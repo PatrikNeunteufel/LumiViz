@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.57.0
+> **Version:** 0.58.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a und TS1 a (Patrik S139–S145);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a und TS1 a (Patrik S139–S145);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -638,6 +638,182 @@ mitgeliefert würde; zum Messen nicht nötig). *University of Iowa MIS*: „may 
 for any projects, without restrictions“ (theremin.music.uiowa.edu/mis.html), der Flügel nicht
 genannt, in einem Unterrichtsraum aufgenommen. Ein Upright mit an der Quelle geprüfter Lizenz:
 noch keins gefunden.
+
+**Wunsch Patrik (S145): Beispiel-Loops mit der Hammer-Saite** — mindestens einer, nach Patriks Notiz
+`docs/welcher komponist ist ideal für ein Flügel tet.txt` (eine Unterhaltung mit einem Sprachmodell;
+ihre Angaben zu Lizenzen und Quellen sind **nicht geprüft**). Dort genannt: Chopin als Idealfall, als
+Prüfstücke *Nocturne Op. 9 Nr. 2* (Pedal, Resonanz, Ausklang), *Ballade Nr. 1 g-Moll Op. 23* (Dynamik,
+Anschlagstufen), *Étude Op. 10 Nr. 4* (Polyphonie, Rechenzeit); dazu Debussy *Clair de lune*, Liszt *La
+Campanella*, Rachmaninow *Prélude cis-Moll*. Die Werke sind gemeinfrei (die Komponisten sind seit mehr als
+70 Jahren tot); Ausgaben, MIDI-Dateien und Aufnahmen tragen eigene Rechte — die Quelle der Noten ist
+deshalb ein eigener Entscheid. Welche Stücke, aus welcher Quelle: offen (BL1 ff.).
+
+✅ **BL1 a** (Patrik S145): **Drei Ausschnitte von Chopin, je einer für eine Prüfung:** `nocturne_demo`
+(Nocturne Op. 9 Nr. 2, die erste Phrase mit Pedal-Spur — Pedal, Mitschwingen, Ausklang),
+`ballade_demo` (Ballade Nr. 1 Op. 23, eine Stelle von pp nach ff — Anschlagstufen, Filzhammer),
+`etude_demo` (Étude Op. 10 Nr. 4, die ersten Takte — Rechenzeit, Töne vorab, Freeze). Grund: jeder
+prüft einen anderen Teil des Zielbilds (§4.1 Antwort 2); Chopin ist unstrittig gemeinfrei. Verworfen: b
+(nur die Nocturne — die Hälfte des Zielbilds ohne Hörbeispiel), c (dazu Debussy und Rachmaninow — was sie
+prüfen, decken Nocturne und Ballade schon; lassen sich nach demselben Verfahren ergänzen). Kippt auf c,
+wenn die Beispiele vor allem die Klangvielfalt zeigen sollen; auf b, wenn ein Ausschnitt viel Arbeit
+kostet (BL2).
+
+**Befund Quellen (S145, abgerufen 2026-10-22):** Mutopia Project, Liste „Composer=ChopinFF“
+(`mutopiaproject.org/cgibin/make-table.cgi`, alle Seiten über ein Skript im Browser nach „Op. 10, No. 4“,
+„Op. 23“ und „Ballade“ durchsucht; Felder wörtlich): *Nocturne* Op. 9, No. 2 — Vorlage „G. Schirmer, New
+York, 1881“, Lizenz „Creative Commons Attribution-ShareAlike 3.0“; *Première Ballade* Op.23 — „Klindworth;
+Bote & Bock,n.d.[1880]“, „Creative Commons Attribution-ShareAlike 4.0“; **Étude Op. 10 Nr. 4: nicht
+gefunden** (vorhanden Op. 10 Nr. 1, 2, 5, 9, 12, je „Public Domain“). Die Liste sagt dazu: „No claim is made
+as to the accuracy … of any of the material provided here.“ Andere Quellen (IMSLP, Sammlungen von
+MIDI-Dateien) nicht abgerufen.
+
+✅ **BL2 a** (Patrik S145), **mit Zusatz: weitere Quellen suchen.** **Claude überträgt jeden Ausschnitt
+von Hand aus einer gemeinfreien Druckausgabe vor 1900** (Scan), geprüft Takt für Takt gegen den Scan;
+ein Skript `make_fluegel_loops.py` schreibt die drei `.lvloop`; die Ausgabe steht in der Beschreibung des
+Loops und in `CREDITS.md`; die Loops stehen unter derselben Lizenz wie die übrigen mitgelieferten. Grund:
+eine Quelle und eine Lizenz für alle mitgelieferten Loops — ShareAlike (b) hinge an jeder späteren Fassung
+dieser Dateien; die Étude fehlt bei Mutopia ohnehin. Verworfen: b (Mutopia per Skript, CC BY-SA), c
+(Sammlungen von MIDI-Dateien — Bedingungen ungeprüft). Kippt auf b, wenn sich für ein Stück keine lesbare
+gemeinfreie Ausgabe findet. Erklärungen beim Herunterladen bestätigt Claude nicht selbst.
+
+**Befund weitere Quellen (S145, abgerufen 2026-10-22; Recherche eines Agenten, das Feld auf Polona von
+Claude selbst nachgelesen):**
+- **Polona** (Polnische Nationalbibliothek): jeder geöffnete Datensatz trägt im Feld „Prawa autorskie“
+  wörtlich „Domena Publiczna. Wolno zwielokrotniać, zmieniać i rozpowszechniać oraz wykonywać utwór, nawet
+  w celach komercyjnych, bez konieczności pytania o zgodę.“ (frei, auch kommerziell, ohne Erlaubnis; den
+  Urheber nennen). Vorhanden: Nocturne Op. 9 Nr. 2 bei Ricordi [ca. 1865] und Gebethner i Wolff [ca. 1870];
+  Ballade Op. 23 als Erstausgabe ca. 1836 (BJ Muz. 10789 III; welche der drei Erstausgaben, sagt der
+  Datensatz nicht); Étude Op. 10, Liv. 1 bei Kistner ca. 1840 (BJ Muz. 10791 III 1 — ob Nr. 4 darin steht,
+  am Scan zu prüfen).
+- **IMSLP:** Nocturne Op. 9 als deutsche Erstausgabe Kistner [1833] (#86550), Breitkopf Gesamtausgabe
+  [1880], Kullak/Schirmer 1881; Ballade Op. 23 als alle drei Erstausgaben 1836 und Breitkopf [1878] — je
+  „Public Domain“, vor 1900 keine mit „Non-PD EU“. Grundsatz (IMSLP:Public_Domain): ein Scan eines
+  gemeinfreien Werks sei „not generally considered copyrightable“; ohne Gewähr.
+- **BnF Gallica:** nicht abrufbar (Bot-Prüfung, nicht umgangen); nach älteren Fassungen kostet die
+  kommerzielle Weiterverwendung eine Lizenz — ungeprüft; der Scan der französischen Erstausgabe von Op. 23
+  bei IMSLP stammt von dort.
+- **OCVE/CFEO:** Bilder nur mit ausdrücklicher Erlaubnis der Bibliothek. **NIFC** (`chopin.musicsources.pl`)
+  beim Abruf in Wartung.
+- Nicht durchsucht: Library of Congress, Wikimedia Commons, HathiTrust direkt.
+
+**Befund vor Stufe 31 (Code S145, gelesen):** Das mitgelieferte `piano` ist heute ein Sinus mit fünf
+Obertönen und langem Decay (`asset/loop/instruments/piano.lvinst`, Fassung 3, ohne Saiten) — von der
+Hammer-Saite übernimmt es nichts. Wiederverwendbar ist die Saite: der Wellenleiter mit Verlust- und
+Allpass-Umlauf für die Inharmonizität (`entwerfeUmlauf`, `rechneSaiteWg`), die Abnahme am Steg und der
+Korpus als gekoppelte Schwinger (Parlor, Classical) als Vorbild für einen Resonanzboden. Pedale wirken
+heute auf die **Dauer** eines Tons (`loop/Pedalplan`: `gehaltenBis`, `gehaltenMs`, Töne je Vorkommen) —
+der Ton einer Note wird für sich gerechnet und unter seinem Namen im Tonspeicher gehalten. **Das
+Mitschwingen der übrigen Saiten bei gedrücktem Pedal** hängt dagegen von allen Noten ab, die zugleich
+klingen; es passt nicht in „ein Ton je Name“. Einen Weg für Töne, die eine Note zusätzlich anstößt, gibt
+es schon: die `zusatz`-Töne einer Kette (Stufe 25c, `Rechenkern.cpp` beim Schlagen). Wie das Mitschwingen
+gerechnet wird, ist deshalb ein eigener Entscheid nach der Recherche (Literatur zu den Rechenverfahren:
+im Gang, S145).
+
+**Befund Literatur (S145, abgerufen 2026-10-22; Recherche eines Agenten — die Sätze aus Bank, Zambon &
+Fontana 2010 von Claude im Volltext nachgelesen, die übrigen nur aus dem Bericht):**
+- **Modale Synthese** (Bank, Zambon, Fontana, „A Modal-Based Real-Time Piano Synthesizer“, IEEE TASLP 18(4),
+  809–821, 2010 — *nachgelesen*): Quer- und Längsschwingung der Saite als Resonatoren zweiter Ordnung, der
+  Hammer nichtlinear (F = K·Δy^p); Schwebung und zweistufiger Ausklang über „a set of secondary resonators
+  to the string model, driven by the hammer force“; das Mitschwingen **einseitig**: „the outputs of the main
+  string models are summed and feed to the secondary resonators of all string models“, mit R = 8 Bereichen
+  „an additional 64 multiplications and additions“; volle Polyphonie mit „10000 second-order resonators and
+  four 20000 tap“ Faltungen in Echtzeit; Dämpfer durch „simply decreasing the decay times of the
+  resonators“. Zum Wellenleiter mit gemeinsamer Abschlussstelle: Mitschwingen „relatively straightforward“;
+  zum „commuted“-Verfahren: es „assumes linearity and time-invariance“, Wiederanschlag und nichtlineare
+  Saite „cannot be precisely modeled“. Resonanzboden: FIR „1000-2000 tap“, für das Klopfen in Mitte und
+  Diskant „ten thousands of taps“ — als FFT-Faltung oder parallele Filter zweiter Ordnung.
+- **Wellenleiter mit Hammer** (Smith/Van Duyne 1995, Bank & Sujbert 2004 — *nur Bericht*): am billigsten;
+  bloßes Summieren verstimmter Saiten gebe keinen echten zweistufigen Ausklang, dafür Kopplung am Steg; ein
+  Hammer an einer Saite mit Dispersion werde fast so teuer wie finite Differenzen.
+- **Finite Differenzen** (Bank & Sujbert 2004; Chabassier, Chaigne, Joly 2016 — *nur Bericht*): am
+  treuesten; nur die Saite 10–20 Mal so teuer wie ein Wellenleiter; der ganze Flügel mit Platte und Luft
+  „24 h of real time on 300 processors“ je Sekunde Klang.
+- **Hammer** (Russell; Stulov & Kartofelev 2009 Gl. 9 — *nur Bericht*): F = K·x^p, p etwa 2 im Bass bis 4 im
+  Diskant, mit Hysterese; Stulov gibt Masse, p und Steife je Taste n = 1…88 als Formel. **Inharmonizität**
+  (Rigaud & David, DAFx 2011 — *nur Bericht*): B(m) als Summe zweier Exponentiale, der Diskant fest.
+  Nicht erreicht: Chaigne & Askenfelt 1994, Weinreich 1977, Conklin 1996, Fletcher 1964 (Volltexte hinter
+  Schranken).
+- **Folge für LumiViz (Claude):** In allen drei Verfahren ist das Mitschwingen eine Stufe **auf der Summe**
+  der klingenden Saiten — in der modalen Fassung einseitig und damit nach dem Vorab-Rechnen der einzelnen
+  Töne möglich: ein Satz ungedämpfter Resonatoren, gespeist von der Summe, im Rechenkern wie ein Effekt
+  des Kanals.
+
+✅ **HS1 a** (Patrik S145): **Die Hammer-Saite wird modal gerechnet, nach Bank, Zambon & Fontana 2010.**
+Jede Saite eine Summe gedämpfter Resonatoren mit Frequenzen nach der Inharmonizität B, Quer- und
+Längsschwingung; der Filzhammer nichtlinear und gekoppelt (F = K·Δy^p, Werte je Taste nach Stulov);
+Schwebung und zweistufiger Ausklang über Nebenresonatoren, getrieben von der Hammerkraft; Resonanzboden als
+Faltung; das Mitschwingen einseitig auf der Summe. Ein neues Modell neben dem Wellenleiter — die gezupfte
+Saite bleibt, wie sie ist. Grund: jeder Teilton trägt Frequenz, Abklingzeit und Schwebung selbst — was aus
+*Salamander* gemessen wird, lässt sich direkt setzen und prüfen; der Hammer bleibt nichtlinear (laut heller,
+§4.1); für das Mitschwingen gibt es einen nachgelesenen stabilen Weg, der zum Vorab-Rechnen passt.
+Verworfen: b (Wellenleiter erweitern — ein Hammer an einer Saite mit starker Dispersion werde fast so teuer
+wie finite Differenzen, nur Bericht; acht Allpässe reichen für den Bass wohl nicht, nicht belegt), c (finite
+Differenzen für die Saite — am treuesten, aber nur über physikalische Größen abzugleichen, nicht über das
+Gemessene). Kippt auf c für die Saite, wenn Hörproben gegen *Salamander* im Anschlag etwas vermissen, das nur
+die Saite in finiten Differenzen trägt.
+
+**Befund (Code S145):** Ein Ton im Tonspeicher trägt heute keine Anschlagstärke — sie wirkt als Pegel auf
+den fertigen Ton (`TonAngabe`, `Loop.hpp`). Mit dem nichtlinearen Hammer klingt ein leiser Anschlag anders
+als ein lauter; die Stärke muss in den Namen des Tons (Frage in 31a).
+
+✅ **HS2 a** (Patrik S145): **Stufe 31 in acht Teilschritten, je mit Entscheiden davor.** **31a** Modell und
+Datei (Bauart Hammer-Saite an der Schicht; Felder der `.lvinst`: Saitenchor, Inharmonizität, Hammer,
+Dämpfer, Resonanzboden; die Anschlagstärke im Namen des Tons). **31b** ein Ton (modale Saite mit
+Längsschwingung, nichtlinearer Hammer, Chor und Nebenresonatoren, Dämpfer beim Loslassen; gemessen am
+gerechneten Ton). **31c** Resonanzboden als Faltung (woher die Impulsantwort kommt: eigene Frage). **31d**
+Messung gegen *Salamander* (Teiltöne, B, Abklingzeiten, Helligkeit je Stärke) und Hörproben, die Patrik
+gesammelt später hört. **31e** Mitschwingen — erst die Rechenzeit beider Wege messen (Stufe auf der Summe im
+Rechenkern oder in jeden Ton eingerechnet, exakt wegen der einseitigen, linearen Kopplung), dann der
+Entscheid, dann der Bau. **31f** Spielweisen (Sustain mit halbem Pedal, Sostenuto, Una corda; Geräusche
+abschaltbar). **31g** Creator und Editor (zuerst die Skizze). **31h** Abschluss: `grand_piano`, die drei
+Beispiel-Loops (BL1 a), Handbuch, Sichttest-Liste, Bereichslauf. Danach das Upright als Vorlage derselben
+Rechnung (Stufe 32). Grund: jede Wahl fällt, wenn ihr Grund vorliegt — beim Mitschwingen die gemessene
+Rechenzeit, beim Boden die Herkunft der Antwort; die Regler im Creator folgen aus den Größen des Modells.
+Verworfen: b (das Mitschwingen schon jetzt als Stufe auf der Summe — verwürfe den exakten Weg „im Ton“ ohne
+Messung), c (die Skizze von Creator und Editor zuerst — die Regler stehen erst nach 31a/31b fest). Kippt auf
+c, wenn Patrik den Flügel früh im Creator sehen will.
+
+✅ **HA1 a** (Patrik S145): **Der Flügel in der `.lvinst`: Kurven über die Tastatur, mit Abweichung je
+Taste.** Jede Größe — Inharmonizität B, Abklingzeit des Grundtons und ihr Abfall zu den hohen Teiltönen,
+Zahl der Saiten im Chor und ihre Verstimmung in Cent, Hammermasse, Hammersteife, Exponent p, Anschlagstelle,
+Stärke des Dämpfers — ist eine Kurve aus Stützpunkten an Tasten, dazwischen glatt; eine Taste kann eine
+Abweichung tragen (leer = die Kurve). Vorgaben aus der Literatur (Hammer nach Stulov, B nach Rigaud &
+David), wo gemessen, Stützpunkte aus *Salamander*. Grund: schließt die Tabelle je Taste ein und hält die
+Absicht lesbar; Messung (rund 30 Tasten) und Literatur (Formeln über die Tastatur) liefern beide Stützpunkte.
+Verworfen: b (Tabelle je Taste — 88 Zahlen je Änderung, kein Verlauf im Creator), c (physikalische Größen je
+Saite — gegen den Grund von HS1 a, Saitendaten eines bestimmten Flügels nicht belegt). Kippt auf b, wenn 31d
+zeigt, dass fast jede Taste eine Abweichung braucht.
+
+✅ **HA2 a** (Patrik S145): **An der Schicht bekommt die Schwingung *String* die Achse *Excitation*
+(*Pluck* — die Vorgabe, wie bisher — oder *Hammer*) und das Verfahren *Modal*; die Hammer-Saite ist
+*Hammer* + *Modal*.** Kurven (HA1 a) und Resonanzboden hängen an dieser Schicht. Am Instrument ein eigener
+Block *Keyboard* für die Ausstattung (HA4), neben dem `Saitensatz`, der den gegriffenen Saiten bleibt.
+Kombinationen, die es noch nicht gibt (*Hammer* mit *Waveguide*), sind in Datei und Creator nicht wählbar.
+Grund: setzt SF10 a um (zwei Achsen, eine neue Kombination ergibt sich von selbst); Clavinet und Bogen-Saite
+werden neue Werte auf denselben Achsen. Verworfen: b (eigene Schwingung *Hammer string* — der Weg, den SF10 b
+verwarf), c (die Tastatur im `Saitensatz` — Tabs, Saitenwahl und Capo an einer Taste). Kippt auf b, wenn beim
+Clavinet Hammer und Zupfen an der Saite nichts teilen außer dem Namen.
+
+✅ **HA3 a** (Patrik S145): **Die Anschlagstärke gestuft im Namen, der Rest als Pegel.** Die Stärke wird
+auf Stufen gleichen Abstands in dB der Hammergeschwindigkeit gerundet (etwa 1 dB), die Stufe steht im Namen
+(`:v<stufe>`, nur bei einem Instrument mit Hammer); den Unterschied zwischen Note und Stufe gleicht ein Pegel
+genau aus — die Lautstärke stimmt, die Klangfarbe auf eine Stufe. Wie fein, legt 31d fest (so, dass man die
+Klangfarbe nicht unterscheidet). Ein kleines Ziehen an der Stärke spielt sofort, ein großes rechnet neu.
+Grund: genau, wo man es hört, und der Editor bleibt bedienbar. Verworfen: b (genau, auf drei Stellen — jede
+kleine Änderung rechnet einen ganzen Ton neu), c (acht Stufen mit Überblendung — ein Klang, den der Flügel
+nicht hat, mit Schwebungen zwischen den Lagen). Kippt auf b, wenn 31b zeigt, dass ein Ton nur Millisekunden
+braucht. Mit Pedal werden die Töne ohnehin je Vorkommen gerechnet; dort spart a wenig.
+
+✅ **HA4 a** (Patrik S145): **Der Block *Keyboard* trägt Umfang, Dämpferbereich und die Pedale als Liste:**
+`range` (tiefste und höchste Taste, Vorgabe A0–C8), `undampedFrom` (die erste Taste ohne Dämpfer — der Wert
+wird in 31a belegt; aus dem Gedächtnis etwa die obersten anderthalb Oktaven), `pedals` je Platz links, Mitte,
+rechts mit einer Art: links *Una corda* (Verschiebung) oder *Soft* (Hämmer näher), Mitte *Sostenuto*,
+*Practice* (Moderator) oder keins, rechts *Sustain*. Jede Art bringt ihre Spur in den Instrument-Editor
+(SF6 a); die Vorlagen *Grand* und *Upright* setzen die Werte. Grund: schließt die Schalter ein und trägt, was
+das Zielbild verlangt (Moderator, das linke Pedal des Upright), ohne neues Feld in Stufe 32. Verworfen: b
+(drei Schalter — das Upright bräuchte ein neues Feld), c (keine Ausstattung — schiebt auf, was HS2 a für das
+Upright als Vorlage derselben Rechnung festlegt). Kippt auf b, wenn die Recherche zum Upright zeigt, dass sich
+seine Pedale nicht auf diese Plätze abbilden lassen.
 
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
@@ -1503,6 +1679,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.58.0 | 2026-10-22 | Session 145. Stufe 31 begonnen: Wunsch Beispiel-Loops, BL1 a (drei Chopin-Ausschnitte), BL2 a (von Hand aus gemeinfreier Ausgabe vor 1900), Befunde Quellen (Mutopia, Polona, IMSLP), Befund Code und Literatur, HS1 a (modal nach Bank 2010), HS2 a (Teilschritte 31a–31h); zu 31a HA1 a (Kurven über die Tastatur), HA2 a (Excitation und Modal an der Schicht, Block Keyboard am Instrument), HA3 a (Anschlagstärke gestuft im Namen), HA4 a (Ausstattung Keyboard). |
 | 0.57.0 | 2026-10-22 | Session 145. Stufe 30i-3 (Handbuch, Sichttest-Liste, Bereichslauf unter clang); Stufe 30 fertig bis auf den vollen Lauf. |
 | 0.56.0 | 2026-10-22 | Session 145. Stufe 30i-2 gebaut (Publish- und Import-Dialog mit eingefrorenen Clips). |
 | 0.55.0 | 2026-10-22 | Session 145. Plan 30i; Stufe 30i-1 gebaut (Wellenformen im Paket, Import prüft den Abdruck). |
