@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.271.0
+> **Version:** 1.272.0
 > **Datum:** 2026-10-22 (Session 143)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -3052,8 +3052,9 @@ Idee Preset-Warmup/Pre-Roll.
   Blenden, Pegelkurve und Limiter), WX4 a (Teilschritte 30a–30d ff.), **WX5 a** (die Lautstärke des
   Loops wirkt nach den Effekten — Befund: sie verstellte die Zerrung; nur `effects_demo` *Acid* klingt
   anders, `Loop Werte` sieht es nicht). 30a `loop/Wellenform` (Clip mit Nachklang, Ausschnitt des
-  Composers). **Offen:** Hörprobe `effects_demo` nach WX5 a; 30b WAV-Schreiber, 30c *Export audio…*
-  (zuerst Skizze), 30d ff. Freeze (Plan als eigene Vorlage).
+  Composers). 30b `audio/WavDatei` (32-bit float, 24, 16 Bit mit Dither; auch die Aufnahme schreibt
+  darüber). **Offen:** Hörprobe `effects_demo` nach WX5 a; 30c *Export audio…* (zuerst Skizze),
+  30d ff. Freeze (Plan als eigene Vorlage).
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6129,6 +6130,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.272.0 | 2026-10-22 | Session 143. §7 Spielweisen: Stufe 30b gebaut (`audio/WavDatei`). |
 | 1.271.0 | 2026-10-22 | Session 143. §7 Spielweisen: WX2 a bis WX5 a, Stufe 30a gebaut (`loop/Wellenform`); Lautstärke des Loops nach den Effekten. |
 | 1.270.0 | 2026-10-22 | Session 143. §7 Spielweisen: Stufe 29f gebaut (TS1 a Loop Sound Memory, Handbuch, Sichttest-Liste Töne vorab); Stufe 29 gebaut. |
 | 1.269.0 | 2026-10-21 | Session 142. §7 Spielweisen: Stufe 29 Töne vorab gebaut bis 29e (TV1 a bis TV7 a); WX1 a; Audio-Clip im Loop als Stufe 31, Hammer-Saite 32 ff. |

@@ -5,15 +5,13 @@
 
 #include "loop/Aufnahme.hpp"
 
+#include "audio/WavDatei.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Sample.hpp"
 
-#include <QByteArray>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QSaveFile>
-#include <QtEndian>
 
 #include <algorithm>
 #include <cmath>
@@ -40,13 +38,6 @@ float betrag(const std::vector<float>& stereo, std::int64_t frame)
 {
     const auto i = static_cast<std::size_t>(2 * frame);
     return std::max(std::abs(stereo[i]), std::abs(stereo[i + 1]));
-}
-
-template <typename Zahl>
-void haenge(QByteArray& daten, Zahl wert)
-{
-    const Zahl klein = qToLittleEndian(wert);
-    daten.append(reinterpret_cast<const char*>(&klein), static_cast<qsizetype>(sizeof(Zahl)));
 }
 
 }  // namespace
@@ -109,36 +100,9 @@ std::vector<float> schneideAus(const std::vector<float>& stereo, int rate, Aussc
 
 bool schreibeWav(const QString& pfad, const std::vector<float>& stereo, int rate)
 {
-    const std::int64_t frames = framesVon(stereo);
-    if (frames <= 0 || rate <= 0) return false;
-    constexpr quint16 kKanaele = 2;
-    constexpr quint16 kBits = 16;
-    const auto datenBytes = static_cast<quint32>(frames * kKanaele * (kBits / 8));
-
-    QByteArray daten;
-    daten.reserve(static_cast<qsizetype>(44 + datenBytes));
-    daten.append("RIFF", 4);
-    haenge<quint32>(daten, 36 + datenBytes);
-    daten.append("WAVE", 4);
-    daten.append("fmt ", 4);
-    haenge<quint32>(daten, 16);                                             // Laenge des Abschnitts
-    haenge<quint16>(daten, 1);                                              // PCM
-    haenge<quint16>(daten, kKanaele);
-    haenge<quint32>(daten, static_cast<quint32>(rate));
-    haenge<quint32>(daten, static_cast<quint32>(rate) * kKanaele * (kBits / 8));  // Bytes je Sekunde
-    haenge<quint16>(daten, static_cast<quint16>(kKanaele * (kBits / 8)));  // Bytes je Abtastwert beider Seiten
-    haenge<quint16>(daten, kBits);
-    daten.append("data", 4);
-    haenge<quint32>(daten, datenBytes);
-    for (std::int64_t i = 0; i < 2 * frames; ++i)
-    {
-        const double wert = std::clamp(static_cast<double>(stereo[static_cast<std::size_t>(i)]), -1.0, 1.0);
-        haenge<qint16>(daten, static_cast<qint16>(std::lround(wert * 32767.0)));
-    }
-
-    QSaveFile datei(pfad);
-    if (!datei.open(QIODevice::WriteOnly)) return false;
-    return datei.write(daten) == daten.size() && datei.commit();
+    // derselbe Schreiber wie Export audio… und Freeze (Stufe 30b) — 16 Bit ohne Dither, wie seit 11b
+    if (framesVon(stereo) <= 0 || rate <= 0) return false;
+    return audio::schreibeWav(pfad, stereo, rate, audio::WavTiefe::Pcm16).geschrieben;
 }
 
 QString vorschlagAufnahmeTitel()

@@ -68,7 +68,8 @@ struct Blenden
 [[nodiscard]] std::vector<float> schneideAus(const std::vector<float>& stereo, int rate, Ausschnitt ausschnitt,
                                              bool normalisieren, Blenden blenden = {});
 
-/// Als WAV schreiben: Stereo, 16 Bit — das liest jedes Programm. Werte ueber 1
+/// Als WAV schreiben: Stereo, 16 Bit — das liest jedes Programm (ueber `audio/WavDatei`, ohne
+/// Dither, seit Stufe 30b). Werte ueber 1
 /// werden begrenzt. false = leer, `rate` nicht groesser als 0, oder nicht zu schreiben.
 bool schreibeWav(const QString& pfad, const std::vector<float>& stereo, int rate);
 

@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.38.0
+> **Version:** 0.39.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -876,6 +876,18 @@ sich, Fortschritt und Abbruch, eine Messung. Dazu in `test_LoopSpieler` „S127 
 wartet jetzt auf die Töne (seit 29e hing er an der Reihenfolge der Fälle). Im Programm nicht
 angesehen.
 
+**Gebaut 30b (S143):** `audio/WavDatei` — `schreibeWav` (Stereo; 32-bit float als Format 3 mit
+`fact`, 24 und 16 Bit als PCM; Kappung bei ±1 mit Zählung, der größte Betrag; Dither bei 16 Bit als
+TPDF ±1 LSB aus einem festen Startwert mit eigener Rechnung — dieselben Werte ergeben dieselbe Datei
+unter jedem Compiler; über `QSaveFile`, über 4 GB nichts) und `liesWav` (was hier geschrieben wird,
+dazu Mono und `WAVE_FORMAT_EXTENSIBLE`). **Ein Schreiber für alles:** `loop/Aufnahme::schreibeWav`
+gibt an ihn weiter (16 Bit ohne Dither, Bit für Bit wie seit 11b). Skala wie seit 11b mit 32767
+(8388607); BASS liest PCM mit 1/32768 — dazu ein halbes LSB Rundung, zusammen höchstens anderthalb
+LSB. Test `test_WavDatei`: der Kopf jeder Art Byte für Byte, Zurücklesen (float genau, PCM auf ein
+halbes LSB), Kappung, Dither (fest, ein Ton von 0,4 LSB bleibt: Ton mal gelesen / Energie 0,9997),
+Grenzen, Mono, die BassEngine liest alle drei (float ohne Abweichung, 24 Bit 1,2·10⁻⁷, 16 Bit
+4,0·10⁻⁵).
+
 ### 4.5 Stufe 29 „Töne vorab“ — Teilschritte
 
 **Befund (Code S142, gelesen): darf `rendereTon` auf mehreren Threads laufen?** Der Rechenkern ja:
@@ -1092,6 +1104,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.39.0 | 2026-10-22 | Session 143. Stufe 30b gebaut (`audio/WavDatei`, ein Schreiber auch für die Aufnahme, `test_WavDatei`). |
 | 0.38.0 | 2026-10-22 | Session 143. Befund Lautstärke des Loops vor den Effekten; WX5 a (nach den Effekten, gebaut); HB1 a (ins Handbuch); Stufe 30a gebaut (`loop/Wellenform`, `test_LoopWellenform`). |
 | 0.37.0 | 2026-10-22 | Session 143. WX2 a (WAV, 32-bit float als Vorgabe, 24 und 16 Bit wählbar); WX3 a mit Zusatz (Loop-Clip im Composer: Länge, Versatz, Fader des Loops — ohne Gain, Blenden, Pegelkurve und Limiter); WX4 a (Teilschritte 30a–30d ff.). |
 | 0.36.0 | 2026-10-22 | Session 143. TS1 a (Loop Sound Memory mit Stand und Clear); Stufe 29f gebaut (Grenze in den Settings, Handbuch, Sichttest-Liste). |

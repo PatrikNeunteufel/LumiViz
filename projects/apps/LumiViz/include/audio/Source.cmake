@@ -25,6 +25,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/IPlaylist.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/Lautheit.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/Playlist.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WavDatei.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/Wiederaufnahme.hpp"
 )
 set(_local_templates
