@@ -68,6 +68,7 @@ constexpr int kVersion = 13;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
+const QString kFrozenVorsatz = QStringLiteral("frozen:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
 const QString kArtInstrument = QStringLiteral("instrument");
 
@@ -694,7 +695,17 @@ std::vector<double> Loop::stellenImMuster(double schritt, const QString& name) c
     return {};
 }
 
-QStringList Loop::klangNamen(const SaitenVon& saiten) const
+QString frozenKlang(const QString& abdruck)
+{
+    return kFrozenVorsatz + abdruck;
+}
+
+QString abdruckVonKlang(const QString& klang)
+{
+    return klang.startsWith(kFrozenVorsatz) ? klang.mid(kFrozenVorsatz.size()) : QString();
+}
+
+QStringList Loop::klangNamen(const SaitenVon& saiten, const Eingefroren& eingefroren) const
 {
     QStringList namen;
     QSet<QString> gesehen;
@@ -703,12 +714,31 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
         gesehen.insert(klang);
         namen << klang;
     };
+    // eingefrorene Clips (Stufe 30f) spielen ihre Wellenform, nicht ihre Toene
+    const auto istEingefroren = [&](std::size_t k, const LoopClip& clip) {
+        return eingefroren.contains({static_cast<int>(k), clip.startTakt});
+    };
+    // ein Muster, das nur in eingefrorenen Clips liegt, braucht keine Klaenge — eines ohne
+    // Clip nennt sie wie bisher
+    const auto gebraucht = [&](const Muster& m) {
+        if (eingefroren.empty()) return true;
+        bool liegt = false;
+        for (std::size_t k = 0; k < kanaele.size(); ++k)
+            for (const LoopClip& clip : kanaele[k].clips)
+            {
+                if (clip.muster != m.name) continue;
+                if (!istEingefroren(k, clip)) return true;
+                liegt = true;
+            }
+        return !liegt;
+    };
     // die Toene der Saiteninstrumente je Vorkommen (Stufe 23b) — dieselbe Rechnung wie `plane`
     std::vector<std::vector<ClipToene>> jeKanal;
     if (saiten)
         for (std::size_t k = 0; k < kanaele.size(); ++k) jeKanal.push_back(toeneImKanal(*this, k, saiten));
     for (const Muster& m : muster)
     {
+        if (!gebraucht(m)) continue;
         if (m.art != MusterArt::Instrument)
         {
             for (const Spur& spur : m.spuren) nimm(spur.spielt());
@@ -722,10 +752,10 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
                 continue;
             }
             // mit Pedal (Stufe 28b), Pitch oder Vibrato (28c-1b): je Vorkommen — dieselbe Rechnung wie `plane`
-            for (const Kanal& kanal : kanaele)
-                for (const LoopClip& clip : kanal.clips)
+            for (std::size_t k = 0; k < kanaele.size(); ++k)
+                for (const LoopClip& clip : kanaele[k].clips)
                 {
-                    if (clip.muster != m.name) continue;
+                    if (clip.muster != m.name || istEingefroren(k, clip)) continue;
                     for (int r = 0; r < clip.wiederholungen; ++r)
                         for (std::size_t i = 0; i < m.noten.size(); ++i)
                             nimm(tonKlang(tonImClip(*this, m, clip.wiederholungen, r, i)));
@@ -735,7 +765,7 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
         for (std::size_t k = 0; k < kanaele.size(); ++k)
             for (std::size_t c = 0; c < kanaele[k].clips.size(); ++c)
             {
-                if (kanaele[k].clips[c].muster != m.name) continue;
+                if (kanaele[k].clips[c].muster != m.name || istEingefroren(k, kanaele[k].clips[c])) continue;
                 for (const std::vector<GeplanterTon>& runde : jeKanal[k][c])
                     for (const GeplanterTon& ton : runde)
                     {
@@ -744,6 +774,10 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
                     }
             }
     }
+    for (std::size_t k = 0; k < kanaele.size(); ++k)
+        for (const LoopClip& clip : kanaele[k].clips)
+            if (const auto ort = eingefroren.find({static_cast<int>(k), clip.startTakt}); ort != eingefroren.end())
+                nimm(frozenKlang(ort->second));
     return namen;
 }
 

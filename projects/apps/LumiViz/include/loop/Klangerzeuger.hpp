@@ -66,10 +66,11 @@ struct Programm
 /// Einen gerichteten Loop fuer `rate` uebersetzen und mit seinen Klaengen
 /// (je Spur einer, in derselben Rate) zu einem Programm fuegen. `saiten` wie
 /// bei `plane` (Stufe 23b): dieselbe Auskunft, mit der die Klaenge zu
-/// `loop.klangNamen(saiten)` geladen wurden.
+/// `loop.klangNamen(saiten)` geladen wurden; `eingefroren` ebenso (Stufe 30f).
 [[nodiscard]] std::shared_ptr<const Programm> baueProgramm(const Loop& loop, int rate,
                                                            std::shared_ptr<const Klaenge> klaenge,
-                                                           const SaitenVon& saiten = {});
+                                                           const SaitenVon& saiten = {},
+                                                           const Eingefroren& eingefroren = {});
 
 class Klangerzeuger final : public IAudioGenerator
 {

@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.44.0
+> **Version:** 0.45.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -947,6 +947,18 @@ ist eine Zusage über die ganze Datei), `make_spuren_loops.py` unverändert. Lit
 auf 13; Test in `test_LoopFreeze` (Datei, Fassung 12 ohne Feld, Richten, Abdruck). Eng unter Release-clang
 und Testing-MSVC 73 / 73, die App unter clang gebaut.
 
+**Gebaut 30f-2 (S144):** `Eingefroren` (je Clip — Kanal, Starttakt — der Abdruck, dessen Datei
+vorliegt; `loop/Loop.hpp`), `frozenKlang`/`abdruckVonKlang` (`frozen:<abdruck>`). `klangNamen`, `plane`
+und `baueProgramm` nehmen die Angabe wie `SaitenVon`: ein eingefrorener Clip nennt seine Wellenform
+(hinten, in der Reihenfolge der Clips) statt seiner Töne; ein Muster, das nur in eingefrorenen Clips
+liegt, nennt keine Klänge mehr (eines ohne Clip wie bisher). Im Ablauf eine Stimme je eingefrorenem Clip:
+ein Schlag je Durchlauf am Anfang des Clips, Pegel Fader mal Lautstärke des Loops, kein Bus, keine
+Expression, `Stimme::schneidet` aus (FV1 a) — `rechne` beginnt dann so viele Durchläufe zurück, wie
+der Klang reicht. Ohne Angabe Bit für Bit wie vorher (`Loop Werte` unverändert). Tests in
+`test_LoopFreezeSpielen` (Namen; Rechenkern mit einer 5-s-Wellenform über 2-s-Durchläufe, drei
+zugleich; gegen live am Echo-Clip von `effects_demo`: größte Abweichung 6·10⁻⁶ bei Spitze 0,56). Eng
+(Klang mit `Loop Werte`) unter Release-clang und Testing-MSVC 73 / 73.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1288,6 +1300,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.45.0 | 2026-10-22 | Session 144. Stufe 30f-2 gebaut (Rechenkern: eingefrorene Clips als eine Stimme, ohne Schnitt über die Naht). |
 | 0.44.0 | 2026-10-22 | Session 144. Stufe 30f-1 gebaut (`frozen` am Clip, `.lvloop` 13). |
 | 0.43.0 | 2026-10-22 | Session 144. Plan 30f (drei Teilschritte); FV1 a (der Nachklang eines eingefrorenen Clips klingt über die Naht); FV2 a (`frozen` trägt den Abdruck des eingefrorenen Stands). |
 | 0.42.0 | 2026-10-22 | Session 143. FZ3 a (Zeile *Frozen Clips*, Skizze); Stufe 30e gebaut (Ordner `frozen`, Grenze, Settings). |

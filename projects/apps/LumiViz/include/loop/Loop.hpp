@@ -29,6 +29,7 @@
 #include <QStringList>
 
 #include <algorithm>
+#include <map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -561,6 +562,16 @@ struct LoopTags
     [[nodiscard]] bool operator==(const LoopTags&) const = default;
 };
 
+/// Die Clips, die ihre eingefrorene Wellenform spielen (Stufe 30f): je Clip — Kanal
+/// (Index) und Starttakt — der Abdruck der Wellenform. Wer sie fuellt, hat nachgesehen,
+/// dass die Datei zum jetzigen Abdruck vorliegt; leer = alles live, wie bis Stufe 30e.
+using Eingefroren = std::map<std::pair<int, int>, QString>;
+
+/// Der Klangname einer eingefrorenen Wellenform (Stufe 30f): `frozen:<abdruck>`.
+[[nodiscard]] QString frozenKlang(const QString& abdruck);
+/// Der Abdruck aus einem solchen Namen; leer = kein eingefrorener Klang.
+[[nodiscard]] QString abdruckVonKlang(const QString& klang);
+
 struct Loop
 {
     LoopTags tags;
@@ -606,7 +617,11 @@ struct Loop
     /// Instrument Saiten traegt, nennt seine Toene je Vorkommen in einem Clip,
     /// mit Saite und Ende (`toeneImKanal`, Saitenplan.hpp) — dieselbe Rechnung
     /// wie `plane`. Ohne `saiten` wie bis Stufe 22.
-    [[nodiscard]] QStringList klangNamen(const SaitenVon& saiten = {}) const;
+    /// Mit `eingefroren` (Stufe 30f): ein eingefrorener Clip nennt seine Wellenform
+    /// (`frozenKlang`, hinten angehaengt in der Reihenfolge der Kanaele und Clips) statt
+    /// seiner Toene — ein Muster, das nur in eingefrorenen Clips liegt, nennt keine.
+    /// Ohne `eingefroren` wie bis Stufe 30e.
+    [[nodiscard]] QStringList klangNamen(const SaitenVon& saiten = {}, const Eingefroren& eingefroren = {}) const;
     /// Die Dauer einer Note in Millisekunden, gerundet — wie sie im Namen
     /// ihres Tons steht.
     [[nodiscard]] int notenMs(const Note& note) const;

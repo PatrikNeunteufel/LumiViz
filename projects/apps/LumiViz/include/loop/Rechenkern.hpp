@@ -23,7 +23,8 @@
  * Ein neuer Schlag einer Stimme schneidet ihren noch klingenden ab, mit einer
  * Blende ueber `kSchnittFrames` (wie eine Drum-Maschine) — auch ueber die
  * Wiederholungen eines Clips und ueber Clips desselben Musters im Kanal
- * hinweg. Verschiedene Stimmen schneiden einander nicht. Vor dem Abtastwert 0
+ * hinweg. Verschiedene Stimmen schneiden einander nicht. Die Stimme eines
+ * eingefrorenen Clips (Stufe 30f) schneidet sich auch selbst nicht (FV1 a). Vor dem Abtastwert 0
  * gibt es nichts: der erste Durchlauf beginnt ohne Ausklang eines frueheren.
  *
  * Keine Audio-Engine.
@@ -118,6 +119,10 @@ struct Stimme
 {
     int klang = -1;                 ///< Index in `Ablauf::klangNamen`; -1 = kein Klang
     std::vector<Schlag> schlaege;   ///< nach Stelle aufsteigend
+    /// Schneidet ein neuer Schlag den klingenden ab? Nicht bei einer eingefrorenen
+    /// Wellenform (Stufe 30f, Entscheid FV1 a): ihr Nachklang klingt unter den
+    /// naechsten Durchlaeufen zu Ende, wie Hall und Echo live ueber die Naht klingen.
+    bool schneidet = true;
 };
 
 /// Ein Loop, fuer eine Abtastrate uebersetzt. Aendert sich der Loop, entsteht
@@ -151,7 +156,12 @@ struct Ablauf
 /// Instrument Saiten traegt, je Vorkommen den Ton aus `toeneImKanal`
 /// (Saitenplan.hpp) — mit Saite und Ende; die Namen stimmen mit
 /// `loop.klangNamen(saiten)` ueberein. Ohne `saiten` wie bis Stufe 22.
-[[nodiscard]] Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten = {});
+/// Mit `eingefroren` (Stufe 30f) spielt ein eingefrorener Clip eine Stimme mit seiner
+/// Wellenform: je Durchlauf ein Schlag am Anfang des Clips, mit Fader und Lautstaerke
+/// des Loops (beide live, F3 a), ohne Bus und ohne Expression (beides steckt in der
+/// Wellenform), ohne sich selbst abzuschneiden (FV1 a). Die Namen stimmen dann mit
+/// `loop.klangNamen(saiten, eingefroren)` ueberein.
+[[nodiscard]] Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten = {}, const Eingefroren& eingefroren = {});
 
 /// `frames` Abtastwerte ab `von` nach `aus` schreiben (Stereo, `2 * frames`
 /// Werte; der Block wird ueberschrieben). `klaenge[i]` ist der Klang zu

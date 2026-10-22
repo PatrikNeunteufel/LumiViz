@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <utility>
 
@@ -50,11 +51,11 @@ double Ausdruck::wert(std::int64_t frame) const
     return m.bei(x) * c.bei(x);
 }
 
-Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
+Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten, const Eingefroren& eingefroren)
 {
     Ablauf ablauf;
     ablauf.rate = rate;
-    ablauf.klangNamen = loop.klangNamen(saiten);
+    ablauf.klangNamen = loop.klangNamen(saiten, eingefroren);
     ablauf.bpm = loop.bpm;
     if (rate <= 0 || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return ablauf;
 
@@ -86,6 +87,21 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
             const ClipToene& toeneDesClips = saitenToene[clipNr];
             const Muster* muster = loop.findeMuster(clip.muster);
             if (muster == nullptr) continue;
+            // eingefroren (Stufe 30f): die Wellenform als ein Klang ab dem Anfang des Clips, mit
+            // Fader und Lautstaerke des Loops (F3 a) — Effekte und Expression stecken in ihr
+            if (const auto ort = eingefroren.find({static_cast<int>(kanalNr), clip.startTakt}); ort != eingefroren.end())
+            {
+                Stimme stimme;
+                stimme.klang = klangVon.value(frozenKlang(ort->second), -1);
+                stimme.schneidet = false;  // FV1 a
+                Schlag schlag;
+                schlag.frame = std::llround(static_cast<double>(clip.startTakt) * jeTakt * schrittFrames);
+                schlag.links = static_cast<float>(fader * loop.laut);
+                schlag.rechts = schlag.links;
+                stimme.schlaege.push_back(schlag);
+                ablauf.stimmen.push_back(std::move(stimme));
+                continue;
+            }
             // ein Clip mit Effekten: seine Schlaege gehen in einen eigenen Bus —
             // nicht, wenn sein Schalter aus ist (E1 a): dann klingt er trocken
             int bus = -1;
@@ -239,19 +255,28 @@ void rechne(const Ablauf& ablauf, const Klaenge& klaenge, std::int64_t von, int 
             return (g / anzahl) * durchlauf + schlaege[static_cast<std::size_t>(g % anzahl)].frame;
         };
         // Der letzte Schlag, der bei `ab` schon begonnen hat — und der davor:
-        // er kann noch in seiner Schnitt-Blende klingen.
+        // er kann noch in seiner Schnitt-Blende klingen. Schneidet die Stimme sich
+        // nicht (FV1 a), so weit zurueck, wie ihr Klang reicht.
         const std::int64_t runde = ab / durchlauf;
-        const auto danach = std::upper_bound(schlaege.begin(), schlaege.end(), ab - runde * durchlauf,
-                                             [](std::int64_t stelle, const Schlag& h) { return stelle < h.frame; });
-        std::int64_t g = runde * anzahl + (danach - schlaege.begin()) - 2;
+        std::int64_t g = 0;
+        if (stimme.schneidet)
+        {
+            const auto danach = std::upper_bound(schlaege.begin(), schlaege.end(), ab - runde * durchlauf,
+                                                 [](std::int64_t stelle, const Schlag& h) { return stelle < h.frame; });
+            g = runde * anzahl + (danach - schlaege.begin()) - 2;
+        }
+        else
+            g = (runde - laenge / durchlauf - 1) * anzahl;
         g = std::max<std::int64_t>(0, g);
 
         for (;; ++g)
         {
             const std::int64_t start = beginn(g);
             if (start >= bis) break;
-            const std::int64_t naechster = beginn(g + 1);
-            const std::int64_t ende = std::min(start + laenge, naechster + kSchnittFrames);
+            const std::int64_t naechster =
+                stimme.schneidet ? beginn(g + 1) : std::numeric_limits<std::int64_t>::max();
+            const std::int64_t ende =
+                stimme.schneidet ? std::min(start + laenge, naechster + kSchnittFrames) : start + laenge;
             const Schlag& schlag = schlaege[static_cast<std::size_t>(g % anzahl)];
             // auch die Schnitt-Blende eines Schlags bleibt in seinem Bus
             float* const ziel = busAus != nullptr && schlag.bus >= 0 ? busAus[schlag.bus] : aus;
