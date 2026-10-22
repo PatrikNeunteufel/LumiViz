@@ -7,6 +7,7 @@
 #include "core/Datensicherung.hpp"
 #include "core/ZipArchiv.hpp"
 #include "loop/DrumKit.hpp"
+#include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 
@@ -18,6 +19,7 @@
 #include <QJsonObject>
 
 #include <map>
+#include <set>
 #include <vector>
 
 namespace lumi::paket
@@ -180,7 +182,46 @@ QString paketPfad(const Zugehoerige& z)
            endungVon(z.art, z.datei);
 }
 
-PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVersion)
+std::vector<FrozenTeil> frozenTeile(const lp::Loop& loop, int rate, const lp::SaitenVon& saiten)
+{
+    std::vector<FrozenTeil> teile;
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+    {
+        const lp::Kanal& kanal = loop.kanaele[k];
+        for (const lp::LoopClip& clip : kanal.clips)
+        {
+            if (clip.frozen.isEmpty()) continue;
+            FrozenTeil teil;
+            teil.ort = lp::ClipOrt{static_cast<int>(k), clip.startTakt};
+            teil.etikett = QStringLiteral("%1 · bar %2")
+                               .arg(kanal.name.isEmpty() ? clip.muster : kanal.name)
+                               .arg(clip.startTakt + 1);
+            teil.abdruck = lp::clipAbdruck(loop, teil.ort, rate, saiten);
+            if (lp::frozenZustand(loop, teil.ort, rate, saiten) == lp::FrozenZustand::Frozen)
+            {
+                teil.datei = lp::frozenDatei(teil.abdruck);
+                teil.groesse = QFileInfo(teil.datei).size();
+            }
+            teile.push_back(std::move(teil));
+        }
+    }
+    return teile;
+}
+
+std::vector<FrozenTeil> frozenTeile(const QString& loopDatei, int rate, const lp::SaitenVon& saiten)
+{
+    lp::Loop loop;
+    if (!lp::ladeLoop(loopDatei, loop)) return {};
+    loop.richte();
+    return frozenTeile(loop, rate, saiten);
+}
+
+QString frozenPfad(const QByteArray& abdruck)
+{
+    return QStringLiteral("frozen/") + QString::fromLatin1(abdruck) + QStringLiteral(".wav");
+}
+
+PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVersion, const std::vector<QByteArray>& frozen)
 {
     PackErgebnis ergebnis;
     if (!fund.ok)
@@ -228,6 +269,24 @@ PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVers
                                  {QStringLiteral("reference"), f.nennung},
                                  {QStringLiteral("namedBy"), f.genanntVon}});
 
+    // die Wellenformen eingefrorener Clips (Stufe 30i, FP1 a): nur ein Loop hat welche
+    QJsonArray wellenformen;
+    std::set<QByteArray> genommen;
+    for (const QByteArray& abdruck : frozen)
+    {
+        const QString datei = lp::frozenDatei(abdruck);
+        if (fund.art != Art::Loop || datei.isEmpty() || !genommen.insert(abdruck).second) continue;
+        QFile f(datei);
+        if (!f.open(QIODevice::ReadOnly)) continue;  // inzwischen geraeumt: der Empfaenger rechnet
+        QByteArray daten = f.readAll();
+        ergebnis.groesse += daten.size();
+        eintraege.push_back({frozenPfad(abdruck), std::move(daten), QDateTime()});
+        ++ergebnis.dateien;
+        ++ergebnis.frozen;
+        wellenformen.append(QJsonObject{{QStringLiteral("path"), frozenPfad(abdruck)},
+                                        {QStringLiteral("fingerprint"), QString::fromLatin1(abdruck)}});
+    }
+
     QJsonArray mitgeliefert;
     for (const Nennung& n : fund.mitgeliefert)
         mitgeliefert.append(QJsonObject{{QStringLiteral("type"), artText(n.art)}, {QStringLiteral("reference"), n.text}});
@@ -242,6 +301,7 @@ PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVers
         {QStringLiteral("bundled"), mitgeliefert},
         {QStringLiteral("missing"), fehlt},
         {QStringLiteral("media"), QJsonArray()},  // Stufe P-B (P4 a)
+        {QStringLiteral("frozen"), wellenformen},
     };
     const QJsonObject manifest{
         {QStringLiteral("format"), QLatin1String(ds::kFormat)},

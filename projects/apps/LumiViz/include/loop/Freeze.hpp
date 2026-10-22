@@ -80,6 +80,17 @@ bool legeFrozen(const QByteArray& abdruck, const std::vector<float>& stereo, int
 /// oder sie hat eine andere Rate.
 [[nodiscard]] std::optional<std::vector<float>> holeFrozen(const QByteArray& abdruck, int rate);
 
+/// Was `legeFrozenDaten` tat.
+enum class FrozenAblage : int
+{
+    Gelegt,     ///< die Datei liegt jetzt unter dem Abdruck
+    SchonDa,    ///< eine lesbare lag schon da — sie bleibt (FP3 a)
+    Ungueltig,  ///< kein Abdruck, keine lesbare WAV oder eine andere Rate — nichts geschrieben
+};
+/// Eine fertige Wellenform als Bytes einer WAV ablegen (Publish, Stufe 30i, FP3 a): nur eine,
+/// die sich lesen laesst und `rate` traegt; eine vorhandene Datei bleibt. Danach gilt die Grenze.
+[[nodiscard]] FrozenAblage legeFrozenDaten(const QByteArray& abdruck, const QByteArray& wav, int rate);
+
 struct FrozenStand
 {
     int dateien = 0;

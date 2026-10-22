@@ -310,6 +310,38 @@ bool legeFrozen(const QByteArray& abdruck, const std::vector<float>& stereo, int
     return true;
 }
 
+FrozenAblage legeFrozenDaten(const QByteArray& abdruck, const QByteArray& wav, int rate)
+{
+    const QString datei = frozenDatei(abdruck);
+    if (datei.isEmpty() || rate <= 0 || !QDir().mkpath(QFileInfo(datei).absolutePath())) return FrozenAblage::Ungueltig;
+    if (liegtVor(abdruck)) return FrozenAblage::SchonDa;
+    // erst neben dem Ziel unter einem Namen, der nicht wie ein Abdruck heisst, lesen, dann umbenennen
+    const QString teil = datei + QStringLiteral(".part");
+    {
+        QFile schreiben(teil);
+        if (!schreiben.open(QIODevice::WriteOnly) || schreiben.write(wav) != wav.size()) return FrozenAblage::Ungueltig;
+    }
+    const std::optional<audio::WavInhalt> inhalt = audio::liesWav(teil);
+    if (!inhalt || inhalt->rate != rate || inhalt->stereo.empty())
+    {
+        (void)QFile::remove(teil);
+        return FrozenAblage::Ungueltig;
+    }
+    (void)QFile::remove(datei);  // eine, die sich nicht lesen liess
+    if (!QFile::rename(teil, datei))
+    {
+        (void)QFile::remove(teil);
+        return FrozenAblage::Ungueltig;
+    }
+    {
+        const std::lock_guard<std::mutex> halt(unlesbarSperre());
+        unlesbar().erase(abdruck);
+    }
+    halteFrozenGrenze();
+    ++frozenZaehler();
+    return FrozenAblage::Gelegt;
+}
+
 std::uint64_t frozenFassung()
 {
     return frozenZaehler().load();

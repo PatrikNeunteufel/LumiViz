@@ -10,6 +10,9 @@
  *     data/<Bereich>/<name>.<endung> jede Zugehoerige — und das Hauptding,
  *                                    wenn seine Art einen eigenen Ordner hat
  *     package/<datei>               das Hauptding ohne eigenen Ordner (ein Loop)
+ *     frozen/<abdruck>.wav          die Wellenform eines eingefrorenen Clips (Stufe 30i,
+ *                                    FP1 a) — im Manifest unter `package.frozen`; ein
+ *                                    Programm vor 30i uebergeht sie
  *
  * Die Dateien im Paket nennen einander schon so, wie sie beim Empfaenger
  * heissen: jede Nennung einer Zugehoerigen ist `user:<name>` (P5 a).
@@ -18,9 +21,15 @@
  */
 #pragma once
 
+#include "loop/Bearbeiten.hpp"
+#include "loop/Loop.hpp"
+#include "loop/Saiten.hpp"
 #include "paket/Sammler.hpp"
 
+#include <QByteArray>
 #include <QString>
+
+#include <vector>
 
 namespace lumi::paket
 {
@@ -45,15 +54,39 @@ inline constexpr int kPaketFassung = 2;
 /// Wo eine Zugehoerige im Paket liegt (`data/samples/snare_hit.wav`).
 [[nodiscard]] QString paketPfad(const Zugehoerige& zugehoerige);
 
+/// Ein eingefrorener Clip des Loops, wie Publish ihn sieht (Stufe 30i, FP1 a).
+struct FrozenTeil
+{
+    lumi::loop::ClipOrt ort;
+    QString etikett;      ///< „Bass · bar 5“ — der Kanal, sonst das Muster
+    QByteArray abdruck;   ///< der jetzige, nicht der gespeicherte (FV2 a)
+    QString datei;        ///< die Wellenform; leer = sie liegt nicht vor
+    qint64 groesse = 0;
+};
+
+/// Je Clip mit Marke, nach Kanal und Takt: der jetzige Abdruck fuer `rate` und ob seine
+/// Wellenform vorliegt. Schreibt nichts.
+[[nodiscard]] std::vector<FrozenTeil> frozenTeile(const lumi::loop::Loop& loop, int rate,
+                                                  const lumi::loop::SaitenVon& saiten);
+/// Dasselbe fuer die gespeicherte Datei (Publish nimmt sie). Leer = keine lesbare Loop-Datei.
+[[nodiscard]] std::vector<FrozenTeil> frozenTeile(const QString& loopDatei, int rate,
+                                                  const lumi::loop::SaitenVon& saiten);
+
 struct PackErgebnis
 {
     bool ok = false;
     QString fehler;
-    int dateien = 0;      ///< ohne Manifest
+    int dateien = 0;      ///< ohne Manifest, mit den Wellenformen
     qint64 groesse = 0;   ///< der Dateien vor dem Packen
+    int frozen = 0;       ///< davon Wellenformen
 };
 
 /// Schreibt das Paket nach `ziel` (ganz oder gar nicht). `fund` muss `ok` sein.
-[[nodiscard]] PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVersion);
+/// `frozen`: die Abdruecke, deren Wellenform mitgeht (aus `frozenTeile`); jeder einmal,
+/// eine, die nicht (mehr) vorliegt, bleibt draussen.
+[[nodiscard]] PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVersion,
+                                 const std::vector<QByteArray>& frozen = {});
+/// Wo die Wellenform zum Abdruck im Paket liegt (`frozen/<abdruck>.wav`).
+[[nodiscard]] QString frozenPfad(const QByteArray& abdruck);
 
 }  // namespace lumi::paket

@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.53.0
+> **Version:** 0.55.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a und TS1 a (Patrik S139–S144);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a und TS1 a (Patrik S139–S145);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1077,6 +1077,68 @@ Grenzen), alle Grenzen von Freeze stehen in den Settings. Verworfen: b (im Loop-
 die Sanduhr — ein Menüeintrag für eine Anzeige wäre in der Achse fremd). Kippt, wenn oft umgeschaltet wird —
 dann b zusätzlich.
 
+**Befund vor 30i (Code S145, gelesen):** Publish (`paket/Packen`) lädt den gespeicherten Loop und schreibt
+jede Nennung einer Zugehörigen als `user:<name>`; `frozen` am Clip bleibt dabei stehen. Der Import
+(`paket/Import`) liest nur, was das Manifest unter `files` nennt — ein weiterer Block wird von einem
+heutigen Programm übergangen. Der Abdruck (`clipAbdruck`) setzt für jeden Verweis den Inhalt ein, für ein
+Instrument das gelesene Instrument mit dem Inhalt seiner Samples und Zeichnungen: Umbenennen beim Import
+(Keep both) ändert ihn nicht, *Use mine* mit anderem Inhalt schon — dann rechnet der Empfänger zu Recht
+neu. Die Rate des Ausgabegeräts geht in den Abdruck; ein Empfänger mit anderer Rate rechnet ebenfalls neu.
+
+✅ **FP1 a** (Patrik S145): **Publish nimmt je Clip mit Marke die Wellenform zu dem Abdruck, den der
+gespeicherte Loop jetzt ergibt.** Fehlt sie (noch im Rechnen, von der Grenze geräumt), rechnet Publish sie
+vor dem Packen — mit einer Fortschrittszeile im Dialog („Freezing clip n of m … p %“) und Cancel. Die
+Datei zu einer veralteten Marke geht nicht mit. Grund: so gilt der Zusatz zu F5 a ohne Ausnahme (der
+Empfänger wartet nicht), unabhängig davon, ob beim Absender gerade die Grenze geräumt hat; das Rechnen gibt
+es schon (`FreezeAuftrag`), im Normalfall liegt alles vor. Verworfen: b (nur, was vorliegt — ein
+unvollständiges Paket gerade in den Ausnahmen, ohne dass der Absender etwas tun kann), c (die Datei zur
+gespeicherten Marke — nach einer Änderung am Instrument Bytes, die beim Empfänger nie passen). Kippt, wenn
+Publish nie warten darf (etwa Pakete ohne Dialog) — dann b.
+
+✅ **FP2 a** (Patrik S145): **Im Publish-Dialog eine Gruppe „Frozen clips (n)“ im Baum unter dem Loop,
+je Clip eine Zeile** („Bass · bar 5 — ready · 10.1 MB“, „Lead · bar 9 — to compute · 3.2 s“); in der Zeile
+unter dem Baum ein zweiter Haken „☑ Include frozen clips — the receiver plays them at once“ (Vorgabe an,
+gemerkt); die Summe im Fuß zählt die Wellenformen mit. Fehlende rechnen ab dem Öffnen des Dialogs im
+Hintergrund; ist man vorher bei Publish, steht im Fuß statt der Summe „Freezing clip 2 of 3 … 40 %“ und
+Publish ist bis dahin gesperrt; Cancel bricht das Rechnen ab und schließt, Gerechnetes bleibt in `frozen`.
+Grund: der Baum ist die volle Liste dessen, was ins Paket geht; der Haken entscheidet über ein vielfach
+größeres Paket (32-bit float Stereo ≈ 21 MB je Minute, Zip packt es kaum) — die Vorgabe „an“ erfüllt den
+Zusatz zu F5 a; ab dem Öffnen zu rechnen heißt, beim Klick ist meist alles da. Verworfen: b (ohne Haken —
+ein Paket, das man nicht verschicken kann, wiegt schwerer als ein Schalter weniger), c (nur der Haken mit
+Zahl und Größe — verschweigt, welcher Clip rechnet). Kippt, wenn Pakete nie über Wege mit Größengrenze
+gehen — dann b.
+
+✅ **FP3 a** (Patrik S145): **Der Import legt nur Wellenformen ab, die beim Empfänger passen.** Erst Loop
+und Dateien schreiben, dann je Clip mit Marke den Abdruck beim Empfänger rechnen (seine Ausgaberate);
+nach `frozen` kommt nur, was einem davon gleicht; eine vorhandene Datei gleichen Namens bleibt; danach
+die Grenze (die eben gelegten zählen als gerade gebraucht). In *Contents* „Frozen clips (3) → frozen
+clips, 30.4 MB“, in *Notes* „Frozen clips: the receiver checks them on import“, nach dem Import
+„Frozen clips: 2 of 3 ready to play — 1 will be computed here“. Grund: nur was zu einem Clip des
+importierten Loops gehört und hier passt — keine toten Dateien, die eigene über die Grenze drängen, und
+kein Paket legt eine Datei für einen fremden Loop ab; eine beim Empfänger gerechnete Datei wiegt
+schwerer als eine fremde. Verworfen: b (alles ungeprüft ablegen), c (dazu ein Haken *Use the frozen
+clips* — eine passende Datei ist genau, was der Empfänger selbst rechnen würde; die Größe entscheidet
+der Absender, FP2 a). Kippt, wenn Empfänger fremden Wellenformen grundsätzlich misstrauen sollen — dann c
+(prüfen ließe sich der Inhalt nur durch Nachrechnen).
+
+**Plan 30i (S145, gebilligt):** drei Teilschritte. **30i-1** Paket und Import ohne Oberfläche; **30i-2**
+die Dialoge (Rate und Engine durchreichen, Publish nach FP2 a, Import nach FP3 a); **30i-3** Handbuch,
+Sichttest-Liste Freeze, Bereichslauf mit `*Publish*`.
+
+**Gebaut 30i-1 (S145):** in `loop/Freeze` `legeFrozenDaten` (Bytes einer fertigen WAV: erst als
+`<abdruck>.wav.part` gelesen — Rate und Inhalt —, dann umbenannt; eine lesbare vorhandene bleibt, danach
+die Grenze; `FrozenAblage`). In `paket/Packen` `FrozenTeil` und `frozenTeile` (je Clip mit Marke Etikett
+„Bass · bar 5“, jetziger Abdruck, Datei und Größe, wenn sie vorliegt), `frozenPfad`, `packe` mit den
+Abdrücken: je einmal unter `frozen/<abdruck>.wav`, im Manifest `package.frozen` (`path`, `fingerprint`), nur
+bei einem Loop, eine geräumte bleibt draußen; die Fassung des Pakets bleibt 2 (ein Programm vor 30i
+übergeht den Eintrag). In `paket/Import` liest `lies` nur Einträge mit 40 Hex-Zeichen unter passendem Pfad
+(sonst „damaged“), `PaketInhalt::frozen`/`frozenGroesse`; `PaketWahl::rate` (0 = nichts ablegen);
+`importierePaket` legt nach dem Loop nach FP3 a ab und zählt `frozenClips`, `frozenBereit`,
+`frozenGelegt`. Tests `test_PublishFreeze` (drei Fälle: Weg vom Absender zum Empfänger mit gleichem Abdruck
+trotz anderer Nennungen; Keep both, Use mine, andere Rate, vorhandene Datei, fremde und kaputte
+Wellenform, falscher Pfad, Paket ohne Eintrag; fehlende beim Packen, Instrument-Paket). `*Publish*,*Freeze*`
+unter Release-clang und Testing-MSVC je 31 / 31.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1418,6 +1480,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.55.0 | 2026-10-22 | Session 145. Plan 30i; Stufe 30i-1 gebaut (Wellenformen im Paket, Import prüft den Abdruck). |
+| 0.54.0 | 2026-10-22 | Session 145. Befund vor 30i (Publish und Abdruck); FP1 a (welche Wellenformen ins Paket gehen); FP2 a (der Publish-Dialog); FP3 a (der Import prüft). |
 | 0.53.0 | 2026-10-22 | Session 144. Stufe 30h gebaut (Rechenzeit je Clip, Sanduhr, Settings *Freeze hint*). |
 | 0.52.0 | 2026-10-22 | Session 144. FZ5 a (Messung von Freeze nach Skizze A–D); FZ6 a mit Zusatz (Summe der Töne, umschaltbar auf geteilt durch die Threads); FZ7 a (Schalter in der Settings-Zeile). |
 | 0.51.0 | 2026-10-22 | Session 144. Stufe 30g-2 gebaut (Marke, Menü, Undo, Speichern, Hinweiszeile; Kurzform „verändert“ im Warndreieck, Patrik). |

@@ -180,6 +180,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishSammler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishPacken.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishImport.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_PublishFreeze.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishDialoge.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEditorLage.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopNachImport.cpp"

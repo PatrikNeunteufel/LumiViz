@@ -14,6 +14,11 @@
  *
  * Gelesen wird nur, was das Manifest nennt, und nur unter Pfaden, die zu Art
  * und Namen passen; alles andere im Archiv bleibt liegen. Kein Qt-Widget.
+ *
+ * Wellenformen eingefrorener Clips (Stufe 30i, FP3 a): erst Loop und Dateien
+ * schreiben, dann je Clip mit Marke den Abdruck beim Empfaenger rechnen; in den
+ * Ordner `frozen` kommt nur, was einem davon gleicht, und nur, wo noch keine
+ * lesbare Datei liegt.
  */
 #pragma once
 
@@ -69,6 +74,9 @@ struct PaketInhalt
     std::vector<Nennung> mitgeliefertFehltHier;
     /// Was schon beim Absender fehlte.
     std::vector<Fehlend> fehlt;
+    /// Wellenformen eingefrorener Clips im Paket (nur bei einem Loop) und ihre Bytes zusammen.
+    int frozen = 0;
+    qint64 frozenGroesse = 0;
 
     /// Braucht das Hauptding einen Ablageort (`PaketWahl::ziel`)? Ein Loop ja.
     [[nodiscard]] bool brauchtZiel() const { return art == Art::Loop; }
@@ -90,6 +98,9 @@ struct PaketWahl
     std::map<QString, lumi::core::datensicherung::Wahl> jeDatei;
     /// Wohin das Hauptding kommt, wenn `brauchtZiel()`: der ganze Pfad.
     QString ziel;
+    /// Die Ausgaberate des Empfaengers — mit ihr wird der Abdruck gerechnet (FP3 a);
+    /// 0 = keine Wellenformen ablegen.
+    int rate = 0;
 };
 
 struct PaketErgebnis
@@ -105,6 +116,11 @@ struct PaketErgebnis
     QStringList umbenennungen;
     /// Wo das Hauptding jetzt liegt.
     QString hauptDatei;
+    /// Eingefrorene Clips (FP3 a): so viele traegt der importierte Loop, so viele spielen
+    /// jetzt ihre Wellenform, so viele davon kamen aus dem Paket.
+    int frozenClips = 0;
+    int frozenBereit = 0;
+    int frozenGelegt = 0;
 };
 
 /// Liest das Paket ein.

@@ -8,6 +8,7 @@
 #include "core/ZipArchiv.hpp"
 #include "loop/Akkord.hpp"
 #include "loop/DrumKit.hpp"
+#include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Sample.hpp"
@@ -20,6 +21,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QSet>
 
@@ -88,7 +90,15 @@ struct Gelesen
 {
     PaketInhalt inhalt;
     std::map<QString, QByteArray> daten;  ///< Pfad im Paket -> Bytes, nur was das Manifest nennt
+    std::map<QByteArray, QByteArray> frozen;  ///< Abdruck -> Bytes der Wellenform (Stufe 30i)
 };
+
+/// 40 Zeichen `0-9a-f` — wie ein Abdruck heisst.
+bool istAbdruck(const QString& text)
+{
+    static const QRegularExpression muster(QStringLiteral("^[0-9a-f]{40}$"));
+    return muster.match(text).hasMatch();
+}
 
 Gelesen lies(const QString& datei)
 {
@@ -209,6 +219,26 @@ Gelesen lies(const QString& datei)
                            o.value(QStringLiteral("reference")).toString(),
                            o.value(QStringLiteral("namedBy")).toString()});
     }
+    // Wellenformen eingefrorener Clips (Stufe 30i): nur bei einem Loop, nur unter `frozen/<abdruck>.wav`
+    if (p.art == Art::Loop)
+    {
+        for (const QJsonValue& wert : paket.value(QStringLiteral("frozen")).toArray())
+        {
+            const QJsonObject o = wert.toObject();
+            const QString abdruck = o.value(QStringLiteral("fingerprint")).toString();
+            const QString pfad = o.value(QStringLiteral("path")).toString();
+            const auto it = alle.find(pfad);
+            if (!istAbdruck(abdruck) || pfad != frozenPfad(abdruck.toLatin1()) || it == alle.end() ||
+                g.frozen.count(abdruck.toLatin1()))
+            {
+                p.fehler = QStringLiteral("The package is damaged (%1).").arg(pfad);
+                return g;
+            }
+            p.frozenGroesse += it->second.size();
+            ++p.frozen;
+            g.frozen[abdruck.toLatin1()] = it->second;
+        }
+    }
 
     // gegen den Benutzerordner halten
     for (PaketDatei& d : p.dateien)
@@ -319,6 +349,28 @@ bool schreibe(Art art, const QByteArray& daten, const QString& pfad, const Umben
         }
     }
     return false;
+}
+
+/// Die Wellenformen nach FP3 a: je Clip mit Marke des eben geschriebenen Loops der Abdruck
+/// beim Empfaenger; abgelegt wird nur, was einem davon gleicht.
+void legeWellenformen(const Gelesen& g, const PaketWahl& wahl, PaketErgebnis& ergebnis)
+{
+    lp::Loop loop;
+    if (wahl.rate <= 0 || !lp::ladeLoop(wahl.ziel, loop)) return;
+    loop.richte();
+    const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+        for (const lp::LoopClip& clip : loop.kanaele[k].clips)
+        {
+            if (clip.frozen.isEmpty()) continue;
+            ++ergebnis.frozenClips;
+            const lp::ClipOrt ort{static_cast<int>(k), clip.startTakt};
+            const auto passend = g.frozen.find(lp::clipAbdruck(loop, ort, wahl.rate, saiten));
+            if (passend != g.frozen.end() &&
+                lp::legeFrozenDaten(passend->first, passend->second, wahl.rate) == lp::FrozenAblage::Gelegt)
+                ++ergebnis.frozenGelegt;
+            if (lp::frozenZustand(loop, ort, wahl.rate, saiten) == lp::FrozenZustand::Frozen) ++ergebnis.frozenBereit;
+        }
 }
 
 }  // namespace
@@ -477,6 +529,7 @@ PaketErgebnis importierePaket(const QString& datei, const PaketWahl& wahl)
             return ergebnis;
         }
         ergebnis.hauptDatei = wahl.ziel;
+        legeWellenformen(g, wahl, ergebnis);
     }
     ergebnis.ok = true;
     return ergebnis;
