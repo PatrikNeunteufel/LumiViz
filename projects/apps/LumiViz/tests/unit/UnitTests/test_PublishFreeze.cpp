@@ -29,96 +29,12 @@ namespace
 
 namespace ds = lumi::core::datensicherung;
 
-constexpr int kRate = 44100;
-
-/// Eigene Einstellungen (`LumiVizTest` / `PublishFreeze`) — die Grenze des Ordners `frozen`.
-struct FreezeEinstellungen
-{
-    QString org = QCoreApplication::organizationName();
-    QString name = QCoreApplication::applicationName();
-    FreezeEinstellungen()
-    {
-        QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
-        QCoreApplication::setApplicationName(QStringLiteral("PublishFreeze"));
-        QSettings().clear();
-    }
-    ~FreezeEinstellungen()
-    {
-        QSettings().clear();
-        QCoreApplication::setOrganizationName(org);
-        QCoreApplication::setApplicationName(name);
-    }
-};
-
-/// Solange er lebt, ist `pfad` der Ordner `frozen`.
-struct FrozenOrdner
-{
-    QString pfad;
-    explicit FrozenOrdner(const QString& p) : pfad(p) { lp::setzeFrozenOrdnerFuerTests(pfad); }
-    ~FrozenOrdner() { lp::setzeFrozenOrdnerFuerTests({}); }
-};
+constexpr int kRate = kFreezeRate;
 
 QByteArray liesBytes(const QString& pfad)
 {
     QFile datei(pfad);
     return datei.open(QIODevice::ReadOnly) ? datei.readAll() : QByteArray("<fehlt>");
-}
-
-/// Der Bestand mit Kanaelen: Bass (Muster B, ab Takt 5) und Drums (Muster D) eingefroren,
-/// Piano (Muster P) live.
-struct FrozenBestand : Bestand
-{
-    QByteArray bass, drums;  ///< die Abdruecke beim Absender
-    QString absender = QDir(tmp.path()).filePath(QStringLiteral("frozen_absender"));
-    QString empfaenger = QDir(tmp.path()).filePath(QStringLiteral("frozen_empfaenger"));
-
-    FrozenBestand()
-    {
-        lp::Loop loop;
-        REQUIRE(lp::ladeLoop(loopDatei, loop));
-        const auto kanal = [](const QString& name, const QString& muster, int start) {
-            lp::Kanal k;
-            k.name = name;
-            lp::LoopClip clip;
-            clip.muster = muster;
-            clip.startTakt = start;
-            k.clips = {clip};
-            return k;
-        };
-        loop.kanaele = {kanal(QStringLiteral("Bass"), QStringLiteral("B"), 4), kanal(QStringLiteral("Drums"), QStringLiteral("D"), 0),
-                        kanal(QStringLiteral("Piano"), QStringLiteral("P"), 0)};
-        loop.richte();
-        const FrozenOrdner ordner(absender);
-        const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
-        const std::vector<lp::ClipOrt> zuRechnen =
-            lp::setzeFrozenMarken(loop, {lp::ClipOrt{0, 4}, lp::ClipOrt{1, 0}}, kRate, saiten);
-        CHECK(zuRechnen.size() == 2);
-        bass = lp::clipAbdruck(loop, lp::ClipOrt{0, 4}, kRate, saiten);
-        drums = lp::clipAbdruck(loop, lp::ClipOrt{1, 0}, kRate, saiten);
-        REQUIRE(bass.size() == 40);
-        REQUIRE(drums.size() == 40);
-        REQUIRE(bass != drums);
-        REQUIRE(lp::speichereLoop(loop, loopDatei));
-    }
-};
-
-/// Packt den Loop mit den Wellenformen zu `abdruecke`.
-QString packeMit(const Bestand& b, const std::vector<QByteArray>& abdruecke, const QString& name,
-                 pb::PackErgebnis* ergebnis = nullptr)
-{
-    const pb::Fund fund = pb::sammle(b.loopDatei);
-    REQUIRE(fund.ok);
-    const QString ziel = QDir(b.tmp.path()).filePath(name);
-    const pb::PackErgebnis e = pb::packe(fund, ziel, QStringLiteral("1.2.3"), abdruecke);
-    REQUIRE_MESSAGE(e.ok, e.fehler.toStdString());
-    if (ergebnis != nullptr) *ergebnis = e;
-    return ziel;
-}
-
-/// Eine Wellenform von `n` Abtastwerten je Kanal mit dem Wert `wert`.
-std::vector<float> welle(float wert, std::size_t n = 1000)
-{
-    return std::vector<float>(2 * n, wert);
 }
 
 /// Das Paket umbauen: Manifest und Eintraege.

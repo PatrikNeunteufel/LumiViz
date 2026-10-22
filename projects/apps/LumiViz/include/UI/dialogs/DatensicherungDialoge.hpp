@@ -157,8 +157,9 @@ private:
 };
 
 /// Settings → User data → **Import...**: nach der Datei fragen, den Dialog zeigen
-/// — ein Paket aus Publish im Dialog Import package (mit `bus`: ▶ und Oeffnen).
-void zeigeDatenImport(QWidget* parent, IEventBus* bus = nullptr);
+/// — ein Paket aus Publish im Dialog Import package (mit `bus`: ▶ und Oeffnen; `rate`:
+/// die Ausgaberate, mit der es Wellenformen eingefrorener Clips prueft, Stufe 30i).
+void zeigeDatenImport(QWidget* parent, IEventBus* bus = nullptr, int rate = 0);
 /// Settings → User data → **Export...**.
 void zeigeDatenExport(QWidget* parent);
 

@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.55.0
+> **Version:** 0.56.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -1139,6 +1139,22 @@ trotz anderer Nennungen; Keep both, Use mine, andere Rate, vorhandene Datei, fre
 Wellenform, falscher Pfad, Paket ohne Eintrag; fehlende beim Packen, Instrument-Paket). `*Publish*,*Freeze*`
 unter Release-clang und Testing-MSVC je 31 / 31.
 
+**Gebaut 30i-2 (S145):** in `UI/dialogs/PaketDialoge` `FreezeTon` (Rate und Dekodierer) und
+`freezeTonVon(engine)` (wie das Loop-Panel: ohne Engine 44100); durchgereicht vom Loop-Panel
+(`veroeffentlicheAusFenster`), aus dem Menü (*Publish a file...*, *Import package...*) und aus den Settings
+(*Import...*, `zeigeDatenImport`). `PublishDialog` nach FP2 a: die Gruppe *Frozen clips (n)* unter dem
+Loop („ready · 8 KB“, „computing… 40 %“, „to compute · 3.2 s“, nach misslungenem Rechnen „could not
+compute — the receiver computes it“ in der Hinweisfarbe), der Haken *Include frozen clips* (gemerkt unter
+`data/publishFrozen`, Vorgabe an), die Summe mit den Wellenformen; ein `FreezeAuftrag` ab dem Öffnen,
+eine Uhr alle 100 ms; **Publish** wartet mit „Freezing clip n of m … p %“ im Fuß und läuft danach von
+selbst weiter. Seine Meldungen laufen jetzt über `fuehreDialogAus` (`publishReplaceQuestion`,
+`publishFailed`, `publishDone`). `ImportPaketDialog` nach FP3 a: die Zeile *Frozen clips (n) → frozen
+clips, 16 KB*, der Hinweis, die Zahl im Kopf, `frozenMeldung` in der Meldung nach dem Import.
+`PaketBestand.hpp` trägt jetzt `FrozenBestand` und die Hilfen dazu. Tests in `test_PublishDialoge` (zwei
+Fälle; `LUMIVIZ_PUBLISH_FROZEN_BILD` legt zwei Bilder ab, das zweite mit `_import`).
+`--source-file=*test_Publish*,*test_Datensicherung*,*test_LoopFreeze*` unter Release-clang und
+Testing-MSVC je 53 / 53; die App unter clang gebaut.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1480,6 +1496,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.56.0 | 2026-10-22 | Session 145. Stufe 30i-2 gebaut (Publish- und Import-Dialog mit eingefrorenen Clips). |
 | 0.55.0 | 2026-10-22 | Session 145. Plan 30i; Stufe 30i-1 gebaut (Wellenformen im Paket, Import prüft den Abdruck). |
 | 0.54.0 | 2026-10-22 | Session 145. Befund vor 30i (Publish und Abdruck); FP1 a (welche Wellenformen ins Paket gehen); FP2 a (der Publish-Dialog); FP3 a (der Import prüft). |
 | 0.53.0 | 2026-10-22 | Session 144. Stufe 30h gebaut (Rechenzeit je Clip, Sanduhr, Settings *Freeze hint*). |

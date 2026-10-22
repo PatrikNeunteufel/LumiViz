@@ -3,13 +3,15 @@
  * @brief Publish: der Bestand der Tests zu Sammler, Packen und Import — eigene
  *        Instrumente, Samples, Kits und Formen in Wegwerf-Ordnern, dazu ein
  *        Loop wie Titanium (Instrument neben sich, Samples auf der Platte,
- *        Mitgeliefertes, eine fehlende Datei)
+ *        Mitgeliefertes, eine fehlende Datei); seit Stufe 30i derselbe Loop mit
+ *        zwei eingefrorenen Clips (`FrozenBestand`)
  */
 #pragma once
 
 #include <doctest.h>
 
 #include "loop/DrumKit.hpp"
+#include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Sample.hpp"
@@ -21,7 +23,10 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSettings>
 #include <QTemporaryDir>
+
+#include <vector>
 
 namespace
 {
@@ -201,5 +206,93 @@ struct Empfaenger
     REQUIRE(pb::packe(fund, ziel, QStringLiteral("1.2.3")).ok);
     return ziel;
 }
+
+// --- eingefrorene Clips (Stufe 30i) ------------------------------------------------------
+
+[[maybe_unused]] constexpr int kFreezeRate = 44100;
+
+/// Eigene Einstellungen (`LumiVizTest` / `PublishFreeze`) — die Grenze des Ordners `frozen`.
+struct FreezeEinstellungen
+{
+    QString org = QCoreApplication::organizationName();
+    QString name = QCoreApplication::applicationName();
+    FreezeEinstellungen()
+    {
+        QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
+        QCoreApplication::setApplicationName(QStringLiteral("PublishFreeze"));
+        QSettings().clear();
+    }
+    ~FreezeEinstellungen()
+    {
+        QSettings().clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(name);
+    }
+};
+
+/// Solange er lebt, ist `pfad` der Ordner `frozen`.
+struct FrozenOrdner
+{
+    QString pfad;
+    explicit FrozenOrdner(const QString& p) : pfad(p) { lp::setzeFrozenOrdnerFuerTests(pfad); }
+    ~FrozenOrdner() { lp::setzeFrozenOrdnerFuerTests({}); }
+};
+
+/// Packt den Loop mit den Wellenformen zu `abdruecke` (aus dem Ordner `frozen`, der gerade gilt).
+[[maybe_unused]] QString packeMit(const Bestand& b, const std::vector<QByteArray>& abdruecke, const QString& name,
+                                  pb::PackErgebnis* ergebnis = nullptr)
+{
+    const pb::Fund fund = pb::sammle(b.loopDatei);
+    REQUIRE(fund.ok);
+    const QString ziel = QDir(b.tmp.path()).filePath(name);
+    const pb::PackErgebnis e = pb::packe(fund, ziel, QStringLiteral("1.2.3"), abdruecke);
+    REQUIRE_MESSAGE(e.ok, e.fehler.toStdString());
+    if (ergebnis != nullptr) *ergebnis = e;
+    return ziel;
+}
+
+/// Eine Wellenform von `n` Abtastwerten je Kanal mit dem Wert `wert`.
+[[maybe_unused]] std::vector<float> welle(float wert, std::size_t n = 1000)
+{
+    return std::vector<float>(2 * n, wert);
+}
+
+/// Der Bestand mit Kanaelen: Bass (Muster B, ab Takt 5) und Drums (Muster D) eingefroren,
+/// Piano (Muster P) live. Die Wellenformen liegen noch nicht.
+struct FrozenBestand : Bestand
+{
+    QByteArray bass, drums;  ///< die Abdruecke beim Absender
+    QString absender = QDir(tmp.path()).filePath(QStringLiteral("frozen_absender"));
+    QString empfaenger = QDir(tmp.path()).filePath(QStringLiteral("frozen_empfaenger"));
+
+    FrozenBestand()
+    {
+        lp::Loop loop;
+        REQUIRE(lp::ladeLoop(loopDatei, loop));
+        const auto kanal = [](const QString& name, const QString& muster, int start) {
+            lp::Kanal k;
+            k.name = name;
+            lp::LoopClip clip;
+            clip.muster = muster;
+            clip.startTakt = start;
+            k.clips = {clip};
+            return k;
+        };
+        loop.kanaele = {kanal(QStringLiteral("Bass"), QStringLiteral("B"), 4), kanal(QStringLiteral("Drums"), QStringLiteral("D"), 0),
+                        kanal(QStringLiteral("Piano"), QStringLiteral("P"), 0)};
+        loop.richte();
+        const FrozenOrdner ordner(absender);
+        const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
+        const std::vector<lp::ClipOrt> zuRechnen =
+            lp::setzeFrozenMarken(loop, {lp::ClipOrt{0, 4}, lp::ClipOrt{1, 0}}, kFreezeRate, saiten);
+        CHECK(zuRechnen.size() == 2);
+        bass = lp::clipAbdruck(loop, lp::ClipOrt{0, 4}, kFreezeRate, saiten);
+        drums = lp::clipAbdruck(loop, lp::ClipOrt{1, 0}, kFreezeRate, saiten);
+        REQUIRE(bass.size() == 40);
+        REQUIRE(drums.size() == 40);
+        REQUIRE(bass != drums);
+        REQUIRE(lp::speichereLoop(loop, loopDatei));
+    }
+};
 
 }  // namespace

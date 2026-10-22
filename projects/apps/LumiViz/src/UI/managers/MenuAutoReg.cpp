@@ -64,6 +64,7 @@
 #include "services/events/UIEvents.hpp"
 #include "composer/AppAnbindung.hpp"  // Composer-Naht N8
 #include "UI/dialogs/PaketDialoge.hpp"  // Publish (S125)
+#include "audio/IAudioEngine.hpp"        // die Rate fuer eingefrorene Clips (Stufe 30i)
 
 #include <QApplication>
 #include <QMainWindow>
@@ -229,7 +230,9 @@ void initMenuDefaults(MenuRegistry& registry)
         MenuItemDesc{
             {"menu.file.publishfile", "menu.file", 510},
             "Publish a file...",
-            [](ServiceContainer& /*svc*/) { lumi::ui::zeigePublishDatei(hauptfenster()); },
+            [](ServiceContainer& svc) {
+                lumi::ui::zeigePublishDatei(hauptfenster(), lumi::ui::freezeTonVon(svc.tryResolve<IAudioEngine>()));
+            },
             {}, {}, ""
         },
         false);
@@ -239,7 +242,8 @@ void initMenuDefaults(MenuRegistry& registry)
             {"menu.file.importpackage", "menu.file", 520},
             "Import package...",
             [](ServiceContainer& svc) {
-                lumi::ui::zeigeImportPaket(hauptfenster(), QString(), svc.tryResolve<IEventBus>());
+                lumi::ui::zeigeImportPaket(hauptfenster(), QString(), svc.tryResolve<IEventBus>(),
+                                           lumi::ui::freezeTonVon(svc.tryResolve<IAudioEngine>()).rate);
             },
             {}, {}, ""
         },

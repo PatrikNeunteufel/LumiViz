@@ -6,12 +6,15 @@
  *        Einstellungen in einer Ini-Datei.
  *
  * Bilder zum Ansehen: `LUMIVIZ_PUBLISH_DIALOG_BILD` und
- * `LUMIVIZ_IMPORT_PAKET_BILD=<datei.png>`.
+ * `LUMIVIZ_IMPORT_PAKET_BILD=<datei.png>`; seit Stufe 30i
+ * `LUMIVIZ_PUBLISH_FROZEN_BILD=<datei.png>` (Publish mit eingefrorenen Clips, waehrend
+ * Publish wartet; dazu `_import` fuer den Import-Dialog).
  */
 
 #include "PaketBestand.hpp"
 
 #include "UI/dialogs/PaketDialoge.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/FormFenster.hpp"
 #include "loop/InstrumentCreator.hpp"
@@ -23,6 +26,7 @@
 #include <QComboBox>
 #include <QImage>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
 #include <QToolButton>
@@ -43,13 +47,40 @@ struct DialogApp
     QApplication app{argc, argv};
 };
 
-void bild(QWidget& fenster, const char* variable)
+void bild(QWidget& fenster, const char* variable, const QString& zusatz = {})
 {
     fenster.resize(fenster.sizeHint().expandedTo(fenster.size()));
     const QImage aufnahme = fenster.grab().toImage();
     CHECK_FALSE(aufnahme.isNull());
-    if (const QString ziel = qEnvironmentVariable(variable); !ziel.isEmpty()) CHECK(aufnahme.save(ziel));
+    QString ziel = qEnvironmentVariable(variable);
+    if (ziel.isEmpty()) return;
+    if (!zusatz.isEmpty())
+    {
+        const QFileInfo info(ziel);
+        ziel = info.dir().filePath(info.completeBaseName() + zusatz + QLatin1Char('.') + info.suffix());
+    }
+    CHECK(aufnahme.save(ziel));
 }
+
+/// Ein Ton fuer die Dialoge ohne Engine: die Rate, dekodiert wird nichts (Samples bleiben still).
+lumi::ui::FreezeTon stillerTon()
+{
+    return {kFreezeRate, [](const QString&, int, double) { return std::vector<float>{}; }};
+}
+
+/// Solange er lebt, beantwortet er die Meldungen ueber `fuehreDialogAus` mit Ja und merkt die Namen.
+struct Meldungen
+{
+    QStringList namen;
+    Meldungen()
+    {
+        lumi::ui::setzeDialogBeobachterFuerTests([this](QDialog& d) {
+            namen << d.objectName();
+            return static_cast<int>(QMessageBox::Yes);
+        });
+    }
+    ~Meldungen() { lumi::ui::setzeDialogBeobachterFuerTests({}); }
+};
 
 QStringList kinder(const QTreeWidgetItem* item, int spalte = 0)
 {
@@ -241,5 +272,131 @@ TEST_SUITE("Publish")
         auto* knopf = keins.findChild<QPushButton*>(QStringLiteral("importPackageGo"));
         REQUIRE(knopf != nullptr);
         CHECK_FALSE(knopf->isEnabled());
+    }
+
+    TEST_CASE("Publish Dialog 30i: Frozen clips im Baum, Haken, Summe; fehlende rechnen ab dem Oeffnen, Publish wartet (FP2 a)")
+    {
+        const DialogApp app;
+        const FreezeEinstellungen freezeEinstellungen;
+        const FrozenBestand b;
+        const FrozenOrdner ordner(b.absender);
+        REQUIRE(lp::legeFrozen(b.bass, welle(0.25f), kFreezeRate));  // Drums fehlt noch
+        QSettings einstellungen(QDir(b.tmp.path()).filePath(QStringLiteral("einstellungen.ini")), QSettings::IniFormat);
+        const pb::Fund fund = pb::sammle(b.loopDatei);
+        REQUIRE(fund.ok);
+
+        // ohne Ton (wie bisher): keine Gruppe, kein Haken
+        {
+            PublishDialog ohne(fund, nullptr, &einstellungen);
+            CHECK(ohne.frozenGruppe() == nullptr);
+            CHECK(ohne.frozenHaken() == nullptr);
+            CHECK_FALSE(ohne.rechnet());
+            CHECK(ohne.summe().startsWith(QStringLiteral("8 files, ")));
+        }
+
+        PublishDialog dialog(fund, nullptr, &einstellungen, stillerTon());
+        const QTreeWidgetItem* gruppe = dialog.frozenGruppe();
+        REQUIRE(gruppe != nullptr);
+        CHECK(gruppe->text(0) == QStringLiteral("Frozen clips (2)"));
+        CHECK(gruppe->parent() == dialog.inhaltsBaum()->topLevelItem(0));
+        CHECK(kinder(gruppe) == QStringList{QStringLiteral("Bass · bar 5"), QStringLiteral("Drums · bar 1")});
+        CHECK(gruppe->child(0)->text(1).startsWith(QStringLiteral("ready · ")));
+        CHECK(gruppe->child(1)->text(1).startsWith(QStringLiteral("computing")));  // ab dem Oeffnen
+        CHECK(dialog.rechnet());
+
+        QCheckBox* haken = dialog.frozenHaken();
+        REQUIRE(haken != nullptr);
+        CHECK(haken->text() == QStringLiteral("Include frozen clips"));
+        CHECK(haken->isChecked());  // Vorgabe an
+        CHECK(dialog.summe().startsWith(QStringLiteral("10 files, ")));
+        haken->setChecked(false);
+        CHECK(dialog.summe().startsWith(QStringLiteral("8 files, ")));
+        CHECK_FALSE(einstellungen.value(QStringLiteral("data/publishFrozen")).toBool());
+        haken->setChecked(true);
+        CHECK(einstellungen.value(QStringLiteral("data/publishFrozen")).toBool());
+
+        // Publish, solange gerechnet wird: es wartet, der Fuss zeigt den Stand
+        const QString ausgabe = QDir(b.tmp.path()).filePath(QStringLiteral("ausgabe"));
+        REQUIRE(QDir().mkpath(ausgabe));
+        dialog.setzeZielOrdner(ausgabe);
+        Meldungen meldungen;
+        auto* publish = dialog.findChild<QPushButton*>(QStringLiteral("publishGo"));
+        REQUIRE(publish != nullptr);
+        publish->click();
+        CHECK(dialog.wartet());
+        CHECK_FALSE(publish->isEnabled());
+        CHECK(dialog.summe().startsWith(QStringLiteral("Freezing clip 1 of 1")));
+        CHECK(meldungen.namen.isEmpty());
+        bild(dialog, "LUMIVIZ_PUBLISH_FROZEN_BILD");
+
+        // fertig gerechnet: Publish laeuft von selbst weiter
+        dialog.warteAufFreeze();
+        CHECK_FALSE(dialog.rechnet());
+        CHECK_FALSE(dialog.wartet());
+        CHECK(gruppe->child(1)->text(1).startsWith(QStringLiteral("ready · ")));
+        CHECK(meldungen.namen == QStringList{QStringLiteral("publishDone")});
+        CHECK(dialog.result() == QDialog::Accepted);
+        const pb::PaketInhalt inhalt = pb::oeffnePaket(dialog.paketDatei());
+        REQUIRE_MESSAGE(inhalt.ok, inhalt.fehler.toStdString());
+        CHECK(inhalt.frozen == 2);
+        CHECK(QFileInfo::exists(lp::frozenDatei(b.drums)));  // Gerechnetes bleibt im Ordner frozen
+
+        // ein zweites Oeffnen: alles liegt vor, nichts rechnet; ohne Haken geht keine Wellenform mit
+        PublishDialog zweiter(fund, nullptr, &einstellungen, stillerTon());
+        CHECK_FALSE(zweiter.rechnet());
+        REQUIRE(zweiter.frozenHaken() != nullptr);
+        zweiter.frozenHaken()->setChecked(false);
+        zweiter.setzeZielOrdner(ausgabe);
+        zweiter.setzeName(QStringLiteral("ohne_frozen"));
+        const pb::PackErgebnis ohneFrozen = zweiter.fuehreAus();
+        REQUIRE(ohneFrozen.ok);
+        CHECK(ohneFrozen.frozen == 0);
+    }
+
+    TEST_CASE("Import package Dialog 30i: Frozen clips in Contents, Hinweis, Meldung nach dem Import (FP3 a)")
+    {
+        const DialogApp app;
+        const FreezeEinstellungen freezeEinstellungen;
+        const FrozenBestand b;
+        QString paket;
+        {
+            const FrozenOrdner ordner(b.absender);
+            REQUIRE(lp::legeFrozen(b.bass, welle(0.25f), kFreezeRate));
+            REQUIRE(lp::legeFrozen(b.drums, welle(-0.5f), kFreezeRate));
+            paket = packeMit(b, {b.bass, b.drums}, QStringLiteral("titan.lvloop.lvdata"));
+        }
+        const Empfaenger e(b.tmp.path());
+        const FrozenOrdner ordner(b.empfaenger);
+        QSettings einstellungen(QDir(b.tmp.path()).filePath(QStringLiteral("einstellungen.ini")), QSettings::IniFormat);
+
+        ImportPaketDialog dialog(paket, nullptr, &einstellungen, kFreezeRate);
+        REQUIRE(dialog.inhalt().ok);
+        const QLabel* info = dialog.findChild<QLabel*>(QStringLiteral("importPackageInfo"));
+        REQUIRE(info != nullptr);
+        CHECK(info->text().contains(QStringLiteral("· 10 files")));
+        QTreeWidget* inhalt = dialog.inhaltsListe();
+        const QTreeWidgetItem* letzte = inhalt->topLevelItem(inhalt->topLevelItemCount() - 1);
+        CHECK(letzte->text(0) == QStringLiteral("Frozen clips (2)"));
+        CHECK(letzte->text(1).startsWith(QStringLiteral("→ frozen clips, ")));
+        CHECK(dialog.hinweise().contains(QStringLiteral("Frozen clips: the receiver checks them on import")));
+        bild(dialog, "LUMIVIZ_PUBLISH_FROZEN_BILD", QStringLiteral("_import"));
+
+        dialog.setzeZiel(QDir(e.loops).filePath(QStringLiteral("titan.lvloop")));
+        const pb::PaketErgebnis ergebnis = dialog.fuehreAus();
+        REQUIRE_MESSAGE(ergebnis.ok, ergebnis.fehler.toStdString());
+        CHECK(ergebnis.frozenGelegt == 2);
+        CHECK(ImportPaketDialog::frozenMeldung(ergebnis) == QStringLiteral("Frozen clips: 2 of 2 ready to play"));
+
+        pb::PaketErgebnis teils;
+        teils.frozenClips = 3;
+        teils.frozenBereit = 2;
+        CHECK(ImportPaketDialog::frozenMeldung(teils) ==
+              QStringLiteral("Frozen clips: 2 of 3 ready to play — 1 will be computed here"));
+        CHECK(ImportPaketDialog::frozenMeldung(pb::PaketErgebnis{}).isEmpty());
+
+        // ohne Rate (wie bisher): nichts wird abgelegt
+        ImportPaketDialog ohne(paket, nullptr, &einstellungen);
+        ohne.setzeZiel(QDir(e.loops).filePath(QStringLiteral("titan_ohne.lvloop")));
+        CHECK(ohne.fuehreAus().frozenClips == 0);
     }
 }

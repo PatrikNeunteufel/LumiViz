@@ -361,7 +361,8 @@ void LoopPanel::setupUI()
     // Publish (Publish_Konzept.md P2 a): die gespeicherte Datei; ungespeichert bietet es Speichern an
     connect(m_publish, &QPushButton::clicked, this, [this] {
         lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Loop, m_datei, m_datei.isEmpty() || ungespeichert(),
-                                            [this] { return speichereMitDialog(m_datei.isEmpty()) ? m_datei : QString(); });
+                                            [this] { return speichereMitDialog(m_datei.isEmpty()) ? m_datei : QString(); },
+                                            lumi::ui::freezeTonVon(services().tryResolve<IAudioEngine>()));
     });
     connect(m_play, &QPushButton::clicked, this, [this] {
         if (m_spieler.spielt() && !hoertVor())

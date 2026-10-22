@@ -10,8 +10,12 @@
 
 #include "AppInfo.hpp"
 #include "UI/dialogs/DatensicherungDialoge.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
+#include "audio/IAudioEngine.hpp"
 #include "loop/DrumKit.hpp"
+#include "loop/Freeze.hpp"
+#include "loop/FreezeAuftrag.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/SignalWeg.hpp"
@@ -37,6 +41,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
 #include <QVBoxLayout>
@@ -54,6 +59,7 @@ namespace
 const char* const kLetzterPublishOrdner = "data/lastPublishDir";  // ein Pfad: geht nie in einen Export
 const char* const kLetzterImportOrdner = "data/lastPackageDir";
 const char* const kLetzterQuellOrdner = "data/lastPublishSourceDir";
+const char* const kFrozenMitnehmen = "data/publishFrozen";  // der Haken Include frozen clips (FP2 a)
 
 QString startOrdner(QSettings& einstellungen, const char* schluessel)
 {
@@ -170,16 +176,46 @@ QString paketArtWort(pk::Art art)
     return {};
 }
 
+FreezeTon freezeTonVon(IAudioEngine* engine)
+{
+    FreezeTon ton;
+    ton.rate = engine != nullptr && engine->getSampleRate() > 0 ? engine->getSampleRate() : 44100;
+    // dekodiert wird ueber die Engine (TV3 a); ohne Engine bleiben Samples still
+    ton.dekodierer = [engine](const QString& datei, int rate, double maxSekunden) {
+        return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};
+    };
+    return ton;
+}
+
 // =============================================================================
 // Publish <art>
 // =============================================================================
 
-PublishDialog::PublishDialog(pk::Fund fund, QWidget* parent, QSettings* einstellungen)
-    : QDialog(parent), m_fund(std::move(fund)), m_einstellungen(einstellungen)
+PublishDialog::PublishDialog(pk::Fund fund, QWidget* parent, QSettings* einstellungen, FreezeTon ton)
+    : QDialog(parent), m_fund(std::move(fund)), m_einstellungen(einstellungen), m_ton(std::move(ton))
 {
     setObjectName(QStringLiteral("publishDialog"));
     setWindowTitle(tr("Publish %1").arg(paketArtWort(m_fund.art)));
     auto* aussen = new QVBoxLayout(this);
+
+    // eingefrorene Clips eines Loops (Stufe 30i, FP1 a): der gespeicherte Stand, der jetzige Abdruck
+    if (m_fund.art == pk::Art::Loop && m_ton.rate > 0)
+    {
+        lp::Loop loop;
+        if (lp::ladeLoop(m_fund.hauptdatei, loop))
+        {
+            loop.richte();
+            const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
+            m_teile = pk::frozenTeile(loop, m_ton.rate, saiten);
+            for (const pk::FrozenTeil& teil : m_teile)
+            {
+                const std::optional<double> ms =
+                    teil.datei.isEmpty() ? lp::clipRechenzeitMs(loop, teil.ort, m_ton.rate, saiten) : std::nullopt;
+                m_rechenzeit.push_back(ms ? QStringLiteral("%1 s").arg(*ms / 1000.0, 0, 'f', 1) : QString());
+            }
+            if (!m_teile.empty()) m_loop = std::move(loop);
+        }
+    }
 
     auto* nameZeile = new QHBoxLayout;
     nameZeile->addWidget(new QLabel(tr("Package"), this));
@@ -212,6 +248,27 @@ PublishDialog::PublishDialog(pk::Fund fund, QWidget* parent, QSettings* einstell
 
     QSettings appEinstellungen;
     QSettings& e = m_einstellungen != nullptr ? *m_einstellungen : appEinstellungen;
+    if (!m_teile.empty())
+    {
+        auto* frozenZeile = new QHBoxLayout;
+        m_frozenHaken = new QCheckBox(tr("Include frozen clips"), this);
+        m_frozenHaken->setObjectName(QStringLiteral("publishFrozen"));
+        m_frozenHaken->setChecked(e.value(QLatin1String(kFrozenMitnehmen), true).toBool());
+        m_frozenHaken->setToolTip(tr("The waveforms of the frozen clips go along: the receiver plays them at once "
+                                     "instead of computing them. They make the package larger."));
+        frozenZeile->addWidget(m_frozenHaken);
+        auto* wozu = new QLabel(tr("— the receiver plays them at once"), this);
+        wozu->setEnabled(false);
+        frozenZeile->addWidget(wozu);
+        frozenZeile->addStretch(1);
+        aussen->addLayout(frozenZeile);
+        connect(m_frozenHaken, &QCheckBox::toggled, this, [this](bool an) {
+            QSettings appEinstellungen;
+            QSettings& e = m_einstellungen != nullptr ? *m_einstellungen : appEinstellungen;
+            e.setValue(QLatin1String(kFrozenMitnehmen), an);
+            aktualisiereSumme();
+        });
+    }
     auto* zielZeile = new QHBoxLayout;
     zielZeile->addWidget(new QLabel(tr("Save to"), this));
     m_ziel = new QLineEdit(QDir::toNativeSeparators(startOrdner(e, kLetzterPublishOrdner)), this);
@@ -229,11 +286,6 @@ PublishDialog::PublishDialog(pk::Fund fund, QWidget* parent, QSettings* einstell
     auto* fuss = new QHBoxLayout;
     m_summe = new QLabel(this);
     m_summe->setObjectName(QStringLiteral("publishSum"));
-    qint64 groesse = QFileInfo(m_fund.hauptdatei).size();
-    for (const pk::Zugehoerige& z : m_fund.zugehoerige) groesse += QFileInfo(z.datei).size();
-    m_summe->setText(QStringLiteral("%1, %2")
-                         .arg(zahlWort(1 + static_cast<int>(m_fund.zugehoerige.size()), tr("file"), tr("files")),
-                              groesseAlsText(groesse)));
     fuss->addWidget(m_summe, 1);
     m_publish = new QPushButton(tr("Publish"), this);
     m_publish->setObjectName(QStringLiteral("publishGo"));
@@ -244,7 +296,113 @@ PublishDialog::PublishDialog(pk::Fund fund, QWidget* parent, QSettings* einstell
     fuss->addWidget(m_publish);
     fuss->addWidget(abbrechen);
     aussen->addLayout(fuss);
+    aktualisiereSumme();
     resize(600, 580);
+
+    // fehlende Wellenformen rechnen ab dem Oeffnen (FP2 a); Cancel bricht ab (der Auftrag
+    // wartet im Destruktor), Gerechnetes bleibt im Ordner `frozen`
+    if (m_loop)
+    {
+        for (const pk::FrozenTeil& teil : m_teile)
+            if (teil.datei.isEmpty()) m_freezeOrte.push_back(teil.ort);
+        if (!m_freezeOrte.empty())
+        {
+            m_freeze = std::make_unique<lp::FreezeAuftrag>(*m_loop, m_freezeOrte, m_ton.rate, m_ton.dekodierer);
+            m_uhr = new QTimer(this);
+            m_uhr->setInterval(100);
+            connect(m_uhr, &QTimer::timeout, this, &PublishDialog::pruefeFreeze);
+            m_uhr->start();
+        }
+        fuelleFrozenZeilen();
+    }
+}
+
+PublishDialog::~PublishDialog() = default;
+
+bool PublishDialog::frozenMitnehmen() const
+{
+    return m_frozenHaken != nullptr && m_frozenHaken->isChecked();
+}
+
+void PublishDialog::fuelleFrozenZeilen()
+{
+    if (m_frozenGruppe == nullptr) return;
+    const lp::FreezeStand stand = m_freeze != nullptr ? m_freeze->stand() : lp::FreezeStand{};
+    for (std::size_t i = 0; i < m_teile.size() && static_cast<int>(i) < m_frozenGruppe->childCount(); ++i)
+    {
+        const pk::FrozenTeil& teil = m_teile[i];
+        QTreeWidgetItem* zeile = m_frozenGruppe->child(static_cast<int>(i));
+        QString text;
+        if (!teil.datei.isEmpty())
+            text = tr("ready · %1").arg(groesseAlsText(teil.groesse));
+        else if (m_freeze != nullptr)
+        {
+            const auto platz = std::find(m_freezeOrte.begin(), m_freezeOrte.end(), teil.ort);
+            const int nr = static_cast<int>(platz - m_freezeOrte.begin());
+            if (nr == stand.clip)
+                text = tr("computing… %1 %").arg(static_cast<int>(stand.anteil * 100.0));
+            else
+                text = m_rechenzeit[i].isEmpty() ? tr("to compute") : tr("to compute · %1").arg(m_rechenzeit[i]);
+        }
+        else
+            text = tr("could not compute — the receiver computes it");
+        zeile->setText(1, text);
+        zeile->setForeground(1, teil.datei.isEmpty() && m_freeze == nullptr ? hinweisFarbe(this) : grau(this));
+    }
+}
+
+void PublishDialog::aktualisiereSumme()
+{
+    if (m_wartet && m_freeze != nullptr)
+    {
+        // Publish wartet: im Fuss statt der Summe der Stand (FP2 a)
+        const lp::FreezeStand stand = m_freeze->stand();
+        m_summe->setText(tr("Freezing clip %1 of %2 … %3 %")
+                             .arg(std::min(stand.clip + 1, std::max(stand.clips, 1)))
+                             .arg(std::max(stand.clips, 1))
+                             .arg(static_cast<int>(stand.anteil * 100.0)));
+        return;
+    }
+    int zahl = 1 + static_cast<int>(m_fund.zugehoerige.size());
+    qint64 groesse = QFileInfo(m_fund.hauptdatei).size();
+    for (const pk::Zugehoerige& z : m_fund.zugehoerige) groesse += QFileInfo(z.datei).size();
+    if (frozenMitnehmen())
+        for (const pk::FrozenTeil& teil : m_teile)
+        {
+            ++zahl;
+            groesse += teil.groesse;
+        }
+    m_summe->setText(QStringLiteral("%1, %2").arg(zahlWort(zahl, tr("file"), tr("files")), groesseAlsText(groesse)));
+}
+
+void PublishDialog::pruefeFreeze()
+{
+    if (m_freeze == nullptr) return;
+    if (!m_freeze->beendet())
+    {
+        fuelleFrozenZeilen();
+        aktualisiereSumme();
+        return;
+    }
+    m_freeze.reset();
+    if (m_uhr != nullptr) m_uhr->stop();
+    // jetzt liegen die Dateien: neu nachsehen (was misslang, rechnet der Empfaenger)
+    m_teile = pk::frozenTeile(*m_loop, m_ton.rate, lp::saitenAusInstrumenten());
+    fuelleFrozenZeilen();
+    aktualisiereSumme();
+    if (m_wartet)
+    {
+        m_wartet = false;
+        m_publish->setEnabled(true);
+        veroeffentliche();
+    }
+}
+
+void PublishDialog::warteAufFreeze()
+{
+    if (m_freeze == nullptr) return;
+    m_freeze->warte();
+    pruefeFreeze();
 }
 
 void PublishDialog::baueBaum()
@@ -278,6 +436,18 @@ void PublishDialog::baueBaum()
             zeile->setToolTip(0, tr("Named by: %1").arg(z->genanntVon.join(QStringLiteral(", "))));
         }
         gruppe->setExpanded(true);
+    }
+    // eingefrorene Clips (FP2 a): je Clip eine Zeile, den Stand fuellt `fuelleFrozenZeilen`
+    if (!m_teile.empty())
+    {
+        m_frozenGruppe = new QTreeWidgetItem(haupt, {tr("Frozen clips (%1)").arg(m_teile.size())});
+        m_frozenGruppe->setToolTip(0, tr("Waveforms of the frozen clips — the receiver plays them at once"));
+        for (const pk::FrozenTeil& teil : m_teile)
+        {
+            auto* zeile = new QTreeWidgetItem(m_frozenGruppe, {teil.etikett});
+            zeile->setIcon(0, dateiIconFuerEndung(QStringLiteral("wav")));
+        }
+        m_frozenGruppe->setExpanded(true);
     }
     haupt->setExpanded(true);
 
@@ -339,7 +509,11 @@ QString PublishDialog::summe() const
 
 pk::PackErgebnis PublishDialog::fuehreAus()
 {
-    const pk::PackErgebnis ergebnis = pk::packe(m_fund, paketDatei(), lumi::appVersion());
+    std::vector<QByteArray> abdruecke;
+    if (frozenMitnehmen())
+        for (const pk::FrozenTeil& teil : m_teile)
+            if (!teil.datei.isEmpty()) abdruecke.push_back(teil.abdruck);
+    const pk::PackErgebnis ergebnis = pk::packe(m_fund, paketDatei(), lumi::appVersion(), abdruecke);
     if (ergebnis.ok)
     {
         QSettings appEinstellungen;
@@ -351,20 +525,39 @@ pk::PackErgebnis PublishDialog::fuehreAus()
 
 void PublishDialog::veroeffentliche()
 {
-    const QString datei = paketDatei();
-    if (QFileInfo::exists(datei) &&
-        QMessageBox::question(this, windowTitle(), tr("%1 exists. Replace it?").arg(QDir::toNativeSeparators(datei))) !=
-            QMessageBox::Yes)
+    // rechnet noch eine Wellenform, die mitgehen soll, wartet Publish darauf (FP2 a)
+    if (frozenMitnehmen() && m_freeze != nullptr)
+    {
+        m_wartet = true;
+        m_publish->setEnabled(false);
+        aktualisiereSumme();
         return;
+    }
+    // die Meldungen ueber `fuehreDialogAus`: ein Test kann sie beantworten
+    const QString datei = paketDatei();
+    if (QFileInfo::exists(datei))
+    {
+        QMessageBox frage(QMessageBox::Question, windowTitle(),
+                          tr("%1 exists. Replace it?").arg(QDir::toNativeSeparators(datei)),
+                          QMessageBox::Yes | QMessageBox::No, this);
+        frage.setObjectName(QStringLiteral("publishReplaceQuestion"));
+        if (fuehreDialogAus(frage) != QMessageBox::Yes) return;
+    }
     const pk::PackErgebnis ergebnis = fuehreAus();
     if (!ergebnis.ok)
     {
-        QMessageBox::warning(this, windowTitle(), tr("Could not publish.\n%1").arg(ergebnis.fehler));
+        QMessageBox warnung(QMessageBox::Warning, windowTitle(), tr("Could not publish.\n%1").arg(ergebnis.fehler),
+                            QMessageBox::Ok, this);
+        warnung.setObjectName(QStringLiteral("publishFailed"));
+        (void)fuehreDialogAus(warnung);
         return;
     }
-    QMessageBox::information(this, windowTitle(),
-                             tr("Published %1 — %2.").arg(QDir::toNativeSeparators(datei),
-                                                          zahlWort(ergebnis.dateien, tr("file"), tr("files"))));
+    QMessageBox fertig(QMessageBox::Information, windowTitle(),
+                       tr("Published %1 — %2.").arg(QDir::toNativeSeparators(datei),
+                                                    zahlWort(ergebnis.dateien, tr("file"), tr("files"))),
+                       QMessageBox::Ok, this);
+    fertig.setObjectName(QStringLiteral("publishDone"));
+    (void)fuehreDialogAus(fertig);
     accept();
 }
 
@@ -372,8 +565,8 @@ void PublishDialog::veroeffentliche()
 // Import package
 // =============================================================================
 
-ImportPaketDialog::ImportPaketDialog(const QString& datei, QWidget* parent, QSettings* einstellungen)
-    : QDialog(parent), m_datei(datei), m_einstellungen(einstellungen), m_inhalt(pk::oeffnePaket(datei))
+ImportPaketDialog::ImportPaketDialog(const QString& datei, QWidget* parent, QSettings* einstellungen, int rate)
+    : QDialog(parent), m_datei(datei), m_einstellungen(einstellungen), m_rate(rate), m_inhalt(pk::oeffnePaket(datei))
 {
     setObjectName(QStringLiteral("importPackageDialog"));
     setWindowTitle(tr("Import package"));
@@ -412,6 +605,14 @@ ImportPaketDialog::ImportPaketDialog(const QString& datei, QWidget* parent, QSet
             zeile->setIcon(0, dateiIconFuerEndung(endungDer(d.art, d.pfad)));
             zeile->setForeground(1, grau(this));
         }
+        if (m_inhalt.frozen > 0)
+        {
+            // die Wellenformen eingefrorener Clips (FP3 a): der Import prueft sie
+            auto* zeile = new QTreeWidgetItem(m_inhaltListe, {tr("Frozen clips (%1)").arg(m_inhalt.frozen),
+                                                              tr("→ frozen clips, %1").arg(groesseAlsText(m_inhalt.frozenGroesse))});
+            zeile->setIcon(0, dateiIconFuerEndung(QStringLiteral("wav")));
+            zeile->setForeground(1, grau(this));
+        }
         aussen->addWidget(m_inhaltListe);
 
         // --- Same names
@@ -448,6 +649,7 @@ ImportPaketDialog::ImportPaketDialog(const QString& datei, QWidget* parent, QSet
             m_hinweise << tr("Not in this LumiViz: %1 — the package needs a newer LumiViz for them")
                               .arg(fehltHier.join(QStringLiteral(", ")));
         const int warnungen = static_cast<int>(m_hinweise.size());
+        if (m_inhalt.frozen > 0) m_hinweise << tr("Frozen clips: the receiver checks them on import");
         if (!m_inhalt.mitgeliefert.empty() && fehltHier.isEmpty())
         {
             QStringList namen;
@@ -538,7 +740,8 @@ void ImportPaketDialog::baueKopf(QVBoxLayout* aussen, const QString& datei)
     {
         qint64 groesse = 0;
         for (const pk::PaketDatei& d : m_inhalt.dateien) groesse += d.groesse;
-        int zahl = static_cast<int>(m_inhalt.dateien.size());
+        int zahl = static_cast<int>(m_inhalt.dateien.size()) + m_inhalt.frozen;
+        groesse += m_inhalt.frozenGroesse;
         if (m_inhalt.brauchtZiel())
         {
             groesse += pk::paketDaten(datei, m_inhalt.hauptPfad).size();
@@ -725,6 +928,7 @@ pk::PaketErgebnis ImportPaketDialog::fuehreAus()
     pk::PaketWahl wahl;
     for (const auto& [pfad, box] : m_wahl) wahl.jeDatei[pfad] = static_cast<ds::Wahl>(box->currentData().toInt());
     wahl.ziel = ziel();
+    wahl.rate = m_rate;
     const pk::PaketErgebnis ergebnis = pk::importierePaket(m_datei, wahl);
     if (ergebnis.ok && m_inhalt.brauchtZiel())
     {
@@ -733,6 +937,14 @@ pk::PaketErgebnis ImportPaketDialog::fuehreAus()
         e.setValue(QLatin1String(kLetzterImportOrdner), QFileInfo(wahl.ziel).absolutePath());
     }
     return ergebnis;
+}
+
+QString ImportPaketDialog::frozenMeldung(const pk::PaketErgebnis& ergebnis)
+{
+    if (ergebnis.frozenClips <= 0) return {};
+    const QString bereit = tr("Frozen clips: %1 of %2 ready to play").arg(ergebnis.frozenBereit).arg(ergebnis.frozenClips);
+    const int rechnen = ergebnis.frozenClips - ergebnis.frozenBereit;
+    return rechnen > 0 ? bereit + tr(" — %1 will be computed here").arg(rechnen) : bereit;
 }
 
 void ImportPaketDialog::importiere()
@@ -754,14 +966,16 @@ void ImportPaketDialog::importiere()
     if (ergebnis.ersetzt > 0) teile << tr("%1 replaced").arg(ergebnis.ersetzt);
     if (ergebnis.eigeneGenommen > 0) teile << tr("%1 of yours used").arg(ergebnis.eigeneGenommen);
     if (ergebnis.gleich > 0) teile << tr("%1 already here").arg(ergebnis.gleich);
-    QMessageBox::information(this, windowTitle(), tr("Imported %1: %2.").arg(m_inhalt.titel, teile.join(QStringLiteral(", "))));
+    QString meldung = tr("Imported %1: %2.").arg(m_inhalt.titel, teile.join(QStringLiteral(", ")));
+    if (const QString frozen = frozenMeldung(ergebnis); !frozen.isEmpty()) meldung += QLatin1Char('\n') + frozen;
+    QMessageBox::information(this, windowTitle(), meldung);
     if (oeffnen() && !ergebnis.hauptDatei.isEmpty()) emit oeffnenVerlangt(static_cast<int>(m_inhalt.art), ergebnis.hauptDatei);
     accept();
 }
 
 // =============================================================================
 
-void zeigePublish(QWidget* parent, const QString& datei)
+void zeigePublish(QWidget* parent, const QString& datei, const FreezeTon& ton)
 {
     pk::Fund fund = pk::sammle(datei);
     if (!fund.ok)
@@ -770,11 +984,11 @@ void zeigePublish(QWidget* parent, const QString& datei)
                              QObject::tr("%1 cannot be published.\n%2").arg(QDir::toNativeSeparators(datei), fund.fehler));
         return;
     }
-    PublishDialog dialog(std::move(fund), parent);
+    PublishDialog dialog(std::move(fund), parent, nullptr, ton);
     dialog.exec();
 }
 
-void zeigePublishDatei(QWidget* parent)
+void zeigePublishDatei(QWidget* parent, const FreezeTon& ton)
 {
     QSettings einstellungen;
     QStringList samples;
@@ -785,11 +999,11 @@ void zeigePublishDatei(QWidget* parent)
             .arg(samples.join(QLatin1Char(' '))));
     if (datei.isEmpty()) return;
     einstellungen.setValue(QLatin1String(kLetzterQuellOrdner), QFileInfo(datei).absolutePath());
-    zeigePublish(parent, datei);
+    zeigePublish(parent, datei, ton);
 }
 
 void veroeffentlicheAusFenster(QWidget* parent, pk::Art art, const QString& datei, bool ungespeichert,
-                               const std::function<QString()>& speichere)
+                               const std::function<QString()>& speichere, const FreezeTon& ton)
 {
     const QString titel = QObject::tr("Publish %1").arg(paketArtWort(art));
     QString pfad = datei;
@@ -828,10 +1042,10 @@ void veroeffentlicheAusFenster(QWidget* parent, pk::Art art, const QString& date
             return;
         }
     }
-    zeigePublish(parent, pfad);
+    zeigePublish(parent, pfad, ton);
 }
 
-void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, IEventBus* bus)
+void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, IEventBus* bus, int rate)
 {
     QString datei = gewaehlt;
     if (datei.isEmpty())
@@ -858,7 +1072,7 @@ void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, IEventBus* bus)
         if (dialog.exec() == QDialog::Accepted && bus != nullptr) bus->publish(UserDataImportedEvent{});
         return;
     }
-    ImportPaketDialog dialog(datei, parent);
+    ImportPaketDialog dialog(datei, parent, nullptr, rate);
     if (bus != nullptr)
     {
         QObject::connect(&dialog, &ImportPaketDialog::anspielenVerlangt, &dialog, [bus](int art, const QString& pfad) {

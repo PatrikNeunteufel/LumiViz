@@ -11,6 +11,7 @@
 
 #include "UI/panels/SettingsPanel.hpp"
 #include "UI/dialogs/DatensicherungDialoge.hpp"
+#include "UI/dialogs/PaketDialoge.hpp"  // freezeTonVon (Stufe 30i)
 #include "UI/managers/ShortcutManager.hpp"
 #include "scripting/ScriptFormatter.hpp"  // FormatOptions-Defaults (Editor-Tab, S69)
 #include "core/GpuInfo.hpp"
@@ -1588,7 +1589,10 @@ void SettingsPanel::setupConnections()
     });
     connect(m_pExportDataButton, &QPushButton::clicked, this, [this] { lumi::ui::zeigeDatenExport(this); });
     connect(m_pImportDataButton, &QPushButton::clicked, this,
-            [this] { lumi::ui::zeigeDatenImport(this, services().tryResolve<IEventBus>()); });
+            [this] {
+                lumi::ui::zeigeDatenImport(this, services().tryResolve<IEventBus>(),
+                                           lumi::ui::freezeTonVon(services().tryResolve<IAudioEngine>()).rate);
+            });
     if (m_pBundledFromProjectCheckBox != nullptr)
         connect(m_pBundledFromProjectCheckBox, &QCheckBox::toggled, this,
                 [](bool checked) { lumi::core::mitgeliefert::setzeProjektZuerst(checked); });

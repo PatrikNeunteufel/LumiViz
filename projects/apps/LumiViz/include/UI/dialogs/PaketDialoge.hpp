@@ -15,6 +15,11 @@
  *    Replace mine / Use mine, dazu All:), Notes, Save to (nur fuer einen
  *    Loop), der Haken Open after import.
  *
+ * Seit Stufe 30i (FP2 a, FP3 a) die Wellenformen eingefrorener Clips: im Publish-Dialog
+ * die Gruppe *Frozen clips* mit einer Zeile je Clip und der Haken *Include frozen clips*;
+ * fehlende rechnen ab dem Oeffnen, **Publish** wartet darauf. Im Import-Dialog eine Zeile
+ * in Contents, ein Hinweis und die Zahl in der Meldung.
+ *
  * Die Regeln stehen in `paket/`; hier ist nur die Oberflaeche. Jeder Dialog
  * laesst sich ohne gezeigtes Fenster bedienen (`fuehreAus`).
  ****************************************************************************************
@@ -22,6 +27,8 @@
 
 #pragma once
 
+#include "loop/Loop.hpp"
+#include "loop/Tonauftrag.hpp"
 #include "paket/Import.hpp"
 #include "paket/Packen.hpp"
 #include "paket/Sammler.hpp"
@@ -32,6 +39,8 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
+#include <vector>
 
 class QCheckBox;
 class QComboBox;
@@ -39,10 +48,17 @@ class QLabel;
 class QLineEdit;
 class QPushButton;
 class QSettings;
+class QTimer;
 class QTreeWidget;
 class QTreeWidgetItem;
 class QVBoxLayout;
+class IAudioEngine;
 class IEventBus;
+
+namespace lumi::loop
+{
+class FreezeAuftrag;
+}
 
 namespace lumi::ui
 {
@@ -50,13 +66,27 @@ namespace lumi::ui
 /// „loop", „instrument", „kit", „shape", „sample" — wie die Art in Titeln steht.
 [[nodiscard]] QString paketArtWort(lumi::paket::Art art);
 
+/// Was Publish und Import fuer eingefrorene Clips brauchen (Stufe 30i): die Ausgaberate,
+/// mit der Abdruecke gerechnet werden, und fuer Publish den Weg zum Dekodieren, wenn eine
+/// Wellenform erst zu rechnen ist (FP1 a). `rate` 0 = ohne Wellenformen.
+struct FreezeTon
+{
+    int rate = 0;
+    lumi::loop::Dekodierer dekodierer;
+};
+/// Wie das Loop-Panel: die Rate der Engine (ohne eine: 44100), dekodiert ueber sie.
+[[nodiscard]] FreezeTon freezeTonVon(IAudioEngine* engine);
+
 class PublishDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    /// `fund` muss `ok` sein. `einstellungen` = nullptr: die der App.
-    explicit PublishDialog(lumi::paket::Fund fund, QWidget* parent = nullptr, QSettings* einstellungen = nullptr);
+    /// `fund` muss `ok` sein. `einstellungen` = nullptr: die der App. Mit `ton.rate` zeigt
+    /// ein Loop seine eingefrorenen Clips und rechnet fehlende Wellenformen (FP1 a, FP2 a).
+    explicit PublishDialog(lumi::paket::Fund fund, QWidget* parent = nullptr, QSettings* einstellungen = nullptr,
+                           FreezeTon ton = {});
+    ~PublishDialog() override;
 
     [[nodiscard]] const lumi::paket::Fund& fund() const { return m_fund; }
     [[nodiscard]] QTreeWidget* inhaltsBaum() const { return m_baum; }
@@ -68,22 +98,51 @@ public:
     /// Die Zeile unten links („8 files, 1.2 KB").
     [[nodiscard]] QString summe() const;
 
-    /// Packen, ohne Rueckfrage und ohne Meldung. Der Knopf **Publish** fragt
-    /// vorher, ob eine vorhandene Datei ersetzt werden soll, und meldet danach.
+    /// Die Gruppe *Frozen clips* im Baum; nullptr = der Loop hat keine eingefrorenen Clips.
+    [[nodiscard]] QTreeWidgetItem* frozenGruppe() const { return m_frozenGruppe; }
+    /// Der Haken *Include frozen clips*; nullptr = keine eingefrorenen Clips.
+    [[nodiscard]] QCheckBox* frozenHaken() const { return m_frozenHaken; }
+    [[nodiscard]] const std::vector<lumi::paket::FrozenTeil>& frozenTeile() const { return m_teile; }
+    /// Rechnet noch eine Wellenform (bis die Uhr das Ende sieht)?
+    [[nodiscard]] bool rechnet() const { return m_freeze != nullptr; }
+    /// Hat **Publish** auf das Rechnen zu warten begonnen?
+    [[nodiscard]] bool wartet() const { return m_wartet; }
+    /// Fuer Tests: bis das Rechnen fertig ist, dann wie die Uhr (Zeilen, Summe, ein wartendes Publish).
+    void warteAufFreeze();
+
+    /// Packen, ohne Rueckfrage und ohne Meldung, mit den Wellenformen, die vorliegen.
+    /// Der Knopf **Publish** wartet erst auf das Rechnen, fragt, ob eine vorhandene Datei
+    /// ersetzt werden soll, und meldet danach (ueber `fuehreDialogAus`).
     lumi::paket::PackErgebnis fuehreAus();
 
 private:
     void baueBaum();
+    void fuelleFrozenZeilen();
+    void aktualisiereSumme();
+    void pruefeFreeze();
+    [[nodiscard]] bool frozenMitnehmen() const;
     void veroeffentliche();
 
     lumi::paket::Fund m_fund;
     QSettings* m_einstellungen = nullptr;
+    FreezeTon m_ton;
     QLineEdit* m_name = nullptr;
     QTreeWidget* m_baum = nullptr;
     QCheckBox* m_medien = nullptr;
     QLineEdit* m_ziel = nullptr;
     QLabel* m_summe = nullptr;
     QPushButton* m_publish = nullptr;
+
+    // Stufe 30i (FP2 a)
+    std::optional<lumi::loop::Loop> m_loop;  ///< der gespeicherte, gerichtet — nur mit eingefrorenen Clips
+    std::vector<lumi::paket::FrozenTeil> m_teile;
+    std::vector<QString> m_rechenzeit;  ///< je Teil „3.2 s" oder leer
+    QTreeWidgetItem* m_frozenGruppe = nullptr;
+    QCheckBox* m_frozenHaken = nullptr;
+    std::unique_ptr<lumi::loop::FreezeAuftrag> m_freeze;
+    std::vector<lumi::loop::ClipOrt> m_freezeOrte;  ///< was der Auftrag rechnet
+    QTimer* m_uhr = nullptr;
+    bool m_wartet = false;
 };
 
 class ImportPaketDialog : public QDialog
@@ -92,8 +151,14 @@ class ImportPaketDialog : public QDialog
 
 public:
     /// Oeffnet `datei` und haelt sie gegen den Benutzerordner. Laesst sie sich
-    /// nicht lesen, ist `inhalt().ok` false und **Import** aus.
-    explicit ImportPaketDialog(const QString& datei, QWidget* parent = nullptr, QSettings* einstellungen = nullptr);
+    /// nicht lesen, ist `inhalt().ok` false und **Import** aus. `rate`: die Ausgaberate,
+    /// mit der der Import Wellenformen prueft (FP3 a); 0 = keine ablegen.
+    explicit ImportPaketDialog(const QString& datei, QWidget* parent = nullptr, QSettings* einstellungen = nullptr,
+                               int rate = 0);
+
+    /// Die Zeile der Meldung nach dem Import zu eingefrorenen Clips („Frozen clips: 2 of 3
+    /// ready to play — 1 will be computed here"); leer = der Loop hat keine.
+    [[nodiscard]] static QString frozenMeldung(const lumi::paket::PaketErgebnis& ergebnis);
 
     [[nodiscard]] const lumi::paket::PaketInhalt& inhalt() const { return m_inhalt; }
     [[nodiscard]] QTreeWidget* inhaltsListe() const { return m_inhaltListe; }
@@ -134,6 +199,7 @@ private:
 
     QString m_datei;
     QSettings* m_einstellungen = nullptr;
+    int m_rate = 0;
     lumi::paket::PaketInhalt m_inhalt;
     QTreeWidget* m_inhaltListe = nullptr;
     QTreeWidget* m_gleiche = nullptr;
@@ -148,20 +214,20 @@ private:
 };
 
 /// Die Knoepfe **Publish...**: den Dialog fuer `datei` zeigen (nach einem
-/// Fehler eine Meldung).
-void zeigePublish(QWidget* parent, const QString& datei);
+/// Fehler eine Meldung). `ton`: fuer die Wellenformen eingefrorener Clips (Stufe 30i).
+void zeigePublish(QWidget* parent, const QString& datei, const FreezeTon& ton = {});
 /// File → **Publish a file...**: nach einer Datei der Loop-Familie fragen, dann `zeigePublish`.
-void zeigePublishDatei(QWidget* parent);
+void zeigePublishDatei(QWidget* parent, const FreezeTon& ton = {});
 /// **Publish...** in einem Fenster (Publish_Konzept.md §5e, von Claude gesetzt):
 /// ohne eigene Datei (mitgeliefert, neu) eine Meldung; mit ungespeicherten
 /// Aenderungen die Frage, ob die gespeicherte Fassung gehen soll — gibt es
 /// `speichere`, bietet sie Speichern an. Dann `zeigePublish`.
 void veroeffentlicheAusFenster(QWidget* parent, lumi::paket::Art art, const QString& datei, bool ungespeichert,
-                               const std::function<QString()>& speichere = {});
+                               const std::function<QString()>& speichere = {}, const FreezeTon& ton = {});
 /// Eine `.lvdata` importieren: ein Paket im Dialog Import package, eine
 /// Datensicherung im Dialog Import data (P2 a, P8 a). `datei` leer = erst fragen.
 /// Mit `bus` spielen ▶ und das Oeffnen nach dem Import ueber das Panel Loop
-/// (`PreviewSoundFileEvent`, `LoadLoopEvent`).
-void zeigeImportPaket(QWidget* parent, const QString& datei = {}, IEventBus* bus = nullptr);
+/// (`PreviewSoundFileEvent`, `LoadLoopEvent`). `rate` wie bei `ImportPaketDialog`.
+void zeigeImportPaket(QWidget* parent, const QString& datei = {}, IEventBus* bus = nullptr, int rate = 0);
 
 }  // namespace lumi::ui
