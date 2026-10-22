@@ -1887,6 +1887,71 @@ TEST_CASE("Loop Spieler 30f: ein eingefrorener Clip spielt seine Wellenform — 
     }
 }
 
+namespace
+{
+
+/// Wie `LoopPappEngine`, aber jede Datei klingt anders und zwei Sekunden lang: `a` 0.5, `b` 0.25,
+/// jede andere 0.125 — so hoert man, welcher Klang an welcher Stimme liegt.
+class KlangPappEngine : public LoopPappEngine
+{
+public:
+    [[nodiscard]] std::vector<float> decodeStereo(const QString& filePath, int rate, double maxSekunden) override
+    {
+        (void)LoopPappEngine::decodeStereo(filePath, rate, maxSekunden);  // mitschreiben, halten
+        const float wert = filePath.endsWith(QStringLiteral("a.wav"))   ? 0.5f
+                           : filePath.endsWith(QStringLiteral("b.wav")) ? 0.25f
+                                                                        : 0.125f;
+        return std::vector<float>(2 * 88200, wert);
+    }
+};
+
+}  // namespace
+
+TEST_CASE("Loop im Composer S144: nach einer Aenderung klingt bis zu den neuen Toenen das Bisherige (C) — auch wenn sich die Namen verschieben")
+{
+    using lumi::composer::Tonfuehrung;
+    tonspeicher().leere();
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    // jeder Schritt schlaegt a an: es klingt die ganze Zeit 0.5
+    const Loop loop = spielLoop({1, 1, 1, 1});
+    const QString pfad = ordner.filePath(QStringLiteral("namen.lvloop"));
+    REQUIRE(speichereLoop(loop, pfad));
+
+    KlangPappEngine engine;
+    SpielPlayer player;
+    Tonfuehrung fuehrung;
+    REQUIRE(fuehrung.uebernimm(engine, player));
+    const lumi::composer::Komposition k = mitClip(pfad, 0, 60000);
+    (void)fuehrung.takt(k, 0, true);
+    fuehrung.warteAufToene();
+    (void)fuehrung.takt(k, 33, true);
+    REQUIRE(engine.generator != nullptr);
+    CHECK(ersterWert(engine.generator) == 0.5f);
+
+    // das Panel meldet eine Fassung mit einer neuen Spur vorn (b, ohne Schlag): die Namen sind jetzt
+    // [b, a] statt [a] — b wird noch dekodiert
+    Loop offen = loop;
+    offen.muster[0].spuren.insert(offen.muster[0].spuren.begin(),
+                                  Spur{QStringLiteral("B"), QStringLiteral("C:/s/b.wav"), 1.0, 0.0, false});
+    offen.muster[0].zeilen.insert(offen.muster[0].zeilen.begin(), std::vector<double>(4, 0.0));
+    engine.halten = true;
+    meldeOffen(pfad, offen);
+    (void)fuehrung.takt(k, 66, true);
+    CHECK(fuehrung.vorbereitung().gesamt == 2);  // b und a — a liegt nicht im Speicher (die Datei gibt es nicht)
+    // C: bis b da ist, klingt das bisherige Programm — a auf jedem Schritt
+    CHECK(ersterWert(engine.generator) == 0.5f);
+
+    engine.halten = false;
+    fuehrung.warteAufToene();
+    (void)fuehrung.takt(k, 99, true);
+    CHECK(fuehrung.vorbereitung().gesamt == 0);
+    CHECK(ersterWert(engine.generator) == 0.5f);  // die neue Fassung: a schlaegt weiter, b schweigt
+    meldeOffen({}, {});
+    fuehrung.gibFrei();
+    tonspeicher().leere();
+}
+
 TEST_CASE("Loop im Composer 30f: ein eingefrorener Clip im Loop-Clip spielt seine Wellenform")
 {
     FrozenOrdner frozen;

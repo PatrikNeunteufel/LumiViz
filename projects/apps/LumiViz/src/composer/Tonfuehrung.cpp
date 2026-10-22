@@ -89,6 +89,10 @@ struct Tonfuehrung::LoopQuelle
             a->brichAb();
             verworfen.push_back(std::move(a));
         };
+        // gehoeren die Klaenge zu diesen Namen? Nur dann passt ein neues Programm zu ihnen —
+        // `plane` sucht sie ueber die Namen des Loops (S144: sonst spielte eine Stimme bis zum
+        // Ende des Auftrags einen fremden Klang oder schwiege)
+        bool passt = klaenge != nullptr && namen == klangNamen;
         if (klaenge != nullptr && namen == klangNamen && fassung == instrumente)
             verwirf(auftrag);  // dieselben Klaenge: ein laufender Auftrag ist ueberholt
         else if (auftrag == nullptr || namen != auftragNamen || fassung != auftragInstrumente)
@@ -99,7 +103,10 @@ struct Tonfuehrung::LoopQuelle
                     return engine.decodeStereo(datei, r, maxSekunden);
                 });
             if (neu->ausSpeicher())
+            {
                 setzeKlaenge(neu->klaenge(), namen, fassung);
+                passt = true;
+            }
             else
             {
                 // D: noch nichts zu spielen — was im Speicher lag, klingt schon, der Rest schweigt
@@ -107,6 +114,7 @@ struct Tonfuehrung::LoopQuelle
                 {
                     klaenge = std::make_shared<const lumi::loop::Klaenge>(neu->klaenge());
                     lueckenhaft = true;
+                    passt = true;  // die Klaenge dieser Namen, mit Luecken
                 }
                 neu->starte();
                 auftrag = std::move(neu);
@@ -115,7 +123,9 @@ struct Tonfuehrung::LoopQuelle
                 auftragEingefroren = eingefroren;
             }
         }
-        if (klaenge == nullptr) return;
+        // C: die Klaenge gehoeren zu einer frueheren Fassung — es klingt das bisherige Programm,
+        // bis der Auftrag fertig ist (`pruefe`)
+        if (!passt) return;
         const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge, saiten, eingefroren);
         durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;
         erzeuger.setzeProgramm(programm);

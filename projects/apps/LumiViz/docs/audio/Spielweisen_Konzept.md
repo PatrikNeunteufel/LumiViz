@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.47.0
+> **Version:** 0.48.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -978,6 +978,11 @@ sich die Namen (ein neuer Ton in einem früheren Muster), spielt eine Stimme bis
 einen falschen Klang; kommen sie nur hinten dazu, schweigt sie. Der Kommentar sagt „bis er da ist,
 klingt das bisherige Programm“; der Spieler des Loop-Panels hält es so. Nicht behoben — zuerst mit einem
 Test belegen, der ohne Fix rot ist.
+*Belegt und behoben (S144, Patrik a):* `test_LoopSpieler` „Loop im Composer S144“ — eine neue Spur vorn
+verschiebt die Namen; ohne Fix schwieg der Loop-Clip, bis die neuen Töne da waren (0 statt 0,5). Jetzt
+baut `baue` ein Programm nur mit Klängen, die zu den Namen gehören (`passt`; im Fall D die lückenhaften
+dieser Namen); sonst klingt das bisherige bis `pruefe`. Spieler, Freeze, Ton und Composer unter
+Release-clang und Testing-MSVC 195 / 195.
 
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
@@ -1320,6 +1325,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.48.0 | 2026-10-22 | Session 144. Verdacht Tonführung Fall C mit Test belegt und behoben. |
 | 0.47.0 | 2026-10-22 | Session 144. Stufe 30f-3 gebaut (Laden: Spieler, Composer, Vorladen, Lautheit); Verdacht Tonführung Fall C (noch ohne Test). |
 | 0.46.0 | 2026-10-22 | Session 144. §4.4 Bauplan: Hammer-Saite wieder Stufe 31 ff., der Audio-Clip im Loop danach (Patrik). |
 | 0.45.0 | 2026-10-22 | Session 144. Stufe 30f-2 gebaut (Rechenkern: eingefrorene Clips als eine Stimme, ohne Schnitt über die Naht). |
