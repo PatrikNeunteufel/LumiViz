@@ -25,6 +25,7 @@
 #include "composer/Tonfuehrung.hpp"
 #include "loop/ComposerAbfragen.hpp"
 #include "loop/DrumEditor.hpp"
+#include "loop/Freeze.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/LoopPanel.hpp"
@@ -1777,4 +1778,135 @@ TEST_CASE("Loop Panel 29d: an der Stelle von Bar · Step steht, was vorbereitet 
         panel.halte();
     }
     tonspeicher().leere();  // Klaenge der Engine aus Pappe zu echten Dateien: nicht liegen lassen
+}
+
+namespace
+{
+
+/// Ein Wegwerf-Ordner `frozen` und ein leerer Tonspeicher fuer einen Fall (Stufe 30f).
+struct FrozenOrdner
+{
+    QTemporaryDir ordner;
+    FrozenOrdner()
+    {
+        REQUIRE(ordner.isValid());
+        setzeFrozenOrdnerFuerTests(ordner.path());
+        tonspeicher().leere();
+    }
+    ~FrozenOrdner()
+    {
+        setzeFrozenOrdnerFuerTests({});
+        tonspeicher().leere();
+    }
+};
+
+/// Der Loop des Spielers mit eingefrorenem Clip; `abdruck` = sein jetziger Abdruck.
+Loop eingefrorenerLoop(QByteArray& abdruck)
+{
+    Loop loop = spielLoop({1, 0, 0, 0});
+    loop.richte();
+    abdruck = clipAbdruck(loop, ClipOrt{0, 0}, 44100, saitenAusInstrumenten());
+    REQUIRE(abdruck.size() == 40);
+    loop.kanaele[0].clips[0].frozen = QString::fromLatin1(abdruck);
+    return loop;
+}
+
+}  // namespace
+
+TEST_CASE("Loop Spieler 30f: ein eingefrorener Clip spielt seine Wellenform — ohne Datei live, eine unlesbare geht")
+{
+    FrozenOrdner frozen;
+    LoopPappEngine engine;
+    SpielPlayer player;
+    QByteArray abdruck;
+    const Loop loop = eingefrorenerLoop(abdruck);
+
+    SUBCASE("die Datei liegt vor: die Wellenform, nichts dekodiert, nichts gerechnet")
+    {
+        REQUIRE(legeFrozen(abdruck, std::vector<float>(200, 0.25f), 44100));
+        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).size() == 1);
+        Spieler spieler;
+        spieler.setzeLoop(loop);
+        REQUIRE(spieler.starte(engine, player));
+        spieler.warteAufToene();
+        CHECK(ersterWert(engine.generator) == 0.25f);
+        CHECK(engine.dekodiert.isEmpty());  // das Muster liegt nur im eingefrorenen Clip
+        CHECK(spieler.bericht().isEmpty());
+        spieler.halte();
+        // ein zweites Mal: aus dem Tonspeicher, sofort
+        Spieler wieder;
+        wieder.setzeLoop(loop);
+        REQUIRE(wieder.starte(engine, player));
+        CHECK_FALSE(wieder.wartet());
+        CHECK(ersterWert(engine.generator) == 0.25f);
+        wieder.halte();
+    }
+    SUBCASE("keine Datei zum jetzigen Abdruck: live, wie ohne Marke")
+    {
+        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).empty());
+        Spieler spieler;
+        spieler.setzeLoop(loop);
+        REQUIRE(spieler.starte(engine, player));
+        spieler.warteAufToene();
+        CHECK(ersterWert(engine.generator) == 0.5f);
+        CHECK(engine.dekodiert == QStringList{QStringLiteral("C:/s/a.wav")});
+        spieler.halte();
+    }
+    SUBCASE("verändert seit dem Einfrieren: die Datei zum gespeicherten Abdruck spielt nicht (FV2 a)")
+    {
+        REQUIRE(legeFrozen(abdruck, std::vector<float>(200, 0.25f), 44100));
+        Loop geaendert = loop;
+        geaendert.muster[0].zeilen[0][0] = 0.8;  // ein Schlag leiser: ein anderer Abdruck
+        CHECK(eingefrorenVon(geaendert, 44100, saitenAusInstrumenten()).empty());
+        Spieler spieler;
+        spieler.setzeLoop(geaendert);
+        REQUIRE(spieler.starte(engine, player));
+        spieler.warteAufToene();
+        CHECK(ersterWert(engine.generator) == doctest::Approx(0.4f));  // live: 0.5 mal 0.8
+        spieler.halte();
+    }
+    SUBCASE("eine Datei, die sich nicht lesen laesst: sie geht, der Clip spielt live")
+    {
+        {
+            QFile kaputt(frozenDatei(abdruck));
+            REQUIRE(kaputt.open(QIODevice::WriteOnly));
+            kaputt.write("keine WAV");
+        }
+        Spieler spieler;
+        spieler.setzeLoop(loop);
+        REQUIRE(spieler.starte(engine, player));
+        spieler.warteAufToene();  // die Wellenform fehlt: er plant neu
+        CHECK_FALSE(QFileInfo::exists(frozenDatei(abdruck)));
+        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).empty());
+        spieler.warteAufToene();  // die Toene fuer live
+        CHECK(ersterWert(engine.generator) == 0.5f);
+        spieler.halte();
+        // neu abgelegt, zaehlt sie wieder
+        REQUIRE(legeFrozen(abdruck, std::vector<float>(200, 0.25f), 44100));
+        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).size() == 1);
+    }
+}
+
+TEST_CASE("Loop im Composer 30f: ein eingefrorener Clip im Loop-Clip spielt seine Wellenform")
+{
+    FrozenOrdner frozen;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    QByteArray abdruck;
+    const Loop loop = eingefrorenerLoop(abdruck);
+    const QString pfad = ordner.filePath(QStringLiteral("frozen.lvloop"));
+    REQUIRE(speichereLoop(loop, pfad));
+    REQUIRE(legeFrozen(abdruck, std::vector<float>(200, 0.25f), 44100));
+
+    LoopPappEngine engine;
+    SpielPlayer player;
+    lumi::composer::Tonfuehrung fuehrung;
+    REQUIRE(fuehrung.uebernimm(engine, player));
+    const lumi::composer::Komposition k = mitClip(pfad, 1000, 6000);
+    (void)fuehrung.takt(k, 0, true);
+    fuehrung.warteAufToene();
+    REQUIRE(engine.generator != nullptr);
+    CHECK(engine.dekodiert.isEmpty());  // nichts dekodiert: die Wellenform kommt aus `frozen`
+    CHECK(ersterWert(engine.generator) == 0.25f);
+    fuehrung.gibFrei();
 }

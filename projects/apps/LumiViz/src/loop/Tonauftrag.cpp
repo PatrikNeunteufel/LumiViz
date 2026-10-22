@@ -5,6 +5,7 @@
 
 #include "loop/Tonauftrag.hpp"
 
+#include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Loop.hpp"
@@ -201,6 +202,14 @@ bool Tonauftrag::ausSpeicher(std::size_t einer, QString& schluessel, Geholt*& ge
         m_ergebnis[einer] = tonspeicher().hole(schluessel);
         return m_ergebnis[einer] != nullptr;
     }
+    // eine eingefrorene Wellenform (Stufe 30f): ihr Name ist der Abdruck — eine Datei mit
+    // diesem Namen aendert sich nie, Rate und Name genuegen als Schluessel
+    if (!abdruckVonKlang(klang).isEmpty())
+    {
+        schluessel = klang + QLatin1Char('|') + QString::number(m_rate);
+        m_ergebnis[einer] = tonspeicher().hole(schluessel);
+        return m_ergebnis[einer] != nullptr;
+    }
     // eine Klangdatei: nur eine, die es gibt, steht im Speicher — an einer anderen liesse
     // sich keine Aenderung erkennen
     const QString datei = klangDatei(klang);
@@ -246,6 +255,25 @@ void Tonauftrag::lade(std::size_t einer)
         auto neu = std::make_shared<const Klang>(rendereTon(*geholt->instrument, ton, m_rate));
         tonspeicher().lege(schluessel, neu, msSeit(anfang));
         m_ergebnis[einer] = std::move(neu);
+        return;
+    }
+    // eine eingefrorene Wellenform (Stufe 30f): aus dem Ordner `frozen`. Laesst sie sich nicht
+    // lesen, geht sie — wer plant, nimmt den Clip dann live (`frozenFehlt`, `eingefrorenVon`)
+    if (const QString abdruck = abdruckVonKlang(klang); !abdruck.isEmpty())
+    {
+        const auto anfang = Uhr::now();
+        std::optional<std::vector<float>> welle = holeFrozen(abdruck.toLatin1(), m_rate);
+        if (welle && !welle->empty())
+        {
+            Klang neu;
+            neu.daten = std::move(*welle);
+            auto geteilt = std::make_shared<const Klang>(std::move(neu));
+            tonspeicher().lege(schluessel, geteilt, msSeit(anfang));
+            m_ergebnis[einer] = std::move(geteilt);
+            return;
+        }
+        vergissFrozen(abdruck.toLatin1());
+        m_zeilen[einer] << QStringLiteral("Frozen clip not readable, playing live: %1").arg(abdruck);
         return;
     }
     // ein dekodierter Klang (TV3 a)

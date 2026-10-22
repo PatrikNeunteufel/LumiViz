@@ -5,7 +5,8 @@
  *
  * Ein Auftrag bekommt Klangnamen (`Loop::klangNamen`, `Ablauf::klangNamen`) und
  * eine Rate und liefert je Name einen Klang: aus dem Tonspeicher, gerechnet
- * (`rendereTon`) oder dekodiert. Jeder Name wird einmal geladen, auch wenn er
+ * (`rendereTon`), dekodiert oder — `frozen:<abdruck>`, seit Stufe 30f — als
+ * eingefrorene Wellenform aus dem Ordner `frozen` gelesen. Jeder Name wird einmal geladen, auch wenn er
  * mehrfach vorkommt. Dekodiert wird ueber einen `Dekodierer` — eine Funktion,
  * nicht die ganze Engine (TV3 a); er muss von mehreren Threads zugleich gerufen
  * werden duerfen.

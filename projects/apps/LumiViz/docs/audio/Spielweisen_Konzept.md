@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.45.0
+> **Version:** 0.47.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -775,8 +775,8 @@ die Datei würde viele MB groß, jedes Speichern schriebe alles).
 |---|---|
 | 29 | **Töne vorab** (H1 a bis H3 a): Speicher je Tonname im Arbeitsspeicher (Grenze in den Settings, 1 GB), Rechnen im Hintergrund auf mehreren Kernen, Vorladen beim Öffnen eines Loops und einer Komposition, „Preparing sounds… n / m“, eine Bearbeitung schaltet um, sobald die neuen Töne fertig sind. |
 | 30 | **Freeze** (F1 a bis F5 a): „Freeze clip“ / „Unfreeze clip“ im Kontextmenü, Hash aus allen Eingaben und der Klangfassung mit dem Test an `loop_werte.txt`, Wellenform bis zum Ausgang des Clips mit Nachklang, neu eingefroren beim Speichern, Messung je Clip mit Zeichen ab 1 s, Ordner `frozen` mit Grenze 2 GB und „Clear frozen clips“, Publish nimmt die Wellenformen mit. Die eingefrorene Wellenform spielt im Rechenkern wie ein langer Klang ab dem Beginn des Clips — der Audio-Clip im Loop (`Loop_Konzept.md` §3.2) ist dafür nicht nötig. |
-| 31 | **Audio-Clip im Loop** (Patrik S142, vorgemerkt; `Loop_Konzept.md` §3.2): die dritte Clip-Art neben Drumkit und Instrument, ein Clip mit einer Wellenform (Samples, Gesang …) und einer Autotune-Spur. Beginnt mit eigenen Entscheiden und einer Skizze — Ort der Spur, Datei, Bearbeitung der Wellenform, Autotune-Spur und Spur Pitch, *Bounce* (F1 c). Das Abspielen einer Wellenform im Rechenkern bringt Stufe 30 mit. |
-| 32 ff. | **Hammer-Saite** (Zielbild §4.1): Recherche, Entscheide, Skizze, Modell, Messung gegen *Salamander Grand Piano*; zuerst Flügel und Upright, danach die übrigen Instrumente der Familie. Die Recherche beginnt schon während 29 bis 31 (Dokumentarbeit, hängt an nichts davon). Bis S142 Stufe 31 ff. — der Audio-Clip ist davor gerückt. |
+| 31 ff. | **Hammer-Saite** (Zielbild §4.1): Recherche, Entscheide, Skizze, Modell, Messung gegen *Salamander Grand Piano*; zuerst Flügel und Upright, danach die übrigen Instrumente der Familie. Die Recherche kann schon während 30 beginnen (Dokumentarbeit, hängt an nichts davon). In S142 hinter den Audio-Clip gerückt (32 ff.), **seit S144 wieder Stufe 31** (Patrik: „tausche 31 und 32“). |
+| danach | **Audio-Clip im Loop** (Patrik S142, vorgemerkt; `Loop_Konzept.md` §3.2): die dritte Clip-Art neben Drumkit und Instrument, ein Clip mit einer Wellenform (Samples, Gesang …) und einer Autotune-Spur. Beginnt mit eigenen Entscheiden und einer Skizze — Ort der Spur, Datei, Bearbeitung der Wellenform, Autotune-Spur und Spur Pitch, *Bounce* (F1 c). Das Abspielen einer Wellenform im Rechenkern bringt Stufe 30 mit. Seit S144 hinter der Hammer-Saite (Stufe 31 ff.); die Nummer bekommt er, wenn er an der Reihe ist. |
 
 Verworfen: b (Töne vorab, dann die Hammer-Saite, Freeze erst danach — die Werte, die sich am Flügel
 prüfen ließen, stehen ohnehin in den Settings und kippen das Gebaute nicht), c (zuerst die
@@ -958,6 +958,26 @@ der Klang reicht. Ohne Angabe Bit für Bit wie vorher (`Loop Werte` unverändert
 `test_LoopFreezeSpielen` (Namen; Rechenkern mit einer 5-s-Wellenform über 2-s-Durchläufe, drei
 zugleich; gegen live am Echo-Clip von `effects_demo`: größte Abweichung 6·10⁻⁶ bei Spitze 0,56). Eng
 (Klang mit `Loop Werte`) unter Release-clang und Testing-MSVC 73 / 73.
+
+**Gebaut 30f-3 (S144):** in `loop/Freeze` `eingefrorenVon` (je Clip mit Marke der **jetzige**
+Abdruck, wenn seine Datei vorliegt — sie zählt dann als gebraucht), `vergissFrozen` (eine unlesbare
+Datei geht; bis sie neu abgelegt ist, spielt ihr Clip live) und `frozenFehlt`. Der `Tonauftrag` lädt
+`frozen:<abdruck>` über `holeFrozen` in den Tonspeicher (Schlüssel Name und Rate — eine Datei mit
+diesem Namen ändert sich nie); unlesbar: „Frozen clip not readable, playing live“ im Bericht. Es planen
+mit `eingefrorenVon`: der Spieler (der Satz trägt die eingefrorenen Clips; fehlt eine Wellenform, plant
+er neu), die Tonführung des Composers (neu im nächsten Takt), das Vorladen der Sitzung und die Messung
+der Lautheit eines Loop-Clips. *Export audio…* rechnet weiter live. Tests in `test_LoopSpieler` (Datei
+da: die Wellenform, nichts dekodiert, beim zweiten Play aus dem Speicher; keine Datei: live; verändert
+seit dem Einfrieren: live; unlesbar: die Datei geht, live, neu abgelegt zählt sie wieder; im Composer
+die Wellenform). Spieler, Freeze, Ton und Composer unter Release-clang und Testing-MSVC 194 / 194.
+
+**Verdacht (S144, beim Lesen für 30f-3; noch nicht mit einem Test belegt):** `Tonfuehrung::LoopQuelle::baue` baut nach einer Bearbeitung,
+deren Töne noch rechnen, das Programm schon mit dem **neuen** Loop und den **alten** Klängen
+(`Tonfuehrung.cpp`, `baue`, Fall C) — `plane` sucht die Klänge aber über die neuen Namen. Verschieben
+sich die Namen (ein neuer Ton in einem früheren Muster), spielt eine Stimme bis zum Ende des Auftrags
+einen falschen Klang; kommen sie nur hinten dazu, schweigt sie. Der Kommentar sagt „bis er da ist,
+klingt das bisherige Programm“; der Spieler des Loop-Panels hält es so. Nicht behoben — zuerst mit einem
+Test belegen, der ohne Fix rot ist.
 
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
@@ -1300,6 +1320,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.47.0 | 2026-10-22 | Session 144. Stufe 30f-3 gebaut (Laden: Spieler, Composer, Vorladen, Lautheit); Verdacht Tonführung Fall C (noch ohne Test). |
+| 0.46.0 | 2026-10-22 | Session 144. §4.4 Bauplan: Hammer-Saite wieder Stufe 31 ff., der Audio-Clip im Loop danach (Patrik). |
 | 0.45.0 | 2026-10-22 | Session 144. Stufe 30f-2 gebaut (Rechenkern: eingefrorene Clips als eine Stimme, ohne Schnitt über die Naht). |
 | 0.44.0 | 2026-10-22 | Session 144. Stufe 30f-1 gebaut (`frozen` am Clip, `.lvloop` 13). |
 | 0.43.0 | 2026-10-22 | Session 144. Plan 30f (drei Teilschritte); FV1 a (der Nachklang eines eingefrorenen Clips klingt über die Naht); FV2 a (`frozen` trägt den Abdruck des eingefrorenen Stands). |

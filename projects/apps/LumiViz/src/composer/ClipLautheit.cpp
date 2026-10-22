@@ -6,6 +6,7 @@
 #include "composer/ClipLautheit.hpp"
 
 #include "audio/IAudioEngine.hpp"
+#include "loop/Freeze.hpp"      // eingefrorenVon, frozenFehlt (Stufe 30f)
 #include "loop/Instrument.hpp"  // saitenAusInstrumenten (Stufe 23b)
 #include "loop/Kit.hpp"
 #include "loop/Klangerzeuger.hpp"
@@ -59,9 +60,19 @@ std::shared_ptr<const loop::Programm> bereiteLoopVor(const QString& datei, IAudi
     geladen.richte();
     // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
     const loop::SaitenVon saiten = loop::saitenAusInstrumenten();
-    auto klaenge =
-        std::make_shared<const loop::Klaenge>(loop::ladeKlaenge(geladen.klangNamen(saiten), engine, rate));
-    auto programm = loop::baueProgramm(geladen, rate, std::move(klaenge), saiten);
+    // eingefrorene Clips (Stufe 30f) wie in der Tonfuehrung; liess sich eine Wellenform nicht
+    // laden, nennt `eingefrorenVon` ihren Clip danach nicht mehr — einmal neu, er klingt live
+    loop::Eingefroren eingefroren = loop::eingefrorenVon(geladen, rate, saiten);
+    QStringList namen = geladen.klangNamen(saiten, eingefroren);
+    loop::Klaenge geladeneKlaenge = loop::ladeKlaenge(namen, engine, rate);
+    if (loop::frozenFehlt(namen, geladeneKlaenge))
+    {
+        eingefroren = loop::eingefrorenVon(geladen, rate, saiten);
+        namen = geladen.klangNamen(saiten, eingefroren);
+        geladeneKlaenge = loop::ladeKlaenge(namen, engine, rate);
+    }
+    auto klaenge = std::make_shared<const loop::Klaenge>(std::move(geladeneKlaenge));
+    auto programm = loop::baueProgramm(geladen, rate, std::move(klaenge), saiten, eingefroren);
     if (programm == nullptr || programm->ablauf.durchlaufFrames <= 0) return nullptr;
     return programm;
 }

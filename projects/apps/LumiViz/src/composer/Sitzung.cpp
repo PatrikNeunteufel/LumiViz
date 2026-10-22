@@ -12,6 +12,7 @@
 #include "composer/AppAnbindung.hpp"  // AusgeschalteterClipEvent (S130)
 #include "composer/Bearbeiten.hpp"
 #include "composer/Bildquelle.hpp"
+#include "loop/Freeze.hpp"      // eingefrorenVon (Stufe 30f)
 #include "loop/Instrument.hpp"  // saitenAusInstrumenten, instrumentFassung (Stufe 29e)
 #include "loop/Loop.hpp"
 #include "loop/Offen.hpp"
@@ -595,6 +596,7 @@ void Sitzung::bereiteToeneVor()
     if (engine == nullptr || !m_geladen) return;  // ohne Engine kein Ton: nichts zu warten
     // die Toene aller Loop-Clips der eingeschalteten Audio-Kanaele, je Loop-Datei einmal gelesen
     const lumi::loop::SaitenVon saiten = lumi::loop::saitenAusInstrumenten();
+    const int rate = engine->getSampleRate();
     QStringList namen;
     QStringList gelesen;
     for (const Kanal& kanal : m_komposition.kanaele)
@@ -607,10 +609,10 @@ void Sitzung::bereiteToeneVor()
             lumi::loop::Loop loop;
             if (!lumi::loop::offenerLoop(clip.datei, loop) && !lumi::loop::ladeLoop(clip.datei, loop)) continue;
             loop.richte();
-            namen << loop.klangNamen(saiten);
+            // eingefrorene Clips (Stufe 30f): ihre Wellenform statt ihrer Toene
+            namen << loop.klangNamen(saiten, lumi::loop::eingefrorenVon(loop, rate, saiten));
         }
     }
-    const int rate = engine->getSampleRate();
     const std::uint64_t fassung = lumi::loop::instrumentFassung();
     if (m_toeneGeprueft && namen == m_toeneNamen && rate == m_toeneRate && fassung == m_toeneFassung) return;
     verwirfToene();

@@ -6,6 +6,7 @@
 #include "loop/Spieler.hpp"
 
 #include "audio/IAudioPlayer.hpp"
+#include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 
@@ -61,15 +62,28 @@ void Spieler::setzeLoop(const Loop& loop)
 Spieler::Satz Spieler::satzJetzt(int rate) const
 {
     // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm;
-    // eine neu gespeicherte Instrument-Datei gibt andere Toene
-    return {m_loop.klangNamen(saitenAusInstrumenten()), rate, instrumentFassung()};
+    // eine neu gespeicherte Instrument-Datei gibt andere Toene; eingefrorene Clips (Stufe 30f)
+    // spielen ihre Wellenform, wenn sie zum jetzigen Abdruck vorliegt
+    const SaitenVon saiten = saitenAusInstrumenten();
+    Eingefroren eingefroren = eingefrorenVon(m_loop, rate, saiten);
+    QStringList namen = m_loop.klangNamen(saiten, eingefroren);
+    return {std::move(namen), rate, instrumentFassung(), std::move(eingefroren)};
 }
 
-void Spieler::nimmKlaenge(Tonauftrag& auftrag, const Satz& satz)
+bool Spieler::nimmKlaenge(Tonauftrag& auftrag, const Satz& satz)
 {
-    m_klaenge = std::make_shared<const Klaenge>(auftrag.klaenge());
     m_bericht = auftrag.bericht();
+    Klaenge klaenge = auftrag.klaenge();
+    if (frozenFehlt(satz.namen, klaenge))
+    {
+        // eine Wellenform liess sich nicht lesen (30f): neu planen, der Clip spielt live
+        m_klaenge.reset();
+        m_satz = {};
+        return false;
+    }
+    m_klaenge = std::make_shared<const Klaenge>(std::move(klaenge));
     m_satz = satz;
+    return true;
 }
 
 void Spieler::verwirf(std::unique_ptr<Tonauftrag>& auftrag)
@@ -96,7 +110,7 @@ void Spieler::ladeProgramm(bool vonVorn)
         // dieselben Klaenge: das Programm gleich, ein laufender Auftrag ist ueberholt
         verwirf(m_auftrag);
         m_wartet = false;
-        m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten()));
+        m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten(), m_satz.eingefroren));
         return;
     }
     if (m_auftrag == nullptr || !(m_auftragSatz == satz))
@@ -112,10 +126,11 @@ void Spieler::ladeProgramm(bool vonVorn)
             auto auftrag = std::make_unique<Tonauftrag>(satz.namen, rate, dekodiererVon(*m_engine));
             if (auftrag->ausSpeicher())
             {
-                // TV6 a: alles im Speicher — sofort, ohne Hintergrund
-                nimmKlaenge(*auftrag, satz);
+                // TV6 a: alles im Speicher — sofort, ohne Hintergrund (eine eingefrorene
+                // Wellenform kommt dann aus dem Speicher: `nimmKlaenge` gelingt)
+                (void)nimmKlaenge(*auftrag, satz);
                 m_wartet = false;
-                m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten()));
+                m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten(), m_satz.eingefroren));
                 return;
             }
             auftrag->starte();
@@ -136,10 +151,24 @@ void Spieler::ladeProgramm(bool vonVorn)
 void Spieler::schalteUm()
 {
     if (m_auftrag == nullptr || !m_auftrag->fertig()) return;
-    nimmKlaenge(*m_auftrag, m_auftragSatz);
+    const bool genommen = nimmKlaenge(*m_auftrag, m_auftragSatz);
     verwirf(m_auftrag);  // fertig: seine Threads laufen gerade aus
+    if (!genommen)
+    {
+        // eine eingefrorene Wellenform fehlte (30f): neu planen — `eingefrorenVon` nennt ihren
+        // Clip nicht mehr, er spielt live; bis dahin klingt, was klang
+        const bool wartete = m_wartet;
+        ladeProgramm(false);
+        if (wartete && !m_wartet)
+        {
+            // gleich aus dem Speicher: beginnen, wie nach dem Warten
+            m_erzeuger.setzeStelle(0);
+            if (m_startSchritt > 0.0) (void)springe(m_startSchritt);
+        }
+        return;
+    }
     const int rate = m_satz.rate;
-    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten()));
+    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten(), m_satz.eingefroren));
     if (m_wartet)
     {
         m_wartet = false;
@@ -194,7 +223,7 @@ void Spieler::ladeVor(IAudioEngine& engine)
     auto auftrag = std::make_unique<Tonauftrag>(satz.namen, satz.rate, dekodiererVon(engine));
     if (auftrag->ausSpeicher())
     {
-        nimmKlaenge(*auftrag, satz);
+        (void)nimmKlaenge(*auftrag, satz);
         return;
     }
     auftrag->starte();
@@ -233,7 +262,7 @@ void Spieler::takt()
     if (m_vorab != nullptr && m_vorab->fertig())
     {
         // vorab gerechnet: die Klaenge stehen fuer das naechste Play bereit
-        nimmKlaenge(*m_vorab, m_vorabSatz);
+        (void)nimmKlaenge(*m_vorab, m_vorabSatz);  // fehlte eine Wellenform: Play plant neu
         verwirf(m_vorab);
     }
     if (!spielt()) return;

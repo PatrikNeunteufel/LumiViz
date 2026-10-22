@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.105.0
+> **Version:** 0.106.0
 > **Datum:** 2026-10-22 (Session 144)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -201,8 +201,9 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
   Ort der Spur, Datei, Bearbeitung der Wellenform. Bezug (Claude): die Spur Pitch
   aus [Spielweisen_Konzept.md](Spielweisen_Konzept.md) SF3 a führt eine Tonhöhe über
   der Zeit; ob die Autotune-Spur dieselbe Art Spur ist, ist zu klären.
-  **Vorgemerkt als Stufe 31** (Patrik S142, `Spielweisen_Konzept.md` §4.4): nach Freeze,
-  das den Weg zum Abspielen einer Wellenform im Rechenkern mitbringt.
+  **Vorgemerkt** (Patrik S142, `Spielweisen_Konzept.md` §4.4): nach Freeze, das den Weg zum
+  Abspielen einer Wellenform im Rechenkern mitbringt — seit S144 nach der Hammer-Saite
+  (Stufe 31 ff.; in S142 war er Stufe 31).
 
 ### 3.3 Noch offen
 
@@ -3993,6 +3994,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.106.0** (S144, 2026-10-22): §3.2 der Audio-Clip im Loop kommt nach der Hammer-Saite (Patrik).
 - **0.105.0** (S144, 2026-10-22): §4 Datei — `.lvloop` Fassung 13 mit `channels[].clips[].frozen` (Stufe 30f-1, Spielweisen_Konzept FV2 a).
 - **0.104.0** (S143, 2026-10-22): Dateiformat `volume` — wirkt nach den Effekten und Fadern (Spielweisen_Konzept WX5 a).
 - **0.103.0** (S142, 2026-10-21): §3.2 Audio-Clip im Loop als Stufe 31 vorgemerkt (Patrik; Spielweisen_Konzept §4.4).

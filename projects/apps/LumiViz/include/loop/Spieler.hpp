@@ -27,6 +27,9 @@
  * geoeffneten Loops vorab, ohne zu spielen; Play uebernimmt einen solchen
  * Auftrag. Seine Threads enden mit dem Spieler — er stirbt vor der Engine
  * (Bootstrap_Integration.md §6.7).
+ *
+ * Seit Stufe 30f spielen eingefrorene Clips ihre Wellenform (`eingefrorenVon`); laesst
+ * sich eine nicht laden, plant er neu, und der Clip spielt live.
  */
 #pragma once
 
@@ -123,14 +126,16 @@ private:
         QStringList namen;
         int rate = 0;
         std::uint64_t fassung = 0;  ///< `instrumentFassung()` beim Anstossen
+        Eingefroren eingefroren;    ///< die Clips, die ihre Wellenform spielen (Stufe 30f)
         bool operator==(const Satz&) const = default;
     };
     /// `vonVorn`: er beginnt gerade — fehlen Toene, spielt er still bis dahin.
     void ladeProgramm(bool vonVorn);
     /// Den Satz, den der Loop jetzt braucht.
     [[nodiscard]] Satz satzJetzt(int rate) const;
-    /// Einen fertigen Auftrag uebernehmen: seine Klaenge, sein Bericht.
-    void nimmKlaenge(Tonauftrag& auftrag, const Satz& satz);
+    /// Einen fertigen Auftrag uebernehmen: seine Klaenge, sein Bericht. false = eine
+    /// eingefrorene Wellenform liess sich nicht laden (Stufe 30f): keine Klaenge, neu planen.
+    bool nimmKlaenge(Tonauftrag& auftrag, const Satz& satz);
     /// Ist der Auftrag fertig: umschalten (und beim Warten von vorn beginnen).
     void schalteUm();
     /// Einen Auftrag abbrechen; er ruht, sobald sein letzter Name geladen ist.

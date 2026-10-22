@@ -7,6 +7,7 @@
 
 #include "audio/AudioPlayer.hpp"  // leseTrackInfo (Naht N14)
 #include "audio/IAudioPlayer.hpp"
+#include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Klangerzeuger.hpp"
@@ -47,6 +48,10 @@ struct Tonfuehrung::LoopQuelle
     std::unique_ptr<lumi::loop::Tonauftrag> auftrag;
     QStringList auftragNamen;
     std::uint64_t auftragInstrumente = 0;
+    lumi::loop::Eingefroren auftragEingefroren;  ///< die eingefrorenen Clips zu `auftragNamen` (Stufe 30f)
+    /// Eine eingefrorene Wellenform liess sich nicht laden (30f): im naechsten Takt neu
+    /// planen — ihr Clip spielt dann live.
+    bool neuPlanen = false;
     /// Er spielt mit Luecken: was fehlte, schweigt, bis der Auftrag fertig ist
     /// (H2 a, TV7 a D). Sonst klingt waehrend des Auftrags das bisherige Programm (C).
     bool lueckenhaft = false;
@@ -74,7 +79,9 @@ struct Tonfuehrung::LoopQuelle
         rate = engine.getSampleRate();
         // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
         const lumi::loop::SaitenVon saiten = lumi::loop::saitenAusInstrumenten();
-        const QStringList namen = loop.klangNamen(saiten);
+        // eingefrorene Clips (Stufe 30f) spielen ihre Wellenform, wenn sie zum jetzigen Abdruck vorliegt
+        const lumi::loop::Eingefroren eingefroren = lumi::loop::eingefrorenVon(loop, rate, saiten);
+        const QStringList namen = loop.klangNamen(saiten, eingefroren);
         // auch wenn eine Instrument-Datei neu gespeichert wurde
         const std::uint64_t fassung = lumi::loop::instrumentFassung();
         const auto verwirf = [&verworfen](std::unique_ptr<lumi::loop::Tonauftrag>& a) {
@@ -105,10 +112,11 @@ struct Tonfuehrung::LoopQuelle
                 auftrag = std::move(neu);
                 auftragNamen = namen;
                 auftragInstrumente = fassung;
+                auftragEingefroren = eingefroren;
             }
         }
         if (klaenge == nullptr) return;
-        const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge, saiten);
+        const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge, saiten, eingefroren);
         durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;
         erzeuger.setzeProgramm(programm);
     }
@@ -121,7 +129,10 @@ struct Tonfuehrung::LoopQuelle
         setzeKlaenge(auftrag->klaenge(), auftragNamen, auftragInstrumente);
         auftrag->brichAb();  // fertig: seine Threads laufen gerade aus
         verworfen.push_back(std::move(auftrag));
-        const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge, lumi::loop::saitenAusInstrumenten());
+        // fehlt eine eingefrorene Wellenform, schweigt ihr Clip bis zum naechsten Takt (30f)
+        neuPlanen = lumi::loop::frozenFehlt(auftragNamen, *klaenge);
+        const auto programm =
+            lumi::loop::baueProgramm(loop, rate, klaenge, lumi::loop::saitenAusInstrumenten(), auftragEingefroren);
         durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;
         erzeuger.setzeProgramm(programm);
         return true;
@@ -522,6 +533,12 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         {
             const double vorher = q.loop->durchlaufMs;
             if (q.loop->pruefe(m_verworfen) && q.loop->durchlaufMs != vorher) sprang = true;
+            if (q.loop->neuPlanen)
+            {
+                // eine eingefrorene Wellenform fehlte (30f): ihr Clip spielt live
+                q.loop->neuPlanen = false;
+                q.loop->baue(engine, m_verworfen);
+            }
         }
         // Ein Loop, den das Loop-Panel offen hat, folgt dessen Fassung (L7 a):
         // geaendert hat sich nur etwas, wenn das Panel seit dem letzten Blick

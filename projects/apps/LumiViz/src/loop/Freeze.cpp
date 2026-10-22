@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <map>
 #include <mutex>
+#include <set>
 
 namespace lumi::loop
 {
@@ -257,11 +258,33 @@ QString frozenDatei(const QByteArray& abdruck)
     return QDir(ordner).filePath(name);
 }
 
+namespace
+{
+
+/// Abdruecke, deren Datei sich nicht lesen liess (30f) — bis sie neu abgelegt werden.
+std::mutex& unlesbarSperre()
+{
+    static std::mutex sperre;
+    return sperre;
+}
+
+std::set<QByteArray>& unlesbar()
+{
+    static std::set<QByteArray> abdruecke;
+    return abdruecke;
+}
+
+}  // namespace
+
 bool legeFrozen(const QByteArray& abdruck, const std::vector<float>& stereo, int rate)
 {
     const QString datei = frozenDatei(abdruck);
     if (datei.isEmpty() || !QDir().mkpath(QFileInfo(datei).absolutePath())) return false;
     if (!audio::schreibeWav(datei, stereo, rate, audio::WavTiefe::Gleitkomma32).geschrieben) return false;
+    {
+        const std::lock_guard<std::mutex> halt(unlesbarSperre());
+        unlesbar().erase(abdruck);
+    }
     halteFrozenGrenze();
     return true;
 }
@@ -329,6 +352,51 @@ void merkeFrozenGrenzeMb(int mb)
     else
         einstellungen.setValue(QLatin1String(kFrozenGrenze), mb);
     halteFrozenGrenze();
+}
+
+// --- abspielen (Stufe 30f) -------------------------------------------------------------
+
+Eingefroren eingefrorenVon(const Loop& loop, int rate, const SaitenVon& saiten)
+{
+    Eingefroren eingefroren;
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+        for (const LoopClip& clip : loop.kanaele[k].clips)
+        {
+            if (clip.frozen.isEmpty()) continue;
+            const ClipOrt ort{static_cast<int>(k), clip.startTakt};
+            // der jetzige Abdruck, nicht der gespeicherte (FV2 a)
+            const QByteArray abdruck = clipAbdruck(loop, ort, rate, saiten);
+            {
+                const std::lock_guard<std::mutex> halt(unlesbarSperre());
+                if (unlesbar().contains(abdruck)) continue;
+            }
+            const QString datei = frozenDatei(abdruck);
+            if (datei.isEmpty() || !QFileInfo(datei).isFile()) continue;
+            // gebraucht: die Aenderungszeit ist der letzte Gebrauch (auch wenn der Klang
+            // dann aus dem Tonspeicher kommt)
+            QFile zeit(datei);
+            if (zeit.open(QIODevice::ReadWrite)) (void)zeit.setFileTime(QDateTime::currentDateTime(), QFileDevice::FileModificationTime);
+            eingefroren[{ort.kanal, ort.startTakt}] = QString::fromLatin1(abdruck);
+        }
+    return eingefroren;
+}
+
+void vergissFrozen(const QByteArray& abdruck)
+{
+    {
+        const std::lock_guard<std::mutex> halt(unlesbarSperre());
+        unlesbar().insert(abdruck);
+    }
+    if (const QString datei = frozenDatei(abdruck); !datei.isEmpty()) (void)QFile::remove(datei);
+}
+
+bool frozenFehlt(const QStringList& namen, const Klaenge& klaenge)
+{
+    for (qsizetype i = 0; i < namen.size(); ++i)
+        if (!abdruckVonKlang(namen[i]).isEmpty() &&
+            (static_cast<std::size_t>(i) >= klaenge.size() || klaenge[static_cast<std::size_t>(i)] == nullptr))
+            return true;
+    return false;
 }
 
 }  // namespace lumi::loop

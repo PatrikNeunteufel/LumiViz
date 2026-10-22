@@ -28,10 +28,12 @@
 
 #include "loop/Bearbeiten.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Rechenkern.hpp"
 #include "loop/Saiten.hpp"
 
 #include <QByteArray>
 #include <QString>
+#include <QStringList>
 
 #include <optional>
 #include <vector>
@@ -93,5 +95,19 @@ void halteFrozenGrenze(qint64 grenzeBytes);
 [[nodiscard]] int gemerkteFrozenGrenzeMb();
 /// Merken (geklemmt; die Vorgabe wird nicht eingetragen) und gleich halten.
 void merkeFrozenGrenzeMb(int mb);
+
+// --- abspielen (Stufe 30f; Entscheide F3 a, FV1 a, FV2 a) ------------------------------
+
+/// Welche Clips jetzt ihre Wellenform spielen: jeder mit Marke `frozen`, dessen **jetziger**
+/// Abdruck als Datei vorliegt (FV2 a) — ob er dem gespeicherten gleicht oder nicht; die
+/// Datei zaehlt dann als gerade gebraucht. Die anderen spielen live. Ein Abdruck, der sich
+/// nicht lesen liess (`vergissFrozen`), zaehlt nicht mehr, bis er neu abgelegt wird.
+[[nodiscard]] Eingefroren eingefrorenVon(const Loop& loop, int rate, const SaitenVon& saiten);
+/// Eine Wellenform, die sich nicht lesen liess: die Datei geht (ein Speicher, kein Werk —
+/// F5 a), und bis `legeFrozen` sie neu ablegt, spielt ihr Clip live. Von jedem Thread aus.
+void vergissFrozen(const QByteArray& abdruck);
+/// Fehlt unter `klaenge` (je Name einer) eine eingefrorene Wellenform aus `namen` — liess
+/// sie sich nicht laden? Dann ist neu zu planen: `eingefrorenVon` nennt ihren Clip nicht mehr.
+[[nodiscard]] bool frozenFehlt(const QStringList& namen, const Klaenge& klaenge);
 
 }  // namespace lumi::loop
