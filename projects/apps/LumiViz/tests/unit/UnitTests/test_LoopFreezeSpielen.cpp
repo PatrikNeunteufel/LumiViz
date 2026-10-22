@@ -18,6 +18,9 @@
  *   Nachklang klingt ueber die Naht unter den naechsten Durchlaeufen weiter (FV1 a).
  * - Gegen live: ein eingefrorener Clip mit Echo klingt im ersten Durchlauf wie live (auf
  *   1e-5 — die Faktoren werden in anderer Reihenfolge malgenommen).
+ * - Stufe 30g-1: Marken (`setzeFrozenMarken`, `frischeFrozenMarken`, `loeseFrozenMarken`), der
+ *   Zustand eines Clips und der `FreezeAuftrag` (ablegen, Abbruch) — Dateien in einem
+ *   Wegwerf-Ordner (`setzeFrozenOrdnerFuerTests`).
  ****************************************************************************************
  */
 
@@ -25,17 +28,23 @@
 
 #include "LoopOhneEngine.hpp"
 #include "loop/Bearbeiten.hpp"
+#include "loop/Freeze.hpp"
+#include "loop/FreezeAuftrag.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
+#include "loop/Tonspeicher.hpp"
 #include "loop/Wellenform.hpp"
 
 #include <QCoreApplication>
+#include <QTemporaryDir>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <thread>
 #include <vector>
 
 using namespace lumi::loop;
@@ -291,5 +300,137 @@ TEST_SUITE("Loop Freeze Spielen")
         MESSAGE("groesste Abweichung " << abweichung << " bei einer Spitze von " << spitze);
         CHECK(spitze > 0.01);
         CHECK(abweichung < 1e-5);
+    }
+
+    TEST_CASE("Loop Freeze 30g-1: Marken und Auftrag — einfrieren, veraendert, beim Speichern neu, Undo, loesen")
+    {
+        SpielenApp app;
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        setzeFrozenOrdnerFuerTests(ordner.path());
+        tonspeicher().leere();
+        const SaitenVon saiten = saitenAusInstrumenten();
+        const Dekodierer nichts = [](const QString&, int, double) { return std::vector<float>{}; };
+
+        // zwei Clips desselben Musters (gleiche Clips teilen eine Datei, F1 a)
+        Muster keys;
+        keys.name = QStringLiteral("Keys");
+        keys.art = MusterArt::Instrument;
+        keys.instrument = QStringLiteral("piano");
+        keys.takte = 1;
+        keys.noten = {Note{0, 4, 60}, Note{8, 4, 64}};
+        Loop loop;
+        loop.muster = {keys};
+        loop.kanaele = {{QStringLiteral("Keys"), true, {{QStringLiteral("Keys"), 0, 1}, {QStringLiteral("Keys"), 2, 1}}}};
+        loop.richte();
+        const ClipOrt erster{0, 0};
+        const ClipOrt zweiter{0, 2};
+        CHECK(frozenZustand(loop, erster, kRate, saiten) == FrozenZustand::Aus);
+
+        // Freeze clip: die Marke steht, die Datei fehlt noch — zu rechnen
+        CHECK(setzeFrozenMarken(loop, {erster}, kRate, saiten) == std::vector<ClipOrt>{erster});
+        CHECK(loop.kanaele[0].clips[0].frozen == QString::fromLatin1(clipAbdruck(loop, erster, kRate, saiten)));
+        CHECK(frozenZustand(loop, erster, kRate, saiten) == FrozenZustand::Fehlt);
+        CHECK(fehlendeFrozen(loop, kRate, saiten) == std::vector<ClipOrt>{erster});
+        {
+            FreezeAuftrag auftrag(loop, {erster}, kRate, nichts);
+            auftrag.warte();
+            REQUIRE(auftrag.beendet());
+            const std::optional<FreezeErgebnis> e = auftrag.ergebnis();
+            REQUIRE(e.has_value());
+            CHECK_FALSE(e->abgebrochen);
+            CHECK(e->gelegt == std::vector<ClipOrt>{erster});
+            CHECK(e->fehlgeschlagen.empty());
+            CHECK(auftrag.stand().beendet);
+        }
+        CHECK(frozenZustand(loop, erster, kRate, saiten) == FrozenZustand::Frozen);
+        CHECK(eingefrorenVon(loop, kRate, saiten).size() == 1);
+        // der zweite, gleiche Clip: seine Datei liegt schon vor
+        CHECK(setzeFrozenMarken(loop, {zweiter}, kRate, saiten).empty());
+        CHECK(frozenZustand(loop, zweiter, kRate, saiten) == FrozenZustand::Frozen);
+        CHECK(frozenStand().dateien == 1);
+        const Loop eingefroren = loop;
+
+        // bearbeitet: veraendert, spielt live; beim Speichern neu (F2 a)
+        loop.muster[0].noten[1].hoehe = 67;
+        loop.richte();
+        CHECK(frozenZustand(loop, erster, kRate, saiten) == FrozenZustand::Veraendert);
+        CHECK(eingefrorenVon(loop, kRate, saiten).empty());
+        CHECK(fehlendeFrozen(loop, kRate, saiten).empty());  // veraendert ist nicht „fehlt"
+        const std::vector<ClipOrt> neu = frischeFrozenMarken(loop, kRate, saiten);
+        CHECK(neu == std::vector<ClipOrt>{erster, zweiter});
+        CHECK(frozenZustand(loop, erster, kRate, saiten) == FrozenZustand::Fehlt);
+        {
+            FreezeAuftrag auftrag(loop, neu, kRate, nichts);
+            auftrag.warte();
+            CHECK(auftrag.ergebnis()->gelegt == neu);  // der zweite fand die Datei des ersten
+        }
+        CHECK(frozenZustand(loop, zweiter, kRate, saiten) == FrozenZustand::Frozen);
+        CHECK(frozenStand().dateien == 2);  // ueberschrieben wird nie (F1 a)
+
+        // Undo auf den eingefrorenen Stand: sofort frozen, die alte Datei liegt noch
+        CHECK(frozenZustand(eingefroren, erster, kRate, saiten) == FrozenZustand::Frozen);
+
+        // Unfreeze clip: die Marke geht, die Datei bleibt
+        Loop geloest = loop;
+        loeseFrozenMarken(geloest, {erster, zweiter});
+        CHECK(frozenZustand(geloest, erster, kRate, saiten) == FrozenZustand::Aus);
+        CHECK(eingefrorenVon(geloest, kRate, saiten).empty());
+        CHECK(frozenStand().dateien == 2);
+
+        // geraeumt (Clear frozen clips): unveraendert, aber die Datei fehlt — neu zu rechnen (F5 a)
+        CHECK(leereFrozen() == 2);
+        CHECK(fehlendeFrozen(loop, kRate, saiten) == std::vector<ClipOrt>{erster, zweiter});
+
+        setzeFrozenOrdnerFuerTests({});
+        tonspeicher().leere();
+    }
+
+    TEST_CASE("Loop Freeze 30g-1: der Auftrag laesst sich abbrechen — ohne Datei; Stand waehrend der Toene")
+    {
+        SpielenApp app;
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        setzeFrozenOrdnerFuerTests(ordner.path());
+        tonspeicher().leere();
+        // eine Drum-Spur mit einer Datei: der Dekodierer haelt, bis der Fall ihn freigibt
+        std::atomic<bool> halten{true};
+        std::atomic<bool> gerufen{false};
+        const Dekodierer haelt = [&](const QString&, int, double) {
+            gerufen = true;
+            while (halten.load()) std::this_thread::yield();
+            return std::vector<float>(200, 0.5f);
+        };
+        Muster m;
+        m.name = QStringLiteral("M");
+        m.takte = 1;
+        m.spuren = {{QStringLiteral("A"), QStringLiteral("C:/s/haelt.wav"), 1.0, 0.0, false}};
+        m.zeilen = {std::vector<double>(16, 0.0)};
+        m.zeilen[0][0] = 1.0;
+        Loop loop;
+        loop.muster = {m};
+        loop.kanaele = {{QStringLiteral("A"), true, {{QStringLiteral("M"), 0, 1}}}};
+        loop.richte();
+        const ClipOrt ort{0, 0};
+        (void)setzeFrozenMarken(loop, {ort}, kRate, saitenAusInstrumenten());
+
+        FreezeAuftrag auftrag(loop, {ort}, kRate, haelt);
+        while (!gerufen.load()) std::this_thread::yield();
+        const FreezeStand stand = auftrag.stand();
+        CHECK(stand.clips == 1);
+        CHECK(stand.clip == 0);
+        CHECK_FALSE(stand.beendet);
+        CHECK(stand.anteil < 0.5);
+        auftrag.brichAb();
+        halten = false;
+        auftrag.warte();
+        REQUIRE(auftrag.ergebnis().has_value());
+        CHECK(auftrag.ergebnis()->abgebrochen);
+        CHECK(auftrag.ergebnis()->gelegt.empty());
+        CHECK(frozenStand().dateien == 0);
+        CHECK(frozenZustand(loop, ort, kRate, saitenAusInstrumenten()) == FrozenZustand::Fehlt);
+
+        setzeFrozenOrdnerFuerTests({});
+        tonspeicher().leere();
     }
 }

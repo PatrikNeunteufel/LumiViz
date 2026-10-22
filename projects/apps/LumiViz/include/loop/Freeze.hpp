@@ -110,4 +110,28 @@ void vergissFrozen(const QByteArray& abdruck);
 /// sie sich nicht laden? Dann ist neu zu planen: `eingefrorenVon` nennt ihren Clip nicht mehr.
 [[nodiscard]] bool frozenFehlt(const QStringList& namen, const Klaenge& klaenge);
 
+// --- bedienen (Stufe 30g; Entscheide F2 a, F5 a, FV2 a, FZ4 a) -------------------------
+
+/// Wie ein Clip zu Freeze steht. Das Rechnen („computing…“) weiss nur, wer den Auftrag haelt.
+enum class FrozenZustand
+{
+    Aus,        ///< keine Marke: live
+    Frozen,     ///< die Wellenform zum jetzigen Abdruck liegt vor
+    Veraendert, ///< seit dem Einfrieren veraendert — der jetzige Abdruck ist nicht der gespeicherte („frozen · changed“), live
+    Fehlt,      ///< unveraendert, aber die Datei fehlt (geraeumt, unlesbar, noch nie gerechnet) — neu zu rechnen (F5 a)
+};
+
+[[nodiscard]] FrozenZustand frozenZustand(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten);
+
+/// Die Marken der Clips an `orte` auf ihren jetzigen Abdruck setzen (*Freeze clip*, FZ4 a).
+/// Zurueck die Clips, deren Wellenform dazu fehlt — sie sind zu rechnen.
+std::vector<ClipOrt> setzeFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte, int rate, const SaitenVon& saiten);
+/// Beim Speichern (F2 a): die Marken aller eingefrorenen Clips auf ihren jetzigen Abdruck.
+/// Zurueck die Clips, deren Wellenform dazu fehlt.
+std::vector<ClipOrt> frischeFrozenMarken(Loop& loop, int rate, const SaitenVon& saiten);
+/// Die Marken der Clips an `orte` wegnehmen (*Unfreeze clip*); die Dateien bleiben im Speicher.
+void loeseFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte);
+/// Die eingefrorenen Clips, deren Datei fehlt, obwohl sie unveraendert sind (`FrozenZustand::Fehlt`).
+[[nodiscard]] std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const SaitenVon& saiten);
+
 }  // namespace lumi::loop

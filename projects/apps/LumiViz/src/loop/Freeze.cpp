@@ -274,6 +274,17 @@ std::set<QByteArray>& unlesbar()
     return abdruecke;
 }
 
+/// Liegt die Wellenform zum Abdruck vor — und liess sie sich bisher lesen?
+bool liegtVor(const QByteArray& abdruck)
+{
+    {
+        const std::lock_guard<std::mutex> halt(unlesbarSperre());
+        if (unlesbar().contains(abdruck)) return false;
+    }
+    const QString datei = frozenDatei(abdruck);
+    return !datei.isEmpty() && QFileInfo(datei).isFile();
+}
+
 }  // namespace
 
 bool legeFrozen(const QByteArray& abdruck, const std::vector<float>& stereo, int rate)
@@ -366,12 +377,8 @@ Eingefroren eingefrorenVon(const Loop& loop, int rate, const SaitenVon& saiten)
             const ClipOrt ort{static_cast<int>(k), clip.startTakt};
             // der jetzige Abdruck, nicht der gespeicherte (FV2 a)
             const QByteArray abdruck = clipAbdruck(loop, ort, rate, saiten);
-            {
-                const std::lock_guard<std::mutex> halt(unlesbarSperre());
-                if (unlesbar().contains(abdruck)) continue;
-            }
+            if (!liegtVor(abdruck)) continue;
             const QString datei = frozenDatei(abdruck);
-            if (datei.isEmpty() || !QFileInfo(datei).isFile()) continue;
             // gebraucht: die Aenderungszeit ist der letzte Gebrauch (auch wenn der Klang
             // dann aus dem Tonspeicher kommt)
             QFile zeit(datei);
@@ -388,6 +395,74 @@ void vergissFrozen(const QByteArray& abdruck)
         unlesbar().insert(abdruck);
     }
     if (const QString datei = frozenDatei(abdruck); !datei.isEmpty()) (void)QFile::remove(datei);
+}
+
+// --- bedienen (Stufe 30g) --------------------------------------------------------------
+
+namespace
+{
+
+LoopClip* clipAn(Loop& loop, ClipOrt ort)
+{
+    const int nr = findeClip(loop, ort);
+    return nr < 0 ? nullptr : &loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(nr)];
+}
+
+}  // namespace
+
+FrozenZustand frozenZustand(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten)
+{
+    const int nr = findeClip(loop, ort);
+    if (nr < 0) return FrozenZustand::Aus;
+    const LoopClip& clip = loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(nr)];
+    if (clip.frozen.isEmpty()) return FrozenZustand::Aus;
+    const QByteArray jetzt = clipAbdruck(loop, ort, rate, saiten);
+    if (liegtVor(jetzt)) return FrozenZustand::Frozen;
+    return QString::fromLatin1(jetzt) == clip.frozen ? FrozenZustand::Fehlt : FrozenZustand::Veraendert;
+}
+
+std::vector<ClipOrt> setzeFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte, int rate, const SaitenVon& saiten)
+{
+    std::vector<ClipOrt> zuRechnen;
+    for (const ClipOrt& ort : orte)
+    {
+        LoopClip* clip = clipAn(loop, ort);
+        if (clip == nullptr) continue;
+        // der Abdruck sieht die Marke nicht: es ist gleich, ob sie vorher schon stand
+        const QByteArray jetzt = clipAbdruck(loop, ort, rate, saiten);
+        if (jetzt.isEmpty()) continue;
+        clip->frozen = QString::fromLatin1(jetzt);
+        if (!liegtVor(jetzt)) zuRechnen.push_back(ort);
+    }
+    return zuRechnen;
+}
+
+std::vector<ClipOrt> frischeFrozenMarken(Loop& loop, int rate, const SaitenVon& saiten)
+{
+    std::vector<ClipOrt> markiert;
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+        for (const LoopClip& clip : loop.kanaele[k].clips)
+            if (!clip.frozen.isEmpty()) markiert.push_back(ClipOrt{static_cast<int>(k), clip.startTakt});
+    return setzeFrozenMarken(loop, markiert, rate, saiten);
+}
+
+void loeseFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte)
+{
+    for (const ClipOrt& ort : orte)
+        if (LoopClip* clip = clipAn(loop, ort)) clip->frozen.clear();
+}
+
+std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const SaitenVon& saiten)
+{
+    std::vector<ClipOrt> fehlend;
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+        for (const LoopClip& clip : loop.kanaele[k].clips)
+        {
+            const ClipOrt ort{static_cast<int>(k), clip.startTakt};
+            if (!clip.frozen.isEmpty() && frozenZustand(loop, ort, rate, saiten) == FrozenZustand::Fehlt)
+                fehlend.push_back(ort);
+        }
+    return fehlend;
 }
 
 bool frozenFehlt(const QStringList& namen, const Klaenge& klaenge)

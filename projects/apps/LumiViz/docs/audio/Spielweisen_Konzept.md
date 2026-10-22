@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.48.0
+> **Version:** 0.50.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a und TS1 a (Patrik S139–S144);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a und TS1 a (Patrik S139–S144);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -984,6 +984,39 @@ baut `baue` ein Programm nur mit Klängen, die zu den Namen gehören (`passt`; i
 dieser Namen); sonst klingt das bisherige bis `pruefe`. Spieler, Freeze, Ton und Composer unter
 Release-clang und Testing-MSVC 195 / 195.
 
+✅ **FZ4 a** (Patrik S144, nach Skizze): **Bedienung nach Skizze A–D.**
+- **A — Marke am Clip:** rechts auf dem Clip, links vom „fx“: „❄ frozen“ (durchgezogen), „computing… n %“
+  (gepunktet), „❄ frozen · changed“ (gestrichelt, matter); auf einem schmalen Clip nur das Zeichen,
+  der Text im Tooltip.
+- **B — Kontextmenü:** nach *Export audio...* „Freeze clip“, an einem eingefrorenen Clip „Unfreeze
+  clip“; bei mehreren markierten „Freeze 3 clips“ / „Unfreeze 3 clips“.
+- **C — Ablauf:** *Freeze clip* setzt die Marke auf den jetzigen Abdruck (mit Undo) und rechnet sofort im
+  Hintergrund (computing… → frozen); nach einer Bearbeitung „frozen · changed“, der Clip spielt live;
+  beim Speichern im Hintergrund neu eingefroren (F2 a); ein Undo auf den eingefrorenen Stand gilt
+  sofort (die Datei liegt noch); *Unfreeze clip* nimmt die Marke (mit Undo), die Datei bleibt im Speicher,
+  bis die Grenze sie räumt.
+- **D — Hinweiszeile** des Loop-Panels (wie „Preparing sounds…“): „Freezing clip 2 of 3 … 40 %“.
+
+Eingefroren wird nur, wo jemand es wählt — welche Clips sich lohnen, zeigt 30h (F4 a). Grund: wer *Freeze
+clip* wählt, will den Clip ab jetzt fertig spielen; F2 a verhindert das Rechnen mitten im Bearbeiten, ein
+einmaliges Rechnen auf ausdrücklichen Wunsch berührt das nicht. Verworfen: b (auch *Freeze clip* rechnet
+erst beim Speichern — nach dem Klick stünde „changed“ da, ohne dass etwas verändert wurde). Kippt, wenn
+oft eingefroren und gleich weiterbearbeitet wird — dann rechnete a umsonst, b sparte es.
+
+**Plan 30g (S144, Claude):** 30g-1 Ablauf ohne Oberfläche (`FreezeAuftrag`, Marken, Zustand), 30g-2
+Bedienung (Marke und Menü in der `Taktachse`, Befehle mit Undo, Speichern, Hinweiszeile, Spieler und
+Composer schalten um, sobald die Datei liegt). Handbuch und Sichttest-Liste in 30i.
+
+**Gebaut 30g-1 (S144):** in `loop/Freeze` `FrozenZustand` (Aus, Frozen, Veraendert, Fehlt) mit
+`frozenZustand`, `setzeFrozenMarken` (*Freeze clip*; zurück die Clips ohne Datei), `frischeFrozenMarken`
+(beim Speichern, F2 a), `loeseFrozenMarken` (*Unfreeze clip*), `fehlendeFrozen` (unverändert, aber die
+Datei fehlt — F5 a). Neu `loop/FreezeAuftrag`: auf einem eigenen Thread je Clip die Töne
+(`Tonauftrag`), `rechneClip`, `legeFrozen` unter dem jetzigen Abdruck; liegt die Datei schon vor,
+wird nichts gerechnet; Stand (Clip n von m, Anteil: Töne bis 0,5, Rechnen bis 1), Abbruch ohne Datei.
+Tests in `test_LoopFreezeSpielen` (zwei Fälle: Marken und Auftrag über Einfrieren, Bearbeiten, Speichern,
+Undo, Lösen, Räumen; Abbruch mit haltendem Dekodierer). Freeze, Spieler, Ton unter Release-clang und
+Testing-MSVC 46 / 46.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1325,6 +1358,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.50.0 | 2026-10-22 | Session 144. Plan 30g; Stufe 30g-1 gebaut (`FreezeAuftrag`, Marken, Zustand). |
+| 0.49.0 | 2026-10-22 | Session 144. FZ4 a (Bedienung von Freeze nach Skizze A–D). |
 | 0.48.0 | 2026-10-22 | Session 144. Verdacht Tonführung Fall C mit Test belegt und behoben. |
 | 0.47.0 | 2026-10-22 | Session 144. Stufe 30f-3 gebaut (Laden: Spieler, Composer, Vorladen, Lautheit); Verdacht Tonführung Fall C (noch ohne Test). |
 | 0.46.0 | 2026-10-22 | Session 144. §4.4 Bauplan: Hammer-Saite wieder Stufe 31 ff., der Audio-Clip im Loop danach (Patrik). |
