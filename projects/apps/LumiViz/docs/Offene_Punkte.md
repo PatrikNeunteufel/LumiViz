@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.277.0
+> **Version:** 1.278.0
 > **Datum:** 2026-10-22 (Session 144)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -3072,6 +3072,12 @@ Idee Preset-Warmup/Pre-Roll.
   Handbuch 1.202.0 („Clips einfrieren: Freeze“). **Offen:** Sichttest Freeze im Programm
   (`.claude/handover/Sichttest_Freeze.md`; nichts angesehen außer dem Beenden). **Bauplan geändert (Patrik S144):** Hammer-Saite
   wieder **Stufe 31 ff.**, der Audio-Clip im Loop danach.
+  **Stufe 31 Hammer-Saite (S145 begonnen, nichts gebaut):** Recherche (Quellen der Noten, Literatur zu den
+  Rechenverfahren), Entscheide BL1 a (drei Chopin-Ausschnitte als Beispiel-Loops), BL2 a (von Hand aus
+  gemeinfreier Ausgabe vor 1900), HS1 a (modal nach Bank/Zambon/Fontana 2010), HS2 a (Teilschritte 31a–31h),
+  HA1 a bis HA4 a (Datei: Kurven über die Tastatur, *Excitation* + *Modal* an der Schicht, Block *Keyboard*,
+  Anschlagstärke gestuft im Namen). **Offen:** welche Ausgabe je Chopin-Stück; 31a bauen (`undampedFrom`
+  belegen), dann 31b und die Messung der Rechenzeit (entscheidet HA3 a und das Mitschwingen 31e).
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6147,6 +6153,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.278.0 | 2026-10-22 | Session 145. §7 Spielweisen: Stufe 31 Hammer-Saite begonnen (BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; nichts gebaut). |
 | 1.277.0 | 2026-10-22 | Session 145. §7 Spielweisen: Freeze 30i gebaut (FP1 a bis FP3 a: Publish mit eingefrorenen Clips), Handbuch Freeze, Sichttest-Liste Freeze; Stufe 30 fertig bis auf den vollen Lauf. |
 | 1.276.0 | 2026-10-22 | Session 144. §7 Spielweisen: Freeze 30f–30h gebaut (FV1 a, FV2 a, FZ4 a bis FZ7 a); Hammer-Saite wieder Stufe 31; Fix Tonführung Fall C, Fix Absturz beim Beenden (LZ1 a). |
 | 1.275.0 | 2026-10-22 | Session 143. §7 Spielweisen: FZ3 a, Stufe 30e gebaut (Freeze: Dateien, Settings). |
