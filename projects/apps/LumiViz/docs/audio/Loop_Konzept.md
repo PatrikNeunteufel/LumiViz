@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.103.0
+> **Version:** 0.104.0
 > **Datum:** 2026-10-21 (Session 142)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -270,7 +270,7 @@ JSON, Schlüssel englisch wie in `.lvcomp`:
 | `bpm` | Tempo des ganzen Loops | 20 bis 400 |
 | `beatsPerBar`, `stepsPerBeat` | Raster des ganzen Loops; ihr Produkt sind die Schritte je Takt | je 1 bis 16 |
 | `swing` | verzögert jeden zweiten Schritt eines Schlags, bei 1 um einen halben Schritt | 0 bis 1 |
-| `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips im Composer; Vorgabe 0,5 (L6 a) | 0 bis 1 |
+| `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips im Composer; Vorgabe 0,5 (L6 a); wirkt nach den Effekten der Clips und den Fadern, vor dem Limiter (seit S143, `Spielweisen_Konzept.md` WX5 a) | 0 bis 1 |
 | `tags` | die Tags des Loops, dasselbe Schema wie bei einem Song (T2): `title`, `artist`, `album`, `year`, `genre`, `track`, `lyrics` (Songtext, darf LRC-Zeitmarken tragen). Alle freiwillig; der Block fehlt, wenn keins gesetzt ist. Ohne Titel gilt der Dateiname. | — |
 | `patterns[]` | die Muster („Basen"): Name, Art, Länge und alles, was ihr Editor einstellt | — |
 | `patterns[].kind` | Art des Musters, bestimmt den Editor: `drumkit` oder `instrument` (Noten statt Spuren, §4f) | — |
@@ -3992,6 +3992,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.104.0** (S143, 2026-10-22): Dateiformat `volume` — wirkt nach den Effekten und Fadern (Spielweisen_Konzept WX5 a).
 - **0.103.0** (S142, 2026-10-21): §3.2 Audio-Clip im Loop als Stufe 31 vorgemerkt (Patrik; Spielweisen_Konzept §4.4).
 - **0.102.0** (S140, 2026-10-20): `.lvinst` Fassung 15 — `strings.tremoloDown`, `strings.tremoloUp` (der Vibratohebel, Halbtöne, immer; Spielweisen_Konzept SK11 a, Stufe 28c-2a).
 - **0.101.0** (S140, 2026-10-20): §4f `.lvinst` Fassung 14 mit `pitchRange` je Schicht (Stufe 28c-1b).

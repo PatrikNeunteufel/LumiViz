@@ -63,7 +63,9 @@ using Klaenge = std::vector<std::shared_ptr<const Klang>>;
 struct Schlag
 {
     std::int64_t frame = 0;  ///< Stelle im Durchlauf
-    float links = 0.0f;      ///< Lautstaerke: Schritt mal Spur mal Loop, mit Panorama
+    /// Lautstaerke: Schritt mal Spur, mit Panorama; ohne Bus auch mal Fader und Loop
+    /// (mit Bus traegt der Bus beide, nach den Effekten — WX5 a)
+    float links = 0.0f;
     float rechts = 0.0f;
     /// Index in `Ablauf::busse`, wenn der Clip des Schlags Effekte hat; -1 =
     /// der Schlag geht unbearbeitet in die Summe.
@@ -104,8 +106,10 @@ struct Bus
     int kanal = 0;      ///< Index des Kanals im Loop
     int startTakt = 0;  ///< zusammen mit dem Kanal: welcher Clip
     ClipEffekte effekte;
-    /// Der Fader des Kanals (Stufe 27e-1): wer den Bus nach den Effekten
-    /// dazumischt, nimmt ihn mal diesen Faktor. Die Schlaege im Bus tragen ihn nicht.
+    /// Der Fader des Kanals (Stufe 27e-1) mal die Lautstaerke des Loops (Stufe 30,
+    /// WX5 a): wer den Bus nach den Effekten dazumischt, nimmt ihn mal diesen
+    /// Faktor. Die Schlaege im Bus tragen beides nicht — so verstellt die
+    /// Lautstaerke des Loops nicht die Zerrung eines Clips.
     float faktor = 1.0f;
 };
 

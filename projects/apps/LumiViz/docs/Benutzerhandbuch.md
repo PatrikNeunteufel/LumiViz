@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.198.0
+> **Version:** 1.199.0
 > **Datum:** 2026-10-21
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2661,6 +2661,14 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | **Fader** rechts im Kanalkopf | Die Lautstärke des Kanals in dB, von −∞ bis +24 dB, für alle Clips darin — zum Mischen. Senkrecht **ziehen** oder das **Mausrad** stellt ihn in Schritten von 0,5 dB, mit **Shift** von 0,1 dB; **Doppelklick** öffnet ein Feld zum Tippen (auch „-6,5“ oder „-inf“); **Ctrl+Klick** setzt 0 dB. Bei 0 dB steht der Wert matt da, sonst gerahmt; über dem Feld nennt die Zeile unter der Achse die Gesten. Er wirkt nach den Effekten der Clips, wie an einem Mischpult; jeder Zug ist ein Schritt für Undo. Neben den Instrumenten liegen die Drums eines frischen Kits rund 8 dB leiser — hier gleicht man es aus |
 | Haken **Limiter** | Hält die Summe aller Kanäle unter 0 dB, solange das Panel den Loop spielt: Spitzen darüber — etwa von einem Fader über 0 dB — werden weich gesenkt statt abgeschnitten, alles darunter bleibt, wie es ist. Aus: die Summe geht, wie sie ist. Gehört zum Loop, Vorgabe an. Im Composer gilt stattdessen sein eigener Limiter |
 
+**Die Lautstärke des Loops.** Jeder Loop hat eine Lautstärke — in der Datei `volume`, ein neuer
+Loop 0,5 (= −6 dB). Sie ist Luft nach oben, damit sich die Kanäle addieren können, ohne gleich
+über 0 dB zu gehen. Sie wirkt nach den Effekten der Clips und nach den Fadern, vor dem Limiter —
+wie ein Summenregler; die Zerrung eines Clips ändert sie nicht. Im Panel ist sie nicht
+einstellbar: Kanäle gleicht man mit den **Fadern** aus, einen ganzen Loop im Composer mit dem
+Gain seines Clips. Die mitgelieferten Beispiele tragen zum Teil andere Werte (`effects_demo` etwa
+0,3) — deshalb klingen nicht alle gleich laut.
+
 **Wer den Ton hat.** Es spielt immer nur einer: der Composer, das Panel Loop
 oder der Player — in dieser Rangfolge. **Play** im Panel Loop hält den Player
 an; bei **Stop** spielt er weiter, wenn er vorher spielte. Solange **Play**
@@ -3642,6 +3650,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.199.0 | 2026-10-22 | Session 143. §16 Loop NEU **Die Lautstärke des Loops** (Datei `volume`, Vorgabe 0,5, wirkt nach den Effekten und Fadern, vor dem Limiter; nicht einstellbar; Stufe 30, WX5 a, HB1 a). |
 | 1.198.0 | 2026-10-22 | Sessions 142–143. §16 Loop NEU **Die Töne werden vorbereitet**: Rechnen im Hintergrund beim Öffnen, Play wartet mit „Preparing sounds…“, nach einer Änderung „updating sounds“, die Hinweiszeilen der Editoren (auch im Drum-Editor). §15 Composer: das Feld Zeit beim Warten. §8 Settings → Panels NEU **Loop Sound Memory** mit Stand und **Clear** (Stufe 29). |
 | 1.197.0 | 2026-10-21 | Sessions 140–141. §16 Loop NEU **Spuren über der Zeit**: im Instrument-Editor die Zeile **Lanes** (Haken je Spur, Tab dorthin verschoben) und die Spuren **Sustain**, **Sostenuto**, **Expression**, **Vibrato**, **Pitch** über dem Raster — Punkte setzen, ziehen, löschen, **Clear lane**; welche Spur ein Instrument trägt; wie sie klingen (Pedal, Pegel e², an der Saite hinter dem Tonabnehmer). Im Panel Loop die **Expression am Clip** als Kurve (am markierten Clip zu bearbeiten, **Clear expression**). Im Creator **Pitch range** und **Tremolo arm**. Neues Beispiel `lanes_demo` |
 | 1.196.0 | 2026-10-20 | Session 139. §16 Loop: Match im Creator, die Rückfrage beim Speichern, die Abweichung im Fenster Instruments (Stufe 27f). |

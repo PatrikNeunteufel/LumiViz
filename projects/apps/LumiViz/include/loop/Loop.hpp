@@ -565,7 +565,8 @@ struct Loop
     double swing = 0.0;
     /// 0…1, die Lautstaerke des ganzen Loops. Die Vorgabe laesst Luft nach
     /// oben: die Spuren addieren sich, begrenzt wird nichts (Entscheid Patrik
-    /// S108, L6 a).
+    /// S108, L6 a). Sie wirkt nach den Effekten der Clips, wie ein Summenregler
+    /// (Stufe 30, WX5 a).
     double laut = 0.5;
     /// Der Begrenzer am Ausgang (Stufe 27e-3, Entscheide Patrik LL7 a, LL13 a): haelt
     /// die Summe unter 0 dB, solange das Loop-Panel den Loop spielt — im Composer gilt

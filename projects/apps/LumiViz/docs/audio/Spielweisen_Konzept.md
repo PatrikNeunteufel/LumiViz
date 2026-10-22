@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.36.0
+> **Version:** 0.38.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a und TS1 a (Patrik S139–S143);
+> Session 143: TS1 a, WX2 a bis WX5 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX5 a und TS1 a (Patrik S139–S143);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -797,6 +797,85 @@ Stufe vor Freeze mit eigener Rechnung — Freeze müsste sie übernehmen oder do
 nichts spricht dafür außer der Reihenfolge der Ideen). Kippt, wenn der Export vor 29c bis 29f gebraucht
 wird — dann rücken 30a und 30b hinter 29b vor, die Rechnung bleibt eine.
 
+✅ **WX2 a** (Patrik S143): **WAV mit Wahl der Tiefe.** *Export audio…* schreibt WAV, Stereo, mit der
+Rate, mit der der Loop spielt. Der Dialog zum Speichern bietet *Format*: **32-bit float** (Vorgabe,
+wie Freeze, Spitzen über 0 dB bleiben erhalten), **24-bit**, **16-bit** (mit Dither); gemerkt wird die
+zuletzt gewählte Art. Schneiden 24 oder 16 Bit Spitzen über 0 dB ab, sagt es die Rückmeldung nach dem
+Export. Grund: ein Export ist ein Zwischenstand, der verlustfrei weitergeht — 32-bit float ist
+dieselbe Datei wie bei Freeze (eine Rechnung, WX1 a); 24 und 16 Bit sind die üblichen Lieferformate.
+Heute schreibt `schreibeWav` (`loop/Aufnahme`) nur 16 Bit — 30a erweitert den Schreiber ohnehin.
+Verworfen: b (nur 32-bit float — manches ältere Programm liest es nicht), c (dazu FLAC, MP3, OGG über
+BASSenc — vier weitere proprietäre Bibliotheken als Pflicht für Bau und Weitergabe; liegen unter
+`externals/bass/`, sind nicht eingebunden). Kippt, wenn exportierte Clips direkt verschickt oder
+veröffentlicht werden sollen — dann c oder FLAC über das freie libFLAC als eigener Entscheid.
+
+✅ **WX3 a** (Patrik S143), **mit Zusatz: ohne die Pegeländerungen des Composers.** *Export audio…*
+am Loop-Clip im Composer schreibt den Clip über **seine Länge und seinen Versatz**, mit allen
+Wiederholungen, mit den **Fadern und Schaltern der Kanäle des Loops** — ohne die anderen Kanäle der
+Komposition und ohne ihren Limiter. Die Datei endet, wo der Clip im Composer endet. *Zusatz Patrik:*
+„ohne die fade in fade out und sonstigen pegeländerungen im composer“ — also **ohne Gain, Blenden und
+Pegelkurve** des Composer-Clips. Grund: der Export gibt den Ausschnitt des Loops, den der Clip
+spielt; was der Composer am Pegel daraus macht, ist Mischen der Komposition (wie Fader und Limiter
+bei Freeze, F3 a). Verworfen: b (der Loop, wie das Loop-Panel ihn spielt, ein Durchlauf mit dem
+Limiter des Loops — den Loop als Ganzes exportiert man sauberer im Panel Loop). Kippt, wenn der Loop
+ohne Composer als Datei gebraucht wird — dann ein eigener Eintrag im Panel Loop (etwa *Export loop
+audio…*), WX3 bleibt.
+
+✅ **WX4 a** (Patrik S143): **Stufe 30 von innen nach außen.**
+
+| Teilschritt | Inhalt |
+|---|---|
+| 30a | **Die Rechnung**, ohne Oberfläche und ohne Engine. *Clip im Loop-Panel:* nur dieser Clip über alle Wiederholungen, mit seinen Effekten und der Kurve am Clip, ohne Kanal-Fader (F3 a), mit dem Nachklang hinter dem Ende, ohne dass der Durchlauf umspringt — er endet, wenn die Summe 0,5 s lang unter −96 dBFS bleibt, höchstens 30 s nach dem Ende (Werte von Claude gesetzt). *Loop-Clip im Composer:* der Ausschnitt über Versatz und Länge, mit Fadern und Schaltern des Loops (WX3 a), ohne Nachklang. Gerechnet mit dem `Klangerzeuger` selbst — derselbe Weg wie live. Tests: Bit für Bit wie live an derselben Stelle, der Nachklang endet in Stille, Rechenzeit. |
+| 30b | **Der WAV-Schreiber:** 32-bit float, 24 und 16 Bit mit Dither, Meldung bei Kappung. Tests: zurücklesen mit dem eigenen Leser und mit der BassEngine. |
+| 30c | **Export audio…:** zuerst die Skizze des Dialogs mit *Format*; dann der Eintrag im Kontextmenü am Drumkit- und Instrument-Clip im Loop-Panel und am Loop-Clip im Composer, Rechnen im Hintergrund mit Fortschritt, Rückmeldung, Handbuch, Sichttest-Liste. |
+| 30d ff. | **Freeze** (F1 a bis F5 a); der Plan der Teilschritte als eigene Vorlage nach 30c. |
+
+Verworfen: b (30a und 30b in einem — ein roter Test hätte zwei mögliche Ursachen, wie bei TV1 a).
+Kippt, wenn Freeze vor dem Export kommen soll — dann 30a, 30b, danach Freeze als 30c.
+
+**Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
+(`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
+ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
+Clips — und eine Wellenform ohne sie, der man sie live wieder dazugibt, klänge bei Drive anders als
+live. F3 a ging so nicht auf.
+
+✅ **WX5 a** (Patrik S143): **Die Lautstärke des Loops wirkt nach den Effekten der Clips**, wie ein
+Summenregler: Schlag → Effekte des Clips → Fader des Kanals → Lautstärke des Loops → Limiter. F3 a gilt
+damit wörtlich. Grund: sie ist die Lautstärke des ganzen Loops — an einem Mischpult hinter den
+Effekten, wie der Fader (LL12 a); dass sie die Zerrung eines Clips verstellte, war ein Fehler im
+Signalweg. Verworfen: b (sie bleibt vor den Effekten, F3 a wird berichtigt, ihre Änderung friert neu
+ein — kein Klang ändert sich, aber der Fehler bliebe). *Gebaut (S143):* wie der Fader — ohne Effekte
+am Schlag (dieselbe Rechnung, Bit für Bit wie vorher), mit Effekten im Faktor des Busses
+(`Bus::faktor` = Fader mal Lautstärke). Betroffen sind nur Clips mit Drive in Loops mit einer
+Lautstärke unter 1; unter den mitgelieferten **nur `effects_demo`** (*Acid* im Kanal *Bass*, Drive 0,5,
+Mix 0,7, Lautstärke des Loops 0,3): er zerrt jetzt stärker und ist danach auf 0,3 gesenkt. `Loop
+Werte` sieht das **nicht** (größter Betrag 0,516817 → 0,516810, die Summe innerhalb eines Tausendstels
+— der Clip ist vier von 32 Takten); die Behauptung in der Vorlage, der Test zeige jede Änderung, war zu
+stark. Hörprobe offen (`LUMIVIZ_LOOP_WAV`).
+
+✅ **HB1 a** (Patrik S143): **Die Lautstärke des Loops steht im Handbuch** (§16, „Die Lautstärke des
+Loops“): Datei `volume`, Vorgabe 0,5 = −6 dB, Luft nach oben, nach Effekten und Fadern, vor dem
+Limiter, im Panel nicht einstellbar. Bei 30c dazu ein Satz, dass *Export audio…* eines Clips ohne
+Fader und ohne diese Lautstärke schreibt. Verworfen: b (dazu ein Summen-Fader im Panel — seit WX5 a
+tut sie dasselbe wie alle Fader zusammen, ein Regler wäre eine zweite Stelle für dieselbe Wirkung),
+c (nicht beschreiben — sie formt den Pegel, den man hört und exportiert). Kippt, wenn Loops
+verschiedener Lautstärke im Composer ohne Fader und Gain angeglichen werden sollen — dann b.
+
+**Gebaut 30a (S143):** `loop/Wellenform` — `clipFassung` (nur dieser Clip in seinem Kanal, an seinem
+Takt; Fader 0 dB, Lautstärke 1, nur sein Muster; dahinter ein ausgeschalteter Kanal mit einem leeren
+Muster, der den Durchlauf über den längsten Nachklang verlängert — sonst dämpfte die Saitenplanung
+die letzten Töne mit den ersten der nächsten Runde), `rechneClip` (durch den `Klangerzeuger` in
+Blöcken wie im Mixer, ab der Stelle des Clips; der Nachklang endet, wenn die Summe 0,5 s unter −96 dBFS
+bleibt, sonst nach 30 s mit `nachklangGekappt`), `rechneAusschnitt` (WX3 a: der Loop ab dem Versatz,
+im Durchlauf wie die Tonführung, mit Fadern und Lautstärke, ohne Nachklang); Fortschritt und
+Abbruch. Test `test_LoopWellenform`: Bit für Bit wie live (Clip allein), WX5 a am Drive-Clip (live mit
+Fader und Lautstärke = Welle mal beide, Bit für Bit), der Nachklang endet in Stille und gleicht dem
+weitergerechneten Live-Ton, Saiten mit *Let ring* klingen 3,4 s nach (die Töne tragen ein späteres
+Ende als im gewöhnlichen Durchlauf), der Composer-Ausschnitt gleicht dem Klangerzeuger und wiederholt
+sich, Fortschritt und Abbruch, eine Messung. Dazu in `test_LoopSpieler` „S127 Loop 3b im Composer“: er
+wartet jetzt auf die Töne (seit 29e hing er an der Reihenfolge der Fälle). Im Programm nicht
+angesehen.
+
 ### 4.5 Stufe 29 „Töne vorab“ — Teilschritte
 
 **Befund (Code S142, gelesen): darf `rendereTon` auf mehreren Threads laufen?** Der Rechenkern ja:
@@ -1013,6 +1092,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.38.0 | 2026-10-22 | Session 143. Befund Lautstärke des Loops vor den Effekten; WX5 a (nach den Effekten, gebaut); HB1 a (ins Handbuch); Stufe 30a gebaut (`loop/Wellenform`, `test_LoopWellenform`). |
+| 0.37.0 | 2026-10-22 | Session 143. WX2 a (WAV, 32-bit float als Vorgabe, 24 und 16 Bit wählbar); WX3 a mit Zusatz (Loop-Clip im Composer: Länge, Versatz, Fader des Loops — ohne Gain, Blenden, Pegelkurve und Limiter); WX4 a (Teilschritte 30a–30d ff.). |
 | 0.36.0 | 2026-10-22 | Session 143. TS1 a (Loop Sound Memory mit Stand und Clear); Stufe 29f gebaut (Grenze in den Settings, Handbuch, Sichttest-Liste). |
 | 0.35.0 | 2026-10-21 | Session 142. TV7 a (das Warten im Composer im Feld Zeit, Skizze A–D); Stufe 29e gebaut (Vorladen in der Sitzung, Play wartet, Loop-Quellen der Tonführung über den Tonauftrag). |
 | 0.34.0 | 2026-10-21 | Session 142. Stufe 29d gebaut (Spieler über den Tonauftrag, Warten, Umschalten, Vorladen, Anzeige im Loop-Panel und im Instrument-Editor). |

@@ -1260,6 +1260,10 @@ TEST_CASE("S127 Loop 3b im Composer: ein Loop mit Effekten — der Klangerzeuger
     const auto bei = static_cast<std::int64_t>(std::llround(startTakt * msJeTakt));
     const Komposition k = mitClip(pfad, 0, 120000);
     (void)fuehrung.takt(k, bei, true);
+    // die Klaenge kommen aus dem Hintergrund (Stufe 29e); erst der naechste Takt schaltet um —
+    // ohne das spielte der Clip still, wenn kein Fall davor den Tonspeicher gefuellt hat
+    fuehrung.warteAufToene();
+    (void)fuehrung.takt(k, bei, true);
     REQUIRE(fuehrung.loops() == 1);
     const auto* erzeuger = dynamic_cast<const Klangerzeuger*>(engine.generator);
     REQUIRE(erzeuger != nullptr);

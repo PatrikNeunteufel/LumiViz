@@ -69,7 +69,8 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
     {
         const Kanal& kanal = loop.kanaele[kanalNr];
         if (!kanal.an) continue;
-        // der Fader (Stufe 27e-1): ohne Effekte am Schlag, mit Effekten am Bus — nach den Effekten
+        // der Fader (Stufe 27e-1) und die Lautstaerke des Loops (Stufe 30, WX5 a): ohne
+        // Effekte am Schlag, mit Effekten am Bus — nach den Effekten, wie an einem Mischpult
         const double fader = kanal.gainFaktor();
         // je Kanal: (Muster, Spur) -> Stimme
         std::map<std::pair<const Muster*, std::size_t>, std::size_t> stimmeVon;
@@ -91,9 +92,11 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
             if (clip.effekteWirken())
             {
                 bus = static_cast<int>(ablauf.busse.size());
-                ablauf.busse.push_back({static_cast<int>(kanalNr), clip.startTakt, clip.effekte, static_cast<float>(fader)});
+                ablauf.busse.push_back(
+                    {static_cast<int>(kanalNr), clip.startTakt, clip.effekte, static_cast<float>(fader * loop.laut)});
             }
             const double faderAmSchlag = bus < 0 ? fader : 1.0;
+            const double loopAmSchlag = bus < 0 ? loop.laut : 1.0;
             // Expression (Stufe 28c-1): die Spur des Musters und die Kurve am Clip — an einem
             // Drumkit nur die Kurve; ein Instrument mit Saiten traegt sie im Ton (28c-2b, SK12 a)
             int ausdruck = -1;
@@ -119,7 +122,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
             if (muster->art == MusterArt::Instrument)
             {
                 if (muster->stumm) continue;
-                const double lautMuster = muster->laut * loop.laut * faderAmSchlag;
+                const double lautMuster = muster->laut * loopAmSchlag * faderAmSchlag;
                 for (int runde = 0; runde < clip.wiederholungen; ++runde)
                 {
                     const std::int64_t schrittDavor =
@@ -189,7 +192,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                         const bool versetzt = (i % loop.schritteJeSchlag) % 2 == 1;
                         const double stelle = static_cast<double>(schrittDavor + i) * schrittFrames +
                                               (versetzt ? swingFrames : 0.0);
-                        const double laut = wert * spur.laut * loop.laut * faderAmSchlag;
+                        const double laut = wert * spur.laut * loopAmSchlag * faderAmSchlag;
                         Schlag schlag;
                         schlag.frame = std::llround(stelle);
                         schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - spur.pan));
