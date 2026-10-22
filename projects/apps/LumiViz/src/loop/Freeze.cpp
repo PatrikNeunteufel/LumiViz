@@ -8,6 +8,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Sample.hpp"
+#include "loop/Tonauftrag.hpp"
 #include "loop/Wellenform.hpp"
 #include "shape/Kontur.hpp"
 
@@ -25,6 +26,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <map>
 #include <mutex>
 #include <set>
@@ -482,6 +484,54 @@ std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const SaitenVon&
                 fehlend.push_back(ort);
         }
     return fehlend;
+}
+
+// --- messen (Stufe 30h) ----------------------------------------------------------------
+
+std::optional<double> clipRechenzeitMs(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten)
+{
+    const std::optional<Loop> fassung = clipFassung(loop, ort);
+    if (!fassung || rate <= 0) return std::nullopt;
+    // die Klaenge, wie der Clip sie live braucht — die Schluessel findet der Tonauftrag, ohne zu laden
+    Tonauftrag nachsehen(fassung->klangNamen(saiten), rate, {});
+    return nachsehen.rechenzeitImSpeicherMs();
+}
+
+namespace
+{
+constexpr char kFreezeHinweis[] = "loop/freezeHintS";
+constexpr char kFreezeHinweisWarten[] = "loop/freezeHintWaiting";
+}  // namespace
+
+double gemerkterFreezeHinweisS()
+{
+    const double s = QSettings().value(QLatin1String(kFreezeHinweis), kFreezeHinweisVorgabeS).toDouble();
+    return std::clamp(s, kFreezeHinweisMinS, kFreezeHinweisMaxS);
+}
+
+void merkeFreezeHinweisS(double sekunden)
+{
+    sekunden = std::clamp(sekunden, kFreezeHinweisMinS, kFreezeHinweisMaxS);
+    QSettings einstellungen;
+    if (std::abs(sekunden - kFreezeHinweisVorgabeS) < 1e-9)
+        einstellungen.remove(QLatin1String(kFreezeHinweis));
+    else
+        einstellungen.setValue(QLatin1String(kFreezeHinweis), sekunden);
+}
+
+FreezeHinweisArt gemerkteFreezeHinweisArt()
+{
+    return QSettings().value(QLatin1String(kFreezeHinweisWarten), false).toBool() ? FreezeHinweisArt::Warten
+                                                                                  : FreezeHinweisArt::Arbeit;
+}
+
+void merkeFreezeHinweisArt(FreezeHinweisArt art)
+{
+    QSettings einstellungen;
+    if (art == FreezeHinweisArt::Arbeit)
+        einstellungen.remove(QLatin1String(kFreezeHinweisWarten));
+    else
+        einstellungen.setValue(QLatin1String(kFreezeHinweisWarten), true);
 }
 
 bool frozenFehlt(const QStringList& namen, const Klaenge& klaenge)

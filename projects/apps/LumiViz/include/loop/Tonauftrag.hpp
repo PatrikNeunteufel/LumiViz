@@ -31,6 +31,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -76,6 +77,14 @@ public:
     [[nodiscard]] Klaenge klaenge() const;
     /// Was nicht zu laden war, in der Reihenfolge der Namen, jede Zeile einmal.
     [[nodiscard]] QStringList bericht() const;
+
+    /// Die Summe der Zeiten, die die Klaenge zum Rechnen oder Dekodieren brauchten, so wie
+    /// der Tonspeicher sie gemerkt hat (Stufe 30h, F4 a, FZ6 a) — jeder Name einmal; was nicht
+    /// zu laden ist, zaehlt nicht. Leer = einer liegt nicht im Speicher. Laedt nichts.
+    [[nodiscard]] std::optional<double> rechenzeitImSpeicherMs();
+
+    /// So viele Threads rechnen in einem Auftrag, wenn `starte` sie waehlt: Kerne − 1, mindestens einer.
+    [[nodiscard]] static int rechenThreads();
 
 private:
     struct Gemeinsam;  ///< je Instrument einmal geholt, unter einer Sperre

@@ -1101,6 +1101,46 @@ QWidget* SettingsPanel::createPanelsTab()
         layout->addRow(tr("Frozen Clips:"), zeile);
     }
 
+    // Loop, Stufe 30h (F4 a, FZ5 a D, FZ7 a): ab welcher Rechenzeit ein Clip die Sanduhr traegt —
+    // und ob sie die Arbeit oder die Wartezeit zeigt; die Schwelle gilt fuer die gewaehlte Zahl
+    {
+        auto* zeile = new QWidget(widget);
+        auto* zeilenLayout = new QHBoxLayout(zeile);
+        zeilenLayout->setContentsMargins(0, 0, 0, 0);
+        const QString tipp = tr("A clip whose sounds take longer to compute shows an hourglass with the time — "
+                                "Freeze clip to start it at once. Computing work: all its sounds one after another "
+                                "on one core. Waiting time: divided by the threads that compute.");
+        auto* von = new QLabel(tr("from"), zeile);
+        auto* schwelle = new QDoubleSpinBox(zeile);
+        schwelle->setObjectName(QStringLiteral("loopFreezeHint"));
+        schwelle->setRange(lumi::loop::kFreezeHinweisMinS, lumi::loop::kFreezeHinweisMaxS);
+        schwelle->setSingleStep(0.1);
+        schwelle->setDecimals(1);
+        schwelle->setSuffix(tr(" s"));
+        schwelle->setKeyboardTracking(false);
+        schwelle->setValue(lumi::loop::gemerkterFreezeHinweisS());
+        schwelle->setToolTip(tipp);
+        connect(schwelle, QOverload<double>::of(&QDoubleSpinBox::valueChanged), zeile,
+                [](double s) { lumi::loop::merkeFreezeHinweisS(s); });
+        auto* of = new QLabel(tr("of"), zeile);
+        auto* art = new QComboBox(zeile);
+        art->setObjectName(QStringLiteral("loopFreezeHintKind"));
+        art->addItem(tr("computing work"));
+        art->addItem(tr("waiting time"));
+        art->setCurrentIndex(lumi::loop::gemerkteFreezeHinweisArt() == lumi::loop::FreezeHinweisArt::Warten ? 1 : 0);
+        art->setToolTip(tipp);
+        connect(art, QOverload<int>::of(&QComboBox::currentIndexChanged), zeile, [](int i) {
+            lumi::loop::merkeFreezeHinweisArt(i == 1 ? lumi::loop::FreezeHinweisArt::Warten
+                                                     : lumi::loop::FreezeHinweisArt::Arbeit);
+        });
+        zeilenLayout->addWidget(von);
+        zeilenLayout->addWidget(schwelle);
+        zeilenLayout->addWidget(of);
+        zeilenLayout->addWidget(art);
+        zeilenLayout->addStretch(1);
+        layout->addRow(tr("Freeze hint:"), zeile);
+    }
+
     // Mitgeliefertes aus dem Projektordner statt aus der Kopie neben der Exe
     // (Datenablage_Konzept.md, D9 a mit Schalter; Patrik S114). Die Zeile gibt
     // es nur im Entwicklungsbaum: neben einer weitergegebenen Exe liegt kein

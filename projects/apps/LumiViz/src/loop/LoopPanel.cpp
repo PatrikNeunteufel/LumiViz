@@ -1126,6 +1126,17 @@ void LoopPanel::beimTakt()
     }
     m_spitze = std::max(m_spitze, m_spieler.nimmSpitze());
     pruefeFreeze();  // Stufe 30g
+    // Stufe 30h: neue Toene im Speicher — neu messen; die Settings etwa jede Sekunde
+    if (tonspeicher().stand().gelegt != m_gelegtGesehen)
+    {
+        bestimmeZeiten();
+        zeigeFreezeMarken();
+    }
+    else if (++m_hinweisTakte >= 30)
+    {
+        m_hinweisTakte = 0;
+        zeigeFreezeMarken();
+    }
     if (isVisible() || (m_editor != nullptr && m_editor->isVisible()) ||
         (m_instrumentEditor != nullptr && m_instrumentEditor->isVisible()) ||
         (m_effekte != nullptr && m_effekte->isVisible()))
@@ -1457,6 +1468,7 @@ void LoopPanel::bestimmeFreeze(bool nachAenderung)
                 if (zustand == FrozenZustand::Fehlt) fehlend.push_back(ort);
             }
     }
+    bestimmeZeiten();
     // F5 a: unveraendert, aber die Datei fehlt — neu rechnen (nicht, was schon dran ist,
     // und nicht, was gerade misslang)
     std::erase_if(fehlend, [this](const ClipOrt& ort) {
@@ -1471,10 +1483,41 @@ void LoopPanel::bestimmeFreeze(bool nachAenderung)
     zeigeFreezeMarken();
 }
 
+void LoopPanel::bestimmeZeiten()
+{
+    m_freezeZeit.clear();
+    m_gelegtGesehen = tonspeicher().stand().gelegt;
+    if (!m_geladen) return;
+    const int rate = freezeRate();
+    const SaitenVon saiten = saitenAusInstrumenten();
+    for (std::size_t k = 0; k < m_loop.kanaele.size(); ++k)
+        for (const LoopClip& clip : m_loop.kanaele[k].clips)
+        {
+            if (!clip.frozen.isEmpty()) continue;  // eingefroren: keine Sanduhr (FZ5 a A)
+            const ClipOrt ort{static_cast<int>(k), clip.startTakt};
+            if (const std::optional<double> ms = clipRechenzeitMs(m_loop, ort, rate, saiten))
+                m_freezeZeit[{ort.kanal, ort.startTakt}] = *ms;
+        }
+}
+
 void LoopPanel::zeigeFreezeMarken()
 {
     std::map<std::pair<int, int>, FreezeMarke> marken;
     for (const auto& [ort, zustand] : m_freezeZustand) marken[ort].zustand = zustand;
+    // die Sanduhren (Stufe 30h): ueber der Schwelle, in der Art aus den Settings (FZ7 a)
+    const double schwelle = gemerkterFreezeHinweisS();
+    const bool warten = gemerkteFreezeHinweisArt() == FreezeHinweisArt::Warten;
+    const int threads = Tonauftrag::rechenThreads();
+    for (const auto& [ort, ms] : m_freezeZeit)
+    {
+        if (m_freezeZustand.contains(ort)) continue;
+        FreezeMarke marke;
+        marke.arbeitMs = ms;
+        marke.threads = threads;
+        marke.warten = warten;
+        marke.zeigeZeit = marke.gezeigtS() >= schwelle;
+        if (marke.zeigeZeit) marken[ort] = marke;
+    }
     if (m_freeze != nullptr)
     {
         const FreezeStand stand = m_freeze->stand();

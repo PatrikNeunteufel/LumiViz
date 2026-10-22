@@ -49,6 +49,7 @@
 #include "shape/Kontur.hpp"
 
 #include <QApplication>
+#include <QComboBox>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -520,10 +521,28 @@ TEST_SUITE("Loop Freeze")
 
             grenze->setValue(4.0);
             CHECK(QSettings().value(QStringLiteral("loop/frozenMB")).toInt() == 4096);
+
+            // Stufe 30h (FZ5 a D, FZ7 a): die Zeile Freeze hint — Schwelle und Art, gemerkt
+            auto* schwelle = settings.findChild<QDoubleSpinBox*>(QStringLiteral("loopFreezeHint"));
+            auto* art = settings.findChild<QComboBox*>(QStringLiteral("loopFreezeHintKind"));
+            REQUIRE(schwelle != nullptr);
+            REQUIRE(art != nullptr);
+            CHECK(schwelle->value() == doctest::Approx(1.0));
+            CHECK(schwelle->minimum() == doctest::Approx(0.1));
+            CHECK(schwelle->maximum() == doctest::Approx(60.0));
+            CHECK(art->count() == 2);
+            CHECK(art->currentText() == QStringLiteral("computing work"));
+            schwelle->setValue(2.5);
+            art->setCurrentIndex(1);
+            CHECK(gemerkterFreezeHinweisS() == doctest::Approx(2.5));
+            CHECK(gemerkteFreezeHinweisArt() == FreezeHinweisArt::Warten);
         }
         {
             SettingsPanel settings(dienste);
             CHECK(settings.findChild<QDoubleSpinBox*>(QStringLiteral("loopFrozenLimit"))->value() == doctest::Approx(4.0));
+            CHECK(settings.findChild<QDoubleSpinBox*>(QStringLiteral("loopFreezeHint"))->value() == doctest::Approx(2.5));
+            CHECK(settings.findChild<QComboBox*>(QStringLiteral("loopFreezeHintKind"))->currentText() ==
+                  QStringLiteral("waiting time"));
         }
         lumi::ui::setzeDialogBeobachterFuerTests({});
         setzeFrozenOrdnerFuerTests({});

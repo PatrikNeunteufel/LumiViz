@@ -122,7 +122,7 @@ void Tonauftrag::rechneHier()
 void Tonauftrag::starte(int threads)
 {
     if (!m_threads.empty()) return;
-    int zahl = threads > 0 ? threads : static_cast<int>(std::thread::hardware_concurrency()) - 1;
+    int zahl = threads > 0 ? threads : rechenThreads();
     zahl = std::min(std::max(zahl, 1), gesamt());
     m_laufend = zahl;
     for (int t = 0; t < zahl; ++t)
@@ -289,6 +289,27 @@ void Tonauftrag::lade(std::size_t einer)
     }
     else
         m_zeilen[einer] << QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(klang));
+}
+
+int Tonauftrag::rechenThreads()
+{
+    return std::max(1, static_cast<int>(std::thread::hardware_concurrency()) - 1);
+}
+
+std::optional<double> Tonauftrag::rechenzeitImSpeicherMs()
+{
+    double summe = 0.0;
+    for (std::size_t einer = 0; einer < m_einzeln.size(); ++einer)
+    {
+        QString schluessel;
+        Geholt* geholt = nullptr;
+        (void)ausSpeicher(einer, schluessel, geholt);
+        if (schluessel.isEmpty()) continue;  // nicht zu laden (oder eine Datei, die es nicht gibt): still
+        const std::optional<double> zeit = tonspeicher().rechenzeitMs(schluessel);
+        if (!zeit) return std::nullopt;
+        summe += *zeit;
+    }
+    return summe;
 }
 
 Klaenge Tonauftrag::klaenge() const

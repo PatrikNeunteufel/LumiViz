@@ -27,6 +27,7 @@
 #include <QRect>
 #include <QString>
 
+#include <algorithm>
 #include <cstdint>
 #include <map>
 #include <utility>
@@ -43,7 +44,13 @@ struct FreezeMarke
     FrozenZustand zustand = FrozenZustand::Aus;
     bool rechnet = false;  ///< ein Auftrag friert ihn gerade ein: „computing… n %“
     double anteil = 0.0;   ///< dabei: 0 … 1
+    // --- die Sanduhr (Stufe 30h; F4 a, FZ5 a bis FZ7 a) ---
+    bool zeigeZeit = false;  ///< ueber der Schwelle und nicht eingefroren
+    double arbeitMs = 0.0;   ///< die Rechenzeit, die Arbeit auf einem Kern (FZ6 a)
+    int threads = 1;         ///< so viele rechnen — die Wartezeit ist `arbeitMs / threads`
+    bool warten = false;     ///< die Sanduhr zeigt die Wartezeit statt der Arbeit (FZ7 a)
 
+    [[nodiscard]] double gezeigtS() const { return (warten ? arbeitMs / std::max(1, threads) : arbeitMs) / 1000.0; }
     [[nodiscard]] bool operator==(const FreezeMarke&) const = default;
 };
 
@@ -142,8 +149,10 @@ public:
     [[nodiscard]] FreezeMarke freezeMarke(int kanal, int startTakt) const;
     /// Was die Marke sagt: „❄ frozen“, „computing… 40 %“, „❄ frozen · changed“; leer = keine.
     [[nodiscard]] static QString freezeText(const FreezeMarke& marke);
-    /// Der Tooltip dazu, mit Erklaerung.
+    /// Der Tooltip dazu, mit Erklaerung — an der Sanduhr beide Zahlen (FZ7 a).
     [[nodiscard]] static QString freezeTooltip(const FreezeMarke& marke);
+    /// Was die Sanduhr sagt: „⏳ 3.2 s“; leer = keine.
+    [[nodiscard]] static QString zeitText(const FreezeMarke& marke);
     void kanalHinzu();
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);

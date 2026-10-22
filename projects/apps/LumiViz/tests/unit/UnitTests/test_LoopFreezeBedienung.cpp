@@ -20,10 +20,13 @@
 
 #include "UI/widgets/Bedienhilfe.hpp"
 #include "loop/Freeze.hpp"
+#include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/LoopPanel.hpp"
 #include "loop/Taktachse.hpp"
+#include "loop/Tonauftrag.hpp"
 #include "loop/Tonspeicher.hpp"
+#include "loop/Wellenform.hpp"  // clipFassung
 #include "services/CommandBus.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
@@ -271,5 +274,158 @@ TEST_SUITE("Loop Freeze Bedienung")
             kurz.insert(kurz.lastIndexOf(QLatin1Char('.')), QStringLiteral("_short"));
             CHECK(mit.save(kurz));
         }
+    }
+
+    TEST_CASE("Loop Freeze 30h: die Sanduhr — Text, Tooltip mit beiden Zahlen, Menue, Kurzform")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        MenueFang fang;
+        Muster m;
+        m.name = QStringLiteral("Riff");
+        m.takte = 4;
+        Muster schmal;
+        schmal.name = QStringLiteral("Fill");
+        schmal.takte = 1;
+        Loop loop;
+        loop.muster = {m, schmal};
+        loop.kanaele = {{QStringLiteral("Guitar"), true, {{QStringLiteral("Riff"), 0, 1}, {QStringLiteral("Fill"), 4, 1}}}};
+        loop.richte();
+        Taktachse achse;  // nicht gezeigt
+        achse.resize(1000, 200);
+        achse.setLoop(loop, true);
+
+        FreezeMarke zeit;
+        zeit.zeigeZeit = true;
+        zeit.arbeitMs = 3200.0;
+        zeit.threads = 7;
+        CHECK(Taktachse::zeitText(zeit) == QString(QChar(0x23F3)) + QStringLiteral(" 3.2 s"));
+        CHECK(Taktachse::freezeTooltip(zeit) ==
+              QStringLiteral("Computing this clip takes 3.2 s of work (about 0.5 s waiting on 7 threads) — "
+                             "Freeze clip to start it at once"));
+        FreezeMarke wartend = zeit;
+        wartend.warten = true;
+        CHECK(Taktachse::zeitText(wartend) == QString(QChar(0x23F3)) + QStringLiteral(" 0.5 s"));
+        FreezeMarke eingefroren = zeit;
+        eingefroren.zustand = FrozenZustand::Frozen;
+        CHECK(Taktachse::zeitText(eingefroren).isEmpty());  // eingefroren: keine Sanduhr
+
+        const QImage ohne = achse.grab().toImage();
+        achse.setzeFreezeMarken({{{0, 0}, zeit}, {{0, 4}, zeit}});
+        const QImage mit = achse.grab().toImage();
+        CHECK(mit != ohne);
+        // im Menue die Zeit
+        achse.waehle(0, 0);
+        rechts(achse, achse.clipRechteck(0, 0).center());
+        CHECK(fang.texte.contains(QStringLiteral("Freeze clip (3.2 s to compute)")));
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_FREEZE_BILD"); !bild.isEmpty())
+        {
+            QString sanduhr = bild;
+            sanduhr.insert(sanduhr.lastIndexOf(QLatin1Char('.')), QStringLiteral("_hourglass"));
+            CHECK(mit.save(sanduhr));
+        }
+    }
+
+    TEST_CASE("Loop Freeze 30h: Rechenzeit aus dem Tonspeicher, Settings, Sanduhr im Panel")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        setzeFrozenOrdnerFuerTests(ordner.filePath(QStringLiteral("frozen")));
+        tonspeicher().leere();
+        const SaitenVon saiten = saitenAusInstrumenten();
+
+        // --- Settings: Vorgabe 1 s und computing work, geklemmt, gemerkt
+        CHECK(gemerkterFreezeHinweisS() == doctest::Approx(1.0));
+        CHECK(gemerkteFreezeHinweisArt() == FreezeHinweisArt::Arbeit);
+        merkeFreezeHinweisS(100.0);
+        CHECK(gemerkterFreezeHinweisS() == doctest::Approx(60.0));
+        merkeFreezeHinweisArt(FreezeHinweisArt::Warten);
+        CHECK(gemerkteFreezeHinweisArt() == FreezeHinweisArt::Warten);
+        merkeFreezeHinweisArt(FreezeHinweisArt::Arbeit);
+        merkeFreezeHinweisS(kFreezeHinweisVorgabeS);
+        CHECK_FALSE(QSettings().contains(QStringLiteral("loop/freezeHintS")));  // die Vorgabe wird nicht eingetragen
+
+        // --- vor dem ersten Rechnen keine Zahl; danach die Summe, bei gleichen Clips dieselbe
+        const Loop loop = probeLoop();
+        CHECK_FALSE(clipRechenzeitMs(loop, ClipOrt{0, 0}, 44100, saiten).has_value());
+        {
+            const std::optional<Loop> fassung = clipFassung(loop, ClipOrt{0, 0});
+            REQUIRE(fassung.has_value());
+            Tonauftrag rechne(fassung->klangNamen(saiten), 44100,
+                              [](const QString&, int, double) { return std::vector<float>{}; });
+            rechne.rechneHier();
+        }
+        const std::optional<double> gemessen = clipRechenzeitMs(loop, ClipOrt{0, 0}, 44100, saiten);
+        REQUIRE(gemessen.has_value());
+        CHECK(*gemessen > 0.0);
+        MESSAGE("Rechenzeit der Keys, gemessen: " << *gemessen << " ms");
+        // die Klaviertoene rechnen in Millisekunden: fuer den Fall mit Sanduhr bekommt jeder Ton
+        // im Speicher 600 ms — die Summe ist dann genau bekannt
+        int toene = 0;
+        {
+            const std::optional<Loop> fassung = clipFassung(loop, ClipOrt{0, 0});
+            REQUIRE(fassung.has_value());
+            for (const QString& name : fassung->klangNamen(saiten))
+            {
+                TonAngabe ton;
+                REQUIRE(zerlegeTon(name, ton));
+                Instrument instrument;
+                REQUIRE(holeInstrument(ton.instrument, instrument));
+                const QString schluessel = tonSchluessel(name, 44100, instrumentAbdruck(instrument));
+                const std::shared_ptr<const Klang> klang = tonspeicher().hole(schluessel);
+                REQUIRE(klang != nullptr);
+                tonspeicher().lege(schluessel, klang, 600.0);
+                ++toene;
+            }
+        }
+        REQUIRE(toene == 2);
+        const double arbeit = 600.0 * toene;
+        CHECK(clipRechenzeitMs(loop, ClipOrt{0, 0}, 44100, saiten) == doctest::Approx(arbeit));
+        CHECK(clipRechenzeitMs(loop, ClipOrt{0, 4}, 44100, saiten) == doctest::Approx(arbeit));  // dieselben Toene
+        CHECK(clipRechenzeitMs(loop, ClipOrt{1, 0}, 44100, saiten) == doctest::Approx(0.0));  // ohne Klang
+
+        // --- im Panel: ueber der Schwelle die Sanduhr, darunter nicht; eingefroren keine
+        const QString pfad = ordner.filePath(QStringLiteral("probe.lvloop"));
+        REQUIRE(speichereLoop(loop, pfad));
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>([](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        {
+            LoopPanel panel(dienste);
+            REQUIRE(panel.lade(pfad));  // Schwelle 1 s, computing work: 1,2 s
+            Taktachse& achse = *panel.taktachse();
+            const FreezeMarke marke = achse.freezeMarke(0, 0);
+            CHECK(marke.zeigeZeit);
+            CHECK(marke.arbeitMs == doctest::Approx(arbeit));
+            CHECK(marke.threads == Tonauftrag::rechenThreads());
+            CHECK(Taktachse::zeitText(marke) == QString(QChar(0x23F3)) + QStringLiteral(" 1.2 s"));
+            CHECK_FALSE(achse.freezeMarke(1, 0).zeigeZeit);  // 0 s
+
+            // waiting time: 1,2 s geteilt durch die Threads — unter 1 s, sobald es mehr als einer ist
+            merkeFreezeHinweisArt(FreezeHinweisArt::Warten);
+            REQUIRE(panel.lade(pfad));
+            CHECK(achse.freezeMarke(0, 0).zeigeZeit == (arbeit / 1000.0 / Tonauftrag::rechenThreads() >= 1.0));
+            merkeFreezeHinweisArt(FreezeHinweisArt::Arbeit);
+
+            merkeFreezeHinweisS(60.0);
+            REQUIRE(panel.lade(pfad));
+            CHECK_FALSE(achse.freezeMarke(0, 0).zeigeZeit);  // unter 60 s
+            merkeFreezeHinweisS(kFreezeHinweisVorgabeS);
+            REQUIRE(panel.lade(pfad));
+            REQUIRE(achse.freezeMarke(0, 0).zeigeZeit);
+
+            achse.waehle(0, 0);
+            REQUIRE(panel.friereEin(true));
+            panel.warteAufFreeze();
+            CHECK_FALSE(achse.freezeMarke(0, 0).zeigeZeit);  // eingefroren: keine Sanduhr
+        }
+        setzeFrozenOrdnerFuerTests({});
+        tonspeicher().leere();
     }
 }

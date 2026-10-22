@@ -139,4 +139,28 @@ void loeseFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte);
 /// Die eingefrorenen Clips, deren Datei fehlt, obwohl sie unveraendert sind (`FrozenZustand::Fehlt`).
 [[nodiscard]] std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const SaitenVon& saiten);
 
+// --- messen (Stufe 30h; Entscheide F4 a, FZ5 a bis FZ7 a) ------------------------------
+
+/// Die Rechenzeit eines Clips (FZ6 a): die Summe der gemessenen Zeiten seiner Klaenge aus dem
+/// Tonspeicher, in ms — die Arbeit auf einem Kern. Leer = den Clip gibt es nicht, oder einer
+/// seiner Klaenge liegt nicht (mehr) im Speicher. Laedt und rechnet nichts.
+[[nodiscard]] std::optional<double> clipRechenzeitMs(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten);
+
+/// Welche Zahl die Sanduhr zeigt (FZ6 a mit Zusatz, FZ7 a).
+enum class FreezeHinweisArt
+{
+    Arbeit,  ///< *computing work*: die Summe (Vorgabe)
+    Warten,  ///< *waiting time*: die Summe geteilt durch die Threads, die rechnen
+};
+
+/// Die Schwelle in den Settings (FZ5 a D): 0,1 bis 60 s, Vorgabe 1 s.
+inline constexpr double kFreezeHinweisVorgabeS = 1.0;
+inline constexpr double kFreezeHinweisMinS = 0.1;
+inline constexpr double kFreezeHinweisMaxS = 60.0;
+
+[[nodiscard]] double gemerkterFreezeHinweisS();  ///< `loop/freezeHintS`, geklemmt
+void merkeFreezeHinweisS(double sekunden);       ///< geklemmt; die Vorgabe wird nicht eingetragen
+[[nodiscard]] FreezeHinweisArt gemerkteFreezeHinweisArt();  ///< `loop/freezeHintWaiting`
+void merkeFreezeHinweisArt(FreezeHinweisArt art);
+
 }  // namespace lumi::loop

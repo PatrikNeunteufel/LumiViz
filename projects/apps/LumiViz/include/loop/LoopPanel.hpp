@@ -32,6 +32,7 @@
 #include <QString>
 #include <QStringList>
 
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
@@ -250,8 +251,11 @@ private:
     /// fehlt, obwohl unveraendert, wird neu gerechnet (F5 a) — ausser, es misslang gerade
     /// (bis zur naechsten Aenderung, `nachAenderung`).
     void bestimmeFreeze(bool nachAenderung = true);
-    /// Die Marken der Achse aus dem Zustand und dem laufenden Auftrag.
+    /// Die Marken der Achse aus dem Zustand und dem laufenden Auftrag — dazu die Sanduhren
+    /// (Stufe 30h) nach Schwelle und Art aus den Settings.
     void zeigeFreezeMarken();
+    /// Die Rechenzeit je Clip ohne Marke aus dem Tonspeicher (Stufe 30h, FZ6 a).
+    void bestimmeZeiten();
 
     /// Permanent: ein Loop aus dem Audio Browser kommt auch an, wenn das Panel nie sichtbar war.
     IEventBus::SubscriberHandle m_ladeSubscription;
@@ -308,6 +312,9 @@ private:
     std::map<std::pair<int, int>, FrozenZustand> m_freezeZustand;  ///< je eingefrorenem Clip
     QStringList m_freezeBericht;              ///< was beim letzten Einfrieren auffiel
     std::vector<ClipOrt> m_freezeMisslungen;  ///< nicht von selbst neu, bis sich etwas aendert
+    std::map<std::pair<int, int>, double> m_freezeZeit;  ///< Rechenzeit je Clip in ms, wo sie bekannt ist (30h)
+    std::uint64_t m_gelegtGesehen = ~std::uint64_t{0};   ///< `Tonspeicher::stand().gelegt` beim letzten Messen
+    int m_hinweisTakte = 0;                              ///< zaehlt Takte bis zum naechsten Blick in die Settings
 };
 
 }  // namespace lumi::loop

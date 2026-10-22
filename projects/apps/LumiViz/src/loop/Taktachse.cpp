@@ -661,8 +661,31 @@ void Taktachse::paintEvent(QPaintEvent*)
             // die Marke Freeze (Stufe 30g, FZ4 a A): links vom „fx" — durchgezogen eingefroren,
             // gepunktet beim Rechnen, gestrichelt und matter, wenn der Clip live spielt; ist kein
             // Platz fuer den Text, nur die Flocke (der Text steht im Tooltip)
-            if (const auto fm = m_freeze.find({k, clip.startTakt});
-                fm != m_freeze.end() && fm->second.zustand != FrozenZustand::Aus && namePasst(r.height()))
+            const auto fm = m_freeze.find({k, clip.startTakt});
+            // die Sanduhr (Stufe 30h, FZ5 a A): an der Stelle der Marke, nur ohne Marke; ohne Platz
+            // fuer die Zahl nur die Sanduhr
+            if (fm != m_freeze.end() && fm->second.zustand == FrozenZustand::Aus && fm->second.zeigeZeit &&
+                namePasst(r.height()))
+            {
+                const int links = std::max(r.left(), kopfBreite()) + 6;
+                const int namePlatz = std::min(fontMetrics().horizontalAdvance(clip.muster) + 8, 60);
+                QString text = zeitText(fm->second);
+                if (fontMetrics().horizontalAdvance(text) + 8 > frei - links - namePlatz) text = QString(QChar(0x23F3));
+                const int breit = fontMetrics().horizontalAdvance(text) + 8;
+                if (breit <= frei - links)
+                {
+                    const int markeHoch = std::min(r.height() - 4, fontMetrics().height() + 2);
+                    const QRect feld(frei - breit, r.center().y() - markeHoch / 2, breit, markeHoch);
+                    p.setPen(Qt::NoPen);
+                    p.setBrush(QColor(0, 0, 0, 70));
+                    p.drawRoundedRect(feld, 3, 3);
+                    p.setBrush(Qt::NoBrush);
+                    p.setPen(Qt::white);
+                    p.drawText(feld, Qt::AlignCenter, text);
+                    namensFeld.setRight(std::min(namensFeld.right(), feld.left() - 4));
+                }
+            }
+            if (fm != m_freeze.end() && fm->second.zustand != FrozenZustand::Aus && namePasst(r.height()))
             {
                 const FreezeMarke& marke = fm->second;
                 const int links = std::max(r.left(), kopfBreite()) + 6;
@@ -1391,8 +1414,20 @@ QString Taktachse::freezeText(const FreezeMarke& marke)
     return {};
 }
 
+QString Taktachse::zeitText(const FreezeMarke& marke)
+{
+    if (!marke.zeigeZeit || marke.zustand != FrozenZustand::Aus) return {};
+    return tr("%1 %2 s").arg(QChar(0x23F3)).arg(marke.gezeigtS(), 0, 'f', 1);
+}
+
 QString Taktachse::freezeTooltip(const FreezeMarke& marke)
 {
+    if (marke.zustand == FrozenZustand::Aus && marke.zeigeZeit && !marke.rechnet)
+        return tr("Computing this clip takes %1 s of work (about %2 s waiting on %3 threads) — "
+                  "Freeze clip to start it at once")
+            .arg(marke.arbeitMs / 1000.0, 0, 'f', 1)
+            .arg(marke.arbeitMs / 1000.0 / std::max(1, marke.threads), 0, 'f', 1)
+            .arg(std::max(1, marke.threads));
     if (marke.rechnet)
         return tr("Freezing this clip — it plays live until the waveform is ready");
     switch (marke.zustand)
@@ -1672,8 +1707,15 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
             const int nr = findeClip(m_loop, ort);
             return nr >= 0 && !m_loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(nr)].frozen.isEmpty();
         });
-        const QString freezeEintrag = alleEingefroren ? (gruppe ? tr("Unfreeze %1 clips").arg(zahl) : tr("Unfreeze clip"))
-                                                      : (gruppe ? tr("Freeze %1 clips").arg(zahl) : tr("Freeze clip"));
+        QString freezeEintrag = alleEingefroren ? (gruppe ? tr("Unfreeze %1 clips").arg(zahl) : tr("Unfreeze clip"))
+                                                : (gruppe ? tr("Freeze %1 clips").arg(zahl) : tr("Freeze clip"));
+        // Stufe 30h (FZ5 a C): ein Clip mit Sanduhr nennt seine Zeit
+        if (!gruppe && !alleEingefroren)
+        {
+            const FreezeMarke marke =
+                freezeMarke(clipKanal, m_loop.kanaele[static_cast<std::size_t>(clipKanal)].clips[static_cast<std::size_t>(clip)].startTakt);
+            if (marke.zeigeZeit) freezeEintrag = tr("Freeze clip (%1 s to compute)").arg(marke.gezeigtS(), 0, 'f', 1);
+        }
         QAction* freeze = menu.addAction(freezeEintrag, this, [this, ein = !alleEingefroren] { (void)verlangeFreeze(ein); });
         freeze->setObjectName(QStringLiteral("loopClipFreeze"));
         menu.addSeparator();

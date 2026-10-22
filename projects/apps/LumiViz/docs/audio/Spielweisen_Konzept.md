@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.51.0
+> **Version:** 0.53.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a und TS1 a (Patrik S139–S144);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a und TS1 a (Patrik S139–S144);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1033,6 +1033,50 @@ Datei: Spieler und Tonführung planen dann neu — auch ohne Änderung am Loop. 
 `test_LoopMenues` kennt *Freeze clip*. Bereich `*Loop*,*Instrument*,*Shape*,*Palette*,*Drum*,*Wav*` unter
 Release-clang 545 / 545 (vor dem Fall der Kurzformen), unter Testing-MSVC 546 / 546; Composer je 151 / 151.
 
+**Gebaut 30h (S144):** `Tonauftrag::rechenzeitImSpeicherMs` (die Summe der gemerkten Zeiten seiner
+Klänge, ohne zu laden; leer, wenn einer fehlt) und `Tonauftrag::rechenThreads`; in `loop/Freeze`
+`clipRechenzeitMs` (FZ6 a) und die Settings `loop/freezeHintS` (0,1 bis 60 s, Vorgabe 1 s) und
+`loop/freezeHintWaiting` (FZ7 a). In der `Taktachse` die Sanduhr an der Stelle der Marke, nur ohne Marke
+(`FreezeMarke::zeigeZeit`, `zeitText`, Kurzform nur „⏳“), der Tooltip mit Arbeit und Wartezeit, im Menü
+„Freeze clip (3.2 s to compute)“. Das `LoopPanel` misst nach jeder Änderung und sobald der Tonspeicher
+Neues aufnimmt (`stand().gelegt`), liest die Settings etwa jede Sekunde. In den Settings unter *Frozen
+Clips* die Zeile *Freeze hint* (`loopFreezeHint`, `loopFreezeHintKind`). Tests in `test_LoopFreezeBedienung`
+(Sanduhr mit Text, Tooltip, Menü, Bild `_hourglass`; Rechenzeit aus dem Tonspeicher — die Klaviertöne
+rechnen ~1 ms, der Fall legt je Ton 600 ms in den Speicher —, Settings, Schwelle, Wartezeit, eingefroren
+ohne Sanduhr), in `test_LoopFreeze` die Zeile *Freeze hint* über das Settings-Panel. Freeze, Menüs, Ton,
+Spieler unter Release-clang und Testing-MSVC je 57 / 57, `test_LoopFreeze` danach je 6 / 6.
+
+✅ **FZ5 a** (Patrik S144, nach Skizze): **Messung nach Skizze A–D.**
+- **A — Zeichen:** rechts auf dem Clip, links vom „fx“, eine Sanduhr mit der Zeit („⏳ 3.2 s“); auf einem
+  schmalen Clip nur die Sanduhr; keines an einem eingefrorenen Clip, unter der Schwelle und vor dem
+  ersten Rechnen.
+- **B — Tooltip:** „Computing this clip takes 3.2 s — Freeze clip to start it at once“.
+- **C — Menü:** „Freeze clip (3.2 s to compute)“.
+- **D — Settings** → Panels, unter *Frozen Clips*: „Freeze hint: from [1.0 s] of computing time“,
+  0,1 bis 60 s, Schritt 0,1.
+
+Grund: F4 a soll zeigen, wo Freeze sich lohnt — mit der Zahl auf dem Clip sieht man beim Überblicken, welcher
+am meisten kostet. Verworfen: b (die Sanduhr ohne Zahl, die Zeit nur in Tooltip und Menü — ruhiger, aber man
+müsste über jeden Clip fahren). Zeichen und Marke Freeze schließen sich aus, höchstens zwei Marken stehen
+zugleich. Kippt, wenn viele schmale Clips über der Schwelle liegen und Zahlen die Namen verdrängen — dann b.
+
+✅ **FZ6 a, mit Zusatz: auch b, umschaltbar** (Patrik S144). **Die Rechenzeit eines Clips ist die Summe
+der gemessenen Zeiten seiner Töne aus dem Tonspeicher** — die Arbeit auf einem Kern, die Freeze erspart; ein
+Ton, den mehrere Clips nutzen, zählt bei jedem voll; fehlt die Zeit eines seiner Töne im Speicher, zeigt der
+Clip keine Zahl, bis er neu gerechnet ist. *Zusatz:* umschaltbar auf **b** — die Summe geteilt durch die
+Threads, die rechnen (Kerne − 1), als Schätzung der Wartezeit beim Öffnen. Grund für a als Grundlage: die
+Summe ist eine Eigenschaft des Clips, unabhängig davon, was gleichzeitig rechnet; Clips lassen sich
+vergleichen. Wo der Schalter sitzt: FZ7.
+
+✅ **FZ7 a** (Patrik S144): **Der Schalter sitzt in der Settings-Zeile von FZ5 a D:** „Freeze hint: from
+[1.0 s] of [computing work ▾]“ mit *computing work* (die Summe, Vorgabe) und *waiting time* (geteilt durch
+die Threads); gemerkt; die Schwelle gilt für die gewählte Zahl. Der Tooltip an der Sanduhr nennt beide,
+etwa „Computing this clip takes 3.2 s of work (about 0.5 s waiting on 7 threads) — Freeze clip to start it
+at once“. Grund: Schalter und Schwelle hängen zusammen (1 s Arbeit und 1 s Warten sind verschiedene
+Grenzen), alle Grenzen von Freeze stehen in den Settings. Verworfen: b (im Loop-Panel per Rechtsklick auf
+die Sanduhr — ein Menüeintrag für eine Anzeige wäre in der Achse fremd). Kippt, wenn oft umgeschaltet wird —
+dann b zusätzlich.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1374,6 +1418,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.53.0 | 2026-10-22 | Session 144. Stufe 30h gebaut (Rechenzeit je Clip, Sanduhr, Settings *Freeze hint*). |
+| 0.52.0 | 2026-10-22 | Session 144. FZ5 a (Messung von Freeze nach Skizze A–D); FZ6 a mit Zusatz (Summe der Töne, umschaltbar auf geteilt durch die Threads); FZ7 a (Schalter in der Settings-Zeile). |
 | 0.51.0 | 2026-10-22 | Session 144. Stufe 30g-2 gebaut (Marke, Menü, Undo, Speichern, Hinweiszeile; Kurzform „verändert“ im Warndreieck, Patrik). |
 | 0.50.0 | 2026-10-22 | Session 144. Plan 30g; Stufe 30g-1 gebaut (`FreezeAuftrag`, Marken, Zustand). |
 | 0.49.0 | 2026-10-22 | Session 144. FZ4 a (Bedienung von Freeze nach Skizze A–D). |
