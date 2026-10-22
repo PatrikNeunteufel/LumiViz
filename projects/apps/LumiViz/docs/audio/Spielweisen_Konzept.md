@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.42.0
+> **Version:** 0.43.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a und TS1 a (Patrik S139–S143);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a und TS1 a (Patrik S139–S144);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -903,6 +903,41 @@ auch die zuletzt gelegte, wenn sie allein darüber liegt), `gemerkteFrozenGrenze
 über `lumi::ui::fuehreDialogAus`). Handbuch 1.201.0 (§8). Tests in `test_LoopFreeze` (zwei Fälle
 mehr: die Dateien mit Grenze nach letztem Gebrauch, die Zeile mit Rückfrage).
 
+**Plan 30f (S144, Claude):** drei Teilschritte. **30f-1** Modell und Datei: Feld `frozen` am Clip
+(der Abdruck des eingefrorenen Stands, FV2 a), `.lvloop` Fassung 13, die Literale in `tests/`, `lanes_demo` über
+`make_spuren_loops.py`. **30f-2** Rechenkern: `klangNamen`, `plane` und `baueProgramm` bekommen wie
+`SaitenVon` eine Angabe, welche Clips eingefroren sind und unter welchem Abdruck; ein eingefrorener
+Clip ist **eine** Stimme `frozen:<abdruck>` mit einem Schlag je Durchlauf am Anfang des Clips, ohne
+Bus und ohne Expression (beides steckt in der Wellenform), Pegel Fader mal Lautstärke des Loops, ein
+ausgeschalteter Kanal schweigt; Test gegen live (wegen der Reihenfolge der Faktoren auf etwa 1e-6,
+nicht Bit für Bit). **30f-3** Laden: `eingefrorenVon(loop, rate, saiten)` (Clips mit Marke, deren
+Datei vorliegt), der `Tonauftrag` lädt `frozen:`-Namen über `holeFrozen` in den Tonspeicher; Spieler,
+Tonführung, Sitzung und ClipLautheit nutzen es; fehlt die Datei beim Laden doch, eine Zeile im Bericht
+und das nächste Programm spielt den Clip live. *Export audio…* rechnet weiter live.
+
+✅ **FV1 a** (Patrik S144): **Ein eingefrorener Clip schneidet sich nicht selbst ab:** sein Nachklang
+klingt unter dem nächsten Durchlauf zu Ende, wie Hall und Echo live über die Naht klingen. Der
+Rechenkern schaut dafür so viele Durchläufe zurück, wie die Wellenform lang ist. Grund: F3 a nimmt den
+Nachklang in die Wellenform, damit Hall und Echo beim Spielen nichts kosten — mit dem Schnitt bräche
+gerade er bei jedem Wiedereinsatz hart ab. Verworfen: b (eine Stimme wie jede andere, der alte
+Nachklang endet am Wiedereinsatz mit der Blende von 64 Abtastwerten — näher an live für Töne, die
+sich selbst abschneiden, aber eine deutliche Kante im Hall). Ohne eingefrorene Clips bleibt `rechne`
+Bit für Bit, wie es ist. Kippt, wenn Freeze vor allem trockene Drums ohne Effekte trifft — dann ist b
+gleichwertig und näher an live.
+
+✅ **FV2 a** (Patrik S144): **`frozen` trägt den Abdruck des Stands, der beim letzten Speichern
+eingefroren wurde** (40 Hex-Zeichen); leer = nicht eingefroren. Gespeichert wird immer der jetzige
+Abdruck, im Hintergrund entsteht seine Datei. Gespielt wird die Datei zum **jetzigen** Abdruck, sonst
+live. Weicht der jetzige vom gespeicherten ab, ist der Clip seit dem Einfrieren verändert („frozen ·
+changed“, 30g); fehlt die Datei zum gespeicherten, wird sie neu gerechnet. Grund: der gespeicherte
+Abdruck hält fest, welcher Stand eingefroren wurde — das lässt sich später nicht ausrechnen; nur damit
+sind „bearbeitet“, „von der Grenze gelöscht“ und „noch nicht gerechnet“ zu unterscheiden, und Publish
+findet seine Wellenformen ohne zu rechnen (30i). Er ist ein Protokoll des letzten Einfrierens, kein
+Doppel des jetzigen. Ein geändertes Instrument oder eine neue Klangfassung gilt ebenfalls als
+„verändert“ — zu Recht, der Klang ist ein anderer. Verworfen: b (ein Schalter `true`/`false` — ob der
+Clip verändert wurde oder seine Datei nur fehlt, sagte die Datei nicht). Kippt, wenn die Marke nur
+„frozen“ und „computing…“ zeigen soll und Publish den Abdruck ohnehin rechnet — dann b.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1244,6 +1279,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.43.0 | 2026-10-22 | Session 144. Plan 30f (drei Teilschritte); FV1 a (der Nachklang eines eingefrorenen Clips klingt über die Naht); FV2 a (`frozen` trägt den Abdruck des eingefrorenen Stands). |
 | 0.42.0 | 2026-10-22 | Session 143. FZ3 a (Zeile *Frozen Clips*, Skizze); Stufe 30e gebaut (Ordner `frozen`, Grenze, Settings). |
 | 0.41.0 | 2026-10-22 | Session 143. FZ1 a (Freeze in sechs Teilschritten 30d–30i); Stufe 30d gebaut (`loop/Freeze`, Wächter der Klangfassung); Befund Pfade im Abdruck, FZ2 a (Dateien über ihren Inhalt, gebaut). |
 | 0.40.0 | 2026-10-22 | Session 143. WX6 a (Fenster *Export audio*, Skizze), WX7 a (auch der ganze Loop, Frage Patrik), WX8 a (Knopf in der Datei-Zeile), WX9 a (Ending, Passes); Stufe 30c gebaut. |
