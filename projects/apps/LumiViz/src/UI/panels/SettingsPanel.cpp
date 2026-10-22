@@ -18,6 +18,7 @@
 #include "core/Mitgeliefert.hpp"
 #include "core/Suchordner.hpp"
 #include "loop/Sample.hpp"  // „Chosen Sample Files": kopieren oder am Ort lassen (S115)
+#include "loop/Tonspeicher.hpp"  // „Loop Sound Memory": Grenze, Stand, Clear (29f)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/LiveVideoFeed.hpp"  // Kamera-Tab: Freigabe + Testaufnahmen-Ordner (S70)
@@ -70,6 +71,7 @@
 #include <QMediaRecorder>
 
 #include <algorithm>
+#include <cmath>
 #include <optional>
 
 #include <BasicLogger.h>
@@ -973,6 +975,64 @@ QWidget* SettingsPanel::createPanelsTab()
             lumi::loop::setzeSampleKopieWahl(static_cast<lumi::loop::SampleKopie>(wahl->itemData(index).toInt()));
         });
         layout->addRow(tr("Chosen Sample Files:"), wahl);
+    }
+
+    // Loop, Stufe 29f (H3 a, TS1 a): die Grenze des Tonspeichers, was er gerade haelt,
+    // und Clear. Eine kleinere Grenze gilt sofort; getippt wird erst mit Enter oder
+    // beim Verlassen uebernommen, sonst verwuerfe eine halb getippte Zahl Toene.
+    {
+        auto* zeile = new QWidget(widget);
+        auto* zeilenLayout = new QHBoxLayout(zeile);
+        zeilenLayout->setContentsMargins(0, 0, 0, 0);
+        auto* grenze = new QDoubleSpinBox(zeile);
+        grenze->setObjectName(QStringLiteral("loopSoundMemoryLimit"));
+        grenze->setRange(lumi::loop::kTonspeicherMinMb / 1024.0, lumi::loop::kTonspeicherMaxMb / 1024.0);
+        grenze->setSingleStep(0.25);
+        grenze->setDecimals(2);
+        grenze->setSuffix(tr(" GB"));
+        grenze->setKeyboardTracking(false);
+        grenze->setValue(lumi::loop::gemerkteTonspeicherGrenzeMb() / 1024.0);
+        const QString tipp =
+            tr("Sounds the Loop has computed or decoded are kept in memory, so opening a loop or composition again "
+               "starts at once. When the limit is reached, the sounds not used for the longest time go. Clear "
+               "forgets all of them; they are computed again when needed. Nothing is kept after a restart.");
+        grenze->setToolTip(tipp);
+        connect(grenze, QOverload<double>::of(&QDoubleSpinBox::valueChanged), zeile, [](double gb) {
+            lumi::loop::merkeTonspeicherGrenzeMb(static_cast<int>(std::lround(gb * 1024.0)));
+        });
+
+        auto* belegt = new QLabel(zeile);
+        belegt->setObjectName(QStringLiteral("loopSoundMemoryInUse"));
+        belegt->setToolTip(tipp);
+        const auto zeigeStand = [belegt]() {
+            const lumi::loop::TonspeicherStand stand = lumi::loop::tonspeicher().stand();
+            const double mb = static_cast<double>(stand.bytes) / (1024.0 * 1024.0);
+            const QString menge = mb >= 1024.0 ? tr("%1 GB").arg(mb / 1024.0, 0, 'f', 2)
+                                               : tr("%1 MB").arg(static_cast<qint64>(std::llround(mb)));
+            const QString toene = stand.toene == 1 ? tr("1 sound") : tr("%1 sounds").arg(stand.toene);
+            const QString text = tr("in use: %1 · %2").arg(menge, toene);
+            if (belegt->text() != text) belegt->setText(text);
+        };
+        zeigeStand();
+        auto* uhr = new QTimer(belegt);
+        uhr->setInterval(1000);
+        connect(uhr, &QTimer::timeout, belegt, zeigeStand);
+        uhr->start();
+
+        auto* leeren = new QPushButton(tr("Clear"), zeile);
+        leeren->setObjectName(QStringLiteral("loopSoundMemoryClear"));
+        leeren->setToolTip(tr("Forget all kept sounds. A loop that is playing keeps the sounds it holds; everything "
+                              "else is computed again when needed."));
+        connect(leeren, &QPushButton::clicked, belegt, [zeigeStand]() {
+            lumi::loop::tonspeicher().leere();
+            zeigeStand();
+        });
+
+        zeilenLayout->addWidget(grenze);
+        zeilenLayout->addWidget(belegt);
+        zeilenLayout->addWidget(leeren);
+        zeilenLayout->addStretch(1);
+        layout->addRow(tr("Loop Sound Memory:"), zeile);
     }
 
     // Mitgeliefertes aus dem Projektordner statt aus der Kopie neben der Exe

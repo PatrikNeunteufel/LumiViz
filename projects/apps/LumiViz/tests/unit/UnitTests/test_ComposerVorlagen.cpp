@@ -126,6 +126,11 @@ std::vector<VorlagenZusage> zusagen()
          {{"CH1", B, {{"Ring", 0, 60000}}},
           {"A1", T, {{"15_pseudo_musik_120bpm_60s", 0, 20000}, {"02_sinus440_mono_30s", 40000, 60000}}},
           {"A2", T, {{"beat_A", 20000, 40000}}}}},
+        // S143, Liste `Sichttest_ToeneVorab.md`: zwei Loops mit vielen gerechneten Toenen nacheinander
+        {"composer_M_toene.lvcomp", 60000,
+         {{"CH1", B, {{"Ring", 0, 60000}}},
+          {"A1", T, {{"lanes_demo", 0, 30000}}},
+          {"A2", T, {{"tabs_demo", 30000, 60000}}}}},
     };
 }
 

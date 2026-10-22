@@ -34,6 +34,7 @@
 #include "loop/Offen.hpp"                               // Loop: Rueckfrage vor dem Beenden
 #include "loop/SichttestAktionen.hpp"                   // Loop: Aktionen der Sichttest-Steuerung
 #include "loop/Spieler.hpp"                             // Loop: Ton fuer die Visuals
+#include "loop/Tonspeicher.hpp"                         // Loop: Grenze aus den Settings (29f)
 #include "composer/SichttestAktionen.hpp"               // Composer-Naht N21
 #include "sichttest/Anbindung.hpp"                      // Composer-Naht N20
 #include "sichttest/AppAktionen.hpp"                    // Composer-Naht N20
@@ -237,6 +238,10 @@ MainWindow::MainWindow(QWidget* parent)
         BasicLogger::logInfo("Start: restoring last preset: " + pfad.toStdString());
         lumi::ui::startpreset::lade(*bus, pfad);
     });
+
+    // Loop, Stufe 29f (TS1 a): die Grenze des Tonspeichers aus den Settings — vor
+    // allem, was Toene vorlaedt (die Komposition darunter, ein Loop als Argument)
+    lumi::loop::tonspeicher().setzeGrenze(static_cast<std::size_t>(lumi::loop::gemerkteTonspeicherGrenzeMb()) << 20);
 
     // Composer-Naht N4 (docs/ui/Composer_Konzept.md §12.2): war beim Beenden
     // eine Komposition geladen, kommt sie wieder ins Panel — mit „Resume after

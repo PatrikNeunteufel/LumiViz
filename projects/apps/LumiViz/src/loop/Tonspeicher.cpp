@@ -13,7 +13,9 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonDocument>
+#include <QSettings>
 
+#include <algorithm>
 #include <utility>
 
 namespace lumi::loop
@@ -21,6 +23,8 @@ namespace lumi::loop
 
 namespace
 {
+
+constexpr char kGrenzeEinstellung[] = "loop/soundMemoryMB";
 
 /// Ort, Groesse und Aenderungszeit einer Datei — wie `sampleDaten` sie vergleicht.
 QByteArray dateiStand(const QString& datei)
@@ -116,6 +120,24 @@ Tonspeicher& tonspeicher()
 {
     static Tonspeicher eine;
     return eine;
+}
+
+int gemerkteTonspeicherGrenzeMb()
+{
+    constexpr int vorgabe = static_cast<int>(kTonspeicherVorgabeBytes >> 20);
+    const int mb = QSettings().value(QLatin1String(kGrenzeEinstellung), vorgabe).toInt();
+    return std::clamp(mb, kTonspeicherMinMb, kTonspeicherMaxMb);
+}
+
+void merkeTonspeicherGrenzeMb(int mb)
+{
+    mb = std::clamp(mb, kTonspeicherMinMb, kTonspeicherMaxMb);
+    QSettings einstellungen;
+    if (mb == static_cast<int>(kTonspeicherVorgabeBytes >> 20))
+        einstellungen.remove(QLatin1String(kGrenzeEinstellung));
+    else
+        einstellungen.setValue(QLatin1String(kGrenzeEinstellung), mb);
+    tonspeicher().setzeGrenze(static_cast<std::size_t>(mb) << 20);
 }
 
 QByteArray instrumentAbdruck(const Instrument& instrument)

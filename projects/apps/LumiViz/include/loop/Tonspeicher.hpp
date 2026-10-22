@@ -84,6 +84,17 @@ private:
 /// Der eine Speicher des Programms.
 [[nodiscard]] Tonspeicher& tonspeicher();
 
+/// Was in den Settings fuer die Grenze einstellbar ist (Stufe 29f, TS1 a): 0,25 bis 64 GB.
+inline constexpr int kTonspeicherMinMb = 256;
+inline constexpr int kTonspeicherMaxMb = 64 * 1024;
+
+/// Die Grenze aus den Settings (`loop/soundMemoryMB`) in MB, ohne Eintrag die Vorgabe;
+/// auf den einstellbaren Bereich geklemmt.
+[[nodiscard]] int gemerkteTonspeicherGrenzeMb();
+/// Die Grenze in den Settings merken (geklemmt) und dem Speicher geben — eine kleinere
+/// gilt sofort. Die Vorgabe selbst wird nicht eingetragen.
+void merkeTonspeicherGrenzeMb(int mb);
+
 /// Der Fingerabdruck eines Instruments (TV2 a): ein Hash ueber das Instrument, wie es
 /// in die Datei geschrieben wuerde, je Sample-Schicht Ort, Groesse und Aenderungszeit
 /// der Datei und je Shape-Schicht der Inhalt der Zeichnung.

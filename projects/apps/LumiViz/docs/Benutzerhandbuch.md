@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.197.0
+> **Version:** 1.198.0
 > **Datum:** 2026-10-21
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -291,7 +291,13 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   Publish (§16, „Weitergeben: Publish“) öffnet hier den Dialog *Import package* · **Chosen Sample
   Files** — was mit einer Tondatei geschieht, die du im Instrument-Creator über File...
   wählst: *Ask each time* (Vorgabe), *Copy to My samples* oder *Use it where it is*
-  (§16, Instrument-Creator) · **MilkDrop Preset Switch** + **MilkDrop Fade
+  (§16, Instrument-Creator) · **Loop Sound Memory** — wie viel Arbeitsspeicher die Töne
+  des Loops belegen dürfen, die schon gerechnet oder dekodiert sind (0,25 bis 64 GB, Vorgabe
+  1 GB; §16, „Die Töne werden vorbereitet“). Daneben steht, was gerade belegt ist („in use:
+  312 MB · 85 sounds“), und **Clear** vergisst alle Töne — sie werden neu gerechnet, sobald
+  man sie braucht; ein Loop, der gerade spielt, klingt weiter. Eine kleinere Grenze gilt
+  sofort: dann gehen die Töne, die am längsten nicht gebraucht wurden. Ein getippter Wert
+  gilt mit Enter oder beim Verlassen des Felds · **MilkDrop Preset Switch** + **MilkDrop Fade
   Amount** — der App-Standard dafür, was beim MilkDrop-Preset-Wechsel mit dem
   geerbten Bild passiert (Details und die Regeln je Node: §11,
   „Preset-Wechsel: das geerbte Bild").
@@ -1965,7 +1971,7 @@ Danach trägt die Komposition einen Stern: der neue Verweis steht erst in der
 | ⏹ | Stopp: anhalten und an den Anfang |
 | Loop-Taste | Die **ganze Komposition** wiederholen (leuchtet bei aktiv) |
 | Resume-Taste (⏩) | **Resume after restart** (leuchtet bei aktiv), siehe unten |
-| Zeit | Stelle und Länge, etwa „0:22.0 / 0:50.0" |
+| Zeit | Stelle und Länge, etwa „0:22.0 / 0:50.0". Hat die Komposition **Loop-Clips**, deren Töne noch gerechnet werden, steht hier in der Akzentfarbe „Preparing sounds… 12 / 40“ — die Uhr wartet, bis die Töne aller Loop-Clips da sind; ⏸ oder ⏹ bricht ab. Wird ein Loop, den der Composer spielt, im Panel Loop geändert, klingt er wie bisher, bis die neuen Töne fertig sind: dahinter „· updating sounds 3 / 5“. In Gelb „· some notes silent, preparing 7 / 20“ heißt: nach einem Sprung fehlen Töne, die Uhr läuft weiter, und nur diese Noten schweigen, bis sie da sind (§16, „Die Töne werden vorbereitet“) |
 | Lineal | Klick oder Ziehen springt an die Stelle; die rote Linie ist die Abspielmarke |
 | Zeilen | Die Kanäle in der Reihenfolge der Datei, **CH1 oben** — im Bild liegt der erste Kanal zuunterst, jeder weitere darüber. Ein ausgeschalteter Kanal trägt „(off)" |
 | Blöcke | Die Clips mit dem Namen ihres Presets; die helle Linie darin ist die Pegelkurve |
@@ -2672,6 +2678,32 @@ Loop spielt, den das Panel offen hat: die rote Marke läuft dann durch die
 Achse des Panels, rechts steht *Bar · Step*, und die Editoren zeigen die
 Stelle in ihrem Muster. Spielt der Composer denselben Loop in mehreren Clips
 zugleich, folgt die Marke dem gerade lautesten (nach seiner Pegelkurve).
+
+**Die Töne werden vorbereitet.** Jeder Ton eines Instruments wird einmal
+gerechnet, jedes Sample einmal gelesen — auf allen Kernen des Rechners außer
+einem, im Hintergrund. Was fertig ist, behält LumiViz im Arbeitsspeicher, bis
+zur Grenze **Loop Sound Memory** (Settings → Panels, Vorgabe 1 GB); nach einem
+Neustart wird neu gerechnet. Das Panel Loop, die Editoren und der Composer
+teilen diese Töne:
+
+- Beim **Öffnen** eines Loops und einer Komposition mit Loop-Clips beginnt das
+  Rechnen sofort, ohne Anzeige.
+- Drückst du **Play**, bevor alles da ist, wird der Knopf gleich zu **Stop**;
+  an der Stelle von *Bar · Step* steht in der Akzentfarbe „Preparing sounds…
+  12 / 40“. Der Loop beginnt, sobald der letzte Ton fertig ist — vorn oder an
+  der grünen Marke. **Stop** bricht ab.
+- Änderst du etwas, während der Loop spielt, klingt er mit den bisherigen
+  Tönen weiter; hinter *Bar · Step* steht „· updating sounds 3 / 5“, bis er
+  umschaltet. Gerechnet werden nur die Töne, die es noch nicht gab.
+- In Drum- und Instrument-Editor sagt es die graue Zeile oben: „Preparing
+  sounds… 12 / 40“ vor **Play pattern**, „Updating sounds 3 / 5“ nach einer
+  Änderung, „Preparing sound…“, wenn eine angeklickte Taste oder Note noch
+  gerechnet wird — sie klingt, sobald sie da ist.
+- Im Composer steht dasselbe im Feld der Zeit (§15).
+
+Ein Klavierton mit langem Ausklang belegt einige MB. Wird es eng, gehen die
+Töne, die am längsten nicht gebraucht wurden; ein Loop, der sie gerade spielt,
+behält sie.
 
 ### Clips und Kanäle
 
@@ -3610,6 +3642,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.198.0 | 2026-10-22 | Sessions 142–143. §16 Loop NEU **Die Töne werden vorbereitet**: Rechnen im Hintergrund beim Öffnen, Play wartet mit „Preparing sounds…“, nach einer Änderung „updating sounds“, die Hinweiszeilen der Editoren (auch im Drum-Editor). §15 Composer: das Feld Zeit beim Warten. §8 Settings → Panels NEU **Loop Sound Memory** mit Stand und **Clear** (Stufe 29). |
 | 1.197.0 | 2026-10-21 | Sessions 140–141. §16 Loop NEU **Spuren über der Zeit**: im Instrument-Editor die Zeile **Lanes** (Haken je Spur, Tab dorthin verschoben) und die Spuren **Sustain**, **Sostenuto**, **Expression**, **Vibrato**, **Pitch** über dem Raster — Punkte setzen, ziehen, löschen, **Clear lane**; welche Spur ein Instrument trägt; wie sie klingen (Pedal, Pegel e², an der Saite hinter dem Tonabnehmer). Im Panel Loop die **Expression am Clip** als Kurve (am markierten Clip zu bearbeiten, **Clear expression**). Im Creator **Pitch range** und **Tremolo arm**. Neues Beispiel `lanes_demo` |
 | 1.196.0 | 2026-10-20 | Session 139. §16 Loop: Match im Creator, die Rückfrage beim Speichern, die Abweichung im Fenster Instruments (Stufe 27f). |
 | 1.195.0 | 2026-10-20 | Session 139. §16 Loop: der Haken Limiter im Panel (Stufe 27e-3). |

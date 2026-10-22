@@ -1,10 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.35.0
-> **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.36.0
+> **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
-> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a und WX1 a (Patrik S139–S142);
+> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
+> Session 143: TS1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a und TS1 a (Patrik S139–S143);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -886,8 +887,8 @@ Klangerzeuger, Spieler, Tonführung, ClipLautheit und Pegel. Zwei Regeln, die si
 zeigten: **eine Klangdatei, die es nicht gibt, kommt nicht in den Speicher** (an ihr ließe sich keine
 Änderung erkennen — die Engine aus Pappe der Tests „dekodierte“ solche Pfade, ihre Klänge blieben
 über Testfälle hinweg liegen); **nach einem Import leert das Loop-Panel den Speicher** wie schon die
-Samples (ein Archiv kann Dateien mit altem Stand ersetzen). Die Grenze steht noch fest auf 1 GB (in
-den Settings: 29f). Test `test_LoopTonspeicher` (der Speicher allein; `ladeKlaenge` mit Instrumenten
+Samples (ein Archiv kann Dateien mit altem Stand ersetzen). Die Grenze stand hier noch fest auf 1 GB
+(seit 29f in den Settings, TS1 a). Test `test_LoopTonspeicher` (der Speicher allein; `ladeKlaenge` mit Instrumenten
 und einer Klangdatei in einem Wegwerf-Ordner: ein zweites Laden rechnet nichts, ein geändertes
 Instrument nur seine Töne, eine geänderte Datei wird neu dekodiert, jeder Ton Bit für Bit wie
 `rendereTon`).
@@ -986,10 +987,33 @@ Panel 29e“ (Laden mit Vorladen, Play wartet, Pause bricht ab, die Uhr läuft a
 Release-clang geprüft** (Composer 151 / 151, Bereich 498 / 498) — Testing-MSVC weggelassen (Patrik,
 zum Abschluss). Im Programm nicht angesehen.
 
+✅ **TS1 a** (Patrik S143, nach Skizze): **Die Grenze in den Settings mit Stand und Clear.**
+Settings → Panels, unter *Chosen Sample Files*: „**Loop Sound Memory:** [0.25 bis 64 GB, Schritt
+0.25, Vorgabe 1.00 GB] · *in use: 312 MB · 85 sounds* · [**Clear**]“; der Stand schreibt jede Sekunde
+nach, *Clear* leert den Speicher (wer einen Ton hält, behält ihn). Eine kleinere Grenze gilt sofort.
+Grund: eine Grenze lässt sich nur mit Blick auf den Stand sinnvoll einstellen, und ohne *Clear* ließe
+sich das Warten nach dem Öffnen (TV5 a, TV7 a) im Sichttest nur über einen Neustart ein zweites Mal
+prüfen. Verworfen: b (nur das Feld — die Grenze bliebe eine geratene Zahl). Kippt, wenn *Clear* mit
+*Clear frozen clips* (F5 a) gebündelt werden soll — dann wandert der Knopf zu Freeze.
+
+**Gebaut 29f (S143):** `gemerkteTonspeicherGrenzeMb` / `merkeTonspeicherGrenzeMb` in
+`loop/Tonspeicher` (Einstellung `loop/soundMemoryMB` in MB, auf 256 bis 65 536 geklemmt; die
+Vorgabe wird nicht eingetragen); `MainWindow` gibt die Grenze beim Start an den Speicher, vor allem,
+was Töne vorlädt. Das Feld übernimmt einen getippten Wert erst mit Enter oder beim Verlassen
+(`keyboardTracking` aus) — sonst verwürfe eine halb getippte Zahl Töne. Handbuch 1.198.0 (§8, §15
+Feld Zeit, §16 „Die Töne werden vorbereitet“), Sichttest-Liste `.claude/handover/Sichttest_ToeneVorab.md`
+mit der neuen Vorlage `asset/sichttest/composer_M_toene.lvcomp` (`lanes_demo` und `tabs_demo`
+nacheinander; Zusage in `test_ComposerVorlagen`). Test in `test_LoopTonspeicher` „29f“ (die
+Einstellung, die Zeile im Settings-Panel: Grenze gilt sofort und wird gemerkt, Stand, Clear, ein
+neues Panel zeigt die gemerkte Grenze). **Nur unter Release-clang geprüft** (Bereich
+`*Loop*,*Instrument*,*Shape*,*Palette*,*Drum*` 499 / 499, Composer 151 / 151; Testing-MSVC
+zurückgestellt, Patrik S143). Im Programm nicht angesehen.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.36.0 | 2026-10-22 | Session 143. TS1 a (Loop Sound Memory mit Stand und Clear); Stufe 29f gebaut (Grenze in den Settings, Handbuch, Sichttest-Liste). |
 | 0.35.0 | 2026-10-21 | Session 142. TV7 a (das Warten im Composer im Feld Zeit, Skizze A–D); Stufe 29e gebaut (Vorladen in der Sitzung, Play wartet, Loop-Quellen der Tonführung über den Tonauftrag). |
 | 0.34.0 | 2026-10-21 | Session 142. Stufe 29d gebaut (Spieler über den Tonauftrag, Warten, Umschalten, Vorladen, Anzeige im Loop-Panel und im Instrument-Editor). |
 | 0.33.0 | 2026-10-21 | Session 142. TV5 a (Anzeige des Wartens an der Stelle von „Bar · Step“, Skizze A–D); TV6 a (Anspielen über den Hintergrund, sofort aus dem Speicher). |

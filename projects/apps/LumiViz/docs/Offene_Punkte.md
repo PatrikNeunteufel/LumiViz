@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.269.0
-> **Datum:** 2026-10-21 (Session 142)
+> **Version:** 1.270.0
+> **Datum:** 2026-10-22 (Session 143)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3041,6 +3041,12 @@ Idee Preset-Warmup/Pre-Roll.
   Stufe 31**, die Hammer-Saite rückt auf **32 ff.** **Offen:** 29e unter Testing-MSVC; 29f (Grenze
   in den Settings, Handbuch, Sichttest-Liste, Bereichslauf); WX2 Format, WX3 Mix des Loop-Clips im
   Composer; im Programm nichts angesehen.
+  **S143: Stufe 29f gebaut** (`Spielweisen_Konzept.md` 0.36.0): TS1 a (Settings → Panels **Loop
+  Sound Memory** mit Stand und **Clear**), Handbuch 1.198.0, Sichttest-Liste
+  `.claude/handover/Sichttest_ToeneVorab.md` (S, P, E, K, Urteile U1–U4) mit der Vorlage
+  `composer_M_toene.lvcomp`. **Stufe 29 damit gebaut — offen:** Testing-MSVC für 29e und 29f
+  (Patrik S143: zurückgestellt), Sichttest Töne vorab, voller Lauf 26–29; danach Stufe 30 mit WX2
+  (Format) und WX3 (Mix des Loop-Clips im Composer) einzeln.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6116,6 +6122,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.270.0 | 2026-10-22 | Session 143. §7 Spielweisen: Stufe 29f gebaut (TS1 a Loop Sound Memory, Handbuch, Sichttest-Liste Töne vorab); Stufe 29 gebaut. |
 | 1.269.0 | 2026-10-21 | Session 142. §7 Spielweisen: Stufe 29 Töne vorab gebaut bis 29e (TV1 a bis TV7 a); WX1 a; Audio-Clip im Loop als Stufe 31, Hammer-Saite 32 ff. |
 | 1.268.0 | 2026-10-21 | Session 141. §7 Spielweisen: Stufe 28 gebaut bis auf den vollen Lauf (28c-2b bis 28f); Konzept Hammer-Saite begonnen (Zielbild, H1 a bis H3 a Töne vorab, F1 a bis F6 a Freeze, Bauplan 29/30/31); Befund Tab-Linien und Karaoke-Panel S89 behoben. |
 | 1.267.0 | 2026-10-20 | Session 140. §7 Spielweisen der Instrumentfamilien: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a entschieden; Stufe 28 gebaut bis 28c-2a (Zeitspuren, Pedale, Expression, Vibrato, Pitch, Vibratohebel); offen 28c-2b, Hörproben, 28d bis 28f. |

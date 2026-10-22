@@ -8,13 +8,15 @@
  * @date   October 2026
  *
  * @details
- * Ohne Ton, ohne Fenster, ohne Qt-Anwendung. Der erste Fall prueft den Speicher
+ * Ohne Ton und ohne Fenster; die ersten zwei ohne Qt-Anwendung. Der erste Fall prueft den Speicher
  * allein (Grenze, der am laengsten nicht gebrauchte Ton geht zuerst, Zaehler);
  * der zweite `ladeKlaenge` mit Instrumenten und einer Klangdatei in einem
  * Wegwerf-Ordner und einer Engine aus Pappe, die mitschreibt, was sie dekodiert:
  * ein zweites Laden rechnet nichts, ein geaendertes Instrument rechnet nur seine
  * Toene neu, eine geaenderte Datei wird neu dekodiert, und jeder Ton gleicht
- * Bit fuer Bit dem, den `rendereTon` direkt rechnet.
+ * Bit fuer Bit dem, den `rendereTon` direkt rechnet. Der dritte (Stufe 29f, TS1 a)
+ * prueft die Zeile Loop Sound Memory im Settings-Panel, in eigenen Einstellungen
+ * (`LumiVizTest` / `LoopTonspeicher`): Grenze, Stand, Clear.
  ****************************************************************************************
  */
 
@@ -25,10 +27,18 @@
 #include "loop/Kit.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Tonspeicher.hpp"
+#include "services/ServiceContainer.hpp"
+#include "UI/panels/SettingsPanel.hpp"
 
+#include <QApplication>
 #include <QDir>
+#include <QDoubleSpinBox>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QLabel>
+#include <QPushButton>
+#include <QSettings>
 #include <QTemporaryDir>
 
 #include <memory>
@@ -60,6 +70,25 @@ public:
         gefragt << filePath;
         const QFileInfo info(filePath);
         return info.exists() ? std::vector<float>(static_cast<std::size_t>(2 * info.size()), 0.25f) : std::vector<float>{};
+    }
+};
+
+/// Eigene Einstellungen (`LumiVizTest` / `LoopTonspeicher`), leer zu Beginn und am Ende.
+struct EigeneEinstellungen
+{
+    QString org = QCoreApplication::organizationName();
+    QString name = QCoreApplication::applicationName();
+    EigeneEinstellungen()
+    {
+        QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
+        QCoreApplication::setApplicationName(QStringLiteral("LoopTonspeicher"));
+        QSettings().clear();
+    }
+    ~EigeneEinstellungen()
+    {
+        QSettings().clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(name);
     }
 };
 
@@ -198,5 +227,79 @@ TEST_SUITE("Loop Tonspeicher")
         (void)ladeKlaenge({namen[2]}, engine, 48000, &bericht);
         CHECK(tonspeicher().stand().gelegt == 8);
         tonspeicher().leere();
+    }
+
+    TEST_CASE("Loop Tonspeicher 29f: Loop Sound Memory in den Settings — Grenze, Stand, Clear")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        tonspeicher().leere();
+        const std::size_t vorher = tonspeicher().grenze();
+
+        // --- ohne Eintrag die Vorgabe; was nicht einstellbar ist, wird geklemmt
+        CHECK(gemerkteTonspeicherGrenzeMb() == 1024);
+        QSettings().setValue(QStringLiteral("loop/soundMemoryMB"), 10);
+        CHECK(gemerkteTonspeicherGrenzeMb() == kTonspeicherMinMb);
+        QSettings().setValue(QStringLiteral("loop/soundMemoryMB"), 1 << 20);
+        CHECK(gemerkteTonspeicherGrenzeMb() == kTonspeicherMaxMb);
+        merkeTonspeicherGrenzeMb(1024);  // die Vorgabe steht nicht in den Settings
+        CHECK_FALSE(QSettings().contains(QStringLiteral("loop/soundMemoryMB")));
+
+        ServiceContainer dienste;
+        {
+            SettingsPanel settings(dienste);
+            auto* grenze = settings.findChild<QDoubleSpinBox*>(QStringLiteral("loopSoundMemoryLimit"));
+            auto* belegt = settings.findChild<QLabel*>(QStringLiteral("loopSoundMemoryInUse"));
+            auto* leeren = settings.findChild<QPushButton*>(QStringLiteral("loopSoundMemoryClear"));
+            REQUIRE(grenze != nullptr);
+            REQUIRE(belegt != nullptr);
+            REQUIRE(leeren != nullptr);
+            CHECK(grenze->value() == doctest::Approx(1.0));
+            CHECK(grenze->minimum() == doctest::Approx(0.25));
+            CHECK(grenze->maximum() == doctest::Approx(64.0));
+            CHECK_FALSE(grenze->keyboardTracking());  // eine halb getippte Zahl verwirft nichts
+            CHECK(belegt->text() == QStringLiteral("in use: 0 MB · 0 sounds"));
+
+            // --- die Grenze gilt sofort und wird gemerkt
+            grenze->setValue(2.5);
+            CHECK(tonspeicher().grenze() == std::size_t{2560} << 20);
+            CHECK(QSettings().value(QStringLiteral("loop/soundMemoryMB")).toInt() == 2560);
+
+            // --- der Stand zeigt, was der Speicher haelt (die Uhr schreibt jede Sekunde nach)
+            tonspeicher().lege(QStringLiteral("a"), klangAus(1 << 17, 0.1f), 0.0);  // 1 MB
+            tonspeicher().lege(QStringLiteral("b"), klangAus(1 << 17, 0.2f), 0.0);
+            QElapsedTimer seit;
+            seit.start();
+            while (belegt->text() != QStringLiteral("in use: 2 MB · 2 sounds") && seit.elapsed() < 3000)
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+            CHECK(belegt->text() == QStringLiteral("in use: 2 MB · 2 sounds"));
+
+            // --- Clear vergisst alles; wer einen Ton haelt, behaelt ihn
+            const std::shared_ptr<const Klang> gehalten = tonspeicher().hole(QStringLiteral("a"));
+            leeren->click();
+            CHECK(tonspeicher().stand().toene == 0);
+            CHECK(belegt->text() == QStringLiteral("in use: 0 MB · 0 sounds"));
+            REQUIRE(gehalten != nullptr);
+            CHECK(gehalten->daten.front() == 0.1f);
+
+            // --- eine kleinere Grenze verwirft sofort die am laengsten nicht gebrauchten
+            for (int i = 0; i < 3; ++i)
+                tonspeicher().lege(QStringLiteral("t%1").arg(i), klangAus(100 << 17, 0.3f), 0.0);  // je 100 MB
+            grenze->setValue(0.25);
+            CHECK(tonspeicher().stand().toene == 2);
+            CHECK(tonspeicher().hole(QStringLiteral("t0")) == nullptr);
+        }
+        {
+            // ein neu geoeffnetes Settings-Panel zeigt die gemerkte Grenze
+            SettingsPanel settings(dienste);
+            auto* grenze = settings.findChild<QDoubleSpinBox*>(QStringLiteral("loopSoundMemoryLimit"));
+            REQUIRE(grenze != nullptr);
+            CHECK(grenze->value() == doctest::Approx(0.25));
+        }
+        tonspeicher().leere();
+        tonspeicher().setzeGrenze(vorher);
     }
 }
