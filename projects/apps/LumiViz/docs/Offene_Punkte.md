@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.275.0
-> **Datum:** 2026-10-22 (Session 143)
+> **Version:** 1.276.0
+> **Datum:** 2026-10-22 (Session 144)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3058,8 +3058,17 @@ Idee Preset-Warmup/Pre-Roll.
   (`.claude/handover/Sichttest_Export.md`), Hörprobe `effects_demo` nach WX5 a (dort H4).
   **Freeze:** FZ1 a (30d–30i); 30d gebaut (`loop/Freeze`: Abdruck eines Clips, Klangfassung mit
   Wächter an `loop_werte.txt`; FZ2 a: Dateien über ihren Inhalt, nicht über Ort und Zeit); 30e gebaut (Ordner `frozen`, Grenze nach letztem Gebrauch, Settings
-  *Frozen Clips*, FZ3 a). **Offen:** 30f Abspielen
-  (`.lvloop` 13), 30g Bedienung (Skizze), 30h Messung, 30i Publish und Abschluss.
+  *Frozen Clips*, FZ3 a). **S144: 30f–30h gebaut** — 30f Abspielen (FV1 a: der Nachklang klingt über
+  die Naht; FV2 a: `frozen` trägt den Abdruck des eingefrorenen Stands, `.lvloop` 13; Spieler, Composer,
+  Vorladen, Lautheit planen mit `eingefrorenVon`), 30g Bedienung (FZ4 a: Marke, *Freeze clip* /
+  *Unfreeze clip*, Undo, Speichern friert neu ein, Hinweiszeile; Kurzform „verändert“ im Warndreieck,
+  Zusatz Patrik), 30h Messung (FZ5 a bis FZ7 a: Sanduhr mit Rechenzeit, *Freeze hint* in den Settings,
+  computing work / waiting time). Nebenbei behoben: Tonführung Fall C (falscher Klang nach einer
+  Änderung, mit Test belegt) und der Absturz beim Beenden mit spielendem Loop (LZ1 a,
+  `Bootstrap_Integration.md` §6.8; Gegenprobe am Stand vor S144). **Offen:** 30i Publish (die
+  Wellenformen eines Pakets) und Abschluss (Handbuch, Sichttest-Liste Freeze, Bereichslauf); Sichttest
+  Freeze im Programm (nichts angesehen außer dem Beenden). **Bauplan geändert (Patrik S144):** Hammer-Saite
+  wieder **Stufe 31 ff.**, der Audio-Clip im Loop danach.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6135,6 +6144,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.276.0 | 2026-10-22 | Session 144. §7 Spielweisen: Freeze 30f–30h gebaut (FV1 a, FV2 a, FZ4 a bis FZ7 a); Hammer-Saite wieder Stufe 31; Fix Tonführung Fall C, Fix Absturz beim Beenden (LZ1 a). |
 | 1.275.0 | 2026-10-22 | Session 143. §7 Spielweisen: FZ3 a, Stufe 30e gebaut (Freeze: Dateien, Settings). |
 | 1.274.0 | 2026-10-22 | Session 143. §7 Spielweisen: FZ1 a, Stufe 30d gebaut (Freeze: Abdruck, Klangfassung). |
 | 1.273.0 | 2026-10-22 | Session 143. §7 Spielweisen: WX6 a bis WX9 a, Stufe 30c gebaut (*Export audio…*). |

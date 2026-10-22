@@ -683,6 +683,18 @@ void DockManager::closeAll()
     m_impl->visualizers.clear();
 }
 
+void DockManager::baueAb()
+{
+    if (m_impl->pAdsDockManager == nullptr) return;
+    BasicLogger::logDebug("DockManager::baueAb() - panels go before the services");
+    // keine Rueckrufe mehr waehrend des Abbaus (dockWidgetRemoved, floatingWidgetCreated …)
+    m_impl->pAdsDockManager->disconnect(this);
+    m_impl->visualizers.clear();
+    // mit ihm gehen alle Dock-Widgets, ihre Panels und die schwebenden Fenster
+    delete m_impl->pAdsDockManager;
+    m_impl->pAdsDockManager = nullptr;
+}
+
 bool DockManager::restoreLayout()
 {
     BasicLogger::logDebug("DockManager::restoreLayout() called");

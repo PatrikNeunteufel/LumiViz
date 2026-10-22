@@ -337,6 +337,18 @@ public slots:
      * @brief Closes all dock widgets.
      */
     void closeAll();
+
+    /**
+     * @brief Baut den Qt-ADS-DockManager mit allen Dock-Widgets und ihren Panels jetzt ab
+     *        (S144, Entscheid Patrik LZ1 a).
+     *
+     * Der `ads::CDockManager` haengt als Kind am Hauptfenster — ohne diesen Schritt
+     * stirbt er erst am Ende von `~MainWindow`, NACH den Diensten, und ein Panel, das
+     * im Destruktor noch einen Dienst nutzt (das Loop-Panel gibt seinen Mixer frei),
+     * greift ins Leere. `~MainWindow` ruft ihn vor `m_pServices.reset()`
+     * (Bootstrap_Integration.md §6.8). Danach ist nur noch der Destruktor erlaubt.
+     */
+    void baueAb();
     
     /**
      * @brief Saves current layout as the new default.

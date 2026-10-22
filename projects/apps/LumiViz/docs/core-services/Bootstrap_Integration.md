@@ -1,7 +1,7 @@
 # Bootstrap & Integration — Init-Reihenfolge, Services, Event-Flow, Shutdown
 
-> **Version:** 1.4.0
-> **Datum:** 2026-10-21 (S142: §6.7 Töne im Hintergrund)
+> **Version:** 1.5.0
+> **Datum:** 2026-10-22 (S144: §6.8 Panels sterben vor den Diensten; S142: §6.7 Töne im Hintergrund)
 > **Typ:** Guide
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -328,6 +328,25 @@ Klänge eines Loops auf einem Pool von Threads; dekodiert wird dort über einen
 Die Threads fassen nichts von Qt an außer `QString`, `QFile`, `QDir`,
 `QFileInfo` und `QJsonDocument` — keine `QObject`s, keine Signale. Den Fortschritt
 liest, wer ihn braucht, über `erledigt()`/`gesamt()`.
+
+### 6.8 Panels sterben vor den Diensten (S144, LZ1 a)
+
+`~MainWindow` baut in dieser Reihenfolge ab: alle Dock-Widgets schließen
+(`DockManager::closeAll`), **den `ads::CDockManager` mit allen Panels abbauen**
+(`DockManager::baueAb`), unsere `DockManager`-Hülle, den `DialogManager`, zuletzt die
+Dienste (`m_pServices.reset()` — mit ihnen die Audio-Engine).
+
+> **Regel:** Ein Panel darf sich in seinem Destruktor auf jeden Dienst verlassen — es
+> stirbt vor ihnen. Wer einen Panel-Baum anders anlegt (eigenes Fenster, eigener
+> Dock-Manager), sorgt für dieselbe Reihenfolge.
+
+*Befund (S144):* Der `ads::CDockManager` hängt als Kind am Hauptfenster. Bis S144 wurde
+nur unsere Hülle vor den Diensten zurückgesetzt; die Panels starben erst im
+Basis-Destruktor von `QMainWindow`, **nach** der Engine. Beendete man LumiViz, während
+das Loop-Panel einen Loop spielte, gab `Spieler::halte` aus `~LoopPanel` den Mixer an
+einer schon abgebauten Engine frei — im Debug-Build ein Absturz, im Release-Build meist
+unbemerkt. Die Gegenprobe am Stand vor S144 stürzte genauso ab; ein Loop, der im
+Composer lief, nicht.
 
 ---
 

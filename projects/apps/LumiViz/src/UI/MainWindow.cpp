@@ -344,6 +344,10 @@ MainWindow::~MainWindow()
     {
         // Close all dock widgets first to avoid dangling references
         m_pDockManager->closeAll();
+        // S144 (LZ1 a): the ads::CDockManager is a child of this window — without this it
+        // (and every panel in it) would only die in the base destructor, AFTER the services
+        // below. A playing Loop panel then released its mixer on a dead audio engine.
+        m_pDockManager->baueAb();
         m_pDockManager.reset();
     }
 
