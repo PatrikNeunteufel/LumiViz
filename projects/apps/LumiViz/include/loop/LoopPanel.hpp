@@ -22,6 +22,8 @@
 #include "UI/panels/PanelBase.hpp"
 #include "audio/AudioEvents.hpp"  // TrackInfo
 #include "loop/Bearbeiten.hpp"  // ClipOrt
+#include "loop/Freeze.hpp"      // FrozenZustand (Stufe 30g)
+#include "loop/FreezeAuftrag.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Spieler.hpp"
 #include "services/IEventBus.hpp"
@@ -31,7 +33,11 @@
 #include <QStringList>
 
 #include <functional>
+#include <map>
+#include <memory>
 #include <optional>
+#include <utility>
+#include <vector>
 
 class QDoubleSpinBox;
 class QCheckBox;
@@ -191,6 +197,18 @@ public:
     /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
     [[nodiscard]] ClipEffektFenster* effektFenster() const;
 
+    // --- Freeze (Stufe 30g; Entscheide F2 a, F5 a, FZ4 a) ---------------------
+    /// *Freeze clip* / *Unfreeze clip* fuer die markierten Clips — ein Undo-Schritt;
+    /// beim Einfrieren rechnet ein Auftrag sofort im Hintergrund, was fehlt. false =
+    /// kein Clip markiert, oder es aendert sich nichts.
+    bool friereEin(bool einfrieren);
+    /// Rechnet gerade ein Auftrag?
+    [[nodiscard]] bool friert() const { return m_freeze != nullptr; }
+    /// Warten, bis alle Auftraege fertig sind, und sie uebernehmen — blockiert. Fuer Tests.
+    void warteAufFreeze();
+    /// Was die Hinweiszeile beim Einfrieren sagt (FZ4 a D); leer = es rechnet nichts.
+    [[nodiscard]] QString freezeHinweis() const;
+
 private:
     void setupUI();
     void frageNachDatei();
@@ -222,6 +240,18 @@ private:
     /// Was der Spieler spielt: der ganze Loop — oder, bei „Play pattern", ein
     /// Loop aus einem Kanal mit einem Clip dieses Musters.
     [[nodiscard]] Loop spielFassung();
+    /// Die Rate, in der eingefroren wird: die der Engine (wie der Spieler), sonst 44100.
+    [[nodiscard]] int freezeRate();
+    /// Einen Auftrag fuer diese Clips starten — rechnet schon einer, kommen sie danach dran.
+    void starteFreeze(std::vector<ClipOrt> orte);
+    /// Ist der Auftrag fertig: Bericht uebernehmen, den naechsten starten, die Marken neu.
+    void pruefeFreeze();
+    /// Den Zustand der eingefrorenen Clips neu bestimmen (nach jeder Aenderung); was
+    /// fehlt, obwohl unveraendert, wird neu gerechnet (F5 a) — ausser, es misslang gerade
+    /// (bis zur naechsten Aenderung, `nachAenderung`).
+    void bestimmeFreeze(bool nachAenderung = true);
+    /// Die Marken der Achse aus dem Zustand und dem laufenden Auftrag.
+    void zeigeFreezeMarken();
 
     /// Permanent: ein Loop aus dem Audio Browser kommt auch an, wenn das Panel nie sichtbar war.
     IEventBus::SubscriberHandle m_ladeSubscription;
@@ -272,6 +302,12 @@ private:
     QLabel* m_bericht = nullptr;
     QTimer* m_takt = nullptr;
     int m_startSchritt = 0;  ///< B4: wo Play beginnt
+
+    std::unique_ptr<FreezeAuftrag> m_freeze;  ///< rechnet gerade (Stufe 30g); endet vor der Engine
+    std::vector<ClipOrt> m_freezeWarte;       ///< kommen nach dem laufenden Auftrag dran
+    std::map<std::pair<int, int>, FrozenZustand> m_freezeZustand;  ///< je eingefrorenem Clip
+    QStringList m_freezeBericht;              ///< was beim letzten Einfrieren auffiel
+    std::vector<ClipOrt> m_freezeMisslungen;  ///< nicht von selbst neu, bis sich etwas aendert
 };
 
 }  // namespace lumi::loop

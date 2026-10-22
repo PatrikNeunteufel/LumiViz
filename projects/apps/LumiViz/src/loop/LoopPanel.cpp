@@ -167,6 +167,7 @@ LoopPanel::~LoopPanel()
 {
     // die Audio-Engine lebt laenger als die Panels: hier noch freigeben
     m_spieler.halte(false);
+    m_freeze.reset();  // Stufe 30g: sein Dekodierer nutzt die Engine (Bootstrap_Integration.md §6.7)
     if (m_meldetSong) meldeLaufendenLoop(nullptr);
     vergissBeendenFrage(this);
     meldeOffen({}, {});  // niemand hat mehr einen Loop offen
@@ -394,6 +395,8 @@ void LoopPanel::setupUI()
     connect(m_achse, &Taktachse::exportVerlangt, this,
             [this](int kanal, int startTakt) { (void)oeffneExport(ClipOrt{kanal, startTakt}); });
     connect(m_exportieren, &QPushButton::clicked, this, [this] { (void)oeffneExport(); });
+    // Stufe 30g (FZ4 a B): Freeze clip / Unfreeze clip
+    connect(m_achse, &Taktachse::freezeVerlangt, this, [this](bool einfrieren) { (void)friereEin(einfrieren); });
     // B4 (S124): ein Klick ins Lineal — dorthin springen, oder dort beginnen
     connect(m_achse, &Taktachse::stelleGewaehlt, this, &LoopPanel::setzeStartstelle);
     connect(m_achse, &Taktachse::zeilenProzentGeaendert, this,
@@ -475,6 +478,7 @@ void LoopPanel::neu()
     m_achse->setLoop(m_loop, true);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);  // seine Basis gibt es nicht mehr: er schliesst sich
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
+    bestimmeFreeze();
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -502,6 +506,7 @@ bool LoopPanel::lade(const QString& pfad)
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
     merkeGeoeffnetenLoop(pfad);  // fuer „Used by" im Fenster Kits
     setzeStartstelle(0);         // ein anderer Loop beginnt wieder vorn
+    bestimmeFreeze();            // Stufe 30g: fehlt eine Wellenform, wird sie gerechnet (F5 a)
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -533,7 +538,19 @@ bool LoopPanel::oeffne(const QString& pfad)
 
 bool LoopPanel::speichere(const QString& pfad)
 {
-    if (!m_geladen || pfad.isEmpty() || !speichereLoop(m_loop, pfad)) return false;
+    if (!m_geladen || pfad.isEmpty()) return false;
+    // F2 a: eingefrorene Clips gelten mit dem Stand, der jetzt gespeichert wird — ihre Marken
+    // bekommen den jetzigen Abdruck, was fehlt, rechnet danach im Hintergrund
+    Loop gespeichert = m_loop;
+    const std::vector<ClipOrt> zuRechnen = frischeFrozenMarken(gespeichert, freezeRate(), saitenAusInstrumenten());
+    if (!speichereLoop(gespeichert, pfad)) return false;
+    if (!(gespeichert == m_loop))
+    {
+        m_loop = gespeichert;
+        m_achse->zeigeBearbeitet(m_loop);
+    }
+    starteFreeze(zuRechnen);
+    bestimmeFreeze();
     m_datei = pfad;
     m_gespeichert = m_loop;
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
@@ -560,6 +577,7 @@ void LoopPanel::setzeLoop(const Loop& loop)
     m_achse->zeigeBearbeitet(m_loop);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
+    bestimmeFreeze();  // Stufe 30g: veraendert, oder (nach Undo) wieder eingefroren
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -1107,6 +1125,7 @@ void LoopPanel::beimTakt()
         m_spieler.setzeLoop(m_loop);
     }
     m_spitze = std::max(m_spitze, m_spieler.nimmSpitze());
+    pruefeFreeze();  // Stufe 30g
     if (isVisible() || (m_editor != nullptr && m_editor->isVisible()) ||
         (m_instrumentEditor != nullptr && m_instrumentEditor->isVisible()) ||
         (m_effekte != nullptr && m_effekte->isVisible()))
@@ -1224,15 +1243,19 @@ void LoopPanel::zeigeStand()
     // TV5 a: was gerechnet wird, steht an der Stelle von „Bar · Step"
     const bool bereitetVor = spielt && m_solo.isEmpty() && m_spieler.wartet();
     const QString vorbereitet = QStringLiteral("%1 / %2").arg(m_spieler.vorbereitet()).arg(m_spieler.vorzubereiten());
+    // Stufe 30g (FZ4 a D): was gerade eingefroren wird
+    const QString friertText = freezeHinweis();
     setzeText(m_stelle, [&]() -> QString {
         if (bereitetVor) return tr("Preparing sounds… %1").arg(vorbereitet);
-        if (arrangement < 0.0) return {};
+        if (arrangement < 0.0) return friertText;
         const int schritt = static_cast<int>(arrangement);
         const QString stelle =
             tr("Bar %1 · Step %2").arg(schritt / m_loop.schritteJeTakt() + 1).arg(schritt % m_loop.schritteJeTakt() + 1);
-        return spielt && m_spieler.bereitet() ? stelle + tr(" · updating sounds %1").arg(vorbereitet) : stelle;
+        const QString mitToenen =
+            spielt && m_spieler.bereitet() ? stelle + tr(" · updating sounds %1").arg(vorbereitet) : stelle;
+        return friertText.isEmpty() ? mitToenen : mitToenen + QStringLiteral(" · ") + friertText;
     }());
-    const bool akzent = bereitetVor || (spielt && m_spieler.bereitet());
+    const bool akzent = bereitetVor || (spielt && m_spieler.bereitet()) || !friertText.isEmpty();
     if (m_stelle->property("akzent").toBool() != akzent)
     {
         m_stelle->setProperty("akzent", akzent);
@@ -1317,9 +1340,155 @@ void LoopPanel::zeigeStand()
 
     QStringList zeilen = m_ladeBericht;
     zeilen << m_spieler.bericht();
+    zeilen << m_freezeBericht;
     const QString text = zeilen.join(QLatin1Char('\n'));
     setzeText(m_bericht, text);
     m_bericht->setVisible(!text.isEmpty());
+}
+
+// --- Freeze (Stufe 30g) -------------------------------------------------------
+
+int LoopPanel::freezeRate()
+{
+    const IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    return engine != nullptr && engine->getSampleRate() > 0 ? engine->getSampleRate() : 44100;
+}
+
+bool LoopPanel::friereEin(bool einfrieren)
+{
+    if (!m_geladen) return false;
+    const std::vector<ClipOrt> orte = m_achse->markierte();
+    if (orte.empty()) return false;
+    Loop neu = m_loop;
+    std::vector<ClipOrt> zuRechnen;
+    if (einfrieren)
+        zuRechnen = setzeFrozenMarken(neu, orte, freezeRate(), saitenAusInstrumenten());
+    else
+        loeseFrozenMarken(neu, orte);
+    if (neu == m_loop) return false;
+    const bool mehrere = orte.size() > 1;
+    bearbeite(neu, einfrieren ? (mehrere ? tr("Freeze clips") : tr("Freeze clip"))
+                              : (mehrere ? tr("Unfreeze clips") : tr("Unfreeze clip")));
+    starteFreeze(std::move(zuRechnen));  // FZ4 a C: gleich, nicht erst beim Speichern
+    zeigeFreezeMarken();
+    return true;
+}
+
+void LoopPanel::starteFreeze(std::vector<ClipOrt> orte)
+{
+    if (orte.empty()) return;
+    if (m_freeze != nullptr)
+    {
+        for (const ClipOrt& ort : orte)
+            if (std::find(m_freezeWarte.begin(), m_freezeWarte.end(), ort) == m_freezeWarte.end())
+                m_freezeWarte.push_back(ort);
+        return;
+    }
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    // dekodiert wird ueber die Engine (TV3 a); ohne Engine bleiben Samples still
+    Dekodierer dekodierer = [engine](const QString& datei, int rate, double maxSekunden) {
+        return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};
+    };
+    Loop gerichtet = m_loop;
+    gerichtet.richte();
+    m_freezeBericht.clear();
+    m_freeze = std::make_unique<FreezeAuftrag>(std::move(gerichtet), std::move(orte), freezeRate(), std::move(dekodierer));
+}
+
+void LoopPanel::pruefeFreeze()
+{
+    if (m_freeze == nullptr) return;
+    if (!m_freeze->beendet())
+    {
+        zeigeFreezeMarken();  // „computing… n %"
+        return;
+    }
+    if (const std::optional<FreezeErgebnis> ergebnis = m_freeze->ergebnis())
+    {
+        for (const QString& zeile : ergebnis->bericht)
+            if (!m_freezeBericht.contains(zeile)) m_freezeBericht << zeile;
+        m_freezeMisslungen.insert(m_freezeMisslungen.end(), ergebnis->fehlgeschlagen.begin(),
+                                  ergebnis->fehlgeschlagen.end());
+    }
+    m_freeze.reset();
+    // der Spieler plant von selbst neu (`frozenFassung`), der Composer ebenso
+    std::vector<ClipOrt> naechste;
+    naechste.swap(m_freezeWarte);
+    starteFreeze(std::move(naechste));
+    bestimmeFreeze(false);
+    zeigeStand();
+}
+
+void LoopPanel::warteAufFreeze()
+{
+    while (m_freeze != nullptr)
+    {
+        m_freeze->warte();
+        pruefeFreeze();
+    }
+}
+
+QString LoopPanel::freezeHinweis() const
+{
+    if (m_freeze == nullptr) return {};
+    const FreezeStand stand = m_freeze->stand();
+    return tr("Freezing clip %1 of %2 … %3 %")
+        .arg(std::min(stand.clip + 1, stand.clips))
+        .arg(stand.clips)
+        .arg(std::lround(100.0 * stand.anteil));
+}
+
+void LoopPanel::bestimmeFreeze(bool nachAenderung)
+{
+    if (nachAenderung) m_freezeMisslungen.clear();
+    m_freezeZustand.clear();
+    std::vector<ClipOrt> fehlend;
+    if (m_geladen)
+    {
+        const int rate = freezeRate();
+        const SaitenVon saiten = saitenAusInstrumenten();
+        for (std::size_t k = 0; k < m_loop.kanaele.size(); ++k)
+            for (const LoopClip& clip : m_loop.kanaele[k].clips)
+            {
+                if (clip.frozen.isEmpty()) continue;
+                const ClipOrt ort{static_cast<int>(k), clip.startTakt};
+                const FrozenZustand zustand = frozenZustand(m_loop, ort, rate, saiten);
+                m_freezeZustand[{ort.kanal, ort.startTakt}] = zustand;
+                if (zustand == FrozenZustand::Fehlt) fehlend.push_back(ort);
+            }
+    }
+    // F5 a: unveraendert, aber die Datei fehlt — neu rechnen (nicht, was schon dran ist,
+    // und nicht, was gerade misslang)
+    std::erase_if(fehlend, [this](const ClipOrt& ort) {
+        return std::find(m_freezeMisslungen.begin(), m_freezeMisslungen.end(), ort) != m_freezeMisslungen.end();
+    });
+    if (m_freeze != nullptr)
+        std::erase_if(fehlend, [this](const ClipOrt& ort) {
+            const std::vector<ClipOrt>& laufend = m_freeze->orte();
+            return std::find(laufend.begin(), laufend.end(), ort) != laufend.end();
+        });
+    starteFreeze(std::move(fehlend));
+    zeigeFreezeMarken();
+}
+
+void LoopPanel::zeigeFreezeMarken()
+{
+    std::map<std::pair<int, int>, FreezeMarke> marken;
+    for (const auto& [ort, zustand] : m_freezeZustand) marken[ort].zustand = zustand;
+    if (m_freeze != nullptr)
+    {
+        const FreezeStand stand = m_freeze->stand();
+        const std::vector<ClipOrt>& orte = m_freeze->orte();
+        for (std::size_t i = 0; i < orte.size(); ++i)
+        {
+            if (static_cast<int>(i) < stand.clip) continue;  // schon fertig
+            const auto ort = marken.find({orte[i].kanal, orte[i].startTakt});
+            if (ort == marken.end()) continue;  // inzwischen geloest
+            ort->second.rechnet = true;
+            ort->second.anteil = static_cast<int>(i) == stand.clip ? stand.anteil : 0.0;
+        }
+    }
+    m_achse->setzeFreezeMarken(std::move(marken));
 }
 
 }  // namespace lumi::loop

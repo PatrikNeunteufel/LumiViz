@@ -35,6 +35,7 @@
 #include <QString>
 #include <QStringList>
 
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -103,6 +104,10 @@ void merkeFrozenGrenzeMb(int mb);
 /// Datei zaehlt dann als gerade gebraucht. Die anderen spielen live. Ein Abdruck, der sich
 /// nicht lesen liess (`vergissFrozen`), zaehlt nicht mehr, bis er neu abgelegt wird.
 [[nodiscard]] Eingefroren eingefrorenVon(const Loop& loop, int rate, const SaitenVon& saiten);
+/// Waechst, sobald eine Wellenform abgelegt, vergessen oder geraeumt wird (Stufe 30g): wer
+/// eingefrorene Clips spielt, plant dann neu — `eingefrorenVon` kann anders antworten, auch
+/// wenn sich der Loop nicht geaendert hat. Von jedem Thread aus.
+[[nodiscard]] std::uint64_t frozenFassung();
 /// Eine Wellenform, die sich nicht lesen liess: die Datei geht (ein Speicher, kein Werk —
 /// F5 a), und bis `legeFrozen` sie neu ablegt, spielt ihr Clip live. Von jedem Thread aus.
 void vergissFrozen(const QByteArray& abdruck);

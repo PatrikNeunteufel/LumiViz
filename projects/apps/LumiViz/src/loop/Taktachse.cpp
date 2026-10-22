@@ -10,6 +10,7 @@
 
 #include <QAction>
 #include <QContextMenuEvent>
+#include <QHelpEvent>
 #include <QInputDialog>
 
 #include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
@@ -19,6 +20,8 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
+#include <QPolygonF>
+#include <QToolTip>
 #include <QWheelEvent>
 
 #include <algorithm>
@@ -635,6 +638,7 @@ void Taktachse::paintEvent(QPaintEvent*)
             // Anfang des Clips hinausgerollt ist
             QRect namensFeld = r.adjusted(6, 0, -4, 0);
             namensFeld.setLeft(std::max(r.left(), kopfBreite()) + 6);
+            int frei = r.right() - 3;  // bis hierher ist rechts Platz fuer Marken
             // die Marke „fx": an diesem Clip ist ein Effekt eingeschaltet (Stufe 12);
             // ist sein Schalter aus (E1 a), steht sie matt da — die Reihe bleibt
             if (clip.effekte.einerAn() && r.width() >= 48 && namePasst(r.height()))
@@ -651,7 +655,64 @@ void Taktachse::paintEvent(QPaintEvent*)
                 p.setBrush(Qt::NoBrush);
                 p.drawText(feld, Qt::AlignCenter, marke);
                 namensFeld.setRight(feld.left() - 4);
+                frei = feld.left() - 4;
                 p.setPen(Qt::white);  // der Name bleibt hell, auch neben einer matten Marke
+            }
+            // die Marke Freeze (Stufe 30g, FZ4 a A): links vom „fx" — durchgezogen eingefroren,
+            // gepunktet beim Rechnen, gestrichelt und matter, wenn der Clip live spielt; ist kein
+            // Platz fuer den Text, nur die Flocke (der Text steht im Tooltip)
+            if (const auto fm = m_freeze.find({k, clip.startTakt});
+                fm != m_freeze.end() && fm->second.zustand != FrozenZustand::Aus && namePasst(r.height()))
+            {
+                const FreezeMarke& marke = fm->second;
+                const int links = std::max(r.left(), kopfBreite()) + 6;
+                QString text = freezeText(marke);
+                // dem Namen bleibt Platz fuer ein Stueck (hoechstens 60 px), der Rest gehoert der Marke
+                const int namePlatz = std::min(fontMetrics().horizontalAdvance(clip.muster) + 8, 60);
+                const bool kurz = fontMetrics().horizontalAdvance(text) + 8 > frei - links - namePlatz;
+                if (kurz)
+                    text = marke.rechnet ? QStringLiteral("%1 %").arg(std::lround(100.0 * marke.anteil))
+                                         : QString(QChar(0x2744));
+                const bool live = !marke.rechnet && marke.zustand != FrozenZustand::Frozen;
+                // kurz und live (veraendert, fehlt): die Flocke in einem Warndreieck (Patrik S144) —
+                // im Quadrat sieht sie aus wie eingefroren
+                const bool dreieck = kurz && live;
+                const int markeHoch = std::min(r.height() - 4, fontMetrics().height() + 2);
+                const int breit = dreieck ? markeHoch + markeHoch / 3 : fontMetrics().horizontalAdvance(text) + 8;
+                if (breit <= frei - links)
+                {
+                    const QRect feld(frei - breit, r.center().y() - markeHoch / 2, breit, markeHoch);
+                    QColor schrift = Qt::white;
+                    if (live && !dreieck) schrift.setAlpha(170);
+                    p.setPen(QPen(schrift, 1.0,
+                                  marke.rechnet ? Qt::DotLine : live && !dreieck ? Qt::DashLine : Qt::SolidLine));
+                    p.setBrush(QColor(0, 0, 0, live ? 40 : 70));
+                    if (dreieck)
+                    {
+                        const QPointF spitze(feld.center().x() + 0.5, feld.top() + 0.5);
+                        const QPolygonF form({spitze, QPointF(feld.right() + 0.5, feld.bottom() + 0.5),
+                                              QPointF(feld.left() + 0.5, feld.bottom() + 0.5)});
+                        p.drawPolygon(form);
+                        p.setBrush(Qt::NoBrush);
+                        // die Flocke im unteren, breiteren Teil des Dreiecks, etwas kleiner
+                        QFont klein = p.font();
+                        if (klein.pointSizeF() > 0.0)
+                            klein.setPointSizeF(klein.pointSizeF() * 0.8);
+                        else
+                            klein.setPixelSize(std::max(6, klein.pixelSize() * 4 / 5));
+                        p.setFont(klein);
+                        p.drawText(feld.adjusted(0, markeHoch / 4, 0, 0), Qt::AlignCenter, text);
+                        p.setFont(font());
+                    }
+                    else
+                    {
+                        p.drawRoundedRect(feld, 3, 3);
+                        p.setBrush(Qt::NoBrush);
+                        p.drawText(feld, Qt::AlignCenter, text);
+                    }
+                    namensFeld.setRight(std::min(namensFeld.right(), feld.left() - 4));
+                    p.setPen(Qt::white);
+                }
             }
             const QString beschriftung = clip.wiederholungen > 1
                                              ? tr("%1 × %2").arg(clip.muster).arg(clip.wiederholungen)
@@ -1296,6 +1357,74 @@ bool Taktachse::verlangeExport()
     return true;
 }
 
+bool Taktachse::verlangeFreeze(bool einfrieren)
+{
+    if (m_gruppe.empty() || m_griff != Griff::Keiner) return false;
+    Q_EMIT freezeVerlangt(einfrieren);
+    return true;
+}
+
+void Taktachse::setzeFreezeMarken(std::map<std::pair<int, int>, FreezeMarke> marken)
+{
+    if (marken == m_freeze) return;
+    m_freeze = std::move(marken);
+    update();
+}
+
+FreezeMarke Taktachse::freezeMarke(int kanal, int startTakt) const
+{
+    const auto ort = m_freeze.find({kanal, startTakt});
+    return ort == m_freeze.end() ? FreezeMarke{} : ort->second;
+}
+
+QString Taktachse::freezeText(const FreezeMarke& marke)
+{
+    if (marke.rechnet) return tr("computing… %1 %").arg(std::lround(100.0 * marke.anteil));
+    const QString flocke(QChar(0x2744));
+    switch (marke.zustand)
+    {
+    case FrozenZustand::Aus: return {};
+    case FrozenZustand::Frozen: return tr("%1 frozen").arg(flocke);
+    case FrozenZustand::Veraendert: return tr("%1 frozen · changed").arg(flocke);
+    case FrozenZustand::Fehlt: return tr("%1 frozen · missing").arg(flocke);
+    }
+    return {};
+}
+
+QString Taktachse::freezeTooltip(const FreezeMarke& marke)
+{
+    if (marke.rechnet)
+        return tr("Freezing this clip — it plays live until the waveform is ready");
+    switch (marke.zustand)
+    {
+    case FrozenZustand::Aus: return {};
+    case FrozenZustand::Frozen: return tr("Frozen: this clip plays its computed waveform");
+    case FrozenZustand::Veraendert:
+        return tr("Frozen · changed: edited since it was frozen — it plays live and is frozen again when you save");
+    case FrozenZustand::Fehlt: return tr("Frozen · missing: the waveform is computed again");
+    }
+    return {};
+}
+
+bool Taktachse::event(QEvent* event)
+{
+    if (event->type() == QEvent::ToolTip)
+    {
+        const auto* hilfe = static_cast<QHelpEvent*>(event);
+        for (const ClipOrt& ort : clipsIm(QRect(hilfe->pos(), QSize(1, 1))))
+        {
+            const QString text = freezeTooltip(freezeMarke(ort.kanal, ort.startTakt));
+            if (text.isEmpty()) continue;
+            QToolTip::showText(hilfe->globalPos(), text, this);
+            return true;
+        }
+        QToolTip::hideText();
+        event->ignore();
+        return true;
+    }
+    return Achse::event(event);
+}
+
 void Taktachse::mouseDoubleClickEvent(QMouseEvent* event)
 {
     if (!m_geladen || event->button() != Qt::LeftButton) return;
@@ -1538,6 +1667,15 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         QAction* exportieren = menu.addAction(tr("Export audio..."), this, [this] { (void)verlangeExport(); });
         exportieren->setObjectName(QStringLiteral("loopClipExportAudio"));
         exportieren->setEnabled(!gruppe);
+        // Stufe 30g (FZ4 a B): sind alle markierten eingefroren, „Unfreeze"; sonst „Freeze"
+        const bool alleEingefroren = std::all_of(m_gruppe.begin(), m_gruppe.end(), [this](const ClipOrt& ort) {
+            const int nr = findeClip(m_loop, ort);
+            return nr >= 0 && !m_loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(nr)].frozen.isEmpty();
+        });
+        const QString freezeEintrag = alleEingefroren ? (gruppe ? tr("Unfreeze %1 clips").arg(zahl) : tr("Unfreeze clip"))
+                                                      : (gruppe ? tr("Freeze %1 clips").arg(zahl) : tr("Freeze clip"));
+        QAction* freeze = menu.addAction(freezeEintrag, this, [this, ein = !alleEingefroren] { (void)verlangeFreeze(ein); });
+        freeze->setObjectName(QStringLiteral("loopClipFreeze"));
         menu.addSeparator();
         menu.addAction(gruppe ? tr("Duplicate %1 clips").arg(zahl) : tr("Duplicate"), this,
                        [this] { (void)dupliziereAuswahl(); });

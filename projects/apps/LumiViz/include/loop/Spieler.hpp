@@ -155,6 +155,7 @@ private:
     std::vector<std::unique_ptr<Tonauftrag>> m_verworfen;  ///< abgebrochen, ihre Threads laufen noch aus
     bool m_wartet = false;
     double m_startSchritt = 0.0;  ///< wohin er beim Umschalten nach dem Warten springt
+    std::uint64_t m_frozenGesehen = 0;  ///< `frozenFassung()` beim letzten Planen (Stufe 30g)
 
     IAudioEngine* m_engine = nullptr;
     IAudioPlayer* m_player = nullptr;

@@ -131,6 +131,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopExport.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopFreeze.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopFreezeSpielen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopFreezeBedienung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_WavDatei.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopClipEffekte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEffekte.cpp"

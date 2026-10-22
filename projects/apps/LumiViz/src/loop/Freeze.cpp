@@ -24,6 +24,7 @@
 #include <QStandardPaths>
 
 #include <algorithm>
+#include <atomic>
 #include <map>
 #include <mutex>
 #include <set>
@@ -274,6 +275,12 @@ std::set<QByteArray>& unlesbar()
     return abdruecke;
 }
 
+std::atomic<std::uint64_t>& frozenZaehler()
+{
+    static std::atomic<std::uint64_t> zaehler{0};
+    return zaehler;
+}
+
 /// Liegt die Wellenform zum Abdruck vor — und liess sie sich bisher lesen?
 bool liegtVor(const QByteArray& abdruck)
 {
@@ -297,7 +304,13 @@ bool legeFrozen(const QByteArray& abdruck, const std::vector<float>& stereo, int
         unlesbar().erase(abdruck);
     }
     halteFrozenGrenze();
+    ++frozenZaehler();
     return true;
+}
+
+std::uint64_t frozenFassung()
+{
+    return frozenZaehler().load();
 }
 
 std::optional<std::vector<float>> holeFrozen(const QByteArray& abdruck, int rate)
@@ -328,6 +341,7 @@ int leereFrozen()
     int geloescht = 0;
     for (const QFileInfo& info : frozenDateien())
         if (QFile::remove(info.absoluteFilePath())) ++geloescht;
+    ++frozenZaehler();
     return geloescht;
 }
 
@@ -344,7 +358,11 @@ void halteFrozenGrenze(qint64 grenze)
     for (const QFileInfo& info : alle)
     {
         if (summe <= grenze) break;
-        if (QFile::remove(info.absoluteFilePath())) summe -= info.size();
+        if (QFile::remove(info.absoluteFilePath()))
+        {
+            summe -= info.size();
+            ++frozenZaehler();
+        }
     }
 }
 
@@ -395,6 +413,7 @@ void vergissFrozen(const QByteArray& abdruck)
         unlesbar().insert(abdruck);
     }
     if (const QString datei = frozenDatei(abdruck); !datei.isEmpty()) (void)QFile::remove(datei);
+    ++frozenZaehler();
 }
 
 // --- bedienen (Stufe 30g) --------------------------------------------------------------

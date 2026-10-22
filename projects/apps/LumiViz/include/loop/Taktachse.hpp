@@ -19,6 +19,7 @@
 
 #include "UI/widgets/Achse.hpp"
 #include "loop/Bearbeiten.hpp"
+#include "loop/Freeze.hpp"
 #include "loop/Loop.hpp"
 
 #include <QColor>
@@ -27,12 +28,24 @@
 #include <QString>
 
 #include <cstdint>
+#include <map>
+#include <utility>
 #include <vector>
 
 class QPainter;
 
 namespace lumi::loop
 {
+
+/// Wie ein Clip zu Freeze steht, fuer die Marke (Stufe 30g, FZ4 a A) — das Panel rechnet es aus.
+struct FreezeMarke
+{
+    FrozenZustand zustand = FrozenZustand::Aus;
+    bool rechnet = false;  ///< ein Auftrag friert ihn gerade ein: „computing… n %“
+    double anteil = 0.0;   ///< dabei: 0 … 1
+
+    [[nodiscard]] bool operator==(const FreezeMarke&) const = default;
+};
 
 class Taktachse : public lumi::ui::Achse
 {
@@ -121,6 +134,16 @@ public:
     /// „Export audio..." (Stufe 30c, WX6 a): den Export des angeklickten Clips verlangen.
     /// false = keiner oder mehrere markiert.
     bool verlangeExport();
+    /// *Freeze clip* / *Unfreeze clip* (Stufe 30g, FZ4 a B) fuer die markierten Clips verlangen.
+    /// false = keiner markiert.
+    bool verlangeFreeze(bool einfrieren);
+    /// Die Marken (FZ4 a A), je Clip — Kanal, Starttakt —; ein Clip ohne Eintrag hat keine.
+    void setzeFreezeMarken(std::map<std::pair<int, int>, FreezeMarke> marken);
+    [[nodiscard]] FreezeMarke freezeMarke(int kanal, int startTakt) const;
+    /// Was die Marke sagt: „❄ frozen“, „computing… 40 %“, „❄ frozen · changed“; leer = keine.
+    [[nodiscard]] static QString freezeText(const FreezeMarke& marke);
+    /// Der Tooltip dazu, mit Erklaerung.
+    [[nodiscard]] static QString freezeTooltip(const FreezeMarke& marke);
     void kanalHinzu();
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
@@ -199,6 +222,8 @@ Q_SIGNALS:
     void effekteVerlangt();
     /// Das Fenster „Export audio" soll sich fuer diesen Clip oeffnen (Stufe 30c).
     void exportVerlangt(int kanal, int startTakt);
+    /// Die markierten Clips sollen einfrieren (`true`) oder ihre Marke verlieren (Stufe 30g).
+    void freezeVerlangt(bool einfrieren);
     /// Ein Klick oder Zug im Lineal (B4): dorthin springen, oder dort beginnen.
     void stelleGewaehlt(int schritt);
     /// Ein Hinweis zur Bedienung unter der Maus (Stufe 27e-2: am Fader, auch sein
@@ -206,6 +231,7 @@ Q_SIGNALS:
     void hinweis(const QString& text);
 
 protected:
+    bool event(QEvent* event) override;  ///< der Tooltip der Marke Freeze
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     [[nodiscard]] bool istGeladen() const override { return m_geladen; }
     /// Die Kanaele und eine Zeile mehr: die Flaeche, auf der ein neuer Kanal entsteht.
@@ -269,6 +295,7 @@ private:
     Loop m_vorZug;                  ///< der Stand beim Druck
 
     std::vector<ClipOrt> m_gruppe;     ///< alle markierten Clips
+    std::map<std::pair<int, int>, FreezeMarke> m_freeze;  ///< die Marken Freeze (Stufe 30g)
     std::vector<ClipOrt> m_vorGruppe;  ///< die Marken beim Druck
     /// Der Druck traf einen von mehreren markierten Clips: wird nicht gezogen,
     /// bleibt beim Loslassen nur er markiert.

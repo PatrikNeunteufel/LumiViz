@@ -52,6 +52,9 @@ struct Tonfuehrung::LoopQuelle
     /// Eine eingefrorene Wellenform liess sich nicht laden (30f): im naechsten Takt neu
     /// planen — ihr Clip spielt dann live.
     bool neuPlanen = false;
+    /// `frozenFassung()` beim letzten Planen (Stufe 30g): liegt eine Wellenform neu vor oder
+    /// ging eine, wird neu geplant — auch wenn sich der Loop nicht geaendert hat.
+    std::uint64_t frozenGesehen = 0;
     /// Er spielt mit Luecken: was fehlte, schweigt, bis der Auftrag fertig ist
     /// (H2 a, TV7 a D). Sonst klingt waehrend des Auftrags das bisherige Programm (C).
     bool lueckenhaft = false;
@@ -77,6 +80,7 @@ struct Tonfuehrung::LoopQuelle
     void baue(IAudioEngine& engine, std::vector<std::unique_ptr<lumi::loop::Tonauftrag>>& verworfen)
     {
         rate = engine.getSampleRate();
+        frozenGesehen = lumi::loop::frozenFassung();
         // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
         const lumi::loop::SaitenVon saiten = lumi::loop::saitenAusInstrumenten();
         // eingefrorene Clips (Stufe 30f) spielen ihre Wellenform, wenn sie zum jetzigen Abdruck vorliegt
@@ -543,9 +547,9 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         {
             const double vorher = q.loop->durchlaufMs;
             if (q.loop->pruefe(m_verworfen) && q.loop->durchlaufMs != vorher) sprang = true;
-            if (q.loop->neuPlanen)
+            if (q.loop->neuPlanen || q.loop->frozenGesehen != lumi::loop::frozenFassung())
             {
-                // eine eingefrorene Wellenform fehlte (30f): ihr Clip spielt live
+                // eine eingefrorene Wellenform fehlte (30f), oder eine liegt neu vor (30g)
                 q.loop->neuPlanen = false;
                 q.loop->baue(engine, m_verworfen);
             }

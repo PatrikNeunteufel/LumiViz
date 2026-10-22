@@ -103,6 +103,7 @@ void Spieler::ladeProgramm(bool vonVorn)
 {
     // der Begrenzer am Mixer des Loops (27e-3, LL7 a): wie der Loop es sagt
     m_engine->setMixerLimiter(m_mixer, m_loop.limiter);
+    m_frozenGesehen = frozenFassung();
     const int rate = m_engine->getSampleRate();
     const Satz satz = satzJetzt(rate);
     if (m_klaenge != nullptr && satz == m_satz)
@@ -273,6 +274,8 @@ void Spieler::takt()
         return;
     }
     schalteUm();
+    // eine eingefrorene Wellenform liegt neu vor oder ging (Stufe 30g): neu planen
+    if (spielt() && m_frozenGesehen != frozenFassung()) ladeProgramm(false);
     // der Player schweigt; seine Lautstaerke, sein Mute und sein Pegel gelten
     // fuer den Mixer des Loops
     if (m_player->isPlaying()) m_player->pause();

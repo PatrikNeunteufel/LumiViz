@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.50.0
+> **Version:** 0.51.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -1017,6 +1017,22 @@ Tests in `test_LoopFreezeSpielen` (zwei Fälle: Marken und Auftrag über Einfrie
 Undo, Lösen, Räumen; Abbruch mit haltendem Dekodierer). Freeze, Spieler, Ton unter Release-clang und
 Testing-MSVC 46 / 46.
 
+**Gebaut 30g-2 (S144):** in der `Taktachse` die Marke (`FreezeMarke`, `setzeFreezeMarken`, `freezeText`,
+`freezeTooltip`): rechts, links vom „fx“; „❄ frozen“ durchgezogen, „computing… n %“ gepunktet, „❄ frozen ·
+changed“ gestrichelt und matter (Fehlt: „❄ frozen · missing“); ist kein Platz für den Text (dem Namen
+bleiben bis 60 px), die Kurzform — eingefroren die Flocke im Quadrat, **verändert oder fehlend die Flocke
+in einem Warndreieck** (Zusatz Patrik S144: im Quadrat nicht zu unterscheiden), rechnend die Prozent;
+Tooltip mit Erklärung. Im Menü *Freeze clip* / *Unfreeze clip* nach *Export audio...*, bei mehreren
+*Freeze 2 clips* / *Unfreeze 2 clips* (Unfreeze, wenn alle eingefroren sind). Im `LoopPanel`
+`friereEin` (ein Undo-Schritt, rechnet sofort), Speichern frischt die Marken auf und rechnet den neuen
+Stand (F2 a), nach jeder Änderung `bestimmeFreeze` (fehlt eine Datei unverändert, wird sie gerechnet —
+F5 a; was misslang, erst nach der nächsten Änderung wieder), die Hinweiszeile „Freezing clip n of m … p %“
+(D), Meldungen im Bericht. `frozenFassung()` wächst mit jeder abgelegten, vergessenen oder geräumten
+Datei: Spieler und Tonführung planen dann neu — auch ohne Änderung am Loop. Tests: `test_LoopFreezeBedienung`
+(Menü, Marke, Undo/Redo, Speichern, Räumen, Lösen; Kurzformen; `LUMIVIZ_FREEZE_BILD` legt vier Bilder ab),
+`test_LoopMenues` kennt *Freeze clip*. Bereich `*Loop*,*Instrument*,*Shape*,*Palette*,*Drum*,*Wav*` unter
+Release-clang 545 / 545 (vor dem Fall der Kurzformen), unter Testing-MSVC 546 / 546; Composer je 151 / 151.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1358,6 +1374,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.51.0 | 2026-10-22 | Session 144. Stufe 30g-2 gebaut (Marke, Menü, Undo, Speichern, Hinweiszeile; Kurzform „verändert“ im Warndreieck, Patrik). |
 | 0.50.0 | 2026-10-22 | Session 144. Plan 30g; Stufe 30g-1 gebaut (`FreezeAuftrag`, Marken, Zustand). |
 | 0.49.0 | 2026-10-22 | Session 144. FZ4 a (Bedienung von Freeze nach Skizze A–D). |
 | 0.48.0 | 2026-10-22 | Session 144. Verdacht Tonführung Fall C mit Test belegt und behoben. |
