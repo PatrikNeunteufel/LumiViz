@@ -16,6 +16,7 @@
 #include "loop/ComposerAbfragen.hpp"  // der Composer steht ueber dem Loop (S128, N1 b)
 #include "loop/DrumEditor.hpp"
 #include "loop/DrumKit.hpp"  // merkeGeoeffnetenLoop
+#include "loop/ExportFenster.hpp"
 #include "loop/Instrument.hpp"  // zaehleInstrumentFassung
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Kit.hpp"
@@ -254,6 +255,11 @@ void LoopPanel::setupUI()
     m_publish->setObjectName(QStringLiteral("loopPublish"));
     m_publish->setToolTip(tr("Pass the loop on as one file, with the instruments, kits, shapes and samples "
                              "of your own it uses"));
+    // Stufe 30c (WX8 a): der ganze Loop als WAV, zwischen Save As... und Publish...
+    m_exportieren = new QPushButton(tr("Export audio..."), this);
+    m_exportieren->setObjectName(QStringLiteral("loopExportAudio"));
+    m_exportieren->setToolTip(tr("Write the whole loop as you hear it here — with faders, loop volume and limiter — "
+                                 "into a WAV file"));
     m_tags = new QPushButton(tr("Tags..."), this);
     m_tags->setObjectName(QStringLiteral("loopTags"));
     m_tags->setToolTip(tr("Title, artist and the other tags of the loop — what the player shows "
@@ -265,6 +271,7 @@ void LoopPanel::setupUI()
     dateiReihe->addWidget(m_laden);
     dateiReihe->addWidget(m_speichern);
     dateiReihe->addWidget(m_speichernUnter);
+    dateiReihe->addWidget(m_exportieren);
     dateiReihe->addWidget(m_publish);
     aussen->addLayout(dateiReihe);
 
@@ -383,6 +390,10 @@ void LoopPanel::setupUI()
     });
     connect(m_achse, &Taktachse::editorVerlangt, this, [this](const QString& muster) { (void)oeffneEditor(muster); });
     connect(m_achse, &Taktachse::effekteVerlangt, this, [this] { (void)oeffneEffekte(); });
+    // Stufe 30c (WX6 a, WX8 a): ein Clip oder der ganze Loop als WAV
+    connect(m_achse, &Taktachse::exportVerlangt, this,
+            [this](int kanal, int startTakt) { (void)oeffneExport(ClipOrt{kanal, startTakt}); });
+    connect(m_exportieren, &QPushButton::clicked, this, [this] { (void)oeffneExport(); });
     // B4 (S124): ein Klick ins Lineal — dorthin springen, oder dort beginnen
     connect(m_achse, &Taktachse::stelleGewaehlt, this, &LoopPanel::setzeStartstelle);
     connect(m_achse, &Taktachse::zeilenProzentGeaendert, this,
@@ -635,6 +646,37 @@ InstrumentEditor* LoopPanel::instrumentEditor() const
 ClipEffektFenster* LoopPanel::effektFenster() const
 {
     return m_effekte;
+}
+
+bool LoopPanel::oeffneExport(std::optional<ClipOrt> clip)
+{
+    if (!m_geladen) return false;
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    ExportWunsch vorlage;
+    vorlage.art = clip ? ExportArt::Clip : ExportArt::Loop;
+    vorlage.loop = m_loop;
+    vorlage.loop.richte();
+    if (clip) vorlage.clip = *clip;
+    vorlage.rate = engine != nullptr && engine->getSampleRate() > 0 ? engine->getSampleRate() : 44100;
+    const QString name = !m_datei.isEmpty()          ? QFileInfo(m_datei).completeBaseName()
+                         : !m_loop.tags.titel.isEmpty() ? m_loop.tags.titel
+                                                        : tr("untitled");
+    QString text = name;
+    if (clip)
+    {
+        const int nr = findeClip(vorlage.loop, *clip);
+        if (nr < 0) return false;
+        const Kanal& kanal = vorlage.loop.kanaele[static_cast<std::size_t>(clip->kanal)];
+        const LoopClip& c = kanal.clips[static_cast<std::size_t>(nr)];
+        text = tr("%1 · %2, bars %3–%4").arg(kanal.name, c.muster).arg(c.startTakt + 1).arg(c.startTakt + vorlage.loop.clipTakte(c));
+    }
+    // dekodiert wird ueber die Engine (TV3 a); ohne Engine bleiben Samples still
+    Dekodierer dekodierer = [engine](const QString& datei, int rate, double maxSekunden) {
+        return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};
+    };
+    ExportFenster fenster(std::move(vorlage), name, text, std::move(dekodierer), this);
+    (void)lumi::ui::fuehreDialogAus(fenster);
+    return true;
 }
 
 bool LoopPanel::oeffneEffekte(bool zeigen)

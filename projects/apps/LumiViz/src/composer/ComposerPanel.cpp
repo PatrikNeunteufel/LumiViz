@@ -22,6 +22,7 @@
 #include "composer/Mischer.hpp"
 #include "composer/MuteKnopf.hpp"
 #include "composer/Sitzung.hpp"
+#include "loop/ExportFenster.hpp"  // Export audio... am Loop-Clip (Stufe 30c)
 #include "loop/Loop.hpp"   // ein Loop als Clip im Audio-Kanal (S109)
 #include "loop/Offen.hpp"
 #include "services/ICommandBus.hpp"
@@ -1859,6 +1860,9 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         if (!istLoop(datei)) return;
         QAction* a = m.addAction(tr("Open in Loop panel"), this, [this, datei] { Q_EMIT loopImPanelOeffnen(datei); });
         a->setObjectName(QStringLiteral("composerOpenInLoopPanel"));
+        // Stufe 30c (WX6 a): der Loop ueber Versatz und Laenge des Clips als WAV
+        QAction* e = m.addAction(tr("Export audio..."), this, [this, kanal, clip] { Q_EMIT loopExportieren(kanal, clip); });
+        e->setObjectName(QStringLiteral("composerExportLoopAudio"));
         m.addSeparator();
     };
     if (!m_bearbeiten)
@@ -2625,6 +2629,8 @@ void ComposerPanel::setupUI()
     connect(m_zeitachse, &Zeitachse::loopImPanelOeffnen, this, [this](const QString& datei) {
         if (auto* bus = services().tryResolve<IEventBus>()) bus->publish(LoadLoopEvent{datei.toStdString()});
     });
+    connect(m_zeitachse, &Zeitachse::loopExportieren, this,
+            [this](int kanal, int clip) { (void)oeffneLoopExport(kanal, clip); });
 
     // Audiokanal (C5): was die Zeitachse ueber Songs wissen muss, kommt von der Audio-Engine
     // — dazu die Loops (S109, Loop_Konzept §4e): eine `.lvloop` faellt in einen
@@ -2645,6 +2651,36 @@ void ComposerPanel::setupUI()
 KurvenFenster* ComposerPanel::kurvenFenster() const
 {
     return m_kurven;
+}
+
+bool ComposerPanel::oeffneLoopExport(int kanal, int clip)
+{
+    const Komposition& k = m_zeitachse->komposition();
+    if (kanal < 0 || kanal >= static_cast<int>(k.kanaele.size())) return false;
+    const Kanal& ziel = k.kanaele[static_cast<std::size_t>(kanal)];
+    if (ziel.art != KanalArt::Audio || clip < 0 || clip >= static_cast<int>(ziel.clips.size())) return false;
+    const Clip& c = ziel.clips[static_cast<std::size_t>(clip)];
+    if (!istLoop(c.datei)) return false;
+    // die Fassung, die das Panel Loop offen hat (auch ungespeichert, L7 a) — sonst die Datei
+    lumi::loop::Loop loop;
+    if (!lumi::loop::offenerLoop(c.datei, loop) && !lumi::loop::ladeLoop(c.datei, loop)) return false;
+    loop.richte();
+
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    lumi::loop::ExportWunsch vorlage;
+    vorlage.art = lumi::loop::ExportArt::Ausschnitt;
+    vorlage.loop = std::move(loop);
+    vorlage.versatzMs = static_cast<double>(c.einsatzMs);
+    vorlage.laengeMs = static_cast<double>(c.dauerMs());
+    vorlage.rate = engine != nullptr && engine->getSampleRate() > 0 ? engine->getSampleRate() : 44100;
+    const QString name = QFileInfo(c.datei).completeBaseName();
+    const QString text = tr("%1 in %2, %3 – %4").arg(name, ziel.name, zeitText(c.startMs), zeitText(c.endeMs));
+    lumi::loop::Dekodierer dekodierer = [engine](const QString& datei, int rate, double maxSekunden) {
+        return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};
+    };
+    lumi::loop::ExportFenster fenster(std::move(vorlage), name, text, std::move(dekodierer), this);
+    (void)lumi::ui::fuehreDialogAus(fenster);
+    return true;
 }
 
 void ComposerPanel::setBearbeiten(bool an)

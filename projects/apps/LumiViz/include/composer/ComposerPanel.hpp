@@ -332,6 +332,8 @@ Q_SIGNALS:
     /// Rechtsklick „Open in Loop panel" auf einem Loop-Clip (S130, Wunsch
     /// Patrik) — auch ohne Edit; das Panel Loop fragt nach Ungespeichertem.
     void loopImPanelOeffnen(const QString& datei);
+    /// Rechtsklick „Export audio..." auf einem Loop-Clip (Stufe 30c) — auch ohne Edit.
+    void loopExportieren(int kanal, int clip);
 
 protected:
     [[nodiscard]] bool istGeladen() const override { return m_geladen; }
@@ -493,6 +495,10 @@ public:
     /// seine Zeile nur markiert (Knopf neben Gain). Nur mit Edit; solange er
     /// offen ist, ist Edit grau (G5-2 a). nullptr = nicht moeglich.
     LautheitsDialog* oeffneAbgleich(int kanal, int clip, bool alsZiel);
+    /// Rechtsklick „Export audio..." auf einem Loop-Clip (Stufe 30c; WX3 a, WX6 a), auch
+    /// ohne Edit: das Fenster *Export audio* fuer den Loop ueber Versatz und Laenge des
+    /// Clips, modal ueber `lumi::ui::fuehreDialogAus`. false = kein Loop-Clip dort.
+    bool oeffneLoopExport(int kanal, int clip);
     /// Der offene Dialog Match loudness, nullptr = keiner.
     [[nodiscard]] LautheitsDialog* abgleichDialog() const;
     /// Enthaelt die Kettendatei einen Host Switcher? Dann wechseln im Composer

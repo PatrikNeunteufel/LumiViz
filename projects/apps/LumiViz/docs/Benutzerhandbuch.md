@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.199.0
+> **Version:** 1.200.0
 > **Datum:** 2026-10-21
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2228,6 +2228,8 @@ unter `composer/fades` und `composer/shapes`.
   den angeklickten Clip: **Ctrl+E** (nur mit *Edit*). Auf einem **Loop-Clip**
   steht dazu *Open in Loop panel* — auch ohne *Edit*: der Loop kommt ins
   Panel **Loop**; hat das Panel Ungespeichertes, fragt es wie bei *Load...*.
+  Darunter *Export audio...*: der Loop über Versatz und Länge des Clips als
+  WAV-Datei, ohne Gain, Blenden und Pegelkurve (§16, „Als WAV exportieren“).
 - **Kanäle verschieben:** Zieh einen Kanal an seinem **Namen** (linke Spalte)
   nach oben oder unten — ein Strich zeigt, wo er landet; Esc bricht ab. Oder
   Rechtsklick auf die Zeile → **Move channel up** / **Move channel down**.
@@ -2648,6 +2650,7 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 |---|---|
 | Dateiname | Der geladene Loop; ein Stern heißt: es gibt Ungespeichertes. „untitled" = noch nie gespeichert |
 | **Tags...** | Titel, Künstler, Album, Jahr, Genre, Nummer und Songtext des Loops — was das Panel Player zeigt, wenn der Loop als Clip im Composer läuft. Ohne Titel gilt der Dateiname |
+| **Export audio...** | Der ganze Loop als WAV-Datei, wie das Panel ihn spielt — siehe „Als WAV exportieren“ |
 | **New** / **Load...** / **Save** / **Save As...** | Ein leerer Loop mit einem Kanal; eine Datei laden; speichern. New, Load und das Beenden von LumiViz fragen nach, wenn Ungespeichertes verloren ginge (Save / Discard / Cancel). Der zuletzt geladene Loop steht nach dem Neustart wieder da |
 | **Play** / **Stop** | Spielt den Loop im Kreis — von vorn oder ab der grünen Marke im Lineal |
 | **BPM** | Das Tempo des ganzen Loops, 20 bis 400 |
@@ -2729,6 +2732,7 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 | Kante eines Clips ziehen | Länger und kürzer in **ganzen Mustern**; der Name zählt mit („Grund × 3"), ein gestrichelter Strich steht an jeder Wiederholung. Links gezogen bleibt das Ende stehen. Eine Kante gehört immer einem Clip — danach ist nur er markiert |
 | Rechtsklick auf einen Clip → **Duplicate** (auch Ctrl+D) | Eine **verbundene** Kopie dahinter: sie spielt dieselbe Basis. Bei mehreren markierten („Duplicate n clips") die ganze Gruppe, an die erste Stelle dahinter, an der alle Kopien Platz haben; markiert sind danach die Kopien |
 | → **Effects...** | Öffnet das Fenster **Clip effects** für die markierten Clips — siehe „Effekte am Clip" |
+| → **Export audio...** | Den Clip als WAV-Datei, mit Nachklang — siehe „Als WAV exportieren“ |
 | → **Rename base...** | Benennt die Basis um — für alle Clips, die sie spielen |
 | → **Delete** (auch Entf) | Entfernt den Clip, bei mehreren alle markierten. Spielt danach kein Clip mehr eine Basis, geht sie mit |
 | → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor |
@@ -3495,6 +3499,41 @@ gerechnet, nicht nach Gehör eingestellt:
 | `afrobeat.lvloop` | Lagos night | Afrobeat | 108 | Cowbell und Congas als Instrumente, Round Bass, Clean Guitar, Orgel, Bläser |
 | `metal.lvloop` | Iron road | Metal | 160 | Doppel-Kick in Sechzehnteln, Overdrive Guitar, Growl Bass, Strings, Solo in harmonisch Moll |
 
+### Als WAV exportieren: Export audio
+
+Drei Wege führen zum Fenster **Export audio**:
+
+| Weg | Was in die Datei kommt |
+|---|---|
+| Panel Loop, Datei-Zeile → **Export audio...** | Der **ganze Loop**, wie das Panel ihn spielt: mit Fadern, Kanal-Schaltern, der Lautstärke des Loops und dem **Limiter** (wenn er an ist) |
+| Panel Loop, Rechtsklick auf **einen** Clip → **Export audio...** | Nur **dieser Clip**, über alle seine Wiederholungen, mit seinen Effekten und der Kurve am Clip und mit dem **Nachklang** dahinter (ausklingende Töne, Echo, Hall) — **ohne** den Fader seines Kanals und **ohne** die Lautstärke des Loops. Die Datei ist darum meist lauter als das, was das Panel spielt. Bei mehreren markierten ist der Eintrag grau |
+| Composer, Rechtsklick auf einen **Loop-Clip** → **Export audio...** (auch ohne *Edit*) | Der Loop über **Versatz und Länge** dieses Clips, mit den Fadern und der Lautstärke des Loops — **ohne** Gain, Blenden und Pegelkurve des Clips und ohne den Limiter der Komposition. Die Datei endet, wo der Clip endet |
+
+Im Fenster:
+
+- **Clip** und **Contains** sagen, was exportiert wird.
+- **File:** ein Vorschlag im zuletzt benutzten Ordner — `<Loop>_<Basis>_bar<N>.wav` für einen
+  Clip, `<Loop>.wav` für den ganzen Loop, `<Loop>_<m-ss>.wav` aus dem Composer. **Browse...**
+  wählt den Ort. Gibt es die Datei schon, steht „This file exists and will be replaced.“ da;
+  fehlt die Endung, kommt `.wav` dazu.
+- **Format:** **32-bit float** (Vorgabe — behält jeden Wert, auch über 0 dB, das Beste zum
+  Weiterarbeiten), **24-bit** oder **16-bit (dither)** (wie eine CD). Bei 24 und 16 Bit wird
+  über 0 dB abgeschnitten.
+- Nur beim ganzen Loop: **Ending** — **Seamless loop** (Vorgabe: ein Durchlauf, wie er ab dem
+  zweiten klingt, also schon mit dem Nachklang des vorigen; in einem anderen Programm wiederholt
+  er sich ohne Lücke) oder **With tail** (aus der Stille, hinten klingt es aus) — und **Passes**,
+  wie oft der Loop in der Datei spielt (1 bis 64).
+
+**Export** rechnet im Hintergrund: erst „Preparing sounds… n / m“ (Töne, die schon gerechnet
+sind, kommen sofort aus dem Speicher, siehe „Die Töne werden vorbereitet“), dann „Rendering… n
+%“. **Cancel** bricht ab, dann wird nichts geschrieben. Am Ende steht etwa „Exported 19.2 s (tail
+3.7 s) · 24-bit · 4.8 MB“; wurde gekappt, sagt es eine gelbe Zeile („312 values above 0 dB were
+clipped — 32-bit float keeps them“). **Show in folder** öffnet den Ordner. Format, Ordner, Ending
+und Passes merkt sich das Fenster. Die Datei hat die Abtastrate, mit der LumiViz gerade spielt.
+
+Ein Nachklang endet, wenn eine halbe Sekunde lang alles unter −96 dB bleibt, spätestens 30 s nach
+dem Ende („The tail was cut after 30 s.“).
+
 ### Weitergeben: Publish
 
 Ein Loop nennt seine Instrumente, Klänge und sein Kit, ein Instrument seine
@@ -3650,6 +3689,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.200.0 | 2026-10-22 | Session 143. §16 Loop NEU **Als WAV exportieren: Export audio** — der ganze Loop (Datei-Zeile), ein Clip (Rechtsklick), aus dem Composer ein Loop-Clip; Format 32-bit float / 24 / 16 Bit, beim ganzen Loop Ending und Passes, Fortschritt, Ergebnis, Show in folder (Stufe 30c). §15 Composer: *Export audio...* am Loop-Clip. |
 | 1.199.0 | 2026-10-22 | Session 143. §16 Loop NEU **Die Lautstärke des Loops** (Datei `volume`, Vorgabe 0,5, wirkt nach den Effekten und Fadern, vor dem Limiter; nicht einstellbar; Stufe 30, WX5 a, HB1 a). |
 | 1.198.0 | 2026-10-22 | Sessions 142–143. §16 Loop NEU **Die Töne werden vorbereitet**: Rechnen im Hintergrund beim Öffnen, Play wartet mit „Preparing sounds…“, nach einer Änderung „updating sounds“, die Hinweiszeilen der Editoren (auch im Drum-Editor). §15 Composer: das Feld Zeit beim Warten. §8 Settings → Panels NEU **Loop Sound Memory** mit Stand und **Clear** (Stufe 29). |
 | 1.197.0 | 2026-10-21 | Sessions 140–141. §16 Loop NEU **Spuren über der Zeit**: im Instrument-Editor die Zeile **Lanes** (Haken je Spur, Tab dorthin verschoben) und die Spuren **Sustain**, **Sostenuto**, **Expression**, **Vibrato**, **Pitch** über dem Raster — Punkte setzen, ziehen, löschen, **Clear lane**; welche Spur ein Instrument trägt; wie sie klingen (Pedal, Pegel e², an der Saite hinter dem Tonabnehmer). Im Panel Loop die **Expression am Clip** als Kurve (am markierten Clip zu bearbeiten, **Clear expression**). Im Creator **Pitch range** und **Tremolo arm**. Neues Beispiel `lanes_demo` |

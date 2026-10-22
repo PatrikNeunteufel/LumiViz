@@ -184,6 +184,10 @@ public:
     /// entsteht beim ersten Mal und folgt danach den Marken). false = kein
     /// Loop geladen. `zeigen` false fuellt es nur (fuer Tests ohne Fenster).
     bool oeffneEffekte(bool zeigen = true);
+    /// „Export audio..." (Stufe 30c; WX6 a, WX7 a, WX8 a): das Fenster fuer einen Clip
+    /// oder — ohne `clip` — den ganzen Loop, modal ueber `lumi::ui::fuehreDialogAus` (ein
+    /// Test faengt es mit `setzeDialogBeobachterFuerTests`). false = kein Loop geladen.
+    bool oeffneExport(std::optional<ClipOrt> clip = std::nullopt);
     /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
     [[nodiscard]] ClipEffektFenster* effektFenster() const;
 
@@ -253,6 +257,7 @@ private:
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
     QPushButton* m_publish = nullptr;
+    QPushButton* m_exportieren = nullptr;  ///< Export audio... (WX8 a)
     QPushButton* m_tags = nullptr;
     QPushButton* m_play = nullptr;
     QDoubleSpinBox* m_bpm = nullptr;

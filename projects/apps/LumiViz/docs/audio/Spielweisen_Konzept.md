@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.39.0
+> **Version:** 0.40.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX5 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX5 a und TS1 a (Patrik S139–S143);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a und TS1 a (Patrik S139–S143);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -888,6 +888,76 @@ halbes LSB), Kappung, Dither (fest, ein Ton von 0,4 LSB bleibt: Ton mal gelesen 
 Grenzen, Mono, die BassEngine liest alle drei (float ohne Abweichung, 24 Bit 1,2·10⁻⁷, 16 Bit
 4,0·10⁻⁵).
 
+✅ **WX6 a** (Patrik S143, nach Skizze): **Ein eigenes Fenster *Export audio*.** Die Skizze:
+- **Menü:** im Loop-Panel am Clip *Export audio...* nach *Effects...* (grau bei mehreren markierten);
+  im Composer am Loop-Clip nach *Open in Loop panel*, auch ohne *Edit*.
+- **Vor dem Export:** *Clip* (welcher: „Keys · Piano stabs, bars 5–8“), *Contains* (was drin ist — im
+  Loop-Panel „the clip with its effects, expression and tail — without channel fader and loop
+  volume“, im Composer „the loop from 0:12 for 0:30, with its faders — without the composition's
+  gain, fades and limiter“), *File* mit Vorschlag und **Browse...** (der Windows-Dialog, nur für den
+  Ort), *Format* mit drei Knöpfen: **32-bit float** (vorgewählt), **24-bit**, **16-bit (dither)**;
+  gemerkt werden Format und Ordner. **Export** / **Cancel**.
+- **Beim Export:** dasselbe Fenster zeigt „Preparing sounds… n / m“, dann „Rendering… n %“, mit
+  **Cancel**.
+- **Am Ende:** „Exported 12.4 s (tail 3.4 s) · 32-bit float · 4.6 MB“; bei Kappung eine Zeile in
+  Warnfarbe („312 values above 0 dB were clipped — 32-bit float keeps them“); **Show in folder**,
+  **Close**.
+
+Grund: der Export muss vor dem Klick sagen, was er enthält (ohne Fader, ohne Lautstärke des Loops,
+mit Nachklang); das Format ist eine sichtbare Wahl; Fortschritt und Ergebnis brauchen ohnehin ein
+Fenster (der Composer hat keine Meldezeile). Verworfen: b (Windows-Dialog mit dem Format als
+*Dateityp*, danach ein kleines Fenster — die Wahl versteckt sich in einer Liste, das Enthaltene stünde
+erst danach da). Kippt, wenn ohne stehendes Fenster exportiert werden soll — dann b mit einem
+Hinweis, der von selbst verschwindet.
+
+✅ **WX7 a** (Patrik S143, Frage Patrik „dann kann man im Loop-Panel den ganzen Loop exportieren?“):
+**Das Loop-Panel exportiert auch den ganzen Loop**, so wie das Panel ihn spielt — mit Fadern,
+Kanal-Schaltern, der Lautstärke des Loops und seinem Limiter; daneben bleibt *Export audio...* am
+Clip. Dieselbe Rechnung (`rechneAusschnitt`, dazu der Begrenzer `audio/Begrenzer` ohne Engine),
+dasselbe Fenster mit einer dritten Fassung von *Contains*. Grund: der Export gehört dorthin, wo der
+Loop entsteht; im Composer ist er ein Ausschnitt ohne seinen Limiter. Verworfen: b (nur Clips, den
+ganzen Loop über den Composer — ein Umweg als Regel, der Klang des Panels fehlte). Kippt, wenn Loops
+nur als Teil einer Komposition weitergegeben werden. Einzeln danach: WX8 der Ort des Eintrags, WX9
+wie der Export endet (ein Durchlauf nahtlos oder mit Nachklang).
+
+✅ **WX8 a** (Patrik S143, nach Skizze): **Ein Knopf *Export audio...* in der Datei-Zeile des
+Loop-Panels**, zwischen **Save As...** und **Publish...**; Tooltip „Write the whole loop as you hear it
+here — with faders, loop volume and limiter — into a WAV file“. Grund: es geht um die ganze Datei, und
+die Datei-Zeile sammelt speichern, speichern unter, weitergeben (wie im Composer: Neues im Kopf in die
+Datei-Zeile). Verworfen: b (im Kontextmenü einer freien Stelle der Achse — dort steht, was an der
+Stelle geschieht, nicht der ganze Loop). Kippt, wenn die Datei-Zeile bei schmalem Panel zu voll wird
+— dann *Export audio...* und *Publish...* hinter einem Knopf mit Menü.
+
+✅ **WX9 a** (Patrik S143): **Beim ganzen Loop die Wahl im Fenster.** Zwei Zeilen mehr: *Ending* mit
+**Seamless loop** (Vorgabe; „One pass as it sounds from the second on — repeats without a gap“) und
+**With tail** („Starts from silence and rings out after the end“), dazu *Passes* 1 bis 64 (Vorgabe 1);
+gemerkt wird die letzte Wahl. Beim Clip bleibt es, wie es ist (immer mit Nachklang, F3 a). Grund:
+beide Enden haben echte Verwendungen (weiter loopen, als Schluss), keines schließt das andere ein;
+„nahtlos“ ist, was das Panel ab dem zweiten Durchlauf spielt. Verworfen: b (nur nahtlos — für einen
+Schluss bliebe der Umweg über den Composer), c (nur mit Nachklang). Kippt, wenn exportierte Loops nur
+in anderen Programmen geloopt werden — dann b ohne *Passes*. *Rechnung (Claude):* nahtlos = ein
+Durchlauf vorweg für Effekte und Limiter, verworfen, dann *Passes* Durchläufe; mit Nachklang = die
+Clips *Passes*-mal hintereinander gelegt (die Saitenplanung läuft über die Durchläufe), dahinter Platz
+für den Nachklang wie bei `clipFassung`.
+
+**Gebaut 30c (S143):** `loop/Wellenform` um den ganzen Loop erweitert (`loopFassung`,
+`loopKlangNamen`, `rechneLoop` — der Limiter `audio/Begrenzer` offline, seine Verzögerung
+ausgeglichen; mit Nachklang haben die Effekte je Durchlauf ihr eigenes Gedächtnis, ein Drive über den
+Nachklang des vorigen hinweg kann sich darum leicht von live unterscheiden). `loop/ExportAuftrag`
+(ein Thread: Töne über einen `Tonauftrag`, Wellenform, `audio::schreibeWav`; Stand, Abbruch,
+Ergebnis; der Destruktor bricht ab und wartet — §6.7), `exportName`, `tiefeText`.
+`loop/ExportFenster` (WX6 a, die drei Zustände; gemerkt unter `loop/exportFormat`, `exportFolder`,
+`exportEnding`, `exportPasses`; **Show in folder** mit Testhaken). Im Loop-Panel der Knopf
+`loopExportAudio` (WX8 a) und am Clip `loopClipExportAudio` (`Taktachse::exportVerlangt`,
+`LoopPanel::oeffneExport`); im Composer am Loop-Clip `composerExportLoopAudio` (`Zeitachse::loopExportieren`,
+`ComposerPanel::oeffneLoopExport`, die offene Fassung des Loop-Panels zuerst, L7 a). Handbuch
+1.200.0 (§16 „Als WAV exportieren“, §15), Sichttest-Liste `.claude/handover/Sichttest_Export.md`.
+Test `test_LoopExport` (sieben Fälle: Clip Bit für Bit, ganzer Loop nahtlos — zwei Durchläufe weichen
+um 3,9·10⁻⁵ voneinander ab — und mit Nachklang 2,7 s, Composer-Ausschnitt 24 Bit, Abbruch und
+Fehler, Dateinamen, das Fenster mit Gemerktem und Cancel, der Weg über Loop-Panel und Composer);
+in `test_LoopMenues` der Eintrag. Release-clang: Bereich 530 / 530, Composer 151 / 151. Im Programm
+nicht angesehen.
+
 ### 4.5 Stufe 29 „Töne vorab“ — Teilschritte
 
 **Befund (Code S142, gelesen): darf `rendereTon` auf mehreren Threads laufen?** Der Rechenkern ja:
@@ -1104,6 +1174,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.40.0 | 2026-10-22 | Session 143. WX6 a (Fenster *Export audio*, Skizze), WX7 a (auch der ganze Loop, Frage Patrik), WX8 a (Knopf in der Datei-Zeile), WX9 a (Ending, Passes); Stufe 30c gebaut. |
 | 0.39.0 | 2026-10-22 | Session 143. Stufe 30b gebaut (`audio/WavDatei`, ein Schreiber auch für die Aufnahme, `test_WavDatei`). |
 | 0.38.0 | 2026-10-22 | Session 143. Befund Lautstärke des Loops vor den Effekten; WX5 a (nach den Effekten, gebaut); HB1 a (ins Handbuch); Stufe 30a gebaut (`loop/Wellenform`, `test_LoopWellenform`). |
 | 0.37.0 | 2026-10-22 | Session 143. WX2 a (WAV, 32-bit float als Vorgabe, 24 und 16 Bit wählbar); WX3 a mit Zusatz (Loop-Clip im Composer: Länge, Versatz, Fader des Loops — ohne Gain, Blenden, Pegelkurve und Limiter); WX4 a (Teilschritte 30a–30d ff.). |

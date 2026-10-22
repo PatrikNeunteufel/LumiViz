@@ -1288,6 +1288,14 @@ bool Taktachse::verlangeEffekte()
     return true;
 }
 
+bool Taktachse::verlangeExport()
+{
+    const LoopClip* clip = auswahl();
+    if (clip == nullptr || m_gruppe.size() > 1 || m_griff != Griff::Keiner) return false;
+    Q_EMIT exportVerlangt(m_kanal, clip->startTakt);
+    return true;
+}
+
 void Taktachse::mouseDoubleClickEvent(QMouseEvent* event)
 {
     if (!m_geladen || event->button() != Qt::LeftButton) return;
@@ -1526,6 +1534,10 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         // die Effekte gelten fuer alle markierten (Entscheid Patrik S113, E2 b)
         menu.addAction(gruppe ? tr("Effects of %1 clips...").arg(zahl) : tr("Effects..."), this,
                        [this] { (void)verlangeEffekte(); });
+        // Stufe 30c (WX6 a): ein Clip als WAV — nur einer
+        QAction* exportieren = menu.addAction(tr("Export audio..."), this, [this] { (void)verlangeExport(); });
+        exportieren->setObjectName(QStringLiteral("loopClipExportAudio"));
+        exportieren->setEnabled(!gruppe);
         menu.addSeparator();
         menu.addAction(gruppe ? tr("Duplicate %1 clips").arg(zahl) : tr("Duplicate"), this,
                        [this] { (void)dupliziereAuswahl(); });

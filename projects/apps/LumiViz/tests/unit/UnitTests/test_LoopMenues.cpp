@@ -178,7 +178,8 @@ TEST_SUITE("Loop Menues")
 
         // --- auf einem Clip: die Eintraege, Rename base... fragt mit dem Namen der Basis
         rechts(achse, achse.clipRechteck(0, 0).center());
-        for (const char* text : {"Edit base", "Make new base and edit", "Effects...", "Duplicate", "Rename base...", "Delete"})
+        for (const char* text :
+             {"Edit base", "Make new base and edit", "Effects...", "Export audio...", "Duplicate", "Rename base...", "Delete"})
         {
             CAPTURE(text);
             CHECK(fang.texte.contains(QString::fromLatin1(text)));

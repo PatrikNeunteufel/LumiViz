@@ -118,6 +118,9 @@ public:
     /// „Effects...": das Fenster der Effekte fuer die markierten Clips
     /// verlangen (Stufe 12d). false = kein Clip markiert.
     bool verlangeEffekte();
+    /// „Export audio..." (Stufe 30c, WX6 a): den Export des angeklickten Clips verlangen.
+    /// false = keiner oder mehrere markiert.
+    bool verlangeExport();
     void kanalHinzu();
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
@@ -194,6 +197,8 @@ Q_SIGNALS:
     void editorVerlangt(const QString& muster);
     /// Das Fenster „Clip effects" soll sich fuer die markierten Clips oeffnen.
     void effekteVerlangt();
+    /// Das Fenster „Export audio" soll sich fuer diesen Clip oeffnen (Stufe 30c).
+    void exportVerlangt(int kanal, int startTakt);
     /// Ein Klick oder Zug im Lineal (B4): dorthin springen, oder dort beginnen.
     void stelleGewaehlt(int schritt);
     /// Ein Hinweis zur Bedienung unter der Maus (Stufe 27e-2: am Fader, auch sein

@@ -13,6 +13,8 @@
  *   ausklingende Toene, Hall, Echo. Damit dabei nichts zum Anfang umspringt
  *   (die Saitenplanung daempft sonst die letzten Toene mit den ersten), spielt
  *   die Rechnung einen Durchlauf, der laenger ist als der Nachklang.
+ * - **Der ganze Loop im Loop-Panel** (WX7 a, WX9 a): wie das Panel ihn spielt, mit
+ *   seinem Limiter — nahtlos oder mit Nachklang, ueber einen oder mehrere Durchlaeufe.
  * - **Ein Loop-Clip im Composer** (WX3 a): der Loop ab seinem Versatz ueber die
  *   Laenge des Clips, mit Fadern und Schaltern seiner Kanaele und seiner
  *   Lautstaerke — ohne Gain, Blenden und Pegelkurve des Composers, ohne Limiter
@@ -27,6 +29,8 @@
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
+
+#include <QStringList>
 
 #include <cstdint>
 #include <functional>
@@ -65,6 +69,36 @@ using Fortschritt = std::function<bool(double)>;
 /// `clipFassung(loop, ort)->klangNamen(saiten)`. Leer = den Clip gibt es nicht, oder
 /// `fortschritt` hat abgebrochen.
 [[nodiscard]] std::optional<Wellenform> rechneClip(const Loop& loop, ClipOrt ort, int rate,
+                                                   std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten,
+                                                   const Fortschritt& fortschritt = {});
+
+/// Wie der ganze Loop endet (WX9 a).
+enum class LoopEnde
+{
+    Nahtlos,    ///< Durchlaeufe, wie sie ab dem zweiten klingen — wiederholbar ohne Luecke
+    Nachklang,  ///< aus der Stille, hinten klingt es aus
+};
+
+/// Hoechstens so viele Durchlaeufe am Stueck (*Passes*, WX9 a).
+inline constexpr int kDurchlaeufeMax = 64;
+
+/// Was `rechneLoop` mit Nachklang spielt: die Clips jedes Kanals `durchlaeufe`-mal
+/// hintereinander (die Saitenplanung laeuft so ueber die Durchlaeufe wie im Kreis),
+/// dahinter Platz fuer den laengsten Nachklang. Ohne Clips leer.
+[[nodiscard]] std::optional<Loop> loopFassung(const Loop& loop, int durchlaeufe);
+
+/// Die Klaenge, die `rechneLoop` braucht — je nach Ende andere (mit Nachklang die der
+/// `loopFassung`).
+[[nodiscard]] QStringList loopKlangNamen(const Loop& loop, LoopEnde ende, int durchlaeufe, const SaitenVon& saiten);
+
+/// Den ganzen Loop rechnen, wie das Loop-Panel ihn spielt (WX7 a, WX9 a): mit Fadern,
+/// Schaltern, Lautstaerke und — wenn er an ist — seinem Limiter. `Nahtlos`: ein Durchlauf
+/// vorweg fuer Effekte und Limiter, verworfen, dann `durchlaeufe` Durchlaeufe. `Nachklang`:
+/// ab der Stille, dahinter der Nachklang wie bei `rechneClip`; Effekte am Clip haben je
+/// Durchlauf ihr eigenes Gedaechtnis (ein Drive ueber den Nachklang des vorigen hinweg
+/// kann sich darum leicht von live unterscheiden). `clipFrames` = die Durchlaeufe.
+/// `klaenge` gehoeren zu `loopKlangNamen`.
+[[nodiscard]] std::optional<Wellenform> rechneLoop(const Loop& loop, LoopEnde ende, int durchlaeufe, int rate,
                                                    std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten,
                                                    const Fortschritt& fortschritt = {});
 
