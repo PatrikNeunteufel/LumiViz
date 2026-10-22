@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.40.0
+> **Version:** 0.41.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a und TS1 a (Patrik S139–S143);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a, FZ2 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a, FZ2 a und TS1 a (Patrik S139–S143);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -833,6 +833,54 @@ audio…*), WX3 bleibt.
 Verworfen: b (30a und 30b in einem — ein roter Test hätte zwei mögliche Ursachen, wie bei TV1 a).
 Kippt, wenn Freeze vor dem Export kommen soll — dann 30a, 30b, danach Freeze als 30c.
 
+✅ **FZ1 a** (Patrik S143): **Freeze von innen nach außen, sechs Teilschritte.**
+
+| Teilschritt | Inhalt |
+|---|---|
+| 30d | **Hash und Klangfassung**, ohne Oberfläche: `clipAbdruck` über alles, was in den Clip eingeht (Muster, Instrumente mit ihren Dateien, Samples, Kit, Effekte und Kurve am Clip, Tempo, Swing, Raster, Rate, Klangfassung) — nicht Fader, Kanal-Schalter, Lautstärke des Loops, Limiter (F3 a, WX5 a). Ein Test wird rot, wenn sich `loop_werte.txt` ändert, ohne dass die Klangfassung mitwächst. |
+| 30e | **Die Dateien:** Ordner `frozen` im Benutzerbereich, je Hash eine WAV 32-bit float (`audio/WavDatei`), Grenze 2 GB, die am längsten nicht gespielten gehen; in den Settings eine Zeile wie *Loop Sound Memory* mit **Clear frozen clips** (vorher Skizze). |
+| 30f | **Abspielen:** `.lvloop` Feld `frozen` am Clip (immer geschrieben, Fassung 13); liegt die Datei zum Hash vor, spielt der Rechenkern sie als einen langen Klang ab dem Clip, Fader und Lautstärke des Loops live; sonst live. Der Composer ebenso. |
+| 30g | **Bedienung:** Skizze, dann *Freeze clip* / *Unfreeze clip*, die Marke („frozen“, „computing…“, „frozen · changed“), neu eingefroren beim Speichern im Hintergrund (F2 a), Undo findet die alte Datei. |
+| 30h | **Messung (F4 a):** Rechenzeit je Clip aus dem Tonspeicher, Zeichen ab der Schwelle (Settings, Vorgabe 1 s), Tooltip und Menütext. |
+| 30i | **Publish und Abschluss:** ein Paket nimmt die Wellenformen mit, der Empfänger nutzt sie nur bei gleichem Hash; Handbuch, Sichttest-Liste, Bereichslauf. |
+
+Grund: jede Stufe steht auf etwas Geprüftem — die Bedienung braucht Dateien, die sich abspielen lassen;
+der Hash mit der Klangfassung ist die heikelste Stelle (F1 a, H3 b) und kommt zuerst und allein.
+Verworfen: b (die Bedienung gleich nach dem Hash — ein Menü ohne Wirkung oder vorläufige Wege). Kippt,
+wenn das Menü früh im Sichttest stehen soll — dann b mit grauem *Freeze clip* bis 30f.
+
+**Gebaut 30d (S143):** `loop/Freeze` — `kKlangfassung` (1), `abdruckFassung` (der Clip allein auf
+Takt 0 über `clipFassung`, ohne Tags, Namen von Kanal und Muster, Kit-Nennung; Limiter fest) und
+`clipAbdruck` (SHA-1 über Klangfassung, Rate, die Fassung als JSON und je Klang seinen Schlüssel im
+Tonspeicher — `instrumentAbdruck` bzw. `klangSchluessel`). Gleiche Clips an anderer Stelle oder unter
+anderem Namen teilen einen Abdruck; Fader, Schalter, Lautstärke des Loops, Limiter, Tags und andere
+Kanäle ändern ihn nicht. Hinweis: wie im Tonspeicher stehen in den Schlüsseln Ort, Größe und
+Änderungszeit der Dateien — ein Auschecken oder Kopieren friert neu ein, schadet aber nicht. *(Durch
+FZ2 a ersetzt, siehe unten.)*
+**Der Wächter der Klangfassung** (`test_LoopFreeze`, `werte/klangfassung.txt`): je Eintrag von
+`loop_werte.txt` ein Abdruck seiner Eingaben **aus dem Inhalt** der Dateien (Instrument mit Samples
+und Zeichnungen, Loop-Datei mit Instrumenten und Klangdateien) und seine Werte; rot nur, wenn gleiche
+Eingaben andere Werte haben — eine geänderte oder neue mitgelieferte Datei verlangt keine neue Fassung.
+Probeweise ein Wert verfälscht: rot mit dem Namen des Eintrags. Grenze: `loop_werte.txt` misst auf ein
+Tausendstel — eine Änderung darunter (wie WX5 a an `effects_demo`) sieht der Wächter nicht.
+`LUMIVIZ_KLANGFASSUNG_SCHREIBEN=1` schreibt die Datei neu. Tests in `test_LoopFreeze` (drei Fälle: der
+Wächter, was den Abdruck ändert und was nicht, geänderte Instrument- und Klangdatei).
+
+**Befund (S143):** Gebaut wie oben, gingen Dateien mit Ort, Größe und Änderungszeit in den Abdruck —
+ein Paket aus Publish passte beim Empfänger nie (andere Pfade; gegen den Zusatz zu F5 a), schon ein
+Auschecken fror alles neu ein.
+
+✅ **FZ2 a** (Patrik S143): **Dateien gehen über ihren Inhalt in den Abdruck** (SHA-1 der Bytes), nicht
+über Ort und Zeit; das Programm merkt sich je Datei den Inhalts-Hash zu Ort, Größe und Änderungszeit
+und liest nur neu, wenn sich davon etwas geändert hat. *Umsetzung (Claude):* jeder **Verweis** auf eine
+Datei wird im Abdruck durch den Hash ihres Inhalts ersetzt — in der Fassung des Clips (Klang einer
+Spur, Instrument eines Musters oder einer Spur), in den Tonnamen (das Instrument darin) und in den
+Instrumenten selbst (Sample einer Schicht, Zeichnung einer Shape-Schicht). Grund: der Abdruck soll
+sagen, ob der Klang derselbe ist — der hängt am Inhalt; nur so geht der Zusatz zu F5 a auf, und
+„gleiche Clips teilen eine Datei“ (F1 a) gilt über zwei Rechner. Verworfen: b (wie im Tonspeicher mit
+Ort und Zeit — Publish nützte nichts, ein Auschecken fröre neu ein). Kippt, wenn Publish die
+Wellenformen doch nicht mitnehmen soll.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1174,6 +1222,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.41.0 | 2026-10-22 | Session 143. FZ1 a (Freeze in sechs Teilschritten 30d–30i); Stufe 30d gebaut (`loop/Freeze`, Wächter der Klangfassung); Befund Pfade im Abdruck, FZ2 a (Dateien über ihren Inhalt, gebaut). |
 | 0.40.0 | 2026-10-22 | Session 143. WX6 a (Fenster *Export audio*, Skizze), WX7 a (auch der ganze Loop, Frage Patrik), WX8 a (Knopf in der Datei-Zeile), WX9 a (Ending, Passes); Stufe 30c gebaut. |
 | 0.39.0 | 2026-10-22 | Session 143. Stufe 30b gebaut (`audio/WavDatei`, ein Schreiber auch für die Aufnahme, `test_WavDatei`). |
 | 0.38.0 | 2026-10-22 | Session 143. Befund Lautstärke des Loops vor den Effekten; WX5 a (nach den Effekten, gebaut); HB1 a (ins Handbuch); Stufe 30a gebaut (`loop/Wellenform`, `test_LoopWellenform`). |

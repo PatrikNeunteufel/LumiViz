@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.273.0
+> **Version:** 1.274.0
 > **Datum:** 2026-10-22 (Session 143)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -3055,8 +3055,10 @@ Idee Preset-Warmup/Pre-Roll.
   Composers). 30b `audio/WavDatei` (32-bit float, 24, 16 Bit mit Dither; auch die Aufnahme schreibt
   darüber). 30c *Export audio…* (WX6 a bis WX9 a: eigenes Fenster; ein Clip, der ganze Loop mit
   Ending und Passes, ein Loop-Clip im Composer). **Offen:** Sichttest Export
-  (`.claude/handover/Sichttest_Export.md`), Hörprobe `effects_demo` nach WX5 a (dort H4); 30d ff.
-  Freeze (Plan als eigene Vorlage).
+  (`.claude/handover/Sichttest_Export.md`), Hörprobe `effects_demo` nach WX5 a (dort H4).
+  **Freeze:** FZ1 a (30d–30i); 30d gebaut (`loop/Freeze`: Abdruck eines Clips, Klangfassung mit
+  Wächter an `loop_werte.txt`; FZ2 a: Dateien über ihren Inhalt, nicht über Ort und Zeit). **Offen:** 30e Dateien (Skizze der Settings-Zeile), 30f Abspielen
+  (`.lvloop` 13), 30g Bedienung (Skizze), 30h Messung, 30i Publish und Abschluss.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6132,6 +6134,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.274.0 | 2026-10-22 | Session 143. §7 Spielweisen: FZ1 a, Stufe 30d gebaut (Freeze: Abdruck, Klangfassung). |
 | 1.273.0 | 2026-10-22 | Session 143. §7 Spielweisen: WX6 a bis WX9 a, Stufe 30c gebaut (*Export audio…*). |
 | 1.272.0 | 2026-10-22 | Session 143. §7 Spielweisen: Stufe 30b gebaut (`audio/WavDatei`). |
 | 1.271.0 | 2026-10-22 | Session 143. §7 Spielweisen: WX2 a bis WX5 a, Stufe 30a gebaut (`loop/Wellenform`); Lautstärke des Loops nach den Effekten. |

@@ -59,6 +59,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Wellenform.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ExportAuftrag.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ExportFenster.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Freeze.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Zeitspur.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Pedalplan.cpp"
 )
@@ -109,6 +110,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Wellenform.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/ExportAuftrag.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/ExportFenster.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Freeze.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Zeitspur.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Pedalplan.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Stueckweise.hpp"
