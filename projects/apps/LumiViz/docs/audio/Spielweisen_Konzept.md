@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.41.0
+> **Version:** 0.42.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a, FZ2 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a, FZ2 a und TS1 a (Patrik S139–S143);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a und TS1 a (Patrik S139–S143);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -881,6 +881,28 @@ sagen, ob der Klang derselbe ist — der hängt am Inhalt; nur so geht der Zusat
 Ort und Zeit — Publish nützte nichts, ein Auschecken fröre neu ein). Kippt, wenn Publish die
 Wellenformen doch nicht mitnehmen soll.
 
+✅ **FZ3 a** (Patrik S143, nach Skizze): **Die Zeile *Frozen Clips* wie *Loop Sound Memory*, gleich
+darunter** (Settings → Panels): „**Frozen Clips:** [0.25 bis 256 GB, Schritt 0.25, Vorgabe 2.00 GB] ·
+*on disk: 0 MB · 0 clips* · [**Clear frozen clips**]“; ein getippter Wert gilt mit Enter, eine kleinere
+Grenze sofort; der Tooltip nennt den Ort (Benutzerordner, `frozen`), dass sie jederzeit neu gerechnet
+werden können und nicht in *Export...* der eigenen Daten gehen; *Clear frozen clips* fragt nach.
+Grund: dieselbe Art Speicher wie die Zeile darüber — Grenze und Belegung auf einen Blick, dieselben
+Gesten. Verworfen: b (dazu *Open folder* — die Dateien heißen nach ihrem Hash, von Hand ist darin
+nichts zu finden; *User Data: Open Folder* gibt es schon). Kippt, wenn die Wellenformen außerhalb von
+LumiViz gebraucht werden — dafür ist *Export audio...* da.
+
+**Gebaut 30e (S143):** in `loop/Freeze` der Ordner `frozen` (`frozenOrdner`, für Tests
+`setzeFrozenOrdnerFuerTests`), `frozenDatei` (nur 40 Hex-Zeichen und `.wav` gehören dazu — fremde
+Dateien im Ordner bleiben unberührt), `legeFrozen` (32-bit float über `audio/WavDatei`, danach die
+Grenze), `holeFrozen` (nur in der passenden Rate; setzt die Änderungszeit — sie ist der letzte
+Gebrauch), `frozenStand`, `leereFrozen`, `halteFrozenGrenze` (die am längsten nicht gespielten zuerst,
+auch die zuletzt gelegte, wenn sie allein darüber liegt), `gemerkteFrozenGrenzeMb` /
+`merkeFrozenGrenzeMb` (`loop/frozenMB`, 256 MB bis 256 GB). Die Datensicherung nimmt feste Bereiche
+(`Datensicherung.cpp`), `frozen` ist keiner. In den Settings die Zeile *Frozen Clips* nach FZ3 a
+(`loopFrozenLimit`, `loopFrozenOnDisk`, `loopFrozenClear`; die Rückfrage `loopFrozenClearQuestion`
+über `lumi::ui::fuehreDialogAus`). Handbuch 1.201.0 (§8). Tests in `test_LoopFreeze` (zwei Fälle
+mehr: die Dateien mit Grenze nach letztem Gebrauch, die Zeile mit Rückfrage).
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1222,6 +1244,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.42.0 | 2026-10-22 | Session 143. FZ3 a (Zeile *Frozen Clips*, Skizze); Stufe 30e gebaut (Ordner `frozen`, Grenze, Settings). |
 | 0.41.0 | 2026-10-22 | Session 143. FZ1 a (Freeze in sechs Teilschritten 30d–30i); Stufe 30d gebaut (`loop/Freeze`, Wächter der Klangfassung); Befund Pfade im Abdruck, FZ2 a (Dateien über ihren Inhalt, gebaut). |
 | 0.40.0 | 2026-10-22 | Session 143. WX6 a (Fenster *Export audio*, Skizze), WX7 a (auch der ganze Loop, Frage Patrik), WX8 a (Knopf in der Datei-Zeile), WX9 a (Ending, Passes); Stufe 30c gebaut. |
 | 0.39.0 | 2026-10-22 | Session 143. Stufe 30b gebaut (`audio/WavDatei`, ein Schreiber auch für die Aufnahme, `test_WavDatei`). |

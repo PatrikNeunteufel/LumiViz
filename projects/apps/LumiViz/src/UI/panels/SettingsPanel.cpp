@@ -19,6 +19,8 @@
 #include "core/Suchordner.hpp"
 #include "loop/Sample.hpp"  // „Chosen Sample Files": kopieren oder am Ort lassen (S115)
 #include "loop/Tonspeicher.hpp"  // „Loop Sound Memory": Grenze, Stand, Clear (29f)
+#include "loop/Freeze.hpp"      // „Frozen Clips": Grenze, Stand, Clear frozen clips (30e)
+#include "UI/widgets/Bedienhilfe.hpp"  // die Rueckfrage von Clear frozen clips: in Tests abfragbar
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/LiveVideoFeed.hpp"  // Kamera-Tab: Freigabe + Testaufnahmen-Ordner (S70)
@@ -1033,6 +1035,70 @@ QWidget* SettingsPanel::createPanelsTab()
         zeilenLayout->addWidget(leeren);
         zeilenLayout->addStretch(1);
         layout->addRow(tr("Loop Sound Memory:"), zeile);
+    }
+
+    // Loop, Stufe 30e (F5 a, FZ3 a): die eingefrorenen Clips auf der Platte — gebaut wie die
+    // Zeile darueber; Clear fragt nach, weil die Dateien von der Platte gehen
+    {
+        auto* zeile = new QWidget(widget);
+        auto* zeilenLayout = new QHBoxLayout(zeile);
+        zeilenLayout->setContentsMargins(0, 0, 0, 0);
+        auto* grenze = new QDoubleSpinBox(zeile);
+        grenze->setObjectName(QStringLiteral("loopFrozenLimit"));
+        grenze->setRange(lumi::loop::kFrozenMinMb / 1024.0, lumi::loop::kFrozenMaxMb / 1024.0);
+        grenze->setSingleStep(0.25);
+        grenze->setDecimals(2);
+        grenze->setSuffix(tr(" GB"));
+        grenze->setKeyboardTracking(false);
+        grenze->setValue(lumi::loop::gemerkteFrozenGrenzeMb() / 1024.0);
+        const QString tipp =
+            tr("Frozen clips play a computed waveform instead of computing their sounds. The files lie in "
+               "your user folder (%1) and can be computed again at any time — they are not part of Export... "
+               "of your data. When the limit is reached, the clips not played for the longest time go.")
+                .arg(QDir::toNativeSeparators(lumi::loop::frozenOrdner()));
+        grenze->setToolTip(tipp);
+        connect(grenze, QOverload<double>::of(&QDoubleSpinBox::valueChanged), zeile, [](double gb) {
+            lumi::loop::merkeFrozenGrenzeMb(static_cast<int>(std::lround(gb * 1024.0)));
+        });
+
+        auto* belegt = new QLabel(zeile);
+        belegt->setObjectName(QStringLiteral("loopFrozenOnDisk"));
+        belegt->setToolTip(tipp);
+        const auto zeigeStand = [belegt]() {
+            const lumi::loop::FrozenStand stand = lumi::loop::frozenStand();
+            const double mb = static_cast<double>(stand.bytes) / (1024.0 * 1024.0);
+            const QString menge = mb >= 1024.0 ? tr("%1 GB").arg(mb / 1024.0, 0, 'f', 2)
+                                               : tr("%1 MB").arg(static_cast<qint64>(std::llround(mb)));
+            const QString clips = stand.dateien == 1 ? tr("1 clip") : tr("%1 clips").arg(stand.dateien);
+            const QString text = tr("on disk: %1 · %2").arg(menge, clips);
+            if (belegt->text() != text) belegt->setText(text);
+        };
+        zeigeStand();
+        auto* uhr = new QTimer(belegt);
+        uhr->setInterval(1000);
+        connect(uhr, &QTimer::timeout, belegt, zeigeStand);
+        uhr->start();
+
+        auto* leeren = new QPushButton(tr("Clear frozen clips"), zeile);
+        leeren->setObjectName(QStringLiteral("loopFrozenClear"));
+        leeren->setToolTip(tr("Delete all frozen waveforms. Frozen clips then compute their sounds again when they play."));
+        connect(leeren, &QPushButton::clicked, belegt, [this, zeigeStand]() {
+            QMessageBox frage(QMessageBox::Question, tr("Clear frozen clips"),
+                              tr("Delete all frozen waveforms from the disk? Frozen clips stay frozen and are "
+                                 "computed again when they play."),
+                              QMessageBox::Yes | QMessageBox::Cancel, this);
+            frage.setObjectName(QStringLiteral("loopFrozenClearQuestion"));
+            frage.setDefaultButton(QMessageBox::Cancel);
+            if (lumi::ui::fuehreDialogAus(frage) != QMessageBox::Yes) return;
+            (void)lumi::loop::leereFrozen();
+            zeigeStand();
+        });
+
+        zeilenLayout->addWidget(grenze);
+        zeilenLayout->addWidget(belegt);
+        zeilenLayout->addWidget(leeren);
+        zeilenLayout->addStretch(1);
+        layout->addRow(tr("Frozen Clips:"), zeile);
     }
 
     // Mitgeliefertes aus dem Projektordner statt aus der Kopie neben der Exe

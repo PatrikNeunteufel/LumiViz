@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.200.0
+> **Version:** 1.201.0
 > **Datum:** 2026-10-21
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -297,7 +297,13 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   312 MB · 85 sounds“), und **Clear** vergisst alle Töne — sie werden neu gerechnet, sobald
   man sie braucht; ein Loop, der gerade spielt, klingt weiter. Eine kleinere Grenze gilt
   sofort: dann gehen die Töne, die am längsten nicht gebraucht wurden. Ein getippter Wert
-  gilt mit Enter oder beim Verlassen des Felds · **MilkDrop Preset Switch** + **MilkDrop Fade
+  gilt mit Enter oder beim Verlassen des Felds · **Frozen Clips** — gleich darunter, gebaut
+  wie die Zeile darüber: wie viel Platz eingefrorene Clips auf der Platte belegen dürfen (0,25
+  bis 256 GB, Vorgabe 2 GB), was dort liegt („on disk: 0 MB · 0 clips“), und **Clear frozen
+  clips** (mit Rückfrage). Die Dateien liegen im Benutzerordner unter `frozen`, lassen sich
+  jederzeit neu rechnen und gehen nicht in *Export...* der eigenen Daten; ist die Grenze
+  erreicht, gehen die am längsten nicht gespielten. Einfrieren lässt sich ein Clip ab einer
+  der nächsten Fassungen — bis dahin bleibt die Zeile leer · **MilkDrop Preset Switch** + **MilkDrop Fade
   Amount** — der App-Standard dafür, was beim MilkDrop-Preset-Wechsel mit dem
   geerbten Bild passiert (Details und die Regeln je Node: §11,
   „Preset-Wechsel: das geerbte Bild").
@@ -3689,6 +3695,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.201.0 | 2026-10-22 | Session 143. §8 Settings → Panels NEU **Frozen Clips** mit Grenze, Stand und **Clear frozen clips** (Stufe 30e; Einfrieren selbst folgt). |
 | 1.200.0 | 2026-10-22 | Session 143. §16 Loop NEU **Als WAV exportieren: Export audio** — der ganze Loop (Datei-Zeile), ein Clip (Rechtsklick), aus dem Composer ein Loop-Clip; Format 32-bit float / 24 / 16 Bit, beim ganzen Loop Ending und Passes, Fortschritt, Ergebnis, Show in folder (Stufe 30c). §15 Composer: *Export audio...* am Loop-Clip. |
 | 1.199.0 | 2026-10-22 | Session 143. §16 Loop NEU **Die Lautstärke des Loops** (Datei `volume`, Vorgabe 0,5, wirkt nach den Effekten und Fadern, vor dem Limiter; nicht einstellbar; Stufe 30, WX5 a, HB1 a). |
 | 1.198.0 | 2026-10-22 | Sessions 142–143. §16 Loop NEU **Die Töne werden vorbereitet**: Rechnen im Hintergrund beim Öffnen, Play wartet mit „Preparing sounds…“, nach einer Änderung „updating sounds“, die Hinweiszeilen der Editoren (auch im Drum-Editor). §15 Composer: das Feld Zeit beim Warten. §8 Settings → Panels NEU **Loop Sound Memory** mit Stand und **Clear** (Stufe 29). |

@@ -21,26 +21,42 @@
  * muss `kKlangfassung` wachsen. Geaenderte oder neue mitgelieferte Dateien
  * verlangen das nicht (das sieht der Abdruck eines Clips selbst).
  * `LUMIVIZ_KLANGFASSUNG_SCHREIBEN=1` schreibt die Datei neu.
+ *
+ * Seit Stufe 30e auch die Dateien im Ordner `frozen` (in einem Wegwerf-Ordner ueber
+ * `setzeFrozenOrdnerFuerTests`, die Einstellungen in `LumiVizTest` / `LoopFreeze`) und
+ * die Zeile *Frozen Clips* im Settings-Panel; die Rueckfrage von *Clear frozen clips*
+ * beantwortet der Test (`setzeDialogBeobachterFuerTests`).
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
 #include "LoopOhneEngine.hpp"
+#include "UI/panels/SettingsPanel.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
+#include "audio/WavDatei.hpp"
 #include "loop/Aufnahme.hpp"  // schreibeWav
 #include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Sample.hpp"
+#include "services/ServiceContainer.hpp"
 #include "shape/Kontur.hpp"
 
+#include <QApplication>
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
+#include <QLabel>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSettings>
 #include <QTemporaryDir>
 #include <QTextStream>
 
@@ -59,6 +75,25 @@ struct FreezeApp
     char arg0[10] = "UnitTests";
     char* argv[2] = {arg0, nullptr};
     QCoreApplication app{argc, argv};
+};
+
+/// Eigene Einstellungen (`LumiVizTest` / `LoopFreeze`), leer zu Beginn und am Ende.
+struct EigeneEinstellungen
+{
+    QString org = QCoreApplication::organizationName();
+    QString name = QCoreApplication::applicationName();
+    EigeneEinstellungen()
+    {
+        QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
+        QCoreApplication::setApplicationName(QStringLiteral("LoopFreeze"));
+        QSettings().clear();
+    }
+    ~EigeneEinstellungen()
+    {
+        QSettings().clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(name);
+    }
 };
 
 QString werteOrdner()
@@ -361,5 +396,130 @@ TEST_SUITE("Loop Freeze")
         const QByteArray ohne = clipAbdruck(fehlt, ClipOrt{0, 0}, kRate, saiten);
         CHECK(ohne.size() == 40);
         CHECK(ohne != drumsNeu);
+    }
+
+    TEST_CASE("Loop Freeze 30e: die Dateien — ablegen, lesen, Stand, Grenze nach letztem Gebrauch, leeren")
+    {
+        FreezeApp app;
+        EigeneEinstellungen einstellungen;
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        const QString ordner = QDir(tmp.path()).filePath(QStringLiteral("frozen"));
+        setzeFrozenOrdnerFuerTests(ordner);
+
+        const QByteArray a = QByteArray(40, 'a');
+        const QByteArray b = QByteArray(40, 'b');
+        const QByteArray c = QByteArray(40, 'c');
+        CHECK(frozenDatei(QByteArrayLiteral("kein abdruck")).isEmpty());
+        CHECK(frozenDatei(a) == QDir(ordner).filePath(QString::fromLatin1(a) + QStringLiteral(".wav")));
+        CHECK(frozenStand().dateien == 0);
+        CHECK_FALSE(holeFrozen(a, kRate).has_value());
+
+        // ablegen legt den Ordner an, 32-bit float, jeder Wert genau — auch ueber 0 dB
+        const std::vector<float> welle = {0.5f, -0.5f, 1.5f, -2.0f, 0.25f, 0.0f};
+        REQUIRE(legeFrozen(a, welle, kRate));
+        REQUIRE(legeFrozen(b, std::vector<float>(2000, 0.1f), kRate));
+        REQUIRE(legeFrozen(c, std::vector<float>(2000, 0.2f), kRate));
+        CHECK(lumi::audio::liesWav(frozenDatei(a))->tiefe == lumi::audio::WavTiefe::Gleitkomma32);
+        const std::optional<std::vector<float>> gelesen = holeFrozen(a, kRate);
+        REQUIRE(gelesen.has_value());
+        CHECK(*gelesen == welle);
+        CHECK_FALSE(holeFrozen(a, 48000).has_value());  // eine andere Rate passt nicht
+        FrozenStand stand = frozenStand();
+        CHECK(stand.dateien == 3);
+        CHECK(stand.bytes == 3 * 58 + (6 + 2000 + 2000) * 4);
+
+        // eine fremde Datei im Ordner gehoert nicht dazu
+        QFile fremd(QDir(ordner).filePath(QStringLiteral("notiz.wav")));
+        REQUIRE(fremd.open(QIODevice::WriteOnly));
+        fremd.write("x");
+        fremd.close();
+        CHECK(frozenStand().dateien == 3);
+
+        // die Grenze: die am laengsten nicht gespielte geht zuerst (die Zeit ist der letzte Gebrauch)
+        const auto setzeZeit = [](const QString& datei, int minutenZurueck) {
+            QFile f(datei);
+            REQUIRE(f.open(QIODevice::ReadWrite));
+            REQUIRE(f.setFileTime(QDateTime::currentDateTime().addSecs(-60 * minutenZurueck), QFileDevice::FileModificationTime));
+        };
+        setzeZeit(frozenDatei(a), 30);
+        setzeZeit(frozenDatei(b), 20);
+        setzeZeit(frozenDatei(c), 10);
+        (void)holeFrozen(b, kRate);  // b gerade gespielt: jetzt ist a die aelteste, dann c
+        halteFrozenGrenze(stand.bytes - 1);
+        CHECK_FALSE(QFileInfo::exists(frozenDatei(a)));
+        CHECK(QFileInfo::exists(frozenDatei(b)));
+        CHECK(QFileInfo::exists(frozenDatei(c)));
+        halteFrozenGrenze(58 + 2000 * 4);
+        CHECK_FALSE(QFileInfo::exists(frozenDatei(c)));
+        CHECK(QFileInfo::exists(frozenDatei(b)));
+
+        // die Grenze aus den Settings, geklemmt; die Vorgabe steht nicht drin
+        CHECK(gemerkteFrozenGrenzeMb() == kFrozenVorgabeMb);
+        merkeFrozenGrenzeMb(1);
+        CHECK(gemerkteFrozenGrenzeMb() == kFrozenMinMb);
+        merkeFrozenGrenzeMb(kFrozenVorgabeMb);
+        CHECK_FALSE(QSettings().contains(QStringLiteral("loop/frozenMB")));
+
+        // leeren: nur die eigenen
+        REQUIRE(legeFrozen(a, welle, kRate));
+        CHECK(leereFrozen() == 2);
+        CHECK(frozenStand().dateien == 0);
+        CHECK(QFileInfo::exists(QDir(ordner).filePath(QStringLiteral("notiz.wav"))));
+        setzeFrozenOrdnerFuerTests({});
+    }
+
+    TEST_CASE("Loop Freeze 30e, FZ3 a: die Zeile Frozen Clips in den Settings — Grenze, Stand, Clear mit Rueckfrage")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeFrozenOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("frozen")));
+        REQUIRE(legeFrozen(QByteArray(40, 'd'), std::vector<float>(2 * 1024 * 128, 0.1f), kRate));  // 1 MB
+
+        int antwort = QMessageBox::Cancel;
+        QStringList gefragt;
+        lumi::ui::setzeDialogBeobachterFuerTests([&](QDialog& d) {
+            gefragt << d.objectName();
+            return antwort;
+        });
+        ServiceContainer dienste;
+        {
+            SettingsPanel settings(dienste);
+            auto* grenze = settings.findChild<QDoubleSpinBox*>(QStringLiteral("loopFrozenLimit"));
+            auto* belegt = settings.findChild<QLabel*>(QStringLiteral("loopFrozenOnDisk"));
+            auto* leeren = settings.findChild<QPushButton*>(QStringLiteral("loopFrozenClear"));
+            REQUIRE(grenze != nullptr);
+            REQUIRE(belegt != nullptr);
+            REQUIRE(leeren != nullptr);
+            CHECK(grenze->value() == doctest::Approx(2.0));
+            CHECK(grenze->maximum() == doctest::Approx(256.0));
+            CHECK_FALSE(grenze->keyboardTracking());
+            CHECK(belegt->text() == QStringLiteral("on disk: 1 MB · 1 clip"));
+            CHECK(leeren->text() == QStringLiteral("Clear frozen clips"));
+            CHECK(grenze->toolTip().contains(QStringLiteral("not part of Export...")));
+
+            // abgebrochen bleibt alles; mit Yes geht es
+            leeren->click();
+            CHECK(gefragt == QStringList{QStringLiteral("loopFrozenClearQuestion")});
+            CHECK(frozenStand().dateien == 1);
+            antwort = QMessageBox::Yes;
+            leeren->click();
+            CHECK(frozenStand().dateien == 0);
+            CHECK(belegt->text() == QStringLiteral("on disk: 0 MB · 0 clips"));
+
+            grenze->setValue(4.0);
+            CHECK(QSettings().value(QStringLiteral("loop/frozenMB")).toInt() == 4096);
+        }
+        {
+            SettingsPanel settings(dienste);
+            CHECK(settings.findChild<QDoubleSpinBox*>(QStringLiteral("loopFrozenLimit"))->value() == doctest::Approx(4.0));
+        }
+        lumi::ui::setzeDialogBeobachterFuerTests({});
+        setzeFrozenOrdnerFuerTests({});
     }
 }

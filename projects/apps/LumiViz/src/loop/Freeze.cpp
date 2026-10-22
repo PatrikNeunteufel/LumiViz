@@ -11,13 +11,19 @@
 #include "loop/Wellenform.hpp"
 #include "shape/Kontur.hpp"
 
+#include "audio/WavDatei.hpp"
+
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
+#include <QRegularExpression>
+#include <QSettings>
+#include <QStandardPaths>
 
+#include <algorithm>
 #include <map>
 #include <mutex>
 
@@ -195,6 +201,133 @@ QByteArray clipAbdruck(const Loop& loop, ClipOrt ort, int rate, const SaitenVon&
             hash.addData(verweis(name, klangDatei(name)).toUtf8());
     }
     return hash.result().toHex();
+}
+
+// --- die Dateien (Stufe 30e) ----------------------------------------------------------
+
+namespace
+{
+
+constexpr char kFrozenGrenze[] = "loop/frozenMB";
+
+QString& frozenOrdnerImTest()
+{
+    static QString ordner;
+    return ordner;
+}
+
+/// Heisst die Datei wie ein Abdruck (40 Hex-Zeichen, `.wav`)?
+bool istFrozenName(const QString& name)
+{
+    static const QRegularExpression muster(QStringLiteral("^[0-9a-f]{40}\\.wav$"));
+    return muster.match(name).hasMatch();
+}
+
+/// Die eingefrorenen Wellenformen im Ordner, die am laengsten nicht gespielte zuerst.
+QFileInfoList frozenDateien()
+{
+    const QString ordner = frozenOrdner();
+    if (ordner.isEmpty()) return {};
+    QFileInfoList alle = QDir(ordner).entryInfoList({QStringLiteral("*.wav")}, QDir::Files, QDir::Time | QDir::Reversed);
+    alle.erase(std::remove_if(alle.begin(), alle.end(), [](const QFileInfo& i) { return !istFrozenName(i.fileName()); }),
+               alle.end());
+    return alle;
+}
+
+}  // namespace
+
+QString frozenOrdner()
+{
+    if (!frozenOrdnerImTest().isEmpty()) return frozenOrdnerImTest();
+    const QString basis = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    return basis.isEmpty() ? QString() : QDir(basis).filePath(QStringLiteral("frozen"));
+}
+
+void setzeFrozenOrdnerFuerTests(const QString& ordner)
+{
+    frozenOrdnerImTest() = ordner;
+}
+
+QString frozenDatei(const QByteArray& abdruck)
+{
+    const QString ordner = frozenOrdner();
+    const QString name = QString::fromLatin1(abdruck) + QStringLiteral(".wav");
+    if (ordner.isEmpty() || !istFrozenName(name)) return {};
+    return QDir(ordner).filePath(name);
+}
+
+bool legeFrozen(const QByteArray& abdruck, const std::vector<float>& stereo, int rate)
+{
+    const QString datei = frozenDatei(abdruck);
+    if (datei.isEmpty() || !QDir().mkpath(QFileInfo(datei).absolutePath())) return false;
+    if (!audio::schreibeWav(datei, stereo, rate, audio::WavTiefe::Gleitkomma32).geschrieben) return false;
+    halteFrozenGrenze();
+    return true;
+}
+
+std::optional<std::vector<float>> holeFrozen(const QByteArray& abdruck, int rate)
+{
+    const QString datei = frozenDatei(abdruck);
+    if (datei.isEmpty() || !QFileInfo(datei).isFile()) return std::nullopt;
+    std::optional<audio::WavInhalt> inhalt = audio::liesWav(datei);
+    if (!inhalt || inhalt->rate != rate) return std::nullopt;
+    // gerade gespielt: die Aenderungszeit ist der letzte Gebrauch
+    QFile zeit(datei);
+    if (zeit.open(QIODevice::ReadWrite)) (void)zeit.setFileTime(QDateTime::currentDateTime(), QFileDevice::FileModificationTime);
+    return std::move(inhalt->stereo);
+}
+
+FrozenStand frozenStand()
+{
+    FrozenStand stand;
+    for (const QFileInfo& info : frozenDateien())
+    {
+        ++stand.dateien;
+        stand.bytes += info.size();
+    }
+    return stand;
+}
+
+int leereFrozen()
+{
+    int geloescht = 0;
+    for (const QFileInfo& info : frozenDateien())
+        if (QFile::remove(info.absoluteFilePath())) ++geloescht;
+    return geloescht;
+}
+
+void halteFrozenGrenze()
+{
+    halteFrozenGrenze(static_cast<qint64>(gemerkteFrozenGrenzeMb()) << 20);
+}
+
+void halteFrozenGrenze(qint64 grenze)
+{
+    const QFileInfoList alle = frozenDateien();
+    qint64 summe = 0;
+    for (const QFileInfo& info : alle) summe += info.size();
+    for (const QFileInfo& info : alle)
+    {
+        if (summe <= grenze) break;
+        if (QFile::remove(info.absoluteFilePath())) summe -= info.size();
+    }
+}
+
+int gemerkteFrozenGrenzeMb()
+{
+    const int mb = QSettings().value(QLatin1String(kFrozenGrenze), kFrozenVorgabeMb).toInt();
+    return std::clamp(mb, kFrozenMinMb, kFrozenMaxMb);
+}
+
+void merkeFrozenGrenzeMb(int mb)
+{
+    mb = std::clamp(mb, kFrozenMinMb, kFrozenMaxMb);
+    QSettings einstellungen;
+    if (mb == kFrozenVorgabeMb)
+        einstellungen.remove(QLatin1String(kFrozenGrenze));
+    else
+        einstellungen.setValue(QLatin1String(kFrozenGrenze), mb);
+    halteFrozenGrenze();
 }
 
 }  // namespace lumi::loop
