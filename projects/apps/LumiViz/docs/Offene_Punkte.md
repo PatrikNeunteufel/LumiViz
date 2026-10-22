@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.276.0
+> **Version:** 1.277.0
 > **Datum:** 2026-10-22 (Session 144)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -3065,9 +3065,12 @@ Idee Preset-Warmup/Pre-Roll.
   Zusatz Patrik), 30h Messung (FZ5 a bis FZ7 a: Sanduhr mit Rechenzeit, *Freeze hint* in den Settings,
   computing work / waiting time). Nebenbei behoben: Tonführung Fall C (falscher Klang nach einer
   Änderung, mit Test belegt) und der Absturz beim Beenden mit spielendem Loop (LZ1 a,
-  `Bootstrap_Integration.md` §6.8; Gegenprobe am Stand vor S144). **Offen:** 30i Publish (die
-  Wellenformen eines Pakets) und Abschluss (Handbuch, Sichttest-Liste Freeze, Bereichslauf); Sichttest
-  Freeze im Programm (nichts angesehen außer dem Beenden). **Bauplan geändert (Patrik S144):** Hammer-Saite
+  `Bootstrap_Integration.md` §6.8; Gegenprobe am Stand vor S144). **S145: 30i gebaut, Stufe 30 fertig
+  bis auf den vollen Lauf** — Publish nimmt die Wellenformen eingefrorener Clips mit (FP1 a: zum jetzigen
+  Abdruck, fehlende rechnet Publish vorher; FP2 a: Gruppe *Frozen clips* und Haken *Include frozen
+  clips* im Dialog, Publish wartet; FP3 a: der Import legt nur ab, was beim Empfänger zum Abdruck passt);
+  Handbuch 1.202.0 („Clips einfrieren: Freeze“). **Offen:** Sichttest Freeze im Programm
+  (`.claude/handover/Sichttest_Freeze.md`; nichts angesehen außer dem Beenden). **Bauplan geändert (Patrik S144):** Hammer-Saite
   wieder **Stufe 31 ff.**, der Audio-Clip im Loop danach.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
@@ -6144,6 +6147,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.277.0 | 2026-10-22 | Session 145. §7 Spielweisen: Freeze 30i gebaut (FP1 a bis FP3 a: Publish mit eingefrorenen Clips), Handbuch Freeze, Sichttest-Liste Freeze; Stufe 30 fertig bis auf den vollen Lauf. |
 | 1.276.0 | 2026-10-22 | Session 144. §7 Spielweisen: Freeze 30f–30h gebaut (FV1 a, FV2 a, FZ4 a bis FZ7 a); Hammer-Saite wieder Stufe 31; Fix Tonführung Fall C, Fix Absturz beim Beenden (LZ1 a). |
 | 1.275.0 | 2026-10-22 | Session 143. §7 Spielweisen: FZ3 a, Stufe 30e gebaut (Freeze: Dateien, Settings). |
 | 1.274.0 | 2026-10-22 | Session 143. §7 Spielweisen: FZ1 a, Stufe 30d gebaut (Freeze: Abdruck, Klangfassung). |

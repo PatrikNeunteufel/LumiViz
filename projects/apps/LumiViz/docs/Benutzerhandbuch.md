@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.201.0
-> **Datum:** 2026-10-21
+> **Version:** 1.202.0
+> **Datum:** 2026-10-22
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -302,8 +302,11 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   bis 256 GB, Vorgabe 2 GB), was dort liegt („on disk: 0 MB · 0 clips“), und **Clear frozen
   clips** (mit Rückfrage). Die Dateien liegen im Benutzerordner unter `frozen`, lassen sich
   jederzeit neu rechnen und gehen nicht in *Export...* der eigenen Daten; ist die Grenze
-  erreicht, gehen die am längsten nicht gespielten. Einfrieren lässt sich ein Clip ab einer
-  der nächsten Fassungen — bis dahin bleibt die Zeile leer · **MilkDrop Preset Switch** + **MilkDrop Fade
+  erreicht, gehen die am längsten nicht gespielten (§16, „Clips einfrieren: Freeze“) ·
+  **Freeze hint** — gleich darunter: ab welcher Rechenzeit ein Clip im Panel Loop die Sanduhr
+  trägt („from 1.0 s of computing work“; 0,1 bis 60 s). *computing work* (Vorgabe) ist die
+  Arbeit aller Töne nacheinander auf einem Kern, *waiting time* dieselbe geteilt durch die
+  Threads, die rechnen — etwa so lange wartet man beim Öffnen · **MilkDrop Preset Switch** + **MilkDrop Fade
   Amount** — der App-Standard dafür, was beim MilkDrop-Preset-Wechsel mit dem
   geerbten Bild passiert (Details und die Regeln je Node: §11,
   „Preset-Wechsel: das geerbte Bild").
@@ -2739,6 +2742,7 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 | Rechtsklick auf einen Clip → **Duplicate** (auch Ctrl+D) | Eine **verbundene** Kopie dahinter: sie spielt dieselbe Basis. Bei mehreren markierten („Duplicate n clips") die ganze Gruppe, an die erste Stelle dahinter, an der alle Kopien Platz haben; markiert sind danach die Kopien |
 | → **Effects...** | Öffnet das Fenster **Clip effects** für die markierten Clips — siehe „Effekte am Clip" |
 | → **Export audio...** | Den Clip als WAV-Datei, mit Nachklang — siehe „Als WAV exportieren“ |
+| → **Freeze clip** / **Unfreeze clip** | Den Clip einmal fertig rechnen und ab dann als Wellenform spielen — oder wieder live. Bei mehreren markierten „Freeze 3 clips“ — siehe „Clips einfrieren: Freeze“ |
 | → **Rename base...** | Benennt die Basis um — für alle Clips, die sie spielen |
 | → **Delete** (auch Entf) | Entfernt den Clip, bei mehreren alle markierten. Spielt danach kein Clip mehr eine Basis, geht sie mit |
 | → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor |
@@ -3540,6 +3544,49 @@ und Passes merkt sich das Fenster. Die Datei hat die Abtastrate, mit der LumiViz
 Ein Nachklang endet, wenn eine halbe Sekunde lang alles unter −96 dB bleibt, spätestens 30 s nach
 dem Ende („The tail was cut after 30 s.“).
 
+### Clips einfrieren: Freeze
+
+Manche Clips brauchen viel Rechenzeit — viele Töne, lange Ausklänge, Saiten. Beim Öffnen eines
+Loops wartet man dann, bis alle Töne gerechnet sind („Die Töne werden vorbereitet“). Ein
+**eingefrorener** Clip wird einmal fertig gerechnet — mit seinen Effekten, der Kurve am Clip und dem
+Nachklang — und spielt danach diese **Wellenform**: ohne Warten, ohne Rechnen beim Spielen. Fader
+und Lautstärke des Loops wirken weiter live, ein Kanal, der aus ist, schweigt.
+
+**Wo es sich lohnt:** Ein Clip, dessen Töne lange rechnen, trägt rechts (links vom „fx“) eine
+**Sanduhr** mit der Zeit, etwa „⏳ 3.2 s“; auf einem schmalen Clip nur die Sanduhr. Der Tooltip sagt
+mehr: „Computing this clip takes 3.2 s of work (about 0.5 s waiting on 7 threads) — Freeze clip to
+start it at once“. Im Menü steht dann „Freeze clip (3.2 s to compute)“. Die Zeit ist die gemessene
+Rechenzeit seiner Töne; vor dem ersten Rechnen steht keine Zahl da. Ab welcher Zeit die Sanduhr
+erscheint, stellst du in Settings → Panels → **Freeze hint** ein (Vorgabe 1 s).
+
+**Einfrieren:** Rechtsklick auf den Clip → **Freeze clip** (bei mehreren markierten „Freeze 3
+clips“). Das Rechnen beginnt gleich, im Hintergrund; die Hinweiszeile des Panels zeigt „Freezing
+clip 2 of 3 … 40 %“, solange spielt der Clip live. **Ctrl+Z** nimmt das Einfrieren zurück.
+
+**Die Marke** rechts auf dem Clip (an der Stelle der Sanduhr):
+
+| Marke | Bedeutung |
+|---|---|
+| **❄ frozen** (Rahmen durchgezogen) | Der Clip spielt seine Wellenform |
+| **computing… 40 %** (gepunktet) | Er wird gerade eingefroren und spielt bis dahin live |
+| **❄ frozen · changed** (gestrichelt, matter) | Seit dem Einfrieren bearbeitet — er spielt live und wird beim nächsten **Save** neu eingefroren (im Hintergrund) |
+| **❄ frozen · missing** | Die Wellenform fehlt (etwa von der Grenze geräumt) — sie wird neu gerechnet |
+
+Auf einem schmalen Clip steht nur das Zeichen: die Flocke im Quadrat für *frozen*, die Flocke im
+**Warndreieck** für *changed* und *missing*, beim Rechnen die Prozent. Der Tooltip erklärt jede
+Marke. Ein Undo zurück auf den eingefrorenen Stand gilt sofort — die Wellenform liegt noch.
+
+**Auftauen:** Rechtsklick → **Unfreeze clip** — der Clip spielt wieder live (mit Undo). Die
+Wellenform bleibt auf der Platte, bis die Grenze sie räumt.
+
+**Wo die Wellenformen liegen:** im Benutzerordner unter `frozen`, je Clip eine WAV mit 32-bit float,
+benannt nach einem Fingerabdruck des Clips (aus allem, was klingt). Gleiche Clips teilen eine Datei.
+Grenze, Belegung und **Clear frozen clips** stehen in Settings → Panels → **Frozen Clips** (§8). Sie
+sind ein Speicher, kein Werk: jederzeit neu zu rechnen, deshalb nicht in *Export...* der eigenen
+Daten. Die `.lvloop` merkt sich am Clip nur, dass er eingefroren ist (`frozen`). Öffnest du sie auf
+einem anderen Rechner, wird die Wellenform dort neu gerechnet — außer sie kam mit **Publish** mit
+(„Weitergeben: Publish“). *Export audio...* rechnet immer live.
+
 ### Weitergeben: Publish
 
 Ein Loop nennt seine Instrumente, Klänge und sein Kit, ein Instrument seine
@@ -3574,6 +3621,19 @@ nennt, in **eine Datei**: `<name>.<art>.lvdata`, etwa `titan.lvloop.lvdata`.
   wird nicht noch einmal geschrieben. **Notes** nennt, was dem Absender fehlte,
   und Mitgeliefertes, das dein LumiViz nicht hat (ein älteres). Mit **Open the
   loop after import** steht der Loop danach im Panel.
+- **Eingefrorene Clips** („Clips einfrieren: Freeze“): Hat der Loop welche, steht im Dialog
+  Publish unter ihm die Gruppe **Frozen clips (n)**, je Clip eine Zeile — „ready · 10.1 MB“ oder,
+  wenn die Wellenform noch fehlt, „computing… 40 %“ (sie wird ab dem Öffnen des Dialogs
+  gerechnet). Der Haken **Include frozen clips** (Vorgabe an, gemerkt) gibt die Wellenformen mit:
+  der Empfänger spielt die Clips sofort, statt zu rechnen. Sie machen das Paket größer — 32-bit
+  float, etwa 21 MB je Minute; ohne Haken bleibt es klein. Klickst du **Publish**, bevor alles
+  gerechnet ist, steht im Fuß „Freezing clip 1 of 2 … 40 %“, und Publish läuft danach von selbst
+  weiter; **Cancel** bricht ab (Gerechnetes bleibt im Ordner `frozen`). Beim **Einlesen** steht
+  in *Contents* „Frozen clips (2) → frozen clips, 16 KB“. LumiViz prüft jede Wellenform: es nimmt
+  nur, was bei dir genauso klingt — dieselben Instrumente und Samples (auch unter neuem Namen
+  mit *Keep both*), dieselbe Abtastrate. Mit *Use mine* und einem anderen Instrument passt sie
+  nicht, dann wird der Clip bei dir gerechnet. Die Meldung danach sagt es: „Frozen clips: 2 of 3
+  ready to play — 1 will be computed here“. Eine Wellenform, die du schon hast, bleibt.
 - Songs, Videos, Kompositionen und Effektketten kommen in einer späteren
   Stufe dazu.
 
@@ -3695,6 +3755,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.202.0 | 2026-10-22 | Session 145. §16 Loop NEU **Clips einfrieren: Freeze** — Sanduhr mit Rechenzeit, Freeze clip / Unfreeze clip, die Marken frozen, computing, changed, missing (Kurzformen), wo die Wellenformen liegen (Stufen 30f–30h); „Weitergeben: Publish“ mit eingefrorenen Clips (Gruppe Frozen clips, Include frozen clips, der Import prüft; Stufe 30i). §8 Settings → Panels NEU **Freeze hint**. |
 | 1.201.0 | 2026-10-22 | Session 143. §8 Settings → Panels NEU **Frozen Clips** mit Grenze, Stand und **Clear frozen clips** (Stufe 30e; Einfrieren selbst folgt). |
 | 1.200.0 | 2026-10-22 | Session 143. §16 Loop NEU **Als WAV exportieren: Export audio** — der ganze Loop (Datei-Zeile), ein Clip (Rechtsklick), aus dem Composer ein Loop-Clip; Format 32-bit float / 24 / 16 Bit, beim ganzen Loop Ending und Passes, Fortschritt, Ergebnis, Show in folder (Stufe 30c). §15 Composer: *Export audio...* am Loop-Clip. |
 | 1.199.0 | 2026-10-22 | Session 143. §16 Loop NEU **Die Lautstärke des Loops** (Datei `volume`, Vorgabe 0,5, wirkt nach den Effekten und Fadern, vor dem Limiter; nicht einstellbar; Stufe 30, WX5 a, HB1 a). |

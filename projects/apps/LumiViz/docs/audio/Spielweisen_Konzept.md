@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.56.0
+> **Version:** 0.57.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -1155,6 +1155,13 @@ Fälle; `LUMIVIZ_PUBLISH_FROZEN_BILD` legt zwei Bilder ab, das zweite mit `_impo
 `--source-file=*test_Publish*,*test_Datensicherung*,*test_LoopFreeze*` unter Release-clang und
 Testing-MSVC je 53 / 53; die App unter clang gebaut.
 
+**Gebaut 30i-3 (S145), Stufe 30 fertig bis auf den vollen Lauf:** Handbuch 1.202.0 (§16 „Clips
+einfrieren: Freeze“, „Weitergeben: Publish“ mit eingefrorenen Clips, §8 *Freeze hint*), Sichttest-Liste
+`.claude/handover/Sichttest_Freeze.md` (S, F, M, P, U). Bereich
+`*Loop*,*Instrument*,*Shape*,*Palette*,*Drum*,*Wav*,*Publish*,*Import package*` unter Release-clang
+561 / 561, Composer 151 / 151 (zusammen gut 4½ Minuten). Unter Testing-MSVC nicht gefahren (Patrik:
+verworfen, dauert zu lange) — dort liefen die engen Fälle von 30i-1 und 30i-2 grün.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1496,6 +1503,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.57.0 | 2026-10-22 | Session 145. Stufe 30i-3 (Handbuch, Sichttest-Liste, Bereichslauf unter clang); Stufe 30 fertig bis auf den vollen Lauf. |
 | 0.56.0 | 2026-10-22 | Session 145. Stufe 30i-2 gebaut (Publish- und Import-Dialog mit eingefrorenen Clips). |
 | 0.55.0 | 2026-10-22 | Session 145. Plan 30i; Stufe 30i-1 gebaut (Wellenformen im Paket, Import prüft den Abdruck). |
 | 0.54.0 | 2026-10-22 | Session 145. Befund vor 30i (Publish und Abdruck); FP1 a (welche Wellenformen ins Paket gehen); FP2 a (der Publish-Dialog); FP3 a (der Import prüft). |
