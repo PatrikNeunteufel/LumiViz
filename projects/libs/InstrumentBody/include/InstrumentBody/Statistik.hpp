@@ -54,6 +54,8 @@ struct StatistischerTeil
     int bandModen = 0;
 
     [[nodiscard]] double dichteBei(double f) const { return dichte + anstieg * (f - vonHz); }
+
+    [[nodiscard]] bool operator==(const StatistischerTeil&) const = default;
 };
 
 /// SplitMix64 (Steele, Lea & Flood 2014) — klein, schnell, auf jedem Compiler gleich.

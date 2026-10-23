@@ -23,6 +23,7 @@ set(_lumiviz_src "${CMAKE_SOURCE_DIR}/projects/apps/LumiViz/src")
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
     "${_lumiviz_src}/loop/KoerperBauplan.cpp"
+    "${_lumiviz_src}/loop/Koerper.cpp"
     "${_lumiviz_src}/core/Mitgeliefert.cpp"
 )
 

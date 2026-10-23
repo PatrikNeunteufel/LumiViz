@@ -18,14 +18,18 @@
  */
 
 #include "InstrumentBody/Auswertung.hpp"
+#include "InstrumentBody/Koerper.hpp"
 #include "InstrumentBody/Platte.hpp"
 #include "InstrumentBody/Statistik.hpp"
 #include "InstrumentBody/Umsetzungen.hpp"
+#include "loop/Koerper.hpp"
 #include "loop/KoerperBauplan.hpp"
 
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
 
 #include <algorithm>
@@ -108,7 +112,9 @@ int main(int argc, char* argv[])
                                      QStringLiteral("Hz"), QStringLiteral("20000"));
     const QCommandLineOption samenOpt(QStringLiteral("seed"), QStringLiteral("Seed of the statistical part (default 1)."),
                                       QStringLiteral("n"), QStringLiteral("1"));
-    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt});
+    const QCommandLineOption ausOpt(QStringLiteral("out"),
+                                    QStringLiteral("Write the body here (default: next to the plan, .lvinstbody)."), QStringLiteral("file"));
+    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt});
     parser.process(app);
 
     const auto geberListe = kp::netzgeber();
@@ -214,11 +220,11 @@ int main(int argc, char* argv[])
 
     // der statistische Teil darueber (31c-5c, ST1 a): Groessen aus der oberen Haelfte des Fensters
     const double statBis = parser.value(statOpt).toDouble();
+    kp::StatistischerTeil st;
     if (statBis > bisHz)
     {
         const double bandVon = std::max(vonHz, bisHz / 2.0);
-        const kp::StatistischerTeil st =
-            kp::schaetze(moden, bandVon, bisHz, bisHz, statBis, kp::Daempfung{}, parser.value(samenOpt).toULongLong());
+        st = kp::schaetze(moden, bandVon, bisHz, bisHz, statBis, kp::Daempfung{}, parser.value(samenOpt).toULongLong());
         const auto gezogen = kp::ziehe(st);
         double stegMittel = 0.0;
         for (const double v : st.stegStreuung) stegMittel += v / static_cast<double>(std::max<std::size_t>(1, st.stegStreuung.size()));
@@ -251,6 +257,31 @@ int main(int argc, char* argv[])
         for (const double f : erg.frequenzenHz) aus << f << '\n';
         std::printf("Frequencies: %s\n", qPrintable(parser.value(freqOpt)));
     }
+
+    // der Koerper (31c-5d): neben den Bauplan oder nach --out
+    QString ziel = parser.value(ausOpt);
+    if (ziel.isEmpty())
+    {
+        const QFileInfo info(parser.positionalArguments().front());
+        ziel = info.absoluteDir().filePath(info.completeBaseName() + QLatin1String(lumi::loop::kKoerperEndung));
+    }
+    kp::Koerper koerper;
+    koerper.titel = plan.titel;
+    koerper.beschreibung = "Computed by InstrumentBodyTool from " + plan.titel + ": modes of the plate up to " +
+                           std::to_string(static_cast<int>(bisHz)) + " Hz, above them a statistical part.";
+    koerper.bauplan = QFileInfo(parser.positionalArguments().front()).fileName().toStdString();
+    koerper.bauplanAbdruck = lumi::loop::bauplanAbdruck(plan).toStdString();
+    koerper.rechnung = {kp::kRechenFassung, geber->name(), loeser->name(), ordnung, netzHz, vonHz, bisHz, s.k.n, seit(beginn)};
+    for (const kp::Stegpunkt& sp : plan.stegpunkte) koerper.stegTasten.push_back(sp.taste);
+    for (const kp::Hoerort& h : plan.hoerorte) koerper.hoerorte.push_back(h.name);
+    koerper.moden = std::move(moden);
+    koerper.statistik = st;
+    if (!lumi::loop::speichereKoerper(koerper, ziel))
+    {
+        std::fprintf(stderr, "Could not write %s\n", qPrintable(ziel));
+        return 1;
+    }
+    std::printf("Body: %s (%.1f MB)\n", qPrintable(ziel), static_cast<double>(QFileInfo(ziel).size()) / 1048576.0);
     std::printf("Total %.1f s\n", seit(beginn));
     return 0;
 }

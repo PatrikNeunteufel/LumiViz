@@ -46,6 +46,8 @@ struct Luft
 {
     double dichte = 1.29;   ///< kg/m³
     double schall = 340.0;  ///< m/s
+
+    [[nodiscard]] bool operator==(const Luft&) const = default;
 };
 
 /// Die modale Daempfung α(f) = a f² + b f + c in 1/s, f in Hz (RT-0425 Gl. 1).
@@ -61,6 +63,8 @@ struct Daempfung
     {
         return frequenzHz > 0.0 ? alpha(frequenzHz) / (2.0 * std::numbers::pi * frequenzHz) : 0.0;
     }
+
+    [[nodiscard]] bool operator==(const Daempfung&) const = default;
 };
 
 /// Wo ein Punkt im System liegt: welche freien Groessen w ihn mit welchem Gewicht tragen.
@@ -152,6 +156,8 @@ struct ModeImKoerper
     double verlustfaktor = 0.0;                      ///< η
     std::vector<double> amStegpunkt;                 ///< φ je Stegpunkt (Reihenfolge des Bauplans), 1/√kg
     std::vector<std::complex<double>> abstrahlung;  ///< G je Hoerort (Reihenfolge des Bauplans), √kg/m²
+
+    [[nodiscard]] bool operator==(const ModeImKoerper&) const = default;
 };
 
 /// Bereitet die Auswertung einmal vor (Abtastung der Stegpunkte, Gauss-Punkte mit ihrem Abstand

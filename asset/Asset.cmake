@@ -48,7 +48,8 @@ lumi_asset(karaoke          OHNE "README.md")
 # Composer: Blenden, Formen, Mutes (FormPresets, Mute)
 lumi_asset(composer         OHNE "README.md")
 
-# Loop: das Kit, die mitgelieferten Samples, die Instrumente, die Beispiel-Loops.
+# Loop: das Kit, die mitgelieferten Samples, die Instrumente, die gerechneten Koerper
+# (instrument_bodies/*.lvinstbody — die App liest nur Koerper, nie Bauplaene; BM5 a, S148), die Beispiel-Loops.
 # Nicht: make_*.py, README.md und Arbeitsdateien im Ordner (test.lvloop,
 # DDdemo.lvloop, ...) — ein Beispiel heisst <name>_demo.lvloop oder liegt unter
 # genres/; unter vergleich/ die Vergleiche alt gegen neu (S133, make_saiten_loops.py). Die Samples unter samples/ sind die eine Ausnahme von „nur eigene
@@ -68,6 +69,7 @@ lumi_asset(loop
         "chords/CREDITS.md"
         "chords/types.json"
         "instruments/*.lvinst"
+        "instrument_bodies/*.lvinstbody"
         "genres/*.lvloop"
         "vergleich/*.lvloop"
         "*_demo.lvloop")

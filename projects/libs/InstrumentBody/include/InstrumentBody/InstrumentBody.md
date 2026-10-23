@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.7.0  
-> **Datum:** 2026-10-23  
+> **Version:** 0.8.0  
+> **Datum:** 2026-10-24  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Auswertung.hpp, Statistik.hpp  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Auswertung.hpp, Statistik.hpp, Koerper.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
@@ -210,7 +210,21 @@ Grenze (Vorgabe 20 kHz).
 - **Gemessen** (Steinway D, Band 2,5–5 kHz mit 528 Moden): Dichte 0,238 /Hz bei 5 kHz, Anstieg 2,1·10⁻⁵ /Hz², 5933
   Moden bis 20 kHz.
 
-### 5.5 Eine eigene Umsetzung dazu
+### 5.5 Der Körper — `InstrumentBody/Koerper.hpp` (31c-5d)
+
+`Koerper` ist, was die Datei `.lvinstbody` trägt: Titel, Name und **Abdruck des Bauplans** (SHA-256 über sein JSON,
+gebildet in der App: `loop/Koerper` `bauplanAbdruck`), wie gerechnet wurde (`Rechnung`: `kRechenFassung`, Netzgeber,
+Löser, Ordnung, Netz für welche Frequenz, Fenster, freie Größen, Zeit), die Stegpunkte (MIDI) und Hörorte in der
+Reihenfolge der Werte, Luft, Dämpfung, die gerechneten Moden (`ModeImKoerper`) und der statistische Teil.
+
+- **`kKoerperFassung`** — die Fassung der Datei (1).
+- **`kRechenFassung`** — die Fassung der Rechnung (1). Hochzählen, wenn sich bei gleichem Bauplan ein anderer Körper
+  ergäbe; dann meldet der Wächter (`test_LoopKoerperDatei`, „Waechter“) jeden mitgelieferten Körper als veraltet, bis
+  `InstrumentBodyTool` ihn neu rechnet. Ebenso, wenn sich der Bauplan ändert (der Abdruck passt nicht mehr).
+- **Datei** (`loop/Koerper`, Qt-JSON, in der App und im Werkzeug): jedes Feld immer geschrieben; Zahlen kommen genau
+  zurück; der Samen steht als Text (64 Bit); eine Mode mit falscher Zahl an Werten macht die Datei ungültig.
+
+### 5.6 Eine eigene Umsetzung dazu
 
 Eine Klasse, die `Eigenloeser` umsetzt, in `eigenloeser()` von `Umsetzungen.hpp` eintragen: alle Fälle von
 `test_LoopKoerperEigen.cpp` laufen dann auch für sie, `InstrumentBodyTool --solver <Name>` wählt sie. Ihre
@@ -225,6 +239,11 @@ Prüfplatten rechnet dort der dichte Löser von Eigen (nur im Test): Ansatz (Kro
 (Monome genau), Werkstoff gedreht, Navier mit Konvergenz in k, Locking an 2 mm und 1 mm, Drehung (Netz und Faser um
 30° gedreht: dieselben Frequenzen), Steinway D grob (bis 1 kHz, k = 2: Masse gegen den Bauplan);
 `LUMIVIZ_PLATTE_MESSUNG=1` baut ihn bis 5 kHz mit k = 3 und meldet Größe und Zeit.
+
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperDatei.cpp` — ohne Qt-Anwendung: die Datei `.lvinstbody`
+(Hin- und Rückweg genau, Felder, Samen mit 64 Bit, Fehler), der Abdruck des Bauplans, der **Wächter** über jeden
+mitgelieferten Körper (Abdruck, `kRechenFassung`, Stegpunkte und Hörorte wie im Bauplan, Moden aufsteigend, Anschluss
+des statistischen Teils, Größe unter rund 10 MB) — liest vom Arbeitsordner aus.
 
 `projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperStatistik.cpp` — ohne Qt-Anwendung, ohne Dateien: Zufall
 (Bezugsfolge, Verteilungen), Ziehung, Schätzung (§5.4).
@@ -256,6 +275,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.8.0 | 2026-10-24 | Session 148, Stufe 31c-5d: der Körper (`Koerper.hpp`: `Koerper`, `Rechnung`, `kKoerperFassung`, `kRechenFassung`), die Datei in `loop/Koerper`, der Wächter. |
 | 0.7.0 | 2026-10-23 | Session 148, Stufe 31c-5c: statistischer Teil (`Statistik.hpp`: `StatistischerTeil`, `schaetze`, `ziehe`, `Zufall`; ST1 a). |
 | 0.6.0 | 2026-10-23 | Session 148, Stufe 31c-5b: Auswertung je Mode (`Auswertung.hpp`: Wert an den Stegpunkten, Dämpfung nach RT-0425 Gl. 1, Abstrahlgewicht nach Rayleigh je Hörort); `PlattenSystem::elemente`, `Plattenelement::basis`, `Auflager::Frei`. |
 | 0.5.0 | 2026-10-23 | Session 148, Stufe 31c-5a: Hörorte (`Hoerort`, BM6 a), `.lvinstbodyplan` Fassung 2 mit `listeningPoints`. |
