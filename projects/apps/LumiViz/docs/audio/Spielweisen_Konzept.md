@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.69.0
+> **Version:** 0.71.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, PL31c a, GB1 a und TS1 a (Patrik S139–S147);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, PL31c a, GB1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1248,6 +1248,47 @@ eine Datei überall mitnimmt. Verworfen: BM3 b (eine Datei — Moden veralten st
 `instruments/` — dort liegt nur, was im Fenster *Instruments* erscheint), BM3-2 b (kurze Endungen — außerhalb des
 Ordners nicht selbsterklärend), BM3-2 c (`bodies/`, `.lvbody` — mehrdeutig).
 
+✅ **BM5 a** (Patrik S147): **Der Rechenkern des Bodens wird eine eigene Bibliothek `projects/libs/InstrumentBody/`**
+— nur Header, reines C++ ohne Qt (Bauplan als Daten, Netz, Platte, Eigenlöser, Abstrahlung, statistischer Teil).
+Lesen und Schreiben von `.lvinstbodyplan` und `.lvinstbody` mit Qt-JSON einmal in der App unter `loop/`. **Ein
+Werkzeug `projects/exec/InstrumentBodyTool/`** (Konsole) liest einen Bauplan, rechnet mit der Bibliothek und
+schreibt den Körper; es kompiliert den Leser aus `loop/` direkt mit (Muster MilkdropStandalone, Executables vor
+Apps). Die App liest nur Körper und rechnet nie; ein späterer Editor bindet dieselbe Bibliothek ein. Tests in
+`LumiViz.UnitTests`: die Bibliothek ohne Qt-Anwendung (analytische Platte, Konvergenz), der Leser, der Wächter des
+Abdrucks. Grund: die Richtung der Abhängigkeiten — der Kern braucht weder Qt noch die App. Verworfen: b (Fall der
+Test-Exe hinter einer Umgebungsvariable — ein Test, der Stunden rechnet und eine mitgelieferte Datei schreibt, ist
+kein Test), c (alles in der App mit verstecktem Aufruf). Kippt auf b, wenn ein Körper nur Sekunden bis wenige Minuten
+braucht (nach 31c-4); dann bleibt das Werkzeug, sein Aufruf darf auch aus einem Test kommen.
+
+✅ **BM5-1 a** (Patrik S147), **mit Zusatz: austauschbar eingebunden, Tests für einen Vergleich alt gegen neu, eigene
+Dokumentation.** **Eigen 3.4.1 und Spectra 1.2.0 als Externals** (beide MPL-2.0, laut COPYING.README bzw. GitHub
+abgefragt 2026-10-23), unverändert, mit fester Fassung, nur für `InstrumentBody`, `InstrumentBodyTool` und die Tests,
+nicht für die App; Lizenzen in `THIRD_PARTY_NOTICES.md`; Eigen 5.0 erst nach einer Probe mit Spectra; ob die Quellen
+fest im Repo liegen oder per Tag geholt werden, klärt eine Probe unter beiden Compilern. **Zum Zusatz:** (1) **Eine
+Schnittstelle vor dem Löser** — die übrige Bibliothek (Netz, Platte, Abstrahlung) kennt nur sie: dünn besetzte
+Matrizen K und M, ein Frequenzfenster, zurück Frequenzen und Formen; Eigen und Spectra stehen nur in der einen
+Umsetzung dahinter, kein Typ von Eigen oder Spectra geht über die Schnittstelle. Ein eigener Löser wird eine zweite
+Umsetzung derselben Schnittstelle, gewählt im Werkzeug per Schalter. (2) **Tests gegen die Schnittstelle**, nicht
+gegen die Umsetzung: dieselben Fälle (geschlossene Lösungen — Rechteckplatte frei aufliegend, orthotrop; kleine
+Matrizen mit bekannten Eigenwerten; Vollständigkeit im Fenster, keine Mode doppelt oder ausgelassen; Orthogonalität
+bezüglich M) laufen für jede vorhandene Umsetzung; dazu **abgelegte Bezugswerte** (Frequenzen und Formen an
+Stützpunkten für die Prüfplatten und den Steinway D) und ein **Vergleichsfall**, der zwei Umsetzungen gegeneinander
+rechnet, sobald es zwei gibt (Frequenzen auf eine Toleranz, Formen über den MAC-Wert), mit Rechenzeit beider. (3)
+**Eigene Dokumentation** des Lösers: Modul-Doku im CppModuleDoc-Format neben den Headern von `InstrumentBody`
+(Projektregel) — Schnittstelle, die Umsetzung mit Eigen und Spectra (Fassungen, Bezug, Lizenz), wie eine eigene
+Umsetzung dazukommt, die Tests und Bezugswerte und wie der Vergleich alt gegen neu läuft. Grund: Richtigkeit —
+erprobte Numerik für die heikelsten Stellen; die Schnittstelle hält den Weg zu einem eigenen Löser offen, ohne die
+übrige Bibliothek anzufassen. Verworfen: b (eigener Löser jetzt — die heikelste Numerik ungeprüft), c (nur Eigen,
+Lanczos selbst — gerade das Verfahren ist die Fehlerquelle). Kippt auf c oder b, wenn Eigen oder Spectra unter einem
+der beiden Compiler nicht sauber bauen oder die Lizenzprüfung im Bauschritt anderes zeigt.
+
+**Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
+grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
+die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
+ein Plugin bräuchte den Kern wie `InstrumentBody` ohne Qt. Ein Plugin rechnet in Echtzeit auf MIDI, LumiViz rechnet
+Töne vorab in den Tonspeicher; die gemessene Rechenzeit (31b-3: 2,3 % der Echtzeit je Ton im Bass) spräche nicht
+dagegen, Pedal und viele Stimmen sind ungemessen. Lizenz des VST3-SDK und Alternativen (CLAP) ungeprüft.
+
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
 Nicht einmal beim Laden. **Im Loop-Panel** rechnet `Spieler::ladeProgramm` erst beim Play
@@ -2112,6 +2153,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.71.0 | 2026-10-23 | Session 147. BM5-1 a (Eigen 3.4.1 und Spectra 1.2.0 als Externals hinter einer Schnittstelle; Tests gegen die Schnittstelle mit Bezugswerten und Vergleich alt gegen neu; eigene Modul-Doku). |
+| 0.70.0 | 2026-10-23 | Session 147. BM5 a (Rechenkern als Bibliothek `InstrumentBody` ohne Qt, Werkzeug `InstrumentBodyTool`, die App liest nur Körper); Frage VST mit Antwort, ohne Umsetzung. |
 | 0.69.0 | 2026-10-23 | Session 147. BM3 a, BM3-1 a, BM3-2 a (Bauplan `.lvinstbodyplan` und Körper `.lvinstbody` als JSON unter `asset/loop/instrument_bodies/`, Abdruck des Bauplans im Körper, Verweis `lib:` aus der `.lvinst`; Icons dazu). |
 | 0.68.0 | 2026-10-23 | Session 147. Wunsch Glas mit Befund Schimmel K 213 Glas (Acrylgehäuse, Fichtenboden); GB1 a (Glasboden in 31c-8, Schimmel als Wunsch bis Rand und Deckel; Material je Teil, frei kombinierbar). |
 | 0.67.0 | 2026-10-23 | Session 147. BM2 a (Geometrie aus RT-0425 Abb. 2 per Farbe, MAESSTRO-Fassung als Prüffall für 31c-6 und 31c-8). |
