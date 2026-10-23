@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.68.0
+> **Version:** 0.69.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, PL31c a, GB1 a und TS1 a (Patrik S139–S147);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, PL31c a, GB1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1225,6 +1225,29 @@ Deckel. Verworfen: b (Rand und Deckel schon in 31c — für den Deckel keine Vor
 Teil länger), c (kein Glasboden). Kippt auf b, wenn der Schimmel als Instrument wichtiger wird als das Experiment —
 dann zuerst eine Recherche zum Deckel.
 
+✅ **BM3 a, BM3-1 a, BM3-2 a** (Patrik S147), **mit Zusatz: passende Icons gehören dazu.** **Zwei Dateien, beide
+JSON, alles ausgeschrieben:** der **Bauplan `.lvinstbodyplan`** (`format: lumiviz-instrument-body-plan`, Fassung 1;
+Quelle, von Hand bzw. von Claude geschrieben) — ein Wörterbuch der Materialien (orthotrop mit Faserwinkel oder
+isotrop; Dichte, Moduln, Querzahlen, Verlustfaktor), Umriss als Polygon in Metern, Platte mit Dickenverlauf, Rippen
+und Stege als Mittellinien mit Höhe und Breite, Stegpunkte je Taste, je Teil ein Material (GB1 a); Rand und Deckel
+später als weitere Teile. Der **Körper `.lvinstbody`** (`format: lumiviz-instrument-body`, Fassung 1; vom Werkzeug
+geschrieben) — die Moden nach KB1 a und der statistische Teil, dazu **der Abdruck des Bauplans und die Fassung des
+Werkzeugs**; ein Test meldet einen Körper, der nicht mehr zum Bauplan passt (Muster des Wächters der Klangfassung).
+**Ort:** `asset/loop/instrument_bodies/` neben `instruments/`, `samples/`, `kits/`, mit einer `README.md`
+(Resonanzkörper von Instrumenten, je Körper Bauplan und gerechneter Körper); beide Dateien im Repo, der Körper
+committet, damit das Programm nie rechnet; Eintrag in `asset/Asset.cmake`. Die `.lvinst` verweist mit
+`"soundboard": {"body": "lib:steinway_d", …}`. Der MAESSTRO-Prüffall liegt unter den Testdaten, nicht mitgeliefert.
+Eigene Körper (Benutzerordner, Datensicherung, Publish) erst mit einem Editor. **Icons (Zusatz):** je Endung ein
+Icon nach dem Muster der Marke mit Zeichen im Kreis (I1 a, S120), aus `lumiviz.ico` erzeugt
+(`build_lvfx2_icons.py`); die Zeichen wählt Patrik an einem Vorschaublatt; dazu `register_file_icons.ps1`
+(`LumiViz.InstrumentBodyPlan`, `LumiViz.InstrumentBody`), die Tabellen in `asset/img/logo/icons/README.md`, die
+Vorschaubilder (`build_previews.py`) und `dateiArtIcon`; in 31c-1. Grund: Quelle und Ergebnis getrennt wie bei Freeze
+(FZ2 a); ein Körper ist etwas, das Instrumente benutzen und teilen, wie ein Sample; die Endung ist das Einzige, was
+eine Datei überall mitnimmt. Verworfen: BM3 b (eine Datei — Moden veralten still), BM3 c (Körper binär — gegen alle
+übrigen Formate; kippt dahin, wenn ein Körper in 31c-5 deutlich über rund 10 MB wächst), BM3-1 b (Unterordner von
+`instruments/` — dort liegt nur, was im Fenster *Instruments* erscheint), BM3-2 b (kurze Endungen — außerhalb des
+Ordners nicht selbsterklärend), BM3-2 c (`bodies/`, `.lvbody` — mehrdeutig).
+
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
 Nicht einmal beim Laden. **Im Loop-Panel** rechnet `Spieler::ladeProgramm` erst beim Play
@@ -2089,6 +2112,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.69.0 | 2026-10-23 | Session 147. BM3 a, BM3-1 a, BM3-2 a (Bauplan `.lvinstbodyplan` und Körper `.lvinstbody` als JSON unter `asset/loop/instrument_bodies/`, Abdruck des Bauplans im Körper, Verweis `lib:` aus der `.lvinst`; Icons dazu). |
 | 0.68.0 | 2026-10-23 | Session 147. Wunsch Glas mit Befund Schimmel K 213 Glas (Acrylgehäuse, Fichtenboden); GB1 a (Glasboden in 31c-8, Schimmel als Wunsch bis Rand und Deckel; Material je Teil, frei kombinierbar). |
 | 0.67.0 | 2026-10-23 | Session 147. BM2 a (Geometrie aus RT-0425 Abb. 2 per Farbe, MAESSTRO-Fassung als Prüffall für 31c-6 und 31c-8). |
 | 0.66.0 | 2026-10-23 | Session 147. Befund RT-0425 Abb. 2 (Geometrie in Metern); PL31c a (31c-1 bis 31c-8, Fragen BM2–BM7 je Schritt, Rückwirkung auf die Saite in 31e); HT7 b (Boden aus dem Modell, Salamander als Vergleich für 31d). |
