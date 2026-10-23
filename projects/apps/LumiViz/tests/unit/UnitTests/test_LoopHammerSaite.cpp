@@ -18,7 +18,8 @@
  * - Die Datei: Fassung 16, `excitation`, `stringModel` `modal`, `hammerString`,
  *   `keyboard`; nur die Paare aus HA2 a; die Tastatur in ihren Grenzen.
  * - Die Anschlagstaerke (HK2 a): Stufen, Hammergeschwindigkeit, Rest, `:a<stufe>`.
- * - Bis 31b schweigt die Hammer-Saite; sie ist keine gegriffene Saite.
+ * - Die Hammer-Saite ist keine gegriffene Saite; seit 31b klingt sie (gemessen in
+ *   test_LoopHammerTon.cpp).
  ****************************************************************************************
  */
 
@@ -210,7 +211,7 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         CHECK(schicht.value(QStringLiteral("stringModel")).toString() == QStringLiteral("modal"));
         CHECK(schicht.value(QStringLiteral("excitation")).toString() == QStringLiteral("hammer"));
         const QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
-        for (const char* feld : {"inharmonicity", "decay", "highDecay", "strings", "detune", "hammerMass", "hammerStiffness",
+        for (const char* feld : {"inharmonicity", "decay", "lateDecay", "highDecay", "strings", "detune", "hammerMass", "hammerStiffness",
                                  "hammerExponent", "strikePosition", "damper", "stringLength", "stringMass",
                                  "longitudinalRatio"})
         {
@@ -358,7 +359,7 @@ TEST_CASE("Loop Hammer-Saite 31a Anschlag")
     }
 }
 
-TEST_CASE("Loop Hammer-Saite 31a schweigt bis 31b")
+TEST_CASE("Loop Hammer-Saite 31a keine gegriffene Saite, klingt seit 31b")
 {
     const Instrument instrument = fluegel();
     CHECK(hatHammer(instrument));
@@ -367,7 +368,7 @@ TEST_CASE("Loop Hammer-Saite 31a schweigt bis 31b")
     CHECK_FALSE(folgtDerSaite(instrument.schichten[0]));
     const Klang klang = rendereTon(instrument, 60, 300.0, 48000);
     REQUIRE_FALSE(klang.daten.empty());
-    CHECK(std::all_of(klang.daten.begin(), klang.daten.end(), [](float w) { return w == 0.0f; }));
+    CHECK(std::any_of(klang.daten.begin(), klang.daten.end(), [](float w) { return w != 0.0f; }));
     Instrument aus = instrument;
     aus.schichten[0].an = false;
     CHECK_FALSE(hatHammer(aus));

@@ -1,0 +1,76 @@
+/**
+ * @file HammerTon.hpp
+ * @brief Loop: ein Ton der Hammer-Saite — modale Saite, Filzhammer, Chor mit
+ *        gekoppelten Moden, Daempfer (docs/audio/Spielweisen_Konzept.md §4.1,
+ *        Stufe 31b; Entscheide Patrik S145/S146: HS1 a, HT1 a bis HT3 a)
+ *
+ * Nach Bank, Zambon & Fontana 2010: je Teilton k der Saite ein gedaempfter
+ * Resonator, angestossen mit b0 = 2/(Lµ) an der Anschlagstelle, abgenommen als
+ * Kraft am Steg (w_b,k = kπT0/L); der Hammer eine Masse mit der Feder
+ * F = Q0·Δy^p, ohne Hysterese. Die Moden sind komplexe Pole nach der
+ * Impulsinvarianz — eine Verzoegerung um einen Takt, keine verzoegerungsfreie
+ * Schleife mit dem Hammer. Waehrend des Kontakts laeuft die Rechnung achtfach
+ * feiner (`kHammerUeberabtastung`).
+ *
+ * Der Chor (HT3 a): je Teilton N ≤ 3 Saiten, jede um ihre Verstimmung
+ * versetzt, ueber einen gemeinsamen Steg gekoppelt — die Eigenwerte von
+ * A = diag(iω_j − σ_s) − σ_b·J geben Schwebung und zweistufigen Ausklang.
+ *
+ * Derselbe Aufruf ergibt dieselben Werte. Kein Qt-Widget, keine Audio-Engine.
+ */
+#pragma once
+
+#include "loop/HammerSaite.hpp"
+
+#include <complex>
+#include <cstdint>
+#include <vector>
+
+namespace lumi::loop
+{
+
+/// So viel feiner rechnet der Kontakt mit dem Hammer.
+inline constexpr int kHammerUeberabtastung = 8;
+/// Teiltoene nur bis zu diesem Anteil der Abtastrate.
+inline constexpr double kHammerTeiltonGrenze = 0.45;
+/// Hoechstens so viele Teiltoene je Saite.
+inline constexpr int kHammerTeiltoeneMax = 400;
+
+/// Was ein Ton der Hammer-Saite braucht.
+struct HammerAnschlag
+{
+    int taste = 60;          ///< MIDI-Nummer — sie waehlt die Werte der Kurven
+    double hz = 261.63;      ///< die Tonhoehe des ersten Teiltons
+    int stufe = 0;           ///< Anschlagstufe (HK2 a), ≤ 0
+    std::int64_t halten = 1; ///< so viele Abtastwerte bis zum Loslassen
+    bool gedaempft = true;   ///< hat die Taste einen Daempfer (`undampedFrom`)?
+    int rate = 48000;
+};
+
+/// Eine Mode des Chors an einem Teilton (fuer Tests und Messungen): der Eigenwert
+/// λ = −α + iΩ in 1/s und ihr Anteil g an der Antwort am Steg (Σ g = 1).
+struct ChorMode
+{
+    std::complex<double> lambda;
+    std::complex<double> anteil;
+};
+
+/// Die Moden des Chors an einem Teilton (HT3 a): N Saiten mit den Kreisfrequenzen
+/// `omega`, dem Verlust jeder Saite `sigmaSaite` und dem Verlust am Steg
+/// `sigmaSteg`. Ohne Verstimmung bleibt nur die Gleichlage.
+[[nodiscard]] std::vector<ChorMode> chorModen(const std::vector<double>& omega, double sigmaSaite, double sigmaSteg);
+
+/// So lang klingt der Ton nach dem Loslassen nach, in Abtastwerten: mit Daempfer
+/// bis −60 dB unter ihm, ohne bis −60 dB der zweiten Stufe des Grundtons —
+/// hoechstens `maxFrames`.
+[[nodiscard]] std::int64_t hammerNachklang(const HammerSaite& saite, const HammerAnschlag& anschlag, std::int64_t maxFrames);
+
+/// Einen Ton rechnen: `frames` Abtastwerte in eine Seite (Mono), der Wert in
+/// Einheiten von `kHammerKraftBezug` Newton am Steg; endet bei null.
+void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, std::vector<float>& mono, std::int64_t frames);
+
+/// Die Kraft am Steg, die als 1 ausgegeben wird (von Claude gesetzt; den Pegel
+/// des Instruments stimmt Stufe 31h).
+inline constexpr double kHammerKraftBezug = 200.0;
+
+}  // namespace lumi::loop

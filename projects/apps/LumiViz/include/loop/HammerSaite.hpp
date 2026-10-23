@@ -106,8 +106,12 @@ struct HammerSaite
 {
     /// Inharmonicity B (log): f_k = k·f0·√(1 + B·k²). 1e-6 … 0,1.
     Tastenkurve inharmonizitaet;
-    /// Decay (log): so lange, bis der Grundton um 60 dB gefallen ist, in s. 0,05 … 120.
+    /// Decay (log): so lange, bis der Grundton in der ersten Stufe um 60 dB fiele, in s.
+    /// 0,05 … 120. Bei einer Saite im Chor die ganze Abklingzeit.
     Tastenkurve abklingS;
+    /// Late decay (log, HT3 a): dasselbe fuer die zweite Stufe (die Gegenlagen des
+    /// Chors), in s, 0,05 … 120; kuerzer als *Decay* gilt als *Decay*.
+    Tastenkurve abklingSpaetS;
     /// High decay (log): die Abklingzeit eines Teiltons bei der zehnfachen
     /// Frequenz des Grundtons im Verhaeltnis zu der des Grundtons, 0,001 … 1.
     /// Die Verluste wachsen dazwischen mit dem Quadrat der Frequenz (31b).

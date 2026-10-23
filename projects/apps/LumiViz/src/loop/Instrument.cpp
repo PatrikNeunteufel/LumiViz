@@ -5,6 +5,7 @@
 
 #include "loop/Instrument.hpp"
 
+#include "loop/HammerTon.hpp"  // die Hammer-Saite (Stufe 31b)
 #include "loop/Kit.hpp"
 #include "loop/Saitenplan.hpp"  // kAbdaempfenMs (Stufe 23b)
 #include "loop/Sample.hpp"
@@ -2902,6 +2903,20 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
         const int ton = hoehe + std::clamp(schicht.versatzHalbtoene, -24, 24);
         const double hz = tonHz(ton);
         Huelle huelle = huelleFuer(schicht, std::max(1.0, dauerMs - einsatzMs), rate);
+        // Stufe 31b: die Hammer-Saite klingt nach dem Loslassen so lange, wie Daempfer und
+        // Saite es wollen — nicht nach Release
+        HammerAnschlag hammer;
+        if (istHammerSchicht(schicht))
+        {
+            hammer.taste = ton;
+            hammer.hz = hz;
+            hammer.stufe = angabe != nullptr ? angabe->anschlagStufe : 0;
+            hammer.halten = huelle.ende;
+            hammer.rate = rate;
+            const Tastatur tastatur = instrument.tastatur.value_or(Tastatur{});
+            hammer.gedaempft = ton < tastatur.ungedaempftAb;
+            huelle.aus = hammerNachklang(schicht.hammerSaite, hammer, hoechstens);
+        }
         huelle.aus = std::min<std::int64_t>(huelle.aus, hoechstens - einsatz - 1);
         if (einsatz + huelle.ende + huelle.aus > hoechstens)
             huelle.ende = std::max<std::int64_t>(1, hoechstens - einsatz - huelle.aus);
@@ -2968,8 +2983,11 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             const Handweg* weg = hand ? &*hand : nullptr;
             if (istHammerSchicht(schicht))
             {
-                // Stufe 31a: die Hammer-Saite hat Modell und Datei, gerechnet wird sie mit
-                // 31b — bis dahin schweigt sie (nicht als Classic)
+                // Stufe 31b: die Hammer-Saite (loop/HammerTon), auf beiden Seiten gleich
+                hammer.halten = huelle.ende;
+                std::vector<float> mono;
+                rechneHammerTon(schicht.hammerSaite, hammer, mono, frames);
+                for (std::size_t i = 0; i < mono.size(); ++i) eine[2 * i] = eine[2 * i + 1] = mono[i];
             }
             else if (schicht.schwingung == Schwingung::Saite)
                 rechneSaite(schicht, ton, hz, huelle, rate, eine, weg);  // Classic (S-K2 b)

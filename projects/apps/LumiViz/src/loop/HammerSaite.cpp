@@ -170,6 +170,9 @@ HammerSaite baueVorgabe()
     // vorlaeufig, ohne Beleg — setzt die Messung an Salamander (31d)
     s.abklingS = kurveAusPunkten({{21, 25.0}, {33, 20.0}, {45, 15.0}, {57, 10.0}, {69, 6.0}, {81, 3.0}, {93, 1.5},
                                   {105, 0.7}, {108, 0.5}});
+    // die zweite Stufe dreimal so lang wie die erste (HT3 a)
+    s.abklingSpaetS = kurveAusPunkten({{21, 75.0}, {33, 60.0}, {45, 45.0}, {57, 30.0}, {69, 18.0}, {81, 9.0},
+                                       {93, 4.5}, {105, 2.1}, {108, 1.5}});
     s.abklingHoch = kurveAusPunkten({{21, 0.2}, {108, 0.2}});
     s.chor = kurveAusPunkten({{21, 1.0}, {30, 1.0}, {31, 2.0}, {48, 2.0}, {49, 3.0}, {108, 3.0}});
     s.verstimmungCent = kurveAusPunkten({{21, 1.0}, {108, 1.0}});
@@ -247,6 +250,7 @@ void richteHammerSaite(HammerSaite& saite)
     const HammerSaite& v = hammerSaiteVorgabe();
     richteKurve(saite.inharmonizitaet, kGrenzeB.von, kGrenzeB.bis, v.inharmonizitaet);
     richteKurve(saite.abklingS, kGrenzeAbkling.von, kGrenzeAbkling.bis, v.abklingS);
+    richteKurve(saite.abklingSpaetS, kGrenzeAbkling.von, kGrenzeAbkling.bis, v.abklingSpaetS);
     richteKurve(saite.abklingHoch, kGrenzeHoch.von, kGrenzeHoch.bis, v.abklingHoch);
     richteKurve(saite.chor, kGrenzeChor.von, kGrenzeChor.bis, v.chor);
     richteKurve(saite.verstimmungCent, kGrenzeCent.von, kGrenzeCent.bis, v.verstimmungCent);
@@ -266,6 +270,7 @@ QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
 {
     return QJsonObject{{QStringLiteral("inharmonicity"), kurveAlsJson(s.inharmonizitaet)},
                        {QStringLiteral("decay"), kurveAlsJson(s.abklingS)},
+                       {QStringLiteral("lateDecay"), kurveAlsJson(s.abklingSpaetS)},
                        {QStringLiteral("highDecay"), kurveAlsJson(s.abklingHoch)},
                        {QStringLiteral("strings"), kurveAlsJson(s.chor)},
                        {QStringLiteral("detune"), kurveAlsJson(s.verstimmungCent)},
@@ -286,6 +291,7 @@ HammerSaite hammerSaiteAusJson(const QJsonObject& o)
     HammerSaite s;
     s.inharmonizitaet = kurveAusJson(o.value(QStringLiteral("inharmonicity")));
     s.abklingS = kurveAusJson(o.value(QStringLiteral("decay")));
+    s.abklingSpaetS = kurveAusJson(o.value(QStringLiteral("lateDecay")));
     s.abklingHoch = kurveAusJson(o.value(QStringLiteral("highDecay")));
     s.chor = kurveAusJson(o.value(QStringLiteral("strings")));
     s.verstimmungCent = kurveAusJson(o.value(QStringLiteral("detune")));

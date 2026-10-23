@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.60.0
+> **Version:** 0.61.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a, HT2 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a, HT2 a und TS1 a (Patrik S139–S146);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT3 a, 31b-1 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT3 a und TS1 a (Patrik S139–S146);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -948,6 +948,62 @@ aus Anhang A mit 11, 12 und 6 Stützpunkten; die Anschlagstelle belegt 0,12. Die
 aus dem Code entfernt (Beleg bleibt im Befund). Tests in `test_LoopHammerSaite` gegen die Tabelle an Tasten, die
 keine Stützpunkte sind.
 
+**Befund Chor und zweistufiger Ausklang (S146; Bank, Dissertation 2006, Kap. 4.2, S. 54–58, von Claude
+gelesen; Weinreich 1977 selbst nicht gelesen):** Die Kopplung der Saiten über den Steg führt zu „beating and
+two-stage decay“; beim Klavier klingen „two or three slightly mistuned strings“, „leading to a four or six
+vibrating modes for one partial“. Bank bildet das als **Signalmodell** nach: je Teilton ein zweiter Resonator,
+dessen Frequenz, Abklingzeit und Amplitude aus der Analyse einer Aufnahme kommen (eine „beating sinusoid“ auf
+die Abweichung vom einfachen Abklingen gepasst), „five to ten resonators … enough“; die Anfangsamplituden kommen
+dabei aus dem physikalischen Modell, „the beating and two-stage decay are modeled by a signal model“. Bank 2010
+nimmt statt weniger Resonatoren eine ganze zweite Bank, vom Hammer getrieben (S. 9). **Größen dafür nennen
+beide nicht.** Die Physik dahinter (nach Weinreich, wie Bank sie zusammenfasst): Saiten eines Chors, die über
+denselben Steg Energie abgeben, schwingen in einer Gleichlage, die schnell Energie an den Steg verliert, und in
+Gegenlagen, die das kaum tun — die zweite Stufe; Verstimmung und ungleicher Anschlag legen Energie in die
+Gegenlagen.
+
+✅ **HT3 a** (Patrik S146): **Je Teilton der Chor als N gekoppelte Moden nach dem Bild von Weinreich: N Saiten,
+jede um ihre Verstimmung versetzt, alle über einen gemeinsamen Steg gedämpft, vom selben Hammer angestoßen; je
+Teilton die Eigenwerte eines N×N-Systems (N ≤ 3) — Frequenz, Abklingzeit und Amplitude jeder Mode, Schwebung und
+zweite Stufe ergeben sich.** `decay` ist die Abklingzeit der ersten Stufe; neue Kurve *Late decay* (T60 der
+zweiten Stufe in s, log, Fassung 16), vorläufig bis 31d. Grund: bildet ab, was im Flügel geschieht; zwei an
+jeder Aufnahme messbare Größen bestimmen mit der Verstimmung den Verlauf (HS1 a); die Verstimmung wirkt auf die
+Nachklangphase wie beim Stimmen. Verworfen: b (Nebenbank nach Bank 2010 mit Pegel und Abklingzeit — Werte eines
+Signalmodells, die Verstimmung wirkt nicht auf die zweite Stufe), c (nur Schwebung — schiebt das Zielbild bis 31d
+hinaus). Kippt auf b, wenn 31d zeigt, dass die gekoppelten Moden die Hüllkurven von *Salamander* auch mit gepassten
+Größen nicht treffen; auf c, wenn 31b zeigt, dass drei Saiten je Teilton zu teuer sind.
+
+**Herleitung zu HT3 a (Claude, S146 — Weinreichs Arbeit selbst nicht gelesen):** Teilton k, Saite j = 1…N mit
+der komplexen Amplitude a_j, ihrer Kreisfrequenz ω_j = ω_k·2^(c_j/1200) (c_j die Verstimmung: bei zwei Saiten
+±c/2, bei drei −c/2, 0, +c/2 — `detune` ist der Abstand der äußeren) und dem eigenen Verlust σ_s. Der Steg
+nimmt eine Kraft auf, die von allen Saiten zugleich kommt, und dämpft jede mit dem Verlust σ_b auf ihre Summe:
+
+  da/dt = A·a,  A = diag(iω_j − σ_s) − σ_b·J  (J: N×N, lauter Einsen)
+
+Bei gleichen Frequenzen hat A den Eigenwert iω − σ_s − N·σ_b für die Gleichlage (Vektor aus Einsen) und
+iω − σ_s (N − 1-fach) für die Gegenlagen. Die beiden Stufen sind damit σ_früh = σ_s + N·σ_b und σ_spät = σ_s:
+aus `decay` und *Late decay* folgen σ_s = σ_spät und σ_b = (σ_früh − σ_spät)/N (je σ = 3·ln 10 / T60). Mit einer
+Saite gilt nur `decay`. Der Hammer stößt jede Saite mit F/N an (die Saiten bewegen sich während des Kontakts
+gemeinsam, der Hammer sieht ihre Masse N·Lµ), am Steg zählt die Summe: mit A = VΛV⁻¹ ist die Antwort am Steg
+1ᵀ·e^(At)·1/N = Σ_m g_m·e^(λ_m t), g_m = (1ᵀv_m)(w_mᵀ1)/N — je Teilton N komplexe Moden, je eine als Resonator
+zweiter Ordnung mit einem Zähler aus zwei Gliedern. Ohne Verstimmung ist g = 1 auf der Gleichlage und 0 auf den
+Gegenlagen: keine zweite Stufe — erst die Verstimmung legt Energie hinein. Über die Teiltöne bleibt das
+Verhältnis σ_spät/σ_früh fest (von Claude gesetzt, vorläufig bis 31d); σ_früh folgt `decay` und *High decay*.
+
+**Gebaut 31b-1 (S146):** `loop/HammerTon` — `chorModen` (Säkulargleichung R(z) = Q(z) + σ_b·Q′(z), Durand–Kerner,
+g = (1ᵀv)²/(N·vᵀv)), `rechneHammerTon`, `hammerNachklang`. Je Teilton bis 0,45·fs (höchstens 400) die Moden
+des Chors als komplexe Pole (Impulsinvarianz, ein Takt Verzögerung); der Kontakt achtfach feiner, bis der Hammer
+1 ms frei ist (höchstens 30 ms); danach je Mode ein abklingender Zeiger, beim Loslassen der Pol des Dämpfers
+(nie langsamer als vorher), abgebrochen unter −140 dB der Summe; f0 so, dass der erste Teilton auf der
+Tonhöhe liegt; Ausgabe die Kraft am Steg / `kHammerKraftBezug` (200 N, von Claude gesetzt), 5 ms Ausblenden am
+Ende. Kurve *Late decay* (`lateDecay`, vorläufig dreimal *Decay*). In `rendereTon` bestimmt die Hammer-Saite
+ihre Länge selbst (Dämpfer, ohne Dämpfer die zweite Stufe; ADSR und *Signal path* wirken an ihr nicht).
+**Gemessen** (`test_LoopHammerTon`, Release-clang): E1 fällt in 3 s um 8,14 dB, soll 8,14 (*Decay* 22,1 s);
+Teiltöne 5, 10, 15 auf 1 Cent nach B; C3 ff gegen pp: Grundton +19,8 dB, Teilton 8 zum Grundton −21,3 gegen
+−32,2 dB (heller); C4 mit 2 Cent Verstimmung früh 13,6 dB/s, später 2,5 dB/s, ohne Verstimmung eine Stufe; C4
+mit Dämpfer über 200 dB in 0,6 s, C7 ohne Dämpfer 23 dB (seine erste Stufe). Spitzen 0,24 … 0,54. Hörproben:
+`LUMIVIZ_31B_WAV=<Ordner>`. **Noch nicht:** Längsschwingung (31b-2), die Stufe aus der Lautstärke der Note und
+die Rechenzeit (31b-3).
+
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
 Nicht einmal beim Laden. **Im Loop-Panel** rechnet `Spieler::ladeProgramm` erst beim Play
@@ -1812,6 +1868,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.61.0 | 2026-10-23 | Session 146. Befund Chor und zweistufiger Ausklang (Bank, Diss. 2006, Kap. 4.2); HT3 a (gekoppelte Moden nach Weinreich, Kurve Late decay) mit Herleitung; 31b-1 gebaut und gemessen (`loop/HammerTon`). |
 | 0.60.0 | 2026-10-23 | Session 146. Befund vor 31b (Bank 2010 im Volltext: Resonatoren, Hammer, Längsschwingung, Nebenresonatoren, Dämpfer; die Kurven aus 31a tragen keine Saitendaten); HT1 a (Länge, Masse, Längsverhältnis als Kurven); Befund Saitendaten (Chabassier, Joly & Chaigne 2013 Tab. III; Chabassier & Duruflé RT-0425 Anhang A, 84 Tasten); HT2 a (Hammer nach RT-0425 statt Stulov); 31a nachgezogen. |
 | 0.59.0 | 2026-10-23 | Session 146. Befund Vorgaben zu 31a (Stulov Gl. 9 und Rigaud Gl. 4/5 am Bild gelesen; p 3,7…5,0 statt des Agenten-Berichts 2…4; kein Beleg für die erste Taste ohne Dämpfer); HK1 a (Skala je Größe, monoton kubisch), HK2 a (laut ∝ Hammergeschwindigkeit, 5 m/s, 1 dB, −40 dB, `:a<stufe>` statt `:v`); 31a gebaut (`loop/HammerSaite`, Fassung 16). |
 | 0.58.0 | 2026-10-22 | Session 145. Stufe 31 begonnen: Wunsch Beispiel-Loops, BL1 a (drei Chopin-Ausschnitte), BL2 a (von Hand aus gemeinfreier Ausgabe vor 1900), Befunde Quellen (Mutopia, Polona, IMSLP), Befund Code und Literatur, HS1 a (modal nach Bank 2010), HS2 a (Teilschritte 31a–31h); zu 31a HA1 a (Kurven über die Tastatur), HA2 a (Excitation und Modal an der Schicht, Block Keyboard am Instrument), HA3 a (Anschlagstärke gestuft im Namen), HA4 a (Ausstattung Keyboard). |
