@@ -1,0 +1,50 @@
+## Bend, Einzelaufnahmen (G-Saite Bund 5)
+AR_G_V_bending #0: Hub 88.9 c, Halt 88.9 c, Anstieg 549 ms, Form [0.09, 0.27, 0.72], Mehrverlust -0.7 dB, Halte-Rate -5.4 dB/s
+AR_G_V_bending #1: Hub 193.9 c, Halt 186.0 c, Anstieg 723 ms, Form [0.16, 0.34, 0.57], Mehrverlust -0.3 dB, Halte-Rate -4.0 dB/s
+AR_G_V_bending #2: Hub 286.1 c, Halt 282.0 c, Anstieg 733 ms, Form [0.11, 0.34, 0.73], Mehrverlust -0.4 dB, Halte-Rate -4.5 dB/s
+FS_G_V_bending #0: Hub 98.3 c, Halt 97.9 c, Anstieg 309 ms, Form [0.19, 0.45, 0.92], Mehrverlust 0.4 dB, Halte-Rate -5.7 dB/s
+FS_G_V_bending #1: Hub 203.4 c, Halt 188.4 c, Anstieg 509 ms, Form [0.21, 0.4, 0.75], Mehrverlust 0.6 dB, Halte-Rate -5.3 dB/s
+FS_G_V_bending #2: Hub 268.9 c, Halt 265.5 c, Anstieg 594 ms, Form [0.14, 0.38, 0.71], Mehrverlust 0.3 dB, Halte-Rate -5.8 dB/s
+LP_G_V_bending #0: Hub 109.0 c, Halt 109.0 c, Anstieg 215 ms, Form [0.19, 0.47, 0.72], Mehrverlust -0.8 dB, Halte-Rate -8.7 dB/s
+LP_G_V_bending #1: Hub 191.8 c, Halt 191.5 c, Anstieg 364 ms, Form [0.18, 0.48, 0.81], Mehrverlust -2.0 dB, Halte-Rate -5.6 dB/s
+LP_G_V_bending #2: Hub 281.8 c, Halt 278.7 c, Anstieg 733 ms, Form [0.23, 0.45, 0.76], Mehrverlust -0.0 dB, Halte-Rate -4.9 dB/s
+
+## Bend in Licks
+Hub ~1 HT: n=24, Hub 107 (63..149, n=24) c, Anstieg 10-90 82 (45..160, n=24) ms, t10 nach Onset 186 (32..271, n=24) ms, 50%-Lage 0.52 (0.30..0.82, n=24), Ueberschwinger 7 (1..63, n=24) c, Ereignisdauer 458 (132..953, n=24) ms
+Hub ~2 HT: n=15, Hub 170 (157..232, n=15) c, Anstieg 10-90 95 (70..135, n=15) ms, t10 nach Onset 206 (71..286, n=15) ms, 50%-Lage 0.47 (0.33..0.53, n=15), Ueberschwinger 5 (2..19, n=15) c, Ereignisdauer 493 (442..889, n=15) ms
+Hub ~4 HT: n=1, Hub 440 (440..440, n=1) c, Anstieg 10-90 150 (150..150, n=1) ms, t10 nach Onset 121 (121..121, n=1) ms, 50%-Lage 1.00 (1.00..1.00, n=1), Ueberschwinger 0 (0..0, n=1) c, Ereignisdauer 305 (305..305, n=1) ms
+Form gesamt (Median 25/50/75 %-Lage im 10-90-Anstieg): [0.2  0.47 0.78] linear waere [0.19 0.5 0.81]
+BE-Ereignisse ohne messbaren Hub (<30 c): 5
+
+## Slide, Einzelaufnahmen
+AR_G_V_slide #0: Weg 92.8 c, Gleiten 10 ms, 9306 c/s, stufig None, R2 cent/Hz None/None, Mehrverlust -1.7 dB
+AR_G_V_slide #1: Weg 196.1 c, Gleiten 60 ms, 3276 c/s, stufig 0.62, R2 cent/Hz 0.837/0.834, Mehrverlust -1.8 dB
+AR_G_V_slide #2: Weg 294.6 c, Gleiten 100 ms, 2953 c/s, stufig 0.67, R2 cent/Hz 0.966/0.965, Mehrverlust -0.3 dB
+AR_G_V_slide #3: Weg 391.2 c, Gleiten 140 ms, 2801 c/s, stufig 0.69, R2 cent/Hz 0.975/0.973, Mehrverlust 0.5 dB
+AR_G_V_slide #4: Weg 495.1 c, Gleiten 185 ms, 2682 c/s, stufig 0.71, R2 cent/Hz 0.981/0.982, Mehrverlust 0.1 dB
+AR_G_V_slide #5: Weg 593.2 c, Gleiten 200 ms, 2973 c/s, stufig 0.59, R2 cent/Hz 0.987/0.982, Mehrverlust -1.7 dB
+AR_G_V_slide #6: Weg 691.5 c, Gleiten 200 ms, 3465 c/s, stufig 0.54, R2 cent/Hz 0.989/0.986, Mehrverlust -3.2 dB
+FS_G_V_slide #0: Weg 91.4 c, Gleiten 5 ms, 18326 c/s, stufig None, R2 cent/Hz None/None, Mehrverlust -2.1 dB
+FS_G_V_slide #1: Weg 197.1 c, Gleiten 55 ms, 3592 c/s, stufig 0.67, R2 cent/Hz 0.89/0.888, Mehrverlust -1.6 dB
+FS_G_V_slide #2: Weg 293.1 c, Gleiten 95 ms, 3093 c/s, stufig 0.7, R2 cent/Hz 0.961/0.959, Mehrverlust -3.0 dB
+FS_G_V_slide #3: Weg 387.8 c, Gleiten 120 ms, 3239 c/s, stufig 0.64, R2 cent/Hz 0.973/0.969, Mehrverlust -1.3 dB
+FS_G_V_slide #4: Weg 489.6 c, Gleiten 165 ms, 2974 c/s, stufig 0.62, R2 cent/Hz 0.969/0.962, Mehrverlust -3.3 dB
+FS_G_V_slide #5: Weg 585.7 c, Gleiten 180 ms, 3261 c/s, stufig 0.57, R2 cent/Hz 0.984/0.977, Mehrverlust -3.3 dB
+FS_G_V_slide #6: Weg 684.0 c, Gleiten 224 ms, 3047 c/s, stufig 0.57, R2 cent/Hz 0.986/0.978, Mehrverlust -2.4 dB
+LP_G_V_slide #0: Weg 87.3 c, Gleiten 5 ms, 17490 c/s, stufig None, R2 cent/Hz None/None, Mehrverlust -2.6 dB
+LP_G_V_slide #1: Weg 188.5 c, Gleiten 35 ms, 5399 c/s, stufig 0.75, R2 cent/Hz 0.52/None, Mehrverlust -4.2 dB
+LP_G_V_slide #2: Weg 284.8 c, Gleiten 60 ms, 4758 c/s, stufig 0.85, R2 cent/Hz 0.854/None, Mehrverlust -5.7 dB
+LP_G_V_slide #3: Weg 378.6 c, Gleiten 100 ms, 3795 c/s, stufig 0.62, R2 cent/Hz 0.966/0.96, Mehrverlust -4.7 dB
+LP_G_V_slide #4: Weg 481.3 c, Gleiten 175 ms, 2757 c/s, stufig 0.69, R2 cent/Hz 0.97/None, Mehrverlust -6.3 dB
+LP_G_V_slide #5: Weg 578.3 c, Gleiten 195 ms, 2972 c/s, stufig 0.7, R2 cent/Hz 0.986/0.984, Mehrverlust -4.3 dB
+LP_G_V_slide #6: Weg 669.4 c, Gleiten 224 ms, 2982 c/s, stufig 0.61, R2 cent/Hz 0.979/None, Mehrverlust -3.0 dB
+Gerade Gleitdauer = -14.7 ms + 35.2 ms je Halbton (Slides ab 2 HT, n=18)
+Mehrverlust je Gitarre: {'AR': '-2 (-3..0, n=7)', 'FS': '-2 (-3..-1, n=7)', 'LP': '-4 (-6..-3, n=7)'}
+Stufigkeit (Anteil +-20 c um Halbton; gleichverteilt 0,40): 0.66 (0.54..0.85, n=18)
+
+## Slide in Licks
+n=66, Weg 190 (87..509, n=66) c, Gleiten 35 (5..309, n=66) ms, c/s 5361 (631..102074, n=66), stufig 0.45 (0.00..1.00, n=47), Pegel nach-vor -1.70 (-23.40..42.80, n=66) dB
+  ~1 HT: n=21, Gleiten 10 (5..35, n=21) ms, Anregung ['FS', 'MU', 'PK']
+  ~2 HT: n=35, Gleiten 40 (5..309, n=35) ms, Anregung ['FS', 'MU', 'PK']
+  ~3 HT: n=7, Gleiten 55 (5..60, n=7) ms, Anregung ['FS', 'MU', 'PK']
+  ~5 HT: n=3, Gleiten 5 (5..5, n=3) ms, Anregung ['MU']

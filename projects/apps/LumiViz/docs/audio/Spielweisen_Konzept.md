@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.63.0
+> **Version:** 0.64.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT5 a, 31b-1 bis 31b-3 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT5 a und TS1 a (Patrik S139–S146);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT7 a (HT7 a vorläufig), KB1 a und TS1 a (Patrik S139–S146);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -640,7 +640,7 @@ genannt, in einem Unterrichtsraum aufgenommen. Ein Upright mit an der Quelle gep
 noch keins gefunden.
 
 **Wunsch Patrik (S145): Beispiel-Loops mit der Hammer-Saite** — mindestens einer, nach Patriks Notiz
-`docs/welcher komponist ist ideal für ein Flügel tet.txt` (eine Unterhaltung mit einem Sprachmodell;
+`docs/modellierung/hammer-saite/welcher komponist ist ideal für ein Flügel tet.txt` (eine Unterhaltung mit einem Sprachmodell;
 ihre Angaben zu Lizenzen und Quellen sind **nicht geprüft**). Dort genannt: Chopin als Idealfall, als
 Prüfstücke *Nocturne Op. 9 Nr. 2* (Pedal, Resonanz, Ausklang), *Ballade Nr. 1 g-Moll Op. 23* (Dynamik,
 Anschlagstufen), *Étude Op. 10 Nr. 4* (Polyphonie, Rechenzeit); dazu Debussy *Clair de lune*, Liszt *La
@@ -913,7 +913,7 @@ Längsschwingung in 31b (HS2 a); der Grund gegen HA1 c entfällt mit einer verö
 (nur die Masse Lµ, Längsschwingung später — schiebt das Zielbild hinaus, ohne zu sparen), c (Verhältnis der
 Massen — verliert die Einheiten). Kippt auf b, wenn sich keine offene Tabelle findet.
 
-**Befund Saitendaten (S146; beide Arbeiten von Patrik heruntergeladen, liegen unter `docs/external` — nicht
+**Befund Saitendaten (S146; beide Arbeiten von Patrik heruntergeladen, liegen unter `docs/modellierung/hammer-saite/quellen/` — nicht
 versioniert; von Claude gelesen, Tabellen am Bild der Seite geprüft):**
 - **Chabassier, Joly & Chaigne**, „Modeling and simulation of a grand piano“, *JASA* 134 (2013), Fassung der
   Autoren hal-00873089, Tab. III (S. 48): Saiten und Hämmer für D♯1, C2, F3, C♯5, G6; die Werte wurden an einem
@@ -972,22 +972,9 @@ Signalmodells, die Verstimmung wirkt nicht auf die zweite Stufe), c (nur Schwebu
 hinaus). Kippt auf b, wenn 31d zeigt, dass die gekoppelten Moden die Hüllkurven von *Salamander* auch mit gepassten
 Größen nicht treffen; auf c, wenn 31b zeigt, dass drei Saiten je Teilton zu teuer sind.
 
-**Herleitung zu HT3 a (Claude, S146 — Weinreichs Arbeit selbst nicht gelesen):** Teilton k, Saite j = 1…N mit
-der komplexen Amplitude a_j, ihrer Kreisfrequenz ω_j = ω_k·2^(c_j/1200) (c_j die Verstimmung: bei zwei Saiten
-±c/2, bei drei −c/2, 0, +c/2 — `detune` ist der Abstand der äußeren) und dem eigenen Verlust σ_s. Der Steg
-nimmt eine Kraft auf, die von allen Saiten zugleich kommt, und dämpft jede mit dem Verlust σ_b auf ihre Summe:
-
-  da/dt = A·a,  A = diag(iω_j − σ_s) − σ_b·J  (J: N×N, lauter Einsen)
-
-Bei gleichen Frequenzen hat A den Eigenwert iω − σ_s − N·σ_b für die Gleichlage (Vektor aus Einsen) und
-iω − σ_s (N − 1-fach) für die Gegenlagen. Die beiden Stufen sind damit σ_früh = σ_s + N·σ_b und σ_spät = σ_s:
-aus `decay` und *Late decay* folgen σ_s = σ_spät und σ_b = (σ_früh − σ_spät)/N (je σ = 3·ln 10 / T60). Mit einer
-Saite gilt nur `decay`. Der Hammer stößt jede Saite mit F/N an (die Saiten bewegen sich während des Kontakts
-gemeinsam, der Hammer sieht ihre Masse N·Lµ), am Steg zählt die Summe: mit A = VΛV⁻¹ ist die Antwort am Steg
-1ᵀ·e^(At)·1/N = Σ_m g_m·e^(λ_m t), g_m = (1ᵀv_m)(w_mᵀ1)/N — je Teilton N komplexe Moden, je eine als Resonator
-zweiter Ordnung mit einem Zähler aus zwei Gliedern. Ohne Verstimmung ist g = 1 auf der Gleichlage und 0 auf den
-Gegenlagen: keine zweite Stufe — erst die Verstimmung legt Energie hinein. Über die Teiltöne bleibt das
-Verhältnis σ_spät/σ_früh fest (von Claude gesetzt, vorläufig bis 31d); σ_früh folgt `decay` und *High decay*.
+**Herleitung zu HT3 a:** steht seit S146 in `docs/modellierung/hammer-saite/modell.md` §5 (gekoppelte Moden
+A = diag(iω_j − σ_s) − σ_b·J, zwei Stufen σ_früh = σ_s + N·σ_b und σ_spät = σ_s, erst die Verstimmung legt Energie
+in die zweite Stufe).
 
 **Gebaut 31b-1 (S146):** `loop/HammerTon` — `chorModen` (Säkulargleichung R(z) = Q(z) + σ_b·Q′(z), Durand–Kerner,
 g = (1ᵀv)²/(N·vᵀv)), `rechneHammerTon`, `hammerNachklang`. Je Teilton bis 0,45·fs (höchstens 400) die Moden
@@ -1061,6 +1048,87 @@ Creator rechnet weiter mit Stufe 0. **Rechenzeit** (Release-clang, zweimal gemes
 Prozent): ein Ton 0,5 s gehalten 1,5 ms (C8) … 9 ms (C4) … 30 ms (A0); 4 s gehalten 46 ms (C4) … 110 ms (A0) —
 2,3 % der Echtzeit im Bass, 1,1 % in der Mitte, unter 0,3 % im Diskant; je Taste und Stufe einmal gerechnet,
 danach aus dem Tonspeicher.
+
+✅ **HT6 a** (Patrik S146): **Die Anschlagstärke bleibt in Stufen (HA3 a, HK2 a); den Schritt legt 31d am Klang
+fest — so groß, dass man den Unterschied der Klangfarbe zwischen zwei Stufen nicht hört.** Der Kipppunkt aus
+HA3 a („wenn 31b zeigt, dass ein Ton nur Millisekunden braucht“) ist nur halb erreicht: kurze Töne 1,5 … 30 ms,
+lange im Bass bis 110 ms; mit Pedal wird je Vorkommen gerechnet, genaue Stärke machte fast jede Note zu einem
+eigenen Ton. Grund: mit dem Rest-Pegel stimmt die Lautstärke genau, offen ist nur die Klangfarbe innerhalb einer
+Stufe. Verworfen: b (genau auf drei Stellen — Hunderte eigene Töne in den Beispiel-Loops, ohne hörbaren Gewinn).
+Kippt auf b, wenn in 31d zwei benachbarte Stufen im Hörvergleich unterscheidbar sind und ein kleinerer Schritt
+nichts mehr spart.
+
+**Befund vor 31c (S146, abgerufen 2026-10-23):**
+- **Keine frei verfügbare gemessene Antwort eines Resonanzbodens gefunden.** AudioLabs Erlangen (Seite
+  „2023-piano-synth-lbd“): „we measured impulse responses of the soundboard of a Yamaha C3 grand piano“ — ohne
+  Download, ohne Lizenz. Bank 2010 bemisst seinen Boden „from measured transfer functions“ (Faltung mit
+  1000–2000 Abtastwerten für die Tonalität, „ten thousands of taps“ für das Klopfen hoher Töne, S. 9).
+- **Synthese nach Boutillon & Ege**, „Vibroacoustics of the piano soundboard: Reduced models, mobility synthesis,
+  and acoustical radiation regime“, *J. Sound Vib.* 332 (2013) 4261–4279 (arXiv 1305.3057, nur die Zusammenfassung
+  gelesen): die Mobilität aus Holzwerten, Geometrie, Rand und Rippenabstand — unten gekoppelte orthotrope
+  Platten, oben Wellenleiter zwischen den Rippen. Dazu Ege, Boutillon & Rébillat, *J. Sound Vib.* 332 (2013)
+  (arXiv 1212.2323): Moden bis 3 kHz mit Dämpfung, gemessen an einem Klavier (Upright). Liefert eine Mobilität,
+  keinen abgestrahlten Schall.
+- ***Salamander*** (Yamaha C5, CC BY 3.0, S141) trägt den Boden in jeder Aufnahme: Aufnahme durch gerechnete
+  Kraft am Steg gibt an den Teiltönen aller Tasten die Übertragung Steg → Mikrofon (mit Raum und Mikrofon).
+
+✅ **HT7 a — vorläufig** (Patrik S146): **Die Antwort des Bodens wird aus *Salamander* geschätzt** (Aufnahme durch
+gerechnete Kraft am Steg an den Teiltönen aller Tasten und Stärken, geglättet, minimalphasig, als Faltung nach
+Bank 2010 VII-A); Raum und Mikrofon gehören dann zum Boden; Reihenfolge Werkzeug der Messung → Boden → übrige
+Messung (31d); Download der Sammlung mit Freigabe, die Antwort mit Nennung CC BY 3.0. **Vorläufig, weil Patrik
+für b ein sauberes Modell will:** bis zu acht Agenten durchsuchen das Netz nach Daten und Verfahren für einen
+physikalischen Boden mit Abstrahlung — möglichst auf einer **allgemeinen Grundlage, auf der auch Körper anderer
+Instrumente aufbauen** (Gitarre, Violine, Trommel). Kippt auf b, wenn die Recherche die Werte eines Flügelbodens
+und ein Modell der Abstrahlung liefert.
+
+**Wunsch Patrik (S146): eine Klasse „Deluxe“ von Instrumenten** — Instrumente mit aufwendigen Modellen, die mehr
+Rechenzeit brauchen, im Fenster *Instruments* eigens markiert (etwa ✨ oder 💫). Offen: was ein Instrument zu
+„Deluxe“ macht (eine Eigenschaft der Datei, abgeleitet aus Schichten und Verfahren, oder gemessen), wie die
+Marke aussieht, ob Freeze und Töne vorab für sie anders arbeiten. Entscheide dazu nach der Recherche.
+
+**Befund Recherche Boden und Körper (S146; sieben Agenten, Berichte von Claude gelesen; „nachgelesen“ = von
+Claude im Volltext geprüft, sonst nur Bericht):**
+- **Offene Messdaten:** kein frei lizenzierter Datensatz eines Flügelbodens (Impulsantwort oder Mobilität).
+  Für andere Körper frei: Mores, Archiv von 65 Gitarren, Mobilität am Steg mit Hammer und zwei Richtungen,
+  Zenodo 4604576, Lizenz `cc-by-4.0` (nur Bericht); CNSM, Violinen mit Stegadmittanz, Zenodo 18696785,
+  `cc-by-4.0` (nur Bericht, Inhalt ungeprüft). Plath 2019 (zwei Konzertflügel) hat Rohdaten bei Zenodo 3271370,
+  CC BY 4.0 — Kraft und Beschleunigung, keine Mobilität (nur Bericht).
+- **Werte für einen physikalischen Flügelboden:** Steinway D Platte 9 mm in der Mitte, 6 mm am Rand (RT-0425
+  §2.1 nachgelesen; Boutillon, Ege & Paulello 2012); Rippenabstand rund 12,7 cm (nur Bericht); Holz für Fichte und
+  Buche (RT-0425 §2.1 nachgelesen), dazu am Fazioli F278 abgeglichene Werte (Corradi et al. 2017, nur Bericht);
+  Masse des fertigen Bodens eines Konzertflügels 13,70 kg (Plath 2019, Tab. 6.2, nachgelesen); Modendichte unter
+  1,1 kHz „about 0.06 modes Hz-1“, Verlustfaktor „1% to 3% (mean of 2.3% …)“ (Ege, Boutillon & Rébillat 2013,
+  an einem Klavier, nachgelesen); äquivalente Steifigkeit eines Stutzflügels ⟨D_iso⟩ = 68 m⁴s⁻² (Boutillon & Ege
+  2013, Anh. B, nachgelesen); die ersten Moden eines eingebauten Flügelbodens ab 43,1 Hz (Corradi et al. 2017,
+  Tab. 2, nachgelesen). **Fehlt für jeden Konzertflügel:** Umriss, Zahl und Querschnitt der Rippen, Lage der
+  Stege — nur als Netzdatei zu RT-0425 (Dropbox, Erreichbarkeit ungeprüft); die Punkte, an denen jede Saite den
+  Steg trifft, stehen in RT-0425 Anhang A (x0, y0).
+- **Moden rechnen:** Chabassier, Joly & Chaigne 2013: „2 400 modes are needed to model the soundboard vibrations
+  up to 10 kHz“, einmal vorab (nachgelesen); MAESSTRO (Elie, Cotté & Boutillon 2022, CC BY 4.0; Code CeCILL-C):
+  Basis bis 5 kHz „about 2 h“ auf vier Kernen (nachgelesen), semi-analytisch nach Trévisan rund 700 s (nur
+  Bericht). Über 1,1 kHz statistisch: Modenabstände, Dämpfungen und charakteristische Mobilität aus wenigen Größen
+  (Boutillon & Ege 2013, Gl. 23–27, nur Bericht). Pianoteq rechnet den Boden laut Patent US 7 915 515 vorab mit
+  finiten Elementen (nur Bericht).
+- **Abstrahlung:** je Mode ein Gewicht zum Hörort aus dem Rayleigh-Integral (Platte in Schallwand) — offline
+  gerechnet, zur Laufzeit dieselbe Form wie Banks parallele Filter (Pole = Moden des Bodens). Grenze unter rund
+  200–300 Hz (die Schallwand stimmt nicht, Ober- und Unterseite schließen kurz); ein Modell für den offenen Deckel
+  ist nicht veröffentlicht (nur Bericht). Offline ist die Faltung billiger als Hunderte parallele Filter.
+- **Allgemeine Grundlage für Körper:** kein Standard; die Arbeiten rechnen alle mit einer Summe gedämpfter Moden
+  mit zwei Ausgängen — die Nachgiebigkeit am Steg (wirkt auf die Saite) und die Abstrahlung, bei Ducceschi, Russo
+  & Webb (DAFx26, 65 Gitarren, CC BY 4.0) als zwei Polsätze, bei Wright 1996 je Mode Frequenz, Masse,
+  Monopolfläche, Q (nur Bericht).
+
+✅ **KB1 a** (Patrik S146), **mit Zusatz: was sich je Instrument unterscheidet, kommt als Erweiterung auf die
+Basis.** **Ein Körper ist eine Liste von Moden — je Mode Frequenz und Dämpfung, je Einkoppelpunkt eine modale
+Masse (der Wert ihrer Form dort), je Ausgang ein Abstrahlgewicht; oberhalb einer Grenzfrequenz ein statistischer
+Teil (Modendichte, mittlere Mobilität, Verteilung der Dämpfung), mit festem Samen zu Moden ausgewürfelt.** Offline
+zu einer Antwort je Einkoppelpunkt und Ausgang gerechnet, per Faltung angewandt; die Rückwirkung auf die Saite aus
+denselben Moden, sobald sie gebraucht wird. **Erweiterungen** tragen, was ein Instrument besonders macht (Flügel:
+viele Stegpunkte, Deckel; Gitarre: Luftraum, zwei Richtungen am Steg; Trommel: Luftlast der Membran) und woher die
+Moden kommen (gerechnet, gemessen, angepasst) — je Instrument eine eigene Frage. Grund: die Form, auf die alle
+gelesenen Arbeiten hinauslaufen; jede Quelle lässt sich darin ausdrücken; Rückwirkung und Abstrahlung aus einer
+Quelle. Verworfen: b (nur Impulsantworten — keine Rückwirkung, nichts zu verstellen), c (kein gemeinsamer Körper —
+gegen den Wunsch). Kippt auf b neben a, wenn für die meisten Instrumente nur Impulsantworten zu haben sind.
 
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
@@ -1926,6 +1994,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.64.0 | 2026-10-23 | Session 146. HT6 a (Stufen bleiben); Befund vor 31c; HT7 a vorläufig (Boden aus Salamander) mit Auftrag zur Recherche für b; Wunsch „Deluxe“; Befund Recherche Boden und Körper (sieben Agenten, Berichte unter `docs/modellierung/`); KB1 a (gemeinsame Grundlage für Körper, Erweiterungen je Instrument); die Herleitung zu HT3 a nach `docs/modellierung/hammer-saite/modell.md`. |
 | 0.63.0 | 2026-10-23 | Session 146. HT5 a (die Auskunft `InstrumentVon` mit Saiten und Hammer); 31b-3 gebaut (Stufe in der Planung, Rest als Pegel) und Rechenzeit gemessen. |
 | 0.62.0 | 2026-10-23 | Session 146. Befund 31b-2 (die Längskraft mit gleichem Gewicht beherrscht den Klang; Auslenkung gegen Chabassier Tab. IV; Kopplung am Steg mit sin α nach Gl. 21); HT4 a (Kurve Bridge angle); 31b-2 gebaut. |
 | 0.61.0 | 2026-10-23 | Session 146. Befund Chor und zweistufiger Ausklang (Bank, Diss. 2006, Kap. 4.2); HT3 a (gekoppelte Moden nach Weinreich, Kurve Late decay) mit Herleitung; 31b-1 gebaut und gemessen (`loop/HammerTon`). |

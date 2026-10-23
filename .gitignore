@@ -467,4 +467,5 @@ docs/**/*.bak
 docs/**/*.zip
 
 asset/free_Tabs/**
-/projects/apps/LumiViz/docs/external
+# fremde Arbeiten (PDFs) zur Modellierung: nur lokal, je Klasse unter quellen/ (S146)
+/projects/apps/LumiViz/docs/modellierung/**/quellen/

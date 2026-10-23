@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
 > **Version:** 0.40.0
-> **Datum:** 2026-10-23 (Session 146: S-A1 a — die Auskunft heißt `InstrumentVon`, HT5 a im Spielweisen_Konzept; Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
+> **Datum:** 2026-10-23 (Session 146: S-A1 a — die Auskunft heißt `InstrumentVon`, HT5 a im Spielweisen_Konzept; §6–§6c und die Berichte 24c, 24f, 25 nach `docs/modellierung/gezupfte-saite/recherche/`; Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
 > Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
 > 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f, 26g und 26h gebaut (ohne den vollen Lauf), §5zb bis §5zd; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
@@ -479,8 +479,9 @@ Versatz im Akkord.
   Q_h = 45, S. 97, und nach Huber 83–89 mm Schalllochdurchmesser) — die
   Klassikgitarre ist vorzulegen.
 - ✅ **S-K9 a** (Patrik S132, bearbeitet S133): gezielte Suche nach V und A_h
-  — in Wrights Thesis am Seitenbild (Quelle im Repo:
-  [quellen/Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf](quellen/Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf),
+  — in Wrights Thesis am Seitenbild (Quelle seit S146 nur lokal, nicht versioniert —
+  „All rights reserved“ auf hakwright.co.uk:
+  `../modellierung/gezupfte-saite/quellen/Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf`,
   von hakwright.co.uk). **Befund:** wörtlich nur für den Satz TOP26, S. 138:
   „A_h = 5.7 × 10⁻³ m² and V = 14 × 10⁻³ m³“ (Schalllochdurchmesser daraus
   85 mm, in Hubers Bereich). Für BR2 auch im Bild nicht (S. 96: „The area of
@@ -885,7 +886,7 @@ eng nach S-P1 a, am Ende der Bereichslauf: **25a** Modell und Datei (*Legato*,
 Saitenwahl legt die Kette auf eine Saite, sonst „!“; der Name des Tons trägt den
 Verlauf) · **25c** Klang (zeitvariable Verzögerung in Extended KS und Waveguide,
 Legato-Anregung, Slide, Bend; Vorgaben aus der Recherche
-`.claude/handover/recherche_25/`) · **25d** Editor nach S-L3 a · **25e** Creator
+`docs/modellierung/gezupfte-saite/recherche/2026-10-19_S136_verbundene_noten_25/`) · **25d** Editor nach S-L3 a · **25e** Creator
 (*Play as*; *Playing*-Regler nur, wenn die Recherche sie verlangt) · **25f**
 Mitgeliefertes (Beispiel-Loops, Handbuch, Sichttest, Bereichslauf). Danach die
 Tabs. Verworfen: b (je Spielweise durchgehend — mehrere Fassungen oder Felder auf
@@ -1542,7 +1543,7 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
 
 Nach S-W6 a, S-W7 a, S-W8 a; nur an Saiten *Extended KS* und *Waveguide*,
 jede andere Schicht spielt die klingende Tonhöhe wie immer. Grundlage: der
-Recherche-Bericht S134 (Agent; lokal unter `.claude/handover/recherche_24c/bericht.md`;
+Recherche-Bericht S134 (Agent; unter `docs/modellierung/gezupfte-saite/recherche/2026-10-18_S134_spielweisen_vorgaben_24c/bericht.md`;
 die tragenden Stellen von Claude an der Quelle nachgelesen, unten mit Fundstelle).
 
 - **Punktdämpfer im Umlauf** (`PunktDaempfer`, `Spielart`, `laufeUm`): nach
@@ -1771,7 +1772,7 @@ Nach S-L1 a, S-L2 a, S-L6 a.
 
 ### 5t. Stufe 25c — der Klang verbundener Noten (im Bau S136)
 
-Nach S-L7 a bis S-L11 a. Grundlage: Recherche 25 (`.claude/handover/recherche_25/`,
+Nach S-L7 a bis S-L11 a. Grundlage: Recherche 25 (`docs/modellierung/gezupfte-saite/recherche/2026-10-19_S136_verbundene_noten_25/`,
 tragende Stellen selbst nachgelesen: PPV08 S. 46, Laurson 2001 S. 47, Välimäki 1995
 S. 117, Özaslan 2010 S. 458).
 
@@ -2136,79 +2137,14 @@ Dialog *Edit chord*.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 
-Recherche durch einen Agenten, die tragenden Stellen von Claude selbst in der
-Textebene der Quellen nachgelesen („bestätigt"). Noch nicht festgelegt
-(S-K6 a: zweite Recherche für die Lücken). Nicht erreichbar waren: Rossing,
-*The Science of String Instruments*; Paiva (Aalto); Paté/Le Carrou (HAL);
-Gough (IOA); Zollner 5.15.
-
-| Korpus | Belegt | Quelle | Lücke |
-|---|---|---|---|
-| Classical guitar (gewählt S-K10 a: TOP26, S. 138–140, §5f) | T(1,1) 165 Hz Q 36 · T(2,1) 204 Q 66 · B(1,2) 293 Q 50 · T(1,2) 391 Q 60 · T(3,1) 432 Q 51 · T(2,2) 607 Q 25 (Schallloch zu, je mit wirksamer Masse); Helmholtz 122 Hz Q 40 (im Modell gesetzt) | H. Wright, *The Acoustics and Psychoacoustics of the Guitar*, Diss. Cardiff 1996, S. 97–98, Tab. 5.4 — bestätigt | Stärke nur über die Masse |
-| Acoustic guitar (Steelstring, Parlor) | T(1,1)₁ 116 Hz, T(1,1)₂ 219 Hz, Helmholtz 130 Hz; Modellwerte (Masse, Steife, Dämpfung) | D. P. Hess, *Savart Journal* 1(3), 2013, S. 3, Tab. 1 — bestätigt | Güte nur gerechnet; keine Dreadnought |
-| Upright bass | A0 65–67 Hz, T1/A1 115 Hz, C2 145, C4 130, C3 155, A2 150/158 Hz | A. W. Brown, Diss. mdw Wien 2004, S. 80–83 — bestätigt (A0, T1/A1) | keine Güte, Stärke nur als Kurve |
-| Violin | A0 270 Hz, Hauptholz 420 Hz, „thick plate" 505 Hz, Bridge Hill 2,7 kHz (Mittel vieler Violinen); Bandbreite je 14 Hz | E. Jansson, *Acoustics for Violin and Guitar Makers*, KTH 2002, S. 7.11 — Frequenzen bestätigt, Bandbreiten nur in der Abbildung | keine Stärken |
-| Acoustic bass | — | — | nichts gefunden |
-
-| Tonabnehmer | Belegt | Quelle |
-|---|---|---|
-| Resonanz mit Kabel | 2–5 kHz bei 2–10 H und 300–600 pF; Q ≈ 3 im Betrieb; Überhöhung ≈ 20·lg Q | M. Zollner, *Physics of the Electric Guitar*, 5.5.4 — bestätigt |
-| Humbucker | Polabstand 18–19 mm, Kammfilter-Lücke; tiefere Resonanz, schwächere Überhöhung (qualitativ) | Zollner 5.4.4 — bestätigt; S. Patsch, *Physik Journal* 19 (2020) |
-| Lage, Apertur | Beispiel 4 und 16 cm vom Steg bei 64 cm Mensur; Apertur ≈ 1 cm | Zollner 2.8.2, 5.4.4 — bestätigt |
-| Piezo | Hochpass f = 1/(2πRC), etwa 106 Hz bei 1,5 nF und 1 MΩ | Zollner 6.2 — bestätigt |
+Seit S146 unter `docs/modellierung/gezupfte-saite/recherche/2026-10-18_S132_korpus_tonabnehmer_messwerte.md`
+(Korpusse Classical, Parlor, Kontrabass, Violine; Tonabnehmer nach Zollner; Quellen und Belegstand).
 
 ### 6b. Zweite Recherche (S-K6 a, S132) — nur die Lücken
 
-„Bestätigt" = von Claude in der Textebene der Quelle gefunden; „Abb." = aus
-einer Kurve abgelesen (±1 dB, ±10 % in der Frequenz); „Händler" = über den
-Agenten aus einer Händler- oder Ratgeberseite, nicht selbst gelesen.
-
-| Lücke | Gefunden | Quelle | Stand |
-|---|---|---|---|
-| Violine, Frequenzen | A0 275 ± 9 Hz, CBR 407 ± 31, B1− 475 ± 16, B1+ 541 ± 22 (17 Violinen) | G. Bissinger, „Structural acoustics of good and bad violins", *JASA* 124(3), 2008, S. 1767 | bestätigt |
-| Violine, Dämpfung | ζ ≈ 1 % der kritischen im 400-Hz-Band → Q ≈ 50 | Bissinger 2008, Abb. 4 | Abb., Q abgeleitet |
-| Violine, Stärke | A0, B1−, B1+ strahlen stark ab, CBR schwach — keine Zahl je Mode | Bissinger 2008, S. 1766 | nur qualitativ |
-| Kontrabass, Güte | — (Askenfelt 1982 nicht erreichbar) | — | **nicht gefunden** |
-| Steelstring, größer als Parlor | Gibson Hummingbird: 103 Hz (Atmung), 188, 202, 262, 315 Hz; keine Güte | D. Russell, Penn State (Webseite) | nur über den Agenten |
-| Single coil mit Last | Strat R = 6 kΩ, L = 2,2 H, C = 450 pF; Q der Spule 2,1–3,5 | Zollner/Zwicker, „Factoring in the Q", GITEC 2019, S. 2; Zollner 5.5.4 | bestätigt |
-| Humbucker mit Last | Q = 1,83 an 333 kΩ ∥ 450 pF (Fender, CuNiFe); Resonanz ≈ 3 kHz | Zollner/Zwicker 2019, S. 6–7 | Q bestätigt, kHz Abb.; **keine Induktivität** |
-| Lagen | Strat 152 / 98 / ≈ 41 mm vom Steg, Tele 152 / ≈ 41 mm (aus den Lagen vom Sattel gerechnet); Jazz Bass Steg 54 mm, Hals ≈ 152 mm; Les Paul widersprüchlich | S. Errede, UIUC Physics 406, „Fourier Analysis IV", S. 2; Bartolini (2025) | Errede bestätigt, mm abgeleitet; Bartolini nur über den Agenten |
-| Mensur | Gitarre 25½″ = 648 mm (bestätigt bei Errede); klassisch 650 mm; E-Bass 34″ = 864 mm; Ukulele Sopran 13–14″, Konzert 15–16″, Tenor 17–18″; Violine 327 mm (bestätigt bei Jansson S. 7.3); Kontrabass 4/4 106–110 cm | Errede; Yamaha; Händler; Jansson; Thomastik-Infeld | teils bestätigt, teils Händler |
+Seit S146 in derselben Datei, Abschnitt „Zweite Recherche“.
 
 ### 6c. Saitenabstände und Spread (S-W16 a, S136)
 
-Recherche S136 (Agent; lokal unter `.claude/handover/recherche_24f/bericht.md`
-mit allen Zitaten und Händlerseiten). Von Claude an der Quelle nachgelesen:
-Freire 2018 S. 545 „a Yamaha nylon acoustic guitar (model CG182S)“; Barbancho
-et al., „Estimation of the Direction of Strokes and Arpeggios“, ISMIR 2014,
-S. 43 „because of human physiology, in most cases the stroke is performed with
-fixed speed“; Traube/Smith, WASPAA 2001, S. 1 „The neutral position of the right
-hand is just behind the sound hole“; Yamaha Singapur, Produktseite CG182S:
-„String Spacing“ 11.8mm, „Nut Width“ 52mm, „Scale Length“ 650mm (bei 52 mm
-Sattelbreite ist der Abstand am Steg gemeint).
-
-**Rechnung:** Abstand benachbarter Saiten am Anschlagort, linear zwischen Sattel
-und Steg bei einem Fünftel der Mensur vom Steg (angenommen; bei 0,15 statt 0,2
-ändert sich der Abstand um 1,4 %). An der CG182S: 11,8 mm (Steg), 8,64 mm
-(Sattel, Graph Tech 6200-00, 43,2 mm ÷ 5) → 11,17 mm; mit 8 ms ergibt das eine
-Hand von 1,40 m/s. **Spread = 8 ms × Abstand ÷ 11,17 mm**, auf 0,5 ms gerundet.
-
-| Bauart | Abstand am Anschlagort | Spread | Quellen (Steg / Sattel) | Stand |
-|---|---|---|---|---|
-| Klassik/Nylon (CG182S) | 11,17 mm | 8,0 ms | Yamaha / Graph Tech 6200-00 | Steg gelesen |
-| Steelstring (Martin D-28, 00, 000) | 10,31 mm | 7,5 ms | Martin „Bridge String Spacing: 2 5/32"“ / Graph Tech M175-00 | über den Agenten |
-| Strat, Vintage-Tremolo (2-7/32") | 10,42 mm | 7,5 ms | StewMac, Fender Road Worn / Graph Tech 5000-00 | über den Agenten |
-| Strat, 2-Punkt-Tremolo (2-1/16") | 9,79 mm | 7,0 ms | StewMac, Fender / Graph Tech 5000-00 | über den Agenten |
-| Les Paul (ABR-1, 2-1/16") | 9,81 mm | 7,0 ms | StewMac / Graph Tech 6010-00 | über den Agenten |
-| Jazz-Archtop (2.125") | 10,07 mm | 7,0 ms | StewMac (Fishman-Steg, kein Werkssteg) / Graph Tech 6010-00 | über den Agenten |
-| E-Bass Precision / Jazz | 17,35 / 17,21 mm | 12,5 ms | StewMac „2-1/4" (57.15mm)“ / Graph Tech 1204-00, 1215-00 | über den Agenten |
-| Ukulele Konzert | 13,0–13,1 mm | 9,5 ms | Martin 0XK „1 41/64''“ / Graph Tech 1257-00, 1237-00 | über den Agenten |
-| Kontrabass | 24,4 mm | 17,5 ms | No Treble (**Blog**): „10 mm at the nut and 28 mm at the bridge“ | S-W19 a |
-| Violine | 10,02 mm | 7,0 ms | Luthiers Forum (**Forum**): Steg „G - E 33-34mm“, Sattel „16 - 16.5mm“ | S-W19 a |
-
-**Lücken:** wo Yamaha „String Spacing“ misst, steht dort nicht (Steg aus der
-Sattelbreite geschlossen); alle Sattelwerte von Ersatzsätteln (Graph Tech), keiner
-vom Hersteller; der Anschlagort nur an der Nylongitarre gestützt; dieselbe
-Geschwindigkeit der Hand über alle Bauarten ist unbelegt (Freire misst nur die
-Nylongitarre mit Plektrum); Kontrabass und Violine nur aus Blog und Forum
-(Strobel, 29 / 11 mm → 18 ms, nicht eingesehen).
+Seit S146 unter `docs/modellierung/gezupfte-saite/recherche/2026-10-19_S136_saitenabstand_spread_befund.md`
+(Spread = 8 ms × Abstand ÷ 11,17 mm; Tabelle je Bauart; Lücken), der Bericht daneben.
