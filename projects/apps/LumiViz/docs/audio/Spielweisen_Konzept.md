@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.65.0
+> **Version:** 0.68.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT7 a (HT7 a vorläufig), KB1 a, BM1 a und TS1 a (Patrik S139–S147);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, PL31c a, GB1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1072,7 +1072,7 @@ nichts mehr spart.
 - ***Salamander*** (Yamaha C5, CC BY 3.0, S141) trägt den Boden in jeder Aufnahme: Aufnahme durch gerechnete
   Kraft am Steg gibt an den Teiltönen aller Tasten die Übertragung Steg → Mikrofon (mit Raum und Mikrofon).
 
-✅ **HT7 a — vorläufig** (Patrik S146): **Die Antwort des Bodens wird aus *Salamander* geschätzt** (Aufnahme durch
+~~HT7 a~~ **abgelöst durch HT7 b (S147, PL31c a, siehe unten nach BM1 a).** ✅ **HT7 a — vorläufig** (Patrik S146): **Die Antwort des Bodens wird aus *Salamander* geschätzt** (Aufnahme durch
 gerechnete Kraft am Steg an den Teiltönen aller Tasten und Stärken, geglättet, minimalphasig, als Faltung nach
 Bank 2010 VII-A); Raum und Mikrofon gehören dann zum Boden; Reihenfolge Werkzeug der Messung → Boden → übrige
 Messung (31d); Download der Sammlung mit Freigabe, die Antwort mit Nennung CC BY 3.0. **Vorläufig, weil Patrik
@@ -1146,7 +1146,7 @@ eigene Flügel mit hörbar anderem Klang; kein Editor vorerst, die Möglichkeit 
 Flügelbodens werden gerechnet:** eigenes Werkzeug, offline, in C++, Reissner-Mindlin-Platte mit finiten Elementen
 wie bei Chabassier 2013 und MAESSTRO (orthotrop; Rippen und Stege als Dicke; Rand eingespannt). Geometrie: der
 vereinfachte Steinway D aus MAESSTRO (Tab. 1; Umriss, Stege, Rippen aus Abb. 4 abgezeichnet, gegen RT-0425 Abb. 2
-geprüft); Stegpunkte aus RT-0425 Anhang A; Holz aus MAESSTRO Tab. 2 und RT-0425 §2.1. Aus den Modenformen die Masse je
+geprüft) — **geändert durch BM2 a:** aus RT-0425 Abb. 2, MAESSTRO nur als Prüffall; Stegpunkte aus RT-0425 Anhang A; Holz aus MAESSTRO Tab. 2 und RT-0425 §2.1. Aus den Modenformen die Masse je
 Stegpunkt und das Abstrahlgewicht je Mode (Rayleigh); oberhalb einer Grenzfrequenz der statistische Teil nach
 Boutillon & Ege 2013 (Gl. 23–27, nachgelesen) — die Grenze legt ein eigener Schritt fest. Prüfstein: die ersten Moden
 gemessener Flügel (Corradi 2017 Tab. 2 ab 43,1 Hz, Conklin) und die mittlere Mobilität (Plath 2019, Giordano). **Zum
@@ -1161,6 +1161,69 @@ die Rechenzeit fällt nur einmal offline an), c (gemessene erste Moden plus Stat
 Abstrahlung nur als Mittel; gemessen nur am Fazioli). Kippt auf c, wenn die abgezeichnete Geometrie die ersten Moden
 nicht in den Bereich gemessener Flügel bringt (erste Mode rund 43–60 Hz, Abstände um 20 Hz); die Datei nach KB1 a
 nimmt beide Herkünfte auf. HT7 a bleibt davon unberührt.
+
+**Befund S147 (selbst angesehen):** RT-0425 Abb. 2 (c) und (d) zeigt den Boden des Steinway D mit Achsen in Metern
+(0–1,4 × 0–1,9 m) — im Bezugssystem der Stegpunkte aus Anhang A —, Umriss, Bass- und Diskantsteg, rund 17 Rippen,
+Dicke der Platte und Höhe der Rippen als Farbverlauf (Spannen in §2.1). Rasterbild, rund 2–3 mm je Pixel. MAESSTRO
+Abb. 4 ist ein Bildschirmfoto ohne Maßstab der vereinfachten Fassung.
+
+✅ **PL31c a** (Patrik S147): **31c in acht Teilschritten.** **31c-1** Konstruktion als Datei (Umriss, Platte mit
+Dickenverlauf, Rippen, Stege, Holz, Stegpunkte; ohne Qt-Anwendung) und der Steinway D als erste Datei — Prüfung: die
+Stegpunkte aus Anhang A liegen auf der Steglinie, Fläche und Masse plausibel (Plath 13,70 kg). **31c-2** Netz
+(Dreiecke im Umriss, Rippen und Stege als Kanten, Elementgröße nach MAESSTRO Gl. 1). **31c-3** Platte
+(Reissner-Mindlin, orthotrop, Dicke je Punkt, Elemente höherer Ordnung; Prüfung gegen die frei aufliegende
+orthotrope Rechteckplatte und auf Konvergenz). **31c-4** Eigenlöser (Moden in Frequenzfenstern, Rechenzeit gemessen).
+**31c-5** Körperdatei nach KB1 a (je Mode Frequenz, Dämpfung nach RT-0425 Gl. 1, Masse je Stegpunkt, Abstrahlgewicht
+nach Rayleigh zu einem Hörort; darüber der statistische Teil nach Boutillon & Ege). **31c-6** Prüfstein und
+Grenzfrequenz (erste Moden gegen Corradi Tab. 2 und Conklin, mittlere Mobilität gegen Plath und Giordano; Kipppunkt
+BM1 a → c). **31c-7** Klang (die Kraft am Steg mit der Antwort des Bodens je Taste gefaltet; `soundboard` am
+Instrument verweist auf den Körper, `.lvinst` Fassung 17; Klangfassung, `loop_werte`, Hörproben `LUMIVIZ_31C_WAV`).
+**31c-8** Varianten (Zusatz zu BM1 a; zwei bis drei Konstruktionen als Hörproben). Fragen einzeln vor ihrem Schritt:
+BM2 Vorlage der Geometrie, BM3 Format und Ort der Dateien, BM4 Netzgenerator, BM5 Ort des Codes und Eigenlöser, BM6
+Hörort, BM7 Grenzfrequenz. **Dazu:** HT7 kippt auf b (unten); die **Rückwirkung des Bodens auf die Saite kommt in
+31e** mit dem Mitschwingen (dieselben Moden am Steg; die Masse je Stegpunkt liegt ab 31c-5 in der Körperdatei).
+Grund: es entsteht nur, was bleibt; ein Boden aus *Salamander* trüge Raum und Mikrofon und würde danach ersetzt.
+Verworfen: b (zuerst *Salamander* — Wegwerfarbeit, zweimal neue Klangfassung), c (Rückwirkung schon in 31c —
+dieselbe Kopplung zweimal angefasst). Kippt auf c, wenn 31d die Rückwirkung braucht (etwa Abklingzeiten im Bass).
+
+✅ **HT7 b** (Patrik S147, mit PL31c a; löst das vorläufige HT7 a ab): **Der Boden kommt aus dem Modell (BM1 a);
+*Salamander* bleibt Vergleich und Messung für 31d.** Grund: der Kipppunkt von HT7 a ist erreicht — Werte eines
+Flügelbodens (RT-0425, MAESSTRO) und ein Modell der Abstrahlung (Rayleigh je Mode) liegen vor.
+
+✅ **BM2 a** (Patrik S147; ändert die Geometrie in BM1 a): **Der Steinway D kommt aus RT-0425 Abb. 2 (c, d), per
+Farbe ausgewertet** — Umriss, Mittellinien von Stegen und Rippen in Metern, im Bezugssystem von Anhang A („(0, 0) is
+the bottom left corner of the soundboard“, §2.3, nachgelesen); Dicke der Platte und Höhe von Rippen und Stegen aus
+dem Farbverlauf (Skala „AU“) linear auf die Spannen aus §2.1 gelegt; Breiten (Rippen 21–25 mm, Stege 32 mm) aus
+MAESSTRO Tab. 1; Holz aus RT-0425 §2.1. **Dazu der vereinfachte Steinway D aus MAESSTRO als zweite Datei, nur als
+Prüffall:** in 31c-6 gegen MAESSTRO Abb. 5 (Modendichte) und Abb. 6 (mittlere Mobilität an den Stegpunkten), in
+31c-8 mit den Varianten MP1–MP3 gegen deren Richtungen. Grund: der Boden zu genau dem Flügel, zu dem Saiten und
+Hammer gehören (HT1 a, HT2 a), ohne Umrechnung der Stegpunkte; der Prüffall trennt in 31c-6 Fehler des Codes von
+Fehlern der Geometrie. Verworfen: b (nur MAESSTRO — vereinfacht, „a generic piano“, anderer Ursprung, Platte gegen
+§2.1 überall 8 mm), c (ohne Prüffall). Kippt für die Dicken auf die Tabellenwerte aus b, wenn die Farbauswertung
+unzuverlässig ist (JPEG, Überdeckung von Rippen und Steg); Umriss und Lage bleiben aus Abb. 2. Prüfung in 31c-1: die
+Stegpunkte aus Anhang A liegen auf der ausgewerteten Steglinie.
+
+**Wunsch Patrik (S147): ein Flügel aus Glas als Variante in 31c-8** („Werte für Glas mit Quelle“), gemeint „so etwas
+wie“ der Schimmel Konzert K 213 Glas. **Befund (selbst gelesen):** Schimmels Prospekt „Glasflügel Schimmel Konzert K
+213 G“ (schimmel-pianos.de, PDF SCH_2006-03): „Acrylglasflügel“, „bereits 1951 den neuen widerstandsfähigen Werkstoff
+Acryl“, „Klang, den der Acrylglaskorpus noch unterstützt“ (Werbung, kein Beleg zum Klang); Händlerseite Boullard
+(K213 Glass): „Acrylgehäuse“, „Sound board : Bayerische Fichte - Deutschland“. **Das Gehäuse ist aus Acrylglas, der
+Resonanzboden aus Fichte.** In unserem Modell ist der Boden am Rand eingespannt (BM1 a, wie MAESSTRO; Corradi 2017:
+Rast „in erster Näherung starr“), ein Deckel kommt nicht vor (Befund S146: kein veröffentlichtes Modell) — ein
+Gehäuse aus Acryl änderte dort nichts.
+
+✅ **GB1 a** (Patrik S147), **mit Zusatz: jedes Teil trägt sein eigenes Material, Boden und Gehäuse lassen sich frei
+kombinieren.** **In 31c-8 kommt ein Boden aus Glas dazu, als gedachtes Instrument** — Glaswerte (Dichte,
+Steifigkeit, Verlustfaktor) mit Quelle, Dicke einmal wie der Holzboden und einmal auf gleiche Masse gerechnet. **Der
+Schimmel-Glasflügel (Acrylgehäuse, Fichtenboden) wird als Wunsch notiert** und kommt, wenn Rand und Deckel ins Modell
+kommen (Erweiterung „Flügel: Deckel“ nach KB1 a; wann, ist eine eigene Frage). **Zum Zusatz:** Die Konstruktion
+(BM3) führt das Material je Teil — Platte, Rippen, Stege, später Rand/Gehäuse und Deckel —, Holz mit Faserrichtung
+oder ein Werkstoff ohne (Glas, Acryl). Sobald Rand und Deckel gerechnet werden, ist jede Kombination eine Datei:
+Fichtenboden mit Acrylgehäuse (Schimmel), Glasboden mit Holzgehäuse, Glas mit Acryl. Grund: das Modell verspricht nur,
+was es rechnet — ein Glasboden ändert Masse, Steifigkeit und Dämpfung des Bodens, ein Gehäuse wirkt erst über Rand und
+Deckel. Verworfen: b (Rand und Deckel schon in 31c — für den Deckel keine Vorlage, 31c würde um einen ungeklärten
+Teil länger), c (kein Glasboden). Kippt auf b, wenn der Schimmel als Instrument wichtiger wird als das Experiment —
+dann zuerst eine Recherche zum Deckel.
 
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
@@ -2026,6 +2089,9 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.68.0 | 2026-10-23 | Session 147. Wunsch Glas mit Befund Schimmel K 213 Glas (Acrylgehäuse, Fichtenboden); GB1 a (Glasboden in 31c-8, Schimmel als Wunsch bis Rand und Deckel; Material je Teil, frei kombinierbar). |
+| 0.67.0 | 2026-10-23 | Session 147. BM2 a (Geometrie aus RT-0425 Abb. 2 per Farbe, MAESSTRO-Fassung als Prüffall für 31c-6 und 31c-8). |
+| 0.66.0 | 2026-10-23 | Session 147. Befund RT-0425 Abb. 2 (Geometrie in Metern); PL31c a (31c-1 bis 31c-8, Fragen BM2–BM7 je Schritt, Rückwirkung auf die Saite in 31e); HT7 b (Boden aus dem Modell, Salamander als Vergleich für 31d). |
 | 0.65.0 | 2026-10-23 | Session 147. Befund: die Netzdatei zu RT-0425 ist nicht mehr zu haben, MAESSTRO rechnet einen vereinfachten Steinway D (Tab. 1–2, Abb. 4); BM1 a (die Moden des Flügelbodens gerechnet, eigenes FEM-Werkzeug; Konstruktion als Datei, Varianten bei Bedarf, Editor offen). |
 | 0.64.0 | 2026-10-23 | Session 146. HT6 a (Stufen bleiben); Befund vor 31c; HT7 a vorläufig (Boden aus Salamander) mit Auftrag zur Recherche für b; Wunsch „Deluxe“; Befund Recherche Boden und Körper (sieben Agenten, Berichte unter `docs/modellierung/`); KB1 a (gemeinsame Grundlage für Körper, Erweiterungen je Instrument); die Herleitung zu HT3 a nach `docs/modellierung/hammer-saite/modell.md`. |
 | 0.63.0 | 2026-10-23 | Session 146. HT5 a (die Auskunft `InstrumentVon` mit Saiten und Hammer); 31b-3 gebaut (Stufe in der Planung, Rest als Pegel) und Rechenzeit gemessen. |
