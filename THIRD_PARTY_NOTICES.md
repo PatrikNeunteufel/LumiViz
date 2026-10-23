@@ -208,6 +208,17 @@ möglicherweise mitübersetzt:
 
 Die übrigen Teile unter BSD (Anbindungen an MKL, BLAS, LAPACKE; `Geometry/AlignedBox.h`) werden nicht eingebunden.
 
+### Spectra 1.2.0 — `externals/Spectra/`
+
+Eigenwerte großer dünn besetzter Matrizen für den Eigenlöser des Instrumentkörpers (Bibliothek `InstrumentBody`,
+Stufe 31c-4); braucht Eigen. Der Ordner `Spectra/` liegt unverändert im Repository (ohne `contrib/`) und wird
+**nicht in die App** gebunden, nur in die Unit-Tests und das Werkzeug `InstrumentBodyTool`. Herkunft, Fassung und
+Prüfsumme: `externals/Spectra/README.md`; der Lizenztext im Original: `externals/Spectra/LICENSE`.
+
+> <https://github.com/yixuan/spectra> — **MPL-2.0** — Copyright (C) 2016-2025 Yixuan Qiu; einzelne Dateien
+> Copyright (C) 2020 Netherlands eScience Center, Copyright (C) 2008-2010 Gael Guennebaud, Copyright (C) 2010 Jitse
+> Niesen (aus Eigen übernommen, ebenfalls MPL-2.0)
+
 ---
 
 ## 2. Portierter Fremdcode in LumiViz-Dateien

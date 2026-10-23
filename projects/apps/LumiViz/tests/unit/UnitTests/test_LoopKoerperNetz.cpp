@@ -27,7 +27,7 @@
 #include <doctest.h>
 
 #include "InstrumentBody/Netz.hpp"
-#include "InstrumentBody/NetzCdt.hpp"
+#include "InstrumentBody/Umsetzungen.hpp"
 #include "loop/KoerperBauplan.hpp"
 
 #include <QDir>
@@ -48,13 +48,8 @@ namespace kp = lumi::koerper;
 namespace
 {
 
-/// Jede Umsetzung der Schnittstelle — ein eigener Generator kommt hier dazu.
-std::vector<std::unique_ptr<kp::Netzgeber>> netzgeber()
-{
-    std::vector<std::unique_ptr<kp::Netzgeber>> alle;
-    alle.push_back(std::make_unique<kp::NetzgeberCdt>());
-    return alle;
-}
+/// Jede Umsetzung der Schnittstelle — ein eigener Generator kommt in `Umsetzungen.hpp` dazu.
+using kp::netzgeber;
 
 std::set<std::pair<int, int>> zwangskantenMenge(const kp::Netz& n)
 {

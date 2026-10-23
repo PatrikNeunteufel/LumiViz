@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.75.0
+> **Version:** 0.76.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a und TS1 a (Patrik S139–S147);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a und TS1 a (Patrik S139–S148);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1378,6 +1378,51 @@ bis 5 kHz, k = 3: 568 515 freie Größen, 14,7 Mio. Einträge je Matrix, gebaut 
 11,77 kg (Bauplan 11,48 kg — unter dem Steg rechnet die Zone Buche statt Fichte). Release-clang `*Loop Koerper*` grün
 (18 Fälle).
 
+**31c-4 begonnen (S148):** Spectra 1.2.0 unter `externals/Spectra` (der Ordner `include/Spectra` unverändert ohne
+`contrib/`, `LICENSE`; `spectra-1.2.0.zip` von GitHub, 381 430 Byte, SHA-256 in der README; Download mit Freigabe
+Patrik), eigene `Include.cmake` (hängt an `Eigen`), in `Solution.json` nur für die Unit-Tests; `THIRD_PARTY_NOTICES.md`.
+
+✅ **EG1 a** (Patrik S148): **Der Eigenlöser teilt das Fenster selbst und reicht jede Mode an einen Empfänger
+weiter**; zurück kommen nur die Frequenzen. Schnittstelle `Eigenloeser` (`name()`, `loese(EigenAuftrag)`, Liste
+`eigenloeser()` wie `netzgeber()`): hinein K und M als `DuenneMatrix`, Fenster `vonHz`/`bisHz`, Toleranz, Empfänger
+`jeMode` (aufsteigend; leer = nur Frequenzen) und `weiter` (Fortschritt, Abbruch); heraus Frequenzen, `imFenster`
+(Zahl der Eigenwerte im Fenster nach dem Trägheitssatz von Sylvester — Pflicht jeder Umsetzung, damit die
+Vollständigkeit auch am Steinway prüfbar ist), Zahl der Faktorisierungen, Sekunden, Fehler. Formen bezüglich M
+normiert, nach `PlattenSystem::frei` nummeriert. Grund: Shifts, Ränder der Teilfenster und doppelte Moden dort hängen
+am Verfahren; der Löser weiß nicht, was mit einer Form geschieht, der Speicher bleibt bei einer Faktorisierung und
+wenigen Formen (alle Formen bis 5 kHz am Steinway wären rund 11 GB). Verworfen: b (alle Moden eines Fensters als
+Liste, Teilfenster beim Aufrufer). Kippt, wenn eine Umsetzung die Moden nicht aufsteigend liefern kann.
+
+✅ **EG2 a** (Patrik S148), **mit Zusatz: die Alternativen bleiben im Blick und kommen, sobald sie als nötig erkannt
+werden.** **Die erste Umsetzung zerlegt K − σM mit `Eigen::SimplicialLDLT`** (AMD-Ordnung) in einem eigenen Operator
+für `SymGEigsShiftSolver` (Spectra lässt eigene Operatoren zu, `SymGEigsShiftSolver.h:66–67`): eine Zerlegung je
+Shift; aus `vectorD()` zählt er die negativen Einträge (Eigenwerte unter σ, Sylvester) — zwei Zählungen an den
+Grenzen ergeben `imFenster`; jede Mode wird an ihrem Residuum ‖Kφ − λMφ‖ geprüft, darüber meldet der Löser einen
+Fehler statt still zu liefern. Grund: K − σM ist symmetrisch; die symmetrische Zerlegung hält etwa halb so viel wie
+`SparseLU` (der Operator `SymShiftInvert` von Spectra, `SymShiftInvert.h:166–170`) und liefert die Zählung ohne
+zweite Zerlegung. **Die Alternativen** (Zusatz): b — `SparseLU` mit Pivotsuche für die Moden, `SimplicialLDLT` nur zum
+Zählen; c — ein Löser mit Superknoten (CHOLMOD, Pardiso) als weiteres External und zweite Umsetzung. **Als nötig
+erkannt** gilt b, wenn an Prüfplatten oder Steinway Residuen über der Toleranz bleiben, die ein verschobener Shift
+nicht behebt (`SimplicialLDLT` sucht keinen Pivot, `SimplicialCholesky_impl.h:150–152`); c, wenn Speicher oder
+Rechenzeit der Zerlegung am Steinway ein Fenster unbrauchbar machen. Dann wird die Alternative mit der Messung
+vorgelegt.
+
+**Gebaut 31c-4 (S148):** in `InstrumentBody` die Schnittstelle `Eigenloeser.hpp` (EG1 a; dazu im Ergebnis der größte
+Rest und die Zeit der Zerlegungen, für den Vergleich alt gegen neu), die Umsetzung `EigenloeserSpectra.hpp` (EG2 a:
+`SimplicialLDLT` in eigenem Operator, Zählung nach Sylvester, Teilfenster [P, σ) zwischen zwei gezählten Shifts,
+geliefert erst bei stimmender Zahl; **Deflation** — gefundene Formen werden im Operator bezüglich M herausprojiziert,
+sonst sähe Lanczos von einem doppelten Eigenwert nur eine Form; Rest je Mode), `Umsetzungen.hpp` (`netzgeber()` und
+`eigenloeser()` an einer Stelle — Tests und Werkzeug lesen dieselbe Liste); das Werkzeug
+`projects/exec/InstrumentBodyTool` (Konsole: Bauplan → Netz → Platte → Moden, `--mesher`/`--solver`/`--list`,
+`--frequencies`; den Körper schreibt es ab 31c-5); Modul-Doku 0.4.0 §5. Tests `test_LoopKoerperEigen` (6 Fälle:
+Kette mit geschlossener Lösung, doppelte Eigenwerte, Prüfplatte gegen den dichten Löser, Bezugswerte
+`werte/eigen_pruefplatte.txt`, Fehler und Abbruch, Messung `LUMIVIZ_EIGEN_MESSUNG=<Hz>`). **Gemessen** (Release-clang):
+Steinway D (Netz bis 5 kHz, k = 3, 568 515 Größen) bis 5 kHz **820 Moden, gezählt 820**, 13 Zerlegungen (248 s),
+größter Rest 4,0·10⁻⁷, **21 min, Spitze 4,8 GB**; bis 1 kHz 80 Moden in 164 s; erste Mode 38,2 Hz (Prüfstein 31c-6).
+**Kipppunkte:** EG2 a b und c nicht erreicht (Reste klein, Zeit und Speicher brauchbar); BM5 a nicht erreicht — ein
+Körper braucht nicht „Sekunden bis wenige Minuten", das Werkzeug bleibt der Ort der Rechnung. Release-clang
+`*Loop Koerper*` 24 / 24; Testing-MSVC baut, getestet wird dort am Stufenende (MT1 a).
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2249,6 +2294,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.76.0 | 2026-10-23 | Session 148. Spectra 1.2.0 als External; EG1 a (Schnittstelle des Eigenlösers: Teilfenster im Löser, Moden an einen Empfänger, Zählung nach Sylvester); EG2 a (`SimplicialLDLT` in eigenem Operator, Residuum je Mode; SparseLU und Superknoten als Alternativen, wenn nötig). |
 | 0.75.0 | 2026-10-23 | Session 147. EL1 a (Lagrange-Dreiecke der Ordnung k, Vorgabe 3); 31c-3 gebaut (Eigen als External, Platte nach Reissner-Mindlin gegen Navier gemessen, Steinway bis 5 kHz gebaut). |
 | 0.74.0 | 2026-10-23 | Session 147. BM4 a (CDT 2.0.1 hinter einer eigenen Schnittstelle, eigener Generator vielleicht später); 31c-2 gebaut (Netz, CDT als External, Steinway bis 5 kHz gemessen). |
 | 0.73.0 | 2026-10-23 | Session 147. IC1 a (Icons P1 und K1); 31c-1 fertig mit den Icons. |

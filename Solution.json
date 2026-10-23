@@ -110,6 +110,12 @@
       "path": "externals/Eigen",
       "include": "externals/Eigen/Include.cmake"
     },
+    "Spectra": {
+      "description": "Eigenwerte grosser duenn besetzter Matrizen (yixuan/spectra 1.2.0, MPL-2.0; nur Header, braucht Eigen — Eigen in externals des Ziels VOR Spectra nennen) — Eigenloeser des Instrumentkoerpers in InstrumentBody, nur fuer Tests und InstrumentBodyTool, nicht fuer die App. Lokales External mit EIGENER Include.cmake (Muster miniz). Spielweisen_Konzept.md BM5-1 a, EL1 a (S147); Herkunft und Pruefsumme: externals/Spectra/README.md",
+      "skip": false,
+      "path": "externals/Spectra",
+      "include": "externals/Spectra/Include.cmake"
+    },
     "miniz": {
       "description": "Zip lesen und schreiben (Export und Import der eigenen Daten, .lvdata). Lokales External mit EIGENER Include.cmake im Projekt (Feld include) — CMakeCraft kennt miniz nicht. Datenablage_Konzept.md, E2 b (S114); Herkunft und Pruefsumme: externals/miniz/README.md",
       "skip": false,
@@ -198,6 +204,16 @@
           "lua54": { "LUA_EMBEDDED": false }
         },
         "platforms": [ "windows", "linux", "macos" ]
+      },
+      {
+        "name": "InstrumentBodyTool",
+        "description": "Rechnet einen Instrumentkoerper aus seinem Bauplan: Netz, Platte, Moden; ab 31c-5 schreibt es den Koerper (Spielweisen_Konzept.md §4.1, BM5 a, S147/S148). Kompiliert den Leser des Bauplans aus loop/ der App direkt (Executables laufen VOR dem App-Container). Netzgeber und Eigenloeser per Schalter (--list)",
+        "skip": false,
+        "type": "CONSOLE",
+        "path": "projects/exec/InstrumentBodyTool/src",
+        "dependencies": [ "BasicLogger", "InstrumentBody" ],
+        "externals": [ "Qt6", "CDT", "Eigen", "Spectra" ],
+        "platforms": [ "windows", "linux", "macos" ]
       }
     ],
     "apps": [
@@ -248,7 +264,7 @@
               "labels": [ "unit", "core", "fast" ],
               "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody" ],
               "//externals": "Composer-Naht N26 (S105): qt-ads fuer den Testfall mit echtem Dock (panel_zeigen in test_ComposerSichttestStart.cpp).",
-              "externals": [ "Qt6", "qt-ads", "bass", "lua54", "CDT", "Eigen" ],
+              "externals": [ "Qt6", "qt-ads", "bass", "lua54", "CDT", "Eigen", "Spectra" ],
               "external_options": {
                 "bass": { "BASS_MIX": true },
                 "lua54": { "LUA_EMBEDDED": false }

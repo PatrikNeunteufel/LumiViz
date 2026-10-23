@@ -1,13 +1,13 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.3.0  
+> **Version:** 0.4.0  
 > **Datum:** 2026-10-23  
 > **Typ:** CppModuleDoc  
-> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte)  
+> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung)  
 > **Namespace:** lumi::koerper  
-> **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); ab 31c-4 Eigen und Spectra, nur hinter der Schnittstelle des Eigenlösers  
+> **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
 
@@ -36,7 +36,7 @@ den Stegpunkten (sie wirkt auf die Saite) und der Abstrahlung. Diese Bibliothek 
 | Bauplan (Daten, Geometrie, Prüfung) | `InstrumentBody/Bauplan.hpp` | nein |
 | Netz, Platte, Eigenlöser, Abstrahlung, statistischer Teil | ab 31c-2 hier | nein |
 | Datei `.lvinstbodyplan` lesen/schreiben | App, `loop/KoerperBauplan` | ja |
-| Werkzeug Bauplan → Körper | `projects/exec/InstrumentBodyTool` (ab 31c-4) | ja (kompiliert den Leser mit) |
+| Werkzeug Bauplan → Körper | `projects/exec/InstrumentBodyTool` (31c-4: bis zu den Moden; den Körper schreibt es ab 31c-5) | ja (kompiliert den Leser mit) |
 | Körper anwenden (Klang) | App, ab 31c-7 | ja |
 
 Steuerdokument: `projects/apps/LumiViz/docs/audio/Spielweisen_Konzept.md` §4.1 (BM1 a bis BM5-1 a, PL31c a,
@@ -82,10 +82,10 @@ Entschieden: BM4 a mit Zusatz (Patrik S147) — CDT jetzt, ein eigener Generator
   Einfügen in gegebener Reihenfolge, sich kreuzende Zwangskanten aufgelöst (`TryResolve`), die äußeren Dreiecke
   gesammelt, zweimal nach größter Fläche und nach kleinstem Winkel verfeinert, dann entfernt. Fehler von CDT
   (Ausnahmen) als Text.
-- **Eine eigene Umsetzung dazu:** eine Klasse, die `Netzgeber` umsetzt, in `netzgeber()` von
-  `test_LoopKoerperNetz.cpp` eintragen — alle Fälle laufen dann für beide; der Fall Steinway vergleicht mit
-  `werte/netz_steinway.txt` (Knoten und Dreiecke auf 2 %, kleinster Winkel bis 1° darunter). Der Schalter im
-  Werkzeug kommt mit dem Werkzeug (31c-4).
+- **Eine eigene Umsetzung dazu:** eine Klasse, die `Netzgeber` umsetzt, in `netzgeber()` von `Umsetzungen.hpp`
+  eintragen — alle Fälle von `test_LoopKoerperNetz.cpp` laufen dann für beide, und `InstrumentBodyTool --mesher`
+  wählt sie; der Fall Steinway vergleicht mit `werte/netz_steinway.txt` (Knoten und Dreiecke auf 2 %, kleinster
+  Winkel bis 1° darunter).
 - **Gemessen** (Release-clang, S147): Steinway D bis 5 kHz — Kante 13,3 mm, 21 491 Knoten, 42 329 Dreiecke,
   kleinster Winkel 25,0° außer 8 Ecken der Eingabe (zwei Zwangskanten schließen den Winkel ein: Kreuzungen von
   Rippe und Steg), Fläche genau, jede Zwangslinie als Kantenfolge, 0,07 s.
@@ -114,20 +114,57 @@ EL1 a (Patrik S147).
 
 ## 5. Eigenlöser
 
-*Noch nicht gebaut (31c-4).* Entschieden (BM5-1 a mit Zusatz, Patrik S147):
+Gebaut 31c-4 (S148). Entschieden: BM5-1 a mit Zusatz (S147), EG1 a, EG2 a mit Zusatz (S148).
 
-- **Eine Schnittstelle vor dem Löser.** Netz, Platte und Abstrahlung kennen nur sie: dünn besetzte K und M, ein
-  Frequenzfenster, zurück Frequenzen und Formen. Kein Typ von Eigen oder Spectra geht über die Schnittstelle.
-- **Erste Umsetzung:** Eigen 3.4.1 und Spectra 1.2.0 (MPL-2.0), unverändert, feste Fassung; Bezug (fest im Repo
-  oder per Tag) nach einer Probe unter beiden Compilern. Ein eigener Löser wird eine zweite Umsetzung derselben
-  Schnittstelle, gewählt im Werkzeug per Schalter.
-- **Tests gegen die Schnittstelle** für jede vorhandene Umsetzung: geschlossene Lösungen (Rechteckplatte frei
-  aufliegend, orthotrop; kleine Matrizen mit bekannten Eigenwerten), Vollständigkeit im Fenster, Orthogonalität
-  bezüglich M; abgelegte **Bezugswerte**; ein **Vergleichsfall alt gegen neu** (Frequenzen auf Toleranz, Formen
-  über den MAC-Wert, Rechenzeit beider), sobald es zwei Umsetzungen gibt.
+### 5.1 Schnittstelle — `InstrumentBody/Eigenloeser.hpp`
 
-Dieser Abschnitt wird mit 31c-4 zur eigentlichen Doku des Lösers: Schnittstelle, Umsetzung, wie eine eigene
-dazukommt, Tests und Bezugswerte, wie der Vergleich läuft.
+K φ = λ M φ mit λ = ω² (`eigenwertVon`, `frequenzVon`). Kein Typ von Eigen oder Spectra geht über die Schnittstelle.
+
+- **`EigenAuftrag`:** K und M als `DuenneMatrix` (symmetrisch, M positiv definit; ab `vonHz` = 0 auch K positiv
+  definit), das Fenster **[vonHz, bisHz)**, `toleranz` (relativ, auf den Eigenwert), der Empfänger `jeMode`
+  (aufsteigend; leer = nur Frequenzen) und `weiter` (Fortschritt 0 … 1, false = abbrechen).
+- **`Mode`:** Frequenz und Form, bezüglich M normiert (φᵀMφ = 1), nummeriert wie K und M (die Platte: nach
+  `PlattenSystem::frei`). Das Vorzeichen ist frei.
+- **`EigenErgebnis`:** die Frequenzen aufsteigend, **`imFenster`** (Zahl der Eigenwerte im Fenster nach dem
+  Trägheitssatz von Sylvester — Pflicht jeder Umsetzung, EG1 a), die Zahl der Zerlegungen und ihre Zeit, der größte
+  Rest ‖Kφ − λMφ‖ / ‖λMφ‖, die Zeit, ein Fehlertext (leer = in Ordnung; „cancelled" nach `weiter` = false).
+- **Der Löser teilt das Fenster selbst** (EG1 a): Shifts, Teilfenster und doppelte Moden an ihren Grenzen sind seine
+  Sache; er weiß nicht, was mit einer Form geschieht. Am Steinway bis 5 kHz wären alle Formen zusammen rund 11 GB.
+
+### 5.2 Erste Umsetzung — `EigenloeserSpectra.hpp`
+
+Spectra 1.2.0 (`SymGEigsShiftSolver`, Shift-Invert, Lanczos mit implizitem Neustart) und Eigen 3.4.1.
+
+- **Zerlegung (EG2 a):** ein eigener Operator `LdltShiftInvert` zerlegt K − σM mit `SimplicialLDLT` (AMD-Ordnung;
+  das Muster einmal analysiert — K und M haben dasselbe, sonst ein Fehler). Aus D zählt er die negativen Einträge:
+  so viele Eigenwerte liegen unter σ. Liegt σ genau auf einem Eigenwert (Pivot 0), wird es um 10⁻⁹ verschoben.
+- **Teilfenster:** von unten, je Schritt das Stück [P, σ) zwischen dem letzten Shift P und dem neuen; σ so gelegt,
+  dass rund `modenJeSchritt` (Vorgabe 40) neue Eigenwerte darin liegen (aus der Dichte des letzten Stücks; zu viele
+  laut Zählung: näher heran). Die Zählungen an P und σ sagen genau, wie viele es sind.
+- **Deflation:** Spectra holt die nächsten um σ. Fehlen im Stück noch welche, läuft es noch einmal, die gefundenen
+  Formen gesperrt: der Operator rechnet P (K − σM)⁻¹ mit P = I − Φ(MΦ)ᵀ, der Startvektor (fest, auf jedem Compiler
+  gleich) ohne sie. So kommen auch beide Formen eines doppelten Eigenwerts — ein Lanczos mit einem Startvektor sähe
+  nur eine (Fall „Eigen doppelt").
+- **Geliefert wird ein Stück erst, wenn die Zahl stimmt;** was über σ schon gefunden ist, wartet (gesperrt) auf das
+  nächste. Am Ende muss die Summe `imFenster` treffen.
+- **Rest je Mode (EG2 a):** über `restGrenze` (Vorgabe 10⁻⁶) ein Fehler statt einer stillen Mode — `SimplicialLDLT`
+  sucht keinen Pivot.
+- **Alternativen (EG2 a, Zusatz), wenn als nötig erkannt:** b `SparseLU` mit Pivotsuche für die Moden (wenn Reste
+  über der Grenze bleiben, die ein verschobener Shift nicht behebt), c ein Löser mit Superknoten (CHOLMOD, Pardiso)
+  als zweite Umsetzung (wenn Speicher oder Zeit der Zerlegung am Steinway ein Fenster unbrauchbar machen).
+- **Gemessen** (Release-clang, S148): Steinway D (Netz bis 5 kHz, k = 3, 568 515 Größen) — bis 300 Hz 16 Moden
+  (gezählt 16), 1 Zerlegung, 68 s, Spitze 2,3 GB; bis 1 kHz 80 Moden (gezählt 80), 3 Zerlegungen zu je rund 17 s,
+  Rest 1,1·10⁻⁷, 164 s, Spitze 2,8 GB; **bis 5 kHz 820 Moden (gezählt 820), 13 Zerlegungen (248 s), Rest 4,0·10⁻⁷,
+  1259 s (21 min), Spitze 4,8 GB** (mit `InstrumentBodyTool`); erste Mode 38,2 Hz (eingespannt, ohne Saiten —
+  Prüfstein erst 31c-6). `SimplicialLDLT` rechnet auf einem Kern. Kipppunkt c von EG2 a nicht erreicht.
+
+### 5.3 Eine eigene Umsetzung dazu
+
+Eine Klasse, die `Eigenloeser` umsetzt, in `eigenloeser()` von `Umsetzungen.hpp` eintragen: alle Fälle von
+`test_LoopKoerperEigen.cpp` laufen dann auch für sie, `InstrumentBodyTool --solver <Name>` wählt sie. Ihre
+Bezugswerte prüft der Fall „Eigen Bezugswerte" (`werte/eigen_pruefplatte.txt`). Der **Vergleichsfall alt gegen neu**
+(Frequenzen auf Toleranz, Formen über den MAC-Wert, Rechenzeit beider) kommt mit der zweiten Umsetzung — mit einer
+gibt es nichts zu vergleichen.
 
 ## 6. Tests
 
@@ -137,8 +174,17 @@ Prüfplatten rechnet dort der dichte Löser von Eigen (nur im Test): Ansatz (Kro
 30° gedreht: dieselben Frequenzen), Steinway D grob (bis 1 kHz, k = 2: Masse gegen den Bauplan);
 `LUMIVIZ_PLATTE_MESSUNG=1` baut ihn bis 5 kHz mit k = 3 und meldet Größe und Zeit.
 
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperEigen.cpp` — gegen die Schnittstelle, für jede
+Umsetzung aus `eigenloeser()`: eine Kette aus linearen Elementen mit geschlossener Lösung (200 Moden von unten, 250
+mitten im Spektrum: jede Mode, keine doppelt, aufsteigend, M-orthonormal auf 10⁻⁸, Rest unter 10⁻⁶), zwei gleiche
+Ketten ohne Kopplung (jeder Eigenwert doppelt — beide kommen), die frei aufliegende Prüfplatte mit k = 3 gegen den
+dichten Löser von Eigen (von unten und mitten im Spektrum), die Bezugswerte `werte/eigen_pruefplatte.txt` (20 Moden:
+Frequenz auf 10⁻⁷, w an fünf Stützpunkten auf 10⁻⁵; `LUMIVIZ_EIGEN_WERTE_SCHREIBEN=1`), Fehler und Abbruch;
+`LUMIVIZ_EIGEN_MESSUNG=<Hz>` rechnet den Steinway D bis dorthin und meldet Zahl, Zeit, Zerlegungen, Rest und Spitze
+des Speichers.
+
 `projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperNetz.cpp` — gegen die Schnittstelle, für jede
-Umsetzung aus `netzgeber()`: Elementgröße nach Gl. 1, Quadrat mit zwei sich kreuzenden Zwangslinien (Fläche,
+Umsetzung aus `netzgeber()` (`Umsetzungen.hpp`): Elementgröße nach Gl. 1, Quadrat mit zwei sich kreuzenden Zwangslinien (Fläche,
 Zwangslinien, Winkel, Fläche je Dreieck, Umlaufsinn, im Umriss, zwei Läufe gleich), ein Auftrag ohne Kante (Fehler),
 der Steinway D bis 5 kHz mit den Bezugswerten `werte/netz_steinway.txt` (`LUMIVIZ_NETZ_WERTE_SCHREIBEN=1`).
 
@@ -151,6 +197,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.4.0 | 2026-10-23 | Session 148, Stufe 31c-4: Eigenlöser — Schnittstelle `Eigenloeser` (EG1 a), Umsetzung mit Spectra 1.2.0 und `SimplicialLDLT` (EG2 a: Zählung nach Sylvester, Teilfenster, Deflation, Rest je Mode), `Umsetzungen.hpp` mit `netzgeber()` und `eigenloeser()`, Werkzeug `InstrumentBodyTool`. |
 | 0.3.0 | 2026-10-23 | Session 147, Stufe 31c-3: Platte — Reissner-Mindlin, Zonen nach RT-0425, `Plattenelement` mit `LagrangeDreieck(k)`, `baueSystem` (eingespannt, gelenkig), `DuenneMatrix` (EL1 a). |
 | 0.2.0 | 2026-10-23 | Session 147, Stufe 31c-2: Netz — Schnittstelle `Netzgeber`, Auftrag aus dem Bauplan (Ränder der Leisten, Kante nach MAESSTRO Gl. 1), Umsetzung mit CDT 2.0.1 (BM4 a). |
 | 0.1.0 | 2026-10-23 | Session 147, Stufe 31c-1: Bauplan (Materialien orthotrop/isotrop, Platte mit Dickenraster, Leisten, Stegpunkte, Geometrie, Masse, Prüfung). |
