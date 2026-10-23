@@ -29,7 +29,7 @@
 #include "loop/Bearbeiten.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
-#include "loop/Saiten.hpp"
+#include "loop/Auskunft.hpp"  // InstrumentVon (HT5 a); bringt Saiten.hpp mit
 
 #include <QByteArray>
 #include <QString>
@@ -48,8 +48,8 @@ namespace lumi::loop
 inline constexpr int kKlangfassung = 1;
 
 /// Der Fingerabdruck des Clips an `ort` fuer `rate`, als Hex (40 Zeichen); leer = den
-/// Clip gibt es nicht. `saiten` wie beim Planen (`saitenAusInstrumenten`).
-[[nodiscard]] QByteArray clipAbdruck(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten);
+/// Clip gibt es nicht. `saiten` wie beim Planen (`instrumentAuskunft`).
+[[nodiscard]] QByteArray clipAbdruck(const Loop& loop, ClipOrt ort, int rate, const InstrumentVon& saiten);
 
 /// Was `clipAbdruck` rechnet, ohne die Schluessel der Klaenge: der Clip allein auf Takt 0,
 /// ohne Tags und Namen (fuer Tests und zum Nachsehen). Leer = den Clip gibt es nicht.
@@ -114,7 +114,7 @@ void merkeFrozenGrenzeMb(int mb);
 /// Abdruck als Datei vorliegt (FV2 a) — ob er dem gespeicherten gleicht oder nicht; die
 /// Datei zaehlt dann als gerade gebraucht. Die anderen spielen live. Ein Abdruck, der sich
 /// nicht lesen liess (`vergissFrozen`), zaehlt nicht mehr, bis er neu abgelegt wird.
-[[nodiscard]] Eingefroren eingefrorenVon(const Loop& loop, int rate, const SaitenVon& saiten);
+[[nodiscard]] Eingefroren eingefrorenVon(const Loop& loop, int rate, const InstrumentVon& saiten);
 /// Waechst, sobald eine Wellenform abgelegt, vergessen oder geraeumt wird (Stufe 30g): wer
 /// eingefrorene Clips spielt, plant dann neu — `eingefrorenVon` kann anders antworten, auch
 /// wenn sich der Loop nicht geaendert hat. Von jedem Thread aus.
@@ -137,25 +137,25 @@ enum class FrozenZustand
     Fehlt,      ///< unveraendert, aber die Datei fehlt (geraeumt, unlesbar, noch nie gerechnet) — neu zu rechnen (F5 a)
 };
 
-[[nodiscard]] FrozenZustand frozenZustand(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten);
+[[nodiscard]] FrozenZustand frozenZustand(const Loop& loop, ClipOrt ort, int rate, const InstrumentVon& saiten);
 
 /// Die Marken der Clips an `orte` auf ihren jetzigen Abdruck setzen (*Freeze clip*, FZ4 a).
 /// Zurueck die Clips, deren Wellenform dazu fehlt — sie sind zu rechnen.
-std::vector<ClipOrt> setzeFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte, int rate, const SaitenVon& saiten);
+std::vector<ClipOrt> setzeFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte, int rate, const InstrumentVon& saiten);
 /// Beim Speichern (F2 a): die Marken aller eingefrorenen Clips auf ihren jetzigen Abdruck.
 /// Zurueck die Clips, deren Wellenform dazu fehlt.
-std::vector<ClipOrt> frischeFrozenMarken(Loop& loop, int rate, const SaitenVon& saiten);
+std::vector<ClipOrt> frischeFrozenMarken(Loop& loop, int rate, const InstrumentVon& saiten);
 /// Die Marken der Clips an `orte` wegnehmen (*Unfreeze clip*); die Dateien bleiben im Speicher.
 void loeseFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte);
 /// Die eingefrorenen Clips, deren Datei fehlt, obwohl sie unveraendert sind (`FrozenZustand::Fehlt`).
-[[nodiscard]] std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const SaitenVon& saiten);
+[[nodiscard]] std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const InstrumentVon& saiten);
 
 // --- messen (Stufe 30h; Entscheide F4 a, FZ5 a bis FZ7 a) ------------------------------
 
 /// Die Rechenzeit eines Clips (FZ6 a): die Summe der gemessenen Zeiten seiner Klaenge aus dem
 /// Tonspeicher, in ms — die Arbeit auf einem Kern. Leer = den Clip gibt es nicht, oder einer
 /// seiner Klaenge liegt nicht (mehr) im Speicher. Laedt und rechnet nichts.
-[[nodiscard]] std::optional<double> clipRechenzeitMs(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten);
+[[nodiscard]] std::optional<double> clipRechenzeitMs(const Loop& loop, ClipOrt ort, int rate, const InstrumentVon& saiten);
 
 /// Welche Zahl die Sanduhr zeigt (FZ6 a mit Zusatz, FZ7 a).
 enum class FreezeHinweisArt

@@ -322,7 +322,7 @@ std::vector<Anschlagplan> schlageAn(const Muster& muster, const Saitensatz& sait
     return plan;
 }
 
-std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const SaitenVon& saitenVon)
+std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const InstrumentVon& saitenVon)
 {
     std::vector<ClipToene> toene;
     if (kanalNr >= loop.kanaele.size()) return toene;
@@ -370,7 +370,7 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         if (ort == gegriffen.end())
         {
             Gegriffen neu;
-            neu.saiten = saitenVon(muster->instrument);
+            neu.saiten = saitenVon(muster->instrument).saiten;
             richteSaiten(neu.saiten);
             neu.griffe = greifeNoten(*muster, neu.saiten);
             neu.anschlag = schlageAn(*muster, neu.saiten, neu.griffe, loop.schlaegeJeTakt, loop.schritteJeSchlag);

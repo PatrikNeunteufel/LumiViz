@@ -5,6 +5,8 @@
 
 #include "loop/Pedalplan.hpp"
 
+#include "loop/HammerSaite.hpp"  // anschlagStufe (Stufe 31b)
+
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -175,7 +177,12 @@ std::vector<TonPunkt> kurveImTon(const std::vector<SpurPunkt>& spur, double schr
 
 }  // namespace
 
-TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note)
+int stufeDerNote(const Note& note, bool hammer)
+{
+    return hammer ? anschlagStufe(note.laut) : 0;
+}
+
+TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note, bool hammer)
 {
     TonAngabe ton;
     if (note >= muster.noten.size()) return ton;
@@ -183,6 +190,7 @@ TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, 
     ton.instrument = muster.instrument;
     ton.hoehe = n.hoehe;
     ton.dauerMs = gehaltenMs(loop, muster, wiederholungen, runde, note);
+    ton.anschlagStufe = stufeDerNote(n, hammer);  // Stufe 31b (HK2 a)
     setzeSpuren(ton, loop, muster, wiederholungen, runde, note);
     return ton;
 }

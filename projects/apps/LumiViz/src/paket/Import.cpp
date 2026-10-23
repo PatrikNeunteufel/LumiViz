@@ -358,7 +358,7 @@ void legeWellenformen(const Gelesen& g, const PaketWahl& wahl, PaketErgebnis& er
     lp::Loop loop;
     if (wahl.rate <= 0 || !lp::ladeLoop(wahl.ziel, loop)) return;
     loop.richte();
-    const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
+    const lp::InstrumentVon saiten = lp::instrumentAuskunft();
     for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
         for (const lp::LoopClip& clip : loop.kanaele[k].clips)
         {

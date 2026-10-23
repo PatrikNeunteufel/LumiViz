@@ -91,7 +91,7 @@ Saitensatz gitarre()
     return s;
 }
 
-SaitenVon nurGitarre()
+InstrumentVon nurGitarre()
 {
     return [](const QString& instrument) { return instrument == QLatin1String("guitar") ? gitarre() : Saitensatz{}; };
 }
@@ -1095,7 +1095,7 @@ TEST_SUITE("LoopSpielweise")
         Saitensatz gitarre;
         gitarre.leer = stimmungsvorlagen()[0].leer;
         gitarre.mensurMm = 648.0;
-        const SaitenVon saiten = [gitarre](const QString&) { return gitarre; };
+        const InstrumentVon saiten = [gitarre](const QString&) { return gitarre; };
         Loop loop;  // 120 BPM: ein Schritt 125 ms, ein Takt 2 s
         Muster m;
         m.name = QStringLiteral("Lauf");

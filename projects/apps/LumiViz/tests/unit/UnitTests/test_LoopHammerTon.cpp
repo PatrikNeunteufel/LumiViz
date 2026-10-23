@@ -29,12 +29,15 @@
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Pedalplan.hpp"
+#include "loop/Rechenkern.hpp"
 
 #include "SaitenMessung.hpp"  // betrag, spitze, cent, db, teilton
 
 #include <QDir>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
 using namespace lumi::loop;
@@ -337,6 +340,109 @@ TEST_CASE("Loop Hammer-Ton 31b-2 ohne Gleichanteil")
         const double effektiv = std::sqrt(quadrate / frames);
         CHECK(std::abs(mittel) < 0.02 * effektiv);
     }
+}
+
+TEST_CASE("Loop Hammer-Ton 31b-3 Planung: die Stufe im Namen, der Rest als Pegel")
+{
+    // ein Takt des Instruments „fluegel" mit drei Noten verschiedener Staerke
+    Loop loop;
+    loop.laut = 1.0;
+    Muster m;
+    m.name = QStringLiteral("P");
+    m.art = MusterArt::Instrument;
+    m.instrument = QStringLiteral("fluegel");
+    m.noten = {Note{0, 4, 60, 1.0}, Note{4, 4, 60, 0.5}, Note{8, 4, 62, 0.3}};
+    loop.muster = {m};
+    loop.kanaele = {Kanal{QStringLiteral("K"), true, {LoopClip(QStringLiteral("P"), 0, 1)}}};
+    loop.richte();
+    const InstrumentVon mitHammer = [](const QString&) { return InstrumentAuskunft(Saitensatz{}, true); };
+    const InstrumentVon ohneHammer = [](const QString&) { return InstrumentAuskunft{}; };
+
+    SUBCASE("mit Hammer: plane und klangNamen nennen dieselben Toene mit Stufe")
+    {
+        const Ablauf ablauf = plane(loop, kSaitenRate, mitHammer);
+        QStringList erwartet = loop.klangNamen(mitHammer);
+        QStringList geplant = ablauf.klangNamen;
+        erwartet.sort();
+        geplant.sort();
+        CHECK(geplant == erwartet);
+        REQUIRE(geplant.size() == 3);
+        // die Stufen 0, −6, −10 (20·lg 0,3 = −10,5)
+        int mitZusatz = 0;
+        for (const QString& name : geplant)
+        {
+            TonAngabe ton;
+            REQUIRE(zerlegeTon(name, ton));
+            CHECK((ton.anschlagStufe == 0 || ton.anschlagStufe == -6 || ton.anschlagStufe == -10));
+            if (ton.anschlagStufe < 0) ++mitZusatz;
+            CHECK(name.contains(QStringLiteral(":a")) == (ton.anschlagStufe < 0));
+        }
+        CHECK(mitZusatz == 2);
+        // der Pegel jedes Schlags ist der Rest: Note / Stufe — beide Seiten, Muster und Loop auf 1
+        for (std::size_t s = 0; s < ablauf.stimmen.size(); ++s)
+        {
+            const Stimme& stimme = ablauf.stimmen[s];
+            REQUIRE(stimme.klang >= 0);
+            TonAngabe ton;
+            REQUIRE(zerlegeTon(ablauf.klangNamen[stimme.klang], ton));
+            const double laut = ton.anschlagStufe == 0 ? 1.0 : ton.anschlagStufe == -6 ? 0.5 : 0.3;
+            for (const Schlag& schlag : stimme.schlaege)
+            {
+                CHECK(schlag.links == doctest::Approx(anschlagRest(laut, ton.anschlagStufe)));
+                CHECK(schlag.links * std::pow(10.0, ton.anschlagStufe / 20.0) == doctest::Approx(laut));
+            }
+        }
+        // je Vorkommen (wie mit Pedal) dieselbe Stufe
+        CHECK(tonImClip(loop, loop.muster.front(), 1, 0, 1, true).anschlagStufe == -6);
+    }
+    SUBCASE("ohne Hammer: Namen und Pegel wie bisher")
+    {
+        const Ablauf ablauf = plane(loop, kSaitenRate, ohneHammer);
+        for (const QString& name : ablauf.klangNamen) CHECK_FALSE(name.contains(QStringLiteral(":a")));
+        CHECK(ablauf.klangNamen == plane(loop, kSaitenRate).klangNamen);  // wie ohne Auskunft
+        bool halb = false;
+        for (const Stimme& stimme : ablauf.stimmen)
+            for (const Schlag& schlag : stimme.schlaege) halb = halb || schlag.links == doctest::Approx(0.5);
+        CHECK(halb);
+        CHECK(tonImClip(loop, loop.muster.front(), 1, 0, 1).anschlagStufe == 0);
+    }
+    SUBCASE("die Auskunft eines echten Instruments")
+    {
+        Instrument instrument = fluegel();
+        CHECK(auskunftVon(instrument).hammer);
+        instrument.schichten[0].an = false;
+        CHECK_FALSE(auskunftVon(instrument).hammer);
+    }
+}
+
+TEST_CASE("Loop Hammer-Ton 31b-3 Rechenzeit (meldet nur Zahlen)")
+{
+    // entscheidet HA3 a (Stufen von 1 dB oder genau) und 31e (Mitschwingen im Ton oder auf der
+    // Summe); nur unter Release-clang aussagekraeftig
+    const Instrument instrument = fluegel();
+    struct Probe
+    {
+        int taste;
+        double dauerMs;
+        int stufe;
+    };
+    double summeMs = 0.0;
+    double summeS = 0.0;
+    for (const Probe& p : {Probe{21, 500.0, 0}, Probe{21, 4000.0, 0}, Probe{40, 500.0, 0}, Probe{40, 4000.0, -20},
+                           Probe{60, 500.0, 0}, Probe{60, 4000.0, 0}, Probe{84, 500.0, 0}, Probe{96, 500.0, 0},
+                           Probe{108, 500.0, 0}})
+    {
+        const auto anfang = std::chrono::steady_clock::now();
+        const Klang k = ton(instrument, p.taste, p.dauerMs, p.stufe);
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - anfang).count();
+        const double s = k.frames() / static_cast<double>(kSaitenRate);
+        summeMs += ms;
+        summeS += s;
+        MESSAGE("Taste " << p.taste << ", gehalten " << p.dauerMs << " ms, Stufe " << p.stufe << ": " << ms << " ms fuer "
+                         << s << " s Ton (" << ms / (1000.0 * s) * 100.0 << " % Echtzeit)");
+    }
+    MESSAGE("zusammen " << summeMs << " ms fuer " << summeS << " s Ton");
+    CHECK(summeMs > 0.0);
 }
 
 TEST_CASE("Loop Hammer-Ton 31b Hoerproben (LUMIVIZ_31B_WAV)")

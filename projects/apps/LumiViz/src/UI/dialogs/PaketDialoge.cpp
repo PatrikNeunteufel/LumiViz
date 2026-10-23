@@ -205,7 +205,7 @@ PublishDialog::PublishDialog(pk::Fund fund, QWidget* parent, QSettings* einstell
         if (lp::ladeLoop(m_fund.hauptdatei, loop))
         {
             loop.richte();
-            const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
+            const lp::InstrumentVon saiten = lp::instrumentAuskunft();
             m_teile = pk::frozenTeile(loop, m_ton.rate, saiten);
             for (const pk::FrozenTeil& teil : m_teile)
             {
@@ -387,7 +387,7 @@ void PublishDialog::pruefeFreeze()
     m_freeze.reset();
     if (m_uhr != nullptr) m_uhr->stop();
     // jetzt liegen die Dateien: neu nachsehen (was misslang, rechnet der Empfaenger)
-    m_teile = pk::frozenTeile(*m_loop, m_ton.rate, lp::saitenAusInstrumenten());
+    m_teile = pk::frozenTeile(*m_loop, m_ton.rate, lp::instrumentAuskunft());
     fuelleFrozenZeilen();
     aktualisiereSumme();
     if (m_wartet)

@@ -5,6 +5,7 @@
 
 #include "loop/Rechenkern.hpp"
 
+#include "loop/HammerSaite.hpp"  // anschlagRest (Stufe 31b)
 #include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
 #include "loop/Stueckweise.hpp"
@@ -51,7 +52,7 @@ double Ausdruck::wert(std::int64_t frame) const
     return m.bei(x) * c.bei(x);
 }
 
-Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten, const Eingefroren& eingefroren)
+Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eingefroren& eingefroren)
 {
     Ablauf ablauf;
     ablauf.rate = rate;
@@ -139,6 +140,8 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten, const Eingefro
             {
                 if (muster->stumm) continue;
                 const double lautMuster = muster->laut * loopAmSchlag * faderAmSchlag;
+                // Stufe 31b (HK2 a): an einer Hammer-Saite traegt der Ton die Stufe, der Rest ist Pegel
+                const bool hammer = saiten && saiten(muster->instrument).hammer;
                 for (int runde = 0; runde < clip.wiederholungen; ++runde)
                 {
                     const std::int64_t schrittDavor =
@@ -153,7 +156,8 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten, const Eingefro
                         const double strumFrames = geplant == nullptr ? 0.0 : geplant->versatzMs * rate / 1000.0;
                         const double stelle = static_cast<double>(schrittDavor + note.schritt) * schrittFrames +
                                               (versetzt ? swingFrames : 0.0) + strumFrames;
-                        const double laut = note.laut * lautMuster;
+                        const double laut =
+                            (hammer ? anschlagRest(note.laut, stufeDerNote(note, true)) : note.laut) * lautMuster;
                         const auto schlage = [&](const QString& name) {
                             const int klang = klangVon.value(name, -1);
                             const auto [ort, neu] = tonStimmeVon.try_emplace({muster, klang}, ablauf.stimmen.size());
@@ -173,7 +177,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten, const Eingefro
                         };
                         // ohne Saiten: so lange, wie die Pedale halten (Stufe 28b), mit Pitch und
                         // Vibrato (28c-1b) — ohne Spuren derselbe Name wie bis Stufe 27
-                        schlage(geplant == nullptr ? tonKlang(tonImClip(loop, *muster, clip.wiederholungen, runde, noteNr))
+                        schlage(geplant == nullptr ? tonKlang(tonImClip(loop, *muster, clip.wiederholungen, runde, noteNr, hammer))
                                                    : tonKlang(*geplant));
                         // Stufe 25c (S-L12 a): beim Kopf einer Kette die Saite ueber die ganze Kette
                         if (geplant != nullptr)

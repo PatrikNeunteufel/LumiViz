@@ -380,7 +380,7 @@ std::vector<int> saitenVon(const std::vector<Griff>& griffe)
 }
 
 /// Eine Auskunft, die nur `gitarre` mit Saiten kennt.
-SaitenVon nurGitarre()
+InstrumentVon nurGitarre()
 {
     return [](const QString& name) { return name == QStringLiteral("gitarre") ? gitarre() : Saitensatz{}; };
 }
@@ -589,7 +589,7 @@ TEST_CASE("Loop Saiten 23b: ein mitgelieferter Loop ohne Saiteninstrument plant 
     // ein Loop, dessen Instrumente keine Saiten tragen: die Auskunft aendert nichts — dieselben Namen,
     // dieselben Stimmen, dieselben Schlaege. Seit 23g spielen einige Gitarren und Baesse (kMitSaiten):
     // dort tragen die Namen der Toene ihre Saite
-    const SaitenVon saiten = saitenAusInstrumenten();
+    const InstrumentVon saiten = instrumentAuskunft();
     const QStringList loops = mitgelieferteLoops();
     REQUIRE(loops.size() >= 38);
     int ohneSaiten = 0;
@@ -601,7 +601,7 @@ TEST_CASE("Loop Saiten 23b: ein mitgelieferter Loop ohne Saiteninstrument plant 
         REQUIRE(ladeLoop(pfad, loop));
         bool spieltSaiten = false;
         for (const Muster& m : loop.muster)
-            if (m.art == MusterArt::Instrument && saiten(m.instrument).istSaiteninstrument()) spieltSaiten = true;
+            if (m.art == MusterArt::Instrument && saiten(m.instrument).saiten.istSaiteninstrument()) spieltSaiten = true;
         if (spieltSaiten)
         {
             ++mitSaiten;

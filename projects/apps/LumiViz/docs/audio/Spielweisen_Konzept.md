@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.62.0
+> **Version:** 0.63.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT4 a, 31b-1 und 31b-2 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT4 a und TS1 a (Patrik S139–S146);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT5 a, 31b-1 bis 31b-3 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT5 a und TS1 a (Patrik S139–S146);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1041,6 +1041,27 @@ unter ihrer Spitze liegt, höchstens 10 s — so lange Takt für Takt über alle
 Tab. IV 0,4 … 0,6 der Tabelle. Die Messung der Inharmonizität läuft leise (pp), wo die Längskraft (∝ v²) nicht
 stört.
 
+✅ **HT5 a** (Patrik S146): **Die Auskunft der Planung wird allgemein: `InstrumentVon` liefert
+`InstrumentAuskunft { Saitensatz saiten; bool hammer; }` und ersetzt `SaitenVon` überall;
+`saitenAusInstrumenten()` heißt `instrumentAuskunft()`; ohne Auskunft keine Saiten, kein Hammer.** S-A1 a
+(Saiten_Konzept) gilt damit für die ganze Auskunft. Grund: bleibt bei einer Auskunft über das Instrument und bei
+der Richtung der Abhängigkeiten (Loop hängt nicht vom Instrument ab); was die Planung später braucht (die Pedale
+aus *Keyboard*, 31f), kommt in dieselbe Struktur. Verworfen: b (zweite Auskunft `HammerVon` daneben — zwei
+Funktionen, die immer zusammen gebraucht werden, jede neue Größe eine weitere), c (die Planung liest das
+Instrument selbst — gegen S-A1 a). Danach ein voller Lauf über Loop und Composer (Composer, Paket und Freeze sind
+mitbetroffen).
+
+**Gebaut 31b-3 (S146):** `loop/Auskunft` (`InstrumentAuskunft`, `InstrumentVon`; aus einem `Saitensatz` ohne
+Hammer bildbar), umbenannt in 43 Dateien; `instrumentAuskunft()` und `auskunftVon(instrument)` (mit `hatHammer`).
+`tonImClip(…, hammer)` und `stufeDerNote` setzen die Anschlagstufe; `klangNamen` und `plane` nennen an einem
+Instrument mit Hammer und ohne Saiten dieselben Töne mit `:a<stufe>`, der Schlag trägt den Rest
+`anschlagRest(laut, stufe)` statt `laut`; ohne Hammer alles wie bisher (auch die Namen). Ein Instrument mit
+Saiten und Hammer zugleich plant über die Saiten, ohne Stufe (gibt es heute nicht). Das Anspielen im Editor und
+Creator rechnet weiter mit Stufe 0. **Rechenzeit** (Release-clang, zweimal gemessen, übereinstimmend auf wenige
+Prozent): ein Ton 0,5 s gehalten 1,5 ms (C8) … 9 ms (C4) … 30 ms (A0); 4 s gehalten 46 ms (C4) … 110 ms (A0) —
+2,3 % der Echtzeit im Bass, 1,1 % in der Mitte, unter 0,3 % im Diskant; je Taste und Stufe einmal gerechnet,
+danach aus dem Tonspeicher.
+
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
 Nicht einmal beim Laden. **Im Loop-Panel** rechnet `Spieler::ladeProgramm` erst beim Play
@@ -1905,6 +1926,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.63.0 | 2026-10-23 | Session 146. HT5 a (die Auskunft `InstrumentVon` mit Saiten und Hammer); 31b-3 gebaut (Stufe in der Planung, Rest als Pegel) und Rechenzeit gemessen. |
 | 0.62.0 | 2026-10-23 | Session 146. Befund 31b-2 (die Längskraft mit gleichem Gewicht beherrscht den Klang; Auslenkung gegen Chabassier Tab. IV; Kopplung am Steg mit sin α nach Gl. 21); HT4 a (Kurve Bridge angle); 31b-2 gebaut. |
 | 0.61.0 | 2026-10-23 | Session 146. Befund Chor und zweistufiger Ausklang (Bank, Diss. 2006, Kap. 4.2); HT3 a (gekoppelte Moden nach Weinreich, Kurve Late decay) mit Herleitung; 31b-1 gebaut und gemessen (`loop/HammerTon`). |
 | 0.60.0 | 2026-10-23 | Session 146. Befund vor 31b (Bank 2010 im Volltext: Resonatoren, Hammer, Längsschwingung, Nebenresonatoren, Dämpfer; die Kurven aus 31a tragen keine Saitendaten); HT1 a (Länge, Masse, Längsverhältnis als Kurven); Befund Saitendaten (Chabassier, Joly & Chaigne 2013 Tab. III; Chabassier & Duruflé RT-0425 Anhang A, 84 Tasten); HT2 a (Hammer nach RT-0425 statt Stulov); 31a nachgezogen. |

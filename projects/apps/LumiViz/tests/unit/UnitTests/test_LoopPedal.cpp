@@ -217,7 +217,7 @@ TEST_SUITE("LoopPedal")
 
     TEST_CASE("Loop Pedal 28b: mit Saiten haelt die Saite nicht, die Schichten mit Own note als eigener Ton")
     {
-        const SaitenVon saiten = [](const QString&) {
+        const InstrumentVon saiten = [](const QString&) {
             Saitensatz satz;
             satz.leer = stimmungsvorlagen()[0].leer;
             satz.mensurMm = 648.0;

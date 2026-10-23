@@ -51,9 +51,9 @@ std::vector<float> rechneStandardprobe(const Instrument& instrument, int rate)
 {
     const QString name = instrument.name.isEmpty() ? QStringLiteral("probe") : instrument.name;
     const Loop probe = standardProbe(name, instrument.art);
-    const Saitensatz saiten = instrument.saiten;
-    const SaitenVon saitenVon = [saiten](const QString&) { return saiten; };
-    const Ablauf ablauf = plane(probe, rate, saitenVon);
+    const InstrumentAuskunft auskunft = auskunftVon(instrument);
+    const InstrumentVon auskunftBeimNamen = [auskunft](const QString&) { return auskunft; };
+    const Ablauf ablauf = plane(probe, rate, auskunftBeimNamen);
     // das Instrument, wie es gerade ist (auch ungespeichert): ohne den Tonspeicher gerechnet
     Klaenge klaenge;
     klaenge.reserve(static_cast<std::size_t>(ablauf.klangNamen.size()));

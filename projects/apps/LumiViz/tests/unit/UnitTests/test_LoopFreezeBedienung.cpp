@@ -339,7 +339,7 @@ TEST_SUITE("Loop Freeze Bedienung")
         REQUIRE(ordner.isValid());
         setzeFrozenOrdnerFuerTests(ordner.filePath(QStringLiteral("frozen")));
         tonspeicher().leere();
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
 
         // --- Settings: Vorgabe 1 s und computing work, geklemmt, gemerkt
         CHECK(gemerkterFreezeHinweisS() == doctest::Approx(1.0));

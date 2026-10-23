@@ -159,7 +159,7 @@ TEST_SUITE("Loop Export")
         CHECK(e.bytes == 58 + e.frames * 8);
         CHECK(e.bericht.isEmpty());
 
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const std::optional<Wellenform> welle =
             rechneClip(loop, echo, kRate, klaengeZu(clipFassung(loop, echo)->klangNamen(saiten)), saiten);
         REQUIRE(welle.has_value());
@@ -185,7 +185,7 @@ TEST_SUITE("Loop Export")
         LeererSpeicher speicher;
         const Loop loop = beispiel("effects_demo.lvloop");
         REQUIRE(loop.limiter);
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const std::int64_t durchlauf = plane(loop, kRate, saiten).durchlaufFrames;
 
         // --- nahtlos, zwei Durchlaeufe: genau so lang, unter der Decke, beide gleich
@@ -266,7 +266,7 @@ TEST_SUITE("Loop Export")
         CHECK(e.frames == std::llround(7500.0 * kRate / 1000.0));
         CHECK(e.frames == e.clipFrames);
 
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const std::optional<Wellenform> welle =
             rechneAusschnitt(loop, 3000.0, 7500.0, kRate, klaengeZu(loop.klangNamen(saiten)), saiten);
         REQUIRE(welle.has_value());

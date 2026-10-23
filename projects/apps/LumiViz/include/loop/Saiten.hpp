@@ -145,12 +145,6 @@ struct Flageolett
 /// kuenstliches (gegriffen auf Bund f, bis f + 12 ≤ `kBuendeMax`).
 [[nodiscard]] Flageolett flageolettAuf(const Saitensatz& saiten, int saite, int hoehe);
 
-/// Die Auskunft, die die Planung herein bekommt (Entscheid S-A1 a, S132): die
-/// Saiten des Instruments, das ein Muster nennt. Leer (keine Funktion) = jedes
-/// Instrument gilt als eines ohne Saiten — alles wie bis Stufe 22. Wer
-/// Instrumente kennt, liefert sie (`saitenAusInstrumenten`, Instrument.hpp).
-using SaitenVon = std::function<Saitensatz(const QString& instrument)>;
-
 /// Werte in ihre Grenzen: hoechstens `kSaitenMax` Saiten (was dahinter steht,
 /// faellt weg), jeder Ton in 0 … 127, das Capo in 0 … `kCapoMax`.
 void richteSaiten(Saitensatz& saiten);

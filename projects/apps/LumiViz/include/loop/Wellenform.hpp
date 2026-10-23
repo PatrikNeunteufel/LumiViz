@@ -69,7 +69,7 @@ using Fortschritt = std::function<bool(double)>;
 /// `clipFassung(loop, ort)->klangNamen(saiten)`. Leer = den Clip gibt es nicht, oder
 /// `fortschritt` hat abgebrochen.
 [[nodiscard]] std::optional<Wellenform> rechneClip(const Loop& loop, ClipOrt ort, int rate,
-                                                   std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten,
+                                                   std::shared_ptr<const Klaenge> klaenge, const InstrumentVon& saiten,
                                                    const Fortschritt& fortschritt = {});
 
 /// Wie der ganze Loop endet (WX9 a).
@@ -89,7 +89,7 @@ inline constexpr int kDurchlaeufeMax = 64;
 
 /// Die Klaenge, die `rechneLoop` braucht — je nach Ende andere (mit Nachklang die der
 /// `loopFassung`).
-[[nodiscard]] QStringList loopKlangNamen(const Loop& loop, LoopEnde ende, int durchlaeufe, const SaitenVon& saiten);
+[[nodiscard]] QStringList loopKlangNamen(const Loop& loop, LoopEnde ende, int durchlaeufe, const InstrumentVon& saiten);
 
 /// Den ganzen Loop rechnen, wie das Loop-Panel ihn spielt (WX7 a, WX9 a): mit Fadern,
 /// Schaltern, Lautstaerke und — wenn er an ist — seinem Limiter. `Nahtlos`: ein Durchlauf
@@ -99,7 +99,7 @@ inline constexpr int kDurchlaeufeMax = 64;
 /// kann sich darum leicht von live unterscheiden). `clipFrames` = die Durchlaeufe.
 /// `klaenge` gehoeren zu `loopKlangNamen`.
 [[nodiscard]] std::optional<Wellenform> rechneLoop(const Loop& loop, LoopEnde ende, int durchlaeufe, int rate,
-                                                   std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten,
+                                                   std::shared_ptr<const Klaenge> klaenge, const InstrumentVon& saiten,
                                                    const Fortschritt& fortschritt = {});
 
 /// Einen Loop-Clip des Composers rechnen (WX3 a): `loop` ab `versatzMs` ueber `laengeMs`,
@@ -107,6 +107,6 @@ inline constexpr int kDurchlaeufeMax = 64;
 /// `loop.klangNamen(saiten)`. Leer = nichts zu rechnen, oder abgebrochen.
 [[nodiscard]] std::optional<Wellenform> rechneAusschnitt(const Loop& loop, double versatzMs, double laengeMs, int rate,
                                                          std::shared_ptr<const Klaenge> klaenge,
-                                                         const SaitenVon& saiten, const Fortschritt& fortschritt = {});
+                                                         const InstrumentVon& saiten, const Fortschritt& fortschritt = {});
 
 }  // namespace lumi::loop

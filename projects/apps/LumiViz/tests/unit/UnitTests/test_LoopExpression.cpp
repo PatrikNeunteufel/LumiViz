@@ -185,7 +185,7 @@ TEST_SUITE("LoopExpression")
         Loop saiten = instrumentLoop();
         saiten.muster.front().zeitspuren.von(Steuerspur::Expression) = {{0.0, 0.5}};
         saiten.richte();
-        const SaitenVon gitarre = [](const QString&) {
+        const InstrumentVon gitarre = [](const QString&) {
             Saitensatz satz;
             satz.leer = stimmungsvorlagen()[0].leer;
             return satz;

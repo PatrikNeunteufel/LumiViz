@@ -96,7 +96,7 @@ void FreezeAuftrag::arbeite()
 bool FreezeAuftrag::friere(const ClipOrt& ort, FreezeErgebnis& ergebnis)
 {
     // die Auskunft ueber die Saiten lebt auf diesem Thread — nur er fragt sie
-    const SaitenVon saiten = saitenAusInstrumenten();
+    const InstrumentVon saiten = instrumentAuskunft();
     const QByteArray abdruck = clipAbdruck(m_loop, ort, m_rate, saiten);
     const std::optional<Loop> fassung = clipFassung(m_loop, ort);
     if (abdruck.isEmpty() || !fassung)

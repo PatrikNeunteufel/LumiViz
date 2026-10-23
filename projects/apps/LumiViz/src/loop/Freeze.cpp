@@ -163,7 +163,7 @@ std::optional<Loop> abdruckFassung(const Loop& loop, ClipOrt ort)
     return fassung;
 }
 
-QByteArray clipAbdruck(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten)
+QByteArray clipAbdruck(const Loop& loop, ClipOrt ort, int rate, const InstrumentVon& saiten)
 {
     const std::optional<Loop> fassung = abdruckFassung(loop, ort);
     if (!fassung || rate <= 0) return {};
@@ -419,7 +419,7 @@ void merkeFrozenGrenzeMb(int mb)
 
 // --- abspielen (Stufe 30f) -------------------------------------------------------------
 
-Eingefroren eingefrorenVon(const Loop& loop, int rate, const SaitenVon& saiten)
+Eingefroren eingefrorenVon(const Loop& loop, int rate, const InstrumentVon& saiten)
 {
     Eingefroren eingefroren;
     for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
@@ -463,7 +463,7 @@ LoopClip* clipAn(Loop& loop, ClipOrt ort)
 
 }  // namespace
 
-FrozenZustand frozenZustand(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten)
+FrozenZustand frozenZustand(const Loop& loop, ClipOrt ort, int rate, const InstrumentVon& saiten)
 {
     const int nr = findeClip(loop, ort);
     if (nr < 0) return FrozenZustand::Aus;
@@ -474,7 +474,7 @@ FrozenZustand frozenZustand(const Loop& loop, ClipOrt ort, int rate, const Saite
     return QString::fromLatin1(jetzt) == clip.frozen ? FrozenZustand::Fehlt : FrozenZustand::Veraendert;
 }
 
-std::vector<ClipOrt> setzeFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte, int rate, const SaitenVon& saiten)
+std::vector<ClipOrt> setzeFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte, int rate, const InstrumentVon& saiten)
 {
     std::vector<ClipOrt> zuRechnen;
     for (const ClipOrt& ort : orte)
@@ -490,7 +490,7 @@ std::vector<ClipOrt> setzeFrozenMarken(Loop& loop, const std::vector<ClipOrt>& o
     return zuRechnen;
 }
 
-std::vector<ClipOrt> frischeFrozenMarken(Loop& loop, int rate, const SaitenVon& saiten)
+std::vector<ClipOrt> frischeFrozenMarken(Loop& loop, int rate, const InstrumentVon& saiten)
 {
     std::vector<ClipOrt> markiert;
     for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
@@ -505,7 +505,7 @@ void loeseFrozenMarken(Loop& loop, const std::vector<ClipOrt>& orte)
         if (LoopClip* clip = clipAn(loop, ort)) clip->frozen.clear();
 }
 
-std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const SaitenVon& saiten)
+std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const InstrumentVon& saiten)
 {
     std::vector<ClipOrt> fehlend;
     for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
@@ -520,7 +520,7 @@ std::vector<ClipOrt> fehlendeFrozen(const Loop& loop, int rate, const SaitenVon&
 
 // --- messen (Stufe 30h) ----------------------------------------------------------------
 
-std::optional<double> clipRechenzeitMs(const Loop& loop, ClipOrt ort, int rate, const SaitenVon& saiten)
+std::optional<double> clipRechenzeitMs(const Loop& loop, ClipOrt ort, int rate, const InstrumentVon& saiten)
 {
     const std::optional<Loop> fassung = clipFassung(loop, ort);
     if (!fassung || rate <= 0) return std::nullopt;

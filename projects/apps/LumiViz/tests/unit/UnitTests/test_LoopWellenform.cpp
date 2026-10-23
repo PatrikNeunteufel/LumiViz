@@ -62,13 +62,13 @@ Loop beispiel(const char* datei)
     return loop;
 }
 
-std::shared_ptr<const Klaenge> klaengeFuer(const Loop& loop, const SaitenVon& saiten)
+std::shared_ptr<const Klaenge> klaengeFuer(const Loop& loop, const InstrumentVon& saiten)
 {
     return std::make_shared<const Klaenge>(looptest::klaengeOhneEngine(plane(loop, kRate, saiten)));
 }
 
 /// `frames` Abtastwerte ab `stelle` durch den Klangerzeuger, in Bloecken wie im Mixer.
-std::vector<float> live(const Loop& loop, const SaitenVon& saiten, std::int64_t stelle, std::int64_t frames)
+std::vector<float> live(const Loop& loop, const InstrumentVon& saiten, std::int64_t stelle, std::int64_t frames)
 {
     Klangerzeuger erzeuger;
     erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaengeFuer(loop, saiten), saiten));
@@ -116,7 +116,7 @@ TEST_SUITE("Loop Wellenform")
     {
         WellenApp app;
         const Loop loop = beispiel("effects_demo.lvloop");
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const ClipOrt echo{2, 4};  // Keys, Piano stabs mit Echo
         REQUIRE(findeClip(loop, echo) >= 0);
         REQUIRE(loop.kanaele[2].clips[static_cast<std::size_t>(findeClip(loop, echo))].effekteWirken());
@@ -171,7 +171,7 @@ TEST_SUITE("Loop Wellenform")
     {
         WellenApp app;
         const Loop loop = beispiel("effects_demo.lvloop");
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const ClipOrt acid{1, 16};  // Bass, Acid mit Drive; der Kanal +4,5 dB, der Loop 0,3
         REQUIRE(findeClip(loop, acid) >= 0);
         REQUIRE(loop.kanaele[1].gainDb != 0.0);
@@ -196,7 +196,7 @@ TEST_SUITE("Loop Wellenform")
     {
         WellenApp app;
         Loop loop = beispiel("tabs_demo.lvloop");
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         // Let ring an jeder Note: ein Ton klingt, bis die naechste Note auf seiner Saite
         // beginnt — ohne die gaebe es hinter dem Ende nichts (jede Note endet mit sich)
         for (Muster& m : loop.muster)
@@ -240,7 +240,7 @@ TEST_SUITE("Loop Wellenform")
     {
         WellenApp app;
         const Loop loop = beispiel("effects_demo.lvloop");
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const auto klaenge = klaengeFuer(loop, saiten);
         const std::int64_t durchlauf = plane(loop, kRate, saiten).durchlaufFrames;
         REQUIRE(durchlauf > 0);
@@ -270,7 +270,7 @@ TEST_SUITE("Loop Wellenform")
     {
         WellenApp app;
         const Loop loop = beispiel("effects_demo.lvloop");
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const ClipOrt echo{2, 4};
         const auto klaenge = klaengeFuer(*clipFassung(loop, echo), saiten);
 
@@ -295,7 +295,7 @@ TEST_SUITE("Loop Wellenform")
     {
         WellenApp app;
         const Loop loop = beispiel("tabs_demo.lvloop");
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const auto klaenge = klaengeFuer(loop, saiten);
         const double durchlaufMs = loop.durchlaufMs();
         QElapsedTimer uhr;

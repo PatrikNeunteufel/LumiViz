@@ -7,7 +7,7 @@
 
 #include "audio/IAudioEngine.hpp"
 #include "loop/Freeze.hpp"      // eingefrorenVon, frozenFehlt (Stufe 30f)
-#include "loop/Instrument.hpp"  // saitenAusInstrumenten (Stufe 23b)
+#include "loop/Instrument.hpp"  // instrumentAuskunft (Stufe 23b)
 #include "loop/Kit.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
@@ -59,7 +59,7 @@ std::shared_ptr<const loop::Programm> bereiteLoopVor(const QString& datei, IAudi
     if (!loop::offenerLoop(datei, geladen) && !loop::ladeLoop(datei, geladen)) return nullptr;
     geladen.richte();
     // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
-    const loop::SaitenVon saiten = loop::saitenAusInstrumenten();
+    const loop::InstrumentVon saiten = loop::instrumentAuskunft();
     // eingefrorene Clips (Stufe 30f) wie in der Tonfuehrung; liess sich eine Wellenform nicht
     // laden, nennt `eingefrorenVon` ihren Clip danach nicht mehr — einmal neu, er klingt live
     loop::Eingefroren eingefroren = loop::eingefrorenVon(geladen, rate, saiten);

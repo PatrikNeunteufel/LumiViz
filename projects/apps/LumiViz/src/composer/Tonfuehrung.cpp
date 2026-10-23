@@ -82,7 +82,7 @@ struct Tonfuehrung::LoopQuelle
         rate = engine.getSampleRate();
         frozenGesehen = lumi::loop::frozenFassung();
         // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
-        const lumi::loop::SaitenVon saiten = lumi::loop::saitenAusInstrumenten();
+        const lumi::loop::InstrumentVon saiten = lumi::loop::instrumentAuskunft();
         // eingefrorene Clips (Stufe 30f) spielen ihre Wellenform, wenn sie zum jetzigen Abdruck vorliegt
         const lumi::loop::Eingefroren eingefroren = lumi::loop::eingefrorenVon(loop, rate, saiten);
         const QStringList namen = loop.klangNamen(saiten, eingefroren);
@@ -146,7 +146,7 @@ struct Tonfuehrung::LoopQuelle
         // fehlt eine eingefrorene Wellenform, schweigt ihr Clip bis zum naechsten Takt (30f)
         neuPlanen = lumi::loop::frozenFehlt(auftragNamen, *klaenge);
         const auto programm =
-            lumi::loop::baueProgramm(loop, rate, klaenge, lumi::loop::saitenAusInstrumenten(), auftragEingefroren);
+            lumi::loop::baueProgramm(loop, rate, klaenge, lumi::loop::instrumentAuskunft(), auftragEingefroren);
         durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;
         erzeuger.setzeProgramm(programm);
         return true;

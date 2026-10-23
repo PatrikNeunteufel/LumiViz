@@ -107,7 +107,7 @@ TEST_SUITE("Loop Freeze Spielen")
     TEST_CASE("Loop Freeze 30f: die Namen — ein eingefrorener Clip nennt seine Wellenform, nicht seine Toene")
     {
         SpielenApp app;
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const Loop loop = probeLoop();
         const QStringList ohne = loop.klangNamen(saiten);
         REQUIRE(nenntToene(ohne));
@@ -242,7 +242,7 @@ TEST_SUITE("Loop Freeze Spielen")
         SpielenApp app;
         Loop loop;
         REQUIRE(ladeLoop(looptest::repoWurzel().filePath(QStringLiteral("asset/loop/effects_demo.lvloop")), loop));
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const ClipOrt echo{2, 4};  // Keys, Piano stabs mit Echo
         REQUIRE(findeClip(loop, echo) >= 0);
         // im Kanal nur dieser Clip: sonst schnitte live ein spaeterer Clip desselben Musters seine Toene ab
@@ -309,7 +309,7 @@ TEST_SUITE("Loop Freeze Spielen")
         REQUIRE(ordner.isValid());
         setzeFrozenOrdnerFuerTests(ordner.path());
         tonspeicher().leere();
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const Dekodierer nichts = [](const QString&, int, double) { return std::vector<float>{}; };
 
         // zwei Clips desselben Musters (gleiche Clips teilen eine Datei, F1 a)
@@ -412,7 +412,7 @@ TEST_SUITE("Loop Freeze Spielen")
         loop.kanaele = {{QStringLiteral("A"), true, {{QStringLiteral("M"), 0, 1}}}};
         loop.richte();
         const ClipOrt ort{0, 0};
-        (void)setzeFrozenMarken(loop, {ort}, kRate, saitenAusInstrumenten());
+        (void)setzeFrozenMarken(loop, {ort}, kRate, instrumentAuskunft());
 
         FreezeAuftrag auftrag(loop, {ort}, kRate, haelt);
         while (!gerufen.load()) std::this_thread::yield();
@@ -428,7 +428,7 @@ TEST_SUITE("Loop Freeze Spielen")
         CHECK(auftrag.ergebnis()->abgebrochen);
         CHECK(auftrag.ergebnis()->gelegt.empty());
         CHECK(frozenStand().dateien == 0);
-        CHECK(frozenZustand(loop, ort, kRate, saitenAusInstrumenten()) == FrozenZustand::Fehlt);
+        CHECK(frozenZustand(loop, ort, kRate, instrumentAuskunft()) == FrozenZustand::Fehlt);
 
         setzeFrozenOrdnerFuerTests({});
         tonspeicher().leere();

@@ -62,7 +62,7 @@ TEST_SUITE("Publish")
         const FrozenBestand b;
         const QString& absender = b.absender;
         const QString& empfaenger = b.empfaenger;
-        const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
+        const lp::InstrumentVon saiten = lp::instrumentAuskunft();
 
         // beim Absender: zwei Clips mit Marke, die Wellenformen fehlen noch
         std::vector<pb::FrozenTeil> teile;
@@ -127,8 +127,8 @@ TEST_SUITE("Publish")
         lp::Loop loop;
         REQUIRE(lp::ladeLoop(loopZiel, loop));
         loop.richte();
-        CHECK(lp::clipAbdruck(loop, lp::ClipOrt{0, 4}, kRate, lp::saitenAusInstrumenten()) == b.bass);
-        CHECK(lp::eingefrorenVon(loop, kRate, lp::saitenAusInstrumenten()).size() == 2);
+        CHECK(lp::clipAbdruck(loop, lp::ClipOrt{0, 4}, kRate, lp::instrumentAuskunft()) == b.bass);
+        CHECK(lp::eingefrorenVon(loop, kRate, lp::instrumentAuskunft()).size() == 2);
 
         // ein zweiter Import: die Dateien liegen schon da und bleiben
         const pb::PaketErgebnis zweiter = pb::importierePaket(paket, wahl);

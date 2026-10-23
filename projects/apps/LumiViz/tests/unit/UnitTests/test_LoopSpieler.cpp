@@ -1805,7 +1805,7 @@ Loop eingefrorenerLoop(QByteArray& abdruck)
 {
     Loop loop = spielLoop({1, 0, 0, 0});
     loop.richte();
-    abdruck = clipAbdruck(loop, ClipOrt{0, 0}, 44100, saitenAusInstrumenten());
+    abdruck = clipAbdruck(loop, ClipOrt{0, 0}, 44100, instrumentAuskunft());
     REQUIRE(abdruck.size() == 40);
     loop.kanaele[0].clips[0].frozen = QString::fromLatin1(abdruck);
     return loop;
@@ -1824,7 +1824,7 @@ TEST_CASE("Loop Spieler 30f: ein eingefrorener Clip spielt seine Wellenform — 
     SUBCASE("die Datei liegt vor: die Wellenform, nichts dekodiert, nichts gerechnet")
     {
         REQUIRE(legeFrozen(abdruck, std::vector<float>(200, 0.25f), 44100));
-        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).size() == 1);
+        CHECK(eingefrorenVon(loop, 44100, instrumentAuskunft()).size() == 1);
         Spieler spieler;
         spieler.setzeLoop(loop);
         REQUIRE(spieler.starte(engine, player));
@@ -1843,7 +1843,7 @@ TEST_CASE("Loop Spieler 30f: ein eingefrorener Clip spielt seine Wellenform — 
     }
     SUBCASE("keine Datei zum jetzigen Abdruck: live, wie ohne Marke")
     {
-        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).empty());
+        CHECK(eingefrorenVon(loop, 44100, instrumentAuskunft()).empty());
         Spieler spieler;
         spieler.setzeLoop(loop);
         REQUIRE(spieler.starte(engine, player));
@@ -1857,7 +1857,7 @@ TEST_CASE("Loop Spieler 30f: ein eingefrorener Clip spielt seine Wellenform — 
         REQUIRE(legeFrozen(abdruck, std::vector<float>(200, 0.25f), 44100));
         Loop geaendert = loop;
         geaendert.muster[0].zeilen[0][0] = 0.8;  // ein Schlag leiser: ein anderer Abdruck
-        CHECK(eingefrorenVon(geaendert, 44100, saitenAusInstrumenten()).empty());
+        CHECK(eingefrorenVon(geaendert, 44100, instrumentAuskunft()).empty());
         Spieler spieler;
         spieler.setzeLoop(geaendert);
         REQUIRE(spieler.starte(engine, player));
@@ -1877,13 +1877,13 @@ TEST_CASE("Loop Spieler 30f: ein eingefrorener Clip spielt seine Wellenform — 
         REQUIRE(spieler.starte(engine, player));
         spieler.warteAufToene();  // die Wellenform fehlt: er plant neu
         CHECK_FALSE(QFileInfo::exists(frozenDatei(abdruck)));
-        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).empty());
+        CHECK(eingefrorenVon(loop, 44100, instrumentAuskunft()).empty());
         spieler.warteAufToene();  // die Toene fuer live
         CHECK(ersterWert(engine.generator) == 0.5f);
         spieler.halte();
         // neu abgelegt, zaehlt sie wieder
         REQUIRE(legeFrozen(abdruck, std::vector<float>(200, 0.25f), 44100));
-        CHECK(eingefrorenVon(loop, 44100, saitenAusInstrumenten()).size() == 1);
+        CHECK(eingefrorenVon(loop, 44100, instrumentAuskunft()).size() == 1);
     }
 }
 

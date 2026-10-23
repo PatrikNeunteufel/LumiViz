@@ -73,6 +73,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Aufnahme.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/AufnahmeFenster.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/FormFenster.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Auskunft.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Auswahl.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Bausteine.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Bearbeiten.hpp"

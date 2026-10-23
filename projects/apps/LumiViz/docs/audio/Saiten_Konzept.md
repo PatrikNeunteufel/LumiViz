@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.39.0
-> **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
+> **Version:** 0.40.0
+> **Datum:** 2026-10-23 (Session 146: S-A1 a — die Auskunft heißt `InstrumentVon`, HT5 a im Spielweisen_Konzept; Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
 > Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
 > 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f, 26g und 26h gebaut (ohne den vollen Lauf), §5zb bis §5zd; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
@@ -1060,6 +1060,9 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
   `Loop::klangNamen` rechnen über einen gemeinsamen Plan je Vorkommen; ohne
   Auskunft wie bis Stufe 22. Verworfen: b (Kopie der Saiten am Muster —
   zweite Quelle), c (Nachbearbeitung des Ablaufs bei jedem Aufrufer).
+  **Seit S146 (HT5 a, Spielweisen_Konzept §4.1) heißt die Auskunft
+  `InstrumentVon`** und liefert `InstrumentAuskunft` (die Saiten und ob eine
+  Hammer-Saite klingt); `saitenAusInstrumenten()` heißt `instrumentAuskunft()`.
 - ✅ **S-T1 a** (Patrik S132): **Die Noten reichen von A0 (21) bis C8 (108)**,
   dem Umfang eines Klaviers (`kHoeheMin`, `kHoeheMax` in `Loop.hpp`; bis
   dahin C1 bis C7). Anlass: die tiefe B-Saite eines fünfsaitigen Basses (B0 =

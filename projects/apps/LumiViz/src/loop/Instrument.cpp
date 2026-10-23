@@ -3155,17 +3155,22 @@ Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate)
     return klang;
 }
 
-SaitenVon saitenAusInstrumenten()
+InstrumentAuskunft auskunftVon(const Instrument& instrument)
 {
-    auto gemerkt = std::make_shared<std::map<QString, Saitensatz>>();
+    return InstrumentAuskunft(instrument.saiten, hatHammer(instrument));
+}
+
+InstrumentVon instrumentAuskunft()
+{
+    auto gemerkt = std::make_shared<std::map<QString, InstrumentAuskunft>>();
     return [gemerkt](const QString& nennung) {
         auto ort = gemerkt->find(nennung);
         if (ort == gemerkt->end())
         {
             Instrument instrument;
-            Saitensatz saiten;
-            if (holeInstrument(nennung, instrument)) saiten = instrument.saiten;
-            ort = gemerkt->emplace(nennung, std::move(saiten)).first;
+            InstrumentAuskunft auskunft;
+            if (holeInstrument(nennung, instrument)) auskunft = auskunftVon(instrument);
+            ort = gemerkt->emplace(nennung, std::move(auskunft)).first;
         }
         return ort->second;
     };

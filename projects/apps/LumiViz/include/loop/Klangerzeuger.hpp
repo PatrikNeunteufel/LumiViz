@@ -69,7 +69,7 @@ struct Programm
 /// `loop.klangNamen(saiten)` geladen wurden; `eingefroren` ebenso (Stufe 30f).
 [[nodiscard]] std::shared_ptr<const Programm> baueProgramm(const Loop& loop, int rate,
                                                            std::shared_ptr<const Klaenge> klaenge,
-                                                           const SaitenVon& saiten = {},
+                                                           const InstrumentVon& saiten = {},
                                                            const Eingefroren& eingefroren = {});
 
 class Klangerzeuger final : public IAudioGenerator

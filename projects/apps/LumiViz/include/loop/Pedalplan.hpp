@@ -62,8 +62,14 @@ inline constexpr double kPedalSchwelle = 0.5;
 /// dem Anschlag, ueber die Naht in die naechste Wiederholung, hinter dem Ende des Clips
 /// der Wert dort. Gelesen bis zum Ende der gehaltenen Note; im Ausklang gilt der letzte
 /// Wert (von Claude gesetzt). Eine Spur Pitch, die ueberall 0 ist, faellt weg — der Ton
-/// heisst dann wie ohne sie.
-[[nodiscard]] TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note);
+/// heisst dann wie ohne sie. Mit `hammer` (das Instrument traegt eine Hammer-Saite,
+/// `InstrumentAuskunft::hammer`) traegt er die Anschlagstufe der Note (HK2 a,
+/// `anschlagStufe`); ohne bleibt sie 0.
+[[nodiscard]] TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note,
+                                  bool hammer = false);
+/// Die Anschlagstufe einer Note an einem Instrument mit oder ohne Hammer (HK2 a) — so
+/// heisst ihr Ton, und den Rest gleicht `anschlagRest` als Pegel aus.
+[[nodiscard]] int stufeDerNote(const Note& note, bool hammer);
 /// Die Spuren Pitch und Vibrato ueber einen Ton legen, der mit der Note `note` dieses
 /// Vorkommens anschlaegt und `ton.dauerMs` gehalten wird — wie in `tonImClip`; auch fuer
 /// die Toene eines Instruments mit Saiten (Stufe 28c-2a, `toeneImKanal`).

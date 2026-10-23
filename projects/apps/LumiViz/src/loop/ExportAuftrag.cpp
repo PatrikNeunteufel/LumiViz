@@ -99,7 +99,7 @@ void ExportAuftrag::arbeite()
     ExportErgebnis ergebnis;
     ergebnis.rate = m_wunsch.rate;
     // die Auskunft ueber die Saiten lebt auf diesem Thread — nur er fragt sie
-    const SaitenVon saiten = saitenAusInstrumenten();
+    const InstrumentVon saiten = instrumentAuskunft();
     QStringList namen;
     switch (m_wunsch.art)
     {

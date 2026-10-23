@@ -714,7 +714,7 @@ QString abdruckVonKlang(const QString& klang)
     return klang.startsWith(kFrozenVorsatz) ? klang.mid(kFrozenVorsatz.size()) : QString();
 }
 
-QStringList Loop::klangNamen(const SaitenVon& saiten, const Eingefroren& eingefroren) const
+QStringList Loop::klangNamen(const InstrumentVon& saiten, const Eingefroren& eingefroren) const
 {
     QStringList namen;
     QSet<QString> gesehen;
@@ -753,11 +753,21 @@ QStringList Loop::klangNamen(const SaitenVon& saiten, const Eingefroren& eingefr
             for (const Spur& spur : m.spuren) nimm(spur.spielt());
             continue;
         }
-        if (!saiten || !saiten(m.instrument).istSaiteninstrument())
+        const InstrumentAuskunft auskunft = saiten ? saiten(m.instrument) : InstrumentAuskunft{};
+        if (!auskunft.saiten.istSaiteninstrument())
         {
             if (!spieltJeVorkommen(m))
             {
-                for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
+                for (const Note& note : m.noten)
+                {
+                    // Stufe 31b (HK2 a): an einer Hammer-Saite mit der Anschlagstufe — wie in `plane`
+                    TonAngabe ton;
+                    ton.instrument = m.instrument;
+                    ton.hoehe = note.hoehe;
+                    ton.dauerMs = notenMs(note);
+                    ton.anschlagStufe = stufeDerNote(note, auskunft.hammer);
+                    nimm(tonKlang(ton));
+                }
                 continue;
             }
             // mit Pedal (Stufe 28b), Pitch oder Vibrato (28c-1b): je Vorkommen — dieselbe Rechnung wie `plane`
@@ -767,7 +777,7 @@ QStringList Loop::klangNamen(const SaitenVon& saiten, const Eingefroren& eingefr
                     if (clip.muster != m.name || istEingefroren(k, clip)) continue;
                     for (int r = 0; r < clip.wiederholungen; ++r)
                         for (std::size_t i = 0; i < m.noten.size(); ++i)
-                            nimm(tonKlang(tonImClip(*this, m, clip.wiederholungen, r, i)));
+                            nimm(tonKlang(tonImClip(*this, m, clip.wiederholungen, r, i, auskunft.hammer)));
                 }
             continue;
         }

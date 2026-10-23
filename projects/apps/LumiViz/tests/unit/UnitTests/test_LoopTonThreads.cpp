@@ -91,7 +91,7 @@ std::vector<TonAngabe> alleToene()
 {
     std::vector<TonAngabe> toene;
     QStringList gesehen;
-    const SaitenVon saiten = saitenAusInstrumenten();
+    const InstrumentVon saiten = instrumentAuskunft();
     for (const QString& pfad : looptest::mitgelieferteLoops())
     {
         Loop loop;

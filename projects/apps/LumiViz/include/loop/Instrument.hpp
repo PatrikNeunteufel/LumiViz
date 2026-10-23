@@ -22,7 +22,7 @@
 #include "loop/Bausteine.hpp"
 #include "loop/HammerSaite.hpp"
 #include "loop/Rechenkern.hpp"
-#include "loop/Saiten.hpp"
+#include "loop/Auskunft.hpp"  // InstrumentVon (HT5 a); bringt Saiten.hpp mit
 
 #include <QColor>
 #include <QJsonObject>
@@ -764,10 +764,12 @@ inline constexpr double kTonMaxSekunden = 30.0;
 /// Saite rechnet sie ohne Dicke.
 [[nodiscard]] Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate);
 
-/// Die Auskunft fuer die Planung (Entscheid S-A1 a): die Saiten eines
-/// Instruments beim Namen, ueber `holeInstrument` — je Name einmal gelesen und
-/// gemerkt, solange die Auskunft lebt. Ein Instrument, das sich nicht findet,
-/// hat keine Saiten.
-[[nodiscard]] SaitenVon saitenAusInstrumenten();
+/// Die Auskunft fuer die Planung (Entscheide S-A1 a, HT5 a): die Saiten eines
+/// Instruments beim Namen und ob eine Hammer-Saite klingt (`hatHammer`), ueber
+/// `holeInstrument` — je Name einmal gelesen und gemerkt, solange die Auskunft
+/// lebt. Ein Instrument, das sich nicht findet, hat weder Saiten noch Hammer.
+[[nodiscard]] InstrumentVon instrumentAuskunft();
+/// Dieselbe Auskunft fuer ein Instrument, das schon da ist (auch ungespeichert).
+[[nodiscard]] InstrumentAuskunft auskunftVon(const Instrument& instrument);
 
 }  // namespace lumi::loop

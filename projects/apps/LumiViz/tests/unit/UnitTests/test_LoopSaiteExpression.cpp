@@ -234,7 +234,7 @@ TEST_SUITE("LoopSaiteExpression")
         loop.richte();
         REQUIRE(loop.bpm == 120.0);
         REQUIRE(loop.schritteJeSchlag == 4);
-        const SaitenVon saiten = [](const QString&) { return gitarre(); };
+        const InstrumentVon saiten = [](const QString&) { return gitarre(); };
         const std::vector<ClipToene> toene = toeneImKanal(loop, 0, saiten);
         REQUIRE(toene.size() == 2);
         REQUIRE(toene[0].size() == 1);
@@ -286,7 +286,7 @@ TEST_SUITE("LoopSaiteExpression")
         loop.muster = {m};
         loop.kanaele = {Kanal{QStringLiteral("K"), true, {LoopClip(QStringLiteral("G"), 0, 1)}}};
         loop.richte();
-        const SaitenVon saiten = [](const QString&) { return gitarre(); };
+        const InstrumentVon saiten = [](const QString&) { return gitarre(); };
         const std::vector<ClipToene> toene = toeneImKanal(loop, 0, saiten);
         const GeplanterTon& erste = toene[0][0][0];
         REQUIRE(erste.endeMs == 500);

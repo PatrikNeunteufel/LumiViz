@@ -17,7 +17,7 @@
  *   Verlust.
  * - Die Spuren: Sustain an den Keys, Expression am Pad mit Kurve am Clip, Vibrato und Pitch
  *   am Lead, Expression an der Gitarre, Pitch am Bass.
- * - Die Planung wie im Programm (`saitenAusInstrumenten`): das Pedal haelt die Keys, das Pad
+ * - Die Planung wie im Programm (`instrumentAuskunft`): das Pedal haelt die Keys, das Pad
  *   bekommt seinen Verlauf im Rechenkern, die Toene der Gitarre tragen Expression (28c-2b).
  ****************************************************************************************
  */
@@ -108,7 +108,7 @@ TEST_SUITE("LoopSpurenBeispiel")
         CHECK(traegt("round_bass", Steuerspur::Pitch));
 
         // --- die Planung wie im Programm
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const Muster* keys = loop.findeMuster(QStringLiteral("Keys"));
         REQUIRE(keys != nullptr);
         CHECK(gehaltenMs(loop, *keys, 2, 0, 0) > loop.notenMs(keys->noten.front()));  // das Pedal haelt

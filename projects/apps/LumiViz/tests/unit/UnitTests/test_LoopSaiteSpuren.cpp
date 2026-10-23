@@ -246,7 +246,7 @@ TEST_SUITE("LoopSaiteSpuren")
         loop.muster = {m};
         loop.kanaele = {Kanal{QStringLiteral("K"), true, {LoopClip(QStringLiteral("G"), 0, 1)}}};
         loop.richte();
-        const SaitenVon saiten = [](const QString&) { return gitarre(2.0, 1.0); };
+        const InstrumentVon saiten = [](const QString&) { return gitarre(2.0, 1.0); };
         const std::vector<ClipToene> toene = toeneImKanal(loop, 0, saiten);
         REQUIRE(toene.size() == 1);
         const GeplanterTon& erste = toene[0][0][0];

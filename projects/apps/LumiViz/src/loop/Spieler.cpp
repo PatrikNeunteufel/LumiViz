@@ -64,7 +64,7 @@ Spieler::Satz Spieler::satzJetzt(int rate) const
     // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm;
     // eine neu gespeicherte Instrument-Datei gibt andere Toene; eingefrorene Clips (Stufe 30f)
     // spielen ihre Wellenform, wenn sie zum jetzigen Abdruck vorliegt
-    const SaitenVon saiten = saitenAusInstrumenten();
+    const InstrumentVon saiten = instrumentAuskunft();
     Eingefroren eingefroren = eingefrorenVon(m_loop, rate, saiten);
     QStringList namen = m_loop.klangNamen(saiten, eingefroren);
     return {std::move(namen), rate, instrumentFassung(), std::move(eingefroren)};
@@ -111,7 +111,7 @@ void Spieler::ladeProgramm(bool vonVorn)
         // dieselben Klaenge: das Programm gleich, ein laufender Auftrag ist ueberholt
         verwirf(m_auftrag);
         m_wartet = false;
-        m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten(), m_satz.eingefroren));
+        m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, instrumentAuskunft(), m_satz.eingefroren));
         return;
     }
     if (m_auftrag == nullptr || !(m_auftragSatz == satz))
@@ -131,7 +131,7 @@ void Spieler::ladeProgramm(bool vonVorn)
                 // Wellenform kommt dann aus dem Speicher: `nimmKlaenge` gelingt)
                 (void)nimmKlaenge(*auftrag, satz);
                 m_wartet = false;
-                m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten(), m_satz.eingefroren));
+                m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, instrumentAuskunft(), m_satz.eingefroren));
                 return;
             }
             auftrag->starte();
@@ -169,7 +169,7 @@ void Spieler::schalteUm()
         return;
     }
     const int rate = m_satz.rate;
-    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten(), m_satz.eingefroren));
+    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, instrumentAuskunft(), m_satz.eingefroren));
     if (m_wartet)
     {
         m_wartet = false;

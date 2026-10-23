@@ -297,7 +297,7 @@ TEST_SUITE("Loop Freeze")
     TEST_CASE("Loop Freeze 30d: der Abdruck eines Clips — was klingt, aendert ihn, was live bleibt, nicht")
     {
         FreezeApp app;
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         const Loop loop = probeLoop();
         const ClipOrt keys{1, 1};
         const QByteArray grund = clipAbdruck(loop, keys, kRate, saiten);
@@ -356,7 +356,7 @@ TEST_SUITE("Loop Freeze")
         FreezeApp app;
         QTemporaryDir tmp;
         REQUIRE(tmp.isValid());
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         Loop loop = probeLoop();
 
         // ein eigenes Instrument als Datei
@@ -551,7 +551,7 @@ TEST_SUITE("Loop Freeze")
     TEST_CASE("Loop Freeze 30f, FV2 a: die Marke frozen am Clip — Datei, Fassung 12, richten, Abdruck")
     {
         FreezeApp app;
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         Loop loop = probeLoop();
         const ClipOrt keys{1, 1};
         const QByteArray abdruck = clipAbdruck(loop, keys, kRate, saiten);

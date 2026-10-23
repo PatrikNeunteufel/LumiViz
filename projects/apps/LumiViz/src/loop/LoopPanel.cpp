@@ -543,7 +543,7 @@ bool LoopPanel::speichere(const QString& pfad)
     // F2 a: eingefrorene Clips gelten mit dem Stand, der jetzt gespeichert wird — ihre Marken
     // bekommen den jetzigen Abdruck, was fehlt, rechnet danach im Hintergrund
     Loop gespeichert = m_loop;
-    const std::vector<ClipOrt> zuRechnen = frischeFrozenMarken(gespeichert, freezeRate(), saitenAusInstrumenten());
+    const std::vector<ClipOrt> zuRechnen = frischeFrozenMarken(gespeichert, freezeRate(), instrumentAuskunft());
     if (!speichereLoop(gespeichert, pfad)) return false;
     if (!(gespeichert == m_loop))
     {
@@ -1374,7 +1374,7 @@ bool LoopPanel::friereEin(bool einfrieren)
     Loop neu = m_loop;
     std::vector<ClipOrt> zuRechnen;
     if (einfrieren)
-        zuRechnen = setzeFrozenMarken(neu, orte, freezeRate(), saitenAusInstrumenten());
+        zuRechnen = setzeFrozenMarken(neu, orte, freezeRate(), instrumentAuskunft());
     else
         loeseFrozenMarken(neu, orte);
     if (neu == m_loop) return false;
@@ -1458,7 +1458,7 @@ void LoopPanel::bestimmeFreeze(bool nachAenderung)
     if (m_geladen)
     {
         const int rate = freezeRate();
-        const SaitenVon saiten = saitenAusInstrumenten();
+        const InstrumentVon saiten = instrumentAuskunft();
         for (std::size_t k = 0; k < m_loop.kanaele.size(); ++k)
             for (const LoopClip& clip : m_loop.kanaele[k].clips)
             {
@@ -1490,7 +1490,7 @@ void LoopPanel::bestimmeZeiten()
     m_gelegtGesehen = tonspeicher().stand().gelegt;
     if (!m_geladen) return;
     const int rate = freezeRate();
-    const SaitenVon saiten = saitenAusInstrumenten();
+    const InstrumentVon saiten = instrumentAuskunft();
     for (std::size_t k = 0; k < m_loop.kanaele.size(); ++k)
         for (const LoopClip& clip : m_loop.kanaele[k].clips)
         {

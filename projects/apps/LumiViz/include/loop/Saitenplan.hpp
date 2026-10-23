@@ -21,7 +21,7 @@
 #pragma once
 
 #include "loop/Loop.hpp"
-#include "loop/Saiten.hpp"
+#include "loop/Auskunft.hpp"  // InstrumentVon (HT5 a); bringt Saiten.hpp mit
 
 #include <vector>
 
@@ -131,6 +131,6 @@ using ClipToene = std::vector<std::vector<GeplanterTon>>;
 /// (leere Funktion) lauter leere. Seit Stufe 24b mit Richtung, Versatz und den
 /// Artikulationen; eine Note mit *Let ring* wird gehalten, bis die naechste auf
 /// ihrer Saite sie abdaempft.
-[[nodiscard]] std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanal, const SaitenVon& saiten);
+[[nodiscard]] std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanal, const InstrumentVon& saiten);
 
 }  // namespace lumi::loop

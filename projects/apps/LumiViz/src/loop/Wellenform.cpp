@@ -146,7 +146,7 @@ std::optional<Loop> clipFassung(const Loop& loop, ClipOrt ort)
 }
 
 std::optional<Wellenform> rechneClip(const Loop& loop, ClipOrt ort, int rate, std::shared_ptr<const Klaenge> klaenge,
-                                     const SaitenVon& saiten, const Fortschritt& fortschritt)
+                                     const InstrumentVon& saiten, const Fortschritt& fortschritt)
 {
     const std::optional<Loop> fassung = clipFassung(loop, ort);
     if (!fassung || rate <= 0) return std::nullopt;
@@ -188,7 +188,7 @@ std::optional<Loop> loopFassung(const Loop& loop, int durchlaeufe)
     return fassung;
 }
 
-QStringList loopKlangNamen(const Loop& loop, LoopEnde ende, int durchlaeufe, const SaitenVon& saiten)
+QStringList loopKlangNamen(const Loop& loop, LoopEnde ende, int durchlaeufe, const InstrumentVon& saiten)
 {
     if (ende == LoopEnde::Nahtlos) return loop.klangNamen(saiten);
     const std::optional<Loop> fassung = loopFassung(loop, durchlaeufe);
@@ -196,7 +196,7 @@ QStringList loopKlangNamen(const Loop& loop, LoopEnde ende, int durchlaeufe, con
 }
 
 std::optional<Wellenform> rechneLoop(const Loop& loop, LoopEnde ende, int durchlaeufe, int rate,
-                                     std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten,
+                                     std::shared_ptr<const Klaenge> klaenge, const InstrumentVon& saiten,
                                      const Fortschritt& fortschritt)
 {
     if (rate <= 0) return std::nullopt;
@@ -244,7 +244,7 @@ std::optional<Wellenform> rechneLoop(const Loop& loop, LoopEnde ende, int durchl
 }
 
 std::optional<Wellenform> rechneAusschnitt(const Loop& loop, double versatzMs, double laengeMs, int rate,
-                                           std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten,
+                                           std::shared_ptr<const Klaenge> klaenge, const InstrumentVon& saiten,
                                            const Fortschritt& fortschritt)
 {
     if (rate <= 0) return std::nullopt;

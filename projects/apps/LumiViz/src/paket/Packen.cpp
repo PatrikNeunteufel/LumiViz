@@ -182,7 +182,7 @@ QString paketPfad(const Zugehoerige& z)
            endungVon(z.art, z.datei);
 }
 
-std::vector<FrozenTeil> frozenTeile(const lp::Loop& loop, int rate, const lp::SaitenVon& saiten)
+std::vector<FrozenTeil> frozenTeile(const lp::Loop& loop, int rate, const lp::InstrumentVon& saiten)
 {
     std::vector<FrozenTeil> teile;
     for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
@@ -208,7 +208,7 @@ std::vector<FrozenTeil> frozenTeile(const lp::Loop& loop, int rate, const lp::Sa
     return teile;
 }
 
-std::vector<FrozenTeil> frozenTeile(const QString& loopDatei, int rate, const lp::SaitenVon& saiten)
+std::vector<FrozenTeil> frozenTeile(const QString& loopDatei, int rate, const lp::InstrumentVon& saiten)
 {
     lp::Loop loop;
     if (!lp::ladeLoop(loopDatei, loop)) return {};

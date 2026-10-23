@@ -13,7 +13,7 @@
 #include "composer/Bearbeiten.hpp"
 #include "composer/Bildquelle.hpp"
 #include "loop/Freeze.hpp"      // eingefrorenVon (Stufe 30f)
-#include "loop/Instrument.hpp"  // saitenAusInstrumenten, instrumentFassung (Stufe 29e)
+#include "loop/Instrument.hpp"  // instrumentAuskunft, instrumentFassung (Stufe 29e)
 #include "loop/Loop.hpp"
 #include "loop/Offen.hpp"
 #include "services/IEventBus.hpp"
@@ -595,7 +595,7 @@ void Sitzung::bereiteToeneVor()
     IAudioEngine* engine = m_widget.dienste().tryResolve<IAudioEngine>();
     if (engine == nullptr || !m_geladen) return;  // ohne Engine kein Ton: nichts zu warten
     // die Toene aller Loop-Clips der eingeschalteten Audio-Kanaele, je Loop-Datei einmal gelesen
-    const lumi::loop::SaitenVon saiten = lumi::loop::saitenAusInstrumenten();
+    const lumi::loop::InstrumentVon saiten = lumi::loop::instrumentAuskunft();
     const int rate = engine->getSampleRate();
     QStringList namen;
     QStringList gelesen;

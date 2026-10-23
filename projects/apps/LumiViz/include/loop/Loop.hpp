@@ -21,7 +21,7 @@
 #pragma once
 
 #include "loop/Bausteine.hpp"
-#include "loop/Saiten.hpp"
+#include "loop/Auskunft.hpp"  // InstrumentVon (HT5 a); bringt Saiten.hpp mit
 #include "loop/Zeitspur.hpp"
 
 #include <QJsonObject>
@@ -626,7 +626,7 @@ struct Loop
     /// (`frozenKlang`, hinten angehaengt in der Reihenfolge der Kanaele und Clips) statt
     /// seiner Toene — ein Muster, das nur in eingefrorenen Clips liegt, nennt keine.
     /// Ohne `eingefroren` wie bis Stufe 30e.
-    [[nodiscard]] QStringList klangNamen(const SaitenVon& saiten = {}, const Eingefroren& eingefroren = {}) const;
+    [[nodiscard]] QStringList klangNamen(const InstrumentVon& saiten = {}, const Eingefroren& eingefroren = {}) const;
     /// Die Dauer einer Note in Millisekunden, gerundet — wie sie im Namen
     /// ihres Tons steht.
     [[nodiscard]] int notenMs(const Note& note) const;

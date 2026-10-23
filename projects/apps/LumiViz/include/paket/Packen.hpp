@@ -23,7 +23,7 @@
 
 #include "loop/Bearbeiten.hpp"
 #include "loop/Loop.hpp"
-#include "loop/Saiten.hpp"
+#include "loop/Auskunft.hpp"  // InstrumentVon (HT5 a); bringt Saiten.hpp mit
 #include "paket/Sammler.hpp"
 
 #include <QByteArray>
@@ -67,10 +67,10 @@ struct FrozenTeil
 /// Je Clip mit Marke, nach Kanal und Takt: der jetzige Abdruck fuer `rate` und ob seine
 /// Wellenform vorliegt. Schreibt nichts.
 [[nodiscard]] std::vector<FrozenTeil> frozenTeile(const lumi::loop::Loop& loop, int rate,
-                                                  const lumi::loop::SaitenVon& saiten);
+                                                  const lumi::loop::InstrumentVon& saiten);
 /// Dasselbe fuer die gespeicherte Datei (Publish nimmt sie). Leer = keine lesbare Loop-Datei.
 [[nodiscard]] std::vector<FrozenTeil> frozenTeile(const QString& loopDatei, int rate,
-                                                  const lumi::loop::SaitenVon& saiten);
+                                                  const lumi::loop::InstrumentVon& saiten);
 
 struct PackErgebnis
 {

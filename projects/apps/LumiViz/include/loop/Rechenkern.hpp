@@ -161,7 +161,7 @@ struct Ablauf
 /// des Loops (beide live, F3 a), ohne Bus und ohne Expression (beides steckt in der
 /// Wellenform), ohne sich selbst abzuschneiden (FV1 a). Die Namen stimmen dann mit
 /// `loop.klangNamen(saiten, eingefroren)` ueberein.
-[[nodiscard]] Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten = {}, const Eingefroren& eingefroren = {});
+[[nodiscard]] Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten = {}, const Eingefroren& eingefroren = {});
 
 /// `frames` Abtastwerte ab `von` nach `aus` schreiben (Stereo, `2 * frames`
 /// Werte; der Block wird ueberschrieben). `klaenge[i]` ist der Klang zu

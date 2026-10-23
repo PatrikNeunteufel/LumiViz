@@ -282,7 +282,7 @@ struct FrozenBestand : Bestand
                         kanal(QStringLiteral("Piano"), QStringLiteral("P"), 0)};
         loop.richte();
         const FrozenOrdner ordner(absender);
-        const lp::SaitenVon saiten = lp::saitenAusInstrumenten();
+        const lp::InstrumentVon saiten = lp::instrumentAuskunft();
         const std::vector<lp::ClipOrt> zuRechnen =
             lp::setzeFrozenMarken(loop, {lp::ClipOrt{0, 4}, lp::ClipOrt{1, 0}}, kFreezeRate, saiten);
         CHECK(zuRechnen.size() == 2);

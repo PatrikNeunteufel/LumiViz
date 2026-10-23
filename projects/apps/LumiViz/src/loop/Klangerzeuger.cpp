@@ -46,7 +46,7 @@ void uebernimmGedaechtnis(const Programm* alt, const Programm& neu)
 }  // namespace
 
 std::shared_ptr<const Programm> baueProgramm(const Loop& loop, int rate,
-                                             std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten,
+                                             std::shared_ptr<const Klaenge> klaenge, const InstrumentVon& saiten,
                                              const Eingefroren& eingefroren)
 {
     auto programm = std::make_shared<Programm>();

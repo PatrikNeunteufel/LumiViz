@@ -119,7 +119,7 @@ std::vector<float> rechneLoop(const QString& pfad, bool ohneStrum = false)
             m.strum.spreadMs = 0.0;
             m.anschlaege.clear();
         }
-    const SaitenVon saiten = saitenAusInstrumenten();
+    const InstrumentVon saiten = instrumentAuskunft();
     const Ablauf ablauf = plane(loop, kRate, saiten);
     const auto klaenge = std::make_shared<const Klaenge>(looptest::klaengeOhneEngine(ablauf));
     Klangerzeuger erzeuger;
