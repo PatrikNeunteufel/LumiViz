@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.278.0
-> **Datum:** 2026-10-22 (Session 144)
+> **Version:** 1.279.0
+> **Datum:** 2026-10-23 (Session 146)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3076,8 +3076,12 @@ Idee Preset-Warmup/Pre-Roll.
   Rechenverfahren), Entscheide BL1 a (drei Chopin-Ausschnitte als Beispiel-Loops), BL2 a (von Hand aus
   gemeinfreier Ausgabe vor 1900), HS1 a (modal nach Bank/Zambon/Fontana 2010), HS2 a (Teilschritte 31a–31h),
   HA1 a bis HA4 a (Datei: Kurven über die Tastatur, *Excitation* + *Modal* an der Schicht, Block *Keyboard*,
-  Anschlagstärke gestuft im Namen). **Offen:** welche Ausgabe je Chopin-Stück; 31a bauen (`undampedFrom`
-  belegen), dann 31b und die Messung der Rechenzeit (entscheidet HA3 a und das Mitschwingen 31e).
+  Anschlagstärke gestuft im Namen). **S146: 31a und 31b gebaut** (Modell, Datei Fassung 16, ein Ton mit Saite,
+  Hammer, Chor, Längsschwingung, Dämpfer, Stufe in der Planung; HK1 a, HK2 a, HT1 a bis HT6 a; Rechenzeit 2,3 % der
+  Echtzeit im Bass); **31c begonnen:** HT7 a vorläufig (Boden aus *Salamander*), Recherche mit sieben Agenten, KB1 a
+  (gemeinsame Grundlage für Körper); Berichte und Modell unter `docs/modellierung/`. **Offen:** Netzdatei zu
+  RT-0425 prüfen, dann woher die Moden des Bodens kommen; Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele
+  Vorgaben vorläufig bis 31d (`docs/modellierung/hammer-saite/modell.md` §2).
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6153,6 +6157,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.279.0 | 2026-10-23 | Session 146. §7 Spielweisen: Stufe 31 — 31a und 31b gebaut, 31c begonnen (HK1 a, HK2 a, HT1 a bis HT7 a, KB1 a); Ablage `docs/modellierung/`. |
 | 1.278.0 | 2026-10-22 | Session 145. §7 Spielweisen: Stufe 31 Hammer-Saite begonnen (BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; nichts gebaut). |
 | 1.277.0 | 2026-10-22 | Session 145. §7 Spielweisen: Freeze 30i gebaut (FP1 a bis FP3 a: Publish mit eingefrorenen Clips), Handbuch Freeze, Sichttest-Liste Freeze; Stufe 30 fertig bis auf den vollen Lauf. |
 | 1.276.0 | 2026-10-22 | Session 144. §7 Spielweisen: Freeze 30f–30h gebaut (FV1 a, FV2 a, FZ4 a bis FZ7 a); Hammer-Saite wieder Stufe 31; Fix Tonführung Fall C, Fix Absturz beim Beenden (LZ1 a). |
