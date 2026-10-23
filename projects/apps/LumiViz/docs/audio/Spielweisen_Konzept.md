@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.64.0
+> **Version:** 0.65.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT7 a (HT7 a vorläufig), KB1 a und TS1 a (Patrik S139–S146);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT7 a (HT7 a vorläufig), KB1 a, BM1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1101,7 +1101,8 @@ Claude im Volltext geprüft, sonst nur Bericht):**
   an einem Klavier, nachgelesen); äquivalente Steifigkeit eines Stutzflügels ⟨D_iso⟩ = 68 m⁴s⁻² (Boutillon & Ege
   2013, Anh. B, nachgelesen); die ersten Moden eines eingebauten Flügelbodens ab 43,1 Hz (Corradi et al. 2017,
   Tab. 2, nachgelesen). **Fehlt für jeden Konzertflügel:** Umriss, Zahl und Querschnitt der Rippen, Lage der
-  Stege — nur als Netzdatei zu RT-0425 (Dropbox, Erreichbarkeit ungeprüft); die Punkte, an denen jede Saite den
+  Stege — nur als Netzdatei zu RT-0425 (Dropbox; S147 geprüft: nicht mehr öffentlich zu haben, siehe
+  `docs/modellierung/hammer-saite/recherche/2026-10-23_S147_rt0425_netzdatei.md`); die Punkte, an denen jede Saite den
   Steg trifft, stehen in RT-0425 Anhang A (x0, y0).
 - **Moden rechnen:** Chabassier, Joly & Chaigne 2013: „2 400 modes are needed to model the soundboard vibrations
   up to 10 kHz“, einmal vorab (nachgelesen); MAESSTRO (Elie, Cotté & Boutillon 2022, CC BY 4.0; Code CeCILL-C):
@@ -1129,6 +1130,37 @@ Moden kommen (gerechnet, gemessen, angepasst) — je Instrument eine eigene Frag
 gelesenen Arbeiten hinauslaufen; jede Quelle lässt sich darin ausdrücken; Rückwirkung und Abstrahlung aus einer
 Quelle. Verworfen: b (nur Impulsantworten — keine Rückwirkung, nichts zu verstellen), c (kein gemeinsamer Körper —
 gegen den Wunsch). Kippt auf b neben a, wenn für die meisten Instrumente nur Impulsantworten zu haben sind.
+
+**Befund S147 (selbst geprüft):** Die Netzdatei zu RT-0425 (Umriss, Rippen, Stege des Steinway D) ist nicht mehr
+öffentlich zu haben — der alte öffentliche Dropbox-Ordner antwortet mit 404, das Webarchiv hat keine Aufnahme mit
+Inhalt, Montjoie bietet keine Piano-Netze an; nicht versucht: eine Anfrage an die Autoren. MAESSTRO (Elie, Cotté &
+Boutillon 2022, nachgelesen) rechnet „a simplified version of the Steinway D“ mit Zahlen in Tab. 1–2 (Platte 8 mm
+Sitka, Faser 135°; Stege Buche 60 × 32 und 20 × 32 mm; Rippen 17–27 × 21–25 mm; 23 006 Elemente, Moden bis 5 kHz
+„about 2 h“); Umriss, Stege und Rippen nur als Bild (Abb. 4), keine Geometriedatei im Repo. Zu hören (§6, nachgelesen):
+„The impact of the global stiffness is also audible in the resulting sound pressure level“; die Änderung des
+Rippenmusters zeigt sich dagegen kaum in ihren Größen (Pegel, Abklingzeit), die von Note zu Note stark streuen.
+Bericht: `docs/modellierung/hammer-saite/recherche/2026-10-23_S147_rt0425_netzdatei.md`.
+
+✅ **BM1 a** (Patrik S147), **mit Zusatz: der Boden ist eine Konstruktion in einer Datei — bei Bedarf entstehen
+eigene Flügel mit hörbar anderem Klang; kein Editor vorerst, die Möglichkeit bleibt offen.** **Die Moden des
+Flügelbodens werden gerechnet:** eigenes Werkzeug, offline, in C++, Reissner-Mindlin-Platte mit finiten Elementen
+wie bei Chabassier 2013 und MAESSTRO (orthotrop; Rippen und Stege als Dicke; Rand eingespannt). Geometrie: der
+vereinfachte Steinway D aus MAESSTRO (Tab. 1; Umriss, Stege, Rippen aus Abb. 4 abgezeichnet, gegen RT-0425 Abb. 2
+geprüft); Stegpunkte aus RT-0425 Anhang A; Holz aus MAESSTRO Tab. 2 und RT-0425 §2.1. Aus den Modenformen die Masse je
+Stegpunkt und das Abstrahlgewicht je Mode (Rayleigh); oberhalb einer Grenzfrequenz der statistische Teil nach
+Boutillon & Ege 2013 (Gl. 23–27, nachgelesen) — die Grenze legt ein eigener Schritt fest. Prüfstein: die ersten Moden
+gemessener Flügel (Corradi 2017 Tab. 2 ab 43,1 Hz, Conklin) und die mittlere Mobilität (Plath 2019, Giordano). **Zum
+Zusatz:** Das Werkzeug liest die Konstruktion (Umriss, Platte, Rippen, Stege, Holz, Stegpunkte) aus einer Datei, nicht
+aus Code; ein Editor kommt erst auf Wunsch, die Datei ist so gefasst, dass er sie ohne Umbau schreiben kann.
+Varianten (etwa dickere Platte, weniger Rippen, kleinerer Boden) erzeugt Claude bei Bedarf als Dateien; ob ein
+Unterschied auch für Laien hörbar ist, wird an Hörproben geprüft, nicht vorausgesetzt — nach MAESSTRO §6 tragen
+Änderungen der ganzen Steifigkeit (Dicke, Holz, Größe) hörbar, ein anderes Rippenmuster allein kaum. Grund: nur das
+Rechnen liefert alles, was KB1 a je Mode verlangt, aus einer Quelle; die Formen tragen den Unterschied zwischen Bass
+und Diskant am Steg. Verworfen: b (semi-analytisch nach Trévisan — verliert laut MAESSTRO „fine geometric details“,
+die Rechenzeit fällt nur einmal offline an), c (gemessene erste Moden plus Statistik — keine Formen, Masse und
+Abstrahlung nur als Mittel; gemessen nur am Fazioli). Kippt auf c, wenn die abgezeichnete Geometrie die ersten Moden
+nicht in den Bereich gemessener Flügel bringt (erste Mode rund 43–60 Hz, Abstände um 20 Hz); die Datei nach KB1 a
+nimmt beide Herkünfte auf. HT7 a bleibt davon unberührt.
 
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
@@ -1994,6 +2026,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.65.0 | 2026-10-23 | Session 147. Befund: die Netzdatei zu RT-0425 ist nicht mehr zu haben, MAESSTRO rechnet einen vereinfachten Steinway D (Tab. 1–2, Abb. 4); BM1 a (die Moden des Flügelbodens gerechnet, eigenes FEM-Werkzeug; Konstruktion als Datei, Varianten bei Bedarf, Editor offen). |
 | 0.64.0 | 2026-10-23 | Session 146. HT6 a (Stufen bleiben); Befund vor 31c; HT7 a vorläufig (Boden aus Salamander) mit Auftrag zur Recherche für b; Wunsch „Deluxe“; Befund Recherche Boden und Körper (sieben Agenten, Berichte unter `docs/modellierung/`); KB1 a (gemeinsame Grundlage für Körper, Erweiterungen je Instrument); die Herleitung zu HT3 a nach `docs/modellierung/hammer-saite/modell.md`. |
 | 0.63.0 | 2026-10-23 | Session 146. HT5 a (die Auskunft `InstrumentVon` mit Saiten und Hammer); 31b-3 gebaut (Stufe in der Planung, Rest als Pegel) und Rechenzeit gemessen. |
 | 0.62.0 | 2026-10-23 | Session 146. Befund 31b-2 (die Längskraft mit gleichem Gewicht beherrscht den Klang; Auslenkung gegen Chabassier Tab. IV; Kopplung am Steg mit sin α nach Gl. 21); HT4 a (Kurve Bridge angle); 31b-2 gebaut. |

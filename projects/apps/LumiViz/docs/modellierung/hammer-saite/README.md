@@ -4,7 +4,7 @@
 `docs/audio/Spielweisen_Konzept.md` §4 „Familie Hammer-Saite“: Zielbild (S141), BL1 a/BL2 a (Beispiel-Loops),
 HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Anschlag, Keyboard), HK1 a/HK2 a
 (Glättung, Anschlagstufe), HT1 a–HT7 a (Saitendaten, Hammer, Chor, Winkel am Steg, Auskunft, Stufen, Boden), KB1 a
-(gemeinsame Grundlage für Körper), Wunsch „Deluxe“.
+(gemeinsame Grundlage für Körper), Wunsch „Deluxe“, BM1 a (Moden des Bodens gerechnet, Konstruktion als Datei).
 
 ## Eigene Ausarbeitungen
 - [modell.md](modell.md) — das gebaute Modell (Stand 31b): Saite, Hammer, Chor (Herleitung), Längsschwingung,
@@ -22,6 +22,7 @@ HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Ans
 | [recherche/2026-10-23_S146_resonanzboden_abstrahlung.md](recherche/2026-10-23_S146_resonanzboden_abstrahlung.md) | Boden: Abstrahlung (Rayleigh, Koinzidenz, modal) |
 | [recherche/2026-10-23_S146_resonanzboden_numerik.md](recherche/2026-10-23_S146_resonanzboden_numerik.md) | Boden: Moden numerisch vorab (FEM, MAESSTRO, Trévisan) |
 | [recherche/2026-10-23_S146_resonanzboden_syntheseverfahren.md](recherche/2026-10-23_S146_resonanzboden_syntheseverfahren.md) | Boden: Verfahren der Synthese und ihre Kosten (Faltung, parallele Filter, Pianoteq) |
+| [recherche/2026-10-23_S147_rt0425_netzdatei.md](recherche/2026-10-23_S147_rt0425_netzdatei.md) | Netzdatei zu RT-0425 (Steinway D): nicht erreichbar, Reichweite der Suche |
 | siehe auch `../koerper/recherche/` | gemeinsame Grundlage für Körper, offene Messdaten |
 
 ## Notizen
