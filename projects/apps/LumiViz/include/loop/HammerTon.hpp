@@ -65,9 +65,21 @@ struct ChorMode
 /// hoechstens `maxFrames`.
 [[nodiscard]] std::int64_t hammerNachklang(const HammerSaite& saite, const HammerAnschlag& anschlag, std::int64_t maxFrames);
 
+/// Was beim Anschlag geschieht (fuer Tests und Messungen gegen die Literatur).
+struct HammerMessung
+{
+    double kontaktS = 0.0;       ///< so lange lag der Hammer an (vom ersten bis zum letzten Druck)
+    double kraftSpitzeN = 0.0;   ///< die groesste Kraft zwischen Hammer und Saite
+    /// Die groesste Auslenkung einer Saite in den ersten 30 ms, an neun Stellen
+    /// (L/10 … 9L/10) gesucht, in m.
+    double auslenkungSpitzeM = 0.0;
+};
+
 /// Einen Ton rechnen: `frames` Abtastwerte in eine Seite (Mono), der Wert in
-/// Einheiten von `kHammerKraftBezug` Newton am Steg; endet bei null.
-void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, std::vector<float>& mono, std::int64_t frames);
+/// Einheiten von `kHammerKraftBezug` Newton am Steg; endet bei null. Mit
+/// `messung` wird festgehalten, was beim Anschlag geschieht.
+void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, std::vector<float>& mono, std::int64_t frames,
+                     HammerMessung* messung = nullptr);
 
 /// Die Kraft am Steg, die als 1 ausgegeben wird (von Claude gesetzt; den Pegel
 /// des Instruments stimmt Stufe 31h).

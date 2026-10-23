@@ -124,6 +124,7 @@ constexpr Grenzen kGrenzeDaempfer{0.01, 10.0};
 constexpr Grenzen kGrenzeLaenge{0.02, 8.0};
 constexpr Grenzen kGrenzeMasseJeM{0.5, 500.0};
 constexpr Grenzen kGrenzeLaengs{5.0, 40.0};
+constexpr Grenzen kGrenzeWinkel{0.0, 10.0};
 
 /// Die Tasten der Vorgabe: A0, A1, … A7 und C8.
 constexpr int kVorgabeTasten[] = {21, 33, 45, 57, 69, 81, 93, 105, 108};
@@ -165,6 +166,8 @@ HammerSaite baueVorgabe()
                                        {41, 7.729}, {54, 6.733}, {70, 5.459}, {82, 4.972}, {94, 4.392}, {107, 3.404}});
     s.laengsVerhaeltnis =
         kurveAusPunkten({{24, 14.21}, {40, 13.71}, {41, 15.74}, {55, 14.98}, {81, 13.59}, {107, 12.20}});
+    // vorlaeufig (HT4 a): Patente nennen 1 bis 5 Grad — nicht zitierfaehig, 31d setzt es
+    s.stegWinkelGrad = kurveAusPunkten({{21, 2.0}, {108, 2.0}});
     // x_H/L liegt dort zwischen 0,113 und 0,127, fast ueberall bei 0,120
     s.anschlagStelle = kurveAusPunkten({{21, 0.12}, {108, 0.12}});
     // vorlaeufig, ohne Beleg — setzt die Messung an Salamander (31d)
@@ -262,6 +265,7 @@ void richteHammerSaite(HammerSaite& saite)
     richteKurve(saite.saitenLaengeM, kGrenzeLaenge.von, kGrenzeLaenge.bis, v.saitenLaengeM);
     richteKurve(saite.saitenMasseGm, kGrenzeMasseJeM.von, kGrenzeMasseJeM.bis, v.saitenMasseGm);
     richteKurve(saite.laengsVerhaeltnis, kGrenzeLaengs.von, kGrenzeLaengs.bis, v.laengsVerhaeltnis);
+    richteKurve(saite.stegWinkelGrad, kGrenzeWinkel.von, kGrenzeWinkel.bis, v.stegWinkelGrad);
     const double anteil = saite.resonanzboden.anteil;
     saite.resonanzboden.anteil = std::isfinite(anteil) ? std::clamp(anteil, 0.0, 1.0) : 0.0;
 }
@@ -282,6 +286,7 @@ QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
                        {QStringLiteral("stringLength"), kurveAlsJson(s.saitenLaengeM)},
                        {QStringLiteral("stringMass"), kurveAlsJson(s.saitenMasseGm)},
                        {QStringLiteral("longitudinalRatio"), kurveAlsJson(s.laengsVerhaeltnis)},
+                       {QStringLiteral("bridgeAngle"), kurveAlsJson(s.stegWinkelGrad)},
                        {QStringLiteral("soundboard"),
                         QJsonObject{{QStringLiteral("amount"), s.resonanzboden.anteil}}}};
 }
@@ -303,6 +308,7 @@ HammerSaite hammerSaiteAusJson(const QJsonObject& o)
     s.saitenLaengeM = kurveAusJson(o.value(QStringLiteral("stringLength")));
     s.saitenMasseGm = kurveAusJson(o.value(QStringLiteral("stringMass")));
     s.laengsVerhaeltnis = kurveAusJson(o.value(QStringLiteral("longitudinalRatio")));
+    s.stegWinkelGrad = kurveAusJson(o.value(QStringLiteral("bridgeAngle")));
     s.resonanzboden.anteil = o.value(QStringLiteral("soundboard")).toObject().value(QStringLiteral("amount")).toDouble(0.0);
     return s;
 }

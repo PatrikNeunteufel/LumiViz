@@ -213,7 +213,7 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         const QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
         for (const char* feld : {"inharmonicity", "decay", "lateDecay", "highDecay", "strings", "detune", "hammerMass", "hammerStiffness",
                                  "hammerExponent", "strikePosition", "damper", "stringLength", "stringMass",
-                                 "longitudinalRatio"})
+                                 "longitudinalRatio", "bridgeAngle"})
         {
             CAPTURE(feld);
             const QJsonObject k = hammer.value(QLatin1String(feld)).toObject();

@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.61.0
+> **Version:** 0.62.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT3 a, 31b-1 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT3 a und TS1 a (Patrik S139–S146);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT4 a, 31b-1 und 31b-2 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT4 a und TS1 a (Patrik S139–S146);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1004,6 +1004,43 @@ mit Dämpfer über 200 dB in 0,6 s, C7 ohne Dämpfer 23 dB (seine erste Stufe). 
 `LUMIVIZ_31B_WAV=<Ordner>`. **Noch nicht:** Längsschwingung (31b-2), die Stufe aus der Lautstärke der Note und
 die Rechenzeit (31b-3).
 
+**Befund 31b-2 (S146, gemessen und nachgelesen):**
+- **Längsschwingung nach Bank 2010 eingebaut, mit gleichem Gewicht neben der Querkraft am Steg** (Spannung
+  Gl. 26, Längsmoden Gl. 27/28, Anregung Gl. 22b mit den Kräften von Mode 3 und 4; Abklingzeit der Längsmoden
+  ein Zehntel von *Decay* nach Bank, Diss. S. 80: „the decay time of the longitudinal modes are an order of a
+  magnitude lower than that of the transverse modes“; Hochpass 20 Hz gegen den Gleichanteil der Spannung, von
+  Claude). Gemessen: neunfaches ES hebt den Phantomteilton f10 + f11 bei E1 um 18 dB, der Grundton bleibt (auf
+  0,001 dB). **Aber die Längskraft beherrscht dann den Klang:** C3 ff Teilton 8 zum Grundton −6 dB (vorher
+  −21), Spitzen bis 2,2 (vorher 0,54), bei E1 ff überdecken die Phantomteiltöne die hohen Querteiltöne.
+- **Die Auslenkung ist nicht zu groß:** gegen Chabassier, Joly & Chaigne 2013, Tab. IV (dieselben Saiten und
+  Hämmer, finite Differenzen) liegt die größte Auslenkung je Durchmesser im Bass bei 0,4, in Mitte und Diskant
+  bei 0,6 der Tabelle (z. B. F3 bei 3 m/s 1,39 gegen 2,10; C♯5 bei 4,5 m/s 1,57 gegen 2,64). Kontakt 1,3 … 5,7 ms,
+  Kraft 4 … 80 N.
+- **Die Längskraft wirkt am Steg nur mit sin α:** Chabassier, Joly & Chaigne 2013, Gl. 21 —
+  F_b ≈ cos α·(Querterme) + sin α·(EA·∂ξ/∂x + (EA − T0)·(∂y/∂x)²/2), α der Winkel der Saite gegen die Ebene
+  am Steg; „Due do the angle α a vertical force component is transmitted to the soundboard“ (S. 16), „a plausible,
+  though not fully proved, way“. **Einen Wert für α nennt die Arbeit nicht**, RT-0425 ebenso wenig; Patente und
+  ein Forum der Klaviertechniker nennen 1 bis 5 Grad, je nach Lage verschieden — nicht zitierfähig.
+
+✅ **HT4 a** (Patrik S146): **Die Längskraft geht mit sin α ein, die Querkraft mit cos α (Chabassier, Joly &
+Chaigne 2013, Gl. 21); α ist eine weitere Kurve über die Tastatur, *Bridge angle* in Grad (linear, 0 … 10,
+Fassung 16), vorläufig 2 Grad, bis 31d sie an den Phantomteiltönen von *Salamander* setzt.** Grund: folgt der
+einzigen gelesenen Quelle zur Kopplung am Steg; mit 2 Grad rund 29 dB unter gleichem Gewicht — die
+Phantomteiltöne bleiben, wo sie hingehören (laut, im Bass), und beherrschen den Klang nicht; eine Kurve nach HA1 a,
+der Winkel ändert sich je Lage. Verworfen: b (eine Zahl für das Instrument — in 31d nicht je Lage anzupassen), c
+(gleiches Gewicht — gegen die Physik am Steg). Kippt auf b, wenn 31d zeigt, dass ein Winkel für alle Tasten
+trifft.
+
+**Gebaut 31b-2 (S146):** In `loop/HammerTon` die Klasse `Laengs` (Gl. 22b, 26–28 nach Bank 2010; je Saite die
+Summe des Chors / N; Querteiltöne in den Produkten bis fs/4; Hochpass 20 Hz; gerechnet, bis die Spannung 100 dB
+unter ihrer Spitze liegt, höchstens 10 s — so lange Takt für Takt über alle Moden, danach je Mode); Kurve
+*Bridge angle* (`bridgeAngle`, vorläufig 2 Grad), Querkraft mit cos α, Längskraft mit sin α. `HammerMessung`
+(Kontakt, Spitzenkraft, größte Auslenkung). **Gemessen** (Release-clang): E1 ff Phantomteilton f10 + f11
+44 dB unter dem Grundton, mit neunfachem ES 18 dB höher, der Grundton gleich; C3 ff Teilton 8 zum Grundton
+−21,2 dB (pp −32,0); Spitzen 0,26 … 0,58; kein Gleichanteil (unter 2 % des Effektivwerts); Auslenkung gegen
+Tab. IV 0,4 … 0,6 der Tabelle. Die Messung der Inharmonizität läuft leise (pp), wo die Längskraft (∝ v²) nicht
+stört.
+
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
 Nicht einmal beim Laden. **Im Loop-Panel** rechnet `Spieler::ladeProgramm` erst beim Play
@@ -1868,6 +1905,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.62.0 | 2026-10-23 | Session 146. Befund 31b-2 (die Längskraft mit gleichem Gewicht beherrscht den Klang; Auslenkung gegen Chabassier Tab. IV; Kopplung am Steg mit sin α nach Gl. 21); HT4 a (Kurve Bridge angle); 31b-2 gebaut. |
 | 0.61.0 | 2026-10-23 | Session 146. Befund Chor und zweistufiger Ausklang (Bank, Diss. 2006, Kap. 4.2); HT3 a (gekoppelte Moden nach Weinreich, Kurve Late decay) mit Herleitung; 31b-1 gebaut und gemessen (`loop/HammerTon`). |
 | 0.60.0 | 2026-10-23 | Session 146. Befund vor 31b (Bank 2010 im Volltext: Resonatoren, Hammer, Längsschwingung, Nebenresonatoren, Dämpfer; die Kurven aus 31a tragen keine Saitendaten); HT1 a (Länge, Masse, Längsverhältnis als Kurven); Befund Saitendaten (Chabassier, Joly & Chaigne 2013 Tab. III; Chabassier & Duruflé RT-0425 Anhang A, 84 Tasten); HT2 a (Hammer nach RT-0425 statt Stulov); 31a nachgezogen. |
 | 0.59.0 | 2026-10-23 | Session 146. Befund Vorgaben zu 31a (Stulov Gl. 9 und Rigaud Gl. 4/5 am Bild gelesen; p 3,7…5,0 statt des Agenten-Berichts 2…4; kein Beleg für die erste Taste ohne Dämpfer); HK1 a (Skala je Größe, monoton kubisch), HK2 a (laut ∝ Hammergeschwindigkeit, 5 m/s, 1 dB, −40 dB, `:a<stufe>` statt `:v`); 31a gebaut (`loop/HammerSaite`, Fassung 16). |

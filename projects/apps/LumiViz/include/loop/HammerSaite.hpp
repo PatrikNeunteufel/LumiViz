@@ -143,6 +143,10 @@ struct HammerSaite
     /// Longitudinal ratio (linear): die Grundfrequenz der Laengsschwingung im
     /// Verhaeltnis zum Grundton, 5 … 40.
     Tastenkurve laengsVerhaeltnis;
+    /// Bridge angle (linear, HT4 a): der Winkel der Saite gegen die Ebene am Steg, in
+    /// Grad, 0 … 10 — die Laengskraft wirkt mit sin α, die Querkraft mit cos α
+    /// (Chabassier, Joly & Chaigne 2013, Gl. 21).
+    Tastenkurve stegWinkelGrad;
     Resonanzboden resonanzboden;
 
     [[nodiscard]] bool operator==(const HammerSaite&) const = default;

@@ -117,11 +117,12 @@ TEST_CASE("Loop Hammer-Ton 31b Chor: gekoppelte Moden")
 
 TEST_CASE("Loop Hammer-Ton 31b Teiltoene nach B")
 {
-    // E1 hat eine Saite (Vorgabe Chor) — keine Schwebung im Weg
+    // E1 hat eine Saite (Vorgabe Chor) — keine Schwebung im Weg; leise angeschlagen, damit die
+    // Phantomteiltoene der Laengsschwingung (∝ v²) die hohen Querteiltoene nicht ueberdecken
     const Instrument instrument = fluegel();
     const int taste = 28;
     const double hz = tonHz(taste);
-    const Klang klang = ton(instrument, taste, 3000.0);
+    const Klang klang = ton(instrument, taste, 3000.0, -30);
     REQUIRE(klang.frames() > kSaitenRate);
     const double b = wertAn(instrument.schichten[0].hammerSaite.inharmonizitaet, taste, KurvenSkala::Logarithmisch);
     const double f0 = hz / std::sqrt(1.0 + b);
@@ -245,6 +246,96 @@ TEST_CASE("Loop Hammer-Ton 31b derselbe Ton, endet bei null")
         CHECK(spitzenwert > 0.0f);
         CHECK(a.daten.back() == 0.0f);
         MESSAGE("Taste " << taste << ": Spitze " << spitzenwert << ", " << a.frames() / double(kSaitenRate) << " s");
+    }
+}
+
+TEST_CASE("Loop Hammer-Ton 31b Anschlag gegen Chabassier, Joly & Chaigne 2013, Tab. IV")
+{
+    // die groesste Auslenkung je Durchmesser (ADR) fuer dieselben Saiten und Haemmer, gerechnet
+    // mit einem anderen Verfahren (finite Differenzen); Durchmesser aus Tab. III
+    struct Zeile
+    {
+        int taste;
+        double dMm;
+        double tempo;
+        double adr;
+    };
+    const Instrument instrument = fluegel();
+    const HammerSaite& h = instrument.schichten[0].hammerSaite;
+    for (const Zeile& z : {Zeile{27, 1.48, 0.5, 0.568}, Zeile{27, 1.48, 3.0, 3.59}, Zeile{36, 0.9502, 1.5, 2.01},
+                           Zeile{53, 1.0525, 0.5, 0.337}, Zeile{53, 1.0525, 3.0, 2.10}, Zeile{73, 0.921, 4.5, 2.64},
+                           Zeile{91, 0.794, 1.5, 0.443}})
+    {
+        CAPTURE(z.taste);
+        CAPTURE(z.tempo);
+        HammerAnschlag a;
+        a.taste = z.taste;
+        a.hz = tonHz(z.taste);
+        a.stufe = static_cast<int>(std::lround(20.0 * std::log10(z.tempo / kHammerTempoMax)));
+        a.halten = kSaitenRate;
+        a.rate = kSaitenRate;
+        HammerMessung m;
+        std::vector<float> mono;
+        rechneHammerTon(h, a, mono, kSaitenRate / 10, &m);
+        // die Stufe rundet auf 1 dB: auf das genaue Tempo umrechnen (die Auslenkung waechst etwa mit v)
+        const double adr = m.auslenkungSpitzeM / (z.dMm * 1e-3) * z.tempo / hammerTempo(a.stufe);
+        MESSAGE("Taste " << z.taste << ", " << z.tempo << " m/s: ADR " << adr << " (Tab. IV " << z.adr << "), Kontakt "
+                         << m.kontaktS * 1e3 << " ms, Kraft " << m.kraftSpitzeN << " N");
+        CHECK(adr == doctest::Approx(z.adr).epsilon(0.5));
+        CHECK(m.kontaktS > 0.3e-3);
+        CHECK(m.kontaktS < 6e-3);
+    }
+}
+
+TEST_CASE("Loop Hammer-Ton 31b-2 Laengsschwingung: Phantomteiltoene wachsen mit ES")
+{
+    // E1, eine Saite: der Phantomteilton bei f10 + f11 liegt dort rund 26 Hz neben f21
+    Instrument normal = fluegel();
+    const int taste = 28;
+    const double hz = tonHz(taste);
+    const HammerSaite& h = normal.schichten[0].hammerSaite;
+    const double b = wertAn(h.inharmonizitaet, taste, KurvenSkala::Logarithmisch);
+    const double f0 = hz / std::sqrt(1.0 + b);
+    const auto fk = [&](int k) { return k * f0 * std::sqrt(1.0 + b * k * k); };
+    const double phantom = fk(10) + fk(11);
+    REQUIRE(fk(21) - phantom > 15.0);
+    Instrument steif = normal;
+    const double r = wertAn(h.laengsVerhaeltnis, taste, KurvenSkala::Linear);
+    steif.schichten[0].hammerSaite.laengsVerhaeltnis = {{{21, 3.0 * r}, {108, 3.0 * r}}, {}};  // ES neunmal
+    const Klang a = ton(normal, taste, 2000.0);
+    const Klang s = ton(steif, taste, 2000.0);
+    const double pa = db(betrag(a, phantom, 0.05, 0.5));
+    const double ps = db(betrag(s, phantom, 0.05, 0.5));
+    const double ga = db(betrag(a, hz, 0.05, 0.5));
+    const double gs = db(betrag(s, hz, 0.05, 0.5));
+    MESSAGE("E1 Phantom f10+f11 (" << phantom << " Hz): " << pa << " dB, mit ES ×9: " << ps << " dB; Grundton "
+                                   << ga << " / " << gs << " dB");
+    CHECK(ps - pa > 12.0);               // neunmal ES: bis +19 dB, die Laengsmoden verschieben etwas
+    CHECK(std::abs(gs - ga) < 0.5);      // der Grundton merkt nichts
+    // und der Phantomteilton steht ueber dem Rauschboden zwischen den Teiltoenen
+    const double zwischen = db(betrag(a, fk(21) + 0.5 * (fk(22) - fk(21)), 0.05, 0.5));
+    CHECK(pa > zwischen + 10.0);
+}
+
+TEST_CASE("Loop Hammer-Ton 31b-2 ohne Gleichanteil")
+{
+    const Instrument instrument = fluegel();
+    for (const int taste : {21, 40, 60})
+    {
+        CAPTURE(taste);
+        const Klang k = ton(instrument, taste, 1500.0, 0);
+        double summe = 0.0;
+        double quadrate = 0.0;
+        const std::int64_t frames = std::min<std::int64_t>(k.frames(), kSaitenRate);
+        for (std::int64_t i = 0; i < frames; ++i)
+        {
+            const double x = k.daten[static_cast<std::size_t>(2 * i)];
+            summe += x;
+            quadrate += x * x;
+        }
+        const double mittel = summe / frames;
+        const double effektiv = std::sqrt(quadrate / frames);
+        CHECK(std::abs(mittel) < 0.02 * effektiv);
     }
 }
 
