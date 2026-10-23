@@ -189,6 +189,25 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
+### Eigen 3.4.1 — `externals/Eigen/`
+
+Lineare Algebra für Platte und Eigenlöser des Instrumentkörpers (Bibliothek `InstrumentBody`, Stufen 31c-3/31c-4).
+Der Ordner `Eigen/` liegt unverändert im Repository und wird **nicht in die App** gebunden, nur in die Unit-Tests
+und das Werkzeug `InstrumentBodyTool`. Herkunft, Fassung, Prüfsumme und die Lizenzen im Einzelnen:
+`externals/Eigen/README.md`; die Lizenztexte im Original: `externals/Eigen/COPYING.*`.
+
+> <https://gitlab.com/libeigen/eigen> — **MPL-2.0** („Eigen is primarily MPL2 licensed")
+
+Übersetzt wird mit `EIGEN_MPL2_ONLY`: Dateien mit LGPL-Code lassen sich nicht einbinden. Darin mitgeliefert und
+möglicherweise mitübersetzt:
+
+- `Eigen/src/Core/arch/Default/BFloat16.h` — Copyright 2017 The TensorFlow Authors, **Apache-2.0**
+  (`externals/Eigen/COPYING.APACHE`).
+- `Eigen/src/Core/arch/Default/Half.h` — die Umrechnungen Copyright (c) Fabian Giesen 2016, „Redistribution and use
+  in source and binary forms, with or without modification, are permitted."
+
+Die übrigen Teile unter BSD (Anbindungen an MKL, BLAS, LAPACKE; `Geometry/AlignedBox.h`) werden nicht eingebunden.
+
 ---
 
 ## 2. Portierter Fremdcode in LumiViz-Dateien

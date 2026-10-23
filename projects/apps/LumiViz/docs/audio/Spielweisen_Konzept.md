@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.74.0
+> **Version:** 0.75.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a und TS1 a (Patrik S139–S147);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1352,6 +1352,32 @@ kleinster Winkel 25,0° außer 8 Ecken der Eingabe (Kreuzungen von Rippe und Ste
 Kantenfolge, 0,07 s. Der Kipppunkt von BM4 a (CDT scheitert am Steinway) ist nicht eingetreten. Release-clang
 `*Loop Koerper*` 11 / 11; ob Testing-MSVC dieselben Zahlen liefert (Bezug auf 2 %), zeigt der Lauf am Stufenende.
 
+✅ **EL1 a** (Patrik S147): **Die Platte bekommt Dreiecke mit Lagrange-Ansätzen frei wählbarer Ordnung k** für w und
+die beiden Drehungen, volle Integration, Schubkorrektur 5/6; Vorgabe k = 3 (MAESSTRO); die Ordnung wählt ein
+Konvergenztest nach MAESSTRO Gl. 2 an den höchsten Moden (wie Chabassier, Duruflé & Joly 2015 Teil 2: „a Q3
+approximation gives … relative error of 1, 3 % … This led us to rp = 4" bis 10 kHz, selbst gelesen) und steht als Zahl
+im Körper. Prüfungen: gegen die geschlossene Lösung der frei aufliegenden orthotropen Rechteckplatte nach Mindlin, auch
+an einer dünnen Prüfplatte (Locking sichtbar), Konvergenz mit der Ordnung, K und M symmetrisch und positiv. Die Bauart
+des Elements liegt hinter einer kleinen Schnittstelle (ein Element gegen Locking kann dazukommen). Grund: der Weg der
+beiden Quellen (höhere Ordnung, an der Konvergenz gewählt); unser Verhältnis Dicke zu Kante (rund 0,5–0,7 bei 13,3 mm
+Kante) liegt nicht im Bereich starken Lockings (eigene Einschätzung, der Test prüft sie). Verworfen: b (MITC — feste
+Ordnung, ohne den Konvergenztest der Quellen), c (2. Ordnung mit reduzierter Integration — unechte Moden landeten still
+im Körper). Kippt auf b, wenn k = 3 an der dünnen Prüfplatte mehr als rund 1 % zu hoch liegt.
+
+**Gebaut 31c-3 (S147):** Eigen 3.4.1 unter `externals/Eigen` (der Ordner `Eigen/` und alle `COPYING.*` unverändert aus
+`eigen-3.4.1.zip`, 3 721 838 Byte, SHA-256 in der README; Download mit Freigabe Patrik), eigene `Include.cmake` mit
+`EIGEN_MPL2_ONLY`, in `Solution.json` nur für die Unit-Tests; `THIRD_PARTY_NOTICES.md` (MPL-2.0; `BFloat16.h` Apache-2.0,
+`Half.h` freizügig; die BSD-Teile werden nicht eingebunden). In `InstrumentBody`: `DuenneMatrix.hpp` (oberes Dreieck,
+Muster, dann Werte — das Format für den Eigenlöser, BM5-1 a; die Platte kennt Eigen nicht) und `Platte.hpp`
+(Reissner-Mindlin, Zonen nach RT-0425 mit Material und Faser je Leiste, `Plattenelement` / `LagrangeDreieck(k)`,
+`baueSystem` eingespannt oder gelenkig); Modul-Doku 0.3.0 §4. Tests `test_LoopKoerperPlatte` (7 Fälle; Eigen dicht nur
+als Werkzeug im Test). **Gemessen** (Release-clang): gegen Navier (Mindlin, frei aufliegend, orthotrop) mit dem Netz
+nach MAESSTRO Gl. 1 trifft k = 3 auf 0,04 % (8 mm), 0,03 % (2 mm, Dicke/Kante 0,084), 0,07 % (1 mm, 0,042); Locking bei
+k = 1 (108–871 %) und k = 2 (2,5–10 %), nicht bei k = 3 — **der Kipppunkt von EL1 a ist nicht erreicht**. Steinway D
+bis 5 kHz, k = 3: 568 515 freie Größen, 14,7 Mio. Einträge je Matrix, gebaut in 4,7 s, Spitze 407 MB; Masse
+11,77 kg (Bauplan 11,48 kg — unter dem Steg rechnet die Zone Buche statt Fichte). Release-clang `*Loop Koerper*` grün
+(18 Fälle).
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2223,6 +2249,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.75.0 | 2026-10-23 | Session 147. EL1 a (Lagrange-Dreiecke der Ordnung k, Vorgabe 3); 31c-3 gebaut (Eigen als External, Platte nach Reissner-Mindlin gegen Navier gemessen, Steinway bis 5 kHz gebaut). |
 | 0.74.0 | 2026-10-23 | Session 147. BM4 a (CDT 2.0.1 hinter einer eigenen Schnittstelle, eigener Generator vielleicht später); 31c-2 gebaut (Netz, CDT als External, Steinway bis 5 kHz gemessen). |
 | 0.73.0 | 2026-10-23 | Session 147. IC1 a (Icons P1 und K1); 31c-1 fertig mit den Icons. |
 | 0.72.0 | 2026-10-23 | Session 147. 31c-1 gebaut (ohne Icons): Bibliothek `InstrumentBody` mit dem Bauplan, `loop/KoerperBauplan`, der Steinway D aus RT-0425 Abb. 2 und Anhang A (`make_steinway_d.py`); Befunde: Farbskalen mit Zahlen, Umriss aus (a), Stegpunkte auf dem Steg, Holz nach Chabassier 2013 Tab. I, A0–B0 und C8 verlängert, Masse 11,5 kg. |

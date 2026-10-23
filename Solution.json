@@ -104,6 +104,12 @@
       "path": "externals/CDT",
       "include": "externals/CDT/Include.cmake"
     },
+    "Eigen": {
+      "description": "Lineare Algebra (Eigen 3.4.1, MPL-2.0 mit EIGEN_MPL2_ONLY; nur Header) — Platte und Eigenloeser des Instrumentkoerpers in InstrumentBody, nur fuer Tests und InstrumentBodyTool, nicht fuer die App. Lokales External mit EIGENER Include.cmake (Muster miniz). Spielweisen_Konzept.md BM5-1 a, EL1 a (S147); Herkunft und Pruefsumme: externals/Eigen/README.md",
+      "skip": false,
+      "path": "externals/Eigen",
+      "include": "externals/Eigen/Include.cmake"
+    },
     "miniz": {
       "description": "Zip lesen und schreiben (Export und Import der eigenen Daten, .lvdata). Lokales External mit EIGENER Include.cmake im Projekt (Feld include) — CMakeCraft kennt miniz nicht. Datenablage_Konzept.md, E2 b (S114); Herkunft und Pruefsumme: externals/miniz/README.md",
       "skip": false,
@@ -242,7 +248,7 @@
               "labels": [ "unit", "core", "fast" ],
               "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody" ],
               "//externals": "Composer-Naht N26 (S105): qt-ads fuer den Testfall mit echtem Dock (panel_zeigen in test_ComposerSichttestStart.cpp).",
-              "externals": [ "Qt6", "qt-ads", "bass", "lua54", "CDT" ],
+              "externals": [ "Qt6", "qt-ads", "bass", "lua54", "CDT", "Eigen" ],
               "external_options": {
                 "bass": { "BASS_MIX": true },
                 "lua54": { "LUA_EMBEDDED": false }

@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.2.0  
+> **Version:** 0.3.0  
 > **Datum:** 2026-10-23  
 > **Typ:** CppModuleDoc  
-> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz)  
+> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein)  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); ab 31c-4 Eigen und Spectra, nur hinter der Schnittstelle des Eigenlösers  
 > **Zielgruppe:** Entwickler  
@@ -18,9 +18,10 @@
 1. [Übersicht](#1-übersicht)
 2. [Bauplan](#2-bauplan)
 3. [Netz](#3-netz)
-4. [Eigenlöser](#4-eigenlöser)
-5. [Tests](#5-tests)
-6. [Changelog](#6-changelog)
+4. [Platte](#4-platte)
+5. [Eigenlöser](#5-eigenlöser)
+6. [Tests](#6-tests)
+7. [Changelog](#7-changelog)
 
 ---
 
@@ -89,7 +90,29 @@ Entschieden: BM4 a mit Zusatz (Patrik S147) — CDT jetzt, ein eigener Generator
   kleinster Winkel 25,0° außer 8 Ecken der Eingabe (zwei Zwangskanten schließen den Winkel ein: Kreuzungen von
   Rippe und Steg), Fläche genau, jede Zwangslinie als Kantenfolge, 0,07 s.
 
-## 4. Eigenlöser
+## 4. Platte
+
+`InstrumentBody/Platte.hpp` und `InstrumentBody/DuenneMatrix.hpp` (ohne fremde Bibliothek). Entschieden: BM1 a,
+EL1 a (Patrik S147).
+
+- **Modell:** Reissner-Mindlin, heterogen und orthotrop wie Chabassier 2013 und MAESSTRO. Größen je Punkt w, φx, φy;
+  κ = (φx,x; φy,y; φx,y + φy,x), γ = (w,x − φx; w,y − φy); D = h³/12 · Q̄, S = κs h Ḡ (κs = 5/6); Masse ρh für w,
+  ρh³/12 für die Drehungen.
+- **Werkstoff am Punkt** (`steifeBei`): auf einem Steg dessen Material mit der Faser längs des Stegs, auf einer Rippe
+  ebenso, sonst die Platte mit ihrer Faser (RT-0425 §2.1, die Zonen); Dicke = Platte + Höhe der Leiste. `gedreht`
+  dreht Q̄ und Ḡ nach R. M. Jones.
+- **Element** hinter der Schnittstelle `Plattenelement` (EL1 a): `LagrangeDreieck(k)`, k = 1 … 6, Knoten Ecken –
+  Kanten – Inneres, volle Integration (Gauss auf dem zusammengeklappten Quadrat, k + 2 Punkte je Richtung).
+- **System** (`baueSystem`): Knoten über die Kanten des Netzes durchnummeriert (Kantenknoten vom kleineren Eckknoten
+  aus), Auflager eingespannt (der Boden) oder gelenkig für achsparallele Prüfplatten; K und M als `DuenneMatrix`
+  (oberes Dreieck, erst das Muster, dann die Werte) — das Format für den Eigenlöser (BM5-1 a).
+- **Gemessen** (Release-clang, S147): Prüfplatten nach Navier (Mindlin, frei aufliegend, orthotrop), Netz nach
+  MAESSTRO Gl. 1 — k = 3 auf 0,04 % (8 mm), 0,03 % (2 mm, Dicke/Kante 0,084), 0,07 % (1 mm, 0,042); Locking bei k = 1
+  (108–871 %) und k = 2 (2,5–10 %) deutlich, bei k = 3 nicht (EL1 a: Kipppunkt 1 % nicht erreicht). Steinway D bis
+  5 kHz, k = 3: 568 515 freie Größen, 14,7 Mio. Einträge je Matrix, 4,7 s, Spitze 407 MB; Masse 11,77 kg (Bauplan
+  11,48 kg: unter dem Steg rechnet die Zone Buche statt Fichte).
+
+## 5. Eigenlöser
 
 *Noch nicht gebaut (31c-4).* Entschieden (BM5-1 a mit Zusatz, Patrik S147):
 
@@ -106,7 +129,13 @@ Entschieden: BM4 a mit Zusatz (Patrik S147) — CDT jetzt, ein eigener Generator
 Dieser Abschnitt wird mit 31c-4 zur eigentlichen Doku des Lösers: Schnittstelle, Umsetzung, wie eine eigene
 dazukommt, Tests und Bezugswerte, wie der Vergleich läuft.
 
-## 5. Tests
+## 6. Tests
+
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperPlatte.cpp` — ohne Qt-Anwendung; die Frequenzen der
+Prüfplatten rechnet dort der dichte Löser von Eigen (nur im Test): Ansatz (Kronecker, Zerlegung der Eins), Integration
+(Monome genau), Werkstoff gedreht, Navier mit Konvergenz in k, Locking an 2 mm und 1 mm, Drehung (Netz und Faser um
+30° gedreht: dieselben Frequenzen), Steinway D grob (bis 1 kHz, k = 2: Masse gegen den Bauplan);
+`LUMIVIZ_PLATTE_MESSUNG=1` baut ihn bis 5 kHz mit k = 3 und meldet Größe und Zeit.
 
 `projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperNetz.cpp` — gegen die Schnittstelle, für jede
 Umsetzung aus `netzgeber()`: Elementgröße nach Gl. 1, Quadrat mit zwei sich kreuzenden Zwangslinien (Fläche,
@@ -118,9 +147,10 @@ der Steinway D bis 5 kHz mit den Bezugswerten `werte/netz_steinway.txt` (`LUMIVI
 Dickenraster, Masse und Werkstoffe (auch Glas), `pruefe`, die Datei (Hin- und Rückweg, jedes Feld, NaN als null,
 falsches Format, zu neue Fassung).
 
-## 6. Changelog
+## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.3.0 | 2026-10-23 | Session 147, Stufe 31c-3: Platte — Reissner-Mindlin, Zonen nach RT-0425, `Plattenelement` mit `LagrangeDreieck(k)`, `baueSystem` (eingespannt, gelenkig), `DuenneMatrix` (EL1 a). |
 | 0.2.0 | 2026-10-23 | Session 147, Stufe 31c-2: Netz — Schnittstelle `Netzgeber`, Auftrag aus dem Bauplan (Ränder der Leisten, Kante nach MAESSTRO Gl. 1), Umsetzung mit CDT 2.0.1 (BM4 a). |
 | 0.1.0 | 2026-10-23 | Session 147, Stufe 31c-1: Bauplan (Materialien orthotrop/isotrop, Platte mit Dickenraster, Leisten, Stegpunkte, Geometrie, Masse, Prüfung). |
