@@ -123,7 +123,8 @@ TEST_SUITE("LoopSaiteSpuren")
     {
         Instrument instrument = saite(3.0, 1.5);
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 15);
+        CHECK(kInstrumentFassung >= 15);  // den Hebel gibt es seit Fassung 15
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // geschrieben wird die juengste
         const QJsonObject saiten = json.value(QStringLiteral("strings")).toObject();
         CHECK(saiten.value(QStringLiteral("tremoloDown")).toDouble() == 3.0);
         CHECK(saiten.value(QStringLiteral("tremoloUp")).toDouble() == 1.5);

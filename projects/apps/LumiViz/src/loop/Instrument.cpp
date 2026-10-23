@@ -2035,6 +2035,7 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         // seit Fassung 10 (Stufe 23c); eine Saite Classic traegt sie nicht — sie bleibt, wie sie war
         const bool wellenleiter = schicht.saitenModell == SaitenModell::Wellenleiter;
         o[QStringLiteral("stringModel")] = wellenleiter ? QStringLiteral("waveguide") : QStringLiteral("extendedKS");
+        o[QStringLiteral("excitation")] = QStringLiteral("pluck");  // seit Fassung 16 (HA2 a), immer
         if (wellenleiter)
         {
             // Stufe 23d: die Tonabnehmer, nur am Waveguide
@@ -2067,6 +2068,13 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
                                                    // seit Fassung 12 (S-L10 a, S-L11 a)
                                                    {QStringLiteral("slideTime"), schicht.gleitMsJeHalbton},
                                                    {QStringLiteral("legatoLevel"), schicht.legatoLaut}};
+    }
+    if (istHammerSchicht(schicht))
+    {
+        // seit Fassung 16 (Stufe 31a, HA1 a, HA2 a): die Hammer-Saite und ihre Kurven
+        o[QStringLiteral("stringModel")] = QStringLiteral("modal");
+        o[QStringLiteral("excitation")] = QStringLiteral("hammer");
+        o[QStringLiteral("hammerString")] = hammerSaiteAlsJson(schicht.hammerSaite);
     }
     // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
     if (!schicht.farbe.isEmpty()) o[QStringLiteral("color")] = schicht.farbe;
@@ -2134,7 +2142,14 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     const QString modell = wurzel.value(QStringLiteral("stringModel")).toString();
     neu.saitenModell = modell == QLatin1String("extendedKS")  ? SaitenModell::ErweiterterKs
                        : modell == QLatin1String("waveguide") ? SaitenModell::Wellenleiter
+                       : modell == QLatin1String("modal")     ? SaitenModell::Modal  // seit Fassung 16
                                                               : SaitenModell::Klassisch;
+    // seit Fassung 16 (HA2 a); fehlt `excitation` oder ist es unbekannt: Pluck
+    neu.anregung = wurzel.value(QStringLiteral("excitation")).toString() == QLatin1String("hammer") ? Anregung::Hammer
+                                                                                                  : Anregung::Zupfen;
+    // seit Fassung 16: die Kurven der Hammer-Saite; fehlt der Block, gelten die Vorgaben
+    if (const QJsonValue hammer = wurzel.value(QStringLiteral("hammerString")); hammer.isObject())
+        neu.hammerSaite = hammerSaiteAusJson(hammer.toObject());
     // Stufe 23d: die Tonabnehmer; fehlen sie, gelten die Vorgaben
     const auto abnehmer = [&](const char* schluessel, const Abnehmer& vorgabeAbnehmer) {
         const QJsonObject o = wurzel.value(QLatin1String(schluessel)).toObject();
@@ -2220,10 +2235,31 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
         neu.reihe.emplace_back(SchichtHuelle{});
     }
     richteReihe(neu.reihe);
+    richteSchicht(neu);
     return neu;
 }
 
 }  // namespace
+
+void richteSchicht(Schicht& schicht)
+{
+    if (schicht.anregung != Anregung::Hammer) schicht.anregung = Anregung::Zupfen;
+    if (schicht.saitenModell < SaitenModell::Klassisch || schicht.saitenModell > SaitenModell::Modal)
+        schicht.saitenModell = SaitenModell::Klassisch;
+    // HA2 a: Hammer gibt es nur mit Modal, Modal nur mit Hammer
+    if (schicht.anregung == Anregung::Hammer || schicht.saitenModell == SaitenModell::Modal)
+    {
+        schicht.anregung = Anregung::Hammer;
+        schicht.saitenModell = SaitenModell::Modal;
+    }
+    richteHammerSaite(schicht.hammerSaite);
+}
+
+bool hatHammer(const Instrument& instrument)
+{
+    return std::any_of(instrument.schichten.begin(), instrument.schichten.end(),
+                       [](const Schicht& s) { return s.an && istHammerSchicht(s); });
+}
 
 void richteReihe(std::vector<SchichtBaustein>& reihe)
 {
@@ -2304,6 +2340,8 @@ QJsonObject alsJson(const Instrument& instrument)
         saiten[QStringLiteral("tremoloUp")] = instrument.saiten.hebelHochHt;
         o[QStringLiteral("strings")] = saiten;
     }
+    // seit Fassung 16 (Stufe 31a, HA4 a): die Tastatur, wenn das Instrument eine hat
+    if (instrument.tastatur) o[QStringLiteral("keyboard")] = tastaturAlsJson(*instrument.tastatur);
     return o;
 }
 
@@ -2358,6 +2396,9 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
     neu.saiten.hebelRunterHt = saiten.value(QStringLiteral("tremoloDown")).toDouble(0.0);  // seit Fassung 15
     neu.saiten.hebelHochHt = saiten.value(QStringLiteral("tremoloUp")).toDouble(0.0);
     richteSaiten(neu.saiten);
+    // seit Fassung 16; fehlt der Block, hat das Instrument keine Tastatur
+    if (const QJsonValue tastatur = wurzel.value(QStringLiteral("keyboard")); tastatur.isObject())
+        neu.tastatur = tastaturAusJson(tastatur.toObject());
     instrument = std::move(neu);
     return true;
 }
@@ -2925,7 +2966,12 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
                 hand->setzeSpuren(rate, angabe->tonhoehe, unten, oben, angabe->vibrato, hz, einsatzVibrato);
             }
             const Handweg* weg = hand ? &*hand : nullptr;
-            if (schicht.schwingung == Schwingung::Saite)
+            if (istHammerSchicht(schicht))
+            {
+                // Stufe 31a: die Hammer-Saite hat Modell und Datei, gerechnet wird sie mit
+                // 31b — bis dahin schweigt sie (nicht als Classic)
+            }
+            else if (schicht.schwingung == Schwingung::Saite)
                 rechneSaite(schicht, ton, hz, huelle, rate, eine, weg);  // Classic (S-K2 b)
             else if (schicht.schwingung == Schwingung::Sample)
                 rechneSample(schicht, ton, hz, huelle, rate, eine, weg);

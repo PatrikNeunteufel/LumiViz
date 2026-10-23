@@ -296,7 +296,8 @@ TEST_SUITE("LoopSpielweise")
 
         // --- Strum steht auch mit der Vorgabe da (S-W11 a); Playing an jeder Saite Extended KS / Waveguide
         QJsonObject json = alsJson(gitarre);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 15);  // seit S136 (Stufe 25c): 12, seit S139: 13, seit S140: 14 und 15
+        CHECK(kInstrumentFassung >= 12);  // die Felder gibt es seit Fassung 12 (S136, Stufe 25c)
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // geschrieben wird die juengste
         CHECK(json.value(QStringLiteral("strings")).toObject().value(QStringLiteral("strum")).toObject() == strumAlsJson(Strum{}));
         CHECK_FALSE(alsJson(Instrument{}).contains(QStringLiteral("strings")));  // ohne Saiten kein Block
         const QJsonObject spiel = json.value(QStringLiteral("layers")).toArray().at(0).toObject().value(QStringLiteral("playing")).toObject();
@@ -1176,7 +1177,7 @@ TEST_SUITE("LoopSpielweise")
         // --- die Datei: `inALegato` an jeder Schicht ausser der Saite, auch bei der Vorgabe (S-W11 a)
         instrument.schichten[1].folgtSaite = true;
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 15);
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // geschrieben wird die juengste
         const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
         REQUIRE(schichten.size() == 3);
         CHECK_FALSE(schichten.at(0).toObject().contains(QStringLiteral("inALegato")));

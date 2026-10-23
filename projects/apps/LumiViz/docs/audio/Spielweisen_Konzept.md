@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.58.0
-> **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.59.0
+> **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a und TS1 a (Patrik S139–S145);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a und TS1 a (Patrik S139–S146);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -796,7 +796,7 @@ Clavinet Hammer und Zupfen an der Saite nichts teilen außer dem Namen.
 
 ✅ **HA3 a** (Patrik S145): **Die Anschlagstärke gestuft im Namen, der Rest als Pegel.** Die Stärke wird
 auf Stufen gleichen Abstands in dB der Hammergeschwindigkeit gerundet (etwa 1 dB), die Stufe steht im Namen
-(`:v<stufe>`, nur bei einem Instrument mit Hammer); den Unterschied zwischen Note und Stufe gleicht ein Pegel
+(`:v<stufe>` — seit HK2 a `:a<stufe>`, nur bei einem Instrument mit Hammer); den Unterschied zwischen Note und Stufe gleicht ein Pegel
 genau aus — die Lautstärke stimmt, die Klangfarbe auf eine Stufe. Wie fein, legt 31d fest (so, dass man die
 Klangfarbe nicht unterscheidet). Ein kleines Ziehen an der Stärke spielt sofort, ein großes rechnet neu.
 Grund: genau, wo man es hört, und der Editor bleibt bedienbar. Verworfen: b (genau, auf drei Stellen — jede
@@ -814,6 +814,70 @@ das Zielbild verlangt (Moderator, das linke Pedal des Upright), ohne neues Feld 
 (drei Schalter — das Upright bräuchte ein neues Feld), c (keine Ausstattung — schiebt auf, was HS2 a für das
 Upright als Vorlage derselben Rechnung festlegt). Kippt auf b, wenn die Recherche zum Upright zeigt, dass sich
 seine Pedale nicht auf diese Plätze abbilden lassen.
+
+**Befund Vorgaben zu 31a (S146, abgerufen 2026-10-23; von Claude selbst gelesen, die Formeln am Bild der
+Seite, weil die Textebene die Vorzeichen verliert):**
+- **Hammer — Stulov & Kartofelev**, „Piano hammer-string interaction: the influence of the elastic parameters
+  of bass hammers on the contact time duration“, *Acoustics High Tatras 2009*, S. 3, Gl. 9 (nach Stulov 2005,
+  *Acta Acustica* 91): m = 11,074 − 0,074 n + 10⁻⁴ n² [g]; p = 3,7 + 0,015 n; Q0 = 183 exp(0,045 n)
+  [N/mm^p]; ε = 0,9894 + 8,8·10⁻⁵ n²; τ = 2,72 − 0,02 n + 9·10⁻⁵ n² [µs] — „for all hammer numbers
+  1 ≤ n ≤ 88“. Für langsames Laden gilt F = Q0·u^p (Gl. 4, „Q0 is the static hammer stiffness“), die
+  Anschlaggeschwindigkeit „is not greater than 5 m/s“ (S. 3). **Befunde:** p wächst von 3,7 (A0) auf 5,0
+  (C8) — der Bericht eines Agenten in S145 („p etwa 2 im Bass bis 4 im Diskant“) war falsch. ε überschreitet
+  ab n ≈ 11 den Wert 1 und ist damit nur im Bass brauchbar (die Arbeit rechnet n = 1, 5, 10); für F = Q0·u^p
+  braucht es ε nicht. Die Masse fällt von 11,0 g (A0) auf 5,3 g (C8).
+- **Inharmonizität — Rigaud, David & Daudet**, „A parametric model of piano tuning“, *DAFx-11*, S. 394,
+  Gl. 4 und 5: B(m) = e^(s_B·m + y_B) + e^(s_T·m + y_T), m die MIDI-Nummer 21…108; die Asymptote des
+  Diskantstegs ist für alle Flügel gleich, „s_T ≃ 9.26·10⁻², y_T ≃ −13.64“; s_B, y_B je Klavier aus drei
+  Tönen A0–D3 geschätzt — **eine Tabelle dieser Werte gibt die Arbeit nicht.** Der Bassanteil kommt deshalb
+  aus *Salamander* (31d); bis dahin vorläufig.
+- **Hammergeschwindigkeit — KTH**, *Five Lectures on the Acoustics of the Piano* (Askenfelt, Hg.), Seite
+  „motions“: „In the forte example, the maximum hammer velocity is about 5 m/s (18 km/h)“ (C4). Ein Wert für
+  pp nicht gefunden (0,3–0,5 m/s auf derselben Seite sind Geschwindigkeiten der Taste).
+- **Erste Taste ohne Dämpfer — kein Beleg an der Quelle.** Kawai (FAQ, kawaius.com): „the strings for the
+  uppermost notes are not fitted with dampers“, ohne Zahl; Yamaha-Händler (markgoodwinpianos.co.uk) ebenso
+  ohne Zahl. Zahlen nur aus Foren und Suchzusammenfassungen (E6 bis G6, 18 bis 22 Töne; eine Seite mit „note
+  #69“ trug beim Abruf etwas anderes) — nicht zitierfähig. Vorgabe deshalb vorläufig, in 31d an *Salamander*
+  zu prüfen (die Aufnahmen des Loslassens sind chromatisch).
+
+✅ **HK1 a** (Patrik S146): **Jede Größe hat eine feste Skala — logarithmisch für B, Q0, Abklingzeit und
+Stärke des Dämpfers, linear für p, Masse, Cent, Zahl der Saiten und Anschlagstelle; in dieser Skala wird
+zwischen den Stützpunkten monoton kubisch interpoliert (Fritsch–Carlson, wie PCHIP), vor dem ersten und nach
+dem letzten Punkt gilt der Randwert.** Die Zahl der Saiten wird danach auf eine ganze Zahl gerundet; eine
+Abweichung je Taste ersetzt den Wert der Kurve dort. Grund: in der logarithmischen Skala werden die Formeln
+von Rigaud (Diskant) und Stulov (Q0) Geraden, wenige Stützpunkte treffen sie, kein Wert wird negativ; monoton
+kubisch schießt nicht über die Punkte und löst das „glatt“ aus HA1 a ein. Verworfen: b (linear in der Skala —
+Knicke an den Stützpunkten, gegen „glatt“, in 31d als scheinbare Abweichung), c (linear in den Werten — B und
+Q0 brauchten viele Punkte). Kippt nicht, solange HA1 a gilt; mit HA1 b (Tabelle) wäre die Interpolation
+gleichgültig.
+
+✅ **HK2 a** (Patrik S146), **mit Zusatz: gilt, solange keine Messung etwas anderes belegt.** **Die
+Lautstärke einer Note ist die Hammergeschwindigkeit im Verhältnis zur größten: v = vMax · laut, vMax = 5 m/s
+(KTH, forte; Stulov: „not greater than 5 m/s“).** Die Stufe ist round(20·lg laut / Schritt), der Schritt eine
+Konstante von 1 dB, bis 31d ihn festlegt; im Namen `:a<stufe>` (ganze Zahl ≤ 0, `:a-6`), bei Stufe 0 ohne
+Zusatz, nur an einem Instrument mit Hammer. Untergrenze −40 dB (0,05 m/s), darunter nur der Pegel; den Rest
+gleicht der Pegel laut / 10^(stufe·Schritt/20) aus. **HA3 a nennt `:v<stufe>` — `:v` ist seit Stufe 25b der
+Verlauf einer Kette; der Buchstabe wird `:a`.** Grund: die Lautstärke kommt aus der Physik des Hammers, `laut`
+behält im Verhältnis seine Bedeutung; vMax ist der einzige belegte Wert; −40 dB liegt unter jedem pp (höchstens
+41 Töne je Taste); die Namen bleiben eindeutig. Verworfen: b (Kurve *Velocity* im Block *Keyboard* — ohne
+Messung kein Grund für eine andere als die Gerade; später ohne Bruch nachzutragen), c (`:v` nach dem Vorzeichen
+unterscheiden — zerbrechlich). Kippt auf b, wenn 31d zeigt, dass die 16 Anschlagstufen von *Salamander* nicht
+auf der Geraden liegen.
+
+**Gebaut 31a (S146):** `loop/HammerSaite` — `Tastenkurve` mit `wertAn` (HK1 a), `HammerSaite` mit zehn Kurven
+(`inharmonicity`, `decay`, `highDecay`, `strings`, `detune`, `hammerMass`, `hammerStiffness`, `hammerExponent`,
+`strikePosition`, `damper`) und `soundboard` (nur `amount`, bis 31c), `Tastatur` (`range`, `undampedFrom`,
+`pedals`), `anschlagStufe`/`hammerTempo`/`anschlagRest` (HK2 a). An der Schicht `Anregung` und
+`SaitenModell::Modal`, `richteSchicht` hält die Paare aus HA2 a; `istSaitenSchicht` zählt die Hammer-Saite
+nicht (keine gegriffene Saite), `istHammerSchicht`, `hatHammer`. `.lvinst` **Fassung 16**; `TonAngabe::anschlagStufe`
+mit `:a<stufe>` im Namen. **Vorgaben:** Hammer nach Stulov Gl. 9 und B nach Rigaud Gl. 5 an A0…A7, C8 — den
+Bassteg aus Abb. 1 der Arbeit pixelgenau abgelesen (s_B = −0,0618, y_B = −6,89; ein Beispiel ohne genannten
+Flügel); **vorläufig ohne Beleg** Abklingzeit (25 s an A0 bis 0,5 s an C8), *High decay* 0,2, Chor (eine Saite
+bis F#1, zwei bis C3, drei darüber), Verstimmung 1 Cent, Anschlagstelle 1/8, Dämpfer (0,8 s bis 0,2 s),
+`undampedFrom` G6 — alle setzt 31d. **Noch nicht:** die Hammer-Saite schweigt bis 31b (sie rechnet nicht als
+Classic); die Planung setzt die Stufe noch nicht aus der Lautstärke der Note (mit dem Ton in 31b, weil der Rest
+dann als Pegel an die Stelle von `laut` tritt); im Creator gibt es *Modal* noch nicht (31g). Tests:
+`test_LoopHammerSaite` (5 Fälle).
 
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
@@ -1679,6 +1743,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.59.0 | 2026-10-23 | Session 146. Befund Vorgaben zu 31a (Stulov Gl. 9 und Rigaud Gl. 4/5 am Bild gelesen; p 3,7…5,0 statt des Agenten-Berichts 2…4; kein Beleg für die erste Taste ohne Dämpfer); HK1 a (Skala je Größe, monoton kubisch), HK2 a (laut ∝ Hammergeschwindigkeit, 5 m/s, 1 dB, −40 dB, `:a<stufe>` statt `:v`); 31a gebaut (`loop/HammerSaite`, Fassung 16). |
 | 0.58.0 | 2026-10-22 | Session 145. Stufe 31 begonnen: Wunsch Beispiel-Loops, BL1 a (drei Chopin-Ausschnitte), BL2 a (von Hand aus gemeinfreier Ausgabe vor 1900), Befunde Quellen (Mutopia, Polona, IMSLP), Befund Code und Literatur, HS1 a (modal nach Bank 2010), HS2 a (Teilschritte 31a–31h); zu 31a HA1 a (Kurven über die Tastatur), HA2 a (Excitation und Modal an der Schicht, Block Keyboard am Instrument), HA3 a (Anschlagstärke gestuft im Namen), HA4 a (Ausstattung Keyboard). |
 | 0.57.0 | 2026-10-22 | Session 145. Stufe 30i-3 (Handbuch, Sichttest-Liste, Bereichslauf unter clang); Stufe 30 fertig bis auf den vollen Lauf. |
 | 0.56.0 | 2026-10-22 | Session 145. Stufe 30i-2 gebaut (Publish- und Import-Dialog mit eingefrorenen Clips). |

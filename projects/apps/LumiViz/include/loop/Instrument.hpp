@@ -20,6 +20,7 @@
 #pragma once
 
 #include "loop/Bausteine.hpp"
+#include "loop/HammerSaite.hpp"
 #include "loop/Rechenkern.hpp"
 #include "loop/Saiten.hpp"
 
@@ -29,6 +30,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -65,6 +67,18 @@ enum class SaitenModell : int
     /// Waveguide (Stufe 23d, S-K1 a): die Saite als zwei gegenlaeufige Wellen
     /// zwischen Sattel und Steg — man kann sie an jeder Stelle abnehmen.
     Wellenleiter = 2,
+    /// Modal (Stufe 31a, HS1 a): die Saite als Summe gedaempfter Resonatoren nach
+    /// Bank, Zambon & Fontana 2010 — nur mit der Anregung *Hammer* (HA2 a).
+    Modal = 3,
+};
+
+/// Excitation (Stufe 31a, HA2 a): wie die Saite angeregt wird. *Pluck* ist jede
+/// Saite bis Stufe 30; *Hammer* gibt es nur mit dem Verfahren *Modal* — und
+/// *Modal* nur mit *Hammer*. Andere Paare richtet das Programm (`richteSchicht`).
+enum class Anregung : int
+{
+    Zupfen = 0,  ///< Pluck
+    Hammer = 1,
 };
 
 /// Die Bauart eines Tonabnehmers (Stufe 23d, S-K5 a).
@@ -409,6 +423,13 @@ struct Schicht
     /// Untergrenze aus einer verdichteten Aufnahme (Saiten_Konzept S-L11 a).
     double legatoLaut = kLegatoLautVorgabe;
 
+    // --- nur Saite *Hammer* + *Modal* (Stufe 31a, HA1 a, HA2 a) ---
+    /// Excitation: eine Datei bis Fassung 15 (und ohne das Feld) ist *Pluck*.
+    Anregung anregung = Anregung::Zupfen;
+    /// Die Groessen des Fluegels als Kurven ueber die Tastatur; bei einer
+    /// anderen Schicht ungenutzt (und nicht in der Datei).
+    HammerSaite hammerSaite = hammerSaiteVorgabe();
+
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 
     // --- der erste Filter und der erste Drive ---------------------------
@@ -428,10 +449,21 @@ struct Schicht
 };
 
 /// Ist die Schicht eine Saite, die die Spielweisen kennt (*Extended KS*, *Waveguide*)?
+/// Die Hammer-Saite nicht: sie ist eine Taste, keine gegriffene Saite (HA2 a).
 [[nodiscard]] inline bool istSaitenSchicht(const Schicht& schicht)
 {
-    return schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch;
+    return schicht.schwingung == Schwingung::Saite &&
+           (schicht.saitenModell == SaitenModell::ErweiterterKs || schicht.saitenModell == SaitenModell::Wellenleiter);
 }
+/// Ist die Schicht eine Hammer-Saite (*Hammer* + *Modal*, Stufe 31a)?
+[[nodiscard]] inline bool istHammerSchicht(const Schicht& schicht)
+{
+    return schicht.schwingung == Schwingung::Saite && schicht.saitenModell == SaitenModell::Modal;
+}
+/// Eine Schicht in ihre Grenzen, soweit es die Hammer-Saite betrifft: nur die Paare
+/// *Pluck* mit Classic, Extended KS, Waveguide und *Hammer* mit *Modal* (HA2 a) —
+/// *Hammer* zieht *Modal* nach sich und umgekehrt; die Kurven in ihre Grenzen.
+void richteSchicht(Schicht& schicht);
 /// Folgt die Schicht in einer Kette und beim Bend der Saite (S-L12 a)? Die Saite selbst
 /// immer, jede andere nach *In a legato*.
 [[nodiscard]] inline bool folgtDerSaite(const Schicht& schicht)
@@ -506,9 +538,17 @@ struct Instrument
     /// (`istSaiteninstrument()` = false) ist das Instrument wie bis Stufe 22.
     /// Die Schichten bleiben der Klang.
     Saitensatz saiten;
+    /// Keyboard (seit Fassung 16, Stufe 31a, HA2 a, HA4 a): Umfang, Daempfer und
+    /// Pedale einer Tastatur — neben den Saiten, die den gegriffenen bleiben.
+    /// Leer = keine Tastatur (wie bis Stufe 30).
+    std::optional<Tastatur> tastatur;
 
     [[nodiscard]] bool operator==(const Instrument&) const = default;
 };
+
+/// Traegt das Instrument eine eingeschaltete Hammer-Saite? Dann tragen seine Toene
+/// die Stufe der Anschlagstaerke im Namen (`:a<stufe>`, HK2 a).
+[[nodiscard]] bool hatHammer(const Instrument& instrument);
 
 // --- die Datei `.lvinst` (Entscheide Patrik S110, I2 b und I3 a; S111, F1 a) --
 // Ein Instrument ist eine Datei, abgelegt wie die Klaenge des Kits: die
@@ -573,10 +613,17 @@ struct Instrument
 // das Feld nicht.
 // Fassung 15 (S140, Stufe 28c-2a, Entscheid SK11 a): `strings` traegt den Vibratohebel
 // `tremoloDown` und `tremoloUp` (Halbtoene, immer) — ein aelteres Programm kennte den
-// Hebel nicht. Geschrieben wird Fassung 15.
+// Hebel nicht.
+// Fassung 16 (S146, Stufe 31a, Entscheide HA1 a bis HA4 a, HK1 a): eine Saite traegt
+// `excitation` (`pluck`, `hammer`; an jeder Saite ausser Classic, immer); die
+// Hammer-Saite hat `stringModel` `modal` und den Block `hammerString` mit je Groesse
+// einer Kurve ueber die Tastatur (`points`, `overrides`) und `soundboard`; am
+// Instrument der Block `keyboard` (`range`, `undampedFrom`, `pedals`), wenn es eine
+// Tastatur hat. Ein aelteres Programm spielte eine Hammer-Saite still als Classic.
+// Geschrieben wird Fassung 16.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 15;
+inline constexpr int kInstrumentFassung = 16;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

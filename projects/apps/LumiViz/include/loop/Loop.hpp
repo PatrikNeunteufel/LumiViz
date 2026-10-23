@@ -263,6 +263,10 @@ struct TonAngabe
     /// Die Kurve Expression am Clip ueber dem Ton, ebenso. Leer = 1. Je Abtastwert werden
     /// beide malgenommen, der Pegel ist das Quadrat (SK9 a).
     std::vector<PegelPunkt> ausdruckClip{};
+    // --- seit Stufe 31a (HA3 a, HK2 a): die Anschlagstaerke einer Hammer-Saite ---
+    /// Die Stufe der Hammergeschwindigkeit (`anschlagStufe`, HammerSaite.hpp), ≤ 0;
+    /// 0 = volle Staerke — und jeder Ton eines Instruments ohne Hammer.
+    int anschlagStufe = 0;
 
     [[nodiscard]] bool operator==(const TonAngabe&) const = default;
 };
@@ -273,8 +277,9 @@ struct TonAngabe
 /// `:q<ms>=<cent>,…` bei der Spur Pitch und `:w<ms>=<cent>,…` bei der Spur Vibrato,
 /// (seit Stufe 28c-2b) `:x<ms>=<tausendstel>,…` bei der Spur Expression und
 /// `:y<ms>=<tausendstel>,…` bei der Kurve am Clip, (seit Stufe 25c) `:p1` nur die
-/// Saite, `:p2` ohne die Saite, zuletzt `:e<ms>` bei einem Ende — ohne alles
-/// derselbe Name wie bis Stufe 22.
+/// Saite, `:p2` ohne die Saite, (seit Stufe 31a, HK2 a) `:a<stufe>` bei einer
+/// Anschlagstufe unter 0, zuletzt `:e<ms>` bei einem Ende — ohne alles derselbe
+/// Name wie bis Stufe 22.
 [[nodiscard]] QString tonKlang(const TonAngabe& ton);
 /// Den Namen wieder zerlegen. false = kein Ton.
 bool zerlegeTon(const QString& klang, TonAngabe& ton);

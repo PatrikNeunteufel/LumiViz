@@ -456,6 +456,7 @@ QString tonKlang(const TonAngabe& ton)
     if (!ton.ausdruckMuster.empty()) name += QStringLiteral(":x") + verlaufText(ton.ausdruckMuster, &PegelPunkt::tausendstel);
     if (!ton.ausdruckClip.empty()) name += QStringLiteral(":y") + verlaufText(ton.ausdruckClip, &PegelPunkt::tausendstel);
     if (ton.teil != TonTeil::Alle) name += QStringLiteral(":p%1").arg(static_cast<int>(ton.teil));  // seit Stufe 25c
+    if (ton.anschlagStufe < 0) name += QStringLiteral(":a%1").arg(ton.anschlagStufe);  // seit Stufe 31a (HK2 a)
     if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
     return name;
 }
@@ -522,12 +523,12 @@ bool zerlegePunkte(QStringView text, std::vector<Punkt>& punkte)
 /// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: die Zusaetze
 /// `:e<ms>`, `:s<n>` (seit Stufe 23b), `:h<n>`, `:u`, `:m`, `:t` (seit Stufe
 /// 24b), `:v…`, `:b…` (seit Stufe 25b), `:q…`, `:w…` (seit Stufe 28c-1b), `:x…`, `:y…` (seit Stufe 28c-2b),
-/// `:p1`, `:p2` (seit Stufe 25c), dann Dauer und Tonhoehe als reine Zahlen — davor das Instrument, das als Pfad
-/// selbst einen Doppelpunkt tragen kann (C:/…).
+/// `:p1`, `:p2` (seit Stufe 25c), `:a<stufe>` (seit Stufe 31a), dann Dauer und Tonhoehe als reine Zahlen — davor
+/// das Instrument, das als Pfad selbst einen Doppelpunkt tragen kann (C:/…).
 bool zerlegeTonRest(QString rest, TonAngabe& ton)
 {
     TonAngabe zusatz;
-    for (int runde = 0; runde < 13; ++runde)
+    for (int runde = 0; runde < 14; ++runde)
     {
         const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
         if (vor < 0 || vor + 2 > rest.size()) break;
@@ -565,6 +566,14 @@ bool zerlegeTonRest(QString rest, TonAngabe& ton)
         else if (stueck.front() == QLatin1Char('y') && stueck.size() > 1 && stueck[1].isDigit())
         {
             if (!zerlegePunkte(stueck.mid(1), zusatz.ausdruckClip)) return false;
+        }
+        else if (stueck.front() == QLatin1Char('a') && stueck.size() > 2 && stueck[1] == QLatin1Char('-'))
+        {
+            // seit Stufe 31a (HK2 a): die Anschlagstufe, immer unter 0
+            bool ok = false;
+            const int stufe = stueck.mid(1).toInt(&ok);
+            if (!ok || stufe >= 0) return false;
+            zusatz.anschlagStufe = stufe;
         }
         else
         {
