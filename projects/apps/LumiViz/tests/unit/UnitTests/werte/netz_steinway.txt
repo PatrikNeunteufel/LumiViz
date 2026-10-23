@@ -1,0 +1,6 @@
+# Netz des Steinway D bis 5 kHz (CDT 2.0.1) - geschrieben von test_LoopKoerperNetz.cpp (LUMIVIZ_NETZ_WERTE_SCHREIBEN=1)
+kante 0.0133385215374
+knoten 21491
+dreiecke 42329
+kleinster_winkel 25.0018086319
+ecken_der_eingabe 8

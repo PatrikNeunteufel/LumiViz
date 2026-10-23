@@ -1,13 +1,13 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.1.0  
+> **Version:** 0.2.0  
 > **Datum:** 2026-10-23  
 > **Typ:** CppModuleDoc  
-> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan)  
+> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein)  
 > **Namespace:** lumi::koerper  
-> **Abhängigkeiten:** keine (kein Qt, keine App-Teile); ab 31c-4 Eigen und Spectra, nur hinter der Schnittstelle des Eigenlösers  
+> **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); ab 31c-4 Eigen und Spectra, nur hinter der Schnittstelle des Eigenlösers  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
 
@@ -17,9 +17,10 @@
 
 1. [Übersicht](#1-übersicht)
 2. [Bauplan](#2-bauplan)
-3. [Eigenlöser](#3-eigenlöser)
-4. [Tests](#4-tests)
-5. [Changelog](#5-changelog)
+3. [Netz](#3-netz)
+4. [Eigenlöser](#4-eigenlöser)
+5. [Tests](#5-tests)
+6. [Changelog](#6-changelog)
 
 ---
 
@@ -62,7 +63,33 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
 Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 1) schreibt jedes Feld, auch leere;
 NaN im Raster steht als `null`.
 
-## 3. Eigenlöser
+## 3. Netz
+
+`InstrumentBody/Netz.hpp` (ohne fremde Bibliothek) und `InstrumentBody/NetzCdt.hpp` (die einzige Datei mit CDT).
+Entschieden: BM4 a mit Zusatz (Patrik S147) — CDT jetzt, ein eigener Generator vielleicht später.
+
+- **Schnittstelle** `Netzgeber::vernetze(NetzAuftrag) → Netz`. Hinein: geschlossener Umriss, offene
+  Zwangslinien (dürfen sich kreuzen), Kantenlänge, kleinster Winkel (Vorgabe 25°). Heraus: Knoten, Dreiecke
+  gegen den Uhrzeiger, Zwangskanten (sortiert), `fehler` (leer = gut), `unverfeinert` (nur Auskunft). Kein Typ
+  von CDT geht über sie hinaus; eine Umsetzung ist zustandslos — zwei Aufrufe, dasselbe Netz.
+- **Aus dem Bauplan** `netzAuftrag(plan, fmax)`: der Umriss der Platte, je Rippe und Steg die beiden Ränder
+  (Mittellinie ± halbe Breite, `versetzt`), am Umriss abgeschnitten (`imUmriss`); die Kante nach MAESSTRO Gl. 1,
+  `elementKante` = λ_min / 4 an der dünnsten Stelle der Platte, λ = √(2π / f) · (D / (ρ h))^¼, D = E_y h³ / 12.
+- **Prüfgrößen:** `flaeche`, `kleinsterWinkelGrad`, `laengsteKante`, `groessteFlaeche(kante)` (gleichseitig),
+  `aufZwangskanten(netz, a, b)`.
+- **Umsetzung CDT 2.0.1** (`NetzgeberCdt`, `externals/CDT`, MPL-2.0): Punkte gleicher Lage zusammengelegt,
+  Einfügen in gegebener Reihenfolge, sich kreuzende Zwangskanten aufgelöst (`TryResolve`), die äußeren Dreiecke
+  gesammelt, zweimal nach größter Fläche und nach kleinstem Winkel verfeinert, dann entfernt. Fehler von CDT
+  (Ausnahmen) als Text.
+- **Eine eigene Umsetzung dazu:** eine Klasse, die `Netzgeber` umsetzt, in `netzgeber()` von
+  `test_LoopKoerperNetz.cpp` eintragen — alle Fälle laufen dann für beide; der Fall Steinway vergleicht mit
+  `werte/netz_steinway.txt` (Knoten und Dreiecke auf 2 %, kleinster Winkel bis 1° darunter). Der Schalter im
+  Werkzeug kommt mit dem Werkzeug (31c-4).
+- **Gemessen** (Release-clang, S147): Steinway D bis 5 kHz — Kante 13,3 mm, 21 491 Knoten, 42 329 Dreiecke,
+  kleinster Winkel 25,0° außer 8 Ecken der Eingabe (zwei Zwangskanten schließen den Winkel ein: Kreuzungen von
+  Rippe und Steg), Fläche genau, jede Zwangslinie als Kantenfolge, 0,07 s.
+
+## 4. Eigenlöser
 
 *Noch nicht gebaut (31c-4).* Entschieden (BM5-1 a mit Zusatz, Patrik S147):
 
@@ -79,14 +106,21 @@ NaN im Raster steht als `null`.
 Dieser Abschnitt wird mit 31c-4 zur eigentlichen Doku des Lösers: Schnittstelle, Umsetzung, wie eine eigene
 dazukommt, Tests und Bezugswerte, wie der Vergleich läuft.
 
-## 4. Tests
+## 5. Tests
+
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperNetz.cpp` — gegen die Schnittstelle, für jede
+Umsetzung aus `netzgeber()`: Elementgröße nach Gl. 1, Quadrat mit zwei sich kreuzenden Zwangslinien (Fläche,
+Zwangslinien, Winkel, Fläche je Dreieck, Umlaufsinn, im Umriss, zwei Läufe gleich), ein Auftrag ohne Kante (Fehler),
+der Steinway D bis 5 kHz mit den Bezugswerten `werte/netz_steinway.txt` (`LUMIVIZ_NETZ_WERTE_SCHREIBEN=1`).
+
 
 `projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperBauplan.cpp` — ohne Qt-Anwendung: Geometrie,
 Dickenraster, Masse und Werkstoffe (auch Glas), `pruefe`, die Datei (Hin- und Rückweg, jedes Feld, NaN als null,
 falsches Format, zu neue Fassung).
 
-## 5. Changelog
+## 6. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.2.0 | 2026-10-23 | Session 147, Stufe 31c-2: Netz — Schnittstelle `Netzgeber`, Auftrag aus dem Bauplan (Ränder der Leisten, Kante nach MAESSTRO Gl. 1), Umsetzung mit CDT 2.0.1 (BM4 a). |
 | 0.1.0 | 2026-10-23 | Session 147, Stufe 31c-1: Bauplan (Materialien orthotrop/isotrop, Platte mit Dickenraster, Leisten, Stegpunkte, Geometrie, Masse, Prüfung). |

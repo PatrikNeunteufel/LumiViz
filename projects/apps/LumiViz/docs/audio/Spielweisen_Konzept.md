@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.73.0
+> **Version:** 0.74.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, PL31c a, GB1 a, IC1 a und TS1 a (Patrik S139–S147);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1317,12 +1317,40 @@ verschiedene Fläche — bei 32 px auseinanderzuhalten. Verworfen: b (P2 mit Ma�
 Linien verschwinden klein, Wellen meinen die Abstrahlung), c (P3 Blaupause, K3 Mode mit Steg — K3 zu nah am Bauplan).
 Kippt auf K2 neben P1, wenn K1 bei 32 px wie ein Schachbrett wirkt.
 
+✅ **BM4 a** (Patrik S147), **mit Zusatz: ein eigener Netzgenerator vielleicht später, als Herausforderung.**
+**CDT 2.0.1** (artem-ogre/CDT, MPL-2.0, als reine Header; Fassung und Lizenz über GitHub abgefragt 2026-10-23;
+Ruppert-Verfeinerung seit 2.0.0 vom 20.09.2026) **als External, unverändert, hinter einer eigenen Schnittstelle in
+`InstrumentBody`** (wie BM5-1 a): hinein Umriss, Zwangslinien, Elementgröße, heraus Knoten und Dreiecke, kein Typ von
+CDT nach außen. Zwangslinien: die Ränder jeder Rippe und des Stegs (Mittellinie ± halbe Breite) — die Dickensprünge
+liegen auf Kanten. Verfeinert nach kleinstem Winkel und größter Fläche aus MAESSTRO Gl. 1. Tests gegen die
+Schnittstelle: Fläche erhalten, jede Zwangslinie als Kantenfolge, kleinster Winkel und größte Fläche eingehalten,
+jedes Dreieck im Umriss, zwei Läufe gleich; Bezugswerte für den Vergleich alt gegen neu; Doku in der Modul-Doku.
+**Zum Zusatz:** ein eigener Generator (Delaunay mit Zwangskanten, Ruppert) wird eine zweite Umsetzung derselben
+Schnittstelle und mit den Tests und Bezugswerten gegen CDT verglichen — die Schnittstelle hält das offen. Grund:
+erprobter Code für die heikelsten Stellen (robuste Prädikate nach Shewchuk), ohne zweites Programm, ohne Qt.
+Verworfen: b (Gmsh als externes Programm, GPLv2+ — die Tests hingen an einem installierten Fremdprogramm, ein Editor
+in der App hätte es nicht), c (eigener Generator jetzt). Kippt auf b, wenn die Verfeinerung von CDT am Steinway mit
+den Zwangslinien scheitert (endet nicht, Winkel nicht eingehalten, Kanten verloren).
+
 **Gebaut 31c-1 Icons (S147):** `zeichen_bauplan` und `zeichen_koerper` in `build_lvfx2_icons.py` (der Umriss aus
 `steinway_d.lvinstbodyplan`), `lumiviz_lvinstbodyplan.ico` und `lumiviz_lvinstbody.ico` — die übrigen 17 Icons Byte
 für Byte gleich; eingetragen in `register_file_icons.ps1` (`LumiViz.InstrumentBodyPlan`, `LumiViz.InstrumentBody`),
 die Tabellen der Icon-README, die Vorschaubilder, Benutzerhandbuch §17 (1.203.0). `dateiArtIcon` findet sie über den
 Namen, ohne Code. Test „Loop Koerper 31c-1 Icons". **31c-1 damit fertig;** unter Release-clang 7 / 7, Testing-MSVC
 baut.
+
+**Gebaut 31c-2 (S147):** CDT 2.0.1 unter `externals/CDT` (die elf Header und drei Lizenzdateien unverändert aus
+`CDT-2.0.1.zip`, 4 350 160 Byte, SHA-256 in der README; Download mit Freigabe Patrik), eigene `Include.cmake`
+(INTERFACE-Ziel `CDT`), in `Solution.json` nur für die Unit-Tests; `THIRD_PARTY_NOTICES.md` mit CDT (MPL-2.0) und den
+mitgelieferten Teilen (Prädikate von W. C. Lenthe, BSD-3 mit Wortlaut; `portable_nth_element` aus LLVM, Apache-2.0
+mit LLVM-Ausnahme). In `InstrumentBody`: `Netz.hpp` (Schnittstelle `Netzgeber`, Prüfgrößen, `netzAuftrag` aus dem
+Bauplan: Ränder der Leisten, Kante nach MAESSTRO Gl. 1 an der dünnsten Stelle) und `NetzCdt.hpp` (die einzige Datei mit
+CDT); Modul-Doku 0.2.0 §3. Tests `test_LoopKoerperNetz` (4 Fälle gegen die Schnittstelle, für jede Umsetzung aus
+`netzgeber()`), Bezugswerte `werte/netz_steinway.txt`. **Gemessen** (Release-clang): Steinway D bis 5 kHz — Kante
+13,3 mm, 21 491 Knoten, 42 329 Dreiecke (MAESSTRO: 23 006 Elemente 3. Ordnung für seinen vereinfachten Steinway),
+kleinster Winkel 25,0° außer 8 Ecken der Eingabe (Kreuzungen von Rippe und Steg), Fläche genau, jede Zwangslinie als
+Kantenfolge, 0,07 s. Der Kipppunkt von BM4 a (CDT scheitert am Steinway) ist nicht eingetreten. Release-clang
+`*Loop Koerper*` 11 / 11; ob Testing-MSVC dieselben Zahlen liefert (Bezug auf 2 %), zeigt der Lauf am Stufenende.
 
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
@@ -2195,6 +2223,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.74.0 | 2026-10-23 | Session 147. BM4 a (CDT 2.0.1 hinter einer eigenen Schnittstelle, eigener Generator vielleicht später); 31c-2 gebaut (Netz, CDT als External, Steinway bis 5 kHz gemessen). |
 | 0.73.0 | 2026-10-23 | Session 147. IC1 a (Icons P1 und K1); 31c-1 fertig mit den Icons. |
 | 0.72.0 | 2026-10-23 | Session 147. 31c-1 gebaut (ohne Icons): Bibliothek `InstrumentBody` mit dem Bauplan, `loop/KoerperBauplan`, der Steinway D aus RT-0425 Abb. 2 und Anhang A (`make_steinway_d.py`); Befunde: Farbskalen mit Zahlen, Umriss aus (a), Stegpunkte auf dem Steg, Holz nach Chabassier 2013 Tab. I, A0–B0 und C8 verlängert, Masse 11,5 kg. |
 | 0.71.0 | 2026-10-23 | Session 147. BM5-1 a (Eigen 3.4.1 und Spectra 1.2.0 als Externals hinter einer Schnittstelle; Tests gegen die Schnittstelle mit Bezugswerten und Vergleich alt gegen neu; eigene Modul-Doku). |
