@@ -57,6 +57,8 @@ $types = @(
     @{ Ext = '.lvinst';  ProgId = 'LumiViz.Instrument';  Text = 'LumiViz Instrument';        Icon = 'lumiviz_lvinst.ico';  Own = $true  }
     @{ Ext = '.lvkit';   ProgId = 'LumiViz.Kit';         Text = 'LumiViz Drum Kit';          Icon = 'lumiviz_lvkit.ico';   Own = $true  }
     @{ Ext = '.lvchord'; ProgId = 'LumiViz.Chord';       Text = 'LumiViz Chord';             Icon = 'lumiviz_lvchord.ico'; Own = $true  }
+    @{ Ext = '.lvinstbodyplan'; ProgId = 'LumiViz.InstrumentBodyPlan'; Text = 'LumiViz Instrument Body Plan'; Icon = 'lumiviz_lvinstbodyplan.ico'; Own = $true }
+    @{ Ext = '.lvinstbody'; ProgId = 'LumiViz.InstrumentBody'; Text = 'LumiViz Instrument Body'; Icon = 'lumiviz_lvinstbody.ico'; Own = $true }
     @{ Ext = '.lvcontour'; ProgId = 'LumiViz.Contour';   Text = 'LumiViz Contour';           Icon = 'lumiviz_lvcontour.ico'; Own = $true }
     @{ Ext = '.lvfade';  ProgId = 'LumiViz.Fade';        Text = 'LumiViz Fade Preset';       Icon = 'lumiviz_lvfade.ico';  Own = $true  }
     @{ Ext = '.lvshape'; ProgId = 'LumiViz.CurvePiece';  Text = 'LumiViz Curve Piece Preset'; Icon = 'lumiviz_lvshape.ico'; Own = $true  }

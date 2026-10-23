@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.202.0
-> **Datum:** 2026-10-22
+> **Version:** 1.203.0
+> **Datum:** 2026-10-23
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -3665,6 +3665,8 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvkit](bilder/handbuch/icons/lumiviz_lvkit.png) | `.lvkit` | Drum-Kit für den Loop (§16, Kits) | Drum-Editor, Knopf Kit; Import data, Liste „Let me decide for each file" |
 | ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | Instrument-Editor vor dem Namen des Instruments; Import data, Liste „Let me decide for each file" |
 | ![lvchord](bilder/handbuch/icons/lumiviz_lvchord.png) | `.lvchord` | Akkord für den Loop: ein Griffbild oder ein Voicing (§16, Akkorde) | Import data, Liste „Let me decide for each file" |
+| ![lvinstbodyplan](bilder/handbuch/icons/lumiviz_lvinstbodyplan.png) | `.lvinstbodyplan` | Bauplan eines Instrumentkörpers: Umriss, Platte, Rippen und Steg eines Resonanzbodens, mitgeliefert der Steinway D | noch nirgends als Icon (im Bau, Stufe 31c) |
+| ![lvinstbody](bilder/handbuch/icons/lumiviz_lvinstbody.png) | `.lvinstbody` | aus dem Bauplan gerechneter Instrumentkörper (seine Moden) | noch nirgends als Icon (im Bau, Stufe 31c) |
 | ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Form aus einer oder mehreren Konturen — der Knoten **Shape** der Effect Chain zeichnet sie (§11), eine Shape-Schicht im Instrument-Creator spielt sie, das Fenster **Edit shape** legt sie an (§16) | noch nirgends als Icon |
 | ![lvfade](bilder/handbuch/icons/lumiviz_lvfade.png) | `.lvfade` | Blende des Curve Editors (§15) | Import data, Liste „Let me decide for each file" |
 | ![lvshape](bilder/handbuch/icons/lumiviz_lvshape.png) | `.lvshape` | Stück des Curve Editors (§15) | Import data, dieselbe Liste |
@@ -3755,6 +3757,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.203.0 | 2026-10-23 | Session 147. §17 Dateitypen: `.lvinstbodyplan` (Bauplan eines Instrumentkörpers) und `.lvinstbody` (gerechneter Körper) mit ihren Icons (Entscheid IC1 a). |
 | 1.202.0 | 2026-10-22 | Session 145. §16 Loop NEU **Clips einfrieren: Freeze** — Sanduhr mit Rechenzeit, Freeze clip / Unfreeze clip, die Marken frozen, computing, changed, missing (Kurzformen), wo die Wellenformen liegen (Stufen 30f–30h); „Weitergeben: Publish“ mit eingefrorenen Clips (Gruppe Frozen clips, Include frozen clips, der Import prüft; Stufe 30i). §8 Settings → Panels NEU **Freeze hint**. |
 | 1.201.0 | 2026-10-22 | Session 143. §8 Settings → Panels NEU **Frozen Clips** mit Grenze, Stand und **Clear frozen clips** (Stufe 30e; Einfrieren selbst folgt). |
 | 1.200.0 | 2026-10-22 | Session 143. §16 Loop NEU **Als WAV exportieren: Export audio** — der ganze Loop (Datei-Zeile), ein Clip (Rechtsklick), aus dem Composer ein Loop-Clip; Format 32-bit float / 24 / 16 Bit, beim ganzen Loop Ending und Passes, Fortschritt, Ergebnis, Show in folder (Stufe 30c). §15 Composer: *Export audio...* am Loop-Clip. |

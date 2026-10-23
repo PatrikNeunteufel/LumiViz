@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.72.0
+> **Version:** 0.73.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut ohne Icons)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, PL31c a, GB1 a und TS1 a (Patrik S139–S147);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, PL31c a, GB1 a, IC1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1309,6 +1309,21 @@ Auswerten (selbst gelesen und gemessen):**
   dem Bild gefolgt.
 - `asset/Asset.cmake` nimmt die Körper erst auf, wenn es den ersten gibt (31c-5); der Bauplan bleibt im Repo.
 
+✅ **IC1 a** (Patrik S147, am Vorschaublatt): **Bauplan `.lvinstbodyplan` = P1** (der Umriss des Bodens dunkel mit
+hellem Rand, Rippen in Cyan, der Steg in Bernstein), **Körper `.lvinstbody` = K1** (derselbe Umriss mit einer Mode,
+Bäuche in Cyan und Magenta) — beide als Marke mit Zeichen im Kreis (I1 a), der Umriss aus
+`steinway_d.lvinstbodyplan`. Grund: sie zeigen, was in der Datei steht (Rippen und Steg gegen Moden), gleiche Form,
+verschiedene Fläche — bei 32 px auseinanderzuhalten. Verworfen: b (P2 mit Maßlinie, K2 mit Schallwellen — dünne
+Linien verschwinden klein, Wellen meinen die Abstrahlung), c (P3 Blaupause, K3 Mode mit Steg — K3 zu nah am Bauplan).
+Kippt auf K2 neben P1, wenn K1 bei 32 px wie ein Schachbrett wirkt.
+
+**Gebaut 31c-1 Icons (S147):** `zeichen_bauplan` und `zeichen_koerper` in `build_lvfx2_icons.py` (der Umriss aus
+`steinway_d.lvinstbodyplan`), `lumiviz_lvinstbodyplan.ico` und `lumiviz_lvinstbody.ico` — die übrigen 17 Icons Byte
+für Byte gleich; eingetragen in `register_file_icons.ps1` (`LumiViz.InstrumentBodyPlan`, `LumiViz.InstrumentBody`),
+die Tabellen der Icon-README, die Vorschaubilder, Benutzerhandbuch §17 (1.203.0). `dateiArtIcon` findet sie über den
+Namen, ohne Code. Test „Loop Koerper 31c-1 Icons". **31c-1 damit fertig;** unter Release-clang 7 / 7, Testing-MSVC
+baut.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2180,6 +2195,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.73.0 | 2026-10-23 | Session 147. IC1 a (Icons P1 und K1); 31c-1 fertig mit den Icons. |
 | 0.72.0 | 2026-10-23 | Session 147. 31c-1 gebaut (ohne Icons): Bibliothek `InstrumentBody` mit dem Bauplan, `loop/KoerperBauplan`, der Steinway D aus RT-0425 Abb. 2 und Anhang A (`make_steinway_d.py`); Befunde: Farbskalen mit Zahlen, Umriss aus (a), Stegpunkte auf dem Steg, Holz nach Chabassier 2013 Tab. I, A0–B0 und C8 verlängert, Masse 11,5 kg. |
 | 0.71.0 | 2026-10-23 | Session 147. BM5-1 a (Eigen 3.4.1 und Spectra 1.2.0 als Externals hinter einer Schnittstelle; Tests gegen die Schnittstelle mit Bezugswerten und Vergleich alt gegen neu; eigene Modul-Doku). |
 | 0.70.0 | 2026-10-23 | Session 147. BM5 a (Rechenkern als Bibliothek `InstrumentBody` ohne Qt, Werkzeug `InstrumentBodyTool`, die App liest nur Körper); Frage VST mit Antwort, ohne Umsetzung. |

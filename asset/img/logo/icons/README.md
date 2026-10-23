@@ -26,6 +26,8 @@ Windows).
 | `.lvinst` (Instrument, S120) | `lumiviz_lvinst.ico` — Marke mit Klaviertasten | erzeugt aus `lumiviz.ico` | Instrument-Editor (Kopfzeile), Import data (Liste) |
 | `.lvkit` (Drum-Kit, S124) | `lumiviz_lvkit.ico` — Marke mit Snare und gekreuzten Sticks (Entscheide Patrik I1 a, I2 a) | erzeugt aus `lumiviz.ico` | Drum-Editor (Knopf Kit), Import data (Liste) |
 | `.lvchord` (Akkord: Griffbild oder Voicing, S137) | `lumiviz_lvchord.ico` — Marke mit einem Griffbild (Entscheid S-T3 a, Wunsch Patrik) | erzeugt aus `lumiviz.ico` | noch nicht (Fenster Chords, Stufe 26e) |
+| `.lvinstbodyplan` (Bauplan eines Instrumentkörpers, S147) | `lumiviz_lvinstbodyplan.ico` — Marke mit dem Umriss eines Resonanzbodens, Rippen und Steg (Entscheid IC1 a, Fassung P1) | erzeugt aus `lumiviz.ico`, Umriss aus `asset/loop/instrument_bodies/steinway_d.lvinstbodyplan` | noch nicht |
+| `.lvinstbody` (gerechneter Instrumentkörper, S147) | `lumiviz_lvinstbody.ico` — Marke mit demselben Umriss und einer Mode (IC1 a, Fassung K1) | erzeugt aus `lumiviz.ico`, wie oben | noch nicht |
 | `.lvcontour` (Kontur für die Waveform Shape, S120 — die Datei gibt es noch nicht) | `lumiviz_lvcontour.ico` — Marke mit Kontur und Stift | erzeugt aus `lumiviz.ico` | noch nicht |
 | `.lvfade` (Blende des Curve Editors, S120) | `lumiviz_lvfade.ico` — Marke mit Keil | erzeugt aus `lumiviz.ico` | Import data (Liste) |
 | `.lvshape` (Stück des Curve Editors, S120) | `lumiviz_lvshape.ico` — Marke mit Hügel | erzeugt aus `lumiviz.ico` | Import data (Liste) |
@@ -52,6 +54,8 @@ zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
 | ![lumiviz_lvinst](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinst.png) | `lumiviz_lvinst.ico` | `.lvinst` |
 | ![lumiviz_lvkit](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvkit.png) | `lumiviz_lvkit.ico` | `.lvkit` |
 | ![lumiviz_lvchord](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvchord.png) | `lumiviz_lvchord.ico` | `.lvchord` |
+| ![lumiviz_lvinstbodyplan](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinstbodyplan.png) | `lumiviz_lvinstbodyplan.ico` | `.lvinstbodyplan` |
+| ![lumiviz_lvinstbody](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinstbody.png) | `lumiviz_lvinstbody.ico` | `.lvinstbody` |
 | ![lumiviz_lvcontour](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvcontour.png) | `lumiviz_lvcontour.ico` | `.lvcontour` |
 | ![lumiviz_lvfade](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvfade.png) | `lumiviz_lvfade.ico` | `.lvfade` |
 | ![lumiviz_lvshape](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvshape.png) | `lumiviz_lvshape.ico` | `.lvshape` |
@@ -107,6 +111,8 @@ eintragen"; die Liste im Skript und diese Tabelle zusammen pflegen):
 | `.lvinst` | `LumiViz.Instrument` | `lumiviz_lvinst.ico` | `-Apply` |
 | `.lvkit` | `LumiViz.Kit` | `lumiviz_lvkit.ico` | `-Apply` (S124) |
 | `.lvchord` | `LumiViz.Chord` | `lumiviz_lvchord.ico` | `-Apply` (S137) |
+| `.lvinstbodyplan` | `LumiViz.InstrumentBodyPlan` | `lumiviz_lvinstbodyplan.ico` | `-Apply` (S147) |
+| `.lvinstbody` | `LumiViz.InstrumentBody` | `lumiviz_lvinstbody.ico` | `-Apply` (S147) |
 | `.lvcontour` | `LumiViz.Contour` | `lumiviz_lvcontour.ico` | `-Apply` |
 | `.lvfade` | `LumiViz.Fade` | `lumiviz_lvfade.ico` | `-Apply` |
 | `.lvshape` | `LumiViz.CurvePiece` | `lumiviz_lvshape.ico` | `-Apply` |
@@ -179,7 +185,8 @@ powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icon
 - **Ohne Schalter** ändert es nichts und zeigt nur, was es täte.
 - **`-Apply`** trägt die eigenen Endungen ein (`.lvfx`, `.lvfx2`, `.lvkar`,
   `.lvtrail`, `.lvcomp`, seit S120 `.lvloop`, `.lvinst`, `.lvcontour`,
-  `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, seit S124 `.lvkit`, seit S137 `.lvchord`), **`-Foreign`** dazu `.avs`,
+  `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, seit S124 `.lvkit`, seit S137 `.lvchord`, seit S147
+  `.lvinstbodyplan` und `.lvinstbody`), **`-Foreign`** dazu `.avs`,
   `.milk`, `.milk2`, `.lrc`, `.grad`. Audioformate nie.
 - **`-Remove`** entfernt genau die eigenen Einträge (Schlüssel `LumiViz.*` und
   Endungen, die auf einen davon zeigen).

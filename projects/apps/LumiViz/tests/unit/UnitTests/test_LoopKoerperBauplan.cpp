@@ -21,6 +21,8 @@
  * - Der mitgelieferte Steinway D (BM2 a, `make_steinway_d.py`), vom Arbeitsordner aus gelesen
  *   (die Test-Exe aus dem Projekt-Root starten): in sich stimmig, 88 Tasten, jeder Stegpunkt
  *   auf dem Steg, Dicken in den Spannen von RT-0425 §2.1, Masse plausibel.
+ * - Die Icons der beiden Endungen (IC1 a) liegen, wo `dateiArtIcon` sie sucht
+ *   (`lumiviz_<endung>.ico`), ebenfalls vom Arbeitsordner aus.
  ****************************************************************************************
  */
 
@@ -29,6 +31,7 @@
 #include "InstrumentBody/Bauplan.hpp"
 #include "loop/KoerperBauplan.hpp"
 
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonObject>
 
@@ -326,4 +329,14 @@ TEST_CASE("Loop Koerper 31c-1 Steinway D")
     CHECK(flaeche == doctest::Approx(2.05).epsilon(0.03));
     CHECK(masse > 10.0);
     CHECK(masse < 15.0);
+}
+
+TEST_CASE("Loop Koerper 31c-1 Icons")
+{
+    // dateiArtIcon(<endung>) laedt `lumiviz_<endung>.ico` aus dem Ordner der Format-Icons
+    for (const char* endung : {kBauplanEndung, kKoerperEndung})
+    {
+        const QString datei = QStringLiteral("asset/img/logo/icons/lumiviz_") + QLatin1String(endung).mid(1) + QStringLiteral(".ico");
+        CHECK_MESSAGE(QFileInfo::exists(datei), datei.toStdString(), " (die Test-Exe aus dem Projekt-Root starten)");
+    }
 }

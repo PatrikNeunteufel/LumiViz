@@ -4,7 +4,7 @@ Aufruf (normales Python mit Pillow):
 
     python asset/img/logo/icons/build_lvfx2_icons.py
 
-Erzeugt sechzehn .ico (16–256 px) neben diesem Skript:
+Erzeugt neunzehn .ico (16–256 px) neben diesem Skript:
 
 - `lumiviz_lvfx2.ico`   „Stapel"  — das Icon vorn, zwei abgedunkelte Kopien
                         versetzt dahinter. Das Datei-Icon fuer `.lvfx2`
@@ -31,6 +31,11 @@ Erzeugt sechzehn .ico (16–256 px) neben diesem Skript:
                         drei Fassungen gewaehlt).
 - `lumiviz_lvchord.ico` „Marke" mit einem Griffbild — das Datei-Icon fuer Akkorde
                         `.lvchord` (Session 137, Entscheid S-T3 a).
+- `lumiviz_lvinstbodyplan.ico` „Marke" mit dem Umriss eines Resonanzbodens, Rippen und
+                        Steg — das Datei-Icon fuer Bauplaene `.lvinstbodyplan`;
+  `lumiviz_lvinstbody.ico` derselbe Umriss mit einer Mode — fuer Koerper
+                        `.lvinstbody` (Session 147, Entscheid IC1 a). Der Umriss
+                        kommt aus `asset/loop/instrument_bodies/steinway_d.lvinstbodyplan`.
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 - `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
@@ -43,6 +48,7 @@ Erzeugt sechzehn .ico (16–256 px) neben diesem Skript:
 Die Reserve-Icons sind noch ohne Verwendung (Ideen in `README.md`).
 `lumiviz.ico` selbst ist Handarbeit und wird nur gelesen.
 """
+import json
 import math
 import pathlib
 import sys
@@ -298,6 +304,68 @@ def zeichen_griffbild(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
         d.ellipse((x - k, y - k, x + k, y + k), fill=(*farbe, 255))
 
 
+BAUPLAN = ORDNER.parents[2] / "loop" / "instrument_bodies" / "steinway_d.lvinstbodyplan"
+HELL = (235, 235, 235, 255)
+
+
+def boden(cx: int, cy: int, r: int):
+    """Umriss, Steg und Rippen des Steinway D aus dem Bauplan, in Pixel des Kreises
+    (der Boden in 70 % des Durchmessers, mittig)."""
+    plan = json.loads(BAUPLAN.read_text(encoding="utf-8"))
+    umriss = plan["plate"]["outline"]
+    x0, x1 = min(p[0] for p in umriss), max(p[0] for p in umriss)
+    y0, y1 = min(p[1] for p in umriss), max(p[1] for p in umriss)
+    s = 2 * r * 0.70 / (y1 - y0)
+    mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+
+    def t(p):
+        return (cx + (p[0] - mx) * s, cy - (p[1] - my) * s)
+
+    return umriss, plan["bridges"][0]["line"], [rippe["line"] for rippe in plan["ribs"]], t
+
+
+def zeichen_bauplan(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Der Bauplan eines Resonanzbodens (Session 147, IC1 a, Fassung P1): der Umriss
+    dunkel mit hellem Rand, jede dritte Rippe in Cyan, der Steg in Bernstein."""
+    umriss, steg, rippen, t = boden(cx, cy, r)
+    pts = [t(p) for p in umriss]
+    d.polygon(pts, fill=(60, 66, 78, 255))
+    d.line(pts + [pts[0]], fill=HELL, width=14, joint="curve")
+    for rippe in rippen[1::3]:
+        d.line([t(rippe[0]), t(rippe[-1])], fill=(*CYAN, 255), width=16)
+    d.line([t(p) for p in steg], fill=(*BERNSTEIN, 255), width=24, joint="curve")
+
+
+def zeichen_koerper(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Der gerechnete Koerper (Session 147, IC1 a, Fassung K1): derselbe Umriss mit
+    einer Mode — die Baeuche wie sin(2πx)·sin(3πy) in Cyan und Magenta."""
+    umriss, _, _, t = boden(cx, cy, r)
+    x0, x1 = min(p[0] for p in umriss), max(p[0] for p in umriss)
+    y0, y1 = min(p[1] for p in umriss), max(p[1] for p in umriss)
+
+    def innen(x, y):
+        drin = False
+        for k in range(len(umriss)):
+            (ax, ay), (bx, by) = umriss[k], umriss[k - 1]
+            if (ay > y) != (by > y) and x < (bx - ax) * (y - ay) / (by - ay) + ax:
+                drin = not drin
+        return drin
+
+    schritt = 0.025
+    y = y0
+    while y < y1:
+        x = x0
+        while x < x1:
+            if innen(x + schritt / 2, y + schritt / 2):
+                v = math.sin(2 * math.pi * (x - x0) / (x1 - x0)) * math.sin(3 * math.pi * (y - y0) / (y1 - y0))
+                a, b = t((x, y + schritt)), t((x + schritt, y))
+                d.rectangle((a[0], a[1], b[0] + 1, b[1] + 1), fill=(*(CYAN if v >= 0 else MAGENTA), 255))
+            x += schritt
+        y += schritt
+    pts = [t(p) for p in umriss]
+    d.line(pts + [pts[0]], fill=HELL, width=14, joint="curve")
+
+
 def marke(icon: Image.Image, zeichen=zeichen_ebenen) -> Image.Image:
     """Das Icon ganz, unten rechts ein Kreis mit einem Zeichen — eine Familie:
     je Verwendung ein eigenes Zeichen im Kreis (Idee Patrik S89)."""
@@ -377,6 +445,9 @@ def main() -> int:
     als_ico(marke(icon, zeichen_trommel), "lumiviz_lvkit.ico")
     # Session 137: Akkorde (.lvchord)
     als_ico(marke(icon, zeichen_griffbild), "lumiviz_lvchord.ico")
+    # Session 147: Bauplan und Koerper eines Instruments (.lvinstbodyplan, .lvinstbody)
+    als_ico(marke(icon, zeichen_bauplan), "lumiviz_lvinstbodyplan.ico")
+    als_ico(marke(icon, zeichen_koerper), "lumiviz_lvinstbody.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     als_ico(komposition(icon), "lumiviz_lvcomp.ico")
     # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein
