@@ -4,8 +4,8 @@
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a und TS1 a (Patrik S139–S148);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a und TS1 a (Patrik S139–S148);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1478,6 +1478,61 @@ darüber (BM6-1 a sagt „Dicke der Platte plus Höhe des Stegs“ — gemessen 
 (`pruefe`, Datei mit Fassung 1, das Paar des Steinway gegen Stegpunkt und Steghöhe auf 1 mm). Release-clang
 `*Loop Koerper*` 24 / 24; Testing-MSVC baut.
 
+**Befund S148 zur Dämpfung (selbst gelesen, an den Seitenbildern):** RT-0425 §2.1 (gedruckt S. 4) nennt nur die
+Konstanten „a = 2.00 × 10⁻⁵ (1a), b = 0.07 (1b), c = 0.00 (1c)“ für „a modal approach which consists in considering
+that the damping occurs mode per mode“, das Gesetz selbst nicht. Chabassier, Joly & Chaigne 2013 Gl. 17 schreibt die
+Dämpfung als Funktion der Frequenz: Ẍn + α(fn) Ẋn + (2πfn)² Xn = Fn, „α is a positive damping function matching
+experimental data“. Chabassier, Duruflé & Joly 2015 Teil 2 (S. 6) gibt die Form fd(λ) = αλ + β√λ + γ mit λ = ω².
+**Gelesen als α(f) = a f² + b f + c, f in Hz** (dieselbe Form wie Teil 2, in f statt in ω): dann ist der
+Verlustfaktor η = α/(2πf) 1,1 % bei 100 Hz, 1,4 % bei 1 kHz, 2,7 % bei 5 kHz — im gemessenen Bereich 1–3 % (Ege,
+Boutillon & Rébillat 2013). In ω gelesen gäben dieselben Zahlen 8 % bei 100 Hz bis 70 % bei 5 kHz, physikalisch nicht
+haltbar. Die Lesart ist eine Deutung, kein Wortlaut; der Prüfstein (31c-6) und *Salamander* (31d) messen sie nach.
+
+**Gebaut 31c-5b (S148):** `InstrumentBody/Auswertung.hpp` — `Auswertung` (einmal vorbereitet: Abtastung der
+Stegpunkte, Gauss-Punkte mit ihrem Abstand zu jedem Hörort) und `werte(mode)` → `ModeImKoerper`: Frequenz,
+Verlustfaktor η (nach dem Befund oben), φ je Stegpunkt (über die Ansatzfunktionen des Elements; die modale Masse ist
+1/φ², das Vorzeichen bleibt), je Hörort das Abstrahlgewicht G = ρa/(2π) ∫ φ e^{−iωR/c}/R dS bei der Frequenz der Mode
+(komplex, √kg/m²; p = q̈ · G). Dazu in der Platte `PlattenSystem::elemente`, `Plattenelement::basis` und
+`Auflager::Frei` (nur für Prüfungen). Das Werkzeug wertet jede Mode beim Liefern aus. Tests `test_LoopKoerperAuswertung`
+(5 Fälle): Dämpfung, Abtastung (Polynome genau), Rayleigh am Kolben auf der Achse gegen die geschlossene Lösung auf
+0,2 % (auch im Nahfeld), die erste Mode der Prüfplatte gegen Navier (φ auf 0,08 %, Fernfeld auf 0,09 %), Steinway.
+**Gemessen** (Release-clang, `InstrumentBodyTool`, Steinway D bis 5 kHz): alle 88 Stegpunkte im Netz, Vorbereitung
+0,06 s, **Auswertung aller 820 Moden 17 s** (innerhalb der 1125 s des Lösers), Spitze 4,9 GB; erste Mode 38,2 Hz,
+η = 1,13 %, |G| links 0,149, rechts 0,108 √kg/m². Release-clang `*Loop Koerper*` 29 / 29; Testing-MSVC baut.
+
+**Befund S148 vor 31c-5c (selbst gerechnet, aus den 820 Moden des Steinway bis 5 kHz):** Modendichte 0,064 /Hz unter
+500 Hz (Ege, Boutillon & Rébillat 2013: „about 0.06 modes Hz⁻¹“), dann gleichmäßig steigend bis 0,230 /Hz bei
+4,5–5 kHz. Die Abstände, auf die örtliche Dichte normiert: Mittel 0,998, Varianz 0,285, Anteil unter 0,25 bei 4,4 % —
+die Rayleigh-Verteilung von Boutillon & Ege 2013 Gl. 23/24 hat 1, 0,273 und 4,8 % (Poisson: 1, 1, 22 %). Das gerechnete
+Modell zeigt sie von sich aus. Boutillon & Ege (S. 19–21, an den Seitenbildern gelesen): Gl. 23/24 Abstände nach
+Rayleigh, Gl. 25 Dämpfung η = 2,3 % · r (Chi-Quadrat), Gl. 26/27 mittlere Mobilität n/(4M); ihre Synthese begrenzen sie
+selbst („We have limited the frequency range of the synthesis to this limit“, S. 20), zur Abstrahlung nichts.
+
+✅ **ST1 a** (Patrik S148): **Die Größen des statistischen Teils kommen aus den gerechneten Moden, die Form der Ziehung
+aus Boutillon & Ege.** Dichte n(f) aus dem oberen Band der gerechneten Moden (2,5–5 kHz) fortgesetzt; Abstände nach
+Rayleigh (Gl. 23/24); Dämpfung nach demselben Gesetz wie die gerechneten Moden (RT-0425 Gl. 1, keine Naht bei 5 kHz);
+je Stegpunkt ein Formwert, normal verteilt mit der Streuung der gerechneten Moden im oberen Band dort, Vorzeichen
+zufällig, die Stegpunkte unabhängig; je Hörort ein Gewicht mit dem mittleren Betrag des oberen Bands und gleichverteilter
+Phase. Bis 20 kHz. Die Datei trägt nur diese Größen und den Samen, gezogen wird beim Bilden der Antworten (KB1 a) —
+ausgeschrieben wären es rund 5000 Moden zu je 92 Zahlen, nahe am Kipppunkt von BM3 c. Grund: ein Instrument, eine
+Quelle — bei 5 kHz passen Dichte, Dämpfung und Mobilität ohne Sprung; die Form der Ziehung ist an den gerechneten Moden
+belegt. Verworfen: b (Formeln von Boutillon & Ege aus dem Bauplan — die Autoren begrenzen ihre Synthese selbst darunter,
+ihre Dämpfung widerspricht RT-0425, für die Abstrahlung keine Vorlage), c (Messungen des Prüfsteins — gemessen ist eine
+mittlere Mobilität anderer Flügel, keine Dichte und keine Abstrahlung; taugt als Prüfung). Kippt auf c, wenn der
+Prüfstein (31c-6) die gerechnete Mobilität oberhalb rund 3 kHz deutlich neben Plath oder Giordano findet; kippt bei der
+Ziehung, wenn benachbarte Stegpunkte über 5 kHz merklich zusammen schwingen.
+
+**Gebaut 31c-5c (S148):** `InstrumentBody/Statistik.hpp` — `StatistischerTeil` (was die Datei trägt: Grenzen, Dichte
+und Anstieg, Dämpfung, Streuung je Stegpunkt, Betrag je Hörort, Samen, das Band der Schätzung), `schaetze` (Dichte als
+Gerade durch die Zählung in zehn Stücken des Bands, fallend wird waagrecht; Streuung und Betrag als quadratisches
+Mittel — „mittlerer Betrag“ aus ST1 a so gelesen, dieselbe Leistung wie die gerechneten Moden), `ziehe` (Rayleigh nach
+Gl. 23/24, normal je Stegpunkt, Phase gleichverteilt), `Zufall` (SplitMix64, eigene Umrechnungen, auf jedem Compiler
+dieselbe Folge; zwei Züge nie in einem Ausdruck). Das Werkzeug hängt den Teil an (`--statistics-to`, Vorgabe 20 kHz;
+`--seed`, Vorgabe 1). Tests `test_LoopKoerperStatistik` (3 Fälle: Zufall gegen Bezugsfolge und Verteilungen, Ziehung,
+Schätzung). **Gemessen** (Steinway D, Band 2,5–5 kHz, 528 Moden): Dichte 0,238 /Hz bei 5 kHz, Anstieg 2,1·10⁻⁵ /Hz²,
+**5933 Moden bis 20 kHz gezogen**, Streuung an den Stegpunkten im Mittel 0,087 /√kg, |G| links 0,0067, rechts 0,0069
+√kg/m². Release-clang `*Loop Koerper*` 32 / 32; Testing-MSVC baut.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2349,7 +2404,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.77.0 | 2026-10-23 | Session 148. BM6 a (Hörorte als Liste im Bauplan, je Hörort ein Abstrahlgewicht je Mode; Lage der Vorgabe in BM6-1); Befund Mikrofone von *Salamander*; BM6-1 a (Stereopaar 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86); PL31c-5 a (31c-5a bis 31c-5d, statistischer Teil dabei); 31c-5a gebaut (Hörorte, `.lvinstbodyplan` Fassung 2). |
+| 0.77.0 | 2026-10-23 | Session 148. BM6 a (Hörorte als Liste im Bauplan, je Hörort ein Abstrahlgewicht je Mode; Lage der Vorgabe in BM6-1); Befund Mikrofone von *Salamander*; BM6-1 a (Stereopaar 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86); PL31c-5 a (31c-5a bis 31c-5d, statistischer Teil dabei); 31c-5a gebaut (Hörorte, `.lvinstbodyplan` Fassung 2); Befund zur Dämpfung (RT-0425 Gl. 1 als Polynom in f); 31c-5b gebaut (Auswertung je Mode); Befund Modendichte und Abstände; ST1 a (statistischer Teil aus den gerechneten Moden, Ziehung nach Boutillon & Ege); 31c-5c gebaut (5933 Moden bis 20 kHz). |
 | 0.76.0 | 2026-10-23 | Session 148. Spectra 1.2.0 als External; EG1 a (Schnittstelle des Eigenlösers: Teilfenster im Löser, Moden an einen Empfänger, Zählung nach Sylvester); EG2 a (`SimplicialLDLT` in eigenem Operator, Residuum je Mode; SparseLU und Superknoten als Alternativen, wenn nötig). |
 | 0.75.0 | 2026-10-23 | Session 147. EL1 a (Lagrange-Dreiecke der Ordnung k, Vorgabe 3); 31c-3 gebaut (Eigen als External, Platte nach Reissner-Mindlin gegen Navier gemessen, Steinway bis 5 kHz gebaut). |
 | 0.74.0 | 2026-10-23 | Session 147. BM4 a (CDT 2.0.1 hinter einer eigenen Schnittstelle, eigener Generator vielleicht später); 31c-2 gebaut (Netz, CDT als External, Steinway bis 5 kHz gemessen). |

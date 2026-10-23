@@ -201,6 +201,8 @@ public:
     [[nodiscard]] int knoten() const { return 3 + 3 * knotenJeKante() + knotenInnen(); }
     /// Lage der Knoten in Bezugskoordinaten (ξ, η), in der Ordnung oben.
     [[nodiscard]] virtual std::vector<std::array<double, 2>> lage() const = 0;
+    /// Die Ansatzfunktionen und ihre Ableitungen nach ξ und η an (ξ, η), je Knoten in der Ordnung oben.
+    virtual void basis(double xi, double eta, std::vector<double>& n, std::vector<double>& dxi, std::vector<double>& deta) const = 0;
     /// Element-Steifigkeit und -Masse (je (3·knoten())², zeilenweise; Groessen je Knoten
     /// w, φx, φy) eines Dreiecks mit diesen Ecken; `steife` liefert den Werkstoff an
     /// einem Punkt. Zurueck die Masse ∫ρh des Elements.
@@ -235,8 +237,7 @@ public:
         return aus;
     }
 
-    /// Die Ansatzfunktionen und ihre Ableitungen nach ξ und η an (ξ, η).
-    void basis(double xi, double eta, std::vector<double>& n, std::vector<double>& dxi, std::vector<double>& deta) const
+    void basis(double xi, double eta, std::vector<double>& n, std::vector<double>& dxi, std::vector<double>& deta) const override
     {
         const double l[3] = {1.0 - xi - eta, xi, eta};
         const double dl[3][2] = {{-1.0, -1.0}, {1.0, 0.0}, {0.0, 1.0}};
@@ -345,6 +346,7 @@ enum class Auflager : int
 {
     Eingespannt = 0,       ///< w = φx = φy = 0 am ganzen Rand
     GelenkigAchsparallel,  ///< w = 0, Drehung laengs des Randes = 0; nur achsparallele Raender
+    Frei,                  ///< nichts gehalten (K hat dann Starrkoerpermoden; fuer Pruefungen der Auswertung)
 };
 
 /// Steifigkeit und Masse der Platte, nur die freien Groessen.
@@ -354,6 +356,9 @@ struct PlattenSystem
     int ordnung = 0;
     std::vector<Punkt2> knoten;       ///< alle Knoten des Systems (Ecken, Kanten, Inneres)
     std::vector<int> frei;            ///< je Groesse (3 je Knoten: w, φx, φy) ihr Platz in K und M; −1 = gehalten
+    /// je Dreieck des Netzes (gleiche Reihenfolge) seine Knoten in der Ordnung von `Plattenelement` —
+    /// die ersten drei sind die Ecken
+    std::vector<std::vector<int>> elemente;
     DuenneMatrix k, m;
     double masse = 0.0;               ///< ∫ ρh ueber die ganze Platte, kg
     std::string fehler;
@@ -447,7 +452,7 @@ struct PlattenSystem
         for (int g = 0; g < 3; ++g)
         {
             bool gehalten = false;
-            if (amRand[q])
+            if (amRand[q] && auflager != Auflager::Frei)
             {
                 if (auflager == Auflager::Eingespannt) gehalten = true;
                 else if (g == 0) gehalten = true;                       // w
@@ -497,6 +502,7 @@ struct PlattenSystem
             }
         }
     }
+    sys.elemente = std::move(elementKnoten);
     return sys;
 }
 

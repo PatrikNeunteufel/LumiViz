@@ -17,7 +17,9 @@
  ****************************************************************************************
  */
 
+#include "InstrumentBody/Auswertung.hpp"
 #include "InstrumentBody/Platte.hpp"
+#include "InstrumentBody/Statistik.hpp"
 #include "InstrumentBody/Umsetzungen.hpp"
 #include "loop/KoerperBauplan.hpp"
 
@@ -26,10 +28,13 @@
 #include <QFile>
 #include <QTextStream>
 
+#include <algorithm>
 #include <chrono>
+#include <complex>
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <vector>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -98,7 +103,12 @@ int main(int argc, char* argv[])
     const QCommandLineOption freqOpt(QStringLiteral("frequencies"), QStringLiteral("Write the frequencies, one per line, to this file."),
                                      QStringLiteral("file"));
     const QCommandLineOption listeOpt(QStringLiteral("list"), QStringLiteral("List the meshers and eigensolvers."));
-    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt});
+    const QCommandLineOption statOpt(QStringLiteral("statistics-to"),
+                                     QStringLiteral("Statistical part above the computed modes up to this frequency in Hz (default 20000; 0 = none)."),
+                                     QStringLiteral("Hz"), QStringLiteral("20000"));
+    const QCommandLineOption samenOpt(QStringLiteral("seed"), QStringLiteral("Seed of the statistical part (default 1)."),
+                                      QStringLiteral("n"), QStringLiteral("1"));
+    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt});
     parser.process(app);
 
     const auto geberListe = kp::netzgeber();
@@ -149,8 +159,9 @@ int main(int argc, char* argv[])
                 netz.dreiecke.size(), seit(t));
 
     t = std::chrono::steady_clock::now();
-    const kp::PlattenSystem s = kp::baueSystem(netz, kp::LagrangeDreieck(ordnung), [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); },
-                                               kp::Auflager::Eingespannt);
+    const kp::LagrangeDreieck element(ordnung);
+    const kp::PlattenSystem s =
+        kp::baueSystem(netz, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); }, kp::Auflager::Eingespannt);
     if (!s.fehler.empty())
     {
         std::fprintf(stderr, "Plate: %s\n", s.fehler.c_str());
@@ -159,11 +170,26 @@ int main(int argc, char* argv[])
     std::printf("Plate (%s): %d unknowns, %lld entries per matrix, mass %.3f kg, %.2f s, peak %.0f MB\n", s.element.c_str(), s.k.n,
                 static_cast<long long>(s.k.eintraege()), s.masse, seit(t), spitzeMB());
 
+    // je Mode: Wert an den Stegpunkten, Daempfung, Abstrahlgewicht je Hoerort (31c-5b)
+    t = std::chrono::steady_clock::now();
+    const kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte);
+    int ausserhalb = 0;
+    for (const kp::Abtastung& a : auswertung.stegpunkte()) ausserhalb += a.imNetz ? 0 : 1;
+    std::printf("Evaluation prepared: %zu bridge points (%d outside the mesh), %zu listening points, %.2f s\n", plan.stegpunkte.size(),
+                ausserhalb, plan.hoerorte.size(), seit(t));
+    std::vector<kp::ModeImKoerper> moden;
+    double sekundenAuswertung = 0.0;
+
     kp::EigenAuftrag auftrag;
     auftrag.k = &s.k;
     auftrag.m = &s.m;
     auftrag.vonHz = vonHz;
     auftrag.bisHz = bisHz;
+    auftrag.jeMode = [&](const kp::Mode& mode) {
+        const auto start = std::chrono::steady_clock::now();
+        moden.push_back(auswertung.werte(mode));
+        sekundenAuswertung += seit(start);
+    };
     int gemeldet = -1;
     auftrag.weiter = [&](double anteil) {
         const int prozent = static_cast<int>(anteil * 100.0);
@@ -184,6 +210,33 @@ int main(int argc, char* argv[])
     std::printf("Modes (%s, %.0f to %.0f Hz): %zu (counted %d), %d factorizations (%.1f s), largest residual %.2e, %.1f s, peak %.0f MB\n",
                 loeser->name().c_str(), vonHz, bisHz, erg.frequenzenHz.size(), erg.imFenster, erg.faktorisierungen,
                 erg.sekundenZerlegung, erg.groessterRest, erg.sekunden, spitzeMB());
+    std::printf("Evaluated %zu modes in %.1f s (within the eigensolver time)\n", moden.size(), sekundenAuswertung);
+
+    // der statistische Teil darueber (31c-5c, ST1 a): Groessen aus der oberen Haelfte des Fensters
+    const double statBis = parser.value(statOpt).toDouble();
+    if (statBis > bisHz)
+    {
+        const double bandVon = std::max(vonHz, bisHz / 2.0);
+        const kp::StatistischerTeil st =
+            kp::schaetze(moden, bandVon, bisHz, bisHz, statBis, kp::Daempfung{}, parser.value(samenOpt).toULongLong());
+        const auto gezogen = kp::ziehe(st);
+        double stegMittel = 0.0;
+        for (const double v : st.stegStreuung) stegMittel += v / static_cast<double>(std::max<std::size_t>(1, st.stegStreuung.size()));
+        std::printf("Statistical part %.0f to %.0f Hz from %d modes in %.0f to %.0f Hz: density %.3f /Hz rising %.2e /Hz^2, "
+                    "%zu modes drawn (seed %llu); mean spread at the bridge points %.3g",
+                    st.vonHz, st.bisHz, st.bandModen, st.bandVonHz, st.bandBisHz, st.dichte, st.anstieg, gezogen.size(),
+                    static_cast<unsigned long long>(st.samen), stegMittel);
+        for (std::size_t h = 0; h < st.hoerBetrag.size(); ++h) std::printf(", |G| %s %.4g", plan.hoerorte[h].name.c_str(), st.hoerBetrag[h]);
+        std::printf("\n");
+    }
+    for (std::size_t i = 0; i < std::min<std::size_t>(moden.size(), 5); ++i)
+    {
+        const kp::ModeImKoerper& m = moden[i];
+        std::printf("  %8.2f Hz  eta %.4f", m.frequenzHz, m.verlustfaktor);
+        for (std::size_t h = 0; h < m.abstrahlung.size(); ++h)
+            std::printf("  |G| %s %.4g", plan.hoerorte[h].name.c_str(), std::abs(m.abstrahlung[h]));
+        std::printf("\n");
+    }
 
     if (parser.isSet(freqOpt))
     {

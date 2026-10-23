@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.5.0  
+> **Version:** 0.7.0  
 > **Datum:** 2026-10-23  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung)  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Auswertung.hpp, Statistik.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
@@ -110,8 +110,10 @@ EL1 a (Patrik S147).
 - **Element** hinter der Schnittstelle `Plattenelement` (EL1 a): `LagrangeDreieck(k)`, k = 1 … 6, Knoten Ecken –
   Kanten – Inneres, volle Integration (Gauss auf dem zusammengeklappten Quadrat, k + 2 Punkte je Richtung).
 - **System** (`baueSystem`): Knoten über die Kanten des Netzes durchnummeriert (Kantenknoten vom kleineren Eckknoten
-  aus), Auflager eingespannt (der Boden) oder gelenkig für achsparallele Prüfplatten; K und M als `DuenneMatrix`
-  (oberes Dreieck, erst das Muster, dann die Werte) — das Format für den Eigenlöser (BM5-1 a).
+  aus), Auflager eingespannt (der Boden), gelenkig für achsparallele Prüfplatten oder frei (nur für Prüfungen der
+  Auswertung); K und M als `DuenneMatrix` (oberes Dreieck, erst das Muster, dann die Werte) — das Format für den
+  Eigenlöser (BM5-1 a). `elemente` hält je Dreieck seine Knoten (seit 31c-5b, für die Auswertung); `Plattenelement`
+  gibt seine Ansatzfunktionen über `basis` heraus.
 - **Gemessen** (Release-clang, S147): Prüfplatten nach Navier (Mindlin, frei aufliegend, orthotrop), Netz nach
   MAESSTRO Gl. 1 — k = 3 auf 0,04 % (8 mm), 0,03 % (2 mm, Dicke/Kante 0,084), 0,07 % (1 mm, 0,042); Locking bei k = 1
   (108–871 %) und k = 2 (2,5–10 %) deutlich, bei k = 3 nicht (EL1 a: Kipppunkt 1 % nicht erreicht). Steinway D bis
@@ -164,7 +166,51 @@ Spectra 1.2.0 (`SymGEigsShiftSolver`, Shift-Invert, Lanczos mit implizitem Neust
   1259 s (21 min), Spitze 4,8 GB** (mit `InstrumentBodyTool`); erste Mode 38,2 Hz (eingespannt, ohne Saiten —
   Prüfstein erst 31c-6). `SimplicialLDLT` rechnet auf einem Kern. Kipppunkt c von EG2 a nicht erreicht.
 
-### 5.3 Eine eigene Umsetzung dazu
+### 5.3 Auswertung je Mode — `InstrumentBody/Auswertung.hpp` (31c-5b)
+
+Was der Körper je Mode trägt (KB1 a), gerechnet, während die Moden kommen (`jeMode`): `Auswertung` bereitet einmal
+vor, `werte(mode)` gibt ein `ModeImKoerper`.
+
+- **Am Stegpunkt** der Wert φ(x) der Form (w, bezüglich M normiert, 1/√kg) über die Ansatzfunktionen des Elements, in
+  dem der Punkt liegt (`abtastung`, `wertBei`); die modale Masse dort ist 1/φ², das Vorzeichen sagt, wie zwei
+  Stegpunkte zueinander schwingen. Ein Punkt außerhalb des Netzes wird auf das nächste Element geklemmt (`imNetz`,
+  `abstand`).
+- **Dämpfung** modal (Chabassier, Joly & Chaigne 2013 Gl. 17): α(f) = a f² + b f + c in 1/s mit f in Hz, a = 2·10⁻⁵,
+  b = 0,07, c = 0 nach RT-0425 Gl. 1; gespeichert als Verlustfaktor η = α/(2πf). Die Lesart in f (nicht in ω) ist
+  ein Befund: nur so liegt η bei den gemessenen 1–3 % (Spielweisen_Konzept §4.1, „Befund S148 zur Dämpfung").
+- **Abstrahlung** je Hörort nach Rayleigh, die Platte in einer Schallwand: G = ρa/(2π) ∫ φ e^{−iωR/c}/R dS bei der
+  Frequenz der Mode, komplex, Einheit √kg/m² (der Druck ist p = q̈ · G); integriert über die Gauss-Punkte aller
+  Elemente (k + 1 je Richtung), R von der Mittelfläche (z = 0) zum Hörort; Luft nach RT-0425 §2.2 (1,29 kg/m³,
+  340 m/s).
+- **Geprüft** (`test_LoopKoerperAuswertung`): Polynome bis zur Ordnung des Elements genau; der Kolben (Scheibe, die
+  sich ganz bewegt) auf der Achse gegen die geschlossene Lösung, auch im Nahfeld, auf 0,2 %; die erste Mode der frei
+  aufliegenden Prüfplatte gegen Navier — φ in der Mitte auf 0,08 %, das Verhältnis Viertel/Mitte auf 10⁻³, das
+  Fernfeld auf 0,09 %.
+- **Gemessen** (Release-clang, `InstrumentBodyTool`, Steinway D bis 5 kHz, k = 3): alle 88 Stegpunkte im Netz,
+  Vorbereitung 0,06 s, Auswertung aller 820 Moden 17 s (innerhalb der Zeit des Lösers).
+
+### 5.4 Statistischer Teil — `InstrumentBody/Statistik.hpp` (31c-5c)
+
+Oberhalb der gerechneten Moden (ST1 a): `schaetze` nimmt die Größen aus dem oberen Band der gerechneten Moden (die
+obere Hälfte des Fensters, beim Steinway 2,5–5 kHz), `ziehe` zieht daraus mit festem Samen die Moden bis zur oberen
+Grenze (Vorgabe 20 kHz).
+
+- **Größen** (`StatistischerTeil`, das trägt die Datei): die Dichte n(f) als Gerade durch die Zählung in zehn Stücken
+  des Bands, über das Ende fortgesetzt (eine fallende Gerade wird waagrecht); je Stegpunkt das quadratische Mittel der
+  Formwerte; je Hörort das quadratische Mittel von |G| (dieselbe Leistung wie die gerechneten Moden); die Dämpfung nach
+  demselben Gesetz (RT-0425 Gl. 1); der Samen.
+- **Ziehung** wie Boutillon & Ege 2013: f_{ν+1} = f_ν + r/n(f_ν), r nach Rayleigh mit Mittel 1 (Gl. 23/24); je
+  Stegpunkt ein Formwert normal verteilt mit seiner Streuung, unabhängig voneinander; je Hörort ein Gewicht mit seinem
+  Betrag und gleichverteilter Phase.
+- **Zufall** mit eigenem Generator (`Zufall`, SplitMix64) und eigenen Umrechnungen — dieselbe Folge auf jedem Compiler.
+  Zwei Züge stehen nie in einem Ausdruck (die Reihenfolge der Auswertung legt C++ dort nicht fest).
+- **Geprüft** (`test_LoopKoerperStatistik`): die Folge des Generators gegen ihren Bezug, Rayleigh und normal in Mittel und
+  Varianz; die Ziehung (Zahl wie ∫n df, Abstände nach Rayleigh, Streuung je Stegpunkt, Betrag und Phase je Hörort,
+  Dämpfung, gleicher Samen gleiche Moden); die Schätzung an gerechneten Moden mit bekannten Größen.
+- **Gemessen** (Steinway D, Band 2,5–5 kHz mit 528 Moden): Dichte 0,238 /Hz bei 5 kHz, Anstieg 2,1·10⁻⁵ /Hz², 5933
+  Moden bis 20 kHz.
+
+### 5.5 Eine eigene Umsetzung dazu
 
 Eine Klasse, die `Eigenloeser` umsetzt, in `eigenloeser()` von `Umsetzungen.hpp` eintragen: alle Fälle von
 `test_LoopKoerperEigen.cpp` laufen dann auch für sie, `InstrumentBodyTool --solver <Name>` wählt sie. Ihre
@@ -179,6 +225,13 @@ Prüfplatten rechnet dort der dichte Löser von Eigen (nur im Test): Ansatz (Kro
 (Monome genau), Werkstoff gedreht, Navier mit Konvergenz in k, Locking an 2 mm und 1 mm, Drehung (Netz und Faser um
 30° gedreht: dieselben Frequenzen), Steinway D grob (bis 1 kHz, k = 2: Masse gegen den Bauplan);
 `LUMIVIZ_PLATTE_MESSUNG=1` baut ihn bis 5 kHz mit k = 3 und meldet Größe und Zeit.
+
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperStatistik.cpp` — ohne Qt-Anwendung, ohne Dateien: Zufall
+(Bezugsfolge, Verteilungen), Ziehung, Schätzung (§5.4).
+
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperAuswertung.cpp` — ohne Qt-Anwendung: Dämpfung im
+gemessenen Bereich, Abtastung (Polynome genau, an einem Knoten sein Wert, außerhalb geklemmt), Rayleigh am Kolben auf
+der Achse, die erste Mode der Prüfplatte gegen Navier (Wert und Fernfeld), der Steinway D (jeder Stegpunkt im Netz).
 
 `projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperEigen.cpp` — gegen die Schnittstelle, für jede
 Umsetzung aus `eigenloeser()`: eine Kette aus linearen Elementen mit geschlossener Lösung (200 Moden von unten, 250
@@ -203,6 +256,8 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.7.0 | 2026-10-23 | Session 148, Stufe 31c-5c: statistischer Teil (`Statistik.hpp`: `StatistischerTeil`, `schaetze`, `ziehe`, `Zufall`; ST1 a). |
+| 0.6.0 | 2026-10-23 | Session 148, Stufe 31c-5b: Auswertung je Mode (`Auswertung.hpp`: Wert an den Stegpunkten, Dämpfung nach RT-0425 Gl. 1, Abstrahlgewicht nach Rayleigh je Hörort); `PlattenSystem::elemente`, `Plattenelement::basis`, `Auflager::Frei`. |
 | 0.5.0 | 2026-10-23 | Session 148, Stufe 31c-5a: Hörorte (`Hoerort`, BM6 a), `.lvinstbodyplan` Fassung 2 mit `listeningPoints`. |
 | 0.4.0 | 2026-10-23 | Session 148, Stufe 31c-4: Eigenlöser — Schnittstelle `Eigenloeser` (EG1 a), Umsetzung mit Spectra 1.2.0 und `SimplicialLDLT` (EG2 a: Zählung nach Sylvester, Teilfenster, Deflation, Rest je Mode), `Umsetzungen.hpp` mit `netzgeber()` und `eigenloeser()`, Werkzeug `InstrumentBodyTool`. |
 | 0.3.0 | 2026-10-23 | Session 147, Stufe 31c-3: Platte — Reissner-Mindlin, Zonen nach RT-0425, `Plattenelement` mit `LagrangeDreieck(k)`, `baueSystem` (eingespannt, gelenkig), `DuenneMatrix` (EL1 a). |
