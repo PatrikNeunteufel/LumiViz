@@ -145,6 +145,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSaiteSpuren.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopHammerSaite.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopHammerTon.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperBauplan.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSaiteExpression.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEditorSpuren.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopClipExpression.cpp"

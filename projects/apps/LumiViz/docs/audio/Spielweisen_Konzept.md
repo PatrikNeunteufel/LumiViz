@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.71.0
+> **Version:** 0.72.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut ohne Icons)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, PL31c a, GB1 a und TS1 a (Patrik S139–S147);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -1282,6 +1282,33 @@ erprobte Numerik für die heikelsten Stellen; die Schnittstelle hält den Weg zu
 Lanczos selbst — gerade das Verfahren ist die Fehlerquelle). Kippt auf c oder b, wenn Eigen oder Spectra unter einem
 der beiden Compiler nicht sauber bauen oder die Lizenzprüfung im Bauschritt anderes zeigt.
 
+**Gebaut 31c-1 (S147, ohne Icons):** Bibliothek `projects/libs/InstrumentBody` (`InstrumentBody/Bauplan.hpp`:
+Materialien orthotrop/isotrop, Platte mit Dickenraster, Leisten, Stegpunkte, Fläche, Masse, `pruefe`; Modul-Doku
+`InstrumentBody.md`), in `Solution.json` als INTERFACE-Bibliothek für Core und Tests; `loop/KoerperBauplan` (Datei
+`.lvinstbodyplan` lesen/schreiben, jedes Feld, NaN als null; `mitgelieferterKoerperOrdner`); der Bauplan
+`asset/loop/instrument_bodies/steinway_d.lvinstbodyplan` aus `make_steinway_d.py <RT-0425.pdf>`, README im Ordner.
+Tests `test_LoopKoerperBauplan` (6 Fälle; der letzte liest den Steinway D vom Arbeitsordner aus). **Befunde beim
+Auswerten (selbst gelesen und gemessen):**
+- Die **Farbskalen von Abb. 2 tragen Zahlen** (c: 6–10·10⁻³ m; d: 0,01–0,09 m), nicht „AU" wie die
+  Bildunterschrift — die Dicken sind direkt abgelesen statt, wie in BM2 a angenommen, linear auf die Spannen von
+  §2.1 gelegt; §2.1 dient als Prüfung. Platte 6,0 … 9,98 mm (Median 8,6; §2.1 sagt 6–9, „following the proportions
+  seen in the figures"), Rippen gesamt 10–35 mm (§2.1: 9–35), Steg gesamt 30–70 mm (§2.1: 29–69).
+- **(c) und (d) schneiden den Boden an den Achsen ab** (B7 liegt bei y = −0,03 m). Der Umriss kommt deshalb aus
+  Abb. 2 (a), gelegt auf die Stegpunkte und den Rand von (c): Stegpunkte zum Steg von (a) Median 0,0 mm, Rand (c)
+  zu Rand (a) Median 2,0 mm, größter 5,4 mm; die linke untere Ecke liegt 8 mm neben dem Ursprung von §2.3. Fläche
+  2,05 m².
+- Achsen beider Bilder 290 px/m; **alle 84 Stegpunkte aus Anhang A liegen auf dem gezeichneten Steg** (Median
+  4,5 mm, größter 14 mm von der Mittellinie; Steg 32 mm breit) — die Eichung trägt.
+- Holz: Chabassier, Joly & Chaigne 2013 Tab. I „Spruce for the table and the ribs" = die zweite Fichtenzeile von
+  RT-0425 §2.1 (380 kg/m³, 11,0 GPa …), Buche für den Steg (nachgelesen). Verlustfaktor 0 (keine Angabe) bis 31c-5.
+- 16 Rippen unter 35,5°; **Faser quer dazu, 125,5°** (Annahme; MAESSTRO setzt 135°).
+- **A0, A♯0, B0 und C8 fehlen in RT-0425** (Anhang A und B: C1 … B7, gleiche Werte): entlang des Stegs
+  verlängert, Quelle „extended along the bridge".
+- **Masse 11,5 kg** (Platte 6,5, Rippen 1,5, Steg 3,5); Plath 2019 Tab. 6.2 am fertigen Konzertflügel 13,70 kg
+  (Rippen 4,17, Steg 3,15). Die Rippen sind in RT-0425 Abb. 2 kürzer gezeichnet (0,3 … 0,8 m) als im Flügel —
+  dem Bild gefolgt.
+- `asset/Asset.cmake` nimmt die Körper erst auf, wenn es den ersten gibt (31c-5); der Bauplan bleibt im Repo.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2153,6 +2180,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.72.0 | 2026-10-23 | Session 147. 31c-1 gebaut (ohne Icons): Bibliothek `InstrumentBody` mit dem Bauplan, `loop/KoerperBauplan`, der Steinway D aus RT-0425 Abb. 2 und Anhang A (`make_steinway_d.py`); Befunde: Farbskalen mit Zahlen, Umriss aus (a), Stegpunkte auf dem Steg, Holz nach Chabassier 2013 Tab. I, A0–B0 und C8 verlängert, Masse 11,5 kg. |
 | 0.71.0 | 2026-10-23 | Session 147. BM5-1 a (Eigen 3.4.1 und Spectra 1.2.0 als Externals hinter einer Schnittstelle; Tests gegen die Schnittstelle mit Bezugswerten und Vergleich alt gegen neu; eigene Modul-Doku). |
 | 0.70.0 | 2026-10-23 | Session 147. BM5 a (Rechenkern als Bibliothek `InstrumentBody` ohne Qt, Werkzeug `InstrumentBodyTool`, die App liest nur Körper); Frage VST mit Antwort, ohne Umsetzung. |
 | 0.69.0 | 2026-10-23 | Session 147. BM3 a, BM3-1 a, BM3-2 a (Bauplan `.lvinstbodyplan` und Körper `.lvinstbody` als JSON unter `asset/loop/instrument_bodies/`, Abdruck des Bauplans im Körper, Verweis `lib:` aus der `.lvinst`; Icons dazu). |

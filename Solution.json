@@ -151,6 +151,13 @@
         "version": "1.0.0",
         "type": "INTERFACE",
         "public_headers": "projects/libs/HlslTranspiler/include"
+      },
+      {
+        "name": "InstrumentBody",
+        "skip": false,
+        "version": "0.1.0",
+        "type": "INTERFACE",
+        "public_headers": "projects/libs/InstrumentBody/include"
       }
     ],
     "executables": [
@@ -191,7 +198,7 @@
         "version": "0.12.0",
 
         "core": {
-          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
+          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
@@ -227,7 +234,7 @@
               "//timeout": "S73: von 30 auf 120 erhoeht. Die Suite braucht warm ~12 s, aber der ERSTE Lauf direkt nach einem Build ~30 s (frische Binaries, Virenscanner) — und schlug damit reproduzierbar an die alte Grenze. Der Wert soll Haenger fangen, nicht kalte Starts.",
               "timeout": 120,
               "labels": [ "unit", "core", "fast" ],
-              "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
+              "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody" ],
               "//externals": "Composer-Naht N26 (S105): qt-ads fuer den Testfall mit echtem Dock (panel_zeigen in test_ComposerSichttestStart.cpp).",
               "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
               "external_options": {
