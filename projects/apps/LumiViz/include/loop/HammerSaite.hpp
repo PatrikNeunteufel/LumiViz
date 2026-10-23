@@ -11,10 +11,11 @@
  * ersten und nach dem letzten Punkt gilt der Randwert; eine Taste kann eine
  * Abweichung tragen, die den Wert der Kurve dort ersetzt (HK1 a).
  *
- * Die Vorgaben stammen, wo belegt, aus der Literatur (Befund S146 im Konzept):
- * der Hammer aus Stulov & Kartofelev 2009, Gl. 9; B aus Rigaud, David & Daudet
- * 2011, Gl. 4/5. Was nicht belegt ist, steht hier als **vorlaeufig** — die
- * Messung an *Salamander* (Stufe 31d) setzt es.
+ * Die Vorgaben stammen, wo belegt, aus der Literatur (Befunde S146 im Konzept):
+ * Saiten und Hammer aus Chabassier & Durufle, INRIA RT-0425 (2012), Anhang A
+ * und Gl. 2–4 (HT1 a, HT2 a); B aus Rigaud, David & Daudet 2011, Gl. 4/5. Was
+ * nicht belegt ist, steht hier als **vorlaeufig** — die Messung an *Salamander*
+ * (Stufe 31d) setzt es.
  *
  * Hier steht nur das Modell; gerechnet wird ein Ton erst mit Stufe 31b.
  * Kein Qt-Widget, keine Audio-Engine.
@@ -128,6 +129,16 @@ struct HammerSaite
     /// Damper (log): so lange, bis ein Ton unter dem Daempfer um 60 dB gefallen
     /// ist, in s, 0,01 … 10 (Bank 2010: der Daempfer verkuerzt die Abklingzeiten).
     Tastenkurve daempferS;
+    // --- die Saite selbst (HT1 a): der Hammer treibt die Moden mit 2/(Lµ), die
+    // Laengsschwingung braucht dazu ES (Bank 2010, Gl. 4c, 26); T0 und ES folgen
+    // aus f0 = (1/2L)√(T0/µ) und f_l0 = (1/2L)√(ES/µ) ---
+    /// String length (log): die schwingende Laenge, in m, 0,02 … 8.
+    Tastenkurve saitenLaengeM;
+    /// String mass (log): die Masse je Laenge µ, in g/m, 0,5 … 500.
+    Tastenkurve saitenMasseGm;
+    /// Longitudinal ratio (linear): die Grundfrequenz der Laengsschwingung im
+    /// Verhaeltnis zum Grundton, 5 … 40.
+    Tastenkurve laengsVerhaeltnis;
     Resonanzboden resonanzboden;
 
     [[nodiscard]] bool operator==(const HammerSaite&) const = default;
@@ -136,9 +147,11 @@ struct HammerSaite
 /// Die Saiten im Chor an einer Taste: die Kurve, auf eine ganze Zahl gerundet (HK1 a).
 [[nodiscard]] int chorAn(const HammerSaite& saite, int taste);
 
-/// Die Vorgaben einer neuen Hammer-Saite (Befund S146): Hammer nach Stulov
-/// Gl. 9 und B nach Rigaud Gl. 5 (Diskant belegt, Bass abgelesen) mit
-/// Stuetzpunkten an A0, A1, … A7 und C8; der Rest vorlaeufig, mit wenigen Punkten.
+/// Die Vorgaben einer neuen Hammer-Saite (Befunde S146): Hammer nach RT-0425
+/// Gl. 2–4 (Stuetzpunkte alle sechs Tasten) und B nach Rigaud Gl. 5 (Diskant
+/// belegt, Bass abgelesen; Stuetzpunkte an A0, A1, … A7 und C8); Laenge, Masse, Laengsverhaeltnis und
+/// Anschlagstelle aus RT-0425 Anhang A (C1 … B7, ausgewaehlte Tasten, auf 2 %
+/// genau); der Rest vorlaeufig, mit wenigen Punkten.
 [[nodiscard]] const HammerSaite& hammerSaiteVorgabe();
 
 /// Jede Kurve in ihre Grenzen; eine leere bekommt die Vorgabe.
@@ -149,11 +162,13 @@ void richteHammerSaite(HammerSaite& saite);
 [[nodiscard]] QJsonObject hammerSaiteAlsJson(const HammerSaite& saite);
 [[nodiscard]] HammerSaite hammerSaiteAusJson(const QJsonObject& o);
 
-/// Stulov & Kartofelev 2009, Gl. 9 — die Groessen des Hammers an Taste n
-/// (1 … 88): Masse in g, Exponent p, Steife Q0 in N/mm^p.
-[[nodiscard]] double stulovMasseG(int n);
-[[nodiscard]] double stulovExponent(int n);
-[[nodiscard]] double stulovSteife(int n);
+/// Chabassier & Durufle, RT-0425, Gl. 2–4 — die Groessen des Hammers an Taste i
+/// (1 … 88, i = MIDI − 20): Masse in g, Exponent p, Steife K_H in N·m⁻ᵖ und
+/// umgerechnet Q0 = K_H·10⁻³ᵖ in N/mm^p (HT2 a).
+[[nodiscard]] double rtHammerMasseG(int i);
+[[nodiscard]] double rtHammerExponent(int i);
+[[nodiscard]] double rtHammerSteifeNm(int i);
+[[nodiscard]] double rtHammerSteife(int i);
 /// Rigaud, David & Daudet 2011, Gl. 4/5: B an MIDI-Nummer m, mit dem
 /// Diskantsteg der Arbeit (s_T = 9,26·10⁻², y_T = −13,64) und dem Bassteg
 /// `sB`, `yB`.

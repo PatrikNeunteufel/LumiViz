@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.59.0
+> **Version:** 0.60.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a und TS1 a (Patrik S139–S146);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a, HT2 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a, HT2 a und TS1 a (Patrik S139–S146);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -777,8 +777,8 @@ c, wenn Patrik den Flügel früh im Creator sehen will.
 Taste.** Jede Größe — Inharmonizität B, Abklingzeit des Grundtons und ihr Abfall zu den hohen Teiltönen,
 Zahl der Saiten im Chor und ihre Verstimmung in Cent, Hammermasse, Hammersteife, Exponent p, Anschlagstelle,
 Stärke des Dämpfers — ist eine Kurve aus Stützpunkten an Tasten, dazwischen glatt; eine Taste kann eine
-Abweichung tragen (leer = die Kurve). Vorgaben aus der Literatur (Hammer nach Stulov, B nach Rigaud &
-David), wo gemessen, Stützpunkte aus *Salamander*. Grund: schließt die Tabelle je Taste ein und hält die
+Abweichung tragen (leer = die Kurve). Vorgaben aus der Literatur (Hammer nach Stulov — seit HT2 a nach
+Chabassier & Duruflé —, B nach Rigaud & David), wo gemessen, Stützpunkte aus *Salamander*. Grund: schließt die Tabelle je Taste ein und hält die
 Absicht lesbar; Messung (rund 30 Tasten) und Literatur (Formeln über die Tastatur) liefern beide Stützpunkte.
 Verworfen: b (Tabelle je Taste — 88 Zahlen je Änderung, kein Verlauf im Creator), c (physikalische Größen je
 Saite — gegen den Grund von HS1 a, Saitendaten eines bestimmten Flügels nicht belegt). Kippt auf b, wenn 31d
@@ -878,6 +878,75 @@ bis F#1, zwei bis C3, drei darüber), Verstimmung 1 Cent, Anschlagstelle 1/8, D�
 Classic); die Planung setzt die Stufe noch nicht aus der Lautstärke der Note (mit dem Ton in 31b, weil der Rest
 dann als Pegel an die Stelle von `laut` tritt); im Creator gibt es *Modal* noch nicht (31g). Tests:
 `test_LoopHammerSaite` (5 Fälle).
+
+**Befund vor 31b (S146, Bank, Zambon & Fontana 2010, Fassung der Autoren `home.mit.bme.hu/~bank/publist/taslp10.pdf`,
+von Claude im Volltext gelesen):**
+- **Saite:** je Mode ein Resonator zweiter Ordnung, diskretisiert nach der Impulsinvarianz (Gl. 10, 11) — das
+  bringt eine Verzögerung um einen Takt und damit keine verzögerungsfreie Schleife mit dem Hammer. Die Mode wird
+  getrieben mit b0,k = 2/(Lµ) (Gl. 4c), Anfangsamplitude A_k = 1/(Lµ f_k) (Gl. 5b); Ein- und Abnahme am Hammer
+  sin(kπ x_h/L) (Gl. 14, 15), die Kraft am Steg mit w_b,k = kπT0/L (Gl. 16). Verluste 1/τ_k = b1 + b3·(2πf_k)²
+  (Gl. 7) — dieselbe Form wie *High decay* aus 31a.
+- **Hammer:** Masse und Feder F = K·Δy^p (Gl. 12), die Masse über die Impulsinvarianz mit einem Takt Verzögerung
+  (Gl. 13); läuft nur während des Kontakts. „We neglect these secondary phenomena“ — Hysterese und Schaft
+  (S. 5).
+- **Längsschwingung:** die Spannung T(t) = T0 + ES·π²/(4L²)·Σ n²·y_n² (Gl. 26), dazu K = 2…10 Längsmoden als
+  Hochpass-Resonatoren (Gl. 27, 28), angeregt von Paaren der Quermoden (Gl. 22b; eine Kraft für die ungeraden,
+  eine für die geraden). Die Längsgrundfrequenz liegt „around 16 to 20 times higher than that of the transverse
+  vibration“ (S. 6, nach Conklin 1996). Gegen Aliasing nur Quermoden mit f < fs/4 in die Produkte.
+- **Schwebung, zweistufiger Ausklang:** „secondary resonators … driven by the hammer force“, als weitere
+  Saitenmodelle mit weniger Moden (S. 9); dieselbe Bank nimmt später das Mitschwingen auf (31e).
+- **Dämpfer:** „simply decreasing the decay times of the resonators“ (S. 12).
+- **Folge für LumiViz (Claude):** Der Hammer sieht die Saite über ihre Masse Lµ, die Längsschwingung braucht
+  dazu L (oder µ) und das Verhältnis der Längs- zur Querfrequenz; Ebene und Pegel der Nebenresonatoren sind
+  eigene Größen. **Keine davon steht in den Kurven aus 31a.** Ohne sie lassen sich Masse und Steife nach Stulov
+  nicht einsetzen (sie wirken nur gegen eine Saitenmasse). Eine offene Tabelle der Saitendaten je Taste ist
+  noch nicht gefunden: Chaigne & Askenfelt 1994 (drei Töne) beim Abruf nicht erreichbar; Banks Dissertation
+  2006 nennt die Werte einer G1-Saite nur im Bild.
+
+✅ **HT1 a** (Patrik S146): **Drei weitere Kurven über die Tastatur (HK1 a): *String length* L in m (log),
+*String mass* µ in g/m (log), *Longitudinal ratio* f_l0/f0 (linear); T0 und ES folgen aus f0 = (1/2L)√(T0/µ) und
+f_l0 = (1/2L)√(ES/µ).** Die Frequenzen bleiben, wie sie sind (f0 aus der Taste, B aus der Kurve). Vorgaben aus
+einer veröffentlichten Saitentabelle eines Konzertflügels, vor dem Bau an der Quelle nachgelesen; das
+Verhältnis vorläufig 17 (Bank 2010: „around 16 to 20“). Weiter in Fassung 16 (nicht ausgeliefert). Grund: gibt
+dem Modell aus HS1 a, was seine Gleichungen verlangen; der Hammer bleibt in den Einheiten der Literatur, die
+Längsschwingung in 31b (HS2 a); der Grund gegen HA1 c entfällt mit einer veröffentlichten Tabelle. Verworfen: b
+(nur die Masse Lµ, Längsschwingung später — schiebt das Zielbild hinaus, ohne zu sparen), c (Verhältnis der
+Massen — verliert die Einheiten). Kippt auf b, wenn sich keine offene Tabelle findet.
+
+**Befund Saitendaten (S146; beide Arbeiten von Patrik heruntergeladen, liegen unter `docs/external` — nicht
+versioniert; von Claude gelesen, Tabellen am Bild der Seite geprüft):**
+- **Chabassier, Joly & Chaigne**, „Modeling and simulation of a grand piano“, *JASA* 134 (2013), Fassung der
+  Autoren hal-00873089, Tab. III (S. 48): Saiten und Hämmer für D♯1, C2, F3, C♯5, G6; die Werte wurden an einem
+  Steinway D gewonnen („used for extracting accurate values of input parameters“, S. 41).
+- **Chabassier & Duruflé**, „Physical parameters for piano modeling“, INRIA RT-0425 (2012), hal-00688679,
+  Anhang A „Wrapped strings values“: je Taste C1 bis B7 (84 Töne; A0–B0 und C8 fehlen) L, d, ρ, T0, Dämpfung,
+  Hammer, Anschlagstelle; umwickelte Saiten als homogenes Material höherer Dichte, E = 2,02·10¹¹ Pa (§3.2). Der
+  Hammer als Formel über die Taste i = 1…88 (Gl. 2–4): M_H = −6,2348·10⁻⁵ i + 0,0112 [kg]; p = 2,4295·10⁻⁴ i²
+  − 0,007703 i + 2,337; K_H = 10^(5,3097·10⁻² i + 7,6425) [N·m⁻ᵖ] — gegen die Tabelle bei C1 (i = 4) geprüft.
+- **Daraus gerechnet (Claude):** µ = ρπd²/4 von 99 g/m (C1) über 14,3 (E2) | 7,7 (F2, Sprung am Bassteg) auf
+  3,4 g/m (B7); L von 2,007 m über 1,378 (E2) | 1,837 (F2) auf 0,052 m; f_l0/f0 = √(EA/T0) zwischen 12,2 und
+  15,7 (unter Banks „around 16 to 20“); x_H/L zwischen 0,113 und 0,127, fast überall 0,120. Monoton kubisch
+  (HK1 a) treffen 11 Punkte L, 12 Punkte µ, 6 Punkte f_l0/f0 die Tabelle auf unter 2 %.
+- **Widerspruch beim Hammer:** RT-0425 und JASA geben p = 2,3 … 3,5, Stulov 2009 p = 3,7 … 5,0; die Massen
+  liegen nah (11,2 → 5,7 g gegen 11,0 → 5,3 g). Die Hämmer von RT-0425 sind mit diesen Saiten zusammen
+  gerechnet und gegen den Steinway D verglichen; die von Stulov stammen aus einem Prüfstand für einzelne
+  Hämmer. RT-0425 gibt dazu einen Verlustterm R_H (Gl. 5), den Bank 2010 vernachlässigt.
+
+✅ **HT2 a** (Patrik S146): **Die Vorgaben von Masse, p und Steife des Hammers kommen aus RT-0425 Gl. 2–4, mit
+derselben Taste i = MIDI − 20 wie die Saiten; die Steife wird in die Einheit der Kurve umgerechnet
+(Q0 = K_H·10⁻³ᵖ N/mm^p); ohne R_H (wie Bank 2010).** HA1 a heißt damit „Hammer nach Chabassier & Duruflé“,
+Stulov bleibt Beleg im Befund. Grund: Hammer und Saite sind dort ein abgestimmter, am Steinway D verglichener
+Satz — die Helligkeit eines Anschlags hängt vor allem an ihrem Verhältnis. Verworfen: b (Stulov mit den Saiten
+aus RT-0425 — ein ungemessenes Verhältnis), c (dazu R_H als Kurve — Bank vernachlässigt ihn, ob man ihn hört,
+zeigt 31d; ohne Bruch nachzutragen). Kippt auf b, wenn in 31d die Helligkeit je Stärke gegen *Salamander*
+(Yamaha C5) mit Stulov besser passt.
+
+**Nachgezogen in 31a (S146, nach HT1 a, HT2 a):** `HammerSaite` trägt dazu `stringLength`, `stringMass`,
+`longitudinalRatio` (Fassung 16 bleibt); der Hammer nach RT-0425 Gl. 2–4 mit Stützpunkten alle sechs Tasten (Q0
+ist in ln quadratisch in der Taste — an den A-Tasten allein bis 4 % daneben); Länge, Masse und Längsverhältnis
+aus Anhang A mit 11, 12 und 6 Stützpunkten; die Anschlagstelle belegt 0,12. Die Funktionen nach Stulov sind
+aus dem Code entfernt (Beleg bleibt im Befund). Tests in `test_LoopHammerSaite` gegen die Tabelle an Tasten, die
+keine Stützpunkte sind.
 
 ### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
 
@@ -1743,6 +1812,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.60.0 | 2026-10-23 | Session 146. Befund vor 31b (Bank 2010 im Volltext: Resonatoren, Hammer, Längsschwingung, Nebenresonatoren, Dämpfer; die Kurven aus 31a tragen keine Saitendaten); HT1 a (Länge, Masse, Längsverhältnis als Kurven); Befund Saitendaten (Chabassier, Joly & Chaigne 2013 Tab. III; Chabassier & Duruflé RT-0425 Anhang A, 84 Tasten); HT2 a (Hammer nach RT-0425 statt Stulov); 31a nachgezogen. |
 | 0.59.0 | 2026-10-23 | Session 146. Befund Vorgaben zu 31a (Stulov Gl. 9 und Rigaud Gl. 4/5 am Bild gelesen; p 3,7…5,0 statt des Agenten-Berichts 2…4; kein Beleg für die erste Taste ohne Dämpfer); HK1 a (Skala je Größe, monoton kubisch), HK2 a (laut ∝ Hammergeschwindigkeit, 5 m/s, 1 dB, −40 dB, `:a<stufe>` statt `:v`); 31a gebaut (`loop/HammerSaite`, Fassung 16). |
 | 0.58.0 | 2026-10-22 | Session 145. Stufe 31 begonnen: Wunsch Beispiel-Loops, BL1 a (drei Chopin-Ausschnitte), BL2 a (von Hand aus gemeinfreier Ausgabe vor 1900), Befunde Quellen (Mutopia, Polona, IMSLP), Befund Code und Literatur, HS1 a (modal nach Bank 2010), HS2 a (Teilschritte 31a–31h); zu 31a HA1 a (Kurven über die Tastatur), HA2 a (Excitation und Modal an der Schicht, Block Keyboard am Instrument), HA3 a (Anschlagstärke gestuft im Namen), HA4 a (Ausstattung Keyboard). |
 | 0.57.0 | 2026-10-22 | Session 145. Stufe 30i-3 (Handbuch, Sichttest-Liste, Bereichslauf unter clang); Stufe 30 fertig bis auf den vollen Lauf. |

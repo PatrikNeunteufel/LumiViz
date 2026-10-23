@@ -121,15 +121,22 @@ constexpr Grenzen kGrenzeSteife{1.0, 1e6};
 constexpr Grenzen kGrenzeExponent{1.0, 6.0};
 constexpr Grenzen kGrenzeStelle{0.02, 0.5};
 constexpr Grenzen kGrenzeDaempfer{0.01, 10.0};
+constexpr Grenzen kGrenzeLaenge{0.02, 8.0};
+constexpr Grenzen kGrenzeMasseJeM{0.5, 500.0};
+constexpr Grenzen kGrenzeLaengs{5.0, 40.0};
 
 /// Die Tasten der Vorgabe: A0, A1, … A7 und C8.
 constexpr int kVorgabeTasten[] = {21, 33, 45, 57, 69, 81, 93, 105, 108};
 
-template <class Formel>
-Tastenkurve kurveAus(Formel formel)
+/// Die Tasten der Hammer-Vorgabe: alle sechs Tasten und C8 — Q0 ist bei RT-0425 in ln
+/// quadratisch in der Taste; an den A-Tasten allein laege die Kurve dazwischen bis 4 % daneben.
+constexpr int kHammerTasten[] = {21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99, 105, 108};
+
+template <class Formel, std::size_t N>
+Tastenkurve kurveAus(const int (&tasten)[N], Formel formel)
 {
     Tastenkurve kurve;
-    for (const int taste : kVorgabeTasten) kurve.punkte.push_back(TastenWert{taste, formel(taste)});
+    for (const int taste : tasten) kurve.punkte.push_back(TastenWert{taste, formel(taste)});
     return kurve;
 }
 
@@ -144,18 +151,28 @@ HammerSaite baueVorgabe()
 {
     HammerSaite s;
     // belegt (Befund S146): B nach Rigaud Gl. 5 — der Bassteg abgelesen, vorlaeufig
-    s.inharmonizitaet = kurveAus([](int m) { return rigaudB(m, kRigaudBassSteigung, kRigaudBassAchse); });
-    // belegt: der Hammer nach Stulov Gl. 9 (Taste n = MIDI − 20)
-    s.hammerMasseG = kurveAus([](int m) { return stulovMasseG(m - 20); });
-    s.hammerExponent = kurveAus([](int m) { return stulovExponent(m - 20); });
-    s.hammerSteife = kurveAus([](int m) { return stulovSteife(m - 20); });
+    s.inharmonizitaet = kurveAus(kVorgabeTasten, [](int m) { return rigaudB(m, kRigaudBassSteigung, kRigaudBassAchse); });
+    // belegt (HT2 a): der Hammer nach RT-0425 Gl. 2–4 (Taste i = MIDI − 20)
+    s.hammerMasseG = kurveAus(kHammerTasten, [](int m) { return rtHammerMasseG(m - 20); });
+    s.hammerExponent = kurveAus(kHammerTasten, [](int m) { return rtHammerExponent(m - 20); });
+    s.hammerSteife = kurveAus(kHammerTasten, [](int m) { return rtHammerSteife(m - 20); });
+    // belegt (HT1 a): RT-0425 Anhang A, C1 … B7 — µ = ρπd²/4, f_l0/f0 = √(EA/T0) mit
+    // E = 2,02·10¹¹ Pa; die Tasten so gewaehlt, dass die Kurve jede Taste der Tabelle auf
+    // 2 % trifft (E2 | F2: der Sprung am Bassteg)
+    s.saitenLaengeM = kurveAusPunkten({{24, 2.007}, {31, 1.842}, {37, 1.548}, {39, 1.442}, {40, 1.378}, {41, 1.837},
+                                       {42, 1.757}, {45, 1.482}, {52, 1.013}, {74, 0.308}, {107, 0.052}});
+    s.saitenMasseGm = kurveAusPunkten({{24, 99.41}, {28, 66.53}, {33, 31.57}, {35, 23.63}, {39, 15.32}, {40, 14.30},
+                                       {41, 7.729}, {54, 6.733}, {70, 5.459}, {82, 4.972}, {94, 4.392}, {107, 3.404}});
+    s.laengsVerhaeltnis =
+        kurveAusPunkten({{24, 14.21}, {40, 13.71}, {41, 15.74}, {55, 14.98}, {81, 13.59}, {107, 12.20}});
+    // x_H/L liegt dort zwischen 0,113 und 0,127, fast ueberall bei 0,120
+    s.anschlagStelle = kurveAusPunkten({{21, 0.12}, {108, 0.12}});
     // vorlaeufig, ohne Beleg — setzt die Messung an Salamander (31d)
     s.abklingS = kurveAusPunkten({{21, 25.0}, {33, 20.0}, {45, 15.0}, {57, 10.0}, {69, 6.0}, {81, 3.0}, {93, 1.5},
                                   {105, 0.7}, {108, 0.5}});
     s.abklingHoch = kurveAusPunkten({{21, 0.2}, {108, 0.2}});
     s.chor = kurveAusPunkten({{21, 1.0}, {30, 1.0}, {31, 2.0}, {48, 2.0}, {49, 3.0}, {108, 3.0}});
     s.verstimmungCent = kurveAusPunkten({{21, 1.0}, {108, 1.0}});
-    s.anschlagStelle = kurveAusPunkten({{21, 0.125}, {108, 0.125}});
     s.daempferS = kurveAusPunkten({{21, 0.8}, {90, 0.2}});
     return s;
 }
@@ -238,6 +255,9 @@ void richteHammerSaite(HammerSaite& saite)
     richteKurve(saite.hammerExponent, kGrenzeExponent.von, kGrenzeExponent.bis, v.hammerExponent);
     richteKurve(saite.anschlagStelle, kGrenzeStelle.von, kGrenzeStelle.bis, v.anschlagStelle);
     richteKurve(saite.daempferS, kGrenzeDaempfer.von, kGrenzeDaempfer.bis, v.daempferS);
+    richteKurve(saite.saitenLaengeM, kGrenzeLaenge.von, kGrenzeLaenge.bis, v.saitenLaengeM);
+    richteKurve(saite.saitenMasseGm, kGrenzeMasseJeM.von, kGrenzeMasseJeM.bis, v.saitenMasseGm);
+    richteKurve(saite.laengsVerhaeltnis, kGrenzeLaengs.von, kGrenzeLaengs.bis, v.laengsVerhaeltnis);
     const double anteil = saite.resonanzboden.anteil;
     saite.resonanzboden.anteil = std::isfinite(anteil) ? std::clamp(anteil, 0.0, 1.0) : 0.0;
 }
@@ -254,6 +274,9 @@ QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
                        {QStringLiteral("hammerExponent"), kurveAlsJson(s.hammerExponent)},
                        {QStringLiteral("strikePosition"), kurveAlsJson(s.anschlagStelle)},
                        {QStringLiteral("damper"), kurveAlsJson(s.daempferS)},
+                       {QStringLiteral("stringLength"), kurveAlsJson(s.saitenLaengeM)},
+                       {QStringLiteral("stringMass"), kurveAlsJson(s.saitenMasseGm)},
+                       {QStringLiteral("longitudinalRatio"), kurveAlsJson(s.laengsVerhaeltnis)},
                        {QStringLiteral("soundboard"),
                         QJsonObject{{QStringLiteral("amount"), s.resonanzboden.anteil}}}};
 }
@@ -271,23 +294,32 @@ HammerSaite hammerSaiteAusJson(const QJsonObject& o)
     s.hammerExponent = kurveAusJson(o.value(QStringLiteral("hammerExponent")));
     s.anschlagStelle = kurveAusJson(o.value(QStringLiteral("strikePosition")));
     s.daempferS = kurveAusJson(o.value(QStringLiteral("damper")));
+    s.saitenLaengeM = kurveAusJson(o.value(QStringLiteral("stringLength")));
+    s.saitenMasseGm = kurveAusJson(o.value(QStringLiteral("stringMass")));
+    s.laengsVerhaeltnis = kurveAusJson(o.value(QStringLiteral("longitudinalRatio")));
     s.resonanzboden.anteil = o.value(QStringLiteral("soundboard")).toObject().value(QStringLiteral("amount")).toDouble(0.0);
     return s;
 }
 
-double stulovMasseG(int n)
+double rtHammerMasseG(int i)
 {
-    return 11.074 - 0.074 * n + 1e-4 * n * n;
+    return (-6.2348e-5 * i + 0.0112) * 1000.0;
 }
 
-double stulovExponent(int n)
+double rtHammerExponent(int i)
 {
-    return 3.7 + 0.015 * n;
+    return 2.4295e-4 * i * i - 0.007703 * i + 2.337;
 }
 
-double stulovSteife(int n)
+double rtHammerSteifeNm(int i)
 {
-    return 183.0 * std::exp(0.045 * n);
+    return std::pow(10.0, 5.3097e-2 * i + 7.6425);
+}
+
+double rtHammerSteife(int i)
+{
+    // K_H·u^p mit u in m = K_H·10⁻³ᵖ·u^p mit u in mm
+    return rtHammerSteifeNm(i) * std::pow(10.0, -3.0 * rtHammerExponent(i));
 }
 
 double rigaudB(int m, double sB, double yB)
