@@ -8,7 +8,7 @@ Quelle: J. Chabassier, M. Duruflé, „Physical parameters for piano modeling", 
 `projects/apps/LumiViz/docs/modellierung/hammer-saite/quellen/` (nicht im Repo). Gebraucht
 werden `pdftotext` und `pdfimages` (Poppler), dazu numpy, scipy, Pillow.
 
-Schreibt `steinway_d.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 1) neben
+Schreibt `steinway_d.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 2) neben
 dieses Skript oder nach `--ziel`. Kein Zufall: zwei Laeufe ergeben dieselbe Datei.
 **Massgebend ist die Datei im Repo, nicht ein neuer Lauf** — zuerst mit `--ziel` in eine Kopie
 schreiben und vergleichen.
@@ -41,6 +41,10 @@ Was woher kommt:
 - **Stegpunkte:** RT-0425 Anhang A (x0, y0) fuer C1 … B7 (Anhang B traegt dieselben Werte).
   A0, A#0, B0 und C8 fehlen dort: entlang des Stegs verlaengert, im Abstand der drei
   naechsten Noten, Quelle „extended along the bridge".
+- **Hoerorte** (S148, BM6 a, BM6-1 a): ein Stereopaar `left`/`right` 12 cm ueber den Saiten
+  (die Readme von *Salamander*: „~12cm above the strings"), ueber den Stegpunkten der Tasten
+  am ersten und dritten Viertel der Tastatur (MIDI 43 und 86). z ueber der Mittelflaeche der
+  Platte: halbe Plattendicke plus Hoehe des Stegs dort plus 12 cm.
 """
 import json
 import re
@@ -62,6 +66,7 @@ RAHMEN = (233, 55, 623, 621)  # x0, y0, x1, y1 innen
 SKALA_X = 676
 RASTER_M = 0.02
 RAND_DICKE = 0.006  # §2.1: am Rand 6 mm
+MIKROFON_UEBER_SAITEN = 0.12  # Salamander: „~12cm above the strings" (BM6-1 a)
 
 NOTEN = {"C": 0, "Cd": 1, "D": 2, "Dd": 3, "E": 4, "F": 5, "Fd": 6, "G": 7, "Ab": 8, "A": 9, "Ad": 10, "B": 11}
 
@@ -369,6 +374,19 @@ def punkt_auf_linie(s, linie):
     return tuple(linie[-1])
 
 
+def wert_auf_linie(p, linie, werte):
+    """Der Wert am naechsten Punkt der Linie, linear zwischen ihren Stuetzpunkten."""
+    best, v_best = np.inf, werte[0]
+    for k in range(len(linie) - 1):
+        a, b = np.array(linie[k]), np.array(linie[k + 1])
+        ab = b - a
+        t = float(np.clip(np.dot(np.array(p) - a, ab) / max(np.dot(ab, ab), 1e-12), 0.0, 1.0))
+        d = float(np.hypot(*(np.array(p) - (a + t * ab))))
+        if d < best:
+            best, v_best = d, werte[k] + t * (werte[k + 1] - werte[k])
+    return v_best
+
+
 def innen(umriss, p):
     drin = False
     n = len(umriss)
@@ -506,10 +524,25 @@ def baue(pdf, bildpfad=None):
             x, y = punkt_auf_linie(ziel, steg)
             alle.append({"key": k, "x": runde(x, 3), "y": runde(y, 3), "source": "extended along the bridge"})
 
+    # Hoerorte (BM6-1 a): ein Stereopaar 12 cm ueber den Saiten (wie Salamander), ueber den
+    # Stegpunkten der Tasten am ersten und dritten Viertel der Tastatur; z ueber der Mittelflaeche
+    # der Platte — die Oberseite des Stegs liegt eine halbe Plattendicke plus die Steghoehe darueber
+    hoerorte = []
+    for name, anteil in (("left", 0.25), ("right", 0.75)):
+        k = int(round(21 + anteil * (108 - 21)))
+        p = next(q for q in alle if q["key"] == k)
+        ort = (p["x"], p["y"])
+        oberseite = plattendicke(ort) / 2.0 + wert_auf_linie(ort, leisten_s[0]["line"], leisten_s[0]["height"])
+        hoerorte.append({
+            "name": name, "x": p["x"], "y": p["y"], "z": runde(oberseite + MIKROFON_UEBER_SAITEN),
+            "source": f"BM6-1 a: 12 cm above the strings (Salamander README: \"~12cm above the strings\"), "
+                      f"over the bridge point of key {k}",
+        })
+
     faser = round(rippenwinkel + 90.0, 1)
     plan = {
         "format": "lumiviz-instrument-body-plan",
-        "version": 1,
+        "version": 2,
         "title": "Steinway D (RT-0425)",
         "description": "Soundboard of a Steinway D after Chabassier & Durufle, RT-0425 (2012): outline, plate "
                        "thickness, ribs and bridge read from Fig. 2, bridge points from Appendix A.",
@@ -542,6 +575,7 @@ def baue(pdf, bildpfad=None):
         "ribs": leisten_r,
         "bridges": leisten_s,
         "bridgePoints": alle,
+        "listeningPoints": hoerorte,
     }
 
     # Pruefung: jeder Stegpunkt auf dem Steg (halbe Breite), Bericht der Zahlen
@@ -554,6 +588,8 @@ def baue(pdf, bildpfad=None):
     hs = leisten_s[0]["height"]
     print(f"Steg {len(steg)} Punkte, Laenge {sum(np.hypot(*(np.array(steg[k + 1]) - steg[k])) for k in range(len(steg) - 1)):.3f} m, Hoehe {min(hs) * 1e3:.1f} … {max(hs) * 1e3:.1f} mm")
     print(f"Stegpunkte {len(alle)}: Abstand zur Steglinie Median {np.median(abst) * 1e3:.1f} mm, groesster {max(abst) * 1e3:.1f} mm")
+    for h in hoerorte:
+        print(f"Hoerort {h['name']}: ({h['x']}, {h['y']}) m, z {h['z'] * 1e3:.1f} mm")
     if max(abst) > 0.016:
         raise SystemExit("Ein Stegpunkt liegt nicht auf dem Steg (mehr als die halbe Breite daneben).")
 

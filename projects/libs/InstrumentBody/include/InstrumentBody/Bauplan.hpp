@@ -37,7 +37,8 @@ namespace lumi::koerper
 {
 
 /// Die Fassung des Bauplans, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kBauplanFassung = 1;
+/// 2 (S148, BM6 a): Hoerorte. Fassung 1 bleibt lesbar (ohne Hoerorte).
+inline constexpr int kBauplanFassung = 2;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -188,6 +189,18 @@ struct Stegpunkt
     [[nodiscard]] bool operator==(const Stegpunkt&) const = default;
 };
 
+/// Ein Ort, an dem der Koerper gehoert wird (BM6 a): je Hoerort traegt der Koerper ein
+/// Abstrahlgewicht je Mode — die Ausgaenge nach KB1 a.
+struct Hoerort
+{
+    std::string name;  ///< im Bauplan eindeutig, etwa „left"
+    Punkt2 ort;        ///< m, im Bezugssystem des Bodens
+    double hoehe = 0.0;  ///< m, z ueber der Mittelflaeche der Platte (die Ebene, in der die Rechnung sie nimmt)
+    std::string quelle;  ///< wie die Lage zustande kam
+
+    [[nodiscard]] bool operator==(const Hoerort&) const = default;
+};
+
 struct Bauplan
 {
     std::string titel;
@@ -198,6 +211,7 @@ struct Bauplan
     std::vector<Leiste> rippen;
     std::vector<Leiste> stege;
     std::vector<Stegpunkt> stegpunkte;  ///< nach Taste aufsteigend
+    std::vector<Hoerort> hoerorte;      ///< seit Fassung 2; leer = keiner
 
     [[nodiscard]] bool operator==(const Bauplan&) const = default;
 };
@@ -325,7 +339,8 @@ struct Bauplan
 /// Geprueft: Materialien eindeutig und mit positiven Werten, jedes genannte
 /// Material vorhanden, Umriss mit mindestens drei Punkten und Flaeche, Dicke
 /// positiv, je Leiste mindestens zwei Punkte und so viele Hoehen und Breiten
-/// wie Punkte (alle positiv), Stegpunkte nach Taste aufsteigend und jede Taste einmal.
+/// wie Punkte (alle positiv), Stegpunkte nach Taste aufsteigend und jede Taste einmal,
+/// Hoerorte mit eindeutigem Namen und ueber der Platte.
 [[nodiscard]] inline std::vector<std::string> pruefe(const Bauplan& plan)
 {
     std::vector<std::string> befunde;
@@ -390,6 +405,17 @@ struct Bauplan
             befunde.push_back("bridge points: keys must ascend, each once");
             break;
         }
+    }
+    for (std::size_t k = 0; k < plan.hoerorte.size(); ++k)
+    {
+        const Hoerort& h = plan.hoerorte[k];
+        if (h.name.empty()) befunde.push_back("listening point without name");
+        for (std::size_t l = k + 1; l < plan.hoerorte.size(); ++l)
+        {
+            if (plan.hoerorte[l].name == h.name) befunde.push_back("listening point '" + h.name + "' twice");
+        }
+        // auf der Platte oder darunter gibt es kein Rayleigh-Integral (Halbraum ueber der Platte)
+        if (!(h.hoehe > 0.0)) befunde.push_back("listening point '" + h.name + "': must lie above the plate");
     }
     return befunde;
 }

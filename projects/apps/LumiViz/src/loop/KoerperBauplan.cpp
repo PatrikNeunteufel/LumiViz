@@ -1,6 +1,6 @@
 /**
  * @file KoerperBauplan.cpp
- * @brief Die Datei `.lvinstbodyplan` (Stufe 31c-1, BM3 a)
+ * @brief Die Datei `.lvinstbodyplan` (Stufe 31c-1, BM3 a; Fassung 2 mit Hoerorten seit 31c-5a, BM6 a)
  */
 
 #include "loop/KoerperBauplan.hpp"
@@ -200,6 +200,17 @@ QJsonObject alsJson(const Bauplan& plan)
             {QStringLiteral("source"), text(s.quelle)},
         });
     }
+    QJsonArray hoerorte;
+    for (const koerper::Hoerort& h : plan.hoerorte)
+    {
+        hoerorte.append(QJsonObject{
+            {QStringLiteral("name"), text(h.name)},
+            {QStringLiteral("x"), h.ort.x},
+            {QStringLiteral("y"), h.ort.y},
+            {QStringLiteral("z"), h.hoehe},
+            {QStringLiteral("source"), text(h.quelle)},
+        });
+    }
     const koerper::Platte& p = plan.platte;
     return QJsonObject{
         {QStringLiteral("format"), QLatin1String(kBauplanFormat)},
@@ -220,6 +231,7 @@ QJsonObject alsJson(const Bauplan& plan)
         {QStringLiteral("ribs"), leistenAlsJson(plan.rippen)},
         {QStringLiteral("bridges"), leistenAlsJson(plan.stege)},
         {QStringLiteral("bridgePoints"), punkte},
+        {QStringLiteral("listeningPoints"), hoerorte},
     };
 }
 
@@ -251,6 +263,15 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
         neu.stegpunkte.push_back({o.value(QStringLiteral("key")).toInt(),
                                   {o.value(QStringLiteral("x")).toDouble(), o.value(QStringLiteral("y")).toDouble()},
                                   text(o.value(QStringLiteral("source")))});
+    }
+    // seit Fassung 2; in Fassung 1 fehlt die Liste — dann keine Hoerorte
+    for (const QJsonValue& e : wurzel.value(QStringLiteral("listeningPoints")).toArray())
+    {
+        const QJsonObject o = e.toObject();
+        neu.hoerorte.push_back({text(o.value(QStringLiteral("name"))),
+                                {o.value(QStringLiteral("x")).toDouble(), o.value(QStringLiteral("y")).toDouble()},
+                                o.value(QStringLiteral("z")).toDouble(),
+                                text(o.value(QStringLiteral("source")))});
     }
     plan = std::move(neu);
     return true;

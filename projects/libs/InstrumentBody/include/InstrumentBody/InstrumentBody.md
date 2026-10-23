@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.4.0  
+> **Version:** 0.5.0  
 > **Datum:** 2026-10-23  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser)  
@@ -55,14 +55,20 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
 - **Leisten** (Rippen, Stege): Mittellinie, je Punkt Höhe über der Platte und Breite. Die Rechnung nimmt sie
   als dickere Stellen der Platte (BM1 a, wie MAESSTRO und Chabassier).
 - **Stegpunkte**: je Taste (MIDI) der Ort, an dem die Saiten den Steg treffen, mit Quelle.
+- **Hörorte** (`Hoerort`, seit Fassung 2; BM6 a): Name, Lage (x, y) und Höhe z über der Mittelfläche der Platte, mit
+  Quelle. Je Hörort trägt der Körper ein Abstrahlgewicht je Mode (die Ausgänge nach KB1 a). Steinway D (BM6-1 a):
+  `left` und `right` 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86 — die Oberseite des Stegs liegt eine
+  halbe Plattendicke plus die Steghöhe über der Mittelfläche.
 - **Prüfen**: `pruefe(plan)` nennt je Befund einen Satz (Material fehlt oder doppelt, Werte nicht positiv,
   Querzahl außerhalb der Stabilität — isotrop 0 ≤ ν < 0,5, orthotrop 1 − ν_xy·ν_yx > 0 —, Umriss ohne Fläche,
-  Leiste ohne Höhe je Punkt, Stegpunkte nicht aufsteigend).
+  Leiste ohne Höhe je Punkt, Stegpunkte nicht aufsteigend, Hörort ohne oder mit doppeltem Namen, nicht über der
+  Platte).
 - **Geometrie**: `flaeche`, `innen`, `abstandZurLinie`, `laenge`, `masse` (Platte über ein Raster von 5 mm
   summiert, Leisten als Länge mal mittlerer Querschnitt).
 
-Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 1) schreibt jedes Feld, auch leere;
-NaN im Raster steht als `null`.
+Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 2) schreibt jedes Feld, auch leere;
+NaN im Raster steht als `null`. Die Hörorte stehen in `listeningPoints` (`name`, `x`, `y`, `z`, `source`); Fassung 1
+ohne diese Liste bleibt lesbar (dann keine Hörorte).
 
 ## 3. Netz
 
@@ -197,6 +203,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.5.0 | 2026-10-23 | Session 148, Stufe 31c-5a: Hörorte (`Hoerort`, BM6 a), `.lvinstbodyplan` Fassung 2 mit `listeningPoints`. |
 | 0.4.0 | 2026-10-23 | Session 148, Stufe 31c-4: Eigenlöser — Schnittstelle `Eigenloeser` (EG1 a), Umsetzung mit Spectra 1.2.0 und `SimplicialLDLT` (EG2 a: Zählung nach Sylvester, Teilfenster, Deflation, Rest je Mode), `Umsetzungen.hpp` mit `netzgeber()` und `eigenloeser()`, Werkzeug `InstrumentBodyTool`. |
 | 0.3.0 | 2026-10-23 | Session 147, Stufe 31c-3: Platte — Reissner-Mindlin, Zonen nach RT-0425, `Plattenelement` mit `LagrangeDreieck(k)`, `baueSystem` (eingespannt, gelenkig), `DuenneMatrix` (EL1 a). |
 | 0.2.0 | 2026-10-23 | Session 147, Stufe 31c-2: Netz — Schnittstelle `Netzgeber`, Auftrag aus dem Bauplan (Ränder der Leisten, Kante nach MAESSTRO Gl. 1), Umsetzung mit CDT 2.0.1 (BM4 a). |

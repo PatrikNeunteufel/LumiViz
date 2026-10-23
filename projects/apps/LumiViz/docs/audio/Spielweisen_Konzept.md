@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.76.0
+> **Version:** 0.77.0
 > **Datum:** 2026-10-23 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a und TS1 a (Patrik S139–S148);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a und TS1 a (Patrik S139–S148);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1423,6 +1423,61 @@ größter Rest 4,0·10⁻⁷, **21 min, Spitze 4,8 GB**; bis 1 kHz 80 Moden in 1
 Körper braucht nicht „Sekunden bis wenige Minuten", das Werkzeug bleibt der Ort der Rechnung. Release-clang
 `*Loop Koerper*` 24 / 24; Testing-MSVC baut, getestet wird dort am Stufenende (MT1 a).
 
+✅ **BM6 a** (Patrik S148): **Die Hörorte stehen im Bauplan als Liste, jeder mit Name und Lage (x, y, z in m im
+Bezugssystem des Bodens, z über der Bodenebene).** Der Körper trägt je Hörort ein Abstrahlgewicht je Mode (aus dem
+Rayleigh-Integral über ihre Form) — das sind die Ausgänge nach KB1 a. Zwei Hörorte geben Stereo aus derselben
+Rechnung, dieselben Moden mit anderen Gewichten (Bank 2007, nur Bericht). Vorgabe für den Steinway D ein Stereopaar;
+seine Lage klärt **BM6-1**, nachdem die Angaben von *Salamander* zur Lage seiner Mikrofone geprüft sind (Vergleich in
+31d). Ein anderer Hörort heißt: das Werkzeug neu laufen lassen (rund 21 min). `.lvinstbodyplan` Fassung 2. Grund: KB1 a
+sieht mehrere Ausgänge vor, der Bauplan ist der Ort der Eingaben der Rechnung; Stereo aus den Lagen über dem Boden
+statt aus einem Panorama; 31d vergleicht Gleiches mit Gleichem. Verworfen: b (ein fester Ort im Werkzeug, Mono — ein
+Wert im Code statt in der Datei), c (Leistung je Mode ohne Ort — trennt am reinsten, aber ohne Ort fehlt, was man
+hört, und der Vergleich mit einer Aufnahme geht nicht; die Leistung kann in a zusätzlich mit). Grenzen wie im Befund:
+Schallwand unter rund 200–300 Hz unzutreffend, kein Modell für den offenen Deckel. Kippt auf c, wenn 31d zeigt, dass
+die Gewichte je Ort an *Salamander* nicht besser treffen als die Leistung je Mode.
+
+**Befund S148 (selbst abgerufen):** die Readme von `sfzinstruments/SalamanderGrandPiano` (Weitergabe der Samples von
+Alexander Holm): „Two AKG c414 disposed in an AB position ~12cm above the strings." Wo über dem Flügel, Abstand und
+Deckel: nicht genannt; die Readme von Holm selbst nicht gesehen
+(`docs/modellierung/hammer-saite/recherche/2026-10-23_S148_salamander_mikrofone.md`).
+
+✅ **BM6-1 a** (Patrik S148): **Zwei Hörorte `left` und `right`, je 12 cm über den Saiten, über den Stegpunkten der
+Tasten am ersten und dritten Viertel der Tastatur** (Steinway D: MIDI 43 bei (0,27; 1,41) m und MIDI 86 bei
+(1,09; 0,09) m). „Über den Saiten“ = über der Oberseite des Stegs an diesem Punkt (Dicke der Platte plus Höhe des
+Stegs). Die Höhe aus *Salamander*, die Waagrechte eine eigene Regel (die Quelle nennt sie nicht);
+`make_steinway_d.py` rechnet die Lagen und schreibt sie als Zahlen mit Quelle in den Bauplan. Grund: die belegte
+Höhe, die Waagrechte an Daten des Bauplans (wo die Saiten den Boden antreiben) statt an einer freien Zahl; die Regel
+taugt für jeden Bauplan. Verworfen: b (AB über dem Schwerpunkt, 0,5 m — ein Abstand ohne Quelle, Bass und Diskant
+kaum getrennt), c (Ohren des Spielers — ohne Bezug zu *Salamander*; als weiterer Hörort später möglich). Kippt, wenn
+die Readme von Holm oder Bilder der Aufnahme eine andere Lage zeigen (dann deren Lage), oder wenn 31d das Verhältnis
+Bass zu Diskant gegen *Salamander* deutlich daneben findet (dann dort anpassen, neu vorlegen).
+
+✅ **PL31c-5 a** (Patrik S148): **31c-5 in vier Teilschritten, der statistische Teil dabei.** **31c-5a** Hörorte im
+Bauplan (`.lvinstbodyplan` Fassung 2, Liste `listeningPoints`; Fassung 1 bleibt lesbar), die Lagen nach BM6-1 a aus
+`make_steinway_d.py`. **31c-5b** Auswertung je Mode in `InstrumentBody`, während die Moden kommen (`jeMode`): der Wert
+der Form an jedem Stegpunkt (über die Ansatzfunktionen des Elements, in dem er liegt), daraus die Masse je Stegpunkt;
+die Dämpfung nach RT-0425 Gl. 1; je Hörort das Abstrahlgewicht aus dem Rayleigh-Integral über die Gauss-Punkte des
+Netzes, komplex bei der Frequenz der Mode (Betrag und Laufzeit — über die schmale Bandbreite einer Mode ändert sich das
+Integral kaum); geprüft gegen eine geschlossene Lösung (Rechteckplatte frei aufliegend). **31c-5c** statistischer Teil
+ab der höchsten gerechneten Mode (vorläufig 5 kHz; BM7 kann die Grenze in 31c-6 senken), mit einer Frage davor (woher
+seine Größen kommen). **31c-5d** die Datei `.lvinstbody` (Fassung 1) lesen und schreiben, mit Abdruck des Bauplans und
+der Fassung des Werkzeugs; das Werkzeug schreibt sie; `steinway_d.lvinstbody` committet (Größe gegen den Kipppunkt von
+BM3 c, rund 10 MB); Wächter-Test; Eintrag in `asset/Asset.cmake`. Grund: über 5 kHz gibt es keine gerechneten Moden —
+der statistische Teil wird gebraucht, wo BM7 die Grenze auch hinlegt; BM3 a nennt ihn als Teil des Körpers, die Datei
+hat so von Anfang an ihre Gestalt; die Grenze ist eine Zahl in der Datei, eine Änderung durch BM7 heißt neu rechnen,
+keine neue Fassung. Verworfen: b (ohne statistischen Teil, er käme mit BM7 als Fassung 2). Kippt auf b, wenn die Frage
+vor 31c-5c zeigt, dass seine Größen erst aus den Messungen des Prüfsteins in 31c-6 kommen können.
+
+**Gebaut 31c-5a (S148):** `Hoerort` in `Bauplan.hpp` (Name, Lage, Höhe z, Quelle; `pruefe`: Name eindeutig, über der
+Platte), `.lvinstbodyplan` **Fassung 2** mit `listeningPoints` (`loop/KoerperBauplan`; Fassung 1 ohne die Liste
+bleibt lesbar), `make_steinway_d.py` schreibt das Stereopaar nach BM6-1 a — erst in eine Kopie geschrieben und
+verglichen: nur Fassung und Hörorte neu. **Präzisiert:** z zählt über der **Mittelfläche** der Platte (der Ebene, in
+der die Rechnung sie als dünn nimmt); die Oberseite des Stegs liegt dort eine halbe Plattendicke plus die Steghöhe
+darüber (BM6-1 a sagt „Dicke der Platte plus Höhe des Stegs“ — gemessen von der Unterseite, derselbe Ort). Steinway D:
+`left` (0,27; 1,41) m, z = 173,7 mm; `right` (1,09; 0,09) m, z = 154,8 mm. Tests in `test_LoopKoerperBauplan`
+(`pruefe`, Datei mit Fassung 1, das Paar des Steinway gegen Stegpunkt und Steghöhe auf 1 mm). Release-clang
+`*Loop Koerper*` 24 / 24; Testing-MSVC baut.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2294,6 +2349,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.77.0 | 2026-10-23 | Session 148. BM6 a (Hörorte als Liste im Bauplan, je Hörort ein Abstrahlgewicht je Mode; Lage der Vorgabe in BM6-1); Befund Mikrofone von *Salamander*; BM6-1 a (Stereopaar 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86); PL31c-5 a (31c-5a bis 31c-5d, statistischer Teil dabei); 31c-5a gebaut (Hörorte, `.lvinstbodyplan` Fassung 2). |
 | 0.76.0 | 2026-10-23 | Session 148. Spectra 1.2.0 als External; EG1 a (Schnittstelle des Eigenlösers: Teilfenster im Löser, Moden an einen Empfänger, Zählung nach Sylvester); EG2 a (`SimplicialLDLT` in eigenem Operator, Residuum je Mode; SparseLU und Superknoten als Alternativen, wenn nötig). |
 | 0.75.0 | 2026-10-23 | Session 147. EL1 a (Lagrange-Dreiecke der Ordnung k, Vorgabe 3); 31c-3 gebaut (Eigen als External, Platte nach Reissner-Mindlin gegen Navier gemessen, Steinway bis 5 kHz gebaut). |
 | 0.74.0 | 2026-10-23 | Session 147. BM4 a (CDT 2.0.1 hinter einer eigenen Schnittstelle, eigener Generator vielleicht später); 31c-2 gebaut (Netz, CDT als External, Steinway bis 5 kHz gemessen). |

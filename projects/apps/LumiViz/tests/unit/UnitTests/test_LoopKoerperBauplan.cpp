@@ -17,7 +17,9 @@
  * - Isotrope Werkstoffe (Glas, GB1 a): G = E / (2 (1 + ν)).
  * - `pruefe` findet, was an einem Bauplan nicht stimmt.
  * - Die Datei: Hin- und Rueckweg gleich, jedes Feld geschrieben, NaN im Raster als null,
- *   falsches Format und zu neue Fassung abgewiesen.
+ *   falsches Format und zu neue Fassung abgewiesen; Fassung 1 (ohne Hoerorte) lesbar.
+ * - Hoerorte (S148, BM6 a, BM6-1 a): in `pruefe`, in der Datei, beim Steinway D das Stereopaar
+ *   12 cm ueber den Saiten an den Stegpunkten von MIDI 43 und 86.
  * - Der mitgelieferte Steinway D (BM2 a, `make_steinway_d.py`), vom Arbeitsordner aus gelesen
  *   (die Test-Exe aus dem Projekt-Root starten): in sich stimmig, 88 Tasten, jeder Stegpunkt
  *   auf dem Steg, Dicken in den Spannen von RT-0425 §2.1, Masse plausibel.
@@ -29,6 +31,7 @@
 #include <doctest.h>
 
 #include "InstrumentBody/Bauplan.hpp"
+#include "InstrumentBody/Platte.hpp"
 #include "loop/KoerperBauplan.hpp"
 
 #include <QFileInfo>
@@ -77,6 +80,7 @@ kp::Bauplan einfacherPlan()
     plan.rippen.push_back({"rib 1", "spruce", {{0.0, 0.25}, {1.0, 0.25}}, {0.02, 0.02}, {0.01, 0.01}});
     plan.stege.push_back({"bridge", "glass", {{0.5, 0.0}, {0.5, 0.5}}, {0.03, 0.03}, {0.03, 0.03}});
     plan.stegpunkte = {{60, {0.5, 0.1}, "von Hand"}, {72, {0.5, 0.3}, "von Hand"}};
+    plan.hoerorte = {{"left", {0.3, 0.2}, 0.15, "von Hand"}, {"right", {0.7, 0.2}, 0.15, "von Hand"}};
     return plan;
 }
 
@@ -171,6 +175,11 @@ TEST_CASE("Loop Koerper 31c-1 pruefe")
     CHECK_FALSE(befundeMit([](kp::Bauplan& p) { p.stege[0].breite[0] = 0.0; }).empty());
     CHECK_FALSE(befundeMit([](kp::Bauplan& p) { p.stege[0].material = "oak"; }).empty());
     CHECK_FALSE(befundeMit([](kp::Bauplan& p) { p.stegpunkte[1].taste = 60; }).empty());
+    // Hoerorte (BM6 a): Name eindeutig, ueber der Platte
+    CHECK_FALSE(befundeMit([](kp::Bauplan& p) { p.hoerorte[1].name = "left"; }).empty());
+    CHECK_FALSE(befundeMit([](kp::Bauplan& p) { p.hoerorte[0].name.clear(); }).empty());
+    CHECK_FALSE(befundeMit([](kp::Bauplan& p) { p.hoerorte[0].hoehe = 0.0; }).empty());
+    CHECK(befundeMit([](kp::Bauplan& p) { p.hoerorte.clear(); }).empty());
     CHECK_FALSE(befundeMit([](kp::Bauplan& p) {
                     p.platte.dickeRaster.nx = 2;
                     p.platte.dickeRaster.ny = 2;
@@ -192,8 +201,11 @@ TEST_CASE("Loop Koerper 31c-1 Datei")
     CHECK(json.value(QStringLiteral("format")).toString() == QLatin1String(kBauplanFormat));
     CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
     // jedes Feld steht da, auch ein leeres
-    for (const char* feld : {"title", "description", "source", "units", "materials", "plate", "ribs", "bridges", "bridgePoints"})
+    for (const char* feld : {"title", "description", "source", "units", "materials", "plate", "ribs", "bridges", "bridgePoints",
+                             "listeningPoints"})
         CHECK_MESSAGE(json.contains(QLatin1String(feld)), feld);
+    const QJsonObject hoerort = json.value(QStringLiteral("listeningPoints")).toArray()[0].toObject();
+    for (const char* feld : {"name", "x", "y", "z", "source"}) CHECK_MESSAGE(hoerort.contains(QLatin1String(feld)), feld);
     const QJsonObject platte = json.value(QStringLiteral("plate")).toObject();
     for (const char* feld : {"material", "grainAngle", "outline", "thickness", "thicknessGrid"})
         CHECK_MESSAGE(platte.contains(QLatin1String(feld)), feld);
@@ -224,6 +236,18 @@ TEST_CASE("Loop Koerper 31c-1 Datei")
     CHECK_FALSE(ausJson(fremd, bleibt, &zuNeu));
     CHECK_FALSE(zuNeu);
     CHECK(bleibt == einfacherPlan());
+
+    // Fassung 1 (vor S148) kennt keine Hoerorte: lesbar, ohne Hoerorte
+    QJsonObject alt = json;
+    alt[QStringLiteral("version")] = 1;
+    alt.remove(QStringLiteral("listeningPoints"));
+    kp::Bauplan ausAlt;
+    REQUIRE(ausJson(alt, ausAlt, &zuNeu));
+    CHECK_FALSE(zuNeu);
+    CHECK(ausAlt.hoerorte.empty());
+    kp::Bauplan ohneHoerorte = plan;
+    ohneHoerorte.hoerorte.clear();
+    CHECK(ausAlt == ohneHoerorte);
 
     // eine Fassung, die es noch nicht gibt
     QJsonObject neuer = json;
@@ -329,6 +353,24 @@ TEST_CASE("Loop Koerper 31c-1 Steinway D")
     CHECK(flaeche == doctest::Approx(2.05).epsilon(0.03));
     CHECK(masse > 10.0);
     CHECK(masse < 15.0);
+
+    // Hoerorte (BM6-1 a): ein Stereopaar 12 cm ueber den Saiten, ueber den Stegpunkten von MIDI 43
+    // und 86; z ueber der Mittelflaeche = halbe Plattendicke + Hoehe des Stegs dort + 12 cm
+    REQUIRE(plan.hoerorte.size() == 2);
+    const std::pair<const char*, int> paar[] = {{"left", 43}, {"right", 86}};
+    for (std::size_t i = 0; i < 2; ++i)
+    {
+        const kp::Hoerort& h = plan.hoerorte[i];
+        CAPTURE(h.name);
+        CHECK(h.name == paar[i].first);
+        CHECK(h.ort.x == doctest::Approx(ort(paar[i].second).x));
+        CHECK(h.ort.y == doctest::Approx(ort(paar[i].second).y));
+        const kp::AufLeiste auf = kp::aufLeiste(steg, h.ort);
+        CHECK(auf.drauf);
+        // das Skript nimmt die Plattendicke der naechsten Rasterzelle, die Bibliothek bilinear: 1 mm Spiel
+        const double soll = plan.platte.dickeBei(h.ort) / 2.0 + auf.hoehe + 0.12;
+        CHECK_MESSAGE(std::abs(h.hoehe - soll) < 0.001, "z ", h.hoehe, " m, erwartet ", soll, " m");
+    }
 }
 
 TEST_CASE("Loop Koerper 31c-1 Icons")

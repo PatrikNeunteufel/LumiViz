@@ -20,6 +20,7 @@ HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Ans
 | [recherche/2026-10-23_S146_resonanzboden_geometrie_holz.md](recherche/2026-10-23_S146_resonanzboden_geometrie_holz.md) | Boden: Geometrie und Holzwerte |
 | [recherche/2026-10-23_S146_resonanzboden_mobilitaet_moden.md](recherche/2026-10-23_S146_resonanzboden_mobilitaet_moden.md) | Boden: gemessene Mobilität, Moden, Dämpfung |
 | [recherche/2026-10-23_S146_resonanzboden_abstrahlung.md](recherche/2026-10-23_S146_resonanzboden_abstrahlung.md) | Boden: Abstrahlung (Rayleigh, Koinzidenz, modal) |
+| [recherche/2026-10-23_S148_salamander_mikrofone.md](recherche/2026-10-23_S148_salamander_mikrofone.md) | Lage der Mikrofone von *Salamander* (für BM6-1) |
 | [recherche/2026-10-23_S146_resonanzboden_numerik.md](recherche/2026-10-23_S146_resonanzboden_numerik.md) | Boden: Moden numerisch vorab (FEM, MAESSTRO, Trévisan) |
 | [recherche/2026-10-23_S146_resonanzboden_syntheseverfahren.md](recherche/2026-10-23_S146_resonanzboden_syntheseverfahren.md) | Boden: Verfahren der Synthese und ihre Kosten (Faltung, parallele Filter, Pianoteq) |
 | [recherche/2026-10-23_S147_rt0425_netzdatei.md](recherche/2026-10-23_S147_rt0425_netzdatei.md) | Netzdatei zu RT-0425 (Steinway D): nicht erreichbar, Reichweite der Suche |
