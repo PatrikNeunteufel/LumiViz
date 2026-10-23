@@ -467,3 +467,4 @@ docs/**/*.bak
 docs/**/*.zip
 
 asset/free_Tabs/**
+/projects/apps/LumiViz/docs/external
