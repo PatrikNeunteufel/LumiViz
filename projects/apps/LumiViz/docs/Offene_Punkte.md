@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.279.0
-> **Datum:** 2026-10-23 (Session 146)
+> **Version:** 1.280.0
+> **Datum:** 2026-10-23 (Session 147)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3079,9 +3079,16 @@ Idee Preset-Warmup/Pre-Roll.
   Anschlagstärke gestuft im Namen). **S146: 31a und 31b gebaut** (Modell, Datei Fassung 16, ein Ton mit Saite,
   Hammer, Chor, Längsschwingung, Dämpfer, Stufe in der Planung; HK1 a, HK2 a, HT1 a bis HT6 a; Rechenzeit 2,3 % der
   Echtzeit im Bass); **31c begonnen:** HT7 a vorläufig (Boden aus *Salamander*), Recherche mit sieben Agenten, KB1 a
-  (gemeinsame Grundlage für Körper); Berichte und Modell unter `docs/modellierung/`. **Offen:** Netzdatei zu
-  RT-0425 prüfen, dann woher die Moden des Bodens kommen; Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele
-  Vorgaben vorläufig bis 31d (`docs/modellierung/hammer-saite/modell.md` §2).
+  (gemeinsame Grundlage für Körper); Berichte und Modell unter `docs/modellierung/`. **S147: 31c — der Boden wird
+  gerechnet** (BM1 a: eigenes FEM-Werkzeug; Netzdatei zu RT-0425 nicht mehr zu haben; PL31c a: 31c-1 bis 31c-8; HT7 b:
+  Salamander nur Vergleich; BM2 a, GB1 a (Glasboden in 31c-8, Schimmel-Glasflügel als Wunsch), BM3 a/-1 a/-2 a, BM5 a,
+  BM5-1 a, IC1 a, BM4 a, EL1 a). **Gebaut 31c-1** (Bibliothek `InstrumentBody`, Bauplan `.lvinstbodyplan`, Steinway D
+  aus RT-0425 Abb. 2, Icons), **31c-2** (Netz, CDT 2.0.1 als External), **31c-3** (Platte nach Reissner-Mindlin,
+  Eigen 3.4.1 als External; gegen Navier auf < 0,1 %; Steinway bis 5 kHz 568 515 Größen). **Offen:** 31c-4 Eigenlöser
+  (Spectra 1.2.0 laden — Freigabe; `InstrumentBodyTool`), BM6 Hörort vor 31c-5, BM7 Grenzfrequenz in 31c-6, 31c-7
+  Klang, 31c-8 Varianten mit Glasboden; Testing-MSVC für `*Loop Koerper*` am Stufenende (Bezug des Netzes auf 2 %);
+  Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d
+  (`docs/modellierung/hammer-saite/modell.md` §2).
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6157,6 +6164,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.280.0 | 2026-10-23 | Session 147. §7 Spielweisen: Stufe 31c — der Boden gerechnet (BM1 a bis BM5-1 a, PL31c a, HT7 b, GB1 a, IC1 a, EL1 a); 31c-1 bis 31c-3 gebaut (Bauplan, Netz mit CDT, Platte mit Eigen). |
 | 1.279.0 | 2026-10-23 | Session 146. §7 Spielweisen: Stufe 31 — 31a und 31b gebaut, 31c begonnen (HK1 a, HK2 a, HT1 a bis HT7 a, KB1 a); Ablage `docs/modellierung/`. |
 | 1.278.0 | 2026-10-22 | Session 145. §7 Spielweisen: Stufe 31 Hammer-Saite begonnen (BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; nichts gebaut). |
 | 1.277.0 | 2026-10-22 | Session 145. §7 Spielweisen: Freeze 30i gebaut (FP1 a bis FP3 a: Publish mit eingefrorenen Clips), Handbuch Freeze, Sichttest-Liste Freeze; Stufe 30 fertig bis auf den vollen Lauf. |
