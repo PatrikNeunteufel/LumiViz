@@ -2043,6 +2043,13 @@ JSON) — `Loop Werte` gegen `loop_werte.txt` unverändert (1504 / 1504), daher 
 `LUMIVIZ_KLANGFASSUNG_SCHREIBEN=1` neu (alle Werte ohne die Spalte des Abdrucks gleich). Eng
 `*Loop Hammer*,*Loop Koerper*,*Klangfassung*,*Instrument*,*Loop Fft*` grün (Release-clang).
 
+**Gebaut 31c-7 Schritt 5 — Hörproben (S150, ZA1 a):** `LUMIVIZ_31C_WAV=<Ordner>` in `test_LoopKoerperKlang` legt
+den Steinway ohne gegen mit Boden ab — A0, C2, C4, C6, C8 bei mf (Stufe −12) und C4 bei pp, mf, ff (−26, −12, 0),
+je 1,2 s gehalten, alle 2,5 s einer, 48 kHz Stereo — mit `liste.txt` (was jede Datei vergleicht; die Pegel ohne und
+mit Boden sind nicht gleich gestellt). Abgelegt lokal unter `.claude/handover/hoerproben_31c/` (Spitzen: mf ohne
+−18,7, mit −23,5 dBFS; C4 ohne −7,6, mit −17,5 dBFS). **31c-7 ist damit gebaut**; die großen Läufe und die
+gesammelten Hörproben aller Körper folgen in 31c-9 (ZA1 a), Patrik hört gesammelt später.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);

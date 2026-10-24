@@ -19,6 +19,8 @@
  *   fehlender Koerper aendert nichts. Leert den Tonspeicher vorher und nachher.
  * - „Body not found“ (SB1 a): ein Instrument in einem Wegwerf-Ordner, dessen Koerper es nicht gibt —
  *   der Bericht des Tonauftrags sagt es einmal, der Ton klingt ohne Boden.
+ * - `LUMIVIZ_31C_WAV=<Ordner>` legt Hoerproben ab (ZA1 a: A0, C2, C4, C6, C8 bei mf, C4 bei pp/mf/ff, ohne
+ *   gegen mit Boden) mit einer Liste `liste.txt` — Patrik hoert sie gesammelt spaeter.
  * - **Messteil** nur mit `LUMIVIZ_31C7_MESSUNG=1` (Release-clang, einige Minuten): Zeit und Speicher je
  *   Antwort, Rechenzeit der Faltung je Ton, Schalldruck am Hoerort fuer alle 88 Tasten bei der
  *   hoechsten Anschlagstufe → der Wert von `kSchalldruckBezug` (PG1 a). Meldet nur Zahlen.
@@ -31,12 +33,15 @@
 #include "loop/Boden.hpp"
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/Aufnahme.hpp"  // schreibeWav
 #include "loop/Kit.hpp"
 #include "loop/Koerper.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Tonspeicher.hpp"
 #include "PappTon.hpp"
 
+#include <QDir>
+#include <QFile>
 #include <QTemporaryDir>
 #include <QtGlobal>
 
@@ -201,6 +206,66 @@ TEST_CASE("Loop Koerper 31c-7 Body not found (SB1 a)")
     REQUIRE(klaenge[0] != nullptr);
     CHECK(klaenge[0]->frames() > 0);
     CHECK(bericht == QStringList{QStringLiteral("Body not found: lib:gibt_es_nicht")});
+    tonspeicher().leere();
+}
+
+TEST_CASE("Loop Koerper 31c-7 Hoerproben (LUMIVIZ_31C_WAV)")
+{
+    // ZA1 a: A0, C2, C4, C6, C8 bei mf, dazu C4 bei pp und ff — der Steinway ohne gegen mit Boden, Stereo
+    const QString ordner = qEnvironmentVariable("LUMIVIZ_31C_WAV");
+    if (ordner.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_31C_WAV=<Ordner> legt Hoerproben ab");
+        return;
+    }
+    REQUIRE(QDir().mkpath(ordner));
+    tonspeicher().leere();
+    const int rate = 48000;
+    Instrument ohne;
+    Schicht& s = ohne.schichten[0];
+    s.schwingung = Schwingung::Saite;
+    s.saitenModell = SaitenModell::Modal;
+    s.anregung = Anregung::Hammer;
+    ohne.tastatur = Tastatur{};
+    Instrument mit = ohne;
+    mit.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
+    // je Ton 1,2 s gehalten, alle 2,5 s einer; der Nachklang laeuft ueber den naechsten
+    const auto lege = [&](const QString& name, const Instrument& instrument, const std::vector<std::pair<int, int>>& toene) {
+        const auto abstand = static_cast<std::size_t>(2.5 * rate);
+        std::vector<float> folge;
+        std::size_t nr = 0;
+        for (const auto& [hoehe, stufe] : toene)
+        {
+            TonAngabe angabe;
+            angabe.hoehe = hoehe;
+            angabe.dauerMs = 1200;
+            angabe.anschlagStufe = stufe;
+            const Klang k = rendereTon(instrument, angabe, rate);
+            const std::size_t ab = 2 * nr * abstand;
+            if (folge.size() < ab + k.daten.size()) folge.resize(ab + k.daten.size(), 0.0f);
+            for (std::size_t i = 0; i < k.daten.size(); ++i) folge[ab + i] += k.daten[i];
+            ++nr;
+        }
+        float spitze = 0.0f;
+        for (const float v : folge) spitze = std::max(spitze, std::abs(v));
+        REQUIRE(schreibeWav(QDir(ordner).filePath(name + QStringLiteral(".wav")), folge, rate));
+        MESSAGE(name.toStdString(), ": Spitze ", 20.0 * std::log10(std::max(spitze, 1e-9f)), " dBFS");
+    };
+    const std::vector<std::pair<int, int>> mf{{21, -12}, {36, -12}, {60, -12}, {84, -12}, {108, -12}};
+    const std::vector<std::pair<int, int>> c4{{60, -26}, {60, -12}, {60, 0}};
+    lege(QStringLiteral("01_mf_ohne_boden"), ohne, mf);
+    lege(QStringLiteral("02_mf_mit_boden"), mit, mf);
+    lege(QStringLiteral("03_c4_pp_mf_ff_ohne_boden"), ohne, c4);
+    lege(QStringLiteral("04_c4_pp_mf_ff_mit_boden"), mit, c4);
+    QFile liste(QDir(ordner).filePath(QStringLiteral("liste.txt")));
+    REQUIRE(liste.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
+    liste.write("Hoerproben 31c-7 (S150): der Steinway D (RT-0425) als Hammer-Saite, ohne gegen mit Resonanzboden.\n"
+                "Je Ton 1,2 s gehalten, alle 2,5 s einer; 48 kHz, Stereo.\n\n"
+                "01 / 02: A0, C2, C4, C6, C8 bei mf (Stufe -12) - ohne Boden (Stegkraft, beide Seiten gleich) gegen mit Boden\n"
+                "         (Hoerorte left/right 12 cm ueber den Saiten an MIDI 43 und 86).\n"
+                "03 / 04: C4 bei pp, mf, ff (Stufen -26, -12, 0) - ohne gegen mit Boden.\n\n"
+                "Pegel: ohne Boden in Einheiten von 200 N am Steg, mit Boden in Einheiten von 97,3 Pa (kSchalldruckBezug) -\n"
+                "die beiden sind nicht gleich laut gestellt; verglichen wird der Klang, nicht die Lautstaerke.\n");
     tonspeicher().leere();
 }
 
