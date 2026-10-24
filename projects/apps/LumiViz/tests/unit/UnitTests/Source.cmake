@@ -232,12 +232,6 @@ dbg(DBG_NORMAL "Found impl     : ${_local_impl}" ID DEB_FOUND_MSG)
 dbg(DBG_NORMAL "Found modules  : ${_local_modules}" ID DEB_FOUND_MSG)
 dbg(DBG_NORMAL "Found includes : ${_local_includes}" ID DEB_FOUND_MSG)
 
-# MSVC: test_ChainSerializer.cpp sprengt seit dem G2-Knoten (S69, 88 Typen im
-# Varianten-Roundtrip) das COFF-Abschnittslimit (fatal error C1128 im
-# Debug-Build) — /bigobj nur fuer diese Datei (Muster panels/Source.cmake).
-set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/test_ChainSerializer.cpp"
-    PROPERTIES COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/bigobj>")
-
 # Aggregate to parent scope
 list(APPEND ${TARGET_NAME}_SOURCES ${_local_sources})
 list(APPEND ${TARGET_NAME}_HEADERS ${_local_headers})

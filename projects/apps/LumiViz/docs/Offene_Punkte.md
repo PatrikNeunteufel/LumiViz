@@ -3096,8 +3096,10 @@ Idee Preset-Warmup/Pre-Roll.
   S149**, Release-clang `*Pegel*,*Palette*` 115 / 115. **Offen bei CMakeCraft:** die Konfiguration Testing baut
   unter MSVC mit `/MT` und ohne Optimierung (CC-Befund F1, F2) — **TC1 a** (Patrik S149): Testing optimiert mit
   Asserts und Debug-Info (`/O2 /Ob1 /Zi`, `-O2 -g`, ohne `NDEBUG`), CRT `/MD`, Pflichtzeile
-  `project(<Name> LANGUAGES NONE)`; in CMakeCraft v0.13.0, mit SH und CS geklärt (beide ohne Einwand). Bei LV nach
-  dem Tag: Zeile in `CMakeLists.txt`, Pin heben, `--fresh`, beide Compiler.
+  `project(<Name> LANGUAGES NONE)`; in CMakeCraft v0.13.0, mit SH und CS geklärt (beide ohne Einwand). Unter v0.13.0
+  brach Testing-MSVC mit C1128 ab (`/O2` mit `/Zi`) — **BG1 a** (Patrik S149): `/bigobj` für alle MSVC-Ziele in
+  v0.13.1. **Bei LV erledigt (S149):** Pin v0.13.1, `project()`-Zeile, die drei `/bigobj` je Datei entfernt; Testing-MSVC
+  baut optimiert mit `/MD` (Bau der Unit-Tests 11 min 44 s; `*Loop Koerper*` 41 / 41 in 44 s, Release-clang 17 s).
   **31c-6 Teil 1 gebaut (S149):** Dämpfung je Werkstoff (DM1 a), Steinway neu gerechnet (Werte Bit für Bit gleich,
   neu die Anteile je Werkstoff).
   **31c-6 Teil 2 gebaut (S149):** Mobilität nach MAESSTRO Gl. 10/12, Terzbänder, Bericht im Werkzeug.
