@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.79.0
+> **Version:** 0.80.0
 > **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a und TS1 a (Patrik S139–S150);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 2 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a und TS1 a (Patrik S139–S150);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1984,6 +1984,24 @@ PF2 a; Körper neu gerechnet (785 Moden, 902 s, 4,9 GB). Release-clang `*Loop Ko
 Körper k = 4). **Offen:** die Antwort der Autoren (PS3 a); mit den Daten die Nachbearbeitung von MAESSTRO nachbauen
 und PS1 a (1) gleich gegen gleich prüfen. **Kipppunkte:** BM7 a (Grenze 5 kHz bleibt, KV1 a besteht), ST1 a
 (PS1 a (3) besteht auch oberhalb 3 kHz), BM1 a über EM1 a (besteht) — keiner greift.
+
+**31c-7 beginnt mit der FFT (S150):** der Messteil (Schritt 1) misst nach FT1 a auch die Rechenzeit der Faltung, die
+es erst mit der FFT gibt — deshalb Schritt 2 (FFT) zuerst; der Inhalt beider Schritte bleibt, kein „Plan erweitern“.
+
+✅ **FF1 a** (Patrik S150): **pocketfft vom Stand `c90e55b` (Zweig `cpp`, 2026-06-30)**, nicht der neueste `4d865cb`
+(2026-10-18). Grund: ein abgelagerter Stand für die Rechnung jedes Tons; der neue Commit bringt nur einen Schalter
+für Bauten ohne Ausnahmen. Kippt, wenn `c90e55b` einen Fehler zeigt, den der neue Stand behebt — der Wechsel geht
+hinter `Fft` ohne Folgen.
+
+**Gebaut 31c-7 Schritt 2 — FFT (S150, FT1 a, FF1 a):** `externals/pocketfft/` (Header und `LICENSE.md` unverändert,
+Git-Blobs gegen GitHub geprüft; README mit SHA-256; eigene `Include.cmake` mit `POCKETFFT_NO_MULTITHREADING` — LumiViz
+rechnet Töne schon parallel), in `Solution.json` an `LumiViz.Core` gebunden; `THIRD_PARTY_NOTICES.md` mit vollem
+BSD-3-Text (der Header geht in die App). Schnittstelle `lumi::loop::Fft` (`include/loop/Fft.hpp`, `src/loop/Fft.cpp`):
+`vorwaerts` (reell → n/2 + 1 komplexe, ohne Normierung), `rueckwaerts` (mit 1/n), `fftUmsetzungen()`, die Vorgabe
+`fft()`, `zweierpotenzAb()`, `falte()` (lineare Faltung auf der nächsten Zweierpotenz, FT1 a); kein Typ von pocketfft
+geht nach außen. Tests `test_LoopFft` (4 Fälle gegen jede Umsetzung): hin und zurück bis 65 536 Werte auch bei
+ungerader Länge auf 10⁻¹², gegen die direkte DFT, gegen die direkte Faltung an kurzen Signalen, ein Bezugswert von
+Hand, der Impuls, `zweierpotenzAb`. Release-clang 4 / 4 (645 Prüfungen); die App baut.
 
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:

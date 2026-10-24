@@ -219,6 +219,37 @@ Prüfsumme: `externals/Spectra/README.md`; der Lizenztext im Original: `external
 > Copyright (C) 2020 Netherlands eScience Center, Copyright (C) 2008-2010 Gael Guennebaud, Copyright (C) 2010 Jitse
 > Niesen (aus Eigen übernommen, ebenfalls MPL-2.0)
 
+### pocketfft — `externals/pocketfft/`
+
+Schnelle Fourier-Transformation für die Faltung je Ton mit der Antwort des Resonanzbodens (Stufe 31c-7; hinter
+`lumi::loop::Fft` in `src/loop/Fft.cpp`). Der Header `pocketfft_hdronly.h` liegt unverändert im Repository und wird
+**in die App gebunden**. Herkunft, Fassung (Zweig `cpp`, Commit `c90e55b`, 2026-06-30) und Prüfsumme:
+`externals/pocketfft/README.md`; der Lizenztext im Original: `externals/pocketfft/LICENSE.md`.
+
+> <https://github.com/mreineck/pocketfft> — **BSD-3-Clause** — Copyright (C) 2010-2024 Max-Planck-Society,
+> Copyright (C) 2019-2020 Peter Bell; für die DCT-IV ungerader Länge Copyright (C) 2003, 2007-14 Matteo Frigo und
+> Copyright (C) 2003, 2007-14 Massachusetts Institute of Technology; für `prev_good_size` Copyright (C) 2024 Tan Ping
+> Liang, Peter Bell; für die Absicherung in `good_size` Copyright (C) 2024 Cris Luengo. Autoren Martin Reinecke,
+> Peter Bell. All rights reserved.
+>
+> Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+> following conditions are met:
+>
+> * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+>   disclaimer.
+> * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+>   following disclaimer in the documentation and/or other materials provided with the distribution.
+> * Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
+>   products derived from this software without specific prior written permission.
+>
+> THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+> INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+> DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+> SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+> SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+> WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+> OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 ---
 
 ## 2. Portierter Fremdcode in LumiViz-Dateien

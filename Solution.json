@@ -116,6 +116,12 @@
       "path": "externals/Spectra",
       "include": "externals/Spectra/Include.cmake"
     },
+    "pocketfft": {
+      "description": "Schnelle Fourier-Transformation (mreineck/pocketfft, Zweig cpp, Commit c90e55b vom 2026-06-30, BSD-3; nur ein Header, ohne eigenen Thread-Pool) — die Faltung je Ton mit der Antwort des Resonanzbodens, hinter lumi::loop::Fft im Kern der App. Lokales External mit EIGENER Include.cmake (Muster miniz). Spielweisen_Konzept.md FT1 a (S149), FF1 a (S150); Herkunft und Pruefsumme: externals/pocketfft/README.md",
+      "skip": false,
+      "path": "externals/pocketfft",
+      "include": "externals/pocketfft/Include.cmake"
+    },
     "miniz": {
       "description": "Zip lesen und schreiben (Export und Import der eigenen Daten, .lvdata). Lokales External mit EIGENER Include.cmake im Projekt (Feld include) — CMakeCraft kennt miniz nicht. Datenablage_Konzept.md, E2 b (S114); Herkunft und Pruefsumme: externals/miniz/README.md",
       "skip": false,
@@ -227,7 +233,7 @@
 
         "core": {
           "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody" ],
-          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz" ],
+          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz", "pocketfft" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
             "lua54": { "LUA_EMBEDDED": false }
