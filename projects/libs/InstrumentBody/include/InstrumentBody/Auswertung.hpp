@@ -9,7 +9,9 @@
  * modale Masse dort ist 1/φ², das Vorzeichen sagt, wie zwei Stegpunkte zueinander schwingen.
  * Gerechnet ueber die Ansatzfunktionen des Elements, in dem der Punkt liegt (`abtastung`).
  *
- * **Daempfung** modal wie Chabassier, Joly & Chaigne 2013 Gl. 17 (Ẍ + α(f) Ẋ + (2πf)² X = F),
+ * **Daempfung** je Werkstoff nach dem Anteil der Verformungsenergie (DM1 a, `Verformungsenergie.hpp`);
+ * ein Werkstoff ohne eigenen Verlustfaktor — und jeder, wenn keine Anteile gerechnet sind — folgt
+ * dem Gesetz des Koerpers, modal wie Chabassier, Joly & Chaigne 2013 Gl. 17 (Ẍ + α(f) Ẋ + (2πf)² X = F),
  * α(f) = a f² + b f + c in 1/s mit f in Hz, a, b, c nach RT-0425 Gl. 1. Gelesen als Polynom in f:
  * so trifft der Verlustfaktor η = α/(2πf) die gemessenen 1–3 % (in ω gelesen gaeben dieselben
  * Zahlen 8–70 %). Die Form αλ + β√λ + γ in λ = ω² steht bei Chabassier, Duruflé & Joly 2015
@@ -29,6 +31,7 @@
 #include "InstrumentBody/Bauplan.hpp"
 #include "InstrumentBody/Eigenloeser.hpp"
 #include "InstrumentBody/Platte.hpp"
+#include "InstrumentBody/Verformungsenergie.hpp"
 
 #include <algorithm>
 #include <array>
@@ -36,6 +39,7 @@
 #include <complex>
 #include <limits>
 #include <numbers>
+#include <utility>
 #include <vector>
 
 namespace lumi::koerper
@@ -66,6 +70,20 @@ struct Daempfung
 
     [[nodiscard]] bool operator==(const Daempfung&) const = default;
 };
+
+/// Der Verlustfaktor einer Mode aus ihren Anteilen der Verformungsenergie je Werkstoff (DM1 a):
+/// ein Werkstoff mit eigenem Verlustfaktor (> 0) traegt ihn, einer ohne (0) das Gesetz des
+/// Koerpers. Gerechnet als η = η_Gesetz + Σ_{η_m > 0} a_m (η_m − η_Gesetz) — ohne eigene
+/// Verlustfaktoren genau das Gesetz, Bit fuer Bit. Ohne Anteile ebenso.
+[[nodiscard]] inline double verlustfaktorAusAnteilen(const Daempfung& gesetz, double frequenzHz, const std::vector<double>& anteile,
+                                                     const std::vector<double>& werkstoffVerlust)
+{
+    const double eta = gesetz.verlustfaktor(frequenzHz);
+    double aus = eta;
+    for (std::size_t m = 0; m < anteile.size() && m < werkstoffVerlust.size(); ++m)
+        if (werkstoffVerlust[m] > 0.0) aus += anteile[m] * (werkstoffVerlust[m] - eta);
+    return aus;
+}
 
 /// Wo ein Punkt im System liegt: welche freien Groessen w ihn mit welchem Gewicht tragen.
 struct Abtastung
@@ -154,6 +172,7 @@ struct ModeImKoerper
 {
     double frequenzHz = 0.0;
     double verlustfaktor = 0.0;                      ///< η
+    std::vector<double> werkstoffAnteil;             ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
     std::vector<double> amStegpunkt;                 ///< φ je Stegpunkt (Reihenfolge des Bauplans), 1/√kg
     std::vector<std::complex<double>> abstrahlung;  ///< G je Hoerort (Reihenfolge des Bauplans), √kg/m²
 
@@ -161,13 +180,17 @@ struct ModeImKoerper
 };
 
 /// Bereitet die Auswertung einmal vor (Abtastung der Stegpunkte, Gauss-Punkte mit ihrem Abstand
-/// zu jedem Hoerort) und wertet dann jede Mode aus.
+/// zu jedem Hoerort) und wertet dann jede Mode aus. Mit `energie` (DM1 a) bekommt jede Mode ihre
+/// Anteile der Verformungsenergie je Werkstoff und daraus ihren Verlustfaktor
+/// (`verlustfaktorAusAnteilen` mit `werkstoffVerlust` je Werkstoff, 0 = das Gesetz).
 class Auswertung
 {
 public:
     Auswertung(const PlattenSystem& s, const Plattenelement& element, const std::vector<Stegpunkt>& stegpunkte,
-               const std::vector<Hoerort>& hoerorte, Luft luft = {}, Daempfung daempfung = {})
-        : m_luft(luft), m_daempfung(daempfung), m_nk(element.knoten())
+               const std::vector<Hoerort>& hoerorte, Luft luft = {}, Daempfung daempfung = {},
+               const Verformungsenergie* energie = nullptr, std::vector<double> werkstoffVerlust = {})
+        : m_luft(luft), m_daempfung(daempfung), m_energie(energie), m_werkstoffVerlust(std::move(werkstoffVerlust)),
+          m_nk(element.knoten())
     {
         for (const Stegpunkt& sp : stegpunkte) m_steg.push_back(abtastung(s, element, sp.ort));
 
@@ -218,7 +241,8 @@ public:
     {
         ModeImKoerper aus;
         aus.frequenzHz = mode.frequenzHz;
-        aus.verlustfaktor = m_daempfung.verlustfaktor(mode.frequenzHz);
+        if (m_energie != nullptr) aus.werkstoffAnteil = m_energie->anteile(mode.form);
+        aus.verlustfaktor = verlustfaktorAusAnteilen(m_daempfung, mode.frequenzHz, aus.werkstoffAnteil, m_werkstoffVerlust);
         for (const Abtastung& a : m_steg) aus.amStegpunkt.push_back(wertBei(a, mode.form));
 
         const double k = 2.0 * std::numbers::pi * mode.frequenzHz / m_luft.schall;
@@ -248,6 +272,8 @@ public:
 private:
     Luft m_luft;
     Daempfung m_daempfung;
+    const Verformungsenergie* m_energie = nullptr;
+    std::vector<double> m_werkstoffVerlust;
     int m_nk = 0;
     std::vector<Abtastung> m_steg;
     std::vector<int> m_groesse;                 ///< je Gauss-Punkt nk Plaetze von w (−1 = gehalten)

@@ -176,9 +176,14 @@ int main(int argc, char* argv[])
     std::printf("Plate (%s): %d unknowns, %lld entries per matrix, mass %.3f kg, %.2f s, peak %.0f MB\n", s.element.c_str(), s.k.n,
                 static_cast<long long>(s.k.eintraege()), s.masse, seit(t), spitzeMB());
 
-    // je Mode: Wert an den Stegpunkten, Daempfung, Abstrahlgewicht je Hoerort (31c-5b)
+    // je Mode: Wert an den Stegpunkten, Daempfung, Abstrahlgewicht je Hoerort (31c-5b); die Daempfung
+    // je Werkstoff nach dem Anteil der Verformungsenergie (31c-6, DM1 a)
     t = std::chrono::steady_clock::now();
-    const kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte);
+    std::vector<double> werkstoffVerlust;
+    for (const kp::Material& m : plan.materialien) werkstoffVerlust.push_back(m.verlustfaktor);
+    const kp::Verformungsenergie energie(s, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); },
+                                         static_cast<int>(plan.materialien.size()));
+    const kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte, {}, {}, &energie, werkstoffVerlust);
     int ausserhalb = 0;
     for (const kp::Abtastung& a : auswertung.stegpunkte()) ausserhalb += a.imNetz ? 0 : 1;
     std::printf("Evaluation prepared: %zu bridge points (%d outside the mesh), %zu listening points, %.2f s\n", plan.stegpunkte.size(),
@@ -224,7 +229,8 @@ int main(int argc, char* argv[])
     if (statBis > bisHz)
     {
         const double bandVon = std::max(vonHz, bisHz / 2.0);
-        st = kp::schaetze(moden, bandVon, bisHz, bisHz, statBis, kp::Daempfung{}, parser.value(samenOpt).toULongLong());
+        st = kp::schaetze(moden, bandVon, bisHz, bisHz, statBis, kp::Daempfung{}, parser.value(samenOpt).toULongLong(),
+                          werkstoffVerlust);
         const auto gezogen = kp::ziehe(st);
         double stegMittel = 0.0;
         for (const double v : st.stegStreuung) stegMittel += v / static_cast<double>(std::max<std::size_t>(1, st.stegStreuung.size()));
@@ -239,6 +245,8 @@ int main(int argc, char* argv[])
     {
         const kp::ModeImKoerper& m = moden[i];
         std::printf("  %8.2f Hz  eta %.4f", m.frequenzHz, m.verlustfaktor);
+        for (std::size_t w = 0; w < m.werkstoffAnteil.size(); ++w)
+            std::printf("  %s %.3f", plan.materialien[w].name.c_str(), m.werkstoffAnteil[w]);
         for (std::size_t h = 0; h < m.abstrahlung.size(); ++h)
             std::printf("  |G| %s %.4g", plan.hoerorte[h].name.c_str(), std::abs(m.abstrahlung[h]));
         std::printf("\n");
@@ -274,6 +282,8 @@ int main(int argc, char* argv[])
     koerper.rechnung = {kp::kRechenFassung, geber->name(), loeser->name(), ordnung, netzHz, vonHz, bisHz, s.k.n, seit(beginn)};
     for (const kp::Stegpunkt& sp : plan.stegpunkte) koerper.stegTasten.push_back(sp.taste);
     for (const kp::Hoerort& h : plan.hoerorte) koerper.hoerorte.push_back(h.name);
+    for (const kp::Material& m : plan.materialien) koerper.werkstoffe.push_back(m.name);
+    koerper.werkstoffVerlust = werkstoffVerlust;
     koerper.moden = std::move(moden);
     koerper.statistik = st;
     if (!lumi::loop::speichereKoerper(koerper, ziel))

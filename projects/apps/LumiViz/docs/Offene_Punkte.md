@@ -3094,8 +3094,13 @@ Idee Preset-Warmup/Pre-Roll.
   FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; **fester Plan IP1, 31c-6 bis 31c-9** im
   `Spielweisen_Konzept` §4.1; IP1 (Fenster *Instruments* misst im Hintergrund, Loop_Konzept §4n) davor — **gebaut
   S149**, Release-clang `*Pegel*,*Palette*` 115 / 115. **Offen bei CMakeCraft:** die Konfiguration Testing baut
-  unter MSVC mit `/MT` und ohne Optimierung (CC-Befund F1, F2) — Entscheid Patrik ausstehend.
-  **Offen:** 31c-6 Prüfstein (Konvergenz mit zweiter Rechnung; erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin,
+  unter MSVC mit `/MT` und ohne Optimierung (CC-Befund F1, F2) — **TC1 a** (Patrik S149): Testing optimiert mit
+  Asserts und Debug-Info (`/O2 /Ob1 /Zi`, `-O2 -g`, ohne `NDEBUG`), CRT `/MD`, Pflichtzeile
+  `project(<Name> LANGUAGES NONE)`; in CMakeCraft v0.13.0, mit SH und CS geklärt (beide ohne Einwand). Bei LV nach
+  dem Tag: Zeile in `CMakeLists.txt`, Pin heben, `--fresh`, beide Compiler.
+  **31c-6 Teil 1 gebaut (S149):** Dämpfung je Werkstoff (DM1 a), Steinway neu gerechnet (Werte Bit für Bit gleich,
+  neu die Anteile je Werkstoff).
+  **Offen:** 31c-6 Teile 2–5 Prüfstein (Mobilität, Prüffall, Konvergenz mit zweiter Rechnung; erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin,
   mittlere Mobilität gegen Plath/Giordano — zugleich Kipppunkt von ST1 a), 31c-7 Klang, 31c-8 Varianten mit Glasboden;
   Testing-MSVC für `*Loop Koerper*` am Stufenende (Bezug des Netzes auf 2 %);
   Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d

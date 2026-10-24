@@ -60,7 +60,16 @@ struct Steife
     double rho = 0.0;               ///< kg/m³
     std::array<double, 6> q{};      ///< Q̄ symmetrisch: 11, 12, 16, 22, 26, 66 (Pa)
     std::array<double, 3> g{};      ///< Ḡ symmetrisch: xz, (xz,yz), yz (Pa)
+    int werkstoff = -1;             ///< Platz in `Bauplan::materialien`; −1 = unbekannt (DM1 a)
 };
+
+/// Der Platz eines Werkstoffs in `plan.materialien`; −1 = nicht dort.
+[[nodiscard]] inline int werkstoffPlatz(const Bauplan& plan, const Material* m)
+{
+    if (m == nullptr || plan.materialien.empty()) return -1;
+    const auto platz = m - plan.materialien.data();
+    return platz >= 0 && platz < static_cast<std::ptrdiff_t>(plan.materialien.size()) ? static_cast<int>(platz) : -1;
+}
 
 /// Die ebene Steifigkeit und der Querschub eines Werkstoffs, um `winkelGrad` gegen
 /// die x-Achse gedreht (die Faser = Achse 1). Formeln nach R. M. Jones, *Mechanics of
@@ -134,12 +143,14 @@ struct AufLeiste
             if (!m) continue;
             Steife s = gedreht(*m, a.richtungGrad);
             s.h = platte + a.hoehe;
+            s.werkstoff = werkstoffPlatz(plan, m);
             return s;
         }
     }
     const Material* m = findeMaterial(plan, plan.platte.material);
     Steife s = m ? gedreht(*m, plan.platte.faserWinkelGrad) : Steife{};
     s.h = platte;
+    s.werkstoff = werkstoffPlatz(plan, m);
     return s;
 }
 
@@ -208,6 +219,8 @@ public:
     /// einem Punkt. Zurueck die Masse ∫ρh des Elements.
     virtual double matrizen(const std::array<Punkt2, 3>& ecken, const std::function<Steife(Punkt2)>& steife,
                             std::vector<double>& k, std::vector<double>& m) const = 0;
+    /// Die Integrationspunkte von `matrizen` im Bezugsdreieck: (ξ, η, Gewicht).
+    [[nodiscard]] virtual const std::vector<std::array<double, 3>>& integrationsPunkte() const = 0;
 };
 
 /// Lagrange-Dreieck der Ordnung k (1 … 6) fuer w, φx und φy (EL1 a).
@@ -319,6 +332,8 @@ public:
         }
         return masse;
     }
+
+    [[nodiscard]] const std::vector<std::array<double, 3>>& integrationsPunkte() const override { return m_punkte; }
 
 private:
     /// f(L) = Π_{m<a} (kL − m)/(m + 1) und f'(L).

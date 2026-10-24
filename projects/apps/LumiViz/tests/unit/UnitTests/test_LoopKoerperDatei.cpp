@@ -54,11 +54,14 @@ kp::Koerper kleinerKoerper()
     k.hoerorte = {"left", "right"};
     k.luft = {1.2, 343.0};
     k.daempfung = {1.0e-5, 0.05, 0.1};
+    k.werkstoffe = {"spruce", "glass"};
+    k.werkstoffVerlust = {0.0, 1.0e-3};
     for (int i = 0; i < 2; ++i)
     {
         kp::ModeImKoerper m;
         m.frequenzHz = 100.0 + 0.1 * i + 1.0 / 3.0;  // nicht in wenigen Stellen darstellbar
         m.verlustfaktor = 0.0113;
+        m.werkstoffAnteil = {1.0 / 3.0, 2.0 / 3.0};
         m.amStegpunkt = {1.0 / 7.0, -2.5, 3.0e-9};
         m.abstrahlung = {{0.1, -0.2}, {1.0 / 3.0, 2.0e-12}};
         k.moden.push_back(m);
@@ -73,6 +76,8 @@ kp::Koerper kleinerKoerper()
     k.statistik.bandVonHz = 2500.0;
     k.statistik.bandBisHz = 5000.0;
     k.statistik.bandModen = 528;
+    k.statistik.werkstoffAnteil = {0.25, 0.75};
+    k.statistik.werkstoffVerlust = k.werkstoffVerlust;  // die Datei traegt sie einmal, am Koerper
     return k;
 }
 
@@ -85,7 +90,7 @@ TEST_CASE("Loop Koerper 31c-5d Datei")
     CHECK(json.value(QStringLiteral("format")).toString() == QLatin1String(kKoerperFormat));
     CHECK(json.value(QStringLiteral("version")).toInt() == kp::kKoerperFassung);
     for (const char* feld : {"title", "description", "units", "plan", "computation", "bridgePoints", "listeningPoints", "air", "damping",
-                             "modes", "statistical"})
+                             "materials", "modes", "statistical"})
         CHECK_MESSAGE(json.contains(QLatin1String(feld)), feld);
     CHECK(json.value(QStringLiteral("statistical")).toObject().value(QStringLiteral("seed")).toString() ==
           QStringLiteral("9223372036854775813"));
@@ -118,6 +123,37 @@ TEST_CASE("Loop Koerper 31c-5d Datei")
     kaputt[QStringLiteral("modes")] = moden;
     CHECK_FALSE(ausJson(kaputt, bleibt));
     CHECK(bleibt == kleinerKoerper());
+    // Anteile, die nicht zu den Werkstoffen passen
+    QJsonObject kaputtAnteil = json;
+    moden = json.value(QStringLiteral("modes")).toArray();
+    mode = moden[0].toObject();
+    mode[QStringLiteral("materialShares")] = QJsonArray{1.0};
+    moden[0] = mode;
+    kaputtAnteil[QStringLiteral("modes")] = moden;
+    CHECK_FALSE(ausJson(kaputtAnteil, bleibt));
+
+    // Fassung 1 (vor DM1 a): ohne Werkstoffe und Anteile — bleibt lesbar
+    QJsonObject alt = json;
+    alt[QStringLiteral("version")] = 1;
+    alt.remove(QStringLiteral("materials"));
+    moden = json.value(QStringLiteral("modes")).toArray();
+    for (int i = 0; i < moden.size(); ++i)
+    {
+        QJsonObject o = moden[i].toObject();
+        o.remove(QStringLiteral("materialShares"));
+        moden[i] = o;
+    }
+    alt[QStringLiteral("modes")] = moden;
+    QJsonObject altStat = alt.value(QStringLiteral("statistical")).toObject();
+    altStat.remove(QStringLiteral("materialShares"));
+    alt[QStringLiteral("statistical")] = altStat;
+    kp::Koerper ausAlt;
+    REQUIRE(ausJson(alt, ausAlt));
+    CHECK(ausAlt.werkstoffe.empty());
+    CHECK(ausAlt.moden.size() == 2);
+    CHECK(ausAlt.moden[0].werkstoffAnteil.empty());
+    CHECK(ausAlt.moden[0].verlustfaktor == k.moden[0].verlustfaktor);
+    CHECK(ausAlt.statistik.werkstoffAnteil.empty());
 
     // ueber eine Datei
     const QString pfad = QDir::temp().filePath(QStringLiteral("lumiviz_test_koerper") + QLatin1String(kKoerperEndung));
@@ -173,7 +209,17 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
         REQUIRE(k.hoerorte.size() == plan.hoerorte.size());
         for (std::size_t i = 0; i < k.hoerorte.size(); ++i) CHECK(k.hoerorte[i] == plan.hoerorte[i].name);
 
-        // Moden aufsteigend im Fenster, Daempfung nach dem Gesetz; der statistische Teil schliesst an
+        // die Werkstoffe wie im Bauplan, mit ihrem Verlustfaktor (DM1 a)
+        REQUIRE(k.werkstoffe.size() == plan.materialien.size());
+        REQUIRE(k.werkstoffVerlust.size() == plan.materialien.size());
+        for (std::size_t w = 0; w < k.werkstoffe.size(); ++w)
+        {
+            CHECK(k.werkstoffe[w] == plan.materialien[w].name);
+            CHECK(k.werkstoffVerlust[w] == plan.materialien[w].verlustfaktor);
+        }
+
+        // Moden aufsteigend im Fenster, je Mode Anteile je Werkstoff (Summe 1), die Daempfung daraus
+        // (DM1 a); der statistische Teil schliesst an
         REQUIRE_FALSE(k.moden.empty());
         int falsch = 0;
         for (std::size_t i = 0; i < k.moden.size(); ++i)
@@ -181,7 +227,11 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
             const kp::ModeImKoerper& m = k.moden[i];
             falsch += (m.frequenzHz >= k.rechnung.vonHz && m.frequenzHz < k.rechnung.bisHz) ? 0 : 1;
             falsch += (i == 0 || m.frequenzHz >= k.moden[i - 1].frequenzHz) ? 0 : 1;
-            falsch += std::abs(m.verlustfaktor - k.daempfung.verlustfaktor(m.frequenzHz)) < 1e-12 ? 0 : 1;
+            double summe = 0.0;
+            for (const double a : m.werkstoffAnteil) summe += a;
+            falsch += m.werkstoffAnteil.size() == k.werkstoffe.size() && std::abs(summe - 1.0) < 1e-9 ? 0 : 1;
+            const double eta = kp::verlustfaktorAusAnteilen(k.daempfung, m.frequenzHz, m.werkstoffAnteil, k.werkstoffVerlust);
+            falsch += std::abs(m.verlustfaktor - eta) < 1e-12 ? 0 : 1;
         }
         CHECK(falsch == 0);
         if (k.statistik.dichte > 0.0)

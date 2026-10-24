@@ -88,10 +88,15 @@ QJsonObject alsJson(const Koerper& k)
         moden.append(QJsonObject{
             {QStringLiteral("f"), m.frequenzHz},
             {QStringLiteral("eta"), m.verlustfaktor},
+            {QStringLiteral("materialShares"), zahlenAlsJson(m.werkstoffAnteil)},
             {QStringLiteral("bridge"), zahlenAlsJson(m.amStegpunkt)},
             {QStringLiteral("radiation"), komplexAlsJson(m.abstrahlung)},
         });
     }
+    QJsonArray werkstoffe;
+    for (std::size_t w = 0; w < k.werkstoffe.size(); ++w)
+        werkstoffe.append(QJsonObject{{QStringLiteral("name"), text(k.werkstoffe[w])},
+                                      {QStringLiteral("lossFactor"), w < k.werkstoffVerlust.size() ? k.werkstoffVerlust[w] : 0.0}});
     const StatistischerTeil& s = k.statistik;
     const koerper::Rechnung& r = k.rechnung;
     return QJsonObject{
@@ -128,7 +133,11 @@ QJsonObject alsJson(const Koerper& k)
              {QStringLiteral("c"), k.daempfung.c},
              {QStringLiteral("source"), QStringLiteral("Chabassier & Durufle, RT-0425 (2012) Eq. 1, read as a polynomial in f "
                                                        "(Spielweisen_Konzept, finding S148)")},
+             {QStringLiteral("perMaterial"),
+              QStringLiteral("eta = law + sum over materials with lossFactor > 0 of share * (lossFactor - law); share = strain "
+                             "energy of the mode in that material / total (DM1 a, S149)")},
          }},
+        {QStringLiteral("materials"), werkstoffe},
         {QStringLiteral("modes"), moden},
         {QStringLiteral("statistical"),
          QJsonObject{
@@ -142,6 +151,7 @@ QJsonObject alsJson(const Koerper& k)
              {QStringLiteral("bandFromHz"), s.bandVonHz},
              {QStringLiteral("bandToHz"), s.bandBisHz},
              {QStringLiteral("bandModes"), s.bandModen},
+             {QStringLiteral("materialShares"), zahlenAlsJson(s.werkstoffAnteil)},
              {QStringLiteral("damping"),
               QJsonObject{{QStringLiteral("a"), s.daempfung.a}, {QStringLiteral("b"), s.daempfung.b}, {QStringLiteral("c"), s.daempfung.c}}},
          }},
@@ -181,16 +191,25 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
     const QJsonObject d = wurzel.value(QStringLiteral("damping")).toObject();
     neu.daempfung = {d.value(QStringLiteral("a")).toDouble(), d.value(QStringLiteral("b")).toDouble(),
                      d.value(QStringLiteral("c")).toDouble()};
+    // seit Fassung 2 (DM1 a); Fassung 1 hat keine — dann leer
+    for (const QJsonValue& e : wurzel.value(QStringLiteral("materials")).toArray())
+    {
+        const QJsonObject o = e.toObject();
+        neu.werkstoffe.push_back(text(o.value(QStringLiteral("name"))));
+        neu.werkstoffVerlust.push_back(o.value(QStringLiteral("lossFactor")).toDouble());
+    }
     for (const QJsonValue& e : wurzel.value(QStringLiteral("modes")).toArray())
     {
         const QJsonObject o = e.toObject();
         ModeImKoerper m;
         m.frequenzHz = o.value(QStringLiteral("f")).toDouble();
         m.verlustfaktor = o.value(QStringLiteral("eta")).toDouble();
+        if (!zahlenAusJson(o.value(QStringLiteral("materialShares")), m.werkstoffAnteil)) return false;
         if (!zahlenAusJson(o.value(QStringLiteral("bridge")), m.amStegpunkt)) return false;
         if (!komplexAusJson(o.value(QStringLiteral("radiation")), m.abstrahlung)) return false;
-        // je Mode so viele Werte, wie es Stegpunkte und Hoerorte gibt
+        // je Mode so viele Werte, wie es Stegpunkte und Hoerorte gibt — und Werkstoffe, wenn sie Anteile traegt
         if (m.amStegpunkt.size() != neu.stegTasten.size() || m.abstrahlung.size() != neu.hoerorte.size()) return false;
+        if (!m.werkstoffAnteil.empty() && m.werkstoffAnteil.size() != neu.werkstoffe.size()) return false;
         neu.moden.push_back(std::move(m));
     }
     const QJsonObject s = wurzel.value(QStringLiteral("statistical")).toObject();
@@ -210,6 +229,9 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
     const QJsonObject sd = s.value(QStringLiteral("damping")).toObject();
     st.daempfung = {sd.value(QStringLiteral("a")).toDouble(), sd.value(QStringLiteral("b")).toDouble(),
                     sd.value(QStringLiteral("c")).toDouble()};
+    if (!zahlenAusJson(s.value(QStringLiteral("materialShares")), st.werkstoffAnteil)) return false;
+    if (!st.werkstoffAnteil.empty() && st.werkstoffAnteil.size() != neu.werkstoffe.size()) return false;
+    st.werkstoffVerlust = neu.werkstoffVerlust;
     koerper = std::move(neu);
     return true;
 }

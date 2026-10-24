@@ -11,7 +11,8 @@
  * Streuung der Formwerte (quadratisches Mittel); je Hoerort der Betrag des Abstrahlgewichts
  * (quadratisches Mittel — dieselbe Leistung wie die gerechneten Moden). Die Daempfung folgt
  * demselben Gesetz wie die gerechneten Moden (RT-0425 Gl. 1), damit es an der Grenze keine Naht
- * gibt.
+ * gibt; tragen die gerechneten Moden Anteile je Werkstoff (DM1 a), gilt deren Mittel im Band mit
+ * denselben Verlustfaktoren je Werkstoff (`verlustfaktorAusAnteilen`).
  *
  * **Ziehung** wie Boutillon & Ege 2013: f_{ν+1} = f_ν + r / n(f_ν) mit r nach Rayleigh (Gl. 23,
  * 24: p(x) = πx/2 · exp(−πx²/4), Mittel 1); je Stegpunkt ein Formwert normal verteilt mit
@@ -33,6 +34,7 @@
 #include <cstdint>
 #include <numbers>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace lumi::koerper
@@ -46,6 +48,8 @@ struct StatistischerTeil
     double dichte = 0.0;  ///< n(vonHz), Moden je Hz
     double anstieg = 0.0;  ///< dn/df, Moden je Hz²; ≥ 0
     Daempfung daempfung;
+    std::vector<double> werkstoffAnteil;   ///< Mittel der Anteile je Werkstoff im Band (DM1 a); leer = nur das Gesetz
+    std::vector<double> werkstoffVerlust;  ///< je Werkstoff sein Verlustfaktor, 0 = das Gesetz
     std::vector<double> stegStreuung;  ///< je Stegpunkt das quadratische Mittel der Formwerte, 1/√kg
     std::vector<double> hoerBetrag;    ///< je Hoerort das quadratische Mittel von |G|, √kg/m²
     std::uint64_t samen = 0;
@@ -95,12 +99,14 @@ private:
 /// der Teil beginnt bei `vonHz` (der oberen Grenze des gerechneten Fensters) und endet bei `bisHz`.
 /// Leer (dichte = 0), wenn im Band weniger als zehn Moden liegen.
 [[nodiscard]] inline StatistischerTeil schaetze(const std::vector<ModeImKoerper>& gerechnet, double bandVon, double bandBis,
-                                                double vonHz, double bisHz, Daempfung daempfung, std::uint64_t samen)
+                                                double vonHz, double bisHz, Daempfung daempfung, std::uint64_t samen,
+                                                std::vector<double> werkstoffVerlust = {})
 {
     StatistischerTeil st;
     st.vonHz = vonHz;
     st.bisHz = bisHz;
     st.daempfung = daempfung;
+    st.werkstoffVerlust = std::move(werkstoffVerlust);
     st.samen = samen;
     st.bandVonHz = bandVon;
     st.bandBisHz = bandBis;
@@ -143,6 +149,16 @@ private:
     }
     for (double& v : st.stegStreuung) v = std::sqrt(v / static_cast<double>(band.size()));
     for (double& v : st.hoerBetrag) v = std::sqrt(v / static_cast<double>(band.size()));
+
+    // Anteile je Werkstoff (DM1 a): das Mittel im Band, wenn jede Mode dort welche traegt
+    const std::size_t nw = band.front()->werkstoffAnteil.size();
+    if (nw > 0 && std::all_of(band.begin(), band.end(), [nw](const ModeImKoerper* m) { return m->werkstoffAnteil.size() == nw; }))
+    {
+        st.werkstoffAnteil.assign(nw, 0.0);
+        for (const ModeImKoerper* m : band)
+            for (std::size_t w = 0; w < nw; ++w) st.werkstoffAnteil[w] += m->werkstoffAnteil[w];
+        for (double& v : st.werkstoffAnteil) v /= static_cast<double>(band.size());
+    }
     return st;
 }
 
@@ -160,7 +176,8 @@ private:
         if (f >= st.bisHz) break;
         ModeImKoerper m;
         m.frequenzHz = f;
-        m.verlustfaktor = st.daempfung.verlustfaktor(f);
+        m.werkstoffAnteil = st.werkstoffAnteil;
+        m.verlustfaktor = verlustfaktorAusAnteilen(st.daempfung, f, st.werkstoffAnteil, st.werkstoffVerlust);
         for (const double s : st.stegStreuung) m.amStegpunkt.push_back(s * zufall.normal());
         for (const double b : st.hoerBetrag)
         {

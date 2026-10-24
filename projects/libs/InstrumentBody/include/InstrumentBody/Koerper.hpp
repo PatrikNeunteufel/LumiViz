@@ -24,12 +24,15 @@ namespace lumi::koerper
 {
 
 /// Die Fassung der Datei `.lvinstbody`, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kKoerperFassung = 1;
+/// Fassung 2 (S149, DM1 a): die Werkstoffe mit ihrem Verlustfaktor, je Mode die Anteile der
+/// Verformungsenergie je Werkstoff, im statistischen Teil deren Mittel. Fassung 1 bleibt lesbar.
+inline constexpr int kKoerperFassung = 2;
 
 /// Die Fassung der Rechnung (Netz, Platte, Loeser, Auswertung, statistischer Teil). Hochzaehlen,
 /// wenn sich bei gleichem Bauplan ein anderer Koerper ergaebe — dann meldet der Waechter jeden
 /// mitgelieferten Koerper als veraltet, bis das Werkzeug ihn neu rechnet.
-inline constexpr int kRechenFassung = 1;
+/// 2 (S149, DM1 a): Daempfung je Werkstoff nach der Verformungsenergie.
+inline constexpr int kRechenFassung = 2;
 
 /// Wie ein Koerper gerechnet wurde.
 struct Rechnung
@@ -58,6 +61,8 @@ struct Koerper
     std::vector<std::string> hoerorte;  ///< die Hoerorte in der Reihenfolge der Gewichte je Mode
     Luft luft;
     Daempfung daempfung;
+    std::vector<std::string> werkstoffe;    ///< Reihenfolge der Anteile je Mode (DM1 a)
+    std::vector<double> werkstoffVerlust;   ///< je Werkstoff sein Verlustfaktor, 0 = das Gesetz
     std::vector<ModeImKoerper> moden;   ///< aufsteigend
     StatistischerTeil statistik;        ///< dichte = 0: keiner
 

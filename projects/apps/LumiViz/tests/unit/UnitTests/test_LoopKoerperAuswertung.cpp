@@ -20,13 +20,19 @@
  * - Die erste Mode der frei aufliegenden Pruefplatte: Wert an zwei Punkten gegen Navier
  *   (sin · sin), Abstrahlung im Fernfeld gegen ρ/(2π) e^{−ikR}/R ∫φ dS.
  * - Der Steinway D: jeder Stegpunkt liegt im Netz; meldet die Zeit der Vorbereitung.
+ * - 31c-6, DM1 a: die Mischung der Verlustfaktoren (ohne eigene Werte genau das Gesetz); an der
+ *   Pruefplatte mit zwei Werkstoffen 2 Σ U_m = ω², Anteile mit Summe 1, die erste Mode halb und
+ *   halb; der statistische Teil mit dem Mittel der Anteile; jeder Punkt des Steinway hat einen
+ *   Werkstoff.
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
 #include "InstrumentBody/Auswertung.hpp"
+#include "InstrumentBody/Statistik.hpp"
 #include "InstrumentBody/Umsetzungen.hpp"
+#include "InstrumentBody/Verformungsenergie.hpp"
 #include "loop/KoerperBauplan.hpp"
 
 #include <QtGlobal>
@@ -243,4 +249,116 @@ TEST_CASE("Loop Koerper 31c-5b Steinway D")
     MESSAGE("Steinway D (Netz bis 1 kHz, k = 2): ", imNetz, " von ", plan.stegpunkte.size(), " Stegpunkten im Netz, groesster Abstand ",
             groessterAbstand * 1e3, " mm; Vorbereitung ", sekunden, " s");
     CHECK(imNetz == static_cast<int>(plan.stegpunkte.size()));
+}
+
+TEST_CASE("Loop Koerper 31c-6 Daempfung je Werkstoff: die Mischung")
+{
+    const kp::Daempfung gesetz;
+    const double f = 1234.5;
+    // ohne Anteile, ohne eigene Verlustfaktoren: genau das Gesetz, Bit fuer Bit
+    CHECK(kp::verlustfaktorAusAnteilen(gesetz, f, {}, {}) == gesetz.verlustfaktor(f));
+    CHECK(kp::verlustfaktorAusAnteilen(gesetz, f, {0.3, 0.7}, {0.0, 0.0}) == gesetz.verlustfaktor(f));
+    CHECK(kp::verlustfaktorAusAnteilen(gesetz, f, {0.3, 0.7}, {}) == gesetz.verlustfaktor(f));
+    // ganz in einem Werkstoff mit eigenem Wert: dieser Wert
+    CHECK(kp::verlustfaktorAusAnteilen(gesetz, f, {0.0, 1.0}, {0.0, 1.0e-3}) == doctest::Approx(1.0e-3).epsilon(1e-12));
+    // gemischt: das Mittel, gewichtet mit den Anteilen
+    const double soll = 0.3 * gesetz.verlustfaktor(f) + 0.7 * 1.0e-3;
+    CHECK(kp::verlustfaktorAusAnteilen(gesetz, f, {0.3, 0.7}, {0.0, 1.0e-3}) == doctest::Approx(soll).epsilon(1e-12));
+    CHECK(kp::verlustfaktorAusAnteilen(gesetz, f, {0.3, 0.7}, {0.02, 1.0e-3}) == doctest::Approx(0.3 * 0.02 + 0.7 * 1.0e-3).epsilon(1e-12));
+}
+
+TEST_CASE("Loop Koerper 31c-6 Daempfung je Werkstoff: Verformungsenergie an der Pruefplatte")
+{
+    // frei aufliegend 0,3 × 0,2 m, 8 mm Fichte, k = 3; links von x = 0,15 Werkstoff 0, rechts Werkstoff 1 —
+    // beide dieselbe Fichte, nur anders benannt: die Moden bleiben die der Platte
+    const double la = 0.3, lb = 0.2, h = 0.008;
+    kp::NetzAuftrag netzAuftrag;
+    netzAuftrag.umriss = {{0.0, 0.0}, {la, 0.0}, {la, lb}, {0.0, lb}};
+    netzAuftrag.kante = 0.04;
+    const kp::Netz netz = kp::NetzgeberCdt().vernetze(netzAuftrag);
+    REQUIRE(netz.fehler.empty());
+    const kp::Material mat = fichte();
+    const auto steife = [&](kp::Punkt2 p) {
+        kp::Steife st = kp::gedreht(mat, 0.0);
+        st.h = h;
+        st.werkstoff = p.x < la / 2 ? 0 : 1;
+        return st;
+    };
+    const kp::LagrangeDreieck element(3);
+    const kp::PlattenSystem s = kp::baueSystem(netz, element, steife, kp::Auflager::GelenkigAchsparallel);
+    REQUIRE_MESSAGE(s.fehler.empty(), s.fehler);
+    const kp::Verformungsenergie energie(s, element, steife, 2);
+    CHECK(energie.werkstoffe() == 2);
+    const std::vector<double> verlust = {0.0, 1.0e-3};  // rechts „Glas", links das Gesetz
+    const kp::Auswertung mit(s, element, {}, {}, {}, {}, &energie, verlust);
+    const kp::Auswertung ohne(s, element, {}, {}, {}, {}, &energie, {0.0, 0.0});
+
+    std::vector<kp::Mode> moden;
+    kp::EigenAuftrag auftrag;
+    auftrag.k = &s.k;
+    auftrag.m = &s.m;
+    auftrag.bisHz = 1500.0;  // die ersten Moden (Navier: f11 rund 300 Hz)
+    auftrag.jeMode = [&](const kp::Mode& mode) { moden.push_back(mode); };
+    const kp::EigenErgebnis erg = kp::eigenloeser().front()->loese(auftrag);
+    REQUIRE_MESSAGE(erg.fehler.empty(), erg.fehler);
+    REQUIRE(moden.size() >= 4);
+
+    for (const kp::Mode& mode : moden)
+    {
+        CAPTURE(mode.frequenzHz);
+        // 2 Σ U_m = φᵀ K φ = ω² (die Form ist bezueglich M normiert) — dieselbe Energie wie K
+        const std::vector<double> u = energie.jeWerkstoff(mode.form);
+        REQUIRE(u.size() == 2);
+        const double omega = 2.0 * std::numbers::pi * mode.frequenzHz;
+        CHECK(2.0 * (u[0] + u[1]) == doctest::Approx(omega * omega).epsilon(1e-6));  // bis auf den Rest des Loesers
+        CHECK(u[0] > 0.0);
+        CHECK(u[1] > 0.0);
+        const kp::ModeImKoerper m = mit.werte(mode);
+        REQUIRE(m.werkstoffAnteil.size() == 2);
+        CHECK(m.werkstoffAnteil[0] + m.werkstoffAnteil[1] == doctest::Approx(1.0).epsilon(1e-12));
+        CHECK(m.verlustfaktor == doctest::Approx(kp::verlustfaktorAusAnteilen(kp::Daempfung{}, mode.frequenzHz, m.werkstoffAnteil, verlust))
+                                     .epsilon(1e-12));
+        // ohne eigene Verlustfaktoren: genau das Gesetz
+        CHECK(ohne.werte(mode).verlustfaktor == kp::Daempfung{}.verlustfaktor(mode.frequenzHz));
+    }
+    // die erste Mode (sin · sin) liegt symmetrisch zur Mitte: halb links, halb rechts
+    const kp::ModeImKoerper erste = mit.werte(moden.front());
+    CHECK(erste.werkstoffAnteil[0] == doctest::Approx(0.5).epsilon(0.01));
+    const double soll = 0.5 * kp::Daempfung{}.verlustfaktor(moden.front().frequenzHz) + 0.5 * 1.0e-3;
+    CHECK(erste.verlustfaktor == doctest::Approx(soll).epsilon(0.01));
+    MESSAGE("erste Mode ", moden.front().frequenzHz, " Hz: Anteile ", erste.werkstoffAnteil[0], " / ", erste.werkstoffAnteil[1],
+            ", eta ", erste.verlustfaktor, " (Gesetz ", kp::Daempfung{}.verlustfaktor(moden.front().frequenzHz), ")");
+
+    // der statistische Teil nimmt das Mittel der Anteile im Band und dieselben Verlustfaktoren
+    std::vector<kp::ModeImKoerper> ausgewertet;
+    for (const kp::Mode& mode : moden) ausgewertet.push_back(mit.werte(mode));
+    while (ausgewertet.size() < 12) ausgewertet.push_back(ausgewertet.back());  // zehn im Band braucht die Schaetzung
+    const kp::StatistischerTeil st =
+        kp::schaetze(ausgewertet, 0.0, 2000.0, 2000.0, 4000.0, kp::Daempfung{}, 7, verlust);
+    REQUIRE(st.werkstoffAnteil.size() == 2);
+    CHECK(st.werkstoffAnteil[0] + st.werkstoffAnteil[1] == doctest::Approx(1.0).epsilon(1e-12));
+    for (const kp::ModeImKoerper& g : kp::ziehe(st))
+    {
+        CHECK(g.werkstoffAnteil == st.werkstoffAnteil);
+        CHECK(g.verlustfaktor == kp::verlustfaktorAusAnteilen(st.daempfung, g.frequenzHz, st.werkstoffAnteil, verlust));
+    }
+}
+
+TEST_CASE("Loop Koerper 31c-6 Daempfung je Werkstoff: der Steinway D kennt seine Werkstoffe")
+{
+    kp::Bauplan plan;
+    REQUIRE_MESSAGE(ladeBauplan(QStringLiteral("asset/loop/instrument_bodies/steinway_d") + QLatin1String(kBauplanEndung), plan),
+                    "die Test-Exe aus dem Projekt-Root starten");
+    REQUIRE(plan.materialien.size() >= 2);
+    // jeder Punkt der Platte hat einen Werkstoff des Bauplans
+    int ohne = 0, platte = 0;
+    for (double x = 0.05; x < 1.4; x += 0.05)
+        for (double y = 0.05; y < 1.9; y += 0.05)
+        {
+            const kp::Steife st = kp::steifeBei(plan, {x, y});
+            ohne += st.werkstoff < 0 || st.werkstoff >= static_cast<int>(plan.materialien.size()) ? 1 : 0;
+            platte += plan.materialien[static_cast<std::size_t>(std::max(0, st.werkstoff))].name == plan.platte.material ? 1 : 0;
+        }
+    CHECK(ohne == 0);
+    CHECK(platte > 0);
 }

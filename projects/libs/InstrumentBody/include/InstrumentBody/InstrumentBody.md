@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.8.0  
+> **Version:** 0.9.0  
 > **Datum:** 2026-10-24  
 > **Typ:** CppModuleDoc  
-> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser)  
+> **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Auswertung.hpp, Statistik.hpp, Koerper.hpp  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Statistik.hpp, Koerper.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
@@ -189,6 +189,19 @@ vor, `werte(mode)` gibt ein `ModeImKoerper`.
 - **Gemessen** (Release-clang, `InstrumentBodyTool`, Steinway D bis 5 kHz, k = 3): alle 88 Stegpunkte im Netz,
   Vorbereitung 0,06 s, Auswertung aller 820 Moden 17 s (innerhalb der Zeit des Lösers).
 
+**Dämpfung je Werkstoff (31c-6, DM1 a)** — `InstrumentBody/Verformungsenergie.hpp`. `Steife` trägt den Werkstoff
+(`werkstoff`, Platz in `Bauplan::materialien`; `steifeBei` setzt ihn), `Plattenelement::integrationsPunkte` gibt die
+Punkte von `matrizen`. `Verformungsenergie` bereitet je Element J⁻¹ und |det J|, je Integrationspunkt D, S und
+Werkstoff vor und gibt je Mode U_m = ½ ∫_m κᵀDκ + γᵀSγ (`jeWerkstoff`) bzw. die Anteile U_m/U (`anteile`) — an
+denselben Punkten mit denselben Größen wie K, also 2 Σ U_m = φᵀKφ. Mit ihr bekommt `Auswertung` je Mode
+`werkstoffAnteil` und den Verlustfaktor aus `verlustfaktorAusAnteilen`: η = η_Gesetz + Σ_{η_m>0} a_m (η_m − η_Gesetz) —
+ein Werkstoff mit eigenem `verlustfaktor` trägt ihn, einer mit 0 das Gesetz; ohne eigene Werte Bit für Bit das
+Gesetz. Verfahren der modalen Verformungsenergie (Johnson & Kienholz 1982, aus Claudes Wissen, nicht nachgelesen).
+**Grenze:** für einen Werkstoff mit eigenem Wert fehlen Verluste an Rand und durch Abstrahlung (für Holz stecken sie im
+Gesetz). **Geprüft** (`test_LoopKoerperAuswertung`, „31c-6"): die Mischung (ohne eigene Werte genau das Gesetz); die
+Prüfplatte mit zwei Werkstoffen (links, rechts): 2 Σ U_m = ω² auf 10⁻⁶, Summe der Anteile 1, die erste Mode
+0,4999 / 0,5001; der statistische Teil mit dem Mittel der Anteile; jeder Punkt des Steinway hat einen Werkstoff.
+
 ### 5.4 Statistischer Teil — `InstrumentBody/Statistik.hpp` (31c-5c)
 
 Oberhalb der gerechneten Moden (ST1 a): `schaetze` nimmt die Größen aus dem oberen Band der gerechneten Moden (die
@@ -198,7 +211,8 @@ Grenze (Vorgabe 20 kHz).
 - **Größen** (`StatistischerTeil`, das trägt die Datei): die Dichte n(f) als Gerade durch die Zählung in zehn Stücken
   des Bands, über das Ende fortgesetzt (eine fallende Gerade wird waagrecht); je Stegpunkt das quadratische Mittel der
   Formwerte; je Hörort das quadratische Mittel von |G| (dieselbe Leistung wie die gerechneten Moden); die Dämpfung nach
-  demselben Gesetz (RT-0425 Gl. 1); der Samen.
+  demselben Gesetz (RT-0425 Gl. 1) — seit DM1 a mit dem Mittel der Anteile je Werkstoff im Band und denselben
+  Verlustfaktoren je Werkstoff; der Samen.
 - **Ziehung** wie Boutillon & Ege 2013: f_{ν+1} = f_ν + r/n(f_ν), r nach Rayleigh mit Mittel 1 (Gl. 23/24); je
   Stegpunkt ein Formwert normal verteilt mit seiner Streuung, unabhängig voneinander; je Hörort ein Gewicht mit seinem
   Betrag und gleichverteilter Phase.
@@ -217,8 +231,9 @@ gebildet in der App: `loop/Koerper` `bauplanAbdruck`), wie gerechnet wurde (`Rec
 Löser, Ordnung, Netz für welche Frequenz, Fenster, freie Größen, Zeit), die Stegpunkte (MIDI) und Hörorte in der
 Reihenfolge der Werte, Luft, Dämpfung, die gerechneten Moden (`ModeImKoerper`) und der statistische Teil.
 
-- **`kKoerperFassung`** — die Fassung der Datei (1).
-- **`kRechenFassung`** — die Fassung der Rechnung (1). Hochzählen, wenn sich bei gleichem Bauplan ein anderer Körper
+- **`kKoerperFassung`** — die Fassung der Datei (2 seit S149: `materials` mit `lossFactor`, je Mode
+  `materialShares`, im statistischen Teil deren Mittel; Fassung 1 bleibt lesbar, ohne Anteile).
+- **`kRechenFassung`** — die Fassung der Rechnung (2 seit S149, DM1 a). Hochzählen, wenn sich bei gleichem Bauplan ein anderer Körper
   ergäbe; dann meldet der Wächter (`test_LoopKoerperDatei`, „Waechter“) jeden mitgelieferten Körper als veraltet, bis
   `InstrumentBodyTool` ihn neu rechnet. Ebenso, wenn sich der Bauplan ändert (der Abdruck passt nicht mehr).
 - **Datei** (`loop/Koerper`, Qt-JSON, in der App und im Werkzeug): jedes Feld immer geschrieben; Zahlen kommen genau
@@ -275,6 +290,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.9.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 1: Dämpfung je Werkstoff (DM1 a) — `Verformungsenergie.hpp`, `Steife::werkstoff`, `Plattenelement::integrationsPunkte`, `verlustfaktorAusAnteilen`, `ModeImKoerper::werkstoffAnteil`, im statistischen Teil das Mittel; `kKoerperFassung` 2, `kRechenFassung` 2. |
 | 0.8.0 | 2026-10-24 | Session 148, Stufe 31c-5d: der Körper (`Koerper.hpp`: `Koerper`, `Rechnung`, `kKoerperFassung`, `kRechenFassung`), die Datei in `loop/Koerper`, der Wächter. |
 | 0.7.0 | 2026-10-23 | Session 148, Stufe 31c-5c: statistischer Teil (`Statistik.hpp`: `StatistischerTeil`, `schaetze`, `ziehe`, `Zufall`; ST1 a). |
 | 0.6.0 | 2026-10-23 | Session 148, Stufe 31c-5b: Auswertung je Mode (`Auswertung.hpp`: Wert an den Stegpunkten, Dämpfung nach RT-0425 Gl. 1, Abstrahlgewicht nach Rayleigh je Hörort); `PlattenSystem::elemente`, `Plattenelement::basis`, `Auflager::Frei`. |
