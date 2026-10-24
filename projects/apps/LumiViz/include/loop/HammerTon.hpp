@@ -85,4 +85,10 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
 /// des Instruments stimmt Stufe 31h).
 inline constexpr double kHammerKraftBezug = 200.0;
 
+/// Der Schalldruck, der mit Resonanzboden als 1 ausgegeben wird, in Pa (PG1 a, gleich fuer alle
+/// Koerper). Gemessen im Messteil von 31c-7 (S150, `test_LoopKoerperKlang`): der lauteste Ton des
+/// Steinway D bei Anschlagstufe 0 (Taste 90, eine Sekunde gehalten) erreicht am Hoerort 48,8 Pa
+/// Spitze; so liegt er bei −6 dBFS.
+inline constexpr double kSchalldruckBezug = 97.3;
+
 }  // namespace lumi::loop

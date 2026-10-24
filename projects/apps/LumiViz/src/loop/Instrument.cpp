@@ -5,6 +5,7 @@
 
 #include "loop/Instrument.hpp"
 
+#include "loop/Boden.hpp"      // der Resonanzboden im Klang (Stufe 31c-7)
 #include "loop/HammerTon.hpp"  // die Hammer-Saite (Stufe 31b)
 #include "loop/Kit.hpp"
 #include "loop/Saitenplan.hpp"  // kAbdaempfenMs (Stufe 23b)
@@ -2906,6 +2907,10 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
         // Stufe 31b: die Hammer-Saite klingt nach dem Loslassen so lange, wie Daempfer und
         // Saite es wollen — nicht nach Release
         HammerAnschlag hammer;
+        // Stufe 31c-7 (AW1 a, FT1 a): mit Resonanzboden klingt die Kraft durch seine Antwort —
+        // der Ton wird um ihre Laenge laenger
+        std::shared_ptr<const Klang> bodenKlang;
+        std::int64_t nachBoden = 0;
         if (istHammerSchicht(schicht))
         {
             hammer.taste = ton;
@@ -2915,7 +2920,11 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             hammer.rate = rate;
             const Tastatur tastatur = instrument.tastatur.value_or(Tastatur{});
             hammer.gedaempft = ton < tastatur.ungedaempftAb;
-            huelle.aus = hammerNachklang(schicht.hammerSaite, hammer, hoechstens);
+            if (!schicht.hammerSaite.resonanzboden.koerper.isEmpty())
+                if (const std::shared_ptr<const BodenImKlang> boden = bodenVon(schicht.hammerSaite.resonanzboden.koerper))
+                    bodenKlang = bodenAntwortFuer(*boden, ton, rate);
+            if (bodenKlang) nachBoden = std::max<std::int64_t>(0, bodenKlang->frames() - 1);
+            huelle.aus = hammerNachklang(schicht.hammerSaite, hammer, hoechstens) + nachBoden;
         }
         huelle.aus = std::min<std::int64_t>(huelle.aus, hoechstens - einsatz - 1);
         if (einsatz + huelle.ende + huelle.aus > hoechstens)
@@ -2983,11 +2992,19 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             const Handweg* weg = hand ? &*hand : nullptr;
             if (istHammerSchicht(schicht))
             {
-                // Stufe 31b: die Hammer-Saite (loop/HammerTon), auf beiden Seiten gleich
+                // Stufe 31b: die Hammer-Saite (loop/HammerTon) — ohne Boden die Kraft am Steg auf
+                // beiden Seiten gleich, mit Boden (31c-7) gefaltet mit seiner Antwort je Hoerort
                 hammer.halten = huelle.ende;
                 std::vector<float> mono;
-                rechneHammerTon(schicht.hammerSaite, hammer, mono, frames);
-                for (std::size_t i = 0; i < mono.size(); ++i) eine[2 * i] = eine[2 * i + 1] = mono[i];
+                rechneHammerTon(schicht.hammerSaite, hammer, mono, std::max<std::int64_t>(1, frames - nachBoden));
+                if (bodenKlang)
+                {
+                    std::vector<float> stereo;
+                    falteMitBoden(mono, *bodenKlang, stereo);
+                    std::copy_n(stereo.begin(), std::min(stereo.size(), eine.size()), eine.begin());
+                }
+                else
+                    for (std::size_t i = 0; i < mono.size(); ++i) eine[2 * i] = eine[2 * i + 1] = mono[i];
             }
             else if (schicht.schwingung == Schwingung::Saite)
                 rechneSaite(schicht, ton, hz, huelle, rate, eine, weg);  // Classic (S-K2 b)

@@ -14,6 +14,9 @@
  * - Ein Einmassenschwinger: die Antwort als Zeitreihe gegen die geschlossene Loesung
  *   a·(g''(t) + δ(t)), g(t) = e^(−σt) sin(ω_d t)/ω_d; der Weg Kraft → Druck.
  * - Die Laenge der Antwort am Steinway (AW1 a: tiefste Mode 38 Hz, η 1,1 % → rund 5 s).
+ * - Ein Ton durch den Boden (Schritt 3): um die Antwort laenger, Stereo (Hoerorte `left`/`right`),
+ *   links gleich der Faltung von Hand, die Antwort beim zweiten Ton aus dem Tonspeicher, ein
+ *   fehlender Koerper aendert nichts. Leert den Tonspeicher vorher und nachher.
  * - **Messteil** nur mit `LUMIVIZ_31C7_MESSUNG=1` (Release-clang, einige Minuten): Zeit und Speicher je
  *   Antwort, Rechenzeit der Faltung je Ton, Schalldruck am Hoerort fuer alle 88 Tasten bei der
  *   hoechsten Anschlagstufe → der Wert von `kSchalldruckBezug` (PG1 a). Meldet nur Zahlen.
@@ -27,6 +30,7 @@
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Koerper.hpp"
+#include "loop/Tonspeicher.hpp"
 
 #include <QtGlobal>
 
@@ -109,6 +113,64 @@ TEST_CASE("Loop Koerper 31c-7 Antwort: Laenge am Steinway")
     CHECK(stegpunktVon(koerper, 21) == 0);
     CHECK(stegpunktVon(koerper, 108) == 87);
     CHECK(stegpunktVon(koerper, 20) == -1);
+}
+
+TEST_CASE("Loop Koerper 31c-7 Ton durch den Boden (AW1 a, FT1 a, PG1 a)")
+{
+    tonspeicher().leere();  // die Antwort liegt im Tonspeicher des ganzen Programms
+    Instrument ohne;
+    Schicht& s = ohne.schichten[0];
+    s.schwingung = Schwingung::Saite;
+    s.saitenModell = SaitenModell::Modal;
+    s.anregung = Anregung::Hammer;
+    ohne.tastatur = Tastatur{};
+    Instrument mit = ohne;
+    mit.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
+    const int rate = 48000;
+    const std::shared_ptr<const BodenImKlang> boden = bodenVon(QStringLiteral("lib:steinway_d"));
+    REQUIRE_MESSAGE(boden, "steinway_d.lvinstbody nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
+    CHECK(boden->koerper.hoerorte[static_cast<std::size_t>(boden->links)] == "left");
+    CHECK(boden->koerper.hoerorte[static_cast<std::size_t>(boden->rechts)] == "right");
+    CHECK(bodenVon(QStringLiteral("lib:steinway_d")).get() == boden.get());  // einmal geladen
+
+    const Klang a = rendereTon(ohne, 60, 500.0, rate);
+    auto t0 = std::chrono::steady_clock::now();
+    const Klang b = rendereTon(mit, 60, 500.0, rate);
+    MESSAGE("Ton mit Boden: ", sekundenSeit(t0), " s (mit dem Bilden der Antwort)");
+    const std::shared_ptr<const Klang> antwort = bodenAntwortFuer(*boden, 60, rate);
+    REQUIRE(antwort);
+    // ohne Boden die Kraft auf beiden Seiten gleich; mit Boden um die Antwort laenger und Stereo
+    REQUIRE(b.frames() == a.frames() + antwort->frames() - 1);
+    double unterschied = 0.0, spitze = 0.0;
+    for (std::int64_t i = 0; i < b.frames(); ++i)
+    {
+        unterschied = std::max(unterschied, static_cast<double>(std::abs(b.daten[2 * i] - b.daten[2 * i + 1])));
+        spitze = std::max(spitze, static_cast<double>(std::abs(b.daten[2 * i])));
+    }
+    MESSAGE("Spitze links ", 20.0 * std::log10(spitze), " dBFS, groesster Unterschied links/rechts ", unterschied);
+    CHECK(unterschied > 0.01 * spitze);
+    CHECK(spitze < 1.0);
+    // links gegen die Faltung von Hand: Kraft (die linke Seite ohne Boden) mit der Antwort links
+    std::vector<float> kraft(static_cast<std::size_t>(a.frames()));
+    for (std::size_t i = 0; i < kraft.size(); ++i) kraft[i] = a.daten[2 * i];
+    std::vector<double> hLinks(static_cast<std::size_t>(antwort->frames()));
+    for (std::size_t i = 0; i < hLinks.size(); ++i) hLinks[i] = antwort->daten[2 * i];
+    const std::vector<double> p = schalldruck(kraft, hLinks);
+    double fehler = 0.0;
+    for (std::size_t i = 0; i < p.size(); ++i) fehler = std::max(fehler, std::abs(p[i] / kSchalldruckBezug - b.daten[2 * i]));
+    MESSAGE("links gegen die Faltung von Hand: ", fehler / spitze, " von der Spitze");
+    CHECK(fehler < 1e-5 * spitze);
+    // der zweite Ton nimmt die Antwort aus dem Tonspeicher und gleicht dem ersten Bit fuer Bit
+    const std::uint64_t vorher = tonspeicher().stand().treffer;
+    const Klang c = rendereTon(mit, 60, 500.0, rate);
+    CHECK(tonspeicher().stand().treffer > vorher);
+    CHECK(c.daten == b.daten);
+    // einen Koerper, den es nicht gibt, hat der Ton nicht: er klingt wie ohne Boden
+    Instrument falsch = ohne;
+    falsch.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:gibt_es_nicht");
+    CHECK(bodenVon(QStringLiteral("lib:gibt_es_nicht")) == nullptr);
+    CHECK(rendereTon(falsch, 60, 500.0, rate).daten == a.daten);
+    tonspeicher().leere();
 }
 
 TEST_CASE("Loop Koerper 31c-7 Messteil (AW1 a, FT1 a, PG1 a)")

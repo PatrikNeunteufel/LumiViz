@@ -2018,6 +2018,20 @@ eine Sekunde gehalten) Taste 90, Spitze 48,8 Pa = **127,7 dB SPL** am Hörort (1
 Spitze **`kSchalldruckBezug` = 97,3 Pa** (PG1 a; gesetzt in Schritt 3). Die übrigen Tasten bei Stufe 0: 108–125 dB
 SPL. Der Vergleich mit *Salamander* folgt in 31d (PG1 a).
 
+**Gebaut 31c-7 Schritt 3 — Antworten und Faltung (S150, AW1 a, FT1 a, PG1 a):** `Resonanzboden::koerper`
+(`lib:<name>`, leer = ohne Boden; in der Datei ab Schritt 4, SB1 a). `loop/Boden`: `bodenVon` lädt einen Körper
+einmal je Datei (alle Moden, Länge, SHA-256 der Datei, Hörorte `left`/`right` — sonst der erste und der zweite, bei
+einem beide gleich); `bodenAntwortFuer` legt die Antwort einer Taste als Stereo-Klang (Pa/N) in den Tonspeicher unter
+`body:<Abdruck>:<Taste>:<Rate>`; `falteMitBoden` bringt die Kraft einmal ins Spektrum und faltet je Seite, in
+Einheiten von **`kSchalldruckBezug` = 97,3 Pa** (`loop/HammerTon.hpp`, neben `kHammerKraftBezug`). In `rendereTon`
+wird der Nachklang einer Hammer-Saite mit Körper um die Antwort weniger eins länger; die Kraft wird gerechnet wie
+bisher und klingt gefaltet links und rechts (echtes Stereo, FT1 a); ohne Körper oder mit einem, den es nicht gibt,
+wie bisher. Test „Ton durch den Boden“: Länge, Stereo, links gegen die Faltung von Hand auf 5·10⁻⁸ der Spitze, der
+zweite Ton nimmt die Antwort aus dem Tonspeicher (bitgleich), ein fehlender Körper ändert nichts; C4 bei Stufe 0
+−17,5 dBFS Spitze links, der Ton mit Antwort 1,8 s. Eng `*Loop Hammer*,*Loop Koerper*,*Klangfassung*,*Instrument*,
+*Loop Fft*` 146 / 146 (Release-clang). **Merker:** der Schlüssel eines Tons im Tonspeicher (`instrumentAbdruck`)
+kennt den Körper erst, wenn er in der Datei steht (Schritt 4).
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
