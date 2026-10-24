@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.11.0  
+> **Version:** 0.12.0  
 > **Datum:** 2026-10-24  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Statistik.hpp, Koerper.hpp  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Antwort.hpp, Statistik.hpp, Koerper.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
@@ -213,6 +213,13 @@ dieselbe Zahl. **Prüfstein** (`test_LoopKoerperPruefstein`, S150): Prüffall ge
 (PS3 a), Steinway gegen Messungen (PS1 a (3)) und EM1 a, Konvergenz k = 3 gegen k = 4 mit `LUMIVIZ_KOERPER_K4`
 (KV1 a nach KV2 a).
 
+**Antwort (31c-7, AW1 a)** — `InstrumentBody/Antwort.hpp`. `antwort(moden, j, h, f)`: Druck am Hörort h je Kraft am
+Stegpunkt j, H(ω) = Σ φ_n(A) G_n (−ω²)/(ω_n² − ω² + jη_nω_nω), Pa/N; `antwortSpektrum(moden, j, h, rate, n)`: H an
+den n/2 + 1 Frequenzpunkten einer FFT der Länge n (die Rückwandlung gibt die Koeffizienten des Filters je
+Abtastwert); `antwortLaengeS`: bis die langsamste Mode 60 dB gefallen ist, höchstens 8 s. Die Zeitreihe und die
+Faltung bildet die App (`loop/Boden`, über `loop/Fft`). **Geprüft** (`test_LoopKoerperKlang`): Einmassenschwinger
+gegen die geschlossene Lösung.
+
 ### 5.4 Statistischer Teil — `InstrumentBody/Statistik.hpp` (31c-5c)
 
 Oberhalb der gerechneten Moden (ST1 a): `schaetze` nimmt die Größen aus dem oberen Band der gerechneten Moden (die
@@ -303,6 +310,7 @@ falsches Format, zu neue Fassung).
 |---|---|---|
 | 0.10.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 2: Mobilität (`Mobilitaet.hpp`: MAESSTRO Gl. 10 und 12, Terzbänder, Dichte je Band); Bericht im Werkzeug (`--report`). |
 | 0.11.0 | 2026-10-24 | Session 150, Stufe 31c-6 Teil 3–5: `kDiskantAb` = 41 in `Mobilitaet.hpp` (PF2 a); Prüfstein `test_LoopKoerperPruefstein` (PS3 a, PS4 a, KV2 a). |
+| 0.12.0 | 2026-10-24 | Session 150, Stufe 31c-7 Schritt 1: Antwort des Bodens (`Antwort.hpp`: H je Stegpunkt und Hörort, im Spektrum der FFT, Länge). |
 | 0.9.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 1: Dämpfung je Werkstoff (DM1 a) — `Verformungsenergie.hpp`, `Steife::werkstoff`, `Plattenelement::integrationsPunkte`, `verlustfaktorAusAnteilen`, `ModeImKoerper::werkstoffAnteil`, im statistischen Teil das Mittel; `kKoerperFassung` 2, `kRechenFassung` 2. |
 | 0.8.0 | 2026-10-24 | Session 148, Stufe 31c-5d: der Körper (`Koerper.hpp`: `Koerper`, `Rechnung`, `kKoerperFassung`, `kRechenFassung`), die Datei in `loop/Koerper`, der Wächter. |
 | 0.7.0 | 2026-10-23 | Session 148, Stufe 31c-5c: statistischer Teil (`Statistik.hpp`: `StatistischerTeil`, `schaetze`, `ziehe`, `Zufall`; ST1 a). |

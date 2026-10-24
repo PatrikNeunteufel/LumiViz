@@ -2003,6 +2003,21 @@ geht nach außen. Tests `test_LoopFft` (4 Fälle gegen jede Umsetzung): hin und 
 ungerader Länge auf 10⁻¹², gegen die direkte DFT, gegen die direkte Faltung an kurzen Signalen, ein Bezugswert von
 Hand, der Impuls, `zweierpotenzAb`. Release-clang 4 / 4 (645 Prüfungen); die App baut.
 
+**Gebaut 31c-7 Schritt 1 — Antwort und Messteil (S150, AW1 a, FT1 a, PG1 a):** `InstrumentBody/Antwort.hpp` —
+`antwort` und `antwortSpektrum` (H(ω) = Σ φ_n(A) G_n (−ω²)/(ω_n² − ω² + jη_nω_nω) in Pa/N, an den Frequenzpunkten
+der FFT; Real- und Imaginärteil getrennt, die Division von Hand — viermal schneller als `std::complex`), 
+`antwortLaengeS` (bis die langsamste Mode 60 dB gefallen ist, höchstens 8 s). `loop/Boden` — `alleModen` (gerechnet
+und gezogen, ST1 a), `stegpunktVon`, `bodenAntwort` (Zeitreihe je Abtastwert in Pa/N über `Fft`),
+`schalldruck` (Kraft in Einheiten von `kHammerKraftBezug` gefaltet mit der Antwort). Tests `test_LoopKoerperKlang`:
+Einmassenschwinger gegen a·(g'' + δ) ab 1 ms auf 2·10⁻⁴ (davor das Nachschwingen des Sprungs von g'' bei t = 0,
+1,6·10⁻³), Länge am Steinway 5,11 s. **Messteil** (`LUMIVIZ_31C7_MESSUNG=1`, Release-clang, 49 s): 820 gerechnete und
+5933 gezogene Moden; Antwort 5,11 s = 245 278 Werte (FFT 262 144), 0,94 MB je Antwort als float, alle 88 × 2
+Hörorte 165 MB; **Zeit je Antwort auf einem Thread 0,62–0,77 s** (unter 1 s, AW1 a greift nicht), acht zugleich
+1,2–2,8 s je Antwort; Faltung je Ton und Hörort 0,03–0,08 s (längster Ton 6,1 s); **lautester Ton** (Stufe 0,
+eine Sekunde gehalten) Taste 90, Spitze 48,8 Pa = **127,7 dB SPL** am Hörort (12 cm über den Saiten) → für −6 dBFS
+Spitze **`kSchalldruckBezug` = 97,3 Pa** (PG1 a; gesetzt in Schritt 3). Die übrigen Tasten bei Stufe 0: 108–125 dB
+SPL. Der Vergleich mit *Salamander* folgt in 31d (PG1 a).
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
