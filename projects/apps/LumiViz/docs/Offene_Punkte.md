@@ -6183,7 +6183,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.282.0 | 2026-10-24 | Session 149. §7 Spielweisen: BM7 a (Grenzfrequenz bleibt an der höchsten gerechneten Mode, 31c-6 prüft bandweise). CMakeCraft-Pin auf v0.12.0 (`/MP8` unter MSVC, MP3 a). PL31 a und zwölf Entscheide zum Rest von 31c, fester Plan IP1 und 31c-6 bis 31c-9; IP1 a (Fenster *Instruments*). Anfrage an CMakeCraft: Konfiguration Testing ohne Optimierung. |
+| 1.282.0 | 2026-10-24 | Session 149. §7 Spielweisen: BM7 a (Grenzfrequenz bleibt an der höchsten gerechneten Mode, 31c-6 prüft bandweise). CMakeCraft-Pin auf v0.12.0 (`/MP8` unter MSVC, MP3 a). PL31 a und zwölf Entscheide zum Rest von 31c, fester Plan IP1 und 31c-6 bis 31c-9; IP1 a (Fenster *Instruments*). Anfrage an CMakeCraft: Konfiguration Testing ohne Optimierung. Gebaut: IP1, 31c-6 Teil 1 (DM1 a, Steinway neu gerechnet) und Teil 2 (Mobilität); TC1 a und BG1 a, Pin v0.13.1. |
 | 1.281.0 | 2026-10-24 | Session 148. §7 Spielweisen: 31c-4 (Eigenlöser, Spectra) und 31c-5 (Hörorte, Auswertung, statistischer Teil, Körperdatei) gebaut, `steinway_d.lvinstbody` abgelegt; offen BM7 und 31c-6. Bauzeit MSVC (`/MP`) an CMakeCraft übergeben (MP1 a). |
 | 1.280.0 | 2026-10-23 | Session 147. §7 Spielweisen: Stufe 31c — der Boden gerechnet (BM1 a bis BM5-1 a, PL31c a, HT7 b, GB1 a, IC1 a, EL1 a); 31c-1 bis 31c-3 gebaut (Bauplan, Netz mit CDT, Platte mit Eigen). |
 | 1.279.0 | 2026-10-23 | Session 146. §7 Spielweisen: Stufe 31 — 31a und 31b gebaut, 31c begonnen (HK1 a, HK2 a, HT1 a bis HT7 a, KB1 a); Ablage `docs/modellierung/`. |
