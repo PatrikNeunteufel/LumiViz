@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.106.0
-> **Datum:** 2026-10-22 (Session 144)
+> **Version:** 0.107.0
+> **Datum:** 2026-10-24 (Session 149)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3824,6 +3824,25 @@ beantwortet die Rückfrage beim bestehenden Save mit *Save as it is*. **Offen:**
 Instrument mit Sample-Schicht wird erst gemessen, wenn seine Aufnahme gemerkt ist (im Fenster
 *Instruments* oft nicht — dann ohne Marke).
 
+**Befund S149 (Meldung Patrik: das Fenster *Instruments* öffnet langsam, der Visualizer steht; im Code gelesen,
+nicht gemessen):** `liesNeu` rechnet für jedes eigene Instrument über `abstandZumBezug` eine ganze Standardprobe
+(`rechneStandardprobe`, „ohne den Tonspeicher gerechnet“) und misst sie nach R128 — synchron auf dem Thread der
+Oberfläche, bei jedem Öffnen (`zeigeVorn`), beim ersten Öffnen zweimal (Konstruktor und `zeigeVorn`); gemerkt wird
+nichts. Bei Patrik 11 eigene Instrumente (darunter 7 Shape-Schichten in einem und Saiten mit Strum). Der Visualizer
+zeichnet auf demselben Thread.
+
+✅ **IP1 a** (Patrik S149): **Die Abweichung im Fenster *Instruments* wird im Hintergrund gemessen und gemerkt.** Das
+Fenster öffnet sofort mit dem Baum; ein Hintergrund-Thread (wie die Töne seit 29a) rechnet die Abweichungen, die
+Spalte füllt sich, sobald ein Wert da ist. Gemerkt je Instrument unter `instrumentAbdruck` (wie im Tonspeicher) und
+`kKlangfassung`: ein unverändertes Instrument wird nie zweimal gemessen, ein geändertes oder eine neue Klangfassung neu.
+Der doppelte Aufruf beim ersten Öffnen entfällt. Ein Test belegt, dass das Öffnen nicht mehr misst und ein zweites
+Öffnen den gemerkten Wert nimmt. Eigener Schritt vor 31c-6. Grund: nur so bleibt die Oberfläche beim Öffnen immer
+frei — die Regel für Töne seit 29a; der Schlüssel macht den Wert genau dann ungültig, wenn er falsch wäre. Verworfen:
+b (nur merken, synchron — das erste Öffnen nach dem Start blockiert weiter), c (Wert beim Speichern in die
+`.lvinst` — eine abgeleitete Zahl, die mit der Klangfassung still veraltet). Kippt, wenn die Standardprobe aus einem
+Hintergrund-Thread nicht sicher zu rechnen ist (etwa `sampleDaten`): dann die Samples vorher auf dem Thread der
+Oberfläche holen, nur das Rechnen auslagern.
+
 **27g (S139):** Hörprobe Titanium vorher und nachher (lokal unter
 `.claude/handover/lautheit_s139/hoerproben/`), je Kanal gemessen: Guitar −45,2 → −34,3 LUFS
 (+10,9), Pad −36,6 → −34,2, Bass −29,4 → −33,2, Piano −25,9 → −29,9, FX −37,1 → −39,0; Drums,
@@ -3994,6 +4013,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.107.0** (S149, 2026-10-24): §4n Befund zum langsamen Öffnen des Fensters *Instruments* (Pegelmessung auf dem Thread der Oberfläche); IP1 a (im Hintergrund messen, gemerkt unter Abdruck und Klangfassung).
 - **0.106.0** (S144, 2026-10-22): §3.2 der Audio-Clip im Loop kommt nach der Hammer-Saite (Patrik).
 - **0.105.0** (S144, 2026-10-22): §4 Datei — `.lvloop` Fassung 13 mit `channels[].clips[].frozen` (Stufe 30f-1, Spielweisen_Konzept FV2 a).
 - **0.104.0** (S143, 2026-10-22): Dateiformat `volume` — wirkt nach den Effekten und Fadern (Spielweisen_Konzept WX5 a).

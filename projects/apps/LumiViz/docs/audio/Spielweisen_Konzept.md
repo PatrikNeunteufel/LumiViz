@@ -4,8 +4,8 @@
 > **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a und TS1 a (Patrik S139–S149);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a und TS1 a (Patrik S139–S149);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1567,6 +1567,258 @@ nicht braucht; würfe Moden weg, die im Mittel stimmen). Kippt auf b, wenn die K
 1,5 kHz versagt; liegt nur der Prüfstein oberhalb rund 3 kHz daneben, greift zusätzlich der Kipppunkt von ST1 a —
 beides dann zusammen neu vorlegen.
 
+**Hinweis Patrik (S149):** Stufen zerfallen immer feiner (31 → 31c → 31c-3 → 31c-5a), ohne abzuschließen, statt von
+Anfang an vollständig geplant zu sein. Ursache: Fragen, die den Umfang eines Schritts bestimmen, standen als „eigene
+Frage“ im Schritt (HS2 a: 31c „woher die Impulsantwort kommt: eigene Frage“ — mit BM1 a wurde daraus ein FEM-Werkzeug
+in acht Teilschritten), geplant war genau nur der nächste Schritt.
+
+✅ **PL31 a** (Patrik S149): **Erst 31c abschließen, dann den Rest von Stufe 31 planen; der Rest von 31c wird vorher
+vollständig geklärt.** (1) Die zwölf Fragen, die den Umfang von 31c-6 bis 31c-8 und den Abschluss bestimmen, werden
+geklärt — zuerst zwei kurze Recherchen (Vergleichswerte der Mobilität oberhalb 1 kHz; Werte für Glas mit Quelle), dann
+jede Frage einzeln: *31c-6* (1) Vergleich oberhalb 1 kHz (Plath nur 50–1000 Hz, Giordano 1998 am Klavier, Conklin 1996
+bis 3,2 kHz ohne bekannte Bezugsgröße), (2) Bauzustand des Vergleichs (gemessen eingebaut und besaitet, das Modell
+eingespannt ohne Saitenlast und Wölbung), (3) Bauplan des MAESSTRO-Prüffalls aus Abb. 4 (Bildschirmfoto ohne Maßstab),
+(4) Weg der Konvergenzrechnung (`--order 4` oder feineres Netz, vorher an einem kleinen Fenster gemessen),
+(5) Toleranzen als Zahlen; *31c-7* (6) wo und wann die Antworten je Taste entstehen (tiefste Mode T60 rund 5 s, 88 × 2
+Antworten roh rund 170 MB), (7) Faltung (Weg, Rechenzeit je Ton, Mono-Kraft zu Stereo), (8) Pegel (Stegkraft heute
+„als 1“, mit dem Boden Schalldruck; `instrument_pegel` neu), (9) `soundboard.amount` und `.lvinst` Fassung 17;
+*31c-8* (10) welche Rechnungen (MAESSTRO MP1–MP3, Glas in zwei Dicken), (11) Werte für Glas; *Abschluss 31c* (12)
+Testumfang, Hörproben, Doku, voller Lauf jetzt oder am Ende von Stufe 31. (2) Daraus der feste Plan 31c-6 bis 31c-8
+plus ein Schritt *Abschluss 31c*; Nummern fest, keine neue Ebene. (3) Bauen bis zum Abschluss von 31c. (4) Danach für
+31d bis 31h dasselbe: alle Umfangsfragen klären, die Stufe bis zu ihrem Abschluss planen. Wächst ein Plan trotzdem,
+als Entscheid „Plan erweitern“ vorlegen. Grund: der Umfang steht fest, bevor gebaut wird, das Ende der Stufe ist ein
+geplanter Schritt. Verworfen: b (Rest von 31c wie geplant, Fragen je vor ihrem Schritt — die Fragen 1, 3 und 6 können
+je einen Schritt verdoppeln). Kippt für eine Frage, die sich nur durch Bauen klären lässt (etwa die Rechenzeit der
+Faltung): sie wird ein benannter Mess-Schritt mit festem Platz im Plan.
+
+**Befund S149 zum Prüfstein (Recherchen `docs/modellierung/hammer-saite/recherche/2026-10-24_S149_mobilitaet_ueber_1khz.md`
+und `…_glas_werkstoffwerte.md`; selbst nachgelesen wie dort im Kopf vermerkt):** Gemessene Mobilität am Steg eines
+Flügels oberhalb 1 kHz gibt es nur bei Plath 2019 Fig. 6.10 (bis 5 kHz, Treiberpunkt, sechs Bauzustände; die Achse
+„Driving point mobility [dB]“ ohne Bezugsgröße — am Bild gesehen; der Agent erschließt 10⁻⁴ s/kg aus Fig. 6.9) und bei
+Conklin 1996 (bis 3,2 kHz, Bezug unbekannt, nur in Wiedergabe). Absolut skaliert nur Giordano 1998 an einem Klavier
+(C4, in Wiedergabe bei Boutillon & Ege 2013 Fig. 7; abgelesen rund −66 dB re 1 s/kg bis 3 kHz). **Zum Bauzustand
+(Frage 2):** Plath S. 89 — Steg „decreases overall mobility by 10 dB and 10 dB to 20 dB above 1 kHz“, nach dem
+Einleimen „From 500 Hz to 5000 Hz the mean mobility stays constant“, Saiten und Rahmen wirken „Up to 350 Hz“; das
+Modell (eingespannt, ohne Saitenlast und Wölbung, mit Steg und Rippen) ist oberhalb rund 500 Hz mit Plath PROD5/PROD6
+vergleichbar, darunter nicht. MAESSTRO Abb. 6 ist ein Wert je Stegpunkt — das geometrische Mittel von |Y| über
+25–5000 Hz (Gl. 12, S. 8), dB re 1 s/kg („about 1500 kg/s, which corresponds to a mean mobility of −63.5 dB“) —, und
+MAESSTRO setzt η = 2 % je Werkstoff (Tab. 2).
+
+✅ **PS1 a** (Patrik S149, Frage 1 und 2 aus PL31 a): **Drei Prüfungen, je mit der Toleranz ihrer Quelle; nur die
+Messungen können eine Grenze kippen.** Alle rechnen die Mobilität am Stegpunkt nach MAESSTRO Gl. 10 aus den
+gerechneten Moden (Treiberpunkt, mit dem η der Moden). (1) **MAESSTRO Abb. 6 am Prüffall** (gleiche Vereinfachungen,
+η = 2 %): je Stegpunkt das geometrische Mittel von |Y| über 25–5000 Hz in 1-Hz-Schritten (Gl. 12); bestanden, wenn
+jeder Wert auf ±2 dB an der abgelesenen Kurve liegt (abgelesen auf ±1 dB) — prüft den Code. (2) **Dasselbe Mittel am
+Steinway D aus RT-0425:** bestanden, wenn die Werte im Bereich von MAESSTRO liegen (−75 bis −57 dB) und der Bass 5 bis
+15 dB unter dem Diskant — prüft die Geometrie grob (Platte 6–9 statt 8 mm). (3) **Gegen die Messungen in Terzbändern
+500 Hz bis 5 kHz**, Mittel über die Stegpunkte im Diskant, gegen Plath PROD5/PROD6 (Bezug 10⁻⁴ s/kg als Annahme
+vermerkt) und Giordano C4: bestanden, wenn jedes Band zwischen −72 und −58 dB re 1 s/kg liegt (beide ±5 dB) und kein
+Anstieg oder Abfall über 6 dB von 500 Hz bis 5 kHz auftritt; unter 500 Hz nur Plath Fig. 6.9 (Mittel 50–1000 Hz
+0,0007 s/kg, bis Faktor 2). Versagt (3) in einem Band, sinkt die Grenze nach BM7 a, oberhalb 3 kHz greift zusätzlich
+der Kipppunkt von ST1 a; versagt (1), wird der Fehler im Code gesucht, die Grenze bleibt; versagt nur (2), wird die
+Geometrie geprüft. Grund: MAESSTRO ist am selben Flügel mit beschriebenen Vereinfachungen der schärfste Test des
+Codes, nur Messungen zeigen die Wirklichkeit, sind aber unscharf — deshalb verschieben nur sie eine Grenze, mit ihrer
+Toleranz. Verworfen: b (nur MAESSTRO — Rechnung gegen Rechnung, BM7 a und ST1 a beziehen sich auf Messungen), c (nur
+Messungen — Code- und Geometriefehler nicht zu trennen, gegen BM2 a). Kippt, wenn Abb. 6 nicht auf ±1 dB lesbar ist
+(dann Prüfung 1 auf ±3 dB, vermerkt), und wenn Plaths Bezugsgröße belegt auftaucht (dann sie statt der Annahme).
+
+**Befund S149 zu MAESSTRO Abb. 4 (selbst angesehen, 300 dpi):** ein Bildschirmfoto der Oberfläche ohne Maßstab,
+der Boden rund 500 Pixel hoch (rund 4 mm je Pixel); die Liste nennt „Ribs - 17“ (16 im Bild zu zählen), eine Rippe
+mit Enden in mm ((147; 1694) und (336; 1850), Breite 25, Höhe 27); als Werkstoff steht dort „Norway Spruce 1“, in
+Tab. 2 Sitka. MP2 (Abb. 4 b) hat jede zweite Rippe.
+
+✅ **PF1 a** (Patrik S149, Frage 3 aus PL31 a): **Der MAESSTRO-Prüffall entsteht aus unserem Bauplan mit den
+Vereinfachungen von MAESSTRO.** `make_steinway_d.py --maesstro` schreibt eine zweite Datei: Umriss, Steglinien,
+Rippenlinien und Stegpunkte wie im Steinway D aus RT-0425; darauf, was MAESSTRO in Text und Tab. 1–2 nennt — Platte
+8 mm, Stege 60 bzw. 20 × 32 mm ohne Verlauf, Rippen ohne Verjüngung (Höhe 27 → 17 mm, Breite 25 → 21 mm von Bass zu
+Diskant), Faser 135°, Sitka und Buche aus Tab. 2, η = 2 % je Werkstoff. Unter den Testdaten, nicht mitgeliefert
+(BM3 a). Geprüft am Überlagerungsbild gegen Abb. 4 a (Zahl, Richtung, Abstand der Rippen, Lage der Stege; die Rippe
+mit Koordinaten in mm als Stichprobe). MP1–MP3 für 31c-8 aus derselben Datei (16 mm; jede zweite Rippe; ohne Rippen).
+Grund: der Prüffall trennt Code- von Geometriefehlern (BM2 a) nur, wenn er sich vom Steinway D allein in Zahlen mit
+Quelle unterscheidet. Verworfen: b (aus Abb. 4 abgezeichnet — rund 4 mm je Pixel, Maßstab aus einer Rippe; eine
+Abweichung wäre nicht mehr dem Code zuzuordnen). Kippt, wenn das Überlagerungsbild Rippen deutlich anders zeigt
+(Winkel über 5°, Abstand über 2 cm daneben): dann die Rippen aus Abb. 4 a, Umriss und Stege bleiben.
+
+**Befund S149 zum Konvergenztest (MAESSTRO S. 4, selbst gelesen):** Gl. 2 vergleicht L = 5 Moden „in the high
+frequency domain, where the numerical dispersion is the highest“ zwischen Ordnung k und k + 1 und nimmt das kleinste
+k mit mittlerer relativer Abweichung unter ε; „In the paper ε = 10⁻⁶, which leads to k = 3“. Dazu: „the user can only
+provide a constant modal loss factor using a material dictionary“. Für k = 4 auf dem Netz des Steinway überschlagen
+(aus Knoten, Kanten und Dreiecken): rund 1,0 Mio. freie Größen statt 568 515; Speicher und Zeit nicht gemessen.
+
+✅ **KV1 a** (Patrik S149, Frage 4 und 5 aus PL31 a): **Die Konvergenz prüft eine zweite Rechnung mit k = 4 auf
+demselben Netz bis 5 kHz.** Vorher ein Messlauf k = 4 im Fenster 0–500 Hz (die Zerlegung bestimmt den Speicher, die
+Zeit wird hochgerechnet); über 20 GB Spitze oder über 3 h hochgerechnet: eigene Rückfrage. Verglichen werden (1) je
+Terzband 100 Hz–5 kHz die Modendichte auf ±3 % und die mittlere Mobilität an den Stegpunkten (geometrisches Mittel
+nach PS1 a) auf ±0,5 dB — das Kriterium von BM7 a, ein versagendes Band senkt die Grenze; (2) die ersten 20 Moden
+einzeln auf ±0,1 %; (3) MAESSTRO Gl. 2 an den fünf höchsten Moden (nach Rang zugeordnet) als Zahl im Körper,
+berichtet, kein Kriterium. Fällt (1) überall durch, wird k = 4 Vorgabe und der Körper neu gerechnet (`kRechenFassung`
+hochzählen); bestehen alle, bleibt k = 3. Grund: der Weg von EL1 a und beiden Quellen — an der Ordnung konvergieren,
+auf demselben Netz misst der Vergleich nur den numerischen Fehler; die Toleranzen weit unter denen von PS1 a, damit
+die Numerik dort nicht mitzählt. Verworfen: b (feineres Netz mit k = 3 — vermischt Geometrie und Numerik), c (beides —
+eine zweite große Rechnung, die keine Quelle verlangt). Kippt, wenn der Messlauf über der Rückfragegrenze liegt (dann
+vorlegen: Fenster teilen oder b), und wenn (1) besteht, (2) aber nicht (dann kommt b dazu).
+
+✅ **AW1 a** (Patrik S149, Frage 6 aus PL31 a): **Die App bildet die Antwort des Bodens je Taste und Hörort aus der
+Körperdatei, wenn die Taste zum ersten Mal klingt** — im Hintergrund wie die Töne, gemerkt im Tonspeicher unter
+Abdruck des Körpers, Taste, Hörort, Rate. Gebildet als Summe der Moden direkt im Spektrum (je Mode ihr Beitrag an den
+Frequenzpunkten der FFT für die Faltung), die gezogenen Moden aus Samen und Größen der Datei (ST1 a). Länge bis die
+langsamste Mode 60 dB gefallen ist, höchstens 8 s (tiefste Mode 38 Hz, η 1,1 %: rund 5 s). **31c-7 beginnt mit einem
+benannten Messteil:** Zeit zum Bilden einer Antwort und Speicher je Taste (Release-clang); über 1 s je Antwort:
+Rückfrage. Die Faltung bleibt nach 31e richtig (der Boden ist linear und nur über den Steg angetrieben; 31e ändert die
+Kraft, nicht die Antwort). Grund: die Körperdatei bleibt die eine Quelle, die Antwort ist eine jederzeit neu
+bildbare Form derselben Moden; es entsteht nur, was gespielt wird. Verworfen: b (Werkzeug rechnet vorab, rund
+170 MB je Körper und Rate — eine zweite Quelle mit eigenem Wächter), c (Moden als Resonatoren im Ton — rund 6700
+Resonatoren je Abtastwert und Hörort, vielfach teurer als die Faltung; 31e braucht es nicht). Kippt, wenn eine Antwort
+auch im Spektrum deutlich über 1 s braucht: zuerst vorlegen, Moden außerhalb ihres Bands zu kappen; erst dann b, als
+Zwischenspeicher im Benutzerordner.
+
+✅ **FT1 a** (Patrik S149, Frage 7 aus PL31 a): **Gefaltet wird je Ton und Hörort mit einer FFT über den ganzen
+Ton** (auf die nächste Zweierpotenz über Ton plus Antwort aufgefüllt); die Antwort liegt im Tonspeicher als Zeitreihe
+(AW1 a) und wird je Ton ins Spektrum gebracht. Die FFT kommt aus **pocketfft** (C++, nur Header, BSD-3), unverändert
+unter `externals/pocketfft` mit README (SHA-256) und eigener `Include.cmake`, hinter einer eigenen Schnittstelle `Fft`
+in `loop/`, mit Tests gegen die Schnittstelle (gegen die direkte Faltung an kurzen Signalen, Bezugswerte); der
+Download mit Freigabe Patrik (Datei, Quelle, Größe), wenn es so weit ist. Der Ton wird echtes Stereo (`left` links,
+`right` rechts; ein Hörort: Mono in beide). Heute schreibt `Instrument.cpp` die Stegkraft in beide Kanäle. Die
+Rechenzeit je Ton misst der Messteil von AW1 a mit. Grund: fremder Code für die Kernrechnung hinter eigener
+Schnittstelle, austauschbar (wie Eigen, Spectra); der Ton entsteht ohnehin am Stück vorab. Verworfen: b (eigene FFT —
+nachgebauter Code ohne Gewinn), c (Blöcke, overlap-add — Echtzeit ist kein Ziel, später hinter derselben
+Schnittstelle nachrüstbar). Kippt auf b, wenn pocketfft bei Lizenz oder Einbindung Probleme macht; auf c, wenn der
+Messteil den Speicher langer Töne im Bass zu groß findet.
+
+✅ **PG1 a** (Patrik S149, Frage 8 aus PL31 a): **Ein fester Bezug für den Schalldruck, gleich für alle Körper** —
+`kSchalldruckBezug` (Pa = 1) neben `kHammerKraftBezug`, mit Herkunft im Kommentar. Den Wert legt der Messteil von
+31c-7 einmal fest: der lauteste Ton des Steinway D (höchste Anschlagstufe, lauteste Taste) bei −6 dBFS Spitze. Die
+Antworten bleiben unnormiert (Taste, Hörort und Anschlag behalten ihr Verhältnis); der Pegel des Instruments kommt wie
+bei allen über `instrument_pegel.py` (Messung in 31h für `grand_piano`). Der Messteil berichtet den Schalldruck in
+dB SPL am Hörort; verglichen mit *Salamander* in 31d. Grund: ein Bezug verschiebt nur, wo „laut“ auf der Skala liegt;
+was der Boden physikalisch bringt (Bass gegen Diskant, links gegen rechts, Anschlagstufen), bleibt. Verworfen: b
+(Antworten normiert — nimmt je Taste weg, wofür der Boden gerechnet wird), c (alter Bezug, skaliert — bindet den
+Schalldruck an eine gesetzte Kraft). Kippt, wenn die Varianten aus 31c-8 bei diesem Bezug über 0 dBFS gehen: dann
+liegt der Bezug am lautesten aller mitgelieferten Körper, weiter einer für alle.
+
+✅ **SB1 a** (Patrik S149, Frage 9 aus PL31 a): **`soundboard` trägt in `.lvinst` Fassung 17 nur `body`** — den
+Verweis auf einen Körper (`lib:<name>`; `user:` erst mit einem Editor, BM3 a), immer geschrieben, leer = ohne Boden;
+**`amount` fällt weg** (Fassung 16 bleibt lesbar, `amount` wird überlesen — es wirkte nie). Mit Körper klingen seine
+Hörorte `left` und `right` (BM6-1 a) als Stereo; andere Namen: der erste links, der zweite rechts; einer allein in
+beide Kanäle. Ohne Körper klingt die Stegkraft wie heute (für Tests und als Vergleich). Fehlt die Körperdatei, klingt
+der Ton ohne Boden, der Bericht meldet „Body not found“ (wie bei einem fehlenden Sample). `kInstrumentFassung` = 17;
+vorher die Fassungs-Literale in `tests/` suchen, danach `*Klangfassung*`. Grund: ein Feld trägt, was es physikalisch
+gibt — beim Flügel kommt der ganze Klang durch den Boden. Verworfen: b (`amount` als Mischverhältnis — gäbe die
+Stegkraft als Klang aus), c (`amount` als Stärke — wiederholt Lautstärke und Pegel, PG1 a). Kippt, wenn 31d gegen
+*Salamander* einen Anteil Direktschall braucht (Hammer, Mechanik) — dann als eigenes Feld mit eigener Quelle.
+
+✅ **DM1 a** (Patrik S149, Frage 13 aus PL31 a, neu beim Sammeln): **η je Mode nach dem Anteil der
+Verformungsenergie je Werkstoff** (modale Verformungsenergie; Johnson & Kienholz 1982 — aus Claudes Wissen, nicht
+nachgelesen): η_Mode = Σ_Werkstoff η_Werkstoff(f) · U_Werkstoff / U_gesamt, U je Element aus φ_eᵀ K_e φ_e, beim
+Auswerten jeder Mode mitgerechnet. Ein Werkstoff mit `lossFactor` > 0 trägt diesen festen Wert, einer mit 0 das Gesetz
+des Körpers (RT-0425 Gl. 1) — der Wortlaut des Feldes im Bauplan. Der Steinway D (überall 0) behält seine
+Verlustfaktoren; weil der Anteil je Werkstoff als Zahl je Mode in den Körper kommt, ändert sich die Datei
+(`kKoerperFassung`, neu rechnen). Der MAESSTRO-Prüffall bekommt 2 % (PF1 a), ein Glasboden das Glas mit seinem Wert,
+Rippen und Stege aus Holz mit dem Gesetz. **Grenze, in der Doku benannt:** für Glas fehlen die Verluste an Rand und
+durch Abstrahlung (für Holz stecken sie im Gesetz von RT-0425). Grund: die Dämpfung einer Mode hängt davon ab, wo sie
+ihre Energie hat; nur Größen, die schon da sind. Verworfen: b (ein η je Körper — ein Glasboden mit Holzrippen bekäme
+einen Wert, den keiner der Werkstoffe hat), c (Gesetz für alle — gegen GB1 a). Kippt, wenn die Hörproben in 31c-8 den
+Glasboden unnatürlich lange klingen lassen: dann die Dämpfung durch Abstrahlung (Rayleigh über die ganze Fläche) als
+eigene Frage.
+
+✅ **GL1 a** (Patrik S149, Frage 11 aus PL31 a): **Der Glasboden ist Kalk-Natron-Floatglas, monolithisch, isotrop** —
+ρ = 2500 kg/m³, E = 70 GPa, ν = 0,2 (europäische Datenblätter nach EN 572; NGA FM05-12 als Gegenwert 71,7 GPa, 0,22 —
+beide als Quelle im Bauplan), **η = 1·10⁻³** fest (Cremer/Heckl über Irvine 2010 Tab. 7, Mitte der Spanne 0,6–2·10⁻³;
+Ashby nennt weniger — vermerkt). Rippen und Stege bleiben Fichte und Buche (GB1 a). Zwei Baupläne: **Dicke wie Holz**
+(Verlauf 9 → 6 mm) und **gleiche Masse** (Verlauf mal 380/2500: 1,4 → 0,9 mm; Biegewellen rund 20 % kürzer, Netz rund
+1,6-mal so viele Größen — selbst gerechnet). Die Doku vermerkt: Bruch unter der Saitenlast nicht gerechnet (gedachtes
+Instrument), Rand und Abstrahlung fehlen in der Dämpfung (DM1 a). Grund: das bestbelegte Glas; für η gibt es bei
+keinem Glas mehr als eine Spanne. Verworfen: b (Borosilikat — dieselbe Unsicherheit bei η), c (Verbundglas — eine
+Platte aus Schichten, Werte nur aus Patenten). Kippt, wenn die Rechnung des dünnen Glasbodens über der
+Rückfragegrenze von KV1 a liegt (20 GB oder 3 h): dann nur „Dicke wie Holz“, vorgelegt.
+
+✅ **VA1 a** (Patrik S149, Frage 10 aus PL31 a): **31c-8 rechnet fünf Körper in zwei Familien, je gegen ihre eigene
+Grundlage.** **Familie MAESSTRO** (aus dem Prüffall nach PF1 a): MP1 (Platte 16 mm), MP2 (jede zweite Rippe), MP3
+(ohne Rippen) — geprüft gegen die Richtungen von MAESSTRO: Modendichte MP1 < RP < MP2 < MP3 (Abb. 5), mittlere
+Mobilität MP3 höchste, MP1 niedrigste, Abstand Bass/Diskant bei MP1 rund 5 statt 10 dB (S. 8); unter den Testdaten,
+nicht mitgeliefert. **Familie Steinway** (aus dem Steinway D nach RT-0425): Glas mit Dicke wie Holz und Glas auf
+gleiche Masse (GL1 a), beide als `lib:`-Körper unter `asset/loop/instrument_bodies/` mitgeliefert (je rund 3 MB) für
+31h. **Hörproben** je Familie gegen ihre Grundlage (RP gegen MP1–MP3, Steinway gegen beide Glasböden), dieselben Töne
+für alle (Satz in Frage 12). Weitere Varianten auf dem echten Steinway (dickere Platte, kleinerer Boden) **bei
+Bedarf** nach Patriks Urteil über die Hörproben (BM1 a). Grund: jede Rechnung hat eine Aufgabe aus einem Entscheid
+(BM2 a, GB1 a), beide Familien liefern zugleich die Hörproben von BM1 a; eine Variante wird nur gegen ihre Grundlage
+gehört, sonst hört man die Vereinfachungen mit. Verworfen: b (dazu drei Varianten auf dem echten Steinway — vorab
+gerechnet, was vielleicht niemand will), c (nur Glas — streicht die Prüfung der Richtungen aus BM2 a). Kippt, wenn
+MP1 klar hörbar anders klingt: dann Varianten auf dem echten Steinway als „Plan erweitern“ (PL31 a).
+
+✅ **ZA1 a** (Patrik S149, Frage 12 aus PL31 a): **31c-9 Abschluss 31c als eigener Schritt nach 31c-8.** (1) Tests:
+zuerst der Bereich `*Loop*,*Instrument*,*Shape*,*Palette*,*Drum*,*Wav*,*Publish*,*Import package*`,
+`--source-file=*test_Composer*` und `*Klangfassung*` unter Release-clang und Testing-MSVC (damit auch der
+ausstehende MSVC-Lauf von `*Loop Koerper*`), dann **der volle Lauf unter beiden Compilern** (offen seit Stufe 26),
+Dauer gemessen und notiert. (2) Hörproben über `LUMIVIZ_31C_WAV=<Ordner>`, gesammelt für Patrik: je Körper A0, C2,
+C4, C6, C8 mit mf, dazu C4 mit pp und ff, Stereo; Steinway ohne gegen mit Boden, die Familien aus VA1 a; mit einer
+Liste, was jede Datei vergleicht. (3) Doku: `InstrumentBody.md`, Gebaut-Absätze, `THIRD_PARTY_NOTICES.md`
+(pocketfft), README der Körper, `Offene_Punkte`, Steckbrief. Keine Sichttests (in 31c entsteht nichts auf dem
+Bildschirm; die Bedienung kommt in 31g). Erst damit ist 31c fertig; danach die Planung von 31d–31h nach PL31 a. Grund:
+ein Abschluss, der den vollen Lauf weiter schiebt, ist keiner; 31c ändert mitbenutzten Code (`.lvinst` 17,
+Tonspeicher, Stereo der Hammer-Saite). Verworfen: b (voller Lauf erst am Ende von 31). Kippt, wenn der volle Lauf
+unter Testing-MSVC über rund 2 h dauert: dann vorlegen, ihn unter MSVC am Ende von 31 zu fahren, unter clang jetzt.
+
+**Befund S149 zu den ersten Moden (Corradi 2017 selbst gelesen, Tab. 2 S. 25, S. 6–11):** gemessen ist ein Fazioli
+F278; unserem Modell (eingespannt, ohne Saiten) entspricht Stufe 3 („soundboard is assembled in the piano case by
+gluing its edge on the internal rim“) — erste Moden 43,1, 46,0, 60,8, 65,7, 75,7 Hz; „34 modes up to 348 Hz … at stage
+3“ (rund 0,11 /Hz); Corradis FE-Modell trifft Stufe 3 erst ab 59,3 Hz. Unser Steinway: erste Mode 38,2 Hz, Dichte
+unter 500 Hz 0,064 /Hz (MAESSTRO Abb. 5 rund 0,05–0,07, Ege am Klavier rund 0,06). Der Bereich in BM1 a („43–60 Hz,
+Abstände um 20 Hz“) war festgelegt, bevor Bauzustand und Flügel des Vergleichs geklärt waren (60 Hz ist bei Conklin
+der Zustand mit Saiten; die Abstände haben keine Quelle).
+
+✅ **EM1 a** (Patrik S149, Frage 14 aus PL31 a, beim Planen gefunden; fasst den Kipppunkt von BM1 a neu): **Die
+ersten Moden werden gegen Corradi Stufe 3 (gleicher Bauzustand) und MAESSTRO Abb. 5 (gleicher Flügel, gerechnet)
+geprüft. BM1 a kippt auf c, wenn (1) die erste Mode außerhalb 35–65 Hz liegt** (Corradi Stufe 3 43,1 Hz ±20 % für den
+Unterschied der Flügel, nach oben bis zum Zustand mit Saiten) **oder (2) die Modendichte unter 500 Hz außerhalb
+0,04–0,14 /Hz** (unter MAESSTRO bis über Corradi). Der Steinway (38,2 Hz, 0,064 /Hz) besteht beides; geprüft und
+berichtet wird an den nachgerechneten Moden in 31c-6. Conklin nur als Bericht (Volltext nicht gesehen). Grund: ein
+Kipppunkt soll anzeigen, dass das Modell daneben liegt, nicht dass ein Steinway nicht wie ein Fazioli schwingt.
+Verworfen: b (BM1 a wörtlich — der Bereich steht auf falscher Grundlage), c (nur berichten — gibt einen Prüfstein
+auf, den PL31c a will). Kippt, wenn die Moden aus 31c-6 (k = 4 nach KV1 a) außerhalb dieser Grenzen liegen (dann BM1 c
+vorlegen), oder wenn Patrik eine engere Toleranz nennt.
+
+### Fester Plan: IP1 und 31c-6 bis 31c-9 (PL31 a, S149)
+
+Nummern fest; wächst etwas, als Entscheid „Plan erweitern“. Je Teilschritt beide Compiler bauen, eng testen unter
+Release-clang (MT1 a); Testing-MSVC und die großen Läufe in 31c-9.
+
+**IP1 — Fenster *Instruments* misst im Hintergrund** (Loop_Konzept §4n, IP1 a). Hintergrund-Thread für
+`abstandZumBezug`, gemerkt unter `instrumentAbdruck` und `kKlangfassung`, kein doppeltes Lesen beim ersten Öffnen.
+Prüfung: ein Fall belegt, dass das Öffnen nicht misst, die Spalte sich füllt und ein zweites Öffnen den gemerkten Wert
+nimmt. Eng: `*Palette*,*Pegel*`. Eigener Commit.
+
+**31c-6 — Prüfstein und Konvergenz.**
+1. *Dämpfung je Werkstoff* (DM1 a): Anteil der Verformungsenergie je Werkstoff in `Auswertung`, `lossFactor` wirkt;
+   der Anteil je Mode in den Körper (`kKoerperFassung` 2, Fassung 1 bleibt lesbar). Prüfung: zwei Werkstoffe an der
+   Prüfplatte (Anteile summieren zu 1, η gegen Handrechnung), der Steinway mit allen 0 behält seine η.
+2. *Mobilität* (PS1 a): Treiberpunkt nach MAESSTRO Gl. 10 aus den Moden, das geometrische Mittel 25–5000 Hz
+   (Gl. 12) je Stegpunkt, Mittel je Terzband; im Werkzeug als Bericht. Prüfung gegen einen Einmassenschwinger und die
+   Prüfplatte (geschlossene Lösung).
+3. *Prüffall* (PF1 a): `make_steinway_d.py --maesstro` unter den Testdaten; Überlagerungsbild gegen Abb. 4 a.
+4. *Rechnungen*: Prüffall (k = 3); Steinway neu (Fassung 2); Messlauf k = 4 im Fenster 0–500 Hz (über 20 GB oder 3 h
+   hochgerechnet: Rückfrage); k = 4 bis 5 kHz (KV1 a).
+5. *Prüfungen und Bericht*: PS1 a (1)–(3), KV1 a (1)–(3), EM1 a, Modendichte gegen Abb. 5; Ergebnisse als Befund
+   hier, Kipppunkte von BM7 a, ST1 a, BM1 a ausgewertet. Eng: `*Loop Koerper*`.
+
+**31c-7 — Klang.**
+1. *Messteil* (AW1 a, FT1 a, PG1 a): Zeit und Speicher je Antwort, Rechenzeit der Faltung je Ton, Schalldruck am
+   Hörort in dB SPL → Wert von `kSchalldruckBezug`; über 1 s je Antwort: Rückfrage.
+2. *FFT* (FT1 a): pocketfft unter `externals/pocketfft` (Download mit Freigabe), Schnittstelle `Fft`, Tests gegen die
+   direkte Faltung, `THIRD_PARTY_NOTICES.md`.
+3. *Antworten und Faltung*: Antwort je Taste und Hörort im Tonspeicher (AW1 a), Faltung je Ton, echtes Stereo
+   (FT1 a), `kSchalldruckBezug` (PG1 a).
+4. *Datei* (SB1 a): `.lvinst` Fassung 17 mit `soundboard.body`, „Body not found“, Fassungs-Literale in `tests/`,
+   `*Klangfassung*`.
+5. *Hörproben*: `LUMIVIZ_31C_WAV`. Eng: `*Loop Hammer*,*Loop Koerper*,*Klangfassung*,*Instrument*`.
+
+**31c-8 — Varianten** (VA1 a, GL1 a): Baupläne MP1–MP3 aus dem Prüffall (Testdaten) und Glas mit Dicke wie Holz
+und auf gleiche Masse (mitgeliefert, `asset/Asset.cmake`, Wächter); fünf Rechnungen; Prüfung der Richtungen gegen
+MAESSTRO Abb. 5 und S. 8. Eng: `*Loop Koerper*`.
+
+**31c-9 — Abschluss 31c** (ZA1 a): Bereich und voller Lauf unter beiden Compilern, Hörproben gesammelt mit Liste,
+Doku. Danach die Planung von 31d–31h nach PL31 a.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2438,7 +2690,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.78.0 | 2026-10-24 | Session 149. Befund Modenüberlappung (M = 1 bei rund 1 kHz); BM7 a (Grenzfrequenz = höchste gerechnete Mode, 31c-6 prüft Konvergenz und Prüfstein bandweise und senkt die Grenze nur, wo ein Band versagt). |
+| 0.78.0 | 2026-10-24 | Session 149. Befund Modenüberlappung (M = 1 bei rund 1 kHz); BM7 a (Grenzfrequenz = höchste gerechnete Mode, 31c-6 prüft Konvergenz und Prüfstein bandweise und senkt die Grenze nur, wo ein Band versagt); Hinweis Patrik zur immer feineren Teilung; PL31 a (erst 31c abschließen, vorher die zwölf Umfangsfragen von 31c-6 bis Abschluss klären, fester Plan; danach 31d–31h ebenso); Recherchen Mobilität über 1 kHz und Glas; Befund Prüfstein und Bauzustand; PS1 a (drei Prüfungen der Mobilität mit Toleranzen); Befund MAESSTRO Abb. 4; PF1 a (Prüffall aus unserem Bauplan mit den Vereinfachungen von MAESSTRO); Befund Konvergenztest MAESSTRO Gl. 2; KV1 a (zweite Rechnung k = 4, Toleranzen je Terzband); AW1 a (Antworten je Taste in der App aus der Körperdatei, im Tonspeicher, Messteil zu Beginn von 31c-7); FT1 a (Faltung je Ton mit pocketfft hinter `Fft`, echtes Stereo); PG1 a (fester Bezug für den Schalldruck, Antworten unnormiert); SB1 a (`soundboard` trägt nur `body`, `amount` fällt weg, `.lvinst` Fassung 17); DM1 a (η je Mode nach Verformungsenergie je Werkstoff); GL1 a (Floatglas, η 1·10⁻³, zwei Dicken); VA1 a (31c-8: MP1–MP3 und zwei Glasböden, Hörproben je Familie); ZA1 a (31c-9 Abschluss: Bereich und voller Lauf unter beiden Compilern, Hörproben, Doku); Befund erste Moden (Corradi Stufe 3); EM1 a (Kipppunkt von BM1 a neu gefasst); fester Plan IP1 und 31c-6 bis 31c-9. |
 | 0.77.0 | 2026-10-23 | Session 148. BM6 a (Hörorte als Liste im Bauplan, je Hörort ein Abstrahlgewicht je Mode; Lage der Vorgabe in BM6-1); Befund Mikrofone von *Salamander*; BM6-1 a (Stereopaar 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86); PL31c-5 a (31c-5a bis 31c-5d, statistischer Teil dabei); 31c-5a gebaut (Hörorte, `.lvinstbodyplan` Fassung 2); Befund zur Dämpfung (RT-0425 Gl. 1 als Polynom in f); 31c-5b gebaut (Auswertung je Mode); Befund Modendichte und Abstände; ST1 a (statistischer Teil aus den gerechneten Moden, Ziehung nach Boutillon & Ege); 31c-5c gebaut (5933 Moden bis 20 kHz); 31c-5d gebaut (Körperdatei, `steinway_d.lvinstbody` 2,9 MB, Wächter) — 31c-5 fertig. |
 | 0.76.0 | 2026-10-23 | Session 148. Spectra 1.2.0 als External; EG1 a (Schnittstelle des Eigenlösers: Teilfenster im Löser, Moden an einen Empfänger, Zählung nach Sylvester); EG2 a (`SimplicialLDLT` in eigenem Operator, Residuum je Mode; SparseLU und Superknoten als Alternativen, wenn nötig). |
 | 0.75.0 | 2026-10-23 | Session 147. EL1 a (Lagrange-Dreiecke der Ordnung k, Vorgabe 3); 31c-3 gebaut (Eigen als External, Platte nach Reissner-Mindlin gegen Navier gemessen, Steinway bis 5 kHz gebaut). |
