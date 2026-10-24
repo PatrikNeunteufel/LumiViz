@@ -23,7 +23,8 @@
  *   gegen mit Boden) mit einer Liste `liste.txt` — Patrik hoert sie gesammelt spaeter.
  * - **Messteil** nur mit `LUMIVIZ_31C7_MESSUNG=1` (Release-clang, einige Minuten): Zeit und Speicher je
  *   Antwort, Rechenzeit der Faltung je Ton, Schalldruck am Hoerort fuer alle 88 Tasten bei der
- *   hoechsten Anschlagstufe → der Wert von `kSchalldruckBezug` (PG1 a). Meldet nur Zahlen.
+ *   hoechsten Anschlagstufe → der Wert von `kSchalldruckBezug` (PG1 a). Meldet nur Zahlen. Seit S151 (31c-8)
+ *   fuer jeden mitgelieferten Koerper, mit dem lautesten Ton in dBFS beim festen Bezug (Kipppunkt von PG1 a).
  ****************************************************************************************
  */
 
@@ -269,15 +270,12 @@ TEST_CASE("Loop Koerper 31c-7 Hoerproben (LUMIVIZ_31C_WAV)")
     tonspeicher().leere();
 }
 
-TEST_CASE("Loop Koerper 31c-7 Messteil (AW1 a, FT1 a, PG1 a)")
+namespace
 {
-    if (qEnvironmentVariableIntValue("LUMIVIZ_31C7_MESSUNG") != 1)
-    {
-        MESSAGE("LUMIVIZ_31C7_MESSUNG nicht gesetzt — der Messteil laeuft nicht");
-        return;
-    }
-    kp::Koerper koerper;
-    REQUIRE(ladeKoerper(QStringLiteral("asset/loop/instrument_bodies/steinway_d.lvinstbody"), koerper));
+
+/// Der Messteil an einem Koerper: Zeit je Antwort, Ton, Faltung und Schalldruck je Taste.
+void messeKoerper(const kp::Koerper& koerper)
+{
     const int rate = 48000;
     auto t0 = std::chrono::steady_clock::now();
     const std::vector<kp::ModeImKoerper> moden = alleModen(koerper);
@@ -363,4 +361,28 @@ TEST_CASE("Loop Koerper 31c-7 Messteil (AW1 a, FT1 a, PG1 a)")
             " dB SPL; kSchalldruckBezug fuer −6 dBFS Spitze: ", spitze / std::pow(10.0, -6.0 / 20.0), " Pa");
     MESSAGE("hoechstens (parallel gemessen): Antwort ", antwortMax, " s, Faltung ", faltungMax, " s; laengster Ton ",
             tonMax / double(rate), " s");
+    MESSAGE("beim festen Bezug (kSchalldruckBezug ", kSchalldruckBezug, " Pa): lautester Ton ",
+            20.0 * std::log10(spitze / kSchalldruckBezug), " dBFS");
+}
+
+}  // namespace
+
+TEST_CASE("Loop Koerper 31c-7 Messteil (AW1 a, FT1 a, PG1 a)")
+{
+    if (qEnvironmentVariableIntValue("LUMIVIZ_31C7_MESSUNG") != 1)
+    {
+        MESSAGE("LUMIVIZ_31C7_MESSUNG nicht gesetzt — der Messteil laeuft nicht");
+        return;
+    }
+    // jeder mitgelieferte Koerper (S151, 31c-8: PG1 a kippt, wenn eine Variante beim festen Bezug ueber 0 dBFS geht)
+    const QDir ordner(QStringLiteral("asset/loop/instrument_bodies"));
+    const QStringList namen = ordner.entryList({QStringLiteral("*.lvinstbody")}, QDir::Files, QDir::Name);
+    REQUIRE_MESSAGE(!namen.isEmpty(), "die Test-Exe aus dem Projekt-Root starten");
+    for (const QString& name : namen)
+    {
+        MESSAGE("=== ", name.toStdString());
+        kp::Koerper koerper;
+        REQUIRE(ladeKoerper(ordner.filePath(name), koerper));
+        messeKoerper(koerper);
+    }
 }

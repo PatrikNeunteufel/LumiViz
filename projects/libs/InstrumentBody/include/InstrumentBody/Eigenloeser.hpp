@@ -53,6 +53,7 @@ struct EigenErgebnis
     int imFenster = -1;                ///< Zahl der Eigenwerte im Fenster, gezaehlt nach Sylvester
     int faktorisierungen = 0;          ///< fuer den Vergleich alt gegen neu
     double groessterRest = 0.0;        ///< max ‖Kφ − λMφ‖ / ‖λMφ‖ ueber die gelieferten Moden
+    int nachgeschaerft = 0;            ///< Moden, die erst nachgeschaerft die Grenze des Rests einhielten (RS1 a)
     double sekunden = 0.0;
     double sekundenZerlegung = 0.0;    ///< davon in Zerlegungen (soweit die Umsetzung zerlegt)
     std::string fehler;                ///< leer = in Ordnung

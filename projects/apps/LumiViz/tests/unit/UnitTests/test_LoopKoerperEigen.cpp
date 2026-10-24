@@ -21,6 +21,9 @@
  *   und gegen Navier; ein Fenster mitten im Spektrum.
  * - Bezugswerte der Pruefplatte (Frequenzen, Form an Stuetzpunkten) in
  *   `werte/eigen_pruefplatte.txt` — neu mit `LUMIVIZ_EIGEN_WERTE_SCHREIBEN=1`.
+ * - Nachschaerfen (RS1 a, S151, nur die Umsetzung mit Spectra): grobe Toleranz, weites Fenster, strenge
+ *   Grenze des Rests — die Moden werden nachgeschaerft statt abzubrechen, auch doppelte; mit der Vorgabe
+ *   schaerft die Pruefplatte nichts nach.
  * - Fehler und Abbruch.
  * - `LUMIVIZ_EIGEN_MESSUNG=<Hz>`: der Steinway D (Netz bis 5 kHz, k = 3) von 0 bis <Hz>; meldet
  *   Zahl der Moden, Zeit, Zerlegungen, Rest und Spitze des Speichers.
@@ -187,6 +190,20 @@ kp::Material fichte()
     m.gyz = 0.042e9;
     m.nuxy = 0.26;
     return m;
+}
+
+/// Zwei gleiche Systeme ohne Kopplung (blockdiagonal): jeder Eigenwert doppelt.
+kp::DuenneMatrix zweimal(const kp::DuenneMatrix& a)
+{
+    kp::DuenneMatrix b;
+    b.n = 2 * a.n;
+    b.start = a.start;
+    for (int i = 1; i <= a.n; ++i) b.start.push_back(a.start[static_cast<std::size_t>(a.n)] + a.start[static_cast<std::size_t>(i)]);
+    b.spalten = a.spalten;
+    for (const int s : a.spalten) b.spalten.push_back(s + a.n);
+    b.werte = a.werte;
+    b.werte.insert(b.werte.end(), a.werte.begin(), a.werte.end());
+    return b;
 }
 
 /// Die frei aufliegende Pruefplatte aus test_LoopKoerperPlatte: 0,3 × 0,2 m, 8 mm Fichte, k = 3.
@@ -407,6 +424,52 @@ TEST_CASE("Loop Koerper 31c-4 Eigen Bezugswerte")
             ++i;
         }
         CHECK(i == moden);
+    }
+}
+
+TEST_CASE("Loop Koerper 31c-8 Eigen Nachschaerfen (RS1 a)")
+{
+    // Spectra mit einem Fenster in einem Schritt und einer Grenze des Rests strenger, als Lanczos sie an der
+    // Pruefplatte von sich aus trifft (dort bis 6·10⁻¹⁰; die Rundung selbst laesst rund 2,5·10⁻¹⁰) — der Loeser
+    // schaerft nach, statt abzubrechen; gegen den
+    // dichten Loeser. Dazu zwei gleiche Platten ohne Kopplung: jeder Eigenwert doppelt, beim Nachschaerfen bleibt
+    // die andere Form gesperrt. Nur die Umsetzung mit Spectra (die Stellgroessen gehoeren ihr, nicht der Schnittstelle).
+    kp::EigenloeserSpectra l;
+    l.modenJeSchritt = 1000;
+    l.restGrenze = 4e-10;
+    const kp::PlattenSystem s = pruefplatte();
+    const auto dicht = dichtAlle(s.k, s.m);
+    const kp::DuenneMatrix k2 = zweimal(s.k), m2 = zweimal(s.m);
+    for (const int kopien : {1, 2})
+    {
+        CAPTURE(kopien);
+        const kp::DuenneMatrix& k = kopien == 1 ? s.k : k2;
+        const kp::DuenneMatrix& m = kopien == 1 ? s.m : m2;
+        const int zahl = 60 * kopien;
+        Lauf x;
+        kp::EigenAuftrag a;
+        a.k = &k;
+        a.m = &m;
+        a.bisHz = zwischen(dicht, 59);
+        a.jeMode = [&](const kp::Mode& mode) { x.moden.push_back(mode); };
+        x.erg = l.loese(a);
+        REQUIRE_MESSAGE(x.erg.fehler.empty(), x.erg.fehler);
+        MESSAGE(std::string(kopien == 1 ? "Pruefplatte: " : "zwei Platten: "), x.erg.nachgeschaerft, " von ",
+                x.erg.frequenzenHz.size(), " Moden nachgeschaerft, Rest ", x.erg.groessterRest, ", ", x.erg.faktorisierungen,
+                " Zerlegungen");
+        CHECK(x.erg.nachgeschaerft > 0);
+        CHECK(x.erg.groessterRest <= 4e-10);
+        REQUIRE(static_cast<int>(x.erg.frequenzenHz.size()) == zahl);
+        CHECK(std::is_sorted(x.erg.frequenzenHz.begin(), x.erg.frequenzenHz.end()));
+        for (int i = 0; i < zahl; ++i)
+            CHECK(x.erg.frequenzenHz[static_cast<std::size_t>(i)] == doctest::Approx(dicht[static_cast<std::size_t>(i / kopien)]).epsilon(1e-8));
+        CHECK(orthoFehler(x.moden, m) < 1e-8);
+    }
+    // mit der Grenze aus EG2 a und der Toleranz der Vorgabe schaerft die Pruefplatte nichts nach (bitgleich wie vorher)
+    {
+        const Lauf x = loese(kp::EigenloeserSpectra{}, s.k, s.m, 0.0, 4000.0);
+        REQUIRE_MESSAGE(x.erg.fehler.empty(), x.erg.fehler);
+        CHECK(x.erg.nachgeschaerft == 0);
     }
 }
 

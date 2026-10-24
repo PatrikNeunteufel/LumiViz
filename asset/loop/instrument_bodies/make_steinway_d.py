@@ -13,6 +13,10 @@ RT-0425 entfaellt), Rippen ohne Verjuengung 27 → 17 mm hoch und 25 → 21 mm b
 Grad, Sitka und Buche aus Tab. 2 mit η = 2 %. `--bild` legt den Pruefstein dann auf Abb. 4 (a)
 (Umriss orange, Rippen schwarz, Bass-Steg rot, Diskant-Steg lila, Rib15 aus der Liste der
 Oberflaeche hellblau) und misst Zahl, Winkel und Abstand der Rippen von MAESSTRO im Bild.
+Derselbe Lauf schreibt die drei Varianten aus MAESSTRO §3.2 (S151, Stufe 31c-8, VA1 a) daneben:
+`maesstro_mp1` (Platte 16 mm), `maesstro_mp2` (doppelter Rippenabstand — jede zweite Rippe ab
+der Bass-Rippe, 9 von 17 wie Abb. 4 b), `maesstro_mp3` (ohne Rippen); mit `--bild` liegt MP2
+zusaetzlich auf Abb. 4 (b) (`<bild>_mp2.png`).
 
 Quelle: J. Chabassier, M. Duruflé, „Physical parameters for piano modeling", Inria RT-0425
 (2012), hal-00688679 — die PDF liegt nur lokal unter
@@ -20,7 +24,9 @@ Quelle: J. Chabassier, M. Duruflé, „Physical parameters for piano modeling", 
 werden `pdftotext` und `pdfimages` (Poppler), dazu numpy, scipy, Pillow.
 
 Schreibt `steinway_d.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 2) neben
-dieses Skript oder nach `--ziel`. Kein Zufall: zwei Laeufe ergeben dieselbe Datei.
+dieses Skript oder nach `--ziel`, dazu die zwei Glasboeden aus dem Steinway (S151, Stufe 31c-8,
+GB1 a, GL1 a): `steinway_d_glass` (Dicke wie Holz) und `steinway_d_glass_same_mass` (gleiche Masse
+der Platte). Kein Zufall: zwei Laeufe ergeben dieselbe Datei.
 **Massgebend ist die Datei im Repo, nicht ein neuer Lauf** — zuerst mit `--ziel` in eine Kopie
 schreiben und vergleichen.
 
@@ -57,6 +63,7 @@ Was woher kommt:
   am ersten und dritten Viertel der Tastatur (MIDI 43 und 86). z ueber der Mittelflaeche der
   Platte: halbe Plattendicke plus Hoehe des Stegs dort plus 12 cm.
 """
+import copy
 import json
 import re
 import subprocess
@@ -624,6 +631,80 @@ def flaeche(umriss):
     return abs(np.dot(u[:, 0], np.roll(u[:, 1], -1)) - np.dot(u[:, 1], np.roll(u[:, 0], -1))) / 2
 
 
+# --- Glasboeden (S151, Stufe 31c-8, GB1 a, GL1 a, VA1 a) ------------------------------------
+# Kalk-Natron-Floatglas, monolithisch, isotrop: Datenblaetter nach EN 572 (gegengelesen NGA FM05-12:
+# 71,7 GPa, ν 0,22); η nach Cremer/Heckl ueber Irvine 2010 Tab. 7 (Spanne 0,6–2·10⁻³, die Mitte)
+GLAS_DICHTE = 2500.0
+GLAS_E = 70.0e9
+GLAS_NU = 0.2
+GLAS_ETA = 1.0e-3
+GLAS_QUELLE = ("soda-lime float glass, monolithic: density, E and Poisson's ratio after European data sheets to "
+               "EN 572 (NGA Glass Technical Paper FM05-12 (2023) gives 71.7 GPa and 0.22); loss factor 1e-3 after "
+               "Cremer & Heckl via T. Irvine, Damping Properties of Materials (2010), Table 7, middle of 0.6-2e-3 "
+               "(Ashby gives less). GL1 a.")
+
+
+def dicke_im_raster(platte, p):
+    """Die Plattendicke an p wie `plattendicke` in `baue`: die naechste Zelle des Rasters, ausserhalb
+    der Wert `thickness`."""
+    r = platte["thicknessGrid"]
+    i = min(max(int(round((p[0] - r["origin"][0]) / r["step"])), 0), r["nx"] - 1)
+    j = min(max(int(round((p[1] - r["origin"][1]) / r["step"])), 0), r["ny"] - 1)
+    v = r["values"][j * r["nx"] + i]
+    return platte["thickness"] if v is None else v
+
+
+def glasboeden(steinway):
+    """Zwei gedachte Instrumente (GB1 a, GL1 a): der Steinway D mit einer Platte aus Glas, Rippen und Steg
+    bleiben Fichte und Buche. `steinway_d_glass` mit der Dicke des Holzbodens (9 → 6 mm),
+    `steinway_d_glass_same_mass` mit dem Verlauf mal 380/2500 (gleiche Masse der Platte, 1,4 → 0,9 mm).
+    Die Hoerorte behalten x, y; z folgt der halben Plattendicke. Bruch unter der Saitenlast ist nicht
+    gerechnet; in der Daempfung fehlen Rand und Abstrahlung (DM1 a)."""
+    holz = next(m for m in steinway["materials"] if m["name"] == steinway["plate"]["material"])
+    g = GLAS_E / (2.0 * (1.0 + GLAS_NU))
+    glas = {"name": "glass", "kind": "isotropic", "density": GLAS_DICHTE, "ex": GLAS_E, "ey": GLAS_E, "gxy": g,
+            "gxz": g, "gyz": g, "nuxy": GLAS_NU, "lossFactor": GLAS_ETA, "source": GLAS_QUELLE}
+    plaene = {}
+    for name, faktor, titel, was in (
+            ("steinway_d_glass", 1.0, "Steinway D with a glass soundboard",
+             "the plate of soda-lime glass with the thickness of the wooden plate (6-10 mm)"),
+            ("steinway_d_glass_same_mass", holz["density"] / GLAS_DICHTE, "Steinway D with a thin glass soundboard",
+             "the plate of soda-lime glass with the mass of the wooden plate (thickness times 380/2500)")):
+        plan = copy.deepcopy(steinway)
+        platte = plan["plate"]
+        platte["material"] = "glass"
+        platte["thickness"] = runde(steinway["plate"]["thickness"] * faktor, 6)
+        platte["thicknessGrid"]["values"] = [None if v is None else runde(v * faktor, 6)
+                                             for v in steinway["plate"]["thicknessGrid"]["values"]]
+        plan["materials"] = steinway["materials"] + [glas]
+        for h, alt in zip(plan["listeningPoints"], steinway["listeningPoints"]):
+            ort = (alt["x"], alt["y"])
+            h["z"] = runde(alt["z"] - dicke_im_raster(steinway["plate"], ort) / 2.0 + dicke_im_raster(platte, ort) / 2.0)
+        plan["title"] = titel
+        plan["description"] = (f"Imagined instrument (GB1 a): the Steinway D of RT-0425 with {was}; ribs of spruce "
+                               "and bridge of beech as in steinway_d. Fracture under the string load is not "
+                               "computed; damping from the rim and from radiation is missing for the glass.")
+        plan["source"] = ("steinway_d.lvinstbodyplan (make_steinway_d.py) with a glass plate after GL1 a; "
+                          + GLAS_QUELLE.split(":", 1)[0] + ", values see material 'glass'. Generated by make_steinway_d.py.")
+        plaene[name] = plan
+    return plaene
+
+
+def pruefe_glasboeden(steinway, plaene):
+    """Bericht: Dicke und Masse der Platte je Glasboden gegen den Holzboden."""
+    def platte(plan):
+        p = plan["plate"]
+        dichte = {m["name"]: m["density"] for m in plan["materials"]}[p["material"]]
+        r = p["thicknessGrid"]
+        werte = [v for v in r["values"] if v is not None]
+        return min(werte), max(werte), sum(werte) * r["step"] ** 2 * dichte
+    for name, plan in [("steinway_d", steinway)] + list(plaene.items()):
+        d0, d1, m = platte(plan)
+        z = ", ".join("%.1f" % (h["z"] * 1e3) for h in plan["listeningPoints"])
+        print(f"{name}: Platte {d0 * 1e3:.2f} … {d1 * 1e3:.2f} mm, Masse der Platte (Raster) {m:.2f} kg, "
+              f"Hoerorte z {z} mm")
+
+
 # --- MAESSTRO-Pruefstein (S150, PF1 a, PF2 a) ---------------------------------------------
 MAESSTRO_PLATTE = 0.008                  # Tab. 1: Panel 8 mm
 MAESSTRO_STEG_BASS = 0.060               # Tab. 1: Bridge #1 (bass) 60 mm
@@ -839,13 +920,66 @@ def pruefe_maesstro(plan):
           f"Enden {da * 1e3:.0f} und {db * 1e3:.0f} mm daneben")
 
 
-def maesstro_bild(plan, maesstro_pdf, bildpfad):
-    """Legt den Pruefstein auf Abb. 4 (a): der Umriss (blau im Bildschirmfoto) bestimmt Massstab und
-    Versatz (ein Massstab fuer beide Achsen, eingepasst ueber den Abstand der Randpunkte)."""
+def varianten(rp):
+    """Die drei veraenderten Fluegel aus MAESSTRO §3.2 (S151, VA1 a), je „similar to the reference piano
+    RP except …“: MP1 die Platte doppelt so dick (16 mm), MP2 „inter-rib spacing twice as RP (see
+    Fig. 4b)“ — Abb. 4 (b) zeigt 9 Rippen, die Bass-Rippe und jede zweite danach bis zur Eckrippe,
+    jede mit ihren Massen aus RP —, MP3 „without ribs: all ribs have been removed and the bridges are
+    the only superstructures“. Die Hoerorte behalten x, y; z folgt der Plattendicke."""
+    sec = "Elie, Cotte & Boutillon, Acta Acustica 6 (2022) 30, Sect. 3.2"
+    mp1 = copy.deepcopy(rp)
+    mp1["plate"]["thickness"] = 2 * MAESSTRO_PLATTE
+    for h in mp1["listeningPoints"]:
+        h["z"] = runde(h["z"] + MAESSTRO_PLATTE / 2.0)
+    mp2 = copy.deepcopy(rp)
+    mp2["ribs"] = rp["ribs"][::2]
+    mp3 = copy.deepcopy(rp)
+    mp3["ribs"] = []
+    plaene = {}
+    for name, plan, titel, was in (
+            ("maesstro_mp1", mp1, "MAESSTRO modified piano 1 (MP1)",
+             "the soundboard twice as thick, 16 mm (\"the thickness of the soundboard is twice the one of RP\")"),
+            ("maesstro_mp2", mp2, "MAESSTRO modified piano 2 (MP2)",
+             "inter-rib spacing twice as RP: ribs 1, 3, ..., 17 of RP with their own sizes (9 ribs, as Fig. 4b)"),
+            ("maesstro_mp3", mp3, "MAESSTRO modified piano 3 (MP3)",
+             "without ribs (\"all ribs have been removed and the bridges are the only superstructures\")")):
+        plan["title"] = titel
+        plan["description"] = (f"Variant of the MAESSTRO test case RP after Elie, Cotte & Boutillon (2022): {was}. "
+                               "Test data, not shipped.")
+        plan["source"] = (f"maesstro_rp.lvinstbodyplan (make_steinway_d.py --maesstro) with the modification of {sec}"
+                          + (" and Fig. 4b." if name == "maesstro_mp2" else ".") + " Generated by make_steinway_d.py --maesstro.")
+        plaene[name] = plan
+    return plaene
+
+
+def pruefe_varianten(rp, plaene):
+    """Bericht: Masse und Rippen je Variante gegen RP (Masse ueber Flaeche und Leisten, wie `masse`)."""
+    def masse(plan):
+        dichte = {m["name"]: m["density"] for m in plan["materials"]}
+        m = flaeche(plan["plate"]["outline"]) * plan["plate"]["thickness"] * dichte[plan["plate"]["material"]]
+        for l in plan["ribs"] + plan["bridges"]:
+            for k in range(len(l["line"]) - 1):
+                laenge = float(np.hypot(*(np.array(l["line"][k + 1]) - np.array(l["line"][k]))))
+                h = (l["height"][k] + l["height"][k + 1]) / 2
+                b = (l["width"][k] + l["width"][k + 1]) / 2
+                m += laenge * h * b * dichte[l["material"]]
+        return m
+    print(f"RP: Platte {rp['plate']['thickness'] * 1e3:.0f} mm, Rippen {len(rp['ribs'])}, Masse {masse(rp):.2f} kg")
+    for name, plan in plaene.items():
+        rippen = ", ".join(r["name"].split()[-1] for r in plan["ribs"]) or "-"
+        z = ", ".join("%.1f" % (h["z"] * 1e3) for h in plan["listeningPoints"])
+        print(f"{name}: Platte {plan['plate']['thickness'] * 1e3:.0f} mm, Rippen {len(plan['ribs'])} ({rippen}), "
+              f"Masse {masse(plan):.2f} kg, Hoerorte z {z} mm")
+
+
+def maesstro_bild(plan, maesstro_pdf, bildpfad, spalten=(222, 610)):
+    """Legt den Pruefstein auf Abb. 4 (a) — mit `spalten=(650, 1094)` eine Variante auf Abb. 4 (b): der
+    Umriss (blau im Bildschirmfoto) bestimmt Massstab und Versatz (ein Massstab fuer beide Achsen,
+    eingepasst ueber den Abstand der Randpunkte)."""
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["pdfimages", "-f", "6", "-l", "6", "-png", maesstro_pdf, str(Path(tmp) / "a")], check=True)
         voll = np.asarray(Image.open(Path(tmp) / "a-000.png").convert("RGB")).astype(int)
-    a = voll[:, 222:610]  # (a) rechts der Bedienleiste
+    a = voll[:, spalten[0]:spalten[1]]  # (a) rechts der Bedienleiste, (b) die rechte Haelfte
     r, g, b = a[:, :, 0], a[:, :, 1], a[:, :, 2]
     blau = (b > 215) & (b - r > 30)  # der Umriss ist blass, etwa (195, 220, 245)
     blau[:60, :] = False  # Kopf des Fensters
@@ -879,7 +1013,8 @@ def maesstro_bild(plan, maesstro_pdf, bildpfad):
     t = optimize.minimize(kosten, start, method="Nelder-Mead", options={"xatol": 1e-3, "fatol": 1e-4, "maxiter": 4000}).x
     px, py = lage(t, rand)
     d = ndimage.map_coordinates(feld, [py, px], order=1)
-    print(f"Abb. 4 (a) gelegt: {1e3 / t[0]:.1f} mm je Pixel; Umriss zum Rand im Bild Median {np.median(d):.1f} px, "
+    teil = "(a)" if spalten[0] < 600 else "(b)"
+    print(f"Abb. 4 {teil} gelegt: {1e3 / t[0]:.1f} mm je Pixel; Umriss zum Rand im Bild Median {np.median(d):.1f} px, "
           f"groesster {d.max():.1f} px")
 
     # die Rippen von MAESSTRO (gruen): Richtung aus der schaerfsten Haeufung, Abstand der Spitzen
@@ -908,7 +1043,7 @@ def maesstro_bild(plan, maesstro_pdf, bildpfad):
                 spitzen.append(k)
     lagen = [(kanten[k] + kanten[k + 1]) / 2 for k in spitzen]
     abst = [d_px * 1e3 / t[0] for d_px in np.diff(lagen)]
-    print(f"Rippen in Abb. 4 (a) (gruen und die gewaehlte Rib15): {len(lagen)}, Winkel {-best[1]:.1f} Grad, "
+    print(f"Rippen in Abb. 4 {teil} (gruen, in (a) mit der gewaehlten Rib15): {len(lagen)}, Winkel {-best[1]:.1f} Grad, "
           f"Abstand {min(abst):.0f} … {max(abst):.0f} mm")
 
     # die Stege von MAESSTRO (rosa) gegen unsere: Abstand jedes rosa Pixels zum naechsten Steg
@@ -936,7 +1071,8 @@ def maesstro_bild(plan, maesstro_pdf, bildpfad):
         zug(r["line"], (0, 0, 0))
     for steg, farbe in zip(plan["bridges"], ((200, 0, 0), (120, 0, 160))):
         zug(steg["line"], farbe, 2)
-    zug(MAESSTRO_RIB15, (0, 180, 255), 2)
+    if teil == "(a)":
+        zug(MAESSTRO_RIB15, (0, 180, 255), 2)
     bild.resize((bild.width * 3, bild.height * 3), Image.LANCZOS).save(bildpfad)
 
 
@@ -963,18 +1099,27 @@ def main(argv):
     if maesstro_pdf:
         plan = maesstro(baue(pdf))
         pruefe_maesstro(plan)
+        plaene = {"maesstro_rp": plan}
+        plaene.update(varianten(plan))
+        pruefe_varianten(plan, {k: v for k, v in plaene.items() if k != "maesstro_rp"})
         if bild:
             maesstro_bild(plan, maesstro_pdf, bild)
+            stamm = Path(bild)
+            print("MP2 auf Abb. 4 (b):")
+            maesstro_bild(plaene["maesstro_mp2"], maesstro_pdf, str(stamm.with_name(stamm.stem + "_mp2" + stamm.suffix)),
+                          spalten=(650, 1094))
         ziel = ziel or Path(__file__).resolve().parents[3] / "projects/apps/LumiViz/tests/unit/UnitTests/koerper"
-        name = "maesstro_rp.lvinstbodyplan"
     else:
-        plan = baue(pdf, bild)
+        steinway = baue(pdf, bild)
+        plaene = {"steinway_d": steinway}
+        plaene.update(glasboeden(steinway))
+        pruefe_glasboeden(steinway, {k: v for k, v in plaene.items() if k != "steinway_d"})
         ziel = ziel or Path(__file__).resolve().parent
-        name = "steinway_d.lvinstbodyplan"
     ziel.mkdir(parents=True, exist_ok=True)
-    datei = ziel / name
-    datei.write_text(json.dumps(plan, indent=4, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    print(f"geschrieben: {datei}")
+    for name, plan in plaene.items():
+        datei = ziel / (name + ".lvinstbodyplan")
+        datei.write_text(json.dumps(plan, indent=4, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        print(f"geschrieben: {datei}")
 
 
 if __name__ == "__main__":

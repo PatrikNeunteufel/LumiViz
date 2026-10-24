@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.282.0
-> **Datum:** 2026-10-24 (Session 149)
+> **Version:** 1.283.0
+> **Datum:** 2026-10-24 (Session 150)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3103,9 +3103,18 @@ Idee Preset-Warmup/Pre-Roll.
   **31c-6 Teil 1 gebaut (S149):** Dämpfung je Werkstoff (DM1 a), Steinway neu gerechnet (Werte Bit für Bit gleich,
   neu die Anteile je Werkstoff).
   **31c-6 Teil 2 gebaut (S149):** Mobilität nach MAESSTRO Gl. 10/12, Terzbänder, Bericht im Werkzeug.
-  **Offen:** 31c-6 Teile 3–5 Prüfstein (Prüffall, Konvergenz mit zweiter Rechnung; erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin,
-  mittlere Mobilität gegen Plath/Giordano — zugleich Kipppunkt von ST1 a), 31c-7 Klang, 31c-8 Varianten mit Glasboden;
-  Testing-MSVC für `*Loop Koerper*` am Stufenende (Bezug des Netzes auf 2 %);
+  **S150: 31c-6 fertig, 31c-7 gebaut.** 31c-6 Teil 3 (MAESSTRO-Prüffall unter den Testdaten, PF2 a: Steg geteilt bei
+  40/41 — MAESSTRO Abb. 6 zählt ab C1; PF3 a: siebzehnte Rippe), Teil 4 (Prüffall gerechnet, Steinway mit k = 4
+  bis 5 kHz: 822 Moden, 44 min, 9,6 GB), Teil 5 (`test_LoopKoerperPruefstein`: PS1 a (3) und EM1 a bestehen, KV1 a
+  nach KV2 a; PS1 a (1) und (2) nur Bericht nach PS3 a und PS4 a — MAESSTRO legt die Formen auf eine Sinus-Basis
+  unbekannter Größe und verschiebt die Stegpunkte, PS2 a: Code gelesen). 31c-7: pocketfft (FF1 a) hinter `loop/Fft`,
+  Antwort des Bodens (`InstrumentBody/Antwort.hpp`, `loop/Boden`), Messteil (Antwort 0,62–0,77 s,
+  `kSchalldruckBezug` 97,3 Pa), Ton der Hammer-Saite durch den Boden in Stereo, `.lvinst` Fassung 17
+  (`soundboard.body`, „Body not found“), Hörproben `LUMIVIZ_31C_WAV`.
+  **Offen:** die **Antwort der Autoren von MAESSTRO** (PS3 a; Entwurf der Anfrage lokal
+  `.claude/handover/Anfrage_MAESSTRO_Daten.md`, Patrik verschickt) — mit den Daten die Nachbearbeitung nachbauen und
+  PS1 a (1) gleich gegen gleich prüfen; **31c-8** Varianten (MP1–MP3, zwei Glasböden), **31c-9** Abschluss (Bereich und
+  voller Lauf unter beiden Compilern, Hörproben aller Körper); Hörproben 31c-7 unter `.claude/handover/hoerproben_31c/`;
   Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d
   (`docs/modellierung/hammer-saite/modell.md` §2).
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen

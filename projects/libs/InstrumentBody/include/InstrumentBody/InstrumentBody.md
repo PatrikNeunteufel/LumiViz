@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.12.0  
+> **Version:** 0.13.0  
 > **Datum:** 2026-10-24  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -135,7 +135,8 @@ K φ = λ M φ mit λ = ω² (`eigenwertVon`, `frequenzVon`). Kein Typ von Eigen
   `PlattenSystem::frei`). Das Vorzeichen ist frei.
 - **`EigenErgebnis`:** die Frequenzen aufsteigend, **`imFenster`** (Zahl der Eigenwerte im Fenster nach dem
   Trägheitssatz von Sylvester — Pflicht jeder Umsetzung, EG1 a), die Zahl der Zerlegungen und ihre Zeit, der größte
-  Rest ‖Kφ − λMφ‖ / ‖λMφ‖, die Zeit, ein Fehlertext (leer = in Ordnung; „cancelled" nach `weiter` = false).
+  Rest ‖Kφ − λMφ‖ / ‖λMφ‖, die Zahl der nachgeschärften Moden (`nachgeschaerft`, RS1 a), die Zeit, ein Fehlertext
+  (leer = in Ordnung; „cancelled" nach `weiter` = false).
 - **Der Löser teilt das Fenster selbst** (EG1 a): Shifts, Teilfenster und doppelte Moden an ihren Grenzen sind seine
   Sache; er weiß nicht, was mit einer Form geschieht. Am Steinway bis 5 kHz wären alle Formen zusammen rund 11 GB.
 
@@ -157,6 +158,12 @@ Spectra 1.2.0 (`SymGEigsShiftSolver`, Shift-Invert, Lanczos mit implizitem Neust
   nächste. Am Ende muss die Summe `imFenster` treffen.
 - **Rest je Mode (EG2 a):** über `restGrenze` (Vorgabe 10⁻⁶) ein Fehler statt einer stillen Mode — `SimplicialLDLT`
   sucht keinen Pivot.
+- **Nachschärfen (RS1 a, S151):** Die Toleranz von Spectra gilt für ν = 1/(λ − σ); eine Mode weit unter σ trägt im
+  eigentlichen Problem einen um rund σ/λ größeren Rest (am steifen MAESSTRO-Flügel MP1: 3·10⁻⁶ bei 68 Hz). Liegt der
+  Rest einer Mode des Stücks über der Grenze, wird sie inverse iteriert — Shift bei λ · (1 − `nachschaerfAbstand`,
+  Vorgabe 10⁻⁶), höchstens `nachschaerfSchritte` (10) Schritte, die übrigen Formen des Stücks gesperrt, λ als
+  Rayleigh-Quotient —, danach neu geordnet; erst wenn auch das nicht reicht, der Fehler. Eine Mode unter der Grenze
+  bleibt, wie sie ist: ein Körper ohne solche Moden rechnet Bit für Bit wie vorher.
 - **Alternativen (EG2 a, Zusatz), wenn als nötig erkannt:** b `SparseLU` mit Pivotsuche für die Moden (wenn Reste
   über der Grenze bleiben, die ein verschobener Shift nicht behebt), c ein Löser mit Superknoten (CHOLMOD, Pardiso)
   als zweite Umsetzung (wenn Speicher oder Zeit der Zerlegung am Steinway ein Fenster unbrauchbar machen).
@@ -290,7 +297,9 @@ Umsetzung aus `eigenloeser()`: eine Kette aus linearen Elementen mit geschlossen
 mitten im Spektrum: jede Mode, keine doppelt, aufsteigend, M-orthonormal auf 10⁻⁸, Rest unter 10⁻⁶), zwei gleiche
 Ketten ohne Kopplung (jeder Eigenwert doppelt — beide kommen), die frei aufliegende Prüfplatte mit k = 3 gegen den
 dichten Löser von Eigen (von unten und mitten im Spektrum), die Bezugswerte `werte/eigen_pruefplatte.txt` (20 Moden:
-Frequenz auf 10⁻⁷, w an fünf Stützpunkten auf 10⁻⁵; `LUMIVIZ_EIGEN_WERTE_SCHREIBEN=1`), Fehler und Abbruch;
+Frequenz auf 10⁻⁷, w an fünf Stützpunkten auf 10⁻⁵; `LUMIVIZ_EIGEN_WERTE_SCHREIBEN=1`), das Nachschärfen (RS1 a,
+nur Spectra: die Prüfplatte und zwei gleiche Platten ohne Kopplung mit einer Grenze strenger, als Lanczos sie trifft),
+Fehler und Abbruch;
 `LUMIVIZ_EIGEN_MESSUNG=<Hz>` rechnet den Steinway D bis dorthin und meldet Zahl, Zeit, Zerlegungen, Rest und Spitze
 des Speichers.
 
@@ -311,6 +320,7 @@ falsches Format, zu neue Fassung).
 | 0.10.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 2: Mobilität (`Mobilitaet.hpp`: MAESSTRO Gl. 10 und 12, Terzbänder, Dichte je Band); Bericht im Werkzeug (`--report`). |
 | 0.11.0 | 2026-10-24 | Session 150, Stufe 31c-6 Teil 3–5: `kDiskantAb` = 41 in `Mobilitaet.hpp` (PF2 a); Prüfstein `test_LoopKoerperPruefstein` (PS3 a, PS4 a, KV2 a). |
 | 0.12.0 | 2026-10-24 | Session 150, Stufe 31c-7 Schritt 1: Antwort des Bodens (`Antwort.hpp`: H je Stegpunkt und Hörort, im Spektrum der FFT, Länge). |
+| 0.13.0 | 2026-10-24 | Session 151, Stufe 31c-8: Nachschärfen im Eigenlöser (RS1 a, `EigenErgebnis::nachgeschaerft`); der Rest in der Fehlermeldung in Exponentenschreibweise. |
 | 0.9.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 1: Dämpfung je Werkstoff (DM1 a) — `Verformungsenergie.hpp`, `Steife::werkstoff`, `Plattenelement::integrationsPunkte`, `verlustfaktorAusAnteilen`, `ModeImKoerper::werkstoffAnteil`, im statistischen Teil das Mittel; `kKoerperFassung` 2, `kRechenFassung` 2. |
 | 0.8.0 | 2026-10-24 | Session 148, Stufe 31c-5d: der Körper (`Koerper.hpp`: `Koerper`, `Rechnung`, `kKoerperFassung`, `kRechenFassung`), die Datei in `loop/Koerper`, der Wächter. |
 | 0.7.0 | 2026-10-23 | Session 148, Stufe 31c-5c: statistischer Teil (`Statistik.hpp`: `StatistischerTeil`, `schaetze`, `ziehe`, `Zufall`; ST1 a). |

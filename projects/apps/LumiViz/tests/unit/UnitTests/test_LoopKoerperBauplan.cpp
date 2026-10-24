@@ -26,6 +26,8 @@
  * - Der MAESSTRO-Prueffall (S150, PF1 a, PF2 a; Testdaten unter `koerper/`, aus
  *   `make_steinway_d.py --maesstro`): Umriss, Rippenlinien und Stegpunkte wie im Steinway D,
  *   Platte, Stege, Rippen und Werkstoffe nach MAESSTRO Tab. 1–2, der Steg geteilt bei 40/41.
+ * - Die drei Varianten (S151, Stufe 31c-8, VA1 a; aus demselben Lauf): MP1 Platte 16 mm, MP2 jede
+ *   zweite Rippe (9 von 17, Abb. 4 b), MP3 ohne Rippen — sonst gleich wie RP.
  * - Die Icons der beiden Endungen (IC1 a) liegen, wo `dateiArtIcon` sie sucht
  *   (`lumiviz_<endung>.ico`), ebenfalls vom Arbeitsordner aus.
  ****************************************************************************************
@@ -479,6 +481,134 @@ TEST_CASE("Loop Koerper 31c-6 MAESSTRO Prueffall")
         CHECK(plan.hoerorte[i].hoehe == doctest::Approx(0.004 + 0.020 + 0.12));
     }
     MESSAGE("Masse ", kp::masse(plan), " kg (Platte ", kp::plattenMasse(plan), " kg)");
+}
+
+TEST_CASE("Loop Koerper 31c-8 MAESSTRO Varianten")
+{
+    // VA1 a: die drei veraenderten Fluegel aus MAESSTRO §3.2, je „similar to the reference piano RP except …“,
+    // Testdaten aus `make_steinway_d.py --maesstro` — MP1 Platte 16 mm, MP2 jede zweite Rippe (Abb. 4 b), MP3 ohne Rippen
+    const QString ordner = QStringLiteral("projects/apps/LumiViz/tests/unit/UnitTests/koerper/");
+    kp::Bauplan rp;
+    REQUIRE_MESSAGE(ladeBauplan(ordner + QStringLiteral("maesstro_rp") + QLatin1String(kBauplanEndung), rp),
+                    "die Test-Exe aus dem Projekt-Root starten");
+    kp::Bauplan mp[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        REQUIRE(ladeBauplan(ordner + QStringLiteral("maesstro_mp%1").arg(i + 1) + QLatin1String(kBauplanEndung), mp[i]));
+        CAPTURE(i + 1);
+        const std::vector<std::string> befunde = kp::pruefe(mp[i]);
+        for (const std::string& b : befunde) MESSAGE(b);
+        CHECK(befunde.empty());
+        // was keine Variante aendert
+        CHECK(mp[i].materialien == rp.materialien);
+        CHECK(mp[i].platte.umriss == rp.platte.umriss);
+        CHECK(mp[i].platte.material == rp.platte.material);
+        CHECK(mp[i].platte.faserWinkelGrad == rp.platte.faserWinkelGrad);
+        CHECK(mp[i].stegpunkte == rp.stegpunkte);
+        REQUIRE(mp[i].stege.size() == rp.stege.size());
+        for (std::size_t k = 0; k < rp.stege.size(); ++k)
+        {
+            CHECK(mp[i].stege[k].linie == rp.stege[k].linie);
+            CHECK(mp[i].stege[k].hoehe == rp.stege[k].hoehe);
+        }
+        REQUIRE(mp[i].hoerorte.size() == rp.hoerorte.size());
+        for (std::size_t k = 0; k < rp.hoerorte.size(); ++k) CHECK(mp[i].hoerorte[k].ort == rp.hoerorte[k].ort);
+    }
+
+    // MP1: „the thickness of the soundboard is twice the one of RP, namely 16 mm“; die Hoerorte 4 mm hoeher
+    CHECK(mp[0].platte.dicke == doctest::Approx(0.016));
+    CHECK(mp[0].rippen.size() == rp.rippen.size());
+    for (std::size_t k = 0; k < rp.hoerorte.size(); ++k)
+        CHECK(mp[0].hoerorte[k].hoehe == doctest::Approx(rp.hoerorte[k].hoehe + 0.004));
+
+    // MP2: „inter-rib spacing twice as RP“ — Rippe 1, 3, …, 17 von RP mit ihren eigenen Massen
+    CHECK(mp[1].platte.dicke == doctest::Approx(rp.platte.dicke));
+    REQUIRE(mp[1].rippen.size() == 9);
+    for (std::size_t k = 0; k < mp[1].rippen.size(); ++k)
+    {
+        const kp::Leiste& r = mp[1].rippen[k];
+        const kp::Leiste& aus = rp.rippen[2 * k];
+        CHECK(r.name == aus.name);
+        CHECK(r.linie == aus.linie);
+        CHECK(r.hoehe == aus.hoehe);
+        CHECK(r.breite == aus.breite);
+    }
+
+    // MP3: „all ribs have been removed and the bridges are the only superstructures“
+    CHECK(mp[2].platte.dicke == doctest::Approx(rp.platte.dicke));
+    CHECK(mp[2].rippen.empty());
+    for (int i : {1, 2})
+        for (std::size_t k = 0; k < rp.hoerorte.size(); ++k) CHECK(mp[i].hoerorte[k].hoehe == rp.hoerorte[k].hoehe);
+
+    // die Masse ordnet sich wie die Steifigkeit: MP3 < MP2 < RP < MP1
+    MESSAGE("Masse RP ", kp::masse(rp), " kg, MP1 ", kp::masse(mp[0]), " kg, MP2 ", kp::masse(mp[1]), " kg, MP3 ",
+            kp::masse(mp[2]), " kg");
+    CHECK(kp::masse(mp[2]) < kp::masse(mp[1]));
+    CHECK(kp::masse(mp[1]) < kp::masse(rp));
+    CHECK(kp::masse(rp) < kp::masse(mp[0]));
+}
+
+TEST_CASE("Loop Koerper 31c-8 Glasboeden")
+{
+    // GB1 a, GL1 a: der Steinway D mit einer Platte aus Kalk-Natron-Floatglas, einmal mit der Dicke des
+    // Holzbodens, einmal mit dem Verlauf mal 380/2500 (gleiche Masse der Platte); Rippen und Steg bleiben
+    const QString ordner = QStringLiteral("asset/loop/instrument_bodies/");
+    kp::Bauplan steinway;
+    REQUIRE_MESSAGE(ladeBauplan(ordner + QStringLiteral("steinway_d") + QLatin1String(kBauplanEndung), steinway),
+                    "die Test-Exe aus dem Projekt-Root starten");
+    const char* namen[2] = {"steinway_d_glass", "steinway_d_glass_same_mass"};
+    const double faktor[2] = {1.0, 380.0 / 2500.0};
+    for (int i = 0; i < 2; ++i)
+    {
+        const std::string name = namen[i];
+        CAPTURE(name);
+        kp::Bauplan glas;
+        REQUIRE(ladeBauplan(ordner + QLatin1String(namen[i]) + QLatin1String(kBauplanEndung), glas));
+        const std::vector<std::string> befunde = kp::pruefe(glas);
+        for (const std::string& b : befunde) MESSAGE(b);
+        CHECK(befunde.empty());
+
+        // GL1 a: isotrop, ρ 2500, E 70 GPa, ν 0,2, η 1·10⁻³ fest
+        const kp::Material* g = kp::findeMaterial(glas, "glass");
+        REQUIRE(g);
+        CHECK(g->art == kp::MaterialArt::Isotrop);
+        CHECK(g->dichte == doctest::Approx(2500.0));
+        CHECK(g->ex == doctest::Approx(70.0e9));
+        CHECK(g->nuxy == doctest::Approx(0.2));
+        CHECK(g->verlustfaktor == doctest::Approx(1.0e-3));
+        CHECK(*g == kp::vervollstaendigt(*g));  // jedes Feld geschrieben, G = E / (2 (1 + ν))
+        CHECK(glas.platte.material == "glass");
+
+        // Rippen, Steg, Holz, Umriss und Stegpunkte wie im Steinway
+        CHECK(glas.rippen == steinway.rippen);
+        CHECK(glas.stege == steinway.stege);
+        CHECK(glas.stegpunkte == steinway.stegpunkte);
+        CHECK(glas.platte.umriss == steinway.platte.umriss);
+        for (const kp::Material& m : steinway.materialien)
+        {
+            const kp::Material* gleich = kp::findeMaterial(glas, m.name);
+            REQUIRE(gleich);
+            CHECK(*gleich == m);
+        }
+
+        // die Dicke an jeder Stelle mal dem Faktor; die Platte wiegt bei gleicher Masse so viel wie Holz
+        for (const kp::Punkt2 p : {kp::Punkt2{0.5, 1.0}, kp::Punkt2{0.3, 1.6}, kp::Punkt2{1.0, 0.3}})
+            CHECK(glas.platte.dickeBei(p) == doctest::Approx(steinway.platte.dickeBei(p) * faktor[i]).epsilon(1e-4));
+        MESSAGE("Platte ", kp::plattenMasse(glas), " kg (Holz ", kp::plattenMasse(steinway), " kg), Masse ",
+                kp::masse(glas), " kg");
+        if (i == 1) CHECK(kp::plattenMasse(glas) == doctest::Approx(kp::plattenMasse(steinway)).epsilon(1e-3));
+        else CHECK(kp::plattenMasse(glas) == doctest::Approx(kp::plattenMasse(steinway) * 2500.0 / 380.0).epsilon(1e-3));
+
+        // Hoerorte an derselben Stelle, z = halbe Platte + Steg + 12 cm (das Skript nimmt die naechste Zelle: 1 mm Spiel)
+        REQUIRE(glas.hoerorte.size() == steinway.hoerorte.size());
+        for (std::size_t k = 0; k < glas.hoerorte.size(); ++k)
+        {
+            const kp::Hoerort& h = glas.hoerorte[k];
+            CHECK(h.ort == steinway.hoerorte[k].ort);
+            const double soll = glas.platte.dickeBei(h.ort) / 2.0 + kp::aufLeiste(glas.stege[0], h.ort).hoehe + 0.12;
+            CHECK_MESSAGE(std::abs(h.hoehe - soll) < 0.001, "z ", h.hoehe, " m, erwartet ", soll, " m");
+        }
+    }
 }
 
 TEST_CASE("Loop Koerper 31c-1 Icons")

@@ -4,7 +4,7 @@
  * @brief  Loop, Stufe 31c-6 Teil 5: der Pruefstein des gerechneten Resonanzbodens —
  *         gegen MAESSTRO, gegen Messungen, gegen sich selbst mit hoeherer Ordnung
  *         (docs/audio/Spielweisen_Konzept.md §4.1, Entscheide Patrik S149/S150: PS1 a,
- *         KV1 a, EM1 a, PF1 a, PF2 a, BM7 a)
+ *         KV1 a, EM1 a, PF1 a, PF2 a, BM7 a; S151 Stufe 31c-8: VA1 a)
  *
  * @author Patrik Neunteufel
  * @date   October 2026
@@ -25,6 +25,10 @@
  *   in −72 … −58 dB re 1 s/kg und kein Anstieg oder Abfall ueber 6 dB; unter 500 Hz das Mittel von |Y|
  *   ueber 50–1000 Hz gegen Plath 2019 Fig. 6.9 (0,0007 s/kg, bis Faktor 2).
  * - **EM1 a**: die erste Mode in 35–65 Hz, die Dichte unter 500 Hz in 0,04–0,14 /Hz.
+ * - **VA1 a** (S151, Stufe 31c-8): die Varianten MP1–MP3 (`koerper/maesstro_mp<n>.lvinstbody`) gegen RP in den
+ *   Richtungen von MAESSTRO — Zahl der Moden MP1 < RP < MP2 < MP3 je Band bis 3 kHz und bis 5 kHz (Abb. 5),
+ *   mittlere Mobilitaet bei MP3 am hoechsten und bei MP1 am niedrigsten, bei MP1 ein kleinerer Abstand Bass/Diskant
+ *   (S. 8); die Zahlen gegen die Kurven nur berichtet.
  * - **KV1 a** nur mit `LUMIVIZ_KOERPER_K4=<datei.lvinstbody>` (der Steinway mit k = 4, nicht im
  *   Repo, 44 min zu rechnen): je Terzband 100 Hz – 5 kHz die Zahl der Moden bis zur oberen Grenze auf
  *   ±3 % und die Mobilitaet auf ±0,5 dB, die ersten 20 Moden je auf η/4 (KV2 a), Gl. 2 an den fuenf
@@ -226,6 +230,86 @@ TEST_CASE("Loop Koerper 31c-6 Pruefstein Steinway (PS1 a 2 und 3, EM1 a)")
     CHECK(erste <= 65.0);
     CHECK(unter500 / 500.0 >= 0.04);
     CHECK(unter500 / 500.0 <= 0.14);
+}
+
+TEST_CASE("Loop Koerper 31c-8 Richtungen MAESSTRO (VA1 a)")
+{
+    // die drei Varianten gegen RP in den Richtungen, die MAESSTRO S. 7–8 nennt und Abb. 5 und 6 zeigen — aus den
+    // gerechneten Moden wie dort (PS1 a); Werte gegen die Kurven nur berichtet (PS3 a)
+    const QString ordner = QStringLiteral("projects/apps/LumiViz/tests/unit/UnitTests/koerper/");
+    const char* namen[4] = {"maesstro_rp", "maesstro_mp1", "maesstro_mp2", "maesstro_mp3"};
+    kp::Koerper k[4];
+    for (int i = 0; i < 4; ++i) k[i] = lade(ordner + QLatin1String(namen[i]) + QStringLiteral(".lvinstbody"));
+    const kp::Koerper &rp = k[0], &mp1 = k[1], &mp2 = k[2], &mp3 = k[3];
+
+    // Modendichte (Abb. 5): MP1 < RP < MP2 < MP3 — RP und MP2 kreuzen sich zwischen rund 3,3 und 4,5 kHz, deshalb je
+    // Band bis 3 kHz und die Zahl der Moden bis 5 kHz. (Der Text S. 7 „RP should have a lower modal density than MP1“
+    // widerspricht seinem eigenen Bild und dem Satz davor — verschrieben.)
+    const auto anzahl = [](const kp::Koerper& x, double von, double bis) {
+        return std::count_if(x.moden.begin(), x.moden.end(),
+                             [=](const kp::ModeImKoerper& m) { return m.frequenzHz >= von && m.frequenzHz < bis; });
+    };
+    for (const auto& [von, bis] : {std::pair{100.0, 1000.0}, std::pair{1000.0, 2000.0}, std::pair{2000.0, 3000.0},
+                                   std::pair{0.0, 5000.0}})
+    {
+        const auto n1 = anzahl(mp1, von, bis), n0 = anzahl(rp, von, bis), n2 = anzahl(mp2, von, bis), n3 = anzahl(mp3, von, bis);
+        MESSAGE("Moden ", von, "–", bis, " Hz: MP1 ", n1, ", RP ", n0, ", MP2 ", n2, ", MP3 ", n3);
+        CHECK_MESSAGE(n1 < n0, von, "–", bis, " Hz");
+        CHECK_MESSAGE(n0 < n2, von, "–", bis, " Hz");
+        CHECK_MESSAGE(n2 < n3, von, "–", bis, " Hz");
+    }
+    const std::map<double, double> abb5 = liesPaare(werteDatei("maesstro_abb5_rp.txt"));
+    for (const double f : {500.0, 1500.0, 2500.0, 3500.0, 4500.0})
+        MESSAGE("Dichte bei ", f, " Hz: MP1 ", interpoliert(dichteGl6(mp1.moden), f), ", RP ", interpoliert(dichteGl6(rp.moden), f),
+                " (Abb. 5 ", abb5.at(f), "), MP2 ", interpoliert(dichteGl6(mp2.moden), f), ", MP3 ",
+                interpoliert(dichteGl6(mp3.moden), f), " /Hz");
+
+    // mittlere Mobilitaet (Abb. 6, S. 8): MP3 „has the largest mean mobility“, MP1 „the lowest“; Abstand Bass
+    // (Index 1–15 = MIDI 24–38) zu Diskant (Index 19–78 = MIDI 42–101) rund 10 dB bei 8 mm, rund 5 dB bei MP1
+    struct Mittel
+    {
+        double alle = 0.0, abstand = 0.0, spanne = 0.0;
+    };
+    const auto mittel = [](const kp::Koerper& x) {
+        Mittel m;
+        double bass = 0.0, diskant = 0.0, lo = 0.0, hi = -200.0;
+        int nb = 0, nd = 0;
+        for (std::size_t j = 0; j < x.stegTasten.size(); ++j)
+        {
+            const int taste = x.stegTasten[j];
+            const double db = kp::mittlereMobilitaetDb(x.moden, j);
+            m.alle += db / static_cast<double>(x.stegTasten.size());
+            if (taste >= 24 && taste <= 38)
+            {
+                bass += db;
+                ++nb;
+            }
+            if (taste >= 42 && taste <= 101)
+            {
+                diskant += db;
+                ++nd;
+            }
+            // „high-medium string range (index 40–60)“ = MIDI 63–83: MP2 schwankt um rund 6 dB, MP3 kaum
+            if (taste >= 63 && taste <= 83)
+            {
+                lo = std::min(lo, db);
+                hi = std::max(hi, db);
+            }
+        }
+        m.abstand = diskant / nd - bass / nb;
+        m.spanne = hi - lo;
+        return m;
+    };
+    Mittel m[4];
+    for (int i = 0; i < 4; ++i)
+    {
+        m[i] = mittel(k[i]);
+        MESSAGE(std::string(namen[i]), ": Gl. 12 im Mittel ", m[i].alle, " dB, Abstand Diskant zu Bass ", m[i].abstand,
+                " dB, Spanne MIDI 63–83 ", m[i].spanne, " dB");
+    }
+    for (int i : {0, 2}) CHECK_MESSAGE(m[1].alle < m[i].alle, "MP1 am niedrigsten gegen ", std::string(namen[i]));
+    for (int i : {0, 2}) CHECK_MESSAGE(m[3].alle > m[i].alle, "MP3 am hoechsten gegen ", std::string(namen[i]));
+    CHECK(m[1].abstand < m[0].abstand);  // MP1 rund 5 dB, RP rund 10 dB
 }
 
 TEST_CASE("Loop Koerper 31c-6 Konvergenz k = 4 (KV1 a)")

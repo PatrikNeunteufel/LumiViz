@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.81.0
+> **Version:** 0.82.0
 > **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 4 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a und TS1 a (Patrik S139–S150);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 gebaut, RS1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a und TS1 a (Patrik S139–S151);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -2050,6 +2050,87 @@ mit Boden sind nicht gleich gestellt). Abgelegt lokal unter `.claude/handover/ho
 −18,7, mit −23,5 dBFS; C4 ohne −7,6, mit −17,5 dBFS). **31c-7 ist damit gebaut**; die großen Läufe und die
 gesammelten Hörproben aller Körper folgen in 31c-9 (ZA1 a), Patrik hört gesammelt später.
 
+**Befund S151 zu den Varianten (MAESSTRO §3.2, S. 6–8 und Abb. 4 b, 5, 6 selbst gelesen):** „The first modified
+piano (labeled as MP1) is similar to the reference piano RP except that the thickness of the soundboard is twice the
+one of RP, namely 16 mm“; MP2 „similar to RP but with inter-rib spacing twice as RP (see Fig. 4b)“ — Abb. 4 (b) zeigt
+9 Rippen: die Bass-Rippe, jede zweite danach und die Eckrippe, also Rippe 1, 3, …, 17 von RP; MP3 „without ribs: all
+ribs have been removed and the bridges are the only superstructures“. Richtungen: Abb. 5 Modendichte MP1 < RP < MP2 <
+MP3 (RP und MP2 kreuzen sich zwischen rund 3,3 und 4,5 kHz); S. 8 „MP3, which is the least stiff, has the largest mean
+mobility and … MP1, which is the stiffest, has the lowest“, Abstand Bass/Diskant „about 10 dB for 8 mm-thick
+soundboards (RP, MP2, and MP3), and about 5 dB for the 16 mm-thick soundboard (MP1)“. **Der Text S. 7 ist verschrieben:**
+„RP should have a lower modal density than MP1“ widerspricht dem Satz davor („MP1 should have the lowest modal density“)
+und Abb. 5; geprüft wird nach dem Bild.
+
+**Gebaut 31c-8 Teil 1 — Baupläne (S151, VA1 a, GL1 a):** `make_steinway_d.py --maesstro` schreibt neben
+`maesstro_rp` (bitgleich) die Varianten `maesstro_mp1` (Platte 16 mm, Hörorte 4 mm höher), `maesstro_mp2` (Rippe 1, 3,
+…, 17 mit ihren Maßen aus RP) und `maesstro_mp3` (ohne Rippen) unter die Testdaten; Massen MP3 8,4 < MP2 9,5 < RP 10,5
+< MP1 16,7 kg. `--bild` legt MP2 zusätzlich auf Abb. 4 (b) (`<bild>_mp2.png`): 9 Rippen im Bild wie bei uns, Abstand
+221–289 mm (RP 105–151), der Winkel wie bei RP rund 4° flacher (unter der Kippgrenze von PF1 a). Der Lauf ohne
+`--maesstro` schreibt neben dem Steinway (bitgleich) die zwei Glasböden nach GL1 a unter `asset/loop/instrument_bodies/`:
+`steinway_d_glass` (Platte aus Floatglas mit der Dicke des Holzbodens, 6,0–10,0 mm, 42,8 kg) und
+`steinway_d_glass_same_mass` (Verlauf mal 380/2500, 0,91–1,52 mm, 6,50 kg wie die Platte aus Holz); Werkstoff `glass`
+isotrop mit jedem Feld geschrieben, Rippen Fichte, Steg Buche, Hörorte mit der halben Plattendicke. Tests „Loop Koerper
+31c-8 MAESSTRO Varianten“ und „… Glasboeden“ in `test_LoopKoerperBauplan`. **Messlauf** des dünnen Glasbodens (k = 3,
+Netz für 5 kHz, 0–500 Hz): 923 520 Größen (Steinway 568 515 — das 1,6-Fache aus GL1 a), 115 Moden, 824 s, Spitze 7,5 GB;
+hochgerechnet bis 5 kHz rund 1–1,8 h und 12–18 GB — unter der Grenze von GL1 a.
+
+**Befund S151 zum Eigenlöser:** MP1 und MP2 brachen nach 17 und 40 s ab — „the residual of a mode at 68.200569 Hz is
+0.000003“ (MP2: 56,5 Hz, 7·10⁻⁶) über `restGrenze` 1·10⁻⁶ (EG2 a). Die Toleranz von Spectra gilt für ν = 1/(λ − σ);
+eine Mode weit unter dem Shift trägt im eigentlichen Problem einen um rund σ/λ größeren Rest. Der steife MP1 hat wenige
+Moden, die Shifts (je rund 40 Moden) liegen weit auseinander. Steinway, RP und der Glas-Messlauf blieben darunter
+(größter Rest 3,75·10⁻⁷).
+
+✅ **RS1 a** (Patrik S151): **Nachschärfen mit verschobenem Shift.** Liegt der Rest einer Mode über `restGrenze`, löst
+der Löser sie noch einmal mit einem Shift knapp neben ihrem Eigenwert und nimmt die neue Form; erst wenn auch dann der
+Rest über der Grenze bleibt, meldet er den Fehler. Ein Körper, dessen Moden alle die Grenze einhalten, bleibt Bit für
+Bit gleich (`kRechenFassung` bleibt 2). Grund: der Weg, den EG2 a für diesen Fall vorsieht (zuerst ein verschobener
+Shift, dann die Alternative b); die Genauigkeit wird verbessert, wo sie fehlt, die Grenze bleibt. Verworfen: b
+(Toleranz für alle 1·10⁻¹¹ — rechnet alle Körper neu, die die Grenze einhalten), c (Grenze 1·10⁻⁵ — gibt die Prüfung
+von EG2 a auf). Kippt auf b, wenn das Nachschärfen bei vielen Moden greift (etwa mehr als ein Zehntel); auf die
+Alternative b von EG2 a (SparseLU), wenn auch der Shift an der Mode die Grenze nicht erreicht.
+
+**Gebaut RS1 a (S151):** `EigenloeserSpectra` — nach den Läufen eines Stücks wird jede Mode in [P, σ) mit einem Rest
+über der Grenze inverse iteriert: Shift bei λ · (1 − 10⁻⁶) (`nachschaerfAbstand`), höchstens 10 Schritte
+(`nachschaerfSchritte`), die übrigen Formen des Stücks gesperrt (derselbe Operator wie die Deflation), λ als
+Rayleigh-Quotient; danach neu geordnet und geliefert, eine Mode, die ihr Stück verlässt, ist ein Fehler.
+`EigenErgebnis::nachgeschaerft` zählt die Moden, `InstrumentBodyTool` meldet sie („(n sharpened)“); die Fehlermeldung
+nennt den Rest jetzt in Exponentenschreibweise (vorher „0.000003“). Test „Loop Koerper 31c-8 Eigen Nachschaerfen (RS1
+a)“ in `test_LoopKoerperEigen`: an der Prüfplatte mit einer Grenze strenger, als Lanczos sie trifft (4·10⁻¹⁰; die
+Vorgabe liefert dort bis 6·10⁻¹⁰, die Rundung lässt rund 2,5·10⁻¹⁰) 1 von 60 Moden nachgeschärft, an zwei gleichen
+Platten ohne Kopplung (jeder Eigenwert doppelt) 5 von 120 — Frequenzen gegen den dichten Löser auf 10⁻⁸, M-orthonormal;
+mit der Vorgabe schärft die Prüfplatte nichts nach, die Bezugswerte bleiben. An der Kette greift es nicht (Lanczos
+trifft dort von sich aus rund 10⁻¹⁴).
+
+**Befund S151 zur Rechenzeit (gemessen):** `InstrumentBodyTool` rechnet mit einem Thread (0,99 Kerne von 32
+logischen). Am Messlauf des dünnen Glasbodens (824 s, 115 Moden) entfallen 166 s auf die Zerlegungen
+(`SimplicialLDLT`, einfädig, ohne Superknoten), der Rest auf die Lanczos-Schritte von Spectra — je Schritt Vorwärts-
+und Rückwärtseinsetzen mit dem Faktor (mehrere GB, an der Speicherbandbreite) und das Abziehen der gesperrten Formen.
+
+**Alternativen zur Rechenzeit (Patrik S151: „Weg 1 und Weg 2 als Alternative“; nicht gebaut):** (1) ein mehrfädiger
+Löser mit Superknoten (CHOLMOD aus SuiteSparse oder Pardiso aus MKL) als zweite Umsetzung hinter `Eigenloeser` — die
+Alternative c aus EG2 a; neues External mit Prüfung der Lizenz. (2) Teilfenster in mehreren Prozessen zugleich
+(`--from`/`--to` gibt es; es fehlt das Zusammenfügen zu einem Körper; der Speicher wächst je Prozess). Wie EG2 a: sie
+kommen, sobald sie als nötig erkannt werden, und werden dann mit einer Messung vorgelegt; die Rückfragegrenze von KV1 a
+(20 GB oder 3 h) bleibt der Anlass.
+
+**Befund S151 zum Messteil an allen mitgelieferten Körpern** (`LUMIVIZ_31C7_MESSUNG=1`, jetzt je Körper): beim festen
+Bezug lautester Ton Steinway −6,0, Glas wie Holz −11,8, Glas auf gleiche Masse −9,4 dBFS — der Kipppunkt von PG1 a
+greift nicht. Eine Antwort allein: Steinway 0,6–0,8 s, Glas wie Holz 0,5–0,7 s, **Glas auf gleiche Masse 1,9–2,0 s**
+(über der Grenze von AW1 a, eigene Frage). **Länge:** Glas klingt länger nach (η der Moden 0,4–0,6 %) — die langsamste
+Mode braucht bis −60 dB beim Glas wie Holz 9,1 s (58 Hz; bei 8 s schon −53 dB), beim dünnen Glas 19,9 s (19,7 Hz; bei
+8 s erst −24 dB, drei Moden über 8 s); die Antwort wird bei 8 s hart geschnitten, und weil `bodenAntwort` das Spektrum
+an n = 524 288 Punkten (10,9 s bei 48 kHz) abtastet, faltet sich, was länger klingt, auf den Anfang zurück (bis rund
+−33 dB unter dem Anfang dieser Mode). Der Steinway (5,1 s) ist nicht betroffen.
+
+✅ **AW2 a** (Patrik S151; erweitert den Plan von 31c-8, PL31 a): **Die Antwort reicht, bis die langsamste Mode um
+60 dB gefallen ist; die Obergrenze 8 s fällt weg.** Die FFT ist mindestens so lang wie die Antwort, was sich
+zurückfaltet, liegt damit unter −60 dB. Der Steinway (5,1 s) bleibt Bit für Bit gleich, Glas wie Holz wird 9,1 s, Glas
+auf gleiche Masse 19,9 s. Grund: „bis −60 dB“ ist das physikalische Kriterium, die 8 s waren eine am Steinway gesetzte
+Schranke; ohne Schnitt und ohne Rückfaltung. Verworfen: b (8 s behalten, weich ausblenden — kürzt den Klang künstlich),
+c (so lassen — der Fehler käme bei jedem lange klingenden Körper wieder). Kippt auf b, wenn der Tonspeicher für ein
+Stück mit dem dünnen Glasboden zu groß wird (etwa über 1 GB; geschätzt 7,6 MB je Taste, 88 Tasten rund 670 MB). Nicht
+gebaut (Stand Haltepunkt S151).
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -2921,6 +3002,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.82.0 | 2026-10-24 | Session 151. Befund Varianten (MAESSTRO §3.2, Abb. 4 b, 5, 6; Text S. 7 verschrieben); 31c-8 Teil 1 gebaut (Baupläne MP1–MP3 und zwei Glasböden, Messlauf dünner Glasboden); Befund Eigenlöser (Rest tiefer Moden bei weiten Shifts); RS1 a (Nachschärfen mit verschobenem Shift) gebaut; Befund Rechenzeit (ein Thread) und zwei Alternativen (Löser mit Superknoten, Teilfenster in Prozessen); 31c-8 Teil 2 gerechnet (fünf Körper, Richtungen bestanden); Befund Messteil an allen Körpern; AW2 a (Länge der Antwort ohne Grenze 8 s). |
+| 0.79.0–0.81.0 | 2026-10-24 | Session 150 (Zeilen nachgetragen S151, aus dem Report von S150). PF2 a (zwei Stege im Prüffall), 31c-6 Teil 3 und 4 gebaut, PF3 a (17. Rippe), PS2 a (Code von MAESSTRO gelesen), PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a (pocketfft), 31c-7 Schritt 1 bis 5 gebaut. |
 | 0.78.0 | 2026-10-24 | Session 149. Befund Modenüberlappung (M = 1 bei rund 1 kHz); BM7 a (Grenzfrequenz = höchste gerechnete Mode, 31c-6 prüft Konvergenz und Prüfstein bandweise und senkt die Grenze nur, wo ein Band versagt); Hinweis Patrik zur immer feineren Teilung; PL31 a (erst 31c abschließen, vorher die zwölf Umfangsfragen von 31c-6 bis Abschluss klären, fester Plan; danach 31d–31h ebenso); Recherchen Mobilität über 1 kHz und Glas; Befund Prüfstein und Bauzustand; PS1 a (drei Prüfungen der Mobilität mit Toleranzen); Befund MAESSTRO Abb. 4; PF1 a (Prüffall aus unserem Bauplan mit den Vereinfachungen von MAESSTRO); Befund Konvergenztest MAESSTRO Gl. 2; KV1 a (zweite Rechnung k = 4, Toleranzen je Terzband); AW1 a (Antworten je Taste in der App aus der Körperdatei, im Tonspeicher, Messteil zu Beginn von 31c-7); FT1 a (Faltung je Ton mit pocketfft hinter `Fft`, echtes Stereo); PG1 a (fester Bezug für den Schalldruck, Antworten unnormiert); SB1 a (`soundboard` trägt nur `body`, `amount` fällt weg, `.lvinst` Fassung 17); DM1 a (η je Mode nach Verformungsenergie je Werkstoff); GL1 a (Floatglas, η 1·10⁻³, zwei Dicken); VA1 a (31c-8: MP1–MP3 und zwei Glasböden, Hörproben je Familie); ZA1 a (31c-9 Abschluss: Bereich und voller Lauf unter beiden Compilern, Hörproben, Doku); Befund erste Moden (Corradi Stufe 3); EM1 a (Kipppunkt von BM1 a neu gefasst); fester Plan IP1 und 31c-6 bis 31c-9; gebaut 31c-6 Teil 1 (DM1 a). |
 | 0.77.0 | 2026-10-23 | Session 148. BM6 a (Hörorte als Liste im Bauplan, je Hörort ein Abstrahlgewicht je Mode; Lage der Vorgabe in BM6-1); Befund Mikrofone von *Salamander*; BM6-1 a (Stereopaar 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86); PL31c-5 a (31c-5a bis 31c-5d, statistischer Teil dabei); 31c-5a gebaut (Hörorte, `.lvinstbodyplan` Fassung 2); Befund zur Dämpfung (RT-0425 Gl. 1 als Polynom in f); 31c-5b gebaut (Auswertung je Mode); Befund Modendichte und Abstände; ST1 a (statistischer Teil aus den gerechneten Moden, Ziehung nach Boutillon & Ege); 31c-5c gebaut (5933 Moden bis 20 kHz); 31c-5d gebaut (Körperdatei, `steinway_d.lvinstbody` 2,9 MB, Wächter) — 31c-5 fertig. |
 | 0.76.0 | 2026-10-23 | Session 148. Spectra 1.2.0 als External; EG1 a (Schnittstelle des Eigenlösers: Teilfenster im Löser, Moden an einen Empfänger, Zählung nach Sylvester); EG2 a (`SimplicialLDLT` in eigenem Operator, Residuum je Mode; SparseLU und Superknoten als Alternativen, wenn nötig). |

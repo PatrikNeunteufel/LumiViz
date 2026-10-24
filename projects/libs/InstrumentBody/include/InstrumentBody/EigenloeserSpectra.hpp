@@ -20,6 +20,13 @@
  * **Rest je Mode (EG2 a):** ‖Kφ − λMφ‖ / ‖λMφ‖ ueber `restGrenze` ist ein Fehler, nicht
  * eine stille Mode (`SimplicialLDLT` sucht keinen Pivot).
  *
+ * **Nachschaerfen (RS1 a, S151):** Die Toleranz von Spectra gilt fuer ν = 1/(λ − σ); eine Mode
+ * weit unter σ traegt im eigentlichen Problem einen um rund σ/λ groesseren Rest (beim steifen
+ * MAESSTRO-Fluegel MP1 liegen die Shifts weit auseinander). Liegt der Rest ueber der Grenze, wird
+ * die Mode mit einem Shift knapp unter ihrem Eigenwert inverse iteriert, die uebrigen Formen des
+ * Stuecks gesperrt; erst wenn auch das nicht reicht, ein Fehler. Eine Mode unter der Grenze bleibt,
+ * wie sie ist — ein Koerper ohne solche Moden rechnet Bit fuer Bit wie vorher.
+ *
  * Kein Typ von Eigen oder Spectra geht ueber die Schnittstelle (BM5-1 a).
  */
 #pragma once
@@ -35,6 +42,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -143,6 +151,8 @@ class EigenloeserSpectra final : public Eigenloeser
 public:
     int modenJeSchritt = 40;    ///< so viele neue Eigenwerte soll ein Shift unter sich haben (Ziel)
     double restGrenze = 1e-6;   ///< groesster erlaubter Rest je Mode
+    double nachschaerfAbstand = 1e-6;  ///< Nachschaerfen (RS1 a): der Shift bei λ · (1 − dies)
+    int nachschaerfSchritte = 10;      ///< hoechstens so viele Schritte der inversen Iteration je Mode
 
     [[nodiscard]] std::string name() const override { return "Spectra 1.2.0 + Eigen SimplicialLDLT"; }
 
@@ -296,6 +306,55 @@ private:
             op.sperre({}, {});
             std::sort(gefunden.begin(), gefunden.end(), [](const Gefunden& x, const Gefunden& y) { return x.lambda < y.lambda; });
 
+            const auto restVon = [&](const Gefunden& g) {
+                mphi = m.selfadjointView<Eigen::Lower>() * g.phi;
+                kphi = k.selfadjointView<Eigen::Lower>() * g.phi;
+                return (kphi - g.lambda * mphi).norm() / (std::abs(g.lambda) * mphi.norm());
+            };
+            // RS1 a: inverse Iteration mit dem Shift knapp unter λ, die uebrigen Formen des Stuecks gesperrt
+            const auto nachschaerfen = [&](std::size_t i) {
+                const int andere = static_cast<int>(gefunden.size()) - 1;
+                Eigen::MatrixXd phi(n, andere), mphiG(n, andere);
+                for (int j = 0, s = 0; j <= andere; ++j)
+                {
+                    if (static_cast<std::size_t>(j) == i) continue;
+                    phi.col(s) = gefunden[static_cast<std::size_t>(j)].phi;
+                    mphiG.col(s) = m.selfadjointView<Eigen::Lower>() * phi.col(s);
+                    ++s;
+                }
+                op.sperre(std::move(phi), std::move(mphiG));
+                Gefunden& g = gefunden[i];
+                double shift = g.lambda * (1.0 - nachschaerfAbstand);
+                zaehle(shift);
+                double rest = restVon(g);
+                Eigen::VectorXd y(n);
+                for (int schritt = 0; schritt < nachschaerfSchritte && !(rest <= restGrenze); ++schritt)
+                {
+                    const Eigen::VectorXd ein = m.selfadjointView<Eigen::Lower>() * g.phi;
+                    op.perform_op(ein.data(), y.data());
+                    mphi = m.selfadjointView<Eigen::Lower>() * y;
+                    g.phi = y / std::sqrt(y.dot(mphi));
+                    g.lambda = g.phi.dot(k.selfadjointView<Eigen::Lower>() * g.phi);
+                    rest = restVon(g);
+                }
+                op.sperre({}, {});
+                erg.faktorisierungen = op.faktorisierungen(), erg.sekundenZerlegung = op.sekunden();
+                if (!(g.lambda >= lP && g.lambda < sigma))
+                    throw std::runtime_error("a sharpened mode at " + std::to_string(frequenzVon(g.lambda)) + " Hz left its piece");
+                ++erg.nachgeschaerft;  // haelt sie die Grenze noch immer nicht, meldet das die Lieferung
+            };
+
+            // erst nachschaerfen, was im Stueck ueber der Grenze liegt (die Formen aller noch gesperrt), dann neu ordnen
+            bool geschaerft = false;
+            for (std::size_t i = 0; i < gefunden.size(); ++i)
+            {
+                if (gefunden[i].lambda >= sigma || restVon(gefunden[i]) <= restGrenze) continue;
+                nachschaerfen(i);
+                geschaerft = true;
+            }
+            if (geschaerft)
+                std::sort(gefunden.begin(), gefunden.end(), [](const Gefunden& x, const Gefunden& y) { return x.lambda < y.lambda; });
+
             // liefern: [P, σ), aufsteigend; der Rest wartet
             for (auto& g : gefunden)
             {
@@ -304,13 +363,15 @@ private:
                     if (!letzter) offen.push_back(std::move(g));
                     continue;
                 }
-                mphi = m.selfadjointView<Eigen::Lower>() * g.phi;
-                kphi = k.selfadjointView<Eigen::Lower>() * g.phi;
-                const double rest = (kphi - g.lambda * mphi).norm() / (std::abs(g.lambda) * mphi.norm());
+                const double rest = restVon(g);
                 erg.groessterRest = std::max(erg.groessterRest, rest);
                 if (!(rest <= restGrenze))
-                    throw std::runtime_error("the residual of a mode at " + std::to_string(frequenzVon(g.lambda)) + " Hz is " +
-                                             std::to_string(rest) + ", above the limit");
+                {
+                    char text[160];
+                    std::snprintf(text, sizeof text, "the residual of a mode at %.6f Hz is %.3e, above the limit %.1e", frequenzVon(g.lambda),
+                                  rest, restGrenze);
+                    throw std::runtime_error(text);
+                }
                 erg.frequenzenHz.push_back(frequenzVon(g.lambda));
                 if (a.jeMode)
                 {

@@ -20,9 +20,14 @@ Einheiten SI (m, kg/m³, Pa). Was ein Bauplan ist, beschreibt
 | Name | Instrument | Quelle | Erzeugt von |
 |---|---|---|---|
 | `steinway_d` | Steinway D, Resonanzboden | Chabassier & Duruflé, RT-0425 (2012), Abb. 2 und Anhang A; Holz nach Chabassier, Joly & Chaigne 2013, Tab. I; Breiten nach MAESSTRO Tab. 1 | Bauplan: `make_steinway_d.py <RT-0425.pdf>` (S147, 31c-1; Hörorte S148, 31c-5a). Körper: `InstrumentBodyTool steinway_d.lvinstbodyplan --to 5000` (S148, 31c-5d) |
+| `steinway_d_glass` | gedachtes Instrument (GB1 a, GL1 a): der Steinway D mit einer Platte aus Kalk-Natron-Floatglas, Dicke wie Holz (6–10 mm); Rippen Fichte, Steg Buche | wie `steinway_d`; Glas nach Datenblättern zu EN 572 (NGA FM05-12 als Gegenwert), η 1·10⁻³ nach Cremer/Heckl über Irvine 2010 Tab. 7 | Bauplan: derselbe Lauf von `make_steinway_d.py` (S151, 31c-8). Körper: `InstrumentBodyTool … --to 5000` (392 Moden, 2 min) |
+| `steinway_d_glass_same_mass` | wie oben, die Platte auf die Masse der Platte aus Holz (Dicke mal 380/2500, 0,9–1,5 mm) | wie oben | wie oben (1985 Moden, 1,3 h, Spitze 9,4 GB) |
+
+Die Glasböden sind gedachte Instrumente: ob das Glas unter der Saitenlast bricht, ist nicht gerechnet; in der
+Dämpfung fehlen Rand und Abstrahlung (DM1 a) — für Holz stecken sie im Gesetz von RT-0425, für Glas nicht.
 
 `make_steinway_d.py` liest die PDF (nur lokal unter `projects/apps/LumiViz/docs/modellierung/hammer-saite/quellen/`),
-wertet Abb. 2 aus und schreibt den Bauplan. **Maßgebend ist die Datei im Repo**: ein neuer Lauf zuerst mit
+wertet Abb. 2 aus und schreibt den Bauplan des Steinway und der beiden Glasböden. **Maßgebend ist die Datei im Repo**: ein neuer Lauf zuerst mit
 `--ziel <ordner>` in eine Kopie, `--bild <datei.png>` legt ein Kontrollbild ab (Umriss, Rippen, Steg und
 Stegpunkte über Abb. 2 (d)).
 
@@ -48,3 +53,8 @@ Prueffall“ prüft die Datei. Der Körper liegt daneben (`maesstro_rp.lvinstbod
 ```
 out/build/windows-ninja-release-clang/exec/InstrumentBodyTool/bin/Release/InstrumentBodyTool.exe projects/apps/LumiViz/tests/unit/UnitTests/koerper/maesstro_rp.lvinstbodyplan --to 5000
 ```
+
+Derselbe Lauf schreibt die drei Varianten aus MAESSTRO §3.2 daneben (S151, 31c-8, VA1 a): `maesstro_mp1` (Platte
+16 mm), `maesstro_mp2` (doppelter Rippenabstand: Rippe 1, 3, …, 17, wie Abb. 4 b — `--bild` legt sie zusätzlich auf
+Abb. 4 b, `<bild>_mp2.png`), `maesstro_mp3` (ohne Rippen). Ihre Körper liegen ebenfalls unter den Testdaten (gerechnet
+wie RP, 5–17 min je Körper); der Test „Loop Koerper 31c-8 Richtungen MAESSTRO (VA1 a)“ prüft sie gegen RP.

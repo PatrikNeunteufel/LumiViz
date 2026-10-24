@@ -294,9 +294,10 @@ int main(int argc, char* argv[])
         std::fprintf(stderr, "Eigensolver: %s\n", erg.fehler.c_str());
         return 1;
     }
-    std::printf("Modes (%s, %.0f to %.0f Hz): %zu (counted %d), %d factorizations (%.1f s), largest residual %.2e, %.1f s, peak %.0f MB\n",
+    std::printf("Modes (%s, %.0f to %.0f Hz): %zu (counted %d), %d factorizations (%.1f s), largest residual %.2e "
+                "(%d sharpened), %.1f s, peak %.0f MB\n",
                 loeser->name().c_str(), vonHz, bisHz, erg.frequenzenHz.size(), erg.imFenster, erg.faktorisierungen,
-                erg.sekundenZerlegung, erg.groessterRest, erg.sekunden, spitzeMB());
+                erg.sekundenZerlegung, erg.groessterRest, erg.nachgeschaerft, erg.sekunden, spitzeMB());
     std::printf("Evaluated %zu modes in %.1f s (within the eigensolver time)\n", moden.size(), sekundenAuswertung);
 
     // der statistische Teil darueber (31c-5c, ST1 a): Groessen aus der oberen Haelfte des Fensters
