@@ -5,10 +5,17 @@
 
 #include "loop/Pegel.hpp"
 
+#include "loop/Freeze.hpp"  // kKlangfassung
 #include "loop/Sample.hpp"
+#include "loop/Tonspeicher.hpp"  // instrumentAbdruck
+
+#include <QByteArray>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <map>
+#include <mutex>
 
 namespace lumi::loop
 {
@@ -73,15 +80,87 @@ audio::Lautheit messeInstrument(const Instrument& instrument, int rate)
     return audio::messeLautheit(rechneStandardprobe(instrument, rate), rate);
 }
 
-std::optional<double> abstandZumBezug(const Instrument& instrument, int rate)
+bool pegelMessbar(const Instrument& instrument)
 {
-    if (instrument.art == QLatin1String("drums")) return std::nullopt;
+    if (instrument.art == QLatin1String("drums")) return false;
     for (const Schicht& schicht : instrument.schichten)
         if (schicht.an && schicht.schwingung == Schwingung::Sample && sampleDaten(schicht.sample) == nullptr)
-            return std::nullopt;
+            return false;
+    return true;
+}
+
+std::optional<double> abstandZumBezug(const Instrument& instrument, int rate)
+{
+    if (!pegelMessbar(instrument)) return std::nullopt;
     const double wert = messeInstrument(instrument, rate).kurzzeitMaxLufs;
     if (wert <= audio::kLufsStille) return std::nullopt;
     return wert - kInstrumentBezugLufs;
+}
+
+namespace
+{
+
+// IP1 a: die gemerkten Abstaende, fuer das ganze Programm
+std::mutex& abstandSchloss()
+{
+    static std::mutex schloss;
+    return schloss;
+}
+
+std::map<QByteArray, std::optional<double>>& gemerkteAbstaende()
+{
+    static std::map<QByteArray, std::optional<double>> gemerkt;
+    return gemerkt;
+}
+
+std::atomic<int>& abstandMessungen()
+{
+    static std::atomic<int> zahl{0};
+    return zahl;
+}
+
+QByteArray abstandSchluessel(const Instrument& instrument, int rate)
+{
+    return instrumentAbdruck(instrument) + '|' + QByteArray::number(kKlangfassung) + '|' + QByteArray::number(rate);
+}
+
+}  // namespace
+
+std::optional<std::optional<double>> gemerkterAbstand(const Instrument& instrument, int rate)
+{
+    const QByteArray schluessel = abstandSchluessel(instrument, rate);
+    const std::lock_guard<std::mutex> halte(abstandSchloss());
+    const auto ort = gemerkteAbstaende().find(schluessel);
+    if (ort == gemerkteAbstaende().end()) return std::nullopt;
+    return ort->second;
+}
+
+std::optional<double> abstandZumBezugGemerkt(const Instrument& instrument, int rate)
+{
+    if (!pegelMessbar(instrument)) return std::nullopt;
+    const QByteArray schluessel = abstandSchluessel(instrument, rate);
+    {
+        const std::lock_guard<std::mutex> halte(abstandSchloss());
+        const auto ort = gemerkteAbstaende().find(schluessel);
+        if (ort != gemerkteAbstaende().end()) return ort->second;
+    }
+    // ausserhalb der Sperre gemessen: zwei Threads koennen dasselbe messen, das Ergebnis ist gleich
+    const std::optional<double> abstand = abstandZumBezug(instrument, rate);
+    ++abstandMessungen();
+    const std::lock_guard<std::mutex> halte(abstandSchloss());
+    gemerkteAbstaende()[schluessel] = abstand;
+    return abstand;
+}
+
+int gemesseneAbstaende()
+{
+    return abstandMessungen().load();
+}
+
+void vergissGemerkteAbstaende()
+{
+    const std::lock_guard<std::mutex> halte(abstandSchloss());
+    gemerkteAbstaende().clear();
 }
 
 std::optional<double> lautAufBezug(const Instrument& instrument, int rate)

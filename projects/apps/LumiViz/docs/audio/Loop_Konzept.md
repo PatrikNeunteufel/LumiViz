@@ -3843,6 +3843,20 @@ b (nur merken, synchron — das erste Öffnen nach dem Start blockiert weiter), 
 Hintergrund-Thread nicht sicher zu rechnen ist (etwa `sampleDaten`): dann die Samples vorher auf dem Thread der
 Oberfläche holen, nur das Rechnen auslagern.
 
+**Gebaut IP1 (S149):** `loop/Pegel`: `pegelMessbar` (aus `abstandZumBezug` herausgelöst), `abstandZumBezugGemerkt`
+und `gemerkterAbstand` — gemerkt für das ganze Programm unter `instrumentAbdruck`, `kKlangfassung` und Rate, unter
+einer Sperre; nicht gemerkt wird, was `pegelMessbar` ablehnt (eine Aufnahme kann später gemerkt sein);
+`gemesseneAbstaende` und `vergissGemerkteAbstaende` für Tests. `InstrumentPalette`: der Konstruktor liest nur
+(`lies(false)`), `liesNeu`/`zeigeVorn` nehmen Gemerktes sofort und geben den Rest einem `std::thread`
+(`Messung`: Abbruch, fertig, Ergebnis); ein Takt von 100 ms sammelt das Ergebnis ein und setzt nur die zweite Spalte
+(`zeigeAbstaende`, der Baum bleibt); `liesNeu` während einer Messung bricht sie ab, der Destruktor ebenso (er wartet
+höchstens ein Instrument); `misstNoch`, `warteAufAbstaende`. Die `sampleDaten` sind unter einer Sperre (seit 29a von
+Threads benutzt) — der Kipppunkt trat nicht ein. Test „Loop Pegel IP1“ in `test_LoopPegel.cpp`: gebaut misst nichts,
+`liesNeu` kommt sofort zurück, die Spalte füllt sich über den Takt, ein zweites Fenster misst nicht noch einmal, eine
+Änderung misst neu, ein Fenster stirbt mitten in der Messung; der Fall 27f wartet mit `warteAufAbstaende`.
+Release-clang `*Pegel*,*Palette*` 115 / 115; Testing-MSVC baut. Nicht gemessen: wie lange das Öffnen bei Patrik
+vorher dauerte.
+
 **27g (S139):** Hörprobe Titanium vorher und nachher (lokal unter
 `.claude/handover/lautheit_s139/hoerproben/`), je Kanal gemessen: Guitar −45,2 → −34,3 LUFS
 (+10,9), Pad −36,6 → −34,2, Bass −29,4 → −33,2, Piano −25,9 → −29,9, FX −37,1 → −39,0; Drums,
@@ -4013,7 +4027,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
-- **0.107.0** (S149, 2026-10-24): §4n Befund zum langsamen Öffnen des Fensters *Instruments* (Pegelmessung auf dem Thread der Oberfläche); IP1 a (im Hintergrund messen, gemerkt unter Abdruck und Klangfassung).
+- **0.107.0** (S149, 2026-10-24): §4n Befund zum langsamen Öffnen des Fensters *Instruments* (Pegelmessung auf dem Thread der Oberfläche); IP1 a (im Hintergrund messen, gemerkt unter Abdruck und Klangfassung); IP1 gebaut.
 - **0.106.0** (S144, 2026-10-22): §3.2 der Audio-Clip im Loop kommt nach der Hammer-Saite (Patrik).
 - **0.105.0** (S144, 2026-10-22): §4 Datei — `.lvloop` Fassung 13 mit `channels[].clips[].frozen` (Stufe 30f-1, Spielweisen_Konzept FV2 a).
 - **0.104.0** (S143, 2026-10-22): Dateiformat `volume` — wirkt nach den Effekten und Fadern (Spielweisen_Konzept WX5 a).

@@ -3092,7 +3092,9 @@ Idee Preset-Warmup/Pre-Roll.
   Prüfstein und senkt sie nur, wo ein Band versagt.
   **S149: PL31 a** — erst 31c abschließen, vorher alle Umfangsfragen klären; geklärt mit PS1 a, PF1 a, KV1 a, AW1 a,
   FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; **fester Plan IP1, 31c-6 bis 31c-9** im
-  `Spielweisen_Konzept` §4.1; IP1 (Fenster *Instruments* misst im Hintergrund, Loop_Konzept §4n) davor.
+  `Spielweisen_Konzept` §4.1; IP1 (Fenster *Instruments* misst im Hintergrund, Loop_Konzept §4n) davor — **gebaut
+  S149**, Release-clang `*Pegel*,*Palette*` 115 / 115. **Offen bei CMakeCraft:** die Konfiguration Testing baut
+  unter MSVC mit `/MT` und ohne Optimierung (CC-Befund F1, F2) — Entscheid Patrik ausstehend.
   **Offen:** 31c-6 Prüfstein (Konvergenz mit zweiter Rechnung; erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin,
   mittlere Mobilität gegen Plath/Giordano — zugleich Kipppunkt von ST1 a), 31c-7 Klang, 31c-8 Varianten mit Glasboden;
   Testing-MSVC für `*Loop Koerper*` am Stufenende (Bezug des Netzes auf 2 %);

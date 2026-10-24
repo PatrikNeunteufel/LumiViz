@@ -26,6 +26,7 @@
 #include <QSettings>
 #include <QShortcut>
 #include <QSignalBlocker>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
 #include <QUrl>
@@ -52,6 +53,9 @@ const QString kKopfEigene = QStringLiteral("My files");
 
 constexpr int kHoeheBass = 36;    // C2
 constexpr int kHoeheSonst = 60;   // C4
+
+constexpr int kPegelRate = 44100;   // die Rate der Messung (27f), wie im Creator
+constexpr int kMessTaktMs = 100;    // so oft sieht das Fenster nach, ob die Messung fertig ist
 
 }  // namespace
 
@@ -181,8 +185,21 @@ InstrumentPalette::InstrumentPalette(QWidget* parent) : QWidget(parent, Qt::Wind
     connect(m_use, &QPushButton::clicked, this, [this] { (void)verwende(); });
     connect(m_favorit, &QToolButton::clicked, this, [this](bool an) { setzeFavorit(an); });
 
-    liesNeu();
+    m_messTakt = new QTimer(this);
+    m_messTakt->setInterval(kMessTaktMs);
+    connect(m_messTakt, &QTimer::timeout, this, [this] {
+        if (m_messung != nullptr && m_messung->fertig.load()) uebernimmMessung();
+    });
+
+    // nur lesen: gemessen wird, wenn das Fenster gezeigt oder neu gelesen wird (IP1 a) —
+    // wer es baut, ruft gleich danach `zeigeVorn` oder `liesNeu`
+    lies(false);
     setzeZiel(QString());
+}
+
+InstrumentPalette::~InstrumentPalette()
+{
+    beendeMessung();
 }
 
 // --- der Baum ----------------------------------------------------------------
@@ -201,15 +218,88 @@ QTreeWidgetItem* InstrumentPalette::blatt(QTreeWidgetItem* kopf, const Instrumen
     eintrag->setText(0, instrument.titel);
     eintrag->setData(0, kRolleNennung, instrument.name);
     eintrag->setToolTip(0, instrument.beschreibung);
-    if (const auto abstand = abstandVon(instrument.name))
-    {
-        eintrag->setText(1, QStringLiteral("%1%2 dB").arg(*abstand > 0.0 ? QStringLiteral("+") : QStringLiteral("−"))
-                                .arg(std::abs(*abstand), 0, 'f', 1));
-        eintrag->setForeground(1, QColor(0xd9, 0xa4, 0x3a));
-        eintrag->setToolTip(1, *abstand > 0.0 ? tr("Louder than the other instruments — open it and use Match")
-                                              : tr("Quieter than the other instruments — open it and use Match"));
-    }
+    zeigeAbstand(eintrag, instrument.name);
     return eintrag;
+}
+
+void InstrumentPalette::zeigeAbstand(QTreeWidgetItem* eintrag, const QString& nennung)
+{
+    const auto abstand = abstandVon(nennung);
+    if (!abstand)
+    {
+        eintrag->setText(1, QString());
+        eintrag->setToolTip(1, QString());
+        return;
+    }
+    eintrag->setText(1, QStringLiteral("%1%2 dB").arg(*abstand > 0.0 ? QStringLiteral("+") : QStringLiteral("−"))
+                            .arg(std::abs(*abstand), 0, 'f', 1));
+    eintrag->setForeground(1, QColor(0xd9, 0xa4, 0x3a));
+    eintrag->setToolTip(1, *abstand > 0.0 ? tr("Louder than the other instruments — open it and use Match")
+                                          : tr("Quieter than the other instruments — open it and use Match"));
+}
+
+void InstrumentPalette::zeigeAbstaende()
+{
+    // nur die Spalte: der Baum bleibt, wie er ist (Auswahl, Rollen, Filter)
+    for (int i = 0; i < m_baum->topLevelItemCount(); ++i)
+    {
+        QTreeWidgetItem* kopf = m_baum->topLevelItem(i);
+        for (int k = 0; k < kopf->childCount(); ++k)
+        {
+            QTreeWidgetItem* eintrag = kopf->child(k);
+            const QString nennung = eintrag->data(0, kRolleNennung).toString();
+            if (!nennung.isEmpty()) zeigeAbstand(eintrag, nennung);
+        }
+    }
+}
+
+void InstrumentPalette::merkeAbstand(const QString& nennung, const std::optional<double>& abstand)
+{
+    if (abstand && std::abs(*abstand) > kBezugToleranzDb)
+        m_abstaende[nennung] = *abstand;
+    else
+        m_abstaende.erase(nennung);
+}
+
+// --- die Messung der Abweichungen (IP1 a) -------------------------------------
+
+void InstrumentPalette::starteMessung(std::vector<Instrument> offen)
+{
+    m_messung = std::make_unique<Messung>();
+    Messung* messung = m_messung.get();
+    messung->faden = std::thread([messung, offen = std::move(offen)] {
+        for (const Instrument& instrument : offen)
+        {
+            if (messung->abbruch.load()) break;
+            messung->ergebnis.emplace_back(instrument.name, abstandZumBezugGemerkt(instrument, kPegelRate));
+        }
+        messung->fertig.store(true);
+    });
+    m_messTakt->start();
+}
+
+void InstrumentPalette::beendeMessung()
+{
+    if (m_messung == nullptr) return;
+    m_messung->abbruch.store(true);
+    if (m_messung->faden.joinable()) m_messung->faden.join();
+    m_messung.reset();  // was schon gemessen ist, ist gemerkt
+    m_messTakt->stop();
+}
+
+void InstrumentPalette::uebernimmMessung()
+{
+    if (m_messung == nullptr) return;
+    if (m_messung->faden.joinable()) m_messung->faden.join();
+    for (const auto& [nennung, abstand] : m_messung->ergebnis) merkeAbstand(nennung, abstand);
+    m_messung.reset();
+    m_messTakt->stop();
+    zeigeAbstaende();
+}
+
+void InstrumentPalette::warteAufAbstaende()
+{
+    uebernimmMessung();
 }
 
 std::optional<double> InstrumentPalette::abstandVon(const QString& nennung) const
@@ -220,6 +310,12 @@ std::optional<double> InstrumentPalette::abstandVon(const QString& nennung) cons
 
 void InstrumentPalette::liesNeu()
 {
+    lies(true);
+}
+
+void InstrumentPalette::lies(bool messen)
+{
+    beendeMessung();  // eine laufende misst die alten Dateien
     {
         // Favoriten und Zuletzt, wie sie jetzt gemerkt sind: das Fenster gibt es je Editor
         // einmal (Instrument-Editor, Drum-Editor) — das andere kann sie geaendert haben
@@ -229,12 +325,18 @@ void InstrumentPalette::liesNeu()
     }
     m_alle = instrumente();
     for (Instrument& eigenes : eigeneInstrumente()) m_alle.push_back(std::move(eigenes));
-    // 27f: wie weit die eigenen vom Bezug liegen — die mitgelieferten stehen darauf
+    // 27f: wie weit die eigenen vom Bezug liegen — die mitgelieferten stehen darauf. Gemerktes
+    // sofort, der Rest auf dem Thread (IP1 a): die Oberflaeche rechnet hier nichts
     m_abstaende.clear();
+    std::vector<Instrument> offen;
     for (const Instrument& instrument : m_alle)
-        if (istEigenesInstrument(instrument.name))
-            if (const auto abstand = abstandZumBezug(instrument, 44100); abstand && std::abs(*abstand) > kBezugToleranzDb)
-                m_abstaende[instrument.name] = *abstand;
+    {
+        if (!istEigenesInstrument(instrument.name) || !pegelMessbar(instrument)) continue;
+        if (const auto gemerkt = gemerkterAbstand(instrument, kPegelRate))
+            merkeAbstand(instrument.name, *gemerkt);
+        else if (messen)
+            offen.push_back(instrument);
+    }
     {
         // die Genres, die es gibt — die Wahl bleibt, wenn es sie noch gibt
         const QString gewaehltesGenre = m_genre->currentData().toString();
@@ -245,6 +347,7 @@ void InstrumentPalette::liesNeu()
         m_genre->setCurrentIndex(std::max(0, m_genre->findData(gewaehltesGenre)));
     }
     baueBaum();
+    if (!offen.empty()) starteMessung(std::move(offen));
 }
 
 void InstrumentPalette::baueBaum()

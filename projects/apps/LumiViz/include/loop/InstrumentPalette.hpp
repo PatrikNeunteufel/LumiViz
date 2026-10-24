@@ -20,6 +20,12 @@
  *
  * Favoriten und „Recently used" merkt die App (`instrumentPalette/…`), als
  * Namen, wie ein Muster sie nennt — sie gelten auch auf einem anderen Rechner.
+ *
+ * Die Abweichung der eigenen Instrumente vom Bezug (27f) misst ein eigener
+ * Thread (Entscheid Patrik IP1 a, S149): das Fenster oeffnet sofort, die zweite
+ * Spalte fuellt sich, sobald die Werte da sind; gemerkt wird jeder Wert
+ * (`abstandZumBezugGemerkt`). Der Destruktor bricht die Messung ab und wartet
+ * auf den Thread (hoechstens ein Instrument).
  */
 #pragma once
 
@@ -28,14 +34,19 @@
 #include <QStringList>
 #include <QWidget>
 
+#include <atomic>
 #include <map>
+#include <memory>
 #include <optional>
+#include <thread>
+#include <utility>
 #include <vector>
 
 class QComboBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
+class QTimer;
 class QToolButton;
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -49,10 +60,16 @@ class InstrumentPalette : public QWidget
 
 public:
     explicit InstrumentPalette(QWidget* parent = nullptr);
+    ~InstrumentPalette() override;
 
     /// Wie weit ein eigenes Instrument vom Bezug abweicht (Stufe 27f, LL14 a), in dB;
-    /// leer = es weicht nicht mehr als `kBezugToleranzDb` ab, ist nicht zu messen oder kein eigenes.
+    /// leer = es weicht nicht mehr als `kBezugToleranzDb` ab, ist nicht zu messen, kein
+    /// eigenes — oder noch nicht gemessen (`misstNoch`).
     [[nodiscard]] std::optional<double> abstandVon(const QString& nennung) const;
+    /// Ob der Thread noch Abweichungen misst (IP1 a).
+    [[nodiscard]] bool misstNoch() const { return m_messung != nullptr; }
+    /// Warten, bis die Messung fertig ist, und ihre Werte zeigen (fuer Tests).
+    void warteAufAbstaende();
 
     /// Fuer welches Muster das Fenster gerade waehlt; leer = es ist kein
     /// Instrument-Muster offen, **Use** ist dann aus. Waehlt das Fenster fuer
@@ -62,7 +79,8 @@ public:
     [[nodiscard]] const QString& ziel() const { return m_ziel; }
     /// Die Instrumente neu lesen — die eigenen aendern sich, waehrend das
     /// Programm laeuft (Save im Creator, ein Import). Auch Favoriten und
-    /// „Recently used" kommen neu aus den Einstellungen.
+    /// „Recently used" kommen neu aus den Einstellungen. Was an Abweichungen
+    /// nicht gemerkt ist, misst danach der Thread.
     void liesNeu();
     /// Oeffnen bzw. nach vorn holen, die Schreibmarke in der Suche.
     void zeigeVorn();
@@ -128,6 +146,26 @@ protected:
     bool eventFilter(QObject* objekt, QEvent* ereignis) override;
 
 private:
+    /// Die Messung der Abweichungen auf ihrem Thread (IP1 a). Der Thread schreibt
+    /// `ergebnis` und setzt danach `fertig`; gelesen wird erst nach `fertig`.
+    struct Messung
+    {
+        std::thread faden;
+        std::atomic<bool> abbruch{false};
+        std::atomic<bool> fertig{false};
+        std::vector<std::pair<QString, std::optional<double>>> ergebnis;  ///< Nennung -> Abstand
+    };
+
+    /// Lesen; mit `messen` startet danach die Messung, was nicht gemerkt ist.
+    void lies(bool messen);
+    void starteMessung(std::vector<Instrument> offen);
+    /// Abbrechen und auf den Thread warten (hoechstens ein Instrument).
+    void beendeMessung();
+    /// Den fertigen Thread einsammeln und seine Werte zeigen.
+    void uebernimmMessung();
+    void merkeAbstand(const QString& nennung, const std::optional<double>& abstand);
+    void zeigeAbstand(QTreeWidgetItem* eintrag, const QString& nennung);
+    void zeigeAbstaende();
     void baueBaum();
     void filtere();
     void zeigeDetail();
@@ -141,6 +179,8 @@ private:
     std::vector<Instrument> m_alle;  ///< mitgelieferte, dann eigene
     /// Eigene, die mehr als `kBezugToleranzDb` vom Bezug abweichen (27f): Nennung -> dB.
     std::map<QString, double> m_abstaende;
+    std::unique_ptr<Messung> m_messung;  ///< nullptr = es wird nicht gemessen
+    QTimer* m_messTakt = nullptr;        ///< sieht nach, ob die Messung fertig ist
     QStringList m_favoriten;         ///< Nennungen
     QStringList m_zuletzt;           ///< juengstes zuerst
 

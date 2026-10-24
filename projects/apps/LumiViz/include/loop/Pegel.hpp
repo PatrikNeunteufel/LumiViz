@@ -45,6 +45,23 @@ inline constexpr double kBezugToleranzDb = 1.0;
 /// 0 … `kInstrumentLautMax`. Leer wie oben.
 [[nodiscard]] std::optional<double> lautAufBezug(const Instrument& instrument, int rate);
 
+/// Ob `abstandZumBezug` dieses Instrument misst: nicht die Art `drums`, nicht mit
+/// einer Sample-Schicht, deren Aufnahme nicht gemerkt ist.
+[[nodiscard]] bool pegelMessbar(const Instrument& instrument);
+
+/// Wie `abstandZumBezug`, aber gemerkt (Entscheid Patrik IP1 a, S149): unter dem
+/// Abdruck des Instruments (`instrumentAbdruck`, wie im Tonspeicher), der
+/// Klangfassung und der Rate. Ein unveraendertes Instrument wird nur einmal
+/// gemessen. Nicht gemerkt wird, was `pegelMessbar` ablehnt — eine Aufnahme kann
+/// spaeter gemerkt sein. Von jedem Thread aus.
+[[nodiscard]] std::optional<double> abstandZumBezugGemerkt(const Instrument& instrument, int rate);
+/// Was gemerkt ist, ohne zu messen: aussen leer = nichts gemerkt.
+[[nodiscard]] std::optional<std::optional<double>> gemerkterAbstand(const Instrument& instrument, int rate);
+/// So oft hat `abstandZumBezugGemerkt` wirklich gemessen (fuer Tests).
+[[nodiscard]] int gemesseneAbstaende();
+/// Alles Gemerkte vergessen (fuer Tests).
+void vergissGemerkteAbstaende();
+
 /// Die Standardprobe als Loop: 120 BPM, 4/4, Sechzehntel; eine Dur-Tonleiter
 /// ueber zwei Oktaven (15 Toene, je zwei Schritte, Lautstaerke 0,9), zwei
 /// Schritte Pause, dann der Akkord Grundton, Terz, Quinte, Oktave ueber einen

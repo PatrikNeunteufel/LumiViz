@@ -37,10 +37,12 @@
 #include <QCoreApplication>
 #include <QDialog>
 #include <QDir>
+#include <QEventLoop>
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTemporaryDir>
+#include <QThread>
 #include <QTreeWidget>
 #include <QFile>
 #include <QRegularExpression>
@@ -369,6 +371,7 @@ TEST_SUITE("LoopPegel")
         {
             InstrumentPalette fenster;
             fenster.liesNeu();
+            fenster.warteAufAbstaende();  // gemessen wird auf einem Thread (IP1 a)
             REQUIRE(fenster.abstandVon(QStringLiteral("user:loud_organ")).has_value());
             CHECK(*fenster.abstandVon(QStringLiteral("user:loud_organ")) == doctest::Approx(6.02).epsilon(0.01));
             CHECK_FALSE(fenster.abstandVon(QStringLiteral("organ")).has_value());  // mitgeliefert: keine
@@ -400,6 +403,7 @@ TEST_SUITE("LoopPegel")
         {
             InstrumentPalette fenster;
             fenster.liesNeu();
+            fenster.warteAufAbstaende();
             CHECK_FALSE(fenster.abstandVon(QStringLiteral("user:loud_organ")).has_value());
         }
         // Save as... fragt ebenso (der Knopf ruft frageNachPegel vor dem Namen; der Name-Dialog
@@ -418,5 +422,88 @@ TEST_SUITE("LoopPegel")
             creator.messeAbstand();
             CHECK(creator.grab().save(bild));
         }
+    }
+
+    TEST_CASE("Loop Pegel IP1: das Fenster Instruments misst auf einem Thread und merkt sich die Werte")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        Instrument laut = *findeInstrument(QStringLiteral("organ"));
+        laut.laut *= 2.0;  // 6,02 dB ueber dem Bezug
+        laut.titel = QStringLiteral("Loud Organ");
+        REQUIRE(speichereEigenes(laut, QStringLiteral("loud_organ")));
+        vergissGemerkteAbstaende();
+        const int vorher = gemesseneAbstaende();
+        const QString nennung = QStringLiteral("user:loud_organ");
+
+        // gebaut: gelesen, nichts gemessen
+        InstrumentPalette fenster;
+        CHECK_FALSE(fenster.misstNoch());
+        CHECK(gemesseneAbstaende() == vorher);
+
+        // gezeigt bzw. neu gelesen: die Oberflaeche kommt sofort zurueck, der Wert noch nicht
+        fenster.liesNeu();
+        CHECK(fenster.misstNoch());
+        CHECK_FALSE(fenster.abstandVon(nennung).has_value());
+        const auto* baum = fenster.findChild<QTreeWidget*>(QStringLiteral("instrumentPaletteTree"));
+        REQUIRE(baum != nullptr);
+        const auto zeile = [baum] {
+            const auto treffer = baum->findItems(QStringLiteral("Loud Organ"), Qt::MatchExactly | Qt::MatchRecursive, 0);
+            return treffer.isEmpty() ? nullptr : treffer.front();
+        };
+        REQUIRE(zeile() != nullptr);
+        CHECK(zeile()->text(1).isEmpty());
+
+        // der Takt des Fensters sammelt das Ergebnis ein, die Spalte fuellt sich
+        for (int runde = 0; runde < 600 && fenster.misstNoch(); ++runde)
+        {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+            QThread::msleep(50);
+        }
+        REQUIRE_FALSE(fenster.misstNoch());
+        REQUIRE(fenster.abstandVon(nennung).has_value());
+        CHECK(*fenster.abstandVon(nennung) == doctest::Approx(6.02).epsilon(0.01));
+        CHECK(zeile()->text(1) == QStringLiteral("+6.0 dB"));
+        CHECK(gemesseneAbstaende() == vorher + 1);
+
+        // ein zweites Fenster: gemerkt, sofort da, nicht noch einmal gemessen
+        {
+            InstrumentPalette zweites;
+            zweites.liesNeu();
+            CHECK_FALSE(zweites.misstNoch());
+            REQUIRE(zweites.abstandVon(nennung).has_value());
+            CHECK(*zweites.abstandVon(nennung) == doctest::Approx(6.02).epsilon(0.01));
+            CHECK(gemesseneAbstaende() == vorher + 1);
+        }
+
+        // geaendert: ein neuer Abdruck, also neu gemessen
+        laut.laut *= 2.0;  // 12,04 dB
+        REQUIRE(speichereEigenes(laut, QStringLiteral("loud_organ")));
+        fenster.liesNeu();
+        CHECK(fenster.misstNoch());
+        fenster.warteAufAbstaende();
+        REQUIRE(fenster.abstandVon(nennung).has_value());
+        CHECK(*fenster.abstandVon(nennung) == doctest::Approx(12.04).epsilon(0.01));
+        CHECK(gemesseneAbstaende() == vorher + 2);
+
+        // laeuft noch eine Messung, wenn das Fenster stirbt, bricht es sie ab und wartet
+        laut.laut *= 1.5;  // ein Wert, der noch nicht gemerkt ist
+        REQUIRE(speichereEigenes(laut, QStringLiteral("loud_organ")));
+        {
+            InstrumentPalette kurz;
+            kurz.liesNeu();
+            CHECK(kurz.misstNoch());
+        }
+        vergissGemerkteAbstaende();
     }
 }
