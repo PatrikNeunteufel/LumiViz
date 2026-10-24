@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.78.0
+> **Version:** 0.79.0
 > **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a und TS1 a (Patrik S139–S149);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a und TS1 a (Patrik S139–S150);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1840,15 +1840,48 @@ Nennmitte „5000 Hz“ ist gerechnet 5012 Hz), `bandMobilitaetDb` (geometrisch 
 `InstrumentBodyTool --report <datei>` schreibt den Bericht (je Stegpunkt Gl. 12; je Terzband 100 Hz–5 kHz Dichte der
 gerechneten Moden und Mobilität über alle Stegpunkte und über den Diskant), nach einer Rechnung oder für einen
 fertigen Körper (`.lvinstbody` statt Bauplan: nur der Bericht); die Mobilität aus den gerechneten und den gezogenen
-Moden. **Festlegung:** Diskant = Stegpunkte ab MIDI 38 (MAESSTRO Abb. 6: Bassteg Noten 1–17 = MIDI 21–37; unser
-Bauplan hat einen durchgehenden Steg). Das letzte Band (5012 Hz, bis 5623 Hz) ist nur zur Hälfte gerechnet — seine
+Moden. **Festlegung:** Diskant = Stegpunkte ab MIDI ~~38~~ **41** (berichtigt S150, PF2 a: Abb. 6 zählt ab C1 —
+Index 1–84 = MIDI 24–107 —, der Bassteg trägt Index 1–17 = MIDI 24–40; S149 hatte Index 1 als A0 gelesen). Das letzte Band (5012 Hz, bis 5623 Hz) ist nur zur Hälfte gerechnet — seine
 Dichte zählt nur die gerechneten Moden. Tests `test_LoopKoerperMobilitaet` (3 Fälle): Einmassenschwinger gegen die
 geschlossene Lösung; Terzbänder, Mittel, Dichte; **Satz vom Mittelwert** an einer Aluminiumplatte 1,0 × 0,8 m, 1 mm,
 η = 2 %: mittleres Re(Y) über 300–1000 Hz 0,0294 s/kg gegen 0,0297 der unendlichen Platte (MAESSTRO Gl. 11, 1 %
 daneben; 288 Moden, Dichte 0,244 gegen asymptotisch 0,257 /Hz). Release-clang `*Loop Koerper*` 41 / 41;
 Testing-MSVC baut (CMakeCraft v0.12.0; die Hebung auf v0.13.1 folgt als eigener Schritt, BG1 a). **Erster Bericht am Steinway (noch keine Prüfung, die kommt in
 Teil 5):** Gl. 12 über alle 88 Stegpunkte −67,4 dB; Terzbänder 500 Hz–5 kHz −65,3 bis −68,1 dB (Diskant),
-Dichte von 0,078 /Hz (500 Hz) auf 0,221 /Hz (4 kHz).
+Dichte von 0,078 /Hz (500 Hz) auf 0,221 /Hz (4 kHz). Mit dem Diskant ab MIDI 41 (S150): −64,8 bis −67,9 dB.
+
+**Befund S150 zum Steg des Prüffalls (MAESSTRO Abb. 4 und 6 selbst angesehen, RT-0425 Abb. 2 d am Kontrollbild):**
+RT-0425 zeichnet den Steg durchgehend: vom Ende des Bass-Arms über einen Haken ins Diskant; unser Bauplan folgt dem.
+Die Stegpunkte aus Anhang A legen die Tasten 21–40 auf den Bass-Arm (Taste 40 bei (0,62; 1,11), Taste 21 bei
+(0,33; 1,73)), Taste 41 springt auf den langen Steg (0,23; 1,58); dazwischen rund 23 cm Haken ohne Stegpunkt.
+MAESSTRO Abb. 4 (a, b) und Abb. 6 zeigen zwei getrennte Stege. Abb. 6 zählt „Note index“ 1–84 — die 84 Noten C1–B7
+aus Anhang A, der Text nennt „notes from C1 to G#7“ —, der Sprung der Mobilität liegt zwischen Index 17 und 18 =
+MIDI 40 und 41. Der Text S. 8 („note index 1–18“) ist damit eine Note weiter gezählt als das Bild. Der geplante Schnitt
+bei 37/38 (S149, aus Index 1 = A0) läge mitten im Bass-Arm.
+
+✅ **PF2 a** (Patrik S150): **Der Prüffall bekommt zwei Stege nach den Stegpunkten.** `bass bridge` trägt die Tasten
+21–40 (60 × 32 mm), `treble bridge` 41–108 (20 × 32 mm); der Haken entfällt; jeder Steg endet einen Tastenabstand
+hinter seiner äußersten Taste (Bass rund 3 cm hinter A0, Diskant rund 9 cm vor F2). `kDiskantAb` im Werkzeug wird 41,
+die Festlegung oben berichtigt. Der Bauplan des Steinway D bleibt mit Haken, wie RT-0425 ihn zeichnet. Grund: zwei
+unabhängige Belege (Geometrie aus Anhang A, Sprung in Abb. 6 bei richtiger Zählung) und die getrennten Stege in
+Abb. 4 und 6; nach PF1 a soll sich der Prüffall vom Steinway nur in Zahlen mit Quelle unterscheiden. Verworfen: b
+(Schnitt bei 37/38 — beruhte auf der falschen Zählung, nicht auf einer Quelle). Kippt, wenn Quellcode oder Daten von
+MAESSTRO (GitLab, nicht gesucht) den Bass-Steg ausdrücklich anders enden lassen.
+
+**Gebaut 31c-6 Teil 3 — Prüffall (S150, PF1 a, PF2 a):** `make_steinway_d.py --maesstro <MAESSTRO.pdf>` schreibt
+`projects/apps/LumiViz/tests/unit/UnitTests/koerper/maesstro_rp.lvinstbodyplan` (Testdaten, nicht mitgeliefert):
+Umriss, Rippenlinien, Stegpunkte und Hörorte (z neu mit dem Diskant-Steg) wie im Steinway; Platte 8 mm ohne Raster,
+Faser 135°, Rippen 27 → 17 mm hoch und 25 → 21 mm breit ohne Verjüngung, zwei Stege nach PF2 a, Sitka und Buche nach
+Tab. 2 mit η = 2 %; Masse 10,4 kg (Steinway 11,5 kg). Der Lauf ohne `--maesstro` schreibt den Steinway weiter bitgleich.
+**Überlagerungsbild gegen Abb. 4 (a)** (`--bild`; Abb. 4 über den Umriss eingepasst, 4,6 mm je Pixel, Umriss zum
+Rand im Bild Median 4 px): Rippen bei MAESSTRO **39,3°** (Rib15 aus der Liste: 39,5°), bei uns 35,5° — **3,8° unter
+der Kippgrenze von 5°**; Abstände 105–151 mm gegen unsere 114–145 mm (unter 2 cm); **Zahl 17** bei MAESSTRO („Ribs -
+17“, im Bild 16 grüne und die gewählte Rib15), **16 bei uns** — MAESSTRO hat eine kurze Rippe mehr in der
+Diskant-Ecke, kein Kipppunkt von PF1 a; die Stichprobe Rib15 in mm trifft unsere Rippe 1 auf 16 und 1 mm (gleicher
+Bezug der Koordinaten); die rosa Stege liegen im Median 17 mm neben unseren (90 % unter 50 mm, so genau wie die
+Einpassung). Damit bleiben nach PF1 a Umriss, Rippen und Stege aus unserem Bauplan. Test „Loop Koerper 31c-6
+MAESSTRO Prueffall“ in `test_LoopKoerperBauplan` (Werte aus Tab. 1–2, gleich wie der Steinway, jeder Stegpunkt auf
+seinem Steg, Stege 99 mm getrennt, Hörorte). Release-clang `*Loop Koerper*` 42 / 42.
 
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:

@@ -72,9 +72,10 @@ double seit(std::chrono::steady_clock::time_point t)
     return std::chrono::duration<double>(std::chrono::steady_clock::now() - t).count();
 }
 
-/// Ab dieser Taste zaehlt ein Stegpunkt zum Diskant: MAESSTRO Abb. 6 hat den Bassteg bei den
-/// Noten 1–17 (MIDI 21–37); PS1 a mittelt die Baender ueber den Diskant.
-constexpr int kDiskantAb = 38;
+/// Ab dieser Taste zaehlt ein Stegpunkt zum Diskant (PF2 a, S150): MAESSTRO Abb. 6 zaehlt die Noten
+/// ab C1 (Index 1–84 = MIDI 24–107), der Bassteg traegt die Indizes 1–17 = MIDI 24–40 — wie in
+/// RT-0425 Anhang A, wo der Bass-Arm bei Taste 40 endet; PS1 a mittelt die Baender ueber den Diskant.
+constexpr int kDiskantAb = 41;
 
 /// Der Bericht des Pruefsteins (31c-6, PS1 a, KV1 a): je Stegpunkt das Mittel nach MAESSTRO Gl. 12,
 /// je Terzband 100 Hz – 5 kHz die Modendichte (gerechnete Moden) und die mittlere Mobilitaet ueber

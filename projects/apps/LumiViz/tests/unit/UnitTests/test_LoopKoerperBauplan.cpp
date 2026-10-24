@@ -23,6 +23,9 @@
  * - Der mitgelieferte Steinway D (BM2 a, `make_steinway_d.py`), vom Arbeitsordner aus gelesen
  *   (die Test-Exe aus dem Projekt-Root starten): in sich stimmig, 88 Tasten, jeder Stegpunkt
  *   auf dem Steg, Dicken in den Spannen von RT-0425 §2.1, Masse plausibel.
+ * - Der MAESSTRO-Prueffall (S150, PF1 a, PF2 a; Testdaten unter `koerper/`, aus
+ *   `make_steinway_d.py --maesstro`): Umriss, Rippenlinien und Stegpunkte wie im Steinway D,
+ *   Platte, Stege, Rippen und Werkstoffe nach MAESSTRO Tab. 1–2, der Steg geteilt bei 40/41.
  * - Die Icons der beiden Endungen (IC1 a) liegen, wo `dateiArtIcon` sie sucht
  *   (`lumiviz_<endung>.ico`), ebenfalls vom Arbeitsordner aus.
  ****************************************************************************************
@@ -371,6 +374,93 @@ TEST_CASE("Loop Koerper 31c-1 Steinway D")
         const double soll = plan.platte.dickeBei(h.ort) / 2.0 + auf.hoehe + 0.12;
         CHECK_MESSAGE(std::abs(h.hoehe - soll) < 0.001, "z ", h.hoehe, " m, erwartet ", soll, " m");
     }
+}
+
+TEST_CASE("Loop Koerper 31c-6 MAESSTRO Prueffall")
+{
+    // PF1 a, PF2 a: der Steinway D mit den Vereinfachungen von MAESSTRO (Elie, Cotte & Boutillon 2022,
+    // Tab. 1 und 2), Testdaten aus `make_steinway_d.py --maesstro`
+    kp::Bauplan plan;
+    kp::Bauplan steinway;
+    REQUIRE_MESSAGE(ladeBauplan(QStringLiteral("projects/apps/LumiViz/tests/unit/UnitTests/koerper/maesstro_rp") +
+                                    QLatin1String(kBauplanEndung),
+                                plan),
+                    "die Test-Exe aus dem Projekt-Root starten");
+    REQUIRE(ladeBauplan(QStringLiteral("asset/loop/instrument_bodies/steinway_d") + QLatin1String(kBauplanEndung), steinway));
+    const std::vector<std::string> befunde = kp::pruefe(plan);
+    for (const std::string& b : befunde) MESSAGE(b);
+    CHECK(befunde.empty());
+
+    // vom Steinway D unveraendert: Umriss, Rippenlinien, Stegpunkte
+    CHECK(plan.platte.umriss == steinway.platte.umriss);
+    CHECK(plan.stegpunkte == steinway.stegpunkte);
+    REQUIRE(plan.rippen.size() == steinway.rippen.size());
+    for (std::size_t k = 0; k < plan.rippen.size(); ++k) CHECK(plan.rippen[k].linie == steinway.rippen[k].linie);
+
+    // Tab. 2: Sitka und Buche, je η = 2 %
+    const kp::Material* sitka = kp::findeMaterial(plan, "sitka");
+    const kp::Material* buche = kp::findeMaterial(plan, "beech");
+    REQUIRE(sitka);
+    REQUIRE(buche);
+    CHECK(sitka->dichte == doctest::Approx(380.0));
+    CHECK(sitka->ex == doctest::Approx(11.0e9));
+    CHECK(sitka->gyz == doctest::Approx(0.042e9));
+    CHECK(buche->dichte == doctest::Approx(750.0));
+    CHECK(buche->ey == doctest::Approx(2.24e9));
+    CHECK(sitka->verlustfaktor == doctest::Approx(0.02));
+    CHECK(buche->verlustfaktor == doctest::Approx(0.02));
+
+    // Tab. 1: Platte 8 mm ueberall, Faser 135°
+    CHECK(plan.platte.material == "sitka");
+    CHECK(plan.platte.faserWinkelGrad == doctest::Approx(135.0));
+    CHECK(plan.platte.dickeRaster.leer());
+    CHECK(plan.platte.dickeBei({0.5, 1.0}) == doctest::Approx(0.008));
+
+    // zwei Stege (PF2 a): der Bass-Steg 60 × 32 mm traegt die Tasten 21–40, der Diskant-Steg
+    // 20 × 32 mm die Tasten 41–108; jeder Stegpunkt auf seinem Steg, der Haken entfaellt
+    REQUIRE(plan.stege.size() == 2);
+    const kp::Leiste& bass = plan.stege[0];
+    const kp::Leiste& diskant = plan.stege[1];
+    CHECK(bass.name == "bass bridge");
+    CHECK(diskant.name == "treble bridge");
+    for (const double h : bass.hoehe) CHECK(h == doctest::Approx(0.060));
+    for (const double h : diskant.hoehe) CHECK(h == doctest::Approx(0.020));
+    for (const kp::Leiste* l : {&bass, &diskant})
+    {
+        CHECK(l->material == "beech");
+        for (const double b : l->breite) CHECK(b == doctest::Approx(0.032));
+    }
+    for (const kp::Stegpunkt& s : plan.stegpunkte)
+    {
+        const kp::Leiste& eigener = s.taste <= 40 ? bass : diskant;
+        const double d = kp::abstandZurLinie(s.ort, eigener.linie);
+        CHECK_MESSAGE(d <= 0.016, "Taste ", s.taste, ": ", d, " m neben ihrem Steg");
+    }
+    double abstand = 1.0;
+    for (const kp::Punkt2& p : bass.linie) abstand = std::min(abstand, kp::abstandZurLinie(p, diskant.linie));
+    MESSAGE("kleinster Abstand der beiden Stege: ", abstand * 1e3, " mm");
+    CHECK(abstand > 0.05);
+
+    // Tab. 1: Rippen ohne Verjuengung, von Bass nach Diskant 27 → 17 mm hoch, 25 → 21 mm breit
+    REQUIRE(plan.rippen.size() == 16);
+    for (std::size_t k = 0; k < plan.rippen.size(); ++k)
+    {
+        const kp::Leiste& r = plan.rippen[k];
+        const double t = static_cast<double>(k) / (plan.rippen.size() - 1);
+        CAPTURE(r.name);
+        CHECK(r.material == "sitka");
+        for (const double h : r.hoehe) CHECK(h == doctest::Approx(0.027 - 0.010 * t).epsilon(1e-4));
+        for (const double b : r.breite) CHECK(b == doctest::Approx(0.025 - 0.004 * t).epsilon(1e-4));
+    }
+
+    // Hoerorte an denselben Stellen; z = halbe Platte + Diskant-Steg + 12 cm (beide Tasten im Diskant)
+    REQUIRE(plan.hoerorte.size() == 2);
+    for (std::size_t i = 0; i < 2; ++i)
+    {
+        CHECK(plan.hoerorte[i].ort == steinway.hoerorte[i].ort);
+        CHECK(plan.hoerorte[i].hoehe == doctest::Approx(0.004 + 0.020 + 0.12));
+    }
+    MESSAGE("Masse ", kp::masse(plan), " kg (Platte ", kp::plattenMasse(plan), " kg)");
 }
 
 TEST_CASE("Loop Koerper 31c-1 Icons")

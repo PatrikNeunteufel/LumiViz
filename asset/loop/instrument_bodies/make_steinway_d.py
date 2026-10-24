@@ -2,6 +2,17 @@
 Entscheide Patrik BM1 a, BM2 a, BM3 a, GB1 a).
 
     python -I asset/loop/instrument_bodies/make_steinway_d.py <RT-0425.pdf> [--ziel <ordner>] [--bild <datei.png>]
+    python -I asset/loop/instrument_bodies/make_steinway_d.py <RT-0425.pdf> --maesstro <MAESSTRO.pdf> [--ziel <ordner>] [--bild <datei.png>]
+
+Mit `--maesstro` (S150, PF1 a, PF2 a) entsteht statt des Steinway der Pruefstein von MAESSTRO
+(Elie, Cotte & Boutillon, Acta Acustica 6 (2022) 30, „RP"): `maesstro_rp.lvinstbodyplan`, von
+sich aus unter den Testdaten `projects/apps/LumiViz/tests/unit/UnitTests/koerper/` (nicht
+mitgeliefert). Umriss, Rippenlinien und Stegpunkte wie im Steinway; Platte 8 mm, zwei Stege
+(Bass 60 mm fuer die Tasten 21–40, Diskant 20 mm fuer 41–108, je 32 mm breit; der Haken von
+RT-0425 entfaellt), Rippen ohne Verjuengung 27 → 17 mm hoch und 25 → 21 mm breit, Faser 135
+Grad, Sitka und Buche aus Tab. 2 mit η = 2 %. `--bild` legt den Pruefstein dann auf Abb. 4 (a)
+(Umriss orange, Rippen schwarz, Bass-Steg rot, Diskant-Steg lila, Rib15 aus der Liste der
+Oberflaeche hellblau) und misst Zahl, Winkel und Abstand der Rippen von MAESSTRO im Bild.
 
 Quelle: J. Chabassier, M. Duruflé, „Physical parameters for piano modeling", Inria RT-0425
 (2012), hal-00688679 — die PDF liegt nur lokal unter
@@ -56,7 +67,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
-from scipy import ndimage, optimize
+from scipy import ndimage, optimize, spatial
 
 # --- Eichung von Abb. 2 (c) und (d) ---------------------------------------------------
 PX_JE_M = 290.0
@@ -613,12 +624,257 @@ def flaeche(umriss):
     return abs(np.dot(u[:, 0], np.roll(u[:, 1], -1)) - np.dot(u[:, 1], np.roll(u[:, 0], -1))) / 2
 
 
+# --- MAESSTRO-Pruefstein (S150, PF1 a, PF2 a) ---------------------------------------------
+MAESSTRO_PLATTE = 0.008                  # Tab. 1: Panel 8 mm
+MAESSTRO_STEG_BASS = 0.060               # Tab. 1: Bridge #1 (bass) 60 mm
+MAESSTRO_STEG_DISKANT = 0.020            # Tab. 1: Bridge #2 (treble) 20 mm
+MAESSTRO_STEG_BREITE = 0.032             # Tab. 1: beide 32 mm
+MAESSTRO_RIPPE_HOEHE = (0.027, 0.017)    # Tab. 1: 27 (bass rib) bis 17 mm (treble rib)
+MAESSTRO_RIPPE_BREITE = (0.025, 0.021)   # Tab. 1: 25 (bass rib) bis 21 mm (treble rib)
+MAESSTRO_FASER = 135.0                   # Tab. 1
+MAESSTRO_ETA = 0.02                      # Tab. 2: 2 % je Werkstoff
+LETZTE_BASS_TASTE = 40                   # PF2 a: der Bass-Arm traegt 21–40 (Anhang A, Abb. 6)
+# Abb. 4 (a), Liste der Rippen: „Rib15", Enden in mm (der Stichprobe nach PF1 a)
+MAESSTRO_RIB15 = ((0.147, 1.694), (0.336, 1.850))
+
+
+def teilstueck(linie, sa, sb):
+    """Das Stueck der Linie zwischen den Bogenlaengen sa < sb, mit den Endpunkten."""
+    stueck = [punkt_auf_linie(sa, linie)]
+    s = 0.0
+    for k in range(1, len(linie)):
+        s += float(np.hypot(*(np.array(linie[k]) - np.array(linie[k - 1]))))
+        if sa < s < sb:
+            stueck.append(tuple(linie[k]))
+    stueck.append(punkt_auf_linie(sb, linie))
+    return stueck
+
+
+def maesstro(steinway):
+    """Der Pruefstein von MAESSTRO (Elie, Cotte & Boutillon 2022, „RP"): Umriss, Rippenlinien und
+    Stegpunkte wie im Steinway D aus RT-0425, darauf die Vereinfachungen aus Text und Tab. 1–2.
+
+    Der Steg wird geteilt (PF2 a): RT-0425 zeichnet ihn mit einem Haken durchgehend, MAESSTRO
+    Abb. 4 und 6 zeigen zwei Stege. Der Bass-Steg traegt die Tasten 21–40 (der Bass-Arm, auf dem
+    Anhang A sie hat; Abb. 6 springt zwischen Index 17 und 18 = MIDI 40 und 41, Index 1 = C1), der
+    Diskant-Steg 41–108. Jeder endet einen Tastenabstand hinter seiner aeussersten Taste; der Haken
+    dazwischen entfaellt."""
+    linie = [tuple(p) for p in steinway["bridges"][0]["line"]]
+    punkte = {p["key"]: (p["x"], p["y"]) for p in steinway["bridgePoints"]}
+    s = {k: lage_auf_linie(p, linie) for k, p in punkte.items()}
+    bass = [k for k in punkte if k <= LETZTE_BASS_TASTE]
+    diskant = [k for k in punkte if k > LETZTE_BASS_TASTE]
+    # der Bass-Steg laeuft von Taste 40 (Anfang der Linie) zu A0, der Diskant-Steg von F2 zu C8
+    bass_ende = s[min(bass)] + abs(s[min(bass)] - s[min(bass) + 1])
+    diskant_anfang = s[min(diskant)] - abs(s[min(diskant) + 1] - s[min(diskant)])
+    if not (max(s[k] for k in bass) < bass_ende < diskant_anfang < min(s[k] for k in diskant)):
+        raise SystemExit("Steg: Bass- und Diskantteil liegen nicht getrennt auf der Linie.")
+    laenge = lage_auf_linie(linie[-1], linie)
+    steg_bass = teilstueck(linie, 0.0, bass_ende)
+    steg_diskant = teilstueck(linie, diskant_anfang, laenge)
+
+    def leiste(name, material, punkte_l, hoehe, breite):
+        return {"name": name, "material": material, "line": [[runde(x), runde(y)] for x, y in punkte_l],
+                "height": [runde(hoehe)] * len(punkte_l), "width": [runde(breite)] * len(punkte_l)}
+
+    stege = [leiste("bass bridge", "beech", steg_bass, MAESSTRO_STEG_BASS, MAESSTRO_STEG_BREITE),
+             leiste("treble bridge", "beech", steg_diskant, MAESSTRO_STEG_DISKANT, MAESSTRO_STEG_BREITE)]
+    rippen = []
+    n = len(steinway["ribs"])
+    for k, r in enumerate(steinway["ribs"]):  # von Bass nach Diskant sortiert
+        t = k / max(1, n - 1)
+        hoehe = MAESSTRO_RIPPE_HOEHE[0] + t * (MAESSTRO_RIPPE_HOEHE[1] - MAESSTRO_RIPPE_HOEHE[0])
+        breite = MAESSTRO_RIPPE_BREITE[0] + t * (MAESSTRO_RIPPE_BREITE[1] - MAESSTRO_RIPPE_BREITE[0])
+        rippen.append(leiste(r["name"], "sitka", [tuple(p) for p in r["line"]], hoehe, breite))
+
+    # Hoerorte an denselben Stellen, z mit der Steghoehe des Steges, auf dem die Taste liegt
+    hoerorte = []
+    for h in steinway["listeningPoints"]:
+        ort = (h["x"], h["y"])
+        steg = min(stege, key=lambda l: abstand_zur_linie(ort, [tuple(p) for p in l["line"]]))
+        z = MAESSTRO_PLATTE / 2.0 + steg["height"][0] + MIKROFON_UEBER_SAITEN
+        hoerorte.append(dict(h, z=runde(z)))
+
+    tab2 = "Elie, Cotte & Boutillon, Acta Acustica 6 (2022), Table 2"
+    return {
+        "format": steinway["format"],
+        "version": steinway["version"],
+        "title": "MAESSTRO reference piano (RP)",
+        "description": "Test case after Elie, Cotte & Boutillon (2022): the Steinway D of RT-0425 with the "
+                       "simplifications of MAESSTRO - constant plate thickness, two bridges of constant "
+                       "height, ribs without taper, Sitka spruce and beech with a loss factor of 2 %. "
+                       "Test data, not shipped.",
+        "source": "Outline, rib lines and bridge points as steinway_d.lvinstbodyplan (RT-0425); plate, bridges, "
+                  "ribs and grain after Elie, Cotte & Boutillon, Acta Acustica 6 (2022) 30, Sect. 3.1 and "
+                  "Table 1; materials after Table 2; the bridge split between keys 40 and 41 after RT-0425 "
+                  "Appendix A and Fig. 6 (note index 1 = C1). Generated by make_steinway_d.py --maesstro.",
+        "units": steinway["units"],
+        "materials": [
+            {"name": "sitka", "kind": "orthotropic", "density": 380.0, "ex": 11.0e9, "ey": 0.65e9, "gxy": 0.66e9,
+             "gxz": 1.2e9, "gyz": 0.042e9, "nuxy": 0.26, "lossFactor": MAESSTRO_ETA,
+             "source": f"{tab2} (Sitka spruce)"},
+            {"name": "beech", "kind": "orthotropic", "density": 750.0, "ex": 13.7e9, "ey": 2.24e9, "gxy": 1.61e9,
+             "gxz": 1.06e9, "gyz": 0.46e9, "nuxy": 0.3, "lossFactor": MAESSTRO_ETA,
+             "source": f"{tab2} (Beech)"},
+        ],
+        "plate": {
+            "material": "sitka",
+            "grainAngle": MAESSTRO_FASER,
+            "outline": steinway["plate"]["outline"],
+            "thickness": MAESSTRO_PLATTE,
+            "thicknessGrid": {"origin": [0.0, 0.0], "step": 0.0, "nx": 0, "ny": 0, "values": []},
+        },
+        "ribs": rippen,
+        "bridges": stege,
+        "bridgePoints": steinway["bridgePoints"],
+        "listeningPoints": hoerorte,
+    }
+
+
+def pruefe_maesstro(plan):
+    """Bericht der Zahlen, die PF1 a gegen Abb. 4 (a) prueft; bricht ab, wenn ein Stegpunkt nicht
+    auf seinem Steg liegt."""
+    bass, diskant = ([tuple(p) for p in l["line"]] for l in plan["bridges"])
+    groesster = 0.0
+    for p in plan["bridgePoints"]:
+        steg = bass if p["key"] <= LETZTE_BASS_TASTE else diskant
+        groesster = max(groesster, abstand_zur_linie((p["x"], p["y"]), steg))
+    for name, l in (("Bass-Steg", bass), ("Diskant-Steg", diskant)):
+        laenge = sum(np.hypot(*(np.array(l[k + 1]) - l[k])) for k in range(len(l) - 1))
+        print(f"{name}: {len(l)} Punkte, Laenge {laenge:.3f} m, von ({l[0][0]:.3f}, {l[0][1]:.3f}) "
+              f"bis ({l[-1][0]:.3f}, {l[-1][1]:.3f})")
+    print(f"Stegpunkte auf ihrem Steg: groesster Abstand {groesster * 1e3:.1f} mm")
+    if groesster > MAESSTRO_STEG_BREITE / 2:
+        raise SystemExit("Ein Stegpunkt liegt nicht auf seinem Steg (mehr als die halbe Breite daneben).")
+    winkel = []
+    for r in plan["ribs"]:
+        a, b = r["line"][0], r["line"][-1]
+        winkel.append(np.degrees(np.arctan2(b[1] - a[1], b[0] - a[0])))
+    abstaende = []
+    for r0, r1 in zip(plan["ribs"], plan["ribs"][1:]):
+        mitte = np.mean(np.array(r1["line"]), axis=0)
+        abstaende.append(abstand_zur_linie(tuple(mitte), [tuple(p) for p in r0["line"]]))
+    print(f"Rippen {len(plan['ribs'])}, Winkel {min(winkel):.1f} … {max(winkel):.1f} Grad, "
+          f"Abstand {min(abstaende) * 1e3:.0f} … {max(abstaende) * 1e3:.0f} mm, "
+          f"Hoehe {plan['ribs'][0]['height'][0] * 1e3:.0f} … {plan['ribs'][-1]['height'][0] * 1e3:.0f} mm")
+    a, b = MAESSTRO_RIB15
+    w15 = np.degrees(np.arctan2(b[1] - a[1], b[0] - a[0]))
+    naechste = min(plan["ribs"], key=lambda r: abstand_zur_linie(a, [tuple(p) for p in r["line"]])
+                   + abstand_zur_linie(b, [tuple(p) for p in r["line"]]))
+    da = abstand_zur_linie(a, [tuple(p) for p in naechste["line"]])
+    db = abstand_zur_linie(b, [tuple(p) for p in naechste["line"]])
+    print(f"Stichprobe Rib15 aus Abb. 4 (a): Winkel {w15:.1f} Grad; naechste Rippe {naechste['name']}, "
+          f"Enden {da * 1e3:.0f} und {db * 1e3:.0f} mm daneben")
+
+
+def maesstro_bild(plan, maesstro_pdf, bildpfad):
+    """Legt den Pruefstein auf Abb. 4 (a): der Umriss (blau im Bildschirmfoto) bestimmt Massstab und
+    Versatz (ein Massstab fuer beide Achsen, eingepasst ueber den Abstand der Randpunkte)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["pdfimages", "-f", "6", "-l", "6", "-png", maesstro_pdf, str(Path(tmp) / "a")], check=True)
+        voll = np.asarray(Image.open(Path(tmp) / "a-000.png").convert("RGB")).astype(int)
+    a = voll[:, 222:610]  # (a) rechts der Bedienleiste
+    r, g, b = a[:, :, 0], a[:, :, 1], a[:, :, 2]
+    blau = (b > 215) & (b - r > 30)  # der Umriss ist blass, etwa (195, 220, 245)
+    blau[:60, :] = False  # Kopf des Fensters
+    blau[:, :25] = False  # Rand der Bedienleiste; die Linie zerfaellt im JPEG in Stuecke — alle zaehlen
+    feld = ndimage.distance_transform_edt(~blau)
+    um = np.array(plan["plate"]["outline"] + [plan["plate"]["outline"][0]], float)
+    dichte = []
+    for k in range(len(um) - 1):
+        for t in np.linspace(0, 1, 12, endpoint=False):
+            dichte.append(um[k] + t * (um[k + 1] - um[k]))
+    rand = np.array(dichte)
+    ys, xs = np.nonzero(blau)
+    start = [(xs.max() - xs.min()) / np.ptp(rand[:, 0]), xs.min() - rand[:, 0].min() * (xs.max() - xs.min()) / np.ptp(rand[:, 0]),
+             ys.max() + rand[:, 1].min() * (xs.max() - xs.min()) / np.ptp(rand[:, 0])]
+
+    def lage(t, p):
+        p = np.asarray(p, float)
+        return t[0] * p[..., 0] + t[1], -t[0] * p[..., 1] + t[2]
+
+    im_bild = np.column_stack([xs, ys])[::3].astype(float)
+
+    def kosten(t):
+        # in beide Richtungen: unser Umriss zum Rand im Bild und der Rand im Bild zu unserem Umriss
+        px, py = lage(t, rand)
+        if not ((px >= 0) & (px < a.shape[1] - 1) & (py >= 0) & (py < a.shape[0] - 1)).all():
+            return 1e9
+        hin = float(ndimage.map_coordinates(feld, [py, px], order=1).mean())
+        zurueck = float(spatial.cKDTree(np.column_stack([px, py])).query(im_bild)[0].mean())
+        return hin + zurueck
+
+    t = optimize.minimize(kosten, start, method="Nelder-Mead", options={"xatol": 1e-3, "fatol": 1e-4, "maxiter": 4000}).x
+    px, py = lage(t, rand)
+    d = ndimage.map_coordinates(feld, [py, px], order=1)
+    print(f"Abb. 4 (a) gelegt: {1e3 / t[0]:.1f} mm je Pixel; Umriss zum Rand im Bild Median {np.median(d):.1f} px, "
+          f"groesster {d.max():.1f} px")
+
+    # die Rippen von MAESSTRO (gruen): Richtung aus der schaerfsten Haeufung, Abstand der Spitzen
+    gruen = (g - r > 12) & (g - b > 12) & (g < 230)
+    gruen[:60, :] = False
+    gy, gx = np.nonzero(gruen)
+    best = None
+    for grad in np.arange(-55.0, -25.0, 0.1):
+        w = np.radians(grad)
+        quer = -gx * np.sin(w) + gy * np.cos(w)
+        h, _ = np.histogram(quer, bins=np.arange(quer.min(), quer.max() + 2, 1.5))
+        schaerfe = float((h.astype(float) ** 2).sum())
+        if best is None or schaerfe > best[0]:
+            best = (schaerfe, grad)
+    w = np.radians(best[1])
+    quer = -gx * np.sin(w) + gy * np.cos(w)
+    h, kanten = np.histogram(quer, bins=np.arange(quer.min() - 1, quer.max() + 3, 1.0))
+    glatt = ndimage.uniform_filter1d(h.astype(float), 3)
+    spitzen = []
+    for k in range(2, len(glatt) - 2):
+        if glatt[k] == glatt[k - 2:k + 3].max() and glatt[k] > 0.1 * glatt.max():  # die kurzen im Diskant
+            if spitzen and k - spitzen[-1] < 6:
+                if glatt[k] > glatt[spitzen[-1]]:
+                    spitzen[-1] = k
+            else:
+                spitzen.append(k)
+    lagen = [(kanten[k] + kanten[k + 1]) / 2 for k in spitzen]
+    abst = [d_px * 1e3 / t[0] for d_px in np.diff(lagen)]
+    print(f"Rippen in Abb. 4 (a) (gruen und die gewaehlte Rib15): {len(lagen)}, Winkel {-best[1]:.1f} Grad, "
+          f"Abstand {min(abst):.0f} … {max(abst):.0f} mm")
+
+    # die Stege von MAESSTRO (rosa) gegen unsere: Abstand jedes rosa Pixels zum naechsten Steg
+    rosa = (r - g > 15) & (b - g > 10)  # etwa (249, 220, 242); der blasse Umriss hat r < g
+    rosa[:60, :] = False
+    ry, rx = np.nonzero(rosa)
+    unsere = []
+    for steg in plan["bridges"]:
+        l = np.array(steg["line"], float)
+        for k in range(len(l) - 1):
+            for u in np.linspace(0, 1, 20, endpoint=False):
+                unsere.append(l[k] + u * (l[k + 1] - l[k]))
+    ux, uy = lage(t, np.array(unsere))
+    dr = spatial.cKDTree(np.column_stack([ux, uy])).query(np.column_stack([rx, ry]))[0] * 1e3 / t[0]
+    print(f"Stege: rosa zu unseren Median {np.median(dr):.0f} mm, 90 % unter {np.percentile(dr, 90):.0f} mm "
+          f"(die Lage im Bild ist nur ueber den Umriss eingepasst)")
+    bild = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert("RGB")
+    z = ImageDraw.Draw(bild)
+
+    def zug(punkte_l, farbe, breite=1):
+        z.line([tuple(np.array(lage(t, p)).tolist()) for p in punkte_l], fill=farbe, width=breite)
+
+    zug(plan["plate"]["outline"] + [plan["plate"]["outline"][0]], (255, 140, 0))
+    for r in plan["ribs"]:
+        zug(r["line"], (0, 0, 0))
+    for steg, farbe in zip(plan["bridges"], ((200, 0, 0), (120, 0, 160))):
+        zug(steg["line"], farbe, 2)
+    zug(MAESSTRO_RIB15, (0, 180, 255), 2)
+    bild.resize((bild.width * 3, bild.height * 3), Image.LANCZOS).save(bildpfad)
+
+
 def main(argv):
     if not argv or argv[0].startswith("--"):
         raise SystemExit(__doc__)
     pdf = argv[0]
-    ziel = Path(__file__).resolve().parent
+    ziel = None
     bild = None
+    maesstro_pdf = None
     k = 1
     while k < len(argv):
         if argv[k] == "--ziel":
@@ -627,11 +883,24 @@ def main(argv):
         elif argv[k] == "--bild":
             bild = argv[k + 1]
             k += 2
+        elif argv[k] == "--maesstro":
+            maesstro_pdf = argv[k + 1]
+            k += 2
         else:
             raise SystemExit(f"unbekannt: {argv[k]}")
-    plan = baue(pdf, bild)
+    if maesstro_pdf:
+        plan = maesstro(baue(pdf))
+        pruefe_maesstro(plan)
+        if bild:
+            maesstro_bild(plan, maesstro_pdf, bild)
+        ziel = ziel or Path(__file__).resolve().parents[3] / "projects/apps/LumiViz/tests/unit/UnitTests/koerper"
+        name = "maesstro_rp.lvinstbodyplan"
+    else:
+        plan = baue(pdf, bild)
+        ziel = ziel or Path(__file__).resolve().parent
+        name = "steinway_d.lvinstbodyplan"
     ziel.mkdir(parents=True, exist_ok=True)
-    datei = ziel / "steinway_d.lvinstbodyplan"
+    datei = ziel / name
     datei.write_text(json.dumps(plan, indent=4, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print(f"geschrieben: {datei}")
 
