@@ -1883,6 +1883,18 @@ Einpassung). Damit bleiben nach PF1 a Umriss, Rippen und Stege aus unserem Baupl
 MAESSTRO Prueffall“ in `test_LoopKoerperBauplan` (Werte aus Tab. 1–2, gleich wie der Steinway, jeder Stegpunkt auf
 seinem Steg, Stege 99 mm getrennt, Hörorte). Release-clang `*Loop Koerper*` 42 / 42.
 
+**Gebaut 31c-6 Teil 4 — Rechnungen (S150, KV1 a; Release-clang, Patriks Rechner):** (1) **Prüffall** k = 3 bis
+5 kHz: 16 462 Knoten, 32 356 Dreiecke (MAESSTRO: 23 006 Elemente), 434 262 Größen, **788 Moden**, 916 s, Spitze
+4,9 GB; erste Mode 42,9 Hz; Gl. 12 über alle Stegpunkte −63,6 dB; Körper `koerper/maesstro_rp.lvinstbody` (2,9 MB,
+Testdaten). (2) Der **Steinway** in Fassung 2 war schon in S149 neu gerechnet (Teil 1). (3) **Messlauf k = 4** am
+Steinway, gleiches Netz (`--mesh-to 5000`), 0–500 Hz: 1 011 993 Größen, eine Zerlegung 50 s (k = 3: rund 11 s),
+265 s, Spitze 5,9 GB; hochgerechnet auf 5 kHz rund 9 GB und 1–1,6 h — unter der Rückfragegrenze von KV1 a.
+(4) **k = 4 bis 5 kHz** am Steinway: **822 Moden** (k = 3: 820), 13 Zerlegungen, 2650 s, **Spitze 9,6 GB**; ohne
+statistischen Teil (`--statistics-to 0`); Körper und Bericht nur lokal unter `.claude/handover/koerper_k4/` (Vergleich,
+nicht mitgeliefert). Erste Moden 38,14 / 60,54 / 82,43 / 100,20 / 118,60 Hz. **Für Teil 5:** der Bericht von k = 3
+enthält die gezogenen Moden über 5 kHz, der von k = 4 nicht — für KV1 a (1) beide gleich fahren; die Dichte im
+Terzband 1585 Hz liegt 4 % auseinander (zwei Moden auf rund 50), alle anderen Bänder unter 3 %.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);

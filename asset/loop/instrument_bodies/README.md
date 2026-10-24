@@ -43,4 +43,8 @@ nicht die Baupläne — das Programm liest nur Körper (BM5 a).
 Boutillon 2022, „reference piano“) nach `projects/apps/LumiViz/tests/unit/UnitTests/koerper/maesstro_rp.lvinstbodyplan`
 (S150, PF1 a, PF2 a): der Steinway D mit den Vereinfachungen aus MAESSTRO Tab. 1–2 und zwei getrennten Stegen
 (Tasten 21–40 und 41–108). `--bild` legt ihn auf Abb. 4 (a) von MAESSTRO. Der Test „Loop Koerper 31c-6 MAESSTRO
-Prueffall“ prüft die Datei.
+Prueffall“ prüft die Datei. Der Körper liegt daneben (`maesstro_rp.lvinstbody`, S150, k = 3 bis 5 kHz, rund 15 min):
+
+```
+out/build/windows-ninja-release-clang/exec/InstrumentBodyTool/bin/Release/InstrumentBodyTool.exe projects/apps/LumiViz/tests/unit/UnitTests/koerper/maesstro_rp.lvinstbodyplan --to 5000
+```
