@@ -17,6 +17,8 @@
  * - Ein Ton durch den Boden (Schritt 3): um die Antwort laenger, Stereo (Hoerorte `left`/`right`),
  *   links gleich der Faltung von Hand, die Antwort beim zweiten Ton aus dem Tonspeicher, ein
  *   fehlender Koerper aendert nichts. Leert den Tonspeicher vorher und nachher.
+ * - „Body not found“ (SB1 a): ein Instrument in einem Wegwerf-Ordner, dessen Koerper es nicht gibt —
+ *   der Bericht des Tonauftrags sagt es einmal, der Ton klingt ohne Boden.
  * - **Messteil** nur mit `LUMIVIZ_31C7_MESSUNG=1` (Release-clang, einige Minuten): Zeit und Speicher je
  *   Antwort, Rechenzeit der Faltung je Ton, Schalldruck am Hoerort fuer alle 88 Tasten bei der
  *   hoechsten Anschlagstufe → der Wert von `kSchalldruckBezug` (PG1 a). Meldet nur Zahlen.
@@ -29,9 +31,13 @@
 #include "loop/Boden.hpp"
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/Kit.hpp"
 #include "loop/Koerper.hpp"
+#include "loop/Loop.hpp"
 #include "loop/Tonspeicher.hpp"
+#include "PappTon.hpp"
 
+#include <QTemporaryDir>
 #include <QtGlobal>
 
 #include <algorithm>
@@ -170,6 +176,31 @@ TEST_CASE("Loop Koerper 31c-7 Ton durch den Boden (AW1 a, FT1 a, PG1 a)")
     falsch.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:gibt_es_nicht");
     CHECK(bodenVon(QStringLiteral("lib:gibt_es_nicht")) == nullptr);
     CHECK(rendereTon(falsch, 60, 500.0, rate).daten == a.daten);
+    tonspeicher().leere();
+}
+
+TEST_CASE("Loop Koerper 31c-7 Body not found (SB1 a)")
+{
+    // ein Instrument, dessen Koerper es nicht gibt: der Ton klingt ohne Boden, der Bericht sagt es einmal
+    tonspeicher().leere();
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    Instrument instrument;
+    Schicht& s = instrument.schichten[0];
+    s.schwingung = Schwingung::Saite;
+    s.saitenModell = SaitenModell::Modal;
+    s.anregung = Anregung::Hammer;
+    s.hammerSaite.resonanzboden.koerper = QStringLiteral("lib:gibt_es_nicht");
+    instrument.tastatur = Tastatur{};
+    const QString pfad = tmp.filePath(QStringLiteral("fluegel.lvinst"));
+    REQUIRE(speichereInstrument(instrument, pfad));
+    papp::PappEngine engine;
+    QStringList bericht;
+    const Klaenge klaenge = ladeKlaenge({tonKlang(pfad, 60, 200), tonKlang(pfad, 62, 200)}, engine, 48000, &bericht);
+    REQUIRE(klaenge.size() == 2);
+    REQUIRE(klaenge[0] != nullptr);
+    CHECK(klaenge[0]->frames() > 0);
+    CHECK(bericht == QStringList{QStringLiteral("Body not found: lib:gibt_es_nicht")});
     tonspeicher().leere();
 }
 

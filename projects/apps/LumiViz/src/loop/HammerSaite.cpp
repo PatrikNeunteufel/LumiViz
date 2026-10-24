@@ -266,8 +266,7 @@ void richteHammerSaite(HammerSaite& saite)
     richteKurve(saite.saitenMasseGm, kGrenzeMasseJeM.von, kGrenzeMasseJeM.bis, v.saitenMasseGm);
     richteKurve(saite.laengsVerhaeltnis, kGrenzeLaengs.von, kGrenzeLaengs.bis, v.laengsVerhaeltnis);
     richteKurve(saite.stegWinkelGrad, kGrenzeWinkel.von, kGrenzeWinkel.bis, v.stegWinkelGrad);
-    const double anteil = saite.resonanzboden.anteil;
-    saite.resonanzboden.anteil = std::isfinite(anteil) ? std::clamp(anteil, 0.0, 1.0) : 0.0;
+    saite.resonanzboden.koerper = saite.resonanzboden.koerper.trimmed();
 }
 
 QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
@@ -287,8 +286,9 @@ QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
                        {QStringLiteral("stringMass"), kurveAlsJson(s.saitenMasseGm)},
                        {QStringLiteral("longitudinalRatio"), kurveAlsJson(s.laengsVerhaeltnis)},
                        {QStringLiteral("bridgeAngle"), kurveAlsJson(s.stegWinkelGrad)},
+                       // seit Fassung 17 (SB1 a): nur der Verweis auf den Koerper, immer geschrieben, leer = ohne Boden
                        {QStringLiteral("soundboard"),
-                        QJsonObject{{QStringLiteral("amount"), s.resonanzboden.anteil}}}};
+                        QJsonObject{{QStringLiteral("body"), s.resonanzboden.koerper}}}};
 }
 
 HammerSaite hammerSaiteAusJson(const QJsonObject& o)
@@ -309,7 +309,8 @@ HammerSaite hammerSaiteAusJson(const QJsonObject& o)
     s.saitenMasseGm = kurveAusJson(o.value(QStringLiteral("stringMass")));
     s.laengsVerhaeltnis = kurveAusJson(o.value(QStringLiteral("longitudinalRatio")));
     s.stegWinkelGrad = kurveAusJson(o.value(QStringLiteral("bridgeAngle")));
-    s.resonanzboden.anteil = o.value(QStringLiteral("soundboard")).toObject().value(QStringLiteral("amount")).toDouble(0.0);
+    // Fassung 16 trug `amount` (wirkte nie) — es wird ueberlesen (SB1 a)
+    s.resonanzboden.koerper = o.value(QStringLiteral("soundboard")).toObject().value(QStringLiteral("body")).toString();
     return s;
 }
 

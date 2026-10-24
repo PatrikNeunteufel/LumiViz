@@ -5,6 +5,7 @@
 
 #include "loop/Tonauftrag.hpp"
 
+#include "loop/Boden.hpp"
 #include "loop/Freeze.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
@@ -180,7 +181,15 @@ bool Tonauftrag::ausSpeicher(std::size_t einer, QString& schluessel, Geholt*& ge
                     // der Ton aus dem Speicher kommt (dort liegt er dann still)
                     for (const Schicht& schicht : neu.schichten)
                     {
-                        if (schicht.schwingung != Schwingung::Sample || !schicht.an) continue;
+                        if (!schicht.an) continue;
+                        // Stufe 31c-7 (SB1 a): ein Koerper, den es nicht gibt — der Ton klingt ohne Boden
+                        const QString& koerper = schicht.hammerSaite.resonanzboden.koerper;
+                        if (istHammerSchicht(schicht) && !koerper.isEmpty() && !bodenVon(koerper))
+                        {
+                            const QString zeile = QStringLiteral("Body not found: %1").arg(koerper);
+                            if (!geholt->zeilen.contains(zeile)) geholt->zeilen << zeile;
+                        }
+                        if (schicht.schwingung != Schwingung::Sample) continue;
                         const QString datei = sampleDatei(schicht.sample);
                         if ((datei.isEmpty() || !QFileInfo(datei).isFile()) && !geholt->zeilen.contains(sampleZeile(schicht.sample)))
                             geholt->zeilen << sampleZeile(schicht.sample);

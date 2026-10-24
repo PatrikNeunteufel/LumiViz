@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.80.0
+> **Version:** 0.81.0
 > **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 2 gebaut)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 4 gebaut)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a und TS1 a (Patrik S139–S150);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -2031,6 +2031,17 @@ zweite Ton nimmt die Antwort aus dem Tonspeicher (bitgleich), ein fehlender Kör
 −17,5 dBFS Spitze links, der Ton mit Antwort 1,8 s. Eng `*Loop Hammer*,*Loop Koerper*,*Klangfassung*,*Instrument*,
 *Loop Fft*` 146 / 146 (Release-clang). **Merker:** der Schlüssel eines Tons im Tonspeicher (`instrumentAbdruck`)
 kennt den Körper erst, wenn er in der Datei steht (Schritt 4).
+
+**Gebaut 31c-7 Schritt 4 — Datei (S150, SB1 a):** `.lvinst` **Fassung 17** (`kInstrumentFassung`): `hammerString.
+soundboard` trägt nur `body` (immer geschrieben, leer = ohne Boden); `Resonanzboden::anteil` und `amount` sind fort,
+Fassung 16 bleibt lesbar (`amount` wird überlesen); `richteHammerSaite` schneidet den Verweis zu. Der Tonauftrag meldet
+einen Körper, den es nicht gibt, einmal: **„Body not found: lib:<name>“** (neben „Sample not loaded“); der Ton klingt
+ohne Boden. Fassungs-Literale in `tests/` nachgezogen (`test_LoopInstrument` 17, `test_LoopHammerSaite` 17 mit
+`body` und ein Fall „Fassung 16 bleibt lesbar“); `test_LoopKoerperKlang` „Body not found“ (Instrument im
+Wegwerf-Ordner, Bericht über `ladeKlaenge`). Der Wächter **`*Klangfassung*`** sah neue Abdrücke (die Fassung steht im
+JSON) — `Loop Werte` gegen `loop_werte.txt` unverändert (1504 / 1504), daher `werte/klangfassung.txt` mit
+`LUMIVIZ_KLANGFASSUNG_SCHREIBEN=1` neu (alle Werte ohne die Spalte des Abdrucks gleich). Eng
+`*Loop Hammer*,*Loop Koerper*,*Klangfassung*,*Instrument*,*Loop Fft*` grün (Release-clang).
 
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:

@@ -90,10 +90,11 @@ void richteKurve(Tastenkurve& kurve, double von, double bis, const Tastenkurve& 
 /// Der Resonanzboden (Stufe 31c): ein gerechneter Koerper, durch den der Ton klingt.
 struct Resonanzboden
 {
-    double anteil = 0.0;  ///< 0 … 1: so viel des Tons kommt durch den Boden (vorlaeufig; wirkt nicht, faellt mit SB1 a weg)
     /// Der Koerper (31c-7, AW1 a, SB1 a): `lib:<name>` = `asset/loop/instrument_bodies/<name>.lvinstbody`;
     /// leer = ohne Boden (die Stegkraft klingt, wie sie ist). Mit Koerper wird der Ton je Hoerort mit
-    /// seiner Antwort gefaltet und klingt in Stereo (`loop/Boden`).
+    /// seiner Antwort gefaltet und klingt in Stereo (`loop/Boden`). Fehlt die Datei, klingt der Ton
+    /// ohne Boden und der Tonauftrag meldet „Body not found“. In der `.lvinst` seit Fassung 17
+    /// `soundboard.body`; das fruehere `amount` (Fassung 16) wird ueberlesen.
     QString koerper;
 
     [[nodiscard]] bool operator==(const Resonanzboden&) const = default;

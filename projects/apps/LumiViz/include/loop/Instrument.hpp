@@ -620,10 +620,13 @@ struct Instrument
 // einer Kurve ueber die Tastatur (`points`, `overrides`) und `soundboard`; am
 // Instrument der Block `keyboard` (`range`, `undampedFrom`, `pedals`), wenn es eine
 // Tastatur hat. Ein aelteres Programm spielte eine Hammer-Saite still als Classic.
-// Geschrieben wird Fassung 16.
+// Fassung 17 (S150, Stufe 31c-7, Entscheid SB1 a): `soundboard` traegt nur `body` — den
+// Verweis auf einen Koerper (`lib:<name>`, immer, leer = ohne Boden); `amount` faellt weg
+// (in Fassung 16 ueberlesen — es wirkte nie). Ein aelteres Programm spielte den Ton ohne Boden.
+// Geschrieben wird Fassung 17.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 16;
+inline constexpr int kInstrumentFassung = 17;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

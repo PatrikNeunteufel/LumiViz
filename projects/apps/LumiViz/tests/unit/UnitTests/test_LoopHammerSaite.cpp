@@ -15,7 +15,7 @@
  *   ohne Ueberschwingen, die logarithmische Skala, Richten.
  * - Die Vorgaben: Hammer und Saiten nach Chabassier & Durufle RT-0425 (HT1 a, HT2 a), B nach
  *   Rigaud Gl. 5, der Chor.
- * - Die Datei: Fassung 16, `excitation`, `stringModel` `modal`, `hammerString`,
+ * - Die Datei: Fassung 17 (seit S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
  *   `keyboard`; nur die Paare aus HA2 a; die Tastatur in ihren Grenzen.
  * - Die Anschlagstaerke (HK2 a): Stufen, Hammergeschwindigkeit, Rest, `:a<stufe>`.
  * - Die Hammer-Saite ist keine gegriffene Saite; seit 31b klingt sie (gemessen in
@@ -200,13 +200,13 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         HammerSaite& h = instrument.schichten[0].hammerSaite;
         h.verstimmungCent.abweichungen = {{60, 3.5}};
         h.chor = kurve({{21, 2.0}, {108, 3.0}});
-        h.resonanzboden.anteil = 0.4;
+        h.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
         instrument.tastatur->ungedaempftAb = 89;
         instrument.tastatur->links = PedalArt::Leise;
         instrument.tastatur->mitte = PedalArt::Moderator;
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 16);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 17);  // seit S150: soundboard.body (SB1 a)
         const QJsonObject schicht = json.value(QStringLiteral("layers")).toArray().first().toObject();
         CHECK(schicht.value(QStringLiteral("stringModel")).toString() == QStringLiteral("modal"));
         CHECK(schicht.value(QStringLiteral("excitation")).toString() == QStringLiteral("hammer"));
@@ -220,7 +220,10 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
             CHECK(k.value(QStringLiteral("points")).isArray());
             CHECK(k.value(QStringLiteral("overrides")).isArray());  // auch leer
         }
-        CHECK(hammer.value(QStringLiteral("soundboard")).toObject().value(QStringLiteral("amount")).toDouble() == 0.4);
+        // seit Fassung 17 (SB1 a): nur der Verweis auf den Koerper, `amount` gibt es nicht mehr
+        const QJsonObject boden = hammer.value(QStringLiteral("soundboard")).toObject();
+        CHECK(boden.value(QStringLiteral("body")).toString() == QStringLiteral("lib:steinway_d"));
+        CHECK_FALSE(boden.contains(QStringLiteral("amount")));
         CHECK_FALSE(schicht.contains(QStringLiteral("pluckPosition")));  // nur was die Hammer-Saite traegt
         const QJsonObject tastatur = json.value(QStringLiteral("keyboard")).toObject();
         CHECK(tastatur.value(QStringLiteral("range")).toArray() == QJsonArray{21, 108});
@@ -234,6 +237,23 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         CHECK(gelesen.schichten[0].hammerSaite == instrument.schichten[0].hammerSaite);
         CHECK(gelesen.tastatur == instrument.tastatur);
         CHECK(gelesen == instrument);
+    }
+    SUBCASE("Fassung 16 bleibt lesbar: amount wird ueberlesen, ohne Boden")
+    {
+        Instrument instrument = fluegel();
+        QJsonObject json = alsJson(instrument);
+        json[QStringLiteral("version")] = 16;
+        QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+        QJsonObject schicht = schichten.first().toObject();
+        QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
+        hammer[QStringLiteral("soundboard")] = QJsonObject{{QStringLiteral("amount"), 0.4}};
+        schicht[QStringLiteral("hammerString")] = hammer;
+        schichten[0] = schicht;
+        json[QStringLiteral("layers")] = schichten;
+        Instrument gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(gelesen.schichten[0].hammerSaite.resonanzboden.koerper.isEmpty());
+        CHECK(gelesen.schichten[0].hammerSaite == instrument.schichten[0].hammerSaite);
     }
     SUBCASE("eine gezupfte Saite schreibt Pluck, ein Instrument ohne Tastatur keinen Block")
     {
