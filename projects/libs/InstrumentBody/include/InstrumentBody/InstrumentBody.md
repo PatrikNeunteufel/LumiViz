@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.10.0  
+> **Version:** 0.11.0  
 > **Datum:** 2026-10-24  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -208,7 +208,10 @@ Gl. 12 (geometrisches Mittel von |Y| über 25–5000 Hz in 1-Hz-Schritten, dB re
 Basis 10, über die Nummer gewählt), `bandMobilitaetDb` (geometrisch über Band und Stegpunkte), `bandDichte`. Das
 Werkzeug schreibt damit den Bericht (`--report`). **Geprüft** (`test_LoopKoerperMobilitaet`): Einmassenschwinger
 gegen die geschlossene Lösung; Satz vom Mittelwert an einer Aluminiumplatte (mittleres Re(Y) gegen 1/(8√(ρhD)) auf
-1 %).
+1 %). `kDiskantAb` = 41 (S150, PF2 a): ab dieser Taste zählt ein Stegpunkt zum Diskant — Werkzeug und Tests lesen
+dieselbe Zahl. **Prüfstein** (`test_LoopKoerperPruefstein`, S150): Prüffall gegen MAESSTRO Abb. 6 und 5 als Bericht
+(PS3 a), Steinway gegen Messungen (PS1 a (3)) und EM1 a, Konvergenz k = 3 gegen k = 4 mit `LUMIVIZ_KOERPER_K4`
+(KV1 a nach KV2 a).
 
 ### 5.4 Statistischer Teil — `InstrumentBody/Statistik.hpp` (31c-5c)
 
@@ -299,6 +302,7 @@ falsches Format, zu neue Fassung).
 | Version | Datum | Änderung |
 |---|---|---|
 | 0.10.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 2: Mobilität (`Mobilitaet.hpp`: MAESSTRO Gl. 10 und 12, Terzbänder, Dichte je Band); Bericht im Werkzeug (`--report`). |
+| 0.11.0 | 2026-10-24 | Session 150, Stufe 31c-6 Teil 3–5: `kDiskantAb` = 41 in `Mobilitaet.hpp` (PF2 a); Prüfstein `test_LoopKoerperPruefstein` (PS3 a, PS4 a, KV2 a). |
 | 0.9.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 1: Dämpfung je Werkstoff (DM1 a) — `Verformungsenergie.hpp`, `Steife::werkstoff`, `Plattenelement::integrationsPunkte`, `verlustfaktorAusAnteilen`, `ModeImKoerper::werkstoffAnteil`, im statistischen Teil das Mittel; `kKoerperFassung` 2, `kRechenFassung` 2. |
 | 0.8.0 | 2026-10-24 | Session 148, Stufe 31c-5d: der Körper (`Koerper.hpp`: `Koerper`, `Rechnung`, `kKoerperFassung`, `kRechenFassung`), die Datei in `loop/Koerper`, der Wächter. |
 | 0.7.0 | 2026-10-23 | Session 148, Stufe 31c-5c: statistischer Teil (`Statistik.hpp`: `StatistischerTeil`, `schaetze`, `ziehe`, `Zufall`; ST1 a). |

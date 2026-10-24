@@ -636,17 +636,73 @@ MAESSTRO_ETA = 0.02                      # Tab. 2: 2 % je Werkstoff
 LETZTE_BASS_TASTE = 40                   # PF2 a: der Bass-Arm traegt 21–40 (Anhang A, Abb. 6)
 # Abb. 4 (a), Liste der Rippen: „Rib15", Enden in mm (der Stichprobe nach PF1 a)
 MAESSTRO_RIB15 = ((0.147, 1.694), (0.336, 1.850))
+# PF3 a (S150): MAESSTRO hat 17 Rippen, RT-0425 16 — die siebzehnte liegt in der Diskant-Ecke, im
+# Bild 23 px (rund 105 mm) hinter der sechzehnten (`--bild` misst die Abstaende); parallel zu
+# unserer letzten Rippe, am Umriss so weit zurueck wie diese
+MAESSTRO_ECKRIPPE_ABSTAND = 0.105
+
+
+def schnitt_mit_umriss(a, richtung, umriss):
+    """Die Parameter t, bei denen die Gerade a + t·richtung den Umriss schneidet, aufsteigend."""
+    ts = []
+    n = len(umriss)
+    for k in range(n):
+        p, q = np.array(umriss[k]), np.array(umriss[(k + 1) % n])
+        m = np.column_stack([richtung, p - q])
+        if abs(np.linalg.det(m)) < 1e-12:
+            continue
+        t, u = np.linalg.solve(m, p - a)
+        if 0.0 <= u <= 1.0:
+            ts.append(float(t))
+    return sorted(ts)
+
+
+def eckrippe(rippen, umriss, diskant_steg):
+    """Die siebzehnte Rippe (PF3 a): parallel zur letzten, um MAESSTRO_ECKRIPPE_ABSTAND weiter von der
+    vorletzten weg; das Stueck im Umriss, das den Diskant-Steg kreuzt, an beiden Enden so weit
+    zurueck wie die letzte Rippe im Mittel vom Rand."""
+    letzte, vorletzte = np.array(rippen[-1], float), np.array(rippen[-2], float)
+    richtung = (letzte[-1] - letzte[0]) / np.hypot(*(letzte[-1] - letzte[0]))
+    quer = np.array([-richtung[1], richtung[0]])
+    if np.dot(np.mean(letzte, axis=0) - np.mean(vorletzte, axis=0), quer) < 0:
+        quer = -quer
+    a = letzte[0] + MAESSTRO_ECKRIPPE_ABSTAND * quer
+    ts = schnitt_mit_umriss(a, richtung, umriss)
+    steg = [tuple(p) for p in diskant_steg]
+    stuecke = [(ts[i], ts[i + 1]) for i in range(0, len(ts) - 1, 2)]
+    t0, t1 = min(stuecke, key=lambda s: abstand_zur_linie(tuple(a + 0.5 * (s[0] + s[1]) * richtung), steg))
+    # wie weit die letzte Rippe laengs ihrer Linie vor dem Umriss endet
+    tl = schnitt_mit_umriss(letzte[0], richtung, umriss)
+    ende = float(np.dot(letzte[-1] - letzte[0], richtung))
+    rein = max(t for t in tl if t <= 1e-9)
+    raus = min(t for t in tl if t >= ende - 1e-9)
+    zurueck = 0.5 * ((0.0 - rein) + (raus - ende))
+    return [tuple(a + t * richtung) for t in np.linspace(t0 + zurueck, t1 - zurueck, 9)]
+
+
+def punkt_verlaengert(s, linie):
+    """Der Punkt bei Bogenlaenge s; vor dem Anfang und hinter dem Ende geradeaus weiter."""
+    laenge = lage_auf_linie(linie[-1], linie)
+    if s < 0.0:
+        a, b = np.array(linie[0]), np.array(linie[1])
+        return tuple(a + (b - a) / np.hypot(*(b - a)) * s)
+    if s > laenge:
+        a, b = np.array(linie[-2]), np.array(linie[-1])
+        return tuple(b + (b - a) / np.hypot(*(b - a)) * (s - laenge))
+    return punkt_auf_linie(s, linie)
 
 
 def teilstueck(linie, sa, sb):
-    """Das Stueck der Linie zwischen den Bogenlaengen sa < sb, mit den Endpunkten."""
-    stueck = [punkt_auf_linie(sa, linie)]
+    """Das Stueck der Linie zwischen den Bogenlaengen sa < sb, mit den Endpunkten (auch ueber die Linie hinaus)."""
+    stueck = [punkt_verlaengert(sa, linie)]
+    if sa < 0.0 < sb:
+        stueck.append(tuple(linie[0]))
     s = 0.0
     for k in range(1, len(linie)):
         s += float(np.hypot(*(np.array(linie[k]) - np.array(linie[k - 1]))))
         if sa < s < sb:
             stueck.append(tuple(linie[k]))
-    stueck.append(punkt_auf_linie(sb, linie))
+    stueck.append(punkt_verlaengert(sb, linie))
     return stueck
 
 
@@ -664,14 +720,25 @@ def maesstro(steinway):
     s = {k: lage_auf_linie(p, linie) for k, p in punkte.items()}
     bass = [k for k in punkte if k <= LETZTE_BASS_TASTE]
     diskant = [k for k in punkte if k > LETZTE_BASS_TASTE]
-    # der Bass-Steg laeuft von Taste 40 (Anfang der Linie) zu A0, der Diskant-Steg von F2 zu C8
-    bass_ende = s[min(bass)] + abs(s[min(bass)] - s[min(bass) + 1])
-    diskant_anfang = s[min(diskant)] - abs(s[min(diskant) + 1] - s[min(diskant)])
+    # der Bass-Steg laeuft von Taste 40 (Anfang der Linie) zu A0, der Diskant-Steg von F2 zu C8; jedes der
+    # vier Enden einen Tastenabstand hinter der aeussersten Taste (PF2 a), wo noetig ueber die Linie hinaus
+    def schritt(k, nachbar):
+        return abs(s[k] - s[nachbar])
+
+    hoch, tief = max(bass), min(bass)  # 40 und 21
+    bass_anfang = s[hoch] - schritt(hoch, hoch - 1)
+    bass_ende = s[tief] + schritt(tief, tief + 1)
+    erste, letzte = min(diskant), max(diskant)  # 41 und 108
+    diskant_anfang = s[erste] - schritt(erste, erste + 1)
+    diskant_ende = s[letzte] + schritt(letzte, letzte - 1)
     if not (max(s[k] for k in bass) < bass_ende < diskant_anfang < min(s[k] for k in diskant)):
         raise SystemExit("Steg: Bass- und Diskantteil liegen nicht getrennt auf der Linie.")
-    laenge = lage_auf_linie(linie[-1], linie)
-    steg_bass = teilstueck(linie, 0.0, bass_ende)
-    steg_diskant = teilstueck(linie, diskant_anfang, laenge)
+    steg_bass = teilstueck(linie, bass_anfang, bass_ende)
+    steg_diskant = teilstueck(linie, diskant_anfang, diskant_ende)
+    um = steinway["plate"]["outline"]
+    for p in (steg_bass[0], steg_bass[-1], steg_diskant[0], steg_diskant[-1]):
+        if not innen(um, p):
+            raise SystemExit(f"Steg: das Ende {p} liegt ausserhalb des Umrisses.")
 
     def leiste(name, material, punkte_l, hoehe, breite):
         return {"name": name, "material": material, "line": [[runde(x), runde(y)] for x, y in punkte_l],
@@ -679,13 +746,18 @@ def maesstro(steinway):
 
     stege = [leiste("bass bridge", "beech", steg_bass, MAESSTRO_STEG_BASS, MAESSTRO_STEG_BREITE),
              leiste("treble bridge", "beech", steg_diskant, MAESSTRO_STEG_DISKANT, MAESSTRO_STEG_BREITE)]
+    # die 16 Rippen von RT-0425 (von Bass nach Diskant sortiert) und die siebzehnte in der Diskant-Ecke
+    # (PF3 a); Hoehe und Breite nach Tab. 1 von der Bass- bis zur Diskant-Rippe ueber alle 17
+    linien = [(r["name"], [tuple(p) for p in r["line"]]) for r in steinway["ribs"]]
+    linien.append((f"rib {len(linien) + 1}",
+                   eckrippe([l for _, l in linien], steinway["plate"]["outline"], steg_diskant)))
     rippen = []
-    n = len(steinway["ribs"])
-    for k, r in enumerate(steinway["ribs"]):  # von Bass nach Diskant sortiert
+    n = len(linien)
+    for k, (name, linie_r) in enumerate(linien):
         t = k / max(1, n - 1)
         hoehe = MAESSTRO_RIPPE_HOEHE[0] + t * (MAESSTRO_RIPPE_HOEHE[1] - MAESSTRO_RIPPE_HOEHE[0])
         breite = MAESSTRO_RIPPE_BREITE[0] + t * (MAESSTRO_RIPPE_BREITE[1] - MAESSTRO_RIPPE_BREITE[0])
-        rippen.append(leiste(r["name"], "sitka", [tuple(p) for p in r["line"]], hoehe, breite))
+        rippen.append(leiste(name, "sitka", linie_r, hoehe, breite))
 
     # Hoerorte an denselben Stellen, z mit der Steghoehe des Steges, auf dem die Taste liegt
     hoerorte = []

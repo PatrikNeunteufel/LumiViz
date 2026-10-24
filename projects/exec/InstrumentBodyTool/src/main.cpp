@@ -72,11 +72,6 @@ double seit(std::chrono::steady_clock::time_point t)
     return std::chrono::duration<double>(std::chrono::steady_clock::now() - t).count();
 }
 
-/// Ab dieser Taste zaehlt ein Stegpunkt zum Diskant (PF2 a, S150): MAESSTRO Abb. 6 zaehlt die Noten
-/// ab C1 (Index 1–84 = MIDI 24–107), der Bassteg traegt die Indizes 1–17 = MIDI 24–40 — wie in
-/// RT-0425 Anhang A, wo der Bass-Arm bei Taste 40 endet; PS1 a mittelt die Baender ueber den Diskant.
-constexpr int kDiskantAb = 41;
-
 /// Der Bericht des Pruefsteins (31c-6, PS1 a, KV1 a): je Stegpunkt das Mittel nach MAESSTRO Gl. 12,
 /// je Terzband 100 Hz – 5 kHz die Modendichte (gerechnete Moden) und die mittlere Mobilitaet ueber
 /// alle Stegpunkte und ueber den Diskant. Die Mobilitaet aus den gerechneten und den gezogenen Moden.
@@ -106,11 +101,11 @@ bool schreibeBericht(const kp::Koerper& koerper, const QString& pfad)
     for (std::size_t j = 0; j < koerper.stegTasten.size(); ++j)
     {
         allePunkte.push_back(j);
-        if (koerper.stegTasten[j] >= kDiskantAb) diskant.push_back(j);
+        if (koerper.stegTasten[j] >= kp::kDiskantAb) diskant.push_back(j);
     }
     aus << "# third-octave bands (IEC 61260, base 10): modal density of the computed modes, mean mobility (geometric, dB re 1 s/kg)"
            " over all bridge points and over the treble (key >= "
-        << kDiskantAb << ")\n";
+        << kp::kDiskantAb << ")\n";
     aus << "centre_Hz\tfrom_Hz\tto_Hz\tdensity_per_Hz\tall_dB\ttreble_dB\n";
     for (const kp::Terzband& band : kp::terzbaender(100.0, 5000.0))
     {

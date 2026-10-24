@@ -4,8 +4,8 @@
 > **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a und TS1 a (Patrik S139–S150);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a und TS1 a (Patrik S139–S150);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -1894,6 +1894,96 @@ statistischen Teil (`--statistics-to 0`); Körper und Bericht nur lokal unter `.
 nicht mitgeliefert). Erste Moden 38,14 / 60,54 / 82,43 / 100,20 / 118,60 Hz. **Für Teil 5:** der Bericht von k = 3
 enthält die gezogenen Moden über 5 kHz, der von k = 4 nicht — für KV1 a (1) beide gleich fahren; die Dichte im
 Terzband 1585 Hz liegt 4 % auseinander (zwei Moden auf rund 50), alle anderen Bänder unter 3 %.
+
+**Befund S150 zu Teil 5, erster Lauf (`test_LoopKoerperPruefstein`, Bezug `werte/maesstro_abb6_rp.txt` und
+`…_abb5_rp.txt`, abgelesen mit `asset/loop/instrument_bodies/maesstro_ablesen.py` auf rund ±0,3 dB):** PS1 a (3)
+besteht (Diskant 500 Hz – 4 kHz −64,7 … −67,3 dB, Spanne 2,6 dB; Plath 0,00094 gegen 0,0007 s/kg), EM1 a besteht
+(38,2 Hz, 0,064 /Hz). PS1 a (1) nicht: der Prüffall liegt je Oktave +1,8 … +3,4 dB über Abb. 6, an den Stegenden
+weit daneben (Taste 40 +8, Taste 41 −4, Tasten 103–107 bis +19 dB); der Abstand Bass/Diskant stimmt (8,9 gegen
+8,4 dB). Die Tasten 100–107 lagen 11–19 cm von der nächsten Rippe — MAESSTRO hat dort eine siebzehnte (Teil 3).
+PS1 a (2) nicht: Gl. 12 am Steinway −70,8 … −54,7 dB (zwei Werte über −57 am Diskant-Ende), Bass nur 1,6 dB unter
+dem Diskant (RT-0425 hat einen fast überall hohen Steg). KV1 a: Mobilität je Terzband überall unter 0,06 dB, Dichte im
+Band 1585 Hz 4 % (zwei Moden), erste 20 Moden 0,1–0,21 %, Gl. 2 1,4·10⁻³.
+
+✅ **PF3 a** (Patrik S150): **Der Prüffall bekommt die siebzehnte Rippe von MAESSTRO in der Diskant-Ecke**, parallel
+zu unserer sechzehnten, 105 mm weiter (Abb. 4 a: Abstand der letzten beiden 23 px), am Umriss so weit zurück wie die
+sechzehnte; Höhe und Breite nach Tab. 1 über alle 17 (die Eckrippe 17 × 21 mm). Der Steinway bleibt. Kippt, wenn die
+Ecke mit der Rippe noch über 5 dB daneben liegt: dann liegt die Ursache woanders, die Tasten fallen heraus.
+**Ergebnis:** die Eckrippe kreuzt den Diskant-Steg bei Taste 100 (bei MAESSTRO rund 12 cm vor dem Ende, bei uns
+10,5 cm); am Diskant-Ende ändert sie fast nichts (Taste 107 −53,5 dB) — der Kipppunkt greift. **Probe Stegenden**
+(in einer Kopie gerechnet): Bass-Steg einen Tastenabstand über Taste 40 hinaus → Tasten 39/40 −71,3 / −67,0 dB
+(Abb. 6 −71,7 / −68,9); Diskant-Steg bis an den Rand → am Diskant-Ende keine Änderung. Mit den gezogenen Moden über
+5 kHz liegt die Mitte nur +1,1 dB über Abb. 6, mit den gerechneten allein +3,5 dB: mit der Basis bis 5 kHz allein
+liegt |Y| rund 2,5 dB höher — die Moden darüber wirken unterhalb ihrer Resonanz wie eine Feder und senken |Y|.
+
+✅ **PS2 a** (Patrik S150): **Vor den weiteren Entscheiden Code und Daten von MAESSTRO lesen**
+(https://gitlab.com/benjamin.elie/maesstro), nichts laden oder ausführen. **Befund** (Wortlaut und Fundstellen in
+`docs/modellierung/hammer-saite/recherche/2026-10-24_S150_maesstro_quellcode.md`): Gl. 12 und die Dämpfung wie bei
+uns; nur die Moden der Basis bis `max_freq` — „aus den gerechneten Moden“ (PS1 a) entspricht MAESSTRO; die
+FE-Formen werden auf `n_xsin × n_ysin` Sinus-Funktionen des umschließenden Rechtecks gelegt (Größe nicht
+veröffentlicht) und die Stegpunkte so verschoben, dass der letzte auf `ref_point` liegt, dann auf den nächsten Steg
+gezogen (in Abb. 6 tragen Index 83 und 84 denselben Wert). Geometrie, Parameter und Stringplan des Referenzflügels
+liegen nicht im Repository („available on request“). Damit ist Abb. 6 nicht Gl. 12 an den Stegpunkten von RT-0425:
+Pegel und Enden hängen an Größen, die wir nicht kennen.
+
+✅ **PS3 a** (Patrik S150): **Die Daten des Referenzflügels werden bei den Autoren angefragt; bis dahin läuft PS1 a (1)
+nur als Bericht** (je Oktave, Versatz, Abstand Bass/Diskant; heute +3,0 dB im Mittel, Abstand 8,9 gegen 8,4 dB). Mit
+den Daten wird die Nachbearbeitung von MAESSTRO nachgebaut (Sinus-Basis, Verschieben und Ziehen der Stegpunkte) und
+gleich gegen gleich auf ±2 dB je Taste geprüft. Den Code prüfen bis dahin die geschlossenen Lösungen
+(Einmassenschwinger, Satz vom Mittelwert auf 1 %) und PS1 a (3). Patrik schreibt (Entwurf lokal unter
+`.claude/handover/Anfrage_MAESSTRO_Daten.md`). Grund: der Prüfstein trennt Code- von Geometriefehlern nur, wenn er
+dieselbe Rechnung vergleicht; eine Toleranz, die erst nach Kenntnis der Werte gesetzt würde, prüft nicht. Verworfen: b
+(Kriterium auf das Muster je Oktave jetzt — die Grenze wäre willkürlich, heute verfehlte die Oktave 84–95 knapp).
+Kippt, wenn die Autoren nicht antworten oder die Daten nicht mehr haben: dann b, mit diesem Befund als Grund.
+
+**Berichtigt S150 (Umsetzung von PF2 a, kein neuer Entscheid):** PF2 a sagt „jeder Steg endet einen Tastenabstand
+hinter seiner äußersten Taste“; umgesetzt war das nur an den beiden Enden am Haken. Am Anfang des Bass-Stegs (Taste
+40) und am Ende des Diskant-Stegs (Taste 108) endete die Linie aus RT-0425 an der Taste. Jetzt an allen vier Enden,
+wo nötig geradeaus über die Linie hinaus (Bass ab (0,627; 1,101), Diskant bis (1,402; −0,044)); der Test des Bauplans
+prüft es. Der Körper des Prüffalls ist neu gerechnet.
+
+✅ **KV2 a** (Patrik S150): **k = 3 bleibt Vorgabe, die Grenze bleibt 5 kHz; KV1 a (1) zählt die Moden bis zur oberen
+Grenze jedes Terzbands (±3 %) statt je Band, KV1 a (2) misst jede der ersten 20 Moden gegen ein Viertel ihrer
+Halbwertsbreite (|Δf|/f ≤ η/4) statt gegen 0,1 % fest.** Die Mobilität bleibt bei ±0,5 dB. Ergebnis (Steinway, k = 3
+gegen k = 4): Mobilität je Band unter 0,06 dB, Moden bis zur Grenze gleich bis auf zweimal zwei (177/179 bis 1778 Hz,
+495/497 bis 3548 Hz), größte Abweichung je Mode das 0,71-fache von η/4 (Mode 11, 0,21 %), Gl. 2 1,4·10⁻³ — **KV1 a
+besteht**. Grund: KV1 a soll sichern, dass die Numerik in PS1 a nicht mitzählt; die Mobilität stimmt auf 0,06 dB. Die
+alten Teilkriterien lagen feiner, als ihre Größe messen kann — bei rund 50 Moden je Band sind 3 % anderthalb Moden,
+und eine feste 0,1 % hat keinen Bezug zur Breite einer Mode; beides stand vor der Rechnung fest. Verworfen: b (KV1 a
+wörtlich — Grenze 1,4 kHz und feineres Netz; würfe 3,6 kHz konvergierte Moden weg), c (k = 4 Vorgabe — genauer an
+Größen, die schon stimmen; der Glasboden gleicher Masse käme auf rund 2,9 Mio. Größen, vermutlich über 20 GB).
+
+**Befund S150 zur Geometrie (PS1 a (2) versagt, „wird die Geometrie geprüft“):** Der Steinway folgt RT-0425 — §2.1
+„On the bridge (magenta area) : between 29 mm and 69 mm“, bei uns 23,5–60,7 mm über der Platte von 6–9 mm; die
+Diskant-Ecke ohne Rippe hat auch RT-0425. Plath 2019 bestätigt, was ihn von MAESSTRO unterscheidet: S. 32 Abb. 3.1
+„The bass bridge and treble bridge are connected.“, S. 105 die Schleife aus Bass-Steg und unterem Diskant-Steg,
+S. 163 „the keys on the bass bridge (key 1-20)“ (= MIDI 21–40, wie PF2 a). Die Grenzen von PS1 a (2) (−75 … −57 dB,
+Bass 5–15 dB unter dem Diskant) stammen aus dem vereinfachten Flügel von MAESSTRO (Stege 60 und 20 mm, getrennt,
+eine Rippe mehr). Eine Messung des Abstands Bass/Diskant an einem Konzertflügel ist nicht gefunden (Plath Abb. 6.10
+zeigt einzelne Anregepunkte). Steinway heute: −70,8 … −54,7 dB (zwei Werte über −57 am Diskant-Ende), Abstand 1,6 dB.
+
+✅ **PS4 a** (Patrik S150): **PS1 a (2) läuft am Steinway nur als Bericht** (Spanne, Abstand Bass/Diskant, Werte am
+Diskant-Ende); die Geometrie bleibt wie in RT-0425. Geprüft wird sie weiter durch die Spannen aus RT-0425 §2.1 (Test
+des Bauplans), EM1 a und PS1 a (3); alle bestehen. Grund: der Steinway ist nach BM2 a RT-0425 mit Quelle je Zahl
+nachgebaut, und Plath bestätigt gerade das, was ihn von MAESSTRO unterscheidet; Grenzen aus einem anders gebauten
+Flügel prüfen den Unterschied, nicht die Geometrie. Verworfen: b (Geometrie an PS1 a (2) anpassen — Eckrippe,
+niedrigere Stege im Diskant; Höhen ohne Quelle, eine Anpassung an die Prüfung). Kippt, wenn eine Messung an einem
+Konzertflügel einen Abstand Bass/Diskant oder Werte am Diskant-Ende belegt, die der Steinway verfehlt.
+
+**Gebaut 31c-6 Teil 5 — Prüfungen (S150; PS1 a, KV1 a, EM1 a; PF3 a, PS2 a, PS3 a, KV2 a, PS4 a):**
+`test_LoopKoerperPruefstein.cpp` mit drei Fällen; die Mobilität aus den gerechneten Moden (wie MAESSTRO).
+(1) *Prüffall gegen Abb. 6 und Abb. 5* — nur Bericht (PS3 a): je Oktave +1,8 … +3,4 dB, an den Stegenden mehr,
+Versatz im Mittel +2,8 dB, Abstand Bass/Diskant 8,8 gegen 8,4 dB; Dichte das 0,9- bis 1,3-fache von Abb. 5 (bei 3 kHz
+ein Ausreißer von Gl. 6 an einem engen Modenpaar). Bezug `werte/maesstro_abb6_rp.txt` und `…_abb5_rp.txt` aus
+`asset/loop/instrument_bodies/maesstro_ablesen.py`. (2) *Steinway* — Bericht (PS4 a), dazu **PS1 a (3) besteht**
+(Diskant je Terzband 500 Hz – 4 kHz −64,7 … −67,3 dB, Spanne 2,6 dB; Mittel |Y| 50–1000 Hz 0,00094 s/kg gegen
+Plath 0,0007, bis Faktor 2) und **EM1 a besteht** (38,2 Hz; 0,064 /Hz). (3) *Konvergenz* mit
+`LUMIVIZ_KOERPER_K4=<datei>` — **KV1 a besteht** nach KV2 a. `kDiskantAb` = 41 liegt jetzt in `Mobilitaet.hpp`
+(Werkzeug und Test lesen dieselbe Zahl). Der Prüffall hat 17 Rippen (PF3 a) und Stegenden an allen vier Enden nach
+PF2 a; Körper neu gerechnet (785 Moden, 902 s, 4,9 GB). Release-clang `*Loop Koerper*` 45 / 45 in 35 s (mit dem
+Körper k = 4). **Offen:** die Antwort der Autoren (PS3 a); mit den Daten die Nachbearbeitung von MAESSTRO nachbauen
+und PS1 a (1) gleich gegen gleich prüfen. **Kipppunkte:** BM7 a (Grenze 5 kHz bleibt, KV1 a besteht), ST1 a
+(PS1 a (3) besteht auch oberhalb 3 kHz), BM1 a über EM1 a (besteht) — keiner greift.
 
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:

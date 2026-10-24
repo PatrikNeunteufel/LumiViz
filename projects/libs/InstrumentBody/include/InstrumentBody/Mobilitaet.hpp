@@ -30,6 +30,11 @@
 namespace lumi::koerper
 {
 
+/// Ab dieser Taste zaehlt ein Stegpunkt zum Diskant (PF2 a, S150): MAESSTRO Abb. 6 zaehlt die Noten
+/// ab C1 (Index 1–84 = MIDI 24–107), der Bassteg traegt die Indizes 1–17 = MIDI 24–40 — wie in
+/// RT-0425 Anhang A, wo der Bass-Arm bei Taste 40 endet. PS1 a mittelt die Baender ueber den Diskant.
+inline constexpr int kDiskantAb = 41;
+
 /// Y_A bei `frequenzHz` am Stegpunkt `stegpunkt` aus den Moden (MAESSTRO Gl. 10), s/kg.
 [[nodiscard]] inline std::complex<double> mobilitaet(const std::vector<ModeImKoerper>& moden, std::size_t stegpunkt, double frequenzHz)
 {

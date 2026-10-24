@@ -391,11 +391,18 @@ TEST_CASE("Loop Koerper 31c-6 MAESSTRO Prueffall")
     for (const std::string& b : befunde) MESSAGE(b);
     CHECK(befunde.empty());
 
-    // vom Steinway D unveraendert: Umriss, Rippenlinien, Stegpunkte
+    // vom Steinway D unveraendert: Umriss, die 16 Rippenlinien, Stegpunkte; dazu die siebzehnte Rippe
+    // in der Diskant-Ecke (PF3 a): parallel zur sechzehnten, rund 105 mm weiter, kreuzt den Diskant-Steg
     CHECK(plan.platte.umriss == steinway.platte.umriss);
     CHECK(plan.stegpunkte == steinway.stegpunkte);
-    REQUIRE(plan.rippen.size() == steinway.rippen.size());
-    for (std::size_t k = 0; k < plan.rippen.size(); ++k) CHECK(plan.rippen[k].linie == steinway.rippen[k].linie);
+    REQUIRE(plan.rippen.size() == steinway.rippen.size() + 1);
+    for (std::size_t k = 0; k < steinway.rippen.size(); ++k) CHECK(plan.rippen[k].linie == steinway.rippen[k].linie);
+    const kp::Leiste& ecke = plan.rippen.back();
+    const kp::Leiste& sechzehn = plan.rippen[steinway.rippen.size() - 1];
+    const double abstandEcke = kp::abstandZurLinie(ecke.linie[ecke.linie.size() / 2], {sechzehn.linie.front(), sechzehn.linie.back()});
+    MESSAGE("Eckrippe ", ecke.name, ": ", abstandEcke * 1e3, " mm von der sechzehnten");
+    CHECK(abstandEcke == doctest::Approx(0.105).epsilon(0.02));
+    for (const kp::Punkt2& p : ecke.linie) CHECK(kp::innen(plan.platte.umriss, p));
 
     // Tab. 2: Sitka und Buche, je η = 2 %
     const kp::Material* sitka = kp::findeMaterial(plan, "sitka");
@@ -436,13 +443,24 @@ TEST_CASE("Loop Koerper 31c-6 MAESSTRO Prueffall")
         const double d = kp::abstandZurLinie(s.ort, eigener.linie);
         CHECK_MESSAGE(d <= 0.016, "Taste ", s.taste, ": ", d, " m neben ihrem Steg");
     }
+    // jedes der vier Enden einen Tastenabstand hinter der aeussersten Taste (PF2 a): kein Stegende auf einem Stegpunkt
+    const auto ort = [&](int taste) {
+        for (const kp::Stegpunkt& s : plan.stegpunkte)
+            if (s.taste == taste) return s.ort;
+        return kp::Punkt2{};
+    };
+    const auto weg = [](kp::Punkt2 a, kp::Punkt2 b) { return std::hypot(a.x - b.x, a.y - b.y); };
+    CHECK(weg(bass.linie.front(), ort(40)) > 0.008);  // Taste 40 liegt 12 mm neben der Linie
+    CHECK(weg(bass.linie.back(), ort(21)) > 0.015);
+    CHECK(weg(diskant.linie.front(), ort(41)) > 0.05);
+    CHECK(weg(diskant.linie.back(), ort(108)) > 0.008);
     double abstand = 1.0;
     for (const kp::Punkt2& p : bass.linie) abstand = std::min(abstand, kp::abstandZurLinie(p, diskant.linie));
     MESSAGE("kleinster Abstand der beiden Stege: ", abstand * 1e3, " mm");
     CHECK(abstand > 0.05);
 
-    // Tab. 1: Rippen ohne Verjuengung, von Bass nach Diskant 27 → 17 mm hoch, 25 → 21 mm breit
-    REQUIRE(plan.rippen.size() == 16);
+    // Tab. 1: Rippen ohne Verjuengung, von Bass nach Diskant 27 → 17 mm hoch, 25 → 21 mm breit (ueber alle 17)
+    REQUIRE(plan.rippen.size() == 17);
     for (std::size_t k = 0; k < plan.rippen.size(); ++k)
     {
         const kp::Leiste& r = plan.rippen[k];
