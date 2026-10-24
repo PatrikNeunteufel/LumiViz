@@ -149,6 +149,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperBauplan.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperDatei.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperEigen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperMobilitaet.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperNetz.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperPlatte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperStatistik.cpp"

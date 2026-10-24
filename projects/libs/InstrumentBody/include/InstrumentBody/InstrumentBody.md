@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.9.0  
+> **Version:** 0.10.0  
 > **Datum:** 2026-10-24  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Statistik.hpp, Koerper.hpp  
+> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Statistik.hpp, Koerper.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
@@ -202,6 +202,14 @@ Gesetz). **Geprüft** (`test_LoopKoerperAuswertung`, „31c-6"): die Mischung (o
 Prüfplatte mit zwei Werkstoffen (links, rechts): 2 Σ U_m = ω² auf 10⁻⁶, Summe der Anteile 1, die erste Mode
 0,4999 / 0,5001; der statistische Teil mit dem Mittel der Anteile; jeder Punkt des Steinway hat einen Werkstoff.
 
+**Mobilität (31c-6, PS1 a)** — `InstrumentBody/Mobilitaet.hpp`. `mobilitaet(moden, j, f)`: Treiberpunkt-Mobilität
+nach MAESSTRO Gl. 10, Y = jω Σ φ_n(A)² / (ω_n² + jη_nω_nω − ω²) (bezüglich M normiert); `mittlereMobilitaetDb` nach
+Gl. 12 (geometrisches Mittel von |Y| über 25–5000 Hz in 1-Hz-Schritten, dB re 1 s/kg); `terzbaender` (IEC 61260,
+Basis 10, über die Nummer gewählt), `bandMobilitaetDb` (geometrisch über Band und Stegpunkte), `bandDichte`. Das
+Werkzeug schreibt damit den Bericht (`--report`). **Geprüft** (`test_LoopKoerperMobilitaet`): Einmassenschwinger
+gegen die geschlossene Lösung; Satz vom Mittelwert an einer Aluminiumplatte (mittleres Re(Y) gegen 1/(8√(ρhD)) auf
+1 %).
+
 ### 5.4 Statistischer Teil — `InstrumentBody/Statistik.hpp` (31c-5c)
 
 Oberhalb der gerechneten Moden (ST1 a): `schaetze` nimmt die Größen aus dem oberen Band der gerechneten Moden (die
@@ -290,6 +298,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.10.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 2: Mobilität (`Mobilitaet.hpp`: MAESSTRO Gl. 10 und 12, Terzbänder, Dichte je Band); Bericht im Werkzeug (`--report`). |
 | 0.9.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 1: Dämpfung je Werkstoff (DM1 a) — `Verformungsenergie.hpp`, `Steife::werkstoff`, `Plattenelement::integrationsPunkte`, `verlustfaktorAusAnteilen`, `ModeImKoerper::werkstoffAnteil`, im statistischen Teil das Mittel; `kKoerperFassung` 2, `kRechenFassung` 2. |
 | 0.8.0 | 2026-10-24 | Session 148, Stufe 31c-5d: der Körper (`Koerper.hpp`: `Koerper`, `Rechnung`, `kKoerperFassung`, `kRechenFassung`), die Datei in `loop/Koerper`, der Wächter. |
 | 0.7.0 | 2026-10-23 | Session 148, Stufe 31c-5c: statistischer Teil (`Statistik.hpp`: `StatistischerTeil`, `schaetze`, `ziehe`, `Zufall`; ST1 a). |

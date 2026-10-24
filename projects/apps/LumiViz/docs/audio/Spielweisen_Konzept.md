@@ -1833,6 +1833,23 @@ gleich**, neu nur die Anteile — Fichte im Mittel 94 %, Buche 6 % (bei 100,4 Hz
 lesbar, falsche Zahl an Anteilen, Wächter mit Werkstoffen und η aus den Anteilen). Release-clang `*Loop Koerper*`
 38 / 38; Testing-MSVC baut.
 
+**Gebaut 31c-6 Teil 2 — Mobilität (S149, PS1 a, KV1 a):** `InstrumentBody/Mobilitaet.hpp` — `mobilitaet` (MAESSTRO
+Gl. 10, Treiberpunkt, Formen bezüglich M normiert), `mittlereMobilitaetDb` (Gl. 12: geometrisches Mittel von |Y|
+25–5000 Hz in 1-Hz-Schritten, dB re 1 s/kg), `terzbaender` (IEC 61260 Basis 10, gewählt über die Nummer — die
+Nennmitte „5000 Hz“ ist gerechnet 5012 Hz), `bandMobilitaetDb` (geometrisch über Band und Stegpunkte), `bandDichte`.
+`InstrumentBodyTool --report <datei>` schreibt den Bericht (je Stegpunkt Gl. 12; je Terzband 100 Hz–5 kHz Dichte der
+gerechneten Moden und Mobilität über alle Stegpunkte und über den Diskant), nach einer Rechnung oder für einen
+fertigen Körper (`.lvinstbody` statt Bauplan: nur der Bericht); die Mobilität aus den gerechneten und den gezogenen
+Moden. **Festlegung:** Diskant = Stegpunkte ab MIDI 38 (MAESSTRO Abb. 6: Bassteg Noten 1–17 = MIDI 21–37; unser
+Bauplan hat einen durchgehenden Steg). Das letzte Band (5012 Hz, bis 5623 Hz) ist nur zur Hälfte gerechnet — seine
+Dichte zählt nur die gerechneten Moden. Tests `test_LoopKoerperMobilitaet` (3 Fälle): Einmassenschwinger gegen die
+geschlossene Lösung; Terzbänder, Mittel, Dichte; **Satz vom Mittelwert** an einer Aluminiumplatte 1,0 × 0,8 m, 1 mm,
+η = 2 %: mittleres Re(Y) über 300–1000 Hz 0,0294 s/kg gegen 0,0297 der unendlichen Platte (MAESSTRO Gl. 11, 1 %
+daneben; 288 Moden, Dichte 0,244 gegen asymptotisch 0,257 /Hz). Release-clang `*Loop Koerper*` 41 / 41;
+Testing-MSVC baut (CMakeCraft v0.12.0; die Hebung auf v0.13.1 folgt als eigener Schritt, BG1 a). **Erster Bericht am Steinway (noch keine Prüfung, die kommt in
+Teil 5):** Gl. 12 über alle 88 Stegpunkte −67,4 dB; Terzbänder 500 Hz–5 kHz −65,3 bis −68,1 dB (Diskant),
+Dichte von 0,078 /Hz (500 Hz) auf 0,221 /Hz (4 kHz).
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);

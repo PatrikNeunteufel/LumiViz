@@ -3100,7 +3100,8 @@ Idee Preset-Warmup/Pre-Roll.
   dem Tag: Zeile in `CMakeLists.txt`, Pin heben, `--fresh`, beide Compiler.
   **31c-6 Teil 1 gebaut (S149):** Dämpfung je Werkstoff (DM1 a), Steinway neu gerechnet (Werte Bit für Bit gleich,
   neu die Anteile je Werkstoff).
-  **Offen:** 31c-6 Teile 2–5 Prüfstein (Mobilität, Prüffall, Konvergenz mit zweiter Rechnung; erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin,
+  **31c-6 Teil 2 gebaut (S149):** Mobilität nach MAESSTRO Gl. 10/12, Terzbänder, Bericht im Werkzeug.
+  **Offen:** 31c-6 Teile 3–5 Prüfstein (Prüffall, Konvergenz mit zweiter Rechnung; erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin,
   mittlere Mobilität gegen Plath/Giordano — zugleich Kipppunkt von ST1 a), 31c-7 Klang, 31c-8 Varianten mit Glasboden;
   Testing-MSVC für `*Loop Koerper*` am Stufenende (Bezug des Netzes auf 2 %);
   Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d

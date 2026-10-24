@@ -14,6 +14,12 @@
 
 cmake_minimum_required(VERSION 3.25)
 
+# Pflicht seit CMakeCraft v0.13.0 (TC1 a, S149): ohne ein ausgeschriebenes project()
+# setzt CMake selbst project(Project) vor cmake_minimum_required, die alte Regel
+# CMP0091 gilt, und die Konfiguration Testing baut unter MSVC mit /MT statt /MD.
+# Name und Version kommen weiter aus Solution.json (CMakeCraft ruft project() dort).
+project(LumiViz LANGUAGES NONE)
+
 include("${CMAKE_CURRENT_LIST_DIR}/CMakeCraftBootstrap.cmake")
 
 # ==============================================================================

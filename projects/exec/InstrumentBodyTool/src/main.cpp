@@ -19,6 +19,7 @@
 
 #include "InstrumentBody/Auswertung.hpp"
 #include "InstrumentBody/Koerper.hpp"
+#include "InstrumentBody/Mobilitaet.hpp"
 #include "InstrumentBody/Platte.hpp"
 #include "InstrumentBody/Statistik.hpp"
 #include "InstrumentBody/Umsetzungen.hpp"
@@ -71,6 +72,56 @@ double seit(std::chrono::steady_clock::time_point t)
     return std::chrono::duration<double>(std::chrono::steady_clock::now() - t).count();
 }
 
+/// Ab dieser Taste zaehlt ein Stegpunkt zum Diskant: MAESSTRO Abb. 6 hat den Bassteg bei den
+/// Noten 1–17 (MIDI 21–37); PS1 a mittelt die Baender ueber den Diskant.
+constexpr int kDiskantAb = 38;
+
+/// Der Bericht des Pruefsteins (31c-6, PS1 a, KV1 a): je Stegpunkt das Mittel nach MAESSTRO Gl. 12,
+/// je Terzband 100 Hz – 5 kHz die Modendichte (gerechnete Moden) und die mittlere Mobilitaet ueber
+/// alle Stegpunkte und ueber den Diskant. Die Mobilitaet aus den gerechneten und den gezogenen Moden.
+bool schreibeBericht(const kp::Koerper& koerper, const QString& pfad)
+{
+    std::vector<kp::ModeImKoerper> alle = koerper.moden;
+    for (kp::ModeImKoerper& m : kp::ziehe(koerper.statistik)) alle.push_back(std::move(m));
+    QFile datei(pfad);
+    if (!datei.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) return false;
+    QTextStream aus(&datei);
+    aus.setRealNumberPrecision(6);
+    aus << "# " << QString::fromStdString(koerper.titel) << ": " << koerper.moden.size() << " computed modes up to "
+        << koerper.rechnung.bisHz << " Hz (order " << koerper.rechnung.ordnung << "), " << alle.size() - koerper.moden.size()
+        << " drawn above\n";
+    aus << "# mean mobility per bridge point, MAESSTRO eq. 12 (geometric mean of |Y| 25-5000 Hz, 1 Hz steps), dB re 1 s/kg\n";
+    aus << "key\tmean_dB\n";
+    double summeDb = 0.0;
+    for (std::size_t j = 0; j < koerper.stegTasten.size(); ++j)
+    {
+        const double db = kp::mittlereMobilitaetDb(alle, j);
+        summeDb += db;
+        aus << koerper.stegTasten[j] << '\t' << db << '\n';
+    }
+    std::printf("Mean mobility (eq. 12) over all %zu bridge points: %.2f dB re 1 s/kg\n", koerper.stegTasten.size(),
+                summeDb / static_cast<double>(std::max<std::size_t>(1, koerper.stegTasten.size())));
+    std::vector<std::size_t> allePunkte, diskant;
+    for (std::size_t j = 0; j < koerper.stegTasten.size(); ++j)
+    {
+        allePunkte.push_back(j);
+        if (koerper.stegTasten[j] >= kDiskantAb) diskant.push_back(j);
+    }
+    aus << "# third-octave bands (IEC 61260, base 10): modal density of the computed modes, mean mobility (geometric, dB re 1 s/kg)"
+           " over all bridge points and over the treble (key >= "
+        << kDiskantAb << ")\n";
+    aus << "centre_Hz\tfrom_Hz\tto_Hz\tdensity_per_Hz\tall_dB\ttreble_dB\n";
+    for (const kp::Terzband& band : kp::terzbaender(100.0, 5000.0))
+    {
+        const double dichte = kp::bandDichte(koerper.moden, band);
+        const double alleDb = kp::bandMobilitaetDb(alle, allePunkte, band);
+        const double diskantDb = kp::bandMobilitaetDb(alle, diskant, band);
+        aus << band.mitteHz << '\t' << band.vonHz << '\t' << band.bisHz << '\t' << dichte << '\t' << alleDb << '\t' << diskantDb << '\n';
+        std::printf("  %7.0f Hz  density %.4f /Hz  all %.2f dB  treble %.2f dB\n", band.mitteHz, dichte, alleDb, diskantDb);
+    }
+    return true;
+}
+
 template <typename Liste>
 auto waehle(const Liste& liste, const QString& name) -> decltype(liste.front().get())
 {
@@ -114,7 +165,12 @@ int main(int argc, char* argv[])
                                       QStringLiteral("n"), QStringLiteral("1"));
     const QCommandLineOption ausOpt(QStringLiteral("out"),
                                     QStringLiteral("Write the body here (default: next to the plan, .lvinstbody)."), QStringLiteral("file"));
-    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt});
+    const QCommandLineOption berichtOpt(QStringLiteral("report"),
+                                        QStringLiteral("Write the test report (mobility per bridge point and per third-octave band) "
+                                                       "to this file. Given a body (.lvinstbody) instead of a plan, only the report "
+                                                       "is written."),
+                                        QStringLiteral("file"));
+    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt, berichtOpt});
     parser.process(app);
 
     const auto geberListe = kp::netzgeber();
@@ -131,6 +187,30 @@ int main(int argc, char* argv[])
     {
         std::fprintf(stderr, "Give one body plan (.lvinstbodyplan); --help lists the options.\n");
         return 2;
+    }
+    // ein fertiger Koerper: nur der Bericht (31c-6)
+    if (parser.positionalArguments().front().endsWith(QLatin1String(lumi::loop::kKoerperEndung), Qt::CaseInsensitive))
+    {
+        if (!parser.isSet(berichtOpt))
+        {
+            std::fprintf(stderr, "A body needs --report <file>.\n");
+            return 2;
+        }
+        kp::Koerper koerper;
+        bool neuer = false;
+        if (!lumi::loop::ladeKoerper(parser.positionalArguments().front(), koerper, &neuer))
+        {
+            std::fprintf(stderr, neuer ? "The body is from a newer version.\n" : "Could not read the body.\n");
+            return 1;
+        }
+        const auto start = std::chrono::steady_clock::now();
+        if (!schreibeBericht(koerper, parser.value(berichtOpt)))
+        {
+            std::fprintf(stderr, "Could not write %s\n", qPrintable(parser.value(berichtOpt)));
+            return 1;
+        }
+        std::printf("Report: %s (%.1f s)\n", qPrintable(parser.value(berichtOpt)), seit(start));
+        return 0;
     }
     const kp::Netzgeber* geber = waehle(geberListe, parser.value(geberOpt));
     const kp::Eigenloeser* loeser = waehle(loeserListe, parser.value(loeserOpt));
@@ -292,6 +372,15 @@ int main(int argc, char* argv[])
         return 1;
     }
     std::printf("Body: %s (%.1f MB)\n", qPrintable(ziel), static_cast<double>(QFileInfo(ziel).size()) / 1048576.0);
+    if (parser.isSet(berichtOpt))
+    {
+        if (!schreibeBericht(koerper, parser.value(berichtOpt)))
+        {
+            std::fprintf(stderr, "Could not write %s\n", qPrintable(parser.value(berichtOpt)));
+            return 1;
+        }
+        std::printf("Report: %s\n", qPrintable(parser.value(berichtOpt)));
+    }
     std::printf("Total %.1f s\n", seit(beginn));
     return 0;
 }
