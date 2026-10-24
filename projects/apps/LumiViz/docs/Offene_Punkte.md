@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.281.0
-> **Datum:** 2026-10-24 (Session 148)
+> **Version:** 1.282.0
+> **Datum:** 2026-10-24 (Session 149)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3088,8 +3088,10 @@ Idee Preset-Warmup/Pre-Roll.
   fertig** (EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a): Spectra 1.2.0 als External, Eigenlöser mit Zählung nach
   Sylvester und Deflation, `InstrumentBodyTool`, Hörorte (`.lvinstbodyplan` Fassung 2), Auswertung je Mode, statistischer
   Teil bis 20 kHz, **`steinway_d.lvinstbody` gerechnet und abgelegt** (820 Moden bis 5 kHz, 2,9 MB, 22 min), Wächter.
-  **Offen:** BM7 Grenzfrequenz und 31c-6 Prüfstein (erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin, mittlere
-  Mobilität gegen Plath/Giordano — zugleich Kipppunkt von ST1 a), 31c-7 Klang, 31c-8 Varianten mit Glasboden;
+  **S149: BM7 a** — die Grenze bleibt an der höchsten gerechneten Mode (5 kHz); 31c-6 prüft bandweise Konvergenz und
+  Prüfstein und senkt sie nur, wo ein Band versagt.
+  **Offen:** 31c-6 Prüfstein (Konvergenz mit zweiter Rechnung; erste Mode gerechnet 38,2 Hz gegen Corradi/Conklin,
+  mittlere Mobilität gegen Plath/Giordano — zugleich Kipppunkt von ST1 a), 31c-7 Klang, 31c-8 Varianten mit Glasboden;
   Testing-MSVC für `*Loop Koerper*` am Stufenende (Bezug des Netzes auf 2 %);
   Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d
   (`docs/modellierung/hammer-saite/modell.md` §2).
@@ -6168,6 +6170,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.282.0 | 2026-10-24 | Session 149. §7 Spielweisen: BM7 a (Grenzfrequenz bleibt an der höchsten gerechneten Mode, 31c-6 prüft bandweise). CMakeCraft-Pin auf v0.12.0 (`/MP8` unter MSVC, MP3 a). |
 | 1.281.0 | 2026-10-24 | Session 148. §7 Spielweisen: 31c-4 (Eigenlöser, Spectra) und 31c-5 (Hörorte, Auswertung, statistischer Teil, Körperdatei) gebaut, `steinway_d.lvinstbody` abgelegt; offen BM7 und 31c-6. Bauzeit MSVC (`/MP`) an CMakeCraft übergeben (MP1 a). |
 | 1.280.0 | 2026-10-23 | Session 147. §7 Spielweisen: Stufe 31c — der Boden gerechnet (BM1 a bis BM5-1 a, PL31c a, HT7 b, GB1 a, IC1 a, EL1 a); 31c-1 bis 31c-3 gebaut (Bauplan, Netz mit CDT, Platte mit Eigen). |
 | 1.279.0 | 2026-10-23 | Session 146. §7 Spielweisen: Stufe 31 — 31a und 31b gebaut, 31c begonnen (HK1 a, HK2 a, HT1 a bis HT7 a, KB1 a); Ablage `docs/modellierung/`. |
