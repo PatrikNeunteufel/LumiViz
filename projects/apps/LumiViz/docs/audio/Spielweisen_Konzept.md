@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.88.0
+> **Version:** 0.89.0
 > **Datum:** 2026-10-25 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a und TS1 a (Patrik S139–S152);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a und TS1 a (Patrik S139–S152);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -2439,6 +2439,50 @@ von Salamander zu, also sehr leise; pp (−26 dB) trifft selbst v1 nur auf 11 dB
 Stufen ist größer als der des Flügels über seine Ebenen (31d-3 Teil 2: 31–51 gegen 14–39 dB) — das gehört zum Stufenschritt
 (HT6 a) und zum Hammer (HT2), Patriks Urteil über die Proben entscheidet.
 
+**Befund S152 (31d-6, an den Hüllkurven von C4 als Bild):** das Modell erzeugt die zweite Stufe — Teilton 1 fällt bis
+etwa 2,9 s schnell, bricht dort ein und klingt danach langsam weiter —, aber die Einbrüche sind fast vollständige
+Auslöschungen (40–80 dB tief, periodisch wiederkehrend), bei Salamander rund 10–20 dB. Die Messung legt Geraden in dB; ein
+Einbruch auf −100 dB zieht sie stärker als der ganze Ton — daher „keine zweite Stufe“ am Modell, und auch an Salamander
+verbiegen die Einbrüche die Geraden. Zwei Ursachen zugleich: die Messung, und im Modell schwingen die N Saiten des Chors je
+Teilton in einer Ebene — am Flügel in zweien (Polarisationen) mit verschiedener Kopplung an den Steg, was die Einbrüche
+auffüllt (darauf baut Weinreichs Erklärung der zwei Stufen); `modell.md` §5 hat die zweite Ebene nicht.
+
+✅ **N1 a** (Patrik S152): **Zuerst wird die Messung robust gegen Einbrüche:** das Abklingen jedes Teiltons aus der
+rückwärts integrierten Energie nach Schroeder (wie beim Nachhall); die zwei Stufen als Knick in dieser Kurve, mit
+derselben Geradensuche; synthetische Fälle mit tiefen Schwebungen belegen es. Danach Salamander und Modell neu gemessen
+und `lateDecay` und `detune` wie in 31d-4 gesetzt (S1 a bis S3 a). Die vollständige Auslöschung im Modell bleibt als
+Befund; ob die zweite Polarisation dazukommt, entscheidet ein eigener Kipppunkt nach der neuen Messung und Patriks
+Hörurteil. Grund: eine Messung, die an Einbrüchen versagt, misst auch Salamander falsch — jede Entscheidung über das
+Modell stünde auf verbogenen Zahlen. Verworfen: b (gleich die zweite Polarisation — ohne Messung, die sie prüfen
+könnte), c (a und die Polarisation vorab als „Plan erweitern“ — nimmt dem Befund die Entscheidung ab). Kippt auf c, wenn
+Patrik die tiefen Einbrüche in den Hörproben als Fehler hört.
+
+**Befund S152 (31d-6 nach N1 a):** die Messung nach Schroeder ist gebaut und an synthetischen Fällen mit tiefen
+Ausloeschungen belegt (zwei Stufen auf 5 %, auch mit Ausloeschung am Übergang; tiefe Schwebung ohne zweite Stufe;
+dazu zwei Berichtigungen: die Glättung am Ende des Bereichs in Energie statt dB, die Prüfung auf den Boden nach Lundeby
+an den letzten 30 % statt am ganzen Bereich; je Stufe wird die Energie der anderen abgezogen). Ein synthetischer Befund
+dabei: liegen die zwei Moden näher beieinander, als sie abklingen (Schwebung langsamer als 1/T60), mittelt sich ihr
+Mischterm nicht heraus — dann gibt es keine zwei getrennten Abklingzeiten zu messen. Salamander neu gemessen: die zweite
+Stufe zeigt sich jetzt vom Mittelteil bis in den Diskant fast überall (77–100 % der Messungen, 21 Tasten ≥ 50 %); das
+Modell mit der Vorgabe aus 31d-4 zeigt sie im Mittelteil (51–72), ab 75 nicht. **Das Setzen mit der neuen Messung
+konvergiert schlecht:** nach drei Durchgängen treffen `decay` 17 von 29, `highDecay` 19, `lateDecay` 5 von 21, `detune`
+13, B 5, Winkel 5 — mit fragwürdigen Parametern (`decay` C4 1,4 s, damit das Modell am Hörort 4,1 s misst; MIDI 72
+0,49 s). Die Vorgabe aus 31d-4 besteht den dauerhaften Test mit der neuen Messung nicht mehr (`decay`, `highDecay`,
+`detune`); B und Winkel halten. Deutung (Claude): das Modell liegt mit seinen gekoppelten Moden im Bereich langsamer
+Schwebung und vollständiger Auslöschung, in dem „erste“ und „zweite Stufe“ keine getrennten Größen sind; die
+Parameter `decay`/`lateDecay`/`detune` steuern dort nicht das, was am Hörort als Stufen erscheint. Nichts eingetragen;
+Verlauf lokal unter `.claude/handover/salamander_31d6/`.
+
+✅ **N2 a** (Patrik S152): **Die Messung nach Schroeder bleibt, auf beiden Seiten; die zweite Polarisation wird als
+„Plan erweitern“ vorgelegt — eigener Teilplan 31d-7 vor 31e —, danach wird mit dem Werkzeug neu gesetzt.** Bis dahin
+bleibt die Vorgabe aus 31d-4 eingetragen; `werte/salamander_c5.txt` steht mit der neuen Messung; der dauerhafte Test
+prüft bis zum Teilplan nur B und Winkel (`decay`, `highDecay`, `detune` ausgesetzt, im Test und hier benannt); die vierte
+Fassung der Hörproben folgt nach dem Teilplan. Grund: die Messung muss richtig bleiben, gleich wo das Modell steht —
+der Fehler liegt im Modell, dort gehört die Korrektur hin; die zweite Polarisation ist Weinreichs eigene Erklärung der
+zwei Stufen. Verworfen: b (jetzt eintragen, was trifft — Werte aus einem Modell, das die Größen nicht trennt), c (erste
+Stufe wieder mit Geraden in dB — dieselbe Größe auf zwei Arten, mit der nachweislich falschen Messung). Kippt auf c, wenn
+Patriks Hörurteil zeigt, dass das Modell nach 31d-4 im Abklingen schon nah genug klingt.
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -2644,7 +2688,12 @@ Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messc
    Stufen (UF4 a); `.claude/handover/hoerproben_31d/`. **Gebaut S152** (Befund unter S3 a); die vierte Fassung „nach
    der Nacharbeit“ legt 31d-6 dazu.
 6. *31d Nacharbeit* (UF5 a): greifende Kipppunkte als Entscheid, hier umgesetzt; der Stufenschritt, wenn Patriks Urteil
-   vorliegt (sonst in 31h-4).
+   vorliegt (sonst in 31h-4). **Begonnen S152:** N1 a (Messung nach Schroeder) gebaut, N2 a; offen die übrigen
+   Kipppunkte (Winkel an MIDI 33, Direktschall SB1 a, Helligkeit HT2, Stufenschritt nach dem Hörurteil) und das
+   Neusetzen nach 31d-7.
+7. *Zweite Polarisation* (**Plan erweitern nach N2 a, S152; Teilplan vorzulegen**): je Saite zwei Schwingungsebenen mit
+   verschiedener Kopplung an den Steg (`modell.md` §5, nach Weinreich); danach mit `LUMIVIZ_31D4_SETZEN` neu setzen, der
+   dauerhafte Test wieder mit `decay`, `highDecay`, `detune` und `lateDecay`, die vierte Fassung der Hörproben.
 
 **31e — Mitschwingen** (UF8 a, UF9 a).
 1. *Messteil* (UF9 a): beide Wege als Prototyp an einer Fassung der Nocturne von Hand mit Pedal-Spur; Kraft durch die
@@ -3549,6 +3598,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.89.0 | 2026-10-25 | Session 152. 31d-6 begonnen: Befund an den Hüllkurven (das Modell löscht an den Einbrüchen fast vollständig aus); N1 a (Messung nach Schroeder, gebaut, synthetische Fälle mit Auslöschung); Befund Setzen mit der neuen Messung (konvergiert schlecht); N2 a (Messung bleibt, zweite Polarisation als 31d-7 „Plan erweitern“, dauerhafter Test bis dahin nur B und Winkel); `werte/salamander_c5.txt` neu gemessen. |
 | 0.88.0 | 2026-10-25 | Session 152. 31d-5 gebaut: Hörproben gegen Salamander (UF7 a) und für den Stufenschritt (UF4 a), gleich laut nach R128; Befund zur Zuordnung der Stufen (mf des Modells ↔ v2–v5). |
 | 0.87.0 | 2026-10-25 | Session 152. S1 a (durch das Modell hindurch setzen), S2 a (Ziel je Parameter), Befund erster Lauf, S3 a (halber Schritt, acht Runden, Verstimmung nur bei zwei Saiten, zweite Stufe Kipppunkt); 31d-4 gebaut: Durchgänge im Werkzeug, Vorgabe gesetzt (decay, highDecay, detune, B im Bass, bridgeAngle, undampedFrom 89), der dauerhafte Test. |
 | 0.86.0 | 2026-10-25 | Session 152. 31d-3 Teil 2 gebaut: dieselbe Messung am Modell (Steinway D wie im Programm, Glasboden), Vergleich mit Salamander; Befund drei weitere Messfehler (Mode neben Teilton 1, Ausreißer bei B, Pegelumfang aus Teilton 1) und der Vergleich je Größe; `werte/salamander_c5.txt` neu gemessen. Voller Lauf 1598 / 1598 unter Release-clang und Testing-MSVC. |

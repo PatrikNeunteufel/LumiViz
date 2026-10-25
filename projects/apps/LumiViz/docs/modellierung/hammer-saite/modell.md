@@ -23,7 +23,7 @@ Jede Größe ist eine Kurve aus Stützpunkten an Tasten (MIDI 21–108), in ihre
 |---|---|---|
 | Inharmonizität B (`inharmonicity`) | log | bis D♯2 gemessen an *Salamander* (Yamaha C5), durch das Modell hindurch (31d-4); darüber Rigaud, David & Daudet 2011, Gl. 4/5 (Diskant s_T = 9,26·10⁻², y_T = −13,64) |
 | Abklingzeit 1. Stufe (`decay`) | log | gemessen an *Salamander*: T60 bei f1 aus dem Ausgleich über die Teiltöne, durch das Modell hindurch (31d-4; 16 s bei A0 … 1,8 s bei F♯7) |
-| Abklingzeit 2. Stufe (`lateDecay`) | log | vorläufig dreimal `decay` — das Modell zeigt keine zweite Stufe wie *Salamander* (Kipppunkt 31d Nacharbeit) |
+| Abklingzeit 2. Stufe (`lateDecay`) | log | vorläufig dreimal `decay` — das Modell löscht an den Einbrüchen fast vollständig aus und trennt die zwei Stufen nicht wie *Salamander*; die zweite Polarisation (§5) kommt mit 31d-7 (N2 a), danach wird neu gesetzt |
 | Hohe Teiltöne (`highDecay`) | log | gemessen an *Salamander* (T60 bei 10·f1 zu T60 bei f1): Bass um 0,95, C4 0,64, Diskant 0,02–0,04 (31d-4) |
 | Saiten im Chor (`strings`) | linear, gerundet | vorläufig 1 bis F♯1, 2 bis C3, 3 darüber |
 | Verstimmung (`detune`) | linear | gemessen an *Salamander* an der Schwebung der Teiltöne 1–3, durch das Modell hindurch, ab C♯2 (zwei Saiten): 0,6–5 Cent (31d-4); im hohen Diskant ohne Treffer, interpoliert |

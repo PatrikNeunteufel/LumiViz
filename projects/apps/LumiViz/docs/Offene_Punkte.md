@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.284.0
-> **Datum:** 2026-10-25 (Session 151)
+> **Version:** 1.285.0
+> **Datum:** 2026-10-25 (Session 152)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3133,7 +3133,20 @@ Idee Preset-Warmup/Pre-Roll.
   Körper-Editor in Stufe 31; `grand_piano` neu neben `piano`, zwei Glasflügel; Chopin aus der Breitkopf-Gesamtausgabe;
   Deluxe als Marke; voller Lauf am Ende jedes Teilschritts. **IK1:** ein eigenes Projekt `InstrumentsCalculation` kommt
   später für die anderen Instrumente; bis dahin neuer Rechen- und Messcode ohne Qt. **Fester Plan 31d bis 31h** im
-  `Spielweisen_Konzept` §4.1. **Als Nächstes: 31d-1** (Download von Salamander mit Freigabe).
+  `Spielweisen_Konzept` §4.1. ~~Als Nächstes: 31d-1~~ (erledigt S152).
+  **S152: 31d-1 bis 31d-5 gebaut, 31d-6 begonnen.** Salamander beschafft (`…\cmake\Salamander\`, README mit SHA-256);
+  WL1 a (WAV lesen ohne Qt, `audio/WavFormat`); `Teiltonmessung.hpp` und `Fluegelmessung.hpp` (Messung ohne Qt, für
+  Aufnahme und Modell); Salamander gemessen (`werte/salamander_c5.txt`, D1 a: `undampedFrom` 89 aus der SFZ, `damper`
+  nicht messbar; V1 a: Helligkeit über dem Pegel); dieselbe Messung am Modell; S1 a bis S3 a: die Vorgabe der
+  Hammer-Saite durch das Modell hindurch gesetzt (`decay`, `highDecay`, `detune`, B im Bass, `bridgeAngle`); Hörproben
+  31d (`.claude/handover/hoerproben_31d/`). 31d-6: an den Hüllkurven als Bild — das Modell löscht an den Einbrüchen fast
+  vollständig aus; N1 a (Abklingen nach Schroeder, gebaut); N2 a: die zweite Polarisation als **31d-7 „Plan
+  erweitern“**, bis dahin bleibt die Vorgabe aus 31d-4, der dauerhafte Test prüft nur B und Winkel. Voller Lauf
+  1601 / 1601 unter beiden Compilern.
+  **Offen:** **Teilplan 31d-7** (zweite Polarisation, `modell.md` §5) mit Umfangsfragen vorlegen, danach neu setzen
+  (`LUMIVIZ_31D4_SETZEN`), dauerhaften Test wieder voll, vierte Fassung der Hörproben; Kipppunkte aus 31d-6: Winkel an
+  MIDI 33 an der Grenze 10°, Direktschall des Modells zu stark (SB1 a), Helligkeit im Diskant (HT2); **Patriks
+  Hörurteil** über `hoerproben_31d` (Stufenschritt UF4 a / HT6 a; Kipppunkt N2 a → c) und über `hoerproben_31c9`.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6209,6 +6222,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.285.0 | 2026-10-25 | Session 152. §7 Spielweisen: 31d-1 bis 31d-5 gebaut (Salamander, WL1 a, Teiltonmessung, Messung an Salamander und Modell, D1 a, V1 a, S1 a bis S3 a, Vorgabe gesetzt, Hörproben 31d); 31d-6 begonnen (N1 a Schroeder, N2 a: 31d-7 zweite Polarisation als „Plan erweitern“); voller Lauf 1601 / 1601. |
 | 1.284.0 | 2026-10-25 | Session 151. §7 Spielweisen: 31c-8 (Varianten MP1–MP3 und zwei Glasböden gerechnet, Richtungen von MAESSTRO bestanden; RS1 a, AW2 a, AW3 a gekippt, AW3-1 a) und 31c-9 (Bereich, voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig; 31d–31h geplant (UF1 a bis UF17 a, IK1, fester Plan); offen Urteil über die Hörproben, Antwort von MAESSTRO. |
 | 1.283.0 | 2026-10-24 | Session 150 (Zeile nachgetragen S151). §7 Spielweisen: 31c-6 fertig (Prüffall, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a), 31c-7 gebaut (FF1 a pocketfft, Antwort des Bodens, `.lvinst` Fassung 17, Hörproben). |
 | 1.282.0 | 2026-10-24 | Session 149. §7 Spielweisen: BM7 a (Grenzfrequenz bleibt an der höchsten gerechneten Mode, 31c-6 prüft bandweise). CMakeCraft-Pin auf v0.12.0 (`/MP8` unter MSVC, MP3 a). PL31 a und zwölf Entscheide zum Rest von 31c, fester Plan IP1 und 31c-6 bis 31c-9; IP1 a (Fenster *Instruments*). Anfrage an CMakeCraft: Konfiguration Testing ohne Optimierung. Gebaut: IP1, 31c-6 Teil 1 (DM1 a, Steinway neu gerechnet) und Teil 2 (Mobilität); TC1 a und BG1 a, Pin v0.13.1. |

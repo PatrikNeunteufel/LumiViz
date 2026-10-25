@@ -91,6 +91,21 @@ double teiltonFrequenz(double f0, double b, int k)
     return k * f0 * std::sqrt(1.0 + b * k * k);
 }
 
+/// Je Teilton zwei Moden (N1 a): die schnelle mit `t60Frueh`, die langsame `abstandDb` leiser mit `t60Spaet` und
+/// `abstandHz` hoeher — die Summe faellt in zwei Stufen und loescht sich am Uebergang fast aus.
+std::vector<Komponente> zweiModen(double f0, double b, int teiltoene, double t60Frueh, double t60Spaet, double abstandDb,
+                                  double abstandHz)
+{
+    std::vector<Komponente> k;
+    for (int i = 1; i <= teiltoene && teiltonFrequenz(f0, b, i) < 0.45 * kRate; ++i)
+    {
+        const double f = teiltonFrequenz(f0, b, i);
+        k.push_back({f, 0.3 / i, t60Frueh, t60Frueh});
+        k.push_back({f + abstandHz, 0.3 / i * std::pow(10.0, abstandDb / 20.0), t60Spaet, t60Spaet});
+    }
+    return k;
+}
+
 /// Teiltoene 1/k laut mit derselben Abklingzeit.
 std::vector<Komponente> saite(double f0, double b, int teiltoene, double t60)
 {
@@ -164,15 +179,14 @@ TEST_CASE("Loop Teiltonmessung 31d-3 eine fremde Spitze neben einem schwachen Te
 
 TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
 {
-    SUBCASE("zwei Stufen: Knick bei 1,5 s, frueh 3 s, spaet 12 s")
+    // zwei Stufen wie am Fluegel (Weinreich) und am Modell: je Teilton zwei Moden mit verschiedener Frequenz, die
+    // schnelle laut, die langsame leise — wo sie gleich laut sind, loeschen sie sich im Takt der Schwebung fast aus
+    // (Befund S152, N1 a). Die Moden liegen so weit auseinander, dass sie mehrfach je Abklingzeit schweben: sonst
+    // mittelt sich ihr Mischterm nicht heraus, und es gibt keine zwei getrennten Abklingzeiten zu messen
+    SUBCASE("zwei Stufen: frueh 3 s, spaet 12 s, die spaete 30 dB leiser, Ausloeschungen am Uebergang")
     {
-        std::vector<Komponente> k = saite(110.0, 1e-4, 12, 3.0);
-        for (Komponente& c : k)
-        {
-            c.t60Spaet = 12.0;
-            c.knickS = 1.5;
-        }
-        const Ergebnis e = miss(erzeuge(k, 6.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(zweiModen(110.0, 1e-4, 12, 3.0, 12.0, -30.0, 2.0), 8.0, 0.1, 1e-6), kRate, 110.0,
+                                lumi::loop::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 8; ++n)
         {
@@ -181,19 +195,13 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
             REQUIRE(t != nullptr);
             REQUIRE(t->abklingen.erkannt);
             CHECK(t->abklingen.zweiStufen);
-            CHECK(t->abklingen.t60Frueh == doctest::Approx(3.0).epsilon(0.03).scale(0.0));
-            CHECK(t->abklingen.t60Spaet == doctest::Approx(12.0).epsilon(0.03).scale(0.0));
-            CHECK(t->abklingen.knickS == doctest::Approx(1.5).epsilon(0.03).scale(0.0));
+            CHECK(t->abklingen.t60Frueh == doctest::Approx(3.0).epsilon(0.05).scale(0.0));
+            CHECK(t->abklingen.t60Spaet == doctest::Approx(12.0).epsilon(0.05).scale(0.0));
         }
     }
-    SUBCASE("kurze fruehe Stufe wie an Salamander: Knick bei 1 s von 12 s, frueh 2 s, spaet 30 s")
+    SUBCASE("kurze fruehe Stufe wie an Salamander: frueh 2 s, spaet 30 s, die spaete 35 dB leiser")
     {
-        std::vector<Komponente> k = saite(261.6, 3e-4, 6, 2.0);
-        for (Komponente& c : k)
-        {
-            c.t60Spaet = 30.0;
-            c.knickS = 1.0;
-        }
+        const std::vector<Komponente> k = zweiModen(261.6, 3e-4, 6, 2.0, 30.0, -35.0, 1.5);
         const Ergebnis e = miss(erzeuge(k, 12.0, 0.1, 1e-6), kRate, 261.6, lumi::loop::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 4; ++n)
@@ -218,6 +226,23 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
         if (const Teilton* t = e.teilton(1)) CHECK_FALSE(t->abklingen.erkannt);
         REQUIRE(e.teilton(2) != nullptr);
         CHECK(e.teilton(2)->abklingen.erkannt);
+    }
+    SUBCASE("tiefe Schwebung ohne zweite Stufe: zwei gleich laute Moden mit 4 s, 0,5 Hz auseinander")
+    {
+        // die Einbrueche gehen bis zur volligen Ausloeschung — die Abklingzeit bleibt 4 s, keine zweite Stufe
+        std::vector<Komponente> k = saite(220.0, 0.0, 8, 4.0);
+        for (const Komponente& c : saite(220.0, 0.0, 8, 4.0)) k.push_back({c.frequenz + 0.5, c.amplitude, 4.0, 4.0});
+        const Ergebnis e = miss(erzeuge(k, 6.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 6; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->abklingen.erkannt);
+            CHECK_FALSE(t->abklingen.zweiStufen);
+            CHECK(t->abklingen.t60Frueh == doctest::Approx(4.0).epsilon(0.05).scale(0.0));
+        }
     }
     SUBCASE("eine Stufe: 4 s, kein Knick")
     {

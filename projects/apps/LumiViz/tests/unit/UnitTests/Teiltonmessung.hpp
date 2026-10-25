@@ -25,7 +25,8 @@
  *    `schrittS`), dazu je Rahmen der Boden in der Mitte zu beiden Nachbarn (Rauschen und das
  *    Leck der anderen Teiltoene — langsame tiefe Teiltoene legen einen fallenden Boden unter
  *    schnelle hohe).
- * 4. *Zwei Stufen:* auf der Huellkurve in dB, ab dem Ende des Anschlags bis zuletzt `grenzeDb`
+ * 4. *Zwei Stufen* (seit N1 a auf der rueckwaerts integrierten Energie nach Schroeder, `zweiStufen`): ab dem
+ *    Ende des Anschlags bis zuletzt `grenzeDb`
  *    ueber dem Boden — dem aus 3. oder, wenn der Teilton vor dem Ende darin ankommt, dem eigenen
  *    (Median der letzten 10 %, Gedanke nach Lundeby fuer Nachhall im Rauschen) —, eine Gerade
  *    und zwei Geraden mit dem besten Knick (die fruehe mindestens ein Zwanzigstel des Bereichs,
@@ -339,51 +340,129 @@ inline Inharmonie gleicheAusRobust(const std::vector<int>& k, const std::vector<
     return e;
 }
 
+/// Die Abklingzeiten aus der rueckwaerts integrierten Energie nach Schroeder (N1 a, S152): Einbrueche einer
+/// Schwebung — am Modell fast vollstaendige Ausloeschungen — verbiegen Geraden in dB, die integrierte Energie
+/// glaettet sie. Die Kurve L(t) = 10·lg(∫_t^Ende e / ∫_von^Ende e) faellt wie der Pegel in dB.
+/// - Ausgewertet bis dorthin, wo der Pegel zuletzt 10 dB ueber dem Ende des Bereichs lag: die Abschneidung biegt
+///   die Kurve am Ende, 10 dB davor ist der Fehler unter 0,5 dB.
+/// - Mindestens 10 dB Abfall des Teiltons (Energie der ersten gegen die letzten 5 %), sonst keine Abklingzeit
+///   (ein Teilton im Rauschen).
+/// - Zwei Stufen: dieselbe Geradensuche mit Knick auf L (die fruehe darf kurz sein, die spaete mindestens ein
+///   Fuenftel); die spaete Steigung ist die der Kurve. Fuer die fruehe wird die Energie der spaeten Geraden
+///   abgezogen und der Rest neu integriert — sonst druckt die Energie der langen spaeten Stufe die fruehe flach.
 inline Abklingen zweiStufen(std::span<const double> pegelDb, double schrittS, std::size_t von, std::size_t bis)
 {
     Abklingen a;
-    if (bis <= von || bis - von < 10) return a;
-    std::vector<double> t(pegelDb.size());
-    for (std::size_t i = 0; i < t.size(); ++i) t[i] = static_cast<double>(i) * schrittS;
-    const Geraden geraden(t, pegelDb);
-    const Geraden::Gerade eine = geraden.ueber(von, bis);
-    // mindestens 10 dB Abfall ueber den Bereich: ein Teilton im Rauschen hat keine Abklingzeit
-    if (eine.steigung >= 0.0 || -eine.steigung * (t[bis - 1] - t[von]) < 10.0) return a;
+    if (bis <= von || bis - von < 20) return a;
+    const std::size_t n = bis - von;
+    std::vector<double> e(n);
+    for (std::size_t j = 0; j < n; ++j) e[j] = std::pow(10.0, pegelDb[von + j] / 10.0);
+    const std::size_t letzte = std::max<std::size_t>(1, n / 20);
+    // mindestens 10 dB Abfall des Teiltons: die Energie der ersten und der letzten 5 % des Bereichs
+    double anfangE = 0.0;
+    double endeE = 0.0;
+    for (std::size_t j = 0; j < letzte; ++j)
+    {
+        anfangE += e[j];
+        endeE += e[n - 1 - j];
+    }
+    if (endeE <= 0.0 || 10.0 * std::log10(anfangE / endeE) < 10.0) return a;
+    const double endPegel = median(std::vector<double>(pegelDb.begin() + static_cast<std::ptrdiff_t>(bis - letzte),
+                                                       pegelDb.begin() + static_cast<std::ptrdiff_t>(bis)));
+    std::size_t m = n;
+    while (m > 0 && pegelDb[von + m - 1] < endPegel + 10.0) --m;
+    if (m < 20) m = n;  // ein flacher Abfall: ohne den Schnitt vor dem Ende, sonst bliebe zu wenig
+
+    const auto schroeder = [](const std::vector<double>& energie) {
+        std::vector<double> summe(energie.size() + 1, 0.0);
+        for (std::size_t j = energie.size(); j-- > 0;) summe[j] = summe[j + 1] + energie[j];
+        return summe;
+    };
+    const std::vector<double> E = schroeder(e);
+    if (E[0] <= 0.0) return a;
+    std::vector<double> t(m);
+    std::vector<double> L(m);
+    for (std::size_t j = 0; j < m; ++j)
+    {
+        t[j] = static_cast<double>(von + j) * schrittS;
+        L[j] = 10.0 * std::log10(std::max(E[j], 1e-300) / E[0]);
+    }
+    const Geraden geraden(t, L);
+    const Geraden::Gerade eine = geraden.ueber(0, m);
+    if (eine.steigung >= 0.0) return a;
     a.erkannt = true;
-    a.vonS = t[von];
-    a.bisS = t[bis - 1];
+    a.vonS = t[0];
+    a.bisS = static_cast<double>(bis - 1) * schrittS;
     a.t60Frueh = a.t60Spaet = -60.0 / eine.steigung;
 
     // die fruehe Stufe darf kurz sein (am Fluegel oft eine Sekunde von zwanzig, Befund S152 an
-    // Salamander), die spaete mindestens ein Fuenftel des Bereichs: sonst „erkennt“ der Uebergang in
-    // den Boden eine kurze zweite Stufe
-    const std::size_t randFrueh = std::max<std::size_t>(10, (bis - von) / 20);
-    const std::size_t randSpaet = std::max<std::size_t>(10, (bis - von) / 5);
-    if (randFrueh + randSpaet > bis - von) return a;
+    // Salamander), die spaete mindestens ein Fuenftel: sonst „erkennt“ der Uebergang in den Boden eine
+    // kurze zweite Stufe
+    const std::size_t randFrueh = std::max<std::size_t>(10, m / 20);
+    const std::size_t randSpaet = std::max<std::size_t>(10, m / 5);
+    if (randFrueh + randSpaet > m) return a;
     double besterRest = eine.rest;
     std::size_t knick = 0;
-    Geraden::Gerade frueh;
     Geraden::Gerade spaet;
-    for (std::size_t j = von + randFrueh; j + randSpaet <= bis; ++j)
+    for (std::size_t j = randFrueh; j + randSpaet <= m; ++j)
     {
-        const Geraden::Gerade g1 = geraden.ueber(von, j);
-        const Geraden::Gerade g2 = geraden.ueber(j, bis);
+        const Geraden::Gerade g1 = geraden.ueber(0, j);
+        const Geraden::Gerade g2 = geraden.ueber(j, m);
         if (g1.rest + g2.rest < besterRest)
         {
             besterRest = g1.rest + g2.rest;
             knick = j;
-            frueh = g1;
             spaet = g2;
         }
     }
-    if (knick != 0 && besterRest < 0.5 * eine.rest && frueh.steigung < 0.0 && spaet.steigung < 0.0 &&
-        frueh.steigung < 1.3 * spaet.steigung)
+    if (knick == 0 || besterRest >= 0.5 * eine.rest || spaet.steigung >= 0.0) return a;
+
+    // die fruehe Stufe: Energie der spaeten Geraden abziehen, den Rest neu integrieren
+    const double rahmenFaktor = 1.0 - std::pow(10.0, spaet.steigung * schrittS / 10.0);
+    std::vector<double> rest(n);
+    for (std::size_t j = 0; j < n; ++j)
     {
-        a.zweiStufen = true;
-        a.knickS = t[knick];
-        a.t60Frueh = -60.0 / frueh.steigung;
-        a.t60Spaet = -60.0 / spaet.steigung;
+        const double tj = static_cast<double>(von + j) * schrittS;
+        const double spaeteEnergie = E[0] * std::pow(10.0, (spaet.achse + spaet.steigung * tj) / 10.0) * rahmenFaktor;
+        rest[j] = std::max(e[j] - spaeteEnergie, 0.0);
     }
+    const std::vector<double> R = schroeder(rest);
+    if (R[0] <= 0.0) return a;
+    std::vector<double> tf;
+    std::vector<double> lf;
+    for (std::size_t j = 0; j < m; ++j)
+    {
+        const double l = 10.0 * std::log10(std::max(R[j], 1e-300) / R[0]);
+        if (l < -20.0 && tf.size() >= 5) break;
+        tf.push_back(t[j]);
+        lf.push_back(l);
+    }
+    const Geraden::Gerade frueh = Geraden(tf, lf).ueber(0, tf.size());
+    if (frueh.steigung >= 0.0 || frueh.steigung >= 1.3 * spaet.steigung) return a;
+
+    // die spaete Stufe ebenso: Energie der fruehen Geraden abziehen, den Rest neu integrieren — sonst zieht der
+    // Auslaeufer der fruehen die spaete hinter dem Knick steiler
+    const double fruehFaktor = 1.0 - std::pow(10.0, frueh.steigung * schrittS / 10.0);
+    std::vector<double> rest2(n);
+    for (std::size_t j = 0; j < n; ++j)
+    {
+        const double tj = static_cast<double>(von + j) * schrittS;
+        const double fruehEnergie = R[0] * std::pow(10.0, (frueh.achse + frueh.steigung * tj) / 10.0) * fruehFaktor;
+        rest2[j] = std::max(e[j] - fruehEnergie, 0.0);
+    }
+    const std::vector<double> R2 = schroeder(rest2);
+    double spaetSteigung = spaet.steigung;
+    if (R2[knick] > 0.0)
+    {
+        std::vector<double> ls(m - knick);
+        for (std::size_t j = knick; j < m; ++j) ls[j - knick] = 10.0 * std::log10(std::max(R2[j], 1e-300) / R2[knick]);
+        const Geraden::Gerade g = Geraden(std::span<const double>(t).subspan(knick), ls).ueber(0, ls.size());
+        if (g.steigung < 0.0) spaetSteigung = g.steigung;
+    }
+    a.zweiStufen = true;
+    a.knickS = t[knick];
+    a.t60Frueh = -60.0 / frueh.steigung;
+    a.t60Spaet = -60.0 / spaetSteigung;
     return a;
 }
 
@@ -627,12 +706,14 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
         // der Bereich endet, wo der Teilton zuletzt `grenzeDb` ueber dem Boden lag — der Boden
         // faellt mit, wenn er Leck der anderen ist; beide ueber ±5 Rahmen gemittelt, damit eine
         // einzelne Spitze im Rauschen den Bereich nicht offen haelt
+        // in Energie gemittelt, nicht in dB: die Einbrueche einer Schwebung zoegen ein Mittel in dB tief hinunter und
+        // beendeten den Bereich zu frueh (Befund S152, N1 a)
         const auto glatt = [](const std::vector<double>& v, std::size_t j) {
             const std::size_t a = j >= 5 ? j - 5 : 0;
             const std::size_t b = std::min(v.size(), j + 6);
             double s = 0.0;
-            for (std::size_t m = a; m < b; ++m) s += v[m];
-            return s / static_cast<double>(b - a);
+            for (std::size_t m = a; m < b; ++m) s += std::pow(10.0, v[m] / 10.0);
+            return 10.0 * std::log10(std::max(s / static_cast<double>(b - a), 1e-300));
         };
         std::size_t bis = t.pegelDb.size();
         while (bis > von && glatt(t.pegelDb, bis - 1) <= glatt(r, bis - 1) + einst.grenzeDb) --bis;
@@ -648,9 +729,13 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
             while (vorEigen > von && glatt(t.pegelDb, vorEigen - 1) <= eigen + einst.grenzeDb) --vorEigen;
             if (vorEigen > von + 10)
             {
+                // die Gerade ueber die letzten 30 % vor dem Kandidaten: faellt der spaete Teil noch? — ueber den ganzen
+                // Bereich machte eine steile fruehe Stufe sie zu steil, und das Ende eines noch fallenden Tons galt
+                // als Boden (Befund S152, N1 a)
                 std::vector<double> zeiten(t.pegelDb.size());
                 for (std::size_t j = 0; j < zeiten.size(); ++j) zeiten[j] = static_cast<double>(j) * einst.schrittS;
-                const detail::Geraden::Gerade g = detail::Geraden(zeiten, t.pegelDb).ueber(von, vorEigen);
+                const std::size_t spaetVon = std::min(vorEigen - 10, von + 7 * (vorEigen - von) / 10);
+                const detail::Geraden::Gerade g = detail::Geraden(zeiten, t.pegelDb).ueber(spaetVon, vorEigen);
                 if (g.achse + g.steigung * zeiten.back() < eigen - 3.0)
                 {
                     bis = vorEigen;
