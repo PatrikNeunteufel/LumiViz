@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.87.0
+> **Version:** 0.88.0
 > **Datum:** 2026-10-25 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 gebaut)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a und TS1 a (Patrik S139–S152);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -2428,6 +2428,17 @@ MIDI 33 läuft an die Grenze 10° (trifft knapp, 2,97 dB), die Nachbarn liegen u
 den Nachbarn (7,97 und 11,5 s gegen 1–4 s), weil Salamander dort länger misst (6,5 und 6,3 s). Der dauerhafte Test
 (`test_LoopSalamanderSetzen.cpp`, UF5 a) prüft die 91 gesetzten Werte an jeder dritten Taste gegen die Messung, rund 50 s.
 
+**Befund S152 (31d-5, Hörproben):** `test_LoopSalamanderHoerproben.cpp` mit `LUMIVIZ_31D_WAV=<Ordner>` und
+`LUMIVIZ_SALAMANDER=<Ordner>` legt in rund 10 s neun Dateien und `liste.txt` (Nennung CC BY 3.0) unter
+`.claude/handover/hoerproben_31d/` ab: A0, C2, C4, C6, C8 bei mf, C4 bei pp und ff, je Salamander | Modell vor 31d (die
+Vorgabe vor 31d-4, im Test ausgeschrieben) | Modell nach 31d-4, je auf −23 LUFS; wo eine Spitze über −1 dBFS käme, alle drei
+gemeinsam leiser (C2 1,5, C6 3,6, C8 3,4 dB — untereinander bleiben sie gleich laut). Dazu an C4 benachbarte Ebenen von
+Salamander (v4/v5, v8/v9, v12/v13) und Stufen des Modells mit 1, 2, 3, 6 dB Abstand, je Paar gleich laut, für den
+Stufenschritt. **Befund zur Zuordnung der Stufen:** die Messung ordnet der Stufe −12 dB (mf) des Modells die Ebenen v2–v5
+von Salamander zu, also sehr leise; pp (−26 dB) trifft selbst v1 nur auf 11 dB. Der Pegelumfang des Modells über die
+Stufen ist größer als der des Flügels über seine Ebenen (31d-3 Teil 2: 31–51 gegen 14–39 dB) — das gehört zum Stufenschritt
+(HT6 a) und zum Hammer (HT2), Patriks Urteil über die Proben entscheidet.
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -2629,8 +2640,9 @@ Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messc
    Quelle „gemessen an Salamander (Yamaha C5)“; der dauerhafte Test (Abklingzeiten ±10 %, B ±5 %, Verstimmung ±0,5 Cent,
    Dämpfer ±20 %, jede dritte Taste); `modell.md` §2 nachgezogen. **Gebaut S152** (S1 a, S2 a, S3 a; Befund unter S3 a;
    der Dämpfer entfällt nach D1 a).
-5. *Hörproben* (UF7 a): Salamander, Modell vorher, Modell nachher, gleich laut nach R128; dazu die Proben benachbarter
-   Stufen (UF4 a); `.claude/handover/hoerproben_31d/`.
+5. ✅ *Hörproben* (UF7 a): Salamander, Modell vorher, Modell nachher, gleich laut nach R128; dazu die Proben benachbarter
+   Stufen (UF4 a); `.claude/handover/hoerproben_31d/`. **Gebaut S152** (Befund unter S3 a); die vierte Fassung „nach
+   der Nacharbeit“ legt 31d-6 dazu.
 6. *31d Nacharbeit* (UF5 a): greifende Kipppunkte als Entscheid, hier umgesetzt; der Stufenschritt, wenn Patriks Urteil
    vorliegt (sonst in 31h-4).
 
@@ -3537,6 +3549,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.88.0 | 2026-10-25 | Session 152. 31d-5 gebaut: Hörproben gegen Salamander (UF7 a) und für den Stufenschritt (UF4 a), gleich laut nach R128; Befund zur Zuordnung der Stufen (mf des Modells ↔ v2–v5). |
 | 0.87.0 | 2026-10-25 | Session 152. S1 a (durch das Modell hindurch setzen), S2 a (Ziel je Parameter), Befund erster Lauf, S3 a (halber Schritt, acht Runden, Verstimmung nur bei zwei Saiten, zweite Stufe Kipppunkt); 31d-4 gebaut: Durchgänge im Werkzeug, Vorgabe gesetzt (decay, highDecay, detune, B im Bass, bridgeAngle, undampedFrom 89), der dauerhafte Test. |
 | 0.86.0 | 2026-10-25 | Session 152. 31d-3 Teil 2 gebaut: dieselbe Messung am Modell (Steinway D wie im Programm, Glasboden), Vergleich mit Salamander; Befund drei weitere Messfehler (Mode neben Teilton 1, Ausreißer bei B, Pegelumfang aus Teilton 1) und der Vergleich je Größe; `werte/salamander_c5.txt` neu gemessen. Voller Lauf 1598 / 1598 unter Release-clang und Testing-MSVC. |
 | 0.85.0 | 2026-10-25 | Session 152. Befund Loslassgeräusche und SFZ; D1 a (`undampedFrom` = 89 aus der SFZ, `damper` vorläufig); V1 a (Helligkeit über dem Pegel, Steigung je Teilton); 31d-3 Teil 1 gebaut: Salamander gemessen, `werte/salamander_c5.txt`; Befund Blende am Ende, kurze erste Stufe, Teilton 1 im Bass im Rauschen. Voller Lauf 1595 / 1595 unter Release-clang und Testing-MSVC. |
