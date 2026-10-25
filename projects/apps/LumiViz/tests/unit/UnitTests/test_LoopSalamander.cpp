@@ -30,6 +30,7 @@
 #include <doctest.h>
 
 #include "Fluegelmessung.hpp"
+#include "ModellMessung.hpp"
 
 #include "audio/WavDatei.hpp"
 #include "audio/WavFormat.hpp"
@@ -330,59 +331,25 @@ TEST_CASE("Loop Salamander 31d-3 Modell (LUMIVIZ_31D3_MODELL)")
     REQUIRE(salamander.size() == 30);
 
     lumi::loop::tonspeicher().leere();
-    lumi::loop::Instrument holz;
-    lumi::loop::Schicht& s = holz.schichten[0];
-    s.schwingung = lumi::loop::Schwingung::Saite;
-    s.saitenModell = lumi::loop::SaitenModell::Modal;
-    s.anregung = lumi::loop::Anregung::Hammer;
-    holz.tastatur = lumi::loop::Tastatur{};
-    lumi::loop::Instrument glas = holz;
-    holz.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
-    glas.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d_glass");
+    const lumi::loop::Instrument holz = modelltest::fluegel(QStringLiteral("lib:steinway_d"));
+    const lumi::loop::Instrument glas = modelltest::fluegel(QStringLiteral("lib:steinway_d_glass"));
     REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
     REQUIRE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d_glass")));
 
-    const int rate = 48000;
+    const int rate = modelltest::kRate;
     const std::vector<SalamanderTaste> tasten = salamanderTasten();
-    const lumi::loop::Fft& fft = lumi::loop::fft();
-    const auto ton = [&](const lumi::loop::Instrument& instrument, int midi, int stufe) {
-        lumi::loop::TonAngabe angabe;
-        angabe.hoehe = midi;
-        angabe.dauerMs = midi <= 72 ? 12000 : 8000;  // gehalten wie die Aufnahmen: gemessen wird vor dem Loslassen
-        angabe.anschlagStufe = stufe;
-        return lumi::loop::rendereTon(instrument, angabe, rate);
-    };
+    std::vector<int> midis;
+    for (const SalamanderTaste& t : tasten) midis.push_back(t.midi);
     constexpr int kVergleichsEbene = 12;  // v12 bzw. Stufe −8: der Boden (UF6 a)
     const auto start = std::chrono::steady_clock::now();
-    std::vector<std::vector<std::array<KanalMessung, 2>>> messungen(tasten.size());
-    std::vector<std::array<KanalMessung, 2>> glasMessung(tasten.size());
-    std::atomic<std::size_t> naechste{0};
-    const unsigned zahl = std::max(1u, std::min(8u, std::thread::hardware_concurrency()));
-    std::vector<std::thread> arbeiter;
-    for (unsigned a = 0; a < zahl; ++a)
-        arbeiter.emplace_back([&] {
-            for (std::size_t i = naechste++; i < tasten.size(); i = naechste++)
-            {
-                const int midi = tasten[i].midi;
-                for (int e = 1; e <= kEbenen; ++e)
-                {
-                    const int stufe = -30 + 2 * (e - 1);
-                    const bool phantome = midi <= kPhantomBis && e == kEbenen;
-                    messungen[i].push_back(messeTon(ton(holz, midi, stufe).daten, rate, tastenFrequenz(midi), fft, phantome));
-                }
-                glasMessung[i] = messeTon(ton(glas, midi, -30 + 2 * (kVergleichsEbene - 1)).daten, rate, tastenFrequenz(midi), fft, false);
-            }
-        });
-    for (std::thread& t : arbeiter) t.join();
-    std::vector<TastenWerte> modell;
-    for (std::size_t i = 0; i < tasten.size(); ++i) modell.push_back(verdichte(tasten[i].midi, messungen[i]));
-    setzeRelativePegel(modell, messungen);
+    const std::vector<std::vector<std::array<KanalMessung, 2>>> messungen = modelltest::messeTasten(holz, midis);
+    std::vector<std::array<KanalMessung, 2>> glasMessung;
+    for (const int midi : midis) glasMessung.push_back(modelltest::messe(glas, midi, modelltest::stufeVonEbene(kVergleichsEbene)));
+    const std::vector<TastenWerte> modell = modelltest::verdichteAlle(midis, messungen);
     const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     REQUIRE(schreibeWerte(ziel / "modell_steinway.txt", modell, kModellKopf));
 
     // der Boden (UF6 a): je Kanal Salamander gegen Holz, Salamander gegen Glas, Holz gegen Glas
-    std::vector<int> midis;
-    for (const SalamanderTaste& t : tasten) midis.push_back(t.midi);
     std::array<BodenVergleich, 2> gegenHolz;
     std::array<BodenVergleich, 2> gegenGlas;
     std::array<BodenVergleich, 2> holzGlas;
@@ -466,7 +433,7 @@ TEST_CASE("Loop Salamander 31d-3 Modell (LUMIVIZ_31D3_MODELL)")
     for (const int midi : {36, 39, 60, 84, 108})
         for (const int stufe : {-30, -8, 0})
         {
-            const lumi::loop::Klang k = ton(holz, midi, stufe);
+            const lumi::loop::Klang k = modelltest::ton(holz, midi, stufe);
             const std::filesystem::path wav = ziel / ("modell_" + std::to_string(midi) + "_" + std::to_string(stufe) + ".wav");
             CHECK(lumi::audio::schreibeWav(QString::fromStdU16String(wav.u16string()), k.daten, rate, lumi::audio::WavTiefe::Gleitkomma32)
                       .geschrieben);

@@ -159,11 +159,12 @@ struct HammerSaite
 /// Die Saiten im Chor an einer Taste: die Kurve, auf eine ganze Zahl gerundet (HK1 a).
 [[nodiscard]] int chorAn(const HammerSaite& saite, int taste);
 
-/// Die Vorgaben einer neuen Hammer-Saite (Befunde S146): Hammer nach RT-0425
-/// Gl. 2–4 (Stuetzpunkte alle sechs Tasten) und B nach Rigaud Gl. 5 (Diskant
-/// belegt, Bass abgelesen; Stuetzpunkte an A0, A1, … A7 und C8); Laenge, Masse, Laengsverhaeltnis und
-/// Anschlagstelle aus RT-0425 Anhang A (C1 … B7, ausgewaehlte Tasten, auf 2 %
-/// genau); der Rest vorlaeufig, mit wenigen Punkten.
+/// Die Vorgaben einer neuen Hammer-Saite (Befunde S146, S152): Hammer nach RT-0425
+/// Gl. 2–4 (Stuetzpunkte alle sechs Tasten); B bis E2 gemessen an *Salamander*, darueber
+/// nach Rigaud Gl. 5; Laenge, Masse, Laengsverhaeltnis und Anschlagstelle aus RT-0425
+/// Anhang A (C1 … B7, ausgewaehlte Tasten, auf 2 % genau); Decay, High decay, Detune und
+/// Bridge angle gemessen an *Salamander* durch das Modell hindurch (31d-4, an den 30 Tasten
+/// der Aufnahme); Late decay und Damper vorlaeufig.
 [[nodiscard]] const HammerSaite& hammerSaiteVorgabe();
 
 /// Jede Kurve in ihre Grenzen; eine leere bekommt die Vorgabe.
@@ -219,10 +220,10 @@ enum class PedalPlatz : int
 /// Fehlt die Art oder ist sie unbekannt: keins.
 [[nodiscard]] PedalArt pedalAusName(const QString& name);
 
-/// Die erste Taste ohne Daempfer in der Vorgabe: G6 — die obersten 18 Tasten.
-/// **Vorlaeufig, ohne Beleg an der Quelle** (Befund S146: Hersteller nennen keine
-/// Zahl, Foren E6 bis G6); in 31d an *Salamander* zu pruefen.
-inline constexpr int kUngedaempftAbVorgabe = 91;
+/// Die erste Taste ohne Daempfer in der Vorgabe: F6 — die obersten 20 Tasten. Aus der SFZ
+/// von *Salamander* (Holm): die Gruppe *Notes without dampers* beginnt bei `lokey=89`
+/// (D1 a, S152; vorher vorlaeufig G6).
+inline constexpr int kUngedaempftAbVorgabe = 89;
 
 /// Die Ausstattung einer Tastatur (HA4 a). Die Vorgaben sind die des Fluegels.
 struct Tastatur

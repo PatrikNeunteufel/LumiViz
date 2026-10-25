@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.86.0
+> **Version:** 0.87.0
 > **Datum:** 2026-10-25 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a und TS1 a (Patrik S139–S152);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 gebaut)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a und TS1 a (Patrik S139–S152);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -2366,6 +2366,68 @@ Vergleich Salamander / Modell (Auswahl; gesetzt wird in 31d-4 nach UF1 a, UF5 a)
   unterscheiden“) ist nahe, aber nicht erreicht. Das Mittel der Tastatur (Raum, Mikrofon, Flügel) steigt von rund 15 dB
   unter 100 Hz auf über 60 dB um 4–6 kHz: die Aufnahme ist oben viel heller als das Modell.
 
+✅ **S1 a** (Patrik S152, vor 31d-4): **Gesetzt wird durch das Modell hindurch.** Startwert je Taste ist der Messwert
+von Salamander; das Modell wird an den 30 Tasten gerechnet und mit derselben Messung gemessen; jeder Parameter wird je
+Taste um das Verhältnis Ziel / Modell berichtigt (logarithmische Größen mit dem Faktor, lineare mit der Differenz), bis
+alle Tasten in der Toleranz liegen, höchstens vier Runden. Die Ergebnisse an den 30 Tasten werden die Stützpunkte in
+`baueVorgabe()` mit der Quelle „gemessen an Salamander (Yamaha C5)“; eine Taste ohne Treffer nach vier Runden oder ohne
+Messung wird vermerkt und trägt nicht bei (UF5 a). Werkzeug: ein Fall mit `LUMIVIZ_31D4_SETZEN=<Ordner>`, der die
+Stützpunkte und den Verlauf je Runde ausgibt; die Zahlen werden von Hand eingetragen. Grund: nur so besteht der
+dauerhafte Test aus UF5 a, der das Modell an derselben Messkette prüft — was Boden, Chor und Längsschwingung zwischen
+Parameter und Messung legen, fängt die Berichtigung auf. Verworfen: b (Messwert direkt als Parameter — fast jede Größe
+würde Kipppunkt, 31d nicht abschließbar), c (ein Faktor je Größe — verliert den Verlauf über die Tastatur, HA1 a). Kippt
+auf b für eine Größe, die das Modell nicht erzeugen kann (dann Kipppunkt nach UF5 a).
+
+✅ **S2 a** (Patrik S152): **Ziel je Parameter** — `decay` ← T60 bei f1 aus dem Ausgleich σ = b1 + b3·ω² (jede Taste
+mit Messung); `highDecay` ← aus demselben Ausgleich; `lateDecay` ← T60 der zweiten Stufe von Teilton 1, nur wo Salamander
+in mindestens der Hälfte der Messungen zwei Stufen zeigt (sonst vermerkt, die Kurve dort interpoliert); `detune` ← die
+Schwebung der Teiltöne 1–3 in Cent; `inharmonicity` ← B nur im Bass bis E2 (MIDI 40, Übergang zum Diskantsteg nach
+RT-0425), darüber Rigaud (UF5 a); `bridgeAngle` ← die Phantome n ≥ 10 im Bass, mittlerer Abstand Salamander gegen Modell
+Δ in dB, α ← atan(tan α·10^(Δ/20)), bis A2 (MIDI 45), darüber der letzte Wert. Alle sechs in jeder Runde gemeinsam.
+Grund: jedem Parameter das Ziel, das ihm im Modell entspricht und an möglichst vielen Tasten messbar ist (`decay` ist die
+erste Stufe bei f1, σ wächst im Modell genau nach b1 + b3·ω², `modell.md` §3 — auch wo Teilton 1 im Rauschen liegt);
+die Größen hängen zusammen (die Verstimmung legt Energie in die zweite Stufe, §5). Verworfen: b (`decay` aus Teilton 1 —
+fehlt im Bass, streut im Mittelteil), c (Größen nacheinander — verschieben sich gegenseitig). Kippt auf c, wenn die
+gemeinsamen Runden nicht konvergieren.
+
+**Befund S152 (31d-4, erster Lauf nach S1 a / S2 a, `test_LoopSalamanderSetzen.cpp`, 4 Runden, 3 min):** treffen nach der
+vierten Runde — B im Bass 7 / 7; Winkel am Steg 6 / 9 (MIDI 33 läuft an die Grenze 10°); `highDecay` 24 / 29; `decay`
+20 / 29, **schwingt** an einzelnen Tasten (MIDI 63: Parameter 0,68 s für ein Ziel von 3,1 s, gemessen 0,79 s; MIDI 87:
+10,6 s für 6,3 s) — die Messung am Modell springt zwischen ein- und zweistufiger Deutung, die Berichtigung um das volle
+Verhältnis schießt über; `detune` 18 / 29 — im tiefen Bass hat das Modell eine Saite (Vorgabe `strings` 1 bis F♯1), dort
+schwebt nichts, gleich wie weit verstimmt; im Diskant liegen die Schwebungen des Modells bei der berichtigten Verstimmung
+über der messbaren Grenze (8 Hz), die Berichtigung treibt sie auf 5–8 Cent; `lateDecay` 1 / 13 — **das Modell zeigt keine
+zweite Stufe**, auch mit 20 Cent Verstimmung nicht (Kipppunkt von S1 a: eine Größe, die das Modell nicht erzeugt). Nichts
+ist in `baueVorgabe()` eingetragen; Verlauf je Runde lokal unter `.claude/handover/salamander_31d4/`.
+
+✅ **S3 a** (Patrik S152): **Das Verfahren wird vor dem Eintragen stabilisiert, dann läuft es neu.** Die Berichtigung
+geht je Runde den halben Schritt (logarithmisch √(Ziel / Modell), linear die halbe Differenz, der Winkel über
+10^(Δ/40)), höchstens acht Runden; `detune` hat ein Ziel nur an Tasten mit mindestens zwei Saiten im Modell, und nur
+so weit, wie die Schwebung des Grundtons unter der Messgrenze bleibt (8 Hz bzw. die halbe Fensterrate); die zweite Stufe
+(`lateDecay`) geht nicht ins Setzen — sie bleibt vorläufig das Dreifache von `decay` (HT3 a) und ist **Kipppunkt für
+31d Nacharbeit** (UF5 a): warum erzeugt das Modell keine sichtbare zweite Stufe? Eingetragen wird nach dem neuen Lauf,
+was trifft; der Rest wird vermerkt. Grund: eingetragen werden nur Zahlen einer konvergierten Rechnung; Ziele, die es
+physikalisch nicht gibt (Schwebung bei einer Saite), treiben den Parameter ins Leere; das Fehlen der zweiten Stufe ist
+ein Befund am Modell, nicht am Setzen. Verworfen: b (jetzt eintragen, was trifft — teils zufällig in die Toleranz
+geschwungen), c (Größen nacheinander — behebt den vollen Schritt nicht). Kippt auf c, wenn auch mit halbem Schritt
+und acht Runden `decay` und `highDecay` schwingen.
+
+**Befund S152 (31d-4 nach S3 a, gesetzt):** mit halbem Schritt konvergiert die Berichtigung (nach acht Runden `decay`
+28 / 29, `highDecay` 28 / 29, `detune` 20 / 25, B 7 / 7, Winkel 9 / 9) — Kipppunkt von S3 a nicht erreicht. Ein weiterer
+Befund: nimmt man danach die nicht treffenden Punkte aus der Kurve (UF5 a), ändert sich an diesen Tasten die
+Verstimmung, über die Kopplung im Chor auch die Abklingzeiten — drei Tasten trafen danach nicht mehr. Das Werkzeug
+rechnet deshalb in **Durchgängen**: nach den Runden fallen Tasten ohne Treffer heraus, mit genau dieser Kurve wird
+weiter berichtigt, bis keine mehr fällt; eingetragen wird die zuletzt gemessene Kurve (3 Durchgänge, 18 Runden, 15 min).
+**Gesetzt in `baueVorgabe()`** mit der Quelle „gemessen an Salamander (Yamaha C5)“: `decay` an 28 Tasten, `highDecay` an
+27, `detune` an 20 (ab C♯2, wo das Modell zwei Saiten hat), B im Bass an 7 (bis D♯2, darüber Rigaud), `bridgeAngle` an
+9 (bis A2, darüber 4,4°); `lateDecay` dreimal `decay` (vorläufig, HT3 a); `undampedFrom` 89 (D1 a). **Vermerkt** (nicht in
+der Kurve, UF5 a): `decay` und `highDecay` an 105 (das Modell liefert dort keine Abklingzeit), `highDecay` an 96,
+`detune` an 84, 87, 93, 96, 105 (das Modell schwebt dort mit 4–8 Cent nur um 0,2 Cent — wie die fehlende zweite Stufe
+ein Zeichen, dass die gekoppelten Saiten des Modells nicht schweben). **Auffällig für die Nacharbeit:** der Winkel an
+MIDI 33 läuft an die Grenze 10° (trifft knapp, 2,97 dB), die Nachbarn liegen um 1°; `decay` an 75 und 87 steht weit über
+den Nachbarn (7,97 und 11,5 s gegen 1–4 s), weil Salamander dort länger misst (6,5 und 6,3 s). Der dauerhafte Test
+(`test_LoopSalamanderSetzen.cpp`, UF5 a) prüft die 91 gesetzten Werte an jeder dritten Taste gegen die Messung, rund 50 s.
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -2563,9 +2625,10 @@ Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messc
    dieselbe Messung am Modell; Bericht der Größen mit Quelle (UF1 a). **Teil 1 gebaut S152** (Salamander gemessen,
    `werte/salamander_c5.txt`; D1 a, V1 a; Befund unter V1 a); **Teil 2 gebaut S152** (dieselbe Messung am Modell,
    Boden und Pegel relativ, Helligkeit, Phantome, Bericht; Befund unter V1 a). ✅ 31d-3 fertig.
-4. *Setzen* (UF1 a, UF5 a): die Größen ohne Quelle als Kurven aus der Messung (±10 % im Median, Verstimmung ±0,5 Cent),
+4. ✅ *Setzen* (UF1 a, UF5 a): die Größen ohne Quelle als Kurven aus der Messung (±10 % im Median, Verstimmung ±0,5 Cent),
    Quelle „gemessen an Salamander (Yamaha C5)“; der dauerhafte Test (Abklingzeiten ±10 %, B ±5 %, Verstimmung ±0,5 Cent,
-   Dämpfer ±20 %, jede dritte Taste); `modell.md` §2 nachgezogen.
+   Dämpfer ±20 %, jede dritte Taste); `modell.md` §2 nachgezogen. **Gebaut S152** (S1 a, S2 a, S3 a; Befund unter S3 a;
+   der Dämpfer entfällt nach D1 a).
 5. *Hörproben* (UF7 a): Salamander, Modell vorher, Modell nachher, gleich laut nach R128; dazu die Proben benachbarter
    Stufen (UF4 a); `.claude/handover/hoerproben_31d/`.
 6. *31d Nacharbeit* (UF5 a): greifende Kipppunkte als Entscheid, hier umgesetzt; der Stufenschritt, wenn Patriks Urteil
@@ -3474,6 +3537,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.87.0 | 2026-10-25 | Session 152. S1 a (durch das Modell hindurch setzen), S2 a (Ziel je Parameter), Befund erster Lauf, S3 a (halber Schritt, acht Runden, Verstimmung nur bei zwei Saiten, zweite Stufe Kipppunkt); 31d-4 gebaut: Durchgänge im Werkzeug, Vorgabe gesetzt (decay, highDecay, detune, B im Bass, bridgeAngle, undampedFrom 89), der dauerhafte Test. |
 | 0.86.0 | 2026-10-25 | Session 152. 31d-3 Teil 2 gebaut: dieselbe Messung am Modell (Steinway D wie im Programm, Glasboden), Vergleich mit Salamander; Befund drei weitere Messfehler (Mode neben Teilton 1, Ausreißer bei B, Pegelumfang aus Teilton 1) und der Vergleich je Größe; `werte/salamander_c5.txt` neu gemessen. Voller Lauf 1598 / 1598 unter Release-clang und Testing-MSVC. |
 | 0.85.0 | 2026-10-25 | Session 152. Befund Loslassgeräusche und SFZ; D1 a (`undampedFrom` = 89 aus der SFZ, `damper` vorläufig); V1 a (Helligkeit über dem Pegel, Steigung je Teilton); 31d-3 Teil 1 gebaut: Salamander gemessen, `werte/salamander_c5.txt`; Befund Blende am Ende, kurze erste Stufe, Teilton 1 im Bass im Rauschen. Voller Lauf 1595 / 1595 unter Release-clang und Testing-MSVC. |
 | 0.84.0 | 2026-10-25 | Session 152. WL1 a (WAV lesen ohne Qt: `audio/WavFormat.hpp`, `liesWav` ruft ihn); 31d-2 gebaut: `Teiltonmessung.hpp` mit Tests an synthetischen Signalen; Befund zum Boden der Hüllkurven (Mitte unterschätzt, eigener Boden nach Lundeby) und zu kurzen zweiten Stufen. Voller Lauf 1588 / 1588 unter Release-clang und Testing-MSVC. |

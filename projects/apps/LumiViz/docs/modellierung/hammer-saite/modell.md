@@ -21,18 +21,18 @@ Jede Größe ist eine Kurve aus Stützpunkten an Tasten (MIDI 21–108), in ihre
 
 | Größe (Datei) | Skala | Vorgabe, Herkunft |
 |---|---|---|
-| Inharmonizität B (`inharmonicity`) | log | Rigaud, David & Daudet 2011, Gl. 4/5; Diskant s_T = 9,26·10⁻², y_T = −13,64; Bass aus Abb. 1 abgelesen (vorläufig) |
-| Abklingzeit 1. Stufe (`decay`) | log | vorläufig 25 s (A0) … 0,5 s (C8) |
-| Abklingzeit 2. Stufe (`lateDecay`) | log | vorläufig dreimal `decay` |
-| Hohe Teiltöne (`highDecay`) | log | vorläufig 0,2 (T60 bei 10·f1 zu T60 bei f1) |
+| Inharmonizität B (`inharmonicity`) | log | bis D♯2 gemessen an *Salamander* (Yamaha C5), durch das Modell hindurch (31d-4); darüber Rigaud, David & Daudet 2011, Gl. 4/5 (Diskant s_T = 9,26·10⁻², y_T = −13,64) |
+| Abklingzeit 1. Stufe (`decay`) | log | gemessen an *Salamander*: T60 bei f1 aus dem Ausgleich über die Teiltöne, durch das Modell hindurch (31d-4; 16 s bei A0 … 1,8 s bei F♯7) |
+| Abklingzeit 2. Stufe (`lateDecay`) | log | vorläufig dreimal `decay` — das Modell zeigt keine zweite Stufe wie *Salamander* (Kipppunkt 31d Nacharbeit) |
+| Hohe Teiltöne (`highDecay`) | log | gemessen an *Salamander* (T60 bei 10·f1 zu T60 bei f1): Bass um 0,95, C4 0,64, Diskant 0,02–0,04 (31d-4) |
 | Saiten im Chor (`strings`) | linear, gerundet | vorläufig 1 bis F♯1, 2 bis C3, 3 darüber |
-| Verstimmung (`detune`) | linear | vorläufig 1 Cent (Abstand der äußeren Saiten) |
+| Verstimmung (`detune`) | linear | gemessen an *Salamander* an der Schwebung der Teiltöne 1–3, durch das Modell hindurch, ab C♯2 (zwei Saiten): 0,6–5 Cent (31d-4); im hohen Diskant ohne Treffer, interpoliert |
 | Hammermasse, Exponent, Steife (`hammerMass`, `hammerExponent`, `hammerStiffness`) | linear, linear, log | Chabassier & Duruflé, RT-0425, Gl. 2–4 (HT2 a), Steife umgerechnet Q0 = K_H·10⁻³ᵖ N/mm^p |
 | Anschlagstelle (`strikePosition`) | linear | 0,12 der Länge ab Agraffe (RT-0425 Anhang A) |
-| Dämpfer (`damper`) | log | vorläufig 0,8 s … 0,2 s |
+| Dämpfer (`damper`) | log | vorläufig 0,8 s … 0,2 s — aus *Salamander* nicht messbar (D1 a); `undampedFrom` 89 aus der SFZ von *Salamander* |
 | Länge, Masse je m (`stringLength`, `stringMass`) | log | RT-0425 Anhang A, µ = ρπd²/4 (HT1 a) |
 | Längsverhältnis (`longitudinalRatio`) | linear | RT-0425 Anhang A, √(EA/T0), E = 2,02·10¹¹ Pa |
-| Winkel am Steg (`bridgeAngle`) | linear | vorläufig 2° (HT4 a; Patente 1–5°, nicht zitierfähig) |
+| Winkel am Steg (`bridgeAngle`) | linear | gemessen an *Salamander* an den Phantomteiltönen bis A2, durch das Modell hindurch (31d-4): 0,7–4,4°, an MIDI 33 die Grenze 10° (auffällig); darüber 4,4° |
 
 Abgeleitet: f0 = f_Taste/√(1+B) (der erste Teilton liegt auf der Tonhöhe); T0 = 4L²f0²µ; ES = µ(2L·f_l0)².
 

@@ -151,8 +151,12 @@ Tastenkurve kurveAusPunkten(std::initializer_list<TastenWert> punkte)
 HammerSaite baueVorgabe()
 {
     HammerSaite s;
-    // belegt (Befund S146): B nach Rigaud Gl. 5 — der Bassteg abgelesen, vorlaeufig
-    s.inharmonizitaet = kurveAus(kVorgabeTasten, [](int m) { return rigaudB(m, kRigaudBassSteigung, kRigaudBassAchse); });
+    // B: im Bass bis E2 gemessen an Salamander (Yamaha C5), gesetzt durch das Modell hindurch (31d-4, S2 a);
+    // darueber Rigaud Gl. 5 an den Tasten der Vorgabe (UF5 a: B im Diskant bleibt bei Rigaud)
+    s.inharmonizitaet = kurveAusPunkten({{21, 2.177e-4}, {24, 1.593e-4}, {27, 1.278e-4}, {30, 8.824e-5}, {33, 8.795e-5},
+                                         {36, 8.776e-5}, {39, 7.436e-5}});
+    for (const int m : kVorgabeTasten)
+        if (m > 40) s.inharmonizitaet.punkte.push_back(TastenWert{m, rigaudB(m, kRigaudBassSteigung, kRigaudBassAchse)});
     // belegt (HT2 a): der Hammer nach RT-0425 Gl. 2–4 (Taste i = MIDI − 20)
     s.hammerMasseG = kurveAus(kHammerTasten, [](int m) { return rtHammerMasseG(m - 20); });
     s.hammerExponent = kurveAus(kHammerTasten, [](int m) { return rtHammerExponent(m - 20); });
@@ -166,19 +170,38 @@ HammerSaite baueVorgabe()
                                        {41, 7.729}, {54, 6.733}, {70, 5.459}, {82, 4.972}, {94, 4.392}, {107, 3.404}});
     s.laengsVerhaeltnis =
         kurveAusPunkten({{24, 14.21}, {40, 13.71}, {41, 15.74}, {55, 14.98}, {81, 13.59}, {107, 12.20}});
-    // vorlaeufig (HT4 a): Patente nennen 1 bis 5 Grad — nicht zitierfaehig, 31d setzt es
-    s.stegWinkelGrad = kurveAusPunkten({{21, 2.0}, {108, 2.0}});
+    // gemessen an Salamander (Yamaha C5) an den Phantomteiltoenen im Bass bis A2, darueber der letzte Wert
+    // (31d-4, S2 a; MIDI 33 an der Grenze 10°, trifft knapp — Auffaelligkeit fuer 31d Nacharbeit)
+    s.stegWinkelGrad = kurveAusPunkten({{21, 1.02}, {24, 0.6763}, {27, 0.6648}, {30, 0.9756}, {33, 10.0}, {36, 1.263},
+                                        {39, 2.0}, {42, 3.532}, {45, 4.432}, {108, 4.432}});
     // x_H/L liegt dort zwischen 0,113 und 0,127, fast ueberall bei 0,120
     s.anschlagStelle = kurveAusPunkten({{21, 0.12}, {108, 0.12}});
-    // vorlaeufig, ohne Beleg — setzt die Messung an Salamander (31d)
-    s.abklingS = kurveAusPunkten({{21, 25.0}, {33, 20.0}, {45, 15.0}, {57, 10.0}, {69, 6.0}, {81, 3.0}, {93, 1.5},
-                                  {105, 0.7}, {108, 0.5}});
-    // die zweite Stufe dreimal so lang wie die erste (HT3 a)
-    s.abklingSpaetS = kurveAusPunkten({{21, 75.0}, {33, 60.0}, {45, 45.0}, {57, 30.0}, {69, 18.0}, {81, 9.0},
-                                       {93, 4.5}, {105, 2.1}, {108, 1.5}});
-    s.abklingHoch = kurveAusPunkten({{21, 0.2}, {108, 0.2}});
+    // gemessen an Salamander (Yamaha C5): T60 bei f1 aus dem Ausgleich ueber die Teiltoene, gesetzt durch das
+    // Modell hindurch (31d-4, S1 a, S2 a, S3 a; drei Durchgaenge, 18 Runden, so gemessen); 105 ohne Treffer, vermerkt
+    s.abklingS = kurveAusPunkten({{21, 15.99}, {24, 13.71}, {27, 18.04}, {30, 18.77}, {33, 11.99}, {36, 14.86}, {39, 12.02},
+                                  {42, 7.494}, {45, 8.793}, {48, 5.843}, {51, 4.726}, {54, 3.92}, {57, 3.77}, {60, 5.294},
+                                  {63, 2.053}, {66, 3.761}, {69, 3.713}, {72, 2.06}, {75, 7.973}, {78, 2.934}, {81, 1.621},
+                                  {84, 1.075}, {87, 11.47}, {90, 4.109}, {93, 2.199}, {96, 0.5089}, {99, 1.507}, {102, 1.837}});
+    // vorlaeufig dreimal Decay (HT3 a) — das Modell zeigt keine zweite Stufe wie Salamander (S3 a: Kipppunkt fuer
+    // 31d Nacharbeit)
+    s.abklingSpaetS = kurveAusPunkten({{21, 47.96}, {24, 41.14}, {27, 54.11}, {30, 56.32}, {33, 35.98}, {36, 44.57},
+                                       {39, 36.07}, {42, 22.48}, {45, 26.38}, {48, 17.53}, {51, 14.18}, {54, 11.76},
+                                       {57, 11.31}, {60, 15.88}, {63, 6.16}, {66, 11.28}, {69, 11.14}, {72, 6.181},
+                                       {75, 23.92}, {78, 8.801}, {81, 4.862}, {84, 3.225}, {87, 34.4}, {90, 12.33},
+                                       {93, 6.596}, {96, 1.527}, {99, 4.522}, {102, 5.512}});
+    // gemessen an Salamander (Yamaha C5) aus demselben Ausgleich, durch das Modell hindurch (31d-4); 96 und 105 vermerkt
+    s.abklingHoch = kurveAusPunkten({{21, 0.9791}, {24, 0.9888}, {27, 0.9689}, {30, 0.9549}, {33, 0.9718}, {36, 0.9409},
+                                     {39, 0.9154}, {42, 0.9577}, {45, 0.9504}, {48, 0.9342}, {51, 0.8951}, {54, 0.7855},
+                                     {57, 0.8781}, {60, 0.6443}, {63, 0.904}, {66, 0.6689}, {69, 0.4688}, {72, 0.524},
+                                     {75, 0.1524}, {78, 0.2841}, {81, 0.3365}, {84, 0.3355}, {87, 0.01508}, {90, 0.03498},
+                                     {93, 0.02882}, {99, 0.02764}, {102, 0.01849}});
     s.chor = kurveAusPunkten({{21, 1.0}, {30, 1.0}, {31, 2.0}, {48, 2.0}, {49, 3.0}, {108, 3.0}});
-    s.verstimmungCent = kurveAusPunkten({{21, 1.0}, {108, 1.0}});
+    // gemessen an Salamander (Yamaha C5) an der Schwebung der Teiltoene 1–3, durch das Modell hindurch, nur bei
+    // mindestens zwei Saiten (31d-4, S3 a); 84, 87, 93, 96, 105 vermerkt — dort schwebt das Modell nicht
+    s.verstimmungCent = kurveAusPunkten({{33, 3.014}, {36, 1.926}, {39, 0.9654}, {42, 4.268}, {45, 3.919}, {48, 2.254},
+                                         {51, 1.228}, {54, 2.851}, {57, 1.084}, {60, 0.8048}, {63, 0.8484}, {66, 1.394},
+                                         {69, 1.422}, {72, 1.789}, {75, 0.858}, {78, 5.052}, {81, 3.76}, {90, 1.635},
+                                         {99, 0.5929}, {102, 1.479}});
     s.daempferS = kurveAusPunkten({{21, 0.8}, {90, 0.2}});
     return s;
 }
