@@ -48,6 +48,9 @@ veröffentlichen (etwa CC BY 4.0), damit LumiViz sie verwenden darf.
 5. **Saiten:** Länge, Durchmesser, Wicklung, Spannung (aus Frequenz und Masse) aller Tasten — oder die Mensur des
    Herstellers.
 6. **Geometrie:** Umriss des Bodens, Lage, Zahl und Querschnitt der Rippen, Lage der Stege, Dicke an einigen Punkten.
+7. **Dämpfer** (D1 a, S152 — aus *Salamander* nicht messbar, die Loslassgeräusche sind 0,46 s Mechanik ohne Ausklang):
+   T60 unter dem Dämpfer je Taste, Ton gehalten und auf einer Stufe losgelassen, an jeder dritten Taste bis zur
+   ersten ohne Dämpfer.
 
 Aus 1–3 entsteht ein Körper nach KB1 a direkt aus Messung; 4–6 sichern Hammer und Saite. Mögliche Partner (nicht
 angefragt): Hochschulen mit Messungen an Flügeln und Gitarren (Uni Hamburg / HAW Hamburg, KTH, LAM Paris,

@@ -17,6 +17,10 @@
  * - Schwebung zweier verstimmter Saiten; eine Saite allein schwebt nicht.
  * - Helligkeit zu Beginn (Pegel je Teilton) und `highDecay` wie im Modell.
  * - Das Rauschen begrenzt den gemessenen Bereich.
+ * - 31d-3: Pegel zu Beginn, Terzbaender, Direktschall (ein Schlag vor dem Ton), Phantomteiltoene
+ *   bei 2·f(n/2) mit bekanntem Abstand; eine Blende am Ende wird abgeschnitten; eine kurze fruehe
+ *   Stufe wird erkannt; ein Teilton im Rauschen bekommt keine Abklingzeit (Befunde S152 an
+ *   Salamander).
  ****************************************************************************************
  */
 
@@ -24,6 +28,7 @@
 
 #include "Teiltonmessung.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -151,6 +156,39 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
             CHECK(t->abklingen.knickS == doctest::Approx(1.5).epsilon(0.03).scale(0.0));
         }
     }
+    SUBCASE("kurze fruehe Stufe wie an Salamander: Knick bei 1 s von 12 s, frueh 2 s, spaet 30 s")
+    {
+        std::vector<Komponente> k = saite(261.6, 3e-4, 6, 2.0);
+        for (Komponente& c : k)
+        {
+            c.t60Spaet = 30.0;
+            c.knickS = 1.0;
+        }
+        const Ergebnis e = miss(erzeuge(k, 12.0, 0.1, 1e-6), kRate, 261.6, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 4; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->abklingen.erkannt);
+            CHECK(t->abklingen.zweiStufen);
+            CHECK(t->abklingen.t60Frueh == doctest::Approx(2.0).epsilon(0.05).scale(0.0));
+            CHECK(t->abklingen.t60Spaet == doctest::Approx(30.0).epsilon(0.05).scale(0.0));
+        }
+    }
+    SUBCASE("ein Teilton, der nicht um 10 dB faellt, hat keine Abklingzeit")
+    {
+        // wie Teilton 1 von A0 an Salamander, der im Rauschen schwankt: leise und fast ohne Abfall
+        std::vector<Komponente> k = saite(110.0, 0.0, 6, 10.0);
+        k[0].amplitude = 4e-5;
+        k[0].t60Frueh = k[0].t60Spaet = 100.0;
+        const Ergebnis e = miss(erzeuge(k, 4.0, 0.1, 2e-5), kRate, 110.0, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        if (const Teilton* t = e.teilton(1)) CHECK_FALSE(t->abklingen.erkannt);
+        REQUIRE(e.teilton(2) != nullptr);
+        CHECK(e.teilton(2)->abklingen.erkannt);
+    }
     SUBCASE("eine Stufe: 4 s, kein Knick")
     {
         const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 12, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
@@ -270,4 +308,90 @@ TEST_CASE("Loop Teiltonmessung 31d-2 das Rauschen begrenzt den Bereich")
     const auto ende = static_cast<std::size_t>(std::lround(t->abklingen.bisS / e.schrittS));
     CHECK(t->pegelDb[ende] > t->rauschenDb + 10.0);
     CHECK(t->abklingen.t60Frueh == doctest::Approx(2.0).epsilon(0.03).scale(0.0));
+}
+
+TEST_CASE("Loop Teiltonmessung 31d-3 Blende am Ende")
+{
+    // 12 s, T60 10 s; ab 9 s linear auf null ausgeblendet wie die Dateien von Salamander
+    std::vector<double> ton = erzeuge(saite(220.0, 0.0, 8, 10.0), 12.0, 0.1, 1e-6);
+    const std::size_t ohne = endeVorBlende(ton, kRate);
+    CHECK(ohne == ton.size());
+    for (std::size_t i = static_cast<std::size_t>(9.0 * kRate); i < ton.size(); ++i)
+        ton[i] *= 1.0 - (static_cast<double>(i) / kRate - 9.0) / 3.0;
+    const std::size_t ende = endeVorBlende(ton, kRate);
+    MESSAGE("Blende ab 9 s: gemessen bis " << static_cast<double>(ende) / kRate << " s");
+    CHECK(static_cast<double>(ende) / kRate > 7.5);
+    CHECK(static_cast<double>(ende) / kRate < 9.0);
+    const Ergebnis e = miss(std::span<const double>(ton).first(ende), kRate, 220.0, lumi::loop::fft());
+    REQUIRE(e.erkannt);
+    for (int n = 1; n <= 6; ++n)
+    {
+        CAPTURE(n);
+        const Teilton* t = e.teilton(n);
+        REQUIRE(t != nullptr);
+        REQUIRE(t->abklingen.erkannt);
+        CHECK_FALSE(t->abklingen.zweiStufen);
+        CHECK(t->abklingen.t60Frueh == doctest::Approx(10.0).epsilon(0.03).scale(0.0));
+    }
+}
+
+TEST_CASE("Loop Teiltonmessung 31d-3 Pegel, Direktschall, Terzbaender, Phantome")
+{
+    const lumi::loop::Fft& fft = lumi::loop::fft();
+    SUBCASE("Pegel zu Beginn und Terzband eines Sinus")
+    {
+        const std::vector<double> ton = erzeuge({{1000.0, 0.5, 100.0, 100.0}}, 2.0, 0.1, 0.0);
+        const Ergebnis e = miss(ton, kRate, 1000.0, fft);
+        REQUIRE(e.erkannt);
+        CHECK(std::abs(pegelZuBeginn(ton, kRate, e.einsatzS) - 20.0 * std::log10(0.5)) < 0.1);
+        const std::vector<double> terz = terzPegel(ton, kRate, e.einsatzS, fft);
+        const std::vector<double> mitten = terzMitten();
+        REQUIRE(terz.size() == mitten.size());
+        CHECK(mitten.front() == doctest::Approx(31.25).epsilon(0.01));
+        CHECK(mitten.back() == doctest::Approx(10079.4).epsilon(0.01));
+        const auto groesstes = static_cast<std::size_t>(std::max_element(terz.begin(), terz.end()) - terz.begin());
+        CHECK(mitten[groesstes] == doctest::Approx(1000.0));
+        CHECK(terz[groesstes - 1] < terz[groesstes] - 30.0);
+        CHECK(terz[groesstes + 1] < terz[groesstes] - 30.0);
+    }
+    SUBCASE("Direktschall: ein Schlag vor dem Ton hebt ihn, der Ton allein nicht")
+    {
+        std::vector<double> ton = erzeuge(saite(220.0, 0.0, 10, 10.0), 1.0, 0.1, 0.0);
+        const Ergebnis e = miss(ton, kRate, 220.0, fft);
+        REQUIRE(e.erkannt);
+        const double ohne = direktschallDb(ton, kRate, e.einsatzS);
+        // 3 ms Rauschen mit dem Zehnfachen der Spitze ab dem Einsatz
+        std::uint64_t z = 7;
+        for (std::size_t i = 0; i < static_cast<std::size_t>(0.003 * kRate); ++i)
+        {
+            z = z * 6364136223846793005ull + 1442695040888963407ull;
+            ton[static_cast<std::size_t>(0.1 * kRate) + i] += 3.0 * (static_cast<double>(z >> 11) / 9007199254740992.0 * 2.0 - 1.0);
+        }
+        const Ergebnis mitSchlag = miss(ton, kRate, 220.0, fft);
+        const double mit = direktschallDb(ton, kRate, mitSchlag.einsatzS);
+        MESSAGE("Direktschall ohne " << ohne << " dB, mit Schlag " << mit << " dB");
+        CHECK(std::abs(ohne) < 3.0);
+        CHECK(mit > ohne + 10.0);
+    }
+    SUBCASE("Phantome bei 2·f(n/2), 20 dB unter dem Querteilton n")
+    {
+        const double f0 = 55.0;
+        const double b = 4e-4;
+        std::vector<Komponente> k = saite(f0, b, 20, 20.0);
+        for (int n = 4; n <= 20; n += 2)
+            k.push_back({2.0 * teiltonFrequenz(f0, b, n / 2), 0.1 * 0.3 / n, 20.0, 20.0});
+        const std::vector<double> ton = erzeuge(k, 5.0, 0.1, 1e-6);
+        const Ergebnis e = miss(ton, kRate, f0 * std::sqrt(1.0 + b), fft);
+        REQUIRE(e.erkannt);
+        const std::vector<Phantom> p = phantome(ton, kRate, e, fft);
+        // n = 4 liegt 0,5 Hz neben dem Querteilton — naeher als die Aufloesung von 1 Hz: nicht gezaehlt
+        REQUIRE(p.size() == 8);
+        CHECK(p.front().n == 6);
+        for (const Phantom& ph : p)
+        {
+            CAPTURE(ph.n);
+            CHECK(ph.frequenz == doctest::Approx(2.0 * teiltonFrequenz(f0, b, ph.n / 2)).epsilon(1e-4).scale(0.0));
+            CHECK(std::abs(ph.abstandDb + 20.0) < 1.0);
+        }
+    }
 }

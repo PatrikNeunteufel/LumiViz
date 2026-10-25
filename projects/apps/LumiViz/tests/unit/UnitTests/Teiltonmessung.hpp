@@ -24,7 +24,8 @@
  * 4. *Zwei Stufen:* auf der Huellkurve in dB, ab dem Ende des Anschlags bis zuletzt `grenzeDb`
  *    ueber dem Boden — dem aus 3. oder, wenn der Teilton vor dem Ende darin ankommt, dem eigenen
  *    (Median der letzten 10 %, Gedanke nach Lundeby fuer Nachhall im Rauschen) —, eine Gerade
- *    und zwei Geraden mit dem besten Knick (jede mindestens ein Fuenftel des Bereichs); zwei
+ *    und zwei Geraden mit dem besten Knick (die fruehe mindestens ein Zwanzigstel des Bereichs,
+ *    die spaete ein Fuenftel; mindestens 10 dB Abfall ueber den Bereich, sonst keine Abklingzeit); zwei
  *    Stufen, wenn sie
  *    den Rest mindestens halbieren und die fruehe um das 1,3-fache steiler faellt. T60 = 60 dB
  *    durch die Steigung (wie `decay` und `lateDecay`).
@@ -33,6 +34,9 @@
  *    dem Zehnfachen des Medians im Periodogramm.
  * 6. *Abklingen ueber der Frequenz:* σ = b1 + b3·ω² aus den fruehen Stufen (Bank 2010, Gl. 7);
  *    `highDecay` = σ(f1) / σ(10·f1) wie im Modell (`modell.md` §3).
+ *
+ * Dazu fuer den ganzen Ton (31d-3): `endeVorBlende` (eine Blende am Ende der Datei abschneiden),
+ * `pegelZuBeginn`, `direktschallDb` (SB1 a), `terzPegel` (UF6 a) und `phantome` (`bridgeAngle`).
  ****************************************************************************************
  */
 
@@ -290,21 +294,24 @@ inline Abklingen zweiStufen(std::span<const double> pegelDb, double schrittS, st
     for (std::size_t i = 0; i < t.size(); ++i) t[i] = static_cast<double>(i) * schrittS;
     const Geraden geraden(t, pegelDb);
     const Geraden::Gerade eine = geraden.ueber(von, bis);
-    if (eine.steigung >= 0.0) return a;
+    // mindestens 10 dB Abfall ueber den Bereich: ein Teilton im Rauschen hat keine Abklingzeit
+    if (eine.steigung >= 0.0 || -eine.steigung * (t[bis - 1] - t[von]) < 10.0) return a;
     a.erkannt = true;
     a.vonS = t[von];
     a.bisS = t[bis - 1];
     a.t60Frueh = a.t60Spaet = -60.0 / eine.steigung;
 
-    // jede Stufe mindestens ein Fuenftel des Bereichs: sonst „erkennt“ der Uebergang in den Boden
-    // eine kurze zweite Stufe
-    const std::size_t rand = std::max<std::size_t>(10, (bis - von) / 5);
-    if (2 * rand > bis - von) return a;
+    // die fruehe Stufe darf kurz sein (am Fluegel oft eine Sekunde von zwanzig, Befund S152 an
+    // Salamander), die spaete mindestens ein Fuenftel des Bereichs: sonst „erkennt“ der Uebergang in
+    // den Boden eine kurze zweite Stufe
+    const std::size_t randFrueh = std::max<std::size_t>(10, (bis - von) / 20);
+    const std::size_t randSpaet = std::max<std::size_t>(10, (bis - von) / 5);
+    if (randFrueh + randSpaet > bis - von) return a;
     double besterRest = eine.rest;
     std::size_t knick = 0;
     Geraden::Gerade frueh;
     Geraden::Gerade spaet;
-    for (std::size_t j = von + rand; j + rand <= bis; ++j)
+    for (std::size_t j = von + randFrueh; j + randSpaet <= bis; ++j)
     {
         const Geraden::Gerade g1 = geraden.ueber(von, j);
         const Geraden::Gerade g2 = geraden.ueber(j, bis);
@@ -596,6 +603,158 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
         }
     }
     return e;
+}
+
+/// Wie viele Abtastwerte vor einer Blende am Ende liegen (Befund S152: jede Datei von *Salamander*
+/// ist am Ende ausgeblendet; alle Teiltoene fallen dort gemeinsam steil). Gemessen am breitbandigen
+/// Pegel in Rahmen von 50 ms: eine Gerade durch 40–70 % der Datei; die Blende beginnt, wo der Pegel
+/// danach bis zum Ende mehr als 3 dB unter ihr bleibt — zwei Stufen oder ein Boden liegen darueber.
+/// Zurueck eine Sekunde vor diese Stelle, nicht vor 70 %; ohne Blende die ganze Laenge.
+inline std::size_t endeVorBlende(std::span<const double> ton, int rate)
+{
+    const auto rahmen = static_cast<std::size_t>(0.05 * rate);
+    const std::size_t n = rahmen == 0 ? 0 : ton.size() / rahmen;
+    if (n < 40) return ton.size();
+    std::vector<double> t(n);
+    std::vector<double> pegel(n);
+    for (std::size_t r = 0; r < n; ++r)
+    {
+        double s = 0.0;
+        for (std::size_t i = r * rahmen; i < (r + 1) * rahmen; ++i) s += ton[i] * ton[i];
+        t[r] = static_cast<double>(r);
+        pegel[r] = 10.0 * std::log10(std::max(s / static_cast<double>(rahmen), 1e-30));
+    }
+    const detail::Geraden geraden(t, pegel);
+    const detail::Geraden::Gerade g = geraden.ueber(4 * n / 10, 7 * n / 10);
+    // von hinten: die groesste Abweichung nach oben ab jeder Stelle
+    double hoechste = -1e9;
+    std::size_t blende = n;
+    for (std::size_t r = n; r-- > 7 * n / 10;)
+    {
+        hoechste = std::max(hoechste, pegel[r] - (g.achse + g.steigung * t[r]));
+        if (hoechste < -3.0) blende = r;
+    }
+    if (blende == n) return ton.size();
+    const std::size_t vorher = blende * rahmen > static_cast<std::size_t>(rate) ? blende * rahmen - static_cast<std::size_t>(rate) : 0;
+    return std::max(vorher, 7 * n / 10 * rahmen);
+}
+
+// ---------------------------------------------------------------------------------------
+// Groessen des ganzen Tons (31d-3): Pegel, Direktschall, Terzbaender, Phantomteiltoene.
+// Alle messen ab dem Einsatz aus `miss`; gleich fuer Aufnahme und Modell (UF3 a).
+// ---------------------------------------------------------------------------------------
+
+/// Der Pegel des Tons in den ersten `dauerS` nach dem Einsatz (Effektivwert in dB, 0 dB = ein
+/// Sinus der Amplitude 1).
+inline double pegelZuBeginn(std::span<const double> ton, int rate, double einsatzS, double dauerS = 0.3)
+{
+    const auto von = static_cast<std::size_t>(einsatzS * rate);
+    const std::size_t bis = std::min(ton.size(), von + static_cast<std::size_t>(dauerS * rate));
+    if (bis <= von) return -300.0;
+    double summe = 0.0;
+    for (std::size_t i = von; i < bis; ++i) summe += ton[i] * ton[i];
+    return detail::db(std::sqrt(2.0 * summe / static_cast<double>(bis - von)));
+}
+
+/// Der Direktschall als Befund (SB1 a): die Energie der ersten `kurzS` nach dem Einsatz gegen die
+/// der folgenden bis `langS`, je Zeit, in dB — ein Schlag vor dem Einschwingen der Teiltoene hebt sie.
+inline double direktschallDb(std::span<const double> ton, int rate, double einsatzS, double kurzS = 0.005, double langS = 0.05)
+{
+    const auto von = static_cast<std::size_t>(einsatzS * rate);
+    const std::size_t mitte = std::min(ton.size(), von + static_cast<std::size_t>(kurzS * rate));
+    const std::size_t bis = std::min(ton.size(), von + static_cast<std::size_t>(langS * rate));
+    if (mitte <= von || bis <= mitte) return 0.0;
+    double vorn = 0.0;
+    double hinten = 0.0;
+    for (std::size_t i = von; i < mitte; ++i) vorn += ton[i] * ton[i];
+    for (std::size_t i = mitte; i < bis; ++i) hinten += ton[i] * ton[i];
+    vorn /= static_cast<double>(mitte - von);
+    hinten /= static_cast<double>(bis - mitte);
+    return 10.0 * std::log10(std::max(vorn, 1e-30) / std::max(hinten, 1e-30));
+}
+
+/// Die Mitten der Terzbaender von 31,5 Hz bis 10 kHz (1000·2^(i/3), i = −15 … 10).
+inline std::vector<double> terzMitten()
+{
+    std::vector<double> m;
+    for (int i = -15; i <= 10; ++i) m.push_back(1000.0 * std::exp2(i / 3.0));
+    return m;
+}
+
+/// Der Pegel je Terzband (`terzMitten`) ueber `dauerS` ab dem Einsatz: die Leistung des Spektrums
+/// (Hann) im Band, in dB — fuer die geglaettete Klangfarbe des Bodens (UF6 a). Nur Verhaeltnisse
+/// zaehlen; gleich gerechnet fuer Aufnahme und Modell.
+inline std::vector<double> terzPegel(std::span<const double> ton, int rate, double einsatzS, const lumi::loop::Fft& fft,
+                                     double dauerS = 1.0)
+{
+    const auto von = static_cast<std::size_t>(einsatzS * rate);
+    const std::size_t laenge = std::min(ton.size() > von ? ton.size() - von : 0, static_cast<std::size_t>(dauerS * rate));
+    std::vector<double> pegel(terzMitten().size(), -300.0);
+    if (laenge < 256) return pegel;
+    const std::size_t n = lumi::loop::zweierpotenzAb(laenge);
+    std::vector<double> zeit(n, 0.0);
+    for (std::size_t i = 0; i < laenge; ++i)
+        zeit[i] = ton[von + i] * (0.5 - 0.5 * std::cos(2.0 * std::numbers::pi * static_cast<double>(i) / static_cast<double>(laenge - 1)));
+    std::vector<std::complex<double>> spektrum(n / 2 + 1);
+    fft.vorwaerts(zeit, spektrum);
+    const double binHz = static_cast<double>(rate) / static_cast<double>(n);
+    const std::vector<double> mitten = terzMitten();
+    for (std::size_t b = 0; b < mitten.size(); ++b)
+    {
+        const auto unten = static_cast<std::size_t>(std::ceil(mitten[b] * std::exp2(-1.0 / 6.0) / binHz));
+        const auto oben = static_cast<std::size_t>(std::floor(mitten[b] * std::exp2(1.0 / 6.0) / binHz));
+        double leistung = 0.0;
+        for (std::size_t i = unten; i <= std::min(oben, spektrum.size() - 1); ++i) leistung += std::norm(spektrum[i]);
+        pegel[b] = 10.0 * std::log10(std::max(leistung / static_cast<double>(laenge), 1e-30));
+    }
+    return pegel;
+}
+
+/// Ein Phantomteilton: die Summe f_(n/2) + f_(n/2) der Laengsschwingung neben dem Querteilton n.
+struct Phantom
+{
+    int n = 0;
+    double frequenz = 0.0;
+    double abstandDb = 0.0;  ///< Pegel gegen den Querteilton n
+};
+
+/// Die Phantomteiltoene bei 2·f_(n/2) fuer gerade n bis `bisN`, je gegen den Querteilton n, aus einem
+/// Spektrum ueber bis zu `dauerS` ab 50 ms nach dem Einsatz (Blackman-Harris, zweimal aufgefuellt).
+/// Gezaehlt nur, wo beide Spitzen mindestens vier Bins des Fensters auseinander liegen und die
+/// Phantomspitze 10 dB ueber dem Median des Spektrums steht (`bridgeAngle`, Messplan Tabelle A).
+inline std::vector<Phantom> phantome(std::span<const double> ton, int rate, const Ergebnis& e, const lumi::loop::Fft& fft,
+                                     int bisN = 20, double dauerS = 4.0)
+{
+    std::vector<Phantom> liste;
+    if (!e.erkannt) return liste;
+    const auto von = static_cast<std::ptrdiff_t>((e.einsatzS + 0.05) * rate);
+    const std::size_t verfuegbar = ton.size() > static_cast<std::size_t>(von) ? ton.size() - static_cast<std::size_t>(von) : 0;
+    const std::size_t laenge = std::min(verfuegbar, static_cast<std::size_t>(dauerS * rate));
+    if (laenge < 4096) return liste;
+    const std::size_t n = 2 * lumi::loop::zweierpotenzAb(laenge);
+    detail::Spektrum spektrum(fft, laenge, n);
+    spektrum.rechne(ton, von);
+    std::vector<double> alle(spektrum.bins());
+    for (std::size_t i = 0; i < alle.size(); ++i) alle[i] = spektrum.binDb(i);
+    const double median = detail::median(alle);
+    const double binHz = static_cast<double>(rate) / static_cast<double>(n);
+    const double aufloesung = 4.0 * static_cast<double>(rate) / static_cast<double>(laenge);
+    for (int k = 4; k <= bisN; k += 2)
+    {
+        const Teilton* halb = e.teilton(k / 2);
+        const Teilton* quer = e.teilton(k);
+        if (halb == nullptr || quer == nullptr) continue;
+        const double fp = 2.0 * halb->frequenz;
+        if (quer->frequenz - fp < aufloesung) continue;
+        const double weite = 0.25 * aufloesung;
+        const auto [sp, pp] = spektrum.spitze(static_cast<std::size_t>((fp - weite) / binHz), static_cast<std::size_t>((fp + weite) / binHz));
+        const auto [sq, pq] = spektrum.spitze(static_cast<std::size_t>((quer->frequenz - weite) / binHz),
+                                              static_cast<std::size_t>((quer->frequenz + weite) / binHz));
+        (void)sq;
+        if (pp < median + 10.0) continue;
+        liste.push_back({k, sp * binHz, pp - pq});
+    }
+    return liste;
 }
 
 }  // namespace lumi::messung
