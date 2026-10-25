@@ -13,8 +13,10 @@
  * Kappung ueber ±1 mit ihrer Zahl, der Dither bei 16 Bit (fest: dieselben
  * Werte ergeben dieselbe Datei; ein Ton unter einem LSB bleibt hoerbar), die
  * Grenzen (nichts zu schreiben, falscher Ort — dann entsteht keine Datei), eine
- * Mono-Datei, und: die BassEngine liest alle drei Arten, wenn es ein
- * Ausgabegeraet gibt (sonst meldet der letzte Fall das und prueft nichts).
+ * Mono-Datei, das Lesen ohne Qt (`WavFormat.hpp`, WL1 a: dasselbe wie mit Qt,
+ * `WAVE_FORMAT_EXTENSIBLE`, ein Abschnitt ungerader Laenge, Abgeschnittenes), und:
+ * die BassEngine liest alle drei Arten, wenn es ein Ausgabegeraet gibt (sonst meldet
+ * der letzte Fall das und prueft nichts).
  ****************************************************************************************
  */
 
@@ -32,8 +34,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <filesystem>
 #include <numbers>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -275,6 +281,78 @@ TEST_SUITE("WavDatei")
         CHECK(gelesen->stereo[0] == gelesen->stereo[1]);
         CHECK(gelesen->stereo[0] == doctest::Approx(16384.0 / 32767.0));
         CHECK(gelesen->stereo[3] == -1.0f);
+    }
+
+    TEST_CASE("WavDatei 31d-2: ohne Qt lesen — dasselbe wie liesWav, EXTENSIBLE, ungerader Abschnitt (WL1 a)")
+    {
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        const std::vector<float> werte = probe();
+        for (const WavTiefe tiefe : {WavTiefe::Gleitkomma32, WavTiefe::Pcm24, WavTiefe::Pcm16})
+        {
+            const QString pfad = QDir(tmp.path()).filePath(QStringLiteral("probe.wav"));
+            REQUIRE(schreibeWav(pfad, werte, kRate, tiefe).geschrieben);
+            const std::optional<WavInhalt> mitQt = liesWav(pfad);
+            const std::optional<WavInhalt> ohneQt = liesWavDatei(std::filesystem::path(pfad.toStdU16String()));
+            REQUIRE(mitQt.has_value());
+            REQUIRE(ohneQt.has_value());
+            CHECK(ohneQt->rate == mitQt->rate);
+            CHECK(ohneQt->tiefe == mitQt->tiefe);
+            CHECK(ohneQt->stereo == mitQt->stereo);
+        }
+        CHECK_FALSE(liesWavDatei(std::filesystem::path(QDir(tmp.path()).filePath(QStringLiteral("fehlt.wav")).toStdU16String())).has_value());
+
+        // von Hand: WAVE_FORMAT_EXTENSIBLE mit PCM 24 Bit, davor ein Abschnitt ungerader Laenge
+        std::vector<std::byte> roh;
+        const auto text = [&roh](const char* s) {
+            for (int i = 0; i < 4; ++i) roh.push_back(static_cast<std::byte>(s[i]));
+        };
+        const auto zahl = [&roh](std::uint32_t wert, int bytes) {
+            for (int i = 0; i < bytes; ++i) roh.push_back(static_cast<std::byte>((wert >> (8 * i)) & 0xFF));
+        };
+        text("RIFF");
+        zahl(0, 4);  // die Groesse liest niemand
+        text("WAVE");
+        text("fmt ");
+        zahl(40, 4);
+        zahl(0xFFFE, 2);
+        zahl(2, 2);
+        zahl(48000, 4);
+        zahl(48000 * 6, 4);
+        zahl(6, 2);
+        zahl(24, 2);
+        zahl(22, 2);  // Laenge der Erweiterung
+        zahl(24, 2);  // gueltige Bits
+        zahl(3, 4);   // Lage der Kanaele
+        zahl(1, 2);   // Unterart PCM, dazu 14 Bytes der GUID
+        for (int i = 0; i < 14; ++i) roh.push_back(std::byte{0});
+        text("LIST");
+        zahl(3, 4);
+        zahl(0x414141, 3);
+        roh.push_back(std::byte{0});  // Fuellbyte nach ungerader Laenge
+        text("data");
+        zahl(12, 4);
+        zahl(0x7FFFFF, 3);  // links +1
+        zahl(0x800001, 3);  // rechts −1
+        zahl(0x400000, 3);  // links +0,5
+        zahl(0xC00000, 3);  // rechts −0,5 (genau −2^22)
+        const std::optional<WavInhalt> erweitert = liesWavBytes(roh);
+        REQUIRE(erweitert.has_value());
+        CHECK(erweitert->rate == 48000);
+        CHECK(erweitert->tiefe == WavTiefe::Pcm24);
+        REQUIRE(erweitert->stereo.size() == 4);
+        CHECK(erweitert->stereo[0] == 1.0f);
+        CHECK(erweitert->stereo[1] == -1.0f);
+        CHECK(erweitert->stereo[2] == doctest::Approx(4194304.0 / 8388607.0));
+        CHECK(erweitert->stereo[3] == doctest::Approx(-4194304.0 / 8388607.0));
+
+        // abgeschnitten oder fremd: nichts
+        CHECK_FALSE(liesWavBytes(std::span(roh).first(11)).has_value());
+        CHECK_FALSE(liesWavBytes(std::span(roh).first(60)).has_value());  // ohne data
+        std::vector<std::byte> fremd = roh;
+        fremd[20] = std::byte{2};  // Format 2 (ADPCM)
+        fremd[44] = std::byte{2};  // auch die Unterart
+        CHECK_FALSE(liesWavBytes(fremd).has_value());
     }
 
     TEST_CASE("WavDatei 30b: die BassEngine liest alle drei Arten (nur mit Ausgabegeraet)")

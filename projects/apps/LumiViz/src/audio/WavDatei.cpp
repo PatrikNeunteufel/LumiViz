@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 #include <limits>
 
 namespace lumi::audio
@@ -24,7 +23,6 @@ namespace
 constexpr quint16 kKanaele = 2;
 constexpr quint16 kFormatPcm = 1;
 constexpr quint16 kFormatFloat = 3;
-constexpr quint16 kFormatErweitert = 0xFFFE;
 /// So viele Frames werden am Stueck umgewandelt und geschrieben.
 constexpr std::size_t kBlockFrames = 65536;
 /// Der Startwert des Dithers — fest, damit dieselben Werte dieselbe Datei ergeben.
@@ -62,14 +60,6 @@ public:
 private:
     std::uint32_t m_zustand = kDitherStart;
 };
-
-template <typename T>
-T lies(const char* stelle)
-{
-    T wert;
-    std::memcpy(&wert, stelle, sizeof(T));
-    return qFromLittleEndian(wert);
-}
 
 }  // namespace
 
@@ -152,61 +142,7 @@ std::optional<WavInhalt> liesWav(const QString& pfad)
     QFile datei(pfad);
     if (!datei.open(QIODevice::ReadOnly)) return std::nullopt;
     const QByteArray roh = datei.readAll();
-    if (roh.size() < 12 || !roh.startsWith("RIFF") || roh.mid(8, 4) != "WAVE") return std::nullopt;
-    quint16 format = 0;
-    quint16 kanaele = 0;
-    quint16 bits = 0;
-    WavInhalt inhalt;
-    qsizetype stelle = 12;
-    while (stelle + 8 <= roh.size())
-    {
-        const QByteArray kennung = roh.mid(stelle, 4);
-        const quint32 groesse = lies<quint32>(roh.constData() + stelle + 4);
-        const char* anfang = roh.constData() + stelle + 8;
-        const qsizetype verfuegbar = std::min<qsizetype>(groesse, roh.size() - stelle - 8);
-        if (kennung == "fmt " && verfuegbar >= 16)
-        {
-            format = lies<quint16>(anfang);
-            kanaele = lies<quint16>(anfang + 2);
-            inhalt.rate = static_cast<int>(lies<quint32>(anfang + 4));
-            bits = lies<quint16>(anfang + 14);
-            if (format == kFormatErweitert && verfuegbar >= 26) format = lies<quint16>(anfang + 24);  // die Unterart
-        }
-        else if (kennung == "data")
-        {
-            if (kanaele < 1 || kanaele > 2 || inhalt.rate <= 0) return std::nullopt;
-            if (format == kFormatFloat && bits == 32)
-                inhalt.tiefe = WavTiefe::Gleitkomma32;
-            else if (format == kFormatPcm && bits == 24)
-                inhalt.tiefe = WavTiefe::Pcm24;
-            else if (format == kFormatPcm && bits == 16)
-                inhalt.tiefe = WavTiefe::Pcm16;
-            else
-                return std::nullopt;
-            const int bytes = bits / 8;
-            const qsizetype frames = verfuegbar / (bytes * kanaele);
-            inhalt.stereo.reserve(static_cast<std::size_t>(2 * frames));
-            const auto wert = [&](const char* p) -> float {
-                if (inhalt.tiefe == WavTiefe::Gleitkomma32) return lies<float>(p);
-                if (inhalt.tiefe == WavTiefe::Pcm16) return static_cast<float>(lies<qint16>(p) / 32767.0);
-                // 24 Bit: die drei Bytes nach oben schieben, das Vorzeichen kommt mit
-                const qint32 ganz = static_cast<qint32>(static_cast<quint32>(static_cast<quint8>(p[0])) << 8 |
-                                                        static_cast<quint32>(static_cast<quint8>(p[1])) << 16 |
-                                                        static_cast<quint32>(static_cast<quint8>(p[2])) << 24) >>
-                                    8;
-                return static_cast<float>(ganz / 8388607.0);
-            };
-            for (qsizetype f = 0; f < frames; ++f)
-            {
-                const char* p = anfang + f * bytes * kanaele;
-                inhalt.stereo.push_back(wert(p));
-                inhalt.stereo.push_back(wert(p + (kanaele - 1) * bytes));
-            }
-            return inhalt;
-        }
-        stelle += 8 + static_cast<qsizetype>(groesse) + (groesse % 2);
-    }
-    return std::nullopt;
+    return liesWavBytes(std::as_bytes(std::span(roh.constData(), static_cast<std::size_t>(roh.size()))));
 }
 
 }  // namespace lumi::audio

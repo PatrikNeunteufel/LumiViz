@@ -14,8 +14,12 @@
  * ±1 und zaehlen, wie viele Werte das traf; 16 Bit wird auf Wunsch mit Dither
  * geschrieben (TPDF, ±1 LSB, aus einem festen Startwert — dieselben Werte
  * ergeben dieselbe Datei).
+ *
+ * Das Zerlegen beim Lesen steht ohne Qt in `WavFormat.hpp` (WL1 a); hier nur das Oeffnen.
  */
 #pragma once
+
+#include "audio/WavFormat.hpp"
 
 #include <QString>
 
@@ -26,14 +30,6 @@
 
 namespace lumi::audio
 {
-
-/// Die Art der Abtastwerte in der Datei (WX2 a).
-enum class WavTiefe
-{
-    Gleitkomma32,  ///< 32-bit float — die Vorgabe, verlustfrei
-    Pcm24,
-    Pcm16,
-};
 
 /// Was beim Schreiben geschah.
 struct WavErgebnis
@@ -51,15 +47,7 @@ struct WavErgebnis
 [[nodiscard]] WavErgebnis schreibeWav(const QString& pfad, std::span<const float> stereo, int rate, WavTiefe tiefe,
                                       bool dither = false);
 
-/// Eine gelesene WAV-Datei: immer Stereo, Werte wie geschrieben (16 und 24 Bit auf ±1).
-struct WavInhalt
-{
-    std::vector<float> stereo;
-    int rate = 0;
-    WavTiefe tiefe = WavTiefe::Gleitkomma32;
-};
-
-/// Lesen, was `schreibeWav` schreibt (auch Mono). Leer = nicht zu lesen.
+/// Lesen, was `schreibeWav` schreibt (auch Mono), ueber `liesWavBytes`. Leer = nicht zu lesen.
 [[nodiscard]] std::optional<WavInhalt> liesWav(const QString& pfad);
 
 }  // namespace lumi::audio
