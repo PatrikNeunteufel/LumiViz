@@ -125,6 +125,9 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
     // AUSGESETZT bis 31d-7 (N2 a, S152): Abklingzeiten (`decay`, `highDecay`, ±10 %) und Verstimmung (±0,5 Cent) —
     // mit der Messung nach Schroeder (N1 a) trifft die Vorgabe aus 31d-4 sie nicht mehr, und das Modell trennt die
     // zwei Stufen erst mit der zweiten Polarisation; danach wird neu gesetzt und hier wieder geprueft.
+    // AUSGESETZT bis 31d-7 B Punkt 7 (WK1 a, S153): der Winkel an den Tasten mit Chor (MIDI 33–45) — seit der
+    // Laengskraft je Saite (P5 a) liegen die Phantome dort 5–8 dB ueber dem in 31d-4 mit Y/N gesetzten Wert; B
+    // setzt den Winkel mit γ und δ neu. An den Tasten mit einer Saite (21–30) rechnet der Ton wie vorher.
     const std::optional<SalamanderWerte> gelesen = liesWerte(kWerteDatei);
     REQUIRE_MESSAGE(gelesen.has_value(), "werte/salamander_c5.txt nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
     const std::vector<TastenWerte> s = tastenWerteAus(*gelesen);
@@ -150,7 +153,7 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
             CHECK(mo.b.wert == doctest::Approx(z.b.wert).epsilon(0.05).scale(0.0));
             ++geprueft;
         }
-        if (z.midi <= kWinkelBis && hatPunkt(v.stegWinkelGrad, z.midi))
+        if (z.midi <= kWinkelBis && hatPunkt(v.stegWinkelGrad, z.midi) && lumi::loop::chorAn(v, z.midi) == 1)
         {
             const std::optional<double> abstand = phantomAbstand(z, mo);
             REQUIRE(abstand.has_value());
@@ -159,7 +162,9 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
         }
     }
     MESSAGE("31d-4: " << geprueft << " gesetzte Werte am Modell gegen Salamander geprueft");
-    CHECK(geprueft == 7 + 9);  // B, Winkel (31d-4); decay, highDecay, detune ausgesetzt bis 31d-7 (N2 a)
+    // B, Winkel an den Tasten mit einer Saite (31d-4); decay, highDecay, detune ausgesetzt bis 31d-7 (N2 a), der
+    // Winkel im Chor bis 31d-7 B (WK1 a)
+    CHECK(geprueft == 7 + 4);
 }
 
 TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")

@@ -5,6 +5,8 @@
  */
 #include "loop/HammerTon.hpp"
 
+#include "loop/Eigenzerlegung.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -57,6 +59,9 @@ struct Werte
     double es = 0.0;           ///< N — aus f_l0 = (1/2L)·√(ES/µ)
     double laengsF0 = 0.0;     ///< Hz, die Grundfrequenz der Laengsschwingung
     double winkel = 0.0;       ///< rad, der Winkel der Saite am Steg (HT4 a)
+    double gamma = 0.0;        ///< rad, die erste Eigenrichtung gegen die Senkrechte (P2 a)
+    double deltaCent = 0.0;    ///< so viel hoeher liegt die zweite Eigenrichtung
+    double verhaeltnisH = 0.0; ///< so viel nimmt der Steg waagrecht im Verhaeltnis zu senkrecht (P3-1 a)
 };
 
 Werte werteAn(const HammerSaite& s, const HammerAnschlag& a)
@@ -85,6 +90,9 @@ Werte werteAn(const HammerSaite& s, const HammerAnschlag& a)
     w.laengsF0 = lin(s.laengsVerhaeltnis) * w.f0;
     w.es = w.mu * std::pow(2.0 * w.laenge * w.laengsF0, 2.0);
     w.winkel = lin(s.stegWinkelGrad) * std::numbers::pi / 180.0;
+    w.gamma = lin(s.polarisationWinkelGrad) * std::numbers::pi / 180.0;
+    w.deltaCent = lin(s.polarisationCent);
+    w.verhaeltnisH = std::clamp(lin(s.waagrechtVerhaeltnis), 0.0, 1.0);
     return w;
 }
 
@@ -108,6 +116,9 @@ struct Mode
     double steg = 0.0;     ///< kπT0/L: die Kraft am Steg
     int teilton = 1;
     double hz = 0.0;       ///< die Frequenz des Teiltons
+    /// Je Stelle 2j + a (Saite j, Eigenrichtung a) die Auslenkung je Einheit des Zustands — nur die von null
+    /// verschiedenen (`EbenenMode::form`; fuer die Laengsschwingung, P5 a).
+    std::vector<std::pair<int, Komplex>> form;
 };
 
 /// Eine Laengsmode (Bank 2010, Gl. 20, 27, 28): nur ihre dynamische Antwort zaehlt — die volle
@@ -126,7 +137,9 @@ struct LaengsMode
 /// Die Laengskraft am Steg (Bank 2010, Abschnitt V): die gleichmaessige Spannung (Gl. 26) und
 /// die dynamische Antwort der Laengsmoden (Gl. 27, 28), angeregt von Paaren der Quermoden
 /// (Gl. 22b) — eine Kraft fuer die ungeraden (wie Mode 3), eine fuer die geraden (wie Mode 4).
-/// Im Chor bewegt sich jede Saite mit der Summe / N (von Claude so genaehert).
+/// Je Saite aus ihren beiden Ebenen (Bank 2006, Gl. 2.9–2.10: (∂y/∂x)² + (∂z/∂x)²; P5 a), die
+/// Auslenkungen aus den Eigenvektoren der Moden; die Laengsmoden aller Saiten sind gleich, ihre
+/// Antwort am Steg ist die auf die Summe der Kraefte.
 class Laengs
 {
 public:
@@ -135,13 +148,19 @@ public:
         if (w.es <= 0.0 || w.laengsF0 <= 0.0) return;
         const double pi = std::numbers::pi;
         const double l2 = w.laenge * w.laenge;
-        m_chor = w.chor;
-        m_spannung = w.es * pi * pi / (4.0 * l2 * w.chor);   // Gl. 26, ueber N Saiten
+        m_stellen = 2 * w.chor;
+        m_spannung = w.es * pi * pi / (4.0 * l2);                   // Gl. 26, je Saite
         m_anregung = -2.0 * w.es * std::pow(pi, 3.0) / (8.0 * l2);  // Gl. 22b
         // Quermoden in die Produkte nur bis fs/4 (Bank 2010, S. 8: kein Aliasing)
         for (const Mode& m : moden)
             if (m.hz < 0.25 * fs) m_teiltoene = std::max(m_teiltoene, m.teilton);
-        m_y.assign(static_cast<std::size_t>(m_teiltoene) + 5, 0.0);
+        m_x.assign((static_cast<std::size_t>(m_teiltoene) + 5) * static_cast<std::size_t>(m_stellen), 0.0);
+        // nur die Stellen, die eine Mode traegt (mit γ = 0 die senkrechten)
+        std::vector<bool> getragen(static_cast<std::size_t>(m_stellen), false);
+        for (const Mode& m : moden)
+            for (const auto& [stelle, f] : m.form) getragen[static_cast<std::size_t>(stelle)] = true;
+        for (int i = 0; i < m_stellen; ++i)
+            if (getragen[static_cast<std::size_t>(i)]) m_getragen.push_back(static_cast<std::size_t>(i));
         const double sigma = w.sigmaFrueh1 * kLaengsSchneller;
         for (int k = 1;; ++k)
         {
@@ -152,7 +171,7 @@ public:
             lm.pol = std::exp(Komplex(-sigma, omega) / fs);
             lm.eingang = 2.0 / (w.laenge * w.mu * omega);
             lm.statisch = 2.0 / (w.laenge * w.mu * omega * omega);
-            lm.steg = w.chor * w.es * k * pi / w.laenge;
+            lm.steg = w.es * k * pi / w.laenge;  // je Saite; angeregt von der Summe ueber die Saiten
             lm.gerade = k % 2 == 0;
             m_moden.push_back(lm);
         }
@@ -167,23 +186,31 @@ public:
     /// Einen Schritt: die Laengskraft am Steg aus den Zustaenden der Quermoden.
     double schritt(const std::vector<Mode>& moden, double dt)
     {
-        std::fill(m_y.begin(), m_y.end(), 0.0);
+        std::fill(m_x.begin(), m_x.end(), 0.0);
+        const auto stellen = static_cast<std::size_t>(m_stellen);
         for (const Mode& m : moden)
-            if (m.teilton <= m_teiltoene) m_y[static_cast<std::size_t>(m.teilton)] += m.zustand.imag();
+        {
+            if (m.teilton > m_teiltoene) continue;
+            const std::size_t ab = static_cast<std::size_t>(m.teilton) * stellen;
+            // Im(f·z), ausgeschrieben
+            for (const auto& [stelle, f] : m.form)
+                m_x[ab + static_cast<std::size_t>(stelle)] += f.real() * m.zustand.imag() + f.imag() * m.zustand.real();
+        }
+        // je Saite und Ebene; die Summen sind gegen die Drehung γ unveraendert (beide Teiltoene einer Taste)
         double quadrate = 0.0;
         double ungerade = 0.0;
         double gerade = 0.0;
         for (int n = 1; n <= m_teiltoene; ++n)
-        {
-            const double yn = m_y[static_cast<std::size_t>(n)];
-            quadrate += static_cast<double>(n) * n * yn * yn;
-            if (n + 3 <= m_teiltoene) ungerade += n * (n + 3.0) * yn * m_y[static_cast<std::size_t>(n + 3)];
-            if (n + 4 <= m_teiltoene) gerade += n * (n + 4.0) * yn * m_y[static_cast<std::size_t>(n + 4)];
-        }
-        const double je = 1.0 / m_chor;  // je Saite die Summe / N
+            for (const std::size_t i : m_getragen)
+            {
+                const double xn = m_x[static_cast<std::size_t>(n) * stellen + i];
+                quadrate += static_cast<double>(n) * n * xn * xn;
+                if (n + 3 <= m_teiltoene) ungerade += n * (n + 3.0) * xn * m_x[static_cast<std::size_t>(n + 3) * stellen + i];
+                if (n + 4 <= m_teiltoene) gerade += n * (n + 4.0) * xn * m_x[static_cast<std::size_t>(n + 4) * stellen + i];
+            }
         const double spannung = m_spannung * quadrate;
-        const double kraftUngerade = m_anregung * 3.0 * ungerade * je * je;
-        const double kraftGerade = m_anregung * 4.0 * gerade * je * je;
+        const double kraftUngerade = m_anregung * 3.0 * ungerade;
+        const double kraftGerade = m_anregung * 4.0 * gerade;
         double dynamisch = 0.0;
         for (LaengsMode& lm : m_moden)
         {
@@ -206,11 +233,12 @@ public:
 
 private:
     bool m_an = false;
-    int m_chor = 1;
+    int m_stellen = 2;  ///< 2N: Saite j, Eigenrichtung a an 2j + a
     int m_teiltoene = 0;
     double m_spannung = 0.0;
     double m_anregung = 0.0;
-    std::vector<double> m_y;
+    std::vector<double> m_x;  ///< je Teilton n und Stelle die Auslenkung, an n·2N + Stelle
+    std::vector<std::size_t> m_getragen;  ///< die Stellen, die eine Mode traegt
     std::vector<LaengsMode> m_moden;
     double m_spitze = 0.0;
     double m_letzte = 0.0;
@@ -285,6 +313,59 @@ std::vector<ChorMode> chorModen(const std::vector<double>& omega, double sigmaSa
     return moden;
 }
 
+std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double deltaCent, double gamma, double sigmaSaite,
+                                    double sigmaV, double sigmaH)
+{
+    const auto n = static_cast<int>(omega.size());
+    if (n == 0) return {};
+    double mitte = 0.0;
+    for (const double o : omega) mitte += o;
+    mitte /= n;
+    const double hoeher = std::exp2(deltaCent / 1200.0);
+    // Stelle 2j + a: Saite j, Eigenrichtung a; um die Mitte verschoben (wie `chorModen`)
+    KleineMatrix a(2 * n);
+    std::vector<double> senk(static_cast<std::size_t>(2 * n));
+    std::vector<double> waag(static_cast<std::size_t>(2 * n));
+    for (int j = 0; j < n; ++j)
+    {
+        const double o = omega[static_cast<std::size_t>(j)];
+        a(2 * j, 2 * j) = Komplex(-sigmaSaite, o - mitte);
+        a(2 * j + 1, 2 * j + 1) = Komplex(-sigmaSaite, o * hoeher - mitte);
+        senk[static_cast<std::size_t>(2 * j)] = std::cos(gamma);
+        senk[static_cast<std::size_t>(2 * j + 1)] = -std::sin(gamma);
+        waag[static_cast<std::size_t>(2 * j)] = std::sin(gamma);
+        waag[static_cast<std::size_t>(2 * j + 1)] = std::cos(gamma);
+    }
+    // der Steg nimmt auf die Summe: senkrecht σ_V, waagrecht σ_H (P2 a, ohne Kreuzterm)
+    for (int z = 0; z < 2 * n; ++z)
+        for (int s = 0; s < 2 * n; ++s)
+            a(z, s) -= sigmaV * senk[static_cast<std::size_t>(z)] * senk[static_cast<std::size_t>(s)] +
+                       sigmaH * waag[static_cast<std::size_t>(z)] * waag[static_cast<std::size_t>(s)];
+    const Eigenzerlegung zer = zerlegeKlein(a);
+    // der Hammer stoesst senkrecht mit F/N, am Steg zaehlt die Summe der senkrechten Anteile
+    std::vector<EbenenMode> moden;
+    double groesster = 0.0;
+    for (int m = 0; m < 2 * n; ++m)
+    {
+        Komplex aus(0.0, 0.0);
+        Komplex ein(0.0, 0.0);
+        for (int i = 0; i < 2 * n; ++i)
+        {
+            aus += senk[static_cast<std::size_t>(i)] * zer.rechts(i, m);
+            ein += zer.links(m, i) * senk[static_cast<std::size_t>(i)];
+        }
+        EbenenMode mode;
+        mode.lambda = zer.werte[static_cast<std::size_t>(m)] + Komplex(0.0, mitte);
+        mode.anteil = aus * ein / static_cast<double>(n);
+        if (std::abs(aus) > 0.0)
+            for (int i = 0; i < 2 * n; ++i) mode.form.push_back(zer.rechts(i, m) / aus);
+        groesster = std::max(groesster, std::abs(mode.anteil));
+        moden.push_back(std::move(mode));
+    }
+    std::erase_if(moden, [&](const EbenenMode& m) { return std::abs(m.anteil) < kEbenenAnteilMin * groesster; });
+    return moden;
+}
+
 std::int64_t hammerNachklang(const HammerSaite& saite, const HammerAnschlag& anschlag, std::int64_t maxFrames)
 {
     const Werte w = werteAn(saite, anschlag);
@@ -318,11 +399,15 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
         const double verh = fk / f1;
         const double sigmaFrueh = w.sigmaFrueh1 * std::max(1.0, 1.0 + w.hoch * (verh * verh - 1.0));
         const double sigmaSpaet = sigmaFrueh * w.spaetJeFrueh;
-        const double sigmaSteg = (sigmaFrueh - sigmaSpaet) / w.chor;
+        // P3-1 a: die zweite Stufe ist der innere Verlust, die erste dazu der senkrechte am Steg; waagrecht
+        // nimmt der Steg im Verhaeltnis h
+        const double sigmaSaite = sigmaSpaet;
+        const double sigmaV = (sigmaFrueh - sigmaSaite) / w.chor;
+        const double sigmaH = w.verhaeltnisH * sigmaV;
         std::vector<double> omega;
         for (const double c : cents) omega.push_back(omegaK * std::exp2(c / 1200.0));
         const double sinus = std::sin(k * pi * w.stelle);
-        for (const ChorMode& m : chorModen(omega, sigmaSpaet, sigmaSteg))
+        for (const EbenenMode& m : ebenenModen(omega, w.deltaCent, w.gamma, sigmaSaite, sigmaV, sigmaH))
         {
             Mode mode;
             mode.eingang = (b0 / omegaK) * m.anteil * sinus;
@@ -336,7 +421,14 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
             mode.steg = k * pi * w.t0 / w.laenge * std::cos(w.winkel);
             mode.teilton = k;
             mode.hz = fk;
-            moden.push_back(mode);
+            // nur, was zaehlt: mit γ = 0 bleibt die waagrechte Seite einer senkrechten Mode beim Zerlegen
+            // nur im Rauschen (um 10⁻¹⁷) von null verschieden
+            double groesste = 0.0;
+            for (const Komplex& f : m.form) groesste = std::max(groesste, std::abs(f));
+            for (std::size_t i = 0; i < m.form.size(); ++i)
+                if (m.form[i] != Komplex(0.0, 0.0) && std::abs(m.form[i]) >= 1e-12 * groesste)
+                    mode.form.emplace_back(static_cast<int>(i), m.form[i]);
+            moden.push_back(std::move(mode));
         }
     }
     std::vector<double> summe(mono.size(), 0.0);

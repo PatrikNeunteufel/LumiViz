@@ -623,10 +623,14 @@ struct Instrument
 // Fassung 17 (S150, Stufe 31c-7, Entscheid SB1 a): `soundboard` traegt nur `body` — den
 // Verweis auf einen Koerper (`lib:<name>`, immer, leer = ohne Boden); `amount` faellt weg
 // (in Fassung 16 ueberlesen — es wirkte nie). Ein aelteres Programm spielte den Ton ohne Boden.
-// Geschrieben wird Fassung 17.
+// Fassung 18 (S153, Stufe 31d-7, Entscheide P2 a, P3 a, P3-1 a, P7 a): `hammerString` traegt die zweite
+// Schwingungsebene — `polarizationAngle` (γ, Grad), `polarizationDetune` (δ, Cent), `horizontalRatio`
+// (h, σ_H/σ_V), je eine Kurve, immer geschrieben; eine aeltere Datei bekommt fuer sie die Vorgabe wie jede
+// fehlende Kurve. Ein aelteres Programm rechnete jede Saite in einer Ebene.
+// Geschrieben wird Fassung 18.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 17;
+inline constexpr int kInstrumentFassung = 18;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

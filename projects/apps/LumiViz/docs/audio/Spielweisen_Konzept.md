@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.89.0
+> **Version:** 0.90.0
 > **Datum:** 2026-10-25 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a und TS1 a (Patrik S139–S152);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a und TS1 a (Patrik S139–S153);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -2483,6 +2483,168 @@ zwei Stufen. Verworfen: b (jetzt eintragen, was trifft — Werte aus einem Model
 Stufe wieder mit Geraden in dB — dieselbe Größe auf zwei Arten, mit der nachweislich falschen Messung). Kippt auf c, wenn
 Patriks Hörurteil zeigt, dass das Modell nach 31d-4 im Abklingen schon nah genug klingt.
 
+**Lage S153 (Teilplan 31d-7):** `modell.md` §5 schwingt je Saite in einer Ebene und trägt den Vermerk „Weinreichs
+Arbeit selbst nicht gelesen“; die Rechnung (`chorModen`) nutzt die Störung vom Rang eins. Lokal zur zweiten Ebene nur:
+Bank 2000 (MSc) S. 23 (die vertikale Ebene stärker an den Steg gekoppelt, vom Hammer stärker angeregt, beide Ebenen
+untereinander gekoppelt — selbst „a simplification“), Bank 2006 §4.2 S. 54–56 (Resonatorpaar je Teilton als
+Signalmodell; A♯4 „drei Saiten mit je zwei Polarisationen, sechs Moden“), Chabassier, Joly & Chaigne 2013 S. 39 (nur
+Ausblick). Weinreich 1977 (*Coupled Piano Strings*, JASA 62(6), 1474–1484) liegt nicht vor.
+
+✅ **P1 a** (Patrik S153): **31d-7 beginnt mit einer Recherche, gebaut wird danach.** Weinreich 1977 wird beschafft
+(Patrik über die Bibliothek, oder Download mit Freigabe, wenn frei zugänglich); ein Agent sucht frei zugängliche
+Arbeiten, die zwei Ebenen mit Kopplung am Steg in Gleichungen fassen (etwa Aramaki et al., Bensa), Bericht unter
+`docs/modellierung/hammer-saite/recherche/`, PDFs nur lokal unter `quellen/`. `modell.md` §5 wird nach den gelesenen
+Gleichungen neu gefasst, der Chor aus S146 eingeschlossen; der Vermerk „nicht gelesen“ entfällt oder bleibt mit der
+Stelle, an der etwas fehlt. Grund: N2 a legt die Korrektur ins Modell — auf einer ungelesenen Grundlage verschiebt sie
+den Fehler nur (der Chor aus S146 nach Banks Zusammenfassung zeigte in S152 Auslöschungen, die kein Flügel hat); das
+Setzen deckt eine falsche Form nicht sicher auf (31d-6: treffende Werte mit fragwürdigen Parametern). Verworfen: b
+(eigene Herleitung auf den vorliegenden Quellen), c (Signalmodell nach Bank 2006 ohne Kopplung — 31e und 31f brauchen
+die Kopplung am Steg). Kippt auf b, wenn Weinreich 1977 nicht zu bekommen ist und die Recherche keine frei zugängliche
+Arbeit mit den Gleichungen findet.
+
+**Befund S153 (Recherche nach P1 a):** Bericht `docs/modellierung/hammer-saite/recherche/2026-10-25_S153_zweite_polarisation.md`
+(Agent), Lesenotiz `…/2026-10-25_S153_lesenotiz_cuenca_tan.md` (selbst gelesen). Weinreich 1977 nicht frei (JASA,
+Bezahlschranke). Geladen nach `quellen/`: Cuenca & Caussé 2007 (ICA), Tan 2017 (Dissertation), Miranda Valiente et al.
+2024 (Una corda, CC BY 4.0), Tan, Touzé & Cotté 2015. Drei Wege für die zweite Ebene: verstimmte Eigenrichtungen der
+Saite, gegen die Achsen des Stegs gedreht (Tan §3.5, §5.1.5, Kap. 7: am Prüfstand 7°, die Rechnung brauchte 22°); ein
+Kreuzterm der Admittanz des Stegs (Cuenca Gl. 10); die Drehung des Stegs um die Saitenachse (Tan Gl. 5.16e). Keine
+Werte für einen Flügel. Rechnung (Claude): der Verlustanteil des Stegs ist eine symmetrische 2×2-Matrix — gedreht auf
+Hauptachsen zählt für das Abklingen nur der Winkel zwischen Eigenrichtungen der Saite und diesen Achsen; Kreuzterm und
+Drehung (in ihrem Verlustanteil) stecken darin.
+
+✅ **P2 a** (Patrik S153): **Je Saite zwei Eigenrichtungen, gegeneinander um δ verstimmt und um den Winkel γ gegen die
+Senkrechte des Stegs gedreht; der Steg dämpft in seinen Achsen senkrecht mit σ_V und waagrecht mit σ_H, ohne eigenen
+Kreuzterm.** Der Hammer stößt senkrecht, in den Boden geht die senkrechte Kraft; mit γ = 0 bekommt die zweite Ebene
+nichts, der Ton rechnet wie bisher. Grund: trägt die Wege aller drei Quellen ohne doppelte Größe — Kreuzterm und
+Drehung stecken in γ, die Eigenverstimmung in δ; doppelte Größen hätten wie in 31d-6 Parameter ergeben, die nicht
+steuern, was am Hörort gemessen wird. Verworfen: b (dazu σ_VH — im Abklingen mit γ vertauschbar, das Setzen trennt sie
+nicht), c (nur Kreuzterm, ohne Eigenrichtungen — lässt Tan §3.5 weg), d (Steg als Oszillatoren nach Tan S200-B201 —
+keine Werte für einen Flügel; senkrecht gehört die Frage nach der Herkunft zu P3). Kippt auf b, wenn das Setzen an
+*Salamander* zwei Stufen und Tiefe der Einbrüche nicht zugleich trifft; auf d, wenn die senkrechte Kopplung aus der
+Mobilität des Bodens kommt und die Verschiebung der Frequenzen hörbar fehlt.
+
+✅ **P3 a** (Patrik S153; im Rahmen von UF8 a — Verluste aus den gemessenen Abklingzeiten): **`decay` und `lateDecay`
+bleiben die gemessenen Stufen; neu `polarizationAngle` (γ, Grad), `polarizationDetune` (δ, Cent) und
+`horizontalShare` h (0 … 1, Anteil der zweiten Stufe, der waagrecht über den Steg geht).** σ_s = (1 − h)·σ_spät,
+N·σ_H = h·σ_spät, N·σ_V = σ_früh − σ_s. Vorgabe h = 0, vorläufig ohne Quelle, gesetzt erst mit UF8 b (wenn der innere
+Verlust getrennt bekannt ist); 31d-7 setzt γ und δ; die Datei schreibt h immer. Grund: die Form von P2 a vollständig in
+der Datei, ohne etwas zu setzen, das niemand messen kann; mit h = 0 rechnet a wie b, und UF8 b füllt ein bestehendes
+Feld statt einer neuen Fassung. Verworfen: b (σ_H fest in σ_s, keine Kurve — mit UF8 b dann neu einzuführen), c (drei
+physikalische Abklingzeiten — zwei Stufen gemessen, drei gesetzt, der Fall aus 31d-6). Kippt auf b, wenn UF8 b nicht
+mehr kommen soll; auf c, wenn eine Quelle zum inneren Verlust von Klaviersaiten auftaucht. **Die Ableitung von h
+ist durch P3-1 a ersetzt** (unten).
+
+✅ **P4 a** (Patrik S153): **S2 a um zwei Ziele erweitert: γ aus dem Knick (`knickS` von Teilton 1 an Tasten mit zwei
+Stufen), δ aus der Schwebung an Tasten mit einer Saite (`schwebungCent`), darüber den letzten Wert fortgeführt; `detune`
+bleibt ab zwei Saiten das Ziel der Schwebung, mit δ als fester Kurve. Die Tiefe der Einbrüche wird Prüfgröße:**
+`tiefeDb` von Teilton 1–3 in `verdichte` (Median über v6–v16), Salamander neu gemessen, in `werte/salamander_c5.txt`;
+der dauerhafte Test prüft sie an jeder dritten Taste mit einer Toleranz aus der Streuung über die Ebenen. Verfahren wie
+S3 a. Grund: jeder Parameter steuert, woran er gemessen wird (die Lehre aus 31d-6); die Tiefe, an der N2 a hängt, prüft,
+ohne selbst angepasst zu werden. Preis: δ über F♯1 ohne Quelle als gleichbleibend angenommen. Verworfen: b (Tiefe als
+Ziel von γ — träfe immer, auch aus falschem Grund), c (gemeinsamer Ausgleich — findet Werte gerade dort, wo die Größen
+nicht getrennt sind), d (γ und δ aus Tan — Prüfstand mit gezupfter Saite; Tan selbst brauchte 22° statt 7°). Kippt auf
+b, wenn der Knick zu unsicher ist (zu wenige Tasten mit `zweiStufenAnteil` über 50 %); beim δ auf eine eigene Annahme
+(etwa δ proportional zu `detune`), wenn die Tiefe ab zwei Saiten mit fortgeführtem δ nicht in der Toleranz bleibt.
+
+✅ **P5 a** (Patrik S153): **Spannung und Anregung der Längsmoden aus beiden Ebenen nach Bank 2006 Gl. 2.9–2.10**
+(Σ n²(y_n² + z_n²), Produkte y_n·y_{n+3} + z_n·z_{n+3}), **je Saite aus den Eigenvektoren statt mit Y/N**, die
+Längskraft über die Saiten summiert; keine Rückwirkung auf die Quermoden. Mit γ = 0 rechnet eine Taste mit einer Saite
+Bit für Bit wie bisher; im Chor ändert sich die Längskraft (die Näherung entfällt, ebenso der Vermerk in `modell.md`
+§6). Grund: Gl. 2.9 — die Spannung jeder Saite aus ihren beiden Ebenen; Y/N gibt in den Gegenlagen der zweiten Stufe
+fast keine Spannung, obwohl jede Saite schwingt. Verworfen: b (beide Ebenen, Y/N bleibt), c (wie heute), d (dazu
+Rückwirkung nach Kirchhoff-Carrier — nach Tan 2015 erst über einer Schwelle, bricht die Zerlegung in feste Moden auf).
+Kippt auf b, wenn die Rechenzeit je Saite und Ebene im Bass zu teuer wird (Grenze in P6); auf d, wenn Patriks Hörurteil
+im Nachklang lauter Töne ein Wandern der Klangfarbe vermisst.
+
+✅ **P6 a** (Patrik S153): **Ein eigener kleiner Löser für allgemeine komplexe Matrizen** (ohne Qt und `windows.h`,
+IK1; hinter eigener Schnittstelle): Hessenberg-Form, QR mit Verschiebung, Eigenvektoren durch inverse Iteration
+nachgeschärft; eine schon diagonale Matrix (eine Saite, γ = 0) übernimmt er unverändert — das hält P5 a Bit für Bit.
+Moden mit einem Beitrag vom Hammer zum Steg unter 10⁻⁶ des größten im Teilton fallen weg (mit γ = 0 die waagrechten).
+Tests gegen Eigen dicht (nur Tests), gegen `chorModen` bei γ = 0 auf 10⁻¹², ein Fall mit zusammenfallenden
+Eigenwerten. Rechenzeit im Fall „Loop Hammer-Ton 31b-3 Rechenzeit“; **Grenze: höchstens das Doppelte von heute im Bass
+(4,6 % der Echtzeit), darüber Rückfrage.** Grund: trägt den Fall ohne oder mit sehr kleiner Verstimmung, in dem
+Durand–Kerner und die geschlossenen Eigenvektoren nachgeben (der Bereich aus 31d-6), und künftige Kopplungen jenseits
+von Rang zwei (31e, P2 → b/d). Verworfen: b (`chorModen` auf Rang zwei erweitert — Bit-Gleichheit im Chor gibt P5 a
+ohnehin auf), c (Eigen in die App — große Bibliothek für 6×6, kehrt „Eigen nur an Tests“ um). Kippt auf b, wenn
+Durand–Kerner mit Verschiebung den Fall zusammenfallender Eigenwerte ebenso sauber trägt; auf c, wenn der eigene Löser
+fehleranfällig ist (Eigenvektoren bei enger Verstimmung gegen Eigen über 10⁻⁹).
+
+✅ **P7 a** (Patrik S153): **`.lvinst` Fassung 18; `polarizationAngle`, `polarizationDetune`, `horizontalShare` im
+Block der Hammer-Saite, immer geschrieben; eine Datei bis Fassung 17 bekommt für sie die Vorgabe wie jede fehlende
+Kurve.** Grenzen: γ 0 … 90° (die Spiegelung der waagrechten Richtung ändert nichts), δ 0 … 20 Cent (die erste
+Eigenrichtung ist die tiefere), h 0 … 1. Danach nach Steckbrief: Fassungs-Literale in `tests/`, `*Loop Werte*`,
+`klangfassung.txt` neu (nur Abdrücke); `kKlangfassung` hochgezählt. Grund: eine Regel — eine fehlende Kurve bekommt die
+Vorgabe, die Vorgabe ist das beste gemessene Modell; kein mitgeliefertes Instrument trägt bis 31h eine Hammer-Saite,
+eingefrorene Clips schützt die Klangfassung. Verworfen: b (ältere Dateien neutral — eine zweite Bedeutung von „fehlt“),
+c (keine neue Fassung — ältere Programme überlesen still, die Literale der Tests sähen nichts). Kippt auf b, wenn eigene
+Instrumente mit Hammer-Saite unverändert klingen sollen.
+
+✅ **P8 a** (Patrik S153): **Jede Zusage aus P2 a bis P6 a bekommt einen Test.** (1) Bezug vor dem Umbau:
+`LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1` legt Prüfsummen einiger Töne nach `werte/hammer_bezug.txt` (eine und drei Saiten,
+drei Stufen, mit und ohne Dämpfer, je Compiler); ohne die Variable bei einer Saite und γ = 0 Bit für Bit, im Chor mit
+Toleranz (P5 a). (2) Löser: `test_LoopKleinEigen.cpp` gegen Eigen dicht, Diagonale unverändert, gegen `chorModen` bei
+γ = 0 auf 10⁻¹², zusammenfallende und eng verstimmte Eigenwerte, Eigenvektoren auf 10⁻⁹. (3) Am gerechneten Ton: eine
+Saite mit γ, δ > 0 zwei Stufen ohne Chor; an C4 flachere Einbrüche mit γ; h > 0 verkürzt die zweite Stufe; mit γ = 0
+bekommt die waagrechte Ebene nichts; Phantome in der zweiten Stufe (P5 a); Rechenzeit im Bass unter 4,6 %. (4) Datei:
+Fassung 18 hin und zurück, 17 bekommt die Vorgabe, Grenzen. (5) Messung: `tiefeDb` in `verdichte` mit synthetischem
+Fall; Salamander neu, `werte/salamander_c5.txt` neu. (6) Der dauerhafte Test wieder mit `decay`, `highDecay`,
+`lateDecay`, `detune`, dazu γ, δ und die Tiefe. (7) Werkzeug `LUMIVIZ_31D7_BILD=<Ordner>`: Hüllkurven der Teiltöne 1–3
+von Modell und *Salamander* als PNG, angesehen vor dem Setzen. Am Ende jedes Teilschritts beide Compiler und der volle
+Lauf (UF17 a). Grund: die Bezugsdatei muss vor dem ersten Eingriff entstehen; ob der Ton gleich bleibt, zeigt nur der
+Ton; die Fälle am Ton prüfen die Physik unabhängig von *Salamander* (das Setzen fand in 31d-6 auch mit falschem Modell
+treffende Werte). Verworfen: b (ohne Bezugsdatei — der Vergleich der Löser prüft nur Eigenwerte), c (nur Löser und
+dauerhafter Test). Kippt auf b, wenn die Prüfsummen schon zwischen zwei Läufen desselben Compilers verschieden sind.
+
+✅ **ZS1 a** (Patrik S153, auf seine Frage „zwei drei Teile zusammen“): **31d-7 in drei Teilschritten statt neun, die
+Nummern bleiben als Punkte darin: A Modell (1–5), B Messung und Setzen (6–7), C Hörproben und Abschluss (8–9).** In A
+zuerst der Bezug, unter beiden Compilern zweimal verglichen, erst dann der Eingriff; je Punkt eng unter Release-clang.
+Am Ende von A, B, C je beide Compiler, der volle Lauf (UF17 a) und eine Commit-Message. Grund: die Grenzen liegen, wo
+eine Änderung fertig und für sich prüfbar ist — nach A rechnet das Modell vollständig, ein Stand nach 3 oder 4 wäre ein
+halbes Modell; die engen Tests je Punkt zeigen Fehler, wo sie entstehen. Verworfen: b (vier Teilschritte: 1–3, 4–5,
+6–7, 8–9), c (neun wie geplant). Kippt auf b, wenn in A nach den Ebenen etwas nicht schnell zu klären ist — dann nach
+Punkt 3 abschließen und committen (vorher in einem Satz vorgelegt).
+
+**Befund S153 (31d-7 A, Punkt 3):** mit der Ableitung aus P3 a (σ_s = (1 − h)·σ_spät, N·σ_H = h·σ_spät, N·σ_V =
+σ_früh − σ_s) fällt σ_s bei einer Saite ganz heraus — A = −σ_früh·e_V·e_Vᵀ − σ_spät·e_H·e_Hᵀ, h ohne Wirkung (am Ton
+5,55386 gegen 5,55386 dB/s); im Chor klingen die Gegenlagen mit σ_s, also mit h > 0 langsamer als `lateDecay` (h = 0,5:
+langsamste Mode 0,29 gegen 0,43 1/s). h verschöbe, was `lateDecay` bedeutet — die Verflechtung aus 31d-6.
+
+✅ **P3-1 a** (Patrik S153): **h ist das Verhältnis des Stegs waagrecht zu senkrecht, σ_H = h·σ_V; der innere Verlust
+bleibt σ_s = σ_spät, N·σ_V = σ_früh − σ_spät wie vor 31d-7.** Feld `horizontalRatio` (Code `waagrechtVerhaeltnis`),
+0 … 1, Vorgabe 0 — mit h = 0 wie bisher. Grund: ein Feld mit festem Sinn, das nicht verschiebt, was andere bedeuten —
+`lateDecay` bleibt der Verlust der Gegenlagen, `decay` der der senkrechten Gleichlage; wirkt h, verkürzt es physikalisch
+richtig auch bei einer Saite die zweite Stufe (gemessen 8,24 gegen gerechnet 8,49 dB/s bei h = 0,5); eine Eigenschaft
+des Stegs (Weinreich, Cuenca), die UF8 b aus der Mobilität nehmen kann. Verworfen: b (P3 a bleibt, nur richtig
+beschrieben — schreibt die Verflechtung fest), c (keine Kurve, wie P3 b — schiebt sie auf eine neue Fassung). Kippt auf
+c, wenn UF8 b die waagrechte Mobilität nicht liefern kann (der Körper aus 31c rechnet nur senkrecht).
+
+**Befund S153 (31d-7 A, Punkt 4, Rechenzeit):** allein am kühlen Rechner Taste 40 bei 4,3–4,4 % der Echtzeit (nachdem
+die Längskraft nur noch die getragenen Stellen rechnet), Taste 21 bei 3,0–3,2 %, Taste 60 bei 2,3–2,5 %; in einem
+Bereichslauf gedrosselt bis 5,7 % (Taste 40) — eine Prüfung gegen die Wanduhr hängt an der Temperatur.
+
+~~**RZ1 a**~~ (Patrik S153, gekippt): Prüfung im Test gegen eine Eichschleife im selben Lauf, das Beste aus fünf. Gebaut;
+allein Verhältnis 0,0232–0,0241 (Eichung 1,84–1,87 ms), im Bereichslauf 0,0153 (Eichung 3,23 ms) — 35 % Streuung,
+der Kipppunkt (über 20 %) greift: die kurze Rechenschleife drosselt anders als der Ton.
+
+✅ **RZ1-1 a** (Patrik S153): **Der Fall Rechenzeit meldet nur Zahlen; die Grenze von 4,6 % (P6 a) prüft Claude am Ende
+jedes Teilschritts von Hand** — `*31b-3 Rechenzeit*` dreimal allein, vorher die Taktprobe (Temperatur über Libre
+Hardware Monitor), Ergebnis im Report; die Eichung ist wieder aus dem Code, der Handschritt steht im Steckbrief.
+Grund: ein Test, der unter Last anders urteilt als in Ruhe, belegt nichts; die Grenze ist eng (kühl 4,3–4,5 %).
+Verworfen: b (bessere Eichschleife — offen, ob sie das Drosseln abbildet), c (Absicherung nach oben mit 10 % — eine
+Grenze ohne Quelle). Kippt auf c, wenn Patrik die Absicherung gegen grobe Ausreißer auch zwischen den Teilschritten
+will.
+
+**Befund S153 (31d-7 A, voller Lauf):** der dauerhafte Test (31d-4) misst an den Tasten mit Chor die Phantome 5,1–7,7 dB
+neben *Salamander* (MIDI 36, 39, 42, 45; Grenze 3 dB) — die Längskraft je Saite (P5 a) macht sie stärker
+(Σ y_j² ≥ N·Ȳ²); der Winkel war in 31d-4 mit Y/N gesetzt. Tasten mit einer Saite unverändert (Bit für Bit), B unverändert.
+
+✅ **WK1 a** (Patrik S153): **Der dauerhafte Test setzt die Prüfung des Winkels an den Tasten mit Chor (MIDI 33–45) bis
+31d-7 B Punkt 7 aus,** benannt im Test und hier; an den Tasten mit einer Saite (21–30) prüft er weiter; B setzt den Winkel
+mit γ und δ neu, danach wieder alle. Geprüft bis dahin 7 B-Werte und 4 Winkel. Grund: wie N2 a — ein jetzt mit γ = 0
+gesetzter Winkel stammte aus einem Modell, das B sofort anders rechnet. Verworfen: b (jetzt neu setzen —
+Zwischenstand in der Vorgabe), c (A rot abschließen). Kippt auf b, wenn B sich verzögert (etwa weil Weinreich 1977
+einen Umbau verlangt).
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -2694,6 +2856,28 @@ Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messc
 7. *Zweite Polarisation* (**Plan erweitern nach N2 a, S152; Teilplan vorzulegen**): je Saite zwei Schwingungsebenen mit
    verschiedener Kopplung an den Steg (`modell.md` §5, nach Weinreich); danach mit `LUMIVIZ_31D4_SETZEN` neu setzen, der
    dauerhafte Test wieder mit `decay`, `highDecay`, `detune` und `lateDecay`, die vierte Fassung der Hörproben.
+   **Begonnen S153:** P1 a (zuerst Recherche und Weinreich 1977, dann die übrigen Umfangsfragen), Recherche, P2 a bis P8 a.
+   **Fester Teilplan 31d-7** (S153; Nummern fest, Wachstum als Entscheid „Plan erweitern“; am Ende jedes Teilschritts
+   beide Compiler und der volle Lauf, UF17 a; neuer Rechencode ohne Qt, IK1). **Nach ZS1 a drei Teilschritte:
+   A = Punkte 1–5, B = 6–7, C = 8–9; die Prüfung nach UF17 a am Ende von A, B, C:**
+   1. *Bezug* (P8 a 1): Fall mit `LUMIVIZ_HAMMER_BEZUG_SCHREIBEN`, die Hammer-Saite im Test ausgeschrieben (Stand vor
+      31d-7, unabhängig von `baueVorgabe()`); `werte/hammer_bezug.txt` je Compiler, zweimal geschrieben und verglichen
+      (Kipppunkt von P8 a) — vor jedem Eingriff in den Code.
+   2. *Löser* (P6 a): kleiner komplexer Eigenlöser hinter eigener Schnittstelle, Modul-Doku; `test_LoopKleinEigen.cpp`.
+   3. *Zwei Ebenen* (P2 a, P3 a): Moden je Teilton aus der Matrix 2N × 2N, Anregung und Abnahme senkrecht, kleine
+      Moden fallen weg; die drei Kurven in `HammerSaite` mit vorläufiger Vorgabe γ = δ = h = 0 (der Ton bleibt bis zum
+      Setzen wie vorher); Fälle „31d-7 …“ am Ton mit ausgeschriebenen γ, δ, h (P8 a 3 ohne Phantome).
+   4. *Längsschwingung* (P5 a): beide Ebenen, je Saite aus den Eigenvektoren; Fall Phantome in der zweiten Stufe;
+      Rechenzeit gegen die Grenze von P6 a (darüber Rückfrage).
+   5. *Datei* (P7 a): Fassung 18, Grenzen, Literale in `tests/`, `*Loop Werte*`, Klangfassung (`kKlangfassung`).
+   6. *Messung* (P4 a, P8 a 5 und 7): `tiefeDb` in `verdichte`, synthetischer Fall; *Salamander* neu gemessen; Werkzeug
+      `LUMIVIZ_31D7_BILD`; Bilder von Modell (mit γ von Hand) und *Salamander* angesehen.
+   7. *Setzen* (P4 a, S3 a): Werkzeug um γ und δ erweitert, `LUMIVIZ_31D4_SETZEN` gefahren, Vorgabe in
+      `baueVorgabe()`; der dauerhafte Test voll (P8 a 6); Bilder nach dem Setzen angesehen.
+   8. *Hörproben* (N2 a): vierte Fassung mit `LUMIVIZ_31D_WAV` und `LUMIVIZ_SALAMANDER`.
+   9. *Abschluss 31d-7*: `modell.md` §2, §5, §6, §9, §10 nach den gelesenen Quellen (P1 a; Abgleich mit Weinreich 1977,
+      falls beschafft), Konzept, `Offene_Punkte`, Steckbrief; Kipppunkte von P2 a bis P8 a geprüft; danach weiter mit
+      dem Rest von 31d-6 (Winkel an MIDI 33, SB1 a, HT2, Stufenschritt).
 
 **31e — Mitschwingen** (UF8 a, UF9 a).
 1. *Messteil* (UF9 a): beide Wege als Prototyp an einer Fassung der Nocturne von Hand mit Pedal-Spur; Kraft durch die
@@ -3598,6 +3782,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.90.0 | 2026-10-25 | Session 153. Teilplan 31d-7 begonnen: Lage der Quellen zur zweiten Ebene; P1 a (Recherche und Weinreich 1977 vor dem Bau); Befund der Recherche (Cuenca & Caussé 2007, Tan 2017); P2 a (zwei Eigenrichtungen mit δ und γ, Steg σ_V/σ_H ohne Kreuzterm); P3 a (Kurven `polarizationAngle`, `polarizationDetune`, `horizontalShare`); P4 a (γ aus dem Knick, δ an Tasten mit einer Saite, Tiefe der Einbrüche als Prüfgröße); P5 a (Längsschwingung aus beiden Ebenen, je Saite); P6 a (eigener Löser, Grenze der Rechenzeit); P7 a (`.lvinst` Fassung 18); P8 a (Tests); fester Teilplan 31d-7 (neun Punkte), ZS1 a (drei Teilschritte A, B, C); Befund zu P3 a, P3-1 a (h = Verhältnis waagrecht zu senkrecht); Befund Rechenzeit, RZ1 a (gekippt), RZ1-1 a (Grenze von Hand); Befund Winkel im Chor, WK1 a (bis B ausgesetzt). |
 | 0.89.0 | 2026-10-25 | Session 152. 31d-6 begonnen: Befund an den Hüllkurven (das Modell löscht an den Einbrüchen fast vollständig aus); N1 a (Messung nach Schroeder, gebaut, synthetische Fälle mit Auslöschung); Befund Setzen mit der neuen Messung (konvergiert schlecht); N2 a (Messung bleibt, zweite Polarisation als 31d-7 „Plan erweitern“, dauerhafter Test bis dahin nur B und Winkel); `werte/salamander_c5.txt` neu gemessen. |
 | 0.88.0 | 2026-10-25 | Session 152. 31d-5 gebaut: Hörproben gegen Salamander (UF7 a) und für den Stufenschritt (UF4 a), gleich laut nach R128; Befund zur Zuordnung der Stufen (mf des Modells ↔ v2–v5). |
 | 0.87.0 | 2026-10-25 | Session 152. S1 a (durch das Modell hindurch setzen), S2 a (Ziel je Parameter), Befund erster Lauf, S3 a (halber Schritt, acht Runden, Verstimmung nur bei zwei Saiten, zweite Stufe Kipppunkt); 31d-4 gebaut: Durchgänge im Werkzeug, Vorgabe gesetzt (decay, highDecay, detune, B im Bass, bridgeAngle, undampedFrom 89), der dauerhafte Test. |

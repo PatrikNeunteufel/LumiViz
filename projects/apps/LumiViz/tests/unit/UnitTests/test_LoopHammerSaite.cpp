@@ -15,7 +15,7 @@
  *   ohne Ueberschwingen, die logarithmische Skala, Richten.
  * - Die Vorgaben: Hammer und Saiten nach Chabassier & Durufle RT-0425 (HT1 a, HT2 a), B nach
  *   Rigaud Gl. 5, der Chor.
- * - Die Datei: Fassung 17 (seit S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
+ * - Die Datei: Fassung 18 (seit S153: die zweite Ebene, P7 a; S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
  *   `keyboard`; nur die Paare aus HA2 a; die Tastatur in ihren Grenzen.
  * - Die Anschlagstaerke (HK2 a): Stufen, Hammergeschwindigkeit, Rest, `:a<stufe>`.
  * - Die Hammer-Saite ist keine gegriffene Saite; seit 31b klingt sie (gemessen in
@@ -206,14 +206,15 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         instrument.tastatur->mitte = PedalArt::Moderator;
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 17);  // seit S150: soundboard.body (SB1 a)
+        CHECK(json.value(QStringLiteral("version")).toInt() == 18);  // seit S153: die zweite Ebene (P7 a); S150: soundboard.body
         const QJsonObject schicht = json.value(QStringLiteral("layers")).toArray().first().toObject();
         CHECK(schicht.value(QStringLiteral("stringModel")).toString() == QStringLiteral("modal"));
         CHECK(schicht.value(QStringLiteral("excitation")).toString() == QStringLiteral("hammer"));
         const QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
         for (const char* feld : {"inharmonicity", "decay", "lateDecay", "highDecay", "strings", "detune", "hammerMass", "hammerStiffness",
                                  "hammerExponent", "strikePosition", "damper", "stringLength", "stringMass",
-                                 "longitudinalRatio", "bridgeAngle"})
+                                 "longitudinalRatio", "bridgeAngle", "polarizationAngle", "polarizationDetune",
+                                 "horizontalRatio"})
         {
             CAPTURE(feld);
             const QJsonObject k = hammer.value(QLatin1String(feld)).toObject();
@@ -320,6 +321,34 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
             CHECK(pedalErlaubt(PedalPlatz::Links, art));
         CHECK_FALSE(pedalErlaubt(PedalPlatz::Mitte, PedalArt::UnaCorda));
         CHECK(pedalErlaubt(PedalPlatz::Rechts, PedalArt::Keins));
+    }
+    SUBCASE("Fassung 17 ohne die zweite Ebene: die Vorgabe; die Grenzen (P7 a)")
+    {
+        Instrument instrument = fluegel();
+        QJsonObject json = alsJson(instrument);
+        json[QStringLiteral("version")] = 17;
+        QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+        QJsonObject schicht = schichten.first().toObject();
+        QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
+        for (const char* feld : {"polarizationAngle", "polarizationDetune", "horizontalRatio"}) hammer.remove(QLatin1String(feld));
+        schicht[QStringLiteral("hammerString")] = hammer;
+        schichten[0] = schicht;
+        json[QStringLiteral("layers")] = schichten;
+        Instrument gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        const HammerSaite& g = gelesen.schichten[0].hammerSaite;
+        CHECK(g.polarisationWinkelGrad == hammerSaiteVorgabe().polarisationWinkelGrad);
+        CHECK(g.polarisationCent == hammerSaiteVorgabe().polarisationCent);
+        CHECK(g.waagrechtVerhaeltnis == hammerSaiteVorgabe().waagrechtVerhaeltnis);
+        // ausserhalb der Grenzen: γ 0 … 90°, δ 0 … 20 Cent, h 0 … 1
+        HammerSaite s = hammerSaiteVorgabe();
+        s.polarisationWinkelGrad = kurve({{21, -5.0}, {108, 120.0}});
+        s.polarisationCent = kurve({{21, -1.0}, {108, 30.0}});
+        s.waagrechtVerhaeltnis = kurve({{21, -0.5}, {108, 2.0}});
+        richteHammerSaite(s);
+        CHECK(s.polarisationWinkelGrad == kurve({{21, 0.0}, {108, 90.0}}));
+        CHECK(s.polarisationCent == kurve({{21, 0.0}, {108, 20.0}}));
+        CHECK(s.waagrechtVerhaeltnis == kurve({{21, 0.0}, {108, 1.0}}));
     }
     SUBCASE("eine Fassung von morgen liest dieses Programm nicht")
     {

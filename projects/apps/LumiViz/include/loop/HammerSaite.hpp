@@ -151,6 +151,17 @@ struct HammerSaite
     /// Grad, 0 … 10 — die Laengskraft wirkt mit sin α, die Querkraft mit cos α
     /// (Chabassier, Joly & Chaigne 2013, Gl. 21).
     Tastenkurve stegWinkelGrad;
+    // --- die zweite Schwingungsebene (31d-7, P2 a, P3 a): je Saite zwei Eigenrichtungen, die
+    // erste um γ gegen die Senkrechte des Stegs gedreht, die zweite um δ hoeher; der Steg nimmt
+    // senkrecht und waagrecht verschieden (Tan 2017 §5.1.5, Cuenca & Causse 2007) ---
+    /// Polarization angle γ (linear): der Winkel der ersten Eigenrichtung gegen die Senkrechte, in Grad,
+    /// 0 … 90 — mit 0 bekommt die zweite Ebene nichts.
+    Tastenkurve polarisationWinkelGrad;
+    /// Polarization detune δ (linear): so viel hoeher liegt die zweite Eigenrichtung, in Cent, 0 … 20.
+    Tastenkurve polarisationCent;
+    /// Horizontal ratio h (linear, P3-1 a): so viel nimmt der Steg waagrecht im Verhaeltnis zu senkrecht,
+    /// σ_H = h·σ_V, 0 … 1; der innere Verlust bleibt σ_s = σ_spät. Vorlaeufig 0, gesetzt erst mit UF8 b.
+    Tastenkurve waagrechtVerhaeltnis;
     Resonanzboden resonanzboden;
 
     [[nodiscard]] bool operator==(const HammerSaite&) const = default;

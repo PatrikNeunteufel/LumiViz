@@ -15,6 +15,9 @@
  * Der Chor (HT3 a): je Teilton N ≤ 3 Saiten, jede um ihre Verstimmung
  * versetzt, ueber einen gemeinsamen Steg gekoppelt — die Eigenwerte von
  * A = diag(iω_j − σ_s) − σ_b·J geben Schwebung und zweistufigen Ausklang.
+ * Seit 31d-7 (P2 a) schwingt jede Saite in zwei Eigenrichtungen, um γ gegen die
+ * Senkrechte gedreht und um δ verstimmt; der Steg nimmt senkrecht σ_V, waagrecht
+ * σ_H (`ebenenModen`, zerlegt mit `loop/Eigenzerlegung`).
  *
  * Derselbe Aufruf ergibt dieselben Werte. Kein Qt-Widget, keine Audio-Engine.
  */
@@ -59,6 +62,29 @@ struct ChorMode
 /// `omega`, dem Verlust jeder Saite `sigmaSaite` und dem Verlust am Steg
 /// `sigmaSteg`. Ohne Verstimmung bleibt nur die Gleichlage.
 [[nodiscard]] std::vector<ChorMode> chorModen(const std::vector<double>& omega, double sigmaSaite, double sigmaSteg);
+
+/// Eine Mode des Chors in zwei Ebenen (31d-7, P2 a): λ, ihr Anteil g = (c·v)(w·b)/N an der Antwort
+/// vom Hammer zum Steg (c = b: der senkrechte Anteil jeder Stelle) und `form` — je Stelle 2j + a
+/// (Saite j, Eigenrichtung a) die Auslenkung je Einheit des Zustands, der mit g angestossen wird:
+/// v_i / (c·v).
+struct EbenenMode
+{
+    std::complex<double> lambda;
+    std::complex<double> anteil;
+    std::vector<std::complex<double>> form;
+};
+
+/// Unter diesem Anteil (gegen den groessten des Teiltons) faellt eine Mode weg (P6 a) — mit γ = 0
+/// die waagrechten.
+inline constexpr double kEbenenAnteilMin = 1e-6;
+
+/// Die Moden eines Teiltons mit N Saiten in je zwei Eigenrichtungen (31d-7, P2 a): `omega` die
+/// Kreisfrequenzen der ersten, die zweite um `deltaCent` hoeher; die erste um `gamma` (rad) gegen
+/// die Senkrechte des Stegs gedreht; `sigmaSaite` der Verlust jeder Saite, `sigmaV` und `sigmaH`
+/// die Verluste senkrecht und waagrecht am Steg auf die Summe. Zerlegt mit `zerlegeKlein`; eine
+/// Saite mit γ = 0 rechnet Bit fuer Bit wie `chorModen`.
+[[nodiscard]] std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double deltaCent, double gamma,
+                                                  double sigmaSaite, double sigmaV, double sigmaH);
 
 /// So lang klingt der Ton nach dem Loslassen nach, in Abtastwerten: mit Daempfer
 /// bis −60 dB unter ihm, ohne bis −60 dB der zweiten Stufe des Grundtons —

@@ -125,6 +125,9 @@ constexpr Grenzen kGrenzeLaenge{0.02, 8.0};
 constexpr Grenzen kGrenzeMasseJeM{0.5, 500.0};
 constexpr Grenzen kGrenzeLaengs{5.0, 40.0};
 constexpr Grenzen kGrenzeWinkel{0.0, 10.0};
+constexpr Grenzen kGrenzePolarisationWinkel{0.0, 90.0};
+constexpr Grenzen kGrenzePolarisationCent{0.0, 20.0};
+constexpr Grenzen kGrenzeVerhaeltnis{0.0, 1.0};
 
 /// Die Tasten der Vorgabe: A0, A1, … A7 und C8.
 constexpr int kVorgabeTasten[] = {21, 33, 45, 57, 69, 81, 93, 105, 108};
@@ -203,6 +206,11 @@ HammerSaite baueVorgabe()
                                          {69, 1.422}, {72, 1.789}, {75, 0.858}, {78, 5.052}, {81, 3.76}, {90, 1.635},
                                          {99, 0.5929}, {102, 1.479}});
     s.daempferS = kurveAusPunkten({{21, 0.8}, {90, 0.2}});
+    // vorlaeufig ohne zweite Ebene (31d-7 A): der Ton rechnet wie vorher, bis 31d-7 B γ und δ an
+    // Salamander setzt (P4 a); h bleibt 0 bis UF8 b (P3 a, P3-1 a)
+    s.polarisationWinkelGrad = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
+    s.polarisationCent = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
+    s.waagrechtVerhaeltnis = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
     return s;
 }
 
@@ -289,6 +297,10 @@ void richteHammerSaite(HammerSaite& saite)
     richteKurve(saite.saitenMasseGm, kGrenzeMasseJeM.von, kGrenzeMasseJeM.bis, v.saitenMasseGm);
     richteKurve(saite.laengsVerhaeltnis, kGrenzeLaengs.von, kGrenzeLaengs.bis, v.laengsVerhaeltnis);
     richteKurve(saite.stegWinkelGrad, kGrenzeWinkel.von, kGrenzeWinkel.bis, v.stegWinkelGrad);
+    richteKurve(saite.polarisationWinkelGrad, kGrenzePolarisationWinkel.von, kGrenzePolarisationWinkel.bis,
+                v.polarisationWinkelGrad);
+    richteKurve(saite.polarisationCent, kGrenzePolarisationCent.von, kGrenzePolarisationCent.bis, v.polarisationCent);
+    richteKurve(saite.waagrechtVerhaeltnis, kGrenzeVerhaeltnis.von, kGrenzeVerhaeltnis.bis, v.waagrechtVerhaeltnis);
     saite.resonanzboden.koerper = saite.resonanzboden.koerper.trimmed();
 }
 
@@ -309,6 +321,10 @@ QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
                        {QStringLiteral("stringMass"), kurveAlsJson(s.saitenMasseGm)},
                        {QStringLiteral("longitudinalRatio"), kurveAlsJson(s.laengsVerhaeltnis)},
                        {QStringLiteral("bridgeAngle"), kurveAlsJson(s.stegWinkelGrad)},
+                       // seit Fassung 18 (P7 a): die zweite Schwingungsebene, immer geschrieben
+                       {QStringLiteral("polarizationAngle"), kurveAlsJson(s.polarisationWinkelGrad)},
+                       {QStringLiteral("polarizationDetune"), kurveAlsJson(s.polarisationCent)},
+                       {QStringLiteral("horizontalRatio"), kurveAlsJson(s.waagrechtVerhaeltnis)},
                        // seit Fassung 17 (SB1 a): nur der Verweis auf den Koerper, immer geschrieben, leer = ohne Boden
                        {QStringLiteral("soundboard"),
                         QJsonObject{{QStringLiteral("body"), s.resonanzboden.koerper}}}};
@@ -332,6 +348,9 @@ HammerSaite hammerSaiteAusJson(const QJsonObject& o)
     s.saitenMasseGm = kurveAusJson(o.value(QStringLiteral("stringMass")));
     s.laengsVerhaeltnis = kurveAusJson(o.value(QStringLiteral("longitudinalRatio")));
     s.stegWinkelGrad = kurveAusJson(o.value(QStringLiteral("bridgeAngle")));
+    s.polarisationWinkelGrad = kurveAusJson(o.value(QStringLiteral("polarizationAngle")));
+    s.polarisationCent = kurveAusJson(o.value(QStringLiteral("polarizationDetune")));
+    s.waagrechtVerhaeltnis = kurveAusJson(o.value(QStringLiteral("horizontalRatio")));
     // Fassung 16 trug `amount` (wirkte nie) — es wird ueberlesen (SB1 a)
     s.resonanzboden.koerper = o.value(QStringLiteral("soundboard")).toObject().value(QStringLiteral("body")).toString();
     return s;
