@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.85.0
+> **Version:** 0.86.0
 > **Datum:** 2026-10-25 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 Teil 1 gebaut)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a und TS1 a (Patrik S139–S152);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -2333,6 +2333,39 @@ Diskant um 0,05 (das Modell setzt vorläufig 0,2 überall). Schwebung der Teilt�
 Direktschall: Bass −14 bis −31 dB, Diskant −5 bis +4,5 dB. Die Phantomteiltöne im Bass streuen stark (−1 bis −54 dB gegen
 den Querteilton) — erst der Vergleich mit dem Modell in Teil 2 deutet sie. Gesetzt wird noch nichts (31d-4).
 
+**Befund S152 (31d-3 Teil 2, dieselbe Messung am Modell):** `LUMIVIZ_31D3_MODELL=<Ordner>` rechnet den Steinway D wie im
+Programm (`rendereTon`, Boden `lib:steinway_d`, Hörorte left/right, 12 s bzw. 8 s gehalten) an den 30 Tasten von
+Salamander mit den Stufen −30 … 0 dB an der Stelle der Ebenen (V1 a), dazu den Glasboden gleicher Dicke an Stufe −8, in
+rund 50 s; Bericht `vergleich.txt` und `modell_steinway.txt` lokal unter `.claude/handover/salamander_31d3/`, dazu
+fünfzehn Modelltöne als WAV. Drei weitere Messfehler am Modell gefunden und behoben (alle Zahlen oben neu gemessen):
+(1) eine Mode des Bodens neben einem schwachen Teilton 1 (rechts am gerechneten C2, 0,927·f1) setzte mit Teilton 2 die
+ganze Reihe falsch (B 0,067) — gesucht wird nur noch im Band, das die Tonhöhe der Taste für Teilton k zulässt (±60 Cent,
+B höchstens 0,02); (2) eine fremde Spitze neben einem schwachen Teilton 2 — der Ausgleich für B lässt Ausreißer über
+max(5 Cent, 4·MAD) fallen; (3) der Pegelumfang aus Teilton 1 ist im Diskant bei leisen Stufen nicht messbar (C8: 110 statt
+51 dB) — er kommt jetzt aus dem Pegel des ganzen Tons. Beim Boden zählen nur Terzbänder bis 60 dB unter dem lautesten.
+Vergleich Salamander / Modell (Auswahl; gesetzt wird in 31d-4 nach UF1 a, UF5 a):
+- **B:** im Bass liegt das Modell um das 1,3- bis 2-Fache über Salamander (A0 2,9 / 2,2, A2 1,4 / 0,7 ·10⁻⁴), ab C4 nahe
+  (C4 3,3 / 2,9, C6 28,5 / 25,7) — B im Bass ist nach UF1 a zu setzen, im Diskant bleibt Rigaud.
+- **Zwei Stufen:** Salamander zeigt sie im Mittelteil in 68–100 % der Messungen (C4 4,1 / 42 s), das Modell fast nie —
+  mit der vorläufigen Verstimmung von 1 Cent trägt die zweite Stufe zu wenig. Die Schwebung misst bei Salamander 1–3 Cent,
+  am Modell 0,2–1,9 Cent, im tiefen Bass keine.
+- **T60 bei f1 (Ausgleich):** im Bass ähnlich (A0 16 / 22 s, C2 19 / 22 s), im Mittelteil das Modell länger (C4 6,1 /
+  11,5 s); `highDecay` am Modell gemessen 0,1–0,6 (gesetzt 0,2), bei Salamander im Bass 0,9–1, C4 0,73, Diskant 0,05.
+- **Helligkeit (V1 a, Teilton 2):** im Diskant wächst sie bei Salamander mit 0,4–1,2 dB je dB, am Modell mit 0–0,2 —
+  der Hammer des Modells macht laut im Diskant kaum heller (Kipppunkt HT2 zu prüfen in der Nacharbeit).
+- **Pegel:** Pegelumfang Salamander v1 → v16 14–39 dB (meist rund 20), Modell −30 → 0 dB 31–51 dB, beide zum Diskant
+  steigend; der Pegel über die Tastatur gegen ihr Mittel verläuft ähnlich (Bass +4 bis +8 dB, Diskant −5 bis −11 dB; C8 am
+  Modell −19).
+- **Direktschall:** Salamander im Bass −14 bis −31 dB, im Diskant −5 bis +4,5; das Modell überall −3 bis +11 dB — es
+  setzt mit voller Stärke ein, wo der Flügel langsamer anschwillt (SB1 a).
+- **Phantome im Bass** (n ≥ 10): am Modell meist 10–20 dB stärker als bei Salamander (−20 bis −35 gegen −35 bis −55 dB) —
+  spricht für einen kleineren Winkel am Steg als die vorläufigen 2°.
+- **Boden (UF6 a):** die Abweichung je Taste vom Mittel der Tastatur, gemittelt: Salamander gegen Holz 10,9 / 12,1 dB
+  (L/R), gegen Glas 12,1 / 13,5 dB, Holz gegen Glas 8,3 / 8,2 dB. Salamander liegt näher am Holz, aber die zwei Böden
+  unterscheiden sich weniger voneinander als jeder von der Aufnahme — der Kipppunkt von UF4 a („Böden nicht mehr zu
+  unterscheiden“) ist nahe, aber nicht erreicht. Das Mittel der Tastatur (Raum, Mikrofon, Flügel) steigt von rund 15 dB
+  unter 100 Hz auf über 60 dB um 4–6 kHz: die Aufnahme ist oben viel heller als das Modell.
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -2528,8 +2561,8 @@ Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messc
 3. *Messung* (UF4 a, UF6 a): Fall `LUMIVIZ_SALAMANDER=<Ordner>` — alle Zeilen der Tabelle A, Boden und Pegel relativ
    (Verhältnis je Taste gegen das Mittel der Tastatur, je Kanal), Direktschall als Befund; nach `werte/salamander_c5.txt`;
    dieselbe Messung am Modell; Bericht der Größen mit Quelle (UF1 a). **Teil 1 gebaut S152** (Salamander gemessen,
-   `werte/salamander_c5.txt`; D1 a, V1 a; Befund unter V1 a); **Teil 2 offen:** dieselbe Messung am Modell, Boden und
-   Pegel relativ (UF6 a), Steigungen der Helligkeit (V1 a), Phantome, Bericht.
+   `werte/salamander_c5.txt`; D1 a, V1 a; Befund unter V1 a); **Teil 2 gebaut S152** (dieselbe Messung am Modell,
+   Boden und Pegel relativ, Helligkeit, Phantome, Bericht; Befund unter V1 a). ✅ 31d-3 fertig.
 4. *Setzen* (UF1 a, UF5 a): die Größen ohne Quelle als Kurven aus der Messung (±10 % im Median, Verstimmung ±0,5 Cent),
    Quelle „gemessen an Salamander (Yamaha C5)“; der dauerhafte Test (Abklingzeiten ±10 %, B ±5 %, Verstimmung ±0,5 Cent,
    Dämpfer ±20 %, jede dritte Taste); `modell.md` §2 nachgezogen.
@@ -3441,6 +3474,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.86.0 | 2026-10-25 | Session 152. 31d-3 Teil 2 gebaut: dieselbe Messung am Modell (Steinway D wie im Programm, Glasboden), Vergleich mit Salamander; Befund drei weitere Messfehler (Mode neben Teilton 1, Ausreißer bei B, Pegelumfang aus Teilton 1) und der Vergleich je Größe; `werte/salamander_c5.txt` neu gemessen. Voller Lauf 1598 / 1598 unter Release-clang und Testing-MSVC. |
 | 0.85.0 | 2026-10-25 | Session 152. Befund Loslassgeräusche und SFZ; D1 a (`undampedFrom` = 89 aus der SFZ, `damper` vorläufig); V1 a (Helligkeit über dem Pegel, Steigung je Teilton); 31d-3 Teil 1 gebaut: Salamander gemessen, `werte/salamander_c5.txt`; Befund Blende am Ende, kurze erste Stufe, Teilton 1 im Bass im Rauschen. Voller Lauf 1595 / 1595 unter Release-clang und Testing-MSVC. |
 | 0.84.0 | 2026-10-25 | Session 152. WL1 a (WAV lesen ohne Qt: `audio/WavFormat.hpp`, `liesWav` ruft ihn); 31d-2 gebaut: `Teiltonmessung.hpp` mit Tests an synthetischen Signalen; Befund zum Boden der Hüllkurven (Mitte unterschätzt, eigener Boden nach Lundeby) und zu kurzen zweiten Stufen. Voller Lauf 1588 / 1588 unter Release-clang und Testing-MSVC. |
 | 0.83.0 | 2026-10-25 | Session 152. 31d-1 gebaut: *Salamander* 48 kHz/24 bit von archive.org geladen (Größe und SHA-256), entpackt nach `…\cmake\Salamander\` mit README; Befund Inhalt (480 Töne, 30 Noten × 16 Stufen, alle PCM 48 kHz/24 bit Stereo, Einsatz bis 28,5 ms); Kipppunkt von UF2 a greift nicht. |

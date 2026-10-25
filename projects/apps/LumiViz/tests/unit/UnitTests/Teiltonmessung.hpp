@@ -15,7 +15,11 @@
  * 2. *Frequenzen:* ein langes Spektrum ab 50 ms nach dem Einsatz (Blackman-Harris, viermal
  *    aufgefuellt, Spitze parabolisch auf dB); Teilton k wird um k·f0·√(1 + B·k²) gesucht, B
  *    und f0 nach jedem gefundenen Teilton neu ausgeglichen: (f_k / k)² = f0² + f0²·B·k²
- *    (Gerade in k², kleinste Quadrate). Fuenf Teiltoene in Folge ohne Spitze beenden die Suche.
+ *    (Gerade in k², kleinste Quadrate) ohne Ausreisser (eine fremde Spitze im Suchfenster, mehr als
+ *    max(5 Cent, 4·MAD) neben der Reihe, zaehlt nicht). Gesucht wird nur im Band, das die Tonhoehe
+ *    der Taste fuer Teilton k zulaesst (`stimmungCent`, `bHoechstens`) — eine Mode des Bodens neben
+ *    einem schwachen Teilton 1 setzte sonst die ganze Reihe falsch. Fuenf Teiltoene in Folge ohne
+ *    Spitze beenden die Suche.
  * 3. *Huellkurven:* je Teilton der Pegel ueber der Zeit aus einer Kurzzeit-FFT (Fenster
  *    `fensterPerioden` Perioden von f0 — der Nachbar liegt am Rand der Hauptkeule; Schritt
  *    `schrittS`), dazu je Rahmen der Boden in der Mitte zu beiden Nachbarn (Rauschen und das
@@ -71,6 +75,11 @@ struct Einstellungen
     double spitzeUeberMedianDb = 20.0;
     /// Die Schwebung wird bis hoechstens hier gesucht.
     double schwebungBisHz = 8.0;
+    /// Teilton k liegt zwischen k·f_Taste·2^(−stimmungCent/1200) und
+    /// k·f_Taste·√((1 + bHoechstens·k²)/(1 + bHoechstens))·2^(stimmungCent/1200) — eine staerkere fremde
+    /// Spitze ausserhalb (eine Mode des Bodens) ist kein Teilton (Befund S152, gerechnetes C2).
+    double stimmungCent = 60.0;
+    double bHoechstens = 0.02;
 };
 
 struct Abklingen
@@ -286,6 +295,50 @@ inline Inharmonie gleicheAus(const std::vector<int>& k, const std::vector<double
     return e;
 }
 
+inline double median(std::vector<double> werte);
+
+/// Wie `gleicheAus`, aber ohne Ausreisser (Befund S152: am gerechneten C2 liegt neben dem schwachen
+/// Teilton 2 eine staerkere fremde Spitze, 166 Cent daneben, und kippte B um das Dreihundertfache):
+/// ausgleichen, die Abweichung jedes Teiltons in Cent, wer mehr als max(5 Cent, 4·1,4826·MAD) daneben
+/// liegt, faellt heraus, bis sich nichts mehr aendert. `gilt` sagt je Punkt, ob er zaehlt.
+inline Inharmonie gleicheAusRobust(const std::vector<int>& k, const std::vector<double>& f, std::vector<bool>& gilt)
+{
+    gilt.assign(k.size(), true);
+    Inharmonie e;
+    for (int runde = 0; runde < 5; ++runde)
+    {
+        std::vector<int> kk;
+        std::vector<double> ff;
+        for (std::size_t i = 0; i < k.size(); ++i)
+            if (gilt[i])
+            {
+                kk.push_back(k[i]);
+                ff.push_back(f[i]);
+            }
+        e = gleicheAus(kk, ff);
+        if (!e.erkannt || kk.size() < 3) return e;
+        std::vector<double> cent(k.size());
+        std::vector<double> betraege;
+        for (std::size_t i = 0; i < k.size(); ++i)
+        {
+            const double soll = k[i] * e.f0 * std::sqrt(std::max(1e-12, 1.0 + e.b * k[i] * k[i]));
+            cent[i] = std::abs(1200.0 * std::log2(f[i] / soll));
+            if (gilt[i]) betraege.push_back(cent[i]);
+        }
+        const double grenze = std::max(5.0, 4.0 * 1.4826 * median(betraege));
+        std::vector<bool> neu(k.size());
+        std::size_t bleiben = 0;
+        for (std::size_t i = 0; i < k.size(); ++i)
+        {
+            neu[i] = cent[i] <= grenze;
+            bleiben += neu[i] ? 1 : 0;
+        }
+        if (neu == gilt || bleiben < 2) return e;
+        gilt = neu;
+    }
+    return e;
+}
+
 inline Abklingen zweiStufen(std::span<const double> pegelDb, double schrittS, std::size_t von, std::size_t bis)
 {
     Abklingen a;
@@ -453,24 +506,59 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
     {
         const double erwartet = k * ih.f0 * std::sqrt(1.0 + ih.b * k * k);
         if (erwartet + 0.25 * ih.f0 >= 0.45 * rate) break;
-        const auto von = static_cast<std::size_t>(std::max(0.0, (erwartet - 0.25 * ih.f0) / binHz));
-        const auto bis = static_cast<std::size_t>((erwartet + 0.25 * ih.f0) / binHz);
+        const double unten = k * nennFrequenz * std::exp2(-einst.stimmungCent / 1200.0);
+        const double oben = k * nennFrequenz * std::sqrt((1.0 + einst.bHoechstens * k * k) / (1.0 + einst.bHoechstens)) *
+                            std::exp2(einst.stimmungCent / 1200.0);
+        const double vonHz = std::max(erwartet - 0.25 * ih.f0, unten);
+        const double bisHz = std::min(erwartet + 0.25 * ih.f0, oben);
+        if (vonHz >= bisHz)
+        {
+            ++fehlend;
+            continue;
+        }
+        const auto von = static_cast<std::size_t>(std::max(0.0, vonHz / binHz));
+        const auto bis = static_cast<std::size_t>(bisHz / binHz);
         const auto [stelle, pegel] = lang.spitze(von, bis);
         if (pegel < grundDb + einst.spitzeUeberMedianDb)
         {
             ++fehlend;
             continue;
         }
-        fehlend = 0;
         ks.push_back(k);
         fs.push_back(stelle * binHz);
         if (ks.size() >= 2)
         {
-            const detail::Inharmonie neu = detail::gleicheAus(ks, fs);
+            std::vector<bool> gilt;
+            const detail::Inharmonie neu = detail::gleicheAusRobust(ks, fs, gilt);
+            if (!gilt.back())
+            {
+                // die Spitze passt nicht in die Reihe: eine fremde, kein Teilton
+                ks.pop_back();
+                fs.pop_back();
+                ++fehlend;
+                continue;
+            }
             if (neu.erkannt && neu.b > -1e-3) ih = neu;
         }
         else
             ih.f0 = fs.back() / k;
+        fehlend = 0;
+    }
+    // zum Schluss ohne die Ausreisser, die erst mit mehr Teiltoenen sichtbar wurden
+    if (ks.size() >= 3)
+    {
+        std::vector<bool> gilt;
+        (void)detail::gleicheAusRobust(ks, fs, gilt);
+        std::vector<int> kk;
+        std::vector<double> ff;
+        for (std::size_t i = 0; i < ks.size(); ++i)
+            if (gilt[i])
+            {
+                kk.push_back(ks[i]);
+                ff.push_back(fs[i]);
+            }
+        ks = std::move(kk);
+        fs = std::move(ff);
     }
     if (ks.empty()) return e;
     const detail::Inharmonie ende = detail::gleicheAus(ks, fs);

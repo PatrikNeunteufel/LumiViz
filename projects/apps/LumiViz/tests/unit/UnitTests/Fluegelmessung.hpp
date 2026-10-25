@@ -196,7 +196,7 @@ struct TastenWerte
     Wert highDecay;
     Wert schwebungCent;    ///< Teiltoene 1–3, 1200·log2(1 + f_Schwebung / f_k)
     std::vector<Wert> helligkeit;  ///< Teilton n = 2 … 8: Steigung dB Helligkeit je dB Pegel (V1 a)
-    Wert pegelumfang;      ///< Pegel von Teilton 1 zu Beginn, v16 gegen v1
+    Wert pegelumfang;      ///< Pegel des Tons zu Beginn (0,3 s), v16 gegen v1
     Wert pegelL;           ///< Pegel zu Beginn gegen das Mittel der Tastatur, je Kanal (UF6 a)
     Wert pegelR;
     Wert direkt;           ///< Direktschall, v16
@@ -290,17 +290,14 @@ inline TastenWerte verdichte(int midi, const std::vector<std::array<KanalMessung
         w.helligkeit.push_back(detail::medianWert(steigungen));
     }
 
-    // Pegelumfang: Teilton 1 zu Beginn, v16 gegen v1, Mittel der Kanaele
+    // Pegelumfang: der Pegel des ganzen Tons zu Beginn, v16 gegen v1, Median der Kanaele (Teilton 1 ist im
+    // Diskant leise kaum messbar — Befund S152: am gerechneten C8 gab er 110 dB statt 51)
     if (messungen.size() == kEbenen)
     {
         std::vector<double> umfang;
         for (std::size_t kanal = 0; kanal < 2; ++kanal)
-        {
-            if (!messungen.front()[kanal].erkannt || !messungen.back()[kanal].erkannt) continue;
-            const TeiltonKurz* leise = messungen.front()[kanal].teilton(1);
-            const TeiltonKurz* laut = messungen.back()[kanal].teilton(1);
-            if (leise != nullptr && laut != nullptr) umfang.push_back(laut->anfangDb - leise->anfangDb);
-        }
+            if (messungen.front()[kanal].erkannt && messungen.back()[kanal].erkannt)
+                umfang.push_back(messungen.back()[kanal].pegelDb - messungen.front()[kanal].pegelDb);
         w.pegelumfang = detail::medianWert(umfang);
         w.terzL = messungen[11][0].terzDb;
         w.terzR = messungen[11][1].terzDb;
@@ -359,12 +356,20 @@ inline void schreibeZeile(std::ostream& aus, int midi, const char* groesse, cons
     aus << midi << '\t' << groesse << '\t' << w.wert << '\t' << w.anzahl << '\n';
 }
 
-inline bool schreibeWerte(const std::filesystem::path& pfad, const std::vector<TastenWerte>& werte)
+/// Kopf fuer dieselbe Messung am Modell (31d-3 Teil 2): die Stufen −30 … 0 dB in Schritten von 2 stehen
+/// an der Stelle der Ebenen v1 … v16 (V1 a).
+inline const char* const kModellKopf =
+    "# Gemessen am gerechneten Steinway D: Hammer-Saite mit Boden (lib:steinway_d, Hoerorte left/right), wie im\n"
+    "# Programm (rendereTon, 48 kHz); Anschlagstufen -30 ... 0 dB in Schritten von 2 an der Stelle der Ebenen\n"
+    "# v1 ... v16 (V1 a). Geschrieben von test_LoopSalamander.cpp (LUMIVIZ_31D3_MODELL=<Ordner>).\n"
+    "# Zeile: Taste <Tab> Groesse <Tab> Wert <Tab> Zahl der Messungen (bei Listen: die Werte)\n";
+
+inline bool schreibeWerte(const std::filesystem::path& pfad, const std::vector<TastenWerte>& werte, const char* kopf = kSalamanderKopf)
 {
     std::ofstream aus(pfad, std::ios::binary);
     if (!aus) return false;
     aus.precision(6);
-    aus << kSalamanderKopf;
+    aus << kopf;
     for (const TastenWerte& w : werte)
     {
         schreibeZeile(aus, w.midi, "B", w.b);
@@ -415,6 +420,106 @@ inline std::optional<SalamanderWerte> liesWerte(const std::filesystem::path& pfa
         werte[std::stoi(teile[0])][teile[1]] = std::vector<std::string>(teile.begin() + 2, teile.end());
     }
     return werte;
+}
+
+/// Die gelesene Datei zurueck in `TastenWerte` (fuer den Vergleich mit dem Modell und fuer 31d-4).
+inline std::vector<TastenWerte> tastenWerteAus(const SalamanderWerte& gelesen)
+{
+    std::vector<TastenWerte> liste;
+    for (const auto& [midi, zeilen] : gelesen)
+    {
+        TastenWerte w;
+        w.midi = midi;
+        const auto wert = [&zeilen](const std::string& name) -> Wert {
+            const auto it = zeilen.find(name);
+            if (it == zeilen.end() || it->second.size() < 2) return {};
+            return {std::stod(it->second[0]), std::stoi(it->second[1])};
+        };
+        const auto zahlen = [&zeilen](const std::string& name) {
+            std::vector<double> z;
+            if (const auto it = zeilen.find(name); it != zeilen.end())
+                for (const std::string& s : it->second) z.push_back(std::stod(s));
+            return z;
+        };
+        w.b = wert("B");
+        w.t60Frueh = wert("t60_frueh");
+        w.t60Spaet = wert("t60_spaet");
+        w.knickS = wert("knick_s");
+        w.zweiStufenAnteil = wert("zwei_stufen");
+        w.t60Ausgleich = wert("t60_ausgleich");
+        w.highDecay = wert("high_decay");
+        w.schwebungCent = wert("schwebung_cent");
+        for (int n = 2; n <= 8; ++n) w.helligkeit.push_back(wert("helligkeit_" + std::to_string(n)));
+        w.pegelumfang = wert("pegelumfang");
+        w.pegelL = wert("pegel_links");
+        w.pegelR = wert("pegel_rechts");
+        w.direkt = wert("direktschall");
+        w.terzL = zahlen("terz_links");
+        w.terzR = zahlen("terz_rechts");
+        if (const auto it = zeilen.find("phantome"); it != zeilen.end())
+            for (const std::string& s : it->second)
+                if (const auto doppelpunkt = s.find(':'); doppelpunkt != std::string::npos)
+                    w.phantome.emplace_back(std::stoi(s.substr(0, doppelpunkt)), std::stod(s.substr(doppelpunkt + 1)));
+        liste.push_back(std::move(w));
+    }
+    return liste;
+}
+
+// ---------------------------------------------------------------------------------------
+// Der Boden im Vergleich (UF6 a)
+// ---------------------------------------------------------------------------------------
+
+/// Das Verhaeltnis zweier Toene je Taste in Terzbaendern (a gegen b, in dB), das Mittel ueber die
+/// Tastatur je Band (Raum, Mikrofon, Unterschied der Fluegel — nur berichtet) und je Taste die
+/// Abweichung von diesem Mittel als Effektivwert ueber die Baender. Gezaehlt werden Baender ab 0,8·f
+/// der Taste, die in beiden Toenen hoechstens `umfangDb` unter deren lautestem Band liegen — ein Band
+/// fast ohne Schall gibt ein zufaelliges Verhaeltnis (Befund S152: die hohen Baender des Modells).
+struct BodenVergleich
+{
+    std::vector<double> mittelDb;      ///< je Band; −300 = kein Beitrag
+    std::vector<double> abweichungDb;  ///< je Taste, Effektivwert ueber die Baender
+};
+
+inline BodenVergleich vergleicheBoden(const std::vector<int>& tasten, const std::vector<std::vector<double>>& a,
+                                      const std::vector<std::vector<double>>& b, double umfangDb = 60.0)
+{
+    const std::vector<double> mitten = terzMitten();
+    const auto lautestes = [](const std::vector<std::vector<double>>& x, std::size_t t) {
+        return t < x.size() && !x[t].empty() ? *std::max_element(x[t].begin(), x[t].end()) : 0.0;
+    };
+    const auto gilt = [&](std::size_t t, std::size_t band) {
+        return t < a.size() && t < b.size() && band < a[t].size() && band < b[t].size() &&
+               mitten[band] >= 0.8 * tastenFrequenz(tasten[t]) && a[t][band] >= lautestes(a, t) - umfangDb &&
+               b[t][band] >= lautestes(b, t) - umfangDb;
+    };
+    BodenVergleich v;
+    v.mittelDb.assign(mitten.size(), -300.0);
+    for (std::size_t band = 0; band < mitten.size(); ++band)
+    {
+        double summe = 0.0;
+        int zahl = 0;
+        for (std::size_t t = 0; t < tasten.size(); ++t)
+            if (gilt(t, band))
+            {
+                summe += a[t][band] - b[t][band];
+                ++zahl;
+            }
+        if (zahl > 0) v.mittelDb[band] = summe / zahl;
+    }
+    for (std::size_t t = 0; t < tasten.size(); ++t)
+    {
+        double summe = 0.0;
+        int zahl = 0;
+        for (std::size_t band = 0; band < mitten.size(); ++band)
+            if (gilt(t, band))
+            {
+                const double d = a[t][band] - b[t][band] - v.mittelDb[band];
+                summe += d * d;
+                ++zahl;
+            }
+        v.abweichungDb.push_back(zahl > 0 ? std::sqrt(summe / zahl) : 0.0);
+    }
+    return v;
 }
 
 }  // namespace lumi::messung

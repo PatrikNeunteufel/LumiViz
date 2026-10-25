@@ -20,6 +20,10 @@
  * - `LUMIVIZ_SALAMANDER=<Ordner>` misst alle 480 Toene beider Kanaele und schreibt die Datei neu;
  *   der Ordner ist `…\Salamander\SalamanderGrandPianoV3_48khz24bit` (README dort). Ohne die
  *   Variable meldet der Fall das und prueft nichts.
+ * - Teil 2: der Boden im Vergleich (UF6 a) an Zahlen von Hand; `LUMIVIZ_31D3_MODELL=<Ordner>` misst den
+ *   gerechneten Steinway D wie im Programm (Stufen −30 … 0 dB an der Stelle der Ebenen, V1 a) und den
+ *   Glasboden, vergleicht mit `werte/salamander_c5.txt` und legt `modell_steinway.txt` und
+ *   `vergleich.txt` in den Ordner.
  ****************************************************************************************
  */
 
@@ -27,8 +31,13 @@
 
 #include "Fluegelmessung.hpp"
 
+#include "audio/WavDatei.hpp"
 #include "audio/WavFormat.hpp"
+#include "loop/Boden.hpp"
 #include "loop/Fft.hpp"
+#include "loop/Instrument.hpp"
+#include "loop/Loop.hpp"
+#include "loop/Tonspeicher.hpp"
 
 #include <QString>
 #include <QtGlobal>
@@ -37,6 +46,7 @@
 #include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <thread>
@@ -155,7 +165,42 @@ TEST_CASE("Loop Salamander 31d-3 Datei hin und zurueck")
     CHECK(t.at("terz_rechts") == std::vector<std::string>{"-11", "-21.5"});
     CHECK(t.at("phantome") == std::vector<std::string>{"6:-32.5", "8:-28"});
     CHECK(t.at("t60_spaet").at(1) == "0");  // nicht gemessen: Anzahl 0
+
+    const std::vector<TastenWerte> zurueck = tastenWerteAus(*gelesen);
+    REQUIRE(zurueck.size() == 1);
+    CHECK(zurueck[0].midi == 60);
+    CHECK(zurueck[0].b.anzahl == 31);
+    CHECK(zurueck[0].t60Frueh.wert == doctest::Approx(6.25));
+    REQUIRE(zurueck[0].helligkeit.size() == 7);
+    CHECK(zurueck[0].helligkeit[1].wert == doctest::Approx(0.6));
+    CHECK(zurueck[0].helligkeit[2].anzahl == 0);
+    CHECK(zurueck[0].terzR == std::vector<double>{-11.0, -21.5});
+    CHECK(zurueck[0].phantome == std::vector<std::pair<int, double>>{{6, -32.5}, {8, -28.0}});
     std::filesystem::remove_all(ordner);
+}
+
+TEST_CASE("Loop Salamander 31d-3 Boden im Vergleich (UF6 a)")
+{
+    // drei Tasten; a = b + eine gemeinsame Kurve (Raum, Mikrofon) + bei Taste 2 ein Buckel von 3 dB in einem Band
+    const std::vector<int> tasten{21, 60, 96};
+    const std::size_t baender = terzMitten().size();
+    std::vector<std::vector<double>> a(3, std::vector<double>(baender));
+    std::vector<std::vector<double>> b(3, std::vector<double>(baender));
+    for (std::size_t t = 0; t < 3; ++t)
+        for (std::size_t band = 0; band < baender; ++band)
+        {
+            b[t][band] = -20.0 - static_cast<double>(band) - 5.0 * static_cast<double>(t);
+            a[t][band] = b[t][band] + 0.5 * static_cast<double>(band);
+        }
+    a[1][20] += 3.0;
+    const BodenVergleich v = vergleicheBoden(tasten, a, b);
+    REQUIRE(v.abweichungDb.size() == 3);
+    // Band 0 (31 Hz) zaehlt nur fuer A0 (27,5 Hz); Band 20 (3,2 kHz) fuer alle drei
+    CHECK(v.mittelDb[0] == doctest::Approx(0.0));
+    CHECK(v.mittelDb[20] == doctest::Approx(10.0 + 1.0));
+    CHECK(v.mittelDb[5] == doctest::Approx(2.5));
+    CHECK(v.abweichungDb[0] > 0.0);
+    CHECK(v.abweichungDb[1] > v.abweichungDb[0]);  // der Buckel liegt bei Taste 2, das Mittel nimmt ein Drittel davon
 }
 
 TEST_CASE("Loop Salamander 31d-3 mitgelieferte Werte")
@@ -261,6 +306,174 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
         // B aus mindestens fuenf Teiltoenen unter 0,45·fs: bis F#6 (darueber bleibt B bei Rigaud, UF5 a)
         if (w.midi <= 90) CHECK(w.b.anzahl > 0);
         // eine Abklingzeit je Taste: aus Teilton 1 oder aus dem Ausgleich (C8 hat zu wenige Teiltoene dafuer)
+        CHECK((w.t60Frueh.anzahl > 0 || w.t60Ausgleich.anzahl > 0));
+    }
+}
+
+TEST_CASE("Loop Salamander 31d-3 Modell (LUMIVIZ_31D3_MODELL)")
+{
+    // Teil 2: dieselbe Messung an den gerechneten Toenen (UF3 a) — der Steinway D wie im Programm
+    // (`rendereTon`, Boden lib:steinway_d), die Stufen −30 … 0 dB an der Stelle der Ebenen (V1 a); dazu
+    // der Glasboden gleicher Dicke an Stufe −8 fuer den Kipppunkt von UF4 a (unterscheiden sich Boeden
+    // im Verhaeltnis zu Salamander?). Schreibt `modell_steinway.txt` und `vergleich.txt` in den Ordner.
+    const QString variable = qEnvironmentVariable("LUMIVIZ_31D3_MODELL");
+    if (variable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_31D3_MODELL=<Ordner> misst das Modell und vergleicht es mit werte/salamander_c5.txt");
+        return;
+    }
+    const std::filesystem::path ziel = variable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    const std::optional<SalamanderWerte> gelesen = liesWerte(kWerteDatei);
+    REQUIRE_MESSAGE(gelesen.has_value(), "werte/salamander_c5.txt nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
+    const std::vector<TastenWerte> salamander = tastenWerteAus(*gelesen);
+    REQUIRE(salamander.size() == 30);
+
+    lumi::loop::tonspeicher().leere();
+    lumi::loop::Instrument holz;
+    lumi::loop::Schicht& s = holz.schichten[0];
+    s.schwingung = lumi::loop::Schwingung::Saite;
+    s.saitenModell = lumi::loop::SaitenModell::Modal;
+    s.anregung = lumi::loop::Anregung::Hammer;
+    holz.tastatur = lumi::loop::Tastatur{};
+    lumi::loop::Instrument glas = holz;
+    holz.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
+    glas.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d_glass");
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    REQUIRE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d_glass")));
+
+    const int rate = 48000;
+    const std::vector<SalamanderTaste> tasten = salamanderTasten();
+    const lumi::loop::Fft& fft = lumi::loop::fft();
+    const auto ton = [&](const lumi::loop::Instrument& instrument, int midi, int stufe) {
+        lumi::loop::TonAngabe angabe;
+        angabe.hoehe = midi;
+        angabe.dauerMs = midi <= 72 ? 12000 : 8000;  // gehalten wie die Aufnahmen: gemessen wird vor dem Loslassen
+        angabe.anschlagStufe = stufe;
+        return lumi::loop::rendereTon(instrument, angabe, rate);
+    };
+    constexpr int kVergleichsEbene = 12;  // v12 bzw. Stufe −8: der Boden (UF6 a)
+    const auto start = std::chrono::steady_clock::now();
+    std::vector<std::vector<std::array<KanalMessung, 2>>> messungen(tasten.size());
+    std::vector<std::array<KanalMessung, 2>> glasMessung(tasten.size());
+    std::atomic<std::size_t> naechste{0};
+    const unsigned zahl = std::max(1u, std::min(8u, std::thread::hardware_concurrency()));
+    std::vector<std::thread> arbeiter;
+    for (unsigned a = 0; a < zahl; ++a)
+        arbeiter.emplace_back([&] {
+            for (std::size_t i = naechste++; i < tasten.size(); i = naechste++)
+            {
+                const int midi = tasten[i].midi;
+                for (int e = 1; e <= kEbenen; ++e)
+                {
+                    const int stufe = -30 + 2 * (e - 1);
+                    const bool phantome = midi <= kPhantomBis && e == kEbenen;
+                    messungen[i].push_back(messeTon(ton(holz, midi, stufe).daten, rate, tastenFrequenz(midi), fft, phantome));
+                }
+                glasMessung[i] = messeTon(ton(glas, midi, -30 + 2 * (kVergleichsEbene - 1)).daten, rate, tastenFrequenz(midi), fft, false);
+            }
+        });
+    for (std::thread& t : arbeiter) t.join();
+    std::vector<TastenWerte> modell;
+    for (std::size_t i = 0; i < tasten.size(); ++i) modell.push_back(verdichte(tasten[i].midi, messungen[i]));
+    setzeRelativePegel(modell, messungen);
+    const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    REQUIRE(schreibeWerte(ziel / "modell_steinway.txt", modell, kModellKopf));
+
+    // der Boden (UF6 a): je Kanal Salamander gegen Holz, Salamander gegen Glas, Holz gegen Glas
+    std::vector<int> midis;
+    for (const SalamanderTaste& t : tasten) midis.push_back(t.midi);
+    std::array<BodenVergleich, 2> gegenHolz;
+    std::array<BodenVergleich, 2> gegenGlas;
+    std::array<BodenVergleich, 2> holzGlas;
+    for (std::size_t kanal = 0; kanal < 2; ++kanal)
+    {
+        std::vector<std::vector<double>> sal, h, g;
+        for (std::size_t i = 0; i < tasten.size(); ++i)
+        {
+            sal.push_back(kanal == 0 ? salamander[i].terzL : salamander[i].terzR);
+            h.push_back(messungen[i][kVergleichsEbene - 1][kanal].terzDb);
+            g.push_back(glasMessung[i][kanal].terzDb);
+        }
+        gegenHolz[kanal] = vergleicheBoden(midis, sal, h);
+        gegenGlas[kanal] = vergleicheBoden(midis, sal, g);
+        holzGlas[kanal] = vergleicheBoden(midis, h, g);
+    }
+
+    std::ostringstream b;
+    b << std::fixed << std::setprecision(2) << "Modell gemessen in " << dauer << " s (30 Tasten, je 16 Stufen und ein Glaston)\n"
+      << "Je Taste Salamander / Modell. T60 in s, B in 1e-4, Helligkeit in dB je dB, Pegel und Direktschall in dB.\n"
+      << "Taste | B | T60 frueh | T60 spaet (Anteil zweistufig) | T60 Ausgleich | highDecay | Schwebung Cent | Hell. 2 | "
+         "Hell. 4 | Umfang | Pegel L | Pegel R | Direkt | Boden L/R: Sal.-Holz, Sal.-Glas, Holz-Glas\n";
+    const auto paar = [&b](const Wert& x, const Wert& y, double faktor = 1.0) {
+        b << ' ' << (x.anzahl > 0 ? faktor * x.wert : 0.0) << " / " << (y.anzahl > 0 ? faktor * y.wert : 0.0) << " |";
+    };
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+    {
+        const TastenWerte& sa = salamander[i];
+        const TastenWerte& mo = modell[i];
+        b << sa.midi << " |";
+        paar(sa.b, mo.b, 1e4);
+        paar(sa.t60Frueh, mo.t60Frueh);
+        b << ' ' << sa.t60Spaet.wert << " (" << std::setprecision(0) << 100.0 * sa.zweiStufenAnteil.wert << " %) / " << std::setprecision(2)
+          << mo.t60Spaet.wert << " (" << std::setprecision(0) << 100.0 * mo.zweiStufenAnteil.wert << " %) |" << std::setprecision(2);
+        paar(sa.t60Ausgleich, mo.t60Ausgleich);
+        paar(sa.highDecay, mo.highDecay);
+        paar(sa.schwebungCent, mo.schwebungCent);
+        paar(sa.helligkeit[0], mo.helligkeit[0]);
+        paar(sa.helligkeit[2], mo.helligkeit[2]);
+        paar(sa.pegelumfang, mo.pegelumfang);
+        paar(sa.pegelL, mo.pegelL);
+        paar(sa.pegelR, mo.pegelR);
+        paar(sa.direkt, mo.direkt);
+        b << ' ' << gegenHolz[0].abweichungDb[i] << '/' << gegenHolz[1].abweichungDb[i] << ", " << gegenGlas[0].abweichungDb[i] << '/'
+          << gegenGlas[1].abweichungDb[i] << ", " << holzGlas[0].abweichungDb[i] << '/' << holzGlas[1].abweichungDb[i] << '\n';
+    }
+    const auto mittel = [](const std::vector<double>& v) {
+        double s = 0.0;
+        for (const double x : v) s += x;
+        return v.empty() ? 0.0 : s / static_cast<double>(v.size());
+    };
+    b << "Boden, Abweichung vom Mittel der Tastatur, gemittelt ueber die Tasten (L/R): Salamander gegen Holz "
+      << mittel(gegenHolz[0].abweichungDb) << '/' << mittel(gegenHolz[1].abweichungDb) << " dB, gegen Glas "
+      << mittel(gegenGlas[0].abweichungDb) << '/' << mittel(gegenGlas[1].abweichungDb) << " dB, Holz gegen Glas "
+      << mittel(holzGlas[0].abweichungDb) << '/' << mittel(holzGlas[1].abweichungDb) << " dB\n"
+      << "Mittel der Tastatur Salamander gegen Holz je Terzband (L, Raum + Mikrofon + Fluegel):";
+    const std::vector<double> mitten = terzMitten();
+    for (std::size_t band = 0; band < mitten.size(); ++band)
+        b << ' ' << std::setprecision(0) << mitten[band] << ':' << std::setprecision(1) << gegenHolz[0].mittelDb[band];
+    b << std::setprecision(2) << "\nPhantome im Bass (v16 / Stufe 0), n: Salamander / Modell in dB gegen den Querteilton\n";
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+    {
+        if (tasten[i].midi > kPhantomBis) continue;
+        b << tasten[i].midi << ':';
+        for (const auto& [n, db] : salamander[i].phantome)
+        {
+            b << ' ' << n << ' ' << db << " / ";
+            const auto it = std::find_if(modell[i].phantome.begin(), modell[i].phantome.end(), [n = n](const auto& p) { return p.first == n; });
+            if (it != modell[i].phantome.end())
+                b << it->second;
+            else
+                b << '-';
+            b << ';';
+        }
+        b << '\n';
+    }
+    std::ofstream(ziel / "vergleich.txt", std::ios::binary) << b.str();
+    MESSAGE(b.str());
+
+    // einige Toene des Modells zum Ansehen und Hoeren (32-bit float, wie gerechnet)
+    for (const int midi : {36, 39, 60, 84, 108})
+        for (const int stufe : {-30, -8, 0})
+        {
+            const lumi::loop::Klang k = ton(holz, midi, stufe);
+            const std::filesystem::path wav = ziel / ("modell_" + std::to_string(midi) + "_" + std::to_string(stufe) + ".wav");
+            CHECK(lumi::audio::schreibeWav(QString::fromStdU16String(wav.u16string()), k.daten, rate, lumi::audio::WavTiefe::Gleitkomma32)
+                      .geschrieben);
+        }
+    for (const TastenWerte& w : modell)
+    {
+        CAPTURE(w.midi);
         CHECK((w.t60Frueh.anzahl > 0 || w.t60Ausgleich.anzahl > 0));
     }
 }

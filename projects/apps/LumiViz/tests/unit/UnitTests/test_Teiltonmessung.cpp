@@ -132,6 +132,36 @@ TEST_CASE("Loop Teiltonmessung 31d-2 Einsatz, f0 und B")
     }
 }
 
+TEST_CASE("Loop Teiltonmessung 31d-3 eine fremde Spitze neben einem schwachen Teilton")
+{
+    // wie am gerechneten C2 (Befund S152): Teilton 2 um 30 dB leiser, 9 % darunter eine Resonanz so laut
+    // wie er sonst waere — sie darf B nicht kippen
+    const double f0 = 65.406;
+    const double b = 1.5e-4;
+    std::vector<Komponente> k = saite(f0, b, 20, 10.0);
+    k[1].amplitude *= 0.03;
+    k.push_back({0.908 * teiltonFrequenz(f0, b, 2), 0.15, 10.0, 10.0});
+    const Ergebnis e = miss(erzeuge(k, 4.0, 0.1, 1e-6), kRate, f0 * std::sqrt(1.0 + b), lumi::loop::fft());
+    REQUIRE(e.erkannt);
+    MESSAGE("B gemessen " << e.b << ", " << e.teiltoene.size() << " Teiltoene");
+    CHECK(e.b == doctest::Approx(b).epsilon(0.01).scale(0.0));
+    CHECK(e.f0 == doctest::Approx(f0).epsilon(1e-4).scale(0.0));
+    if (const Teilton* t = e.teilton(2)) CHECK(t->frequenz == doctest::Approx(teiltonFrequenz(f0, b, 2)).epsilon(1e-3).scale(0.0));
+    CHECK(e.teiltoene.size() >= 18);
+
+    // wie im rechten Kanal am gerechneten C2: eine Mode bei 0,927·f1, staerker als der schwache Teilton 1 —
+    // mit Teilton 2 zusammen gaebe sie B = 0,067 und eine falsche Reihe
+    std::vector<Komponente> r = saite(f0, b, 20, 10.0);
+    r[0].amplitude *= 0.03;
+    r.push_back({0.927 * teiltonFrequenz(f0, b, 1), 0.3, 10.0, 10.0});
+    const Ergebnis rechts = miss(erzeuge(r, 4.0, 0.1, 1e-6), kRate, f0 * std::sqrt(1.0 + b), lumi::loop::fft());
+    REQUIRE(rechts.erkannt);
+    MESSAGE("mit Mode unter Teilton 1: B " << rechts.b << ", " << rechts.teiltoene.size() << " Teiltoene");
+    CHECK(rechts.b == doctest::Approx(b).epsilon(0.01).scale(0.0));
+    if (const Teilton* t = rechts.teilton(1)) CHECK(t->frequenz == doctest::Approx(teiltonFrequenz(f0, b, 1)).epsilon(1e-3).scale(0.0));
+    CHECK(rechts.teiltoene.size() >= 18);
+}
+
 TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
 {
     SUBCASE("zwei Stufen: Knick bei 1,5 s, frueh 3 s, spaet 12 s")
