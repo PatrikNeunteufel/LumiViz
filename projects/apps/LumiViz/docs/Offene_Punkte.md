@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.285.0
-> **Datum:** 2026-10-25 (Session 152)
+> **Version:** 1.286.0
+> **Datum:** 2026-10-25 (Session 153)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3143,8 +3143,12 @@ Idee Preset-Warmup/Pre-Roll.
   vollständig aus; N1 a (Abklingen nach Schroeder, gebaut); N2 a: die zweite Polarisation als **31d-7 „Plan
   erweitern“**, bis dahin bleibt die Vorgabe aus 31d-4, der dauerhafte Test prüft nur B und Winkel. Voller Lauf
   1601 / 1601 unter beiden Compilern.
-  **Offen:** **Teilplan 31d-7** (zweite Polarisation, `modell.md` §5) mit Umfangsfragen vorlegen, danach neu setzen
-  (`LUMIVIZ_31D4_SETZEN`), dauerhaften Test wieder voll, vierte Fassung der Hörproben; Kipppunkte aus 31d-6: Winkel an
+  **S153: Teilplan 31d-7 entschieden, 31d-7 A gebaut.** Recherche (P1 a), P2 a bis P8 a, ZS1 a (A Modell, B Messung und
+  Setzen, C Abschluss), P3-1 a, RZ1-1 a, WK1 a; gebaut: Bezug `werte/hammer_bezug_*`, `loop/Eigenzerlegung`,
+  `ebenenModen`, Längskraft je Saite, `.lvinst` Fassung 18 (γ = δ = h = 0), Klangfassung 2. Voller Lauf 1611 / 1611.
+  **Offen:** **31d-7 B** (`tiefeDb`, Salamander neu messen, Bilder, γ und δ setzen, dauerhafter Test wieder voll inkl.
+  Winkel im Chor), **31d-7 C** (Hörproben, `modell.md`); Weinreich 1977 (Patrik); ~~Teilplan 31d-7 vorlegen~~ (S153);
+  ~~danach neu setzen~~ → 31d-7 B; vierte Fassung der Hörproben → 31d-7 C; Kipppunkte aus 31d-6: Winkel an
   MIDI 33 an der Grenze 10°, Direktschall des Modells zu stark (SB1 a), Helligkeit im Diskant (HT2); **Patriks
   Hörurteil** über `hoerproben_31d` (Stufenschritt UF4 a / HT6 a; Kipppunkt N2 a → c) und über `hoerproben_31c9`.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
@@ -6222,6 +6226,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.286.0 | 2026-10-25 | Session 153. §7 Spielweisen: Teilplan 31d-7 (Recherche P1 a, P2 a bis P8 a, ZS1 a), 31d-7 A gebaut (zwei Ebenen, Eigenlöser, Längskraft je Saite, Fassung 18; P3-1 a, RZ1-1 a, WK1 a); voller Lauf 1611 / 1611. |
 | 1.285.0 | 2026-10-25 | Session 152. §7 Spielweisen: 31d-1 bis 31d-5 gebaut (Salamander, WL1 a, Teiltonmessung, Messung an Salamander und Modell, D1 a, V1 a, S1 a bis S3 a, Vorgabe gesetzt, Hörproben 31d); 31d-6 begonnen (N1 a Schroeder, N2 a: 31d-7 zweite Polarisation als „Plan erweitern“); voller Lauf 1601 / 1601. |
 | 1.284.0 | 2026-10-25 | Session 151. §7 Spielweisen: 31c-8 (Varianten MP1–MP3 und zwei Glasböden gerechnet, Richtungen von MAESSTRO bestanden; RS1 a, AW2 a, AW3 a gekippt, AW3-1 a) und 31c-9 (Bereich, voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig; 31d–31h geplant (UF1 a bis UF17 a, IK1, fester Plan); offen Urteil über die Hörproben, Antwort von MAESSTRO. |
 | 1.283.0 | 2026-10-24 | Session 150 (Zeile nachgetragen S151). §7 Spielweisen: 31c-6 fertig (Prüffall, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a), 31c-7 gebaut (FF1 a pocketfft, Antwort des Bodens, `.lvinst` Fassung 17, Hörproben). |
