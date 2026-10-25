@@ -13,7 +13,9 @@
  *
  * - Ein Einmassenschwinger: die Antwort als Zeitreihe gegen die geschlossene Loesung
  *   a·(g''(t) + δ(t)), g(t) = e^(−σt) sin(ω_d t)/ω_d; der Weg Kraft → Druck.
- * - Die Laenge der Antwort am Steinway (AW1 a: tiefste Mode 38 Hz, η 1,1 % → rund 5 s).
+ * - Die Laenge der Antwort am Steinway (AW1 a: tiefste Mode 38 Hz, η 1,1 % → rund 5 s); eine Mode, die 22 s
+ *   klingt (AW2 a, S151: keine Grenze 8 s mehr); die schnelle Antwort auf dem Raster gegen die exakte (AW3-1 a,
+ *   S151) an jedem mitgelieferten Koerper, unter −80 dB der Spitze.
  * - Ein Ton durch den Boden (Schritt 3): um die Antwort laenger, Stereo (Hoerorte `left`/`right`),
  *   links gleich der Faltung von Hand, die Antwort beim zweiten Ton aus dem Tonspeicher, ein
  *   fehlender Koerper aendert nichts. Leert den Tonspeicher vorher und nachher.
@@ -125,6 +127,86 @@ TEST_CASE("Loop Koerper 31c-7 Antwort: Laenge am Steinway")
     CHECK(stegpunktVon(koerper, 21) == 0);
     CHECK(stegpunktVon(koerper, 108) == 87);
     CHECK(stegpunktVon(koerper, 20) == -1);
+}
+
+TEST_CASE("Loop Koerper 31c-8 Antwort schnell gegen exakt (AW3-1 a)")
+{
+    // das Raster mit exaktem Kern schmaler Resonanzen gegen jede Mode an jedem Punkt — an jedem mitgelieferten Koerper,
+    // je an zwei Stegpunkten und beiden Hoerorten, mit der vollen Laenge und den gezogenen Moden wie in der App:
+    // groesster Fehler unter −80 dB der Spitze
+    const QDir ordner(QStringLiteral("asset/loop/instrument_bodies"));
+    const QStringList namen = ordner.entryList({QStringLiteral("*.lvinstbody")}, QDir::Files, QDir::Name);
+    REQUIRE_MESSAGE(namen.size() >= 3, "die Test-Exe aus dem Projekt-Root starten");
+    const int rate = 48000;
+    for (const QString& name : namen)
+    {
+        CAPTURE(name.toStdString());
+        kp::Koerper koerper;
+        REQUIRE(ladeKoerper(ordner.filePath(name), koerper));
+        const std::vector<kp::ModeImKoerper> moden = alleModen(koerper);
+        const std::size_t n = zweierpotenzAb(static_cast<std::size_t>(std::ceil(kp::antwortLaengeS(moden) * rate)));
+        double zeitExakt = 0.0, zeitSchnell = 0.0, schlimmster = 0.0;
+        for (const int taste : {30, 80})
+            for (std::size_t o = 0; o < 2; ++o)
+            {
+                const auto j = static_cast<std::size_t>(stegpunktVon(koerper, taste));
+                auto t0 = std::chrono::steady_clock::now();
+                const auto exakt = kp::antwortSpektrumExakt(moden, j, o, rate, n);
+                zeitExakt += sekundenSeit(t0);
+                t0 = std::chrono::steady_clock::now();
+                const auto schnell = kp::antwortSpektrum(moden, j, o, rate, n);
+                zeitSchnell += sekundenSeit(t0);
+                REQUIRE(schnell.size() == exakt.size());
+                double spitze = 0.0, fehler = 0.0;
+                for (std::size_t k = 0; k < exakt.size(); ++k)
+                {
+                    spitze = std::max(spitze, std::abs(exakt[k]));
+                    fehler = std::max(fehler, std::abs(schnell[k] - exakt[k]));
+                }
+                schlimmster = std::max(schlimmster, fehler / spitze);
+            }
+        MESSAGE(name.toStdString(), ": FFT ", n, ", groesster Fehler ", 20.0 * std::log10(schlimmster), " dB der Spitze; exakt ",
+                zeitExakt / 4.0, " s, schnell ", zeitSchnell / 4.0, " s je Antwort (", zeitExakt / zeitSchnell, "-fach)");
+        CHECK(schlimmster < 1e-4);
+    }
+}
+
+TEST_CASE("Loop Koerper 31c-8 Antwort: laenger als 8 s (AW2 a)")
+{
+    // eine Mode bei 20 Hz, η = 0,5 % (wie die tiefste des duennen Glasbodens): bis −60 dB rund 22 s — die Antwort
+    // reicht so weit (keine Grenze 8 s mehr), und am Anfang faltet sich nichts vom Ende zurueck
+    kp::ModeImKoerper m;
+    m.frequenzHz = 20.0;
+    m.verlustfaktor = 0.005;
+    m.amStegpunkt = {2.0};
+    m.abstrahlung = {std::complex<double>(0.5, 0.0)};
+    const std::vector<kp::ModeImKoerper> moden{m};
+    const double wn = 2.0 * std::numbers::pi * 20.0, sigma = 0.5 * 0.005 * wn;
+    const double laenge = kp::antwortLaengeS(moden);
+    CHECK(laenge == doctest::Approx(std::log(1000.0) / sigma));
+    CHECK(laenge > 20.0);
+    const int rate = 8000;  // eine kleine Rate genuegt fuer 20 Hz und haelt den Fall kurz
+    const double t = 1.0 / rate;
+    const std::vector<double> h = bodenAntwort(moden, 0, 0, rate, laenge);
+    REQUIRE(h.size() == static_cast<std::size_t>(std::ceil(laenge * rate)));
+    // gegen die geschlossene Loesung (wie beim Einmassenschwinger) in der ersten Sekunde und um 8 s, ab 1 ms
+    const double wd = wn * std::sqrt(1.0 - 0.005 * 0.005 / 4.0);
+    double groesste = 0.0, fehler = 0.0;
+    for (const auto& [von, bis] : {std::pair{8, rate}, std::pair{8 * rate - 400, 8 * rate + 400}})
+        for (int k = von; k < bis; ++k)
+        {
+            const double tk = k * t;
+            const double soll =
+                std::exp(-sigma * tk) * ((sigma * sigma - wd * wd) * std::sin(wd * tk) - 2.0 * sigma * wd * std::cos(wd * tk)) / wd * t;
+            groesste = std::max(groesste, std::abs(soll));
+            fehler = std::max(fehler, std::abs(h[static_cast<std::size_t>(k)] - soll));
+        }
+    MESSAGE("Antwort ", laenge, " s; groesster Fehler gegen die geschlossene Loesung ", fehler / groesste, " vom groessten Wert");
+    CHECK(fehler < 1e-3 * groesste);
+    // um 8 s klingt sie noch deutlich (rund −22 dB des Anfangs) — frueher endete sie dort
+    double um8 = 0.0;
+    for (int k = 8 * rate - 400; k < 8 * rate + 400; ++k) um8 = std::max(um8, std::abs(h[static_cast<std::size_t>(k)]));
+    CHECK(um8 > 0.05 * groesste);
 }
 
 TEST_CASE("Loop Koerper 31c-7 Ton durch den Boden (AW1 a, FT1 a, PG1 a)")

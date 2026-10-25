@@ -32,7 +32,8 @@ namespace lumi::loop
 [[nodiscard]] int stegpunktVon(const koerper::Koerper& koerper, int taste);
 
 /// Die Antwort am Hoerort `hoerort` auf eine Kraft am Stegpunkt `stegpunkt`, je Abtastwert in Pa/N,
-/// `laengeS` lang (AW1 a: `antwortLaengeS`). Gebildet im Spektrum auf der naechsten Zweierpotenz.
+/// `laengeS` lang (AW1 a, AW2 a: `antwortLaengeS`, bis −60 dB). Gebildet im Spektrum auf der naechsten
+/// Zweierpotenz — sie ist mindestens so lang wie die Antwort, zurueck faltet sich nur, was unter −60 dB liegt.
 [[nodiscard]] std::vector<double> bodenAntwort(const std::vector<koerper::ModeImKoerper>& moden, std::size_t stegpunkt,
                                                std::size_t hoerort, int rate, double laengeS, const Fft& umsetzung = fft());
 
