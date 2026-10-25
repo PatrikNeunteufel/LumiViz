@@ -4,8 +4,8 @@
 > **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a und TS1 a (Patrik S139–S151);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1 und TS1 a (Patrik S139–S151);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -2190,6 +2190,311 @@ Patriks Urteil über die Hörproben (Kipppunkte von VA1 a: MP1 klar hörbar ande
 DM1 a: Glas unnatürlich lang → Dämpfung durch Abstrahlung) und die Antwort der Autoren von MAESSTRO (PS3 a). **Als
 Nächstes nach PL31 a: die Planung von 31d–31h** — erst alle Umfangsfragen klären, dann der feste Plan.
 
+### Umfangsfragen 31d–31h (PL31 a, gesammelt S151)
+
+Wie für 31c (PL31 a (1)): jede Frage einzeln, danach der feste Plan bis zum Abschluss von Stufe 31, Nummern fest.
+Gesammelt aus HS2 a, dem Messplan (`docs/modellierung/hammer-saite/messplan.md` Teil A), den Vorgaben „vorläufig bis
+31d“ (`modell.md` §2) und den Kipppunkten, die auf 31d–31h zeigen (HT2, HT3, HT4, HT6, BM1, BM6-1, PG1 a, SB1 a, VA1 a,
+DM1 a, HS1 a).
+
+*31d — Messung gegen Salamander:* (1) **Rolle von Salamander** — ein Yamaha C5, unser Modell rechnet Saiten und Boden
+eines Steinway D: welche Größen setzt die Messung, welche vergleicht sie nur? (2) Beschaffung (Fassung, rund 1,3 GB,
+CC BY 3.0, Ablage außerhalb des Repos, Download mit Freigabe). (3) Messwerkzeug (Ort: Unit-Test, `tools/`, eigenes
+Werkzeug; Sprache). (4) Welche Größen aus Tabelle A, dazu Schalldruck (PG1 a) und Direktschall (SB1 a). (5) Kriterien
+„gilt als gemessen“ als Zahlen, und was geschieht, wenn ein Kipppunkt greift (im Plan oder „Plan erweitern“).
+(6) Raum und Mikrofon in jeder Aufnahme — wie beim Vergleich des Bodens behandeln. (7) Hörproben gegen Salamander
+(welche Töne, gleich laut gestellt oder nicht).
+
+*31e — Mitschwingen:* (8) Umfang — nur das Mitschwingen der ungedämpften Saiten, oder auch die Rückwirkung des Bodens
+auf die Saite (PL31c a, BM1) und die Duplex-Teile. (9) Der Messschritt: was gemessen wird und woran der Entscheid
+zwischen „Stufe auf der Summe“ und „in jeden Ton“ fällt.
+
+*31f — Spielweisen:* (10) Umfang — halbes Pedal, Sostenuto, Una corda, Geräusche (Pedal, Dämpfer, Tasten); woher die
+Geräusche kommen (Salamander, CC BY 3.0, oder gerechnet). (11) Una corda im Modell (der Hammer trifft eine Saite
+weniger, mit anderer Filzstelle) und in der Planung (Spur oder Ausstattung).
+
+*31g — Creator und Editor:* (12) Umfang — Kurven über die Tastatur bearbeitbar (HA1 a), Wahl des Körpers, Hörort;
+Skizze zuerst. (13) Ein Editor für Körper (`user:`-Körper, BM3 a „Editor offen“) — in 31g, später oder nicht.
+
+*31h — Abschluss:* (14) `grand_piano` — neben `piano` oder statt seiner; welcher Körper; die Glasböden als eigene
+Instrumente. (15) Die drei Chopin-Loops (BL1 a, BL2 a) — die Ausgabe je Stück. (16) Der Wunsch „Deluxe“ — in Stufe 31
+oder später. (17) Testumfang, Hörproben, Sichttests, Doku, voller Lauf (wie ZA1 a).
+
+✅ **UF1 a** (Patrik S151, Frage 1): **31d setzt aus Salamander, was keine Quelle hat, und vergleicht, was eine hat.**
+Gesetzt werden die Größen, die heute ohne Quelle vorläufig sind: Abklingzeiten (`decay`, `lateDecay`, `highDecay`),
+Verstimmung, Dämpfer und `undampedFrom`, Winkel am Steg, Schritt der Anschlagstufe, B im Bass. Größen mit einer Quelle
+für den Steinway oder für Flügel allgemein (B im Diskant, Hammer, Saiten, Boden) misst 31d nur und vergleicht sie; die
+Abweichung wird berichtet, ändern darf sie nur der jeweilige Kipppunkt (HT2, BM6-1, PG1 a …). Jede gesetzte Größe trägt
+als Quelle „gemessen an Salamander (Yamaha C5)“. Grund: eine Messung an einem echten Flügel schlägt eine geratene
+Größe, eine Quelle zum Steinway schlägt die Messung an einem anderen Instrument — jede Größe hat die beste verfügbare
+Herkunft, und die steht an ihr. Verworfen: b (alles aus Salamander — ersetzt belegte Steinway-Werte; B hängt an Länge
+und Durchmesser der Saiten), c (nur vergleichen — lässt Werte ohne jeden Beleg stehen). Kippt: eine Größe mit Quelle
+weit neben der Messung entscheidet ihr eigener Kipppunkt; passen Größen beider Arten nicht zusammen (etwa Abklingzeiten
+des C5 zu den Saiten des Steinway), wird b als Folgefrage vorgelegt.
+
+**Befund S151 zu den Fassungen (selbst abgerufen, Felder wörtlich):** archive.org `SalamanderGrandPianoV3` — `creator`
+„Alexander Holm“, `date` „2011-08-12“, `licenseurl` „http://creativecommons.org/licenses/by/3.0/“; Dateien
+`SalamanderGrandPianoV3_48khz24bit.tar.bz2` (1 448 107 335 Bytes), `…_44.1khz16bit.tar.bz2` (488 713 261), Ogg (78 MB).
+GitHub `sfzinstruments/SalamanderGrandPiano`: „Remapped by kinwie using sfz format v2 … in flac format“, „Source:
+https://archive.org/details/SalamanderGrandPianoV3“, keine Releases, Größe laut API 730 959 KB; Inhalt laut README: 16
+Stufen in kleinen Terzen, Loslassgeräusche des Hammers chromatisch, Saitenresonanz in kleinen Terzen in drei Stufen,
+Pedalgeräusch. Nicht gesehen: das Dateiformat im Archiv von archive.org.
+
+✅ **UF2 a** (Patrik S151, Frage 2): **Gemessen wird am Original in 48 kHz/24 bit** —
+`SalamanderGrandPianoV3_48khz24bit.tar.bz2` von archive.org (Alexander Holm, 2011, CC BY 3.0, 1 448 107 335 Bytes),
+unverändert entpackt außerhalb des Repos unter `…\Visuals_Project\cmake\Salamander\` (wie OLPC und DrumGizmo), mit
+README (Quelle, Lizenz, SHA-256 des Archivs); der Download wird zu Beginn von 31d mit Datei, Quelle und Größe
+freigegeben. Grund: die Primärquelle — jede gesetzte Zahl führt ohne Zwischenstufe auf Holms Aufnahme; 48 kHz wie die
+Engine, 24 bit für 60 dB Abklingen. Verworfen: b (FLAC-Neuordnung auf GitHub — Bearbeitung durch Dritte, Dekoder nötig),
+c (44,1 kHz/16 bit — weniger Auflösung im Ausklang, andere Rate). Kippt auf b, wenn das Original Mängel hat, die die
+Neuordnung behoben hat.
+
+✅ **UF3 a** (Patrik S151, Frage 3): **Die Messung ist C++ im Testbaum, ein Code für Salamander und Modell.** Ein Header
+`Teiltonmessung.hpp` (Teiltöne über der Zeit, Ausgleich von B, zwei Abklingstufen, Schwebung, Helligkeit je Stufe) mit
+der FFT des Programms (`loop/Fft`), zuerst an synthetischen Signalen geprüft (bekanntes B, zwei Stufen, Schwebung); ein
+Fall nur mit `LUMIVIZ_SALAMANDER=<Ordner>` misst Salamander (WAV 24 bit lesen) und schreibt die Zahlen mit Quelle nach
+`werte/salamander_c5.txt` (committet, nur Zahlen, Nennung CC BY 3.0); dieselbe Messung an den gerechneten Tönen; ein
+gewöhnlicher Test hält danach fest, dass das Modell die gesetzten Werte trifft. Grund: ein selbst geprüfter Messcode
+für beide Seiten mit der FFT des Programms; das Ergebnis bleibt als Test in der Suite (wie `loop_werte.txt` und der Pegel
+der Instrumente). Verworfen: b (Python unter `tools/` — die Prüfung bliebe außerhalb der Suite, zweite Messkette), c
+(eigenes Werkzeug — Ziel und Bibliothek ohne weiteren Nutzer). Kippt auf c, wenn die Messung für andere Instrumente
+außerhalb der Tests gebraucht wird (Stufe 32, Gitarren); auf b, wenn die Ausgleichsrechnungen nichtlinear mit mehreren
+Parametern werden und in C++ deutlich mehr Code brauchen.
+
+✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
+Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
+Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
+der Pegel über die Tastatur, beide gegen das Mittel der Tastatur gestellt (die Aufnahme ist nicht kalibriert — kein
+absoluter Schalldruck); der Direktschall als Befund (Anteil vor dem Einschwingen der Teiltöne, gegen das Modell, SB1 a).
+Für den Stufenschritt legt 31d Hörproben benachbarter Stufen ab (Salamander und gerechnet); gesetzt wird er nach Patriks
+gesammeltem Urteil als eigener kleiner Schritt am Ende, bis dahin bleibt 1 dB. Die Zahl der Saiten im Chor bleibt
+vorläufig (aus der Aufnahme nicht zu zählen). Grund: tut, was HT7 b, PG1 a und SB1 a zusagen, und nur, was die Aufnahme
+hergibt; der Stufenschritt bleibt ein Urteil des Gehörs (HT6 a), ohne den Plan anzuhalten. Verworfen: b (nur Saite und
+Hammer — bricht HT7 b), c (Stufenschritt gemessen — eine Schwelle ohne Quelle). Kippt auf b für den Boden, wenn Raum und
+Mikrofon die geglättete Übertragung so prägen, dass sich Böden nicht mehr unterscheiden (Frage 6); auf c, wenn Patrik
+keine Hörvergleiche machen will.
+
+**Überlegung Patrik (S151):** ein eigenes Projekt `…\Visuals_Project\cmake\InstrumentsCalculation` (der Ordner besteht,
+leer, kein Git), auf GitHub von einer Claude-Sitzung in der Cloud bearbeitet, das die Vorarbeiten des Flügels
+(Recherche, Bauplan, Körper, Messung) für andere Instrumentklassen leistet. Befund dazu: `InstrumentBody` ist reines C++
+(Eigen, Spectra, CDT, ohne Qt); die Dateiformate (`loop/KoerperBauplan`, `loop/Koerper`) und `InstrumentBodyTool`
+hängen an Qt und `windows.h`; eine Cloud-Sitzung baut unter Linux ohne Qt und BASS; Commits einer Cloud-Sitzung
+bräuchten eine Ausnahme von Patriks Git-Regel.
+
+✅ **IK1** (Patrik S151): **Der Flügel wird hier fertig; `InstrumentsCalculation` kommt später für die anderen
+Instrumente, die viel Rechnung brauchen, und lagert diese dann aus.** UF3 a bleibt. **Bis dahin wird in Vorbereitung
+darauf gebaut:** neuer Rechen- und Messcode (die Teiltonmessung aus UF3 a eingeschlossen) ist reines C++ ohne Qt und
+ohne `windows.h`, nur gegen die Schnittstellen `Fft` und `Eigenloeser`, mit eigenen Tests ohne Qt-Anwendung — so, dass
+er später ohne Umbau in ein eigenes Repo gehen kann. Wann und wie das Projekt entsteht (Schnitt, Repo, Git-Regel für
+die Cloud-Sitzung, Rückweg), wird vor Stufe 32 bzw. vor der nächsten Instrumentklasse entschieden.
+
+✅ **UF5 a** (Patrik S151, Frage 5): **Kurven ausgeglichen, Toleranzen als Zahlen, ein fester Schritt für Kipppunkte.**
+Jede gesetzte Größe wird als Kurve über die Tastatur aus den Messwerten ausgeglichen (Stützpunkte wie HA1 a); sie gilt
+als gemessen, wenn sie die Messpunkte im Median auf ±10 % trifft (Verstimmung ±0,5 Cent), Streuung je Oktave
+berichtet; B im Diskant bleibt bei Rigaud. Tasten ohne erkennbare zweite Stufe oder Schwebung werden vermerkt und
+tragen nicht zur Kurve bei. Der dauerhafte Test: das Modell trifft die gesetzten Kurven an jeder dritten Taste —
+Abklingzeiten ±10 %, B ±5 %, Verstimmung ±0,5 Cent, T60 unter dem Dämpfer ±20 % (von Claude gesetzt, ohne äußere
+Quelle; ±10 % nimmt den Messplan auf, die engeren liegen darunter, damit die Rechnung nicht mitzählt). Ein greifender
+Kipppunkt wird als Entscheid vorgelegt und im geplanten Schritt **„31d Nacharbeit“** am Ende von 31d umgesetzt; nur was
+dort nicht hineinpasst, wird „Plan erweitern“. Grund: 31d wird abschließbar — jede gesetzte Größe hat ein prüfbares
+Ziel, Kipppunkte einen geplanten Platz (PL31 a). Verworfen: b (ohne Toleranzen, jeder Kipppunkt ein „Plan erweitern“ —
+der Test aus UF3 a fehlte, der Plan bräche auf), c (Kipppunkte sofort umsetzen — Zusammenhänge erst nach allen
+Messungen sichtbar). Kippt, wenn viele Kipppunkte zusammen das Modell umbauen (etwa HS1 a → c): dann ein „Plan
+erweitern“ mit eigenem Teilplan; oder wenn Patrik andere Toleranzen nennt.
+
+✅ **UF6 a** (Patrik S151, Frage 6): **Raum und Mikrofon kürzen sich im Verhältnis je Taste gegen das Mittel der
+Tastatur.** 31d bildet je Taste und Kanal das Verhältnis Aufnahme zu Modell (beide mit demselben Ton der Hammer-Saite
+angeregt, in Terzbändern geglättet); das Mittel über alle Tasten (Raum, Mikrofon, Unterschied der Flügel) wird als Kurve
+über der Frequenz nur berichtet; verglichen wird die Abweichung jeder Taste von diesem Mittel (Verlauf Bass–Diskant,
+Unterschiede benachbarter Tasten); links und rechts getrennt. Grund: was allen Tasten gemein ist, kürzt sich, ohne Raum
+oder Mikrofon zu kennen — übrig bleibt, was der Boden je Taste beiträgt. Grenze: der Gesamtverlauf über der Frequenz
+(Boden insgesamt heller oder dumpfer) geht im Mittel auf, ihn zeigt nur die Hörprobe. Verworfen: b (nur Direktschall —
+bei wenigen ms keine tiefen Frequenzen, Zeitpunkt der ersten Reflexion unbekannt), c (roh — Abweichung nicht zu deuten).
+Kippt: ändert sich das Mittel stark von Taste zu Taste (Lage der AB-Mikrofone), je Lage ein eigenes Mittel (Bass,
+Mitte, Diskant); will Patrik den Gesamtverlauf als Zahl, zusätzlich c als Bericht ohne Urteil.
+
+✅ **UF7 a** (Patrik S151, Frage 7): **Hörproben gegen Salamander: dieselben Töne wie in 31c, je Ton drei Fassungen,
+gleich laut.** A0, C2, C4, C6, C8 bei mf und C4 bei pp, mf, ff (wie ZA1 a); je Ton hintereinander Salamander, das
+Modell vor 31d, das Modell nach 31d Nacharbeit; jede Fassung auf dieselbe integrierte Lautheit nach EBU R128
+(`audio/Lautheit`); pp, mf, ff nehmen die Schicht von Salamander, die die Messung der Stufe zuordnet; gehalten so lang
+wie die Aufnahme, dann geschnitten; mit `liste.txt` und Nennung CC BY 3.0, lokal unter `.claude/handover/hoerproben_31d/`;
+dazu die Proben benachbarter Stufen für den Stufenschritt (UF4 a). Grund: gleich gestellt wird nur, was sich gleich
+stellen lässt — übrig bleibt die Klangfarbe; vorher und nachher zeigen, was 31d bringt; dieselben Töne wie 31c.
+Verworfen: b (ohne Angleichung — der Pegel der Aufnahme ist unbekannt, der Unterschied wäre Zufall), c (alle 30
+gesampelten Tasten — fünfmal so viel ohne neue Antwort). Kippt auf c, wenn Patrik einzelne Lagen genauer hören will; auf
+b, wenn er die Pegel über die Tastatur hören will.
+
+✅ **UF8 a** (Patrik S151, Frage 8: „vorerst a, später b erweitern“): **31e ist das Mitschwingen; die Rückwirkung des
+Bodens auf die Saite kommt vorerst nicht.** Gerechnet wird das Mitschwingen der ungedämpften Saiten (mit Pedal alle,
+ohne die gehaltenen und die über `undampedFrom`), angeregt von der Kraft am Steg (Bank 2010); wie — auf der Summe oder in
+jeden Ton —, entscheidet der Messschritt (Frage 9). Die Rückwirkung entfällt, solange die Abklingzeiten gemessen sind
+(UF1 a): sie enthalten den Verlust über den Steg schon — er stünde sonst doppelt im Klang. Keine Duplex-Teile (keine
+Daten). Grund: jede Wirkung genau einmal. Preis: ein Glasboden klingt mit den Abklingzeiten des Holzbodens (in der Doku
+der Glasböden vermerkt). Verworfen vorerst: b (mit Rückwirkung, gemessene Abklingzeiten um einen gerechneten Anteil
+verringert — braucht den inneren Verlust der Saite getrennt, den keine Quelle für diesen Flügel gibt), c (dazu Duplex —
+Längen ohne Quelle). **Später b als Erweiterung (vorgemerkt):** der Verlust über den Steg je Teilton aus der
+Mobilität des Körpers (Re Y am Stegpunkt, seit 31c-6 gerechnet), der innere Verlust der Saite getrennt — sauber mit
+Messung B des Messplans (Mobilität mit gedämpften Saiten) oder einer Quelle zum inneren Verlust von Klaviersaiten;
+sinnvoll mit den Glasböden oder Stufe 32, wo ein anderer Boden auch das Abklingen ändern soll. **Vorbereitung in 31e:**
+die Kopplung am Steg so bauen, dass sie den Verlust je Teilton später aus dem Körper nehmen kann statt fest aus
+`decay`. Kippt auf b, wenn 31d zeigt, dass die Abklingzeiten im Bass mit gemessenen Werten nicht zu treffen sind.
+
+✅ **UF9 a** (Patrik S151, Frage 9): **Der Messschritt am Anfang von 31e misst beide Wege als Prototyp am selben Stück,
+mit festem Kriterium; der exakte Weg hat Vorrang.** Ein benannter Messteil rechnet „Summe im Rechenkern“ und „in jeden
+Ton“ ohne Klangprüfung am Ausschnitt der Nocturne (BL1 a; der Loop entsteht erst in 31h — für die Messung eine Fassung
+von Hand mit Pedal-Spur), in beiden Wegen die Kraft der mitschwingenden Saiten durch die Antwort ihres Stegpunkts;
+gemessen (Release-clang): Rechenzeit je Sekunde Klang, Zahl und Speicher der Töne im Tonspeicher, Zeit bis zum ersten
+Ton. **„In jeden Ton“, wenn er gegenüber dem Stück ohne Mitschwingen höchstens das Doppelte an Rechenzeit und Speicher
+braucht; sonst die Summe** (Schwelle von Claude gesetzt, ohne Quelle); über 1 GB oder 1 s bis zum ersten Ton:
+Rückfrage. Grund: HS2 a hält den exakten Weg offen, er ist der richtigere; er hat Vorrang, solange er nicht nachweislich
+etwas kostet, und was „kostet“ heißt, steht vorab fest. Verworfen: b (Bank folgen ohne Messung — Näherung, der Boden je
+Stegpunkt ungelöst), c (ohne Kriterium — verschiebt den Entscheid, gegen PL31 a). Kippt auf die Summe, wenn der exakte
+Weg den Tonspeicher bei langen Pedalstellen schon im Prototyp sprengt; zeigt sich, dass die Summe den Boden je
+Stegpunkt nicht ohne Faltung je Taste kann, wird die Summe mit gemitteltem Boden vorgelegt.
+
+✅ **UF10 a** (Patrik S151, Frage 10): **31f baut halbes Pedal, Sostenuto, Una corda und Geräusche; die Geräusche aus
+Salamander, das halbe Pedal nach einer kurzen Recherche.** Am Anfang von 31f eine kurze Recherche zur Wirkung eines
+Dämpfers in Teilstellung — mit Quelle gilt sie, sonst geht die Abklingzeit unter dem Dämpfer mit der Stufe des Pedals
+logarithmisch von gedämpft zu frei (vorläufig, vermerkt). Sostenuto an der Hammer-Saite: die Dämpfer der beim Treten
+gehaltenen Tasten bleiben oben. Una corda als Spur (SF8 a), das Modell nach Frage 11. Geräusche: Loslassgeräusch der
+Dämpfer und Pedalgeräusch (auf und ab) als Samples aus Salamander, mitgeliefert mit Nennung CC BY 3.0 in `CREDITS.md`,
+an der Hammer-Saite als eigene Schicht, abschaltbar, ihr Pegel gegen den Ton aus der Aufnahme übernommen. Grund: für
+jeden Teil die beste Herkunft — die Geräusche aufgenommen am Flügel, an dem 31d misst, unter einer Lizenz, die schon
+genutzt wird; für das halbe Pedal zuerst eine Quelle. Verworfen: b (ohne Geräusche — HS2 a legt sie in 31f), c
+(Geräusche gerechnet — Modell ohne Vorlage, obwohl eine Aufnahme da ist). Preis: das mitgelieferte Paket wächst um die
+Samples (geschätzt einige MB, nicht gemessen). Kippt auf c für ein Geräusch, das Salamander nicht hat; auf b, wenn die
+Geräusche in der Planung mehr verlangen als eine weitere Schicht (eigene Zeitpunkte beim Loslassen).
+
+✅ **UF11 a** (Patrik S151, Frage 11): **Una corda: die getroffenen Saiten exakt, der Filz nur mit Quelle.** Mit Una
+corda trifft der Hammer N − 1 Saiten des Chors (Einzelsaiten unverändert); die Anregung geht nur auf sie, die Gewichte
+der gekoppelten Moden folgen aus der Rechnung von HT3 a mit diesem Anregungsvektor (die nicht getroffene Saite schwingt
+über σ_b mit), der Hammer sieht die Masse von N − 1 Saiten. Ob die Stelle des Filzes weicher ist, sucht die kurze
+Recherche am Anfang von 31f (wie beim halben Pedal) — mit Quelle gilt ihr Wert für Q0, ohne bleibt der Filz gleich
+(vermerkt). Im Namen des Tons `:u`; die Spur setzt den Zustand zur Zeit des Anschlags. Grund: der Hauptteil folgt aus
+dem vorhandenen Modell ohne neue Annahme; erfunden wird nichts. Verworfen: b (nur weicher — verfehlt die Mechanik),
+c (Filz geschätzt — eine Zahl ohne Quelle, Salamander hat keine Aufnahmen mit Una corda). Kippt auf c, wenn sie Patrik
+ohne weicheren Filz zu wenig anders klingt (dann „vorläufig, geschätzt“).
+
+✅ **UF12 a** (Patrik S151, Frage 12): **31g: Skizze zuerst, dann der Flügel ganz bearbeitbar, der Hörort fest.**
+31g beginnt mit einer Skizze von Creator und Editor (Zeichenwerkzeug), gebilligt und als Beschreibung ins Konzept
+geschrieben. Im Creator: die Bauart Hammer-Saite (*Modal*) wählbar; jede Kurve aus `modell.md` §2 mit einem
+Kurveneditor über die Tastatur (Stützpunkte ziehen, eine Taste abweichen lassen, HA1 a), an jeder Kurve ihre Herkunft
+sichtbar (gemessen an Salamander, Quelle, vorläufig); der Körper aus der Liste der mitgelieferten oder „ohne“; die
+Ausstattung (Sostenuto, Una corda, Geräusche) als Haken; Anspielen einer Taste in jeder Stufe. Der Hörort nicht wählbar
+(gehört zum Körper, angezeigt). Im Instrument-Editor die Spuren Sustain, Sostenuto, Una corda, wo die Ausstattung sie
+trägt (SF6 a). Bedienung auffindbar (Zeiger, Griffe, Hinweise; Bilder aus den Tests). Grund: HA1 a hat die Kurven zum
+Bearbeiten angelegt; die Herkunft zeigt, was gesetzt und was geraten ist. Verworfen: b (Grobregler — zweite Form
+derselben Größen neben der Datei), c (Hörort wählbar — die App rechnete, was nach BM5 a nur das Werkzeug rechnet).
+Kippt: zeigt die Skizze, dass ein Kurveneditor für ein Dutzend Größen im Creator unübersichtlich wird, kommen die
+Kurven in ein eigenes Fenster *Keyboard curves*, aus dem Creator geöffnet.
+
+✅ **UF13 a** (Patrik S151, Frage 13; „b evtl. später“): **Stufe 31 liefert keinen Editor für Körper.** Der Creator
+wählt aus den mitgelieferten (UF12 a); ein Editor für Baupläne und eigene Körper (`user:`) wird mit
+`InstrumentsCalculation` entschieden (IK1), weil er dort rechnen muss, wo die Rechnung dann wohnt. Grund: der Editor
+hängt untrennbar an der Rechnung, die nach IK1 umzieht; jetzt gebaut, entstünde er am falschen Ort und mit einer
+Kopplung App–Werkzeug, die BM5 a ausschließt; dem Flügel fehlt ohne ihn nichts. Verworfen vorerst: c (Werkstoff
+wählen — gibt es mit der Liste der Körper schon). **b vorgemerkt** (Patrik: „evtl. später“): ein Bauplan-Editor (Umriss,
+Rippen, Stege, Werkstoffe) mit Rechnung über das Werkzeug im Hintergrund, Ergebnis ein `user:`-Körper — mit oder nach
+`InstrumentsCalculation`. Kippt auf b, wenn Patrik eigene Körper noch in Stufe 31 bauen will.
+
+✅ **UF14 a** (Patrik S151, Frage 14): **`grand_piano` neu, `piano` bleibt, zwei gedachte Glasflügel.** `grand_piano`:
+die Hammer-Saite mit `lib:steinway_d`, Pegel über `instrument_pegel.py` (PG1 a). `piano` (Sinus mit fünf Obertönen, in
+sechs mitgelieferten Loops) bleibt unverändert — ein billiges Klavier für bestehende Loops und wenig Rechenzeit.
+`grand_piano_glass` und `grand_piano_glass_thin` mit den beiden Glasböden als eigene Instrumente, in der Beschreibung
+„gedachtes Instrument“ mit den Grenzen aus GL1 a. Das Upright heißt in Stufe 32 `upright_piano`. Grund: der Name aus
+HS2 a, eindeutig neben dem Upright, ohne Änderung an Loops mit dem einfachen Klavier; die Glasflügel hörbar in der
+Liste, wie GB1 a sie bestellt hat. Verworfen: b (Muster S133, `piano` wird der Flügel — dort war das Alte eine
+Nachahmung desselben Instruments, hier haben billiges Klavier und teurer Flügel je ihren Zweck), c (keine Glasflügel —
+das Experiment versteckt hinter einer Einstellung). Kippt auf b, wenn Patrik die Sinus-Fassung nicht mehr anbieten
+will; auf c, wenn die Glasflügel beim Hören nicht vorzeigbar sind (Kipppunkt DM1 a).
+
+✅ **UF15 a** (Patrik S151, Frage 15; nach Rückfrage zu „a, oder alle 3“): **Die drei Chopin-Loops werden aus der
+Breitkopf-&-Härtel-Gesamtausgabe (1878–1880, über IMSLP) übertragen, die Erstausgabe (IMSLP) und Polona dienen als
+Gegenprobe.** Jede Stelle, an der Claude unsicher ist oder die auffällt, wird gegen beide geprüft; Abweichungen
+zwischen den Ausgaben stehen in der Beschreibung des Loops; die Loops folgen der Gesamtausgabe; die Ausgabe in der
+Beschreibung und in `CREDITS.md`. Ob die Étude Op. 10 Nr. 4 in der Gesamtausgabe bei IMSLP als Scan vorliegt, wird zu
+Beginn von 31h geprüft. Grund: bei einer Übertragung von Hand entscheiden Lesbarkeit und Einheitlichkeit über die
+Richtigkeit — eine Ausgabe in einem Stich für alle drei; die anderen fangen Lesefehler und zeigen, wo die Ausgaben
+abweichen. Rechtlich zählt nur, dass Werk und Ausgabe vor 1900 gemeinfrei sind (der Scan wird nicht weitergegeben).
+Verworfen: b (je Stück die Erstausgabe — Stiche der 1830er schwerer lesbar), c (nur Polona — drei Ausgaben aus drei
+Jahrzehnten; die Erklärung der Bibliothek betrifft den Scan), dazu „alle drei als Loops“ (neun Loops ohne mehr Prüfung).
+Kippt für die Étude auf Polona (Kistner, ca. 1840), wenn sie in der Gesamtausgabe bei IMSLP fehlt oder unlesbar ist.
+
+✅ **UF16 a** (Patrik S151, Frage 16, zum Wunsch „Deluxe“ aus S146): **Deluxe kommt in 31h, aus dem Modell abgeleitet,
+nur als Marke.** Ein Instrument ist Deluxe, wenn eine Schicht die Hammer-Saite mit Körper rechnet; die Liste der
+Verfahren, die dazu zählen, steht an einer Stelle im Code und wächst mit künftigen. Im Fenster *Instruments* eine Marke
+mit Hinweis (was es rechnet, warum es mehr Zeit braucht); die Marke selbst kommt in die Skizze von 31g. Freeze und Töne
+vorab arbeiten unverändert. Grund: eine Eigenschaft aus dem, was die Datei rechnet — auf jedem Rechner gleich,
+prüfbar, ändert sich nur mit dem Instrument; die Marke kommt mit dem ersten Instrument, das sie braucht. Verworfen: b
+(später — die teuersten Instrumente ohne Hinweis), c (gemessen mit eigenem Verhalten — Schwelle ohne Quelle, Marke je
+Rechner verschieden, Freeze eine eigene Frage). Kippt auf c für das Verhalten, wenn die Wartezeit beim ersten Abspielen
+der Chopin-Loops mit Deluxe-Instrumenten spürbar stört (31h misst das).
+
+✅ **UF17 a** (Patrik S151, Frage 17): **Voller Lauf am Ende jedes Teilschritts, Abschluss wie ZA1 a mit Sichttests.**
+Während eines Teilschritts eng unter Release-clang; am Ende jedes Teilschritts (31d–31h) beide Compiler bauen und der
+volle Lauf unter beiden (rund 12 min, Dauer je Teilschritt notiert). 31h schließt Stufe 31 ab: `grand_piano` und die
+Glasflügel mit gemessenem Pegel, `loop_werte` und Klangfassung neu (Diff geprüft), die drei Chopin-Loops, Hörproben
+aller neuen Instrumente und Loops mit Liste, eine Sichttest-Liste für Creator, Editor und Marke Deluxe (Vorlagen unter
+`asset\sichttest\`; Patrik hakt sie später ab, sie hält den Abschluss nicht an), Handbuch (Flügel, Kurven, Spuren,
+Deluxe), Doku (Konzept, `modell.md`, `Offene_Punkte`, Steckbrief). Grund: der volle Lauf dauert heute 6,2 / 6,0 min
+(Testing optimiert seit CMakeCraft v0.13.1) — Fehler zeigen sich im Teilschritt, der sie macht; MT1 a und ZA1 a hatten
+ihren Grund in der Laufzeit von damals. Verworfen: b (wie bisher — Zeitersparnis gegen späte Fehler), c (ohne
+Sichttests — Oberfläche aus 31g ohne den Blick, für den das Werkzeug da ist). Kippt auf b, wenn der volle Lauf wieder
+deutlich länger wird (etwa über 30 min). **Löst für Stufe 31 MT1 a ab.**
+
+### Fester Plan: 31d bis 31h (PL31 a, S151)
+
+Nummern fest; wächst etwas, als Entscheid „Plan erweitern“. Je Teilschritt eng unter Release-clang; am Ende jedes
+Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messcode ohne Qt und ohne `windows.h` (IK1).
+
+**31d — Messung gegen Salamander** (UF1 a–UF7 a).
+1. *Beschaffung* (UF2 a): Download mit Freigabe (Datei, Quelle, Größe), entpackt nach `…\cmake\Salamander\` mit README
+   (Quelle, Lizenz, SHA-256); Inhalt prüfen (Format, 16 Stufen, Dateinamen; Kipppunkt von UF2 a).
+2. *Teiltonmessung* (UF3 a): `Teiltonmessung.hpp` (Teiltöne über der Zeit, B, zwei Stufen, Schwebung, Helligkeit),
+   WAV mit 24 bit lesen; Tests an synthetischen Signalen.
+3. *Messung* (UF4 a, UF6 a): Fall `LUMIVIZ_SALAMANDER=<Ordner>` — alle Zeilen der Tabelle A, Boden und Pegel relativ
+   (Verhältnis je Taste gegen das Mittel der Tastatur, je Kanal), Direktschall als Befund; nach `werte/salamander_c5.txt`;
+   dieselbe Messung am Modell; Bericht der Größen mit Quelle (UF1 a).
+4. *Setzen* (UF1 a, UF5 a): die Größen ohne Quelle als Kurven aus der Messung (±10 % im Median, Verstimmung ±0,5 Cent),
+   Quelle „gemessen an Salamander (Yamaha C5)“; der dauerhafte Test (Abklingzeiten ±10 %, B ±5 %, Verstimmung ±0,5 Cent,
+   Dämpfer ±20 %, jede dritte Taste); `modell.md` §2 nachgezogen.
+5. *Hörproben* (UF7 a): Salamander, Modell vorher, Modell nachher, gleich laut nach R128; dazu die Proben benachbarter
+   Stufen (UF4 a); `.claude/handover/hoerproben_31d/`.
+6. *31d Nacharbeit* (UF5 a): greifende Kipppunkte als Entscheid, hier umgesetzt; der Stufenschritt, wenn Patriks Urteil
+   vorliegt (sonst in 31h-4).
+
+**31e — Mitschwingen** (UF8 a, UF9 a).
+1. *Messteil* (UF9 a): beide Wege als Prototyp an einer Fassung der Nocturne von Hand mit Pedal-Spur; Kraft durch die
+   Antwort des Stegpunkts; Rechenzeit, Tonspeicher, Zeit bis zum ersten Ton; Entscheid nach dem Kriterium
+   (über 1 GB oder 1 s: Rückfrage).
+2. *Bau* des gewählten Wegs: Mitschwingen der ungedämpften Saiten (Pedal, gehaltene Tasten, über `undampedFrom`); die
+   Kopplung am Steg vorbereitet für die Erweiterung b (UF8 a).
+3. *Prüfung und Hörproben*: Pedal mit und ohne Mitschwingen; Bit für Bit gleich ohne Pedal.
+
+**31f — Spielweisen** (UF10 a, UF11 a).
+1. *Recherche* (kurz): Dämpfer in Teilstellung; Filz bei Una corda.
+2. *Halbes Pedal und Sostenuto* an der Hammer-Saite.
+3. *Una corda*: N − 1 Saiten getroffen (Anregungsvektor nach HT3 a), Filz nur mit Quelle, `:u` im Namen, Spur (SF8 a).
+4. *Geräusche*: Loslassen der Dämpfer und Pedal aus Salamander, mitgeliefert (`CREDITS.md`), eigene Schicht, abschaltbar.
+
+**31g — Creator und Editor** (UF12 a, UF13 a).
+1. *Skizze* mit dem Zeichenwerkzeug (Creator mit Bauart *Modal*, Kurven, Körper, Ausstattung; Editor mit den Spuren;
+   die Marke Deluxe, UF16 a); gebilligt, als Beschreibung ins Konzept.
+2. *Creator*: Bauart Hammer-Saite, Körper aus der Liste oder „ohne“, Ausstattung als Haken, Anspielen je Stufe, Hörort
+   angezeigt.
+3. *Kurveneditor* über die Tastatur mit Herkunft je Kurve (oder Fenster *Keyboard curves*, Kipppunkt von UF12 a).
+4. *Instrument-Editor*: Spuren Sustain, Sostenuto, Una corda nach Ausstattung; Bilder aus den Tests.
+
+**31h — Abschluss Stufe 31** (UF14 a–UF17 a).
+1. *Instrumente* (UF14 a): `grand_piano`, `grand_piano_glass`, `grand_piano_glass_thin`; Pegel über
+   `instrument_pegel.py`; `loop_werte` und Klangfassung neu (Diff geprüft); `asset/loop/instrument_katalog.py`.
+2. *Deluxe* (UF16 a): die Liste der Verfahren, die Marke im Fenster *Instruments*.
+3. *Chopin-Loops* (BL1 a, BL2 a, UF15 a): die Étude in der Gesamtausgabe prüfen; Übertragung mit Gegenprobe;
+   `make_fluegel_loops.py`; `CREDITS.md`; Wartezeit beim ersten Abspielen gemessen (Kipppunkt von UF16 a).
+4. *Abschluss* (UF17 a): Hörproben mit Liste, Sichttest-Liste, Handbuch, Doku; der Stufenschritt, falls noch offen;
+   beide Compiler, voller Lauf. **Erst damit ist Stufe 31 fertig**; danach Stufe 32 (Upright) und IK1
+   (`InstrumentsCalculation`) planen.
+
 **Frage Patrik (S147), ohne Umsetzung: ließe sich daraus ein VST-Plugin machen?** Antwort (Claude, nicht gebaut):
 grundsätzlich ja — der Körper ist nach BM3 a/BM5 a eine Datei plus Faltung, das passt in ein Plugin. Heute im Weg:
 die Rechnung der Hammer-Saite (`loop/HammerTon`) hängt über `loop/HammerSaite` an Qt (`QJsonObject`, `QString`);
@@ -3061,7 +3366,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.82.0 | 2026-10-24 | Session 151. Befund Varianten (MAESSTRO §3.2, Abb. 4 b, 5, 6; Text S. 7 verschrieben); 31c-8 Teil 1 gebaut (Baupläne MP1–MP3 und zwei Glasböden, Messlauf dünner Glasboden); Befund Eigenlöser (Rest tiefer Moden bei weiten Shifts); RS1 a (Nachschärfen mit verschobenem Shift) gebaut; Befund Rechenzeit (ein Thread) und zwei Alternativen (Löser mit Superknoten, Teilfenster in Prozessen); 31c-8 Teil 2 gerechnet (fünf Körper, Richtungen bestanden); Befund Messteil an allen Körpern; AW2 a (Länge der Antwort ohne Grenze 8 s) gebaut; AW3 a (Band mit Reihen — gekippt vor dem Bau); AW3-1 a (Raster, schmale Resonanzen exakt) gebaut; 31c-9 gebaut (Bereich und voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig. |
+| 0.82.0 | 2026-10-24 | Session 151. Befund Varianten (MAESSTRO §3.2, Abb. 4 b, 5, 6; Text S. 7 verschrieben); 31c-8 Teil 1 gebaut (Baupläne MP1–MP3 und zwei Glasböden, Messlauf dünner Glasboden); Befund Eigenlöser (Rest tiefer Moden bei weiten Shifts); RS1 a (Nachschärfen mit verschobenem Shift) gebaut; Befund Rechenzeit (ein Thread) und zwei Alternativen (Löser mit Superknoten, Teilfenster in Prozessen); 31c-8 Teil 2 gerechnet (fünf Körper, Richtungen bestanden); Befund Messteil an allen Körpern; AW2 a (Länge der Antwort ohne Grenze 8 s) gebaut; AW3 a (Band mit Reihen — gekippt vor dem Bau); AW3-1 a (Raster, schmale Resonanzen exakt) gebaut; 31c-9 gebaut (Bereich und voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig. Umfangsfragen 31d–31h (17) gesammelt und entschieden: UF1 a bis UF17 a, IK1 (`InstrumentsCalculation` später, bis dahin auslagerbar bauen); fester Plan 31d bis 31h. |
 | 0.79.0–0.81.0 | 2026-10-24 | Session 150 (Zeilen nachgetragen S151, aus dem Report von S150). PF2 a (zwei Stege im Prüffall), 31c-6 Teil 3 und 4 gebaut, PF3 a (17. Rippe), PS2 a (Code von MAESSTRO gelesen), PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a (pocketfft), 31c-7 Schritt 1 bis 5 gebaut. |
 | 0.78.0 | 2026-10-24 | Session 149. Befund Modenüberlappung (M = 1 bei rund 1 kHz); BM7 a (Grenzfrequenz = höchste gerechnete Mode, 31c-6 prüft Konvergenz und Prüfstein bandweise und senkt die Grenze nur, wo ein Band versagt); Hinweis Patrik zur immer feineren Teilung; PL31 a (erst 31c abschließen, vorher die zwölf Umfangsfragen von 31c-6 bis Abschluss klären, fester Plan; danach 31d–31h ebenso); Recherchen Mobilität über 1 kHz und Glas; Befund Prüfstein und Bauzustand; PS1 a (drei Prüfungen der Mobilität mit Toleranzen); Befund MAESSTRO Abb. 4; PF1 a (Prüffall aus unserem Bauplan mit den Vereinfachungen von MAESSTRO); Befund Konvergenztest MAESSTRO Gl. 2; KV1 a (zweite Rechnung k = 4, Toleranzen je Terzband); AW1 a (Antworten je Taste in der App aus der Körperdatei, im Tonspeicher, Messteil zu Beginn von 31c-7); FT1 a (Faltung je Ton mit pocketfft hinter `Fft`, echtes Stereo); PG1 a (fester Bezug für den Schalldruck, Antworten unnormiert); SB1 a (`soundboard` trägt nur `body`, `amount` fällt weg, `.lvinst` Fassung 17); DM1 a (η je Mode nach Verformungsenergie je Werkstoff); GL1 a (Floatglas, η 1·10⁻³, zwei Dicken); VA1 a (31c-8: MP1–MP3 und zwei Glasböden, Hörproben je Familie); ZA1 a (31c-9 Abschluss: Bereich und voller Lauf unter beiden Compilern, Hörproben, Doku); Befund erste Moden (Corradi Stufe 3); EM1 a (Kipppunkt von BM1 a neu gefasst); fester Plan IP1 und 31c-6 bis 31c-9; gebaut 31c-6 Teil 1 (DM1 a). |
 | 0.77.0 | 2026-10-23 | Session 148. BM6 a (Hörorte als Liste im Bauplan, je Hörort ein Abstrahlgewicht je Mode; Lage der Vorgabe in BM6-1); Befund Mikrofone von *Salamander*; BM6-1 a (Stereopaar 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86); PL31c-5 a (31c-5a bis 31c-5d, statistischer Teil dabei); 31c-5a gebaut (Hörorte, `.lvinstbodyplan` Fassung 2); Befund zur Dämpfung (RT-0425 Gl. 1 als Polynom in f); 31c-5b gebaut (Auswertung je Mode); Befund Modendichte und Abstände; ST1 a (statistischer Teil aus den gerechneten Moden, Ziehung nach Boutillon & Ege); 31c-5c gebaut (5933 Moden bis 20 kHz); 31c-5d gebaut (Körperdatei, `steinway_d.lvinstbody` 2,9 MB, Wächter) — 31c-5 fertig. |

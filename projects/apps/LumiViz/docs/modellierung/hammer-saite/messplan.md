@@ -4,6 +4,10 @@
 > Instrument; Teil B lässt sich nur an einem echten Flügel machen und eignet sich als **Forschungsauftrag** (etwa an
 > eine Hochschule mit Akustiklabor); Teil C sind Anfragen nach vorhandenen Daten.
 > **Bezug:** [modell.md](modell.md) §2 (welche Größe vorläufig ist), `docs/audio/Spielweisen_Konzept.md` §4.1.
+> **Teil A entschieden (S151):** UF1 a bis UF7 a und der feste Plan 31d im `Spielweisen_Konzept` §4.1 — Salamander
+> setzt, was keine Quelle hat, und vergleicht den Rest; das Original 48 kHz/24 bit; das Werkzeug ist C++ im Testbaum
+> (`Teiltonmessung.hpp`, `LUMIVIZ_SALAMANDER`); Boden und Pegel relativ (Verhältnis je Taste gegen das Mittel der
+> Tastatur); der Stufenschritt nach Patriks Hörurteil. Wo dieser Plan davon abweicht, gilt das Konzept.
 
 ## A. An *Salamander* (Yamaha C5, CC BY 3.0) — Stufe 31d
 

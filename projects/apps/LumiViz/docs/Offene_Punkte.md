@@ -3124,9 +3124,16 @@ Idee Preset-Warmup/Pre-Roll.
   **Offen:** **Patriks Urteil über die Hörproben** (`.claude/handover/hoerproben_31c9/liste.txt`; Kipppunkte VA1 a — MP1
   klar hörbar anders → Varianten am echten Steinway — und DM1 a — Glas unnatürlich lang → Dämpfung durch Abstrahlung);
   die **Antwort der Autoren von MAESSTRO** (PS3 a; Entwurf der Anfrage lokal `.claude/handover/Anfrage_MAESSTRO_Daten.md`,
-  Patrik verschickt) — mit den Daten die Nachbearbeitung nachbauen und PS1 a (1) gleich gegen gleich prüfen; **als
-  Nächstes die Planung von 31d–31h nach PL31 a** (erst alle Umfangsfragen, dann der feste Plan); Wunsch „Deluxe“;
-  Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d (`docs/modellierung/hammer-saite/modell.md` §2).
+  Patrik verschickt) — mit den Daten die Nachbearbeitung nachbauen und PS1 a (1) gleich gegen gleich prüfen; viele
+  Vorgaben vorläufig bis 31d (`docs/modellierung/hammer-saite/modell.md` §2).
+  **S151: 31d–31h geplant (PL31 a).** 17 Umfangsfragen entschieden (UF1 a bis UF17 a): Salamander setzt, was keine
+  Quelle hat, und vergleicht den Rest; das Original 48 kHz/24 bit; Messung C++ im Testbaum, ein Code für Aufnahme und
+  Modell; Boden relativ, Raum und Mikrofon kürzen sich; Hörproben gleich laut; 31e nur Mitschwingen (Rückwirkung später
+  als Erweiterung), Messschritt mit Kriterium; 31f mit Geräuschen aus Salamander; 31g Kurveneditor nach Skizze; kein
+  Körper-Editor in Stufe 31; `grand_piano` neu neben `piano`, zwei Glasflügel; Chopin aus der Breitkopf-Gesamtausgabe;
+  Deluxe als Marke; voller Lauf am Ende jedes Teilschritts. **IK1:** ein eigenes Projekt `InstrumentsCalculation` kommt
+  später für die anderen Instrumente; bis dahin neuer Rechen- und Messcode ohne Qt. **Fester Plan 31d bis 31h** im
+  `Spielweisen_Konzept` §4.1. **Als Nächstes: 31d-1** (Download von Salamander mit Freigabe).
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6202,7 +6209,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.284.0 | 2026-10-25 | Session 151. §7 Spielweisen: 31c-8 (Varianten MP1–MP3 und zwei Glasböden gerechnet, Richtungen von MAESSTRO bestanden; RS1 a, AW2 a, AW3 a gekippt, AW3-1 a) und 31c-9 (Bereich, voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig; offen Urteil über die Hörproben, Antwort von MAESSTRO, Planung 31d–31h. |
+| 1.284.0 | 2026-10-25 | Session 151. §7 Spielweisen: 31c-8 (Varianten MP1–MP3 und zwei Glasböden gerechnet, Richtungen von MAESSTRO bestanden; RS1 a, AW2 a, AW3 a gekippt, AW3-1 a) und 31c-9 (Bereich, voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig; 31d–31h geplant (UF1 a bis UF17 a, IK1, fester Plan); offen Urteil über die Hörproben, Antwort von MAESSTRO. |
 | 1.283.0 | 2026-10-24 | Session 150 (Zeile nachgetragen S151). §7 Spielweisen: 31c-6 fertig (Prüffall, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a), 31c-7 gebaut (FF1 a pocketfft, Antwort des Bodens, `.lvinst` Fassung 17, Hörproben). |
 | 1.282.0 | 2026-10-24 | Session 149. §7 Spielweisen: BM7 a (Grenzfrequenz bleibt an der höchsten gerechneten Mode, 31c-6 prüft bandweise). CMakeCraft-Pin auf v0.12.0 (`/MP8` unter MSVC, MP3 a). PL31 a und zwölf Entscheide zum Rest von 31c, fester Plan IP1 und 31c-6 bis 31c-9; IP1 a (Fenster *Instruments*). Anfrage an CMakeCraft: Konfiguration Testing ohne Optimierung. Gebaut: IP1, 31c-6 Teil 1 (DM1 a, Steinway neu gerechnet) und Teil 2 (Mobilität); TC1 a und BG1 a, Pin v0.13.1. |
 | 1.281.0 | 2026-10-24 | Session 148. §7 Spielweisen: 31c-4 (Eigenlöser, Spectra) und 31c-5 (Hörorte, Auswertung, statistischer Teil, Körperdatei) gebaut, `steinway_d.lvinstbody` abgelegt; offen BM7 und 31c-6. Bauzeit MSVC (`/MP`) an CMakeCraft übergeben (MP1 a). |
