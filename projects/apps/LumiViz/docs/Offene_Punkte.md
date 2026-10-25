@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.283.0
-> **Datum:** 2026-10-24 (Session 150)
+> **Version:** 1.284.0
+> **Datum:** 2026-10-25 (Session 151)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3111,12 +3111,22 @@ Idee Preset-Warmup/Pre-Roll.
   Antwort des Bodens (`InstrumentBody/Antwort.hpp`, `loop/Boden`), Messteil (Antwort 0,62–0,77 s,
   `kSchalldruckBezug` 97,3 Pa), Ton der Hammer-Saite durch den Boden in Stereo, `.lvinst` Fassung 17
   (`soundboard.body`, „Body not found“), Hörproben `LUMIVIZ_31C_WAV`.
-  **Offen:** die **Antwort der Autoren von MAESSTRO** (PS3 a; Entwurf der Anfrage lokal
-  `.claude/handover/Anfrage_MAESSTRO_Daten.md`, Patrik verschickt) — mit den Daten die Nachbearbeitung nachbauen und
-  PS1 a (1) gleich gegen gleich prüfen; **31c-8** Varianten (MP1–MP3, zwei Glasböden), **31c-9** Abschluss (Bereich und
-  voller Lauf unter beiden Compilern, Hörproben aller Körper); Hörproben 31c-7 unter `.claude/handover/hoerproben_31c/`;
-  Wunsch „Deluxe“; Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d
-  (`docs/modellierung/hammer-saite/modell.md` §2).
+  **S151: 31c-8 und 31c-9 gebaut — 31c fertig.** 31c-8: Baupläne MP1–MP3 (Testdaten) und zwei Glasböden
+  (`steinway_d_glass`, `steinway_d_glass_same_mass`, mitgeliefert), alle fünf gerechnet; die Richtungen von MAESSTRO
+  bestehen (Moden MP1 < RP < MP2 < MP3, Mobilität MP1 am niedrigsten, MP3 am höchsten, Abstand Bass/Diskant bei MP1
+  kleiner). Unterwegs: **RS1 a** (der Eigenlöser schärft eine Mode mit zu großem Rest nach — MP1/MP2 brachen ab),
+  **AW2 a** (die Antwort reicht bis −60 dB, keine Grenze 8 s — der dünne Glasboden klingt 19,9 s), **AW3 a** vor dem
+  Bau gekippt, **AW3-1 a** (Antwort auf einem Raster, schmale Resonanzen exakt: −96 … −104 dB gegen exakt, 14- bis
+  19-fach schneller; 88 Tasten dünnes Glas 17,6 s statt 659 s). 31c-9: Bereich 640 / 640 und Composer 151 / 151, **voller
+  Lauf 1582 / 1582 unter Release-clang (6,2 min) und Testing-MSVC (6,0 min)**; Hörproben aller Körper mit Liste unter
+  `.claude/handover/hoerproben_31c9/`. Befund: `InstrumentBodyTool` rechnet einfädig; Alternativen (Löser mit
+  Superknoten, Teilfenster in Prozessen) notiert, nicht gebaut.
+  **Offen:** **Patriks Urteil über die Hörproben** (`.claude/handover/hoerproben_31c9/liste.txt`; Kipppunkte VA1 a — MP1
+  klar hörbar anders → Varianten am echten Steinway — und DM1 a — Glas unnatürlich lang → Dämpfung durch Abstrahlung);
+  die **Antwort der Autoren von MAESSTRO** (PS3 a; Entwurf der Anfrage lokal `.claude/handover/Anfrage_MAESSTRO_Daten.md`,
+  Patrik verschickt) — mit den Daten die Nachbearbeitung nachbauen und PS1 a (1) gleich gegen gleich prüfen; **als
+  Nächstes die Planung von 31d–31h nach PL31 a** (erst alle Umfangsfragen, dann der feste Plan); Wunsch „Deluxe“;
+  Ausgabe je Chopin-Stück; viele Vorgaben vorläufig bis 31d (`docs/modellierung/hammer-saite/modell.md` §2).
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6192,6 +6202,8 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.284.0 | 2026-10-25 | Session 151. §7 Spielweisen: 31c-8 (Varianten MP1–MP3 und zwei Glasböden gerechnet, Richtungen von MAESSTRO bestanden; RS1 a, AW2 a, AW3 a gekippt, AW3-1 a) und 31c-9 (Bereich, voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig; offen Urteil über die Hörproben, Antwort von MAESSTRO, Planung 31d–31h. |
+| 1.283.0 | 2026-10-24 | Session 150 (Zeile nachgetragen S151). §7 Spielweisen: 31c-6 fertig (Prüffall, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a), 31c-7 gebaut (FF1 a pocketfft, Antwort des Bodens, `.lvinst` Fassung 17, Hörproben). |
 | 1.282.0 | 2026-10-24 | Session 149. §7 Spielweisen: BM7 a (Grenzfrequenz bleibt an der höchsten gerechneten Mode, 31c-6 prüft bandweise). CMakeCraft-Pin auf v0.12.0 (`/MP8` unter MSVC, MP3 a). PL31 a und zwölf Entscheide zum Rest von 31c, fester Plan IP1 und 31c-6 bis 31c-9; IP1 a (Fenster *Instruments*). Anfrage an CMakeCraft: Konfiguration Testing ohne Optimierung. Gebaut: IP1, 31c-6 Teil 1 (DM1 a, Steinway neu gerechnet) und Teil 2 (Mobilität); TC1 a und BG1 a, Pin v0.13.1. |
 | 1.281.0 | 2026-10-24 | Session 148. §7 Spielweisen: 31c-4 (Eigenlöser, Spectra) und 31c-5 (Hörorte, Auswertung, statistischer Teil, Körperdatei) gebaut, `steinway_d.lvinstbody` abgelegt; offen BM7 und 31c-6. Bauzeit MSVC (`/MP`) an CMakeCraft übergeben (MP1 a). |
 | 1.280.0 | 2026-10-23 | Session 147. §7 Spielweisen: Stufe 31c — der Boden gerechnet (BM1 a bis BM5-1 a, PL31c a, HT7 b, GB1 a, IC1 a, EL1 a); 31c-1 bis 31c-3 gebaut (Bauplan, Netz mit CDT, Platte mit Eigen). |

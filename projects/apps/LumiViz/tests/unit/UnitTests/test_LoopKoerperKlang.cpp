@@ -21,8 +21,9 @@
  *   fehlender Koerper aendert nichts. Leert den Tonspeicher vorher und nachher.
  * - „Body not found“ (SB1 a): ein Instrument in einem Wegwerf-Ordner, dessen Koerper es nicht gibt —
  *   der Bericht des Tonauftrags sagt es einmal, der Ton klingt ohne Boden.
- * - `LUMIVIZ_31C_WAV=<Ordner>` legt Hoerproben ab (ZA1 a: A0, C2, C4, C6, C8 bei mf, C4 bei pp/mf/ff, ohne
- *   gegen mit Boden) mit einer Liste `liste.txt` — Patrik hoert sie gesammelt spaeter.
+ * - `LUMIVIZ_31C_WAV=<Ordner>` legt Hoerproben ab (ZA1 a, VA1 a: A0, C2, C4, C6, C8 bei mf, C4 bei pp/mf/ff;
+ *   Familie Steinway ohne Boden, mit Boden und mit den zwei Glasboeden durch das Instrument; Familie MAESSTRO
+ *   RP gegen MP1–MP3 ueber die Bausteine) mit einer Liste `liste.txt` — Patrik hoert sie gesammelt spaeter.
  * - **Messteil** nur mit `LUMIVIZ_31C7_MESSUNG=1` (Release-clang, einige Minuten): Zeit und Speicher je
  *   Antwort, Rechenzeit der Faltung je Ton, Schalldruck am Hoerort fuer alle 88 Tasten bei der
  *   hoechsten Anschlagstufe → der Wert von `kSchalldruckBezug` (PG1 a). Meldet nur Zahlen. Seit S151 (31c-8)
@@ -292,9 +293,12 @@ TEST_CASE("Loop Koerper 31c-7 Body not found (SB1 a)")
     tonspeicher().leere();
 }
 
-TEST_CASE("Loop Koerper 31c-7 Hoerproben (LUMIVIZ_31C_WAV)")
+TEST_CASE("Loop Koerper 31c Hoerproben (LUMIVIZ_31C_WAV)")
 {
-    // ZA1 a: A0, C2, C4, C6, C8 bei mf, dazu C4 bei pp und ff — der Steinway ohne gegen mit Boden, Stereo
+    // ZA1 a, VA1 a: je Koerper A0, C2, C4, C6, C8 bei mf, dazu C4 bei pp, mf, ff, Stereo; je Familie gegen ihre
+    // Grundlage — der Steinway ohne Boden, mit Boden, mit den zwei Glasboeden (wie im Programm, `rendereTon`);
+    // der MAESSTRO-Pruefstein RP gegen MP1–MP3 (Testdaten, nicht ueber `lib:` erreichbar — ueber die Bausteine
+    // des Programms: Kraft der Hammer-Saite, Antwort aus dem Tonspeicher, Faltung)
     const QString ordner = qEnvironmentVariable("LUMIVIZ_31C_WAV");
     if (ordner.isEmpty())
     {
@@ -304,51 +308,120 @@ TEST_CASE("Loop Koerper 31c-7 Hoerproben (LUMIVIZ_31C_WAV)")
     REQUIRE(QDir().mkpath(ordner));
     tonspeicher().leere();
     const int rate = 48000;
+    const std::vector<std::pair<int, int>> mf{{21, -12}, {36, -12}, {60, -12}, {84, -12}, {108, -12}};
+    const std::vector<std::pair<int, int>> c4{{60, -26}, {60, -12}, {60, 0}};
+    // je Ton 1,2 s gehalten, alle 2,5 s einer; der Nachklang laeuft ueber den naechsten
+    const auto abstand = static_cast<std::size_t>(2.5 * rate);
+    const auto schreibe = [&](const QString& name, const std::vector<float>& folge) {
+        float spitze = 0.0f;
+        for (const float v : folge) spitze = std::max(spitze, std::abs(v));
+        REQUIRE(schreibeWav(QDir(ordner).filePath(name + QStringLiteral(".wav")), folge, rate));
+        MESSAGE(name.toStdString(), ": Spitze ", 20.0 * std::log10(std::max(spitze, 1e-9f)), " dBFS");
+    };
+    const auto lege = [&](const QString& name, const auto& ton, const std::vector<std::pair<int, int>>& toene) {
+        std::vector<float> folge;
+        std::size_t stelle = 0;
+        for (const auto& [hoehe, stufe] : toene)
+        {
+            const std::vector<float> k = ton(hoehe, stufe);
+            const std::size_t ab = 2 * stelle * abstand;
+            if (folge.size() < ab + k.size()) folge.resize(ab + k.size(), 0.0f);
+            for (std::size_t i = 0; i < k.size(); ++i) folge[ab + i] += k[i];
+            ++stelle;
+        }
+        schreibe(name, folge);
+    };
+
+    // Familie Steinway: durch das Instrument wie im Programm
     Instrument ohne;
     Schicht& s = ohne.schichten[0];
     s.schwingung = Schwingung::Saite;
     s.saitenModell = SaitenModell::Modal;
     s.anregung = Anregung::Hammer;
     ohne.tastatur = Tastatur{};
-    Instrument mit = ohne;
-    mit.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
-    // je Ton 1,2 s gehalten, alle 2,5 s einer; der Nachklang laeuft ueber den naechsten
-    const auto lege = [&](const QString& name, const Instrument& instrument, const std::vector<std::pair<int, int>>& toene) {
-        const auto abstand = static_cast<std::size_t>(2.5 * rate);
-        std::vector<float> folge;
-        std::size_t nr = 0;
-        for (const auto& [hoehe, stufe] : toene)
-        {
-            TonAngabe angabe;
-            angabe.hoehe = hoehe;
-            angabe.dauerMs = 1200;
-            angabe.anschlagStufe = stufe;
-            const Klang k = rendereTon(instrument, angabe, rate);
-            const std::size_t ab = 2 * nr * abstand;
-            if (folge.size() < ab + k.daten.size()) folge.resize(ab + k.daten.size(), 0.0f);
-            for (std::size_t i = 0; i < k.daten.size(); ++i) folge[ab + i] += k.daten[i];
-            ++nr;
-        }
-        float spitze = 0.0f;
-        for (const float v : folge) spitze = std::max(spitze, std::abs(v));
-        REQUIRE(schreibeWav(QDir(ordner).filePath(name + QStringLiteral(".wav")), folge, rate));
-        MESSAGE(name.toStdString(), ": Spitze ", 20.0 * std::log10(std::max(spitze, 1e-9f)), " dBFS");
+    const auto mitKoerper = [&](const char* verweis) {
+        Instrument i = ohne;
+        i.schichten[0].hammerSaite.resonanzboden.koerper = QLatin1String(verweis);
+        REQUIRE_MESSAGE(bodenVon(QLatin1String(verweis)), verweis, " nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
+        return i;
     };
-    const std::vector<std::pair<int, int>> mf{{21, -12}, {36, -12}, {60, -12}, {84, -12}, {108, -12}};
-    const std::vector<std::pair<int, int>> c4{{60, -26}, {60, -12}, {60, 0}};
-    lege(QStringLiteral("01_mf_ohne_boden"), ohne, mf);
-    lege(QStringLiteral("02_mf_mit_boden"), mit, mf);
-    lege(QStringLiteral("03_c4_pp_mf_ff_ohne_boden"), ohne, c4);
-    lege(QStringLiteral("04_c4_pp_mf_ff_mit_boden"), mit, c4);
+    const std::vector<std::pair<QString, Instrument>> steinway{
+        {QStringLiteral("ohne_boden"), ohne},
+        {QStringLiteral("steinway_d"), mitKoerper("lib:steinway_d")},
+        {QStringLiteral("glas_wie_holz"), mitKoerper("lib:steinway_d_glass")},
+        {QStringLiteral("glas_gleiche_masse"), mitKoerper("lib:steinway_d_glass_same_mass")}};
+    int nr = 1;
+    for (const auto& [teil, satz] : {std::pair{QStringLiteral("mf"), mf}, std::pair{QStringLiteral("c4_pp_mf_ff"), c4}})
+        for (const auto& [name, instrument] : steinway)
+        {
+            const Instrument& in = instrument;
+            lege(QStringLiteral("%1_steinway_%2_%3").arg(nr++, 2, 10, QLatin1Char('0')).arg(teil, name),
+                 [&](int hoehe, int stufe) {
+                     TonAngabe angabe;
+                     angabe.hoehe = hoehe;
+                     angabe.dauerMs = 1200;
+                     angabe.anschlagStufe = stufe;
+                     return rendereTon(in, angabe, rate).daten;
+                 },
+                 satz);
+        }
+
+    // Familie MAESSTRO: die Kraft der Hammer-Saite (wie `rendereTon`: gehalten 1,2 s, Daempfer unter
+    // `ungedaempftAb`), gefaltet mit der Antwort des Koerpers je Hoerort
+    const QString testdaten = QStringLiteral("projects/apps/LumiViz/tests/unit/UnitTests/koerper/");
+    const Tastatur tastatur{};
+    for (const auto& [teil, satz] : {std::pair{QStringLiteral("mf"), mf}, std::pair{QStringLiteral("c4_pp_mf_ff"), c4}})
+        for (const char* datei : {"maesstro_rp", "maesstro_mp1", "maesstro_mp2", "maesstro_mp3"})
+        {
+            auto boden = std::make_shared<BodenImKlang>();
+            REQUIRE_MESSAGE(ladeKoerper(testdaten + QLatin1String(datei) + QStringLiteral(".lvinstbody"), boden->koerper), datei);
+            REQUIRE(boden->koerper.hoerorte.size() == 2);  // left, right wie im Programm
+            boden->moden = alleModen(boden->koerper);
+            boden->laengeS = kp::antwortLaengeS(boden->moden);
+            boden->abdruck = QStringLiteral("test:") + QLatin1String(datei);
+            boden->links = 0;
+            boden->rechts = 1;
+            lege(QStringLiteral("%1_%2_%3").arg(nr++, 2, 10, QLatin1Char('0')).arg(QLatin1String(datei).mid(9), teil),
+                 [&](int hoehe, int stufe) {
+                     HammerAnschlag a;
+                     a.taste = hoehe;
+                     a.hz = tonHz(hoehe);
+                     a.stufe = stufe;
+                     a.halten = static_cast<std::int64_t>(1.2 * rate);
+                     a.gedaempft = hoehe < tastatur.ungedaempftAb;
+                     a.rate = rate;
+                     std::vector<float> kraft;
+                     rechneHammerTon(hammerSaiteVorgabe(), a, kraft, a.halten + hammerNachklang(hammerSaiteVorgabe(), a, std::int64_t{30} * rate));
+                     const std::shared_ptr<const Klang> antwort = bodenAntwortFuer(*boden, hoehe, rate);
+                     REQUIRE(antwort);
+                     std::vector<float> stereo;
+                     falteMitBoden(kraft, *antwort, stereo);
+                     return stereo;
+                 },
+                 satz);
+        }
+
     QFile liste(QDir(ordner).filePath(QStringLiteral("liste.txt")));
     REQUIRE(liste.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
-    liste.write("Hoerproben 31c-7 (S150): der Steinway D (RT-0425) als Hammer-Saite, ohne gegen mit Resonanzboden.\n"
-                "Je Ton 1,2 s gehalten, alle 2,5 s einer; 48 kHz, Stereo.\n\n"
-                "01 / 02: A0, C2, C4, C6, C8 bei mf (Stufe -12) - ohne Boden (Stegkraft, beide Seiten gleich) gegen mit Boden\n"
-                "         (Hoerorte left/right 12 cm ueber den Saiten an MIDI 43 und 86).\n"
-                "03 / 04: C4 bei pp, mf, ff (Stufen -26, -12, 0) - ohne gegen mit Boden.\n\n"
-                "Pegel: ohne Boden in Einheiten von 200 N am Steg, mit Boden in Einheiten von 97,3 Pa (kSchalldruckBezug) -\n"
-                "die beiden sind nicht gleich laut gestellt; verglichen wird der Klang, nicht die Lautstaerke.\n");
+    liste.write("Hoerproben 31c (S151, ZA1 a, VA1 a): die Hammer-Saite des Steinway D durch verschiedene Resonanzboeden.\n"
+                "Je Ton 1,2 s gehalten, alle 2,5 s einer; 48 kHz, Stereo (Hoerorte left/right 12 cm ueber den Saiten an\n"
+                "MIDI 43 und 86). Teil mf: A0, C2, C4, C6, C8 bei mf (Stufe -12). Teil c4_pp_mf_ff: C4 bei pp, mf, ff\n"
+                "(Stufen -26, -12, 0).\n\n"
+                "Familie Steinway (01-08, durch das Instrument wie im Programm), je Teil gegeneinander hoeren:\n"
+                "  ohne_boden          die Stegkraft, beide Seiten gleich (Einheiten von 200 N - nicht gleich laut gestellt)\n"
+                "  steinway_d          der Fichtenboden nach RT-0425 (Grundlage)\n"
+                "  glas_wie_holz       Platte aus Floatglas, Dicke wie Holz (6-10 mm), Rippen und Steg Holz\n"
+                "  glas_gleiche_masse  Platte aus Floatglas mit der Masse der Holzplatte (0,9-1,5 mm)\n"
+                "  Gedachte Instrumente: Bruch nicht gerechnet, in der Daempfung des Glases fehlen Rand und Abstrahlung -\n"
+                "  sie klingen vermutlich laenger als echt (DM1 a).\n\n"
+                "Familie MAESSTRO (09-16, ueber die Bausteine: Kraft, Antwort, Faltung), je Teil gegeneinander hoeren:\n"
+                "  rp   der vereinfachte Steinway von MAESSTRO (Platte 8 mm, zwei Stege, 17 Rippen; Grundlage)\n"
+                "  mp1  Platte 16 mm (steifer)\n"
+                "  mp2  jede zweite Rippe (doppelter Rippenabstand)\n"
+                "  mp3  ohne Rippen\n\n"
+                "Pegel mit Boden in Einheiten von 97,3 Pa (kSchalldruckBezug), unnormiert: ob ein Boden lauter oder leiser\n"
+                "klingt, gehoert zu ihm. Die Familien sind untereinander nicht gleich gestellt (MAESSTRO ohne Huellkurve der\n"
+                "Schicht).\n");
     tonspeicher().leere();
 }
 
