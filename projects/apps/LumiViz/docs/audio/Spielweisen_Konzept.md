@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.82.0
-> **Datum:** 2026-10-24 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.83.0
+> **Datum:** 2026-10-25 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1 und TS1 a (Patrik S139–S151);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -2249,6 +2249,16 @@ Engine, 24 bit für 60 dB Abklingen. Verworfen: b (FLAC-Neuordnung auf GitHub �
 c (44,1 kHz/16 bit — weniger Auflösung im Ausklang, andere Rate). Kippt auf b, wenn das Original Mängel hat, die die
 Neuordnung behoben hat.
 
+**Befund S152 (31d-1, Patrik gab den Download frei):** geladen am 2026-10-25, 1 448 107 335 Bytes wie angegeben, SHA-256
+`04a4442f2432d846f7a6aaf7156e83e06a84342f4d7475e6e070587b3b28ef21`; entpackt nach `…\cmake\Salamander\` (README dort,
+Prüfskripte unter `pruefung\`, Archiv unter `…\cmake\Salamander_download\`). Inhalt: 641 WAV, **alle PCM, Stereo,
+48 000 Hz, 24 bit** — 480 Töne `<Note><Oktave>v<Stufe>.wav`, 30 Noten in kleinen Terzen A0–C8 (MIDI 21 … 108) **je mit allen
+16 Stufen**, 88 Loslassgeräusche `rel<n>`, 69 Saitenresonanzen `harmL|harmS|harmV3<Note>` (23 Noten in drei Stufen),
+4 Pedalgeräusche; dazu zwei `.sfz` und die README des Autors (Kopfzeile „Yamaha C5“). Keine Datei voll ausgesteuert
+(Spitze −0,86 bis −41,5 dBFS); Einsatz (erste Probe über 1 % der Spitze) im Median 8,9 ms, längster 28,5 ms, C1 durchweg
+14–29 ms — die Teiltonmessung sucht den Einsatz je Datei. **Kipppunkt von UF2 a greift nicht** (kein Mangel gefunden; was
+die Neuordnung auf GitHub ändert, ist nicht geprüft).
+
 ✅ **UF3 a** (Patrik S151, Frage 3): **Die Messung ist C++ im Testbaum, ein Code für Salamander und Modell.** Ein Header
 `Teiltonmessung.hpp` (Teiltöne über der Zeit, Ausgleich von B, zwei Abklingstufen, Schwebung, Helligkeit je Stufe) mit
 der FFT des Programms (`loop/Fft`), zuerst an synthetischen Signalen geprüft (bekanntes B, zwei Stufen, Schwebung); ein
@@ -2448,8 +2458,9 @@ Nummern fest; wächst etwas, als Entscheid „Plan erweitern“. Je Teilschritt 
 Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messcode ohne Qt und ohne `windows.h` (IK1).
 
 **31d — Messung gegen Salamander** (UF1 a–UF7 a).
-1. *Beschaffung* (UF2 a): Download mit Freigabe (Datei, Quelle, Größe), entpackt nach `…\cmake\Salamander\` mit README
-   (Quelle, Lizenz, SHA-256); Inhalt prüfen (Format, 16 Stufen, Dateinamen; Kipppunkt von UF2 a).
+1. ✅ *Beschaffung* (UF2 a): Download mit Freigabe (Datei, Quelle, Größe), entpackt nach `…\cmake\Salamander\` mit README
+   (Quelle, Lizenz, SHA-256); Inhalt prüfen (Format, 16 Stufen, Dateinamen; Kipppunkt von UF2 a). **Gebaut S152**
+   (Befund unter UF2 a).
 2. *Teiltonmessung* (UF3 a): `Teiltonmessung.hpp` (Teiltöne über der Zeit, B, zwei Stufen, Schwebung, Helligkeit),
    WAV mit 24 bit lesen; Tests an synthetischen Signalen.
 3. *Messung* (UF4 a, UF6 a): Fall `LUMIVIZ_SALAMANDER=<Ordner>` — alle Zeilen der Tabelle A, Boden und Pegel relativ
@@ -3366,6 +3377,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.83.0 | 2026-10-25 | Session 152. 31d-1 gebaut: *Salamander* 48 kHz/24 bit von archive.org geladen (Größe und SHA-256), entpackt nach `…\cmake\Salamander\` mit README; Befund Inhalt (480 Töne, 30 Noten × 16 Stufen, alle PCM 48 kHz/24 bit Stereo, Einsatz bis 28,5 ms); Kipppunkt von UF2 a greift nicht. |
 | 0.82.0 | 2026-10-24 | Session 151. Befund Varianten (MAESSTRO §3.2, Abb. 4 b, 5, 6; Text S. 7 verschrieben); 31c-8 Teil 1 gebaut (Baupläne MP1–MP3 und zwei Glasböden, Messlauf dünner Glasboden); Befund Eigenlöser (Rest tiefer Moden bei weiten Shifts); RS1 a (Nachschärfen mit verschobenem Shift) gebaut; Befund Rechenzeit (ein Thread) und zwei Alternativen (Löser mit Superknoten, Teilfenster in Prozessen); 31c-8 Teil 2 gerechnet (fünf Körper, Richtungen bestanden); Befund Messteil an allen Körpern; AW2 a (Länge der Antwort ohne Grenze 8 s) gebaut; AW3 a (Band mit Reihen — gekippt vor dem Bau); AW3-1 a (Raster, schmale Resonanzen exakt) gebaut; 31c-9 gebaut (Bereich und voller Lauf 1582 / 1582 unter beiden Compilern, Hörproben aller Körper) — 31c fertig. Umfangsfragen 31d–31h (17) gesammelt und entschieden: UF1 a bis UF17 a, IK1 (`InstrumentsCalculation` später, bis dahin auslagerbar bauen); fester Plan 31d bis 31h. |
 | 0.79.0–0.81.0 | 2026-10-24 | Session 150 (Zeilen nachgetragen S151, aus dem Report von S150). PF2 a (zwei Stege im Prüffall), 31c-6 Teil 3 und 4 gebaut, PF3 a (17. Rippe), PS2 a (Code von MAESSTRO gelesen), PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a (pocketfft), 31c-7 Schritt 1 bis 5 gebaut. |
 | 0.78.0 | 2026-10-24 | Session 149. Befund Modenüberlappung (M = 1 bei rund 1 kHz); BM7 a (Grenzfrequenz = höchste gerechnete Mode, 31c-6 prüft Konvergenz und Prüfstein bandweise und senkt die Grenze nur, wo ein Band versagt); Hinweis Patrik zur immer feineren Teilung; PL31 a (erst 31c abschließen, vorher die zwölf Umfangsfragen von 31c-6 bis Abschluss klären, fester Plan; danach 31d–31h ebenso); Recherchen Mobilität über 1 kHz und Glas; Befund Prüfstein und Bauzustand; PS1 a (drei Prüfungen der Mobilität mit Toleranzen); Befund MAESSTRO Abb. 4; PF1 a (Prüffall aus unserem Bauplan mit den Vereinfachungen von MAESSTRO); Befund Konvergenztest MAESSTRO Gl. 2; KV1 a (zweite Rechnung k = 4, Toleranzen je Terzband); AW1 a (Antworten je Taste in der App aus der Körperdatei, im Tonspeicher, Messteil zu Beginn von 31c-7); FT1 a (Faltung je Ton mit pocketfft hinter `Fft`, echtes Stereo); PG1 a (fester Bezug für den Schalldruck, Antworten unnormiert); SB1 a (`soundboard` trägt nur `body`, `amount` fällt weg, `.lvinst` Fassung 17); DM1 a (η je Mode nach Verformungsenergie je Werkstoff); GL1 a (Floatglas, η 1·10⁻³, zwei Dicken); VA1 a (31c-8: MP1–MP3 und zwei Glasböden, Hörproben je Familie); ZA1 a (31c-9 Abschluss: Bereich und voller Lauf unter beiden Compilern, Hörproben, Doku); Befund erste Moden (Corradi Stufe 3); EM1 a (Kipppunkt von BM1 a neu gefasst); fester Plan IP1 und 31c-6 bis 31c-9; gebaut 31c-6 Teil 1 (DM1 a). |
