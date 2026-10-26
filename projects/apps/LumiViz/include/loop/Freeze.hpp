@@ -46,7 +46,8 @@ namespace lumi::loop
 /// aendern (dann auch `loop_werte.txt` neu) — und `werte/klangfassung.txt` neu
 /// schreiben (`LUMIVIZ_KLANGFASSUNG_SCHREIBEN=1`).
 /// 2 (S153, 31d-7, P7 a): die Hammer-Saite rechnet in zwei Ebenen, die Laengskraft je Saite.
-inline constexpr int kKlangfassung = 2;
+/// 3 (S154, 31d-7 B, US4 a): der Stoss je Saite (`stossLeise`, `stossLaut`).
+inline constexpr int kKlangfassung = 3;
 
 /// Der Fingerabdruck des Clips an `ort` fuer `rate`, als Hex (40 Zeichen); leer = den
 /// Clip gibt es nicht. `saiten` wie beim Planen (`instrumentAuskunft`).

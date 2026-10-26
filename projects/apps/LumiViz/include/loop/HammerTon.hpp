@@ -82,9 +82,15 @@ inline constexpr double kEbenenAnteilMin = 1e-6;
 /// Kreisfrequenzen der ersten, die zweite um `deltaCent` hoeher; die erste um `gamma` (rad) gegen
 /// die Senkrechte des Stegs gedreht; `sigmaSaite` der Verlust jeder Saite, `sigmaV` und `sigmaH`
 /// die Verluste senkrecht und waagrecht am Steg auf die Summe. Zerlegt mit `zerlegeKlein`; eine
-/// Saite mit γ = 0 rechnet Bit fuer Bit wie `chorModen`.
+/// Saite mit γ = 0 rechnet Bit fuer Bit wie `chorModen`. `anregung` (leer = gleich) gewichtet den
+/// Stoss des Hammers je Saite, auf das Mittel 1 bezogen (US2 a, `stossJeSaite`).
 [[nodiscard]] std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double deltaCent, double gamma,
-                                                  double sigmaSaite, double sigmaV, double sigmaH);
+                                                  double sigmaSaite, double sigmaV, double sigmaH,
+                                                  const std::vector<double>& anregung = {});
+
+/// Der Stoss je Saite eines Chors aus u (US2 a): bei drei Saiten 1 + u : 1 : 1 − u, bei zwei 1 + u : 1 − u;
+/// leer bei einer Saite oder u = 0 (gleicher Stoss).
+[[nodiscard]] std::vector<double> stossJeSaite(int chor, double u);
 
 /// So lang klingt der Ton nach dem Loslassen nach, in Abtastwerten: mit Daempfer
 /// bis −60 dB unter ihm, ohne bis −60 dB der zweiten Stufe des Grundtons —

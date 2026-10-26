@@ -128,6 +128,7 @@ constexpr Grenzen kGrenzeWinkel{0.0, 10.0};
 constexpr Grenzen kGrenzePolarisationWinkel{0.0, 90.0};
 constexpr Grenzen kGrenzePolarisationCent{0.0, 20.0};
 constexpr Grenzen kGrenzeVerhaeltnis{0.0, 1.0};
+constexpr Grenzen kGrenzeStoss{0.0, 1.0};
 
 /// Die Tasten der Vorgabe: A0, A1, … A7 und C8.
 constexpr int kVorgabeTasten[] = {21, 33, 45, 57, 69, 81, 93, 105, 108};
@@ -211,6 +212,10 @@ HammerSaite baueVorgabe()
     s.polarisationWinkelGrad = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
     s.polarisationCent = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
     s.waagrechtVerhaeltnis = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
+    // vorlaeufig gleicher Stoss (US4 a): der Ton rechnet wie vorher, bis 31d-7 B den Stoss an der Tiefe der
+    // Einbrueche setzt (US1 a)
+    s.stossLeise = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
+    s.stossLaut = kurveAusPunkten({{21, 0.0}, {108, 0.0}});
     return s;
 }
 
@@ -301,6 +306,8 @@ void richteHammerSaite(HammerSaite& saite)
                 v.polarisationWinkelGrad);
     richteKurve(saite.polarisationCent, kGrenzePolarisationCent.von, kGrenzePolarisationCent.bis, v.polarisationCent);
     richteKurve(saite.waagrechtVerhaeltnis, kGrenzeVerhaeltnis.von, kGrenzeVerhaeltnis.bis, v.waagrechtVerhaeltnis);
+    richteKurve(saite.stossLeise, kGrenzeStoss.von, kGrenzeStoss.bis, v.stossLeise);
+    richteKurve(saite.stossLaut, kGrenzeStoss.von, kGrenzeStoss.bis, v.stossLaut);
     saite.resonanzboden.koerper = saite.resonanzboden.koerper.trimmed();
 }
 
@@ -325,6 +332,9 @@ QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
                        {QStringLiteral("polarizationAngle"), kurveAlsJson(s.polarisationWinkelGrad)},
                        {QStringLiteral("polarizationDetune"), kurveAlsJson(s.polarisationCent)},
                        {QStringLiteral("horizontalRatio"), kurveAlsJson(s.waagrechtVerhaeltnis)},
+                       // seit Fassung 19 (US4 a): der Stoss je Saite, immer geschrieben
+                       {QStringLiteral("strikeUnevennessSoft"), kurveAlsJson(s.stossLeise)},
+                       {QStringLiteral("strikeUnevennessLoud"), kurveAlsJson(s.stossLaut)},
                        // seit Fassung 17 (SB1 a): nur der Verweis auf den Koerper, immer geschrieben, leer = ohne Boden
                        {QStringLiteral("soundboard"),
                         QJsonObject{{QStringLiteral("body"), s.resonanzboden.koerper}}}};
@@ -351,6 +361,8 @@ HammerSaite hammerSaiteAusJson(const QJsonObject& o)
     s.polarisationWinkelGrad = kurveAusJson(o.value(QStringLiteral("polarizationAngle")));
     s.polarisationCent = kurveAusJson(o.value(QStringLiteral("polarizationDetune")));
     s.waagrechtVerhaeltnis = kurveAusJson(o.value(QStringLiteral("horizontalRatio")));
+    s.stossLeise = kurveAusJson(o.value(QStringLiteral("strikeUnevennessSoft")));
+    s.stossLaut = kurveAusJson(o.value(QStringLiteral("strikeUnevennessLoud")));
     // Fassung 16 trug `amount` (wirkte nie) — es wird ueberlesen (SB1 a)
     s.resonanzboden.koerper = o.value(QStringLiteral("soundboard")).toObject().value(QStringLiteral("body")).toString();
     return s;

@@ -2645,6 +2645,190 @@ gesetzter Winkel stammte aus einem Modell, das B sofort anders rechnet. Verworfe
 Zwischenstand in der Vorgabe), c (A rot abschließen). Kippt auf b, wenn B sich verzögert (etwa weil Weinreich 1977
 einen Umbau verlangt).
 
+**Befund S154 (31d-7 B, Punkt 6):** `Schwebung::tiefeDb` ist die Grundschwingung des Rests um die Stufen, Spitze zu
+Spitze — an zwei Moden mit Verhältnis r nachgerechnet: r = 0,5 wahr 9,5 / gemessen 8,7 dB, r = 0,8 19,1 / 13,9 dB,
+r = 0,95 31,8 / 16,5 dB, r = 0,99 46,0 / 17,4 dB. Die Größe sättigt bei rund 17 dB; 30 und 55 dB (Modell in einer
+Ebene, γ = 45°) fallen auf fast dieselbe Zahl.
+
+✅ **TB1 a** (Patrik S154): **Die Tiefe der Einbrüche ist eine eigene Größe `Schwebung::einbruchDb`:** im Rest um die
+Stufen je volle Periode der gefundenen Schwebung Maximum minus Minimum, der Median über die Perioden, nur wo eine
+Schwebung erkannt ist; `verdichte` nimmt daraus `tiefeDb` von Teilton 1–3 (Median über v6–v16, Zeile `tiefe_db` in
+`werte/salamander_c5.txt`); `Schwebung::tiefeDb` bleibt. Synthetischer Fall: zwei Moden mit r = 0,5 … 0,99 gegen
+20·log₁₀((1 + r)/(1 − r)). Grund: die Prüfgröße muss messen, was N2 a behauptet — fast vollständige Auslöschung im
+Modell gegen 10–20 dB bei *Salamander*; mit der Grundschwingung bestünde ein falsches γ die Prüfung. Verworfen: b
+(`tiefeDb` der Schwebung verdichten, wie P4 a wörtlich — sättigt im entscheidenden Bereich). Preis: nur Teiltöne mit
+erkannter Schwebung zählen. Kippt auf b, wenn das Maximum minus Minimum je Periode an *Salamander* stärker streut als
+die zu prüfenden Unterschiede (Bilder `LUMIVIZ_31D7_BILD`).
+
+**Befund S154 (31d-7 B, Punkt 6, Bilder und Zählung):** die Bilder `LUMIVIZ_31D7_BILD` (MIDI 24, 33, 42, 60, 81; *Salamander*
+v12 gegen Stufe −8) zeigen: *Salamander* läuft an 42 und 60 fast glatt (Einbrüche 1–12 dB), schwebt an 81 echt
+(15–27 dB); das Modell mit γ = 0 bricht überall 31–53 dB ein; γ = 20°, δ = 2 Cent füllt an C4 Teilton 1 (4,3 dB), nicht
+Teilton 2 und 3 (48–51 dB). Ein Messfall: C4 v12 links, Teilton 1 — der Knick bei rund 0,5 s liegt vor dem Rand der
+Suche (ein Zwanzigstel des Bereichs, 0,55 s), die Messung findet eine Stufe, der Rest zählt als Einbruch 17,7 dB bei
+1,4 dB Grundschwingung. Gezählt über alle Tasten (v6–v16, Teilton 1–3): 1300 Schwebungen, 190 mit Grundschwingung
+unter 2 dB, davon 148 mit zwei Stufen (flache echte Schwebungen) und 42 ohne (der Verdacht der verfehlten Stufe; fast
+alle an den Tasten mit einer Saite 21–33, an C4 vier). Ohne alle schwachen Fälle steigt der Median um höchstens 2,7 dB,
+außer an MIDI 42 (1,6 → 11,0 dB) und 48 (5,5 → 10,6 dB), wo flache Kurven überwiegen — das Bild von 42 zeigt sie. Ein
+Einbruch über dreimal der Grundschwingung (582 Fälle) ist kein Fehlerzeichen: die echten Einbrüche an 81 sind schärfer
+als eine Sinusschwingung. Der Kipppunkt von TB1 a greift nicht; `tiefe_db` bleibt wie gemessen.
+
+**Befund S154 (31d-7 B, Punkt 7, erstes Setzen):** das Werkzeug `LUMIVIZ_31D4_SETZEN` setzt jetzt auch γ (Start aus
+tan γ = exp(−Δσ·t_Knick), Teilton 1, zwei Stufen in mindestens der Hälfte; halber Schritt; Grenzen 0,5–40°; Treffer:
+Knick ±20 % oder ±0,2 s) und δ (Tasten mit einer Saite, ±0,5 Cent, darüber der letzte Wert). Gefahren: drei Durchgänge,
+18 Runden, **nicht brauchbar, nicht eingetragen.** γ läuft an fast allen Tasten an die Grenze 40° (trifft nur an MIDI 69);
+δ trifft an keiner Taste — das Modell zeigt an 21–30 keine Schwebung, auch mit δ bis 20 Cent (γ dort aus dem ersten
+Ziel fortgeführt, 0,5°); `decay` wandert an 63–72 auf 0,5 s, um den Ausgleich zu treffen. Die Tiefe der Einbrüche im
+Modell liegt an allen Tasten mit Chor bei 30–100 dB gegen 5–24 dB bei *Salamander* — auch in Runden mit γ um 20°.
+Ursachen, soweit sichtbar: (1) zeigt das Modell keine zwei Stufen, behandelt das Werkzeug den Knick als spät und hebt
+γ — die tiefen Einbrüche zerstören aber die Stufen, γ steigt und vertieft sie weiter; (2) ohne γ an den Tasten mit
+einer Saite wirkt δ nicht (P4 a: γ **und** δ). Der Kipppunkt von P4 a für δ (die Tiefe bleibt ab zwei Saiten mit
+fortgeführtem δ nicht in der Toleranz) ist erreicht.
+
+✅ **SZ1 a** (Patrik S154): **Vor einem neuen Setzen wird untersucht, was die Tiefe der Einbrüche im Chor bestimmt:** an
+C4, 66 und 81 bei fester Vorgabe einzeln verändert — γ, δ im Chor (heute 0 über MIDI 30), die Verstimmung der Saiten,
+eine ungleiche Anregung der Saiten von Hand; Bilder mit `LUMIVIZ_31D7_BILD` und die Tiefe je Fall; danach Entscheid, ob
+das Modell erweitert wird („Plan erweitern“) oder nur die Regeln des Setzens. Grund: γ um 20° ließ die Tiefe im Chor bei
+30–50 dB — solange unklar ist, welche Größe sie steuert, treffen bessere Regeln sie nicht, ein zweiter Lauf fände nur
+ausgleichende Werte (die Lehre aus 31d-6). Verworfen: b (Regeln berichtigen und neu fahren — behebt zwei Fehler des
+Werkzeugs, hilft nur, wenn das Modell die Tiefe erreichen kann). Kippt auf b, wenn eine Kombination aus γ und δ im Chor
+die Tiefe von *Salamander* ohne Zusatz am Modell erreicht. Die Toleranz des Knicks (±20 % oder ±0,2 s) ist ungeprüft.
+
+**Befund S154 (SZ1 a, Untersuchung):** Werkzeug `LUMIVIZ_31D7_TIEFE` (mit `LUMIVIZ_SALAMANDER`), der Stoß je Saite von
+Hand über `setzeAnregungJeSaiteFuerTests` (nur Tests; leer rechnet Bit für Bit wie vorher). Tiefe der Einbrüche,
+Teilton 1 / 2 / 3, linker Kanal, v12 bzw. Stufe −8, in dB:
+
+| Fall | MIDI 60 | MIDI 66 | MIDI 81 |
+|---|---|---|---|
+| *Salamander* v12 | 17,7 / 11,9 / 9,7 | 12,0 / 15,3 / 22,4 | 26,7 / 22,7 / 15,3 |
+| Vorgabe | 34,5 / 50,0 / 52,8 | 36,9 / 37,1 / 26,8 | 27,2 / 31,1 / 57,8 |
+| γ = 20°, δ = 2 Cent | 4,3 / 51,5 / 48,4 | 41,0 / 34,9 / 30,7 | 42,6 / 19,9 / 19,8 |
+| γ = 20°, δ = 0 | wie Vorgabe | wie Vorgabe | wie Vorgabe |
+| Verstimmung × 0,5 | 6,6 / 39,7 / 45,9 | 41,3 / 37,6 / 40,8 | 29,4 / 30,0 / 59,8 |
+| Verstimmung × 2 | 46,5 / 51,9 / 43,9 | 36,2 / 31,9 / 21,4 | 21,5 / 18,4 / 52,1 |
+| Stoß 1 : 0,8 : 0,6 | 5,5 / 14,8 / 19,5 | 12,8 / 16,1 / 14,8 | 15,1 / 16,4 / 67,6 |
+| Stoß 1 : 0,5 : 0,2 | 4,1 / 8,4 / 10,6 | 15,9 / 8,7 / 8,2 | 8,1 / 8,1 / 59,0 |
+| Stoß 1 : 0,8 : 0,6 mit γ = 20°, δ = 2 Cent | 13,1 / 42,2 / 27,2 | 23,0 / 20,6 / 22,0 | 48,6 / 21,6 / 22,0 |
+
+(1) **Der Stoß je Saite steuert die Tiefe im Chor:** schon 1 : 0,8 : 0,6 bringt sie an 60 und 66 in den Bereich von
+*Salamander* (8–22 dB), ohne die Schwebung zu ändern; die zweite Ebene und die Verstimmung tun das an keiner der drei
+Tasten für alle drei Teiltöne. Mit gleichem Stoß bekommen die Gegenlagen vom Hammer nichts, sie entstehen nur aus der
+Verstimmung — darum löschen die Saiten sich im Wechsel fast aus. (2) γ mit δ = 0 ändert nichts (h = 0: die Drehung ist
+nur eine andere Basis). (3) Ein Messfehler am Modell: wo der Ton ohne zweite Stufe bis in die Rechengenauigkeit fällt
+(81, Verstimmung 0: T60 2,7 s, nach 4 s unter −90 dB), zählt die Messung 62–84 dB „Einbruch“ — das Modell hat keinen
+Rauschboden, die Grenze des Bereichs greift nicht; betrifft auch Teilton 3 an 81 in jedem Fall. (4) An 81 fehlt dem
+Modell die zweite Stufe ganz (*Salamander*: −40 … −55 dB über 11 s), unabhängig von der Tiefe.
+
+✅ **SZ2 a** (Patrik S154): **Plan erweitern — der Hammer stößt die Saiten eines Chors ungleich, als neue Größe der
+Hammer-Saite.** Form, Datei und Fassung, woran sie gesetzt wird und die Tests kommen als Umfangsfragen einzeln vor dem
+Bau; der Haken für Tests geht in diese Größe über. Grund: nur der ungleiche Stoß trifft die Tiefe an 60 und 66 in allen
+drei Teiltönen; ein Modell, das die Messung nachweislich nicht erreicht, fände beim Setzen ausgleichende Werte (31d-6).
+Verworfen: b (nur die Regeln des Setzens berichtigen, die Tiefe im Chor als bekannte Abweichung). Kippt auf b, wenn der
+Stoß an *Salamander* nicht getrennt von γ und δ zu setzen ist. Daneben eigene Schritte: der Rauschboden der Messung am
+Modell und die fehlende zweite Stufe an 81.
+
+**Befund S154 (SZ2 a, Raster vor der ersten Umfangsfrage):** Werkzeug `LUMIVIZ_31D7_RASTER` — Stoß 1 + u : 1 : 1 − u
+(u = 0 … 0,6) mal γ (0, 10°, 20°, δ = 2 Cent), an 60 und 66 über alle 16 Stufen verdichtet wie beim Setzen
+(`raster.txt`, 174 s). **Die Tiefe folgt dem Stoß und kaum γ:** MIDI 60 bei γ = 0 49,8 → 21,5 → 15,5 → 13,2 dB für
+u = 0 … 0,6 (*Salamander* 11,9), MIDI 66 36,9 → 16,1 → 13,3 → 10,9 dB (*Salamander* 16,1); γ verschiebt sie bei
+festem u um −9 … +8 dB ohne Richtung. **Der Knick trägt nicht:** an 60 liegt er im ganzen Raster bei 1,6–3,4 s
+(*Salamander* 0,83 s), an 66 findet die Messung in 8 von 12 Fällen keine zwei Stufen (Anteil 0) — mit γ = 20° oder
+u ≥ 0,2 meist nicht. Die Schwebung ändert sich mit γ (60: 1,09 → 0,55 Cent), mit u kaum.
+
+✅ **US1 a** (Patrik S154): **Der Stoß je Saite wird an den Tasten mit Chor an der Tiefe der Einbrüche gesetzt**
+(`tiefe_db`, Teilton 1–3, Median über v6–v16), mit dem halben Schritt wie die übrigen Größen; die Tiefe ist damit Ziel
+statt Prüfgröße (P4 a insoweit ersetzt), der dauerhafte Test prüft sie als gesetzte Größe mit Toleranz; zwischen den
+Tasten mit Ziel interpoliert, an Tasten mit einer Saite wirkt der Stoß nicht. Grund: jeder Parameter an der Größe, die
+er steuert (P4 a) — das Raster zeigt, dass der Stoß die Tiefe steuert und γ kaum; P4 b (Tiefe als Ziel von γ) fiel,
+weil γ sie aus falschem Grund träfe, der Stoß ist die Ursache. Verworfen: b (ein fester Wert ohne Setzen — keine
+Quelle mit Zahl, 60 und 66 brauchen nach dem Raster verschiedene u). Kippt auf b, wenn beim Setzen die Verstimmung die
+Tiefe so mitbewegt, dass Stoß und Verstimmung sich gegenseitig verschieben.
+
+**Befund S154 (vor US2, Tiefe je Stufe an *Salamander*):** der Messbericht von `LUMIVIZ_SALAMANDER` zeigt jetzt die
+Tiefe je Gruppe von vier Ebenen. An den meisten Tasten mit Chor bleibt sie über die Stärke innerhalb von 3–5 dB; an
+einigen wandert sie deutlich, ohne gemeinsame Richtung: MIDI 42 14,7 → 1,3 dB, 69 16,3 → 9,0 dB, 45 17,1 → 12,9 dB
+(fallend), 81 11,6 → 27,7 dB, 84 14,4 → 22,1 dB (steigend). Bank 2000 (MSc, S. 29): der Filz ist ungleichmäßig, die
+Saiten bekommen bei verschiedener Stärke verschiedene Anteile — ohne Zahlen. Im Modell ist die Tiefe bei festem Stoß
+von der Stärke unabhängig (die Moden rechnen linear, der Stoß skaliert je Saite).
+
+✅ **US2 a** (Patrik S154): **Der Stoß ist eine Zahl u je Taste (0 … 1): bei drei Saiten 1 + u : 1 : 1 − u, bei zwei
+1 + u : 1 − u, auf das Mittel bezogen; u steht in zwei Kurven `strikeUnevennessSoft` und `strikeUnevennessLoud`,** gültig
+an der Mitte der leisen Ebenen (v6–v10) und der lauten (v12–v16), dazwischen nach der Anschlagstufe linear, an den
+Grenzen festgehalten; gesetzt beide getrennt an der Tiefe ihrer Gruppe; gleich gesetzt rechnet der Ton wie mit einer.
+Bei einer Saite wirkt u nicht; die stärkere Saite zuerst (die mittlere ist unverstimmt). Grund: Bank 2000 S. 29 und
+*Salamander* (42, 69, 81, 84 wandern 8–16 dB über die Stärke); die Form schließt eine Kurve ein, ohne spätere Fassung.
+Verworfen: b (eine Kurve für alle Stärken). Kippt auf b, wenn beim Setzen der Unterschied der Gruppen an den meisten
+Tasten unter ihrer Streuung liegt.
+
+✅ **US3 a** (Patrik S154): **γ wird an den Tasten mit einer Saite (21–30) an der Tiefe der Einbrüche gesetzt, δ dort
+weiter an der Schwebung (P4 a); über MIDI 30 γ mit dem letzten Wert fortgeführt wie δ; im Chor setzt der Stoß die
+Tiefe (US1 a). Der Knick ist keine Zielgröße mehr, er steht als Prüfgröße im Bericht, ohne Toleranz im dauerhaften
+Test** (P4 a insoweit ersetzt). Grund: an einer Saite ist die zweite Ebene die einzige Ursache einer Schwebung — die
+Tiefe dort misst γ; der Knick wird im Chor von Stoß, γ und Verstimmung zugleich bewegt (Raster: an 60 bei γ = 0 von
+2,6 auf 1,6 s mit u), als Ziel wäre er der gemeinsame Ausgleich aus P4 c. Verworfen: b (γ am Knick, Messung des Knicks
+berichtigt). Kippt auf b, wenn das Modell an den Tasten mit einer Saite die flachen Schwebungen nicht ohne zweite Stufe
+erreicht (*Salamander* zeigt dort keine; mit h = 0 klingt die waagrechte Richtung langsam ab — dann eine eigene Frage
+zu h, UF8 b). Bekannt: der Rand der Suche (ein Zwanzigstel, 0,55 s an C4) verfehlt einen frühen Knick.
+
+✅ **US4 a** (Patrik S154): **`.lvinst` Fassung 19; `strikeUnevennessSoft` und `strikeUnevennessLoud` (Code `stossLeise`,
+`stossLaut`) im Block der Hammer-Saite, immer geschrieben, Grenzen 0 … 1; eine Datei bis Fassung 18 bekommt die
+Vorgabe wie jede fehlende Kurve; die Vorgabe ist u = 0, bis 31d-7 B setzt** (der Ton rechnet bis dahin wie vorher).
+Die Kurven gelten an Stufe −16 (Mitte v6–v10) und −4 (Mitte v12–v16) nach V1 a. Der Haken für Tests entfällt, die
+Werkzeuge nehmen die Kurven. Danach nach Steckbrief: Fassungs-Literale in `tests/`, `*Loop Werte*`, `klangfassung.txt`
+neu (nur Abdrücke), `kKlangfassung` 3. Grund: eine Bedeutung von „fehlt“ wie in P7 a. Verworfen: b (Dateien bis 18
+mit u = 0). Kippt auf b, wenn eigene Instrumente mit Hammer-Saite unverändert klingen sollen.
+
+✅ **US5 a** (Patrik S154): **Jede Zusage aus US1 a bis US4 a bekommt einen Test wie in P8 a:** (1) Bezug — mit u = 0
+`werte/hammer_bezug_*` unverändert, eine Saite Bit für Bit; (2) `ebenenModen` mit Stoß, bei γ = 0 Σ Anteile = 1 für
+jedes u; (3) am Ton — an C4 flachere Einbrüche mit u > 0, bei einer Saite ändert u nichts (Bit für Bit), an Stufe −16
+und −4 je die eigene Kurve, dazwischen linear; (4) Datei — Fassung 19 hin und zurück, 18 bekommt die Vorgabe, Grenzen;
+(5) Setzen und dauerhafter Test — u leise und laut an der Tiefe der Chor-Tasten, γ an der Tiefe von 21–30, der Knick
+nur im Bericht; der dauerhafte Test wieder voll (decay, highDecay, lateDecay, detune, B, Winkel auch im Chor, γ, δ, u
+über die Tiefe), die Toleranz der Tiefe nach den Werten aus der Streuung über die Ebenen. Am Ende von B beide Compiler,
+voller Lauf, Rechenzeit von Hand mit Taktprobe. Grund: das Setzen fand auch mit falschem Modell treffende Werte; ob der
+Stoß tut, was er soll, zeigen nur Fälle am Ton. Verworfen: b (nur Datei und dauerhafter Test). Kippt auf b, wenn die
+Fälle am Ton den vollen Lauf deutlich über 7 min heben.
+
+✅ **US6 a** (Patrik S154): **Der gemessene Bereich eines Teiltons endet zusätzlich, wo die Hüllkurve 60 dB unter ihre
+Spitze zu Beginn fällt — für *Salamander* und das Modell gleich** (UF3 a); *Salamander* danach neu gemessen, der
+Unterschied an `werte/salamander_c5.txt` geprüft; synthetischer Fall: ein Teilton ohne Rauschen, der weit unter −60 dB
+fällt, bekommt keinen Einbruch. Grund: eine Regel der Messung für beide Seiten, ohne fremde Zutat; 60 dB wie T60.
+Verworfen: b (dem Modell beim Messen Rauschen wie bei *Salamander* zugeben — greift ins Signal ein, hängt am
+Rauschpegel je Taste). Kippt auf b, wenn die Grenze an *Salamander* Werte deutlich verschiebt (T60 oder Tiefe an
+mehreren Tasten außerhalb der Toleranzen des dauerhaften Tests). Dass sie den Scheinwert an 81 beseitigt, ist erwartet,
+nicht geprüft.
+
+**Befund S154 (vor US7, die zweite Stufe an 81):** `lateDecay` steht an 81 noch auf dem vorläufigen Wert aus 31d-4
+(dreimal `decay`, 4,9 s; *Salamander* 15,8 s); das erste Setzen hat ihn nicht bewegt (das Modell zeigte keine zwei
+Stufen, die Taste fiel heraus). Gerechnet (`LUMIVIZ_31D7_TIEFE`, neuer Fall): Stoß 1 : 0,8 : 0,6 mit `lateDecay` × 3
+(14,6 s) hebt den Nachklang von Teilton 1 um rund 15 dB, bleibt aber eine Stufe (T60 3,5 s) und fällt nach 7 s unter
+−80 dB — *Salamander* liegt von 3 bis 11 s bei −40 … −55 dB. Weder der Stoß noch ein längeres `lateDecay` allein
+bringen die zweite Stufe an 81; die Ursache ist offen.
+
+✅ **US7 a** (Patrik S154): **Zuerst Stoß (US1 a–US5 a) und Grenze der Messung (US6 a) bauen und prüfen; danach, vor dem
+Setzen, eine eigene Untersuchung an 81 und Nachbartasten (75, 84) mit dem gebauten Stoß; Befund und Entscheid wie bei
+SZ1 a (Regeln des Setzens oder Modell); erst dann setzen.** Grund: Stoß und Messgrenze hängen nicht an der Ursache an
+81, das Setzen an beidem; die Untersuchung läuft so am fertigen Modell mit der richtigen Messung. Verworfen: b (81 jetzt
+mit dem Haken für Tests, Bau danach). Kippt auf b, wenn sich vor dem Bau zeigt, dass die Ursache die Form des Stoßes
+ändert (etwa ungleiche Dämpfung der Saiten statt ungleicher Stoß — dann US2 a neu prüfen).
+
+**Befund S154 (7.1, Messgrenze):** mit 60 dB (US6 a) greift der Kipppunkt: an *Salamander* ändern sich 18 Werte um
+mehr als 10 %, fast alle im Diskant (72: `t60_spaet` 20,6 → 14,7 s; 90: 56,2 → 22,8 s; 102: Knick 0,92 → 0,23 s), und
+der synthetische Fall „zwei Stufen: frueh 3 s, spaet 12 s, die spaete 30 dB leiser“ wird rot — die späte Stufe liegt
+dort selbst 30–70 dB unter der Spitze. Das Bild des Modells an 81 bis −160 dB (`tiefe_31d7_grenze/`) zeigt die Ursache
+der Scheinwerte: unter rund −100 dB ein Boden der Rechnung und ein Sprung nach etwa 5 s in allen Fällen (Ursache im
+Modell offen, unhörbar). **Mit 90 dB** ändert sich an *Salamander* ein einziger Wert (96: `t60_spaet` 3,64 → 3,74 s,
++2,6 %), `tiefe_db` gar nicht; die synthetischen Fälle sind grün; am Modell an 81 fällt der Scheinwert weg (Teilton 3,
+Vorgabe 57,8 → 14,0 dB; Stoß 1 : 0,8 : 0,6 67,6 → 21,3 dB). Neuer Fall: zwei leise, langsam abklingende Moden 100 dB
+unter dem Ton schweben, sobald er unter sie fällt — ohne Grenze 46,5 dB Schein-Einbruch, mit Grenze keiner.
+
+✅ **US6-1 a** (Patrik S154; US6 a gekippt): **Der gemessene Bereich endet zusätzlich, wo die Hüllkurve 90 dB unter ihre
+Spitze zu Beginn fällt — für *Salamander* und das Modell gleich** (`Einstellungen::untergrenzeDb`). *Salamander* damit
+gemessen (eine Änderung, 96 `t60_spaet` +2,6 %); der Sprung im Modell unter −90 dB als eigener Befund für 31d-7 C.
+Grund: dieselbe Regel für beide Seiten (UF3 a), schneidet nachweislich nur ab, was keine Aufnahme zeigt. Verworfen: b
+(dem Modell Rauschen wie bei *Salamander* zugeben — greift ins Signal ein, hängt am Rauschpegel je Taste und Teilton).
+Kippt auf b, wenn eine leisere Aufnahme (etwa ein Upright, Stufe 32) Stufen unter −90 dB zeigt oder die Reste der
+Rechnung am Modell über −90 dB auftauchen. **7.1 fertig.**
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -2874,6 +3058,29 @@ Teilschritts beide Compiler und der volle Lauf (UF17 a). Neuer Rechen- und Messc
       `LUMIVIZ_31D7_BILD`; Bilder von Modell (mit γ von Hand) und *Salamander* angesehen.
    7. *Setzen* (P4 a, S3 a): Werkzeug um γ und δ erweitert, `LUMIVIZ_31D4_SETZEN` gefahren, Vorgabe in
       `baueVorgabe()`; der dauerhafte Test voll (P8 a 6); Bilder nach dem Setzen angesehen.
+      **S154: erstes Setzen nicht brauchbar (Befund S154 vor SZ1 a); Plan erweitern nach SZ2 a, US1 a–US7 a —
+      Punkt 7 in sieben Unterpunkten (von Patrik gebilligt S154):**
+      1. *Messgrenze* (US6 a): Bereich endet 60 dB unter der Spitze; synthetischer Fall; *Salamander* neu gemessen,
+         Unterschied an `werte/salamander_c5.txt` geprüft (Kipppunkt US6 a); Modell an 81 im Bild.
+      2. *Stoß im Modell* (US2 a, US4 a): `stossLeise`/`stossLaut` in `HammerSaite` (Stufe −16 / −4, linear, an den
+         Grenzen fest), `ebenenModen` nimmt den Stoß aus den Kurven, der Haken für Tests entfällt (Werkzeuge auf die
+         Kurven); `.lvinst` Fassung 19, Literale, `*Loop Werte*`, `klangfassung.txt`, `kKlangfassung` 3.
+      3. *Tests* (US5 a 1–4): Bezug unverändert mit u = 0; Moden mit Stoß; am Ton (C4 flacher, eine Saite Bit für Bit,
+         Stufen −16/−4/dazwischen); Datei 19/18/Grenzen. Eng unter Release-clang.
+      **Stand S154: 7.1 fertig (US6-1 a), 7.2 und 7.3 gebaut** — Bereich `*Loop Hammer*,*Loop Werte*,*Klangfassung*,
+      *Instrument*,*Salamander*,*Teiltonmessung*` (ohne Rechenzeit) 123 / 123 unter Release-clang; Bezug und `*Loop Werte*`
+      unverändert, `klangfassung.txt` neu (nur Abdrücke, `kKlangfassung` 3); an C4 tiefster Einbruch 30,7 dB bei
+      gleichem Stoß, 7,5 dB mit u = 0,25. Testing-MSVC und der volle Lauf in 7.7.
+      4. *Untersuchung 81* (US7 a): 81, 75, 84 mit dem gebauten Stoß und der Messgrenze — Bilder, Befund, Entscheid (Regeln
+         des Setzens oder Modell; wächst das Modell, als „Plan erweitern“).
+      5. *Setzen-Werkzeug* (US1 a, US3 a): u leise/laut an der Tiefe der Chor-Tasten (Gruppen v6–v10, v12–v16), γ an
+         der Tiefe von 21–30 (darüber fortgeführt), δ an der Schwebung von 21–30, `detune` ab zwei Saiten; der Knick
+         nur im Bericht; „keine zwei Stufen im Modell“ ändert γ nicht; dazu, was 4 entscheidet. Gefahren, Bilder nach
+         dem Setzen angesehen, Vorgabe in `baueVorgabe()`.
+      6. *Dauerhafter Test voll* (US5 a 5, WK1 a endet): decay, highDecay, lateDecay, detune, B, Winkel auch im Chor,
+         γ, δ, u über die Tiefe; Toleranz der Tiefe nach den Werten aus der Streuung über die Ebenen.
+      7. *Abschluss B* (UF17 a, RZ1-1 a): beide Compiler, voller Lauf, Rechenzeit von Hand mit Taktprobe (LHM vorher
+         starten), Commit-Message.
    8. *Hörproben* (N2 a): vierte Fassung mit `LUMIVIZ_31D_WAV` und `LUMIVIZ_SALAMANDER`.
    9. *Abschluss 31d-7*: `modell.md` §2, §5, §6, §9, §10 nach den gelesenen Quellen (P1 a; Abgleich mit Weinreich 1977,
       falls beschafft), Konzept, `Offene_Punkte`, Steckbrief; Kipppunkte von P2 a bis P8 a geprüft; danach weiter mit

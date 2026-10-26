@@ -15,6 +15,9 @@
  * S3 a: logarithmische mit √(Ziel / Modell), lineare mit der halben Differenz), hoechstens acht
  * Runden. Die Ziele nach S2 a; nach S3 a die Verstimmung nur bei mindestens zwei Saiten und messbarer
  * Schwebung, die zweite Stufe nicht gesetzt (dreimal Decay, Kipppunkt der Nacharbeit).
+ * 31d-7 B (P4 a): dazu γ aus dem Knick von Teilton 1 (wo Salamander in mindestens der Haelfte der Messungen
+ * zwei Stufen zeigt) und δ aus der Schwebung an den Tasten mit einer Saite, darueber der letzte Wert; die
+ * Tiefe der Einbrueche (TB1 a) steht nur im Bericht.
  * Legt je Runde `runde_<n>.txt` und am Ende `stuetzpunkte.txt` (zum Eintragen in
  * `baueVorgabe()`) in den Ordner. Ohne die Variable meldet der Fall das und prueft nichts.
  *
@@ -55,6 +58,9 @@ const std::filesystem::path kWerteDatei = "projects/apps/LumiViz/tests/unit/Unit
 constexpr int kBBis = 40;
 constexpr int kWinkelBis = 45;
 constexpr int kRunden = 8;  // S3 a
+/// γ beim Setzen zwischen diesen Grenzen (P7 a erlaubt 0–90°; ab 45° koppeln beide Richtungen gleich).
+constexpr double kGammaMin = 0.5;
+constexpr double kGammaMax = 40.0;
 
 /// Die hoechste Verstimmung, deren Schwebung am Grundton der Taste noch messbar ist (S3 a): die
 /// Schwebung unter 8 Hz und unter der halben Fensterrate der Messung (`Teiltonmessung.hpp`).
@@ -104,6 +110,28 @@ lumi::loop::Tastenkurve kurveAus(const std::vector<int>& tasten, const Parameter
     for (const lumi::loop::TastenWert& w : rest) k.punkte.push_back(w);
     std::sort(k.punkte.begin(), k.punkte.end(), [](const auto& a, const auto& b) { return a.taste < b.taste; });
     return k;
+}
+
+/// Der Unterschied der Abklingraten beider Stufen von Teilton 1 in 1/s (Amplitude; T60 = 60 dB).
+double stufenAbstand(const TastenWerte& w)
+{
+    return std::log(1000.0) * (1.0 / w.t60Frueh.wert - 1.0 / w.t60Spaet.wert);
+}
+
+/// γ aus dem Knick (P4 a): die schwach gekoppelte Richtung traegt sin²γ, die stark gekoppelte cos²γ der
+/// Energie; der Knick liegt, wo beide gleich laut sind — tan γ = exp(−Δσ·t_Knick).
+double gammaAusKnick(double knickS, double abstand)
+{
+    return std::atan(std::exp(-abstand * knickS)) * 180.0 / std::numbers::pi;
+}
+
+/// γ beim Setzen: der Knick des Modells um (t_Modell − t_Ziel) zu spaet heisst tan γ um exp(Δσ·(t_Modell − t_Ziel))
+/// zu klein; mit dem halben Schritt (S3 a) die Wurzel davon. Grenzen: γ = 45° vertieft die Einbrueche (Befund S153).
+double gammaBerichtigt(double gammaGrad, double knickModell, double knickZiel, double abstand)
+{
+    const double rad = gammaGrad * std::numbers::pi / 180.0;
+    const double faktor = std::exp(0.5 * abstand * (knickModell - knickZiel));
+    return std::clamp(std::atan(std::tan(rad) * faktor) * 180.0 / std::numbers::pi, kGammaMin, kGammaMax);
 }
 
 std::string punkteText(const lumi::loop::Tastenkurve& k)
@@ -194,6 +222,8 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
     Parameter cent = neu("verstimmungCent", false);
     Parameter b = neu("inharmonizitaet", true);
     Parameter winkel = neu("stegWinkelGrad", false);
+    Parameter gamma = neu("polarisationWinkelGrad", false);  // P4 a
+    Parameter delta = neu("polarisationCent", false);
     // S2 a: Ziele und Startwerte
     for (std::size_t i = 0; i < n; ++i)
     {
@@ -231,6 +261,20 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
             winkel.ziel[i] = true;
             winkel.wert[i] = 2.0;
         }
+        // P4 a: γ aus dem Knick von Teilton 1, wo Salamander meist zwei Stufen zeigt
+        if (w.zweiStufenAnteil.wert >= 0.5 && w.knickS.anzahl > 0 && w.knickS.wert > 0.0 && w.t60Spaet.wert > w.t60Frueh.wert &&
+            w.t60Frueh.wert > 0.0)
+        {
+            gamma.ziel[i] = true;
+            gamma.wert[i] = std::clamp(gammaAusKnick(w.knickS.wert, stufenAbstand(w)), kGammaMin, kGammaMax);
+        }
+        // P4 a: δ aus der Schwebung an den Tasten mit einer Saite (darueber der letzte Wert)
+        if (w.schwebungCent.anzahl > 0 && lumi::loop::chorAn(lumi::loop::hammerSaiteVorgabe(), w.midi) == 1 &&
+            w.schwebungCent.wert <= centGrenze(w.midi))
+        {
+            delta.ziel[i] = true;
+            delta.wert[i] = std::clamp(w.schwebungCent.wert, 0.0, 20.0);
+        }
     }
     const lumi::loop::HammerSaite vorgabe = lumi::loop::hammerSaiteVorgabe();
     const auto saiteAus = [&]() {
@@ -249,6 +293,13 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
         for (std::size_t i = 0; i < n; ++i)
             if (winkel.ziel[i]) letzter = winkel.wert[i];
         saite.stegWinkelGrad = kurveAus(tasten, winkel, {{lumi::loop::kTasteMax, letzter}});
+        // P4 a: γ zwischen den Zielen interpoliert, an den Enden fortgefuehrt; δ ueber den Tasten mit einer Saite
+        // der letzte Wert bis C8
+        saite.polarisationWinkelGrad = kurveAus(tasten, gamma);
+        double letztesDelta = 0.0;
+        for (std::size_t i = 0; i < n; ++i)
+            if (delta.ziel[i]) letztesDelta = delta.wert[i];
+        saite.polarisationCent = kurveAus(tasten, delta, {{lumi::loop::kTasteMax, letztesDelta}});
         lumi::loop::richteHammerSaite(saite);
         return saite;
     };
@@ -290,7 +341,11 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
                 b.trifft[i] = b.ziel[i] && mo.b.anzahl > 0 && relativ(mo.b.wert, z.b.wert, 0.05);
                 const std::optional<double> abstand = phantomAbstand(z, mo);
                 winkel.trifft[i] = winkel.ziel[i] && abstand && std::abs(*abstand) <= 3.0;
-                for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel})
+                // γ: der Knick des Modells auf ±20 % oder ±0,2 s (die Messung sucht ihn im Raster der Huellkurve)
+                gamma.trifft[i] = gamma.ziel[i] && mo.knickS.anzahl > 0 && mo.zweiStufenAnteil.wert >= 0.5 &&
+                                  std::abs(mo.knickS.wert - z.knickS.wert) <= std::max(0.2, 0.2 * z.knickS.wert);
+                delta.trifft[i] = delta.ziel[i] && std::abs(centModell - z.schwebungCent.wert) <= 0.5;
+                for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel, &gamma, &delta})
                     if (p->ziel[i] && !p->trifft[i]) alle = false;
 
                 // die zweite Stufe: Parameter | Salamander (Anteil zweistufig) | Modell (Anteil)
@@ -302,9 +357,15 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
                         << cent.wert[i] << ' ' << z.schwebungCent.wert << ' ' << centModell << (cent.trifft[i] ? '*' : ' ');
                 if (b.ziel[i]) tabelle << " | B " << 1e4 * b.wert[i] << ' ' << 1e4 * z.b.wert << ' ' << 1e4 * mo.b.wert << (b.trifft[i] ? '*' : ' ');
                 if (winkel.ziel[i]) tabelle << " | Winkel " << winkel.wert[i] << " Abstand " << (abstand ? *abstand : 0.0) << (winkel.trifft[i] ? '*' : ' ');
+                if (gamma.ziel[i])
+                    tabelle << " | gamma " << gamma.wert[i] << " Knick " << z.knickS.wert << ' ' << mo.knickS.wert << " (" << mo.zweiStufenAnteil.wert
+                            << ')' << (gamma.trifft[i] ? '*' : ' ');
+                if (delta.ziel[i]) tabelle << " | delta " << delta.wert[i] << ' ' << z.schwebungCent.wert << ' ' << centModell << (delta.trifft[i] ? '*' : ' ');
+                // TB1 a: die Tiefe der Einbrueche nur im Bericht (Pruefgroesse, kein Ziel)
+                tabelle << " | Tiefe " << z.tiefeDb.wert << ' ' << mo.tiefeDb.wert;
                 tabelle << '\n';
             }
-            for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel})
+            for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel, &gamma, &delta})
             {
                 int ziele = 0;
                 int treffer = 0;
@@ -343,11 +404,20 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
                     const double rad = winkel.wert[i] * std::numbers::pi / 180.0;
                     winkel.wert[i] = std::clamp(std::atan(std::tan(rad) * std::pow(10.0, *abstand / 40.0)) * 180.0 / std::numbers::pi, 0.0, 10.0);
                 }
+                if (gamma.ziel[i] && !gamma.trifft[i])
+                {
+                    // ohne zwei Stufen im Modell: der Knick liegt jenseits des Gemessenen — γ wie bei einem spaeten Knick
+                    const double knickModell = mo.knickS.anzahl > 0 && mo.zweiStufenAnteil.wert >= 0.5 ? mo.knickS.wert : 2.0 * z.knickS.wert;
+                    gamma.wert[i] = gammaBerichtigt(gamma.wert[i], knickModell, z.knickS.wert, stufenAbstand(z));
+                }
+                if (delta.ziel[i] && !delta.trifft[i])
+                    delta.wert[i] = std::clamp(delta.wert[i] + 0.5 * (z.schwebungCent.wert - (mo.schwebungCent.anzahl > 0 ? mo.schwebungCent.wert : 0.0)),
+                                               0.0, std::min(20.0, centGrenze(z.midi)));
             }
         }
         // Tasten ohne Treffer fallen heraus; ist keine gefallen, ist die Kurve die zuletzt gemessene
         bool entfernt = false;
-        for (Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel})
+        for (Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel, &gamma, &delta})
             for (std::size_t i = 0; i < n; ++i)
                 if (p->ziel[i] && !p->trifft[i])
                 {
@@ -371,6 +441,8 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
            << "s.verstimmungCent = kurveAusPunkten(" << punkteText(saite.verstimmungCent) << ");\n"
            << "s.inharmonizitaet = kurveAusPunkten(" << punkteText(saite.inharmonizitaet) << ");\n"
            << "s.stegWinkelGrad = kurveAusPunkten(" << punkteText(saite.stegWinkelGrad) << ");\n"
+           << "s.polarisationWinkelGrad = kurveAusPunkten(" << punkteText(saite.polarisationWinkelGrad) << ");\n"
+           << "s.polarisationCent = kurveAusPunkten(" << punkteText(saite.polarisationCent) << ");\n"
            << "// ohne Treffer, nicht in der Kurve (UF5 a: vermerkt):" << vermerkt.str() << '\n';
     std::ofstream(ziel / "stuetzpunkte.txt", std::ios::binary) << punkte.str();
     MESSAGE(verlauf.str() << punkte.str());

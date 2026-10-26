@@ -627,10 +627,14 @@ struct Instrument
 // Schwingungsebene — `polarizationAngle` (γ, Grad), `polarizationDetune` (δ, Cent), `horizontalRatio`
 // (h, σ_H/σ_V), je eine Kurve, immer geschrieben; eine aeltere Datei bekommt fuer sie die Vorgabe wie jede
 // fehlende Kurve. Ein aelteres Programm rechnete jede Saite in einer Ebene.
-// Geschrieben wird Fassung 18.
+// Fassung 19 (S154, Stufe 31d-7 B, Entscheide US2 a, US4 a): `hammerString` traegt den Stoss je Saite —
+// `strikeUnevennessSoft` und `strikeUnevennessLoud` (u, 0 … 1, an Anschlagstufe −16 und −4), je eine Kurve,
+// immer geschrieben; eine aeltere Datei bekommt fuer sie die Vorgabe. Ein aelteres Programm stiess alle
+// Saiten eines Chors gleich.
+// Geschrieben wird Fassung 19.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 18;
+inline constexpr int kInstrumentFassung = 19;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

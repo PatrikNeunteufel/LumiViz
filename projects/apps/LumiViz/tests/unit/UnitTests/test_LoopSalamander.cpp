@@ -24,6 +24,11 @@
  *   gerechneten Steinway D wie im Programm (Stufen −30 … 0 dB an der Stelle der Ebenen, V1 a) und den
  *   Glasboden, vergleicht mit `werte/salamander_c5.txt` und legt `modell_steinway.txt` und
  *   `vergleich.txt` in den Ordner.
+ * - 31d-7 (P8 a 7): `LUMIVIZ_31D7_BILD=<Ordner>` mit `LUMIVIZ_SALAMANDER` legt je Taste ein Bild der
+ *   Huellkurven von Teilton 1–3 ab — *Salamander* v12 gegen das Modell an Stufe −8 mit γ und δ von Hand.
+ * - 31d-7 (SZ1 a): `LUMIVIZ_31D7_TIEFE=<Ordner>` mit `LUMIVIZ_SALAMANDER` veraendert an MIDI 60, 66, 81 je eine
+ *   Groesse (zweite Ebene, Verstimmung, Stoss des Hammers je Saite) und legt die Tiefe der Einbrueche
+ *   (`tiefe.txt`) und Bilder ab.
  ****************************************************************************************
  */
 
@@ -36,10 +41,17 @@
 #include "audio/WavFormat.hpp"
 #include "loop/Boden.hpp"
 #include "loop/Fft.hpp"
+#include "loop/HammerSaite.hpp"
+#include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Tonspeicher.hpp"
 
+#include <QColor>
+#include <QGuiApplication>
+#include <QImage>
+#include <QPainter>
+#include <QPainterPath>
 #include <QString>
 #include <QtGlobal>
 
@@ -49,6 +61,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <thread>
 
@@ -110,6 +123,16 @@ TEST_CASE("Loop Salamander 31d-3 verdichten je Taste")
         messungen.push_back({kanal(pegel, 0.5, 2e-4, 4.0 + 0.1 * e, e >= 11), kanal(pegel + 1.0, 0.3, 4e-4, 4.0 + 0.1 * e, e >= 11)});
     }
     messungen[0][1].erkannt = false;  // ein Kanal ohne Messung zaehlt nicht
+    // Tiefe der Einbrueche (TB1 a): Teilton 1 mit Schwebung, 10 + Index dB; Teilton 2 nur in v3 (zaehlt nicht,
+    // vor v6) und v16 (zaehlt); Teilton 3 ohne erkannte Schwebung
+    for (std::size_t e = 0; e < messungen.size(); ++e)
+        for (KanalMessung& m : messungen[e])
+        {
+            m.teiltoene[0].schwebung = {true, 0.5, 8.0, 10.0 + static_cast<double>(e)};
+            if (e == 2) m.teiltoene[1].schwebung = {true, 1.0, 8.0, 200.0};
+            if (e == 15) m.teiltoene[1].schwebung = {true, 1.0, 8.0, 100.0};
+            m.teiltoene[2].schwebung = {false, 1.5, 0.5, 300.0};
+        }
     const TastenWerte w = verdichte(45, messungen);
     CHECK(w.midi == 45);
     CHECK(w.b.anzahl == 31);
@@ -120,6 +143,8 @@ TEST_CASE("Loop Salamander 31d-3 verdichten je Taste")
     CHECK(w.zweiStufenAnteil.wert == doctest::Approx(12.0 / 22.0));
     CHECK(w.t60Spaet.anzahl == 12);
     CHECK(w.knickS.wert == doctest::Approx(2.0));
+    CHECK(w.tiefeDb.anzahl == 24);  // Teilton 1 in v6–v16 je Kanal (22), Teilton 2 in v16 (2)
+    CHECK(w.tiefeDb.wert == doctest::Approx(21.0));
     REQUIRE(w.helligkeit.size() == 7);
     CHECK(w.helligkeit[0].anzahl == 2);
     CHECK(w.helligkeit[0].wert == doctest::Approx(0.5).epsilon(1e-9));  // Median aus zweien: der obere
@@ -149,6 +174,7 @@ TEST_CASE("Loop Salamander 31d-3 Datei hin und zurueck")
     w.midi = 60;
     w.b = {3.5e-4, 31};
     w.t60Frueh = {6.25, 22};
+    w.tiefeDb = {18.5, 24};
     w.helligkeit = {{0.4, 2}, {0.6, 2}};
     w.terzL = {-10.0, -20.5};
     w.terzR = {-11.0, -21.5};
@@ -172,6 +198,8 @@ TEST_CASE("Loop Salamander 31d-3 Datei hin und zurueck")
     CHECK(zurueck[0].midi == 60);
     CHECK(zurueck[0].b.anzahl == 31);
     CHECK(zurueck[0].t60Frueh.wert == doctest::Approx(6.25));
+    CHECK(zurueck[0].tiefeDb.wert == doctest::Approx(18.5));
+    CHECK(zurueck[0].tiefeDb.anzahl == 24);
     REQUIRE(zurueck[0].helligkeit.size() == 7);
     CHECK(zurueck[0].helligkeit[1].wert == doctest::Approx(0.6));
     CHECK(zurueck[0].helligkeit[2].anzahl == 0);
@@ -300,6 +328,51 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
     std::sort(anteile.begin(), anteile.end());
     bericht << "Gemessen bis vor die Blende: Anteil der Datei kleinster " << anteile.front() << ", Median "
             << anteile[anteile.size() / 2] << ", groesster " << anteile.back() << '\n';
+
+    // die Einbrueche (TB1 a, Befund S154): wie viele der gezaehlten Schwebungen haben eine schwache
+    // Grundschwingung (unter 2 dB) — ohne zwei Stufen der Verdacht auf eine verfehlte Stufe (C4 v12 links);
+    // ein Einbruch ueber dreimal der Grundschwingung ist kein Fehler (scharfe echte Einbrueche, MIDI 81)
+    bericht << "Einbrueche, Teiltoene 1-3, v6-v16: Taste | gezaehlt | Grundschw. < 2 dB | davon mit zwei Stufen | "
+               "Einbruch > 3 x Grundschw. | tiefe_db alle | ohne Grundschw. < 2 dB (Anzahl)\n";
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+    {
+        std::vector<double> alle, sauber;
+        int schwach = 0, verdacht = 0, verdachtZwei = 0;
+        for (std::size_t e = 5; e < messungen[i].size(); ++e)
+            for (const KanalMessung& m : messungen[i][e])
+                for (int k = 1; k <= 3; ++k)
+                    if (const TeiltonKurz* t = m.teilton(k); t != nullptr && t->schwebung.erkannt)
+                    {
+                        alle.push_back(t->schwebung.einbruchDb);
+                        const bool klein = t->schwebung.tiefeDb < 2.0;
+                        const bool weit = t->schwebung.einbruchDb > 3.0 * t->schwebung.tiefeDb;
+                        schwach += klein ? 1 : 0;
+                        verdacht += weit ? 1 : 0;
+                        verdachtZwei += klein && t->abklingen.zweiStufen ? 1 : 0;
+                        if (!klein) sauber.push_back(t->schwebung.einbruchDb);
+                    }
+        bericht << tasten[i].midi << " | " << alle.size() << " | " << schwach << " | " << verdachtZwei << " | " << verdacht << " | "
+                << detail::medianWert(alle).wert << " | " << detail::medianWert(sauber).wert << " (" << sauber.size() << ")\n";
+    }
+
+    // die Tiefe je Stufe (US2, Bank 2000 S. 29: das Verhaeltnis der Saiten aendert sich mit der Staerke) — je Taste
+    // der Median ueber Teilton 1–3 und beide Kanaele, in Gruppen zu vier Ebenen
+    bericht << "Tiefe je Stufe: Taste | v1-v4 | v5-v8 | v9-v12 | v13-v16 (dB, Anzahl)\n";
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+    {
+        bericht << tasten[i].midi;
+        for (std::size_t gruppe = 0; gruppe < 4; ++gruppe)
+        {
+            std::vector<double> t;
+            for (std::size_t e = 4 * gruppe; e < 4 * gruppe + 4 && e < messungen[i].size(); ++e)
+                for (const KanalMessung& m : messungen[i][e])
+                    for (int k = 1; k <= 3; ++k)
+                        if (const TeiltonKurz* teil = m.teilton(k); teil != nullptr && teil->schwebung.erkannt) t.push_back(teil->schwebung.einbruchDb);
+            const Wert w = detail::medianWert(t);
+            bericht << " | " << w.wert << " (" << w.anzahl << ')';
+        }
+        bericht << '\n';
+    }
     MESSAGE(bericht.str());
     for (const TastenWerte& w : werte)
     {
@@ -443,4 +516,324 @@ TEST_CASE("Loop Salamander 31d-3 Modell (LUMIVIZ_31D3_MODELL)")
         CAPTURE(w.midi);
         CHECK((w.t60Frueh.anzahl > 0 || w.t60Ausgleich.anzahl > 0));
     }
+}
+
+namespace
+{
+
+/// Der linke Kanal eines Tons in Stereo, bis vor die Blende am Ende, gemessen mit den Huellkurven.
+Ergebnis linksGemessen(std::span<const float> stereo, int rate, int midi)
+{
+    auto [links, rechts] = trenne(stereo);
+    std::vector<double> summe(links.size());
+    for (std::size_t i = 0; i < summe.size(); ++i) summe[i] = links[i] + rechts[i];
+    links.resize(endeVorBlende(summe, rate));
+    return miss(links, rate, tastenFrequenz(midi), lumi::loop::fft());
+}
+
+struct BildKurve
+{
+    QString name;
+    QColor farbe;
+    Ergebnis messung;
+};
+
+/// Ein Bild je Taste: drei Zeilen (Teilton 1–3), jede Kurve auf ihre Spitze zu Beginn bezogen.
+QImage huellkurvenBild(int midi, const std::vector<BildKurve>& kurven, double bisS, double kUnten = -90.0)
+{
+    constexpr int kBreite = 1600;
+    constexpr int kZeile = 330;
+    constexpr int kRandL = 60;
+    constexpr int kRandR = 560;
+    constexpr int kRandO = 30;
+    QImage bild(kBreite, 3 * kZeile + 10, QImage::Format_ARGB32);
+    bild.fill(Qt::white);
+    QPainter p(&bild);
+    p.setRenderHint(QPainter::Antialiasing);
+    const double breite = kBreite - kRandL - kRandR;
+    const double hoehe = kZeile - kRandO - 30;
+    for (int n = 1; n <= 3; ++n)
+    {
+        const double oben = (n - 1) * kZeile + kRandO;
+        const auto x = [&](double s) { return kRandL + breite * s / bisS; };
+        const auto y = [&](double db) { return oben + hoehe * std::clamp(db, kUnten, 0.0) / kUnten; };
+        p.setPen(QColor(225, 225, 225));
+        for (int s = 0; s <= static_cast<int>(bisS); ++s) p.drawLine(QPointF(x(s), y(0.0)), QPointF(x(s), y(kUnten)));
+        for (int db = 0; db >= static_cast<int>(kUnten); db -= 10) p.drawLine(QPointF(x(0.0), y(db)), QPointF(x(bisS), y(db)));
+        p.setPen(Qt::black);
+        p.drawText(QPointF(kRandL, oben - 8),
+                   QStringLiteral("MIDI %1, Teilton %2 — Pegel in dB gegen die Spitze zu Beginn, Raster 1 s / 10 dB").arg(midi).arg(n));
+        for (int db = 0; db >= static_cast<int>(kUnten); db -= 20) p.drawText(QPointF(8, y(db) + 4), QString::number(db));
+        double legende = oben + 16;
+        for (const BildKurve& k : kurven)
+        {
+            const Teilton* t = k.messung.teilton(n);
+            if (t == nullptr || t->pegelDb.empty()) continue;
+            double spitze = -300.0;
+            const auto anfang = static_cast<std::size_t>(0.1 / k.messung.schrittS);
+            for (std::size_t i = 0; i < std::min(anfang + 1, t->pegelDb.size()); ++i) spitze = std::max(spitze, t->pegelDb[i]);
+            QPainterPath pfad;
+            for (std::size_t i = 0; i < t->pegelDb.size(); ++i)
+            {
+                const double s = static_cast<double>(i) * k.messung.schrittS;
+                if (s > bisS) break;
+                const QPointF punkt(x(s), y(t->pegelDb[i] - spitze));
+                if (i == 0)
+                    pfad.moveTo(punkt);
+                else
+                    pfad.lineTo(punkt);
+            }
+            p.setPen(QPen(k.farbe, 1.4));
+            p.drawPath(pfad);
+            QString text = k.name;
+            if (t->abklingen.erkannt)
+                text += QStringLiteral(": T60 %1").arg(t->abklingen.t60Frueh, 0, 'f', 1) +
+                        (t->abklingen.zweiStufen ? QStringLiteral(" / %1 s, Knick %2 s").arg(t->abklingen.t60Spaet, 0, 'f', 1).arg(t->abklingen.knickS, 0, 'f', 1)
+                                                 : QStringLiteral(" s, eine Stufe")) +
+                        QStringLiteral(", gemessen %1–%2 s").arg(t->abklingen.vonS, 0, 'f', 1).arg(t->abklingen.bisS, 0, 'f', 1);
+            else
+                text += QStringLiteral(": kein Abklingen");
+            QString zweite = t->schwebung.erkannt ? QStringLiteral("    Schwebung %1 Hz, Einbruch %2 dB (Grundschwingung %3 dB)")
+                                                        .arg(t->schwebung.frequenz, 0, 'f', 2)
+                                                        .arg(t->schwebung.einbruchDb, 0, 'f', 1)
+                                                        .arg(t->schwebung.tiefeDb, 0, 'f', 1)
+                                                  : QStringLiteral("    keine Schwebung erkannt");
+            p.setPen(k.farbe);
+            p.drawText(QPointF(kBreite - kRandR + 10, legende), text);
+            p.drawText(QPointF(kBreite - kRandR + 10, legende + 16), zweite);
+            legende += 40;
+        }
+    }
+    return bild;
+}
+
+}  // namespace
+
+TEST_CASE("Loop Salamander 31d-7 Bilder der Huellkurven (LUMIVIZ_31D7_BILD)")
+{
+    // P8 a 7: vor dem Setzen ansehen, ob die Messung die Einbrueche beider Seiten trifft und wie γ und δ sie
+    // formen — Salamander v12 gegen das Modell an Stufe −8 (V1 a), linker Kanal; das Modell mit der
+    // Vorgabe (γ = δ = 0) und zwei Einstellungen von Hand
+    const QString variable = qEnvironmentVariable("LUMIVIZ_31D7_BILD");
+    const QString salamanderOrdner = qEnvironmentVariable("LUMIVIZ_SALAMANDER");
+    if (variable.isEmpty() || salamanderOrdner.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_31D7_BILD=<Ordner> mit LUMIVIZ_SALAMANDER=<Ordner> legt je Taste ein Bild der Huellkurven ab");
+        return;
+    }
+    std::unique_ptr<QGuiApplication> anwendung;
+    int argc = 1;
+    char arg0[] = "UnitTests";
+    char* argv[] = {arg0, nullptr};
+    if (QCoreApplication::instance() == nullptr) anwendung = std::make_unique<QGuiApplication>(argc, argv);
+
+    const std::filesystem::path ziel = variable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    const std::filesystem::path ordner = salamanderOrdner.toStdU16String();
+    lumi::loop::tonspeicher().leere();
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+
+    struct Einstellung
+    {
+        QString name;
+        QColor farbe;
+        double gammaGrad;
+        double deltaCent;
+    };
+    const std::vector<Einstellung> einstellungen{{QStringLiteral("Modell γ = 0"), QColor(150, 150, 150), 0.0, 0.0},
+                                                 {QStringLiteral("Modell γ = 20°, δ = 2 Cent"), QColor(30, 90, 220), 20.0, 2.0},
+                                                 {QStringLiteral("Modell γ = 45°, δ = 2 Cent"), QColor(220, 50, 40), 45.0, 2.0}};
+    constexpr int kEbene = 12;
+    const std::vector<int> tasten{24, 33, 42, 60, 81};
+    for (const int midi : tasten)
+    {
+        CAPTURE(midi);
+        const std::vector<SalamanderTaste> alle = salamanderTasten();
+        const SalamanderTaste& st = *std::find_if(alle.begin(), alle.end(), [midi](const SalamanderTaste& t) { return t.midi == midi; });
+        const std::optional<lumi::audio::WavInhalt> wav = lumi::audio::liesWavDatei(salamanderDatei(ordner, st, kEbene));
+        REQUIRE(wav.has_value());
+        std::vector<BildKurve> kurven{{QStringLiteral("Salamander v%1").arg(kEbene), Qt::black, linksGemessen(wav->stereo, wav->rate, midi)}};
+        for (const Einstellung& e : einstellungen)
+        {
+            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
+            saite.polarisationWinkelGrad = {{{lumi::loop::kTasteMin, e.gammaGrad}, {lumi::loop::kTasteMax, e.gammaGrad}}, {}};
+            saite.polarisationCent = {{{lumi::loop::kTasteMin, e.deltaCent}, {lumi::loop::kTasteMax, e.deltaCent}}, {}};
+            const lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
+            const lumi::loop::Klang klang = modelltest::ton(instrument, midi, modelltest::stufeVonEbene(kEbene));
+            kurven.push_back({e.name, e.farbe, linksGemessen(klang.daten, modelltest::kRate, midi)});
+        }
+        for (const BildKurve& k : kurven) CHECK(k.messung.erkannt);
+        const QImage bild = huellkurvenBild(midi, kurven, midi <= 72 ? 11.0 : 7.0);
+        const std::filesystem::path pfad = ziel / ("huellkurven_" + std::to_string(midi) + ".png");
+        CHECK(bild.save(QString::fromStdU16String(pfad.u16string())));
+    }
+    MESSAGE("Bilder unter " << ziel.string());
+}
+
+TEST_CASE("Loop Salamander 31d-7 was die Tiefe im Chor bestimmt (LUMIVIZ_31D7_TIEFE)")
+{
+    // SZ1 a: an Tasten mit drei Saiten bei fester Vorgabe je eine Groesse veraendert — die zweite Ebene, die
+    // Verstimmung der Saiten, ein ungleicher Stoss des Hammers (seit 7.2 ueber `stossLeise`/`stossLaut`);
+    // je Fall die Tiefe der Einbrueche (Teilton 1–3, linker Kanal, Stufe −8) und Bilder gegen Salamander v12
+    const QString variable = qEnvironmentVariable("LUMIVIZ_31D7_TIEFE");
+    const QString salamanderOrdner = qEnvironmentVariable("LUMIVIZ_SALAMANDER");
+    if (variable.isEmpty() || salamanderOrdner.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_31D7_TIEFE=<Ordner> mit LUMIVIZ_SALAMANDER=<Ordner> untersucht die Tiefe der Einbrueche im Chor");
+        return;
+    }
+    std::unique_ptr<QGuiApplication> anwendung;
+    int argc = 1;
+    char arg0[] = "UnitTests";
+    char* argv[] = {arg0, nullptr};
+    if (QCoreApplication::instance() == nullptr) anwendung = std::make_unique<QGuiApplication>(argc, argv);
+
+    const std::filesystem::path ziel = variable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    const std::filesystem::path ordner = salamanderOrdner.toStdU16String();
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    const std::optional<SalamanderWerte> gelesen = liesWerte(kWerteDatei);
+    REQUIRE(gelesen.has_value());
+    const std::vector<TastenWerte> salamander = tastenWerteAus(*gelesen);
+
+    struct Fall
+    {
+        QString name;
+        QColor farbe;
+        int bild;  ///< 0: zweite Ebene und Verstimmung, 1: Stoss des Hammers
+        double gammaGrad = 0.0;
+        double deltaCent = 0.0;
+        double verstimmungFaktor = 1.0;
+        double stoss = 0.0;  ///< u (US2 a): 1 + u : 1 : 1 − u
+        double spaetFaktor = 1.0;  ///< `lateDecay` der Vorgabe mal so viel (US7: die zweite Stufe an 81)
+    };
+    const std::vector<Fall> faelle{
+        {QStringLiteral("Vorgabe"), QColor(150, 150, 150), 2},
+        {QStringLiteral("γ = 20°, δ = 2 Cent"), QColor(30, 90, 220), 0, 20.0, 2.0},
+        {QStringLiteral("γ = 20°, δ = 0"), QColor(0, 160, 160), 0, 20.0, 0.0},
+        {QStringLiteral("Verstimmung 0"), QColor(220, 50, 40), 0, 0.0, 0.0, 0.0},
+        {QStringLiteral("Verstimmung × 0,5"), QColor(230, 140, 20), 0, 0.0, 0.0, 0.5},
+        {QStringLiteral("Verstimmung × 2"), QColor(140, 60, 170), 0, 0.0, 0.0, 2.0},
+        // u = 0,25 ist der Stoss 1 : 0,8 : 0,6 der ersten Untersuchung (auf das Mittel bezogen)
+        {QStringLiteral("Stoss u = 0,25"), QColor(30, 90, 220), 1, 0.0, 0.0, 1.0, 0.25},
+        {QStringLiteral("Stoss u = 0,6"), QColor(220, 50, 40), 1, 0.0, 0.0, 1.0, 0.6},
+        {QStringLiteral("Stoss u = 0,25, γ = 20°, δ = 2 Cent"), QColor(0, 160, 160), 1, 20.0, 2.0, 1.0, 0.25},
+        {QStringLiteral("Stoss u = 0,25, lateDecay × 3"), QColor(230, 140, 20), 1, 0.0, 0.0, 1.0, 0.25, 3.0},
+    };
+    const auto tiefen = [](const Ergebnis& e) {
+        std::vector<double> t;
+        for (int k = 1; k <= 3; ++k)
+            if (const Teilton* teil = e.teilton(k); teil != nullptr && teil->schwebung.erkannt) t.push_back(teil->schwebung.einbruchDb);
+        return t;
+    };
+    const auto text = [](const std::vector<double>& t) {
+        std::ostringstream s;
+        s << std::fixed << std::setprecision(1);
+        for (const double x : t) s << x << ' ';
+        if (t.empty()) s << "- ";
+        return s.str();
+    };
+
+    constexpr int kEbene = 12;
+    std::ostringstream bericht;
+    bericht << "Tiefe der Einbrueche, Teilton 1-3 mit erkannter Schwebung, linker Kanal, v12 / Stufe -8 (dB)\n";
+    for (const int midi : {60, 66, 81})
+    {
+        CAPTURE(midi);
+        const std::vector<SalamanderTaste> alle = salamanderTasten();
+        const SalamanderTaste& st = *std::find_if(alle.begin(), alle.end(), [midi](const SalamanderTaste& t) { return t.midi == midi; });
+        const std::optional<lumi::audio::WavInhalt> wav = lumi::audio::liesWavDatei(salamanderDatei(ordner, st, kEbene));
+        REQUIRE(wav.has_value());
+        const BildKurve sal{QStringLiteral("Salamander v%1").arg(kEbene), Qt::black, linksGemessen(wav->stereo, wav->rate, midi)};
+        const auto it = std::find_if(salamander.begin(), salamander.end(), [midi](const TastenWerte& w) { return w.midi == midi; });
+        bericht << "MIDI " << midi << ": Salamander v12 " << text(tiefen(sal.messung)) << "| tiefe_db v6-v16 " << std::fixed
+                << std::setprecision(1) << (it != salamander.end() ? it->tiefeDb.wert : 0.0) << '\n';
+        std::array<std::vector<BildKurve>, 2> bilder{std::vector<BildKurve>{sal}, std::vector<BildKurve>{sal}};
+        for (const Fall& f : faelle)
+        {
+            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
+            const auto ueberall = [](double wert) {
+                return lumi::loop::Tastenkurve{{{lumi::loop::kTasteMin, wert}, {lumi::loop::kTasteMax, wert}}, {}};
+            };
+            saite.polarisationWinkelGrad = ueberall(f.gammaGrad);
+            saite.polarisationCent = ueberall(f.deltaCent);
+            for (lumi::loop::TastenWert& p : saite.verstimmungCent.punkte) p.wert *= f.verstimmungFaktor;
+            for (lumi::loop::TastenWert& p : saite.abklingSpaetS.punkte) p.wert *= f.spaetFaktor;
+            saite.stossLeise = ueberall(f.stoss);
+            saite.stossLaut = ueberall(f.stoss);
+            const lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
+            const lumi::loop::Klang klang = modelltest::ton(instrument, midi, modelltest::stufeVonEbene(kEbene));
+            const BildKurve kurve{f.name, f.farbe, linksGemessen(klang.daten, modelltest::kRate, midi)};
+            CHECK(kurve.messung.erkannt);
+            bericht << "  " << f.name.toStdString() << ": " << text(tiefen(kurve.messung)) << '\n';
+            if (f.bild == 2)
+            {
+                bilder[0].push_back(kurve);
+                bilder[1].push_back(kurve);
+            }
+            else
+                bilder[static_cast<std::size_t>(f.bild)].push_back(kurve);
+        }
+        for (std::size_t b = 0; b < 2; ++b)
+        {
+            // bis −160 dB: auch, was unter dem Rauschen von Salamander liegt (US6 a, der Scheinwert an 81)
+            const QImage bild = huellkurvenBild(midi, bilder[b], midi <= 72 ? 11.0 : 7.0, -160.0);
+            const std::filesystem::path pfad = ziel / ("tiefe_" + std::to_string(midi) + (b == 0 ? "_ebene_verstimmung" : "_stoss") + ".png");
+            CHECK(bild.save(QString::fromStdU16String(pfad.u16string())));
+        }
+    }
+    std::ofstream(ziel / "tiefe.txt", std::ios::binary) << bericht.str();
+    MESSAGE(bericht.str());
+}
+
+TEST_CASE("Loop Salamander 31d-7 Raster aus Stoss und γ (LUMIVIZ_31D7_RASTER)")
+{
+    // SZ2 a, Kipppunkt: laesst sich der Stoss je Saite getrennt von γ setzen? Je Taste ein Raster, gemessen ueber
+    // alle 16 Stufen wie beim Setzen; reagieren Knick und Tiefe verschieden auf beide, sind sie trennbar
+    const QString variable = qEnvironmentVariable("LUMIVIZ_31D7_RASTER");
+    if (variable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_31D7_RASTER=<Ordner> rechnet ein Raster aus Stoss je Saite und γ an MIDI 60 und 66");
+        return;
+    }
+    const std::filesystem::path ziel = variable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    const std::optional<SalamanderWerte> gelesen = liesWerte(kWerteDatei);
+    REQUIRE(gelesen.has_value());
+    const std::vector<TastenWerte> salamander = tastenWerteAus(*gelesen);
+    const std::vector<int> tasten{60, 66};
+
+    std::ostringstream bericht;
+    bericht << std::fixed << std::setprecision(2)
+            << "Raster: Stoss 1+u : 1 : 1-u, γ mit δ = 2 Cent; je Taste verdichtet ueber 16 Stufen (wie beim Setzen)\n"
+            << "Taste | u | γ | Knick s (Anteil zwei Stufen) | T60 frueh / spaet s | Tiefe dB (Anzahl) | Schwebung Cent\n";
+    for (const int midi : tasten)
+    {
+        const auto it = std::find_if(salamander.begin(), salamander.end(), [midi](const TastenWerte& w) { return w.midi == midi; });
+        REQUIRE(it != salamander.end());
+        bericht << midi << " | Salamander | | " << it->knickS.wert << " (" << it->zweiStufenAnteil.wert << ") | " << it->t60Frueh.wert << " / "
+                << it->t60Spaet.wert << " | " << it->tiefeDb.wert << " (" << it->tiefeDb.anzahl << ") | " << it->schwebungCent.wert << '\n';
+    }
+    for (const double u : {0.0, 0.2, 0.4, 0.6})
+        for (const double gammaGrad : {0.0, 10.0, 20.0})
+        {
+            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
+            const auto ueberall = [](double wert) {
+                return lumi::loop::Tastenkurve{{{lumi::loop::kTasteMin, wert}, {lumi::loop::kTasteMax, wert}}, {}};
+            };
+            saite.polarisationWinkelGrad = ueberall(gammaGrad);
+            saite.polarisationCent = ueberall(gammaGrad > 0.0 ? 2.0 : 0.0);
+            saite.stossLeise = ueberall(u);
+            saite.stossLaut = ueberall(u);
+            const std::vector<TastenWerte> m =
+                modelltest::verdichteAlle(tasten, modelltest::messeTasten(modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite), tasten));
+            lumi::loop::tonspeicher().leere();
+            for (const TastenWerte& w : m)
+                bericht << w.midi << " | " << u << " | " << gammaGrad << " | " << w.knickS.wert << " (" << w.zweiStufenAnteil.wert << ") | "
+                        << w.t60Frueh.wert << " / " << w.t60Spaet.wert << " | " << w.tiefeDb.wert << " (" << w.tiefeDb.anzahl << ") | "
+                        << w.schwebungCent.wert << '\n';
+        }
+    std::ofstream(ziel / "raster.txt", std::ios::binary) << bericht.str();
+    MESSAGE(bericht.str());
 }

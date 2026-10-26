@@ -21,6 +21,8 @@
  *   bei 2·f(n/2) mit bekanntem Abstand; eine Blende am Ende wird abgeschnitten; eine kurze fruehe
  *   Stufe wird erkannt; ein Teilton im Rauschen bekommt keine Abklingzeit (Befunde S152 an
  *   Salamander).
+ * - 31d-7: die Tiefe der Einbrueche je Periode der Schwebung (TB1 a) gegen zwei Moden mit bekanntem
+ *   Verhaeltnis.
  ****************************************************************************************
  */
 
@@ -293,6 +295,71 @@ TEST_CASE("Loop Teiltonmessung 31d-2 Schwebung")
         CAPTURE(n);
         REQUIRE(allein.teilton(n) != nullptr);
         CHECK_FALSE(allein.teilton(n)->schwebung.erkannt);
+    }
+}
+
+TEST_CASE("Loop Teiltonmessung 31d-7 Tiefe der Einbrueche")
+{
+    // TB1 a: je Teilton zwei Moden 0,5 Hz auseinander, die zweite r-mal so laut — die Einbrueche sind
+    // 20·log10((1 + r)/(1 − r)) tief; die Grundschwingung (`tiefeDb`) saettigt dort bei rund 17 dB
+    for (const double r : {0.5, 0.8, 0.95, 0.99})
+    {
+        CAPTURE(r);
+        std::vector<Komponente> k = saite(220.0, 0.0, 8, 20.0);
+        for (const Komponente& c : saite(220.0, 0.0, 8, 20.0)) k.push_back({c.frequenz + 0.5, r * c.amplitude, 20.0, 20.0});
+        const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        const double wahr = 20.0 * std::log10((1.0 + r) / (1.0 - r));
+        for (int n = 1; n <= 3; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->schwebung.erkannt);
+            MESSAGE("r = " << r << ", Teilton " << n << ": wahr " << wahr << " dB, einbruchDb " << t->schwebung.einbruchDb
+                           << " dB, tiefeDb " << t->schwebung.tiefeDb << " dB");
+            if (r < 0.99)
+                CHECK(std::abs(t->schwebung.einbruchDb - wahr) < 1.5);
+            else
+                CHECK(t->schwebung.einbruchDb > 35.0);  // der Schritt der Huellkurve (10 ms) trifft den Grund nicht genau
+        }
+    }
+}
+
+TEST_CASE("Loop Teiltonmessung 31d-7 der Bereich endet 90 dB unter der Spitze")
+{
+    // US6-1 a: ein Ton ohne Rauschen (wie das Modell) faellt bis weit unter jede Aufnahme; dort liegen am Modell Reste
+    // der Rechnung (Befund S154 an MIDI 81: ein Boden um −150 dB, ein Sprung nach 5 s) und die Messung zaehlte
+    // Einbrueche, die keine sind. Nachgebildet: T60 1,5 s, darunter je Teilton zwei gleich laute Moden 100 dB leiser,
+    // 0,7 Hz auseinander, langsam abklingend (T60 15 s, damit der Bereich sie nicht als Boden abschneidet) — sie
+    // schweben bis zur Ausloeschung, sobald der Ton unter sie faellt.
+    std::vector<Komponente> k = saite(440.0, 0.0, 6, 1.5);
+    for (const Komponente& c : saite(440.0, 0.0, 6, 1.5))
+    {
+        k.push_back({c.frequenz, 1e-5 * c.amplitude, 15.0, 15.0});
+        k.push_back({c.frequenz + 0.7, 1e-5 * c.amplitude, 15.0, 15.0});
+    }
+    const std::vector<double> ton = erzeuge(k, 10.0, 0.1, 0.0);
+    Einstellungen ohneGrenze;
+    ohneGrenze.untergrenzeDb = 1000.0;
+    const Ergebnis vorher = miss(ton, kRate, 440.0, lumi::loop::fft(), ohneGrenze);
+    const Ergebnis e = miss(ton, kRate, 440.0, lumi::loop::fft());
+    REQUIRE(e.erkannt);
+    for (int n = 1; n <= 3; ++n)
+    {
+        CAPTURE(n);
+        const Teilton* t = e.teilton(n);
+        REQUIRE(t != nullptr);
+        REQUIRE(t->abklingen.erkannt);
+        const Teilton* v = vorher.teilton(n);
+        REQUIRE(v != nullptr);
+        MESSAGE("Teilton " << n << " ohne Grenze: bis " << v->abklingen.bisS << " s, Schwebung " << v->schwebung.erkannt << ", Einbruch "
+                           << v->schwebung.einbruchDb << " dB; mit Grenze: bis " << t->abklingen.bisS << " s");
+        CHECK(v->schwebung.erkannt);  // ohne Grenze der Scheinwert (gemessen S154: 46,5 dB) — der Fall sieht ihn
+        CHECK(v->schwebung.einbruchDb > 30.0);
+        CHECK(t->abklingen.bisS <= 2.5);  // −90 dB nach 2,25 s, dazu das Glaetten ueber ±5 Rahmen
+        CHECK(t->abklingen.t60Frueh == doctest::Approx(1.5).epsilon(0.05).scale(0.0));
+        CHECK((!t->schwebung.erkannt || t->schwebung.einbruchDb < 3.0));
     }
 }
 

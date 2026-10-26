@@ -15,7 +15,7 @@
  *   ohne Ueberschwingen, die logarithmische Skala, Richten.
  * - Die Vorgaben: Hammer und Saiten nach Chabassier & Durufle RT-0425 (HT1 a, HT2 a), B nach
  *   Rigaud Gl. 5, der Chor.
- * - Die Datei: Fassung 18 (seit S153: die zweite Ebene, P7 a; S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
+ * - Die Datei: Fassung 19 (seit S154: der Stoss je Saite, US4 a; S153: die zweite Ebene, P7 a; S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
  *   `keyboard`; nur die Paare aus HA2 a; die Tastatur in ihren Grenzen.
  * - Die Anschlagstaerke (HK2 a): Stufen, Hammergeschwindigkeit, Rest, `:a<stufe>`.
  * - Die Hammer-Saite ist keine gegriffene Saite; seit 31b klingt sie (gemessen in
@@ -201,12 +201,14 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         h.verstimmungCent.abweichungen = {{60, 3.5}};
         h.chor = kurve({{21, 2.0}, {108, 3.0}});
         h.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
+        h.stossLeise = kurve({{21, 0.1}, {108, 0.4}});  // hin und zurueck nicht die Vorgabe
+        h.stossLaut = kurve({{21, 0.3}, {108, 0.2}});
         instrument.tastatur->ungedaempftAb = 89;
         instrument.tastatur->links = PedalArt::Leise;
         instrument.tastatur->mitte = PedalArt::Moderator;
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 18);  // seit S153: die zweite Ebene (P7 a); S150: soundboard.body
+        CHECK(json.value(QStringLiteral("version")).toInt() == 19);  // seit S154: der Stoss je Saite (US4 a); S153: die zweite Ebene (P7 a); S150: soundboard.body
         const QJsonObject schicht = json.value(QStringLiteral("layers")).toArray().first().toObject();
         CHECK(schicht.value(QStringLiteral("stringModel")).toString() == QStringLiteral("modal"));
         CHECK(schicht.value(QStringLiteral("excitation")).toString() == QStringLiteral("hammer"));
@@ -214,7 +216,7 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         for (const char* feld : {"inharmonicity", "decay", "lateDecay", "highDecay", "strings", "detune", "hammerMass", "hammerStiffness",
                                  "hammerExponent", "strikePosition", "damper", "stringLength", "stringMass",
                                  "longitudinalRatio", "bridgeAngle", "polarizationAngle", "polarizationDetune",
-                                 "horizontalRatio"})
+                                 "horizontalRatio", "strikeUnevennessSoft", "strikeUnevennessLoud"})
         {
             CAPTURE(feld);
             const QJsonObject k = hammer.value(QLatin1String(feld)).toObject();
@@ -349,6 +351,31 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         CHECK(s.polarisationWinkelGrad == kurve({{21, 0.0}, {108, 90.0}}));
         CHECK(s.polarisationCent == kurve({{21, 0.0}, {108, 20.0}}));
         CHECK(s.waagrechtVerhaeltnis == kurve({{21, 0.0}, {108, 1.0}}));
+    }
+    SUBCASE("Fassung 18 ohne den Stoss je Saite: die Vorgabe; die Grenzen (US4 a)")
+    {
+        Instrument instrument = fluegel();
+        QJsonObject json = alsJson(instrument);
+        json[QStringLiteral("version")] = 18;
+        QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+        QJsonObject schicht = schichten.first().toObject();
+        QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
+        for (const char* feld : {"strikeUnevennessSoft", "strikeUnevennessLoud"}) hammer.remove(QLatin1String(feld));
+        schicht[QStringLiteral("hammerString")] = hammer;
+        schichten[0] = schicht;
+        json[QStringLiteral("layers")] = schichten;
+        Instrument gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        const HammerSaite& g = gelesen.schichten[0].hammerSaite;
+        CHECK(g.stossLeise == hammerSaiteVorgabe().stossLeise);
+        CHECK(g.stossLaut == hammerSaiteVorgabe().stossLaut);
+        // ausserhalb der Grenzen: u 0 … 1
+        HammerSaite s = hammerSaiteVorgabe();
+        s.stossLeise = kurve({{21, -0.2}, {108, 1.5}});
+        s.stossLaut = kurve({{21, 2.0}, {108, -1.0}});
+        richteHammerSaite(s);
+        CHECK(s.stossLeise == kurve({{21, 0.0}, {108, 1.0}}));
+        CHECK(s.stossLaut == kurve({{21, 1.0}, {108, 0.0}}));
     }
     SUBCASE("eine Fassung von morgen liest dieses Programm nicht")
     {

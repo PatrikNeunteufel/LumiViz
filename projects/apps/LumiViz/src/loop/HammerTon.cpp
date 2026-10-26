@@ -62,6 +62,7 @@ struct Werte
     double gamma = 0.0;        ///< rad, die erste Eigenrichtung gegen die Senkrechte (P2 a)
     double deltaCent = 0.0;    ///< so viel hoeher liegt die zweite Eigenrichtung
     double verhaeltnisH = 0.0; ///< so viel nimmt der Steg waagrecht im Verhaeltnis zu senkrecht (P3-1 a)
+    double stoss = 0.0;        ///< u, der ungleiche Stoss je Saite an dieser Stufe (US2 a)
 };
 
 Werte werteAn(const HammerSaite& s, const HammerAnschlag& a)
@@ -93,6 +94,10 @@ Werte werteAn(const HammerSaite& s, const HammerAnschlag& a)
     w.gamma = lin(s.polarisationWinkelGrad) * std::numbers::pi / 180.0;
     w.deltaCent = lin(s.polarisationCent);
     w.verhaeltnisH = std::clamp(lin(s.waagrechtVerhaeltnis), 0.0, 1.0);
+    // der Stoss: leise und laut an ihren Stufen, dazwischen linear, an den Grenzen festgehalten (US2 a)
+    const double zwischen = std::clamp(static_cast<double>(a.stufe - kStossStufeLeise) / (kStossStufeLaut - kStossStufeLeise), 0.0, 1.0);
+    const double leise = std::clamp(lin(s.stossLeise), 0.0, 1.0);
+    w.stoss = leise + zwischen * (std::clamp(lin(s.stossLaut), 0.0, 1.0) - leise);
     return w;
 }
 
@@ -313,11 +318,27 @@ std::vector<ChorMode> chorModen(const std::vector<double>& omega, double sigmaSa
     return moden;
 }
 
+std::vector<double> stossJeSaite(int chor, double u)
+{
+    if (u <= 0.0 || chor <= 1) return {};
+    if (chor == 2) return {1.0 + u, 1.0 - u};
+    return {1.0 + u, 1.0, 1.0 - u};
+}
+
 std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double deltaCent, double gamma, double sigmaSaite,
-                                    double sigmaV, double sigmaH)
+                                    double sigmaV, double sigmaH, const std::vector<double>& anregung)
 {
     const auto n = static_cast<int>(omega.size());
     if (n == 0) return {};
+    // der Stoss je Saite, auf das Mittel 1 bezogen
+    std::vector<double> stoss(static_cast<std::size_t>(n), 1.0);
+    if (anregung.size() == static_cast<std::size_t>(n))
+    {
+        double summe = 0.0;
+        for (const double g : anregung) summe += g;
+        if (summe > 0.0)
+            for (int j = 0; j < n; ++j) stoss[static_cast<std::size_t>(j)] = anregung[static_cast<std::size_t>(j)] * n / summe;
+    }
     double mitte = 0.0;
     for (const double o : omega) mitte += o;
     mitte /= n;
@@ -352,7 +373,7 @@ std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double del
         for (int i = 0; i < 2 * n; ++i)
         {
             aus += senk[static_cast<std::size_t>(i)] * zer.rechts(i, m);
-            ein += zer.links(m, i) * senk[static_cast<std::size_t>(i)];
+            ein += zer.links(m, i) * senk[static_cast<std::size_t>(i)] * stoss[static_cast<std::size_t>(i / 2)];
         }
         EbenenMode mode;
         mode.lambda = zer.werte[static_cast<std::size_t>(m)] + Komplex(0.0, mitte);
@@ -391,6 +412,7 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
     const double b0 = 2.0 / (w.laenge * w.mu);  // Bank 2010, Gl. 4c
     const double f1 = w.f0 * std::sqrt(1.0 + w.b);
     const std::vector<double> cents = chorCent(w.chor, w.cent);
+    const std::vector<double> stoss = stossJeSaite(w.chor, w.stoss);
     for (int k = 1; k <= kHammerTeiltoeneMax; ++k)
     {
         const double fk = k * w.f0 * std::sqrt(1.0 + w.b * k * k);
@@ -407,7 +429,7 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
         std::vector<double> omega;
         for (const double c : cents) omega.push_back(omegaK * std::exp2(c / 1200.0));
         const double sinus = std::sin(k * pi * w.stelle);
-        for (const EbenenMode& m : ebenenModen(omega, w.deltaCent, w.gamma, sigmaSaite, sigmaV, sigmaH))
+        for (const EbenenMode& m : ebenenModen(omega, w.deltaCent, w.gamma, sigmaSaite, sigmaV, sigmaH, stoss))
         {
             Mode mode;
             mode.eingang = (b0 / omegaK) * m.anteil * sinus;

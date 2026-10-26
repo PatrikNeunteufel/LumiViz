@@ -195,6 +195,7 @@ struct TastenWerte
     Wert t60Ausgleich;     ///< T60 bei f1 aus σ = b1 + b3·ω² (auch wo Teilton 1 schwach ist)
     Wert highDecay;
     Wert schwebungCent;    ///< Teiltoene 1–3, 1200·log2(1 + f_Schwebung / f_k)
+    Wert tiefeDb;          ///< Tiefe der Einbrueche, Teiltoene 1–3 mit Schwebung, Median ueber v6–v16 (P4 a, TB1 a)
     std::vector<Wert> helligkeit;  ///< Teilton n = 2 … 8: Steigung dB Helligkeit je dB Pegel (V1 a)
     Wert pegelumfang;      ///< Pegel des Tons zu Beginn (0,3 s), v16 gegen v1
     Wert pegelL;           ///< Pegel zu Beginn gegen das Mittel der Tastatur, je Kanal (UF6 a)
@@ -223,7 +224,7 @@ inline TastenWerte verdichte(int midi, const std::vector<std::array<KanalMessung
 {
     TastenWerte w;
     w.midi = midi;
-    std::vector<double> b, frueh, spaet, knick, zwei, ausgleich, hoch, cent, direkt;
+    std::vector<double> b, frueh, spaet, knick, zwei, ausgleich, hoch, cent, tiefe, direkt;
     for (std::size_t e = 0; e < messungen.size(); ++e)
         for (const KanalMessung& m : messungen[e])
         {
@@ -239,6 +240,10 @@ inline TastenWerte verdichte(int midi, const std::vector<std::array<KanalMessung
             for (int k = 1; k <= 3; ++k)
                 if (const TeiltonKurz* t = m.teilton(k); t != nullptr && t->schwebung.erkannt)
                     cent.push_back(1200.0 * std::log2(1.0 + t->schwebung.frequenz / t->frequenz));
+            if (e + 1 >= 6)
+                for (int k = 1; k <= 3; ++k)
+                    if (const TeiltonKurz* t = m.teilton(k); t != nullptr && t->schwebung.erkannt)
+                        tiefe.push_back(t->schwebung.einbruchDb);
             if (e + 1 >= 6)
                 if (const TeiltonKurz* t = m.teilton(1); t != nullptr && t->abklingen.erkannt)
                 {
@@ -265,6 +270,7 @@ inline TastenWerte verdichte(int midi, const std::vector<std::array<KanalMessung
     w.t60Ausgleich = detail::medianWert(ausgleich);
     w.highDecay = detail::medianWert(hoch);
     w.schwebungCent = detail::medianWert(cent);
+    w.tiefeDb = detail::medianWert(tiefe);
     w.direkt = detail::medianWert(direkt);
 
     // Helligkeit (V1 a): je Kanal die Steigung von (Teilton n − Teilton 1) ueber Teilton 1, dann Median
@@ -380,6 +386,7 @@ inline bool schreibeWerte(const std::filesystem::path& pfad, const std::vector<T
         schreibeZeile(aus, w.midi, "t60_ausgleich", w.t60Ausgleich);
         schreibeZeile(aus, w.midi, "high_decay", w.highDecay);
         schreibeZeile(aus, w.midi, "schwebung_cent", w.schwebungCent);
+        schreibeZeile(aus, w.midi, "tiefe_db", w.tiefeDb);
         for (std::size_t i = 0; i < w.helligkeit.size(); ++i)
             schreibeZeile(aus, w.midi, ("helligkeit_" + std::to_string(i + 2)).c_str(), w.helligkeit[i]);
         schreibeZeile(aus, w.midi, "pegelumfang", w.pegelumfang);
@@ -449,6 +456,7 @@ inline std::vector<TastenWerte> tastenWerteAus(const SalamanderWerte& gelesen)
         w.t60Ausgleich = wert("t60_ausgleich");
         w.highDecay = wert("high_decay");
         w.schwebungCent = wert("schwebung_cent");
+        w.tiefeDb = wert("tiefe_db");
         for (int n = 2; n <= 8; ++n) w.helligkeit.push_back(wert("helligkeit_" + std::to_string(n)));
         w.pegelumfang = wert("pegelumfang");
         w.pegelL = wert("pegel_links");

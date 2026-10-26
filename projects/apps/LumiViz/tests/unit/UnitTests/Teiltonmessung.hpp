@@ -70,6 +70,10 @@ struct Einstellungen
     double fensterPerioden = 8.0;
     /// Die Huellkurve zaehlt bis so weit ueber dem Rauschen.
     double grenzeDb = 10.0;
+    /// … und hoechstens bis so weit unter ihre Spitze (US6 a, US6-1 a, S154): ein Ton ohne Rauschen (das Modell) faellt
+    /// sonst bis zu Resten der Rechnung, und dort zaehlt die Messung Einbrueche, die keine sind; 60 dB schnitten an
+    /// Salamander spaete Stufen ab, 90 dB liegen unter dem Rauschen jeder Aufnahme dort.
+    double untergrenzeDb = 90.0;
     /// Die Helligkeit: die Spitze jeder Huellkurve in so viel Zeit nach dem Einsatz.
     double anfangBisS = 0.1;
     /// Eine Spitze im langen Spektrum zaehlt so weit ueber dessen Median.
@@ -99,6 +103,9 @@ struct Schwebung
     bool erkannt = false;
     double frequenz = 0.0;  ///< Hz
     double tiefeDb = 0.0;   ///< Spitze zu Spitze der gefundenen Periodizitaet
+    /// Tiefe der Einbrueche (TB1 a, S154): je volle Periode Maximum minus Minimum des Rests, Median ueber die
+    /// Perioden — `tiefeDb` saettigt als Grundschwingung bei rund 17 dB, diese Groesse nicht.
+    double einbruchDb = 0.0;
 };
 
 struct Teilton
@@ -533,6 +540,26 @@ inline Schwebung findeSchwebung(std::span<const double> rest, double schrittS, d
     s.frequenz = von + (static_cast<double>(beste) + delta) * schritt;
     s.tiefeDb = 2.0 * amplitude[beste];
     s.erkannt = s.tiefeDb >= 1.0 && leistung[beste] >= 10.0 * median;
+    if (!s.erkannt) return s;
+
+    // die Tiefe der Einbrueche (TB1 a): jede volle Periode enthaelt eine Spitze und einen Einbruch
+    const double periode = 1.0 / (s.frequenz * schrittS);
+    std::vector<double> tiefen;
+    for (std::size_t i = 0;; ++i)
+    {
+        const auto anfang = static_cast<std::size_t>(std::lround(static_cast<double>(i) * periode));
+        const auto ende = static_cast<std::size_t>(std::lround(static_cast<double>(i + 1) * periode));
+        if (ende > rest.size() || ende <= anfang) break;
+        const auto [unten, oben] = std::minmax_element(rest.begin() + static_cast<std::ptrdiff_t>(anfang),
+                                                       rest.begin() + static_cast<std::ptrdiff_t>(ende));
+        tiefen.push_back(*oben - *unten);
+    }
+    if (!tiefen.empty())
+    {
+        const auto mitte = tiefen.begin() + static_cast<std::ptrdiff_t>(tiefen.size() / 2);
+        std::nth_element(tiefen.begin(), mitte, tiefen.end());
+        s.einbruchDb = *mitte;
+    }
     return s;
 }
 
@@ -717,6 +744,9 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
         };
         std::size_t bis = t.pegelDb.size();
         while (bis > von && glatt(t.pegelDb, bis - 1) <= glatt(r, bis - 1) + einst.grenzeDb) --bis;
+        // US6 a: hoechstens bis `untergrenzeDb` unter die Spitze — vom Ende her, damit ein tiefer Einbruch davor den
+        // Bereich nicht beendet
+        while (bis > von && glatt(t.pegelDb, bis - 1) < t.pegelDb[hoechster] - einst.untergrenzeDb) --bis;
         // Die Mitte zwischen den Teiltoenen liegt in den Nullstellen des Fensters zu den Nachbarn
         // und unterschaetzt den Boden am Teilton. Darum auch der eigene Boden (nach Lundeby): der
         // Median der letzten 10 % ist es, wenn eine Gerade bis `grenzeDb` darueber am Ende der

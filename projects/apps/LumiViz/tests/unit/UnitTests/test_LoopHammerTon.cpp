@@ -25,6 +25,9 @@
  * `werte/hammer_bezug_saite.json` (Stand vor 31d-7, unabhaengig von der Vorgabe), gegen ihre
  * Pruefsummen in `werte/hammer_bezug_<compiler>.txt` — neu mit `LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1`
  * (die Saite wird dabei nur geschrieben, wenn sie fehlt).
+ *
+ * 31d-7 B (US5 a): der Stoss je Saite — die Moden, im Chor flachere Einbrueche, bei einer Saite unveraendert,
+ * leise und laut an ihren Stufen.
  ****************************************************************************************
  */
 
@@ -588,6 +591,9 @@ Instrument bezugInstrument(const QJsonObject& o)
     saite.polarisationWinkelGrad = {{{21, 0.0}, {108, 0.0}}, {}};
     saite.polarisationCent = {{{21, 0.0}, {108, 0.0}}, {}};
     saite.waagrechtVerhaeltnis = {{{21, 0.0}, {108, 0.0}}, {}};
+    // ebenso ohne ungleichen Stoss (31d-7 B, US5 a 1)
+    saite.stossLeise = {{{21, 0.0}, {108, 0.0}}, {}};
+    saite.stossLaut = {{{21, 0.0}, {108, 0.0}}, {}};
     instrument.schichten[0].hammerSaite = saite;
     instrument.tastatur = tastaturAusJson(o.value(QStringLiteral("keyboard")).toObject());
     return instrument;
@@ -902,4 +908,76 @@ TEST_CASE("Loop Hammer-Ton 31d-7 das waagrechte Verhaeltnis: wie gerechnet, nie 
     CHECK(ohne == doctest::Approx(gerechnet(0.0)).epsilon(0.05));
     CHECK(mit == doctest::Approx(gerechnet(0.5)).epsilon(0.05));
     CHECK(mit > ohne * 1.2);  // waagrechter Verlust am Steg verkuerzt die zweite Stufe
+}
+
+TEST_CASE("Loop Hammer-Ton 31d-7 B Stoss je Saite: die Moden")
+{
+    // US5 a 2: der Stoss je Saite aus u, und die Anteile vom Hammer zum Steg summieren sich bei γ = 0 fuer jedes u zu 1
+    CHECK(stossJeSaite(1, 0.5).empty());
+    CHECK(stossJeSaite(3, 0.0).empty());
+    CHECK(stossJeSaite(2, 0.25) == std::vector<double>{1.25, 0.75});
+    CHECK(stossJeSaite(3, 0.25) == std::vector<double>{1.25, 1.0, 0.75});
+    const double omega = 2.0 * kPi * 261.6;
+    const std::vector<double> drei{omega * std::exp2(-1.0 / 1200.0), omega, omega * std::exp2(1.0 / 1200.0)};
+    for (const double u : {0.0, 0.3, 0.8})
+    {
+        CAPTURE(u);
+        const auto moden = ebenenModen(drei, 1.5, 0.0, 0.2, 0.3, 0.05, stossJeSaite(3, u));
+        std::complex<double> summe(0.0, 0.0);
+        for (const EbenenMode& m : moden) summe += m.anteil;
+        CHECK(std::abs(summe - 1.0) < 1e-9);
+    }
+}
+
+TEST_CASE("Loop Hammer-Ton 31d-7 B Stoss je Saite: am Ton")
+{
+    // US5 a 3: im Chor flachere Einbrueche; bei einer Saite aendert u nichts; leise und laut an ihren Stufen
+    Instrument instrument = fluegel();
+    HammerSaite& h = instrument.schichten[0].hammerSaite;
+    const int taste = 60;
+    const double hz = tonHz(taste);
+    SUBCASE("C4, drei Saiten: der ungleiche Stoss fuellt die Einbrueche")
+    {
+        const double gleich = tiefsterEinbruch(ton(instrument, taste, 8000.0), hz, 0.5, 7.5);
+        h.stossLeise = ueberall(0.25);
+        h.stossLaut = ueberall(0.25);
+        const double ungleich = tiefsterEinbruch(ton(instrument, taste, 8000.0), hz, 0.5, 7.5);
+        MESSAGE("C4, drei Saiten: tiefster Einbruch bei gleichem Stoss " << gleich << " dB, mit u = 0,25 " << ungleich << " dB");
+        CHECK(ungleich < gleich - 10.0);
+    }
+    SUBCASE("eine Saite: u aendert nichts, Bit fuer Bit")
+    {
+        h.chor = ueberall(1.0);
+        const Klang ohne = ton(instrument, taste, 3000.0);
+        h.stossLeise = ueberall(0.5);
+        h.stossLaut = ueberall(0.7);
+        const Klang mit = ton(instrument, taste, 3000.0);
+        REQUIRE(ohne.daten.size() == mit.daten.size());
+        CHECK(std::memcmp(ohne.daten.data(), mit.daten.data(), ohne.daten.size() * sizeof(float)) == 0);
+    }
+    SUBCASE("leise an Stufe −16, laut an −4, dazwischen linear, an den Grenzen fest")
+    {
+        const auto mitU = [&](double leise, double laut, int stufe) {
+            h.stossLeise = ueberall(leise);
+            h.stossLaut = ueberall(laut);
+            return ton(instrument, taste, 1500.0, stufe);
+        };
+        const auto gleich = [](const Klang& a, const Klang& b) {
+            REQUIRE(a.daten.size() == b.daten.size());
+            float groesste = 0.0f;
+            float abstand = 0.0f;
+            for (std::size_t i = 0; i < a.daten.size(); ++i)
+            {
+                groesste = std::max(groesste, std::abs(a.daten[i]));
+                abstand = std::max(abstand, std::abs(a.daten[i] - b.daten[i]));
+            }
+            return abstand <= 1e-5f * groesste;
+        };
+        CHECK(gleich(mitU(0.5, 0.0, kStossStufeLeise), mitU(0.5, 0.5, kStossStufeLeise)));
+        CHECK(gleich(mitU(0.5, 0.0, kStossStufeLaut), mitU(0.0, 0.0, kStossStufeLaut)));
+        CHECK(gleich(mitU(0.5, 0.0, -10), mitU(0.25, 0.25, -10)));  // die Mitte
+        CHECK(gleich(mitU(0.5, 0.0, -30), mitU(0.5, 0.5, -30)));    // unter leise: leise
+        CHECK(gleich(mitU(0.5, 0.0, 0), mitU(0.0, 0.0, 0)));        // ueber laut: laut
+        CHECK_FALSE(gleich(mitU(0.5, 0.0, -10), mitU(0.0, 0.0, -10)));  // der Stoss wirkt ueberhaupt
+    }
 }

@@ -104,6 +104,11 @@ struct Resonanzboden
 inline constexpr int kChorMin = 1;
 inline constexpr int kChorMax = 3;
 
+/// Die Anschlagstufen, an denen `stossLeise` und `stossLaut` gelten (US2 a): die Mitte der Ebenen v6–v10 und
+/// v12–v16 von Salamander nach V1 a (Stufe = −30 + 2·(Ebene − 1)).
+inline constexpr int kStossStufeLeise = -16;
+inline constexpr int kStossStufeLaut = -4;
+
 /// Die Hammer-Saite einer Schicht: je Groesse eine Kurve ueber die Tastatur.
 /// Die Skala jeder Groesse steht bei ihr (HK1 a).
 struct HammerSaite
@@ -162,6 +167,14 @@ struct HammerSaite
     /// Horizontal ratio h (linear, P3-1 a): so viel nimmt der Steg waagrecht im Verhaeltnis zu senkrecht,
     /// σ_H = h·σ_V, 0 … 1; der innere Verlust bleibt σ_s = σ_spät. Vorlaeufig 0, gesetzt erst mit UF8 b.
     Tastenkurve waagrechtVerhaeltnis;
+    // --- der Stoss je Saite (31d-7 B, US2 a, US4 a): der Hammer trifft die Saiten eines Chors ungleich
+    // (Bank 2000, S. 29: der Filz ist ungleichmaessig) — bei drei Saiten 1 + u : 1 : 1 − u, bei zwei
+    // 1 + u : 1 − u, auf das Mittel bezogen; u gilt an `kStossStufeLeise` und `kStossStufeLaut`,
+    // dazwischen linear nach der Anschlagstufe, an den Grenzen festgehalten ---
+    /// Strike unevenness, soft (linear): u bei leisem Anschlag, 0 … 1.
+    Tastenkurve stossLeise;
+    /// Strike unevenness, loud (linear): u bei lautem Anschlag, 0 … 1.
+    Tastenkurve stossLaut;
     Resonanzboden resonanzboden;
 
     [[nodiscard]] bool operator==(const HammerSaite&) const = default;
