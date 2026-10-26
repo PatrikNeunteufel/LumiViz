@@ -148,6 +148,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKleinEigen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopFft.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Teiltonmessung.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_Kurvenabstand.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamander.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamanderSetzen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamanderHoerproben.cpp"

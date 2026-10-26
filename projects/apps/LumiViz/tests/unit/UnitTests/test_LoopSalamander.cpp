@@ -38,6 +38,7 @@
 #include <doctest.h>
 
 #include "Fluegelmessung.hpp"
+#include "Kurvenabstand.hpp"
 #include "ModellMessung.hpp"
 
 #include "InstrumentBody/Mobilitaet.hpp"
@@ -323,6 +324,26 @@ TEST_CASE("Loop Salamander 31d-7 B mitgelieferte Kurven (7.5.2)")
         CHECK(zahl >= 11);  // mindestens Teilton 1 (oder einer) je Ebene
     }
     MESSAGE(bezug->size() << " Kurven, " << std::filesystem::file_size(kKurvenDatei) / 1024 << " KiB");
+
+    // 7.5.3: der Abstand benachbarter Ebenen derselben Taste — die Groessenordnung, in der *Salamander* sich selbst
+    // streut (nur berichtet; die Schwellen der Probe stehen in SW1 a)
+    std::vector<double> abklingen;
+    std::vector<double> schwebung;
+    for (const auto& [s, z] : *bezug)
+        if (const auto nachbar = bezug->find({s.midi, s.ebene + 1, s.k}); nachbar != bezug->end())
+            if (const KurvenAbstand a = kurvenAbstand(nachbar->second, z); a.gilt)
+            {
+                abklingen.push_back(a.abklingenDb);
+                schwebung.push_back(a.schwebungDb);
+            }
+    REQUIRE_FALSE(abklingen.empty());
+    const auto quantil = [](std::vector<double> v, double p) {
+        std::sort(v.begin(), v.end());
+        return v[static_cast<std::size_t>(p * static_cast<double>(v.size() - 1))];
+    };
+    MESSAGE("Benachbarte Ebenen (" << abklingen.size() << " Paare): Abklingen Median " << quantil(abklingen, 0.5) << " dB, 90 % "
+                                    << quantil(abklingen, 0.9) << " dB; Schwebung Median " << quantil(schwebung, 0.5) << " dB, 90 % "
+                                    << quantil(schwebung, 0.9) << " dB");
 }
 
 TEST_CASE("Loop Salamander 31d-3 Boden im Vergleich (UF6 a)")

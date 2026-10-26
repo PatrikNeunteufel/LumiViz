@@ -3169,6 +3169,22 @@ die Probe 7.5.4). Synthetisch: im eigenen Bereich ändert der Abzug des Bodens d
 im Rauschen 11,2 / 17,3 dB mit gegen 17,6 / 23,6 dB ohne. Release-clang `*Teiltonmessung*,*Salamander*` grün.
 **7.5.2 fertig.**
 
+**7.5.3 gebaut (S155):** `Kurvenabstand.hpp` (ohne Qt): `kurvenAbstand(Modell, Salamander)` — gemeinsamer Bereich vom
+späteren ersten Punkt bis zum früheren Ende; die länger reichende Kurve wird aus L allein auf das gemeinsame Ende
+gekürzt (10^(L/10) ist das Restintegral, I(t) − I(T)), beide neu auf den gemeinsamen Anfang bezogen; verglichen bis 1 s
+vor dem Ende (K6-1 a); Anteil Abklingen = RMS in dB, Anteil Schwebung = Wurzel aus der RMS-Differenz der
+Autokovarianzen; `tastenAbstand` gewichtet über Ebenen und Teiltöne. **Festgelegt im Bau, nicht entschieden:**
+(1) „1 : 1“ als d² = Abklingen² + Schwebung² je Kurve, die Taste als Wurzel des gewichteten Mittels; (2) das Gewicht
+„Bereich über dem Boden / 60 dB“ als Fall der Kurve von *Salamander* über die verglichenen Punkte / 60 dB, höchstens 1 —
+die Datei trägt den Boden nicht, der Bereich endet 10 dB darüber; (3) das eigene Ende einer Kurve liegt auf dem Raster
+bis zu einem Punkt (50 ms) neben dem wahren. Synthetisch (`test_Kurvenabstand`, zwei Fälle): gleiche Hüllkurve 0 dB,
+auch gekürzt und später begonnen (< 10⁻¹⁴ dB); T60 3 … 5 s gegen 4 s streng monoton zu beiden Seiten des Minimums
+(1,5 dB je 0,1 s); Schwebung 0,8 … 1,2 Hz gegen 1 Hz ebenso, Minimum bei 1,0 Hz, die Tiefe r 0,3 … 0,7 Minimum bei 0,5
+— am Minimum ist der Anteil Schwebung spitz (∝ √|Δ|), nicht rund. An *Salamander* selbst: benachbarte Ebenen derselben
+Taste liegen im Median 0,26 dB (Abklingen) und 0,32 dB (Schwebung) auseinander, 90 % unter 0,74 bzw. 0,87 dB (770 Paare)
+— die Größenordnung, unter der ein Abstand nicht mehr trennt. Release-clang
+`*Teiltonmessung*,*Salamander*,*Kurvenabstand*` 32 / 32. **7.5.3 fertig; nächster Schritt 7.5.4, die Probe.**
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
