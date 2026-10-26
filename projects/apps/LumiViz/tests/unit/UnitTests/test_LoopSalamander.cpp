@@ -17,7 +17,10 @@
  * - Die Datei hin und zurueck, in einem Wegwerf-Ordner.
  * - `werte/salamander_c5.txt` (committet): 30 Tasten, jede mit B und Abklingzeit — liest vom
  *   Arbeitsordner aus (Test-Exe aus dem Projekt-Root starten).
- * - `LUMIVIZ_SALAMANDER=<Ordner>` misst alle 480 Toene beider Kanaele und schreibt die Datei neu;
+ * - 31d-7 B (7.5.2): `werte/salamander_kurven.txt` — je Taste, Ebene v6–v16, Teilton 1–3 die Kurve nach
+ *   Schroeder und die Autokovarianz (K1 a, K2 a, K5 a); das Kanalmittel und die Datei an Zahlen von Hand.
+ * - `LUMIVIZ_SALAMANDER=<Ordner>` misst alle 480 Toene beider Kanaele und schreibt die Datei neu (seit 7.5.2
+ *   auch `salamander_kurven.txt`);
  *   der Ordner ist `…\Salamander\SalamanderGrandPianoV3_48khz24bit` (README dort). Ohne die
  *   Variable meldet der Fall das und prueft nichts.
  * - Teil 2: der Boden im Vergleich (UF6 a) an Zahlen von Hand; `LUMIVIZ_31D3_MODELL=<Ordner>` misst den
@@ -72,6 +75,7 @@ namespace
 {
 
 const std::filesystem::path kWerteDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_c5.txt";
+const std::filesystem::path kKurvenDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_kurven.txt";
 
 /// Eine Messung von Hand: Teilton 1 bei `pegel`, Teilton 2 bei `pegel − 6 + steigung·(pegel + 40)`.
 KanalMessung kanal(double pegel, double steigung, double b, double t60, bool zwei)
@@ -233,6 +237,94 @@ TEST_CASE("Loop Salamander 31d-3 Datei hin und zurueck")
     std::filesystem::remove_all(ordner);
 }
 
+TEST_CASE("Loop Salamander 31d-7 B Kurven: Kanalmittel und Datei hin und zurueck (7.5.2)")
+{
+    // zwei Kanaele gleich laut: das Mittel ist derselbe Pegel; einer 10 dB leiser: 10·lg((1 + 0,1)/2) = −2,6 dB
+    Teilton a;
+    a.k = 1;
+    a.pegelDb = {0.0, -10.0, -20.0, -30.0};
+    a.bodenDb = {-80.0, -80.0, -80.0, -80.0};
+    a.bereichVon = 1;
+    a.bereichBis = 3;
+    Teilton b = a;
+    b.pegelDb = {-10.0, -20.0, -30.0};
+    b.bereichVon = 0;
+    b.bereichBis = 3;
+    const Teilton m = kanalMittel(a, b);
+    REQUIRE(m.pegelDb.size() == 3);
+    CHECK(m.pegelDb[0] == doctest::Approx(10.0 * std::log10(0.55)));
+    CHECK(m.bodenDb[0] == doctest::Approx(-80.0));
+    CHECK(m.bereichVon == 1);
+    CHECK(m.bereichBis == 3);
+    CHECK(kanalMittel(a, Teilton{}).pegelDb == a.pegelDb);
+
+    const std::filesystem::path ordner =
+        std::filesystem::temp_directory_path() / ("lumiviz_kurven_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    REQUIRE(std::filesystem::create_directories(ordner));
+    KurvenBezug bezug;
+    TeiltonKurven z;
+    z.erkannt = true;
+    z.bereichVon = 12;
+    z.bereichBis = 840;
+    z.kurve.rasterS = 0.05;
+    z.kurve.ersterPunkt = 3;
+    z.kurve.db = {0.0, -1.25, -2.5, -3.75};
+    z.kurve.gueltig = 3;
+    z.kovarianz.rasterS = 0.02;
+    z.kovarianz.db2 = {9.25, -7.5, 0.0125};
+    bezug[{60, 12, 2}] = z;
+    bezug[{60, 12, 3}] = TeiltonKurven{};  // nicht erkannt: nicht geschrieben
+    const std::filesystem::path pfad = ordner / "kurven.txt";
+    REQUIRE(schreibeKurven(pfad, bezug));
+    const std::optional<KurvenBezug> gelesen = liesKurven(pfad);
+    REQUIRE(gelesen.has_value());
+    REQUIRE(gelesen->size() == 1);
+    const TeiltonKurven& g = gelesen->at({60, 12, 2});
+    CHECK(g.erkannt);
+    CHECK(g.bereichVon == 12);
+    CHECK(g.bereichBis == 840);
+    CHECK(g.kurve.ersterPunkt == 3);
+    CHECK(g.kurve.gueltig == 3);
+    CHECK(g.kurve.db == std::vector<double>{0.0, -1.25, -2.5, -3.75});
+    REQUIRE(g.kovarianz.db2.size() == 3);
+    CHECK(g.kovarianz.db2[0] == doctest::Approx(9.25));
+    CHECK(g.kovarianz.db2[2] == doctest::Approx(0.0125));
+    std::filesystem::remove_all(ordner);
+}
+
+TEST_CASE("Loop Salamander 31d-7 B mitgelieferte Kurven (7.5.2)")
+{
+    // K1 a, K2 a, K5 a: je Taste die Ebenen v6–v16, Teilton 1–3; die Kurve faellt, die Autokovarianz reicht bis 2 s
+    const std::optional<KurvenBezug> bezug = liesKurven(kKurvenDatei);
+    REQUIRE_MESSAGE(bezug.has_value(), "werte/salamander_kurven.txt nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
+    std::map<int, int> jeTaste;
+    for (const auto& [s, z] : *bezug)
+    {
+        CAPTURE(s.midi);
+        CAPTURE(s.ebene);
+        CAPTURE(s.k);
+        CHECK(s.ebene >= kKurvenEbeneAb);
+        CHECK(s.ebene <= kEbenen);
+        CHECK(s.k >= 1);
+        CHECK(s.k <= kKurvenTeiltoene);
+        REQUIRE(z.erkannt);
+        REQUIRE_FALSE(z.kurve.db.empty());
+        CHECK(z.kurve.db.front() == 0.0);
+        CHECK(z.kurve.gueltig <= z.kurve.db.size());
+        CHECK(std::is_sorted(z.kurve.db.rbegin(), z.kurve.db.rend()));  // nicht steigend
+        CHECK(z.bereichBis > z.bereichVon);
+        CHECK(z.kovarianz.db2.size() <= 101);
+        ++jeTaste[s.midi];
+    }
+    CHECK(jeTaste.size() == 30);
+    for (const auto& [midi, zahl] : jeTaste)
+    {
+        CAPTURE(midi);
+        CHECK(zahl >= 11);  // mindestens Teilton 1 (oder einer) je Ebene
+    }
+    MESSAGE(bezug->size() << " Kurven, " << std::filesystem::file_size(kKurvenDatei) / 1024 << " KiB");
+}
+
 TEST_CASE("Loop Salamander 31d-3 Boden im Vergleich (UF6 a)")
 {
     // drei Tasten; a = b + eine gemeinsame Kurve (Raum, Mikrofon) + bei Taste 2 ein Buckel von 3 dB in einem Band
@@ -300,6 +392,7 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
     const auto start = std::chrono::steady_clock::now();
     const lumi::loop::Fft& fft = lumi::loop::fft();
     std::vector<std::vector<std::array<KanalMessung, 2>>> messungen(tasten.size());
+    std::vector<std::vector<TonKurven>> kurven(tasten.size());  // 7.5.2: je Taste die Ebenen ab `kKurvenEbeneAb`
     std::vector<std::string> fehler(tasten.size());
     std::atomic<std::size_t> naechste{0};
     const unsigned zahl = std::max(1u, std::min(8u, std::thread::hardware_concurrency()));
@@ -318,7 +411,10 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
                         break;
                     }
                     const bool phantome = taste.midi <= kPhantomBis && e == kEbenen;
-                    messungen[i].push_back(messeTon(wav->stereo, wav->rate, tastenFrequenz(taste.midi), fft, phantome));
+                    TonKurven k;
+                    messungen[i].push_back(
+                        messeTon(wav->stereo, wav->rate, tastenFrequenz(taste.midi), fft, phantome, e >= kKurvenEbeneAb ? &k : nullptr));
+                    if (e >= kKurvenEbeneAb) kurven[i].push_back(k);
                 }
             }
         });
@@ -330,6 +426,14 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
     setzeRelativePegel(werte, messungen);
     const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     REQUIRE(schreibeWerte(kWerteDatei, werte));
+    KurvenBezug bezug;
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+        for (std::size_t j = 0; j < kurven[i].size(); ++j)
+            for (int k = 1; k <= kKurvenTeiltoene; ++k)
+                bezug[{tasten[i].midi, kKurvenEbeneAb + static_cast<int>(j), k}] = kurven[i][j][static_cast<std::size_t>(k - 1)];
+    REQUIRE(schreibeKurven(kKurvenDatei, bezug));
+    MESSAGE("Kurven: " << bezug.size() << " geschrieben nach " << kKurvenDatei.string() << ", "
+                       << std::filesystem::file_size(kKurvenDatei) / 1024 << " KiB");
 
     std::ostringstream bericht;
     bericht << std::fixed << std::setprecision(2) << "Salamander gemessen in " << dauer << " s, geschrieben nach "

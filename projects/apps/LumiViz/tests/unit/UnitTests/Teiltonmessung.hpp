@@ -837,17 +837,18 @@ struct Abklingkurve
     std::size_t ersterPunkt = 0;
     /// L = 10·lg(∫_t^Ende e / ∫_t0^Ende e) in dB, am ersten Punkt 0.
     std::vector<double> db;
-    /// So viele Punkte vom Anfang bis dorthin, wo der Pegel zuletzt 10 dB ueber dem Ende lag (K6 a) — dahinter
-    /// biegt das Abschneiden am Ende die Kurve.
+    /// So viele Punkte vom Anfang bis `randS` vor dem Ende (K6-1 a) — dahinter mittelt ein Punkt ueber zu wenige
+    /// Rahmen.
     std::size_t gueltig = 0;
 };
 
 /// Die Kurve nach Schroeder von Teilton `t` ueber die Rahmen [von, ende), abgetastet auf dem Raster `rasterS`
 /// (der erste Punkt ist der erste Rasterpunkt ab `von`). Mit `bodenAbziehen` wird je Rahmen die Energie von
 /// `bodenDb` abgezogen, unter 0 gilt 0 (K6 a). `ende` darf hinter `bereichBis` liegen (das gemeinsame Ende zweier
-/// Kurven, K6 a), nicht hinter `pegelDb`. Leer, wenn der Bereich keinen Rasterpunkt oder keine Energie hat.
+/// Kurven, K6 a), nicht hinter `pegelDb`. Gueltig bis `randS` vor dem Ende (K6-1 a). Leer, wenn der Bereich keinen
+/// Rasterpunkt oder keine Energie hat.
 inline Abklingkurve schroederKurve(const Teilton& t, double schrittS, std::size_t von, std::size_t ende, double rasterS = 0.05,
-                                   bool bodenAbziehen = true)
+                                   bool bodenAbziehen = true, double randS = 1.0)
 {
     Abklingkurve k;
     k.rasterS = rasterS;
@@ -867,12 +868,10 @@ inline Abklingkurve schroederKurve(const Teilton& t, double schrittS, std::size_
     if (summe[0] <= 0.0) return k;
     for (std::size_t j = 0; j < n; j += q) k.db.push_back(10.0 * std::log10(std::max(summe[j], 1e-300) / summe[0]));
 
-    // wie in `zweiStufen`: das Ende ist der Median der letzten 5 %, gueltig bis zuletzt 10 dB darueber
-    const std::size_t letzte = std::max<std::size_t>(1, n / 20);
-    const double endPegel = detail::median(std::vector<double>(t.pegelDb.begin() + static_cast<std::ptrdiff_t>(ende - letzte),
-                                                               t.pegelDb.begin() + static_cast<std::ptrdiff_t>(ende)));
-    std::size_t bisGueltig = n;
-    while (bisGueltig > 0 && t.pegelDb[anfang + bisGueltig - 1] < endPegel + 10.0) --bisGueltig;
+    // K6-1 a: beide Seiten sind bis zum selben Ende integriert und tragen dieselbe Abschneidung; nur die letzten
+    // Punkte mitteln ueber zu wenige Rahmen
+    const auto rand = static_cast<std::size_t>(std::lround(randS / schrittS));
+    const std::size_t bisGueltig = n > rand ? n - rand : 0;
     k.gueltig = std::min(k.db.size(), (bisGueltig + q - 1) / q);
     return k;
 }

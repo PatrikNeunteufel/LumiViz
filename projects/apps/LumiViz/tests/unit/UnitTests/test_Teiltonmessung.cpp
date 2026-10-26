@@ -630,7 +630,18 @@ TEST_CASE("Loop Teiltonmessung 31d-7 B Kurve nach Schroeder (7.5.1)")
             const double abwMit = groessteAbweichung(mit, wahr, endeS);
             const double abwOhne = groessteAbweichung(ohne, wahr, endeS);
             MESSAGE("Teilton " << n << ": bis " << endeS << " s, mit Abzug " << abwMit << " dB, ohne " << abwOhne << " dB");
-            CHECK(abwMit < 0.5 * abwOhne);  // gemessen S155: 2,3 gegen 6,6 dB und 1,0 gegen 5,7 dB
+            // gemessen S155 mit K6-1 a (bis 1 s vor dem Ende, tief im Rauschen): 11,2 gegen 17,6 dB, 17,3 gegen 23,6 dB
+            CHECK(abwMit < abwOhne);
+
+            // bis zum eigenen Bereich (10 dB ueber dem Boden), wie bei Salamander
+            const Abklingkurve mitB = schroederKurve(*t, schritt, t->bereichVon, t->bereichBis);
+            const Abklingkurve ohneB = schroederKurve(*t, schritt, t->bereichVon, t->bereichBis, 0.05, false);
+            const double bisB = static_cast<double>(t->bereichBis) * schritt;
+            const auto wahrB = [&](double tt, double ende) {
+                return schroederWahr({{1.0, 3.0}}, tt, static_cast<double>(mitB.ersterPunkt) * mitB.rasterS, ende);
+            };
+            MESSAGE("Teilton " << n << ": im eigenen Bereich bis " << bisB << " s, mit Abzug " << groessteAbweichung(mitB, wahrB, bisB)
+                               << " dB, ohne " << groessteAbweichung(ohneB, wahrB, bisB) << " dB");
         }
     }
     SUBCASE("ein gemeinsames Ende hinter dem eigenen Bereich verlaengert die Kurve")

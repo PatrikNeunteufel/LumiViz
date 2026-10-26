@@ -10,6 +10,9 @@
  * das verdichtet, was 31d braucht (`KanalMessung`, ohne die Huellkurven); `verdichte` macht
  * daraus je Taste die Zeilen der Tabelle A (`TastenWerte`). `schreibeWerte` / `liesWerte`
  * halten sie in `werte/salamander_c5.txt` (UF3 a: nur Zahlen, mit Quelle und Lizenz).
+ * Dazu fuer das Setzen an den Kurven (31d-7 B, 7.5.2): `messeTon` mit `TonKurven` legt je Teilton 1–3 die
+ * Kurve nach Schroeder und die Autokovarianz ab (Kanaele in der Energie gemittelt, `kanalMittel`);
+ * `schreibeKurven` / `liesKurven` halten sie je Taste und Ebene v6–v16 in `werte/salamander_kurven.txt`.
  *
  * Die Tasten von *Salamander*: 30 in kleinen Terzen von A0 bis C8, je 16 Ebenen `v1`–`v16`
  * (Befund S152). `undampedFrom` steht nicht hier — es kommt aus der SFZ (D1 a).
@@ -24,7 +27,9 @@
 #include <array>
 #include <cmath>
 #include <filesystem>
+#include <compare>
 #include <fstream>
+#include <iomanip>
 #include <map>
 #include <numbers>
 #include <optional>
@@ -108,13 +113,19 @@ struct KanalMessung
     }
 };
 
+/// Die Teiltoene, deren Kurven gesetzt werden (SM4 a: Teilton 1–3).
+inline constexpr int kKurvenTeiltoene = 3;
+
 /// Einen Kanal messen. `mitPhantomen` nur, wo sie gebraucht werden (Bass, laut — es kostet ein
-/// langes Spektrum).
+/// langes Spektrum). `huellen` (wenn gegeben) bekommt Teilton 1 bis `kKurvenTeiltoene` mit Huellkurve und Boden.
 inline KanalMessung messeKanal(std::span<const double> ton, int rate, double nennFrequenz, const lumi::loop::Fft& fft,
-                               bool mitPhantomen)
+                               bool mitPhantomen, std::vector<Teilton>* huellen = nullptr)
 {
     KanalMessung m;
     const Ergebnis e = miss(ton, rate, nennFrequenz, fft);
+    if (huellen != nullptr)
+        for (const Teilton& t : e.teiltoene)
+            if (t.k <= kKurvenTeiltoene) huellen->push_back(t);
     if (!e.erkannt) return m;
     m.erkannt = true;
     m.einsatzS = e.einsatzS;
@@ -150,10 +161,74 @@ inline std::pair<std::vector<double>, std::vector<double>> trenne(std::span<cons
 /// Phantomteiltoene werden bis zu dieser Taste gemessen (Messplan Tabelle A: im Bass).
 inline constexpr int kPhantomBis = 45;
 
+/// Die Kurven eines Teiltons fuer das Setzen (SM4 a, 7.5.2): beide Kanaele in der Energie gemittelt (K1 a).
+struct TeiltonKurven
+{
+    bool erkannt = false;
+    std::size_t bereichVon = 0;  ///< in Rahmen ab dem Einsatz (`Einstellungen::schrittS`)
+    std::size_t bereichBis = 0;
+    Abklingkurve kurve;          ///< nach Schroeder bis `bereichBis` (K5 a, K6 a)
+    Autokovarianz kovarianz;     ///< des Rests (K3 a)
+};
+
+/// Die Kurven eines Tons, Teilton 1 bis `kKurvenTeiltoene` (Index k − 1).
+using TonKurven = std::array<TeiltonKurven, kKurvenTeiltoene>;
+
+/// Zwei Kanaele eines Teiltons in einen: Huellkurve und Boden je Rahmen in der Energie gemittelt (K1 a), der Bereich
+/// vom spaeteren Anfang bis zum spaeteren Ende. Die Rahmen beider Kanaele zaehlen je ab ihrem Einsatz — bei
+/// *Salamander* liegen die Einsaetze der Kanaele innerhalb weniger Millisekunden.
+inline Teilton kanalMittel(const Teilton& a, const Teilton& b)
+{
+    if (b.pegelDb.empty()) return a;
+    if (a.pegelDb.empty()) return b;
+    Teilton m;
+    m.k = a.k;
+    m.frequenz = 0.5 * (a.frequenz + b.frequenz);
+    const auto mittel = [](const std::vector<double>& x, const std::vector<double>& y) {
+        std::vector<double> z(std::min(x.size(), y.size()));
+        for (std::size_t i = 0; i < z.size(); ++i)
+            z[i] = 10.0 * std::log10(std::max(0.5 * (std::pow(10.0, x[i] / 10.0) + std::pow(10.0, y[i] / 10.0)), 1e-300));
+        return z;
+    };
+    m.pegelDb = mittel(a.pegelDb, b.pegelDb);
+    m.bodenDb = mittel(a.bodenDb, b.bodenDb);
+    const bool hatA = a.bereichBis > a.bereichVon;
+    const bool hatB = b.bereichBis > b.bereichVon;
+    m.bereichVon = hatA && hatB ? std::max(a.bereichVon, b.bereichVon) : (hatA ? a.bereichVon : b.bereichVon);
+    m.bereichBis = std::min(m.pegelDb.size(), hatA && hatB ? std::max(a.bereichBis, b.bereichBis) : (hatA ? a.bereichBis : b.bereichBis));
+    if (m.bereichBis <= m.bereichVon) m.bereichVon = m.bereichBis = 0;
+    return m;
+}
+
+/// Die Kurven aus den Huellen beider Kanaele (`messeKanal`): je Teilton gemittelt, die Kurve nach Schroeder bis zum
+/// Ende des Bereichs und die Autokovarianz ueber ihn.
+inline TonKurven kurvenAus(const std::vector<Teilton>& links, const std::vector<Teilton>& rechts, double schrittS)
+{
+    TonKurven kurven;
+    for (int k = 1; k <= kKurvenTeiltoene; ++k)
+    {
+        const auto finde = [k](const std::vector<Teilton>& v) {
+            for (const Teilton& t : v)
+                if (t.k == k) return t;
+            return Teilton{};
+        };
+        const Teilton t = kanalMittel(finde(links), finde(rechts));
+        TeiltonKurven& z = kurven[static_cast<std::size_t>(k - 1)];
+        if (t.bereichBis <= t.bereichVon) continue;
+        z.bereichVon = t.bereichVon;
+        z.bereichBis = t.bereichBis;
+        z.kurve = schroederKurve(t, schrittS, t.bereichVon, t.bereichBis);
+        z.kovarianz = autokovarianz(t, schrittS, t.bereichVon, t.bereichBis);
+        z.erkannt = !z.kurve.db.empty();
+    }
+    return kurven;
+}
+
 /// Ein Ton in Stereo: die Blende am Ende einmal an der Summe beider Kanaele bestimmt und an beiden
-/// gleich abgeschnitten (`endeVorBlende`), dann jeder Kanal gemessen.
+/// gleich abgeschnitten (`endeVorBlende`), dann jeder Kanal gemessen. `kurven` (wenn gegeben) bekommt die
+/// Kurven fuer das Setzen (7.5.2) — aus derselben Messung, die Werte aendern sich nicht.
 inline std::array<KanalMessung, 2> messeTon(std::span<const float> stereo, int rate, double nennFrequenz,
-                                            const lumi::loop::Fft& fft, bool mitPhantomen)
+                                            const lumi::loop::Fft& fft, bool mitPhantomen, TonKurven* kurven = nullptr)
 {
     auto [links, rechts] = trenne(stereo);
     const double laengeS = static_cast<double>(links.size()) / rate;
@@ -162,13 +237,16 @@ inline std::array<KanalMessung, 2> messeTon(std::span<const float> stereo, int r
     const std::size_t ende = endeVorBlende(summe, rate);
     links.resize(ende);
     rechts.resize(ende);
-    std::array<KanalMessung, 2> ton{messeKanal(links, rate, nennFrequenz, fft, mitPhantomen),
-                                    messeKanal(rechts, rate, nennFrequenz, fft, mitPhantomen)};
+    std::vector<Teilton> huellenL;
+    std::vector<Teilton> huellenR;
+    std::array<KanalMessung, 2> ton{messeKanal(links, rate, nennFrequenz, fft, mitPhantomen, kurven != nullptr ? &huellenL : nullptr),
+                                    messeKanal(rechts, rate, nennFrequenz, fft, mitPhantomen, kurven != nullptr ? &huellenR : nullptr)};
     for (KanalMessung& k : ton)
     {
         k.endeS = static_cast<double>(ende) / rate;
         k.laengeS = laengeS;
     }
+    if (kurven != nullptr) *kurven = kurvenAus(huellenL, huellenR, Einstellungen{}.schrittS);
     return ton;
 }
 
@@ -522,6 +600,94 @@ inline std::vector<TastenWerte> tastenWerteAus(const SalamanderWerte& gelesen)
         liste.push_back(std::move(w));
     }
     return liste;
+}
+
+// ---------------------------------------------------------------------------------------
+// Die Kurven je Taste und Ebene (7.5.2; K1 a, K2 a, K5 a)
+// ---------------------------------------------------------------------------------------
+
+/// Die Ebenen, deren Kurven eingehen (K2 a): v6–v16.
+inline constexpr int kKurvenEbeneAb = 6;
+
+/// Der Schluessel einer Kurve: Taste, Ebene (1 … 16), Teilton (1 … `kKurvenTeiltoene`).
+struct KurvenSchluessel
+{
+    int midi = 0;
+    int ebene = 0;
+    int k = 0;
+
+    [[nodiscard]] auto operator<=>(const KurvenSchluessel&) const = default;
+};
+
+using KurvenBezug = std::map<KurvenSchluessel, TeiltonKurven>;
+
+inline const char* const kKurvenKopf =
+    "# Kurven von Salamander Grand Piano V3 (Yamaha C5), Alexander Holm 2011, CC BY 3.0\n"
+    "# (http://creativecommons.org/licenses/by/3.0/), Fassung 48 kHz/24 bit von archive.org, SHA-256 des Archivs\n"
+    "# 04a4442f2432d846f7a6aaf7156e83e06a84342f4d7475e6e070587b3b28ef21. Nur Zahlen; geschrieben von\n"
+    "# test_LoopSalamander.cpp (LUMIVIZ_SALAMANDER=<Ordner>), Messung Teiltonmessung.hpp / Fluegelmessung.hpp.\n"
+    "# Je Taste, Ebene v6-v16, Teilton 1-3 (beide Kanaele in der Energie gemittelt; Spielweisen_Konzept 7.5, K1 a-K6 a):\n"
+    "# Taste <Tab> Ebene <Tab> Teilton <Tab> schroeder <Tab> Bereich von <Tab> bis (Rahmen zu 10 ms ab dem Einsatz)\n"
+    "#   <Tab> erster Punkt <Tab> gueltig <Tab> L in dB je 0,05 s ab erster Punkt * 0,05 s\n"
+    "# Taste <Tab> Ebene <Tab> Teilton <Tab> kovarianz <Tab> C in dB^2 je 0,02 s ab 0\n";
+
+inline bool schreibeKurven(const std::filesystem::path& pfad, const KurvenBezug& bezug)
+{
+    std::ofstream aus(pfad, std::ios::binary);
+    if (!aus) return false;
+    aus << kKurvenKopf;
+    for (const auto& [s, z] : bezug)
+    {
+        if (!z.erkannt) continue;
+        aus << s.midi << '\t' << s.ebene << '\t' << s.k << "\tschroeder\t" << z.bereichVon << '\t' << z.bereichBis << '\t'
+            << z.kurve.ersterPunkt << '\t' << z.kurve.gueltig;
+        aus << std::fixed << std::setprecision(2);
+        for (const double v : z.kurve.db) aus << '\t' << v;
+        aus << '\n' << std::defaultfloat << std::setprecision(4);
+        aus << s.midi << '\t' << s.ebene << '\t' << s.k << "\tkovarianz";
+        for (const double v : z.kovarianz.db2) aus << '\t' << v;
+        aus << '\n' << std::defaultfloat;
+    }
+    return static_cast<bool>(aus);
+}
+
+/// Gelesen wie geschrieben; Raster nach K5 a (0,05 s und 0,02 s).
+inline std::optional<KurvenBezug> liesKurven(const std::filesystem::path& pfad)
+{
+    std::ifstream ein(pfad, std::ios::binary);
+    if (!ein) return std::nullopt;
+    KurvenBezug bezug;
+    std::string zeile;
+    while (std::getline(ein, zeile))
+    {
+        if (!zeile.empty() && zeile.back() == '\r') zeile.pop_back();
+        if (zeile.empty() || zeile.front() == '#') continue;
+        std::vector<std::string> teile;
+        std::stringstream s(zeile);
+        std::string teil;
+        while (std::getline(s, teil, '\t')) teile.push_back(teil);
+        if (teile.size() < 4) return std::nullopt;
+        TeiltonKurven& z = bezug[{std::stoi(teile[0]), std::stoi(teile[1]), std::stoi(teile[2])}];
+        if (teile[3] == "schroeder")
+        {
+            if (teile.size() < 8) return std::nullopt;
+            z.erkannt = true;
+            z.bereichVon = std::stoul(teile[4]);
+            z.bereichBis = std::stoul(teile[5]);
+            z.kurve.rasterS = 0.05;
+            z.kurve.ersterPunkt = std::stoul(teile[6]);
+            z.kurve.gueltig = std::stoul(teile[7]);
+            for (std::size_t i = 8; i < teile.size(); ++i) z.kurve.db.push_back(std::stod(teile[i]));
+        }
+        else if (teile[3] == "kovarianz")
+        {
+            z.kovarianz.rasterS = 0.02;
+            for (std::size_t i = 4; i < teile.size(); ++i) z.kovarianz.db2.push_back(std::stod(teile[i]));
+        }
+        else
+            return std::nullopt;
+    }
+    return bezug;
 }
 
 // ---------------------------------------------------------------------------------------

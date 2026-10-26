@@ -3138,6 +3138,37 @@ gerechneten Kurve, zwei Stufen 0,78 dB (Mischterme), ins Rauschen integriert mit
 ohne. Release-clang: Bereich `*Teiltonmessung*,*Salamander*,*Loop Hammer*,*Loop Werte*,*Klangfassung*` 56 / 56 —
 die Werte von `miss` unverändert. **7.5.1 fertig.**
 
+**7.5.2 gebaut (S155):** `messeTon` legt auf Wunsch je Teilton 1–3 die Kurven ab (`TonKurven`, Kanäle in der Energie
+gemittelt mit `kanalMittel`, Bereich vom späteren Anfang bis zum späteren Ende beider Kanäle), aus derselben Messung;
+`schreibeKurven`/`liesKurven`; `LUMIVIZ_SALAMANDER` schreibt `werte/salamander_kurven.txt` mit (29 s für alle 480
+Töne). 939 Kurven (Ebenen v6–v16; an 21, 24, 105, 108 fehlen Teiltöne ohne Bereich), **1 732 KiB** (K1 a, K5 a:
+geschätzt 3 MB); `salamander_c5.txt` Bit für Bit unverändert. Bild der Kurven an 33, 48, 60, 66, 81, 84 angesehen
+(Scratchpad S155): zwei Stufen sichtbar (48, 60, 81), am Ende biegen die Kurven wie erwartet ab.
+
+**Befund S155 (7.5.2, die Grenze „gültig“ aus K6 a an *Salamander*):** Der Bereich von *Salamander* endet schon
+`grenzeDb` = 10 dB über dem Boden; „bis zuletzt 10 dB über dem Ende“ schneidet damit bei rund 20 dB über dem Boden ab.
+Über alle 939 Kurven bleibt im Median **68 %** der Kurve, bei einem Viertel höchstens 54 %, bei 168 weniger als die
+Hälfte. Beispiele v16: 33 Teilton 1 9,2 von 21,1 s (L dort −4,5 dB), 48 Teilton 1 0,5 von 3,6 s (die ganze späte Stufe
+fällt weg), 48 Teilton 2 5,6 von 13,4 s, 60 Teilton 1 7,6 von 13,5 s. Die Grenze stammt aus `zweiStufen`, wo sie den
+Fehler der Abschneidung gegen die wahre Kurve klein hält; im Abstand nach K6 a werden aber beide Seiten bis zum selben
+Ende integriert — beide tragen dieselbe Abschneidung.
+
+✅ **K6-1 a** (Patrik S155; ändert den letzten Satz von K6 a): **Verglichen wird bis 1 s vor dem gemeinsamen Ende,
+unabhängig vom Pegel — jeder verglichene Punkt mittelt so über mindestens 100 Rahmen; `gueltig` danach, *Salamander*
+neu gemessen.** Grund: der Grund der 10 dB (Fehler gegen die wahre Kurve) entfällt beim Vergleich gleich abgeschnittener
+Kurven; zu schützen ist nur gegen das Rauschen der letzten Punkte, und die späte Stufe — die Größe, die SM4 a setzt —
+bleibt fast ganz. Verworfen: b (wie K6 a — im Median ein Drittel der Kurve weg), c (ohne Abschnitt — die letzten Punkte,
+wo L gegen −∞ geht, bestimmen den Abstand mit). Die 1 s ist vorab gesetzt; kippt auf eine längere Spanne, wenn die Probe
+7.5.4 zeigt, dass mehr als die Hälfte des Abstands aus den letzten 20 % der Punkte kommt.
+
+**Nach K6-1 a (S155):** `schroederKurve` mit `randS` = 1 s; *Salamander* neu gemessen (`salamander_c5.txt` Bit für Bit
+gleich). Gültig bleiben jetzt im Median **87 %** der Kurve (vorher 68 %), bei einem Viertel höchstens 71 %; 33 Teilton 1
+v16 20,1 von 21,1 s, 48 Teilton 1 2,6 von 3,6 s, 60 Teilton 1 12,5 von 13,5 s. **121 Kurven** behalten weniger als die
+Hälfte — kurze Kurven im Diskant, deren Bereich kaum länger als 2 s ist; die feste Sekunde wiegt dort schwer (offen für
+die Probe 7.5.4). Synthetisch: im eigenen Bereich ändert der Abzug des Bodens die Kurve kaum (0,03 gegen 0,02 dB), tief
+im Rauschen 11,2 / 17,3 dB mit gegen 17,6 / 23,6 dB ohne. Release-clang `*Teiltonmessung*,*Salamander*` grün.
+**7.5.2 fertig.**
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
