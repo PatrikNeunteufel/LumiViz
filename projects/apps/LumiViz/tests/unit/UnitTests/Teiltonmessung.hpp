@@ -40,6 +40,12 @@
  * 6. *Abklingen ueber der Frequenz:* σ = b1 + b3·ω² aus den fruehen Stufen (Bank 2010, Gl. 7);
  *    `highDecay` = σ(f1) / σ(10·f1) wie im Modell (`modell.md` §3).
  *
+ * Fuer das Setzen an den Kurven (31d-7 B, SM4 a, Teilplan 7.5.1, S155): je Teilton der Boden je Rahmen
+ * (`bodenDb`) und der gemessene Bereich (`bereichVon`, `bereichBis`); daraus `schroederKurve` (die Kurve
+ * nach Schroeder auf festem Raster, bis zu einem waehlbaren Ende, ohne die Energie des eigenen Bodens —
+ * K5 a, K6 a) und `autokovarianz` (der Rest der Huellkurve um ihr gleitendes Mittel, K3 a). Beide
+ * aendern an den Werten von `miss` nichts.
+ *
  * Dazu fuer den ganzen Ton (31d-3): `endeVorBlende` (eine Blende am Ende der Datei abschneiden),
  * `pegelZuBeginn`, `direktschallDb` (SB1 a), `terzPegel` (UF6 a) und `phantome` (`bridgeAngle`).
  ****************************************************************************************
@@ -113,6 +119,14 @@ struct Teilton
     int k = 0;
     double frequenz = 0.0;  ///< Hz, aus dem langen Spektrum
     std::vector<double> pegelDb;  ///< Huellkurve, Amplitude in dB, ab dem Einsatz im Schritt `schrittS`
+    /// Der Boden je Rahmen wie `pegelDb`: die Mitte zu beiden Nachbarn (Schritt 3) — Rauschen und Leck der anderen
+    /// Teiltoene; `schroederKurve` zieht seine Energie ab (K6 a).
+    std::vector<double> bodenDb;
+    /// Der gemessene Bereich in Rahmen [von, bis): vom Ende des Anschlags bis `grenzeDb` ueber dem Boden bzw.
+    /// `untergrenzeDb` unter der Spitze — auch, wenn der Teilton keine Abklingzeit bekommt; leer (0, 0), wenn
+    /// es keinen gibt.
+    std::size_t bereichVon = 0;
+    std::size_t bereichBis = 0;
     double rauschenDb = 0.0;
     double anfangDb = 0.0;  ///< Spitze in `anfangBisS` nach dem Einsatz
     Abklingen abklingen;
@@ -773,6 +787,12 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
                 }
             }
         }
+        t.bodenDb = r;
+        if (bis > von)
+        {
+            t.bereichVon = von;
+            t.bereichBis = bis;
+        }
         if (bis <= von || static_cast<double>(bis - von) * einst.schrittS < 0.3) continue;
         t.abklingen = detail::zweiStufen(t.pegelDb, einst.schrittS, von, bis);
         if (!t.abklingen.erkannt) continue;
@@ -806,6 +826,102 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
         }
     }
     return e;
+}
+
+/// Die Abklingkurve eines Teiltons nach Schroeder auf festem Raster (SM4 a, K5 a, K6 a; S155).
+struct Abklingkurve
+{
+    double rasterS = 0.0;
+    /// Punkt j liegt bei (ersterPunkt + j)·rasterS nach dem Einsatz — zwei Kurven mit demselben Raster
+    /// liegen so Punkt fuer Punkt uebereinander.
+    std::size_t ersterPunkt = 0;
+    /// L = 10·lg(∫_t^Ende e / ∫_t0^Ende e) in dB, am ersten Punkt 0.
+    std::vector<double> db;
+    /// So viele Punkte vom Anfang bis dorthin, wo der Pegel zuletzt 10 dB ueber dem Ende lag (K6 a) — dahinter
+    /// biegt das Abschneiden am Ende die Kurve.
+    std::size_t gueltig = 0;
+};
+
+/// Die Kurve nach Schroeder von Teilton `t` ueber die Rahmen [von, ende), abgetastet auf dem Raster `rasterS`
+/// (der erste Punkt ist der erste Rasterpunkt ab `von`). Mit `bodenAbziehen` wird je Rahmen die Energie von
+/// `bodenDb` abgezogen, unter 0 gilt 0 (K6 a). `ende` darf hinter `bereichBis` liegen (das gemeinsame Ende zweier
+/// Kurven, K6 a), nicht hinter `pegelDb`. Leer, wenn der Bereich keinen Rasterpunkt oder keine Energie hat.
+inline Abklingkurve schroederKurve(const Teilton& t, double schrittS, std::size_t von, std::size_t ende, double rasterS = 0.05,
+                                   bool bodenAbziehen = true)
+{
+    Abklingkurve k;
+    k.rasterS = rasterS;
+    ende = std::min(ende, t.pegelDb.size());
+    const auto q = static_cast<std::size_t>(std::max(1L, std::lround(rasterS / schrittS)));
+    const std::size_t anfang = (von + q - 1) / q * q;
+    k.ersterPunkt = anfang / q;
+    if (anfang >= ende) return k;
+    const std::size_t n = ende - anfang;
+    std::vector<double> summe(n + 1, 0.0);
+    for (std::size_t j = n; j-- > 0;)
+    {
+        double e = std::pow(10.0, t.pegelDb[anfang + j] / 10.0);
+        if (bodenAbziehen && anfang + j < t.bodenDb.size()) e = std::max(0.0, e - std::pow(10.0, t.bodenDb[anfang + j] / 10.0));
+        summe[j] = summe[j + 1] + e;
+    }
+    if (summe[0] <= 0.0) return k;
+    for (std::size_t j = 0; j < n; j += q) k.db.push_back(10.0 * std::log10(std::max(summe[j], 1e-300) / summe[0]));
+
+    // wie in `zweiStufen`: das Ende ist der Median der letzten 5 %, gueltig bis zuletzt 10 dB darueber
+    const std::size_t letzte = std::max<std::size_t>(1, n / 20);
+    const double endPegel = detail::median(std::vector<double>(t.pegelDb.begin() + static_cast<std::ptrdiff_t>(ende - letzte),
+                                                               t.pegelDb.begin() + static_cast<std::ptrdiff_t>(ende)));
+    std::size_t bisGueltig = n;
+    while (bisGueltig > 0 && t.pegelDb[anfang + bisGueltig - 1] < endPegel + 10.0) --bisGueltig;
+    k.gueltig = std::min(k.db.size(), (bisGueltig + q - 1) / q);
+    return k;
+}
+
+/// Die Autokovarianz des Rests der Huellkurve um ihren glatten Verlauf (K3 a, Anteil Schwebung; S155).
+struct Autokovarianz
+{
+    double rasterS = 0.0;
+    /// C(τ) in dB² fuer τ = 0, rasterS, 2·rasterS, …
+    std::vector<double> db2;
+};
+
+/// Der Rest von `pegelDb` ueber [von, bis) um sein gleitendes Mittel in dB ueber `glattS` (mittig, am Rand
+/// symmetrisch gekuerzt), um den eigenen Mittelwert, davon C(τ) = Mittel von rest(t)·rest(t + τ) fuer τ bis `bisS`,
+/// hoechstens die Haelfte des Bereichs,
+/// auf dem Raster `rasterS`. Eine Schwebung mit Tiefe D (Spitze zu Spitze, sinusfoermig in dB) und Frequenz f gibt
+/// C(τ) ≈ (D²/8)·cos(2π·f·τ); eine Schwebung langsamer als 1/`glattS` folgt teils dem glatten Verlauf.
+inline Autokovarianz autokovarianz(const Teilton& t, double schrittS, std::size_t von, std::size_t bis, double bisS = 2.0,
+                                   double rasterS = 0.02, double glattS = 2.0)
+{
+    Autokovarianz a;
+    a.rasterS = rasterS;
+    bis = std::min(bis, t.pegelDb.size());
+    if (bis <= von + 2) return a;
+    const std::size_t n = bis - von;
+    std::vector<double> summe(n + 1, 0.0);
+    for (std::size_t j = 0; j < n; ++j) summe[j + 1] = summe[j] + t.pegelDb[von + j];
+    const auto halb = static_cast<std::size_t>(std::lround(0.5 * glattS / schrittS));
+    std::vector<double> rest(n);
+    for (std::size_t j = 0; j < n; ++j)
+    {
+        // das Mittel in dB, mittig und am Rand symmetrisch gekuerzt: ein Abfall gerade in dB bleibt ohne Rest
+        const std::size_t h = std::min({halb, j, n - 1 - j});
+        const double mittel = (summe[j + h + 1] - summe[j - h]) / static_cast<double>(2 * h + 1);
+        rest[j] = t.pegelDb[von + j] - mittel;
+    }
+    double mittelwert = 0.0;
+    for (const double r : rest) mittelwert += r;
+    mittelwert /= static_cast<double>(n);
+    for (double& r : rest) r -= mittelwert;
+    const auto q = static_cast<std::size_t>(std::max(1L, std::lround(rasterS / schrittS)));
+    const auto hoechstens = static_cast<std::size_t>(std::min(bisS / schrittS, 0.5 * static_cast<double>(n)));
+    for (std::size_t tau = 0; tau <= hoechstens; tau += q)
+    {
+        double s = 0.0;
+        for (std::size_t j = 0; j + tau < n; ++j) s += rest[j] * rest[j + tau];
+        a.db2.push_back(s / static_cast<double>(n - tau));
+    }
+    return a;
 }
 
 /// Wie viele Abtastwerte vor einer Blende am Ende liegen (Befund S152: jede Datei von *Salamander*

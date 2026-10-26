@@ -1873,7 +1873,8 @@ S. 117, Özaslan 2010 S. 458).
 
 - **`asset/loop/chords/make_chords.py <ChordsDb-Ordner>`** schreibt 6373 Dateien:
   `guitar/` 2069 und `ukulele/` 2114 Lagen aus chords-db 0.5.1 (npm `lib/guitar.json`,
-  `lib/ukulele.json`; die Originale außerhalb des Repos unter `…\cmake\ChordsDb\0.5.1`).
+  `lib/ukulele.json`; die Originale außerhalb des Repos, seit S155 auf der Wechselplatte unter
+  `E:\samples\ChordsDb\0.5.1`, vorher `…\cmake\ChordsDb\0.5.1`).
   Gelesen: die Bünde stehen dort ab `baseFret` (`f > 0` → `baseFret + f − 1`, die Barres
   ebenso); jede Lage trägt `midi` — die Umrechnung wird gegen sie geprüft, alle 4183 Lagen
   stimmen. Gitarre 529 Akkorde in 63 Arten (darunter 22 Slash-Akkorde), Ukulele 552 in 46.

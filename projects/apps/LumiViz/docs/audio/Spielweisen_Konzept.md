@@ -2985,6 +2985,159 @@ lebt davon) und den Bezug Bit für Bit. Für 31d-7 also kein Gewinn; als Idee f�
 Teiltöne über der Grenze der Moden). **Auf Wunsch Patrik an `InstrumentsCalculation` weitergegeben** (`AUFGABE.md`,
 „Zusatzfragen aus LumiViz“, Z1: Recherche je Klasse mit Saite und Rohr, auch für schon abgeschlossene Klassen).
 
+**Teilplan 7.5 (SM4 a, vorgelegt S155; Nummern fest, PL31 a):**
+- **7.5.1 Kurven in der Messung:** `Teiltonmessung` gibt je Teilton zusätzlich die Kurve nach Schroeder L(t) auf einem
+  festen Raster aus; die bisherigen Werte Bit für Bit gleich; synthetischer Fall (bekannte Abklingzeiten, zwei Stufen,
+  Rauschen).
+- **7.5.2 Bezug *Salamander*:** Kurven Teilton 1–3 je Taste und Ebene, gemessen und abgelegt (K1 a, K2).
+- **7.5.3 Kurvenabstand:** Modell gegen *Salamander* in dB über der Zeit bis zur Messgrenze auf dem gemeinsamen Bereich,
+  mit Gewichten; Schwebung und Tiefe über Hüllkurve bzw. Tiefe am Ton (K3, K4).
+- **7.5.4 Probe, zuerst — entschieden durch Messungen** (Anweisung Patrik S155): an 33, 48, 60, 66, 81, 84 (a) Schnitte je
+  Parameter um den Startwert, (b) Nelder–Mead von zwei Startpunkten, (c) Anteil von Rauschen und Raum an den Kurven von
+  *Salamander*. Die Schwellen, an denen gesetzt wird oder SM4 a kippt, stehen **vor** der Probe fest und werden danach
+  nicht verschoben; der Befund nennt je Schwelle den gemessenen Wert.
+- **7.5.5 Setzen** zweistufig nach SM1 a am Kurvenabstand (Aufteilung Moden/Ton nach K4); Grenzen gemeldet.
+- **7.5.6 Vorgabe eintragen** (`baueVorgabe()`), Bezug, `*Loop Werte*`, Klangfassung.
+- **7.6** dauerhafter Test voll (Toleranzen aus den Werten); **7.7** beide Compiler, voller Lauf, Rechenzeit mit Taktprobe.
+- Umfangsfragen einzeln: K1 Ablage der Kurven, K2 Ebenen und Kanäle, K3 Abstand und Gewichte, K4 Moden oder Ton,
+  K5 Raster und Zeitbereich, K6 Ende der Integration und Abzug des Bodens; dazu die Schwellen von 7.5.4.
+
+✅ **K1 a** (Patrik S155): **Die Kurven nach Schroeder von *Salamander* (Teilton 1–3, je Taste und Ebene, Kanäle in der
+Energie gemittelt) werden einmal gemessen und als Bezug `werte/salamander_kurven.txt` ins Repo gelegt, auf dem Raster aus
+K5; `LUMIVIZ_SALAMANDER` schreibt sie zusammen mit `salamander_c5.txt` neu; Probe, Setzen und der dauerhafte Test lesen
+nur die Datei.** Grund: dasselbe Muster wie `salamander_c5.txt` — reproduzierbar ohne die Aufnahme, und der dauerhafte
+Test kann den Kurvenabstand selbst prüfen statt der abgeleiteten Größen, an denen SM3 a scheiterte. Verworfen: b (bei
+jedem Lauf aus den WAVs messen). Kippt auf b, wenn K5 ein feines Raster verlangt und die Datei deutlich über einige MB
+wächst.
+
+✅ **K2 a** (Patrik S155): **Je Ebene v6–v16 eine eigene Kurve, verglichen mit dem Modell an derselben Stufe
+(`stufeVonEbene`); der Abstand wird über die Ebenen gemittelt; v1–v5 gehen nicht ein (wie bisher in `verdichte`).**
+Grund: Stoß (u leise, u laut, dazwischen linear) und Hammer hängen an der Stufe — nur der Vergleich je Ebene prüft das an
+der Kurve. Verworfen: b (eine über v6–v16 gemittelte Kurve an Stufe −10 — verwischt u), c (alle 16 Ebenen — der Abstand
+der leisen zum Rauschen ist nicht gemessen). Kippt auf b, wenn die Probe zeigt, dass die Kurven einer Taste über v6–v16
+innerhalb ihrer Streuung gleich sind; auf c, wenn v1–v5 an den meisten Tasten mindestens 40 dB über dem Boden tragen.
+
+✅ **K3 a** (Patrik S155): **Der Abstand je Kurve hat zwei Anteile in dB — (1) Abklingen: RMS der Differenz der Kurven
+nach Schroeder über die Zeit, auf dem gemeinsamen Bereich vom Ende des Anschlags bis zur Messgrenze von *Salamander*;
+(2) Schwebung: der Rest der Hüllkurve um ihren glatten Verlauf, davon die Autokovarianz über die Verzögerung 0 bis 2 s
+(höchstens den halben Bereich), der Anteil ist die Wurzel aus der RMS-Differenz der beiden Autokovarianzen. Beide 1 : 1;
+jede Kurve mit dem Gewicht „Bereich der Kurve von *Salamander* über dem Boden / 60 dB“, höchstens 1; Teiltöne und Ebenen
+gleich.** Grund: die Autokovarianz eines schwebenden Rests geht wie (D²/8)·cos(2π·f·τ) — Tiefe und Schwebungsfrequenz
+stecken darin, der Abstand ändert sich stetig mit beiden, ohne Lage der Einbrüche und ohne Erkennungsschwelle (an denen
+SM3 a kippte); die Verstimmung wird so in Stufe 1 an einer stetigen Größe gesetzt. Verworfen: b (nur Schroeder, Schwebung
+und Tiefe in Stufe 2 wie heute — die Verstimmung wäre in Stufe 1 nur über die Mischung der Stufen bestimmt). Kippt auf b,
+wenn die Probe 7.5.4 (a) zeigt, dass Anteil (2) über einen Schnitt der Verstimmung nicht glatt ist (Schwellen nach SW1).
+
+✅ **K4 a** (Patrik S155): **Gesucht wird am gerechneten Ton, je Taste alle Größen gemeinsam (`decay`, `highDecay`,
+`lateDecay`, Verstimmung bzw. δ, u leise, u laut, γ wo ein Ziel), am vollen Abstand nach K3 a; den Startpunkt gibt eine
+Suche am Modell der Moden nur an Anteil (1); die Rechenzeit einer Auswertung wird in 7.5.4 an einer Taste gemessen,
+bevor die Probe läuft.** Löst für 7.5 die Aufteilung aus SM1 a ab. Grund: verglichen wird, was man hört, ohne
+Ersatzrechnung — die Ausnahme an 48 (späte Stufe 38 gegen 3,6 s) entfällt, die Tiefe wird dort gemessen, wo sie
+verlässlich ist; u, γ und Verstimmung wirken gemeinsam auf die Tiefe und werden gemeinsam gesucht (das wechselseitige
+Nachstellen ließ `decay` in S154 weglaufen). Geschätzt (aus S154, nicht gemessen): eine Auswertung über v6–v16 rund
+19 s, 30 Tasten mit zwei Startpunkten 3–12 h. Verworfen: b (Stufe 1 an den Moden, Stufe 2 am Ton wie SM1 a — setzt die
+Verstimmung an einer Tiefe, die bis 30 dB daneben liegt). Kippt auf b, wenn die gemessene Rechenzeit das Setzen aller
+30 Tasten mit zwei Startpunkten über 12 h hebt oder die Probe zeigt, dass Moden und Ton am vollen Abstand auf wenige
+Prozent übereinstimmen.
+
+**Befund S155 (vor K5, Längen der Aufnahmen v6/v16):** A0–F#1 23–26 s, A1–D#2 22–23 s, F#2–A4 14–16 s, C5–F#5 12–15 s,
+A5 10–11 s, ab C6 4–6 s; das Modell wird zum Messen 12 s (bis 72) bzw. 8 s gehalten (`modelltest::ton`), *Salamander*
+über die ganze Datei gemessen (`endeVorBlende`) — im Bass fehlen dem Modell bis 14 s der späten Stufe.
+
+✅ **K5 a** (Patrik S155): **Das Modell klingt je Taste so lange wie die Datei von *Salamander* (Ende vor der Blende, je
+Taste das längste über v6–v16); der gemeinsame Bereich reicht vom späteren Ende des Anschlags beider Seiten bis zur
+Messgrenze von *Salamander*; Raster der Kurven nach Schroeder gleichmäßig 0,05 s, der Autokovarianz 0,02 s über 0–2 s;
+der Bezug (K1 a) enthält beides je Taste, Ebene und Teilton (geschätzt rund 3 MB).** Grund: die späte Stufe ist im Bass
+die kennzeichnende Größe — ein Bereich bis 12 s setzt sie an der Hälfte dessen, was die Aufnahme zeigt; 0,05 s gibt einer
+frühen Stufe mit Knick bei 0,2 s (102: 0,23 s) genug Punkte; 0,02 s gibt der schnellsten gesuchten Schwebung (8 Hz) sechs
+Punkte je Periode. Verworfen: b (Modell 12 / 8 s, Bereich bis zum früheren Ende — prüft die späte Stufe im Bass nur zur
+Hälfte), c (Raster 0,1 s — zwei Punkte vor einem frühen Knick). Kippt auf b, wenn die in 7.5.4 gemessene Rechenzeit mit
+dem längeren Halten über die 12 h aus K4 a geht, ohne es aber darunter bliebe; auf c, wenn der Bezug deutlich über 3 MB
+wächst.
+
+✅ **K6 a** (Patrik S155): **Beide Seiten werden bis zum selben Ende integriert (Messgrenze von *Salamander*, oder das
+frühere Ende des Modells, wo es vorher 90 dB unter seine Spitze fällt); jede Seite zieht vor der Integration je Rahmen die
+Energie ihres eigenen gemessenen Bodens ab (Mitte zu beiden Nachbarn, wie in der Messung gebildet; unter 0 → 0);
+verglichen wird bis dorthin, wo der Pegel zuletzt 10 dB über dem Ende lag (wie heute).** Grund: dieselbe Regel für beide
+Seiten ohne fremde Zutat (US6-1 a); ohne Abzug sitzt der Fehler des Bodens (bis 10 % der Energie am Ende) systematisch
+auf *Salamander* — genau wo die späte Stufe gesetzt wird, eine flachere Kurve würde als längeres `lateDecay` gelesen.
+Verworfen: b (ohne Abzug), c (dem Modell den Boden von *Salamander* zuschlagen — fremde Zutat, wie in US6-1 a verworfen).
+Kippt auf b, wenn der Abzug in 7.5.4 (c) an weniger als einer von zehn Kurven mehr als 0,5 dB ändert; auf c, wenn er an
+vielen Kurven Energie unter 0 erzeugt.
+
+**Frage Patrik (S155): ist *Salamander* das Maß aller Dinge?** Antwort (Claude): nein — UF1 a setzt aus *Salamander* nur,
+was keine Quelle hat, und vergleicht, was eine hat. Aber: ein anderes Instrument (C5 gegen Steinway D in Saiten und Boden),
+ein Stimmzustand (die Verstimmung im Chor ist die eines Tages), Raum, Mikrofon und Rauschen in der Aufnahme, 30 Tasten in
+kleinen Terzen, unsichere Ziele an schwachen Teiltönen. Und die Suche lief bisher „innerhalb des Faktors 3 um die
+Messwerte“ (`test_LoopSalamanderSetzen.cpp`, `grenzeOben = 3.0 * v`) — die Grenzen hingen am Ziel selbst.
+
+✅ **SQ1 a** (Patrik S155; Recherche mit bis zu acht Agenten, wo sinnvoll): **Vor 7.5.5 werden je gesetzter Größe
+Bereiche aus Quellen zum Flügel gesucht und mit Fundstelle eingetragen (`decay`, `lateDecay`, `highDecay`, Verstimmung im
+Chor, γ, δ, Stoß); gesucht wird in diesen Bereichen, nicht im Faktor 3 um *Salamander*; wo sich keine Quelle findet,
+bleibt der Faktor 3, als solcher benannt; ein Wert an einer belegten Grenze ist ein Befund gegen Modell oder Aufnahme.**
+Grund: Grenzen, die nicht aus dem Ziel kommen, trennen „das Modell trifft mit einem möglichen Wert“ von „die Aufnahme
+verlangt, was ein Flügel nicht tut“ (etwa `decay` 0,5 s in S154) — *Salamander* bleibt Messbezug, nicht Maßstab.
+Verworfen: b (Faktor 3 wie bisher, Unsicherheit nur über Gewichte und Befunde). Kippt auf b, wenn sich für die meisten
+der sieben Größen keine zitierfähige Quelle findet.
+
+**Befund S155 (Recherche zu SQ1 a, sieben Agenten; Berichte `modellierung/hammer-saite/recherche/2026-10-26_S155_bereich_*.md`,
+Zusammenstellung `modellierung/hammer-saite/grenzen.md`, tragende Zitate selbst nachgelesen):** Verstimmung (Plath 2019,
+Steinway D: bis F6 „approx. 1-2 cent“, im hohen Diskant „up to 5 cent“), δ (Tan 2017: 0,1–0,4 Hz), γ (Tan: gemessen 5°
+und 7°; 22° nur „artificially increased“ in der Simulation) und `highDecay` (Bensa et al. 2003, Yamaha C6, Tab. I und
+Gl. 37) sind belegt; *Salamander* liegt überall darin (`highDecay` am oberen Rand des Streubands). Für `decay` messen alle
+Quellen eine Gerade über den ganzen Ton (Mischung beider Stufen) an anderen Flügeln — nicht dieselbe Größe; für
+`lateDecay` und u gibt es keine Zahl aus einer Messung (Thomas et al. 1998: von den Autoren gesetzt). Der Kipppunkt von
+SQ1 a greift damit zur Hälfte.
+
+✅ **SQ2 a** (Patrik S155): **Grenzen aus Quellen nur, wo die Quelle dieselbe Größe misst — Verstimmung 0–6 Cent (im
+hohen Diskant ab F6 bis 7,5 Cent außen–außen), δ 0–8 Cent, γ 0–25°, `highDecay` im Streuband nach Bensa (Gl. 37 mit
+b1 × 0,5…3, b2 × 0,5…1,5); `decay`, `lateDecay` und u behalten Faktor 3 bzw. 0…1, im Bericht als „ohne Quelle“ benannt;
+die Quellen zu `decay` gehen als Vergleich in den Bericht, nicht als Grenze; Simulationen und gesetzte Werte (RT-0425,
+Thomas, Tans 22°) zählen nirgends als Grenze.** Grund: eine Grenze hält nur fest, was für die gesetzte Größe physikalisch
+gilt — eine einstufige Mischung begrenzt die erste Stufe nicht, eine Simulation sagt nur, was die Autoren wählten.
+Verworfen: b (Hülle aller Werte je Register — *Salamander* läge an 27–36 und 78–87 ohne Fehler außerhalb). Kippt für
+`decay` und `lateDecay` auf Grenzen aus Quellen, sobald Hundley 1978 oder Weinreich 1977 die zwei Stufen je Taste an
+einem Flügel beziffern (`docs/Bibliothek_offen.md`); dann die gesetzten Werte gegen die neuen Grenzen prüfen und nur
+neu setzen, wo einer außerhalb liegt.
+
+**Nachtrag S155 (Hinweise Patrik):** Die KTH-Vorlesung von Weinreich (`motion.html`) selbst roh abgerufen: „The initial
+portion, called "prompt sound," drops (in this case) at a rate of about 8 dB/sec; the final one, called "aftersound," at
+less than one-quarter that rate“, gefiltert auf den Grundton, und „only one of the three strings belonging to this note
+(Eb4) was allowed to sound“ — ein Ton, eine Saite: belegt den Mechanismus der zwei Ebenen (spät/früh > 4), gibt aber
+keinen Bereich je Taste. Über die Semantic-Scholar-Nummer im Link von Connected Papers die 33 Arbeiten gesucht, die
+Martin 1947 zitieren; fünf freie von J-STAGE geladen (Nakamura 1992, 1993, 1996; Kubo & Aoshima 1994, 1995, unter
+`quellen/`): im Text keine Abklingzeiten je Taste — Kubo & Aoshima 1995 finden am Flügel ein mehrstufiges Abklingen, das
+sich „by performance style or piano condition“ ändert (Abstract). SQ2 a bleibt.
+
+✅ **SW1 a** (Patrik S155): **Die Probe 7.5.4 trägt, wenn alle Schwellen halten; jede Zeile mit ihrem Messwert im
+Bericht; nach der Probe nicht verschoben.** (1) Rechenzeit: eine Auswertung gemessen, hochgerechnet 30 Tasten × 2
+Startpunkte ≤ 12 h, sonst K4 b bzw. K5 b. (2) Glätte: je Parameter ein Schnitt mit 15 Punkten über seinen Bereich, je
+Schnitt höchstens ein Minimum und kein Sprung über das Dreifache der mittleren Nachbaränderung, an ≥ 5 von 6 Tasten;
+Anteil (2) unglatt → K3 b, Anteil (1) unglatt → SM4 b. (3) Eindeutig: zwei Startpunkte (aus den Moden; × 1,6), Endwerte
+logarithmischer Größen auf 10 %, linearer auf 10 % ihres Bereichs, Rest auf 5 %, an ≥ 5 von 6 Tasten, sonst SM4 b.
+(4) Kein Parameter an seiner Grenze an ≥ 5 von 6 Tasten, sonst Befund je Taste und Entscheid. (5) Raum: die späte Stufe
+von *Salamander* fällt in weniger als einem Drittel der Kurven gleich schnell (±20 %) wie ihr Boden zwischen den
+Teiltönen, sonst SM4 b. (6) Abzug des Bodens ändert an ≥ 1 von 10 Kurven mehr als 0,5 dB (sonst K6 b) und erzeugt an
+weniger als 1 von 10 Kurven mehr als 5 % Rahmen unter 0 (sonst K6 c). (7) Die Kurven einer Taste unterscheiden sich über
+v6–v16 mehr als zwischen den Kanälen, sonst K2 b. (8) Abstand nach K3 a an Moden und Ton weicht an ≥ 2 von 6 Tasten
+mehr als 5 % ab, sonst K4 b. Tasten 33, 48, 60, 66, 81, 84; die Dauer wird nach (1) geschätzt und angesagt. Grund: jeder
+Kipppunkt aus K2–K6 und SM4 a ist ein Urteil der Probe — ohne Zahl fiele es nach dem Ergebnis (Anweisung Patrik S155:
+„sollte durch Messungen entschieden werden“). Verworfen: b (feste Schwellen nur für Glätte und Eindeutigkeit).
+**Teilplan 7.5 damit vollständig entschieden (K1 a–K6 a, SQ1 a, SQ2 a, SW1 a); nächster Schritt 7.5.1.**
+
+**7.5.1 gebaut (S155):** `Teiltonmessung.hpp` trägt je Teilton den Boden je Rahmen (`bodenDb`) und den gemessenen Bereich
+(`bereichVon`, `bereichBis`, auch ohne Abklingzeit); `schroederKurve` (Raster 0,05 s, festes Gitter ab dem Einsatz, Ende
+wählbar, Abzug des eigenen Bodens, `gueltig` bis zuletzt 10 dB über dem Ende) und `autokovarianz` (Raster 0,02 s bis 2 s).
+**Festgelegt im Bau, nicht entschieden:** der „glatte Verlauf“ aus K3 a ist das gleitende Mittel in dB über 2 s, mittig
+und am Rand symmetrisch gekürzt — ein in dB gerader Abfall gibt keinen Rest (gemessen: ohne Schwebung C(0) ≈ 10⁻⁵ dB²
+gegen 9,3 dB² mit); eine Schwebung langsamer als 0,5 Hz folgt teils dem Mittel. Ein erster Versuch mit dem Mittel der
+Energie ließ an den Rändern 0,2 dB² Rest. Für 7.5.3 vorgemerkt: die Zahl gültiger Punkte nimmt der Abstand von
+*Salamander* (fest), nicht vom Modell — sonst springt der Abstand mit ihr. Synthetische Fälle in `test_Teiltonmessung`
+(„31d-7 B Kurve nach Schroeder (7.5.1)“, „31d-7 B Autokovarianz des Rests (7.5.1)“): eine Stufe 0,001 dB an der
+gerechneten Kurve, zwei Stufen 0,78 dB (Mischterme), ins Rauschen integriert mit Abzug 2,3 / 1,0 dB gegen 6,6 / 5,7 dB
+ohne. Release-clang: Bereich `*Teiltonmessung*,*Salamander*,*Loop Hammer*,*Loop Werte*,*Klangfassung*` 56 / 56 —
+die Werte von `miss` unverändert. **7.5.1 fertig.**
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und

@@ -5,11 +5,11 @@
 Die Originale stammen aus der OLPC-Sammlung auf archive.org (CC BY 3.0, die Lizenz steht je
 Eintrag in den Metadaten) und liegen NICHT im Repo; geladen werden sie einzeln aus den ZIPs der
 Eintraege, Adresse je Datei unten in `QUELLEN` (`<eintrag>/<zip>/<pfad>`). Im Ordner heisst ein
-Original `<eintrag>__<datei>.wav` — so, wie es die Sitzung S123 abgelegt hat (seit S128 liegen
-sie unter `…/Visuals_Project/cmake/OLPC`).
+Original `<eintrag>__<datei>.wav` — so, wie es die Sitzung S123 abgelegt hat (seit S155 liegen
+sie auf der Wechselplatte unter `E:/samples/OLPC`, vorher `…/Visuals_Project/cmake/OLPC`).
 
 Die Clave (S128, Entscheid Patrik C1 a) ist ein einzelner Schlag aus `Clave son 2-3.wav` von
-Wikimedia Commons (ESMUC, CC0; Original unter `…/Visuals_Project/cmake/CommonsClave`), siehe
+Wikimedia Commons (ESMUC, CC0; Original seit S155 unter `E:/samples/CommonsClave`), siehe
 `CLAVE`.
 
 Je Sample: Stille an den Raendern weg (Schwelle -50 dB, davor 2 ms stehen gelassen), am Ende

@@ -469,3 +469,5 @@ docs/**/*.zip
 asset/free_Tabs/**
 # fremde Arbeiten (PDFs) zur Modellierung: nur lokal, je Klasse unter quellen/ (S146)
 /projects/apps/LumiViz/docs/modellierung/**/quellen/
+# Eingang für Downloads aus Patriks Browser (S155): wird nach quellen/ einsortiert, nie versioniert
+/dld/

@@ -30,6 +30,9 @@ Methodenregeln, die Werkzeuge je Format, die Audio-Testsignale und der Stand
 je Format. Dazu [Messmittel](kalibrierung/Messmittel.md) — die Kalibrier-Raster
 und wie sie abgenommen werden.
 
+**Was nur eine Bibliothek beschafft:** [Bibliothek_offen.md](Bibliothek_offen.md) — Quellen hinter
+Bezahlschranken oder nur gedruckt, mit Verlagsseite und Anlass (S155).
+
 **Was ist noch zu tun:** [**Offene Punkte**](Offene_Punkte.md) — die Arbeitsliste
 (Kalibrier-Befunde, offene Urteile, Sichttests, Entscheide, Backlog). Ein Ort;
 löst die früheren `Offene_Implementierungen.md` + `Offene_Sichttests.md` ab, die

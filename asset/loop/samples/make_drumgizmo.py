@@ -6,7 +6,8 @@ Die Kits DRSKit 2.1 und CrocellKit 1.1 von drumgizmo.org stehen unter CC BY 4.0.
 mehrere GB gross; gebraucht werden je Rolle nur wenige Anschlaege. Deshalb laedt dieses Skript
 nie ein ganzes Paket (Entscheid D1 a), sondern liest ueber Teil-Abrufe (HTTP Range) erst das
 Inhaltsverzeichnis jeder ZIP und spaeter nur die gewaehlten Dateien. Die Originale liegen NICHT
-im Repo, sondern in `<ordner>` (in S124: `...\\Visuals_Project\\cmake\\DrumGizmo`).
+im Repo, sondern in `<ordner>` (in S124: `...\\Visuals_Project\\cmake\\DrumGizmo`; seit S155 auf der
+Wechselplatte unter `E:\\samples\\DrumGizmo`).
 
 Schritte:
   verzeichnis  liest das Inhaltsverzeichnis jeder ZIP nach `<ordner>/<kit>_inhalt.json`

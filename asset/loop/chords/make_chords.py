@@ -4,7 +4,8 @@ docs/audio/Saiten_Konzept.md §1).
     python -I asset/loop/chords/make_chords.py <Ordner mit guitar.json und ukulele.json>
 
 Der Ordner ist das npm-Paket `@tombatossals/chords-db` 0.5.1 (`lib/guitar.json`, `lib/ukulele.json`,
-`LICENSE`), geladen S137 nach `...\\cmake\\ChordsDb\\0.5.1` — ausserhalb des Repos, wie die Originale der
+`LICENSE`), geladen S137 nach `...\\cmake\\ChordsDb\\0.5.1`, seit S155 auf der Wechselplatte unter
+`E:\\samples\\ChordsDb\\0.5.1` — ausserhalb des Repos, wie die Originale der
 Samples. Schreibt neben dieses Skript je Akkord eine `.lvchord` (Fassung 1, `loop/Akkord.hpp`):
 
 - `guitar/`, `ukulele/`: jede Lage aus chords-db (MIT, D. Rubert; `CREDITS.md`). Die Buende stehen

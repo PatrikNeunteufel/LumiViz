@@ -23,6 +23,8 @@
  *   Salamander).
  * - 31d-7: die Tiefe der Einbrueche je Periode der Schwebung (TB1 a) gegen zwei Moden mit bekanntem
  *   Verhaeltnis.
+ * - 31d-7 B (7.5.1, S155): die Kurve nach Schroeder auf dem Raster gegen die gerechnete Kurve (eine Stufe,
+ *   zwei Stufen, Boden mit und ohne Abzug, gemeinsames Ende) und die Autokovarianz des Rests einer Schwebung.
  ****************************************************************************************
  */
 
@@ -34,7 +36,9 @@
 #include <cmath>
 #include <complex>
 #include <cstdint>
+#include <functional>
 #include <numbers>
+#include <utility>
 #include <vector>
 
 using namespace lumi::messung;
@@ -515,5 +519,159 @@ TEST_CASE("Loop Teiltonmessung 31d-3 Pegel, Direktschall, Terzbaender, Phantome"
             CHECK(ph.frequenz == doctest::Approx(2.0 * teiltonFrequenz(f0, b, ph.n / 2)).epsilon(1e-4).scale(0.0));
             CHECK(std::abs(ph.abstandDb + 20.0) < 1.0);
         }
+    }
+}
+
+namespace
+{
+
+/// Die Kurve nach Schroeder einer Summe von Exponentialen in der Energie (ohne Mischterme): L(t) = 10·lg(I(t)/I(t0)),
+/// I(t) = Σ a²/(2σ)·(e^(−2σt) − e^(−2σ·T)) mit σ = ln 1000 / T60.
+double schroederWahr(const std::vector<std::pair<double, double>>& amplitudeT60, double t, double t0, double ende)
+{
+    const auto integral = [&](double von) {
+        double s = 0.0;
+        for (const auto& [a, t60] : amplitudeT60)
+        {
+            const double sigma = std::log(1000.0) / t60;
+            s += a * a / (2.0 * sigma) * (std::exp(-2.0 * sigma * von) - std::exp(-2.0 * sigma * ende));
+        }
+        return s;
+    };
+    return 10.0 * std::log10(integral(t) / integral(t0));
+}
+
+/// Die groesste Abweichung der Kurve von `wahr` ueber ihre gueltigen Punkte.
+double groessteAbweichung(const Abklingkurve& k, const std::function<double(double, double)>& wahr, double endeS)
+{
+    double groesste = 0.0;
+    for (std::size_t j = 0; j < k.gueltig; ++j)
+    {
+        const double t = static_cast<double>(k.ersterPunkt + j) * k.rasterS;
+        groesste = std::max(groesste, std::abs(k.db[j] - wahr(t, endeS)));
+    }
+    return groesste;
+}
+
+}  // namespace
+
+TEST_CASE("Loop Teiltonmessung 31d-7 B Kurve nach Schroeder (7.5.1)")
+{
+    // SM4 a, K5 a, K6 a (S155): die Kurve auf dem Raster 0,05 s, bis zu einem waehlbaren Ende, ohne die Energie des Bodens
+    const double schritt = Einstellungen{}.schrittS;
+    SUBCASE("eine Stufe: 4 s — eine Gerade mit −15 dB/s, Bereich wie die Abklingzeit")
+    {
+        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 8, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 3; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->abklingen.erkannt);
+            CHECK(t->bodenDb.size() == t->pegelDb.size());
+            CHECK(static_cast<double>(t->bereichVon) * schritt == doctest::Approx(t->abklingen.vonS).epsilon(1e-12));
+            CHECK(static_cast<double>(t->bereichBis - 1) * schritt == doctest::Approx(t->abklingen.bisS).epsilon(1e-12));
+            const Abklingkurve k = schroederKurve(*t, schritt, t->bereichVon, t->bereichBis);
+            REQUIRE(k.gueltig >= 20);
+            CHECK(k.db.front() == 0.0);
+            CHECK(static_cast<double>(k.ersterPunkt) * k.rasterS >= static_cast<double>(t->bereichVon) * schritt - 1e-12);
+            const double endeS = static_cast<double>(t->bereichBis) * schritt;
+            const double abweichung = groessteAbweichung(
+                k, [&](double tt, double ende) { return schroederWahr({{1.0, 4.0}}, tt, static_cast<double>(k.ersterPunkt) * k.rasterS, ende); },
+                endeS);
+            MESSAGE("Teilton " << n << ": " << k.db.size() << " Punkte, gueltig " << k.gueltig << ", groesste Abweichung " << abweichung << " dB");
+            CHECK(abweichung < 0.5);
+        }
+    }
+    SUBCASE("zwei Stufen: frueh 3 s, spaet 12 s, die spaete 30 dB leiser")
+    {
+        const Ergebnis e = miss(erzeuge(zweiModen(110.0, 1e-4, 12, 3.0, 12.0, -30.0, 2.0), 8.0, 0.1, 1e-6), kRate, 110.0,
+                                lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 3; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            const Abklingkurve k = schroederKurve(*t, schritt, t->bereichVon, t->bereichBis);
+            REQUIRE(k.gueltig >= 20);
+            const double endeS = static_cast<double>(t->bereichBis) * schritt;
+            const double a2 = std::pow(10.0, -30.0 / 20.0);
+            const double abweichung = groessteAbweichung(
+                k,
+                [&](double tt, double ende) {
+                    return schroederWahr({{1.0, 3.0}, {a2, 12.0}}, tt, static_cast<double>(k.ersterPunkt) * k.rasterS, ende);
+                },
+                endeS);
+            MESSAGE("Teilton " << n << ": gueltig " << k.gueltig << " von " << k.db.size() << ", groesste Abweichung " << abweichung << " dB");
+            CHECK(abweichung < 1.0);
+        }
+    }
+    SUBCASE("der Boden: bis in das Rauschen integriert, biegt es die Kurve ohne Abzug flach, mit Abzug weniger")
+    {
+        // ein gemeinsames Ende (K6 a) kann hinter dem eigenen Bereich im Rauschen liegen — dort traegt der Abzug
+        const std::vector<double> ton = erzeuge(saite(220.0, 0.0, 6, 3.0), 6.0, 0.1, 3e-4);
+        const Ergebnis e = miss(ton, kRate, 220.0, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 2; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            const std::size_t ende = t->pegelDb.size();
+            const Abklingkurve mit = schroederKurve(*t, schritt, t->bereichVon, ende);
+            const Abklingkurve ohne = schroederKurve(*t, schritt, t->bereichVon, ende, 0.05, false);
+            REQUIRE(mit.gueltig >= 20);
+            const double endeS = static_cast<double>(ende) * schritt;
+            const auto wahr = [&](double tt, double ende) {
+                return schroederWahr({{1.0, 3.0}}, tt, static_cast<double>(mit.ersterPunkt) * mit.rasterS, ende);
+            };
+            const double abwMit = groessteAbweichung(mit, wahr, endeS);
+            const double abwOhne = groessteAbweichung(ohne, wahr, endeS);
+            MESSAGE("Teilton " << n << ": bis " << endeS << " s, mit Abzug " << abwMit << " dB, ohne " << abwOhne << " dB");
+            CHECK(abwMit < 0.5 * abwOhne);  // gemessen S155: 2,3 gegen 6,6 dB und 1,0 gegen 5,7 dB
+        }
+    }
+    SUBCASE("ein gemeinsames Ende hinter dem eigenen Bereich verlaengert die Kurve")
+    {
+        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 8, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
+        const Teilton* t = e.teilton(1);
+        REQUIRE(t != nullptr);
+        const Abklingkurve eigen = schroederKurve(*t, schritt, t->bereichVon, t->bereichBis);
+        const Abklingkurve weiter = schroederKurve(*t, schritt, t->bereichVon, t->pegelDb.size());
+        CHECK(weiter.db.size() >= eigen.db.size());
+        CHECK(weiter.ersterPunkt == eigen.ersterPunkt);
+    }
+}
+
+TEST_CASE("Loop Teiltonmessung 31d-7 B Autokovarianz des Rests (7.5.1)")
+{
+    // K3 a (S155): zwei Moden 1 Hz auseinander, die zweite halb so laut — Einbrueche 20·lg 3 = 9,5 dB tief im Takt 1 s;
+    // ohne zweite Mode kein Rest
+    const double schritt = Einstellungen{}.schrittS;
+    std::vector<Komponente> k = saite(220.0, 0.0, 6, 20.0);
+    for (const Komponente& c : saite(220.0, 0.0, 6, 20.0)) k.push_back({c.frequenz + 1.0, 0.5 * c.amplitude, 20.0, 20.0});
+    const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
+    const Ergebnis allein = miss(erzeuge(saite(220.0, 0.0, 6, 20.0), 8.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
+    REQUIRE(e.erkannt);
+    REQUIRE(allein.erkannt);
+    for (int n = 1; n <= 2; ++n)
+    {
+        CAPTURE(n);
+        const Teilton* t = e.teilton(n);
+        const Teilton* a = allein.teilton(n);
+        REQUIRE(t != nullptr);
+        REQUIRE(a != nullptr);
+        const Autokovarianz c = autokovarianz(*t, schritt, t->bereichVon, t->bereichBis);
+        const Autokovarianz c0 = autokovarianz(*a, schritt, a->bereichVon, a->bereichBis);
+        REQUIRE(c.db2.size() == 101);  // 0 … 2 s im Raster 0,02 s
+        const double periode = 1.0;  // jeder Teilton hat seine zweite Mode 1 Hz daneben
+        const auto bei = [&](double tau) { return c.db2[static_cast<std::size_t>(std::lround(tau / c.rasterS))]; };
+        MESSAGE("Teilton " << n << ": C(0) " << c.db2[0] << " dB², C(T/2) " << bei(0.5 * periode) << ", C(T) " << bei(periode)
+                           << "; allein C(0) " << c0.db2[0]);
+        CHECK(bei(0.5 * periode) < -0.5 * c.db2[0]);
+        CHECK(bei(periode) > 0.5 * c.db2[0]);
+        CHECK(c0.db2[0] < 0.01 * c.db2[0]);
     }
 }

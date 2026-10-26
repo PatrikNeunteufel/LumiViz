@@ -317,8 +317,9 @@ Rändern weg, Spitze 0,89.
   `THIRD_PARTY_NOTICES.md` führt die Samples.
 - **`samples/make_samples.py <Ordner der Originale> <Clave_son_2-3.wav>`**
   schreibt alle neu und gibt die gemessene Tonhöhe aus. Die Originale liegen
-  **nicht** im Repo (seit S128 unter `…\Visuals_Project\cmake\OLPC` und
-  `…\cmake\CommonsClave`); ihre Adressen stehen im Skript.
+  **nicht** im Repo (seit S155 auf der Wechselplatte unter `E:\samples\OLPC` und
+  `E:\samples\CommonsClave`, vorher `…\Visuals_Project\cmake\…`); ihre Adressen
+  stehen im Skript.
 - **S128 (Entscheid Patrik C1 a):** dazu `cowbell` und `cowbell_tip` aus
   TamTam Drum Kits (OLPC, CC BY 3.0) und `clave` — ein Schlag aus *Clave son
   2-3* der ESMUC auf Wikimedia Commons (**CC0**; in OLPC gibt es keine Clave,
@@ -373,7 +374,8 @@ Inhaltsverzeichnis der beiden ZIPs (DRSKit 2.1, 2,80 GB; CrocellKit 1.1,
 5,65 GB) über Teil-Abrufe, dazu die XMLs der Instrumente; `holen` lädt nur die
 gewählten Anschläge (`WAHL`, 310,5 MB, Entscheide D1 a, D1b, D4 a); `schreiben`
 mischt sie zu Stereo (D2 a) und lässt sie ganz — nur die Stille vorn fällt weg (D6 a). Die Originale liegen
-nicht im Repo (S124: `…\Visuals_Project\cmake\DrumGizmo`). Nennung in
+nicht im Repo (S124: `…\Visuals_Project\cmake\DrumGizmo`, seit S155
+`E:\samples\DrumGizmo`). Nennung in
 `samples/CREDITS.md`, Abschnitt *Acoustic drums — DrumGizmo*.
 
 | Präfix | Kit | Was |
