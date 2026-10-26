@@ -845,8 +845,8 @@ struct Abklingkurve
 /// Die Kurve nach Schroeder von Teilton `t` ueber die Rahmen [von, ende), abgetastet auf dem Raster `rasterS`
 /// (der erste Punkt ist der erste Rasterpunkt ab `von`). Mit `bodenAbziehen` wird je Rahmen die Energie von
 /// `bodenDb` abgezogen, unter 0 gilt 0 (K6 a). `ende` darf hinter `bereichBis` liegen (das gemeinsame Ende zweier
-/// Kurven, K6 a), nicht hinter `pegelDb`. Gueltig bis `randS` vor dem Ende (K6-1 a). Leer, wenn der Bereich keinen
-/// Rasterpunkt oder keine Energie hat.
+/// Kurven, K6 a), nicht hinter `pegelDb`; die Kurve endet frueher, wo nach dem Abzug keine Energie mehr kommt.
+/// Gueltig bis `randS` vor dem Ende (K6-1 a). Leer, wenn der Bereich keinen Rasterpunkt oder keine Energie hat.
 inline Abklingkurve schroederKurve(const Teilton& t, double schrittS, std::size_t von, std::size_t ende, double rasterS = 0.05,
                                    bool bodenAbziehen = true, double randS = 1.0)
 {
@@ -857,15 +857,21 @@ inline Abklingkurve schroederKurve(const Teilton& t, double schrittS, std::size_
     const std::size_t anfang = (von + q - 1) / q * q;
     k.ersterPunkt = anfang / q;
     if (anfang >= ende) return k;
-    const std::size_t n = ende - anfang;
+    std::size_t n = ende - anfang;
     std::vector<double> summe(n + 1, 0.0);
+    std::size_t letzteEnergie = 0;  // hinter dem letzten Rahmen mit Energie ueber dem Boden ist die Kurve zu Ende
     for (std::size_t j = n; j-- > 0;)
     {
         double e = std::pow(10.0, t.pegelDb[anfang + j] / 10.0);
         if (bodenAbziehen && anfang + j < t.bodenDb.size()) e = std::max(0.0, e - std::pow(10.0, t.bodenDb[anfang + j] / 10.0));
+        if (e > 0.0 && letzteEnergie == 0) letzteEnergie = j + 1;
         summe[j] = summe[j + 1] + e;
     }
     if (summe[0] <= 0.0) return k;
+    // faellt der Teilton vor dem Ende unter den Boden (am Modell: Teilton 1 unter das Leck eines langsameren Nachbarn,
+    // Befund S155 an MIDI 48), endet die Kurve dort — sonst stuende sie danach flach, und ein Vergleich
+    // gekuerzter Kurven teilte dort null durch null
+    n = letzteEnergie;
     for (std::size_t j = 0; j < n; j += q) k.db.push_back(10.0 * std::log10(std::max(summe[j], 1e-300) / summe[0]));
 
     // K6-1 a: beide Seiten sind bis zum selben Ende integriert und tragen dieselbe Abschneidung; nur die letzten

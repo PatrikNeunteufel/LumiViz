@@ -3185,6 +3185,31 @@ Taste liegen im Median 0,26 dB (Abklingen) und 0,32 dB (Schwebung) auseinander, 
 — die Größenordnung, unter der ein Abstand nicht mehr trennt. Release-clang
 `*Teiltonmessung*,*Salamander*,*Kurvenabstand*` 32 / 32. **7.5.3 fertig; nächster Schritt 7.5.4, die Probe.**
 
+**7.5.4, das Werkzeug (S155):** `test_LoopSalamanderProbe.cpp`, `LUMIVIZ_75_PROBE=<Ordner>` (mit `LUMIVIZ_75_PROBE_TEIL=1` nur
+die Rechenzeit; (5)–(7) mit `LUMIVIZ_SALAMANDER`), Bericht `probe75.txt`; Nelder–Mead aus dem Setz-Werkzeug in
+`NelderMead.hpp` gelöst. Grenzen nach SQ2 a; `highDecay` im Band nach Bensa mit L aus der Vorgabe (Steinway — die Längen
+des C6 fehlen, Annahme). Der Ton wird so lang gehalten, wie die Kurven von *Salamander* reichen, und 1,5 s mehr.
+**Befunde aus Teil (1), im Bau behoben — festgelegt, nicht entschieden:** (a) an MIDI 48 fällt Teilton 1 des Modells
+unter seinen Boden (das Leck des langsameren Teiltons 2); nach dem Abzug kommt keine Energie mehr, die Kurve stand
+danach flach, der Vergleich teilte null durch null (Abstand 261 dB) → eine Kurve endet an ihrer letzten Energie über
+dem Boden (`schroederKurve`; an *Salamander* ändern sich dadurch 2 von 939 Kurven, neu gemessen); (b) endet die Kurve
+des Modells, bevor ein Vergleich möglich ist, zählt sie als fehlte dem Modell der ganze Abfall (Abstand = Kurve von
+*Salamander* gegen 0 dB) — sonst verbesserte ein zu früh verstummendes Modell den Abstand; (c) neu bezogene Kurven
+höchstens 100 dB tief (unter der Messgrenze von 90 dB ist nichts gemessen; tiefer rechnete der Vergleich an der Grenze
+der Genauigkeit — 48 Teilton 1 fiel in der ersten Stufe schneller als 150 dB). **(1) Rechenzeit:** eine Auswertung
+(11 Ebenen auf 8 Threads) 0,8–7,0 s je Taste, im Mittel 2,3–3,0 s (Taktdrosselung); hochgerechnet mit höchstens 150
+Auswertungen je Suche: Setzen 30 Tasten × 2 Startpunkte **5,8–7,4 h** (Schwelle 12 h, hält); die Probe höchstens rund
+2 h — so angesagt, dann gestartet. Abstand am Start: 33 12,4 dB, 48 52,4 dB, 60 8,7 dB, 66 10,1 dB, 81 10,0 dB,
+84 15,0 dB.
+
+✅ **SE1 a** (Patrik S155): **Das Setzen 7.5.5 läuft je Taste; jede fertige Taste wird sofort in eine Ergebnisdatei
+geschrieben, ein neuer Lauf überspringt, was fertig ist (Stücke beliebiger Länge, etwa 5 Tasten ≈ 1 h). Zuerst eine
+Stichprobe über das ganze Band — 21, 27, 45, 72, 96, 108 (die Tasten, die die Probe nicht hatte; rund 1,5 h); danach
+entscheidet Patrik am Bild der Kurven und am Abstand, ob der Rest läuft.** Grund: ein Abbruch kostet höchstens eine
+Taste; die Stichprobe deckt die Lücke der Probe (Bass mit einer Saite: γ und δ statt Verstimmung und Stoß; hoher Diskant:
+kurze Kurven, K6-1 a). Verworfen: b (die Probe als Stichprobe), c (ein Lauf über alle 30 Tasten — Lehre aus S154).
+Kippt auf b, wenn die Probe 7.5.4 an einer Bedingung scheitert (dann wird ohnehin nicht gesetzt).
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und

@@ -151,6 +151,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_Kurvenabstand.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamander.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamanderSetzen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamanderProbe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamanderHoerproben.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperAuswertung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperBauplan.cpp"

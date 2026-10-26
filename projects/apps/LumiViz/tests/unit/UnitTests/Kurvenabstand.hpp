@@ -46,6 +46,7 @@ struct KurvenAbstand
     double schwebungDb = 0.0;  ///< K3 a (2)
     double gewicht = 0.0;
     std::size_t punkte = 0;    ///< verglichene Punkte der Kurve nach Schroeder
+    double anteilEnde = 0.0;   ///< Anteil der letzten 20 % der Punkte an der Summe der Quadrate (Kipppunkt K6-1 a)
     std::size_t vonPunkt = 0;  ///< absolut (Punkt · Raster = Zeit nach dem Einsatz)
     std::size_t endePunkt = 0; ///< gemeinsames Ende, absolut
 };
@@ -63,7 +64,9 @@ inline std::vector<double> neuBezogen(const Abklingkurve& k, std::size_t von, st
     const double rest = energie(ende);
     const double bezug = energie(von) - rest;
     if (bezug <= 0.0) return l;
-    for (std::size_t p = von; p < ende; ++p) l.push_back(10.0 * std::log10(std::max((energie(p) - rest) / bezug, 1e-30)));
+    // hoechstens 100 dB tief: unter der Messgrenze (90 dB, US6-1 a) ist nichts mehr gemessen, und tiefer teilt die
+    // Rechnung Reste an der Grenze der Genauigkeit (Befund S155 an MIDI 48, festgelegt im Bau)
+    for (std::size_t p = von; p < ende; ++p) l.push_back(10.0 * std::log10(std::max((energie(p) - rest) / bezug, 1e-10)));
     return l;
 }
 
@@ -74,19 +77,49 @@ inline std::vector<double> neuBezogen(const Abklingkurve& k, std::size_t von, st
 inline KurvenAbstand kurvenAbstand(const TeiltonKurven& m, const TeiltonKurven& s, double randS = 1.0)
 {
     KurvenAbstand a;
-    if (!m.erkannt || !s.erkannt || m.kurve.db.empty() || s.kurve.db.empty()) return a;
+    if (!s.erkannt || s.kurve.db.empty()) return a;
     const double raster = s.kurve.rasterS;
+    const auto rand = static_cast<std::size_t>(std::lround(randS / raster));
+    // Hat das Modell keine Kurve oder endet sie, bevor ein Vergleich moeglich ist, zaehlt die Kurve trotzdem: als
+    // fehlte dem Modell der ganze Abfall von *Salamander* (Abstand = die Kurve von Salamander gegen 0 dB, die
+    // Autokovarianz gegen null) — sonst verbesserte ein Modell, das zu frueh verstummt, den Abstand (Befund S155,
+    // festgelegt im Bau)
+    const auto ohneModell = [&] {
+        const std::size_t n = s.kurve.gueltig;
+        if (n < 2) return a;
+        KurvenAbstand o;
+        double q = 0.0;
+        for (std::size_t j = 0; j < n; ++j) q += s.kurve.db[j] * s.kurve.db[j];
+        o.abklingenDb = std::sqrt(q / static_cast<double>(n));
+        double c = 0.0;
+        for (const double v : s.kovarianz.db2) c += v * v;
+        o.schwebungDb = s.kovarianz.db2.empty() ? 0.0 : std::sqrt(std::sqrt(c / static_cast<double>(s.kovarianz.db2.size())));
+        o.gewicht = std::min(1.0, -s.kurve.db[n - 1] / 60.0);
+        o.punkte = n;
+        o.vonPunkt = s.kurve.ersterPunkt;
+        o.endePunkt = s.kurve.ersterPunkt + s.kurve.db.size();
+        o.gilt = o.gewicht > 0.0;
+        return o;
+    };
+    if (!m.erkannt || m.kurve.db.empty()) return ohneModell();
     const std::size_t von = std::max(m.kurve.ersterPunkt, s.kurve.ersterPunkt);
     const std::size_t ende = std::min(m.kurve.ersterPunkt + m.kurve.db.size(), s.kurve.ersterPunkt + s.kurve.db.size());
-    const auto rand = static_cast<std::size_t>(std::lround(randS / raster));
-    if (ende <= von + rand + 2) return a;
+    if (ende <= von + rand + 2) return ohneModell();
     const std::vector<double> lm = detail::neuBezogen(m.kurve, von, ende);
     const std::vector<double> ls = detail::neuBezogen(s.kurve, von, ende);
-    if (lm.empty() || ls.empty()) return a;
+    if (ls.empty()) return a;
+    if (lm.empty()) return ohneModell();
     const std::size_t n = ende - rand - von;
     double summe = 0.0;
-    for (std::size_t j = 0; j < n; ++j) summe += (lm[j] - ls[j]) * (lm[j] - ls[j]);
+    double ende20 = 0.0;
+    for (std::size_t j = 0; j < n; ++j)
+    {
+        const double q = (lm[j] - ls[j]) * (lm[j] - ls[j]);
+        summe += q;
+        if (5 * j >= 4 * n) ende20 += q;
+    }
     a.abklingenDb = std::sqrt(summe / static_cast<double>(n));
+    a.anteilEnde = summe > 0.0 ? ende20 / summe : 0.0;
     a.gewicht = std::min(1.0, -ls[n - 1] / 60.0);
 
     const std::size_t lags = std::min(m.kovarianz.db2.size(), s.kovarianz.db2.size());
