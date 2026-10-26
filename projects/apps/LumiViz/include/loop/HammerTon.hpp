@@ -88,6 +88,19 @@ inline constexpr double kEbenenAnteilMin = 1e-6;
                                                   double sigmaSaite, double sigmaV, double sigmaH,
                                                   const std::vector<double>& anregung = {});
 
+/// Die Moden eines Teiltons, wie der Ton sie rechnet (SZ3 a: auch fuer das Setzen am Modell der Moden).
+struct TeiltonModen
+{
+    int teilton = 1;
+    double hz = 0.0;     ///< die Frequenz des Teiltons
+    double sinus = 0.0;  ///< sin(kπ·x_H): die Anschlagstelle
+    std::vector<EbenenMode> moden;
+};
+
+/// Je Teilton unter der Grenze von `rechneHammerTon` die Moden des Chors in zwei Ebenen, aus den Kurven der Saite an
+/// Taste und Anschlagstufe von `anschlag` — dieselbe Rechnung wie im Ton.
+[[nodiscard]] std::vector<TeiltonModen> hammerTeiltonModen(const HammerSaite& saite, const HammerAnschlag& anschlag);
+
 /// Der Stoss je Saite eines Chors aus u (US2 a): bei drei Saiten 1 + u : 1 : 1 − u, bei zwei 1 + u : 1 − u;
 /// leer bei einer Saite oder u = 0 (gleicher Stoss).
 [[nodiscard]] std::vector<double> stossJeSaite(int chor, double u);

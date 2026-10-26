@@ -15,9 +15,11 @@
  * S3 a: logarithmische mit √(Ziel / Modell), lineare mit der halben Differenz), hoechstens acht
  * Runden. Die Ziele nach S2 a; nach S3 a die Verstimmung nur bei mindestens zwei Saiten und messbarer
  * Schwebung, die zweite Stufe nicht gesetzt (dreimal Decay, Kipppunkt der Nacharbeit).
- * 31d-7 B (P4 a): dazu γ aus dem Knick von Teilton 1 (wo Salamander in mindestens der Haelfte der Messungen
- * zwei Stufen zeigt) und δ aus der Schwebung an den Tasten mit einer Saite, darueber der letzte Wert; die
- * Tiefe der Einbrueche (TB1 a) steht nur im Bericht.
+ * 31d-7 B (SZ3 a, SM1 a, SM2 a — ersetzt das Vorgehen oben): Stufe 1 setzt je Taste decay, highDecay, lateDecay
+ * und Verstimmung (an Tasten mit einer Saite δ) gemeinsam am Modell der Moden (`modelltest::modenWerte`, Nelder–Mead,
+ * Faktor 3 um die Messwerte, an der Grenze gemeldet; `stufe1_<n>.txt`); Stufe 2 setzt am gerechneten Ton nur u leise
+ * und laut (Tiefe v6–v10, v12–v16, US1 a), γ (Tiefe der Tasten mit einer Saite, US3 a), B und Winkel; beide wechseln
+ * hoechstens dreimal. Knick und Tiefe ueber v6–v16 im Bericht.
  * Legt je Runde `runde_<n>.txt` und am Ende `stuetzpunkte.txt` (zum Eintragen in
  * `baueVorgabe()`) in den Ordner. Ohne die Variable meldet der Fall das und prueft nichts.
  *
@@ -38,8 +40,11 @@
 #include <QtGlobal>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <filesystem>
+#include <functional>
+#include <thread>
 #include <fstream>
 #include <iomanip>
 #include <numbers>
@@ -112,26 +117,119 @@ lumi::loop::Tastenkurve kurveAus(const std::vector<int>& tasten, const Parameter
     return k;
 }
 
-/// Der Unterschied der Abklingraten beider Stufen von Teilton 1 in 1/s (Amplitude; T60 = 60 dB).
-double stufenAbstand(const TastenWerte& w)
+/// Trifft die Tiefe der Einbrueche? Vorlaeufig ±20 % oder ±1,5 dB (US5 a: die Toleranz des dauerhaften Tests kommt
+/// erst nach den Werten aus der Streuung ueber die Ebenen).
+bool tiefeTrifft(const Wert& modell, const Wert& ziel)
 {
-    return std::log(1000.0) * (1.0 / w.t60Frueh.wert - 1.0 / w.t60Spaet.wert);
+    return modell.anzahl > 0 && std::abs(modell.wert - ziel.wert) <= std::max(1.5, 0.2 * ziel.wert);
 }
 
-/// γ aus dem Knick (P4 a): die schwach gekoppelte Richtung traegt sin²γ, die stark gekoppelte cos²γ der
-/// Energie; der Knick liegt, wo beide gleich laut sind — tan γ = exp(−Δσ·t_Knick).
-double gammaAusKnick(double knickS, double abstand)
+/// γ aus der Tiefe an einer Saite (US3 a): zwei Eigenrichtungen, der Hammer stoesst senkrecht — am Steg kommen sie
+/// mit cos²γ und sin²γ an; die Einbrueche zweier Moden mit Verhaeltnis r = tan²γ sind 20·log10((1 + r)/(1 − r)) tief.
+double gammaAusTiefe(double tiefeDb)
 {
-    return std::atan(std::exp(-abstand * knickS)) * 180.0 / std::numbers::pi;
+    const double q = std::pow(10.0, tiefeDb / 20.0);
+    const double r = (q - 1.0) / (q + 1.0);
+    return std::clamp(std::atan(std::sqrt(r)) * 180.0 / std::numbers::pi, kGammaMin, kGammaMax);
 }
 
-/// γ beim Setzen: der Knick des Modells um (t_Modell − t_Ziel) zu spaet heisst tan γ um exp(Δσ·(t_Modell − t_Ziel))
-/// zu klein; mit dem halben Schritt (S3 a) die Wurzel davon. Grenzen: γ = 45° vertieft die Einbrueche (Befund S153).
-double gammaBerichtigt(double gammaGrad, double knickModell, double knickZiel, double abstand)
+/// γ beim Setzen: zu flach heisst γ zu klein; mit dem halben Schritt die Wurzel des Verhaeltnisses. Ohne erkannte
+/// Schwebung im Modell (keine Tiefe) γ um die Haelfte groesser.
+double gammaBerichtigt(double gammaGrad, const Wert& modell, double zielDb)
 {
-    const double rad = gammaGrad * std::numbers::pi / 180.0;
-    const double faktor = std::exp(0.5 * abstand * (knickModell - knickZiel));
-    return std::clamp(std::atan(std::tan(rad) * faktor) * 180.0 / std::numbers::pi, kGammaMin, kGammaMax);
+    const double neu = modell.anzahl > 0 && modell.wert > 0.0 ? gammaGrad * std::sqrt(zielDb / modell.wert) : gammaGrad * 1.5;
+    return std::clamp(neu, kGammaMin, kGammaMax);
+}
+
+/// Der Stoss beim Setzen (US1 a): die Tiefe faellt mit u (Raster S154: an 60 49,8 → 21,5 → 15,5 → 13,2 dB fuer
+/// u = 0 … 0,6, etwa wie u^−0,44) — zu tief heisst u zu klein; der Schritt u·(Modell/Ziel). Ohne erkannte Schwebung im
+/// Modell (flacher als messbar) u halbiert.
+double stossBerichtigt(double u, const Wert& modell, double zielDb)
+{
+    const double neu = modell.anzahl > 0 && modell.wert > 0.0 ? u * (modell.wert / zielDb) : 0.5 * u;
+    return std::clamp(neu, 0.01, 1.0);
+}
+
+/// Das Ergebnis einer Suche nach Nelder–Mead.
+struct NelderMead
+{
+    std::vector<double> x;
+    double rest = 0.0;
+    int auswertungen = 0;
+};
+
+/// Nelder–Mead (Spiegeln 1, Strecken 2, Stauchen ½, Schrumpfen ½) ueber `f`, vom Start `x0` mit dem Anfangsschritt je
+/// Achse; hoechstens `maxAuswertungen`, Ende auch, wenn die Reste des Simplex um weniger als 10⁻⁴ auseinanderliegen.
+NelderMead nelderMead(const std::function<double(const std::vector<double>&)>& f, const std::vector<double>& x0,
+                      const std::vector<double>& schritte, int maxAuswertungen)
+{
+    const std::size_t d = x0.size();
+    std::vector<std::vector<double>> punkte{x0};
+    for (std::size_t j = 0; j < d; ++j)
+    {
+        std::vector<double> p = x0;
+        p[j] += schritte[j];
+        punkte.push_back(p);
+    }
+    int auswertungen = 0;
+    const auto werte = [&](const std::vector<double>& p) {
+        ++auswertungen;
+        return f(p);
+    };
+    std::vector<double> reste;
+    for (const auto& p : punkte) reste.push_back(werte(p));
+    while (auswertungen < maxAuswertungen)
+    {
+        std::vector<std::size_t> ordnung(d + 1);
+        for (std::size_t i = 0; i <= d; ++i) ordnung[i] = i;
+        std::sort(ordnung.begin(), ordnung.end(), [&](std::size_t a, std::size_t b) { return reste[a] < reste[b]; });
+        const std::size_t best = ordnung.front();
+        const std::size_t schlecht = ordnung.back();
+        const std::size_t zweit = ordnung[d - 1];  // der zweitschlechteste
+        if (reste[schlecht] - reste[best] < 1e-4) break;
+        std::vector<double> mitte(d, 0.0);
+        for (std::size_t i = 0; i <= d; ++i)
+            if (i != schlecht)
+                for (std::size_t j = 0; j < d; ++j) mitte[j] += punkte[i][j] / static_cast<double>(d);
+        const auto entlang = [&](double t) {
+            std::vector<double> p(d);
+            for (std::size_t j = 0; j < d; ++j) p[j] = mitte[j] + t * (punkte[schlecht][j] - mitte[j]);
+            return p;
+        };
+        const std::vector<double> gespiegelt = entlang(-1.0);
+        const double rSpiegel = werte(gespiegelt);
+        if (rSpiegel < reste[best])
+        {
+            const std::vector<double> gestreckt = entlang(-2.0);
+            const double rStreck = werte(gestreckt);
+            punkte[schlecht] = rStreck < rSpiegel ? gestreckt : gespiegelt;
+            reste[schlecht] = std::min(rStreck, rSpiegel);
+        }
+        else if (rSpiegel < reste[zweit])
+        {
+            punkte[schlecht] = gespiegelt;
+            reste[schlecht] = rSpiegel;
+        }
+        else
+        {
+            const std::vector<double> gestaucht = entlang(0.5);
+            const double rStauch = werte(gestaucht);
+            if (rStauch < reste[schlecht])
+            {
+                punkte[schlecht] = gestaucht;
+                reste[schlecht] = rStauch;
+            }
+            else
+                for (std::size_t i = 0; i <= d; ++i)
+                {
+                    if (i == best) continue;
+                    for (std::size_t j = 0; j < d; ++j) punkte[i][j] = punkte[best][j] + 0.5 * (punkte[i][j] - punkte[best][j]);
+                    reste[i] = werte(punkte[i]);
+                }
+        }
+    }
+    const auto best = static_cast<std::size_t>(std::min_element(reste.begin(), reste.end()) - reste.begin());
+    return {punkte[best], reste[best], auswertungen};
 }
 
 std::string punkteText(const lumi::loop::Tastenkurve& k)
@@ -197,10 +295,13 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
 
 TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
 {
+    // SZ3 a, SM1 a, SM2 a: Stufe 1 am Modell der Moden (je Taste Nelder–Mead ueber decay, highDecay, lateDecay und
+    // Verstimmung bzw. δ), Stufe 2 am gerechneten Ton (u leise, u laut, γ an der Tiefe; B und Winkel wie bisher);
+    // beide wechseln hoechstens dreimal
     const QString variable = qEnvironmentVariable("LUMIVIZ_31D4_SETZEN");
     if (variable.isEmpty())
     {
-        MESSAGE("LUMIVIZ_31D4_SETZEN=<Ordner> setzt die Groessen ohne Quelle durch das Modell hindurch (S1 a, S2 a)");
+        MESSAGE("LUMIVIZ_31D4_SETZEN=<Ordner> setzt die Groessen ohne Quelle durch das Modell hindurch (SZ3 a, SM1 a, SM2 a)");
         return;
     }
     const std::filesystem::path ziel = variable.toStdU16String();
@@ -222,13 +323,23 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
     Parameter cent = neu("verstimmungCent", false);
     Parameter b = neu("inharmonizitaet", true);
     Parameter winkel = neu("stegWinkelGrad", false);
-    Parameter gamma = neu("polarisationWinkelGrad", false);  // P4 a
-    Parameter delta = neu("polarisationCent", false);
-    // S2 a: Ziele und Startwerte
+    Parameter gamma = neu("polarisationWinkelGrad", false);  // US3 a
+    Parameter delta = neu("polarisationCent", false);         // P4 a
+    Parameter stossLeise = neu("stossLeise", false);          // US1 a, US2 a
+    Parameter stossLaut = neu("stossLaut", false);
+    const lumi::loop::HammerSaite vorgabe = lumi::loop::hammerSaiteVorgabe();
+    // Ziele und Startwerte (S2 a, US1 a, US3 a, RB1-1 a)
     for (std::size_t i = 0; i < n; ++i)
     {
         const TastenWerte& w = s[i];
-        if (w.t60Ausgleich.anzahl > 0 && w.t60Ausgleich.wert > 0.0)
+        const int chor = lumi::loop::chorAn(vorgabe, w.midi);
+        // SM3 a: Start an der fruehen Stufe von Teilton 1, sonst am Ausgleich (der Ausgleich bleibt Pruefgroesse am Ton)
+        if (w.t60Frueh.anzahl > 0 && w.t60Frueh.wert > 0.0)
+        {
+            decay.ziel[i] = true;
+            decay.wert[i] = w.t60Frueh.wert;
+        }
+        else if (w.t60Ausgleich.anzahl > 0 && w.t60Ausgleich.wert > 0.0)
         {
             decay.ziel[i] = true;
             decay.wert[i] = w.t60Ausgleich.wert;
@@ -238,18 +349,16 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
             hoch.ziel[i] = true;
             hoch.wert[i] = std::clamp(w.highDecay.wert, 0.001, 1.0);
         }
-        // N1 a: die zweite Stufe wieder gesetzt (S2 a: wo Salamander in mindestens der Haelfte der Messungen zwei zeigt)
         if (w.zweiStufenAnteil.wert >= 0.5 && w.t60Spaet.anzahl > 0 && w.t60Spaet.wert > 0.0)
         {
             spaet.ziel[i] = true;
             spaet.wert[i] = std::max(w.t60Spaet.wert, decay.wert[i]);
         }
-        // S3 a: Verstimmung nur, wo das Modell mindestens zwei Saiten hat und die Schwebung messbar bleibt
-        if (w.schwebungCent.anzahl > 0 && lumi::loop::chorAn(lumi::loop::hammerSaiteVorgabe(), w.midi) >= 2 &&
-            w.schwebungCent.wert <= centGrenze(w.midi))
+        if (w.schwebungCent.anzahl > 0 && w.schwebungCent.wert <= centGrenze(w.midi))
         {
-            cent.ziel[i] = true;
-            cent.wert[i] = std::clamp(w.schwebungCent.wert, 0.0, 20.0);
+            Parameter& p = chor >= 2 ? cent : delta;
+            p.ziel[i] = true;
+            p.wert[i] = std::clamp(w.schwebungCent.wert, 0.0, 20.0);
         }
         if (w.midi <= kBBis && w.b.anzahl > 0 && w.b.wert > 0.0)
         {
@@ -261,60 +370,248 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
             winkel.ziel[i] = true;
             winkel.wert[i] = 2.0;
         }
-        // P4 a: γ aus dem Knick von Teilton 1, wo Salamander meist zwei Stufen zeigt
-        if (w.zweiStufenAnteil.wert >= 0.5 && w.knickS.anzahl > 0 && w.knickS.wert > 0.0 && w.t60Spaet.wert > w.t60Frueh.wert &&
-            w.t60Frueh.wert > 0.0)
+        if (chor == 1 && w.tiefeDb.anzahl > 0 && w.tiefeDb.wert > 0.0)
         {
             gamma.ziel[i] = true;
-            gamma.wert[i] = std::clamp(gammaAusKnick(w.knickS.wert, stufenAbstand(w)), kGammaMin, kGammaMax);
+            gamma.wert[i] = gammaAusTiefe(w.tiefeDb.wert);
         }
-        // P4 a: δ aus der Schwebung an den Tasten mit einer Saite (darueber der letzte Wert)
-        if (w.schwebungCent.anzahl > 0 && lumi::loop::chorAn(lumi::loop::hammerSaiteVorgabe(), w.midi) == 1 &&
-            w.schwebungCent.wert <= centGrenze(w.midi))
+        if (chor >= 2 && w.tiefeLeise.anzahl > 0 && w.tiefeLeise.wert > 0.0)
         {
-            delta.ziel[i] = true;
-            delta.wert[i] = std::clamp(w.schwebungCent.wert, 0.0, 20.0);
+            stossLeise.ziel[i] = true;
+            stossLeise.wert[i] = 0.25;
+        }
+        if (chor >= 2 && w.tiefeLaut.anzahl > 0 && w.tiefeLaut.wert > 0.0)
+        {
+            stossLaut.ziel[i] = true;
+            stossLaut.wert[i] = 0.25;
         }
     }
-    const lumi::loop::HammerSaite vorgabe = lumi::loop::hammerSaiteVorgabe();
     const auto saiteAus = [&]() {
         lumi::loop::HammerSaite saite = vorgabe;
         saite.abklingS = kurveAus(tasten, decay);
         saite.abklingHoch = kurveAus(tasten, hoch);
-        saite.abklingSpaetS = kurveAus(tasten, spaet);  // N1 a; zwischen den Zielen interpoliert (S2 a)
+        saite.abklingSpaetS = kurveAus(tasten, spaet);
         saite.verstimmungCent = kurveAus(tasten, cent);
-        // B: im Bass gesetzt, darueber die Punkte der Vorgabe (Rigaud)
         std::vector<lumi::loop::TastenWert> rigaud;
         for (const lumi::loop::TastenWert& p : vorgabe.inharmonizitaet.punkte)
             if (p.taste > kBBis) rigaud.push_back(p);
         saite.inharmonizitaet = kurveAus(tasten, b, rigaud);
-        // der Winkel: im Bass gesetzt, darueber der letzte Wert bis C8
-        double letzter = 2.0;
-        for (std::size_t i = 0; i < n; ++i)
-            if (winkel.ziel[i]) letzter = winkel.wert[i];
-        saite.stegWinkelGrad = kurveAus(tasten, winkel, {{lumi::loop::kTasteMax, letzter}});
-        // P4 a: γ zwischen den Zielen interpoliert, an den Enden fortgefuehrt; δ ueber den Tasten mit einer Saite
-        // der letzte Wert bis C8
-        saite.polarisationWinkelGrad = kurveAus(tasten, gamma);
-        double letztesDelta = 0.0;
-        for (std::size_t i = 0; i < n; ++i)
-            if (delta.ziel[i]) letztesDelta = delta.wert[i];
-        saite.polarisationCent = kurveAus(tasten, delta, {{lumi::loop::kTasteMax, letztesDelta}});
+        const auto letzterWert = [&](const Parameter& p, double sonst) {
+            double l = sonst;
+            for (std::size_t i = 0; i < n; ++i)
+                if (p.ziel[i]) l = p.wert[i];
+            return l;
+        };
+        saite.stegWinkelGrad = kurveAus(tasten, winkel, {{lumi::loop::kTasteMax, letzterWert(winkel, 2.0)}});
+        saite.polarisationWinkelGrad = kurveAus(tasten, gamma, {{lumi::loop::kTasteMax, letzterWert(gamma, 0.0)}});
+        saite.polarisationCent = kurveAus(tasten, delta, {{lumi::loop::kTasteMax, letzterWert(delta, 0.0)}});
+        saite.stossLeise = kurveAus(tasten, stossLeise);
+        saite.stossLaut = kurveAus(tasten, stossLaut);
         lumi::loop::richteHammerSaite(saite);
         return saite;
     };
 
-    // Durchgaenge: nach den Runden fallen Tasten ohne Treffer heraus (UF5 a: sie tragen nicht bei), und mit genau
-    // dieser Kurve wird weiter berichtigt — ueber die Kopplung im Chor aendert eine fehlende Verstimmung auch die
-    // Abklingzeiten der Taste (Befund S152). Eingetragen wird die Kurve des letzten Durchgangs, gemessen.
+    // --- Stufe 1 (SM2 a): je Taste gemeinsam am Modell der Moden ---
+    struct Ergebnis1
+    {
+        std::vector<double> x;
+        double rest = 0.0;
+        int auswertungen = 0;
+        std::string grenzen;  ///< Parameter, die an ihrer Grenze liegen
+    };
+    // die freien Groessen einer Taste: decay, highDecay, lateDecay (log), Verstimmung oder δ (linear)
+    const auto stufe1 = [&](std::size_t i, const lumi::loop::HammerSaite& basis, double startFaktor) {
+        const TastenWerte& z = s[i];
+        const int midi = tasten[i];
+        Parameter& verstimmung = cent.ziel[i] ? cent : delta;
+        std::vector<Parameter*> frei;
+        for (Parameter* p : {&decay, &hoch, &spaet, &verstimmung})
+            if (p->ziel[i]) frei.push_back(p);
+        std::vector<double> unten, oben, x0;
+        for (Parameter* p : frei)
+        {
+            const double v = p->wert[i];
+            if (p->logarithmisch)
+            {
+                const double grenzeOben = p == &hoch ? std::min(1.0, 3.0 * v) : 3.0 * v;
+                unten.push_back(std::log(v / 3.0));
+                oben.push_back(std::log(grenzeOben));
+                x0.push_back(std::log(v) + std::log(startFaktor));
+            }
+            else
+            {
+                unten.push_back(0.0);
+                oben.push_back(std::min(20.0, std::max(1.0, 3.0 * v)));
+                x0.push_back(v * startFaktor);
+            }
+        }
+        const auto saiteMit = [&](const std::vector<double>& x) {
+            lumi::loop::HammerSaite saite = basis;
+            for (std::size_t j = 0; j < frei.size(); ++j)
+            {
+                const double v = frei[j]->logarithmisch ? std::exp(x[j]) : x[j];
+                lumi::loop::Tastenkurve* k = frei[j] == &decay ? &saite.abklingS
+                                             : frei[j] == &hoch ? &saite.abklingHoch
+                                             : frei[j] == &spaet ? &saite.abklingSpaetS
+                                             : frei[j] == &cent ? &saite.verstimmungCent
+                                                                : &saite.polarisationCent;
+                k->abweichungen = {{midi, v}};
+            }
+            return saite;
+        };
+        const auto rest = [&](const std::vector<double>& xRoh) {
+            std::vector<double> x = xRoh;
+            for (std::size_t j = 0; j < x.size(); ++j) x[j] = std::clamp(x[j], unten[j], oben[j]);
+            const TastenWerte mo = modelltest::modenWerte(saiteMit(x), midi, -10);
+            double r = 0.0;
+            const auto logAbstand = [&r](const Wert& m, const Wert& zw) {
+                if (zw.anzahl == 0 || zw.wert <= 0.0) return;  // kein Ziel
+                if (m.anzahl == 0 || m.wert <= 0.0)
+                    r += 4.0;  // nicht messbar am Modell: wie ein Faktor e²
+                else
+                    r += std::pow(std::log(m.wert / zw.wert), 2.0);
+            };
+            // SM3 a: je Teilton 1–3 die fruehe Stufe, die spaete (wo Salamander meist zwei zeigt) und die Schwebung
+            logAbstand(mo.t60Frueh, z.t60Frueh);
+            if (z.zweiStufenAnteil.wert >= 0.5) logAbstand(mo.zweiStufenAnteil.wert >= 0.5 ? mo.t60Spaet : Wert{}, z.t60Spaet);
+            for (std::size_t j = 0; j < 2; ++j)
+            {
+                logAbstand(mo.t60FruehK[j], z.t60FruehK[j]);
+                if (z.zweiStufenAnteilK[j].wert >= 0.5)
+                    logAbstand(mo.zweiStufenAnteilK[j].wert >= 0.5 ? mo.t60SpaetK[j] : Wert{}, z.t60SpaetK[j]);
+            }
+            if (verstimmung.ziel[i])
+                r += std::pow(((mo.schwebungCent.anzahl > 0 ? mo.schwebungCent.wert : 0.0) - z.schwebungCent.wert) / 5.0, 2.0);  // 0,5 Cent wie 10 %
+            return r;
+        };
+        Ergebnis1 e;
+        if (frei.empty()) return e;
+        std::vector<double> schritte;
+        for (std::size_t j = 0; j < frei.size(); ++j) schritte.push_back(frei[j]->logarithmisch ? 0.3 : 0.5);
+        const NelderMead nm = nelderMead(rest, x0, schritte, 150);
+        e.x = nm.x;
+        for (std::size_t j = 0; j < e.x.size(); ++j)
+        {
+            e.x[j] = std::clamp(e.x[j], unten[j], oben[j]);
+            if (e.x[j] <= unten[j] + 1e-6 || e.x[j] >= oben[j] - 1e-6) e.grenzen += ' ' + frei[j]->name;
+        }
+        e.rest = nm.rest;
+        e.auswertungen = nm.auswertungen;
+        return e;
+    };
+    const auto uebernehme = [&](std::size_t i, const Ergebnis1& e) {
+        Parameter& verstimmung = cent.ziel[i] ? cent : delta;
+        std::size_t j = 0;
+        for (Parameter* p : {&decay, &hoch, &spaet, &verstimmung})
+            if (p->ziel[i]) p->wert[i] = p->logarithmisch ? std::exp(e.x[j++]) : e.x[j++];
+        if (spaet.ziel[i] && decay.ziel[i]) spaet.wert[i] = std::max(spaet.wert[i], decay.wert[i]);
+    };
+
+    // SM3 a, die zweite Probe: Stufe 1 an sechs Tasten mit zwei Startpunkten, dann der Ton mit den Werten des ersten —
+    // je Teilton 1–3 Salamander | Summe der Moden | Ton
+    if (qEnvironmentVariableIsSet("LUMIVIZ_31D7_PROBE2"))
+    {
+        const lumi::loop::HammerSaite basis = saiteAus();
+        std::ostringstream probe;
+        probe << std::fixed << std::setprecision(2)
+              << "Zweite Probe (SM3 a): je Taste x (ln decay, ln highDecay, ln lateDecay, Cent) und Rest fuer zwei Startpunkte; "
+                 "je Teilton T60 frueh / spaet (Stufen) und Schwebung in Cent: Salamander | Moden | Ton\n";
+        for (const int midi : {33, 48, 60, 66, 81, 84})
+        {
+            const auto i = static_cast<std::size_t>(std::find(tasten.begin(), tasten.end(), midi) - tasten.begin());
+            REQUIRE(i < n);
+            const Ergebnis1 erster = stufe1(i, basis, 1.0);
+            const Ergebnis1 zweiter = stufe1(i, basis, 1.6);
+            probe << "MIDI " << midi << ": Rest " << erster.rest << " / " << zweiter.rest << " — x";
+            for (const double v : erster.x) probe << ' ' << v;
+            probe << " /";
+            for (const double v : zweiter.x) probe << ' ' << v;
+            probe << " — an der Grenze:" << erster.grenzen << " /" << zweiter.grenzen << '\n';
+            uebernehme(i, erster);
+            lumi::loop::HammerSaite saite = basis;
+            const Parameter& verstimmung = cent.ziel[i] ? cent : delta;
+            if (decay.ziel[i]) saite.abklingS.abweichungen = {{midi, decay.wert[i]}};
+            if (hoch.ziel[i]) saite.abklingHoch.abweichungen = {{midi, hoch.wert[i]}};
+            if (spaet.ziel[i]) saite.abklingSpaetS.abweichungen = {{midi, spaet.wert[i]}};
+            if (verstimmung.ziel[i])
+                (cent.ziel[i] ? saite.verstimmungCent : saite.polarisationCent).abweichungen = {{midi, verstimmung.wert[i]}};
+            probe << "  Werte: decay " << decay.wert[i] << " s, highDecay " << hoch.wert[i] << ", lateDecay " << spaet.wert[i]
+                  << " s, Verstimmung " << verstimmung.wert[i] << " Cent\n";
+            const TastenWerte ausModen = modelltest::modenWerte(saite, midi, -10);
+            lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
+            instrument.tastatur->ungedaempftAb = 89;
+            const TastenWerte ausTon = modelltest::verdichteAlle({midi}, modelltest::messeTasten(instrument, {midi})).front();
+            const TastenWerte& z = s[i];
+            const auto stufe = [](const Wert& frueh, const Wert& spaet, const Wert& anteil) {
+                std::ostringstream t;
+                t << std::fixed << std::setprecision(2) << frueh.wert << " / " << (anteil.wert >= 0.5 ? spaet.wert : 0.0) << " ("
+                  << anteil.wert << ')';
+                return t.str();
+            };
+            for (const auto& [name, w] : {std::pair{"Salamander", &z}, std::pair{"Moden     ", &ausModen}, std::pair{"Ton       ", &ausTon}})
+                probe << "  " << name << ": T1 " << stufe(w->t60Frueh, w->t60Spaet, w->zweiStufenAnteil) << " | T2 "
+                      << stufe(w->t60FruehK[0], w->t60SpaetK[0], w->zweiStufenAnteilK[0]) << " | T3 "
+                      << stufe(w->t60FruehK[1], w->t60SpaetK[1], w->zweiStufenAnteilK[1]) << " | Cent " << w->schwebungCent.wert
+                      << " | Ausgleich " << w->t60Ausgleich.wert << " | highDecay " << w->highDecay.wert << " | Tiefe " << w->tiefeDb.wert
+                      << '\n';
+        }
+        std::ofstream(ziel / "probe2.txt", std::ios::binary) << probe.str();
+        MESSAGE(probe.str());
+        return;
+    }
+
     std::ostringstream verlauf;
     std::ostringstream vermerkt;
     std::vector<TastenWerte> m;
     int runde = 0;
-    int durchgang = 1;
-    bool gemessen = false;
-    for (; durchgang <= 3; ++durchgang)
+    for (int wechsel = 1; wechsel <= 3; ++wechsel)
     {
+        // Stufe 1 auf acht Threads ueber die Tasten
+        const lumi::loop::HammerSaite basis = saiteAus();
+        std::vector<Ergebnis1> ergebnisse(n);
+        std::atomic<std::size_t> naechste{0};
+        std::vector<std::thread> arbeiter;
+        const unsigned zahl = std::max(1u, std::min(8u, std::thread::hardware_concurrency()));
+        for (unsigned a = 0; a < zahl; ++a)
+            arbeiter.emplace_back([&] {
+                for (std::size_t i = naechste++; i < n; i = naechste++) ergebnisse[i] = stufe1(i, basis, 1.0);
+            });
+        for (std::thread& t : arbeiter) t.join();
+        std::ostringstream bericht1;
+        bericht1 << std::fixed << std::setprecision(3) << "Wechsel " << wechsel
+                 << ", Stufe 1 (Modell der Moden): je Taste decay | highDecay | lateDecay | Verstimmung bzw. delta | Rest | Auswertungen | an der Grenze\n";
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            uebernehme(i, ergebnisse[i]);
+            const Parameter& verstimmung = cent.ziel[i] ? cent : delta;
+            bericht1 << tasten[i] << " | " << (decay.ziel[i] ? decay.wert[i] : 0.0) << " | " << (hoch.ziel[i] ? hoch.wert[i] : 0.0) << " | "
+                     << (spaet.ziel[i] ? spaet.wert[i] : 0.0) << " | " << (verstimmung.ziel[i] ? verstimmung.wert[i] : 0.0) << " | "
+                     << ergebnisse[i].rest << " | " << ergebnisse[i].auswertungen << " |" << ergebnisse[i].grenzen << '\n';
+        }
+        // SM2 a, Kipppunkt: im ersten Wechsel an drei Tasten ein zweiter Startpunkt — eindeutig?
+        if (wechsel == 1)
+        {
+            bericht1 << "Zweiter Startpunkt (Faktor 1,6 auf alle Startwerte), dieselbe Suche:\n";
+            for (const int midi : {33, 60, 81})
+            {
+                const auto it = std::find(tasten.begin(), tasten.end(), midi);
+                if (it == tasten.end()) continue;
+                const auto i = static_cast<std::size_t>(it - tasten.begin());
+                const Ergebnis1 zweiter = stufe1(i, basis, 1.6);
+                bericht1 << midi << ": Rest " << zweiter.rest << " (erster " << ergebnisse[i].rest << ") — x";
+                for (const double v : zweiter.x) bericht1 << ' ' << v;
+                bericht1 << " gegen";
+                for (const double v : ergebnisse[i].x) bericht1 << ' ' << v;
+                bericht1 << '\n';
+            }
+        }
+        std::ofstream(ziel / ("stufe1_" + std::to_string(wechsel) + ".txt"), std::ios::binary) << bericht1.str();
+        verlauf << bericht1.str() << '\n';
+
+        // --- Stufe 2 (SM1 a): am gerechneten Ton nur u leise, u laut, γ — dazu B und Winkel ---
+        const std::vector<double> uVorher = stossLeise.wert;
+        const std::vector<double> lautVorher = stossLaut.wert;
+        const std::vector<double> gammaVorher = gamma.wert;
         for (int r = 1; r <= kRunden; ++r)
         {
             ++runde;
@@ -324,48 +621,48 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
             m = modelltest::verdichteAlle(tasten, modelltest::messeTasten(instrument, tasten));
 
             std::ostringstream tabelle;
-            tabelle << std::fixed << std::setprecision(3) << "Durchgang " << durchgang << ", Runde " << r << " (" << runde << ")"
+            tabelle << std::fixed << std::setprecision(3) << "Wechsel " << wechsel << ", Stufe 2, Runde " << r << " (" << runde << ")"
                     << " — je Taste Parameter | Salamander | Modell (* = trifft: T60 und highDecay ±10 %, B ±5 %, Cent ±0,5, "
-                       "Phantome ±3 dB)\n";
+                       "Phantome ±3 dB, Tiefe vorlaeufig ±20 % oder ±1,5 dB)\n";
             bool alle = true;
             for (std::size_t i = 0; i < n; ++i)
             {
                 const TastenWerte& z = s[i];
                 const TastenWerte& mo = m[i];
                 const auto relativ = [](double ist, double soll, double grenze) { return soll > 0.0 && std::abs(ist / soll - 1.0) <= grenze; };
+                // die Groessen aus Stufe 1 nur geprueft (am Ton)
                 decay.trifft[i] = decay.ziel[i] && mo.t60Ausgleich.anzahl > 0 && relativ(mo.t60Ausgleich.wert, z.t60Ausgleich.wert, 0.10);
                 hoch.trifft[i] = hoch.ziel[i] && mo.highDecay.anzahl > 0 && relativ(mo.highDecay.wert, z.highDecay.wert, 0.10);
+                spaet.trifft[i] = spaet.ziel[i] && mo.t60Spaet.anzahl > 0 && relativ(mo.t60Spaet.wert, z.t60Spaet.wert, 0.10);
                 const double centModell = mo.schwebungCent.anzahl > 0 ? mo.schwebungCent.wert : 0.0;
                 cent.trifft[i] = cent.ziel[i] && std::abs(centModell - z.schwebungCent.wert) <= 0.5;
-                spaet.trifft[i] = spaet.ziel[i] && mo.t60Spaet.anzahl > 0 && relativ(mo.t60Spaet.wert, z.t60Spaet.wert, 0.10);
+                delta.trifft[i] = delta.ziel[i] && std::abs(centModell - z.schwebungCent.wert) <= 0.5;
+                // die Groessen der Stufe 2
                 b.trifft[i] = b.ziel[i] && mo.b.anzahl > 0 && relativ(mo.b.wert, z.b.wert, 0.05);
                 const std::optional<double> abstand = phantomAbstand(z, mo);
                 winkel.trifft[i] = winkel.ziel[i] && abstand && std::abs(*abstand) <= 3.0;
-                // γ: der Knick des Modells auf ±20 % oder ±0,2 s (die Messung sucht ihn im Raster der Huellkurve)
-                gamma.trifft[i] = gamma.ziel[i] && mo.knickS.anzahl > 0 && mo.zweiStufenAnteil.wert >= 0.5 &&
-                                  std::abs(mo.knickS.wert - z.knickS.wert) <= std::max(0.2, 0.2 * z.knickS.wert);
-                delta.trifft[i] = delta.ziel[i] && std::abs(centModell - z.schwebungCent.wert) <= 0.5;
-                for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel, &gamma, &delta})
+                gamma.trifft[i] = gamma.ziel[i] && tiefeTrifft(mo.tiefeDb, z.tiefeDb);
+                stossLeise.trifft[i] = stossLeise.ziel[i] && tiefeTrifft(mo.tiefeLeise, z.tiefeLeise);
+                stossLaut.trifft[i] = stossLaut.ziel[i] && tiefeTrifft(mo.tiefeLaut, z.tiefeLaut);
+                for (const Parameter* p : {&b, &winkel, &gamma, &stossLeise, &stossLaut})
                     if (p->ziel[i] && !p->trifft[i]) alle = false;
 
-                // die zweite Stufe: Parameter | Salamander (Anteil zweistufig) | Modell (Anteil)
                 tabelle << z.midi << " | decay " << decay.wert[i] << ' ' << z.t60Ausgleich.wert << ' ' << mo.t60Ausgleich.wert
                         << (decay.trifft[i] ? '*' : ' ') << " | high " << hoch.wert[i] << ' ' << z.highDecay.wert << ' ' << mo.highDecay.wert
                         << (hoch.trifft[i] ? '*' : ' ') << " | late " << (spaet.ziel[i] ? spaet.wert[i] : 0.0) << ' ' << z.t60Spaet.wert << " ("
                         << z.zweiStufenAnteil.wert << ") " << mo.t60Spaet.wert << " (" << mo.zweiStufenAnteil.wert << ")"
-                        << (spaet.trifft[i] ? '*' : ' ') << " | cent "
-                        << cent.wert[i] << ' ' << z.schwebungCent.wert << ' ' << centModell << (cent.trifft[i] ? '*' : ' ');
+                        << (spaet.trifft[i] ? '*' : ' ') << " | cent " << (cent.ziel[i] ? cent.wert[i] : delta.wert[i]) << ' '
+                        << z.schwebungCent.wert << ' ' << centModell << (cent.trifft[i] || delta.trifft[i] ? '*' : ' ');
                 if (b.ziel[i]) tabelle << " | B " << 1e4 * b.wert[i] << ' ' << 1e4 * z.b.wert << ' ' << 1e4 * mo.b.wert << (b.trifft[i] ? '*' : ' ');
                 if (winkel.ziel[i]) tabelle << " | Winkel " << winkel.wert[i] << " Abstand " << (abstand ? *abstand : 0.0) << (winkel.trifft[i] ? '*' : ' ');
-                if (gamma.ziel[i])
-                    tabelle << " | gamma " << gamma.wert[i] << " Knick " << z.knickS.wert << ' ' << mo.knickS.wert << " (" << mo.zweiStufenAnteil.wert
-                            << ')' << (gamma.trifft[i] ? '*' : ' ');
-                if (delta.ziel[i]) tabelle << " | delta " << delta.wert[i] << ' ' << z.schwebungCent.wert << ' ' << centModell << (delta.trifft[i] ? '*' : ' ');
-                // TB1 a: die Tiefe der Einbrueche nur im Bericht (Pruefgroesse, kein Ziel)
-                tabelle << " | Tiefe " << z.tiefeDb.wert << ' ' << mo.tiefeDb.wert;
-                tabelle << '\n';
+                if (gamma.ziel[i]) tabelle << " | gamma " << gamma.wert[i] << (gamma.trifft[i] ? '*' : ' ');
+                if (stossLeise.ziel[i])
+                    tabelle << " | u leise " << stossLeise.wert[i] << ' ' << z.tiefeLeise.wert << ' ' << mo.tiefeLeise.wert << (stossLeise.trifft[i] ? '*' : ' ');
+                if (stossLaut.ziel[i])
+                    tabelle << " | u laut " << stossLaut.wert[i] << ' ' << z.tiefeLaut.wert << ' ' << mo.tiefeLaut.wert << (stossLaut.trifft[i] ? '*' : ' ');
+                tabelle << " | Tiefe " << z.tiefeDb.wert << ' ' << mo.tiefeDb.wert << " | Knick " << z.knickS.wert << ' ' << mo.knickS.wert << '\n';
             }
-            for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel, &gamma, &delta})
+            for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &delta, &b, &winkel, &gamma, &stossLeise, &stossLaut})
             {
                 int ziele = 0;
                 int treffer = 0;
@@ -378,25 +675,11 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
             }
             std::ofstream(ziel / ("runde_" + std::to_string(runde) + ".txt"), std::ios::binary) << tabelle.str();
             verlauf << tabelle.str() << '\n';
-            gemessen = true;
             if (alle || r == kRunden) break;
-            gemessen = false;
-
-            // S1 a mit dem halben Schritt (S3 a): logarithmisch √(Ziel / Modell), linear die halbe Differenz
             for (std::size_t i = 0; i < n; ++i)
             {
                 const TastenWerte& z = s[i];
                 const TastenWerte& mo = m[i];
-                if (decay.ziel[i] && !decay.trifft[i] && mo.t60Ausgleich.anzahl > 0 && mo.t60Ausgleich.wert > 0.0)
-                    decay.wert[i] = std::clamp(decay.wert[i] * std::sqrt(z.t60Ausgleich.wert / mo.t60Ausgleich.wert), 0.05, 120.0);
-                if (hoch.ziel[i] && !hoch.trifft[i] && mo.highDecay.anzahl > 0 && mo.highDecay.wert > 0.0)
-                    hoch.wert[i] = std::clamp(hoch.wert[i] * std::sqrt(z.highDecay.wert / mo.highDecay.wert), 0.001, 1.0);
-                if (spaet.ziel[i] && !spaet.trifft[i] && mo.t60Spaet.anzahl > 0 && mo.t60Spaet.wert > 0.0)
-                    spaet.wert[i] = std::clamp(spaet.wert[i] * std::sqrt(z.t60Spaet.wert / mo.t60Spaet.wert), 0.05, 120.0);
-                if (spaet.ziel[i] && decay.ziel[i]) spaet.wert[i] = std::max(spaet.wert[i], decay.wert[i]);
-                if (cent.ziel[i] && !cent.trifft[i])
-                    cent.wert[i] = std::clamp(cent.wert[i] + 0.5 * (z.schwebungCent.wert - (mo.schwebungCent.anzahl > 0 ? mo.schwebungCent.wert : 0.0)),
-                                              0.0, centGrenze(z.midi));
                 if (b.ziel[i] && !b.trifft[i] && mo.b.anzahl > 0 && mo.b.wert > 0.0)
                     b.wert[i] = std::clamp(b.wert[i] * std::sqrt(z.b.wert / mo.b.wert), 1e-6, 0.1);
                 if (const std::optional<double> abstand = phantomAbstand(z, mo); winkel.ziel[i] && !winkel.trifft[i] && abstand)
@@ -404,37 +687,34 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
                     const double rad = winkel.wert[i] * std::numbers::pi / 180.0;
                     winkel.wert[i] = std::clamp(std::atan(std::tan(rad) * std::pow(10.0, *abstand / 40.0)) * 180.0 / std::numbers::pi, 0.0, 10.0);
                 }
-                if (gamma.ziel[i] && !gamma.trifft[i])
-                {
-                    // ohne zwei Stufen im Modell: der Knick liegt jenseits des Gemessenen — γ wie bei einem spaeten Knick
-                    const double knickModell = mo.knickS.anzahl > 0 && mo.zweiStufenAnteil.wert >= 0.5 ? mo.knickS.wert : 2.0 * z.knickS.wert;
-                    gamma.wert[i] = gammaBerichtigt(gamma.wert[i], knickModell, z.knickS.wert, stufenAbstand(z));
-                }
-                if (delta.ziel[i] && !delta.trifft[i])
-                    delta.wert[i] = std::clamp(delta.wert[i] + 0.5 * (z.schwebungCent.wert - (mo.schwebungCent.anzahl > 0 ? mo.schwebungCent.wert : 0.0)),
-                                               0.0, std::min(20.0, centGrenze(z.midi)));
+                if (gamma.ziel[i] && !gamma.trifft[i]) gamma.wert[i] = gammaBerichtigt(gamma.wert[i], mo.tiefeDb, z.tiefeDb.wert);
+                if (stossLeise.ziel[i] && !stossLeise.trifft[i])
+                    stossLeise.wert[i] = stossBerichtigt(stossLeise.wert[i], mo.tiefeLeise, z.tiefeLeise.wert);
+                if (stossLaut.ziel[i] && !stossLaut.trifft[i])
+                    stossLaut.wert[i] = stossBerichtigt(stossLaut.wert[i], mo.tiefeLaut, z.tiefeLaut.wert);
             }
         }
-        // Tasten ohne Treffer fallen heraus; ist keine gefallen, ist die Kurve die zuletzt gemessene
-        bool entfernt = false;
-        for (Parameter* p : {&decay, &hoch, &spaet, &cent, &b, &winkel, &gamma, &delta})
-            for (std::size_t i = 0; i < n; ++i)
-                if (p->ziel[i] && !p->trifft[i])
-                {
-                    vermerkt << ' ' << p->name << '@' << tasten[i];
-                    p->ziel[i] = false;
-                    entfernt = true;
-                }
-        if (!entfernt) break;
-        gemessen = false;
+        // ruhig? — u und γ aenderten sich um hoechstens 10 %
+        bool ruhig = true;
+        for (std::size_t i = 0; i < n; ++i)
+            for (const auto& [neuWert, alt] : {std::pair{stossLeise.wert[i], uVorher[i]}, std::pair{stossLaut.wert[i], lautVorher[i]},
+                                                std::pair{gamma.wert[i], gammaVorher[i]}})
+                if (alt > 0.0 && std::abs(neuWert / alt - 1.0) > 0.10) ruhig = false;
+        verlauf << "Wechsel " << wechsel << (ruhig ? ": u und gamma ruhig — Ende\n" : ": u oder gamma noch bewegt\n");
+        if (ruhig) break;
     }
 
-    // zum Eintragen in baueVorgabe() — nur aus Tasten, die treffen (UF5 a); die Kurve laeuft durch ihre Punkte
+    // vermerkt, was am Ende am Ton nicht trifft (UF5 a); eingetragen wird alles, was gesetzt ist — die Pruefung am Ton
+    // steht in der letzten Runde
+    for (const Parameter* p : {&decay, &hoch, &spaet, &cent, &delta, &b, &winkel, &gamma, &stossLeise, &stossLaut})
+        for (std::size_t i = 0; i < n; ++i)
+            if (p->ziel[i] && !p->trifft[i]) vermerkt << ' ' << p->name << '@' << tasten[i];
+
     const lumi::loop::HammerSaite saite = saiteAus();
     std::ostringstream punkte;
-    punkte << "// gemessen an Salamander (Yamaha C5), gesetzt durch das Modell hindurch (31d-4, S1 a, S2 a, S3 a; 31d-6, N1 a: Messung nach Schroeder), "
-           << std::min(durchgang, 3) << " Durchgaenge, " << runde << " Runden; "
-           << (gemessen ? "die Kurve ist so gemessen" : "ACHTUNG: die Kurve nach dem letzten Herausnehmen ist nicht gemessen") << "\n"
+    punkte << "// gemessen an Salamander (Yamaha C5), gesetzt durch das Modell hindurch (31d-7 B: SZ3 a, SM1 a, SM2 a — Stufe 1 am "
+              "Modell der Moden, Stufe 2 am Ton), "
+           << runde << " Runden am Ton; die letzte Runde ist mit diesen Werten gemessen\n"
            << "s.abklingS = kurveAusPunkten(" << punkteText(saite.abklingS) << ");\n"
            << "s.abklingSpaetS = kurveAusPunkten(" << punkteText(saite.abklingSpaetS) << ");\n"
            << "s.abklingHoch = kurveAusPunkten(" << punkteText(saite.abklingHoch) << ");\n"
@@ -443,7 +723,9 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
            << "s.stegWinkelGrad = kurveAusPunkten(" << punkteText(saite.stegWinkelGrad) << ");\n"
            << "s.polarisationWinkelGrad = kurveAusPunkten(" << punkteText(saite.polarisationWinkelGrad) << ");\n"
            << "s.polarisationCent = kurveAusPunkten(" << punkteText(saite.polarisationCent) << ");\n"
-           << "// ohne Treffer, nicht in der Kurve (UF5 a: vermerkt):" << vermerkt.str() << '\n';
+           << "s.stossLeise = kurveAusPunkten(" << punkteText(saite.stossLeise) << ");\n"
+           << "s.stossLaut = kurveAusPunkten(" << punkteText(saite.stossLaut) << ");\n"
+           << "// am Ton ohne Treffer (UF5 a: vermerkt):" << vermerkt.str() << '\n';
     std::ofstream(ziel / "stuetzpunkte.txt", std::ios::binary) << punkte.str();
     MESSAGE(verlauf.str() << punkte.str());
 }

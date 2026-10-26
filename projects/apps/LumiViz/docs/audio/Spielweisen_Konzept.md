@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.90.0
-> **Datum:** 2026-10-25 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.91.0
+> **Datum:** 2026-10-26 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a und TS1 a (Patrik S139–S153);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a und TS1 a (Patrik S139–S154);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -2829,6 +2829,162 @@ Grund: dieselbe Regel für beide Seiten (UF3 a), schneidet nachweislich nur ab, 
 Kippt auf b, wenn eine leisere Aufnahme (etwa ein Upright, Stufe 32) Stufen unter −90 dB zeigt oder die Reste der
 Rechnung am Modell über −90 dB auftauchen. **7.1 fertig.**
 
+**Befund S154 (7.4, die zweite Stufe im Diskant):** Werkzeug `LUMIVIZ_31D7_DISKANT` (mit `LUMIVIZ_SALAMANDER`;
+`.claude/handover/diskant_31d7/`): an 75, 81, 84 von der Vorgabe aus Schritt für Schritt zu den Werten von *Salamander*
+— u = 0,25; dazu `lateDecay` wie *Salamander* (Abweichung je Taste); dazu `decay` wie *Salamander*; u = 0,6;
+Verstimmung × 3. **In keinem Fall zeigt das Modell zwei Stufen** (Teilton 1–3, einzige Ausnahme der Rest unter −90 dB an
+81 Teilton 3); es misst eine einzige, mittlere Abklingzeit: 81 mit `decay` 3,1 s und `lateDecay` 15,8 s → 6,6 s
+(*Salamander* 2,5 / 15,6 s, Knick 0,9 s); 75 → 14,0 s (*Salamander* 6,2 / 15,1 s); 84 → 5,0 s (*Salamander* 2,1 / 3,1 s).
+Der Stoß senkt nur die Tiefe. **Ursache nach der Quelle:** Bank 2000 (MSc, S. 22–23, nach Weinreich 1977, nachgelesen):
+bei rein **resistiver** Admittanz des Stegs gibt es zwei Bereiche — ist die Verstimmung größer als eine Schwelle,
+klingen beide Moden **gleich schnell** ab und unterscheiden sich nur in der Frequenz; darunter gleiche Frequenz,
+verschiedenes Abklingen. Bei rein reaktiver Admittanz sind die Frequenzen immer verschieden; beim echten Boden mit
+Real- und Imaginärteil unterscheiden sich Frequenzen **und** Abklingzeiten. Das Modell koppelt rein resistiv
+(`ebenenModen`: D − σ_V·b·bᵀ − σ_H·…, reell): an 75–84 liegt die gemessene Verstimmung (0,46–1,9 Cent, an 81 Δf ≈ 0,29 Hz
+zwischen den äußeren Saiten) bei oder über der Schwelle (N·σ_V ≈ 1,8 1/s an 81) — die Moden mischen, eine Stufe. Es
+fehlt der **Blindanteil der Kopplung am Steg**. Die Mobilität des Körpers (Re und Im Y am Stegpunkt) ist seit 31c-6
+gerechnet; UF8 a schließt die Rückwirkung des Bodens auf die Verluste vorerst aus. Im Bild (81) auch: das Modell
+schwebt an Teilton 1 mit 0,92 Hz, *Salamander* mit 0,24 Hz — im gemischten Bereich ist die Schwebung nicht mehr die
+Verstimmung, das Setzen von `detune` an der Schwebung wird dort verzerrt; der Sprung unter −90 dB nach rund 5 s ist
+wieder zu sehen.
+
+✅ **RB1 a** (Patrik S154): **Plan erweitern — die Kopplung am Steg wird komplex, σ_V − i·β_V; das Verhältnis β/σ je
+Teilton kommt aus der Mobilität des Körpers am Stegpunkt (Im Y / Re Y, seit 31c-6 gerechnet); der Verlust selbst bleibt
+gemessen (`decay`, UF8 a: nichts doppelt).** Zuerst ein Befund am Körper (Im/Re Y an den Teiltönen von 21–108, Bild und
+Zahlen), dann die Umfangsfragen einzeln (Glättung über die Moden, waagrecht, Datei, Tests); 7.5 erst danach. Grund:
+der Blindanteil ist eine Eigenschaft des Bodens, die LumiViz rechnet — kein neuer freier Parameter, ein anderer Boden
+ändert auch das Abklingen (Richtung UF8 b). Verworfen: b (eigene Kurve, an *Salamander* gesetzt). Kippt auf b, wenn
+Im/Re Y an den Teiltönen so streut, dass das Modell von Taste zu Taste zwischen einer und zwei Stufen springt,
+*Salamander* aber nicht.
+
+**Befund S154 (RB1 a, am Körper und Korrektur des Befunds 7.4):** Werkzeug `LUMIVIZ_31D7_BLIND`
+(`.claude/handover/blind_31d7/`): Im Y / Re Y am Stegpunkt des `steinway_d` je Taste, Teilton 1–6 (Moden bis 20 kHz).
+Am Teilton selbst streut das Verhältnis stark (208 von 528 Teiltönen über ±1); das komplexe Mittel über das Terzband ist
+ab etwa MIDI 45 ruhig: Teilton 1 −1,8 … +0,1, meist −0,3 … −1,0; Teilton 2 und 3 −0,8 … +0,3; im Bass (21–36) bis 142
+(Teilton 1 unter den ersten Moden des Bodens, federnd). **Probe der Wirkung** (3 × 3, Skript
+`scratchpad/blind_probe.py`, 81 mit `decay` 3,08 s und `lateDecay` 15,82 s): β/σ = −0,3 ändert die Moden kaum
+(3,62 / 11,46 s → 3,55 / 12,20 s). **Dabei die eigentliche Ursache:** die Verstimmung der Vorgabe an 81 ist 3,76 Cent
+(gesetzt in 31d-4 am alten Modell in einer Ebene); damit klingen alle drei Moden mit 6,6 s ab und schweben mit 0,94 Hz —
+genau, was das Modell im Bild zeigt. Mit den 0,57 Cent der Schwebung von *Salamander* gibt es zwei Stufen. **Am Ton
+bestätigt** (`LUMIVIZ_31D7_DISKANT`, neuer Fall „Verstimmung = Schwebung Salamander“, u = 0,25, `decay` und `lateDecay`
+wie *Salamander*): 81 Teilton 1 zwei Stufen 2,44 / 18,35 s, Knick 1,06 s (*Salamander* 2,53 / 15,58 s, 0,90 s); 75
+4,05 / 11,21 s, Knick 2,2 s (*Salamander* 6,21 / 15,14 s, 2,5 s); 84 (1,91 Cent) weiter eine Stufe. **Der Befund 7.4
+war voreilig:** er prüfte die Verstimmung nur größer (× 3), nicht kleiner; der Nebenbefund (Schwebung 0,92 gegen 0,24 Hz)
+zeigte schon dorthin. RB1 a beruht damit auf einer falschen Ursache.
+
+✅ **RB1-1 a** (Patrik S154; RB1 a zurückgenommen): **Kein Blindanteil jetzt — die Kopplung bleibt resistiv. 7.5 setzt
+die Verstimmung neu (Start an der Schwebung von *Salamander*, nicht an der Vorgabe aus 31d-4), mit `decay` und
+`lateDecay`; der Anteil zweistufiger Messungen steht als Prüfgröße im Bericht. Der Blindanteil bleibt mit dem Befund am
+Körper bei UF8 b vorgemerkt.** Grund: die Verstimmung verursacht die zweite Stufe an 81 und 75 (am Ton belegt), der
+Blindanteil in der Größe des Körpers wirkt unter dem, was die Messung trennt — ein Teil ohne Bedarf und ohne Messgröße.
+Verworfen: b (RB1 a beibehalten). Kippt auf b, wenn nach 7.5 Tasten im Diskant, an denen *Salamander* zwei Stufen
+zeigt (wie 84), mit gesetzter Verstimmung einstufig bleiben. **7.4 fertig.**
+
+**Befund S154 (7.5, Setzen nach US1 a, US3 a, RB1-1 a; `.claude/handover/setzen_31d7_b/`, 3 Durchgänge, 24 Runden,
+37 min; nach einer Pause neu gefahren):** **nicht brauchbar, nicht eingetragen.** Was trägt: im Diskant zeigt das Modell
+jetzt zwei Stufen (81 `lateDecay` 16,4 gegen 15,8 s, Verstimmung 0,57 Cent; 84 zweistufig, späte Stufe 14,5 s — der
+Kipppunkt von RB1-1 a greift nicht); u trifft die Tiefe an 48, 78–105 (u 0,14–1,0); Verstimmung 13 von 26, B, Winkel.
+Was nicht trägt: **`decay` wandert wieder ins Unphysikalische** (63–105: 0,05–0,8 s gegen 1,7–4,5 s Ausgleich bei
+*Salamander*; 21–27 nach oben) — wie im ersten Lauf (0,5 s an 63–72). Mit so kurzer Gleichlage bleiben nur die
+Gegenlagen, die untereinander tief schweben: an 51–75 liegt die Tiefe des Modells bei 20–36 dB gegen 5–16 dB, der Stoß
+fällt dort heraus (u leise 7 / 25, laut 8 / 26 treffen am Ende; 33–75 fast alle vermerkt). γ und δ treffen nur an 30
+(13,2°, 5,7 Cent). **Ursache:** das Setzen berichtigt jede Größe an ihrer Messgröße, aber im Chor ist die gemessene
+frühe Abklingzeit (Ausgleich über die Teiltöne) nicht die Gleichlage `decay`, sondern eine Mischung aus Gleichlage,
+Gegenlagen, Verstimmung und Stoß — die Schleife drückt `decay`, bis die Mischung trifft.
+
+✅ **SZ3 a** (Patrik S154): **Gesetzt wird am Modell der Moden je Teilton, der gerechnete Ton prüft nur noch.** Je Taste
+und Teilton die Moden aus derselben Zerlegung wie im Ton (`ebenenModen`), daraus die Hüllkurve als Summe der Moden,
+gemessen mit derselben Teiltonmessung (frühe und späte Stufe, Schwebung, Tiefe); `decay`, `lateDecay`, Verstimmung und
+u gemeinsam je Taste gesucht, in physikalischen Grenzen; ebenso γ und δ an den Tasten mit einer Saite; der gerechnete
+Ton wie heute im dauerhaften Test. Grund: die Kopplung wird dort aufgelöst, wo sie entsteht — die Mischung vorhergesagt
+statt mit je einem Parameter nachgestellt (P4 a für alle vier zusammen); die 3 × 3-Probe an 81 sagte den Ton voraus.
+Verworfen: b (Schleife gestuft, mit Bändern um die Startwerte — verlegt den Ausgleich an den Rand des Bandes). Kippt auf
+b, wenn die Messung an der Summe der Moden und am gerechneten Ton sich deutlich unterscheiden (Boden, Längsschwingung).
+Plan erweitern: Umfangsfragen einzeln, zuerst die Probe „Moden gegen Ton“.
+
+**Befund S154 (SZ3 a, Probe „Moden gegen Ton“):** `hammerTeiltonModen` aus `rechneHammerTon` herausgelöst (dieselbe
+Rechnung; Bezug, `*Loop Werte*`, Klangfassung unverändert, 27 / 27). Werkzeug `LUMIVIZ_31D7_MODEN`
+(`.claude/handover/moden_31d7/`): an 33, 48, 60, 66, 81, 84, Stufe −8, mit der Vorgabe und nahe *Salamander* (u = 0,25,
+`decay`, `lateDecay`, Verstimmung wie *Salamander*), die Teiltonmessung an der Summe der Moden (Teilton 1–12, Gewicht 1/k)
+gegen den gerechneten Ton. **T60 früh und spät, Stufen, Knick, Schwebung stimmen** fast überall auf wenige Prozent (60
+nahe: 3,92 / 9,09 gegen 3,88 / 9,01 s, Knick 1,56 / 1,56 s; 81 nahe: 2,45 / 19,26 gegen 2,44 / 18,35 s; 84, 66 gleich).
+Ausnahme 48 nahe (`decay` 0,98 s): der Ton zeigt an Teilton 1 eine späte Stufe von 38 s, die Summe der Moden 3,6 s — wo die
+Saite sehr schnell abklingt, klingt im Ton etwas anderes nach (vermutlich der Boden; offen). **Die Tiefe der Einbrüche
+stimmt nur teils:** im Bereich von *Salamander* oft auf 1 dB (60 nahe Teilton 1 und 3, 66 nahe, 84 nahe), an anderen
+Stellen bis 30 dB auseinander (81 nahe Teilton 1: 16,5 gegen 45,4 dB; 60 nahe Teilton 2: 26,2 gegen 37,6 dB; tiefe
+Einbrüche der Vorgabe 37–54 gegen 23–42 dB) — tiefe Kerben sind empfindlich für alles, was der Ton daneben trägt, und mit
+wenigen Perioden der Schwebung im Fenster ist der Median schwach.
+
+✅ **SM1 a** (Patrik S154): **Zweistufig: (1) `decay`, `lateDecay`, Verstimmung (an Tasten mit einer Saite δ) je Taste am
+Modell der Moden, gemeinsam, in physikalischen Grenzen; (2) mit diesen fest nur u leise, u laut und γ am gerechneten
+Ton an der Tiefe, Schleife wie bisher; der dauerhafte Test prüft alles am Ton.** Grund: jede Größe dort, wo ihre
+Messgröße verlässlich vorhergesagt wird (Abklingzeiten am Modell der Moden auf wenige Prozent, die Tiefe nur am Ton); in
+Stufe 2 bleibt der Schleife nichts zum Ausweichen. Verworfen: b (alles am Modell der Moden, auch die Tiefe — setzte an
+einer Größe, die dem Ton bis 30 dB widerspricht). Kippt auf b, wenn die Messung der Tiefe so verbessert wird, dass Moden
+und Ton übereinstimmen.
+
+✅ **SM2 a** (Patrik S154): **Stufe 1 sucht je Taste gemeinsam (Nelder–Mead) über `decay`, `highDecay`, `lateDecay` und
+Verstimmung (an Tasten mit einer Saite δ statt Verstimmung), logarithmisch, innerhalb des Faktors 3 um die Messwerte;
+Ziel die Summe der quadrierten relativen Abweichungen der Messgrößen (Ausgleich, `highDecay`, späte Stufe, Schwebung),
+jede Auswertung an der Summe der Moden mit derselben Messung und Verdichtung. u und γ stehen in Stufe 1 auf dem Wert der
+letzten Stufe 2 (Start 0,25 bzw. aus der Tiefe); Stufe 1 und 2 wechseln höchstens dreimal, bis sich nichts mehr ändert;
+ein Parameter an seiner Grenze wird als Befund gemeldet.** Grund: gemeinsam, weil sie gemeinsam wirken (SZ3 a); das
+Wechseln löst die Rückwirkung von u, ohne u in Stufe 1 an der unzuverlässigen Tiefe zu setzen. Verworfen: b (die
+Schleife je Größe am Modell der Moden — derselbe Mechanismus, der `decay` weglaufen ließ). Kippt auf b, wenn die Suche an
+vielen Tasten nicht eindeutig ist (zwei Startpunkte, verschiedene Ergebnisse bei gleichem Rest; im Bau geprüft).
+
+**Befund S154 (Setzen nach SM1 a, SM2 a; `.claude/handover/setzen_31d7_sm/`, 3 Wechsel, 24 Runden am Ton, 41 min):**
+**nicht brauchbar, nicht eingetragen.** (1) **Stufe 1 trifft am Modell der Moden, der Ton aber nicht:** am Ton treffen
+`decay` (Ausgleich) 11 / 29, `lateDecay` 5 / 21 — an 81 sagt die Summe der Moden einen Ausgleich von 2,0 s voraus (Rest
+0,12), der Ton misst 14,6 s. Die Probe hatte nur Teilton 1–3 verglichen; der **Ausgleich** (σ = b1 + b3·ω² über bis zu 60
+Teiltöne) und `highDecay` hängen an vielen Teiltönen, die Summe der Moden trägt 30 mit Gewicht 1/k statt des Spektrums
+des Hammers — diese Messgrößen sagt sie nicht verlässlich voraus. (2) **`decay` fällt auch hier** (60: 1,2 s, 63: 0,58 s,
+72: 0,63 s, 78: 0,46 s, 84: 0,47 s bei Ausgleich 1,7–4,1 s) — nicht die Schleife, die Ziele verlangen es am Modell; mit
+so kurzer Gleichlage erreicht der Stoß an 51–63 die Tiefe nicht (u an der Grenze 1,0, Modell 19–30 dB gegen 5–15 dB).
+(3) **Nicht eindeutig** (Kipppunkt SM2 a): an 33 und 60 führt der zweite Startpunkt zu anderen Werten (60: Rest 2,75
+gegen 1,51, `lateDecay` 70 gegen 43 s, Verstimmung 2,3 gegen 1,3 Cent). (4) `highDecay` stößt im Bass bis 66 an seine
+Grenze 1,0. (5) u und γ wurden in drei Wechseln nicht ruhig.
+
+✅ **SM3 a** (Patrik S154): **Stufe 1 setzt an den Größen, die die Probe bestätigt hat — je Teilton 1–3 die frühe und
+die späte Abklingzeit und die Schwebung (Teilton 2 und 3 tragen `highDecay` mit); Ausgleich und `highDecay` über viele
+Teiltöne bleiben Prüfgrößen am Ton. Vor dem Setzen eine zweite Probe: die neuen Ziele an der Summe der Moden gegen den
+Ton an sechs Tasten, mit zwei Startpunkten; erst wenn beides trägt, läuft das Setzen.** Grund: SM1 a verlangt es (jede
+Größe dort, wo ihre Messgröße verlässlich vorhergesagt wird); mehr Messgrößen als Parameter machen die Suche eindeutiger.
+Verworfen: b (Setzen anhalten, Ziel und Messgrößen insgesamt neu fassen). Kippt auf b, wenn die zweite Probe auch an den
+Größen je Teilton keine eindeutige Suche zeigt oder `decay` wieder unter eine Sekunde fällt.
+
+**Befund S154 (SM3 a, zweite Probe; `.claude/handover/probe2_31d7/`, 7 min):** **der Kipppunkt von SM3 a greift.**
+(1) **Nicht eindeutig:** an 33, 48, 60, 66, 81 führen die zwei Startpunkte zu verschiedenen Werten mit verschiedenem Rest
+(48: Rest 5,4 gegen 8,8; 60: 10,3 gegen 15,9), der zweite oft an Grenzen; nur 84 annähernd gleich. (2) **`decay` unter
+einer Sekunde** an 84 (0,80 s, an der unteren Grenze). (3) Die Reste sind groß (2–12 bei 3–9 Messgrößen) — das Modell
+trifft die Ziele je Teilton nicht gleichzeitig. Moden und Ton stimmen dabei an 81, 84, 66 auf wenige Prozent; an 60 und
+48 kippt die Erkennung der zweiten Stufe zwischen Moden und Ton (60 Teilton 1: Moden 7,8 / 28,3 s zweistufig, Ton 8,8 s
+einstufig). **Ursachen, soweit sichtbar:** die abgeleiteten Messgrößen springen — ob eine zweite Stufe erkannt wird, ob
+eine Schwebung erkannt wird (am Modell oft „6,0 Cent“ ohne erkennbare Schwebung, an 60 und 81), ob ein Teilton überhaupt
+ein Abklingen bekommt —, so wird der Rest zu einer Fläche mit Stufen, auf der jede Suche an einem anderen Absatz hängen
+bleibt; dazu Ziele von *Salamander*, die an schwachen Teiltönen selbst unsicher sind (33 Teilton 1: 105 s). Nach dem
+Kipppunkt gilt SM3 b: das Setzen ruht, Ziel und Messgrößen werden neu gefasst.
+
+✅ **SM4 a** (Patrik S154): **Gesetzt wird an den Abklingkurven je Teilton selbst** — je Teilton 1–3 und Ebene die Kurve
+nach Schroeder (die die Messung schon bildet, N1 a) zwischen Modell und *Salamander* auf demselben Raster, als Abstand in
+dB über der Zeit bis zur Messgrenze, dazu die Hüllkurve für Schwebung und Tiefe; T60, Knick, Schwebung, Tiefe bleiben
+Prüfgrößen im Bericht und im dauerhaften Test. Zuerst eine Probe: ist der Kurvenabstand glatt, findet die Suche von zwei
+Startpunkten dasselbe? Vor dem Bau ein eigener Teilplan (fest nummeriert, PL31 a). Grund: eine Abklingkurve ändert sich
+stetig mit jedem Parameter — keine Schwellen, an denen die Suche hängen bleibt; sie trägt frühe und späte Stufe, Knick
+und Mischung, ohne vorher zu entscheiden, wie viele Stufen es gibt; schwache Kurven gehen mit kleinem Gewicht ein.
+Verworfen: b (abgeleitete Größen mit geglätteter Erkennung, unsichere Ziele aussortiert — eine geglättete Schwelle
+bleibt eine Schwelle). Kippt auf b, wenn die Probe zeigt, dass der Kurvenabstand von Rauschen und Raum bei *Salamander*
+beherrscht wird (etwa Nachhall über der späten Stufe).
+
+**Frage Patrik (S154): eine Kombination von Moden und Waveguides?** Antwort (Claude, nicht entschieden): Die Saite im
+Chor als Waveguide mit Kopplung am Steg hat dieselbe Physik wie die Moden — die Mischung von Gleich- und Gegenlagen
+(Weinreich) entstünde dort ebenso, das Setzen hätte dieselben Fragen. Was ein Waveguide gäbe: alle Teiltöne ohne
+Obergrenze, frequenzabhängiger Verlust über ein Filter, Nichtlineares und Zeitveränderliches (Bend) natürlich; was er
+nimmt: die Steuerung je Teilton (Verstimmung, zwei Stufen, γ je Teilton), die Rechnung von Moden für das Setzen (SZ3 a
+lebt davon) und den Bezug Bit für Bit. Für 31d-7 also kein Gewinn; als Idee für später vorgemerkt (etwa für hohe
+Teiltöne über der Grenze der Moden). **Auf Wunsch Patrik an `InstrumentsCalculation` weitergegeben** (`AUFGABE.md`,
+„Zusatzfragen aus LumiViz“, Z1: Recherche je Klasse mit Saite und Rohr, auch für schon abgeschlossene Klassen).
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -3989,6 +4145,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.91.0 | 2026-10-26 | Session 154. 31d-7 B: TB1 a (Tiefe der Einbrüche je Periode, `einbruchDb`); erstes Setzen mit γ und δ nicht brauchbar, SZ1 a (Untersuchung der Tiefe im Chor); SZ2 a (ungleicher Stoß je Saite, Plan erweitern), US1 a bis US7 a, Teilplan 7.1–7.7; 7.1 Messgrenze (US6 a gekippt, US6-1 a: 90 dB), 7.2 Stoß im Modell (`.lvinst` 19, Klangfassung 3), 7.3 Tests; 7.4 zweite Stufe im Diskant: RB1 a (Blindanteil) nach Befund am Körper zurückgenommen, RB1-1 a (Ursache die Verstimmung der Vorgabe); 7.5 Setzen zweimal nicht brauchbar → SZ3 a (am Modell der Moden), Probe Moden gegen Ton, SM1 a, SM2 a, SM3 a (gekippt), SM4 a (an den Abklingkurven je Teilton, eigener Teilplan offen); Frage Patrik Moden und Waveguides (an `InstrumentsCalculation`). |
 | 0.90.0 | 2026-10-25 | Session 153. Teilplan 31d-7 begonnen: Lage der Quellen zur zweiten Ebene; P1 a (Recherche und Weinreich 1977 vor dem Bau); Befund der Recherche (Cuenca & Caussé 2007, Tan 2017); P2 a (zwei Eigenrichtungen mit δ und γ, Steg σ_V/σ_H ohne Kreuzterm); P3 a (Kurven `polarizationAngle`, `polarizationDetune`, `horizontalShare`); P4 a (γ aus dem Knick, δ an Tasten mit einer Saite, Tiefe der Einbrüche als Prüfgröße); P5 a (Längsschwingung aus beiden Ebenen, je Saite); P6 a (eigener Löser, Grenze der Rechenzeit); P7 a (`.lvinst` Fassung 18); P8 a (Tests); fester Teilplan 31d-7 (neun Punkte), ZS1 a (drei Teilschritte A, B, C); Befund zu P3 a, P3-1 a (h = Verhältnis waagrecht zu senkrecht); Befund Rechenzeit, RZ1 a (gekippt), RZ1-1 a (Grenze von Hand); Befund Winkel im Chor, WK1 a (bis B ausgesetzt). |
 | 0.89.0 | 2026-10-25 | Session 152. 31d-6 begonnen: Befund an den Hüllkurven (das Modell löscht an den Einbrüchen fast vollständig aus); N1 a (Messung nach Schroeder, gebaut, synthetische Fälle mit Auslöschung); Befund Setzen mit der neuen Messung (konvergiert schlecht); N2 a (Messung bleibt, zweite Polarisation als 31d-7 „Plan erweitern“, dauerhafter Test bis dahin nur B und Winkel); `werte/salamander_c5.txt` neu gemessen. |
 | 0.88.0 | 2026-10-25 | Session 152. 31d-5 gebaut: Hörproben gegen Salamander (UF7 a) und für den Stufenschritt (UF4 a), gleich laut nach R128; Befund zur Zuordnung der Stufen (mf des Modells ↔ v2–v5). |

@@ -17,6 +17,7 @@
 
 #include "loop/Boden.hpp"
 #include "loop/Fft.hpp"
+#include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 
@@ -25,6 +26,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <complex>
 #include <thread>
 #include <vector>
 
@@ -87,6 +89,47 @@ inline std::vector<std::vector<std::array<lumi::messung::KanalMessung, 2>>> mess
         });
     for (std::thread& t : arbeiter) t.join();
     return messungen;
+}
+
+/// Die Summe der Moden als Ton (SZ3 a): je Teilton bis `teiltoeneMax` die Antwort am Steg auf einen Stoss,
+/// Σ Im(g·e^(λt)) / k — ohne Hammerkontakt, Laengskraft und Boden; in float gerundet wie der Ton.
+inline std::vector<double> modenTon(const lumi::loop::HammerSaite& saite, int midi, int stufe, double dauerS, int teiltoeneMax)
+{
+    lumi::loop::HammerAnschlag a;
+    a.taste = midi;
+    a.hz = lumi::messung::tastenFrequenz(midi);
+    a.stufe = stufe;
+    a.rate = kRate;
+    std::vector<double> ton(static_cast<std::size_t>(dauerS * kRate), 0.0);
+    const double dt = 1.0 / kRate;
+    for (const lumi::loop::TeiltonModen& t : lumi::loop::hammerTeiltonModen(saite, a))
+    {
+        if (t.teilton > teiltoeneMax) break;
+        for (const lumi::loop::EbenenMode& m : t.moden)
+        {
+            std::complex<double> z = m.anteil / static_cast<double>(t.teilton);
+            const std::complex<double> schritt = std::exp(m.lambda * dt);
+            for (double& x : ton)
+            {
+                x += z.imag();
+                z *= schritt;
+            }
+        }
+    }
+    for (double& x : ton) x = static_cast<float>(x);
+    return ton;
+}
+
+/// Die Summe der Moden gemessen und verdichtet wie eine Taste von Salamander: die eine Messung steht fuer alle 16
+/// Ebenen (die Moden haengen an der Stufe nur ueber den Stoss — in Stufe 1 fest, SM1 a).
+inline lumi::messung::TastenWerte modenWerte(const lumi::loop::HammerSaite& saite, int midi, int stufe, int teiltoeneMax = 30)
+{
+    const double dauerS = midi <= 72 ? 12.0 : 8.0;
+    const std::vector<double> ton = modenTon(saite, midi, stufe, dauerS, teiltoeneMax);
+    const lumi::messung::KanalMessung m =
+        lumi::messung::messeKanal(ton, kRate, lumi::messung::tastenFrequenz(midi), lumi::loop::fft(), false);
+    const std::vector<std::array<lumi::messung::KanalMessung, 2>> ebenen(lumi::messung::kEbenen, {m, m});
+    return lumi::messung::verdichte(midi, ebenen);
 }
 
 /// Verdichtet je Taste, mit den Pegeln gegen das Mittel der Tastatur.

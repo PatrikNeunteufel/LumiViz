@@ -396,20 +396,13 @@ std::int64_t hammerNachklang(const HammerSaite& saite, const HammerAnschlag& ans
     return std::clamp<std::int64_t>(frames, 1, std::max<std::int64_t>(1, maxFrames));
 }
 
-void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, std::vector<float>& mono, std::int64_t frames,
-                     HammerMessung* messung)
+std::vector<TeiltonModen> hammerTeiltonModen(const HammerSaite& saite, const HammerAnschlag& anschlag)
 {
-    mono.assign(static_cast<std::size_t>(std::max<std::int64_t>(0, frames)), 0.0f);
-    if (frames <= 0 || anschlag.rate <= 0) return;
+    std::vector<TeiltonModen> teiltoene;
+    if (anschlag.rate <= 0) return teiltoene;
     const Werte w = werteAn(saite, anschlag);
     const double fs = anschlag.rate;
-    const double dt = 1.0 / fs;
-    const double dtFein = dt / kHammerUeberabtastung;
     const double pi = std::numbers::pi;
-
-    // --- die Moden: je Teilton der Chor (HT3 a) ---
-    std::vector<Mode> moden;
-    const double b0 = 2.0 / (w.laenge * w.mu);  // Bank 2010, Gl. 4c
     const double f1 = w.f0 * std::sqrt(1.0 + w.b);
     const std::vector<double> cents = chorCent(w.chor, w.cent);
     const std::vector<double> stoss = stossJeSaite(w.chor, w.stoss);
@@ -428,8 +421,32 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
         const double sigmaH = w.verhaeltnisH * sigmaV;
         std::vector<double> omega;
         for (const double c : cents) omega.push_back(omegaK * std::exp2(c / 1200.0));
-        const double sinus = std::sin(k * pi * w.stelle);
-        for (const EbenenMode& m : ebenenModen(omega, w.deltaCent, w.gamma, sigmaSaite, sigmaV, sigmaH, stoss))
+        teiltoene.push_back({k, fk, std::sin(k * pi * w.stelle), ebenenModen(omega, w.deltaCent, w.gamma, sigmaSaite, sigmaV, sigmaH, stoss)});
+    }
+    return teiltoene;
+}
+
+void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, std::vector<float>& mono, std::int64_t frames,
+                     HammerMessung* messung)
+{
+    mono.assign(static_cast<std::size_t>(std::max<std::int64_t>(0, frames)), 0.0f);
+    if (frames <= 0 || anschlag.rate <= 0) return;
+    const Werte w = werteAn(saite, anschlag);
+    const double fs = anschlag.rate;
+    const double dt = 1.0 / fs;
+    const double dtFein = dt / kHammerUeberabtastung;
+    const double pi = std::numbers::pi;
+
+    // --- die Moden: je Teilton der Chor (HT3 a) ---
+    std::vector<Mode> moden;
+    const double b0 = 2.0 / (w.laenge * w.mu);  // Bank 2010, Gl. 4c
+    for (const TeiltonModen& t : hammerTeiltonModen(saite, anschlag))
+    {
+        const int k = t.teilton;
+        const double fk = t.hz;
+        const double omegaK = 2.0 * pi * fk;
+        const double sinus = t.sinus;
+        for (const EbenenMode& m : t.moden)
         {
             Mode mode;
             mode.eingang = (b0 / omegaK) * m.anteil * sinus;
