@@ -3316,6 +3316,97 @@ diesen Rechner; Messergebnisse sind keine Arbeitsnotizen (der Entscheid vom 2026
 Arbeitsstand). Verworfen: b (Berichte lokal, im Konzept nur Schlüsse und tragende Zahlen). Kippt, wenn die Berichte groß
 werden (etwa beim Setzen mit allen Kurven je Auswertung) — dann nur die Urteile ins Repo.
 
+**Teilplan SM4 b (S156; Umfangsfragen einzeln, Nummern fest nach PL31 a, wenn alle entschieden):** Lage vor der ersten
+Frage — sechs Anläufe gescheitert (S154: Schleife je Größe, SM1 a mit SM2 a, SM3 a; S156: zweimal SM4 a), stets an
+denselben Mustern: `decay` läuft ins Unphysikalische, die Suche ist nicht eindeutig, Parameter enden an Grenzen, das
+Modell trifft die Ziele je Teilton nicht gleichzeitig; dazu verliert und gewinnt das Modell Teiltöne und Stufen an
+Schwellen (Befund nach RV1 a).
+
+✅ **ZF1 a** (Patrik S156): **Eine Messgröße gilt als getroffen, wenn ihre Abweichung vom Ziel innerhalb der Streuung von
+*Salamander* zwischen benachbarten Ebenen derselben Taste liegt; diese Streuung wird je Größe vor dem Setzen gemessen
+(wie für die Kurven 0,26 / 0,32 dB). Eine Taste ist fertig, wenn alle ihre Größen getroffen sind; sie ist nicht
+erreichbar, wenn das Setzen dort mit einem Parameter an einer belegten Grenze endet oder zwei Startpunkte verschieden
+enden — dann wird nicht weiter verfeinert, die Taste geht mit Bild und Hörprobe an Patrik, gesetzt wird dort nach dem
+Gehör innerhalb der Grenzen (SQ2 a). Die Schwellen stehen fest, bevor gesetzt wird.** Grund: unterhalb der Streuung der
+eigenen Ebenen ist jeder kleinere Abstand Zufall; a trennt „gut genug“ von „nicht erreichbar“ — nach sechs Anläufen mit
+Parametern an Grenzen (Körper Steinway D gegen Aufnahme Yamaha C5) zu erwarten —, und das Gehör übernimmt, was das
+Modell nicht treffen kann, statt dass die Suche Parameter ins Unphysikalische drückt (SQ1 a). Verworfen: b (ohne festes
+Ziel bis zum Budget, Urteil am Bild — führte in S154 dreimal zu „nicht brauchbar“, ohne dass vorher feststand, was
+brauchbar heißt). Kippt für eine Größe auf b, wenn die Streuung von *Salamander* dort so groß ist, dass fast jeder Wert
+sie trifft (etwa die Schwebung an schwachen Teiltönen). Anmerkung Patrik: läuft es wieder schief, setzt er Fable 5.1
+darauf an.
+
+✅ **ZF2 a** (Patrik S156): **Gesetzt wird an allen Größen je Teilton 1–3 — frühe und späte Abklingzeit, Lage des
+Knicks, Schwebungsfrequenz und Tiefe; Ausgleich und `highDecay` über viele Teiltöne bleiben Prüfgrößen am Ton. Ob eine
+Größe trägt, entscheidet die Streuung nach ZF1 a: eine Größe, deren Streuung bei *Salamander* fast jeden Wert trifft,
+fällt dort heraus und wird als solche gemeldet.** Grund: keine gemessene Information wird vorab weggeworfen; welche Größe
+zu unsicher ist, sagt die gemessene Streuung — dieselbe Regel für alle (ZF1 a). Verworfen: b (nur das Abklingen,
+Schwebung und Tiefe als Prüfgrößen, Verstimmung aus der Form des Abklingens, u nach Gehör — ohne Schwebung und Tiefe
+bliebe u ohne Messgröße, und Verstimmung und Stoß wirken beide auf die späte Stufe, die Suche würde wieder nicht
+eindeutig). Kippt auf b, wenn die Messung der Streuung zeigt, dass Schwebung und Tiefe an den meisten Tasten herausfallen.
+
+✅ **ZF3 a** (Patrik S156): ***Salamander* wird wie bisher mit Erkennung gemessen, einmal, als Ziel; das Modell wird an der
+Struktur des Ziels gemessen — im Bereich von *Salamander*, zwei Geraden mit dem Knick von *Salamander* (wo dort zwei
+Stufen erkannt sind, sonst eine), die Schwebung als Anteil des Rests bei der Frequenz von *Salamander* (Amplitude und
+Tiefe), ohne eigene Erkennung. Liegt die Struktur des Modells anderswo, zeigt sich das stetig als Abweichung der Größen;
+die Erkennung des Modells bleibt Prüfgröße im Bericht.** Grund: die Größen des Modells werden von Bau aus stetig — eine
+Gerade über einen festen Bereich mit festem Knick und der Anteil bei fester Frequenz hängen glatt von der Hüllkurve ab;
+keine Schwelle und keine Wahl des besten Kandidaten mehr (Knick `Teiltonmessung.hpp` `zweiStufen`, Spitze
+`findeSchwebung`), an denen SM3 a und beide Proben zu SM4 a scheiterten; dieselbe Rechnung auf beiden Seiten, nur die
+Struktur einmal vom Ziel. Verworfen: b (weiche Schwellen, gewichtetes Mittel aus einer und zwei Stufen — der beste Knick
+und die stärkste Spitze springen weiter, „eine geglättete Schwelle bleibt eine Schwelle“). Kippt, wenn die Probe zeigt,
+dass das Modell an vielen Tasten eine deutlich andere Struktur hat als *Salamander* (zwei Stufen gegen eine oder
+umgekehrt) — dann misst a das Modell in einer fremden Form.
+
+**Nachtrag vor ZF4 (Claude):** Zeile (7) beider Proben lag schon vor ZF1 vor und hätte dort genannt werden müssen — bei
+*Salamander* unterscheiden sich die Kanäle einer Taste stärker als die Ebenen (Ebenen 0,62–2,17 dB, Kanäle 1,53–7,01 dB).
+
+✅ **ZF4 a** (Patrik S156; ändert ZF1 a): **Die Toleranz je Größe ist die größere von zwei gemessenen Streuungen bei
+*Salamander* — zwischen benachbarten Ebenen derselben Taste und zwischen den beiden Kanälen derselben Ebene; verglichen
+wird weiter am Mittel der Kanäle (K1 a), der Unterschied der Kanäle je Größe im Bericht.** Grund: die Toleranz ist die
+Auflösung des Bezugs, und dazu gehört, wo gemessen wurde — ein Modell, das an einem anderen Ort hört (waagrechte Lage
+der Hörorte ohne Quelle, BM6-1 a), kann der Aufnahme nicht näher kommen als die beiden Mikrofone einander. Verworfen: b
+(Toleranz nur aus den Ebenen wie ZF1 a — strenger, aber die Feinheit verschwindet in einer Aufnahme, die den Ort stärker
+zeigt als den Anschlag); Vergleich je Kanal nicht vorgelegt (bände eine freie Zahl an die Aufnahme). Kippt, wenn die
+Lage der Mikrofone von *Salamander* auch waagrecht belegt und die Hörorte dorthin gelegt werden — dann Vergleich je
+Kanal und die engere Streuung der Ebenen.
+
+✅ **ZF5 a** (Patrik S156): **Jede Abweichung wird durch ihre Toleranz nach ZF4 a geteilt; gesucht wird das Minimum der
+Summe der Quadrate dieser Verhältnisse; getroffen ist eine Größe bei einem Verhältnis von höchstens 1 (ZF1 a).** Grund:
+Suche und Urteil auf derselben Skala; eine unsichere Größe zieht weniger (Gewicht mit der inversen Varianz). Verworfen: b
+(relative Abweichungen wie SM2 a). Kippt, wenn eine Toleranz nahe null gemessen wird — dann eine Untergrenze.
+
+✅ **ZF6 a** (Patrik S156): **Levenberg–Marquardt an den Verhältnissen aus ZF5 a, Ableitungen über finite Differenzen
+(je Iteration Parameter + 1 Auswertungen), am Ton nach K4 a, von zwei Startpunkten (Moden; × 1,6 wie SW1 a); Ende, wenn
+die Schritte unter 1 % der Größe fallen, höchstens 150 Auswertungen; mit Eigen (für die Tests gebunden); gegen
+Nelder–Mead an denselben Tasten verglichen.** Grund: das Verfahren für nichtlineare kleinste Quadrate, glatt und
+überbestimmt; Ende aus der Konvergenz statt aus dem Budget; die Jacobi-Matrix zeigt, welche Parameter die Größen nicht
+festlegen (der Grund für „nicht eindeutig“). Verworfen: b (Nelder–Mead wie bisher). Kippt auf b, wenn die Probe trotz
+ZF3 a kleine Stufen in der Fläche zeigt.
+
+✅ **ZF7 a** (Patrik S156): **Kein eigenes Aussortieren über ZF2 a hinaus; unsichere Ziele ziehen über ihre Toleranz
+weniger (ZF5 a); ein Ziel fehlt nur, wo *Salamander* die Struktur nicht trägt (ohne zweite Stufe kein Knick und keine
+späte Stufe, ohne erkannte Schwebung keine Frequenz und Tiefe; ZF3 a).** Grund: ZF5 a gewichtet Unsicherheit schon
+stetig, eine zweite harte Schwelle wäre wieder eine Kante. Verworfen: b (zusätzlich heraus ab Toleranz > halber Wert).
+Kippt, wenn einzelne schwache Ziele die Suche trotz Gewicht an Grenzen drücken.
+
+✅ **ZF8 a** (Patrik S156): **Probe zu SM4 b an 33, 48, 60, 66, 81, 84: (1) Setzen 30 Tasten × 2 Startpunkte ≤ 12 h;
+(2) Glätte je Parameter (Schnitt mit 15 Punkten, höchstens ein Minimum, kein Sprung über das Dreifache der mittleren
+Nachbaränderung) an ≥ 5 von 6 Tasten; (3) eindeutig (beide Startpunkte auf 10 % bzw. 10 % des Bereichs) an ≥ 5 von 6 —
+eine nach ZF1 a nicht erreichbare Taste zählt nicht mit; (4) Grenze nur Befund (ZF1 a); (8) Moden gegen Ton bleibt;
+neu (9) je Taste die Zahl getroffener Größen. Verfehlen (2) oder (3), ruht das Setzen; das Weitere entscheidet
+Patrik.** Grund: die Probe prüft, ob die Suche funktioniert, nicht ob das Modell jede Taste erreicht. Verworfen: b ((4)
+bleibt Kipppunkt). Kippt, wenn an mehr als der Hälfte der Tasten dieselbe Größe an derselben Grenze endet — dann ist die
+Grenze fraglich.
+
+✅ **ZF9 a** (Patrik S156): **Neue Schritte vor 7.5.5 — 7.5.7 Toleranzen messen (ZF1 a, ZF4 a; `werte/` neben
+`salamander_kurven.txt`), 7.5.8 Messung an der Struktur des Ziels (ZF3 a, synthetische Fälle), 7.5.9 Ziel nach ZF5 a und
+ZF7 a, 7.5.10 Levenberg–Marquardt (ZF6 a, gegen Nelder–Mead geprüft), 7.5.11 Probe nach ZF8 a; hält sie: 7.5.5 Setzen
+nach SE1 a (Stichprobe zuerst), 7.5.6 Vorgabe, 7.6, 7.7; je Schritt beide Compiler und der volle Lauf (UF17 a).**
+Grund: Setzen und Vorgabe bleiben dieselben Ziele, nur Messung und Suche ändern sich; feste Nummern, auf die Konzept und
+Commits verweisen. Verworfen: b (eigener Teilplan 7.8). Kippt, wenn ZF6 oder ZF8 so ausgehen, dass 7.5.5 sich wesentlich
+ändert. **Teilplan SM4 b damit entschieden; nächster Schritt 7.5.7.**
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
