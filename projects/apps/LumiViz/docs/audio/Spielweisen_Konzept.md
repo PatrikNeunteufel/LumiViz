@@ -3407,6 +3407,22 @@ Grund: Setzen und Vorgabe bleiben dieselben Ziele, nur Messung und Suche ändern
 Commits verweisen. Verworfen: b (eigener Teilplan 7.8). Kippt, wenn ZF6 oder ZF8 so ausgehen, dass 7.5.5 sich wesentlich
 ändert. **Teilplan SM4 b damit entschieden; nächster Schritt 7.5.7.**
 
+**Frage Patrik (S156): kommen wir vorwärts?** Antwort (Claude): beim Klang seit 31d-4 (25.10.) nicht — S153–S156 bauten
+Ebenen, Stoß, Messgrenze, Kurven und Proben mit Vorgaben, die den Ton Bit für Bit lassen; sieben Anläufe zum Setzen,
+keiner eingetragen; jeder baute ein Lineal, das den vorigen widerlegte. Fortschritt im Verständnis (warum das Setzen
+scheitert), nicht im Hörbaren.
+
+✅ **ZZ1 a** (Patrik S156): **SM4 b bekommt genau einen Anlauf: 7.5.7–7.5.11 bauen (geschätzt eine Sitzung), Probe
+(rund 1 h). Verfehlt sie, wird nicht weiter automatisch gesetzt — die Vorgabe bleibt bei 31d-4 (an *Salamander*
+gemessen); u, γ und δ setzt Patrik nach dem Gehör an wenigen Tasten (etwa 33, 60, 84), dazwischen interpoliert,
+innerhalb der Grenzen nach SQ2 a; *Salamander* bleibt Prüfgröße im Bericht; weiter mit 31d-7 C und 31e. Hält sie, läuft
+7.5.5 nach SE1 a wie entschieden.** Ergänzt ZF8 a („das Weitere entscheidet Patrik“). Grund: nach sieben Anläufen führte
+jeder Entscheid nach einem Fehlschlag zu einem neuen Messgerät; ein vorher festgelegter Ausstieg bricht das (wie SW1 a
+die Schwellen vorher festlegte) — zum hörbaren Ton und zu den Größen, für die es ohnehin keine Quelle gibt. Verworfen: b
+(nach dem Fehlschlag entscheiden). Kippt, wenn die Hörproben (`hoerproben_31d`) zeigen, dass schon 31d-4 hörbar falsch
+klingt — dann lohnt das automatische Setzen mehr Anläufe. Anmerkung Patrik: zwischen S156 und dem Bau fragt er Fable 5.1
+in einer eigenen Sitzung.
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und

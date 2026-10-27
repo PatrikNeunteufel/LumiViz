@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.288.0
-> **Datum:** 2026-10-26 (Session 155)
+> **Version:** 1.289.0
+> **Datum:** 2026-10-27 (Session 156)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3160,8 +3160,17 @@ Idee Preset-Warmup/Pre-Roll.
   `docs/Bibliothek_offen.md`. Gebaut: Kurven nach Schroeder und Autokovarianz in der Messung, `werte/salamander_kurven.txt`
   (939 Kurven), `Kurvenabstand.hpp`, Werkzeug `LUMIVIZ_75_PROBE`; Teil (1): Setzen hochgerechnet 5,8–7,4 h (≤ 12 h).
   Kein MSVC, kein voller Lauf seit S153.
-  **Offen:** **Ergebnis der Probe 7.5.4 auswerten** (`probe75.txt` im Scratchpad S155, Urteile nach SW1 a), dann
-  7.5.5 nach SE1 a (Stichprobe zuerst), 7.5.6 Vorgabe, 7.6 dauerhafter Test voll, 7.7 beide Compiler und voller Lauf; **31d-7 C** (Hörproben, `modell.md`, dazu Stoß); nach Befunden S154: der Sprung
+  **S156: Probe 7.5.4 zweimal gefahren, SM4 a gekippt, Teilplan SM4 b entschieden.** Rechenweg gemessen
+  (`LUMIVIZ_75_ZEIT`, Taktprobe: Prozessor an der Wärmegrenze, 11 Threads am schnellsten); bitgleich schneller:
+  Längskraft flach, Pool. Probe (54 min): (2), (3), (4), (7) verfehlt; Gegenprobe (`LUMIVIZ_75_SPRUNG`): Sprung an 48 aus
+  Regel (b) → GP1 a, RV1 a (fehlende Kurve = sofort bis −100 dB); Probe nach RV1 a verfehlt wieder → SM4 b. Teilplan
+  SM4 b: ZF1 a–ZF9 a (Toleranz aus Ebenen und Kanälen, Modell an der Struktur des Ziels, Levenberg–Marquardt, Schritte
+  7.5.7–7.5.11 vor 7.5.5); **ZZ1 a: genau ein Anlauf — verfehlt die Probe, Gehör statt Setzen, weiter mit 31d-7 C und
+  31e.** PB1 a: Berichte unter `modellierung/hammer-saite/proben/`. Voller Lauf 1631 / 1631 unter beiden Compilern
+  (vor RV1 a), Rechenzeit Taste 40 3,73–3,82 %. Seit 31d-4 (S152) klingt der Flügel unverändert.
+  **Offen:** **7.5.7** Toleranzen messen, 7.5.8 Messung an der Struktur des Ziels, 7.5.9 Ziel, 7.5.10
+  Levenberg–Marquardt, 7.5.11 Probe nach ZF8 a; hält sie: 7.5.5 nach SE1 a (Stichprobe zuerst), 7.5.6 Vorgabe, 7.6
+  dauerhafter Test voll, 7.7 beide Compiler und voller Lauf; verfehlt sie: ZZ1 a (Gehör); **31d-7 C** (Hörproben, `modell.md`, dazu Stoß); nach Befunden S154: der Sprung
   unter −90 dB nach rund 5 s im Modell, der Nachklang an MIDI 48 bei sehr kurzem `decay` (Boden?), die Schein-Schwebung
   „6,0 Cent“ am Modell; Weinreich 1977 (Patrik); ~~Teilplan 31d-7 vorlegen~~ (S153);
   ~~danach neu setzen~~ → 31d-7 B; vierte Fassung der Hörproben → 31d-7 C; Kipppunkte aus 31d-6: Winkel an
@@ -6242,6 +6251,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.289.0 | 2026-10-27 | Session 156. §7 Spielweisen: Probe 7.5.4 zweimal (Pool, bitgleich schneller), SM4 a gekippt (GP1 a, RV1 a), Teilplan SM4 b (ZF1 a–ZF9 a), ZZ1 a (ein Anlauf, sonst Gehör), PB1 a; voller Lauf 1631 / 1631 unter beiden Compilern. |
 | 1.288.0 | 2026-10-26 | Session 155. §7 Spielweisen: Teilplan 7.5 (K1 a–K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a); 7.5.1–7.5.3 gebaut (Kurven nach Schroeder, `salamander_kurven.txt`, Kurvenabstand); Probe 7.5.4 gestartet; Recherche Grenzen, `Bibliothek_offen.md`. |
 | 1.287.0 | 2026-10-26 | Session 154. §7 Spielweisen: 31d-7 B bis 7.4 (TB1 a, SZ1 a, SZ2 a, US1 a–US7 a, US6-1 a, Stoß je Saite gebaut, `.lvinst` 19, Klangfassung 3; RB1 a zurückgenommen, RB1-1 a); Setzen dreimal nicht brauchbar → SZ3 a, SM1 a–SM3 a, SM4 a (Abklingkurven je Teilton, Teilplan offen). |
 | 1.286.0 | 2026-10-25 | Session 153. §7 Spielweisen: Teilplan 31d-7 (Recherche P1 a, P2 a bis P8 a, ZS1 a), 31d-7 A gebaut (zwei Ebenen, Eigenlöser, Längskraft je Saite, Fassung 18; P3-1 a, RZ1-1 a, WK1 a); voller Lauf 1611 / 1611. |
