@@ -1,0 +1,17 @@
+Zeit einer Auswertung je Phase (Ebene v11, ein Thread, je 3 Durchgaenge), hardware_concurrency 32
+  MIDI 33 (23490 ms, 382 Moden) Durchgang 1: Ton 0.929 s = Hammer-Saite 0.789 (davon Laengskraft 0.604, ohne sie 0.185) + Boden und Rest 0.140; Messung 0.581 s; zusammen 1.511 s
+  MIDI 33 (23490 ms, 382 Moden) Durchgang 2: Ton 1.028 s = Hammer-Saite 0.830 (davon Laengskraft 0.647, ohne sie 0.182) + Boden und Rest 0.198; Messung 0.664 s; zusammen 1.692 s
+  MIDI 33 (23490 ms, 382 Moden) Durchgang 3: Ton 1.022 s = Hammer-Saite 0.829 (davon Laengskraft 0.646, ohne sie 0.183) + Boden und Rest 0.193; Messung 0.636 s; zusammen 1.658 s
+  MIDI 60 (15880 ms, 171 Moden) Durchgang 1: Ton 0.344 s = Hammer-Saite 0.313 (davon Laengskraft 0.258, ohne sie 0.055) + Boden und Rest 0.032; Messung 0.156 s; zusammen 0.501 s
+  MIDI 60 (15880 ms, 171 Moden) Durchgang 2: Ton 0.347 s = Hammer-Saite 0.265 (davon Laengskraft 0.209, ohne sie 0.057) + Boden und Rest 0.082; Messung 0.154 s; zusammen 0.501 s
+  MIDI 60 (15880 ms, 171 Moden) Durchgang 3: Ton 0.346 s = Hammer-Saite 0.280 (davon Laengskraft 0.225, ohne sie 0.055) + Boden und Rest 0.066; Messung 0.154 s; zusammen 0.500 s
+  MIDI 84 (6230 ms, 45 Moden) Durchgang 1: Ton 0.082 s = Hammer-Saite 0.016 (davon Laengskraft 0.009, ohne sie 0.006) + Boden und Rest 0.067; Messung 0.053 s; zusammen 0.136 s
+  MIDI 84 (6230 ms, 45 Moden) Durchgang 2: Ton 0.091 s = Hammer-Saite 0.013 (davon Laengskraft 0.007, ohne sie 0.006) + Boden und Rest 0.077; Messung 0.052 s; zusammen 0.143 s
+  MIDI 84 (6230 ms, 45 Moden) Durchgang 3: Ton 0.082 s = Hammer-Saite 0.013 (davon Laengskraft 0.007, ohne sie 0.006) + Boden und Rest 0.068; Messung 0.049 s; zusammen 0.131 s
+
+Durchsatz an MIDI 60: 3 Auswertungen zu je 11 Ebenen auf einem Pool (heute: 8 Threads je Auswertung, nacheinander)
+  8 Threads: 3.64 s, 1.21 s je Auswertung
+  11 Threads: 3.21 s, 1.07 s je Auswertung
+  16 Threads: 3.10 s, 1.03 s je Auswertung
+  22 Threads: 3.26 s, 1.09 s je Auswertung
+  32 Threads: 3.55 s, 1.18 s je Auswertung

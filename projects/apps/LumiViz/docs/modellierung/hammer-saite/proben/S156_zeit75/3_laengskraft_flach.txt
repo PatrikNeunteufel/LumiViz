@@ -1,0 +1,18 @@
+Zeit einer Auswertung je Phase (Ebene v11, ein Thread, je 3 Durchgaenge), hardware_concurrency 32
+  MIDI 33 (23490 ms, 382 Moden) Durchgang 1: Ton 0.894 s = Hammer-Saite 0.688 (davon Laengskraft 0.505, ohne sie 0.183) + Boden und Rest 0.206; Messung 0.588 s (nur Kurven 0.590); zusammen 1.481 s
+  MIDI 33 (23490 ms, 382 Moden) Durchgang 2: Ton 0.919 s = Hammer-Saite 0.741 (davon Laengskraft 0.558, ohne sie 0.183) + Boden und Rest 0.178; Messung 0.583 s (nur Kurven 0.607); zusammen 1.502 s
+  MIDI 33 (23490 ms, 382 Moden) Durchgang 3: Ton 0.889 s = Hammer-Saite 0.719 (davon Laengskraft 0.546, ohne sie 0.173) + Boden und Rest 0.170; Messung 0.588 s (nur Kurven 0.607); zusammen 1.477 s
+  MIDI 60 (15880 ms, 171 Moden) Durchgang 1: Ton 0.291 s = Hammer-Saite 0.242 (davon Laengskraft 0.186, ohne sie 0.056) + Boden und Rest 0.049; Messung 0.152 s (nur Kurven 0.150); zusammen 0.443 s
+  MIDI 60 (15880 ms, 171 Moden) Durchgang 2: Ton 0.310 s = Hammer-Saite 0.241 (davon Laengskraft 0.185, ohne sie 0.056) + Boden und Rest 0.069; Messung 0.153 s (nur Kurven 0.150); zusammen 0.463 s
+  MIDI 60 (15880 ms, 171 Moden) Durchgang 3: Ton 0.312 s = Hammer-Saite 0.231 (davon Laengskraft 0.179, ohne sie 0.053) + Boden und Rest 0.081; Messung 0.151 s (nur Kurven 0.149); zusammen 0.464 s
+  MIDI 84 (6230 ms, 45 Moden) Durchgang 1: Ton 0.077 s = Hammer-Saite 0.012 (davon Laengskraft 0.006, ohne sie 0.006) + Boden und Rest 0.065; Messung 0.046 s (nur Kurven 0.044); zusammen 0.123 s
+  MIDI 84 (6230 ms, 45 Moden) Durchgang 2: Ton 0.077 s = Hammer-Saite 0.013 (davon Laengskraft 0.007, ohne sie 0.006) + Boden und Rest 0.064; Messung 0.046 s (nur Kurven 0.044); zusammen 0.123 s
+  MIDI 84 (6230 ms, 45 Moden) Durchgang 3: Ton 0.078 s = Hammer-Saite 0.013 (davon Laengskraft 0.007, ohne sie 0.006) + Boden und Rest 0.065; Messung 0.049 s (nur Kurven 0.046); zusammen 0.127 s
+
+Durchsatz an MIDI 60: 3 Auswertungen zu je 11 Ebenen auf einem Pool (heute: 8 Threads je Auswertung, nacheinander)
+  1 Threads: 14.79 s, 4.93 s je Auswertung
+  8 Threads: 3.36 s, 1.12 s je Auswertung
+  11 Threads: 2.79 s, 0.93 s je Auswertung
+  16 Threads: 3.00 s, 1.00 s je Auswertung
+  22 Threads: 2.83 s, 0.94 s je Auswertung
+  32 Threads: 3.49 s, 1.16 s je Auswertung

@@ -10,6 +10,8 @@ HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Ans
 - [modell.md](modell.md) — das gebaute Modell (Stand 31b): Saite, Hammer, Chor (Herleitung), Längsschwingung,
   Dämpfer, Anschlagstufe, Größen und ihre Herkunft.
 - [messplan.md](messplan.md) — wie Messungen das Modell absichern sollen.
+- [proben/](proben/README.md) — Berichte der Proben und Gegenproben je Lauf (PB1 a, ab S155: Probe 7.5.4, Zeit je
+  Phase, Sprünge je Kurve).
 
 ## Recherchen
 | Datei | Thema |

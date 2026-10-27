@@ -1,0 +1,106 @@
+Probe 7.5.4 (SW1 a) an den Tasten 33, 48, 60, 66, 81, 84 — Werte, dann je Zeile das Urteil
+MIDI 33 (Chor 2, gehalten 23490 ms): decay 105.036 [35.012, 315.108] (ohne Quelle, Faktor 3); highDecay 0.969 [0.767, 0.983] (Bensa 2003); lateDecay 315.108 [105.036, 945.324] (ohne Quelle, Faktor 3); Verstimmung 1.486 [0.000, 6.000] (Kirk, Cuenca, Plath); u leise 0.250 [0.000, 1.000] (ohne Quelle, 0-1); u laut 0.250 [0.000, 1.000] (ohne Quelle, 0-1);
+MIDI 48 (Chor 2, gehalten 15580 ms): decay 0.977 [0.326, 2.932] (ohne Quelle, Faktor 3); highDecay 0.944 [0.673, 0.974] (Bensa 2003); lateDecay 3.577 [1.192, 10.730] (ohne Quelle, Faktor 3); Verstimmung 2.150 [0.000, 6.000] (Kirk, Cuenca, Plath); u leise 0.250 [0.000, 1.000] (ohne Quelle, 0-1); u laut 0.250 [0.000, 1.000] (ohne Quelle, 0-1);
+MIDI 60 (Chor 3, gehalten 15880 ms): decay 5.367 [1.789, 16.100] (ohne Quelle, Faktor 3); highDecay 0.894 [0.380, 0.916] (Bensa 2003); lateDecay 37.935 [12.645, 113.806] (ohne Quelle, Faktor 3); Verstimmung 0.766 [0.000, 6.000] (Kirk, Cuenca, Plath); u leise 0.250 [0.000, 1.000] (ohne Quelle, 0-1); u laut 0.250 [0.000, 1.000] (ohne Quelle, 0-1);
+MIDI 66 (Chor 3, gehalten 15290 ms): decay 2.590 [0.863, 7.770] (ohne Quelle, Faktor 3); highDecay 0.853 [0.249, 0.853] (Bensa 2003); lateDecay 16.536 [5.512, 49.607] (ohne Quelle, Faktor 3); Verstimmung 1.116 [0.000, 6.000] (Kirk, Cuenca, Plath); u leise 0.250 [0.000, 1.000] (ohne Quelle, 0-1); u laut 0.250 [0.000, 1.000] (ohne Quelle, 0-1);
+MIDI 81 (Chor 3, gehalten 10980 ms): decay 3.081 [1.027, 9.242] (ohne Quelle, Faktor 3); highDecay 0.412 [0.070, 0.543] (Bensa 2003); lateDecay 15.824 [5.275, 47.471] (ohne Quelle, Faktor 3); Verstimmung 0.571 [0.000, 6.000] (Kirk, Cuenca, Plath); u leise 0.250 [0.000, 1.000] (ohne Quelle, 0-1); u laut 0.250 [0.000, 1.000] (ohne Quelle, 0-1);
+MIDI 84 (Chor 3, gehalten 6230 ms): decay 2.404 [0.801, 7.213] (ohne Quelle, Faktor 3); highDecay 0.321 [0.054, 0.464] (Bensa 2003); lateDecay 10.300 [3.433, 30.899] (ohne Quelle, Faktor 3); Verstimmung 1.915 [0.000, 6.000] (Kirk, Cuenca, Plath); u leise 0.250 [0.000, 1.000] (ohne Quelle, 0-1); u laut 0.250 [0.000, 1.000] (ohne Quelle, 0-1);
+
+(1) Rechenzeit einer Auswertung am Ton (Startwerte), Abstand dort:
+  MIDI 33: 3.35 s, Abstand 12.389 dB (Abklingen 12.377, Schwebung 0.545, 33 Kurven)
+  MIDI 48: 1.09 s, Abstand 52.371 dB (Abklingen 52.354, Schwebung 1.308, 33 Kurven)
+  MIDI 60: 1.29 s, Abstand 8.728 dB (Abklingen 8.655, Schwebung 1.133, 33 Kurven)
+  MIDI 66: 1.02 s, Abstand 10.129 dB (Abklingen 9.954, Schwebung 1.875, 33 Kurven)
+  MIDI 81: 0.80 s, Abstand 10.012 dB (Abklingen 9.739, Schwebung 2.325, 33 Kurven)
+  MIDI 84: 0.74 s, Abstand 14.983 dB (Abklingen 14.480, Schwebung 3.849, 33 Kurven)
+  Mittel 1.38 s je Auswertung. Hochgerechnet (hoechstens 150 Auswertungen je Suche): Setzen 30 Tasten x 2 Startpunkte 3.5 h (Schwelle 12 h); diese Probe ohne Teil 1 hoechstens 0.9 h
+
+MIDI 33 — (2) Schnitte (15 Punkte ueber den Bereich):
+  decay: 35.012=11.11/0.48 40.962=10.83/0.51 47.922=6.64/0.56 56.066=14.16/0.70 65.593=18.60/0.54 76.739=11.85/0.54 89.780=12.14/0.54 105.036=12.38/0.54 122.885=12.58/0.55 143.767=12.75/0.55 168.197=12.89/0.55 196.779=13.00/0.55 230.218=13.10/0.55 269.339=13.19/0.55 315.108=13.26/0.55  | Abklingen: Minima 2, groesster/mittlerer Schritt 7.52/1.76 NICHT glatt | Schwebung: Minima 2, 0.15/0.03 NICHT glatt
+  highDecay: 0.767=12.35/0.54 0.781=12.35/0.54 0.795=12.36/0.54 0.809=12.36/0.54 0.823=12.36/0.54 0.838=12.36/0.54 0.853=12.36/0.54 0.868=12.37/0.54 0.884=12.37/0.54 0.900=12.37/0.54 0.916=12.37/0.54 0.932=12.37/0.54 0.949=12.38/0.54 0.966=12.38/0.54 0.983=12.38/0.54  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.00/0.00 glatt | Schwebung: Minima 1, 0.00/0.00 glatt
+  lateDecay: 105.036=13.20/0.68 122.885=17.78/0.53 143.767=13.33/0.54 168.197=11.81/0.55 196.779=11.99/0.55 230.218=12.14/0.55 269.339=12.27/0.54 315.108=12.38/0.54 368.655=12.47/0.54 431.300=12.55/0.54 504.592=12.61/0.54 590.337=12.67/0.54 690.654=12.72/0.54 808.017=12.76/0.54 945.324=12.80/0.54  | Abklingen: Minima 2, groesster/mittlerer Schritt 4.58/0.82 NICHT glatt | Schwebung: Minima 2, 0.15/0.01 NICHT glatt
+  Verstimmung: 0.000=11.29/0.62 0.429=8.09/0.65 0.857=12.93/0.59 1.286=16.06/0.58 1.714=12.59/0.51 2.143=12.69/0.55 2.571=12.57/0.76 3.000=12.55/0.98 3.429=12.06/1.15 3.857=12.57/1.30 4.286=12.44/1.57 4.714=12.64/1.82 5.143=12.52/2.03 5.571=12.43/2.23 6.000=12.61/2.34  | Abklingen: Minima 5, groesster/mittlerer Schritt 4.85/1.18 NICHT glatt | Schwebung: Minima 2, 0.27/0.14 NICHT glatt
+  u leise: 0.000=12.38/1.04 0.071=12.37/0.67 0.143=12.37/0.53 0.214=12.37/0.53 0.286=12.39/0.55 0.357=12.40/0.57 0.429=12.41/0.58 0.500=12.41/0.58 0.571=12.42/0.59 0.643=12.44/0.59 0.714=12.44/0.59 0.786=12.45/0.59 0.857=12.46/0.59 0.929=12.46/0.59 1.000=12.46/0.59  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.01/0.01 glatt | Schwebung: Minima 1, 0.37/0.04 NICHT glatt
+  u laut: 0.000=12.37/1.11 0.071=12.36/0.73 0.143=12.36/0.58 0.214=12.37/0.54 0.286=12.38/0.55 0.357=12.40/0.56 0.429=12.40/0.57 0.500=12.41/0.58 0.571=12.42/0.58 0.643=12.42/0.59 0.714=12.76/0.59 0.786=12.42/0.59 0.857=12.42/0.60 0.929=12.42/0.60 1.000=13.12/0.59  | Abklingen: Minima 3, groesster/mittlerer Schritt 0.70/0.10 NICHT glatt | Schwebung: Minima 2, 0.38/0.05 NICHT glatt
+  (3) Moden-Start (150 Auswertungen, Abklingen 6.234 dB); Ton A: Rest 2.174 dB (151), Ton B: Rest 7.428 dB (150)
+     decay 78.859 / 95.869 (!); highDecay 0.983 / 0.983 [an der Grenze]; lateDecay 334.990 / 492.663 (!); Verstimmung 0.833 / 1.841 (!); u leise 0.423 / 0.535 (!); u laut 0.277 / 0.536 (!); 
+     NICHT eindeutig
+  (8) am Moden-Start: Moden 6.273 dB, Ton 11.134 dB (43.7 %); (K6-1 a) am Ende von Suche A: letzte 20 % tragen 42.6 % des Anteils Abklingen
+
+MIDI 48 — (2) Schnitte (15 Punkte ueber den Bereich):
+  decay: 0.326=50.67/1.72 0.381=24.44/1.88 0.446=24.20/1.86 0.522=24.60/1.84 0.610=24.95/1.84 0.714=52.51/1.44 0.835=52.47/1.36 0.977=52.35/1.31 1.144=52.19/1.28 1.338=52.15/1.27 1.565=51.92/1.31 1.831=50.34/1.41 2.142=49.66/1.68 2.506=47.67/1.77 2.932=46.20/1.91  | Abklingen: Minima 2, groesster/mittlerer Schritt 27.56/4.36 NICHT glatt | Schwebung: Minima 2, 0.39/0.10 NICHT glatt
+  highDecay: 0.673=52.58/1.32 0.691=52.56/1.31 0.710=52.54/1.31 0.729=52.52/1.31 0.748=52.51/1.31 0.768=52.49/1.31 0.789=52.48/1.31 0.810=52.46/1.31 0.831=52.45/1.31 0.853=52.43/1.31 0.876=52.42/1.31 0.900=52.40/1.31 0.924=52.38/1.31 0.948=52.35/1.31 0.974=52.34/1.31  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.03/0.02 glatt | Schwebung: Minima 1, 0.00/0.00 glatt
+  lateDecay: 1.192=63.45/2.97 1.395=61.36/2.90 1.632=59.58/2.81 1.909=57.78/2.70 2.234=56.15/2.59 2.613=54.87/2.35 3.057=53.73/1.66 3.577=52.35/1.31 4.185=50.94/1.42 4.896=49.41/1.52 5.728=48.13/1.58 6.701=46.93/1.56 7.840=46.00/1.56 9.172=45.51/1.55 10.730=44.92/1.54  | Abklingen: Minima 1, groesster/mittlerer Schritt 2.09/1.32 glatt | Schwebung: Minima 2, 0.70/0.14 NICHT glatt
+  Verstimmung: 0.000=65.15/2.99 0.429=55.94/1.93 0.857=54.23/1.58 1.286=53.24/1.42 1.714=52.65/1.34 2.143=52.36/1.31 2.571=52.28/1.30 3.000=52.31/1.31 3.429=52.45/1.33 3.857=52.83/1.40 4.286=54.01/1.54 4.714=53.61/1.87 5.143=21.47/2.32 5.571=20.80/2.34 6.000=20.90/2.39  | Abklingen: Minima 2, groesster/mittlerer Schritt 32.13/3.42 NICHT glatt | Schwebung: Minima 1, 1.06/0.20 NICHT glatt
+  u leise: 0.000=52.90/1.57 0.071=52.81/1.46 0.143=52.63/1.37 0.214=52.45/1.32 0.286=52.28/1.30 0.357=52.11/1.29 0.429=51.95/1.28 0.500=51.81/1.29 0.571=51.67/1.29 0.643=51.55/1.29 0.714=51.44/1.30 0.786=51.34/1.30 0.857=51.30/1.31 0.929=51.32/1.31 1.000=51.28/1.32  | Abklingen: Minima 2, groesster/mittlerer Schritt 0.18/0.12 NICHT glatt | Schwebung: Minima 1, 0.11/0.02 NICHT glatt
+  u laut: 0.000=52.89/1.57 0.071=52.81/1.46 0.143=52.63/1.37 0.214=52.45/1.32 0.286=52.27/1.30 0.357=52.10/1.29 0.429=52.02/1.29 0.500=51.94/1.29 0.571=51.86/1.29 0.643=51.73/1.30 0.714=51.62/1.30 0.786=51.57/1.31 0.857=51.47/1.31 0.929=51.44/1.31 1.000=51.37/1.32  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.18/0.11 glatt | Schwebung: Minima 1, 0.11/0.02 NICHT glatt
+  (3) Moden-Start (151 Auswertungen, Abklingen 12.925 dB); Ton A: Rest 13.221 dB (151), Ton B: Rest 13.850 dB (150)
+     decay 2.932 / 2.932 [an der Grenze]; highDecay 0.718 / 0.974 (!); lateDecay 10.730 / 10.730 [an der Grenze]; Verstimmung 3.110 / 4.931 (!); u leise 0.000 / 0.205 (!) [an der Grenze]; u laut 0.289 / 0.314; 
+     NICHT eindeutig
+  (8) am Moden-Start: Moden 13.340 dB, Ton 13.938 dB (4.3 %); (K6-1 a) am Ende von Suche A: letzte 20 % tragen 37.1 % des Anteils Abklingen
+
+MIDI 60 — (2) Schnitte (15 Punkte ueber den Bereich):
+  decay: 1.789=5.63/1.27 2.093=5.60/1.18 2.448=5.66/1.12 2.865=6.00/1.14 3.351=6.59/1.12 3.921=7.35/1.11 4.587=8.14/1.11 5.367=8.65/1.13 6.278=9.00/1.20 7.345=9.47/1.24 8.594=9.56/1.22 10.054=10.21/1.23 11.762=12.06/1.30 13.761=13.04/1.30 16.100=13.78/1.30  | Abklingen: Minima 1, groesster/mittlerer Schritt 1.85/0.59 NICHT glatt | Schwebung: Minima 4, 0.10/0.03 NICHT glatt
+  highDecay: 0.380=8.60/1.16 0.404=8.61/1.16 0.430=8.62/1.17 0.458=8.57/1.13 0.488=8.58/1.13 0.520=8.58/1.13 0.554=8.59/1.13 0.590=8.60/1.13 0.628=8.61/1.13 0.669=8.62/1.13 0.712=8.62/1.13 0.758=8.63/1.13 0.807=8.64/1.13 0.860=8.65/1.13 0.916=8.66/1.13  | Abklingen: Minima 2, groesster/mittlerer Schritt 0.05/0.01 NICHT glatt | Schwebung: Minima 3, 0.04/0.00 NICHT glatt
+  lateDecay: 12.645=19.48/1.20 14.794=16.26/1.18 17.308=11.09/1.19 20.249=9.53/1.19 23.690=8.44/1.17 27.716=8.05/1.16 32.425=8.21/1.14 37.935=8.65/1.13 44.382=9.20/1.13 51.924=9.28/1.08 60.747=10.17/1.16 71.070=10.90/1.16 83.147=11.52/1.16 97.276=12.08/1.17 113.806=12.61/1.17  | Abklingen: Minima 1, groesster/mittlerer Schritt 5.17/1.14 NICHT glatt | Schwebung: Minima 2, 0.09/0.02 NICHT glatt
+  Verstimmung: 0.000=22.41/1.12 0.429=7.42/0.91 0.857=8.67/1.24 1.286=7.24/1.57 1.714=7.38/2.02 2.143=7.93/2.48 2.571=8.22/3.12 3.000=8.61/3.43 3.429=8.53/3.83 3.857=8.56/3.92 4.286=8.67/3.89 4.714=8.27/3.89 5.143=8.58/3.88 5.571=8.70/3.87 6.000=8.69/3.84  | Abklingen: Minima 5, groesster/mittlerer Schritt 14.99/1.44 NICHT glatt | Schwebung: Minima 2, 0.64/0.24 NICHT glatt
+  u leise: 0.000=8.66/1.91 0.071=8.65/1.51 0.143=8.64/1.28 0.214=8.65/1.16 0.286=8.67/1.11 0.357=8.71/1.09 0.429=8.76/1.07 0.500=8.83/1.07 0.571=8.91/1.07 0.643=9.00/1.07 0.714=9.09/1.07 0.786=9.18/1.07 0.857=9.26/1.06 0.929=9.37/1.06 1.000=9.45/1.05  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.10/0.06 glatt | Schwebung: Minima 2, 0.40/0.06 NICHT glatt
+  u laut: 0.000=8.61/1.85 0.071=8.61/1.48 0.143=8.61/1.25 0.214=8.64/1.16 0.286=8.68/1.11 0.357=8.74/1.08 0.429=8.82/1.06 0.500=8.91/1.04 0.571=9.01/1.03 0.643=9.04/1.02 0.714=9.15/1.02 0.786=9.26/1.02 0.857=9.34/1.02 0.929=9.45/1.02 1.000=9.54/1.03  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.11/0.07 glatt | Schwebung: Minima 1, 0.37/0.06 NICHT glatt
+  (3) Moden-Start (151 Auswertungen, Abklingen 6.415 dB); Ton A: Rest 6.221 dB (150), Ton B: Rest 5.998 dB (150)
+     decay 8.500 / 12.587 (!); highDecay 0.916 / 0.916 [an der Grenze]; lateDecay 22.591 / 15.474 (!); Verstimmung 1.095 / 1.591; u leise 0.517 / 0.588; u laut 0.384 / 0.350; 
+     NICHT eindeutig
+  (8) am Moden-Start: Moden 6.616 dB, Ton 6.454 dB (2.5 %); (K6-1 a) am Ende von Suche A: letzte 20 % tragen 18.2 % des Anteils Abklingen
+
+MIDI 66 — (2) Schnitte (15 Punkte ueber den Bereich):
+  decay: 0.863=9.09/2.36 1.010=9.45/2.27 1.182=9.86/2.19 1.383=9.61/2.07 1.617=10.02/2.01 1.892=10.36/1.99 2.214=10.43/1.98 2.590=9.95/1.87 3.030=10.34/1.79 3.545=10.67/1.74 4.148=9.15/1.70 4.852=6.81/1.77 5.677=6.41/1.81 6.642=5.23/1.84 7.770=6.55/1.87  | Abklingen: Minima 4, groesster/mittlerer Schritt 2.35/0.70 NICHT glatt | Schwebung: Minima 1, 0.12/0.06 glatt
+  highDecay: 0.249=11.64/1.96 0.272=11.61/1.96 0.297=11.50/1.96 0.324=11.36/1.96 0.354=11.21/1.95 0.386=11.05/1.94 0.422=10.90/1.93 0.461=10.75/1.93 0.503=10.61/1.92 0.549=10.48/1.91 0.600=10.36/1.90 0.655=10.25/1.90 0.715=10.15/1.89 0.781=10.05/1.88 0.853=9.95/1.87  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.16/0.12 glatt | Schwebung: Minima 2, 0.01/0.01 NICHT glatt
+  lateDecay: 5.512=24.33/1.76 6.449=23.00/1.71 7.544=20.51/1.64 8.826=17.57/1.61 10.326=15.60/1.71 12.081=15.29/1.80 14.134=12.46/1.83 16.536=9.95/1.87 19.346=10.68/2.02 22.633=8.91/2.04 26.479=7.63/2.06 30.979=6.88/2.08 36.243=7.13/2.17 42.402=7.22/2.19 49.607=7.45/2.18  | Abklingen: Minima 2, groesster/mittlerer Schritt 2.94/1.39 NICHT glatt | Schwebung: Minima 2, 0.14/0.05 NICHT glatt
+  Verstimmung: 0.000=22.23/1.10 0.429=10.49/1.02 0.857=11.33/1.41 1.286=12.23/2.08 1.714=14.02/2.50 2.143=12.96/2.79 2.571=13.90/3.07 3.000=14.35/3.22 3.429=15.14/3.32 3.857=15.57/3.32 4.286=15.93/3.23 4.714=14.68/3.19 5.143=14.84/3.28 5.571=15.79/3.30 6.000=15.83/3.32  | Abklingen: Minima 3, groesster/mittlerer Schritt 11.74/1.55 NICHT glatt | Schwebung: Minima 2, 0.68/0.19 NICHT glatt
+  u leise: 0.000=10.37/2.52 0.071=10.29/2.26 0.143=10.17/2.07 0.214=10.03/1.93 0.286=9.88/1.83 0.357=9.75/1.76 0.429=9.61/1.70 0.500=9.48/1.66 0.571=9.74/1.64 0.643=9.77/1.62 0.714=9.80/1.60 0.786=9.76/1.59 0.857=9.71/1.58 0.929=10.15/1.58 1.000=10.17/1.58  | Abklingen: Minima 2, groesster/mittlerer Schritt 0.44/0.12 NICHT glatt | Schwebung: Minima 1, 0.26/0.07 NICHT glatt
+  u laut: 0.000=10.38/2.60 0.071=10.30/2.31 0.143=10.18/2.10 0.214=10.03/1.94 0.286=9.87/1.82 0.357=9.71/1.74 0.429=9.86/1.69 0.500=9.85/1.64 0.571=9.86/1.61 0.643=9.79/1.59 0.714=9.81/1.57 0.786=9.78/1.56 0.857=9.72/1.56 0.929=9.96/1.56 1.000=10.05/1.57  | Abklingen: Minima 4, groesster/mittlerer Schritt 0.24/0.10 NICHT glatt | Schwebung: Minima 1, 0.29/0.08 NICHT glatt
+  (3) Moden-Start (151 Auswertungen, Abklingen 5.707 dB); Ton A: Rest 4.296 dB (152), Ton B: Rest 4.891 dB (150)
+     decay 2.878 / 5.757 (!); highDecay 0.249 / 0.853 (!) [an der Grenze]; lateDecay 19.399 / 18.148; Verstimmung 0.569 / 1.083; u leise 0.974 / 0.539 (!); u laut 0.760 / 0.409 (!); 
+     NICHT eindeutig
+  (8) am Moden-Start: Moden 5.824 dB, Ton 5.874 dB (0.8 %); (K6-1 a) am Ende von Suche A: letzte 20 % tragen 29.4 % des Anteils Abklingen
+
+MIDI 81 — (2) Schnitte (15 Punkte ueber den Bereich):
+  decay: 1.027=8.55/2.93 1.201=8.60/2.82 1.406=8.64/2.77 1.644=8.72/2.73 1.924=8.81/2.66 2.251=9.00/2.53 2.633=9.30/2.37 3.081=9.74/2.32 3.604=10.37/2.26 4.217=11.26/2.35 4.933=12.28/2.39 5.772=13.25/2.40 6.752=14.24/2.42 7.900=15.17/2.43 9.242=16.01/2.44  | Abklingen: Minima 1, groesster/mittlerer Schritt 1.02/0.53 glatt | Schwebung: Minima 1, 0.16/0.06 glatt
+  highDecay: 0.070=5.52/2.52 0.081=5.94/2.47 0.094=6.42/2.41 0.109=6.89/2.44 0.126=7.33/2.39 0.146=7.74/2.34 0.169=8.12/2.38 0.195=8.46/2.35 0.226=8.77/2.33 0.262=9.04/2.30 0.303=9.30/2.29 0.350=9.52/2.33 0.405=9.72/2.33 0.469=9.90/2.32 0.543=10.05/2.31  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.47/0.32 glatt | Schwebung: Minima 4, 0.06/0.03 NICHT glatt
+  lateDecay: 5.275=16.48/2.43 6.171=16.55/2.41 7.220=14.55/2.37 8.446=12.58/2.29 9.882=10.76/2.26 11.561=9.59/2.24 13.525=9.33/2.29 15.824=9.74/2.32 18.513=10.53/2.35 21.659=11.46/2.38 25.339=12.38/2.40 29.645=13.23/2.42 34.683=13.97/2.50 40.576=14.70/2.53 47.471=15.35/2.57  | Abklingen: Minima 2, groesster/mittlerer Schritt 2.00/0.95 NICHT glatt | Schwebung: Minima 1, 0.09/0.04 glatt
+  Verstimmung: 0.000=14.79/1.85 0.429=10.73/2.09 0.857=9.99/3.04 1.286=11.38/3.71 1.714=11.75/3.71 2.143=11.81/3.95 2.571=11.80/4.00 3.000=11.79/4.23 3.429=11.78/4.35 3.857=11.78/4.07 4.286=11.76/3.99 4.714=11.77/3.85 5.143=11.75/4.14 5.571=11.77/4.18 6.000=11.79/4.27  | Abklingen: Minima 3, groesster/mittlerer Schritt 4.06/0.48 NICHT glatt | Schwebung: Minima 3, 0.95/0.24 NICHT glatt
+  u leise: 0.000=9.77/2.97 0.071=9.76/2.73 0.143=9.75/2.54 0.214=9.74/2.39 0.286=9.74/2.27 0.357=9.74/2.19 0.429=9.75/2.13 0.500=9.77/2.08 0.571=9.80/2.05 0.643=9.83/2.03 0.714=9.86/2.01 0.786=9.90/2.00 0.857=9.94/1.99 0.929=9.98/1.98 1.000=10.02/1.98  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.04/0.02 glatt | Schwebung: Minima 1, 0.24/0.07 NICHT glatt
+  u laut: 0.000=9.73/3.04 0.071=9.73/2.79 0.143=9.73/2.56 0.214=9.73/2.39 0.286=9.75/2.27 0.357=9.77/2.17 0.429=9.80/2.11 0.500=9.85/2.06 0.571=9.90/2.03 0.643=9.95/2.01 0.714=10.00/1.99 0.786=10.06/1.98 0.857=10.12/1.97 0.929=10.17/1.96 1.000=10.23/1.95  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.06/0.04 glatt | Schwebung: Minima 1, 0.26/0.08 NICHT glatt
+  (3) Moden-Start (150 Auswertungen, Abklingen 4.373 dB); Ton A: Rest 5.116 dB (157), Ton B: Rest 7.243 dB (150)
+     decay 2.058 / 1.027 (!); highDecay 0.070 / 0.124 (!) [an der Grenze]; lateDecay 14.814 / 16.073; Verstimmung 0.537 / 1.213 (!); u leise 0.628 / 1.000 (!); u laut 0.449 / 0.854 (!); 
+     NICHT eindeutig
+  (8) am Moden-Start: Moden 5.558 dB, Ton 6.099 dB (8.9 %); (K6-1 a) am Ende von Suche A: letzte 20 % tragen 11.2 % des Anteils Abklingen
+
+MIDI 84 — (2) Schnitte (15 Punkte ueber den Bereich):
+  decay: 0.801=8.13/3.62 0.938=8.06/3.49 1.097=8.30/3.42 1.283=8.96/3.39 1.501=10.04/3.26 1.756=11.40/3.31 2.055=12.93/3.61 2.404=14.48/3.85 2.813=15.93/3.98 3.291=17.23/4.03 3.850=18.38/4.05 4.504=19.38/4.04 5.269=20.24/4.04 6.165=20.99/4.03 7.213=21.63/4.02  | Abklingen: Minima 1, groesster/mittlerer Schritt 1.55/0.97 glatt | Schwebung: Minima 2, 0.30/0.08 NICHT glatt
+  highDecay: 0.054=10.27/3.64 0.063=10.60/3.69 0.074=11.01/3.70 0.086=11.43/3.74 0.100=11.87/3.76 0.117=12.32/3.79 0.136=12.74/3.79 0.159=13.14/3.80 0.185=13.50/3.81 0.216=13.82/3.83 0.252=14.10/3.83 0.293=14.35/3.84 0.342=14.57/3.85 0.398=14.75/3.86 0.464=14.92/3.86  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.45/0.33 glatt | Schwebung: Minima 2, 0.05/0.02 NICHT glatt
+  lateDecay: 3.433=7.29/3.82 4.017=7.70/3.92 4.699=8.59/3.97 5.498=9.81/3.96 6.432=11.12/3.94 7.525=12.36/3.91 8.804=13.49/3.89 10.300=14.48/3.85 12.050=15.34/3.81 14.097=16.09/3.77 16.493=16.73/3.74 19.296=17.28/3.71 22.575=17.76/3.68 26.411=18.16/3.66 30.899=18.50/3.64  | Abklingen: Minima 1, groesster/mittlerer Schritt 1.31/0.80 glatt | Schwebung: Minima 2, 0.10/0.03 NICHT glatt
+  Verstimmung: 0.000=6.83/1.71 0.429=11.06/2.27 0.857=14.44/3.03 1.286=14.84/3.45 1.714=14.48/3.64 2.143=14.53/3.91 2.571=14.45/4.10 3.000=14.41/4.16 3.429=14.31/3.88 3.857=14.26/3.81 4.286=14.19/3.92 4.714=14.12/4.01 5.143=14.06/4.10 5.571=13.99/4.12 6.000=13.94/4.24  | Abklingen: Minima 3, groesster/mittlerer Schritt 4.23/0.64 NICHT glatt | Schwebung: Minima 2, 0.76/0.23 NICHT glatt
+  u leise: 0.000=14.49/4.38 0.071=14.49/4.19 0.143=14.49/4.03 0.214=14.48/3.91 0.286=14.48/3.80 0.357=14.47/3.71 0.429=14.47/3.63 0.500=14.46/3.56 0.571=14.45/3.50 0.643=14.45/3.44 0.714=14.44/3.39 0.786=14.43/3.35 0.857=14.42/3.30 0.929=14.41/3.27 1.000=14.41/3.23  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.01/0.01 glatt | Schwebung: Minima 1, 0.19/0.08 glatt
+  u laut: 0.000=14.50/4.52 0.071=14.50/4.30 0.143=14.49/4.09 0.214=14.49/3.92 0.286=14.47/3.78 0.357=14.46/3.66 0.429=14.44/3.56 0.500=14.43/3.47 0.571=14.41/3.39 0.643=14.39/3.32 0.714=14.37/3.25 0.786=14.36/3.20 0.857=14.34/3.14 0.929=14.32/3.10 1.000=14.31/3.05  | Abklingen: Minima 1, groesster/mittlerer Schritt 0.02/0.01 glatt | Schwebung: Minima 1, 0.23/0.11 glatt
+  (3) Moden-Start (150 Auswertungen, Abklingen 5.225 dB); Ton A: Rest 5.880 dB (151), Ton B: Rest 6.094 dB (150)
+     decay 0.801 / 0.801 [an der Grenze]; highDecay 0.377 / 0.464 (!); lateDecay 6.950 / 10.791 (!); Verstimmung 2.964 / 4.677 (!); u leise 0.383 / 0.583 (!); u laut 0.598 / 1.000 (!); 
+     NICHT eindeutig
+  (8) am Moden-Start: Moden 5.901 dB, Ton 5.969 dB (1.1 %); (K6-1 a) am Ende von Suche A: letzte 20 % tragen 32.4 % des Anteils Abklingen
+
+Urteile nach SW1 a:
+(1) Rechenzeit: 1.38 s je Auswertung, im Mittel 151 Auswertungen je Suche → Setzen 3.5 h — haelt (<= 12 h)
+(2) Glaette: Anteil Abklingen glatt an 0 von 6, Anteil Schwebung an 0 von 6 — Schwebung VERFEHLT → K3 b, Abklingen VERFEHLT → SM4 b
+(3) Eindeutig an 0 von 6 — VERFEHLT → SM4 b
+(4) Ohne Parameter an der Grenze an 0 von 6 — VERFEHLT → Befund je Taste, Entscheid
+(5) Raum: spaete Stufe so schnell wie der Boden (±20 %) an 26 von 337 zweistufigen Kurven — haelt (< 1/3)
+(6) Abzug aendert > 0,5 dB an 43 von 198 Kurven — haelt; mehr als 5 % Rahmen unter 0 an 5 — haelt
+(7) Ebenen gegen Kanaele (je Taste):
+  MIDI 33: Ebenen untereinander 0.67 dB, Kanaele untereinander 1.53 dB
+  MIDI 48: Ebenen untereinander 0.62 dB, Kanaele untereinander 3.45 dB
+  MIDI 60: Ebenen untereinander 1.71 dB, Kanaele untereinander 7.01 dB
+  MIDI 66: Ebenen untereinander 1.19 dB, Kanaele untereinander 3.87 dB
+  MIDI 81: Ebenen untereinander 1.62 dB, Kanaele untereinander 4.22 dB
+  MIDI 84: Ebenen untereinander 2.17 dB, Kanaele untereinander 4.99 dB
+    Ebenen unterscheiden sich mehr an 0 von 6 Tasten (SW1 a nennt keine Zahl; berichtet)
+(8) Moden gegen Ton weicht > 5 % ab an 2 von 6 — haelt (Ton noetig)
+(K6-1 a) letzte 20 % tragen im Mittel 28.5 % des Anteils Abklingen — haelt
