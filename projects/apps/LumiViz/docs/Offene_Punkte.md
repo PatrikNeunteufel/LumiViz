@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.289.0
-> **Datum:** 2026-10-27 (Session 156)
+> **Version:** 1.290.0
+> **Datum:** 2026-10-27 (Session 157)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3168,9 +3168,16 @@ Idee Preset-Warmup/Pre-Roll.
   7.5.7–7.5.11 vor 7.5.5); **ZZ1 a: genau ein Anlauf — verfehlt die Probe, Gehör statt Setzen, weiter mit 31d-7 C und
   31e.** PB1 a: Berichte unter `modellierung/hammer-saite/proben/`. Voller Lauf 1631 / 1631 unter beiden Compilern
   (vor RV1 a), Rechenzeit Taste 40 3,73–3,82 %. Seit 31d-4 (S152) klingt der Flügel unverändert.
-  **Offen:** **7.5.7** Toleranzen messen, 7.5.8 Messung an der Struktur des Ziels, 7.5.9 Ziel, 7.5.10
-  Levenberg–Marquardt, 7.5.11 Probe nach ZF8 a; hält sie: 7.5.5 nach SE1 a (Stichprobe zuerst), 7.5.6 Vorgabe, 7.6
-  dauerhafter Test voll, 7.7 beide Compiler und voller Lauf; verfehlt sie: ZZ1 a (Gehör); **31d-7 C** (Hörproben, `modell.md`, dazu Stoß); nach Befunden S154: der Sprung
+  **S157 (Sitzung mit Fable 5.1): SP1 a bis SP3 a, Teilplan 31d-8 „Spielbar“ vor SM4 b.** Lage: die Hörproben 31d
+  (Kipppunkt von ZZ1 a) seit dem 25.10. ungehört; das Setzen ein Forschungsproblem (teils die Auflösung der Aufnahme:
+  `lateDecay` 355 gegen 637 s an 33 sind über 23 s 1,7 dB); im Programm kein anspielbarer Flügel. SP1 a: 31d-8 mit
+  Hörurteil (8.1), `grand_piano.lvinst` vom Programm geschrieben (8.2), Pegel (8.3), `grand_piano_demo.lvloop` aus
+  `make_fluegel_loops.py` (8.4), Hörproben u/γ/δ (8.5), Gehör eintragen (8.6), Abschluss (8.7); SP2 a:
+  Levenberg–Marquardt über die Stützpunkte der Kurven statt je Taste (ändert ZF6 a); SP3 a: eindeutig an den
+  Messgrößen (ändert ZF8 a (3)). Lehren für die übrigen Klassen in `InstrumentsCalculation/LEHREN_SETZEN_FLUEGEL.md`.
+  **Offen:** **31d-8** 8.1 (Patrik hört `hoerproben_31d`), 8.2–8.7 (Bau, Teilplan im Konzept §4.1); danach **7.5.7** Toleranzen messen, 7.5.8 Messung an der Struktur des Ziels, 7.5.9 Ziel, 7.5.10
+  Levenberg–Marquardt (nach SP2 a), 7.5.11 Probe nach ZF8 a mit SP3 a; hält sie: 7.5.5 nach SE1 a (Stichprobe zuerst), 7.5.6 Vorgabe, 7.6
+  dauerhafter Test voll, 7.7 beide Compiler und voller Lauf; verfehlt sie: ZZ1 a (die Werte aus 8.6 bleiben); **31d-7 C** (Hörproben, `modell.md`, dazu Stoß); nach Befunden S154: der Sprung
   unter −90 dB nach rund 5 s im Modell, der Nachklang an MIDI 48 bei sehr kurzem `decay` (Boden?), die Schein-Schwebung
   „6,0 Cent“ am Modell; Weinreich 1977 (Patrik); ~~Teilplan 31d-7 vorlegen~~ (S153);
   ~~danach neu setzen~~ → 31d-7 B; vierte Fassung der Hörproben → 31d-7 C; Kipppunkte aus 31d-6: Winkel an
@@ -6251,6 +6258,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.290.0 | 2026-10-27 | Session 157 (Fable 5.1). §7 Spielweisen: SP1 a (31d-8 „Spielbar“ vor SM4 b), SP2 a (Levenberg–Marquardt über die Stützpunkte), SP3 a (Eindeutigkeit an den Messgrößen); Teilplan 31d-8 (8.1–8.7); Lehren für InstrumentsCalculation. Nichts gebaut. |
 | 1.289.0 | 2026-10-27 | Session 156. §7 Spielweisen: Probe 7.5.4 zweimal (Pool, bitgleich schneller), SM4 a gekippt (GP1 a, RV1 a), Teilplan SM4 b (ZF1 a–ZF9 a), ZZ1 a (ein Anlauf, sonst Gehör), PB1 a; voller Lauf 1631 / 1631 unter beiden Compilern. |
 | 1.288.0 | 2026-10-26 | Session 155. §7 Spielweisen: Teilplan 7.5 (K1 a–K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a); 7.5.1–7.5.3 gebaut (Kurven nach Schroeder, `salamander_kurven.txt`, Kurvenabstand); Probe 7.5.4 gestartet; Recherche Grenzen, `Bibliothek_offen.md`. |
 | 1.287.0 | 2026-10-26 | Session 154. §7 Spielweisen: 31d-7 B bis 7.4 (TB1 a, SZ1 a, SZ2 a, US1 a–US7 a, US6-1 a, Stoß je Saite gebaut, `.lvinst` 19, Klangfassung 3; RB1 a zurückgenommen, RB1-1 a); Setzen dreimal nicht brauchbar → SZ3 a, SM1 a–SM3 a, SM4 a (Abklingkurven je Teilton, Teilplan offen). |

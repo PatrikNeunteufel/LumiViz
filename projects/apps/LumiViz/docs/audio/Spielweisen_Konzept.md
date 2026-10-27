@@ -1,11 +1,11 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.92.0
-> **Datum:** 2026-10-26 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.93.0
+> **Datum:** 2026-10-27 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a und TS1 a (Patrik S139–S154);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -3423,6 +3423,132 @@ die Schwellen vorher festlegte) — zum hörbaren Ton und zu den Größen, für 
 klingt — dann lohnt das automatische Setzen mehr Anläufe. Anmerkung Patrik: zwischen S156 und dem Bau fragt er Fable 5.1
 in einer eigenen Sitzung.
 
+**Lage S157 (Sitzung mit Fable 5.1, auf Wunsch Patrik nach ZZ1 a; Anlass: „wir stehen bei der Entwicklung des Modells
+für das Grand Piano gefühlt seit Tagen still“):** gelesen Handover, Report S156, §4.1 ab SM1 a, `modell.md`,
+`grenzen.md`, die Berichte unter `proben/`. Befund in drei Sätzen. (1) Der Kipppunkt von ZZ1 a — klingt 31d-4 hörbar
+falsch? — liegt seit dem 25.10. ungehört in `hoerproben_31d` (neun WAVs, rund zwei Minuten); alles seit S153 Gebaute
+hing an dieser Frage. (2) Das Setzen ist ein Forschungsproblem (Systemidentifikation eines Modells, dessen Struktur an
+Schwellen wechselt, gegen die Aufnahme eines anderen Instruments mit Raum und zwei Mikrofonen) und nicht das
+Produktziel; „nicht eindeutig“ nach Wortlaut war teils die Auflösung der Aufnahme — an 33 fanden die Suchen
+`lateDecay` 355 und 637 s, über die 23 s der Aufnahme ein Unterschied von 1,7 dB (`proben/S156_probe75_rv1/`). (3) Im
+Programm ist der Flügel nach fünf Sitzungen nicht anspielbar („Im Programm: nichts angesehen“ in jedem Handover seit
+S152; `grand_piano` erst in 31h-1, die Bauart im Creator erst in 31g). Schluss: nicht das Modell steht still, sondern
+die Reihenfolge — die Feinabstimmung an *Salamander* wurde zur Vorbedingung für alles Weitere. Vorlage mit drei Fragen,
+alle **a** (Patrik S157: „alles nach deinen Empfehlungen. erst mal ein Resultat, Perfektion kommt dann einen Tag
+später“). Die Lehren für die übrigen Klassen stehen in `…\InstrumentsCalculation\LEHREN_SETZEN_FLUEGEL.md`.
+
+✅ **SP1 a** (Patrik S157; Plan erweitern nach PL31 a): **Vor SM4 b ein Teilschritt 31d-8 „Spielbar“: (1) Patriks
+Hörurteil über `hoerproben_31d`; (2) `grand_piano.lvinst` mitgeliefert mit der Vorgabe 31d-4 und dem Boden
+`lib:steinway_d`, Pegel, Katalog, `loop_werte` und Klangfassung, im Fenster *Instruments* anspielbar, ein Demo-Loop;
+(3) u, γ und δ nach Gehör an wenigen Tasten innerhalb SQ2 a als Vorgabe, dazwischen interpoliert — der Ausstieg aus
+ZZ1 a vorgezogen, nicht ersetzt; (4) beide Compiler, voller Lauf. Danach SM4 b (7.5.7–7.5.11) unverändert als
+Feinabstimmung mit einem Anlauf (ZZ1 a); hält die Probe, ersetzt 7.5.5 die Werte nach Gehör; *Salamander* bleibt
+Prüfgröße. 31e–31h folgen wie geplant; die Bauart im Creator (31g) und das Pedal (31e) bleiben, wo sie sind.** Grund:
+a beschafft die einzige Information, die den Wert von SM4 b bestimmt (das Hörurteil), bevor eine Sitzung hineingeht,
+und bringt das Instrument dorthin, wo Klangfragen entschieden werden können — neben den anderen Instrumenten, im Loop,
+auf dem Monitor; nichts Gemessenes geht verloren (der Ton 31d-4, die Prüfgrößen, der dauerhafte Test, SM4 b im
+Wortlaut bleiben). Verworfen: b (Plan wie entschieden: 7.5.7–7.5.11, Probe, dann 7.5.5 oder Gehör; `grand_piano`
+erst in 31h-1 — die Entscheide sind frisch, aber ihr Kipppunkt ist ungehört, und ein Umbau der Reihenfolge kippt
+keinen davon). Kippt, wenn das Hörurteil in 8.1 sagt, dass 31d-4 grob falsch klingt (etwa keine späte Stufe,
+metallische Schwebungen, falsche Länge über das ganze Band) — dann ist das Setzen der Blocker, und SM4 b läuft vor 8.5.
+
+✅ **SP2 a** (Patrik S157; ändert ZF6 a, gilt für 7.5.10): **Levenberg–Marquardt sucht über die Stützpunkte der
+Kurven — `decay`, `lateDecay`, `highDecay`, `detune`, u leise, u laut, γ, δ, je Kurve die Stützpunkte wie heute in
+`baueVorgabe()` (Tasten der Vorgabe; δ nur an Tasten mit einer Saite, `detune` nur ab zwei) —, Ziel die Summe aus
+ZF5 a über alle 30 Tasten von *Salamander*; je Taste ihr Anteil im Bericht, eine Taste über dem Dreifachen des Mittels
+als Ausreißer (Kandidat für ein Modell-Problem, nicht für einen Parameter). Eine Auswertung ist ein Durchlauf über
+30 Tasten (geschätzt 45 s auf dem Pool), je Iteration Parameter + 1 Auswertungen (Ableitungen über finite
+Differenzen), Ergebnisdatei je Iteration (SE1 a sinngemäß: ein neuer Lauf nimmt die letzte Iteration auf),
+Schätzung 5–8 h über Nacht, vorher an einer Auswertung gemessen; zwei Startpunkte wie ZF6 a (Vorgabe; × 1,6 in
+logarithmischen Größen, + 0,25 in linearen). ZF1 a und ZF8 a gelten übertragen: getroffen je Taste, eindeutig je
+Stützpunkt.** Grund: das Modell interpoliert Kurven, also setzt die Suche Kurven — Richtung der Abhängigkeit; die
+Aufgabe wird stark überbestimmt (rund 450 Messgrößen gegen rund 50 Parameter), die Jacobi-Matrix sagt je Stützpunkt,
+was ihn festlegt, und die Feinheit je Taste ist genau das, was *Salamander* (ein Instrument, ein Stimmtag, zwei
+Mikrofone) nicht hergibt; ZF1 a bis ZF8 a lassen sich auf Kurven übertragen. Verworfen: b (ZF6 a wie entschieden,
+Levenberg–Marquardt je Taste — löst feiner auf, als die Aufnahme trägt). Kippt, wenn eine Auswertung über 30 Tasten
+mehr als zwei Minuten braucht — dann reicht die Nacht nicht, b bleibt.
+
+✅ **SP3 a** (Patrik S157; ändert ZF8 a Zeile (3)): **Eindeutig ist eine Suche, wenn beide Startpunkte an jeder
+Messgröße innerhalb ihrer Toleranz nach ZF4 a enden; die Parameter selbst stehen im Bericht, ein Abstand über 10 %
+(bzw. 10 % des Bereichs) wird als „von der Aufnahme nicht aufgelöst“ benannt und ist kein Kipppunkt.** Grund: die
+Probe beurteilt die Suche (so der Grund von ZF8 a), und eine Suche funktioniert, wenn beide Wege denselben Klang
+finden; gleiche Messgrößen bei verschiedenen Parametern bleiben als Hinweis auf ein zu reiches Modell sichtbar, weil a
+sie benennt. Verworfen: b (ZF8 a (3) wie entschieden — misst die Aufnahme, nicht die Suche). Kippt, wenn die
+Toleranzen aus 7.5.7 so groß ausfallen, dass fast jeder Parameterwert hineinfällt — dann ist der Kipppunkt von ZF1 a
+ohnehin erreicht.
+
+**Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
+Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
+
+- **8.1 Hörurteil** (Patrik, unabhängig vom Bau, gesammelt): `.claude\handover\hoerproben_31d\` 01–07 nach
+  `liste.txt` (je Datei *Salamander* | Modell vor 31d | Modell nach 31d-4, gleich laut). Je Datei ein Satz zu: Länge
+  des Tons (zu kurz, zu lang, passt), späte Stufe hörbar, Schwebung (zu viel, zu wenig, metallisch, passt),
+  Helligkeit, Anschlag (Geräusch, Härte), sonst. Dazu 08/09 für den Stufenschritt (UF4 a: ab welchem Abstand
+  unterscheidet man die Klangfarbe nicht mehr). Der Befund kommt als „**Hörurteil S15x (Patrik)**“ hierher. Urteil
+  „klingt wie ein Flügel, Rest Feinheiten“ → 8.5 wie geplant; Urteil „grob falsch“ (Kipppunkt SP1 a) → Patrik
+  entscheidet, ob SM4 b vor 8.5 läuft; der Bau 8.2–8.4 läuft in beiden Fällen.
+- **8.2 Instrument** `grand_piano.lvinst`: **vom Programm geschrieben, nicht von Hand** — Werkzeug in
+  `test_LoopHammerSaite.cpp`: `LUMIVIZ_GRAND_PIANO_SCHREIBEN=1` schreibt `asset/loop/instruments/grand_piano.lvinst`
+  (vom Arbeitsordner aus, also aus dem Projekt-Root) aus `modelltest::fluegel("lib:steinway_d")` über `alsJson`:
+  eine Schicht „Hammer string“ (`waveform` `string`, `stringModel` `modal`, `excitation` `hammer`), `hammerString`
+  mit **allen** Kurven gleich der Vorgabe (`hammerSaiteVorgabe()`, Datei-Felder immer schreiben), `keyboard` gleich
+  `Tastatur{}` (Umfang A0–C8, `undampedFrom` 89, Pedale Una corda / Sostenuto / Sustain), Titel *Grand Piano*, Fassung
+  `kInstrumentFassung` (19), `level` 1,0 bis 8.3. Danach `python asset/loop/instrument_katalog.py`: Eintrag
+  `"grand_piano": ("keys", "A modal hammer-string grand piano: three strings per key with two decay stages, through
+  the Steinway D soundboard; decay, brightness and detuning measured against the Salamander Yamaha C5.")`;
+  **`ergaenze` trägt `keyboard` durch** (heute baut es `neu` nur aus Kopf, `level`, `layers`, `strings` — die
+  Tastatur fiele still weg; dieselbe Zeile wie für `strings`). **Wächter** im dauerhaften Test
+  (`test_LoopHammerSaite.cpp`, Fall „31d-8 grand_piano trägt die Vorgabe“): die mitgelieferte Datei gelesen, ihre
+  `hammerSaite` gleich `hammerSaiteVorgabe()` und ihre `tastatur` gleich `Tastatur{}` — meldet er Abweichung, ist das
+  Werkzeug neu zu fahren (nach 8.6 und nach 7.5.6; Meldung nennt die Variable). **Zahlen:** `test_LoopInstrument.cpp`
+  Zeile mit `alle.size() == 107` → 108, `instrumente().size() == 107` → 108, `jeArt["keys"] == 9` → 10, die Namensliste
+  im selben Fall um `grand_piano`; `test_LoopInstrumentPalette.cpp` `unter("Keys").size() == 9` → 10;
+  `asset/loop/README.md` Abschnitt *instruments/* um einen Absatz (Herkunft: Werkzeug, nicht Skript; nach einer neuen
+  Vorgabe neu schreiben). `test_LoopWerte` rechnet für das Instrument drei Töne (bei Hammer rund 2–5 s — zulässig).
+- **8.3 Pegel:** aus dem Projekt-Root, Release-clang, `LUMIVIZ_PEGEL_DATEI=<tsv>` mit `--test-case="Loop Pegel:
+  Messung*"`; `python asset/loop/instrument_pegel.py --messung <tsv>` (schreibt `PEGEL` und alle Instrumente neu —
+  Diff prüfen: nur `grand_piano` neu, sonst Bit für Bit gleich), dann `--loops`. `LUMIVIZ_LOOP_WERTE_SCHREIBEN=1`
+  (Diff: nur Zusätze für `grand_piano` und `grand_piano_demo`, keine geänderte Zeile), danach `*Klangfassung*`
+  (neue Dateien ändern `kKlangfassung` nicht; `LUMIVIZ_KLANGFASSUNG_SCHREIBEN=1` nur, wenn der Wächter neue Einträge
+  verlangt). `test_LoopPegel` prüft dann auch `grand_piano` auf ±1 LU.
+- **8.4 Demo-Loop** `grand_piano_demo.lvloop` aus **`asset/loop/make_fluegel_loops.py`** (neu; 31h-3 baut es für die
+  Chopin-Loops aus; Muster wie `make_examples.py`: `loop`, `muster`, `als_text`, Fassung 2, danach `instrument_pegel.py
+  --loops` zieht es nach): 8 Takte, 72 bpm, Genre *Classical*, Titel *Grand piano demo*, zwei Muster — „Left hand“
+  gebrochene Akkorde C–Am–F–G (je Takt Grundton, Quinte, Terz, Oktave als Achtel, MIDI 36–60, Anschlag 0,45), „Right
+  hand“ Melodie (MIDI 64–81, Viertel und Halbe, Anschläge 0,5–0,8); keine Spuren, kein Pedal (31e), Lautstärke des
+  Loops wie `instrument_demo`. Kanäle *Left*, *Right*, Pan −0,2 / 0,2. **Wartezeit** bis zum ersten Ton im Programm
+  einmal gemessen (Zeit vom Start bis zum ersten Abtastwert, aus dem Log oder mit der Uhr) und hier notiert
+  (Kipppunkt UF16 a: über 1 s → Vermerk, kein Umbau in 31d-8).
+- **8.5 Hörproben für u, γ, δ** (für den Ausstieg nach ZZ1 a, vorgezogen): Werkzeug in `test_LoopSalamanderHoerproben.cpp`,
+  `LUMIVIZ_31D8_WAV=<Ordner>` mit `LUMIVIZ_SALAMANDER`, nach dem Muster von `LUMIVIZ_31D_WAV` (gleich laut auf
+  −23 LUFS, `liste.txt` mit Frage je Datei; Ablage `.claude\handover\hoerproben_31d8\`). Je Datei zuerst *Salamander*
+  (Ebene zur Stufe, V1 a), dann die Varianten mit einer Sekunde Stille: **u** (leise = laut) 0 / 0,15 / 0,3 / 0,5 an
+  33, 60, 84 bei mf (−12 dB) und ff (0 dB) — sechs Dateien; **γ** 0 / 5 / 10 / 20° an 24, 33, 60, 84 bei mf — vier
+  Dateien; **δ** 0 / 2 / 4 / 6 Cent an 24 und 28 (eine Saite, γ dabei 10°, sonst wirkt δ nicht) bei mf — zwei Dateien.
+  Alle übrigen Größen die Vorgabe 31d-4. Werte innerhalb SQ2 a (γ 0–25°, δ 0–8 Cent, u 0–1). Patrik hört gesammelt
+  (Memory „Proben später“); seine Wahl je Datei (eine der Varianten, oder „dazwischen“) kommt als Antwort hierher.
+- **8.6 Gehör eintragen** (nach Patriks Wahl aus 8.5, ohne weitere Rückfrage): die gewählten Werte als Stützpunkte in
+  `baueVorgabe()` — `stossLeise`/`stossLaut` an 33, 60, 84 (gleich, bis Patrik leise und laut verschieden hört),
+  `polarisationWinkelGrad` an 24, 33, 60, 84, `polarisationCent` an 24 und 28 (ab 31 bleibt 0: dort trägt `detune`
+  die Schwebung) — Herkunft im Kommentar „nach Gehör, Patrik S15x (31d-8), innerhalb SQ2 a“; „dazwischen“ heißt das
+  Mittel der beiden Nachbarwerte. Danach: Werkzeug aus 8.2 neu (Datei), `*Loop Werte*` neu geschrieben (Diff: nur
+  `grand_piano*`-Zeilen und die Hammer-Instrumente — es gibt keine anderen), `klangfassung.txt` neu, Bezug der
+  Hammer-Saite unverändert (er hält u = 0 fest, `werte/hammer_bezug_saite.json`); der dauerhafte Test
+  (`test_LoopSalamanderSetzen`) prüft u, γ, δ **nicht** gegen *Salamander* (nicht gemessen), nur dass sie in SQ2 a
+  liegen (ein `CHECK` je Kurve im Fall der Vorgabe). Hört Patrik keinen Unterschied, bleibt 0 (so steht es heute).
+- **8.7 Abschluss:** beide Compiler, voller Lauf (UF17 a); Rechenzeit RZ1-1 a dreimal mit Taktprobe (kein Rechenkern
+  geändert — Bezug bitgleich ist der Beleg, die Messung bestätigt es); `LumiViz.exe` Release-clang bauen (die
+  Asset-Kopie neben der Exe bekommt `grand_piano` erst damit), Exe-Pfad an Patrik, der das Programm selbst startet;
+  `modell.md` §2 (Zeilen u, γ, δ mit Herkunft „nach Gehör“), `Offene_Punkte` §7, Changelog 157, Handover.
+  Commit-Messages je Schritt: Konzept (SP1 a–SP3 a, Teilplan); 8.2–8.4 zusammen; 8.5; 8.6; 8.7.
+- **Danach, in dieser Reihenfolge:** SM4 b 7.5.7–7.5.11 mit SP2 a und SP3 a (ein Anlauf, ZZ1 a) — für 7.5.10 nach
+  SP2 a: Parameter in ihrer Skala (logarithmisch für `decay`, `lateDecay`, `highDecay`; linear für `detune`, u, γ, δ),
+  Grenzen nach SQ2 a durch Abschneiden je Schritt, Schritt der finiten Differenz 1 % der Größe (logarithmisch) bzw.
+  1 % des Bereichs (linear), Dämpfung λ nach Marquardt (× 10 bei schlechterem Rest, ÷ 10 bei besserem, Start 10⁻³),
+  Ende bei Schritt unter 1 % oder höchstens 20 Iterationen, Bericht je Iteration mit Rest je Taste und der Diagonale
+  von JᵀJ je Stützpunkt (welche Größen ihn festlegen); dann 31d-7 C; 31e–31h. Verfehlt die Probe 7.5.11, bleiben die
+  Werte aus 8.6 (ZZ1 a).
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -4583,6 +4709,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.93.0 | 2026-10-27 | Session 157 (Sitzung mit Fable 5.1). Lage: Hörproben 31d seit dem 25.10. ungehört, das Setzen ein Forschungsproblem (Auflösung der Aufnahme), der Flügel im Programm nicht anspielbar; SP1 a (31d-8 „Spielbar“ vor SM4 b: Hörurteil, `grand_piano` mitgeliefert, Demo-Loop, u/γ/δ nach Gehör), SP2 a (Levenberg–Marquardt über die Stützpunkte der Kurven, ändert ZF6 a), SP3 a (Eindeutigkeit an den Messgrößen, ändert ZF8 a (3)); Teilplan 31d-8 (8.1–8.7) so geklärt, dass der Bau ohne Rückfrage läuft; Lehren für die übrigen Klassen in `InstrumentsCalculation/LEHREN_SETZEN_FLUEGEL.md`. |
 | 0.92.0 | 2026-10-27 | Session 156. Rechenweg der Probe gemessen (`LUMIVIZ_75_ZEIT`, Taktprobe: Wärmegrenze), Längskraft und Pool bitgleich schneller; Probe 7.5.4 neu (54 min): (1), (5), (6), (8), K6-1 a halten, (2), (3), (4), (7) verfehlt; Gegenprobe der Sprünge (Regel (b)); GP1 a, RV1 a gebaut; Probe nach RV1 a verfehlt wieder → SM4 b gilt (GP1 a), 7.5.5 läuft nicht, Teilplan SM4 b offen; PB1 a (Berichte unter `modellierung/hammer-saite/proben/`). |
 | 0.91.0 | 2026-10-26 | Session 154. 31d-7 B: TB1 a (Tiefe der Einbrüche je Periode, `einbruchDb`); erstes Setzen mit γ und δ nicht brauchbar, SZ1 a (Untersuchung der Tiefe im Chor); SZ2 a (ungleicher Stoß je Saite, Plan erweitern), US1 a bis US7 a, Teilplan 7.1–7.7; 7.1 Messgrenze (US6 a gekippt, US6-1 a: 90 dB), 7.2 Stoß im Modell (`.lvinst` 19, Klangfassung 3), 7.3 Tests; 7.4 zweite Stufe im Diskant: RB1 a (Blindanteil) nach Befund am Körper zurückgenommen, RB1-1 a (Ursache die Verstimmung der Vorgabe); 7.5 Setzen zweimal nicht brauchbar → SZ3 a (am Modell der Moden), Probe Moden gegen Ton, SM1 a, SM2 a, SM3 a (gekippt), SM4 a (an den Abklingkurven je Teilton, eigener Teilplan offen); Frage Patrik Moden und Waveguides (an `InstrumentsCalculation`). |
 | 0.90.0 | 2026-10-25 | Session 153. Teilplan 31d-7 begonnen: Lage der Quellen zur zweiten Ebene; P1 a (Recherche und Weinreich 1977 vor dem Bau); Befund der Recherche (Cuenca & Caussé 2007, Tan 2017); P2 a (zwei Eigenrichtungen mit δ und γ, Steg σ_V/σ_H ohne Kreuzterm); P3 a (Kurven `polarizationAngle`, `polarizationDetune`, `horizontalShare`); P4 a (γ aus dem Knick, δ an Tasten mit einer Saite, Tiefe der Einbrüche als Prüfgröße); P5 a (Längsschwingung aus beiden Ebenen, je Saite); P6 a (eigener Löser, Grenze der Rechenzeit); P7 a (`.lvinst` Fassung 18); P8 a (Tests); fester Teilplan 31d-7 (neun Punkte), ZS1 a (drei Teilschritte A, B, C); Befund zu P3 a, P3-1 a (h = Verhältnis waagrecht zu senkrecht); Befund Rechenzeit, RZ1 a (gekippt), RZ1-1 a (Grenze von Hand); Befund Winkel im Chor, WK1 a (bis B ausgesetzt). |
