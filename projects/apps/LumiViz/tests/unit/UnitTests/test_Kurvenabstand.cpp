@@ -135,6 +135,35 @@ TEST_CASE("Loop Kurvenabstand 31d-7 B gleich, gekuerzt, stetig (7.5.3)")
     }
 }
 
+TEST_CASE("Loop Kurvenabstand S156 fehlende Kurve des Modells (RV1 a)")
+{
+    // Salamander: T60 4 s ueber 8 s; das Modell faellt immer schneller, zuletzt fehlt ihm die Kurve
+    const TeiltonKurven s = kurvenVon(huelle(4.0, 0.0, 1.0, 1000, 10, 800));
+    std::vector<double> d;
+    for (const double t60 : {4.0, 2.0, 1.0, 0.5, 0.25, 0.1, 0.05})
+        d.push_back(kurvenAbstand(kurvenVon(huelle(t60, 0.0, 1.0, 1000, 10, 800)), s).abklingenDb);
+    const KurvenAbstand fehlt = kurvenAbstand(TeiltonKurven{}, s);
+    REQUIRE(fehlt.gilt);
+    MESSAGE("T60 4 … 0,05 s: " << d[0] << ", " << d[1] << ", " << d[2] << ", " << d[3] << ", " << d[4] << " … " << d.back()
+                                << " dB; ohne Kurve " << fehlt.abklingenDb << " dB");
+    // waechst, bis das Modell schneller faellt als das Raster (0,05 s): ab T60 0,25 s gleich dem Fall ohne Kurve
+    for (std::size_t i = 1; i <= 3; ++i)
+    {
+        CAPTURE(i);
+        CHECK(d[i] > d[i - 1]);
+    }
+    for (std::size_t i = 4; i < d.size(); ++i)
+    {
+        CAPTURE(i);
+        CHECK(d[i] == doctest::Approx(fehlt.abklingenDb).epsilon(1e-9));
+    }
+    // nie billiger als ein Modell mit Kurve, und ohne Sprung am Uebergang (T60 0,5 s liegt 0,05 dB darunter)
+    for (const double x : d) CHECK(fehlt.abklingenDb >= x - 1e-9);
+    CHECK(fehlt.abklingenDb - d[3] < 0.5);
+    // dasselbe Gewicht wie mit Kurve
+    CHECK(fehlt.gewicht == doctest::Approx(kurvenAbstand(s, s).gewicht).epsilon(0.05));
+}
+
 TEST_CASE("Loop Kurvenabstand 31d-7 B Gewicht und Taste (7.5.3)")
 {
     // Fall bis 1 s vor dem Ende: T60 20 s ueber 6 s Bereich faellt etwa 15 dB → Gewicht ≈ 0,25; T60 2 s faellt weit

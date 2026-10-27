@@ -3194,13 +3194,17 @@ unter seinen Boden (das Leck des langsameren Teiltons 2); nach dem Abzug kommt k
 danach flach, der Vergleich teilte null durch null (Abstand 261 dB) → eine Kurve endet an ihrer letzten Energie über
 dem Boden (`schroederKurve`; an *Salamander* ändern sich dadurch 2 von 939 Kurven, neu gemessen); (b) endet die Kurve
 des Modells, bevor ein Vergleich möglich ist, zählt sie als fehlte dem Modell der ganze Abfall (Abstand = Kurve von
-*Salamander* gegen 0 dB) — sonst verbesserte ein zu früh verstummendes Modell den Abstand; (c) neu bezogene Kurven
+*Salamander* gegen 0 dB) — sonst verbesserte ein zu früh verstummendes Modell den Abstand (**abgelöst durch RV1 a, S156**:
+gegen 0 dB war milder als jede schnell fallende Kurve); (c) neu bezogene Kurven
 höchstens 100 dB tief (unter der Messgrenze von 90 dB ist nichts gemessen; tiefer rechnete der Vergleich an der Grenze
 der Genauigkeit — 48 Teilton 1 fiel in der ersten Stufe schneller als 150 dB). **(1) Rechenzeit:** eine Auswertung
 (11 Ebenen auf 8 Threads) 0,8–7,0 s je Taste, im Mittel 2,3–3,0 s (Taktdrosselung); hochgerechnet mit höchstens 150
 Auswertungen je Suche: Setzen 30 Tasten × 2 Startpunkte **5,8–7,4 h** (Schwelle 12 h, hält); die Probe höchstens rund
 2 h — so angesagt, dann gestartet. Abstand am Start: 33 12,4 dB, 48 52,4 dB, 60 8,7 dB, 66 10,1 dB, 81 10,0 dB,
-84 15,0 dB.
+84 15,0 dB. **Dieser erste Lauf brach ab** (S156 festgestellt): der Bericht endet nach Teil (2) an Taste 33 (letzte Zeile
+23:53), der Prozess lief am Morgen nicht mehr; Ursache nicht festgestellt — vermutlich mit dem Ende der Sitzung beendet
+(er lief aus ihrem Hintergrund). Bericht unter `.claude/handover/probe75/probe75.txt`; die Probe S156 wiederholt seine
+Zeilen Zeichen für Zeichen.
 
 ✅ **SE1 a** (Patrik S155): **Das Setzen 7.5.5 läuft je Taste; jede fertige Taste wird sofort in eine Ergebnisdatei
 geschrieben, ein neuer Lauf überspringt, was fertig ist (Stücke beliebiger Länge, etwa 5 Tasten ≈ 1 h). Zuerst eine
@@ -3266,6 +3270,43 @@ Dazu liegen an 48 `decay` und `lateDecay` an ihrer oberen Grenze (Faktor 3 um de
 frühe Abklingzeit an 48 schon in S154 fraglich war). An **60** ist der Sprung bei der Verstimmung 0 → 0,43 Cent echt:
 ohne Verstimmung fehlt die späte Stufe, Teilton 1 fällt bis 7,9 s um 90 dB, der Vergleich endet dort (K6 a) —
 25 dB gegen 10–13 dB mit Verstimmung.
+
+✅ **GP1 a** (Patrik S156): **SM4 a bleibt vorerst. Regel (b) aus dem Bau wird als eigene Frage neu gefasst und
+entschieden; ein Modell ohne Kurve darf nicht billiger sein als eines mit falscher Kurve. Danach läuft die Probe 7.5.4
+neu, mit denselben Schwellen nach SW1 a (rund 1 h). Kippt sie wieder, gilt SM4 b ohne weitere Frage.** Grund: die Probe
+soll die Methode beurteilen, nicht einen Fehler in einer nie entschiedenen Hilfsregel; die Schwellen bleiben, repariert
+wird nur, was die Gegenprobe als Fehler belegt. Verworfen: b (SM4 a kippt nach dem Wortlaut; SM4 b, K3 b, K2 b — zurück
+auf eine aus gutem Grund verworfene Option wegen eines Fehlers, der in ihr nicht vorkommt). Kippt auf b, wenn die neue
+Probe wieder verfehlt.
+
+✅ **RV1 a** (Patrik S156): **Fehlt dem Modell die Kurve (Teilton nicht gefunden, Kurve endet vor dem Vergleich, kein
+Restintegral), gilt sie als sofort bis zur Untergrenze gefallen: 0 dB am ersten verglichenen Punkt, danach −100 dB;
+verglichen über den Bereich von *Salamander* wie bisher, mit demselben Gewicht; die Autokovarianz zählt gegen null wie
+bisher.** Löst Regel (b) aus dem Bau ab (dort: gegen 0 dB, als klänge das Modell gar nicht ab). Grund: in allen drei
+Fällen fehlt dem Modell Energie, es fällt schneller als messbar — so ist ein fehlender Teilton nie billiger als einer,
+der zu schnell fällt, und eine immer schneller fallende Kurve geht stetig in diesen Fall über; nur der Maßstab auf der
+Seite des Modells ändert sich, Messung und `salamander_c5.txt` bleiben. Verworfen: b (die Kurve aus der Hüllkurve an der
+erwarteten Frequenz ohne Erkennung bilden — fiele an 48 auf a zurück, Teilton 1 liegt dort unter dem eigenen Boden, und
+bräuchte für das Modell einen eigenen Weg durch die Messung gegen K6 a). Kippt auf b, wenn die neue Probe zeigt, dass
+Teiltöne oft knapp über dem Boden an der Erkennung scheitern.
+
+**RV1 a gebaut (S156):** `Kurvenabstand.hpp` (`ohneModell`, `kKurveUntergrenzeDb`); neuer Fall „fehlende Kurve des
+Modells (RV1 a)“ in `test_Kurvenabstand`: fällt das Modell immer schneller (T60 4 … 0,05 s gegen 4 s), wächst der
+Abstand 0 → 28,4 → 53,9 → 56,39 dB und ist ab T60 0,25 s gleich dem Fall ohne Kurve (56,43 dB) — kein Sprung, nie
+billiger. Release-clang und Testing-MSVC `*Kurvenabstand*,*Salamander*,*Teiltonmessung*,*Loop Hammer*,*Loop Werte*,
+*Klangfassung*` je 65 / 65; Bezüge unverändert.
+
+**Befund S156 — Probe 7.5.4 nach RV1 a** (Bericht `.claude/handover/probe75_rv1/probe75.txt`, 58 min, dieselben
+Schwellen nach SW1 a): (1) hält (1,52 s je Auswertung, Setzen 3,8 h); **(2) verfehlt** (Abklingen und Schwebung glatt an
+0 von 6); **(3) verfehlt** (0 von 6); **(4) verfehlt** (0 von 6 ohne Parameter an der Grenze); (5), (6) halten wie
+zuvor; **(7) verfehlt** wie zuvor (0 von 6); (8) hält (3 von 6, 33 68,2 %, 48 71,6 %, 81 8,9 %); K6-1 a hält (27,7 %).
+An 48 sind die Sprünge kleiner geworden (`decay` größter Schritt 27,6 → 4,8 dB, Verstimmung 32,1 → 9,2 dB), an 33
+größer (`decay` 7,5 → 54,2 dB, Verstimmung 4,9 → 40,4 dB, u laut 0,7 → 12,8 dB): dort fallen jetzt Kurven aus, die
+vorher als „klingt gar nicht ab“ billig zählten. Die Sprünge kommen also nicht nur aus der Regel — das Modell selbst
+verliert und gewinnt Teiltöne und Stufen an Schwellen (wie an 60 die späte Stufe bei Verstimmung 0).
+**Damit gilt nach GP1 a SM4 b** (abgeleitete Größen mit geglätteter Erkennung, unsichere Ziele aussortiert); K3 b und
+K2 b betreffen den Kurvenabstand und entfallen mit ihm; SE1 a kippt auf b — 7.5.5 läuft nicht. Für SM4 b steht vor dem
+Bau ein eigener Teilplan aus (fest nummeriert, PL31 a); RV1 a und der Kurvenabstand bleiben als Prüfgrößen im Bericht.
 
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
@@ -4427,7 +4468,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.92.0 | 2026-10-27 | Session 156. Rechenweg der Probe gemessen (`LUMIVIZ_75_ZEIT`, Taktprobe: Wärmegrenze), Längskraft und Pool bitgleich schneller; Probe 7.5.4 neu (54 min): (1), (5), (6), (8), K6-1 a halten, (2), (3), (4), (7) verfehlt — SM4 a kippt nach SW1 a, dazu K3 b und K2 b, 7.5.5 läuft nicht; Ursache der Sprünge offen. |
+| 0.92.0 | 2026-10-27 | Session 156. Rechenweg der Probe gemessen (`LUMIVIZ_75_ZEIT`, Taktprobe: Wärmegrenze), Längskraft und Pool bitgleich schneller; Probe 7.5.4 neu (54 min): (1), (5), (6), (8), K6-1 a halten, (2), (3), (4), (7) verfehlt; Gegenprobe der Sprünge (Regel (b)); GP1 a, RV1 a gebaut; Probe nach RV1 a verfehlt wieder → SM4 b gilt (GP1 a), 7.5.5 läuft nicht, Teilplan SM4 b offen. |
 | 0.91.0 | 2026-10-26 | Session 154. 31d-7 B: TB1 a (Tiefe der Einbrüche je Periode, `einbruchDb`); erstes Setzen mit γ und δ nicht brauchbar, SZ1 a (Untersuchung der Tiefe im Chor); SZ2 a (ungleicher Stoß je Saite, Plan erweitern), US1 a bis US7 a, Teilplan 7.1–7.7; 7.1 Messgrenze (US6 a gekippt, US6-1 a: 90 dB), 7.2 Stoß im Modell (`.lvinst` 19, Klangfassung 3), 7.3 Tests; 7.4 zweite Stufe im Diskant: RB1 a (Blindanteil) nach Befund am Körper zurückgenommen, RB1-1 a (Ursache die Verstimmung der Vorgabe); 7.5 Setzen zweimal nicht brauchbar → SZ3 a (am Modell der Moden), Probe Moden gegen Ton, SM1 a, SM2 a, SM3 a (gekippt), SM4 a (an den Abklingkurven je Teilton, eigener Teilplan offen); Frage Patrik Moden und Waveguides (an `InstrumentsCalculation`). |
 | 0.90.0 | 2026-10-25 | Session 153. Teilplan 31d-7 begonnen: Lage der Quellen zur zweiten Ebene; P1 a (Recherche und Weinreich 1977 vor dem Bau); Befund der Recherche (Cuenca & Caussé 2007, Tan 2017); P2 a (zwei Eigenrichtungen mit δ und γ, Steg σ_V/σ_H ohne Kreuzterm); P3 a (Kurven `polarizationAngle`, `polarizationDetune`, `horizontalShare`); P4 a (γ aus dem Knick, δ an Tasten mit einer Saite, Tiefe der Einbrüche als Prüfgröße); P5 a (Längsschwingung aus beiden Ebenen, je Saite); P6 a (eigener Löser, Grenze der Rechenzeit); P7 a (`.lvinst` Fassung 18); P8 a (Tests); fester Teilplan 31d-7 (neun Punkte), ZS1 a (drei Teilschritte A, B, C); Befund zu P3 a, P3-1 a (h = Verhältnis waagrecht zu senkrecht); Befund Rechenzeit, RZ1 a (gekippt), RZ1-1 a (Grenze von Hand); Befund Winkel im Chor, WK1 a (bis B ausgesetzt). |
 | 0.89.0 | 2026-10-25 | Session 152. 31d-6 begonnen: Befund an den Hüllkurven (das Modell löscht an den Einbrüchen fast vollständig aus); N1 a (Messung nach Schroeder, gebaut, synthetische Fälle mit Auslöschung); Befund Setzen mit der neuen Messung (konvergiert schlecht); N2 a (Messung bleibt, zweite Polarisation als 31d-7 „Plan erweitern“, dauerhafter Test bis dahin nur B und Winkel); `werte/salamander_c5.txt` neu gemessen. |

@@ -20,6 +20,7 @@
  * - *Gewicht* (K3 a): der Fall der Kurve von *Salamander* ueber die verglichenen Punkte durch 60 dB,
  *   hoechstens 1 — die Datei traegt den Boden nicht; der Fall bis 1 s vor dem Ende eines Bereichs, der
  *   10 dB ueber dem Boden endet, steht fuer den Bereich ueber dem Boden (festgelegt im Bau, S155).
+ * - *Fehlt dem Modell die Kurve* (RV1 a): sie zaehlt als sofort bis zur Untergrenze (−100 dB) gefallen.
  * - *Je Taste* (K2 a): d² = Abklingen² + Schwebung² je Kurve (1 : 1), gewichtet gemittelt ueber
  *   Ebenen und Teiltoene, die Wurzel daraus.
  ****************************************************************************************
@@ -51,6 +52,9 @@ struct KurvenAbstand
     std::size_t endePunkt = 0; ///< gemeinsames Ende, absolut
 };
 
+/// So tief reicht eine neu bezogene Kurve hoechstens (`detail::neuBezogen`: 10^(−10)), in dB unter ihrem Anfang.
+inline constexpr double kKurveUntergrenzeDb = 100.0;
+
 namespace detail
 {
 
@@ -80,16 +84,16 @@ inline KurvenAbstand kurvenAbstand(const TeiltonKurven& m, const TeiltonKurven& 
     if (!s.erkannt || s.kurve.db.empty()) return a;
     const double raster = s.kurve.rasterS;
     const auto rand = static_cast<std::size_t>(std::lround(randS / raster));
-    // Hat das Modell keine Kurve oder endet sie, bevor ein Vergleich moeglich ist, zaehlt die Kurve trotzdem: als
-    // fehlte dem Modell der ganze Abfall von *Salamander* (Abstand = die Kurve von Salamander gegen 0 dB, die
-    // Autokovarianz gegen null) — sonst verbesserte ein Modell, das zu frueh verstummt, den Abstand (Befund S155,
-    // festgelegt im Bau)
+    // Hat das Modell keine Kurve, endet sie, bevor ein Vergleich moeglich ist, oder traegt sie kein Restintegral, fehlt
+    // ihm dort Energie: die Kurve zaehlt als sofort bis zur Untergrenze gefallen — 0 dB am ersten Punkt, danach
+    // −100 dB wie in `neuBezogen`; die Autokovarianz gegen null (RV1 a, S156). So ist ein fehlender Teilton nie
+    // billiger als einer, der zu schnell faellt.
     const auto ohneModell = [&] {
         const std::size_t n = s.kurve.gueltig;
         if (n < 2) return a;
         KurvenAbstand o;
         double q = 0.0;
-        for (std::size_t j = 0; j < n; ++j) q += s.kurve.db[j] * s.kurve.db[j];
+        for (std::size_t j = 1; j < n; ++j) q += (s.kurve.db[j] + kKurveUntergrenzeDb) * (s.kurve.db[j] + kKurveUntergrenzeDb);
         o.abklingenDb = std::sqrt(q / static_cast<double>(n));
         double c = 0.0;
         for (const double v : s.kovarianz.db2) c += v * v;
