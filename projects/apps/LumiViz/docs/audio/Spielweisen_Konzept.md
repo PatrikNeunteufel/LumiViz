@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.91.0
+> **Version:** 0.92.0
 > **Datum:** 2026-10-26 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -3210,6 +3210,63 @@ Taste; die Stichprobe deckt die Lücke der Probe (Bass mit einer Saite: γ und �
 kurze Kurven, K6-1 a). Verworfen: b (die Probe als Stichprobe), c (ein Lauf über alle 30 Tasten — Lehre aus S154).
 Kippt auf b, wenn die Probe 7.5.4 an einer Bedingung scheitert (dann wird ohnehin nicht gesetzt).
 
+**Rechenweg der Probe (S156, bitgleich):** gemessen mit `LUMIVIZ_75_ZEIT` (Zeit je Phase eines Tons auf einem Thread,
+Durchsatz je Zahl der Threads, Taktprobe über Libre Hardware Monitor; Berichte `.claude/handover/probe75/zeit75_*.txt`).
+Ein Ton an Ebene v11 auf einem Thread: 33 1,5 s (Längskraft 0,62, Saite ohne sie 0,18, Boden und Rest 0,13, Messung
+0,59), 60 0,47 s (0,21 / 0,06 / 0,06 / 0,15), 84 0,12 s (Boden und Messung tragen fast alles). Die Längskraft rechnet
+jeden Takt über alle Moden bis zu 10 s und ist im Bass und in der Mitte der größte Teil; die Messung ist `miss()` selbst
+(eine Kurzzeit-FFT je Rahmen für alle Teiltöne — Pegel, Direktschall und Terzen kosten fast nichts, ein Weg nur für die
+Kurven brachte nichts und wurde zurückgenommen). Durchsatz an 60 (drei Auswertungen auf einem Pool): 1 Thread 4,93 s je
+Auswertung, 8 Threads 1,12 s, **11 Threads 0,93 s**, 16 1,00 s, 32 1,16 s — der Prozessor steht dabei an seiner
+Wärmegrenze (Tctl 98–99,6 °C schon mit einem Thread), mehr Threads drosseln nur stärker. Umgebaut, Bit für Bit gleich:
+die Längskraft liest die Formen der Moden flach statt je Mode verstreut (10–13 %, Bezug der Hammer-Saite, `*Loop Werte*`,
+`*Klangfassung*` unverändert); die Probe rechnet auf einem Pool mit 11 Threads — die Punkte aller Schnitte einer Taste
+zugleich, die Suchen A und B nebeneinander (Fall „Pool wie nacheinander“; die neue Probe wiederholt Teil (1) und die
+Schnitte an 33 der abgebrochenen Probe Zeichen für Zeichen). Die Probe brauchte 54 min. Voller Lauf 1631 / 1631,
+0 Skips unter Release-clang (8,3 min) und Testing-MSVC (7,5 min); Rechenzeit von Hand (RZ1-1 a) mit Taktprobe (Tctl im
+Mittel 94 °C, höchstens 97 °C): Taste 40 3,73–3,82 % der Echtzeit (S153: 4,35–4,60 %; Grenze 4,6 %).
+
+**Befund S156 — Probe 7.5.4, Urteile nach SW1 a** (Bericht `.claude/handover/probe75_s156/probe75.txt`, mit
+`LUMIVIZ_SALAMANDER`, Taktprobe `takt_probe.tsv`):
+- **(1) Rechenzeit hält:** 1,38 s je Auswertung (Pool), im Mittel 151 Auswertungen je Suche → Setzen 3,5 h (≤ 12 h).
+- **(2) Glätte verfehlt:** Anteil Abklingen glatt an 0 von 6 Tasten, Anteil Schwebung an 0 von 6 (Schwelle ≥ 5) →
+  **K3 b und SM4 b**. Glatt sind nur einzelne Schnitte (`highDecay` an 33, 48, 81, 84; `decay` an 81 und 84; u an 60,
+  81, 84). Die Sprünge sind groß: an 48 `decay` 0,61 → 0,71 s springt der Abstand Abklingen 24,95 → 52,51 dB, die
+  Verstimmung 4,71 → 5,14 Cent 53,6 → 21,5 dB; an 60 die Verstimmung 0 → 0,43 Cent 22,4 → 7,4 dB; an 66 `lateDecay` in
+  Stufen von 2–3 dB.
+- **(3) Eindeutig verfehlt:** an 0 von 6 Tasten (Schwelle ≥ 5) → **SM4 b**. Rest der Suchen A / B: 33 2,17 / 7,43 dB,
+  48 13,22 / 13,85, 60 6,22 / 6,00, 66 4,30 / 4,89, 81 5,12 / 7,24, 84 5,88 / 6,09; die Endwerte liegen bis Faktor 2
+  auseinander, auch wo der Rest fast gleich ist (60, 84) — die Fläche hat flache Täler.
+- **(4) Grenze verfehlt:** an jeder Taste mindestens ein Parameter an seiner Grenze (Schwelle ≥ 5 ohne) → Befund je
+  Taste und Entscheid: 33 `highDecay` oben; 48 `decay` und `lateDecay` oben, u leise unten; 60 `highDecay` oben; 66
+  `highDecay` unten (B oben); 81 `highDecay` unten; 84 `decay` unten.
+- **(5) Raum hält:** die späte Stufe fällt so schnell wie der Boden an 26 von 337 zweistufigen Kurven (< 1/3).
+- **(6) Abzug hält:** ändert an 43 von 198 Kurven mehr als 0,5 dB (≥ 1/10); mehr als 5 % Rahmen unter 0 an 5 (< 1/10).
+- **(7) Ebenen gegen Kanäle verfehlt:** die Kurven unterscheiden sich über v6–v16 an **0 von 6** Tasten mehr als zwischen
+  den Kanälen (33 0,67 gegen 1,53 dB, 48 0,62 / 3,45, 60 1,71 / 7,01, 66 1,19 / 3,87, 81 1,62 / 4,22, 84 2,17 / 4,99) →
+  nach SW1 a **K2 b**. (SW1 a nennt für (7) keine Zahl der Tasten, das Werkzeug berichtet deshalb nur; mit 0 von 6
+  greift „sonst K2 b“ unter jeder Schwelle.)
+- **(8) Moden gegen Ton hält:** weicht an 2 von 6 Tasten mehr als 5 % ab (33 43,7 %, 81 8,9 %) → K4 a bleibt.
+- **(K6-1 a) hält:** die letzten 20 % tragen im Mittel 28,5 % des Anteils Abklingen (≤ 50 %).
+
+**Damit kippt SM4 a nach dem Wortlaut von SW1 a (Zeilen (2) und (3)), dazu K3 b und K2 b; (4) verlangt einen Entscheid
+je Taste. 7.5.5 läuft nicht (SE1 a kippt auf b).** Noch nicht geprüft (Claude, nicht entschieden): ob die großen Sprünge
+aus der Physik kommen oder aus den Regeln des Abstands, die im Bau festgelegt und nicht entschieden sind (Kurve endet an
+ihrer letzten Energie; Modell ohne Kurve zählt als fehlender Abfall; Gewicht und Bereich „gilt“) — ein Sprung von 28 dB
+zwischen zwei benachbarten Punkten passt zu einer Kurve, die an einer Schwelle ein- oder ausfällt, nicht zu einem stetig
+ändernden Abklingen.
+
+**Gegenprobe S156 (`LUMIVIZ_75_SPRUNG`, Bericht `.claude/handover/probe75_s156/spruenge75.txt`, je Kurve an beiden
+Nachbarpunkten):** An **48** kommen beide Sprünge allein aus Teilton 1 des Modells: bei `decay` 0,61 s und bei
+Verstimmung 5,14 Cent wird er nicht erkannt (keine Kurve) und zählt nach Regel (b) aus dem Bau als fehlender Abfall —
+**23 dB** je Ebene; bei 0,71 s bzw. 4,71 Cent wird er erkannt, seine Kurve liegt **71–73 dB** neben *Salamander*.
+Teilton 2 und 3 ändern sich dabei um weniger als 1 dB (Verstimmung: um 2–7 dB, stetig). **Ein Modell ohne Grundton
+schneidet so besser ab als eines mit falsch abklingendem — der Sprung ist ein Fehler der Regel (b), nicht der Kurven.**
+Dazu liegen an 48 `decay` und `lateDecay` an ihrer oberen Grenze (Faktor 3 um den Messwert von *Salamander*, dessen
+frühe Abklingzeit an 48 schon in S154 fraglich war). An **60** ist der Sprung bei der Verstimmung 0 → 0,43 Cent echt:
+ohne Verstimmung fehlt die späte Stufe, Teilton 1 fällt bis 7,9 s um 90 dB, der Vergleich endet dort (K6 a) —
+25 dB gegen 10–13 dB mit Verstimmung.
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und
@@ -4370,6 +4427,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.92.0 | 2026-10-27 | Session 156. Rechenweg der Probe gemessen (`LUMIVIZ_75_ZEIT`, Taktprobe: Wärmegrenze), Längskraft und Pool bitgleich schneller; Probe 7.5.4 neu (54 min): (1), (5), (6), (8), K6-1 a halten, (2), (3), (4), (7) verfehlt — SM4 a kippt nach SW1 a, dazu K3 b und K2 b, 7.5.5 läuft nicht; Ursache der Sprünge offen. |
 | 0.91.0 | 2026-10-26 | Session 154. 31d-7 B: TB1 a (Tiefe der Einbrüche je Periode, `einbruchDb`); erstes Setzen mit γ und δ nicht brauchbar, SZ1 a (Untersuchung der Tiefe im Chor); SZ2 a (ungleicher Stoß je Saite, Plan erweitern), US1 a bis US7 a, Teilplan 7.1–7.7; 7.1 Messgrenze (US6 a gekippt, US6-1 a: 90 dB), 7.2 Stoß im Modell (`.lvinst` 19, Klangfassung 3), 7.3 Tests; 7.4 zweite Stufe im Diskant: RB1 a (Blindanteil) nach Befund am Körper zurückgenommen, RB1-1 a (Ursache die Verstimmung der Vorgabe); 7.5 Setzen zweimal nicht brauchbar → SZ3 a (am Modell der Moden), Probe Moden gegen Ton, SM1 a, SM2 a, SM3 a (gekippt), SM4 a (an den Abklingkurven je Teilton, eigener Teilplan offen); Frage Patrik Moden und Waveguides (an `InstrumentsCalculation`). |
 | 0.90.0 | 2026-10-25 | Session 153. Teilplan 31d-7 begonnen: Lage der Quellen zur zweiten Ebene; P1 a (Recherche und Weinreich 1977 vor dem Bau); Befund der Recherche (Cuenca & Caussé 2007, Tan 2017); P2 a (zwei Eigenrichtungen mit δ und γ, Steg σ_V/σ_H ohne Kreuzterm); P3 a (Kurven `polarizationAngle`, `polarizationDetune`, `horizontalShare`); P4 a (γ aus dem Knick, δ an Tasten mit einer Saite, Tiefe der Einbrüche als Prüfgröße); P5 a (Längsschwingung aus beiden Ebenen, je Saite); P6 a (eigener Löser, Grenze der Rechenzeit); P7 a (`.lvinst` Fassung 18); P8 a (Tests); fester Teilplan 31d-7 (neun Punkte), ZS1 a (drei Teilschritte A, B, C); Befund zu P3 a, P3-1 a (h = Verhältnis waagrecht zu senkrecht); Befund Rechenzeit, RZ1 a (gekippt), RZ1-1 a (Grenze von Hand); Befund Winkel im Chor, WK1 a (bis B ausgesetzt). |
 | 0.89.0 | 2026-10-25 | Session 152. 31d-6 begonnen: Befund an den Hüllkurven (das Modell löscht an den Einbrüchen fast vollständig aus); N1 a (Messung nach Schroeder, gebaut, synthetische Fälle mit Auslöschung); Befund Setzen mit der neuen Messung (konvergiert schlecht); N2 a (Messung bleibt, zweite Polarisation als 31d-7 „Plan erweitern“, dauerhafter Test bis dahin nur B und Winkel); `werte/salamander_c5.txt` neu gemessen. |

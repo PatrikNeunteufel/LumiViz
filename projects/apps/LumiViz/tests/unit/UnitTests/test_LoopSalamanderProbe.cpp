@@ -190,43 +190,94 @@ Bewertung bewerte(int midi, const std::vector<TonKurven>& jeEbene, const KurvenB
     return b;
 }
 
+/// `einer(i)` fuer i = 0 … zahl − 1 auf `threads` Threads; jede Aufgabe rechnet fuer sich.
+void parallelJe(int zahl, unsigned threads, const std::function<void(int)>& einer)
+{
+    std::atomic<int> naechste{0};
+    std::vector<std::thread> arbeiter;
+    for (unsigned a = 0; a < std::max(1u, threads); ++a)
+        arbeiter.emplace_back([&] {
+            for (int i = naechste++; i < zahl; i = naechste++) einer(i);
+        });
+    for (std::thread& t : arbeiter) t.join();
+}
+
+/// So viele Ebenen v6–v16 hat eine Auswertung.
+constexpr int kAuswertungEbenen = kEbenen - kKurvenEbeneAb + 1;
+
+/// So viele Threads rechnen die Toene (S156, `LUMIVIZ_75_ZEIT`: am schnellsten, mehr werden langsamer — der
+/// Prozessor steht an der Waermegrenze); eine Auswertung so in einem Durchgang.
+const unsigned kPoolThreads = std::max(1u, std::min(static_cast<unsigned>(kAuswertungEbenen), std::thread::hardware_concurrency()));
+
 /// Je Ebene v6–v16 parallel: `einer(e)` gibt die Kurven der Ebene.
 std::vector<TonKurven> jeEbene(const std::function<TonKurven(int)>& einer)
 {
-    const int zahl = kEbenen - kKurvenEbeneAb + 1;
-    std::vector<TonKurven> kurven(static_cast<std::size_t>(zahl));
-    std::atomic<int> naechste{0};
-    std::vector<std::thread> arbeiter;
-    const unsigned threads = std::max(1u, std::min(8u, std::thread::hardware_concurrency()));
-    for (unsigned a = 0; a < threads; ++a)
-        arbeiter.emplace_back([&] {
-            for (int i = naechste++; i < zahl; i = naechste++) kurven[static_cast<std::size_t>(i)] = einer(kKurvenEbeneAb + i);
-        });
-    for (std::thread& t : arbeiter) t.join();
+    std::vector<TonKurven> kurven(static_cast<std::size_t>(kAuswertungEbenen));
+    parallelJe(kAuswertungEbenen, kPoolThreads, [&](int i) { kurven[static_cast<std::size_t>(i)] = einer(kKurvenEbeneAb + i); });
     return kurven;
+}
+
+/// Der Fluegel der Probe mit der Saite `saite`.
+lumi::loop::Instrument fluegelMit(const lumi::loop::HammerSaite& saite)
+{
+    lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
+    instrument.tastatur->ungedaempftAb = 89;  // D1 a
+    return instrument;
+}
+
+/// Die Kurven einer Ebene des gerechneten Tons wie im Programm (K4 a), gehalten `dauerMs`.
+TonKurven kurvenEbene(const lumi::loop::Instrument& instrument, int midi, int e, int dauerMs)
+{
+    lumi::loop::TonAngabe a;
+    a.hoehe = midi;
+    a.dauerMs = dauerMs;
+    a.anschlagStufe = modelltest::stufeVonEbene(e);
+    const lumi::loop::Klang klang = lumi::loop::rendereTon(instrument, a, modelltest::kRate);
+    TonKurven k;
+    (void)messeTon(klang.daten, modelltest::kRate, tastenFrequenz(midi), lumi::loop::fft(), false, &k);
+    return k;
+}
+
+/// So lange reichen die Kurven von *Salamander* an der Taste, und 1,5 s mehr (K5 a).
+int dauerAn(int midi, const KurvenBezug& bezug)
+{
+    std::size_t bis = 0;
+    for (const auto& [s, z] : bezug)
+        if (s.midi == midi) bis = std::max(bis, z.bereichBis);
+    return static_cast<int>(static_cast<double>(bis) * Einstellungen{}.schrittS * 1000.0) + 1500;
 }
 
 /// Die Kurven des gerechneten Tons wie im Programm (K4 a), gehalten `dauerMs`, je Ebene v6–v16.
 std::vector<TonKurven> kurvenTon(const lumi::loop::HammerSaite& saite, int midi, int dauerMs)
 {
-    lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
-    instrument.tastatur->ungedaempftAb = 89;  // D1 a
-    const lumi::loop::Fft& fft = lumi::loop::fft();
-    return jeEbene([&](int e) {
-        lumi::loop::TonAngabe a;
-        a.hoehe = midi;
-        a.dauerMs = dauerMs;
-        a.anschlagStufe = modelltest::stufeVonEbene(e);
-        const lumi::loop::Klang klang = lumi::loop::rendereTon(instrument, a, modelltest::kRate);
-        TonKurven k;
-        (void)messeTon(klang.daten, modelltest::kRate, tastenFrequenz(midi), fft, false, &k);
-        return k;
-    });
+    const lumi::loop::Instrument instrument = fluegelMit(saite);
+    return jeEbene([&](int e) { return kurvenEbene(instrument, midi, e, dauerMs); });
 }
 
 Bewertung bewerteTon(const lumi::loop::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
 {
     return bewerte(midi, kurvenTon(saite, midi, dauerMs), bezug);
+}
+
+/// Viele Auswertungen am Ton zugleich (S156): die Ebenen aller Saiten auf einem Pool — jeder Ton rechnet fuer sich,
+/// die Bewertungen sind dieselben wie mit `bewerteTon` nacheinander.
+std::vector<Bewertung> bewerteToene(const std::vector<lumi::loop::HammerSaite>& saiten, int midi, int dauerMs, const KurvenBezug& bezug)
+{
+    std::vector<lumi::loop::Instrument> instrumente;
+    for (const lumi::loop::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
+    const auto ebenen = static_cast<std::size_t>(kAuswertungEbenen);
+    std::vector<TonKurven> kurven(saiten.size() * ebenen);
+    parallelJe(static_cast<int>(kurven.size()), kPoolThreads, [&](int i) {
+        const auto j = static_cast<std::size_t>(i);
+        kurven[j] = kurvenEbene(instrumente[j / ebenen], midi, kKurvenEbeneAb + static_cast<int>(j % ebenen), dauerMs);
+    });
+    std::vector<Bewertung> bewertungen;
+    for (std::size_t q = 0; q < saiten.size(); ++q)
+    {
+        const auto ab = kurven.begin() + static_cast<std::ptrdiff_t>(q * ebenen);
+        bewertungen.push_back(bewerte(midi, std::vector<TonKurven>(ab, ab + static_cast<std::ptrdiff_t>(ebenen)), bezug));
+    }
+    return bewertungen;
 }
 
 /// Die Summe der Moden (Startpunkt nach K4 a): ohne Hammerkontakt, Laengskraft und Boden.
@@ -274,7 +325,89 @@ std::string zahl(double v, int stellen = 3)
     return s.str();
 }
 
+/// Je Kurve eine Zeile: Ebene/Teilton, Abklingen, Schwebung, Gewicht, ob sie gilt, verglichene Punkte, Anfang und Ende
+/// (Punkte zu 50 ms) — Modell und Salamander mit ihrem eigenen ersten und letzten Punkt.
+std::string kurvenZeilen(const lumi::loop::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
+{
+    std::ostringstream z;
+    const std::vector<TonKurven> k = kurvenTon(saite, midi, dauerMs);
+    for (std::size_t j = 0; j < k.size(); ++j)
+        for (int tk = 1; tk <= kKurvenTeiltoene; ++tk)
+        {
+            const auto it = bezug.find({midi, kKurvenEbeneAb + static_cast<int>(j), tk});
+            if (it == bezug.end()) continue;
+            const TeiltonKurven& m = k[j][static_cast<std::size_t>(tk - 1)];
+            const KurvenAbstand a = kurvenAbstand(m, it->second);
+            z << "    v" << kKurvenEbeneAb + static_cast<int>(j) << " T" << tk << ": " << zahl(a.abklingenDb, 2) << " / " << zahl(a.schwebungDb, 2)
+              << " dB, Gewicht " << zahl(a.gewicht, 2) << (a.gilt ? "" : " (gilt nicht)") << ", Punkte " << a.punkte << " (" << a.vonPunkt << "-"
+              << a.endePunkt << "); Modell " << m.kurve.ersterPunkt << "-" << m.kurve.ersterPunkt + m.kurve.db.size()
+              << (m.erkannt ? "" : " (nicht erkannt)") << ", Salamander " << it->second.kurve.ersterPunkt << "-"
+              << it->second.kurve.ersterPunkt + it->second.kurve.db.size() << '\n';
+        }
+    std::string s = z.str();
+    if (!s.empty()) s.pop_back();
+    return s;
+}
+
 }  // namespace
+
+/// S156, Gegenprobe zu (2): an den groessten Spruengen der Schnitte je Kurve, was sich zwischen zwei Nachbarpunkten
+/// aendert — 48 `decay` 0,61 / 0,71 s und Verstimmung 4,71 / 5,14 Cent, 60 Verstimmung 0 / 0,43 Cent (die anderen Groessen am
+/// Start). Nur Bericht, keine Pruefung.
+TEST_CASE("Loop Salamander 31d-7 B Probe Spruenge (LUMIVIZ_75_SPRUNG)")
+{
+    const QString variable = qEnvironmentVariable("LUMIVIZ_75_SPRUNG");
+    if (variable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_75_SPRUNG=<Ordner> schreibt an den Spruengen der Probe den Abstand je Kurve aus");
+        return;
+    }
+    const std::filesystem::path ziel = variable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    const std::optional<SalamanderWerte> gelesen = liesWerte(kWerteDatei);
+    REQUIRE_MESSAGE(gelesen.has_value(), "werte/salamander_c5.txt nicht gefunden — aus dem Projekt-Root starten");
+    const std::optional<KurvenBezug> bezug = liesKurven(kKurvenDatei);
+    REQUIRE(bezug.has_value());
+    REQUIRE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")));
+    lumi::loop::tonspeicher().leere();
+    const std::vector<TastenWerte> alle = tastenWerteAus(*gelesen);
+    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    std::ofstream datei(ziel / "spruenge75.txt", std::ios::binary);
+
+    struct Sprung
+    {
+        int midi;
+        std::string groesse;
+        int punkt;  ///< der erste der beiden Nachbarpunkte im Schnitt
+    };
+    for (const Sprung& s : {Sprung{48, "decay", 4}, Sprung{48, "Verstimmung", 11}, Sprung{60, "Verstimmung", 0}})
+    {
+        TastenWerte z;
+        for (const TastenWerte& w : alle)
+            if (w.midi == s.midi) z = w;
+        const std::vector<Groesse> groessen = groessenAn(s.midi, z, basis);
+        const int dauerMs = dauerAn(s.midi, *bezug);
+        std::vector<double> x0;
+        for (const Groesse& g : groessen) x0.push_back(koordinate(g, g.start));
+        std::size_t j = 0;
+        while (j < groessen.size() && groessen[j].name != s.groesse) ++j;
+        REQUIRE(j < groessen.size());
+        const Groesse& g = groessen[j];
+        for (int p = s.punkt; p <= s.punkt + 1; ++p)
+        {
+            std::vector<double> x = x0;
+            const double a = koordinate(g, g.unten), b = koordinate(g, g.oben);
+            x[j] = a + (b - a) * p / (kSchnittPunkte - 1);
+            const lumi::loop::HammerSaite saite = saiteMit(basis, s.midi, groessen, x);
+            const Bewertung bw = bewerteTon(saite, s.midi, dauerMs, *bezug);
+            datei << "MIDI " << s.midi << ' ' << g.name << ' ' << zahl(wertAus(g, x[j])) << ": Abklingen " << zahl(bw.abklingen, 2) << ", Schwebung "
+                  << zahl(bw.schwebung, 2) << ", " << bw.kurven << " Kurven gelten\n"
+                  << kurvenZeilen(saite, s.midi, dauerMs, *bezug) << "\n\n";
+            datei.flush();
+        }
+    }
+    lumi::loop::tonspeicher().leere();
+}
 
 TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
 {
@@ -321,10 +454,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
         for (const TastenWerte& w : alle)
             if (w.midi == midi) t.z = w;
         t.groessen = groessenAn(midi, t.z, basis);
-        std::size_t bis = 0;
-        for (const auto& [s, z] : *bezug)
-            if (s.midi == midi) bis = std::max(bis, z.bereichBis);
-        t.dauerMs = static_cast<int>(static_cast<double>(bis) * Einstellungen{}.schrittS * 1000.0) + 1500;
+        t.dauerMs = dauerAn(midi, *bezug);
         std::ostringstream g;
         g << "MIDI " << midi << " (Chor " << lumi::loop::chorAn(basis, midi) << ", gehalten " << t.dauerMs << " ms):";
         for (const Groesse& gr : t.groessen)
@@ -346,25 +476,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
         summeZeit += t.sekundenJeAuswertung;
         schreibe("  MIDI " + std::to_string(t.midi) + ": " + zahl(t.sekundenJeAuswertung, 2) + " s, Abstand " + zahl(b.gesamt) + " dB (Abklingen " +
                  zahl(b.abklingen) + ", Schwebung " + zahl(b.schwebung) + ", " + std::to_string(b.kurven) + " Kurven)");
-        if (nurZeit)
-        {
-            // je Kurve: Ebene/Teilton, Abklingen, Schwebung, Gewicht, verglichene Punkte, Anfang und Ende (Punkte zu 50 ms) —
-            // Modell und Salamander mit ihrem eigenen ersten und letzten Punkt
-            const std::vector<TonKurven> k = kurvenTon(saiteMit(basis, t.midi, t.groessen, x0), t.midi, t.dauerMs);
-            for (std::size_t j = 0; j < k.size(); ++j)
-                for (int tk = 1; tk <= kKurvenTeiltoene; ++tk)
-                {
-                    const auto it = bezug->find({t.midi, kKurvenEbeneAb + static_cast<int>(j), tk});
-                    if (it == bezug->end()) continue;
-                    const TeiltonKurven& m = k[j][static_cast<std::size_t>(tk - 1)];
-                    const KurvenAbstand a = kurvenAbstand(m, it->second);
-                    schreibe("    v" + std::to_string(kKurvenEbeneAb + static_cast<int>(j)) + " T" + std::to_string(tk) + ": " + zahl(a.abklingenDb, 2) + " / " +
-                             zahl(a.schwebungDb, 2) + " dB, Gewicht " + zahl(a.gewicht, 2) + ", Punkte " + std::to_string(a.punkte) + " (" +
-                             std::to_string(a.vonPunkt) + "-" + std::to_string(a.endePunkt) + "); Modell " + std::to_string(m.kurve.ersterPunkt) + "-" +
-                             std::to_string(m.kurve.ersterPunkt + m.kurve.db.size()) + (m.erkannt ? "" : " (nicht erkannt)") + ", Salamander " +
-                             std::to_string(it->second.kurve.ersterPunkt) + "-" + std::to_string(it->second.kurve.ersterPunkt + it->second.kurve.db.size()));
-                }
-        }
+        if (nurZeit) schreibe(kurvenZeilen(saiteMit(basis, t.midi, t.groessen, x0), t.midi, t.dauerMs, *bezug));
     }
     const double mittel = summeZeit / static_cast<double>(tasten.size());
     const double setzenStunden = mittel * kSucheHoechstens * 30.0 * 2.0 / 3600.0;
@@ -397,6 +509,17 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
         // (2) Schnitte je Groesse, die anderen am Start
         schreibe("\nMIDI " + std::to_string(t.midi) + " — (2) Schnitte (" + std::to_string(kSchnittPunkte) + " Punkte ueber den Bereich):");
         bool glattA = true, glattS = true;
+        // alle Punkte aller Schnitte auf einem Pool (S156)
+        const auto punkt = [&](std::size_t j, int p) {
+            std::vector<double> x = x0;
+            const double a = koordinate(t.groessen[j], t.groessen[j].unten), b = koordinate(t.groessen[j], t.groessen[j].oben);
+            x[j] = a + (b - a) * p / (kSchnittPunkte - 1);
+            return x;
+        };
+        std::vector<lumi::loop::HammerSaite> schnittSaiten;
+        for (std::size_t j = 0; j < d; ++j)
+            for (int p = 0; p < kSchnittPunkte; ++p) schnittSaiten.push_back(saiteMit(basis, t.midi, t.groessen, punkt(j, p)));
+        const std::vector<Bewertung> schnittWerte = bewerteToene(schnittSaiten, t.midi, t.dauerMs, *bezug);
         for (std::size_t j = 0; j < d; ++j)
         {
             const Groesse& g = t.groessen[j];
@@ -405,10 +528,8 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
             zeile << "  " << g.name << ':';
             for (int p = 0; p < kSchnittPunkte; ++p)
             {
-                std::vector<double> x = x0;
-                const double a = koordinate(g, g.unten), b = koordinate(g, g.oben);
-                x[j] = a + (b - a) * p / (kSchnittPunkte - 1);
-                const Bewertung bw = beiTon(x);
+                const std::vector<double> x = punkt(j, p);
+                const Bewertung& bw = schnittWerte[j * kSchnittPunkte + static_cast<std::size_t>(p)];
                 dA.push_back(bw.abklingen);
                 dS.push_back(bw.schwebung);
                 dG.push_back(bw.gesamt);
@@ -440,8 +561,11 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
             startB[j] = g.log ? startA[j] + std::log(1.6) : std::min(g.oben, std::max(1.6 * startA[j], g.unten + 0.1 * (g.oben - g.unten)));
         }
         const auto abstand = [&](const std::vector<double>& x) { return beiTon(x).gesamt; };
+        // die beiden Suchen nebeneinander (S156): jede fuer sich, wie nacheinander
+        NelderMead b;
+        std::thread sucheB([&] { b = nelderMead(abstand, startB, schritte, kSucheHoechstens); });
         const NelderMead a = nelderMead(abstand, startA, schritte, kSucheHoechstens);
-        const NelderMead b = nelderMead(abstand, startB, schritte, kSucheHoechstens);
+        sucheB.join();
         ergebnis.auswertungenMittel += 0.5 * (a.auswertungen + b.auswertungen) / static_cast<double>(std::size(kProbeTasten));
         bool gleich = std::abs(a.rest / b.rest - 1.0) <= 0.05;
         bool grenze = false;
@@ -611,5 +735,139 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
              (ergebnis.modenAbweichend >= 2 ? "haelt (Ton noetig)" : "VERFEHLT → K4 b"));
     schreibe(std::string("(K6-1 a) letzte 20 % tragen im Mittel ") + zahl(100.0 * ergebnis.anteilEndeMittel, 1) + " % des Anteils Abklingen — " +
              (ergebnis.anteilEndeMittel <= 0.5 ? "haelt" : "VERFEHLT → laengere Spanne"));
+    MESSAGE(bericht.str());
+}
+
+/// S156: Auswertungen auf dem Pool (`bewerteToene`) geben Bit fuer Bit dieselben Bewertungen wie nacheinander
+/// (`bewerteTon`) — an einer Taste mit zwei Saiten und einer mit drei, je am Start und mit anderer Verstimmung.
+TEST_CASE("Loop Salamander Probe S156 Pool wie nacheinander")
+{
+    const std::optional<KurvenBezug> bezug = liesKurven(kKurvenDatei);
+    REQUIRE_MESSAGE(bezug.has_value(), "werte/salamander_kurven.txt nicht gefunden — aus dem Projekt-Root starten");
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    lumi::loop::tonspeicher().leere();
+    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    for (const int midi : {48, 84})
+    {
+        CAPTURE(midi);
+        constexpr int kDauerMs = 2500;
+        lumi::loop::HammerSaite anders = basis;
+        anders.verstimmungCent.abweichungen = {{midi, 3.0}};
+        const std::vector<lumi::loop::HammerSaite> saiten{basis, anders};
+        const std::vector<Bewertung> pool = bewerteToene(saiten, midi, kDauerMs, *bezug);
+        REQUIRE(pool.size() == saiten.size());
+        for (std::size_t q = 0; q < saiten.size(); ++q)
+        {
+            const Bewertung einzeln = bewerteTon(saiten[q], midi, kDauerMs, *bezug);
+            CHECK(einzeln.kurven > 0);
+            CHECK(pool[q].kurven == einzeln.kurven);
+            CHECK(pool[q].gesamt == einzeln.gesamt);
+            CHECK(pool[q].abklingen == einzeln.abklingen);
+            CHECK(pool[q].schwebung == einzeln.schwebung);
+            CHECK(pool[q].anteilEnde == einzeln.anteilEnde);
+        }
+        CHECK(pool[0].gesamt != pool[1].gesamt);  // die Verstimmung wirkt: zwei verschiedene Auswertungen
+    }
+    lumi::loop::tonspeicher().leere();
+}
+
+/// Vor dem Pool (S156): wohin die Zeit einer Auswertung geht. Je Taste 33, 60, 84 an Ebene v11 auf einem
+/// Thread: der Ton wie im Programm, darin die Hammer-Saite mit und ohne Laengskraft (Stegwinkel 0), der Rest
+/// (Boden und Rahmen), die Messung; danach der Durchsatz von drei Auswertungen an Taste 60 je Zahl der Threads.
+/// Nur Zeiten, keine Pruefung.
+TEST_CASE("Loop Salamander 31d-7 B Probe Zeit (LUMIVIZ_75_ZEIT)")
+{
+    const QString variable = qEnvironmentVariable("LUMIVIZ_75_ZEIT");
+    if (variable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_75_ZEIT=<Ordner> misst die Zeit je Phase einer Auswertung und den Durchsatz je Zahl der Threads");
+        return;
+    }
+    const std::filesystem::path ziel = variable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    const std::optional<KurvenBezug> bezug = liesKurven(kKurvenDatei);
+    REQUIRE_MESSAGE(bezug.has_value(), "werte/salamander_kurven.txt nicht gefunden — aus dem Projekt-Root starten");
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    lumi::loop::tonspeicher().leere();
+    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &basis);
+    instrument.tastatur->ungedaempftAb = 89;  // D1 a
+    const lumi::loop::HammerSaite& saite = instrument.schichten[0].hammerSaite;
+
+    std::ofstream datei(ziel / "zeit75.txt", std::ios::binary);
+    std::ostringstream bericht;
+    const auto schreibe = [&](const std::string& zeile) {
+        bericht << zeile << '\n';
+        datei << zeile << '\n';
+        datei.flush();
+    };
+    using Uhr = std::chrono::steady_clock;
+    const auto sekunden = [](Uhr::time_point von) { return std::chrono::duration<double>(Uhr::now() - von).count(); };
+    constexpr int kEbene = 11;
+    constexpr int kDurchgaenge = 3;
+    schreibe("Zeit einer Auswertung je Phase (Ebene v11, ein Thread, je " + std::to_string(kDurchgaenge) + " Durchgaenge), hardware_concurrency " +
+             std::to_string(std::thread::hardware_concurrency()));
+
+    for (const int midi : {33, 60, 84})
+    {
+        const int dauerMs = dauerAn(midi, *bezug);
+        lumi::loop::TonAngabe angabe;
+        angabe.hoehe = midi;
+        angabe.dauerMs = dauerMs;
+        angabe.anschlagStufe = modelltest::stufeVonEbene(kEbene);
+        (void)lumi::loop::rendereTon(instrument, angabe, modelltest::kRate);  // die Antwort des Bodens liegt danach bereit
+
+        lumi::loop::HammerAnschlag hammer;
+        hammer.taste = midi;
+        hammer.hz = tastenFrequenz(midi);
+        hammer.stufe = angabe.anschlagStufe;
+        hammer.rate = modelltest::kRate;
+        hammer.gedaempft = midi < 89;
+        const auto frames = static_cast<std::int64_t>(std::llround(dauerMs / 1000.0 * modelltest::kRate));
+        hammer.halten = frames;
+        lumi::loop::HammerSaite ohneLaengs = saite;
+        ohneLaengs.stegWinkelGrad.abweichungen = {{midi, 0.0}};
+        std::size_t moden = 0;
+        for (const lumi::loop::TeiltonModen& t : lumi::loop::hammerTeiltonModen(saite, hammer)) moden += t.moden.size();
+
+        for (int d = 1; d <= kDurchgaenge; ++d)
+        {
+            auto t0 = Uhr::now();
+            const lumi::loop::Klang klang = lumi::loop::rendereTon(instrument, angabe, modelltest::kRate);
+            const double ton = sekunden(t0);
+            t0 = Uhr::now();
+            TonKurven k;
+            (void)messeTon(klang.daten, modelltest::kRate, tastenFrequenz(midi), lumi::loop::fft(), false, &k);
+            const double messung = sekunden(t0);
+            std::vector<float> mono;
+            t0 = Uhr::now();
+            lumi::loop::rechneHammerTon(saite, hammer, mono, frames);
+            const double mitLaengs = sekunden(t0);
+            t0 = Uhr::now();
+            lumi::loop::rechneHammerTon(ohneLaengs, hammer, mono, frames);
+            const double ohne = sekunden(t0);
+            schreibe("  MIDI " + std::to_string(midi) + " (" + std::to_string(dauerMs) + " ms, " + std::to_string(moden) + " Moden) Durchgang " +
+                     std::to_string(d) + ": Ton " + zahl(ton, 3) + " s = Hammer-Saite " + zahl(mitLaengs, 3) + " (davon Laengskraft " +
+                     zahl(mitLaengs - ohne, 3) + ", ohne sie " + zahl(ohne, 3) + ") + Boden und Rest " + zahl(ton - mitLaengs, 3) +
+                     "; Messung " + zahl(messung, 3) + " s; zusammen " + zahl(ton + messung, 3) + " s");
+        }
+    }
+
+    // der Durchsatz: drei Auswertungen (3 × 11 Ebenen) an Taste 60 auf einem gemeinsamen Pool
+    const int midi = 60;
+    const int dauerMs = dauerAn(midi, *bezug);
+    constexpr int kAuswertungen = 3;
+    const int ebenen = kEbenen - kKurvenEbeneAb + 1;
+    schreibe("\nDurchsatz an MIDI 60: " + std::to_string(kAuswertungen) + " Auswertungen zu je " + std::to_string(ebenen) +
+             " Ebenen auf einem Pool (heute: 8 Threads je Auswertung, nacheinander)");
+    for (const unsigned threads : {1u, 8u, 11u, 16u, 22u, 32u})
+    {
+        if (threads > std::thread::hardware_concurrency()) continue;
+        const auto t0 = Uhr::now();
+        parallelJe(kAuswertungen * ebenen, threads,
+                   [&](int i) { (void)kurvenEbene(instrument, midi, kKurvenEbeneAb + i % ebenen, dauerMs); });
+        const double s = sekunden(t0);
+        schreibe("  " + std::to_string(threads) + " Threads: " + zahl(s, 2) + " s, " + zahl(s / kAuswertungen, 2) + " s je Auswertung");
+    }
     MESSAGE(bericht.str());
 }

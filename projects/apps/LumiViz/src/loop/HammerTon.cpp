@@ -166,6 +166,16 @@ public:
             for (const auto& [stelle, f] : m.form) getragen[static_cast<std::size_t>(stelle)] = true;
         for (int i = 0; i < m_stellen; ++i)
             if (getragen[static_cast<std::size_t>(i)]) m_getragen.push_back(static_cast<std::size_t>(i));
+        // die Beitraege der Moden zu den Auslenkungen flach, in der Reihenfolge der Moden (S156: die Formen
+        // liegen sonst je Mode verstreut im Speicher; gerechnet wird gleich)
+        const auto stellen = static_cast<std::size_t>(m_stellen);
+        for (std::size_t j = 0; j < moden.size(); ++j)
+        {
+            const Mode& m = moden[j];
+            if (m.teilton > m_teiltoene) continue;
+            const std::size_t ab = static_cast<std::size_t>(m.teilton) * stellen;
+            for (const auto& [stelle, f] : m.form) m_beitraege.push_back({j, ab + static_cast<std::size_t>(stelle), f.real(), f.imag()});
+        }
         const double sigma = w.sigmaFrueh1 * kLaengsSchneller;
         for (int k = 1;; ++k)
         {
@@ -193,13 +203,11 @@ public:
     {
         std::fill(m_x.begin(), m_x.end(), 0.0);
         const auto stellen = static_cast<std::size_t>(m_stellen);
-        for (const Mode& m : moden)
+        for (const Beitrag& b : m_beitraege)
         {
-            if (m.teilton > m_teiltoene) continue;
-            const std::size_t ab = static_cast<std::size_t>(m.teilton) * stellen;
             // Im(f·z), ausgeschrieben
-            for (const auto& [stelle, f] : m.form)
-                m_x[ab + static_cast<std::size_t>(stelle)] += f.real() * m.zustand.imag() + f.imag() * m.zustand.real();
+            const Komplex& z = moden[b.mode].zustand;
+            m_x[b.stelle] += b.re * z.imag() + b.im * z.real();
         }
         // je Saite und Ebene; die Summen sind gegen die Drehung γ unveraendert (beide Teiltoene einer Taste)
         double quadrate = 0.0;
@@ -237,7 +245,17 @@ public:
     [[nodiscard]] bool verklungen() const { return m_spitze > 0.0 && m_letzte < 1e-5 * m_spitze; }
 
 private:
+    /// Ein Beitrag einer Mode zu einer Auslenkung: f an der Stelle `stelle` von `m_x`.
+    struct Beitrag
+    {
+        std::size_t mode = 0;
+        std::size_t stelle = 0;
+        double re = 0.0;
+        double im = 0.0;
+    };
+
     bool m_an = false;
+    std::vector<Beitrag> m_beitraege;
     int m_stellen = 2;  ///< 2N: Saite j, Eigenrichtung a an 2j + a
     int m_teiltoene = 0;
     double m_spannung = 0.0;
