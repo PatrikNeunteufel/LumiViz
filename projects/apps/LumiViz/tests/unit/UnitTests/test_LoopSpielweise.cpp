@@ -1217,8 +1217,11 @@ TEST_SUITE("LoopSpielweise")
             for (const QJsonValue& wert : wurzel.value(QStringLiteral("layers")).toArray())
             {
                 const QJsonObject s = wert.toObject();
+                // die gegriffene Saite (Extended KS, Waveguide) — nicht die Hammer-Saite (`modal`, S157: grand_piano),
+                // die wie jede andere Schicht `inALegato` traegt (`istSaitenSchicht`)
+                const QString modell = s.value(QStringLiteral("stringModel")).toString();
                 const bool saitenSchicht = s.value(QStringLiteral("waveform")).toString() == QStringLiteral("string") &&
-                                           s.contains(QStringLiteral("stringModel"));
+                                           (modell == QStringLiteral("extendedKS") || modell == QStringLiteral("waveguide"));
                 CHECK(s.contains(QStringLiteral("inALegato")) == !saitenSchicht);
                 ++geprueft;
             }

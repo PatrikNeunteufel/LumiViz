@@ -399,3 +399,28 @@ Pan 0 — sie tragen ihr Bild aus den Overheads.
 
 Jazz, 132 BPM, Swing in Triolen (zwölf Schritte je Takt), Kit `jazz_brushes`
 mit Rollen an den Spuren; Upright Bass als Walking Bass über Dm7 G7 Cmaj7 A7.
+
+## S157, Stufe 31d-8: der Flügel spielbar
+
+### instruments/grand_piano.lvinst
+
+Die Hammer-Saite (modal, Stufe 31) als mitgeliefertes Instrument, Titel *Grand
+Piano*, Art `keys`, Fassung 19: eine Schicht „Hammer string“ mit allen Kurven
+der Vorgabe aus `baueVorgabe()` (`src/loop/HammerSaite.cpp`), dem Boden
+`lib:steinway_d` und der Tastatur der Vorgabe (A0–C8, `undampedFrom` 89,
+Pedale Una corda, Sostenuto, Sustain). **Geschrieben vom Programm, nicht von
+Hand und nicht von einem Skript:** aus dem Projekt-Root
+`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1 LumiViz.UnitTests --test-case="*31d-8 grand_piano*"`,
+danach `python asset/loop/instrument_katalog.py` (Art, Genres, Beschreibung,
+Pegel). Der Fall ohne die Variable ist der Wächter: weicht die Datei von der
+Vorgabe ab, meldet er „veraltet“ — nach jeder neuen Vorgabe neu schreiben.
+Pegel gemessen wie die anderen (`instrument_pegel.py`, Level 4,1788, rund
++12,4 dB). Gerechnet und an *Salamander* (Yamaha C5, CC BY 3.0) gemessen,
+nichts davon mitgeliefert: an fremden Rechten hängt nur die Messung.
+
+### grand_piano_demo.lvloop
+
+Klassik, 72 BPM, acht Takte, selbst gesetzt: linke Hand gebrochene Akkorde
+(C, Am, F, G, C, Am, G, zum Schluss C gehalten), rechte Hand eine Melodie aus
+Vierteln und Halben — erzeugt mit `make_fluegel_loops.py`, danach
+`instrument_pegel.py --loops`. Kein Pedal (Mitschwingen kommt mit 31e).

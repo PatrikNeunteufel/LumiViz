@@ -3175,7 +3175,11 @@ Idee Preset-Warmup/Pre-Roll.
   `make_fluegel_loops.py` (8.4), Hörproben u/γ/δ (8.5), Gehör eintragen (8.6), Abschluss (8.7); SP2 a:
   Levenberg–Marquardt über die Stützpunkte der Kurven statt je Taste (ändert ZF6 a); SP3 a: eindeutig an den
   Messgrößen (ändert ZF8 a (3)). Lehren für die übrigen Klassen in `InstrumentsCalculation/LEHREN_SETZEN_FLUEGEL.md`.
-  **Offen:** **31d-8** 8.1 (Patrik hört `hoerproben_31d`), 8.2–8.7 (Bau, Teilplan im Konzept §4.1); danach **7.5.7** Toleranzen messen, 7.5.8 Messung an der Struktur des Ziels, 7.5.9 Ziel, 7.5.10
+  **31d-8 8.2–8.5 gebaut (S157):** `grand_piano` mitgeliefert (Level 4,1788), `grand_piano_demo`, Hörproben
+  `.claude/handover/hoerproben_31d8/` (zehn Dateien: u an 33, 60, 84 mf/ff; γ und δ an 24 und 27 — Befund: γ wirkt
+  nur mit δ); `LumiViz.exe` unter Release-clang gebaut. **Offen:** **31d-8** 8.1 (Patrik hört `hoerproben_31d`), die
+  Wahl aus 8.5 (Patrik hört `hoerproben_31d8`), 8.6 (eintragen), 8.7 (Abschluss); **im Programm ansehen:**
+  *Grand Piano* im Fenster *Instruments*, der Loop *Grand piano demo* — Wartezeit bis zum ersten Ton; danach **7.5.7** Toleranzen messen, 7.5.8 Messung an der Struktur des Ziels, 7.5.9 Ziel, 7.5.10
   Levenberg–Marquardt (nach SP2 a), 7.5.11 Probe nach ZF8 a mit SP3 a; hält sie: 7.5.5 nach SE1 a (Stichprobe zuerst), 7.5.6 Vorgabe, 7.6
   dauerhafter Test voll, 7.7 beide Compiler und voller Lauf; verfehlt sie: ZZ1 a (die Werte aus 8.6 bleiben); **31d-7 C** (Hörproben, `modell.md`, dazu Stoß); nach Befunden S154: der Sprung
   unter −90 dB nach rund 5 s im Modell, der Nachklang an MIDI 48 bei sehr kurzem `decay` (Boden?), die Schein-Schwebung

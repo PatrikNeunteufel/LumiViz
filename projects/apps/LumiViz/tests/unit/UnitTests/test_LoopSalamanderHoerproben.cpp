@@ -18,6 +18,11 @@
  * so lang wie die Aufnahme vor ihrer Blende, dann geschnitten (50 ms ausgeblendet). UF4 a: an C4
  * benachbarte Ebenen von Salamander und Stufen des Modells mit 1, 2, 3 und 6 dB Abstand, je Paar
  * gleich laut — fuer den Stufenschritt nach Patriks Urteil. `liste.txt` mit Nennung CC BY 3.0.
+ *
+ * 31d-8 (S157, SP1 a, Schritt 8.5): `LUMIVIZ_31D8_WAV=<Ordner>` mit `LUMIVIZ_SALAMANDER` legt die
+ * Proben fuer u (Stoss je Saite) an 33, 60, 84 bei mf und ff, γ und δ an 24 und 27 ab (Salamander
+ * hat nur kleine Terzen; γ wirkt nur mit δ, δ nur an Tasten mit einer Saite) — je Datei Salamander
+ * und vier Werte innerhalb SQ2 a; Patrik waehlt nach Gehoer (8.6).
  ****************************************************************************************
  */
 
@@ -36,11 +41,14 @@
 #include <QtGlobal>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <optional>
 #include <sstream>
+#include <string>
 #include <vector>
 
 using namespace lumi::messung;
@@ -129,6 +137,73 @@ std::vector<float> folge(const std::vector<std::vector<float>>& teile)
     return f;
 }
 
+SalamanderTaste taste(int midi)
+{
+    for (const SalamanderTaste& t : salamanderTasten())
+        if (t.midi == midi) return t;
+    return SalamanderTaste{};
+}
+
+/// Eine Ebene von Salamander als Stereo (48 kHz).
+std::vector<float> liesEbene(const std::filesystem::path& salamander, int midi, int ebene)
+{
+    const std::filesystem::path datei = salamanderDatei(salamander, taste(midi), ebene);
+    const std::optional<lumi::audio::WavInhalt> wav = lumi::audio::liesWavDatei(datei);
+    REQUIRE_MESSAGE(wav.has_value(), datei.string());
+    REQUIRE(wav->rate == kRate);
+    return wav->stereo;
+}
+
+/// Ein Ton des Modells, `halten` s gehalten, wie im Programm.
+std::vector<float> rechne(const lumi::loop::Instrument& instrument, int midi, int stufe, double halten)
+{
+    lumi::loop::TonAngabe angabe;
+    angabe.hoehe = midi;
+    angabe.dauerMs = static_cast<int>(1000.0 * halten);
+    angabe.anschlagStufe = stufe;
+    return lumi::loop::rendereTon(instrument, angabe, kRate).daten;
+}
+
+/// Die Ebene von Salamander zur Stufe des Modells: ihr Pegel zu Beginn liegt gegen v16 so wie die Stufe
+/// gegen 0 dB am Modell `modell`; `abstand` bekommt die Abweichung in dB.
+int passendeEbene(const std::filesystem::path& salamander, const lumi::loop::Instrument& modell, int midi, int stufe,
+                  double& abstand)
+{
+    const double modellAbstand = pegel(rechne(modell, midi, stufe, 1.0)) - pegel(rechne(modell, midi, 0, 1.0));
+    const double laut = pegel(liesEbene(salamander, midi, kEbenen));
+    int ebene = kEbenen;
+    abstand = 1e9;
+    for (int e = 1; e <= kEbenen; ++e)
+    {
+        const double d = std::abs(pegel(liesEbene(salamander, midi, e)) - laut - modellAbstand);
+        if (d < abstand)
+        {
+            abstand = d;
+            ebene = e;
+        }
+    }
+    return ebene;
+}
+
+/// Wie lange Salamander an dieser Ebene klingt, bevor die Aufnahme ausblendet (Frames).
+std::size_t framesVorBlende(const std::vector<float>& stereo)
+{
+    std::vector<double> summe(stereo.size() / 2);
+    for (std::size_t i = 0; i < summe.size(); ++i) summe[i] = static_cast<double>(stereo[2 * i]) + stereo[2 * i + 1];
+    return endeVorBlende(summe, kRate);
+}
+
+/// Eine Kurve, an jeder Taste derselbe Wert.
+lumi::loop::Tastenkurve ueberall(double wert)
+{
+    return {{{21, wert}, {108, wert}}, {}};
+}
+
+std::string nummer(int nr)
+{
+    return (nr < 10 ? "0" : "") + std::to_string(nr);
+}
+
 }  // namespace
 
 TEST_CASE("Loop Salamander 31d-5 Hoerproben (LUMIVIZ_31D_WAV)")
@@ -150,24 +225,7 @@ TEST_CASE("Loop Salamander 31d-5 Hoerproben (LUMIVIZ_31D_WAV)")
     lumi::loop::Instrument vor = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &vorSaite);
     vor.tastatur->ungedaempftAb = 91;  // die Vorgabe vor D1 a
     const lumi::loop::Instrument nach = modelltest::fluegel(QStringLiteral("lib:steinway_d"));
-    const auto taste = [](int midi) {
-        for (const SalamanderTaste& t : salamanderTasten())
-            if (t.midi == midi) return t;
-        return SalamanderTaste{};
-    };
-    const auto liesEbene = [&](int midi, int ebene) {
-        const std::optional<lumi::audio::WavInhalt> wav = lumi::audio::liesWavDatei(salamanderDatei(salamander, taste(midi), ebene));
-        REQUIRE_MESSAGE(wav.has_value(), salamanderDatei(salamander, taste(midi), ebene).string());
-        REQUIRE(wav->rate == kRate);
-        return wav->stereo;
-    };
-    const auto rechne = [](const lumi::loop::Instrument& instrument, int midi, int stufe, double halten) {
-        lumi::loop::TonAngabe angabe;
-        angabe.hoehe = midi;
-        angabe.dauerMs = static_cast<int>(1000.0 * halten);
-        angabe.anschlagStufe = stufe;
-        return lumi::loop::rendereTon(instrument, angabe, kRate).daten;
-    };
+    const auto liesEbene = [&](int midi, int ebene) { return ::liesEbene(salamander, midi, ebene); };
 
     std::ostringstream liste;
     liste << std::fixed << std::setprecision(1)
@@ -192,23 +250,10 @@ TEST_CASE("Loop Salamander 31d-5 Hoerproben (LUMIVIZ_31D_WAV)")
     {
         CAPTURE(t.midi);
         // die Schicht von Salamander: Pegel zu Beginn gegen v16 wie die Stufe gegen 0 dB am Modell (nach 31d)
-        const double modellAbstand = pegel(rechne(nach, t.midi, t.stufe, 1.0)) - pegel(rechne(nach, t.midi, 0, 1.0));
-        const double laut = pegel(liesEbene(t.midi, kEbenen));
-        int ebene = kEbenen;
-        double bester = 1e9;
-        for (int e = 1; e <= kEbenen; ++e)
-        {
-            const double d = std::abs(pegel(liesEbene(t.midi, e)) - laut - modellAbstand);
-            if (d < bester)
-            {
-                bester = d;
-                ebene = e;
-            }
-        }
+        double bester = 0.0;
+        const int ebene = passendeEbene(salamander, nach, t.midi, t.stufe, bester);
         std::vector<float> sal = liesEbene(t.midi, ebene);
-        std::vector<double> summe(sal.size() / 2);
-        for (std::size_t i = 0; i < summe.size(); ++i) summe[i] = static_cast<double>(sal[2 * i]) + sal[2 * i + 1];
-        const std::size_t frames = endeVorBlende(summe, kRate);
+        const std::size_t frames = framesVorBlende(sal);
         const double haltenS = static_cast<double>(frames) / kRate;
         std::vector<float> v = rechne(vor, t.midi, t.stufe, haltenS);
         std::vector<float> n = rechne(nach, t.midi, t.stufe, haltenS);
@@ -266,6 +311,118 @@ TEST_CASE("Loop Salamander 31d-5 Hoerproben (LUMIVIZ_31D_WAV)")
                                      folge(modellPaare), kRate, lumi::audio::WavTiefe::Gleitkomma32)
                 .geschrieben);
     liste << "\n\nFrage zum Stufenschritt (UF4 a, HT6 a): bei welchem Abstand unterscheidet man die Klangfarbe nicht mehr?\n";
+    std::ofstream(ziel / "liste.txt", std::ios::binary) << liste.str();
+    MESSAGE(liste.str());
+}
+
+TEST_CASE("Loop Salamander 31d-8 Hoerproben u, gamma, delta (LUMIVIZ_31D8_WAV)")
+{
+    // 31d-8, Schritt 8.5 (SP1 a): u, γ und δ hat keine Quelle gemessen (SQ2 a: nur Grenzen) — Patrik waehlt sie
+    // nach Gehoer. Je Datei zuerst Salamander, dann das Modell mit vier Werten der einen Groesse, alles andere die
+    // Vorgabe; jede Fassung auf −23 LUFS, gemeinsam unter −1 dBFS; gehalten wie Salamander, hoechstens 12 s.
+    const QString zielVariable = qEnvironmentVariable("LUMIVIZ_31D8_WAV");
+    const QString salamanderVariable = qEnvironmentVariable("LUMIVIZ_SALAMANDER");
+    if (zielVariable.isEmpty() || salamanderVariable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_31D8_WAV=<Ordner> mit LUMIVIZ_SALAMANDER=<Ordner> legt die Hoerproben 31d-8 (u, gamma, delta) ab");
+        return;
+    }
+    const std::filesystem::path ziel = zielVariable.toStdU16String();
+    const std::filesystem::path salamander = salamanderVariable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    lumi::loop::tonspeicher().leere();
+
+    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    const lumi::loop::Instrument vorgabe = modelltest::fluegel(QStringLiteral("lib:steinway_d"));
+    enum class Groesse
+    {
+        Stoss,
+        Winkel,
+        Ebenen
+    };
+    const struct
+    {
+        Groesse groesse;
+        int midi;
+        const char* name;
+        const char* staerke;
+        int stufe;
+        std::array<double, 4> werte;
+    } proben[] = {
+        {Groesse::Stoss, 33, "a1", "mf", -12, {0.0, 0.15, 0.3, 0.5}},  {Groesse::Stoss, 33, "a1", "ff", 0, {0.0, 0.15, 0.3, 0.5}},
+        {Groesse::Stoss, 60, "c4", "mf", -12, {0.0, 0.15, 0.3, 0.5}},  {Groesse::Stoss, 60, "c4", "ff", 0, {0.0, 0.15, 0.3, 0.5}},
+        {Groesse::Stoss, 84, "c6", "mf", -12, {0.0, 0.15, 0.3, 0.5}},  {Groesse::Stoss, 84, "c6", "ff", 0, {0.0, 0.15, 0.3, 0.5}},
+        // γ wirkt nur mit δ (S157 gemessen: an 24, 33, 60, 84 mit δ = 0 sind alle vier Fassungen Bit fuer Bit
+        // gleich) — δ ist nur an Tasten mit einer Saite gesetzt, also γ dort, mit δ = 3 Cent (Mitte nach Tan 2017)
+        {Groesse::Winkel, 24, "c1", "mf", -12, {0.0, 5.0, 10.0, 20.0}}, {Groesse::Winkel, 27, "ds1", "mf", -12, {0.0, 5.0, 10.0, 20.0}},
+        {Groesse::Ebenen, 24, "c1", "mf", -12, {0.0, 2.0, 4.0, 6.0}},   {Groesse::Ebenen, 27, "ds1", "mf", -12, {0.0, 2.0, 4.0, 6.0}},
+    };
+
+    std::ostringstream liste;
+    liste << std::fixed << std::setprecision(1) << "Hoerproben 31d-8 (SP1 a, Schritt 8.5), gleich laut auf " << kZielLufs
+          << " LUFS integriert (EBU R128).\n"
+          << "Salamander Grand Piano V3 (Yamaha C5), Alexander Holm 2011, CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/),\n"
+          << "Fassung 48 kHz/24 bit von archive.org; hier geschnitten und im Pegel angeglichen.\n"
+          << "Modell: Hammer-Saite mit dem Boden des Steinway D (lib:steinway_d), wie im Programm; alles ausser der\n"
+          << "einen Groesse ist die Vorgabe nach 31d-4. Gehalten wie Salamander vor der Blende, hoechstens 12 s.\n\n"
+          << "Je Datei hintereinander, mit einer Sekunde Stille: Salamander | Modell Wert 1 | Wert 2 | Wert 3 | Wert 4.\n"
+          << "u = ungleicher Stoss der Saiten im Chor (leise = laut); gamma = Winkel der zweiten Schwingungsebene\n"
+          << "(delta dabei 3 Cent); delta = ihre Verstimmung (gamma dabei 10 Grad). gamma und delta wirken nur zusammen\n"
+          << "und nur an Tasten mit einer Saite (A0-F#1); im Chor traegt die Verstimmung der Saiten die Schwebung.\n\n";
+    int nr = 1;
+    for (const auto& p : proben)
+    {
+        CAPTURE(p.midi);
+        double abstand = 0.0;
+        const int ebene = passendeEbene(salamander, vorgabe, p.midi, p.stufe, abstand);
+        std::vector<float> sal = liesEbene(salamander, p.midi, ebene);
+        const std::size_t frames = std::min(framesVorBlende(sal), static_cast<std::size_t>(12 * kRate));
+        const double haltenS = static_cast<double>(frames) / kRate;
+        std::vector<std::vector<float>> teile;
+        teile.push_back(std::move(sal));
+        for (const double w : p.werte)
+        {
+            lumi::loop::HammerSaite saite = basis;
+            if (p.groesse == Groesse::Stoss)
+            {
+                saite.stossLeise = ueberall(w);
+                saite.stossLaut = ueberall(w);
+            }
+            else if (p.groesse == Groesse::Winkel)
+            {
+                saite.polarisationWinkelGrad = ueberall(w);
+                saite.polarisationCent = ueberall(3.0);
+            }
+            else
+            {
+                saite.polarisationWinkelGrad = ueberall(10.0);
+                saite.polarisationCent = ueberall(w);
+            }
+            const lumi::loop::Instrument modell = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
+            teile.push_back(rechne(modell, p.midi, p.stufe, haltenS));
+        }
+        std::vector<std::vector<float>*> zeiger;
+        for (std::vector<float>& t : teile)
+        {
+            richte(t, frames);
+            zeiger.push_back(&t);
+        }
+        const double leiser = unterSpitze(zeiger);
+        const char* groesse = p.groesse == Groesse::Stoss ? "u" : p.groesse == Groesse::Winkel ? "gamma" : "delta";
+        const char* einheit = p.groesse == Groesse::Stoss ? "" : p.groesse == Groesse::Winkel ? " Grad" : " Cent";
+        const std::string datei = nummer(nr) + "_" + groesse + "_" + p.name + "_" + p.staerke + ".wav";
+        REQUIRE(lumi::audio::schreibeWav(QString::fromStdU16String((ziel / datei).u16string()), folge(teile), kRate,
+                                         lumi::audio::WavTiefe::Gleitkomma32)
+                    .geschrieben);
+        liste << datei << ": " << groesse << " an " << p.name << " (MIDI " << p.midi << ") " << p.staerke << " (Stufe " << p.stufe
+              << " dB; Salamander v" << ebene << ", auf " << abstand << " dB), je " << haltenS << " s; Modell mit " << groesse << " =";
+        for (const double w : p.werte) liste << ' ' << std::setprecision(2) << w << einheit;
+        liste << std::setprecision(1) << (leiser > 0.0 ? "; gemeinsam " + std::to_string(leiser).substr(0, 4) + " dB leiser" : std::string())
+              << "\n   Frage: welcher Wert klingt Salamander am naechsten (1-4, \"zwischen 2 und 3\", oder \"kein Unterschied\")?\n";
+        ++nr;
+    }
+    liste << "\nDie Wahl je Datei kommt nach Schritt 8.6 als Vorgabe in baueVorgabe() (Konzept §4.1, Teilplan 31d-8).\n";
     std::ofstream(ziel / "liste.txt", std::ios::binary) << liste.str();
     MESSAGE(liste.str());
 }

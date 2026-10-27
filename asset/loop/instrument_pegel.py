@@ -69,6 +69,7 @@ PEGEL = {
     "finger_bass": (1.0, 1.1852),
     "flute": (0.8, 0.5298),
     "ghost": (0.7, 0.4897),
+    "grand_piano": (1.0, 4.1788),
     "growl_bass": (0.55, 0.3081),
     "guitar": (1.0, 2.0941),
     "guitar_old": (1.0, 2.2333),

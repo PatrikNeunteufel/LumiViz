@@ -42,6 +42,10 @@ KATALOG = {
     "clavinet": ("keys", "A driven string per key (Waveguide) with two single coils and a short square bark on top."),
     "clavinet_old": ("keys", "The clavinet before stage 23: a driven plucked string with a short square bark on top."),
     "chord_stab": ("keys", "Three detuned saws through a filter that snaps shut."),
+    # S157 (31d-8, SP1 a): geschrieben vom Programm (test_LoopHammerSaite.cpp, LUMIVIZ_GRAND_PIANO_SCHREIBEN=1)
+    "grand_piano": ("keys", "A modal hammer-string grand piano: three strings per key with two decay stages, through "
+                            "the Steinway D soundboard; decay, brightness and detuning measured against the Salamander "
+                            "Yamaha C5."),
     # --- Bass
     "bass": ("bass", "A filtered saw with a short filter sweep."),
     "acid_bass": ("bass", "A saw through a low filter with a strong sweep."),
@@ -202,6 +206,9 @@ def ergaenze(name, daten, genres=None):
     # die Saiten (Fassung 10, Stufe 23a) bleiben, wie sie sind — ohne das verloere ein Lauf sie still
     if "strings" in daten:
         neu["strings"] = daten["strings"]
+    # die Tastatur (Fassung 16, Stufe 31a) ebenso — S157 (31d-8): `grand_piano` traegt sie
+    if "keyboard" in daten:
+        neu["keyboard"] = daten["keyboard"]
     return neu
 
 

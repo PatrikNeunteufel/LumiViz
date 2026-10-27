@@ -120,7 +120,7 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     CHECK(zeilen.last() == QStringLiteral("[My files]"));
     // (S123: aus Formen, aus Samples und Drums dazu — wer Instrumente dazulegt, stellt die Zahlen nach,
     // wie in test_LoopInstrument)
-    CHECK(fenster.unter(QStringLiteral("Keys")).size() == 9);  // S133 (Stufe 23g): die alten als <name>_old
+    CHECK(fenster.unter(QStringLiteral("Keys")).size() == 10);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): die alten als <name>_old
     CHECK(fenster.unter(QStringLiteral("Bass")).size() == 15);
     CHECK(fenster.unter(QStringLiteral("Lead")).size() == 7);
     CHECK(fenster.unter(QStringLiteral("Pads and strings")).size() == 9);

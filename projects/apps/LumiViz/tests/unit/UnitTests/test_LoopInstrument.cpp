@@ -345,7 +345,7 @@ TEST_SUITE("LoopInstrument")
         // (Wunsch Patrik S111), sechs gerechnete Drums (Stufe 11f, S117); S123: elf aus Formen,
         // dreizehn aus mitgelieferten Samples, elf Drums mehr (sechs gerechnet, fuenf aus Samples)
         // und drei Besen (S124, Stufe 21d)
-        REQUIRE(alle.size() == 107);  // S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
+        REQUIRE(alle.size() == 108);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
@@ -367,7 +367,7 @@ TEST_SUITE("LoopInstrument")
                                  "wind_voices", "drum_kick_808", "drum_tom_low", "drum_tom_high", "drum_shaker",
                                  "drum_ride", "drum_crash", "drum_kick_punch", "drum_snare_fat", "drum_clap_stack",
                                  "drum_hat_shake", "drum_beatbox_kick", "drum_brush_tap", "drum_brush_slap",
-                                 "drum_brush_sweep"})
+                                 "drum_brush_sweep", "grand_piano"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -409,7 +409,13 @@ TEST_SUITE("LoopInstrument")
             looptest::merkeSamplesOhneEngine(instrument);
             const Klang ton = rendereTon(instrument, 69, 500.0, kRate);
             const std::int64_t ausklang = std::llround(std::max(5.0, laengsterAusklang) * kRate / 1000.0);
-            CHECK(ton.frames() == 22050 + ausklang);
+            // die Hammer-Saite (S157, 31d-8: grand_piano) rechnet ihre Laenge selbst — gehalten, dann der
+            // Nachklang unter dem Daempfer und die Antwort des Bodens (geprueft in test_LoopHammerTon.cpp)
+            const bool hammer = istHammerSchicht(instrument.schichten[0]);
+            if (hammer)
+                CHECK(ton.frames() > 22050);
+            else
+                CHECK(ton.frames() == 22050 + ausklang);
             const float groesster = spitze(ton.daten);
             MESSAGE(instrument.titel.toStdString() << ": A4, " << ton.frames() << " Abtastwerte, Spitze "
                                                    << std::to_string(groesster));
@@ -428,9 +434,11 @@ TEST_SUITE("LoopInstrument")
             }
             CHECK(endlich);
             // beide Seiten gleich — ausser eine Schicht steht mit Pan zur Seite oder spielt Stereo XY
-            // (S123: Instrumente aus Formen, etwa Rings Choir und Atom Bell)
-            const bool stereo = std::any_of(instrument.schichten.begin(), instrument.schichten.end(),
-                                            [](const Schicht& s) { return s.pan != 0.0 || s.stereoXY; });
+            // (S123: Instrumente aus Formen, etwa Rings Choir und Atom Bell), oder die Hammer-Saite klingt
+            // durch einen Koerper (Hoerorte links und rechts, 31c-7)
+            const bool stereo = std::any_of(instrument.schichten.begin(), instrument.schichten.end(), [](const Schicht& s) {
+                return s.pan != 0.0 || s.stereoXY || (istHammerSchicht(s) && !s.hammerSaite.resonanzboden.koerper.isEmpty());
+            });
             CHECK(beideGleich == !stereo);
             // der Klang endet bei null: kein Knacken am Ende
             CHECK(std::abs(ton.daten[ton.daten.size() - 2]) < 0.002f);
@@ -638,7 +646,7 @@ TEST_SUITE("LoopInstrument")
         }
         // nach dem Titel zugeordnet (asset/loop/instrument_katalog.py) — wer eines dazulegt, stellt die Zahl nach
         // (S123: aus Formen, aus Samples und elf Drums dazu)
-        CHECK(jeArt[QStringLiteral("keys")] == 9);  // S133: clavinet_old
+        CHECK(jeArt[QStringLiteral("keys")] == 10);  // S157: grand_piano; S133: clavinet_old
         CHECK(jeArt[QStringLiteral("bass")] == 15);  // S133: slap_bass_old, upright_bass_old, finger_bass
         CHECK(jeArt[QStringLiteral("lead")] == 7);
         CHECK(jeArt[QStringLiteral("pads")] == 9);
@@ -715,7 +723,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 107);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 108);  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {

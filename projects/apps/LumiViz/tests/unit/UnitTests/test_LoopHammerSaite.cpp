@@ -9,7 +9,11 @@
  * @date   October 2026
  *
  * @details
- * Ohne Ton, ohne Engine, ohne Dateien aus dem Repo, ohne Qt-Anwendung.
+ * Ohne Ton, ohne Engine, ohne Qt-Anwendung; ohne Dateien aus dem Repo bis auf einen Fall:
+ * der Waechter ueber `asset/loop/instruments/grand_piano.lvinst` (31d-8, SP1 a) liest vom
+ * Arbeitsordner aus — die Test-Exe aus dem Projekt-Root starten.
+ * `LUMIVIZ_GRAND_PIANO_SCHREIBEN=1` schreibt die Datei aus der Vorgabe neu (nach jeder neuen
+ * Vorgabe in `baueVorgabe()`); danach `python asset/loop/instrument_katalog.py`.
  *
  * - Kurven ueber die Tastatur (HK1 a): Randwert, Abweichung je Taste, monoton kubisch
  *   ohne Ueberschwingen, die logarithmische Skala, Richten.
@@ -29,7 +33,9 @@
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 
+#include <QFile>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 
 #include <algorithm>
@@ -67,7 +73,50 @@ Instrument zurueck(const Instrument& instrument)
     return gelesen;
 }
 
+/// Das mitgelieferte `grand_piano` (31d-8, SP1 a): die Vorgabe der Hammer-Saite mit dem Boden des
+/// Steinway D und der Tastatur der Vorgabe — wie es das Programm schreibt.
+Instrument grandPiano()
+{
+    Instrument instrument = fluegel();
+    instrument.titel = QStringLiteral("Grand Piano");
+    Schicht& s = instrument.schichten[0];
+    s.name = QStringLiteral("Hammer string");
+    s.hammerSaite = hammerSaiteVorgabe();
+    s.hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
+    return instrument;
+}
+
+const QString kGrandPianoDatei = QStringLiteral("asset/loop/instruments/grand_piano.lvinst");
+
 }  // namespace
+
+TEST_CASE("Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe")
+{
+    // Werkzeug: die Datei aus der Vorgabe neu schreiben (Titel, Schicht, Kurven, Tastatur); Art, Genres,
+    // Beschreibung und Pegel setzt danach `instrument_katalog.py` — sie aendern Kurven und Tastatur nicht
+    const Instrument soll = grandPiano();
+    if (qEnvironmentVariableIntValue("LUMIVIZ_GRAND_PIANO_SCHREIBEN") == 1)
+    {
+        QFile aus(kGrandPianoDatei);
+        REQUIRE_MESSAGE(aus.open(QIODevice::WriteOnly | QIODevice::Truncate),
+                        "asset/loop/instruments nicht gefunden — aus dem Projekt-Root starten");
+        REQUIRE(aus.write(QJsonDocument(alsJson(soll)).toJson(QJsonDocument::Indented)) > 0);
+        MESSAGE("grand_piano.lvinst geschrieben — danach python asset/loop/instrument_katalog.py");
+    }
+
+    QFile datei(kGrandPianoDatei);
+    REQUIRE_MESSAGE(datei.open(QIODevice::ReadOnly), "grand_piano.lvinst nicht gefunden — aus dem Projekt-Root starten");
+    Instrument ist;
+    REQUIRE(ausJson(QJsonDocument::fromJson(datei.readAll()).object(), ist));
+    CHECK(ist.titel == soll.titel);
+    CHECK(ist.art == QStringLiteral("keys"));
+    REQUIRE(ist.schichten.size() == 1);
+    CHECK(istHammerSchicht(ist.schichten[0]));
+    CHECK(ist.schichten[0].anregung == Anregung::Hammer);
+    CHECK_MESSAGE(ist.schichten[0].hammerSaite == soll.schichten[0].hammerSaite,
+                  "grand_piano.lvinst ist veraltet — LUMIVIZ_GRAND_PIANO_SCHREIBEN=1, dann instrument_katalog.py");
+    CHECK_MESSAGE(ist.tastatur == soll.tastatur, "Tastatur fehlt oder weicht ab — instrument_katalog.ergaenze traegt `keyboard`?");
+}
 
 TEST_CASE("Loop Hammer-Saite 31a Kurve")
 {

@@ -588,17 +588,31 @@ TEST_CASE("Loop Saiten 23b: ein mitgelieferter Loop ohne Saiteninstrument plant 
 {
     // ein Loop, dessen Instrumente keine Saiten tragen: die Auskunft aendert nichts — dieselben Namen,
     // dieselben Stimmen, dieselben Schlaege. Seit 23g spielen einige Gitarren und Baesse (kMitSaiten):
-    // dort tragen die Namen der Toene ihre Saite
+    // dort tragen die Namen der Toene ihre Saite. Seit S157 (31d-8) spielt grand_piano_demo den Fluegel: die
+    // Planung erfaehrt den Hammer ueber die Auskunft (HT5 a), die Namen tragen die Anschlagstufe `:a<stufe>`
     const InstrumentVon saiten = instrumentAuskunft();
     const QStringList loops = mitgelieferteLoops();
     REQUIRE(loops.size() >= 38);
     int ohneSaiten = 0;
     int mitSaiten = 0;
+    int mitHammer = 0;
     for (const QString& pfad : loops)
     {
         CAPTURE(pfad.toStdString());
         Loop loop;
         REQUIRE(ladeLoop(pfad, loop));
+        bool spieltHammer = false;
+        for (const Muster& m : loop.muster)
+            if (m.art == MusterArt::Instrument && saiten(m.instrument).hammer) spieltHammer = true;
+        if (spieltHammer)
+        {
+            ++mitHammer;
+            bool traegtStufe = false;
+            for (const QString& name : loop.klangNamen(saiten))
+                if (name.contains(QStringLiteral(":a"))) traegtStufe = true;
+            CHECK(traegtStufe);
+            continue;
+        }
         bool spieltSaiten = false;
         for (const Muster& m : loop.muster)
             if (m.art == MusterArt::Instrument && saiten(m.instrument).saiten.istSaiteninstrument()) spieltSaiten = true;
@@ -630,7 +644,9 @@ TEST_CASE("Loop Saiten 23b: ein mitgelieferter Loop ohne Saiteninstrument plant 
         }
         CHECK(gleich);
     }
-    MESSAGE(ohneSaiten << " Loops ohne Saiteninstrument wie ohne Auskunft, " << mitSaiten << " mit Saiten");
+    MESSAGE(ohneSaiten << " Loops ohne Saiteninstrument wie ohne Auskunft, " << mitSaiten << " mit Saiten, " << mitHammer
+                       << " mit Hammer");
     CHECK(ohneSaiten > 0);
     CHECK(mitSaiten > 0);
+    CHECK(mitHammer > 0);
 }

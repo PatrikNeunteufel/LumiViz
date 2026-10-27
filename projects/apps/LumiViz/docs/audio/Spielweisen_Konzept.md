@@ -3523,14 +3523,21 @@ Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler 
   `LUMIVIZ_31D8_WAV=<Ordner>` mit `LUMIVIZ_SALAMANDER`, nach dem Muster von `LUMIVIZ_31D_WAV` (gleich laut auf
   −23 LUFS, `liste.txt` mit Frage je Datei; Ablage `.claude\handover\hoerproben_31d8\`). Je Datei zuerst *Salamander*
   (Ebene zur Stufe, V1 a), dann die Varianten mit einer Sekunde Stille: **u** (leise = laut) 0 / 0,15 / 0,3 / 0,5 an
-  33, 60, 84 bei mf (−12 dB) und ff (0 dB) — sechs Dateien; **γ** 0 / 5 / 10 / 20° an 24, 33, 60, 84 bei mf — vier
-  Dateien; **δ** 0 / 2 / 4 / 6 Cent an 24 und 28 (eine Saite, γ dabei 10°, sonst wirkt δ nicht) bei mf — zwei Dateien.
+  33, 60, 84 bei mf (−12 dB) und ff (0 dB) — sechs Dateien; **γ** 0 / 5 / 10 / 20° an 24 und 27 bei mf, δ dabei
+  3 Cent (Mitte nach Tan 2017) — zwei Dateien; **δ** 0 / 2 / 4 / 6 Cent an 24 und 27, γ dabei 10°, bei mf — zwei
+  Dateien. *Im Bau S157 geändert:* 28 → 27 (*Salamander* hat nur kleine Terzen); γ an 33, 60, 84 entfallen —
+  **Befund:** mit δ = 0 sind die vier Fassungen von γ an 24, 33, 60, 84 Bit für Bit gleich (Abstand der Fassungen
+  unter −196 dB): ohne Verstimmung der zweiten Ebene und mit h = 0 ist die gedrehte Ebene von der ersten nicht zu
+  unterscheiden, γ wirkt nur mit δ, und δ ist nur an Tasten mit einer Saite gesetzt (8.6). Abstand der Fassungen
+  2–4 zur ersten (RMS der Differenz gegen RMS): u −6 … −25 dB, γ −14 … −41 dB, δ −24 … −29 dB — alle hörbar
+  verschieden. Zehn Dateien, abgelegt S157.
   Alle übrigen Größen die Vorgabe 31d-4. Werte innerhalb SQ2 a (γ 0–25°, δ 0–8 Cent, u 0–1). Patrik hört gesammelt
   (Memory „Proben später“); seine Wahl je Datei (eine der Varianten, oder „dazwischen“) kommt als Antwort hierher.
 - **8.6 Gehör eintragen** (nach Patriks Wahl aus 8.5, ohne weitere Rückfrage): die gewählten Werte als Stützpunkte in
   `baueVorgabe()` — `stossLeise`/`stossLaut` an 33, 60, 84 (gleich, bis Patrik leise und laut verschieden hört),
-  `polarisationWinkelGrad` an 24, 33, 60, 84, `polarisationCent` an 24 und 28 (ab 31 bleibt 0: dort trägt `detune`
-  die Schwebung) — Herkunft im Kommentar „nach Gehör, Patrik S15x (31d-8), innerhalb SQ2 a“; „dazwischen“ heißt das
+  `polarisationWinkelGrad` und `polarisationCent` je mit Stützpunkten 24 und 27 aus der Wahl, 30 wie 27, `polarisationCent`
+  ab 31 auf 0 (Stützpunkte 31 und 108 mit 0: dort trägt `detune` die Schwebung; γ darüber bleibt wie an 30 und
+  wirkt ohne δ nicht) — Herkunft im Kommentar „nach Gehör, Patrik S15x (31d-8), innerhalb SQ2 a“; „dazwischen“ heißt das
   Mittel der beiden Nachbarwerte. Danach: Werkzeug aus 8.2 neu (Datei), `*Loop Werte*` neu geschrieben (Diff: nur
   `grand_piano*`-Zeilen und die Hammer-Instrumente — es gibt keine anderen), `klangfassung.txt` neu, Bezug der
   Hammer-Saite unverändert (er hält u = 0 fest, `werte/hammer_bezug_saite.json`); der dauerhafte Test
@@ -3548,6 +3555,33 @@ Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler 
   Ende bei Schritt unter 1 % oder höchstens 20 Iterationen, Bericht je Iteration mit Rest je Taste und der Diagonale
   von JᵀJ je Stützpunkt (welche Größen ihn festlegen); dann 31d-7 C; 31e–31h. Verfehlt die Probe 7.5.11, bleiben die
   Werte aus 8.6 (ZZ1 a).
+
+**31d-8, 8.2 bis 8.5 gebaut (S157, nach dem Wechsel auf Opus):**
+- **8.2:** `grand_piano.lvinst` aus dem Werkzeug (`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1`), Kurven und Tastatur gleich der
+  Vorgabe (Wächter „Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe“); `ergaenze` trägt `keyboard` durch;
+  Zahlen 108 Instrumente, *Keys* 10. Im allgemeinen Ton-Fall von `test_LoopInstrument` ist der Flügel von zwei Regeln
+  der Hüllkurven-Instrumente ausgenommen (Länge = gehalten + Release; Mono): er rechnet seine Länge selbst (A4, 0,5 s
+  gehalten: 260 849 Abtastwerte, der Boden klingt nach) und klingt durch den Boden in Stereo; Tonhöhe, Ende bei null,
+  Spitze prüft der Fall weiter. Zwei ältere Fälle prüften Regeln von vor der Hammer-Saite und wurden nachgezogen —
+  `test_LoopSpielweise` (`inALegato` fehlt nur an der gegriffenen Saite, nicht an `modal`) und `test_LoopSaiten` 23b
+  (ein Loop mit Hammer plant mit der Auskunft anders, seine Namen tragen `:a<stufe>`, HT5 a); das Programm blieb.
+- **8.3:** gemessen −25,821 LUFS bei Level 1 (alle übrigen 107 auf ±0,1 LU am Bezug) → Level 4,1788; `--messung` nur
+  mit der Zeile des Flügels (sonst verschöben Rundungsreste andere Instrumente). `loop_werte.txt` neu geschrieben
+  hätte acht bestehende Zeilen in der achten Stelle verschoben (effects_demo 0,09 %, die übrigen um 10⁻⁸ — der
+  Compiler, der die Datei zuletzt schrieb, gegen Release-clang; im Rahmen von einem Tausendstel): behalten, nur vier
+  Zusätze (drei Töne, der Loop); `klangfassung.txt` ebenso, 379 / 379 bewacht. Die Spitze des Flügels an C6 liegt bei
+  Level 4,18 über 1 (1,32) — kein Fehler nach LL7 a (Schutz am Ausgang).
+- **8.4:** `grand_piano_demo.lvloop` aus `make_fluegel_loops.py` (C, Am, F, G, C, Am, G, C gehalten; linke Hand
+  MIDI 33–59); zwei Läufe gleich. **Wartezeit im Programm nicht gemessen** — Patrik startet das Programm selbst;
+  geschätzt aus der Rechenzeit (ein Ton im Bass um 1–1,5 s auf einem Thread, S156) über 1 s → Kipppunkt UF16 a
+  vermerkt, kein Umbau in 31d-8.
+- **8.5:** zehn Dateien unter `.claude\handover\hoerproben_31d8\` (Abweichungen von 8.5 dort vermerkt: 27 statt 28,
+  γ nur an 24 und 27 mit δ = 3 Cent).
+- Release-clang: voller Lauf 1632 / 1634 — rot nur die zwei nachgezogenen Fälle, danach beide Dateien 22 / 22;
+  Testing-MSVC: voller Lauf **1634 / 1634, 0 Skips** (6,8 min, mit beiden Nachträgen); `LumiViz.exe` unter
+  Release-clang gebaut, die Asset-Kopie trägt Flügel und Loop. Rechenkern unverändert (Bezug der Hammer-Saite
+  bitgleich) — die Rechenzeit von Hand steht mit 8.7 an. **Offen:** 8.1 und die Wahl aus 8.5 (Patrik), 8.6,
+  8.7 (Testing-MSVC und voller Lauf am Ende, Rechenzeit, `modell.md`).
 
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
