@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.93.0
+> **Version:** 0.94.0
 > **Datum:** 2026-10-27 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -3856,7 +3856,7 @@ Gesamtausgabe bei IMSLP als Scan vor. *Angaben aus den Werkseiten bei IMSLP, im 
 | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
 | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
 | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
-| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, 9.2 entschieden (VZ1 a, VZ2 a), 9.3 gebaut; 9.4 Übertragung läuft (TR1 a) | — |
+| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, 9.2 entschieden (VZ1 a, VZ2 a), 9.3 gebaut; 9.4 Übertragung läuft (TR1 a): Takte 0–15 von 34 übertragen (Arbeitsstand lokal unter `.claude/handover/nocturne_31d9/`), noch keine `.lvloop` | — |
 | 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
 | 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
 | 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |
