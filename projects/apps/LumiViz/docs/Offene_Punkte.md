@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.292.0
+> **Version:** 1.293.0
 > **Datum:** 2026-10-28 (Session 158)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -3210,7 +3210,7 @@ Idee Preset-Warmup/Pre-Roll.
   | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
   | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
   | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
-  | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, 9.2 entschieden (VZ1 a, VZ2 a), 9.3 gebaut; 9.4 Übertragung läuft (TR1 a): Takte 0–15 von 34 übertragen (Arbeitsstand lokal unter `.claude/handover/nocturne_31d9/`); Kostprobe der Takte 0–15 als `.lvloop` (S158, `kostprobe.py`, mit Gabeln nach DY1 a) — Hörurteil bei Patrik | — |
+  | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1–9.6 fertig (S158): ganz übertragen (TR1 a, Kistner gegengeprüft), `nocturne_demo` mitgeliefert (Daten `asset/loop/nocturne_op9_2.py`, 40 Takte, 3:38), Fader +1,4 dB (Spitze −1 dBFS), Werte und Klangfassung, Hörprobe; voll 1640 / 1640 unter Release-clang (587 s) und Testing-MSVC (600 s) — NP1 a (Fader +1,4 dB); Hörurteil (DY1 a) bei Patrik | — |
   | 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
   | 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
   | 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |
@@ -6295,6 +6295,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.293.0 | 2026-10-28 | Session 158. §7 Spielweisen: 31d-9 fertig — Nocturne Op. 9 Nr. 2 ganz übertragen, `nocturne_demo` mitgeliefert (Daten `nocturne_op9_2.py`, Beschreibung, `CREDITS.md`), Pegel, Werte, Hörprobe, voller Lauf unter beiden Compilern. NP1 a. Offen bei Patrik: Hörurteil (DY1 a). |
 | 1.292.0 | 2026-10-28 | Session 158. §7 Spielweisen: Kostprobe der Nocturne (Takte 0–15) als `.lvloop`, Befund zur Spreizung der Tafel am Flügel, DY1 a (Gabeln zuerst). CR1 a (der Creator misst auf einem Thread, gemerkt, wie IP1 a) gebaut; *Chords* beim Flügel offen. |
 | 1.290.0 | 2026-10-27 | Session 157 (Fable 5.1). §7 Spielweisen: SP1 a (31d-8 „Spielbar“ vor SM4 b), SP2 a (Levenberg–Marquardt über die Stützpunkte), SP3 a (Eindeutigkeit an den Messgrößen); Teilplan 31d-8 (8.1–8.7); Lehren für InstrumentsCalculation. Nichts gebaut. |
 | 1.289.0 | 2026-10-27 | Session 156. §7 Spielweisen: Probe 7.5.4 zweimal (Pool, bitgleich schneller), SM4 a gekippt (GP1 a, RV1 a), Teilplan SM4 b (ZF1 a–ZF9 a), ZZ1 a (ein Anlauf, sonst Gehör), PB1 a; voller Lauf 1631 / 1631 unter beiden Compilern. |

@@ -327,7 +327,8 @@ def als_text(daten):
                 return "{}"
             return "{\n" + ",\n".join(innen + json.dumps(k) + ": " + schreibe(v, einzug + 4) for k, v in wert.items()) + "\n" + " " * einzug + "}"
         if isinstance(wert, list):
-            if all(not isinstance(v, (dict, list)) for v in wert):
+            # eine leere Liste darin (der Bend einer Note, Fassung 14) haelt die Zeile nicht auf
+            if all(not isinstance(v, (dict, list)) or v == [] for v in wert):
                 return json.dumps(wert)
             return "[\n" + ",\n".join(innen + schreibe(v, einzug + 4) for v in wert) + "\n" + " " * einzug + "]"
         return json.dumps(wert, ensure_ascii=False)

@@ -54,7 +54,8 @@ lumi_asset(composer         OHNE "README.md")
 # DDdemo.lvloop, ...) — ein Beispiel heisst <name>_demo.lvloop oder liegt unter
 # genres/; unter vergleich/ die Vergleiche alt gegen neu (S133, make_saiten_loops.py). Die Samples unter samples/ sind die eine Ausnahme von „nur eigene
 # Werke": fremde Aufnahmen unter CC BY 3.0, CC BY 4.0 und CC0 (Entscheid 2 a, Patrik S123) — ihre
-# Nennung samples/CREDITS.md geht mit, und THIRD_PARTY_NOTICES.md fuehrt sie.
+# Nennung samples/CREDITS.md geht mit, und THIRD_PARTY_NOTICES.md fuehrt sie. CREDITS.md nennt die Ausgaben, aus
+# denen gemeinfreie Werke uebertragen sind (nocturne_demo, S158).
 lumi_asset(loop
     NUR "kit/*.wav"
         "samples/*.wav"
@@ -72,7 +73,8 @@ lumi_asset(loop
         "instrument_bodies/*.lvinstbody"
         "genres/*.lvloop"
         "vergleich/*.lvloop"
-        "*_demo.lvloop")
+        "*_demo.lvloop"
+        "CREDITS.md")
 
 # Formen (shape/Kontur): die mitgelieferten Zeichnungen. Nicht: make_contours.py
 # und README.md.

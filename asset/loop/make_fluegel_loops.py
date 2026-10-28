@@ -17,10 +17,19 @@ Danach `instrument_pegel.py --loops` (zieht den Loop auf den Pegel der Instrumen
 jeden anderen) und `instrument_katalog.py` (das Genre des Loops wird das Genre von
 `grand_piano`). 31d-9 und 31h-3 bauen dieses Skript fuer die Chopin-Loops aus (CH1 a, CH2 a).
 Kein Zufall: zwei Laeufe ergeben dieselbe Datei.
+
+Schreibt dazu `asset/loop/nocturne_demo.lvloop` (31d-9, S158): die Nocturne Op. 9 Nr. 2 ganz, aus den Daten in
+`nocturne_op9_2.py` — ein Muster *Piano* mit beiden Haenden (HD1 a), Stimmen *Right hand* / *Left hand* nach System
+(N5 a), Pedal-Spur Sustain nach *Ped.* und ✱ (N3 a), Staerke nach der Tafel mit Gabeln (N2 a, DY1 a), festes Tempo
+♪ = 132 (N4 a), Auftakt vorn (N7 a), Kadenz und Schlussfermate nach N8 a; Fassung 14, immer alle Felder. Was die
+Beschreibung des Loops sagt (Tafel, Tempo-Stellen, Verzierungen, Abweichungen), steht in README.md.
+`instrument_pegel.py --loops` laesst Fassung 14 unberuehrt — der Pegel steht hier (`NOCTURNE_GAIN_DB`).
 """
 
+import math
 from pathlib import Path
 
+import nocturne_op9_2
 from make_examples import TAKT, als_text, loop, muster
 
 HIER = Path(__file__).resolve().parent
@@ -71,7 +80,136 @@ def grand_piano_demo():
     )
 
 
-LOOPS = {"grand_piano_demo": grand_piano_demo}
+# --- Nocturne Op. 9 Nr. 2 (31d-9, CH1 a; Daten in nocturne_op9_2.py) ---------------------------------------------
+
+NOCTURNE_TAKT = 48  # 12/8: zwoelf Achtel zu vier Schritten (Zweiunddreissigstel)
+NOCTURNE_AUFTAKT = 44  # Schritt des Auftakts in Takt 0 — er liegt im Loop bei 0 (N7 a)
+# N2 a: die Tafel in dB der Anschlagstufe; ein Akzent 6 dB ueber der Umgebung
+NOCTURNE_STUFEN = {"ppp": -30, "pp": -24, "p": -18, "mp": -15, "mf": -12, "f": -6, "ff": 0}
+NOCTURNE_AKZENT_DB = 6
+NOCTURNE_GABEL_DB = 6  # eine Gabel ohne Buchstaben an ihrem Ende fuehrt so weit hin (DY1 a)
+NOCTURNE_GABELN = {"<": 1, "cresc.": 1, ">": -1, "dim.": -1}
+NOCTURNE_VORGABE = "p"  # vor dem ersten Zeichen (die Ausgabe: espress. dolce, ohne Buchstaben)
+# Fader des Kanals (9.5, S158): die Spitze der gerechneten Nocturne (die Kadenz im ff) bei −1 dBFS; mit +10 dB lag sie
+# bei 2,40 (+7,6 dB) und die leisen Stellen so laut wie grand_piano_demo
+NOCTURNE_GAIN_DB = 1.4
+RECHTE_HAND, LINKE_HAND = 1, 2  # Stimmen nach System (N5 a)
+TONNAMEN = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+
+
+def tonhoehe(name):
+    """„Eb5“, „C#6“, „Bbb5“ → MIDI (C4 = 60)."""
+    ton, rest, vorzeichen = name[0], name[1:], 0
+    while rest and rest[0] in "b#":
+        vorzeichen += -1 if rest[0] == "b" else 1
+        rest = rest[1:]
+    return 12 * (int(rest) + 1) + TONNAMEN[ton] + vorzeichen
+
+
+class Nocturne:
+    """Rechnet die Partiturtakte in Schritte des Loops um und fuehrt Dynamik und Pedal nach N2 a, N3 a, DY1 a."""
+
+    def __init__(self, takte):
+        self.takte = takte
+        self.anfang, ort = {}, 0
+        for t in sorted(takte):
+            self.anfang[t] = ort
+            ort += takte[t].get("takte", 1) * NOCTURNE_TAKT
+        self.ende = ort - NOCTURNE_AUFTAKT
+        self.marken = [(self.stelle(t, s), z) for t in sorted(takte) for s, z in takte[t]["dyn"]]
+
+    def stelle(self, takt, schritt):
+        return self.anfang[takt] + schritt - NOCTURNE_AUFTAKT
+
+    def taktende(self, stelle):
+        for t in sorted(self.takte):
+            ende = self.stelle(t, 0) + self.takte[t].get("takte", 1) * NOCTURNE_TAKT
+            if ende > stelle:
+                return ende
+        return self.ende
+
+    def grundstufe(self, stelle):
+        """Stufe aus den Buchstaben bis `stelle`; sfp = f auf dem Schlag samt Vorschlaegen davor, danach p."""
+        db = NOCTURNE_STUFEN[NOCTURNE_VORGABE]
+        for ort, zeichen in self.marken:
+            if ort > stelle:
+                break
+            if zeichen in NOCTURNE_STUFEN:
+                db = NOCTURNE_STUFEN[zeichen]
+            elif zeichen == "sfp":
+                db = NOCTURNE_STUFEN["f"] if stelle - ort < 2 else NOCTURNE_STUFEN["p"]
+        return db
+
+    def stufe(self, stelle):
+        """Mit Gabeln (DY1 a): eine Gabel reicht bis zum naechsten Zeichen, hoechstens bis zum Ende ihres Takts;
+        steht dort ein Buchstabe, fuehrt sie gleichmaessig zu seiner Stufe, sonst um NOCTURNE_GABEL_DB hin."""
+        db = self.grundstufe(stelle)
+        for i, (ort, zeichen) in enumerate(self.marken):
+            if zeichen not in NOCTURNE_GABELN or ort > stelle:
+                continue
+            naechste = self.marken[i + 1] if i + 1 < len(self.marken) else None
+            ende = min(naechste[0], self.taktende(ort)) if naechste else self.taktende(ort)
+            if not ort <= stelle < ende:
+                continue
+            start = self.grundstufe(ort)
+            ziel = start + NOCTURNE_GABELN[zeichen] * NOCTURNE_GABEL_DB
+            if naechste and naechste[0] == ende and naechste[1] in NOCTURNE_STUFEN:
+                ziel = NOCTURNE_STUFEN[naechste[1]]
+            db = start + (ziel - start) * (stelle - ort) / (ende - ort)
+        return db
+
+    def noten(self):
+        noten = []
+        for t in sorted(self.takte):
+            for hand, stimme in (("rh", RECHTE_HAND), ("lh", LINKE_HAND)):
+                for eintrag in self.takte[t][hand]:
+                    anfang, dauer, toene = eintrag[:3]
+                    ort = self.stelle(t, anfang)
+                    db = min(0.0, self.stufe(ort) + (NOCTURNE_AKZENT_DB if len(eintrag) > 3 else 0))
+                    noten += [note_mit_versatz(ort, dauer, tonhoehe(ton), db, stimme) for ton in toene]
+        noten.sort(key=lambda n: (n[0], n[8], n[2]))
+        return noten
+
+    def pedal(self):
+        punkte = []
+        for t in sorted(self.takte):
+            ped = self.takte[t]["ped"]
+            if ped == "schlag":  # nieder an jedem Schlag, hoch nach dem zweiten Achtel (N3 a)
+                ped = [(s, 1) for s in (0, 12, 24, 36)] + [(s + 8, 0) for s in (0, 12, 24, 36)]
+            punkte += [(self.stelle(t, s), w) for s, w in ped]
+        return [[float(ort), float(w)] for ort, w in sorted(p for p in punkte if p[0] >= 0)]
+
+
+def note_mit_versatz(ort, dauer, hoehe, db, stimme):
+    """Eine Zeile der Fassung 14: Bruchteile als Schritt + Versatz des Anfangs, Laenge + Versatz des Endes (N1 a);
+    die Staerke als Faktor der Anschlagstufe (N2 a)."""
+    schritt = math.floor(ort + 1e-9)
+    laenge = max(1, math.ceil(dauer - 1e-9))
+    return [schritt, laenge, hoehe, round(10 ** (db / 20), 4), -1, 0, [], stimme,
+            round(ort - schritt, 6), round(dauer - laenge, 6)]
+
+
+def nocturne_demo():
+    stueck = Nocturne(nocturne_op9_2.TAKTE)
+    noten = stueck.noten()
+    takte = math.ceil(max(n[0] + n[1] for n in noten) / NOCTURNE_TAKT)
+    muster_ = {
+        "name": "Piano", "kind": "instrument", "bars": takte, "instrument": "grand_piano", "volume": 0.8, "pan": 0.0,
+        "mute": False, "notes": noten, "voices": ["Right hand", "Left hand"],
+        "lanes": {"sustain": stueck.pedal(), "sostenuto": [], "expression": [], "vibrato": [], "pitch": [],
+                  "switches": {}},
+    }
+    return {
+        "format": "lumiviz-loop", "version": 14, "bpm": 132, "beatsPerBar": 12, "stepsPerBeat": 4, "swing": 0.0,
+        "volume": 0.35,
+        "tags": {"title": "Nocturne Op. 9 No. 2", "artist": "Frédéric Chopin", "genre": "Classical"},
+        "patterns": [muster_],
+        "channels": [{"name": "Piano", "enabled": True, "clips": [{"pattern": "Piano", "start": 0, "repeat": 1}],
+                      "gain": NOCTURNE_GAIN_DB}],
+    }
+
+
+LOOPS = {"grand_piano_demo": grand_piano_demo, "nocturne_demo": nocturne_demo}
 
 
 def main():

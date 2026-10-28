@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.95.0
+> **Version:** 0.96.0
 > **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -3684,6 +3684,8 @@ Stufen zu eng oder zu weit liegen — dann ändert sich nur die Tafel.
 
 ✅ **DY1 a** (Patrik S158): **Die Gabeln und *cresc.* zuerst nach N2 a ausführen, dann neu hören; klingt es dann immer noch extrem, die Tafel mit Messung je Lage und einer Quelle für die Abstände neu vorlegen.** Eine Gabel führt gleichmäßig zum nächsten Zeichen, höchstens bis zum Ende ihres Takts (die Daten tragen ihr Ende nicht); steht dort ein Buchstabe, zu seiner Stufe, sonst um 6 dB hin. Grund: die Tafel nicht an einer Fassung beurteilen, die N2 a noch nicht ausführt. Verworfen: b (die Tafel als Pegel am Ausgang, im Skript über eine gemessene Kurve je Lage umgerechnet). Kippt, wenn auch mit Gabeln die Akzente und f-Stellen hart klingen — dann b oder eine engere Tafel. Hörurteil bei Patrik, gesammelt später.
 
+✅ **NP1 a** (Patrik S158): **Der Fader der Nocturne steht so, dass die Spitze bei −1 dBFS liegt (+1,4 dB); die Nocturne ist im Mittel leiser als `grand_piano_demo`.** Grund: die Datei klingt ohne Begrenzer, wie die Tafel es sagt — das Verhältnis von p zu ff bleibt. Verworfen: b (+10 dB, die leisen Stellen so laut wie das Demo, die Spitzen fängt der Limiter — er stauchte genau die ff-Stellen, um die es bei DY1 a geht). Kippt, wenn das Hörurteil zu DY1 a die Tafel als zu weit gespreizt findet — dann Tafel und Pegel zusammen neu.
+
 ✅ **N3 a** (Patrik S157): **Das Pedal genau nach *Ped.* und ✱ der Gesamtausgabe auf Sustain (1 beim Treten, 0 beim
 Heben); wo die Ausgabe nichts zeigt, kein Pedal.** Grund: Treue zur Quelle (UF15 a). Verworfen: b (nach heutiger
 Spielpraxis). Kippt, wenn die Ausgabe an Stellen kein Pedal zeigt, an denen es offensichtlich fehlt — dann je Stelle
@@ -3841,6 +3843,30 @@ Zwischenstand.** Grund: rechtlich und fachlich der saubere Weg; die Hörprobe f�
 Akkordtöne). Verworfen: b (Snortums Quelle als Lesehilfe — öffnet die Lizenzfrage, die BL2 a vermeiden wollte), c (die
 Nocturne bis 31h-3 zurückstellen — verschiebt nur die Arbeit).
 
+**Befund 9.4 (S158, Übertragung zu Ende):** Takte 16–34 aus der Gesamtausgabe, jede unsichere Stelle gegen Kistner.
+Lesehilfe über dem System an D6 (Takt 4/8) geeicht: rund 10 px zu hoch. Unregelmäßige Gruppen: Takt 16 dreizehn
+Zweiunddreißigstel im Schlag, Takt 29 acht Sechzehntel im Raum von sechs (beide Ausgaben), Takt 18 eine Quartole, Takt
+24 eine Triole. Die Kadenz (Takt 32) misst in notierten Werten 216 Schritte → 5 Loop-Takte (N8 a): Akkord Cb5/Cb6 *ff*
+mit Arpeggio der linken Hand, Fermate auf Bb4/Cb6 über D5, 15 Vierergruppen unter *8va* (zwölfmal Cb–Bb–C♮–A♮, dann
+Cb–Bb–D–C♮, Bb–A–Ab–G, F–D–Eb–C), vier Achtel Bb5 Ab5 C5 D5. Berichtigt beim Gegenlesen: Takt 30 vor G6 eine
+Sechzehntelpause (zuerst als drei Vorschläge verlesen); Takt 15 ohne Pedal (zuvor wie Takt 7 angenommen); das ♮ in
+Takt 15 hebt das Db4 aus Takt 14 auf. Abweichungen der Erstausgabe (die Gesamtausgabe gilt, UF15 a): Takt 20 links
+F3 E♭4 statt F3 C4, Takt 22 drittes Achtel von Schlag 3, Takt 24 Balken, Takt 13, 26 und 30 andere Verzierungen.
+Gesamtausgabe: Pedal fehlt in den Takten 14–24; *con forza* (30) ist kein Buchstabe der Tafel.
+
+**Gebaut 9.4–9.6 (S158):** `asset/loop/nocturne_op9_2.py` (Daten je Takt mit `unsicher` und `anm`; `takte` für
+Kadenz und Schluss), `make_fluegel_loops.py` schreibt `nocturne_demo.lvloop` (Fassung 14, 12/8 als 12 Achtel zu 4
+Schritten, ♪ = 132; Stimmen nach System, Sustain nach *Ped.*/✱, Tafel mit Gabeln nach DY1 a, Bruchteile als Versatz;
+`Nocturne`, `note_mit_versatz`, `tonhoehe`); eine zweite, unabhängige Umsetzung (`.claude/handover/nocturne_31d9/
+kostprobe.py`) ergibt Note für Note dasselbe. `make_examples.als_text` hält eine Zeile mit leerer Liste (Bend)
+einzeilig. Beschreibung in `asset/loop/README.md` (Taktzahlen, Tafel, Pedal, Tempo-Stellen, Verzierungen mit Quelle,
+Abweichungen), Nennung der Ausgaben in `asset/loop/CREDITS.md` (geht mit, `Asset.cmake`). **9.5:** Spitze bei +10 dB
+Fader 2,40 (die Kadenz im *ff*, die leisen Stellen so laut wie `grand_piano_demo`) → Fader +1,4 dB, Spitze −1,0 dBFS,
+RMS 3 s höchstens −22,7 dB, Median −40,7 dB (Demo −26,5 / −31,5); `loop_werte.txt` nur um die Zeile der Nocturne
+ergänzt (ein Neuschreiben verschob andere Loops in der letzten Stelle innerhalb der Toleranz — verworfen), Klangfassung
+grün; Hörprobe `.claude/handover/nocturne_31d9/hoerprobe/nocturne_demo.wav` (218 s). **9.6:** voll 1640 / 1640, 0 Skips
+unter Release-clang (587 s) und Testing-MSVC (600 s); `LumiViz.exe` Release-clang gebaut.
+
 *Downloads S157 (Patrik):* alle sechs Scans liegen unter `LumiViz\dld\` (Nocturne, Étude, Ballade je Vorlage und
 Gegenprobe).
 
@@ -3860,7 +3886,7 @@ Gesamtausgabe bei IMSLP als Scan vor. *Angaben aus den Werkseiten bei IMSLP, im 
 | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
 | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
 | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
-| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, 9.2 entschieden (VZ1 a, VZ2 a), 9.3 gebaut; 9.4 Übertragung läuft (TR1 a): Takte 0–15 von 34 übertragen (Arbeitsstand lokal unter `.claude/handover/nocturne_31d9/`), noch keine `.lvloop` | — |
+| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1–9.6 fertig (S158): ganz übertragen (TR1 a, Kistner gegengeprüft), `nocturne_demo` mitgeliefert (Daten `asset/loop/nocturne_op9_2.py`, 40 Takte, 3:38), Fader +1,4 dB (Spitze −1 dBFS), Werte und Klangfassung, Hörprobe; voll 1640 / 1640 unter Release-clang (587 s) und Testing-MSVC (600 s) — NP1 a (Fader +1,4 dB); Hörurteil (DY1 a) bei Patrik | — |
 | 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
 | 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
 | 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |

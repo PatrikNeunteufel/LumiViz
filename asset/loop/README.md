@@ -426,3 +426,69 @@ Vierteln und Halben — beide Hände in **einem** Muster *Piano*, ein Kanal, Pan
 (ein Flügel hat ein Pedal für alle Saiten, HD1 a). Erzeugt mit
 `make_fluegel_loops.py`, danach `instrument_pegel.py --loops`. Kein Pedal
 (Mitschwingen kommt mit 31e).
+
+## S158, Stufe 31d-9: Nocturne Op. 9 Nr. 2
+
+### nocturne_demo.lvloop
+
+Frédéric Chopin, Nocturne Es-Dur Op. 9 Nr. 2, ganz: Auftakt und 34 Takte, 12/8,
+♪ = 132 (die Metronomangabe der Ausgabe), 3:38. Von Hand übertragen aus der
+**Gesamtausgabe Breitkopf & Härtel 1880** (Bargiel, *Friedrich Chopin's Werke*
+Band IV, Plate C. IV. 2; IMSLP #113996), Takt für Takt, jede unsichere Stelle
+gegen die **Erstausgabe Kistner 1833** (Plate 995; IMSLP #86550) geprüft. Beide
+gemeinfrei; Nennung in `CREDITS.md`. Die Daten stehen in `nocturne_op9_2.py`
+(je Takt mit `unsicher` und `anm`), `make_fluegel_loops.py` schreibt daraus den
+Loop (Fassung 14). Ein Muster *Piano* mit beiden Händen, Stimmen *Right hand*
+und *Left hand* nach dem System der Partitur (N5 a), ein Kanal, Pan 0.
+
+**Taktzahlen.** Der Loop beginnt mit dem Auftakt: alle Noten liegen ein Achtel
+früher als in der Partitur, die Taktstriche des Loops ein Achtel vor denen der
+Partitur (N7 a) — Loop-Takt *n* enthält Partiturtakt *n*. Ab der Kadenz weichen
+sie ab (N8 a): Partiturtakt 32 = Loop-Takte 32–36, 33 = 37, 34 = 38–39, Takt 40
+klingt aus.
+
+**Stärke (N2 a, DY1 a).** Die Zeichen der Ausgabe nach einer festen Tafel in dB
+der Anschlagstufe: ppp −30, pp −24, p −18, mp −15, mf −12, f −6, ff 0; ein Akzent
+6 dB über der Umgebung; *sfp* f auf dem Schlag, danach p. Vor dem ersten Zeichen
+p (*espress. dolce*). Gabeln und *cresc.* führen gleichmäßig zum nächsten
+Zeichen, höchstens bis zum Ende ihres Takts; steht dort ein Buchstabe, zu seiner
+Stufe, sonst um 6 dB hin. Was kein Buchstabe ist (*con forza*, Takt 30), ändert
+die Stufe nicht. Am Flügel spreizt das Modell die Tafel (schneller Hammer, härterer
+Filz): p → f misst 13 dB bei C4, 17 dB bei A5.
+
+**Pedal (N3 a).** Sustain genau nach *Ped.* und ✱ der Gesamtausgabe; wo sie nichts
+zeigt (Takte 14–24, Teile von 30), kein Pedal. Die Kadenz liegt ganz im Pedal, der
+Schluss ab Takt 33 bis nach der Fermate.
+
+**Tempo (N4 a).** Fest ♪ = 132. Die Stellen für die Tempo-Spur (TP1 a): *poco
+ritard.* 10, *Tempo I* 11, 13, 21, 33, *poco rallent.* 12, 20, *poco rubato* 26,
+*sempre pp* und *dolcissimo* 27, *con forza* und *stretto* 30, *senza Tempo* und
+*rallent. smorz.* in der Kadenz (32), Fermaten in 32 (zweimal) und 34.
+
+**Verzierungen (N6 a, VZ1 a, VZ2 a).** Es gilt der Notentext der Gesamtausgabe,
+Varianten aus Schülerexemplaren nicht. Triller ohne Vorschlag beginnen auf der
+oberen Nebennote, auf dem Schlag; Triller mit Vorschlag (Takte 7, 15, 23: e♮²)
+mit dem Vorschlag auf dem Schlag. Vorschläge auf dem Schlag, zulasten der
+Hauptnote. Pralltriller (*w*, auch *tr* auf einem Sechzehntel): Hauptnote –
+obere Nebennote – Hauptnote auf dem Schlag. Fiorituren und unregelmäßige Gruppen
+(Takt 16: 13 in 12; Takt 29: 8 in 6) gleichmäßig über die Zeit ihrer
+Melodienote, die linke Hand im Takt. Quelle: Mikuli 1879 (Chopins Unterricht),
+für die Stellen dieser Nocturne übereinstimmend die Wydanie Narodowe. Der
+Doppelschlag (Takte 2, 27) nach der Lage des Zeichens: obere Nebennote –
+Hauptnote – untere Nebennote – Hauptnote auf dem Schlag — **nach allgemeinem
+Brauch, für Chopin nicht belegt.** Die Kadenz (Takt 32, *senza Tempo*) bekommt so
+viele ganze Takte, wie ihre notierten Werte im Tempo brauchen (216 Schritte, also
+5 Takte); alles ist gleichmäßig darauf gestreckt, die Fermate zählt doppelt.
+
+**Abweichungen der Erstausgabe** (die Gesamtausgabe gilt): Takt 13 verziert
+Kistner anders; Takt 20, linke Hand Schlag 2: Kistner F3 E♭4 (wie Takt 12), die
+Gesamtausgabe F3 C4; Takt 22, drittes Achtel von Schlag 3 anders gesetzt;
+Takt 24 Schlag 1–2 anders balkt (gleiche Töne); Takt 26 ein Doppelschlag vor
+E♭6; Takt 30 ein *tr* in Schlag 1. Unsicher Gelesenes steht je Takt in
+`nocturne_op9_2.py` unter `unsicher`.
+
+**Nicht umgesetzt:** Legato und Bögen, Staccato (das Modell kennt keine
+Artikulation am Flügel), die Tempo-Angaben (bis zur Tempo-Spur).
+
+Pegel: der Fader des Kanals hebt um `NOCTURNE_GAIN_DB` (9.5); `instrument_pegel.py
+--loops` lässt Fassung 14 unberührt.
