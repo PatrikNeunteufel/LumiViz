@@ -3556,6 +3556,82 @@ Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler 
   von JᵀJ je Stützpunkt (welche Größen ihn festlegen); dann 31d-7 C; 31e–31h. Verfehlt die Probe 7.5.11, bleiben die
   Werte aus 8.6 (ZZ1 a).
 
+**Hörurteil S158 (Patrik), 8.1 — `hoerproben_31d` 01–09** (je Datei *Salamander* | vor 31d | nach 31d-4; Länge
+ist, wie lange man den Ton hört):
+
+| Datei | *Salamander* | vor 31d | nach 31d-4 |
+|---|---|---|---|
+| 01 A0 mf | klingt 12–14 s aus; Klangfarbe deutlich besser („100 %“) | 5–6 s, viel dumpfer und leiser („40 %“) | 7–9 s, etwas klarer als vor, noch leiser („55 %“) |
+| 02 C2 mf | 14–16 s, klar | gedämpft, 8–10 s | klarer, 10–11 s |
+| 03 C4 mf | klar, etwa 11 s | heller als *Salamander*, etwa 11 s | etwa wie vor, aber 5–6 s |
+| 04 C6 mf | klar, etwa 3 s | dumpf, „wie ein Rohr geschlagen“, etwa 4 s | 2–3 s, wie vor, heller |
+| 05 C8 mf | 1 s helles Klimpern, wirkt abgeschnitten | dumpf wie 04, 1 s | etwas heller, sonst wie vor |
+| 06 C4 pp | klar bis 9–10 s, wirkt leicht abgeschnitten | stumpfer, leiser, 8–9 s | weniger stumpf als vor, 7–8 s |
+| 07 C4 ff | klar, 8–10 s | etwas dumpfer, 8–10 s | klar, nahe an *Salamander*, etwas heller, nur etwa 5 s |
+
+08 (*Salamander*, benachbarte Ebenen) und 09 (Modell, 1–6 dB): **kein Unterschied hörbar**; 09 klingt etwas voller,
+mit einem schwach hörbaren, gedämpften, hohlen Klang im Hintergrund (Patrik: Hammer?).
+
+**Gegenprobe an denselben Dateien (S158, Rückwärtsintegration nach Schroeder je Teil ab der Spitze; Schwerpunkt des
+Spektrums der ersten 0,5 s; die Teile von *Salamander* enden an der Blende, Zeiten über ihr sind nach unten
+begrenzt):**
+
+| Datei | bis −20 dB: *Sal.* / vor / nach | bis −40 dB: *Sal.* / vor / nach | Schwerpunkt *Sal.* / vor / nach |
+|---|---|---|---|
+| 01 A0 mf | 8,9 / 5,4 / 5,3 s | 16,8 / 11,6 / 10,6 s | 281 / 170 / 187 Hz |
+| 02 C2 mf | 11,2 / 6,3 / 7,3 s | 17,7 / 16,6 / 14,7 s | 408 / 287 / 338 Hz |
+| 03 C4 mf | 7,0 / 4,5 / **1,6** s | 11,5 / 10,7 / 6,7 s | 522 / 559 / 618 Hz |
+| 04 C6 mf | 3,5 / 0,6 / **0,5** s | 4,3 / 3,3 / 1,7 s | 739 / 768 / 573 Hz |
+| 05 C8 mf | 2,1 / 0,2 / **0,2** s | 2,2 / 0,7 / 0,7 s | 1161 / 461 / 465 Hz |
+| 06 C4 pp | 7,0 / 2,6 / **1,5** s | 10,1 / 9,7 / 5,9 s | 469 / 344 / 347 Hz |
+| 07 C4 ff | 2,7 / 4,6 / **1,9** s | 12,1 / 11,4 / 6,6 s | 954 / 732 / 895 Hz |
+
+**Vorsicht bei dieser Tabelle:** die Rückwärtsintegration gewichtet den leisen Nachklang stark; „bis −20 dB“ heißt
+hier nicht „der Ton fällt so schnell“. Erst die Hüllkurve vorwärts (Patrik S158: „reichen zwei Punkte je Ton?“ —
+nein) zeigt die Form.
+
+**Hüllkurve vorwärts (S158; RMS 50 ms, Zeiten ab der Spitze; Einsatz bis Spitze mit RMS 10 ms; Teiltöne mit FFT
+4096/1024, je Teilton das Maximum ±4 % um k·f0, Zeit bis −20 dB seines Anfangs):**
+
+| Datei | Einsatz → Spitze *Sal.* / nach | −20 dB *Sal.* / nach | −30 dB *Sal.* / nach | −40 dB *Sal.* / nach |
+|---|---|---|---|---|
+| 01 A0 mf | 24 / **367** ms | 6,4 / 5,2 s | 11,0 / 7,8 s | 15,5 / 10,6 s |
+| 02 C2 mf | 65 / 133 ms | **1,4 / 5,3** s | 8,1 / 9,5 s | 15,5 / 14,0 s |
+| 03 C4 mf | 37 / 24 ms | 0,9 / 1,4 s | 1,4 / 2,5 s | **11,4 / 4,1** s |
+| 04 C6 mf | 14 / 5 ms | 0,4 / 0,3 s | 0,9 / 0,6 s | **4,3 / 1,3** s |
+| 05 C8 mf | 35 / 6 ms | 0,4 / 0,2 s | 2,2 / 0,3 s | — / 0,5 s |
+| 06 C4 pp | 38 / 20 ms | 1,0 / 1,4 s | 4,7 / 2,1 s | **10,2 / 3,7** s |
+| 07 C4 ff | 34 / 24 ms | 0,9 / 1,3 s | 1,2 / 2,6 s | **7,8 / 4,1** s |
+
+Teiltöne: bei C4 klingen in *Salamander* die Teiltöne 3–4 lange (bis −20 dB 2,1–2,8 s), im Modell kurz (0,8–1,0 s),
+der Grundton umgekehrt (*Sal.* 0,8 s, Modell 1,6 s); bei C2 fällt der Grundton im Modell in 0,13 s um 20 dB
+(*Sal.* 1,1 s), die Teiltöne 2–5 liegen im Modell fast gleich laut (−1 bis −4 dB), in *Salamander* fallen sie ab
+(−9 bis −21 dB); bei C8 hat das Modell über dem Grundton fast nichts (Teiltöne ab 3 unter −90 dB, *Sal.* −51 bis
+−61 dB).
+
+Befund (Ohr und Messung stimmen überein, die erste Deutung oben war zu grob): **(1) In der Mitte und im Diskant fehlt
+der lange, leise Nachklang** — *Salamander* fällt schnell auf etwa −30 dB und klingt dann lange weiter, das Modell
+fällt anfangs eher langsamer, aber sein Nachklang endet nach rund einem Drittel der Zeit (C4: −40 dB nach 4 s gegen
+11 s) — das ist die „Länge“, die Patrik hört; und **seit 31d-4 ist dieser Nachklang kürzer als vorher** (C4 mf: −40 dB
+vor 31d 7,6 s, nach 4,1 s). **(2) Im Bass ist der Anfang falsch:** zu langsamer Anstieg (A0 367 ms bis zur Spitze),
+zu langsamer erster Abfall (C2), ein Grundton, der fast sofort verschwindet, und zu starke mittlere Teiltöne — das
+passt zu „dumpf“ und „wie ein Rohr“. **(3) Im hohen Diskant fehlen die Obertöne** (C8). Der Stufenschritt ist nach
+Gehör grob (auch 6 dB ohne hörbaren Unterschied der Klangfarbe). Nach dem Teilplan ist das der Fall „grob falsch“
+(Kipppunkt SP1 a). Warum die Werte aus 31d-4 den Nachklang kürzen, obwohl sie das Abklingen je Teilton an *Salamander*
+setzen, ist nicht untersucht — eine Spur: gesetzt und geprüft wurde je Teilton, nie die Hüllkurve des ganzen Tons.
+Messskripte (lokal, S158): `abklingen_31d.py`, `huelle_31d.py` im Scratchpad, Kopie unter
+`.claude/handover/hoerproben_31d/messung/`.
+
+✅ **HU1 a** (Patrik S158, nach dem Urteil „grob falsch“): **Zuerst die Ursache: warum das Modell nach 31d-4 den
+Nachklang in Mitte und Diskant kürzt, im Bass den Anfang falsch formt und im hohen Diskant die Obertöne verliert,
+obwohl das Abklingen je Teilton an *Salamander* gesetzt ist — gemessen am gerechneten Ton, an der Hüllkurve des ganzen
+Tons wie an den Teiltönen, Gegenprobe in beide Richtungen; dann Befund und Fix. 8.5 ruht bis dahin, SM4 b bleibt in
+31i.** Grund: ein Faktor wie hier, der mit 31d-4 schlechter wurde, deutet auf einen Fehler im Rechenweg oder in der
+Messung, nicht auf fehlende Feinabstimmung; neu setzen auf einem falschen Weg deckte ihn zu. Verworfen: b (SM4 b vor
+8.5). Kippt, wenn die Diagnose zeigt, dass der Rechenweg stimmt und nur die gesetzten Werte falsch sind — dann SM4 b.
+Diagnose nach der Modellwahl mit Fable. Neu als Prüfgröße für jede weitere Probe: die Hüllkurve vorwärts gegen
+*Salamander* (Einsatz bis Spitze, −20/−30/−40 dB) — nicht nur je Teilton.
+
 **31d-8, 8.2 bis 8.5 gebaut (S157, nach dem Wechsel auf Opus):**
 - **8.2:** `grand_piano.lvinst` aus dem Werkzeug (`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1`), Kurven und Tastatur gleich der
   Vorgabe (Wächter „Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe“); `ergaenze` trägt `keyboard` durch;
@@ -3685,6 +3761,13 @@ Stufen zu eng oder zu weit liegen — dann ändert sich nur die Tafel.
 ✅ **DY1 a** (Patrik S158): **Die Gabeln und *cresc.* zuerst nach N2 a ausführen, dann neu hören; klingt es dann immer noch extrem, die Tafel mit Messung je Lage und einer Quelle für die Abstände neu vorlegen.** Eine Gabel führt gleichmäßig zum nächsten Zeichen, höchstens bis zum Ende ihres Takts (die Daten tragen ihr Ende nicht); steht dort ein Buchstabe, zu seiner Stufe, sonst um 6 dB hin. Grund: die Tafel nicht an einer Fassung beurteilen, die N2 a noch nicht ausführt. Verworfen: b (die Tafel als Pegel am Ausgang, im Skript über eine gemessene Kurve je Lage umgerechnet). Kippt, wenn auch mit Gabeln die Akzente und f-Stellen hart klingen — dann b oder eine engere Tafel. Hörurteil bei Patrik, gesammelt später.
 
 ✅ **NP1 a** (Patrik S158): **Der Fader der Nocturne steht so, dass die Spitze bei −1 dBFS liegt (+1,4 dB); die Nocturne ist im Mittel leiser als `grand_piano_demo`.** Grund: die Datei klingt ohne Begrenzer, wie die Tafel es sagt — das Verhältnis von p zu ff bleibt. Verworfen: b (+10 dB, die leisen Stellen so laut wie das Demo, die Spitzen fängt der Limiter — er stauchte genau die ff-Stellen, um die es bei DY1 a geht). Kippt, wenn das Hörurteil zu DY1 a die Tafel als zu weit gespreizt findet — dann Tafel und Pegel zusammen neu.
+
+✅ **DY2 a** (Patrik S158; Kipppunkt von DY1 a erreicht — auch mit Gabeln zu extrem, das leise Stück kaum hörbar, im
+Programm +8 dB am Kanal nötig): **Recherche nach gemessenen Lautstärkeabständen im Klavierspiel (Quelle mit
+Fundstelle, nur Abruf, kein Browser), dazu die Spreizung des Modells je Lage über die ganze Tastatur gemessen; daraus
+eine neue Tafel als Vorlage, danach der Fader so, dass die Spitze bei −1 dBFS liegt (NP1 a).** Grund: der in DY1 a
+vereinbarte Weg; eine Tafel mit Quelle gilt auch für Étude und Ballade (CH1 a, CH2 a). Verworfen: b (Tafel jetzt
+halbieren, ohne Quelle). Kippt, wenn die Recherche keine brauchbare Quelle findet — dann b mit Messung.
 
 ✅ **N3 a** (Patrik S157): **Das Pedal genau nach *Ped.* und ✱ der Gesamtausgabe auf Sustain (1 beim Treten, 0 beim
 Heben); wo die Ausgabe nichts zeigt, kein Pedal.** Grund: Treue zur Quelle (UF15 a). Verworfen: b (nach heutiger
@@ -3881,9 +3964,9 @@ Gesamtausgabe bei IMSLP als Scan vor. *Angaben aus den Werkseiten bei IMSLP, im 
 
 | Schritt | Inhalt | Stand | hängt an |
 |---|---|---|---|
-| 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | offen — Patrik | — |
+| 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | Hörurteil S158 (Patrik) mit Messung: „grob falsch“ (Nachklang in Mitte/Diskant zu kurz, Bass-Anfang falsch, C8 ohne Obertöne) → **HU1 a: zuerst Diagnose** (mit Fable) | — |
 | 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — `Offene_Punkte` §7); `LumiViz.exe` neu | — |
-| 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
+| 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | ruht (HU1 a) | Diagnose HU1 a |
 | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
 | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
 | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1–9.6 fertig (S158): ganz übertragen (TR1 a, Kistner gegengeprüft), `nocturne_demo` mitgeliefert (Daten `asset/loop/nocturne_op9_2.py`, 40 Takte, 3:38), Fader +1,4 dB (Spitze −1 dBFS), Werte und Klangfassung, Hörprobe; voll 1640 / 1640 unter Release-clang (587 s) und Testing-MSVC (600 s) — NP1 a (Fader +1,4 dB); Hörurteil (DY1 a) bei Patrik | — |
