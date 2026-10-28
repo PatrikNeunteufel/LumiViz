@@ -26,6 +26,11 @@ Ablauf — wer ein Instrument im Klang aendert, misst neu:
    (`gain` in dB, LL8 a). Der Loop klingt danach so laut wie vorher. Ein Loop-Skript, das neu
    laeuft, schreibt eine Fassung unter 11 — danach (3) wieder laufen lassen.
 
+**Ein neues Instrument** (S157, `grand_piano`): `--messung` traegt es als `(level vor der Messung, neu)` ein —
+richtig fuer Loops, die schon mit dem alten Level gemischt sind. Sind seine Loops fuer den Bezug geschrieben (die
+Regel fuer jedes neue Instrument), setzt man danach von Hand `alt = neu`, sonst zieht (3) sie um den ganzen
+Unterschied leiser nach (S157: 12,4 dB).
+
 Schreibende Laeufe zuerst in einer Kopie: ``--wurzel <kopie von asset/loop>``.
 """
 
@@ -69,7 +74,7 @@ PEGEL = {
     "finger_bass": (1.0, 1.1852),
     "flute": (0.8, 0.5298),
     "ghost": (0.7, 0.4897),
-    "grand_piano": (1.0, 4.1788),
+    "grand_piano": (4.1788, 4.1788),
     "growl_bass": (0.55, 0.3081),
     "guitar": (1.0, 2.0941),
     "guitar_old": (1.0, 2.2333),

@@ -3583,6 +3583,178 @@ Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler 
   bitgleich) — die Rechenzeit von Hand steht mit 8.7 an. **Offen:** 8.1 und die Wahl aus 8.5 (Patrik), 8.6,
   8.7 (Testing-MSVC und voller Lauf am Ende, Rechenzeit, `modell.md`).
 
+**Befund S157 (nach dem Commit `1ae4dc74`, Patrik im Programm):** *Grand piano demo* klang zu leise — Patrik hat ihn mit
+Gain +13 / +13,5 dB je Kanal gespeichert (und die Clips eingefroren; Datei uncommittet). Ursache (Claude): der Flügel
+stand vor der Messung mit Level 1 in der Datei, `--messung` trug ihn deshalb als `(1.0, 4.1788)` in `PEGEL` ein, und
+`--loops` zog den neu geschriebenen Loop nach, als wäre er für Level 1 gemischt — Volume 0,8 · 1 / 4,1788 = 0,1914, also
+12,4 dB leiser. Für ein neues Instrument, dessen Loops erst nach der Messung entstehen, gilt alt = neu.
+
+✅ **HD1 a** (Patrik S157; ändert Teilplan 31d-8 Schritt 8.4): **Ein Flügel spielt in einem Muster mit beiden Händen
+und einer Pedal-Spur, in einem Kanal, Pan 0 — für jeden mitgelieferten Klavier-Loop, in 8.4 und 31h-3; *Grand piano
+demo* wird so neu geschrieben.** Grund: ein Flügel hat ein Dämpfersystem für alle Saiten — eine Spur bildet das ab und
+kann nicht in zwei Fassungen auseinanderlaufen; den Raum gibt der Boden, nicht ein Pan je Hand. Verworfen: b (Hände als
+zwei Muster, dieselbe Pedal-Spur in beiden — ein Flügel hat keinen Pegel je Hand, zwei gleiche Spuren sind eine
+Fehlerquelle), c (Pedal-Spur am Kanal für alle Muster — kippt SK5 a, der Klang eines Clips hinge am Kanal). Kippt, wenn
+Patrik die Hände im Editor getrennt bearbeiten will — dann eine Kennzeichnung je Note (Frage HD2), nicht zwei Muster.
+Nachfrage Patrik: Hand je Note festhalten — und es können mehrere Personen am Flügel sitzen (Frage HD2).
+
+✅ **CH1 a** (Patrik S157; ändert BL1 a für die Nocturne): **Die Nocturne Op. 9 Nr. 2 kommt ganz, sofort, als neuer
+Schritt 31d-9 — übertragen nach UF15 a, eine Pedal-Spur (HD1 a); das Mitschwingen klingt mit 31e dazu, ohne den Loop
+zu ändern. Étude und Ballade bleiben Ausschnitte nach BL1 a in 31h-3, bis ein Loop das trägt, was ihnen fehlt.**
+**Korrektur Claude (Rückfrage Patrik: „wer hat die Vorgabe gemacht, es müsse alles in ein Muster passen?“):** niemand —
+die Grenze „höchstens 64 Takte“ gilt je Muster (`kTakteMax`), und ein Loop reiht Muster als Clips beliebig aneinander;
+die Länge steht ganzen Stücken nicht im Weg. Im Weg stehen zwei andere Regeln: das Tempo gilt fest für den ganzen Loop
+(L2 b: kein Ritardando, keine Fermate, kein Tempowechsel), und an jedem Clip-Ende wird das Pedal losgelassen (SK5 a) —
+eine Naht zwischen zwei Mustern darf nur dort liegen, wo das Pedal ohnehin gehoben wird. Damit kann die Étude ganz
+kommen, wenn ihr Tempo durchgeht (Frage CH2); die Ballade wechselt das Tempo vielfach und bleibt Ausschnitt, bis es
+eine Tempo-Spur gibt.
+
+✅ **HD2 a** (Patrik S157, Rückfrage „muss es auf 4 begrenzt werden?“ → Frage HD2-1): **Jede Note kann eine Stimme
+tragen (0 = keine), mit einem Namen je Stimme am Muster (etwa *Left hand*, *Right hand*, *Primo*, *Secondo*); sie wirkt
+nicht auf den Klang, nur auf Anzeige und Bearbeitung (Farbe, Ein- und Ausblenden, Auswahl je Stimme). Das Feld kommt mit
+31d-9 in die `.lvloop` (neue Fassung, immer geschrieben), die Nocturne bekommt es beim Übertragen; gezeigt wird es in
+31g nach Skizze.** Grund: die Information liegt an der Quelle — jede Note steht in der Partitur in einem System; wer es
+beim Übertragen nicht festhält, überträgt später nach; sich kreuzende Hände (bei Chopin häufig) trennt die Lage nicht.
+Bei vier Händen gilt dasselbe, auch dann gibt es ein Pedal. Verworfen: b (keine Kennzeichnung, Trennung nach Lage).
+Kippt, wenn die Skizze in 31g zeigt, dass Stimmen sich im Piano-Roll nicht lesbar zeigen lassen — dann bleibt das Feld,
+die Anzeige wartet.
+
+✅ **CH2 a** (Patrik S157): **Die Étude Op. 10 Nr. 4 kommt ganz in 31h-3, aus mehreren Mustern, Nähte nur dort, wo das
+Pedal gehoben ist; schreibt die Gesamtausgabe einen Tempowechsel vor, bleibt sie Ausschnitt nach BL1 a** (mit einer
+Tempo-Spur nach TP1 entfiele die Bedingung). Grund: Treue zum Werk; die Étude prüft Rechenzeit, Töne vorab und Freeze —
+das ganze Stück mit allen Tönen. Verworfen: b (Ausschnitt). Kippt, wenn die Wartezeit beim ersten Abspielen zu lang
+wird (UF16 a).
+
+✅ **RF1 a** (Patrik S157: „erst mal die Grundlagen bis und mit 31h durchführen, und danach mit der Feinjustierung
+anfangen … es muss einfach ganz klar notiert sein, was noch offen ist“; ändert SP1 a in der Reihenfolge): **Zuerst die
+Grundlagen: 31d-8 zu Ende, 31d-9, 31d-7 C, 31e, 31f, 31g, 31h. Danach die eigene Stufe 31i Feinabstimmung (SM4 b mit
+7.5.7–7.5.11 nach SP2 a und SP3 a, dann 7.5.5, 7.5.6, 7.6, 7.7, die Befunde S154, der Rest von 31d-6, der Stufenschritt
+UF4 a). Stufe 31 endet mit 31i. Was offen ist, steht in der Tabelle unten (hier und in `Offene_Punkte` §7), nachgeführt
+bei jedem Schritt.** Grund: 31e–31h hängen nicht an den feinen Werten, die Feinabstimmung aber an allem, was das Modell
+bis dahin kann — mit Mitschwingen und Una corda setzt sie an dem, was wirklich klingt; neu setzen kostet danach wenig
+(Werkzeug, Wächter, Pegel, Wertedateien stehen). Verworfen: b (SM4 b nach 31d-9, vor 31e, wie SP1 a). Kippt, wenn das
+Hörurteil 8.1 sagt, dass 31d-4 grob falsch klingt — dann zuerst 31i (Kipppunkt von SP1 a).
+
+✅ **DL1 a** (Patrik S157): **`grand_piano_demo.lvloop` wird nach HD1 a neu geschrieben — richtiger Pegel, Gain 0,
+ohne eingefrorene Clips; Patriks gespeicherte Fassung (uncommittet, 27.10. 18:09: nur Gain +13 / +13,5 dB und Freeze,
+Noten gleich) wird ersetzt. Der Eintrag des Flügels in `instrument_pegel.py` bekommt alt = neu (4,1788), mit einem Satz
+zur Regel für neue Instrumente.** Grund: die Gains glichen einen Fehler aus, mit richtigem Pegel stünden sie doppelt; ein
+mitgelieferter Loop zeigt nicht auf Dateien, die nur in einem Benutzerordner liegen. Verworfen: b (die Fassung als
+Grundlage, Gains übernommen).
+
+✅ **HD2-1 a** (Patrik S157; ergänzt HD2 a): **Bis zu 16 Stimmen je Muster, jede mit Namen und eigener Farbe; 0 =
+keine.** Grund: jedes Feld einer Datei braucht beim Lesen einen Bereich (so liest das Programm jede Zahl der `.lvloop`);
+16 ist die übliche Grenze der Musiksoftware (die Kanäle von MIDI), eine spätere MIDI-Übernahme passt ohne Umrechnung.
+Verworfen: b (ohne Obergrenze — die Prüfung gegen unsinnige Werte bleibt nötig, mehr als 16 Farben unterscheidet der
+Piano-Roll nicht), c (bis 4 — schon eine Fuge mit fünf Stimmen geht darüber). Kippt, wenn die Skizze in 31g zeigt, dass
+16 Farben im Raster nicht lesbar sind — dann bleibt die Grenze in der Datei, die Anzeige fasst zusammen.
+
+✅ **TP1 a** (Patrik S157, Frage „ist Tempowechsel möglich? zusätzliche Spur für Tempo? sollte sofort wechseln wie
+auch Rampen können“; erweitert L2 b im `Loop_Konzept`): **Eine Tempo-Spur am Loop, über die Taktachse des ganzen
+Arrangements, nicht am Muster: Punkte (Stelle in Schritten, BPM), je Punkt die Art *Sprung* oder *Rampe* bis zum
+nächsten (*durch SV2 a ersetzt: ein Sprung sind zwei Punkte an derselben Stelle*); ohne Punkte gilt `bpm` wie heute, Bit für Bit gleich; die Zeit eines Schritts folgt aus der Spur; Echos als
+Notenwert folgen dem Tempo an ihrer Stelle; die Länge eines Loop-Clips im Composer kommt aus der Spur. Eigener
+Teilplan „Tempo“ vor 31h, mit gesammelten Umfangsfragen** (Fermate als Halt oder als Tempopunkt; Rampe gleichmäßig im
+BPM oder in der Zeit; Anzeige in der Taktachse; Freeze und Abdruck; Wiederholung eines Clips über Tempopunkte; zwei
+Loops mit verschiedenen Spuren im Composer; freies Spiel je Note, Rubato, ja oder nein). Grund: Tempo ist eine
+Eigenschaft der Zeit, nicht eines Instruments — alle Kanäle eines Loops bleiben im selben Takt, also gehört es an die
+gemeinsame Achse; Sprung und Rampe decken a tempo, accelerando, ritardando. Verworfen: b (am Muster wie die fünf
+Spuren aus SF5 d — zwei Muster in zwei Kanälen hätten im selben Takt verschiedene Tempi), c (Abschnitte mit festem
+Tempo als Loops im Composer, ohne Rampen — die Nocturne braucht an den Kadenzen ein Ritardando). Kippt, wenn der
+Composer selbst ein Tempo bekommen soll (Songs und Loops auf einem Raster) — dann gehört die Spur dorthin, L2 b wäre
+neu zu fassen.
+
+**Umfangsfragen 31d-9 (Nocturne Op. 9 Nr. 2 ganz, CH1 a), entschieden S157 — alle a:**
+
+✅ **N1 a** (Patrik S157): **Eine Note trägt zusätzlich einen Versatz von Anfang und Ende in Bruchteilen eines
+Schritts — mit derselben neuen Fassung der `.lvloop` wie die Stimmen (HD2 a), immer geschrieben; das Raster des Loops
+bleibt (Nocturne: 4 Schläge zu je 12 Schritten); der Editor zeigt solche Noten an ihrer wahren Stelle (31g).** Grund:
+nur so trifft jede unregelmäßige Gruppe der Verzierungen genau — in ganzen Schritten fielen Noten auf denselben Schritt
+und klängen zugleich; bereitet die offene Frage „Rubato je Note“ aus TP1 a vor. Verworfen: b (Raster bis 96 je Schlag
+— Siebener- und Elfergruppen bleiben ungenau, der Piano-Roll wird unbedienbar), c (runden — Noten fallen aufeinander).
+Kippt, wenn die Ausgabe nur Gruppen zeigt, die in 12 je Schlag aufgehen.
+
+✅ **N2 a** (Patrik S157): **Dynamik als feste Tafel in Anschlagstufen, gleich für alle Chopin-Loops: ppp −30, pp −24,
+p −18, mp −15, mf −12, f −6, ff 0 dB; Crescendo und Diminuendo gleichmäßig über die Noten dazwischen, ein Akzent 6 dB
+über der Umgebung; die Tafel steht in der Beschreibung des Loops.** Grund: jede Stärke folgt aus dem Zeichen der
+Ausgabe; mf = −12 dB ist die Stufe der Hörproben. Verworfen: b (nach Gehör). Kippt, wenn die Hörproben zeigen, dass die
+Stufen zu eng oder zu weit liegen — dann ändert sich nur die Tafel.
+
+✅ **N3 a** (Patrik S157): **Das Pedal genau nach *Ped.* und ✱ der Gesamtausgabe auf Sustain (1 beim Treten, 0 beim
+Heben); wo die Ausgabe nichts zeigt, kein Pedal.** Grund: Treue zur Quelle (UF15 a). Verworfen: b (nach heutiger
+Spielpraxis). Kippt, wenn die Ausgabe an Stellen kein Pedal zeigt, an denen es offensichtlich fehlt — dann je Stelle
+eine Frage.
+
+✅ **N4 a** (Patrik S157): **Bis zur Tempo-Spur ein festes Tempo nach der Metronomangabe der Ausgabe (fehlt sie, nennt
+Patrik eines); Ritardandi und Fermaten stehen mit Takt in der Beschreibung des Loops und werden eingetragen, sobald es
+die Tempo-Spur gibt (TP1 a).** Grund: ein Ergebnis jetzt (CH1 a), die Noten ändern sich mit der Tempo-Spur nicht.
+Verworfen: b (auf die Tempo-Spur warten). Kippt, wenn die steife Fassung als Demo nicht taugt.
+
+✅ **N5 a** (Patrik S157): **Die Stimme folgt dem System der Partitur (oben *Right hand*, unten *Left hand*); wo die
+Ausgabe ausdrücklich eine Hand vorschreibt (m. d., m. s.), dieser Angabe.** Grund: hält fest, was die Quelle sagt.
+Verworfen: b (nach der spielenden Hand, auch ohne Angabe — eine Deutung). Kippt, wenn die Stimmen vor allem zum Üben
+einer Hand dienen sollen.
+
+✅ **N6 a** (Patrik S157): **Triller, Doppelschläge und Vorschläge werden ausgeschrieben nach einer Regel mit Quelle,
+die Claude vor der Übertragung sucht und mit Fundstelle vorlegt; die Regel steht in der Beschreibung des Loops.** Grund:
+die Nocturne lebt von ihren Verzierungen; eine benannte Regel mit Quelle bleibt nachprüfbar. Verworfen: b (nur die
+Hauptnoten). Kippt, wenn sich für Chopin keine belastbare Quelle findet — dann die Stellen einzeln.
+
+*Zur Quelle:* die Gesamtausgabe kommt als Scan von IMSLP; verlangt IMSLP beim Herunterladen eine Bestätigung,
+bestätigt Claude sie nicht selbst (BL2 a) — dann lädt Patrik die Datei nach `LumiViz\dld\`.
+
+**Spuren (Wunsch Patrik S157):** „wenn die Spur noch nichts gesetzt hat, dann ist der Status ja trotzdem nicht
+undefiniert … dies sollte doch schon in der Spur angezeigt werden, klickt man in die Spur, wo es noch keinen Knoten gibt,
+wird einer erstellt und kann diesen dann verschieben — entweder als Rampe, oder auch direkt steile Flanke (2 Knoten auf
+der selben x-Position möglich)“. Stand (Claude, Code gelesen): die leere Spur zeichnet immer eine gestrichelte Linie in
+der Mitte („Instrument default“), gleich welche Vorgabe; vor dem ersten Punkt gilt bei den Kurven dessen Wert
+(`kurveBei`), bei den Pedalen 0; je Stelle ein Punkt (`richtePunkte`); Pedale springen, Kurven laufen linear; Klick
+setzt schon heute einen Punkt und zieht ihn.
+
+✅ **SV1 a** (Patrik S157; ändert §1a „Eine leere Spur zeigt eine gestrichelte Linie …“ und `kurveBei`): **Jede Spur
+zeigt die Vorgabe als Linie auf ihrer wahren Höhe — Pedale unten (0), Expression oben (1), Pitch in der Mitte (0),
+Vibrato auf der Tiefe der Schicht —, beschriftet mit dem Wert. Bis zum ersten Punkt gilt in allen Spuren die Vorgabe,
+nach dem letzten sein Wert. Alte Dateien klingen gleich: beim Lesen bekommt eine Kurve, deren erster Punkt nach dem
+Anfang liegt, einen Punkt am Anfang mit dessen Wert.** Grund: Spur und Klang sagen dasselbe; eine Vorgabe gilt, bis ein
+Punkt etwas anderes sagt (bei den Pedalen schon so). Verworfen: b (nur die Anzeige — eine Linie bei 1, während 0,5
+klingt). Kippt für Pitch, wenn dort das heutige Verhalten gewünscht ist (Bend schon vor dem ersten Punkt).
+
+✅ **SV2 a** (Patrik S157; ändert `richtePunkte`, `istStufenspur` und in TP1 a „je Punkt die Art *Sprung* oder
+*Rampe*“): **Jede Spur ist eine Linie zwischen ihren Punkten; zwei Punkte an derselben Stelle sind ein Sprung (vom
+Wert des ersten zum Wert des zweiten), mehr als zwei an einer Stelle gibt es nicht. Das gilt auch für die Pedale (damit
+auch als Rampe) und für die Tempo-Spur (statt der Art je Punkt). Alte Dateien klingen gleich: beim Lesen wird jede
+Stufe eines Pedals zu einem Punktepaar. Neue Fassung der `.lvloop`.** Grund: eine Darstellung für alle Spuren, ohne
+Verlust — ein Sprung ist eine Rampe der Länge null; ein langsam kommendes Pedal ist mit dem halben Pedal (31f) echtes
+Spiel. Verworfen: b (zwei Arten wie heute, dazu die Art je Punkt für Kurven und Tempo). Kippt, wenn die Skizze zeigt,
+dass zwei Punkte an einer Stelle sich nicht gut greifen lassen — dann eine Art je Punkt in der Bedienung, im Format
+bleibt a. Ein Synth liest die Pedale weiter als Schalter ab 0,5 (SK6 a).
+
+✅ **SV3 a** (Patrik S157): **Die Zeile *Tempo* der Tabelle wird zum Teilplan „Spuren und Tempo“ vor 31h: zuerst eine
+Skizze mit dem Zeichenwerkzeug (Vorgabe-Linie, Sprung setzen und ziehen, Zeigerwechsel), dann die Umfangsfragen
+gesammelt (mit denen aus TP1 a), dann der Bau — Punktemodell und Migration, Editor, Tempo-Spur.** Grund: Spuren und
+Tempo bekommen dasselbe Punktemodell, eine Migration statt zwei; wie man einen Sprung greift, klärt die Skizze vor dem
+Bau. Verworfen: b (SV1 und SV2 sofort als eigener Schritt, das Tempo später). Kippt, wenn die falsche Linie in leeren
+Spuren schon jetzt stört — dann nur die Anzeige aus SV1 vorziehen (Zeichnung, ohne Fassung).
+
+**Offen — Stufe 31 bis zum Ende (RF1 a; nachgeführt bei jedem Schritt; Stand S157):**
+
+| Schritt | Inhalt | Stand | hängt an |
+|---|---|---|---|
+| 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | offen — Patrik | — |
+| 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — `Offene_Punkte` §7); `LumiViz.exe` neu | — |
+| 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
+| 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
+| 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
+| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | offen; N1 a–N6 a entschieden, zuerst die Regel der Verzierungen (N6 a) und die Ausgabe | — |
+| 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
+| 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
+| 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |
+| 31g | Creator und Editor (UF12 a, UF13 a), dazu die Anzeige der Stimmen (HD2 a) | offen, Skizze zuerst | — |
+| Spuren und Tempo | SV3 a: Skizze (Vorgabe-Linie, Sprung greifen), Umfangsfragen (dazu TP1 a), dann Bau: Punktemodell mit Sprung als zwei Punkte (SV2 a) und Migration, Vorgabe sichtbar und gültig vor dem ersten Punkt (SV1 a), Editor, Tempo-Spur am Loop (TP1 a) | offen | — |
+| 31h | Instrumente, Deluxe, Chopin (Étude ganz nach CH2 a; Ballade ganz erst mit Tempo, sonst Ausschnitt), Abschluss der Grundlagen | offen, Plan steht | 31e–31g, Tempo |
+| 31i | **Feinabstimmung:** 7.5.7–7.5.11 (SM4 b mit SP2 a, SP3 a), dann 7.5.5, 7.5.6, 7.6, 7.7; Befunde S154 (Sprung unter −90 dB nach rund 5 s, Nachklang an 48 bei `decay` < 1 s, Schein-Schwebung „6,0 Cent“); Rest 31d-6 (Winkel an 33 an der Grenze 10°, Direktschall SB1 a, Helligkeit im Diskant HT2); Stufenschritt (UF4 a) | offen | 31h |
+| daneben | Bibliothek (Hundley 1978, Weinreich 1977; `Bibliothek_offen.md`), Kühlung des Rechners | offen | — |
+
 ✅ **UF4 a** (Patrik S151, Frage 4): **31d misst alle Zeilen der Tabelle A, Boden und Pegel nur relativ, den
 Stufenschritt aus Patriks Hörurteil.** Gemessen: B, beide Abklingstufen, Abklingen der hohen Teiltöne, Verstimmung,
 Helligkeit je Stufe, Dämpfer und `undampedFrom`, Phantomteiltöne; dazu der Boden als geglättete Klangfarbe je Taste und

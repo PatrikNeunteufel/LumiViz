@@ -9,9 +9,13 @@ Akkorde (Grundton, Quinte, Terz eine Oktave hoeher, Oktave als Achtel; C, Am, F,
 im letzten Takt C gehalten), rechte Hand eine Melodie aus Vierteln und Halben. Keine Spuren,
 kein Pedal (Mitschwingen kommt mit 31e). Selbst gesetzt, kein fremdes Werk.
 
+Ein Fluegel spielt in **einem** Muster mit beiden Haenden, in einem Kanal, Pan 0 (HD1 a, S157):
+ein Daempfersystem, eine Pedal-Spur; den Raum gibt der Boden. Die Lautstaerke ist fuer den
+Pegel des Instruments auf dem Bezug gesetzt (`instrument_pegel.PEGEL`: alt = neu, DL1 a).
+
 Danach `instrument_pegel.py --loops` (zieht den Loop auf den Pegel der Instrumente nach, wie
 jeden anderen) und `instrument_katalog.py` (das Genre des Loops wird das Genre von
-`grand_piano`). Stufe 31h-3 baut dieses Skript fuer die Chopin-Loops aus (BL1 a, BL2 a).
+`grand_piano`). 31d-9 und 31h-3 bauen dieses Skript fuer die Chopin-Loops aus (CH1 a, CH2 a).
 Kein Zufall: zwei Laeufe ergeben dieselbe Datei.
 """
 
@@ -61,9 +65,9 @@ def grand_piano_demo():
     takte = len(MELODIE)
     return loop(
         "Grand piano demo", "Classical", 72, 0.35,
-        [muster("Left hand", "grand_piano", linke_hand(), laut=0.8, pan=-0.2, takte=takte),
-         muster("Right hand", "grand_piano", rechte_hand(), laut=0.8, pan=0.2, takte=takte)],
-        [("Left", [("Left hand", 0, 1)]), ("Right", [("Right hand", 0, 1)])],
+        # beide Haende in einem Muster (HD1 a); die Stimmen je Note (HD2 a) kommen mit 31d-9 in die Datei
+        [muster("Piano", "grand_piano", linke_hand() + rechte_hand(), laut=0.8, pan=0.0, takte=takte)],
+        [("Piano", [("Piano", 0, 1)])],
     )
 
 

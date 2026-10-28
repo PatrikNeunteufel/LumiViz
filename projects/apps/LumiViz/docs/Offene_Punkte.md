@@ -2821,6 +2821,16 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 ## 7. Backlog (bewusst nichts tun)
 
+### ⚪ Befund: „Datensicherung: nur gewaehlte Bereiche“ einmal rot im vollen Lauf unter Testing-MSVC (S157)
+
+Im vollen Lauf nach 31d-8 Schritt 8.4 (Testing-MSVC, 1633 / 1634) scheiterte `test_Datensicherung.cpp:224`
+(`REQUIRE(leer.ok)`): der zweite Export schreibt dasselbe Archiv neu, kurz nachdem der Fall es mit `ds::oeffne`
+geöffnet hat. Allein fünfmal grün, im vollen Lauf davor (gleiche Exe) grün, unter Release-clang 1634 / 1634.
+Vermutung, nicht geprüft: die Datei war kurz gesperrt (Virenscanner, Index). Der Fall meldet den Grund nicht — beim
+nächsten Auftreten zuerst den Fehlertext von `exportiere` in die Prüfung nehmen, dann entscheiden (eigene Datei je
+Export oder Wiederholung beim Ersetzen). Hat mit dem Flügel nichts zu tun: seit dem grünen Lauf waren nur Loop-Daten
+geändert.
+
 ### ⚪ Befund: ein Testfall hängt an der Reihenfolge — `presetIconDir()` merkt sich den Ordner (S131)
 
 Mit dem Filter `*Milkdrop*,*Milk*,*Hlsl*,*Handbuch*,*nventar*,*Palette*,*ChainSerializer*`
@@ -3179,7 +3189,9 @@ Idee Preset-Warmup/Pre-Roll.
   `.claude/handover/hoerproben_31d8/` (zehn Dateien: u an 33, 60, 84 mf/ff; γ und δ an 24 und 27 — Befund: γ wirkt
   nur mit δ); `LumiViz.exe` unter Release-clang gebaut. **Offen:** **31d-8** 8.1 (Patrik hört `hoerproben_31d`), die
   Wahl aus 8.5 (Patrik hört `hoerproben_31d8`), 8.6 (eintragen), 8.7 (Abschluss); **im Programm ansehen:**
-  *Grand Piano* im Fenster *Instruments*, der Loop *Grand piano demo* — Wartezeit bis zum ersten Ton; danach **7.5.7** Toleranzen messen, 7.5.8 Messung an der Struktur des Ziels, 7.5.9 Ziel, 7.5.10
+  *Grand Piano* im Fenster *Instruments*, der Loop *Grand piano demo* — Wartezeit bis zum ersten Ton.
+  **Seit RF1 a (S157) gilt die Tabelle „Offen — Stufe 31 bis zum Ende“ unten; der Text danach ist der Stand vor RF1 a.**
+  Danach **7.5.7** Toleranzen messen, 7.5.8 Messung an der Struktur des Ziels, 7.5.9 Ziel, 7.5.10
   Levenberg–Marquardt (nach SP2 a), 7.5.11 Probe nach ZF8 a mit SP3 a; hält sie: 7.5.5 nach SE1 a (Stichprobe zuerst), 7.5.6 Vorgabe, 7.6
   dauerhafter Test voll, 7.7 beide Compiler und voller Lauf; verfehlt sie: ZZ1 a (die Werte aus 8.6 bleiben); **31d-7 C** (Hörproben, `modell.md`, dazu Stoß); nach Befunden S154: der Sprung
   unter −90 dB nach rund 5 s im Modell, der Nachklang an MIDI 48 bei sehr kurzem `decay` (Boden?), die Schein-Schwebung
@@ -3187,6 +3199,27 @@ Idee Preset-Warmup/Pre-Roll.
   ~~danach neu setzen~~ → 31d-7 B; vierte Fassung der Hörproben → 31d-7 C; Kipppunkte aus 31d-6: Winkel an
   MIDI 33 an der Grenze 10°, Direktschall des Modells zu stark (SB1 a), Helligkeit im Diskant (HT2); **Patriks
   Hörurteil** über `hoerproben_31d` (Stufenschritt UF4 a / HT6 a; Kipppunkt N2 a → c) und über `hoerproben_31c9`.
+
+  **Offen — Stufe 31 bis zum Ende (RF1 a, Stand S157; dieselbe Tabelle im `Spielweisen_Konzept` §4.1, dort
+  maßgebend):**
+
+  | Schritt | Inhalt | Stand | hängt an |
+  |---|---|---|---|
+  | 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | offen — Patrik | — |
+  | 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — §7 Backlog); `LumiViz.exe` neu | — |
+  | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
+  | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
+  | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
+  | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | offen; N1 a–N6 a entschieden, zuerst die Regel der Verzierungen (N6 a) und die Ausgabe | — |
+  | 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
+  | 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
+  | 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |
+  | 31g | Creator und Editor (UF12 a, UF13 a), dazu die Anzeige der Stimmen (HD2 a) | offen, Skizze zuerst | — |
+  | Spuren und Tempo | SV3 a: Skizze (Vorgabe-Linie, Sprung greifen), Umfangsfragen (dazu TP1 a), dann Bau: Punktemodell mit Sprung als zwei Punkte (SV2 a) und Migration, Vorgabe sichtbar und gültig vor dem ersten Punkt (SV1 a), Editor, Tempo-Spur am Loop (TP1 a) | offen | — |
+  | 31h | Instrumente, Deluxe, Chopin (Étude ganz nach CH2 a; Ballade ganz erst mit Tempo, sonst Ausschnitt), Abschluss der Grundlagen | offen, Plan steht | 31e–31g, Tempo |
+  | 31i | **Feinabstimmung:** 7.5.7–7.5.11 (SM4 b mit SP2 a, SP3 a), dann 7.5.5, 7.5.6, 7.6, 7.7; Befunde S154 (Sprung unter −90 dB nach rund 5 s, Nachklang an 48 bei `decay` < 1 s, Schein-Schwebung „6,0 Cent“); Rest 31d-6 (Winkel an 33 an der Grenze 10°, Direktschall SB1 a, Helligkeit im Diskant HT2); Stufenschritt (UF4 a) | offen | 31h |
+  | daneben | Bibliothek (Hundley 1978, Weinreich 1977; `Bibliothek_offen.md`), Kühlung des Rechners | offen | — |
+
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument

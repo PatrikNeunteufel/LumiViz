@@ -422,5 +422,7 @@ nichts davon mitgeliefert: an fremden Rechten hängt nur die Messung.
 
 Klassik, 72 BPM, acht Takte, selbst gesetzt: linke Hand gebrochene Akkorde
 (C, Am, F, G, C, Am, G, zum Schluss C gehalten), rechte Hand eine Melodie aus
-Vierteln und Halben — erzeugt mit `make_fluegel_loops.py`, danach
-`instrument_pegel.py --loops`. Kein Pedal (Mitschwingen kommt mit 31e).
+Vierteln und Halben — beide Hände in **einem** Muster *Piano*, ein Kanal, Pan 0
+(ein Flügel hat ein Pedal für alle Saiten, HD1 a). Erzeugt mit
+`make_fluegel_loops.py`, danach `instrument_pegel.py --loops`. Kein Pedal
+(Mitschwingen kommt mit 31e).

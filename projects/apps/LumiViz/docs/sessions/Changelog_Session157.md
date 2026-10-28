@@ -13,7 +13,8 @@
   Vorgabe der Hammer-Saite mit dem Boden `lib:steinway_d` und der Tastatur A0–C8 (ungedämpft ab F6, Pedale Una corda,
   Sostenuto, Sustain). Vom Programm geschrieben, nicht von Hand.
 - **Loop *Grand piano demo*** (`asset/loop/grand_piano_demo.lvloop`): acht Takte, 72 BPM, gebrochene Akkorde links,
-  Melodie rechts; erzeugt mit `asset/loop/make_fluegel_loops.py`.
+  Melodie rechts, beide Hände in einem Muster — ein Flügel hat ein Pedal für alle Saiten; erzeugt mit
+  `asset/loop/make_fluegel_loops.py`. Die erste Fassung (zwei Muster, eine je Hand) klang 12,4 dB zu leise; behoben.
 
 ## Intern
 
@@ -28,8 +29,14 @@
 - **Befund:** der Winkel der zweiten Schwingungsebene (γ) wirkt im Modell nur zusammen mit ihrer Verstimmung (δ) —
   an Tasten mit Chor (δ = 0) sind alle Werte von γ Bit für Bit gleich.
 - Konzept: Lage S157, SP1 a (spielbar vor der Feinabstimmung), SP2 a (Suche über die Stützpunkte der Kurven), SP3 a
-  (Eindeutigkeit an den Messgrößen), Teilplan 31d-8.
+  (Eindeutigkeit an den Messgrößen), Teilplan 31d-8; HD1 a (ein Muster je Flügel), HD2 a und HD2-1 a (bis 16 Stimmen
+  je Note, mit 31d-9), CH1 a (die Nocturne Op. 9 Nr. 2 ganz, sofort), CH2 a (die Étude ganz in 31h-3), RF1 a
+  (Grundlagen bis 31h, danach Stufe 31i Feinabstimmung; Tabelle der offenen Schritte), DL1 a, TP1 a (Tempo-Spur am
+  Loop mit Sprung und Rampe, eigener Teilplan vor 31h).
+- `instrument_pegel.py`: Regel für neue Instrumente (alt = neu, wenn ihre Loops für den Bezug geschrieben sind).
 - Zwei ältere Tests nachgezogen, deren Regeln vor der Hammer-Saite geschrieben wurden (`inALegato` je Schicht;
   ein Loop mit Hammer plant mit der Auskunft anders) — das Programm blieb.
 - Tests: 1634 Cases (+2: Wächter `grand_piano`, Hörproben 31d-8); Testing-MSVC voller Lauf 1634 / 1634, 0 Skips;
-  Release-clang voller Lauf 1632 / 1634 vor den zwei Nachträgen, danach beide Dateien grün.
+  Release-clang voller Lauf 1632 / 1634 vor den zwei Nachträgen, danach beide Dateien grün. Nach dem neuen Demo-Loop:
+  Release-clang 1634 / 1634; Testing-MSVC 1633 / 1634 — rot ein Fall der Datensicherung, der mit dem Flügel nichts
+  zu tun hat (allein fünfmal grün; Befund in `Offene_Punkte` §7).

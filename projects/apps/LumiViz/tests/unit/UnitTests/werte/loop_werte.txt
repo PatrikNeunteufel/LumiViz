@@ -358,7 +358,7 @@ loop:genres/trap.lvloop	1209600	0.517281055	168312.771
 loop:genres/vocal_house.lvloop	2048516	0.411416203	146543.696
 loop:genres/waltz.lvloop	920348	0.401586384	68452.1046
 loop:genres/zen_garden.lvloop	3628800	0.374026984	367154.828
-loop:grand_piano_demo.lvloop	1176000	0.0660589784	10228.4627
+loop:grand_piano_demo.lvloop	1176000	0.277279258	47615.0235
 loop:harmonics_demo.lvloop	1114105	0.21260415	28693.8616
 loop:house_demo.lvloop	2048516	0.515627086	348582.105
 loop:instrument_demo.lvloop	1693440	0.670242131	232649.042
