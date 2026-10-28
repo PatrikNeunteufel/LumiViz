@@ -184,7 +184,7 @@ TEST_SUITE("LoopSpielweise")
         // --- ohne Spielweisen: Strum steht trotzdem da (S-W11 a), Abweichungen und sechste Werte nicht
         Loop schlicht = probe();
         const QJsonObject ohne = musterJson(alsJson(schlicht));
-        CHECK(alsJson(schlicht).value(QStringLiteral("version")).toInt() == 13);
+        CHECK(alsJson(schlicht).value(QStringLiteral("version")).toInt() == 14);
         CHECK(ohne.value(QStringLiteral("strum")).toObject() ==
               QJsonObject{{QStringLiteral("spread"), kSpreadVorgabeMs}, {QStringLiteral("hand"), QStringLiteral("halfBeat")}});
         CHECK_FALSE(ohne.contains(QStringLiteral("strokes")));
@@ -863,7 +863,7 @@ TEST_SUITE("LoopSpielweise")
         m.noten.push_back(gebogen);
         loop.richte();
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 13);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 14);
         const QJsonArray noten = json.value(QStringLiteral("patterns")).toArray()[0].toObject().value(QStringLiteral("notes")).toArray();
         bool legatoGesehen = false, bendGesehen = false;
         for (const QJsonValue& v : noten)

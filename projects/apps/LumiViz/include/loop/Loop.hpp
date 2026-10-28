@@ -148,9 +148,36 @@ struct Note
     /// Mit Vorgabe `{}`: so meldet clang bei `Note{schritt, laenge, hoehe}` kein
     /// fehlendes Feld (anders als bei `Saitensatz::strum`).
     std::vector<BendPunkt> bend{};
+    /// Die Stimme (Stufe 31d-9, HD2 a, HD2-1 a): 0 = keine, 1 … `kStimmenMax`; ihr Name
+    /// steht am Muster (`Muster::stimmen`). Wirkt nicht auf den Klang — nur auf Anzeige
+    /// und Bearbeitung (etwa die Hand am Fluegel).
+    int stimme = 0;
+    /// Versatz des Anfangs in Bruchteilen eines Schritts (31d-9, N1 a), 0 … < 1: die Note
+    /// schlaegt bei `schritt + versatzAnfang` an. 0 = auf dem Raster.
+    double versatzAnfang = 0.0;
+    /// Versatz des Endes in Bruchteilen eines Schritts (N1 a), > −1 … 0: die Note klingt
+    /// `laenge + versatzEnde` Schritte lang — so auch kuerzer als ein Schritt (ein Vorschlag).
+    double versatzEnde = 0.0;
 
     [[nodiscard]] bool operator==(const Note&) const = default;
 };
+
+/// So viele Stimmen traegt ein Muster hoechstens (HD2-1 a: die Kanaele von MIDI).
+inline constexpr int kStimmenMax = 16;
+/// So weit reicht ein Versatz hoechstens (N1 a): knapp unter einem Schritt — der
+/// Anfang bleibt in seinem Schritt, die Dauer groesser als 0.
+inline constexpr double kVersatzHoechstens = 0.999;
+
+/// Wo die Note anschlaegt, in Schritten ab dem Anfang des Musters, mit Bruchteil (N1 a).
+[[nodiscard]] inline double notenAnfang(const Note& note)
+{
+    return note.schritt + note.versatzAnfang;
+}
+/// Wie lange die Note klingt, in Schritten mit Bruchteil (N1 a); immer groesser als 0.
+[[nodiscard]] inline double notenDauer(const Note& note)
+{
+    return note.laenge + note.versatzEnde;
+}
 
 /// Nennt ein Muster sein Instrument beim Pfad einer eigenen Datei (`.lvinst`)
 /// — statt beim Namen eines mitgelieferten?
@@ -311,9 +338,15 @@ struct Muster
     double laut = 1.0;   ///< 0…1
     double pan = 0.0;    ///< -1 (links) … 1 (rechts)
     bool stumm = false;
-    /// Nach `Loop::richte` nach Schritt, dann Tonhoehe sortiert; je Schritt
-    /// und Tonhoehe hoechstens eine, keine reicht ueber das Ende des Musters.
+    /// Nach `Loop::richte` nach Anfang (Schritt, dann Versatz), dann Tonhoehe
+    /// sortiert; je Anfang und Tonhoehe hoechstens eine, keine reicht ueber das
+    /// Ende des Musters.
     std::vector<Note> noten;
+    /// Die Namen der Stimmen (31d-9, HD2 a): `stimmen[0]` ist Stimme 1 einer Note,
+    /// hoechstens `kStimmenMax`; leer = keine benannt. In der Datei `voices` (seit
+    /// Fassung 14, immer geschrieben; Stimme und Versatz einer Note stehen in ihrer
+    /// Zeile nur, wenn einer davon gesetzt ist — wie Saite und Bend).
+    QStringList stimmen;
     /// String choice (Stufe 23a, Entscheid S-M2c a): die Regel fuer Noten ohne
     /// eigene Saite. Ein neues Muster bekommt die Vorgabe seines Instruments
     /// (`Saitensatz::wahl`). Gilt nur, wenn das Instrument Saiten traegt.

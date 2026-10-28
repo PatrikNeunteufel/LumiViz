@@ -132,7 +132,7 @@ TEST_SUITE("LoopZeitspur")
     {
         // leer: die Felder stehen trotzdem da (Memory „Datei-Felder immer schreiben")
         const QJsonObject leer = alsJson(instrumentLoop());
-        CHECK(leer.value(QStringLiteral("version")).toInt() == 13);  // seit S144: 13 (frozen am Clip)
+        CHECK(leer.value(QStringLiteral("version")).toInt() == 14);  // seit S157: 14 (Stimme und Versatz); S144: 13 (frozen am Clip)
         const QJsonObject lanes =
             leer.value(QStringLiteral("patterns")).toArray().at(0).toObject().value(QStringLiteral("lanes")).toObject();
         for (const char* name : {"sustain", "sostenuto", "expression", "vibrato", "pitch"})

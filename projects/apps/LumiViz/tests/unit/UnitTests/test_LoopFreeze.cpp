@@ -571,7 +571,7 @@ TEST_SUITE("Loop Freeze")
         SUBCASE("immer geschrieben, Fassung 13, ohne Verlust gelesen")
         {
             const QJsonObject json = alsJson(loop);
-            CHECK(json.value(QStringLiteral("version")).toInt() == 13);
+            CHECK(json.value(QStringLiteral("version")).toInt() == 14);
             const QJsonArray drums = clipsVon(json, 0);
             const QJsonArray tasten = clipsVon(json, 1);
             REQUIRE(drums.size() == 1);

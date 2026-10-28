@@ -80,8 +80,9 @@ double gehaltenBis(const Loop& loop, const Muster& muster, int wiederholungen, i
     const Note& n = muster.noten[note];
     const double schritte = static_cast<double>(muster.takte) * loop.schritteJeTakt();
     const int mal = std::max(1, wiederholungen);
-    const double anschlag = runde * schritte + n.schritt;
-    const double ende = anschlag + n.laenge;
+    // 31d-9 (N1 a): Anfang und Dauer mit Versatz; ohne ihn wie bis Fassung 13
+    const double anschlag = runde * schritte + notenAnfang(n);
+    const double ende = anschlag + notenDauer(n);
     if (!hatPedal(muster)) return ende;
     double bis = ende;
 
@@ -106,7 +107,7 @@ double gehaltenBis(const Loop& loop, const Muster& muster, int wiederholungen, i
         for (const Note& andere : muster.noten)
         {
             if (andere.hoehe != n.hoehe) continue;
-            const double neu = r * schritte + andere.schritt;
+            const double neu = r * schritte + notenAnfang(andere);
             if (neu > anschlag && neu < bis) bis = std::max(ende, neu);
         }
     return std::min(bis, mal * schritte);
@@ -118,9 +119,9 @@ int gehaltenMs(const Loop& loop, const Muster& muster, int wiederholungen, int r
     const Note& n = muster.noten[note];
     if (!hatPedal(muster) || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return loop.notenMs(n);
     const double schritte = static_cast<double>(muster.takte) * loop.schritteJeTakt();
-    const double anschlag = runde * schritte + n.schritt;
+    const double anschlag = runde * schritte + notenAnfang(n);
     const double bis = gehaltenBis(loop, muster, wiederholungen, runde, note);
-    if (bis <= anschlag + n.laenge) return loop.notenMs(n);  // nicht gehalten: wie ohne Pedal
+    if (bis <= anschlag + notenDauer(n)) return loop.notenMs(n);  // nicht gehalten: wie ohne Pedal
     const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
     return std::max(loop.notenMs(n), static_cast<int>(std::lround((bis - anschlag) * schrittMs)));
 }
@@ -204,7 +205,7 @@ void setzeSpuren(TonAngabe& ton, const Loop& loop, const Muster& muster, int wie
     const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
     const double schritte = static_cast<double>(muster.takte) * loop.schritteJeTakt();
     const int mal = std::max(1, wiederholungen);
-    const double anschlag = runde * schritte + n.schritt;
+    const double anschlag = runde * schritte + notenAnfang(n);  // 31d-9 (N1 a): mit Versatz
     const double bis = anschlag + ton.dauerMs / schrittMs;
     ton.tonhoehe = kurveImTon(muster.zeitspuren.von(Steuerspur::Pitch), schritte, mal, anschlag, bis, schrittMs, 100.0);
     if (std::all_of(ton.tonhoehe.begin(), ton.tonhoehe.end(), [](const TonPunkt& p) { return p.cent == 0; }))
@@ -223,7 +224,7 @@ void setzeAusdruck(TonAngabe& ton, const Loop& loop, const Muster& muster, const
     const double schritte = static_cast<double>(muster.takte) * jeTakt;
     const int mal = std::max(1, clip.wiederholungen);
     const double clipEnde = mal * schritte;
-    const double anschlag = runde * schritte + muster.noten[note].schritt + versatzMs / schrittMs;
+    const double anschlag = runde * schritte + notenAnfang(muster.noten[note]) + versatzMs / schrittMs;  // 31d-9: mit Versatz
     // bis zum Ende des Clips, bei einem Ende des Tons bis dorthin (dahinter klingt er nicht)
     double bis = clipEnde;
     if (ton.endeMs > 0) bis = std::min(bis, anschlag + ton.endeMs / schrittMs);

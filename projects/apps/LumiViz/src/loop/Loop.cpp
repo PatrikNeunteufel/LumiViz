@@ -63,8 +63,12 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // verloere beides still.
 // 13 (S144, Stufe 30f, Entscheid FV2 a): am Clip `frozen`, der Abdruck des
 // eingefrorenen Stands, immer geschrieben (leer = nicht eingefroren) — ein
-// aelteres Programm verloere ihn still. Geschrieben wird immer 13.
-constexpr int kVersion = 13;
+// aelteres Programm verloere ihn still.
+// 14 (S157, Stufe 31d-9, Entscheide HD2 a, HD2-1 a, N1 a): je Note die Stimme und der
+// Versatz von Anfang und Ende in Bruchteilen eines Schritts (in der Zeile der Note, wenn
+// gesetzt), am Instrument-Muster die Namen der Stimmen `voices` (immer geschrieben) — ein
+// aelteres Programm verloere beides still. Geschrieben wird immer 14.
+constexpr int kVersion = 14;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -803,7 +807,8 @@ QStringList Loop::klangNamen(const InstrumentVon& saiten, const Eingefroren& ein
 int Loop::notenMs(const Note& note) const
 {
     if (bpm <= 0.0 || schritteJeSchlag <= 0) return 1;
-    return std::max(1, static_cast<int>(std::lround(note.laenge * 60000.0 / bpm / schritteJeSchlag)));
+    // mit dem Versatz des Endes (31d-9, N1 a); ohne ihn wie bis Fassung 13
+    return std::max(1, static_cast<int>(std::lround(notenDauer(note) * 60000.0 / bpm / schritteJeSchlag)));
 }
 
 const Anschlag* anschlagAn(const Muster& muster, int schritt)
@@ -904,7 +909,15 @@ void Loop::richte(QStringList* bericht)
                 if (note.saite < -1 || note.saite >= kSaitenMax) note.saite = -1;
                 note.artikulationen &= kArtikulationenAlle;
                 richteBend(note.bend);
+                // 31d-9: Stimme 0 … 16 (HD2-1 a), Versatz des Anfangs 0 … < 1, des Endes > −1 … 0 (N1 a);
+                // die Note endet nicht hinter dem Muster
+                note.stimme = std::clamp(note.stimme, 0, kStimmenMax);
+                note.versatzAnfang = inGrenzen(note.versatzAnfang, 0.0, kVersatzHoechstens, 0.0);
+                note.versatzEnde = inGrenzen(note.versatzEnde, -kVersatzHoechstens, 0.0, 0.0);
+                if (const double ueber = notenAnfang(note) + notenDauer(note) - schritte; ueber > 0.0)
+                    note.versatzEnde = std::max(-kVersatzHoechstens, note.versatzEnde - ueber);
             }
+            while (m.stimmen.size() > kStimmenMax) m.stimmen.removeLast();
             if (m.saitenwahl != Saitenwahl::Hand) m.saitenwahl = Saitenwahl::JeKlang;
             richteStrum(m.strum, handStellen(m.strum.raster, schlaegeJeTakt, schritteJeSchlag));
             m.noten.erase(std::remove_if(m.noten.begin(), m.noten.end(),
@@ -912,12 +925,17 @@ void Loop::richte(QStringList* bericht)
                                              return n.schritt < 0 || n.schritt >= schritte || n.laut <= 0.0;
                                          }),
                           m.noten.end());
+            // nach Anfang (Schritt, dann Versatz), dann Tonhoehe; je Anfang und Tonhoehe eine (31d-9:
+            // zwei gleiche Toene im selben Schritt mit verschiedenem Versatz bleiben beide)
             std::stable_sort(m.noten.begin(), m.noten.end(), [](const Note& a, const Note& b) {
-                return a.schritt != b.schritt ? a.schritt < b.schritt : a.hoehe < b.hoehe;
+                if (a.schritt != b.schritt) return a.schritt < b.schritt;
+                if (a.versatzAnfang != b.versatzAnfang) return a.versatzAnfang < b.versatzAnfang;
+                return a.hoehe < b.hoehe;
             });
             m.noten.erase(std::unique(m.noten.begin(), m.noten.end(),
                                       [](const Note& a, const Note& b) {
-                                          return a.schritt == b.schritt && a.hoehe == b.hoehe;
+                                          return a.schritt == b.schritt && a.versatzAnfang == b.versatzAnfang &&
+                                                 a.hoehe == b.hoehe;
                                       }),
                           m.noten.end());
             richteAnschlaege(m);
@@ -1024,18 +1042,29 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             // je Note eine Zeile: Schritt, Laenge, Tonhoehe, Lautstaerke — seit
             // Fassung 8 als fuenfter Wert die Saite, nur wenn die Note eine traegt;
             // seit Fassung 9 als sechster die Artikulationen (die Saite dann als −1),
-            // seit Fassung 10 als siebter der Bend (Saite und Artikulationen dann davor)
+            // seit Fassung 10 als siebter der Bend (Saite und Artikulationen dann davor);
+            // seit Fassung 14 als achter bis zehnter Stimme, Versatz des Anfangs, Versatz des
+            // Endes — nur wenn einer davon gesetzt ist (alles davor dann ausgeschrieben). Die
+            // Zeile traegt, was die Note braucht; „keine Stimme, auf dem Raster“ aendert sich nie
             QJsonArray noten;
             for (const Note& note : m.noten)
             {
                 QJsonArray zeile{note.schritt, note.laenge, note.hoehe, note.laut};
-                const bool mitBend = !note.bend.empty();
+                const bool mitStimme = note.stimme != 0 || note.versatzAnfang != 0.0 || note.versatzEnde != 0.0;
+                const bool mitBend = !note.bend.empty() || mitStimme;
                 if (note.saite >= 0 || note.artikulationen != 0 || mitBend) zeile.append(note.saite);
                 if (note.artikulationen != 0 || mitBend) zeile.append(note.artikulationen);
                 if (mitBend) zeile.append(bendAlsJson(note.bend));
+                if (mitStimme)
+                {
+                    zeile.append(note.stimme);
+                    zeile.append(note.versatzAnfang);
+                    zeile.append(note.versatzEnde);
+                }
                 noten.append(zeile);
             }
             o[QStringLiteral("notes")] = noten;
+            o[QStringLiteral("voices")] = QJsonArray::fromStringList(m.stimmen);  // seit Fassung 14, immer
             // seit Fassung 8; Per chord ist die Vorgabe und steht nicht da
             if (m.saitenwahl != Saitenwahl::JeKlang)
                 o[QStringLiteral("stringChoice")] = saitenwahlName(m.saitenwahl);
@@ -1192,8 +1221,14 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                 note.saite = werte.size() > 4 ? werte[4].toInt(-1) : -1;  // seit Fassung 8
                 note.artikulationen = werte.size() > 5 ? werte[5].toInt(0) : 0;  // seit Fassung 9
                 if (werte.size() > 6) note.bend = bendAusJson(werte[6].toArray());  // seit Fassung 10
+                // seit Fassung 14; fehlen sie: keine Stimme, auf dem Raster
+                note.stimme = werte.size() > 7 ? werte[7].toInt(0) : 0;
+                note.versatzAnfang = werte.size() > 8 ? werte[8].toDouble(0.0) : 0.0;
+                note.versatzEnde = werte.size() > 9 ? werte[9].toDouble(0.0) : 0.0;
                 m.noten.push_back(std::move(note));
             }
+            for (const QJsonValue& name : o.value(QStringLiteral("voices")).toArray())  // seit Fassung 14
+                m.stimmen.append(name.toString());
             m.saitenwahl = saitenwahlAusName(o.value(QStringLiteral("stringChoice")).toString());
             // seit Fassung 9; fehlt es, gilt die Vorgabe
             m.strum = strumAusJson(o.value(QStringLiteral("strum")).toObject());

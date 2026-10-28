@@ -154,8 +154,10 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                         const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
                         // Strum (Stufe 24b): eine Saite des Akkords schlaegt so viel spaeter an
                         const double strumFrames = geplant == nullptr ? 0.0 : geplant->versatzMs * rate / 1000.0;
+                        // 31d-9 (N1 a): der Versatz des Anfangs in Bruchteilen eines Schritts; ohne ihn + 0
                         const double stelle = static_cast<double>(schrittDavor + note.schritt) * schrittFrames +
-                                              (versetzt ? swingFrames : 0.0) + strumFrames;
+                                              (versetzt ? swingFrames : 0.0) + strumFrames +
+                                              note.versatzAnfang * schrittFrames;
                         const double laut =
                             (hammer ? anschlagRest(note.laut, stufeDerNote(note, true)) : note.laut) * lautMuster;
                         const auto schlage = [&](const QString& name) {

@@ -19,6 +19,7 @@ HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Ans
 | — (im Konzept §4.1, S145) | Quellen der Noten für die Beispiel-Loops (Mutopia, Polona, IMSLP); Literatur zu den Rechenverfahren — die Berichte der Agenten aus S145 sind nicht abgelegt worden |
 | — (im Konzept §4.1, S146) | Vorgaben zu 31a: Stulov & Kartofelev 2009, Rigaud et al. 2011, Hammergeschwindigkeit, `undampedFrom` |
 | — (im Konzept §4.1, S146) | Bank 2010 im Volltext; Saitendaten Chabassier 2013 Tab. III und RT-0425 Anhang A; Chor (Bank 2006 Kap. 4.2); Längskraft am Steg (Chabassier Gl. 21) |
+| [recherche/2026-10-28_S157_verzierungen_chopin.md](recherche/2026-10-28_S157_verzierungen_chopin.md) | Verzierungen bei Chopin (Triller, Vorschläge, Pralltriller, Fiorituren) für die Übertragung der Nocturne Op. 9 Nr. 2 (31d-9, N6 a); Bericht eines Agenten |
 | [recherche/2026-10-23_S146_resonanzboden_geometrie_holz.md](recherche/2026-10-23_S146_resonanzboden_geometrie_holz.md) | Boden: Geometrie und Holzwerte |
 | [recherche/2026-10-23_S146_resonanzboden_mobilitaet_moden.md](recherche/2026-10-23_S146_resonanzboden_mobilitaet_moden.md) | Boden: gemessene Mobilität, Moden, Dämpfung |
 | [recherche/2026-10-23_S146_resonanzboden_abstrahlung.md](recherche/2026-10-23_S146_resonanzboden_abstrahlung.md) | Boden: Abstrahlung (Rayleigh, Koinzidenz, modal) |

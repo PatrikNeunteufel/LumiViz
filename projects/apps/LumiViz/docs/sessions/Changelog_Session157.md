@@ -18,6 +18,13 @@
 
 ## Intern
 
+- **`.lvloop` Fassung 14** (31d-9): je Note eine Stimme (0 bis 16) und ein Versatz von Anfang und Ende in Bruchteilen
+  eines Schritts — für Stücke, deren Verzierungen nicht ins Raster passen, und für die Hand am Flügel; am Muster die
+  Namen der Stimmen. Ohne Versatz klingt alles wie vorher. Neuer Fall `test_LoopNotenStimme`.
+- Nocturne Op. 9 Nr. 2: Teilplan 31d-9, Vorlage gelesen (Auftakt, 34 Takte, Kadenz *senza Tempo*), Entscheide N1 a
+  bis N8 a; Recherche zu Chopins Verzierungen (Bericht unter `docs/modellierung/hammer-saite/recherche/`).
+- Spuren: SV1 a bis SV3 a (Vorgabe sichtbar, Sprung als zwei Punkte, Teilplan „Spuren und Tempo“).
+
 - Werkzeug und Wächter für `grand_piano.lvinst` in `test_LoopHammerSaite.cpp` (`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1`
   schreibt die Datei aus der Vorgabe; ohne die Variable meldet der Fall eine veraltete Datei).
 - `instrument_katalog.ergaenze` trägt die Tastatur (`keyboard`) mit durch — vorher fiel sie beim Schreiben still weg.

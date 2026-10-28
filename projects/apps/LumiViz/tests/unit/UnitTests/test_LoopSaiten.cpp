@@ -203,7 +203,7 @@ TEST_CASE("Loop Saiten: .lvloop Fassung 8 — die Saite einer Note und String ch
 {
     const Loop loop = gitarrenLoop();
     const QJsonObject json = alsJson(loop);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 13);  // seit Fassung 8; geschrieben wird die juengste (S134: 9, S136: 10, S139: 11, S140: 12, S144: 13)
+    CHECK(json.value(QStringLiteral("version")).toInt() == 14);  // seit Fassung 8; geschrieben wird die juengste (S134: 9, S136: 10, S139: 11, S140: 12, S144: 13)
 
     // --- die Saite steht als fuenfter Wert, nur wenn die Note eine traegt
     const QJsonArray noten = notenIn(json);

@@ -3736,6 +3736,86 @@ Tempo bekommen dasselbe Punktemodell, eine Migration statt zwei; wie man einen S
 Bau. Verworfen: b (SV1 und SV2 sofort als eigener Schritt, das Tempo später). Kippt, wenn die falsche Linie in leeren
 Spuren schon jetzt stört — dann nur die Anzeige aus SV1 vorziehen (Zeichnung, ohne Fassung).
 
+**Teilplan 31d-9 „Nocturne Op. 9 Nr. 2 ganz“ (S157; Nummern fest, PL31 a; CH1 a, HD1 a, HD2 a, HD2-1 a, N1 a–N6 a):**
+- **9.1 Quelle:** Scans unter `LumiViz\dld\` (lokal, ignoriert): Vorlage IMSLP #113996 (Bargiel, *Friedrich Chopin's
+  Werke* Band IV, Breitkopf & Härtel 1880, Plate C. IV. 1–3), Gegenprobe #86550 (Erstausgabe, Kistner 1833, Plate 995).
+  Gelesen werden Takt- und Seitenzahl, Tempo- und Metronomangabe, *Ped.*/✱, Dynamik, Verzierungen und die
+  unregelmäßigen Gruppen; Befund hierher.
+- **9.2 Regel der Verzierungen (N6 a):** Quelle zu Vorschlag, Triller und Doppelschlag bei Chopin suchen, Fundstelle
+  selbst nachlesen, Patrik vorlegen; bis zu seinem Ja wird keine Verzierung übertragen.
+- **9.3 Format:** `.lvloop` neue Fassung, immer geschrieben — je Note die Stimme (0 … 16, HD2-1 a) und der Versatz von
+  Anfang und Ende als Bruchteil eines Schritts (N1 a), am Muster die Namen der Stimmen; die Planung rechnet den Versatz;
+  der Editor verliert die Felder nicht (Anzeige 31g). Tests: hin und zurück gleich; ohne Versatz Bit für Bit wie vorher
+  (`Loop Werte`, Klangfassung); ein Versatz verschiebt den Anschlag genau; die Literale der Fassung in `tests/` gesucht.
+- **9.4 Übertragung:** `nocturne_demo` in `make_fluegel_loops.py`, ein Muster mit Pedal-Spur (N3 a), Dynamik nach der
+  Tafel (N2 a), Stimmen nach System (N5 a), festes Tempo (N4 a); Takt für Takt gegen die Vorlage geprüft, Abweichungen
+  der Erstausgabe, Tafel, Tempo-Stellen und Regel der Verzierungen in der Beschreibung, die Ausgabe in `CREDITS.md`.
+- **9.5 Pegel, Werte, Klangfassung**; eine Hörprobe (WAV) für Patrik.
+- **9.6 Abschluss:** beide Compiler, voller Lauf, Tabelle nachgeführt.
+
+**Befund 9.1 (S157, Vorlage #113996 gelesen; Seiten als Bild, keine Textebene; Systeme mit 220 dpi geschnitten):**
+Nr. 2 steht auf PDF-Seite 5–6 (gedruckt 6–7), je sechs Systeme. *Andante*, ♪ = 132, 12/8, Es-Dur, *espress. dolce*.
+**Auftakt** (ein Achtel B) und **34 Takte**: Seite 6 System 1 = Takte 1–3, … Seite 7 System 5 = Takt 31 und 32, System 6 =
+Rest von 32, 33 (*Tempo I*), 34. *Ped.* und ✱ stehen fast an jedem Achtel der linken Hand (N3 a trägt). Dynamik und
+Vortrag: *p, pp, f, sfp, ff, ppp, cresc., dimin.*, Gabeln, Akzente; *poco ritard.* (10), *Tempo I* (11, 13, 21, 33),
+*poco rallent.* (12, 20), *poco rubato* (26), *sempre pp*, *dolcissimo* (27), *con forza*, *stretto* (30–31),
+*ff senza Tempo* mit Fermaten (32), *rallent. smorz.* (32), Fermate am Schluss (34). Verzierungen: Triller (etwa 7, 15, 21,
+22) — Stellen beim Übertragen genau —, Pralltriller, Vorschläge. Dichte Läufe in 32steln mit Gruppen, die nicht in
+12 je Schlag aufgehen (sicher Takt 16; die übrigen und die Zahlen beim Übertragen); **Takt 32 ist eine Kadenz *senza Tempo***: Akkord mit
+Fermate, dann ein Lauf aus über zehn Vierergruppen in 32steln unter *8va*, länger als ein 12/8-Takt. Zwei Fragen
+für das Loop-Format: **N7** (Auftakt) und **N8** (Kadenz, Fermaten).
+
+✅ **N7 a** (Patrik S157): **Der Loop beginnt mit dem Auftakt — alle Noten liegen ein Achtel früher als die
+Taktstriche der Partitur, ohne Stille am Anfang; die Taktstriche des Loops liegen ein Achtel vor denen der Partitur.
+Das Skript rechnet aus Takt und Stelle der Partitur, die Beschreibung nennt den Versatz.** Grund: der Klang — keine
+fremde Stille (ein Takt dauert bei ♪ = 132 rund 5,5 s), keine fehlende Note. Verworfen: b (ein ganzer Takt vor Takt 1,
+5 s Stille), c (ohne Auftakt). Kippt, wenn Patrik im Editor Takt für Takt mit der Partitur mitlesen will — dann b.
+
+✅ **N8 a** (Patrik S157; ergänzt N4 a): **Takt 32 (Kadenz *senza Tempo*) bekommt im Loop so viele ganze Takte, wie
+die Kadenz in ihren notierten Werten im Tempo braucht, aufgerundet; ihre Noten werden mit dem Versatz (N1 a)
+gleichmäßig auf diesen Raum verteilt, der Akkord mit Fermate bekommt mindestens seine doppelte Dauer. Am Ende ein Takt
+mehr mit gedrücktem Pedal für die Schlussfermate (SK5 a). Ab Takt 32 weichen die Taktzahlen des Loops von der Partitur
+ab, die Beschreibung nennt die Zuordnung; mit der Tempo-Spur wird die Kadenz später frei geformt (*rallent. smorz.*).**
+Grund: *senza Tempo* heißt frei in der Zeit — gleichmäßig über den Raum der notierten Werte verfälscht den Lauf nicht.
+Verworfen: b (in einen 12/8-Takt gepresst — deutlich schneller als notiert), c (ohne Kadenz). Kippt, wenn sie im
+festen Tempo hörbar steif wird — dann wartet ihre Form auf die Tempo-Spur, bis dahin a.
+
+**9.3 gebaut (S157):** `.lvloop` Fassung 14 — `Note::stimme` (0 … 16), `versatzAnfang` (0 … < 1),
+`versatzEnde` (> −1 … 0; Anfang = Schritt + Versatz, Dauer = Länge + Versatz des Endes — so ist auch ein Vorschlag
+kürzer als ein Schritt möglich), `Muster::stimmen` (`voices`); `notenAnfang`, `notenDauer` in `loop/Loop.hpp`; der
+Rechenkern setzt den Anschlag um den Bruchteil, `notenMs` und der Pedalplan rechnen Anfang und Dauer mit Versatz;
+`richte` sortiert nach Schritt, Versatz, Tonhöhe und lässt zwei gleiche Töne im selben Schritt mit verschiedenem
+Versatz stehen; kein Ende hinter dem Muster. **Im Bau festgelegt, nicht entschieden:** Stimme und Versatz stehen in
+der Zeile der Note nur, wenn einer davon gesetzt ist (Saite, Artikulationen und Bend davor dann ausgeschrieben) — wie
+Saite und Bend seit Fassung 8; „immer geschrieben“ aus dem Teilplan gilt nur für `voices`. Grund: eine Zeile trägt,
+was die Note braucht; der Grund von S-W11 a (eine Vorgabe, die sich ändern kann) trifft „keine Stimme, auf dem Raster“
+nicht; zehn Werte in jeder Zeile hätten jede Datei verdoppelt. Neuer Fall `test_LoopNotenStimme` (Datei, Richten,
+Planung, Pedalplan); die Literale der Fassung in neun Testdateien auf 14. Release-clang `Loop*` 489 / 489 — ohne
+Versatz klingt alles wie vorher (`Loop Werte`, Klangfassung unverändert). Voller Lauf: Release-clang **1638 / 1638**;
+Testing-MSVC 1637 / 1638 — rot nur der neue Fall: `QJsonArray{QJsonArray{…}}` liest MSVC als Kopie der inneren
+Liste, nicht als Liste mit einer Zeile (clang anders); im Test ausdrücklich angehängt, danach der Fall unter beiden
+4 / 4. **9.3 fertig.**
+
+**Befund 9.2 (S157, Bericht eines Agenten `modellierung/hammer-saite/recherche/2026-10-28_S157_verzierungen_chopin.md`;
+tragende Stellen von Claude nachgelesen):** Mikuli 1879, Vorwort (PDF-Seite 8, Spalten in der Textebene gemischt):
+„Triller, die er meist mit der oberen Hilfsnote … anfangen liess, mussten weniger schnell, als mit Gleichheit
+geschlagen werden; die Trillerendigung ruhig und ohne Ueberstürzung.“ Wydanie Narodowe, Kommentar Nocturnes (Ekier &
+Kamiński, PDF-Seite 1–2, gedruckt S. 3) zu Op. 9 Nr. 2: „Bars 7, 15, 23 R.H. The start of the trill with the
+grace-note … begin together with the corresponding L.H. note.“ Nur Bericht: Palmer (Alfred), Lenz-Blatt, PTNA,
+Eigeldinger. Gesperrt (Zwischenseite mit JavaScript, nicht umgangen): Paderewski-Ausgabe und Mikulis Nocturnes bei
+IMSLP; nicht frei: Ekiers *Introduction*, Eigeldinger, Henle. **Unbelegt bleibt der Doppelschlag in Takt 2** — nach
+N6 a eine Frage für sich. Vorlage an Patrik: VZ1 (Regel), VZ2 (Doppelschlag Takt 2).
+
+*Downloads S157 (Patrik):* alle sechs Scans liegen unter `LumiViz\dld\` (Nocturne, Étude, Ballade je Vorlage und
+Gegenprobe).
+
+*Für 31h-3 schon geladen (S157, Patrik):* Étude Op. 10 — Vorlage IMSLP #113278 (Rudorff, *Werke* Band II, Breitkopf &
+Härtel 1880, Plate C. II. 1–12), Gegenprobe #232114 (Erstausgabe Buch I, Kistner 1833, Plate 1018); Ballade Op. 23 —
+Vorlage #113137 (Rudorff, *Werke* Band I, Breitkopf & Härtel 1878, Plate C. I. 1), Gegenprobe #979572 (deutsche
+Erstausgabe, Breitkopf & Härtel 1836, Plate 5706). Damit ist die Prüfung aus UF15 a erledigt: die Étude liegt in der
+Gesamtausgabe bei IMSLP als Scan vor. *Angaben aus den Werkseiten bei IMSLP, im Wortlaut zitiert vom Abrufwerkzeug
+(2026-10-28).*
+
 **Offen — Stufe 31 bis zum Ende (RF1 a; nachgeführt bei jedem Schritt; Stand S157):**
 
 | Schritt | Inhalt | Stand | hängt an |
@@ -3745,7 +3825,7 @@ Spuren schon jetzt stört — dann nur die Anzeige aus SV1 vorziehen (Zeichnung,
 | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
 | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
 | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
-| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | offen; N1 a–N6 a entschieden, zuerst die Regel der Verzierungen (N6 a) und die Ausgabe | — |
+| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, N7 a, N8 a; 9.2 recherchiert (Fragen VZ1, VZ2); 9.3 gebaut | — |
 | 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
 | 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
 | 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |

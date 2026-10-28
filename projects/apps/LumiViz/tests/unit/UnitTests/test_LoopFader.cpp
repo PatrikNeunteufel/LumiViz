@@ -116,7 +116,7 @@ TEST_SUITE("LoopFader")
     {
         const Loop null = drumLoop(0.0);
         const QJsonObject json = alsJson(null);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 13);  // der Fader seit 11; geschrieben wird die juengste
+        CHECK(json.value(QStringLiteral("version")).toInt() == 14);  // der Fader seit 11; geschrieben wird die juengste
         const QJsonObject kanal = json.value(QStringLiteral("channels")).toArray().at(0).toObject();
         REQUIRE(kanal.contains(QStringLiteral("gain")));  // auch bei 0 dB (Memory „Datei-Felder immer schreiben")
         CHECK(kanal.value(QStringLiteral("gain")).toDouble() == 0.0);
