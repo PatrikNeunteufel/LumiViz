@@ -3806,6 +3806,37 @@ Eigeldinger. Gesperrt (Zwischenseite mit JavaScript, nicht umgangen): Paderewski
 IMSLP; nicht frei: Ekiers *Introduction*, Eigeldinger, Henle. **Unbelegt bleibt der Doppelschlag in Takt 2** — nach
 N6 a eine Frage für sich. Vorlage an Patrik: VZ1 (Regel), VZ2 (Doppelschlag Takt 2).
 
+✅ **VZ1 a** (Patrik S157; Regel nach N6 a): **Es gilt der Notentext der Gesamtausgabe; Varianten aus
+Schülerexemplaren werden nicht übernommen (UF15 a). Triller ohne Vorschlag beginnen auf der oberen Nebennote, auf dem
+Schlag mit der linken Hand, gleichmäßig und nicht schnell, mit ruhigem Schluss in den Nachschlag; geht die obere
+Nebennote gebunden voraus, auf der Hauptnote. Triller mit Vorschlag beginnen mit dem Vorschlag auf dem Schlag (Takt 7,
+15, 23: das e♮² zusammen mit dem B der linken Hand). Vorschläge auf dem Schlag, zulasten der Hauptnote. „w“: drei Töne
+Hauptnote – obere Nebennote – Hauptnote auf dem Schlag. Fiorituren gleichmäßig über die Zeit ihrer Melodienote, die
+linke Hand im Takt. Die Regel steht in der Beschreibung des Loops, mit Mikuli 1879 und der Wydanie Narodowe als
+Quelle.** Grund: Mikuli berichtet von Chopins eigenem Unterricht; für die Stellen dieser Nocturne stimmt die Wydanie
+Narodowe überein. Verworfen: b (alle Triller auf der Hauptnote — für Op. 9 Nr. 2 ohne Quelle). Kippt, wenn die
+Paderewski-Ausgabe oder Eigeldinger zu dieser Nocturne anderes sagt.
+
+✅ **VZ2 a** (Patrik S157): **Der Doppelschlag in Takt 2 nach der Lage des Zeichens — es steht über dem Achtel C5
+(mit ♮ oben und unten): D5 – C5 – B♮4 – C5 auf dem Schlag, gebunden, nicht hastig (Mikuli: die großen Sänger als
+Vorbild); in der Beschreibung als „nach allgemeinem Brauch, für Chopin nicht belegt“ markiert, mit Paderewski oder
+Eigeldinger nachgeprüft, sobald eine davon da ist (`Bibliothek_offen.md`).** Verworfen: b (weglassen, bis eine Quelle
+ihn belegt).
+
+**Befund 9.4 (S157, Beginn der Übertragung):** Der Scan liegt mit 600 dpi vor (`pdfimages`); eine Lesehilfe im
+Scratchpad erkennt Notenköpfe und misst ihre Höhe gegen die Notenlinien. Über dem Bass-System (Akkorde der linken
+Hand an Hilfslinien) misst sie rund eine halbe Stufe zu hoch — genau dort entscheidet es zwischen zwei Tönen; das
+Zählen der Hilfslinien trug nicht (sie verschmelzen mit den Köpfen). Jeder solche Akkord braucht einen Zoom und die
+Harmonie als Gegenprobe; nach drei Takten hochgerechnet eine bis zwei Sitzungen. Die einzige freie digitale Fassung bei
+IMSLP (Snortum, LilyPond) steht unter „Creative Commons Attribution-ShareAlike 4.0“ — ShareAlike hat BL2 a verworfen.
+
+✅ **TR1 a** (Patrik S157): **Weiter von Hand aus der Gesamtausgabe, Takt für Takt mit der Lesehilfe und Zoom an jeder
+unsicheren Stelle, mit der Harmonie als Gegenprobe; unsichere Stellen in einer Liste, gegen die Erstausgabe geprüft;
+am Ende eine Hörprobe, in der falsche Akkorde auffallen. Rechnung eine bis zwei Sitzungen, je Systemzeile ein
+Zwischenstand.** Grund: rechtlich und fachlich der saubere Weg; die Hörprobe fängt die gefürchtete Fehlerart (falsche
+Akkordtöne). Verworfen: b (Snortums Quelle als Lesehilfe — öffnet die Lizenzfrage, die BL2 a vermeiden wollte), c (die
+Nocturne bis 31h-3 zurückstellen — verschiebt nur die Arbeit).
+
 *Downloads S157 (Patrik):* alle sechs Scans liegen unter `LumiViz\dld\` (Nocturne, Étude, Ballade je Vorlage und
 Gegenprobe).
 
@@ -3825,7 +3856,7 @@ Gesamtausgabe bei IMSLP als Scan vor. *Angaben aus den Werkseiten bei IMSLP, im 
 | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
 | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
 | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
-| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, N7 a, N8 a; 9.2 recherchiert (Fragen VZ1, VZ2); 9.3 gebaut | — |
+| 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, 9.2 entschieden (VZ1 a, VZ2 a), 9.3 gebaut; 9.4 Übertragung läuft (TR1 a) | — |
 | 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
 | 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
 | 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |
