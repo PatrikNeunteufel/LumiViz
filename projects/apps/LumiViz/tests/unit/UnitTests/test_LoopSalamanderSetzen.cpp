@@ -188,11 +188,21 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
     const std::vector<TastenWerte> m =
         modelltest::verdichteAlle(tasten, modelltest::messeTasten(modelltest::fluegel(QStringLiteral("lib:steinway_d")), tasten));
     int geprueft = 0;
+    // HU2 a (S159): die Pruefgroesse Huellkurve vorwaerts an Modell und Salamander mit derselben Rechnung — bis zum
+    // Setzen (SM4 b) nur als Bericht, dann als Pruefung
+    std::ostringstream pruef;
+    pruef << std::fixed << std::setprecision(2)
+          << "HU2 a: Huellkurve vorwaerts, Salamander | Modell — T60 vorwaerts T1 / T2 / T3 s; Knick T1 dB; ganzer Ton bis -20/-30/-40 dB s\n";
     for (std::size_t i = 0; i < s.size(); ++i)
     {
         const TastenWerte& z = s[i];
         const TastenWerte& mo = m[i];
         CAPTURE(z.midi);
+        pruef << z.midi << ": " << z.vorwaertsT60.wert << " / " << z.vorwaertsT60K[0].wert << " / " << z.vorwaertsT60K[1].wert << " | "
+              << mo.vorwaertsT60.wert << " / " << mo.vorwaertsT60K[0].wert << " / " << mo.vorwaertsT60K[1].wert << "; Knick "
+              << z.knickTiefe.wert << " (" << z.knickTiefe.anzahl << ") | " << mo.knickTiefe.wert << " (" << mo.knickTiefe.anzahl
+              << "); Ton " << z.huelle[0].wert << " / " << z.huelle[1].wert << " / " << z.huelle[2].wert << " | " << mo.huelle[0].wert
+              << " / " << mo.huelle[1].wert << " / " << mo.huelle[2].wert << '\n';
         if (z.midi <= kBBis && hatPunkt(v.inharmonizitaet, z.midi))
         {
             CHECK(mo.b.wert == doctest::Approx(z.b.wert).epsilon(0.05).scale(0.0));
@@ -206,6 +216,7 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
             ++geprueft;
         }
     }
+    MESSAGE(pruef.str());
     MESSAGE("31d-4: " << geprueft << " gesetzte Werte am Modell gegen Salamander geprueft");
     // B, Winkel an den Tasten mit einer Saite (31d-4); decay, highDecay, detune ausgesetzt bis 31d-7 (N2 a), der
     // Winkel im Chor bis 31d-7 B (WK1 a)

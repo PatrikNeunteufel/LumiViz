@@ -393,6 +393,23 @@ TEST_CASE("Loop Salamander 31d-3 mitgelieferte Werte")
         CHECK((std::stoi(t.at("t60_frueh").at(1)) > 0 || std::stoi(t.at("t60_ausgleich").at(1)) > 0));
         REQUIRE(t.count("terz_links") == 1);
         CHECK(t.at("terz_links").size() == terzMitten().size());
+        // HU2 a (S159): die Huellkurve vorwaerts steht in der Datei
+        for (const char* name : {"vorwaerts_t60", "vorwaerts_t60_2", "vorwaerts_t60_3", "knick_tiefe_db", "huelle_20_s", "huelle_30_s", "huelle_40_s"})
+        {
+            CAPTURE(name);
+            REQUIRE(t.count(name) == 1);
+        }
+        if (taste.midi == 60)
+        {
+            // Befund HU1 a: an C4 faellt der Grundton vorwaerts mit T60 2,5–2,8 s (nicht 5,4 wie `t60_frueh`), der Knick
+            // liegt um −15 dB, der ganze Ton erreicht −40 dB nach rund 11 s
+            CHECK(std::stoi(t.at("vorwaerts_t60").at(1)) >= 20);
+            CHECK(std::stod(t.at("vorwaerts_t60").at(0)) > 2.0);
+            CHECK(std::stod(t.at("vorwaerts_t60").at(0)) < 3.5);
+            CHECK(std::stod(t.at("knick_tiefe_db").at(0)) < -10.0);
+            CHECK(std::stod(t.at("knick_tiefe_db").at(0)) > -22.0);
+            CHECK(std::stod(t.at("huelle_40_s").at(0)) > 6.0);
+        }
     }
 }
 

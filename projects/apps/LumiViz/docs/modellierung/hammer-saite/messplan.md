@@ -18,7 +18,7 @@ verfolgt (Frequenz, Hüllkurve) — in den Unit-Tests oder als Werkzeug unter `t
 | Größe im Modell | Messung | Gilt als gemessen, wenn |
 |---|---|---|
 | B (`inharmonicity`) | Teiltonfrequenzen f_k, Ausgleich f_k = k f0 √(1+Bk²) | je Taste B mit Streuung; Kurve in Rigauds Form passt auf ±10 % |
-| `decay`, `lateDecay` | Hüllkurve des Grundtons, zwei Geraden in dB | erste und zweite Stufe je Taste getrennt erkennbar |
+| `decay`, `lateDecay` | Hüllkurve des Grundtons, zwei Geraden in dB — seit N1 a (S152) auf der Kurve nach Schroeder; **seit HU2 a (S159) die Hüllkurve vorwärts** (`Vorwaerts`: Gerade der ersten 0,5 s nach der Spitze, Tiefe des Knicks als Energie ab dem Knick; dazu der ganze Ton ab der Spitze bis −20/−30/−40 dB), aus dem Kanalmittel in der Energie | erste und zweite Stufe je Taste getrennt erkennbar; die Prüfgröße vorwärts an Modell und *Salamander* mit derselben Rechnung |
 | `highDecay` | Abklingen der Teiltöne über der Frequenz | Gesetz σ(f) = b1 + b3 ω² passt (Bank 2010, Gl. 7) |
 | `detune` | Schwebungsfrequenz der ersten Teiltöne | je Taste ein Wert in Cent |
 | Hammer (p, Q0, Masse) | Helligkeit (Teilton n zum Grundton) über den 16 Stufen | Steigung je Teilton gegen die Rechnung; entscheidet HT2 (Kipppunkt Stulov) |

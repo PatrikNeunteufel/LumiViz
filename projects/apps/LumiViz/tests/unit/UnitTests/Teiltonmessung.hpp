@@ -39,6 +39,11 @@
  *    dem Zehnfachen des Medians im Periodogramm.
  * 6. *Abklingen ueber der Frequenz:* σ = b1 + b3·ω² aus den fruehen Stufen (Bank 2010, Gl. 7);
  *    `highDecay` = σ(f1) / σ(10·f1) wie im Modell (`modell.md` §3).
+ * 7. *Huellkurve vorwaerts* (HU2 a, S159; `Vorwaerts`): je Teilton die Gerade ueber die ersten `vorwaertsS` nach der
+ *    Spitze als T60 — die erste Stufe, so wie man sie hoert; die Zwei-Geraden-Suche aus 4. war an *Salamander* je
+ *    Kanal unstet (Befund HU1 a: C4, Teilton 1 1,2–3,7 s statt 2,5 s) — und, wo 4. zwei Stufen fand, der Pegel am
+ *    Knick unter der Spitze (die Tiefe des Knicks). Der ganze Ton ab seiner Spitze steht in `Fluegelmessung.hpp`
+ *    (`huellkurveZeiten`).
  *
  * Fuer das Setzen an den Kurven (31d-7 B, SM4 a, Teilplan 7.5.1, S155): je Teilton der Boden je Rahmen
  * (`bodenDb`) und der gemessene Bereich (`bereichVon`, `bereichBis`); daraus `schroederKurve` (die Kurve
@@ -91,6 +96,22 @@ struct Einstellungen
     /// Spitze ausserhalb (eine Mode des Bodens) ist kein Teilton (Befund S152, gerechnetes C2).
     double stimmungCent = 60.0;
     double bHoechstens = 0.02;
+    /// Die Huellkurve vorwaerts: so lange nach der Spitze liegt die Gerade der ersten Stufe (HU2 a).
+    double vorwaertsS = 0.5;
+};
+
+/// Die Huellkurve vorwaerts eines Teiltons (HU2 a, S159): die Steigung der ersten `vorwaertsS` nach der Spitze als
+/// T60 — die erste Stufe, robust gegen das, was die Zwei-Geraden-Suche nach Schroeder an *Salamander* je Kanal
+/// verbog — und der Pegel am Knick unter der Spitze.
+struct Vorwaerts
+{
+    bool erkannt = false;
+    double t60 = 0.0;           ///< s, aus der Geraden ab der Spitze ueber `vorwaertsS` (oder bis zum Ende des Bereichs)
+    double bisS = 0.0;          ///< so lang war die Gerade
+    bool knickErkannt = false;  ///< nur mit zwei Stufen (`Abklingen::zweiStufen`)
+    /// Die Tiefe des Knicks: die Energie ab dem Knick gegen die Energie ab dem Anfang des Bereichs, in dB (negativ) —
+    /// die Kurve nach Schroeder am Knick; so viel vom Ton liegt in der zweiten Stufe.
+    double knickTiefeDb = 0.0;
 };
 
 struct Abklingen
@@ -131,6 +152,7 @@ struct Teilton
     double anfangDb = 0.0;  ///< Spitze in `anfangBisS` nach dem Einsatz
     Abklingen abklingen;
     Schwebung schwebung;
+    Vorwaerts vorwaerts;
 };
 
 struct Ergebnis
@@ -515,6 +537,57 @@ inline std::vector<double> restUmStufen(std::span<const double> pegelDb, double 
     return rest;
 }
 
+/// Die Huellkurve vorwaerts (HU2 a, S159): die Gerade ueber `pegelDb` ab der Spitze `hoechster` ueber `vorwaertsS`
+/// (hoechstens bis `bis`, mindestens zehn Rahmen) als T60; mit zwei Stufen (`a`) die Tiefe des Knicks als die Energie
+/// ab dem Knick gegen die Energie ab `von` (die Kurve nach Schroeder am Knick) — so bleibt sie auch am Modell mit
+/// seinen vollstaendigen Ausloeschungen stetig, wo der Pegel am Knick selbst in einem Einbruch liegen kann.
+inline Vorwaerts huellkurveVorwaerts(std::span<const double> pegelDb, double schrittS, std::size_t hoechster, std::size_t von,
+                                     std::size_t bis, double vorwaertsS, const Abklingen& a)
+{
+    Vorwaerts v;
+    bis = std::min(bis, pegelDb.size());
+    const auto rahmen = static_cast<std::size_t>(std::lround(vorwaertsS / schrittS));
+    const std::size_t ende = std::min(bis, hoechster + rahmen + 1);
+    if (ende > hoechster + 10)
+    {
+        std::vector<double> zt;
+        std::vector<double> zl;
+        for (std::size_t j = hoechster; j < ende; ++j)
+        {
+            zt.push_back(static_cast<double>(j) * schrittS);
+            zl.push_back(pegelDb[j]);
+        }
+        const Geraden::Gerade g = Geraden(zt, zl).ueber(0, zt.size());
+        if (g.steigung < 0.0)
+        {
+            v.erkannt = true;
+            v.t60 = -60.0 / g.steigung;
+            v.bisS = static_cast<double>(ende - hoechster) * schrittS;
+        }
+    }
+    if (a.zweiStufen && bis > von)
+    {
+        const auto knick = static_cast<std::size_t>(std::lround(a.knickS / schrittS));
+        if (knick > von && knick < bis)
+        {
+            double gesamt = 0.0;
+            double rest = 0.0;
+            for (std::size_t j = von; j < bis; ++j)
+            {
+                const double e = std::pow(10.0, pegelDb[j] / 10.0);
+                gesamt += e;
+                if (j >= knick) rest += e;
+            }
+            if (gesamt > 0.0 && rest > 0.0)
+            {
+                v.knickErkannt = true;
+                v.knickTiefeDb = 10.0 * std::log10(rest / gesamt);
+            }
+        }
+    }
+    return v;
+}
+
 inline Schwebung findeSchwebung(std::span<const double> rest, double schrittS, double bisHz)
 {
     Schwebung s;
@@ -793,8 +866,12 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
             t.bereichVon = von;
             t.bereichBis = bis;
         }
+        // 7. die Huellkurve vorwaerts (HU2 a): die Gerade ab der Spitze ueber `vorwaertsS` — auch ohne Abklingzeit
+        t.vorwaerts = detail::huellkurveVorwaerts(t.pegelDb, einst.schrittS, hoechster, von, bis, einst.vorwaertsS, Abklingen{});
         if (bis <= von || static_cast<double>(bis - von) * einst.schrittS < 0.3) continue;
         t.abklingen = detail::zweiStufen(t.pegelDb, einst.schrittS, von, bis);
+        // mit zwei Stufen dazu die Tiefe des Knicks
+        t.vorwaerts = detail::huellkurveVorwaerts(t.pegelDb, einst.schrittS, hoechster, von, bis, einst.vorwaertsS, t.abklingen);
         if (!t.abklingen.erkannt) continue;
         const std::vector<double> rest = detail::restUmStufen(t.pegelDb, einst.schrittS, von, bis, t.abklingen);
         t.schwebung = detail::findeSchwebung(rest, einst.schrittS, std::min(einst.schwebungBisHz, 0.5 / fensterS));

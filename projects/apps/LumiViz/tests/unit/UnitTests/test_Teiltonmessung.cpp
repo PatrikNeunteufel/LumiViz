@@ -30,9 +30,11 @@
 
 #include <doctest.h>
 
+#include "Fluegelmessung.hpp"  // HU2 a: `huellkurveZeiten`, `messeKanal` (schliesst Teiltonmessung.hpp ein)
 #include "Teiltonmessung.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -122,6 +124,73 @@ std::vector<Komponente> saite(double f0, double b, int teiltoene, double t60)
 }
 
 }  // namespace
+
+TEST_CASE("Loop Teiltonmessung HU2 Huellkurve vorwaerts: erste Stufe, Knick, ganzer Ton")
+{
+    // HU2 a (S159): die Zwei-Geraden-Suche nach Schroeder war an Salamander je Kanal unstet (C4, Teilton 1: 1,2–3,7 s
+    // statt 2,5 s); die Gerade ueber die ersten 0,5 s nach der Spitze ist die erste Stufe, wie man sie hoert, dazu der
+    // Pegel am Knick unter der Spitze und der ganze Ton ab seiner Spitze bis −20/−30/−40 dB
+    SUBCASE("zwei Stufen wie an C4: frueh 2,5 s, spaet 36 s, die spaete 20 dB leiser")
+    {
+        // die langsame Mode haelt die Gerade der ersten 0,5 s flacher (bei −12 dB der schnellen liegt sie bei −20):
+        // 2,5 s werden rund 2,6 s — darum 15 %
+        const std::vector<Komponente> k = zweiModen(261.6, 3e-4, 6, 2.5, 36.0, -20.0, 1.5);
+        const Ergebnis e = miss(erzeuge(k, 12.0, 0.1, 1e-6), kRate, 261.6, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        int knicke = 0;
+        for (int n = 1; n <= 3; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->vorwaerts.erkannt);
+            CHECK(t->vorwaerts.bisS == doctest::Approx(0.51).epsilon(0.05));
+            CHECK(t->vorwaerts.t60 == doctest::Approx(2.5).epsilon(0.15).scale(0.0));
+            if (t->abklingen.zweiStufen)
+            {
+                // die Tiefe des Knicks: die Energie ab dem Knick gegen die ganze — hier liegt die langsame Mode 20 dB
+                // unter der schnellen, ihre Energie (T60 36 gegen 2,5 s) am Anfang des Bereichs etwa 8 dB darunter
+                CHECK(t->vorwaerts.knickErkannt);
+                CHECK(t->vorwaerts.knickTiefeDb < -4.0);
+                CHECK(t->vorwaerts.knickTiefeDb > -16.0);
+                ++knicke;
+            }
+        }
+        CHECK(knicke >= 2);
+    }
+    SUBCASE("eine Stufe 4 s: vorwaerts 4 s, kein Knick; der ganze Ton ab der Spitze bis -20/-30/-40 dB")
+    {
+        const std::vector<double> ton = erzeuge(saite(110.0, 1e-4, 12, 4.0), 6.0, 0.1, 1e-6);
+        const Ergebnis e = miss(ton, kRate, 110.0, lumi::loop::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 6; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->vorwaerts.erkannt);
+            CHECK(t->vorwaerts.t60 == doctest::Approx(4.0).epsilon(0.05).scale(0.0));
+            CHECK_FALSE(t->vorwaerts.knickErkannt);
+        }
+        const std::array<double, 3> z = huellkurveZeiten(ton, kRate);
+        CHECK(z[0] == doctest::Approx(4.0 * 20.0 / 60.0).epsilon(0.1));
+        CHECK(z[1] == doctest::Approx(4.0 * 30.0 / 60.0).epsilon(0.1));
+        CHECK(z[2] == doctest::Approx(4.0 * 40.0 / 60.0).epsilon(0.1));
+        const KanalMessung m = messeKanal(ton, kRate, 110.0, lumi::loop::fft(), false);
+        REQUIRE(m.erkannt);
+        CHECK(m.huelleS == z);
+        REQUIRE(m.teilton(1) != nullptr);
+        CHECK(m.teilton(1)->vorwaerts.t60 == doctest::Approx(4.0).epsilon(0.05).scale(0.0));
+    }
+    SUBCASE("ein kurzer Ton: wo er nicht bis -40 dB faellt, steht 0")
+    {
+        const std::vector<double> ton = erzeuge(saite(440.0, 1e-4, 6, 4.0), 1.5, 0.1, 1e-6);
+        const std::array<double, 3> z = huellkurveZeiten(ton, kRate);
+        CHECK(z[0] == doctest::Approx(4.0 * 20.0 / 60.0).epsilon(0.1));
+        CHECK(z[1] == 0.0);
+        CHECK(z[2] == 0.0);
+    }
+}
 
 TEST_CASE("Loop Teiltonmessung 31d-2 Einsatz, f0 und B")
 {

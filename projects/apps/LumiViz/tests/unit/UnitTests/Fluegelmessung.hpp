@@ -83,6 +83,9 @@ struct TeiltonKurz
     double anfangDb = 0.0;
     Abklingen abklingen;
     Schwebung schwebung;
+    /// HU2 a: erste Stufe aus der Huellkurve vorwaerts, Tiefe des Knicks — aus `messeTon` das Kanalmittel in der
+    /// Energie (in beiden Kanaelen gleich), aus `messeKanal` allein der eine Kanal.
+    Vorwaerts vorwaerts;
 };
 
 /// Ein Kanal eines Tons, verdichtet: was 31d je Ton braucht.
@@ -104,6 +107,9 @@ struct KanalMessung
     double direktDb = 0.0;
     std::vector<double> terzDb;
     std::vector<Phantom> phantome;
+    /// Der ganze Ton ab seiner Spitze bis −20, −30, −40 dB, in s (HU2 a, `huellkurveZeiten`); 0 = so weit faellt er nicht.
+    /// Aus `messeTon` das Kanalmittel in der Energie (in beiden Kanaelen gleich), aus `messeKanal` allein der eine Kanal.
+    std::array<double, 3> huelleS{};
 
     [[nodiscard]] const TeiltonKurz* teilton(int k) const
     {
@@ -116,12 +122,40 @@ struct KanalMessung
 /// Die Teiltoene, deren Kurven gesetzt werden (SM4 a: Teilton 1–3).
 inline constexpr int kKurvenTeiltoene = 3;
 
+/// Der ganze Ton ab seiner Spitze (HU2 a, S159): die Huellkurve als Energie ueber 50 ms gemittelt, in dB; zurueck die
+/// Zeit von der Spitze bis −20, −30 und −40 dB darunter, in s — 0, wo der Ton so weit nicht faellt. Die Pruefgroesse
+/// aus HU1 a: sie zeigt, was man als Laenge hoert, gleich wie sich die Stufen auf die Teiltoene verteilen.
+inline std::array<double, 3> huellkurveZeiten(std::span<const double> ton, int rate)
+{
+    std::array<double, 3> zeiten{};
+    if (rate <= 0) return zeiten;
+    const auto n = static_cast<std::size_t>(std::max(1, rate / 20));
+    if (ton.size() < 2 * n) return zeiten;
+    std::vector<double> summe(ton.size() + 1, 0.0);
+    for (std::size_t i = 0; i < ton.size(); ++i) summe[i + 1] = summe[i] + ton[i] * ton[i];
+    const std::size_t rahmen = ton.size() - n + 1;
+    std::vector<double> db(rahmen);
+    for (std::size_t i = 0; i < rahmen; ++i)
+        db[i] = 10.0 * std::log10(std::max((summe[i + n] - summe[i]) / static_cast<double>(n), 1e-30));
+    const auto spitze = static_cast<std::size_t>(std::max_element(db.begin(), db.end()) - db.begin());
+    constexpr double kGrenzen[3] = {-20.0, -30.0, -40.0};
+    for (std::size_t g = 0; g < 3; ++g)
+        for (std::size_t i = spitze; i < rahmen; ++i)
+            if (db[i] <= db[spitze] + kGrenzen[g])
+            {
+                zeiten[g] = static_cast<double>(i - spitze) / rate;
+                break;
+            }
+    return zeiten;
+}
+
 /// Einen Kanal messen. `mitPhantomen` nur, wo sie gebraucht werden (Bass, laut — es kostet ein
 /// langes Spektrum). `huellen` (wenn gegeben) bekommt Teilton 1 bis `kKurvenTeiltoene` mit Huellkurve und Boden.
 inline KanalMessung messeKanal(std::span<const double> ton, int rate, double nennFrequenz, const lumi::loop::Fft& fft,
                                bool mitPhantomen, std::vector<Teilton>* huellen = nullptr)
 {
     KanalMessung m;
+    m.huelleS = huellkurveZeiten(ton, rate);
     const Ergebnis e = miss(ton, rate, nennFrequenz, fft);
     if (huellen != nullptr)
         for (const Teilton& t : e.teiltoene)
@@ -136,7 +170,7 @@ inline KanalMessung messeKanal(std::span<const double> ton, int rate, double nen
     m.sigmaB1 = e.sigmaB1;
     m.sigmaB3 = e.sigmaB3;
     m.highDecay = e.highDecay;
-    for (const Teilton& t : e.teiltoene) m.teiltoene.push_back({t.k, t.frequenz, t.anfangDb, t.abklingen, t.schwebung});
+    for (const Teilton& t : e.teiltoene) m.teiltoene.push_back({t.k, t.frequenz, t.anfangDb, t.abklingen, t.schwebung, t.vorwaerts});
     m.pegelDb = pegelZuBeginn(ton, rate, e.einsatzS);
     m.direktDb = direktschallDb(ton, rate, e.einsatzS);
     m.terzDb = terzPegel(ton, rate, e.einsatzS, fft);
@@ -239,14 +273,49 @@ inline std::array<KanalMessung, 2> messeTon(std::span<const float> stereo, int r
     rechts.resize(ende);
     std::vector<Teilton> huellenL;
     std::vector<Teilton> huellenR;
-    std::array<KanalMessung, 2> ton{messeKanal(links, rate, nennFrequenz, fft, mitPhantomen, kurven != nullptr ? &huellenL : nullptr),
-                                    messeKanal(rechts, rate, nennFrequenz, fft, mitPhantomen, kurven != nullptr ? &huellenR : nullptr)};
+    std::array<KanalMessung, 2> ton{messeKanal(links, rate, nennFrequenz, fft, mitPhantomen, &huellenL),
+                                    messeKanal(rechts, rate, nennFrequenz, fft, mitPhantomen, &huellenR)};
     for (KanalMessung& k : ton)
     {
         k.endeS = static_cast<double>(ende) / rate;
         k.laengeS = laengeS;
     }
     if (kurven != nullptr) *kurven = kurvenAus(huellenL, huellenR, Einstellungen{}.schrittS);
+    // HU2 a (S159): die Huellkurve vorwaerts und der ganze Ton aus dem Kanalmittel in der Energie (wie die Kurven, K1 a) —
+    // in beiden Kanaelen derselbe Wert. Grund: an Salamander laufen die Kanaele auseinander (C4, Teilton 1: links faellt
+    // der Grundton in den ersten 0,5 s mit 12 dB/s, rechts mit 23 dB/s — der linke Kanal ist dort 5 dB leiser und traegt
+    // frueh mehr Nachklang); der Median ueber beide Kanaele laege dazwischen und beschriebe keinen von beiden.
+    const Einstellungen einst;
+    for (int k = 1; k <= kKurvenTeiltoene; ++k)
+    {
+        const auto finde = [k](const std::vector<Teilton>& h) -> const Teilton* {
+            for (const Teilton& t : h)
+                if (t.k == k) return &t;
+            return nullptr;
+        };
+        const Teilton* l = finde(huellenL);
+        const Teilton* r = finde(huellenR);
+        if (l == nullptr || r == nullptr || l->pegelDb.empty() || r->pegelDb.empty()) continue;
+        const std::size_t n = std::min(l->pegelDb.size(), r->pegelDb.size());
+        std::vector<double> mitte(n);
+        for (std::size_t i = 0; i < n; ++i)
+            mitte[i] = 10.0 * std::log10(0.5 * (std::pow(10.0, l->pegelDb[i] / 10.0) + std::pow(10.0, r->pegelDb[i] / 10.0)));
+        const std::size_t suche = std::min(n, static_cast<std::size_t>(0.5 / einst.schrittS) + 1);
+        const auto hoechster = static_cast<std::size_t>(std::max_element(mitte.begin(), mitte.begin() + static_cast<std::ptrdiff_t>(suche)) -
+                                                        mitte.begin());
+        const std::size_t von = std::max(l->bereichVon, r->bereichVon);
+        const std::size_t bis = std::min({l->bereichBis, r->bereichBis, n});
+        const Abklingen a = bis > von && static_cast<double>(bis - von) * einst.schrittS >= 0.3 ? detail::zweiStufen(mitte, einst.schrittS, von, bis)
+                                                                                                   : Abklingen{};
+        const Vorwaerts v = detail::huellkurveVorwaerts(mitte, einst.schrittS, hoechster, von, bis, einst.vorwaertsS, a);
+        for (KanalMessung& km : ton)
+            for (TeiltonKurz& tk : km.teiltoene)
+                if (tk.k == k) tk.vorwaerts = v;
+    }
+    std::vector<double> mono(ende);
+    for (std::size_t i = 0; i < ende; ++i) mono[i] = std::sqrt(0.5 * (links[i] * links[i] + rechts[i] * rechts[i]));
+    const std::array<double, 3> huelle = huellkurveZeiten(mono, rate);
+    for (KanalMessung& km : ton) km.huelleS = huelle;
     return ton;
 }
 
@@ -280,6 +349,12 @@ struct TastenWerte
     Wert tiefeDb;          ///< Tiefe der Einbrueche, Teiltoene 1–3 mit Schwebung, Median ueber v6–v16 (P4 a, TB1 a)
     Wert tiefeLeise;       ///< dieselbe ueber v6–v10 (US2 a: das Ziel von `stossLeise`)
     Wert tiefeLaut;        ///< dieselbe ueber v12–v16 (US2 a: das Ziel von `stossLaut`)
+    // HU2 a (S159): die Huellkurve vorwaerts als Mess- und Setzgroesse, Median ueber v6–v16 und beide Kanaele
+    Wert vorwaertsT60;                   ///< Teilton 1: T60 aus der Geraden der ersten 0,5 s nach der Spitze
+    std::array<Wert, 2> vorwaertsT60K;   ///< Teilton 2 und 3
+    Wert knickTiefe;                     ///< Teilton 1: Pegel am Knick unter der Spitze, dB (nur wo zwei Stufen)
+    std::array<Wert, 2> knickTiefeK;     ///< Teilton 2 und 3
+    std::array<Wert, 3> huelle;          ///< der ganze Ton ab seiner Spitze bis −20 / −30 / −40 dB, s
     std::vector<Wert> helligkeit;  ///< Teilton n = 2 … 8: Steigung dB Helligkeit je dB Pegel (V1 a)
     Wert pegelumfang;      ///< Pegel des Tons zu Beginn (0,3 s), v16 gegen v1
     Wert pegelL;           ///< Pegel zu Beginn gegen das Mittel der Tastatur, je Kanal (UF6 a)
@@ -310,10 +385,25 @@ inline TastenWerte verdichte(int midi, const std::vector<std::array<KanalMessung
     w.midi = midi;
     std::vector<double> b, frueh, spaet, knick, zwei, ausgleich, hoch, cent, tiefe, tiefeLeise, tiefeLaut, direkt;
     std::array<std::vector<double>, 2> fruehK, spaetK, zweiK;  // Teilton 2 und 3
+    std::vector<double> vorw, knickT;                           // HU2 a: Teilton 1
+    std::array<std::vector<double>, 2> vorwK, knickK;           // Teilton 2 und 3
+    std::array<std::vector<double>, 3> huelle;                  // der ganze Ton
     for (std::size_t e = 0; e < messungen.size(); ++e)
         for (const KanalMessung& m : messungen[e])
         {
             if (!m.erkannt) continue;
+            if (e + 1 >= 6)
+            {
+                for (int k = 1; k <= 3; ++k)
+                    if (const TeiltonKurz* t = m.teilton(k); t != nullptr && t->vorwaerts.erkannt)
+                    {
+                        (k == 1 ? vorw : vorwK[static_cast<std::size_t>(k - 2)]).push_back(t->vorwaerts.t60);
+                        if (t->vorwaerts.knickErkannt)
+                            (k == 1 ? knickT : knickK[static_cast<std::size_t>(k - 2)]).push_back(t->vorwaerts.knickTiefeDb);
+                    }
+                for (std::size_t g = 0; g < 3; ++g)
+                    if (m.huelleS[g] > 0.0) huelle[g].push_back(m.huelleS[g]);
+            }
             if (m.teiltoene.size() >= 5) b.push_back(m.b);
             if (m.hochErkannt)
             {
@@ -378,6 +468,14 @@ inline TastenWerte verdichte(int midi, const std::vector<std::array<KanalMessung
     }
     w.t60Ausgleich = detail::medianWert(ausgleich);
     w.highDecay = detail::medianWert(hoch);
+    w.vorwaertsT60 = detail::medianWert(vorw);
+    w.knickTiefe = detail::medianWert(knickT);
+    for (std::size_t j = 0; j < 2; ++j)
+    {
+        w.vorwaertsT60K[j] = detail::medianWert(vorwK[j]);
+        w.knickTiefeK[j] = detail::medianWert(knickK[j]);
+    }
+    for (std::size_t g = 0; g < 3; ++g) w.huelle[g] = detail::medianWert(huelle[g]);
     w.schwebungCent = detail::medianWert(cent);
     w.tiefeDb = detail::medianWert(tiefe);
     w.tiefeLeise = detail::medianWert(tiefeLeise);
@@ -466,7 +564,9 @@ inline const char* const kSalamanderKopf =
     "# (http://creativecommons.org/licenses/by/3.0/), Fassung 48 kHz/24 bit von archive.org, SHA-256 des Archivs\n"
     "# 04a4442f2432d846f7a6aaf7156e83e06a84342f4d7475e6e070587b3b28ef21. Nur Zahlen; geschrieben von\n"
     "# test_LoopSalamander.cpp (LUMIVIZ_SALAMANDER=<Ordner>), Messung Teiltonmessung.hpp / Fluegelmessung.hpp.\n"
-    "# Zeile: Taste <Tab> Groesse <Tab> Wert <Tab> Zahl der Messungen (bei Listen: die Werte)\n";
+    "# Zeile: Taste <Tab> Groesse <Tab> Wert <Tab> Zahl der Messungen (bei Listen: die Werte)\n"
+    "# Seit S159 (HU2 a): vorwaerts_t60[_k] = T60 aus der Geraden der ersten 0,5 s nach der Spitze des Teiltons,\n"
+    "# knick_tiefe_db[_k] = Pegel am Knick unter der Spitze, huelle_20/30/40_s = der ganze Ton ab seiner Spitze.\n";
 
 inline void schreibeZeile(std::ostream& aus, int midi, const char* groesse, const Wert& w)
 {
@@ -507,6 +607,17 @@ inline bool schreibeWerte(const std::filesystem::path& pfad, const std::vector<T
         schreibeZeile(aus, w.midi, "tiefe_db", w.tiefeDb);
         schreibeZeile(aus, w.midi, "tiefe_leise_db", w.tiefeLeise);
         schreibeZeile(aus, w.midi, "tiefe_laut_db", w.tiefeLaut);
+        schreibeZeile(aus, w.midi, "vorwaerts_t60", w.vorwaertsT60);
+        schreibeZeile(aus, w.midi, "knick_tiefe_db", w.knickTiefe);
+        for (std::size_t j = 0; j < 2; ++j)
+        {
+            const std::string k = std::to_string(j + 2);
+            schreibeZeile(aus, w.midi, ("vorwaerts_t60_" + k).c_str(), w.vorwaertsT60K[j]);
+            schreibeZeile(aus, w.midi, ("knick_tiefe_db_" + k).c_str(), w.knickTiefeK[j]);
+        }
+        schreibeZeile(aus, w.midi, "huelle_20_s", w.huelle[0]);
+        schreibeZeile(aus, w.midi, "huelle_30_s", w.huelle[1]);
+        schreibeZeile(aus, w.midi, "huelle_40_s", w.huelle[2]);
         for (std::size_t i = 0; i < w.helligkeit.size(); ++i)
             schreibeZeile(aus, w.midi, ("helligkeit_" + std::to_string(i + 2)).c_str(), w.helligkeit[i]);
         schreibeZeile(aus, w.midi, "pegelumfang", w.pegelumfang);
@@ -586,6 +697,17 @@ inline std::vector<TastenWerte> tastenWerteAus(const SalamanderWerte& gelesen)
         w.tiefeDb = wert("tiefe_db");
         w.tiefeLeise = wert("tiefe_leise_db");
         w.tiefeLaut = wert("tiefe_laut_db");
+        w.vorwaertsT60 = wert("vorwaerts_t60");
+        w.knickTiefe = wert("knick_tiefe_db");
+        for (std::size_t j = 0; j < 2; ++j)
+        {
+            const std::string k = std::to_string(j + 2);
+            w.vorwaertsT60K[j] = wert("vorwaerts_t60_" + k);
+            w.knickTiefeK[j] = wert("knick_tiefe_db_" + k);
+        }
+        w.huelle[0] = wert("huelle_20_s");
+        w.huelle[1] = wert("huelle_30_s");
+        w.huelle[2] = wert("huelle_40_s");
         for (int n = 2; n <= 8; ++n) w.helligkeit.push_back(wert("helligkeit_" + std::to_string(n)));
         w.pegelumfang = wert("pegelumfang");
         w.pegelL = wert("pegel_links");
