@@ -131,8 +131,7 @@ QJsonObject alsJson(const Koerper& k)
              {QStringLiteral("a"), k.daempfung.a},
              {QStringLiteral("b"), k.daempfung.b},
              {QStringLiteral("c"), k.daempfung.c},
-             {QStringLiteral("source"), QStringLiteral("Chabassier & Durufle, RT-0425 (2012) Eq. 1, read as a polynomial in f "
-                                                       "(Spielweisen_Konzept, finding S148)")},
+             {QStringLiteral("source"), text(k.daempfung.quelle)},  // seit HU4-1 a aus dem Bauplan
              {QStringLiteral("perMaterial"),
               QStringLiteral("eta = law + sum over materials with lossFactor > 0 of share * (lossFactor - law); share = strain "
                              "energy of the mode in that material / total (DM1 a, S149)")},
@@ -190,7 +189,7 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
     neu.luft.schall = luft.value(QStringLiteral("speedOfSound")).toDouble();
     const QJsonObject d = wurzel.value(QStringLiteral("damping")).toObject();
     neu.daempfung = {d.value(QStringLiteral("a")).toDouble(), d.value(QStringLiteral("b")).toDouble(),
-                     d.value(QStringLiteral("c")).toDouble()};
+                     d.value(QStringLiteral("c")).toDouble(), text(d.value(QStringLiteral("source")))};
     // seit Fassung 2 (DM1 a); Fassung 1 hat keine — dann leer
     for (const QJsonValue& e : wurzel.value(QStringLiteral("materials")).toArray())
     {
@@ -228,7 +227,7 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
     st.bandModen = s.value(QStringLiteral("bandModes")).toInt();
     const QJsonObject sd = s.value(QStringLiteral("damping")).toObject();
     st.daempfung = {sd.value(QStringLiteral("a")).toDouble(), sd.value(QStringLiteral("b")).toDouble(),
-                    sd.value(QStringLiteral("c")).toDouble()};
+                    sd.value(QStringLiteral("c")).toDouble(), {}};
     if (!zahlenAusJson(s.value(QStringLiteral("materialShares")), st.werkstoffAnteil)) return false;
     if (!st.werkstoffAnteil.empty() && st.werkstoffAnteil.size() != neu.werkstoffe.size()) return false;
     st.werkstoffVerlust = neu.werkstoffVerlust;

@@ -48,7 +48,7 @@ namespace lumi::loop
 /// 2 (S153, 31d-7, P7 a): die Hammer-Saite rechnet in zwei Ebenen, die Laengskraft je Saite.
 /// 3 (S154, 31d-7 B, US4 a): der Stoss je Saite (`stossLeise`, `stossLaut`).
 /// 4 (S159, HU3-1 c): der Hammer nach Stulov (Masse, p, Q0, Hysterese ε, τ) statt RT-0425.
-inline constexpr int kKlangfassung = 4;
+inline constexpr int kKlangfassung = 5;
 
 /// Der Fingerabdruck des Clips an `ort` fuer `rate`, als Hex (40 Zeichen); leer = den
 /// Clip gibt es nicht. `saiten` wie beim Planen (`instrumentAuskunft`).

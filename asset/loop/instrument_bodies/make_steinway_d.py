@@ -560,7 +560,7 @@ def baue(pdf, bildpfad=None):
     faser = round(rippenwinkel + 90.0, 1)
     plan = {
         "format": "lumiviz-instrument-body-plan",
-        "version": 2,
+        "version": 3,
         "title": "Steinway D (RT-0425)",
         "description": "Soundboard of a Steinway D after Chabassier & Durufle, RT-0425 (2012): outline, plate "
                        "thickness, ribs and bridge read from Fig. 2, bridge points from Appendix A.",
@@ -594,6 +594,16 @@ def baue(pdf, bildpfad=None):
         "bridges": leisten_s,
         "bridgePoints": alle,
         "listeningPoints": hoerorte,
+        # Fassung 3 (S160): die Rueckseite (HU4 a, aus — an den Hoerorten 12 cm ueber den Saiten wirkt der
+        # Kurzschluss nicht, Befund HU4) und das Daempfungsgesetz (HU4-1 a)
+        "backside": {"rimDepth": 0.0, "shadowHz": 0.0,
+                     "source": "off (HU4 a, S160): at listening points 12 cm above the strings the acoustic short "
+                               "circuit does not act (near field); kept for far-field listening points"},
+        "damping": {"a": 2.0e-5, "b": 0.07, "c": 4.5,
+                    "source": "a and b after Chabassier & Durufle, RT-0425 (2012) Eq. 1, read as a polynomial in f "
+                              "(finding S148); c = 4.5 1/s (HU4-1 a, S160) lifts the lowest modes to the loss factors "
+                              "measured on soundboards, 1 to 3 % with a mean of 2.3 % (Ege, Boutillon & Rebillat 2013): "
+                              "eta 3.0 % at 38 Hz, 2.3 % at 61 Hz, 1.5 % at 300 Hz to 1 kHz, 2.1 % at 3 kHz"},
     }
 
     # Pruefung: jeder Stegpunkt auf dem Steg (halbe Breite), Bericht der Zahlen

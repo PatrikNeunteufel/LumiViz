@@ -180,6 +180,80 @@ TEST_CASE("Loop Koerper 31c-5b Rayleigh Kolben")
     }
 }
 
+TEST_CASE("Loop Koerper HU4 Rueckseite: Kolben ohne Schallwand")
+{
+    // dieselbe Scheibe (w = 1), auf der Achse in der Hoehe z. Ohne Rueckseite Bit fuer Bit wie bisher;
+    // mit Rueckseite kommt je Punkt im Abstand r ein Weg R' = (a − r) + 2h + √(a² + z²) dazu, mit umgekehrtem
+    // Vorzeichen: bei tiefer Frequenz (k R' ≪ 1) ist ∫ dS/R' = 2π (C ln(C/c) − a) mit c = 2h + √(a² + z²),
+    // C = a + c; ein Schatten weit unter der Frequenz nimmt die Rueckseite wieder heraus.
+    std::vector<kp::Punkt2> kreis;
+    const int ecken = 256;
+    const double radius = 0.1;
+    for (int i = 0; i < ecken; ++i)
+    {
+        const double w = 2.0 * std::numbers::pi * i / ecken;
+        kreis.push_back({radius * std::cos(w), radius * std::sin(w)});
+    }
+    const double a = std::sqrt(kp::flaeche(kreis) / std::numbers::pi);
+    const int k = 2;
+    const kp::PlattenSystem s = platte(kreis, 0.015, k, 0.008, kp::Auflager::Frei);
+    const kp::Luft luft;
+    const std::vector<kp::Hoerort> orte = {{"z0.05", {0.0, 0.0}, 0.05, "Achse"}, {"z0.2", {0.0, 0.0}, 0.2, "Achse"}};
+    kp::Mode mode;
+    mode.form = formAus(s, [](kp::Punkt2) { return 1.0; });
+    mode.frequenzHz = 1.0;  // k R' hoechstens 0,02: die Phasen fallen weg
+
+    const kp::Auswertung schallwand(s, kp::LagrangeDreieck(k), {}, orte, luft);
+    const kp::ModeImKoerper vorn = schallwand.werte(mode);
+
+    SUBCASE("Rueckseite aus: wie die Schallwand, Bit fuer Bit")
+    {
+        const kp::Auswertung aus(s, kp::LagrangeDreieck(k), {}, orte, luft, {}, nullptr, {}, kreis, kp::Rueckseite{});
+        const kp::ModeImKoerper m = aus.werte(mode);
+        for (std::size_t h = 0; h < orte.size(); ++h) CHECK(m.abstrahlung[h] == vorn.abstrahlung[h]);
+    }
+    SUBCASE("Rueckseite an: der Kurzschluss bei tiefer Frequenz")
+    {
+        const double hTief = 0.05;
+        const kp::Rueckseite rueck{hTief, 0.0, "Test"};
+        const kp::Auswertung an(s, kp::LagrangeDreieck(k), {}, orte, luft, {}, nullptr, {}, kreis, rueck);
+        const kp::ModeImKoerper m = an.werte(mode);
+        for (std::size_t h = 0; h < orte.size(); ++h)
+        {
+            const double z = orte[h].hoehe;
+            const double c = 2.0 * hTief + std::sqrt(a * a + z * z);
+            const double gross = a + c;
+            const double vornSoll = 2.0 * std::numbers::pi * (std::sqrt(z * z + a * a) - z);
+            const double hintenSoll = 2.0 * std::numbers::pi * (gross * std::log(gross / c) - a);
+            const double soll = luft.dichte / (2.0 * std::numbers::pi) * (vornSoll - hintenSoll);
+            CAPTURE(z);
+            CHECK(hintenSoll > 0.0);
+            CHECK(std::abs(m.abstrahlung[h]) < std::abs(vorn.abstrahlung[h]));  // der Kurzschluss nimmt
+            CHECK(std::abs(m.abstrahlung[h].real() - soll) < 1e-2 * std::abs(soll));
+            CHECK(std::abs(m.abstrahlung[h].imag()) < 1e-2 * std::abs(soll));
+        }
+    }
+    SUBCASE("Schatten weit unter der Frequenz: die Rueckseite faellt heraus")
+    {
+        const kp::Rueckseite rueck{0.05, 1e-9, "Test"};
+        const kp::Auswertung an(s, kp::LagrangeDreieck(k), {}, orte, luft, {}, nullptr, {}, kreis, rueck);
+        const kp::ModeImKoerper m = an.werte(mode);
+        for (std::size_t h = 0; h < orte.size(); ++h)
+            CHECK(std::abs(m.abstrahlung[h] - vorn.abstrahlung[h]) < 1e-6 * std::abs(vorn.abstrahlung[h]));
+    }
+    SUBCASE("der naechste Randpunkt")
+    {
+        const kp::Randpunkt r = kp::naechsterRandpunkt(kreis, {0.03, 0.0});
+        CHECK(std::abs(r.abstand - (radius - 0.03)) < 1e-4);
+        CHECK(std::abs(r.punkt.x - radius) < 1e-4);
+        CHECK(std::abs(r.punkt.y) < 1e-3);
+        const kp::Randpunkt aussen = kp::naechsterRandpunkt({{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}}, {0.5, 1.5});
+        CHECK(aussen.abstand == doctest::Approx(0.5));
+        CHECK(aussen.punkt.x == doctest::Approx(0.5));
+        CHECK(aussen.punkt.y == doctest::Approx(1.0));
+    }
+}
+
 TEST_CASE("Loop Koerper 31c-5b erste Mode der Pruefplatte")
 {
     // frei aufliegend 0,3 × 0,2 m, 8 mm Fichte, k = 3: die erste Mode ist sin(πx/a) sin(πy/b),

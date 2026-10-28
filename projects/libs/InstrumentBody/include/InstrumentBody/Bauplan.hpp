@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <numbers>
 #include <string>
 #include <vector>
 
@@ -38,7 +39,8 @@ namespace lumi::koerper
 
 /// Die Fassung des Bauplans, die dieses Programm schreibt; eine hoehere liest es nicht.
 /// 2 (S148, BM6 a): Hoerorte. Fassung 1 bleibt lesbar (ohne Hoerorte).
-inline constexpr int kBauplanFassung = 2;
+/// 3 (S160, HU4 a): die Rueckseite (Kurzschluss ueber den Rand). Fassung 1 und 2 bleiben lesbar (ohne Rueckseite).
+inline constexpr int kBauplanFassung = 3;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -201,6 +203,44 @@ struct Hoerort
     [[nodiscard]] bool operator==(const Hoerort&) const = default;
 };
 
+/// Die Rueckseite der Platte im Rayleigh-Integral (HU4 a, S160): ohne Schallwand strahlt auch die
+/// Unterseite, mit umgekehrtem Vorzeichen, und erreicht den Hoerort ueber den naechsten Randpunkt —
+/// in der Platte bis zum Rand, die Randtiefe hinab und wieder hinauf, dann zum Hoerort. Bei tiefen
+/// Frequenzen loescht sie die fernen Anteile der Vorderseite aus (akustischer Kurzschluss); oberhalb
+/// `schattenHz` wird sie mit 1/(1 + j f/schattenHz) abgeschattet (Beugung ueber den Rand).
+/// `randtiefe` 0 = keine Rueckseite, wie die Platte in der Schallwand (BM6 a).
+struct Rueckseite
+{
+    double randtiefe = 0.0;   ///< m, Tiefe des Rands (der Zarge) unter der Platte; 0 = aus
+    double schattenHz = 0.0;  ///< Hz, ab hier faellt die Rueckseite mit erster Ordnung; 0 = kein Schatten
+    std::string quelle;       ///< wie die Werte zustande kamen
+
+    [[nodiscard]] bool an() const { return randtiefe > 0.0; }
+    [[nodiscard]] bool operator==(const Rueckseite&) const = default;
+};
+
+/// Die modale Daempfung α(f) = a f² + b f + c in 1/s, f in Hz (RT-0425 Gl. 1, gelesen als Polynom in f —
+/// Befund S148). Seit HU4-1 a (S160) eine Eingabe des Bauplans: der Steinway D traegt c = 4,5 1/s, damit die
+/// tiefsten Moden die an Resonanzboeden gemessenen 1–3 % erreichen (Ege, Boutillon & Rebillat 2013, Mittel
+/// 2,3 %) — RT-0425 mit c = 0 gibt dort 1,1 %. Fuer einen Werkstoff mit eigenem Verlustfaktor (> 0) gilt
+/// sein Wert statt des Gesetzes (DM1 a, `verlustfaktorAusAnteilen`).
+struct Daempfung
+{
+    double a = 2.0e-5;
+    double b = 0.07;
+    double c = 0.0;
+    std::string quelle;  ///< wie die Werte zustande kamen
+
+    [[nodiscard]] double alpha(double frequenzHz) const { return a * frequenzHz * frequenzHz + b * frequenzHz + c; }
+    /// Verlustfaktor η = α / (2π f).
+    [[nodiscard]] double verlustfaktor(double frequenzHz) const
+    {
+        return frequenzHz > 0.0 ? alpha(frequenzHz) / (2.0 * std::numbers::pi * frequenzHz) : 0.0;
+    }
+
+    [[nodiscard]] bool operator==(const Daempfung&) const = default;
+};
+
 struct Bauplan
 {
     std::string titel;
@@ -212,9 +252,37 @@ struct Bauplan
     std::vector<Leiste> stege;
     std::vector<Stegpunkt> stegpunkte;  ///< nach Taste aufsteigend
     std::vector<Hoerort> hoerorte;      ///< seit Fassung 2; leer = keiner
+    Rueckseite rueckseite;              ///< seit Fassung 3; Vorgabe aus (Schallwand)
+    Daempfung daempfung;                ///< seit Fassung 3; Vorgabe RT-0425 Gl. 1 (c = 0)
 
     [[nodiscard]] bool operator==(const Bauplan&) const = default;
 };
+
+/// Der naechste Punkt des geschlossenen Umrisses zu `p` und sein Abstand (auf den Kanten des Polygons).
+struct Randpunkt
+{
+    Punkt2 punkt;
+    double abstand = 0.0;
+};
+
+[[nodiscard]] inline Randpunkt naechsterRandpunkt(const std::vector<Punkt2>& umriss, Punkt2 p)
+{
+    Randpunkt best{p, std::numeric_limits<double>::infinity()};
+    const std::size_t n = umriss.size();
+    for (std::size_t k = 0; k < n; ++k)
+    {
+        const Punkt2& a = umriss[k];
+        const Punkt2& b = umriss[(k + 1) % n];
+        const double dx = b.x - a.x, dy = b.y - a.y;
+        const double laenge2 = dx * dx + dy * dy;
+        double t = laenge2 > 0.0 ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / laenge2 : 0.0;
+        t = std::clamp(t, 0.0, 1.0);
+        const Punkt2 q{a.x + t * dx, a.y + t * dy};
+        const double d = std::sqrt((p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y));
+        if (d < best.abstand) best = {q, d};
+    }
+    return best;
+}
 
 // --- Geometrie -------------------------------------------------------------------
 
@@ -417,6 +485,10 @@ struct Bauplan
         // auf der Platte oder darunter gibt es kein Rayleigh-Integral (Halbraum ueber der Platte)
         if (!(h.hoehe > 0.0)) befunde.push_back("listening point '" + h.name + "': must lie above the plate");
     }
+    if (plan.rueckseite.randtiefe < 0.0) befunde.push_back("backside: rim depth must not be negative");
+    if (plan.rueckseite.schattenHz < 0.0) befunde.push_back("backside: shadow frequency must not be negative");
+    if (plan.daempfung.a < 0.0 || plan.daempfung.b < 0.0 || plan.daempfung.c < 0.0)
+        befunde.push_back("damping: a, b and c must not be negative");
     return befunde;
 }
 

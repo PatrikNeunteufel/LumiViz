@@ -201,14 +201,33 @@ TEST_CASE("Loop Koerper 31c-1 Datei")
     plan.platte.dickeRaster.nx = 2;
     plan.platte.dickeRaster.ny = 1;
     plan.platte.dickeRaster.werte = {0.009, std::numeric_limits<double>::quiet_NaN()};
+    plan.rueckseite = {0.4, 68.0, "Test"};        // Fassung 3 (HU4 a)
+    plan.daempfung = {2.0e-5, 0.07, 4.5, "Test"};  // Fassung 3 (HU4-1 a)
 
     const QJsonObject json = alsJson(plan);
     CHECK(json.value(QStringLiteral("format")).toString() == QLatin1String(kBauplanFormat));
     CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
     // jedes Feld steht da, auch ein leeres
     for (const char* feld : {"title", "description", "source", "units", "materials", "plate", "ribs", "bridges", "bridgePoints",
-                             "listeningPoints"})
+                             "listeningPoints", "backside", "damping"})
         CHECK_MESSAGE(json.contains(QLatin1String(feld)), feld);
+    for (const char* feld : {"rimDepth", "shadowHz", "source"})
+        CHECK_MESSAGE(json.value(QStringLiteral("backside")).toObject().contains(QLatin1String(feld)), feld);
+    for (const char* feld : {"a", "b", "c", "law", "source"})
+        CHECK_MESSAGE(json.value(QStringLiteral("damping")).toObject().contains(QLatin1String(feld)), feld);
+    // Fassung 2 ohne die Bloecke: Rueckseite aus, Daempfung RT-0425 mit c = 0
+    {
+        QJsonObject zwei = json;
+        zwei.remove(QStringLiteral("backside"));
+        zwei.remove(QStringLiteral("damping"));
+        zwei[QStringLiteral("version")] = 2;
+        kp::Bauplan alt;
+        REQUIRE(ausJson(zwei, alt));
+        CHECK_FALSE(alt.rueckseite.an());
+        CHECK(alt.daempfung == kp::Daempfung{});
+        CHECK(alt.daempfung.c == 0.0);
+        CHECK(alt.daempfung.verlustfaktor(1000.0) == doctest::Approx(0.0143).epsilon(0.01));
+    }
     const QJsonObject hoerort = json.value(QStringLiteral("listeningPoints")).toArray()[0].toObject();
     for (const char* feld : {"name", "x", "y", "z", "source"}) CHECK_MESSAGE(hoerort.contains(QLatin1String(feld)), feld);
     const QJsonObject platte = json.value(QStringLiteral("plate")).toObject();

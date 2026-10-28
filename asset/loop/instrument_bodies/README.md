@@ -31,6 +31,12 @@ wertet Abb. 2 aus und schreibt den Bauplan des Steinway und der beiden Glasböde
 `--ziel <ordner>` in eine Kopie, `--bild <datei.png>` legt ein Kontrollbild ab (Umriss, Rippen, Steg und
 Stegpunkte über Abb. 2 (d)).
 
+**Fassung 3 der Baupläne (S160):** der Block `damping` trägt das Dämpfungsgesetz α(f) = a·f² + b·f + c mit Quelle
+(HU4-1 a: c = 4,5 1/s hebt die tiefsten Moden auf die gemessenen 1–3 %, Ege, Boutillon & Rébillat 2013; mit c = 0
+nach RT-0425 lagen sie bei 1,1 %), der Block `backside` die Rückseite der Platte (HU4 a: aus — an den Hörorten
+12 cm über den Saiten wirkt der akustische Kurzschluss nicht, Befund HU4 im Spielweisen_Konzept §4.1; für Hörorte im
+Fernfeld vorgesehen). `make_steinway_d.py` schreibt beide; Fassung 2 ohne die Blöcke bleibt lesbar.
+
 **Ein Körper wird neu gerechnet**, wenn sich sein Bauplan ändert oder die Rechnung (`kRechenFassung` in
 `projects/libs/InstrumentBody/include/InstrumentBody/Koerper.hpp`) — der Test „Loop Koerper 31c-5d Waechter“ meldet es.
 Neu rechnen mit dem Werkzeug (Release-clang, rund 22 Minuten für den Steinway):

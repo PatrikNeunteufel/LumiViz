@@ -123,8 +123,9 @@ TEST_CASE("Loop Koerper 31c-7 Antwort: Laenge am Steinway")
                     "die Test-Exe aus dem Projekt-Root starten");
     const double laenge = kp::antwortLaengeS(alleModen(koerper));
     MESSAGE("Laenge der Antwort am Steinway: ", laenge, " s");
-    CHECK(laenge > 4.0);
-    CHECK(laenge <= 8.0);
+    // bis S160 ueber 4 s (langsamste Mode 38 Hz mit eta 1,1 %); seit HU4-1 a faellt sie mit eta 3 % — rund 1,9 s
+    CHECK(laenge > 1.5);
+    CHECK(laenge <= 4.0);
     CHECK(stegpunktVon(koerper, 21) == 0);
     CHECK(stegpunktVon(koerper, 108) == 87);
     CHECK(stegpunktVon(koerper, 20) == -1);

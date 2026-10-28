@@ -54,22 +54,7 @@ struct Luft
     [[nodiscard]] bool operator==(const Luft&) const = default;
 };
 
-/// Die modale Daempfung α(f) = a f² + b f + c in 1/s, f in Hz (RT-0425 Gl. 1).
-struct Daempfung
-{
-    double a = 2.0e-5;
-    double b = 0.07;
-    double c = 0.0;
-
-    [[nodiscard]] double alpha(double frequenzHz) const { return a * frequenzHz * frequenzHz + b * frequenzHz + c; }
-    /// Verlustfaktor η = α / (2π f).
-    [[nodiscard]] double verlustfaktor(double frequenzHz) const
-    {
-        return frequenzHz > 0.0 ? alpha(frequenzHz) / (2.0 * std::numbers::pi * frequenzHz) : 0.0;
-    }
-
-    [[nodiscard]] bool operator==(const Daempfung&) const = default;
-};
+// `Daempfung` (das Gesetz α(f) = a f² + b f + c) steht seit HU4-1 a (S160) im Bauplan: `Bauplan.hpp`.
 
 /// Der Verlustfaktor einer Mode aus ihren Anteilen der Verformungsenergie je Werkstoff (DM1 a):
 /// ein Werkstoff mit eigenem Verlustfaktor (> 0) traegt ihn, einer ohne (0) das Gesetz des
@@ -186,11 +171,15 @@ struct ModeImKoerper
 class Auswertung
 {
 public:
+    /// Mit `rueckseite.an()` und einem Umriss (dem der Platte) traegt jeder Gauss-Punkt zusaetzlich die
+    /// Rueckseite: Weg zum naechsten Randpunkt, zweimal die Randtiefe, dann zum Hoerort; umgekehrtes
+    /// Vorzeichen, in `werte` oberhalb `schattenHz` abgeschattet (HU4 a). Ohne sie wie bisher, Bit fuer Bit.
     Auswertung(const PlattenSystem& s, const Plattenelement& element, const std::vector<Stegpunkt>& stegpunkte,
                const std::vector<Hoerort>& hoerorte, Luft luft = {}, Daempfung daempfung = {},
-               const Verformungsenergie* energie = nullptr, std::vector<double> werkstoffVerlust = {})
+               const Verformungsenergie* energie = nullptr, std::vector<double> werkstoffVerlust = {},
+               const std::vector<Punkt2>& umriss = {}, Rueckseite rueckseite = {})
         : m_luft(luft), m_daempfung(daempfung), m_energie(energie), m_werkstoffVerlust(std::move(werkstoffVerlust)),
-          m_nk(element.knoten())
+          m_nk(element.knoten()), m_rueckseite(rueckseite), m_rueck(rueckseite.an() && umriss.size() >= 3)
     {
         for (const Stegpunkt& sp : stegpunkte) m_steg.push_back(abtastung(s, element, sp.ort));
 
@@ -203,6 +192,13 @@ public:
         m_gewicht.assign(hoerorte.size(), {});
         for (auto& v : m_abstand) v.reserve(np);
         for (auto& v : m_gewicht) v.reserve(np);
+        if (m_rueck)
+        {
+            m_abstandRueck.assign(hoerorte.size(), {});
+            m_gewichtRueck.assign(hoerorte.size(), {});
+            for (auto& v : m_abstandRueck) v.reserve(np);
+            for (auto& v : m_gewichtRueck) v.reserve(np);
+        }
         std::vector<double> n, dxi, deta;
         std::vector<std::vector<double>> ansatz;
         for (const auto& [xi, eta, w] : punkte)
@@ -223,12 +219,21 @@ public:
                     m_ansatz.push_back(ansatz[g][static_cast<std::size_t>(i)]);
                 }
                 const Punkt2 p{e0.x + (e1.x - e0.x) * xi + (e2.x - e0.x) * eta, e0.y + (e1.y - e0.y) * xi + (e2.y - e0.y) * eta};
+                const Randpunkt rand = m_rueck ? naechsterRandpunkt(umriss, p) : Randpunkt{};
                 for (std::size_t h = 0; h < hoerorte.size(); ++h)
                 {
                     const Hoerort& o = hoerorte[h];
                     const double r = std::sqrt((p.x - o.ort.x) * (p.x - o.ort.x) + (p.y - o.ort.y) * (p.y - o.ort.y) + o.hoehe * o.hoehe);
                     m_abstand[h].push_back(r);
                     m_gewicht[h].push_back(w * det / r);
+                    if (m_rueck)
+                    {
+                        const Punkt2& q = rand.punkt;
+                        const double rr = rand.abstand + 2.0 * m_rueckseite.randtiefe +
+                                          std::sqrt((q.x - o.ort.x) * (q.x - o.ort.x) + (q.y - o.ort.y) * (q.y - o.ort.y) + o.hoehe * o.hoehe);
+                        m_abstandRueck[h].push_back(rr);
+                        m_gewichtRueck[h].push_back(w * det / rr);
+                    }
                 }
             }
         }
@@ -246,6 +251,10 @@ public:
         for (const Abtastung& a : m_steg) aus.amStegpunkt.push_back(wertBei(a, mode.form));
 
         const double k = 2.0 * std::numbers::pi * mode.frequenzHz / m_luft.schall;
+        // die Rueckseite: umgekehrtes Vorzeichen, oberhalb schattenHz mit erster Ordnung abgeschattet
+        const std::complex<double> schatten =
+            m_rueckseite.schattenHz > 0.0 ? 1.0 / std::complex<double>(1.0, mode.frequenzHz / m_rueckseite.schattenHz)
+                                          : std::complex<double>(1.0, 0.0);
         std::vector<std::complex<double>> summe(m_abstand.size(), {0.0, 0.0});
         const std::size_t np = m_abstand.empty() ? 0 : m_abstand[0].size();
         for (std::size_t p = 0; p < np; ++p)
@@ -262,6 +271,11 @@ public:
             {
                 const double phase = -k * m_abstand[h][p];
                 summe[h] += w * m_gewicht[h][p] * std::complex<double>(std::cos(phase), std::sin(phase));
+                if (m_rueck)
+                {
+                    const double phaseRueck = -k * m_abstandRueck[h][p];
+                    summe[h] -= schatten * (w * m_gewichtRueck[h][p]) * std::complex<double>(std::cos(phaseRueck), std::sin(phaseRueck));
+                }
             }
         }
         const double faktor = m_luft.dichte / (2.0 * std::numbers::pi);
@@ -280,6 +294,10 @@ private:
     std::vector<double> m_ansatz;               ///< je Gauss-Punkt nk Ansatzwerte
     std::vector<std::vector<double>> m_abstand;  ///< je Hoerort je Gauss-Punkt R
     std::vector<std::vector<double>> m_gewicht;  ///< je Hoerort je Gauss-Punkt Gewicht · |det J| / R
+    Rueckseite m_rueckseite;
+    bool m_rueck = false;                             ///< Rueckseite an und ein Umriss da
+    std::vector<std::vector<double>> m_abstandRueck;  ///< je Hoerort je Gauss-Punkt R' ueber den Rand
+    std::vector<std::vector<double>> m_gewichtRueck;  ///< je Hoerort je Gauss-Punkt Gewicht · |det J| / R'
 };
 
 }  // namespace lumi::koerper

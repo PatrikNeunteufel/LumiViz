@@ -259,11 +259,18 @@ int main(int argc, char* argv[])
     for (const kp::Material& m : plan.materialien) werkstoffVerlust.push_back(m.verlustfaktor);
     const kp::Verformungsenergie energie(s, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); },
                                          static_cast<int>(plan.materialien.size()));
-    const kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte, {}, {}, &energie, werkstoffVerlust);
+    const kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte, {}, plan.daempfung, &energie, werkstoffVerlust,
+                                    plan.platte.umriss, plan.rueckseite);
+    std::printf("Damping law (plan): alpha = %g f^2 + %g f + %g 1/s (eta %.2f %% at 40 Hz, %.2f %% at 1 kHz)\n", plan.daempfung.a,
+                plan.daempfung.b, plan.daempfung.c, 100.0 * plan.daempfung.verlustfaktor(40.0), 100.0 * plan.daempfung.verlustfaktor(1000.0));
     int ausserhalb = 0;
     for (const kp::Abtastung& a : auswertung.stegpunkte()) ausserhalb += a.imNetz ? 0 : 1;
     std::printf("Evaluation prepared: %zu bridge points (%d outside the mesh), %zu listening points, %.2f s\n", plan.stegpunkte.size(),
                 ausserhalb, plan.hoerorte.size(), seit(t));
+    if (plan.rueckseite.an())
+        std::printf("Backside on (HU4 a): rim depth %.3f m, shadow from %.1f Hz\n", plan.rueckseite.randtiefe, plan.rueckseite.schattenHz);
+    else
+        std::printf("Backside off: plate in a baffle (BM6 a)\n");
     std::vector<kp::ModeImKoerper> moden;
     double sekundenAuswertung = 0.0;
 
@@ -306,7 +313,7 @@ int main(int argc, char* argv[])
     if (statBis > bisHz)
     {
         const double bandVon = std::max(vonHz, bisHz / 2.0);
-        st = kp::schaetze(moden, bandVon, bisHz, bisHz, statBis, kp::Daempfung{}, parser.value(samenOpt).toULongLong(),
+        st = kp::schaetze(moden, bandVon, bisHz, bisHz, statBis, plan.daempfung, parser.value(samenOpt).toULongLong(),
                           werkstoffVerlust);
         const auto gezogen = kp::ziehe(st);
         double stegMittel = 0.0;
@@ -361,6 +368,7 @@ int main(int argc, char* argv[])
     for (const kp::Hoerort& h : plan.hoerorte) koerper.hoerorte.push_back(h.name);
     for (const kp::Material& m : plan.materialien) koerper.werkstoffe.push_back(m.name);
     koerper.werkstoffVerlust = werkstoffVerlust;
+    koerper.daempfung = plan.daempfung;
     koerper.moden = std::move(moden);
     koerper.statistik = st;
     if (!lumi::loop::speichereKoerper(koerper, ziel))

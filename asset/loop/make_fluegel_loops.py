@@ -95,8 +95,9 @@ NOCTURNE_GABELN = {"<": 1, "cresc.": 1, ">": -1, "dim.": -1}
 NOCTURNE_VORGABE = "p"  # vor dem ersten Zeichen (die Ausgabe: espress. dolce, ohne Buchstaben)
 # Fader des Kanals (9.5, S158, NP1 a): die Spitze der gerechneten Nocturne (die Kadenz im ff) bei −1 dBFS; mit +10 dB
 # lag sie bei 2,40 (+7,6 dB) und die leisen Stellen so laut wie grand_piano_demo. S160: mit +1,4 dB lag sie bei 0,866
-# (−1,25 dBFS), darum +1,65 dB (LUMIVIZ_LOOP_WAV misst sie: „groesster Betrag“).
-NOCTURNE_GAIN_DB = 1.65
+# (−1,25 dBFS), darum +1,65 dB (LUMIVIZ_LOOP_WAV misst sie: „groesster Betrag“); mit dem Boden nach HU4-1 a und dem
+# neuen Level des Fluegels (4,2418) lag sie bei 0,938 (−0,55 dBFS), darum +1,2 dB.
+NOCTURNE_GAIN_DB = 1.2
 RECHTE_HAND, LINKE_HAND = 1, 2  # Stimmen nach System (N5 a)
 TONNAMEN = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 

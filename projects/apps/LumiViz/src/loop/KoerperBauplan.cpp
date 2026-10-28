@@ -232,6 +232,21 @@ QJsonObject alsJson(const Bauplan& plan)
         {QStringLiteral("bridges"), leistenAlsJson(plan.stege)},
         {QStringLiteral("bridgePoints"), punkte},
         {QStringLiteral("listeningPoints"), hoerorte},
+        // seit Fassung 3 (HU4 a, HU4-1 a), immer geschrieben
+        {QStringLiteral("backside"),
+         QJsonObject{
+             {QStringLiteral("rimDepth"), plan.rueckseite.randtiefe},
+             {QStringLiteral("shadowHz"), plan.rueckseite.schattenHz},
+             {QStringLiteral("source"), text(plan.rueckseite.quelle)},
+         }},
+        {QStringLiteral("damping"),
+         QJsonObject{
+             {QStringLiteral("a"), plan.daempfung.a},
+             {QStringLiteral("b"), plan.daempfung.b},
+             {QStringLiteral("c"), plan.daempfung.c},
+             {QStringLiteral("law"), QStringLiteral("alpha(f) = a f^2 + b f + c in 1/s, f in Hz; eta = alpha / (2 pi f)")},
+             {QStringLiteral("source"), text(plan.daempfung.quelle)},
+         }},
     };
 }
 
@@ -272,6 +287,21 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
                                 {o.value(QStringLiteral("x")).toDouble(), o.value(QStringLiteral("y")).toDouble()},
                                 o.value(QStringLiteral("z")).toDouble(),
                                 text(o.value(QStringLiteral("source")))});
+    }
+    // seit Fassung 3; fehlt der Block, bleibt die Rueckseite aus (Schallwand wie bis Fassung 2)
+    const QJsonObject rueck = wurzel.value(QStringLiteral("backside")).toObject();
+    neu.rueckseite.randtiefe = rueck.value(QStringLiteral("rimDepth")).toDouble();
+    neu.rueckseite.schattenHz = rueck.value(QStringLiteral("shadowHz")).toDouble();
+    neu.rueckseite.quelle = text(rueck.value(QStringLiteral("source")));
+    // seit Fassung 3 (HU4-1 a); fehlt der Block, gilt RT-0425 Gl. 1 mit c = 0 wie bis Fassung 2
+    if (wurzel.contains(QStringLiteral("damping")))
+    {
+        const QJsonObject d = wurzel.value(QStringLiteral("damping")).toObject();
+        const koerper::Daempfung vorgabe;
+        neu.daempfung.a = d.value(QStringLiteral("a")).toDouble(vorgabe.a);
+        neu.daempfung.b = d.value(QStringLiteral("b")).toDouble(vorgabe.b);
+        neu.daempfung.c = d.value(QStringLiteral("c")).toDouble(vorgabe.c);
+        neu.daempfung.quelle = text(d.value(QStringLiteral("source")));
     }
     plan = std::move(neu);
     return true;

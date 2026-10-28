@@ -3944,6 +3944,88 @@ abgeschattet) ist mit der `.lvinstbody` allein nicht rechenbar — sie trägt G,
 Werkzeug (Steinway 22 min); **nicht gerechnet, nur geschätzt.** Der Kipppunkt von HU2 a („neues Abstrahlmodell statt
 einer Korrektur unter 150 Hz“) ist damit erreicht → Vorlage HU4 (Chat S160).
 
+✅ **HU4 a** (Patrik S160): **Der Kurzschluss kommt je Mode aus ihrer Form — das Rayleigh-Integral zweiseitig, die
+Rückseite über den nächsten Randpunkt (Randtiefe h, oberhalb f_s abgeschattet), h und f_s im Bauplan (Fassung 3);
+zuerst die Probe am Steinway in eine Kopie, gemessen mit HU1 und dem Terzvergleich; nimmt sie den Bändern 39 und
+62 Hz nicht mindestens 10 dB, kippt a auf b (Hochpass-Shelf f_c 200 Hz).** Verworfen: b (Filter ohne Physik, trifft
+zwei der drei Zielgrößen nicht), c (nur Dämpfung: Spektrum unverändert), d (vertagen: durch den falschen Boden
+hindurch zweimal setzen).
+
+**HU4 a gebaut und geprobt (S160) — die Probe kippt a:** `Bauplan.hpp` trägt `Rueckseite` (`randtiefe`, `schattenHz`,
+`quelle`; `.lvinstbodyplan` Fassung 3, Block `backside`, immer geschrieben; Fassung 1 und 2 bleiben lesbar),
+`naechsterRandpunkt` (der nächste Punkt auf den Kanten des Umrisses); `Auswertung` rechnet mit Rückseite je
+Gauß-Punkt zusätzlich −S(f)·φ·e^(−jkR')/R' mit R' = Weg zum Rand + 2h + Weg zum Hörort und S = 1/(1 + jf/f_s), ohne
+Rückseite Bit für Bit wie bisher; das Werkzeug reicht Umriss und Rückseite durch (`--out` für die Probe). Test
+„Loop Koerper HU4 Rueckseite: Kolben ohne Schallwand“ (aus = Schallwand Bit für Bit; an = Kurzschluss gegen die
+geschlossene Form ∫ dS/R' = 2π(C·ln(C/c) − a); Schatten weit unter f = Schallwand; der nächste Randpunkt). **Probe**
+(Steinway D, h 0,4 m als Annahme für die Zarge, f_s = c/(2π·2h) = 68 Hz; 1286 s; `probe_plan.py`,
+`hu4_probe_messen.py`, Ergebnis `messung/hu4/probe_rueckseite_messung.txt`): |G| der Mode 38 Hz **+0,0 dB**, 61 Hz
++0,2 / +0,4 dB, alle Bänder bis 5 kHz innerhalb ±3 dB (meist ±1); A0 Einsatz 332 → 367 ms, C2 133 → 54 ms (nur durch
+die Phasen der Nebenanteile), Terz-Bass unverändert (14,8 / 15,8 / 24,5 → 15,1 / 15,8 / 25,1). **Warum:** die Hörorte
+liegen 17 cm über einer Platte von 1,4 × 2 m — bei 40–60 Hz (λ 6–8 m) tief im Nahfeld. Dort ist der Druck
+hydrodynamisch, nicht abgestrahlt: der Umweg der Rückseite über den Rand (≥ 0,8 m plus Wege) macht sie mit 1/R'
+klein gegen die Vorderseite mit R ab 0,17 m, und ihre Phase kippt schon bei 38 Hz um eine Bogenlänge. Die
+geschlossene Lösung bestätigt die Größenordnung: eine freie Scheibe trägt die halbe mitschwingende Masse der
+eingebauten (8/3 gegen 16/3 ρa³), der Druck auf ihrer Fläche ist also höchstens um rund **6 dB** kleiner, nicht um
+die 20–30 dB des Befunds. Der akustische Kurzschluss gilt für das Fernfeld (Dipol gegen Monopol); an *Salamanders*
+Mikrofonen 12 cm über den Saiten greift er nicht. Der Überschuss der tiefen Moden gegen die Aufnahme ist damit
+**kein Abstrahlfehler des Modells**, sondern Unterschied der Instrumente (Yamaha C5 gegen Steinway D: Lage und
+Dämpfung der tiefsten Moden), der Aufnahmekette (die AKG C414 haben einen schaltbaren Bassschnitt 40/80/160 Hz;
+ob er stand, ist nicht bekannt) und der Mikrofonlage gegen Knotenlinien. Kipppunkt von HU4 a erreicht: weniger als
+10 dB in den Bändern 39 und 62 Hz → Vorlage HU4-1 (Chat S160): b wie entschieden, oder die Dämpfung nach Ege als
+einzige belegte Korrektur, und ob die Rückseite im Format bleibt. Dafür nachgerechnet (`hu4_optionen.py`, Variante C):
+das Dämpfungsgesetz RT-0425 Gl. 1 mit c-Term, η = (a f² + b f + c)/(2πf), heute c = 0 — c hebt die tiefen Moden auf
+die gemessenen 1–3 % (Ege, Boutillon & Rébillat 2013, Mittel 2,3 %), oben ändert sich fast nichts:
+
+| c in 1/s | η bei 38 / 61 / 165 / 300 / 1000 / 3000 Hz | A0 Einsatz ms | C2 Einsatz ms | Terz-Bass A0 / C2 / C4 | Pegel A0 / C2 / C4 dB | Bänder 39 / 62 / 157 Hz an C4 |
+|---|---|---|---|---|---|---|
+| 0 (heute) | 1,1 / 1,1 / 1,2 / 1,2 / 1,4 / 2,1 % | 332 | 133 | 14,8 / 15,8 / 24,5 | 0 / 0 / 0 | +36 / +38 / +29 |
+| 2,5 | 2,2 / 1,8 / 1,4 / 1,3 / 1,5 / 2,1 % | 332 | 133 | 13,6 / 14,5 / 21,9 | −1,1 / −0,3 / −0,1 | +31,5 / +34 / +26,5 |
+| 4,5 | 3,0 / 2,3 / 1,6 / 1,5 / 1,5 / 2,1 % | 332 | 20 | 13,0 / 13,8 / 20,1 | −1,8 / −0,5 / −0,2 | +28,5 / +31 / +25 |
+| 7 | 4,1 / 3,0 / 1,8 / 1,6 / 1,5 / 2,1 % | 259 | 20 | 12,5 / 13,2 / 18,2 | −2,6 / −0,7 / −0,3 | +25 / +28 / +22,5 |
+
+Die Spektren der ersten 0,5 s ändern sich um höchstens 1 dB (A0 k3 −2 bei c = 4,5); das Mitklingen der tiefen Moden
+in jedem Ton fällt um 5–7 dB je Band (C4), der Einsatz von C2 ist geheilt, A0 bleibt am Zusammentreffen von k6 mit
+der Mode 165 Hz (Anstiegszeit 1/(π·η·f) bei η 1,6 %: 0,12 s).
+
+✅ **HU4-2 b** (Patrik S160): **Die Rückseite bleibt im Format und im Rechenkern, Vorgabe aus (Randtiefe 0), Bit für
+Bit wie bisher; dokumentiert als Option für Hörorte im Fernfeld.** Grund (Patrik): sie kostet ausgeschaltet nichts
+und ist im Fall der Fälle da, statt sie später neu zu bauen. Wo sie wirkt: an Hörorten, die weit gegen den Körper
+liegen (ein Raummikrofon am Flügel in 2–3 m statt 12 cm über den Saiten), und an Körpern, die wirklich zweiseitig
+offen in der Luft stehen — Becken und Glocken als freie Platten, ein Banjo mit offenem Rücken, der Flügel von unten
+(kein Boden unter dem Resonanzboden). Nicht an geschlossenen Kästen (Gitarre, Violine, Harfe): dort bleibt die
+Rückwelle im Korpus und tritt durch das Schallloch aus (Helmholtz-Resonanz), ein eigenes Modell. Verworfen: a (Rückseite
+heraus, Diff als Patch) — Patrik: Wiedereinbau bei Bedarf kostet mehr als das Mitführen.
+
+✅ **HU4-1 a** (Patrik S160): **HU4 kippt nicht auf b, sondern auf die Dämpfung: das Gesetz α = a·f² + b·f + c
+bekommt c = 4,5 1/s (η 3,0 % bei 38 Hz, 2,3 % bei 61, 1,6 % bei 165, 1,5 % bei 300–1000 Hz, 2,1 % bei 3 kHz; Ege,
+Boutillon & Rébillat 2013: 1–3 %, Mittel 2,3 %). Das Gesetz steht mit Quelle im Bauplan (Block `damping`, Fassung
+3) statt als Vorgabe im Code; die drei Körper werden neu gerechnet, danach Pegel des Flügels, Klangfassung und
+`loop_werte.txt`. Der Rest des Befunds (A0-Einsatz, C2 k2) gilt als Unterschied der Instrumente; die Streckstimmung
+kommt als eigene Vorlage.** Grund: die einzige Option mit gemessener Grundlage für dieses Instrument; sie heilt den
+Einsatz von C2 (133 → 20 ms) und nimmt den tiefen Moden 5–7 dB, ohne das Spektrum zu verschieben. Verworfen: b
+(Hochpass-Shelf — stellt einen Fernfeld-Kurzschluss nach, den es an diesen Hörorten nicht gibt; Anpassung an die
+Aufnahme eines Yamaha mit unbekanntem Bassschnitt), c (a und b), d (nichts — lässt C2 bei 133 ms und η bei 1,1 %
+gegen den Beleg). Kippt, wenn das Hörurteil nach SM4 b den Bass immer noch dumpf findet — dann b als dokumentierte
+Anpassung obendrauf.
+
+**HU4-1 a gebaut (S160):** `Daempfung` wandert aus `Auswertung.hpp` nach `Bauplan.hpp` (mit `quelle`),
+`Bauplan::daempfung`; `.lvinstbodyplan` Fassung 3 mit Block `damping` (`a`, `b`, `c`, `law`, `source`; fehlt er, gilt
+RT-0425 mit c = 0 wie bis Fassung 2), `pruefe` verlangt a, b, c ≥ 0; das Werkzeug gibt das Gesetz an `Auswertung`
+und an `schaetze` (statistischer Teil) und schreibt es mit Quelle in den Körper; `make_steinway_d.py` schreibt Fassung
+3 mit `backside` (aus) und `damping` (c = 4,5) für den Steinway und beide Glasböden (Lauf in eine Kopie: nur die
+neuen Blöcke unterscheiden sich). Körper neu: `steinway_d` (1743 s; η 3,00 % bei 38 Hz, 2,31 % bei 61 Hz, |G|
+unverändert), `steinway_d_glass` (273 s); **`steinway_d_glass_same_mass` steht aus (1,3 h, S161; Patrik: zu spät am
+Abend) — der Wächter „31c-5d“ meldet ihn bis dahin.** Gemessen am neuen Steinway (Modensumme gegen den alten,
+`hu4_probe_messen.py`, `messung/hu4/messung_daempfung.txt`): A0 Einsatz 332 ms (unverändert, k6 auf der Mode
+165 Hz), **C2 133 → 54 ms** (*Salamander* 65), C4 24; Spektren der ersten 0,5 s innerhalb 2 dB (A0 k3 −2,1, k6 −1,6);
+Terz-Bass A0 14,8 → 13,0, C2 15,8 → 13,6, C4 24,5 → 20,4; die Bänder 39 / 62 / 157 Hz an C4 von +36 / +38 / +29 auf
++29 / +32 / +25 — die tiefen Moden klingen in jedem Ton 4–7 dB leiser mit; Pegel A0 −1,8, C2 −1,2, C4 −2,0 dB. Pegel
+des Flügels neu gemessen: −13,833 LUFS → `grand_piano` Level 4,0355 → 4,2418 (alt = neu, die Loops sind für den
+Bezug geschrieben); `kKlangfassung` 5, `loop_werte.txt` (nur die Zeilen des Flügels), `klangfassung.txt` neu; der
+Test „31c-7 Antwort: Laenge am Steinway“ erwartet die kürzere Antwort (1,9 s statt über 4 s — die langsamste Mode fällt
+jetzt mit η 3 %).
+
 **31d-8, 8.2 bis 8.5 gebaut (S157, nach dem Wechsel auf Opus):**
 - **8.2:** `grand_piano.lvinst` aus dem Werkzeug (`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1`), Kurven und Tastatur gleich der
   Vorgabe (Wächter „Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe“); `ergaenze` trägt `keyboard` durch;
@@ -4092,8 +4174,9 @@ string vibration*, Abb. 5: „The dynamic span ranges from pp to ff, correspondi
 Hickmans Ampico-Messung 1929 (18,2 dB je Hammer, nur über mmdigest.com, Sekundärquelle). *Salamander* v1 → v16 an C4:
 18,4 dB (Hörproben 31d, Verstärkungen). **Neue Tafel:** ppp −21, pp −18, p −14, mp −11, mf −8, f −4, ff 0 (0,45 … 5 m/s
 Hammer; Stufe 0 = 5 m/s nach HK2 a, KTH nennt forte „about 5 m/s“), Akzent 4 dB, Gabel 4 dB; Fader +1,65 dB (Spitze
-mit +1,4 dB bei 0,866 = −1,25 dBFS, NP1 a verlangt −1). Loop neu geschrieben (nur Stärken und Gain), `loop_werte.txt`
-und `klangfassung.txt` nachgezogen. Erwartete Spanne am Ausgang 19 (Bass) bis 29 dB (Diskant).
+mit +1,4 dB bei 0,866 = −1,25 dBFS, NP1 a verlangt −1), nach HU4-1 a (neuer Boden, Level 4,2418) **+1,2 dB** (Spitze
+0,891 = −1,00 dBFS). Loop neu geschrieben (nur Stärken und Gain), `loop_werte.txt` und `klangfassung.txt` nachgezogen.
+Gemessen am gerechneten Loop: Loudness Range 21,6 → 15,5 LU, Anschlagsspitzen 5 … 95 % 23,8 → 18,1 dB.
 
 ✅ **N3 a** (Patrik S157): **Das Pedal genau nach *Ped.* und ✱ der Gesamtausgabe auf Sustain (1 beim Treten, 0 beim
 Heben); wo die Ausgabe nichts zeigt, kein Pedal.** Grund: Treue zur Quelle (UF15 a). Verworfen: b (nach heutiger
@@ -5465,7 +5548,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.100.0 | 2026-10-28 | Session 160 (Fable 5.1). Befund HU4 (Boden im Bass): Zielgrößen mit dem Stulov-Hammer (A0 332 ms, C2 133 ms); der Überschuss sitzt in den Moden 38 und 61 Hz (beide Hörorte) und 165 Hz (rechts) mit 3- bis 8-fachem Abstrahlgewicht gegen 200–400 Hz; Hochpass-Shelf, Dämpfung und Streckstimmung an Kraft × Antwort gerechnet — kein Filter trifft A0, C2 k2 höchstens +3 statt +25 dB; Kurzschluss je Mode aus der Form (zweiseitiges Rayleigh) als Weg, nicht gerechnet; Kipppunkt von HU2 a erreicht; Entscheid HU4 a. DY2 a ausgeführt: Spreizung des Modells 0,9–1,4 dB je dB Stufe gemessen, Quelle Goebl, Bresin & Galembo 2004 (0,37–4,07 m/s), neue Tafel ppp −21 … ff 0, Akzent und Gabel 4 dB, Fader +1,65 dB; `nocturne_demo.lvloop`, `loop_werte.txt`, `klangfassung.txt` nachgezogen. |
+| 0.100.0 | 2026-10-28 | Session 160 (Fable 5.1). Befund HU4 (Boden im Bass): Zielgrößen mit dem Stulov-Hammer (A0 332 ms, C2 133 ms); der Überschuss sitzt in den Moden 38 und 61 Hz (beide Hörorte) und 165 Hz (rechts) mit 3- bis 8-fachem Abstrahlgewicht gegen 200–400 Hz; Hochpass-Shelf, Dämpfung und Streckstimmung an Kraft × Antwort gerechnet — kein Filter trifft A0, C2 k2 höchstens +3 statt +25 dB; Kurzschluss je Mode aus der Form (zweiseitiges Rayleigh) als Weg, nicht gerechnet; Kipppunkt von HU2 a erreicht; Entscheid HU4 a. DY2 a ausgeführt: Spreizung des Modells 0,9–1,4 dB je dB Stufe gemessen, Quelle Goebl, Bresin & Galembo 2004 (0,37–4,07 m/s), neue Tafel ppp −21 … ff 0, Akzent und Gabel 4 dB, Fader +1,2 dB; `nocturne_demo.lvloop`, `loop_werte.txt`, `klangfassung.txt` nachgezogen. HU4 a gebaut und geprobt (Rückseite: 0 dB im Nahfeld), HU4-2 b (bleibt, aus), HU4-1 a gebaut (Dämpfungsgesetz im Bauplan Fassung 3, c = 4,5; `steinway_d` und `steinway_d_glass` neu, `grand_piano` Level 4,2418, Klangfassung 5). |
 | 0.99.0 | 2026-10-28 | Session 159. HU3 a (R_H nachtragen) — vor dem Bau als Fehllesung erkannt (verlorenes Minus in RT-0425 Gl. 5, Abb. 4c; R_H wirkungslos); Befund p über Taste 71 extrapoliert; HU3-1 vorgelegt, Empfehlung nach Patriks Rückfrage auf c geändert (Helligkeit je Stärke an Salamander trifft Stulov, RT-0425 kaum); **HU3-1 c gebaut:** Hammer nach Stulov Gl. 9 mit Hysterese (`hammerHysteresis`, `hammerRelaxation`, `.lvinst` 20, Klangfassung 4, `grand_piano.lvinst` Level 4,0355, `loop_werte.txt` fünf Zeilen), Fall HU3-1 (Kontaktzeit, Helligkeit je Stärke), Chabassier-Fall als Band; C8 0,86 / 0,52 ms. Regel (global): nicht das Einfache empfehlen, jede Option gegen alle Zielgrößen rechnen. |
 | 0.98.0 | 2026-10-28 | Session 159. HU2 a (Reihenfolge: Prüfgröße, HU3 Hammer, HU4 Boden, dann SM4 b mit zweiter Ebene); HU2 a (1) gebaut: Hüllkurve vorwärts als Mess- und Setzgröße (`Vorwaerts`, `huellkurveZeiten`, Kanalmittel in der Energie), `salamander_c5.txt` mit den neuen Zeilen, Wächter, Bericht im dauerhaften Test; Tabelle Salamander gegen Modell. |
 | 0.97.0 | 2026-10-28 | Session 159 (Fable 5.1). Befund HU1 a am gerechneten Ton: Rechenweg = Modell; `lateDecay` nie gesetzt (3·`decay` gegen 36–38 s an C4), `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (Zwei-Geraden-Suche je Kanal unstet; Hüllkurve vorwärts 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig), im Bass der Boden (Schallwand ohne Kurzschluss, tiefe Moden mit T60 3–5 s), im Diskant der Hammer (Kontakt 1,3–1,6 ms, Kraft bricht über 5–6 kHz weg); Messfall `LUMIVIZ_HU1_WAV`; Berichtigung zur Tabelle S158 (C2: Teilton 2, nicht Grundton); Tabelle „Offen“ nachgeführt; HU2 offen. |

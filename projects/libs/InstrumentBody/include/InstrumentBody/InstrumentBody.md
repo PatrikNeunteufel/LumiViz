@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.14.0  
+> **Version:** 0.15.0  
 > **Datum:** 2026-10-24  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -59,16 +59,28 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   Quelle. Je Hörort trägt der Körper ein Abstrahlgewicht je Mode (die Ausgänge nach KB1 a). Steinway D (BM6-1 a):
   `left` und `right` 12 cm über den Saiten an den Stegpunkten von MIDI 43 und 86 — die Oberseite des Stegs liegt eine
   halbe Plattendicke plus die Steghöhe über der Mittelfläche.
+- **Rückseite** (`Rueckseite`, seit Fassung 3; HU4 a, S160): Randtiefe h in m (die Zarge unter der Platte; 0 = aus,
+  dann die Platte in der Schallwand wie bis Fassung 2), Schattenfrequenz in Hz (0 = kein Schatten), Quelle. Mit ihr
+  strahlt im Rayleigh-Integral auch die Unterseite, mit umgekehrtem Vorzeichen, über den nächsten Randpunkt
+  (`naechsterRandpunkt`): Weg in der Platte zum Rand, 2h hinab und hinauf, dann zum Hörort; oberhalb der
+  Schattenfrequenz mit 1/(1 + j f/f_s) abgeschattet (Beugung über den Rand). Bei tiefen Frequenzen löscht sie die
+  fernen Anteile der Vorderseite aus — der akustische Kurzschluss, den die Schallwand nicht kennt (Befund HU4,
+  Spielweisen_Konzept §4.1).
+- **Dämpfung** (`Daempfung`, seit Fassung 3; HU4-1 a, S160): das Gesetz α(f) = a·f² + b·f + c in 1/s mit Quelle,
+  Vorgabe RT-0425 Gl. 1 (a = 2·10⁻⁵, b = 0,07, c = 0); der Steinway D trägt c = 4,5 (siehe Auswertung).
 - **Prüfen**: `pruefe(plan)` nennt je Befund einen Satz (Material fehlt oder doppelt, Werte nicht positiv,
   Querzahl außerhalb der Stabilität — isotrop 0 ≤ ν < 0,5, orthotrop 1 − ν_xy·ν_yx > 0 —, Umriss ohne Fläche,
   Leiste ohne Höhe je Punkt, Stegpunkte nicht aufsteigend, Hörort ohne oder mit doppeltem Namen, nicht über der
-  Platte).
+  Platte, Randtiefe oder Schattenfrequenz negativ, a, b oder c der Dämpfung negativ).
 - **Geometrie**: `flaeche`, `innen`, `abstandZurLinie`, `laenge`, `masse` (Platte über ein Raster von 5 mm
-  summiert, Leisten als Länge mal mittlerer Querschnitt).
+  summiert, Leisten als Länge mal mittlerer Querschnitt), `naechsterRandpunkt` (der nächste Punkt auf den Kanten
+  des Umrisses und sein Abstand).
 
-Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 2) schreibt jedes Feld, auch leere;
-NaN im Raster steht als `null`. Die Hörorte stehen in `listeningPoints` (`name`, `x`, `y`, `z`, `source`); Fassung 1
-ohne diese Liste bleibt lesbar (dann keine Hörorte).
+Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 3) schreibt jedes Feld, auch leere;
+NaN im Raster steht als `null`. Die Hörorte stehen in `listeningPoints` (`name`, `x`, `y`, `z`, `source`), die
+Rückseite in `backside` (`rimDepth`, `shadowHz`, `source`), die Dämpfung in `damping` (`a`, `b`, `c`, `law`,
+`source`); Fassung 1 ohne die Liste und Fassung 2 ohne die Blöcke bleiben lesbar (dann keine Hörorte bzw. keine
+Rückseite und RT-0425 mit c = 0).
 
 ## 3. Netz
 
@@ -185,10 +197,15 @@ vor, `werte(mode)` gibt ein `ModeImKoerper`.
 - **Dämpfung** modal (Chabassier, Joly & Chaigne 2013 Gl. 17): α(f) = a f² + b f + c in 1/s mit f in Hz, a = 2·10⁻⁵,
   b = 0,07, c = 0 nach RT-0425 Gl. 1; gespeichert als Verlustfaktor η = α/(2πf). Die Lesart in f (nicht in ω) ist
   ein Befund: nur so liegt η bei den gemessenen 1–3 % (Spielweisen_Konzept §4.1, „Befund S148 zur Dämpfung").
+  Seit HU4-1 a (S160) kommt das Gesetz aus dem Bauplan (`Bauplan::daempfung`, Block `damping`); der Steinway D
+  trägt c = 4,5 1/s, damit die tiefsten Moden die gemessenen Werte erreichen (η 3,0 % bei 38 Hz, 2,3 % bei 61 Hz,
+  1,5 % bei 300 Hz bis 1 kHz; Ege, Boutillon & Rébillat 2013: 1–3 %, Mittel 2,3 %) — mit c = 0 lagen sie bei 1,1 %.
+  Ein Bauplan ohne den Block rechnet mit c = 0 wie bisher.
 - **Abstrahlung** je Hörort nach Rayleigh, die Platte in einer Schallwand: G = ρa/(2π) ∫ φ e^{−iωR/c}/R dS bei der
   Frequenz der Mode, komplex, Einheit √kg/m² (der Druck ist p = q̈ · G); integriert über die Gauss-Punkte aller
   Elemente (k + 1 je Richtung), R von der Mittelfläche (z = 0) zum Hörort; Luft nach RT-0425 §2.2 (1,29 kg/m³,
-  340 m/s).
+  340 m/s). Mit der **Rückseite** des Bauplans (HU4 a) je Gauss-Punkt dazu −S(f) φ e^{−iωR'/c}/R' mit R' über den
+  nächsten Randpunkt (Weg zum Rand + 2h + zum Hörort) und S = 1/(1 + j f/f_s); ohne Rückseite Bit für Bit wie bisher.
 - **Geprüft** (`test_LoopKoerperAuswertung`): Polynome bis zur Ordnung des Elements genau; der Kolben (Scheibe, die
   sich ganz bewegt) auf der Achse gegen die geschlossene Lösung, auch im Nahfeld, auf 0,2 %; die erste Mode der frei
   aufliegenden Prüfplatte gegen Navier — φ in der Mitte auf 0,08 %, das Verhältnis Viertel/Mitte auf 10⁻³, das
@@ -325,6 +342,7 @@ falsches Format, zu neue Fassung).
 | 0.11.0 | 2026-10-24 | Session 150, Stufe 31c-6 Teil 3–5: `kDiskantAb` = 41 in `Mobilitaet.hpp` (PF2 a); Prüfstein `test_LoopKoerperPruefstein` (PS3 a, PS4 a, KV2 a). |
 | 0.12.0 | 2026-10-24 | Session 150, Stufe 31c-7 Schritt 1: Antwort des Bodens (`Antwort.hpp`: H je Stegpunkt und Hörort, im Spektrum der FFT, Länge). |
 | 0.13.0 | 2026-10-24 | Session 151, Stufe 31c-8: Nachschärfen im Eigenlöser (RS1 a, `EigenErgebnis::nachgeschaerft`); der Rest in der Fehlermeldung in Exponentenschreibweise. |
+| 0.15.0 | 2026-10-28 | Session 160, HU4 a und HU4-1 a: die Rückseite (`Rueckseite` im Bauplan, Fassung 3 mit `backside`; `naechsterRandpunkt`); `Auswertung` rechnet das Rayleigh-Integral zweiseitig, wenn sie an ist (Kurzschluss über den Rand, Schatten erster Ordnung), sonst Bit für Bit wie bisher; Test „HU4 Rueckseite: Kolben ohne Schallwand“. Das Dämpfungsgesetz `Daempfung` wandert in den Bauplan (Block `damping`, mit Quelle); das Werkzeug nimmt es für Moden und statistischen Teil; der Steinway D mit c = 4,5 1/s (Ege 2013). |
 | 0.14.0 | 2026-10-25 | Session 151, Stufe 31c-8: `antwortLaengeS` ohne Obergrenze 8 s (AW2 a); `antwortSpektrum` schnell über ein Raster mit exaktem Kern schmaler Resonanzen (AW3-1 a), die bisherige Rechnung als `antwortSpektrumExakt`. |
 | 0.9.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 1: Dämpfung je Werkstoff (DM1 a) — `Verformungsenergie.hpp`, `Steife::werkstoff`, `Plattenelement::integrationsPunkte`, `verlustfaktorAusAnteilen`, `ModeImKoerper::werkstoffAnteil`, im statistischen Teil das Mittel; `kKoerperFassung` 2, `kRechenFassung` 2. |
 | 0.8.0 | 2026-10-24 | Session 148, Stufe 31c-5d: der Körper (`Koerper.hpp`: `Koerper`, `Rechnung`, `kKoerperFassung`, `kRechenFassung`), die Datei in `loop/Koerper`, der Wächter. |
