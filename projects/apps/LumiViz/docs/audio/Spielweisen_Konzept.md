@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.99.0
+> **Version:** 0.100.0
 > **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -3881,6 +3881,69 @@ unter Release-clang und Testing-MSVC; kein voller Lauf (Patrik S159). **Hörprob
 angelegt — nach HU2 a wird nach dem Setzen gehört; wer vorher hören will: `LUMIVIZ_31D_WAV` legt die neun Dateien in
 rund 10 s neu ab (die Fassung „nach 31d-4“ darin rechnet jetzt mit dem Stulov-Hammer).
 
+**Befund S160 (HU4, der Boden im Bass; Fable):** Werkzeug ist der Messfall `LUMIVIZ_HU1_WAV`, neu gerechnet mit dem
+Stulov-Hammer, dazu `hu4_optionen.py` (lokal unter `.claude/handover/hoerproben_31d/messung/`, Ergebnisse unter
+`hu4/`): die Kraft am Steg wird in numpy mit Varianten der Bodenantwort gefaltet — die Faltung Kraft × Antwort trifft
+den Ton des Programms auf 3·10⁻⁶ (A0) bzw. 4·10⁻⁵ (C2) — und gemessen wie in HU1 a; dazu die Terzpegel (31,5 Hz …
+10 kHz, erste Sekunde, Kanalmittel) gegen `terz_links/rechts` von *Salamander* (v12), als Form (Mittel über 250 Hz …
+2 kHz abgezogen). Zielgrößen heute (Stulov): A0 Einsatz bis Spitze **332 ms** (*Salamander* 23,5), C2 **133 ms** (65),
+C4 24 (37); Spektrum der ersten 0,5 s relativ zum Grundton: A0 k3 / k6 / k7 +25,5 / +37,4 / +9,4 (*Salamander* +39,7 /
++30,3 / +23,0), C2 k2–k5 −7,2 / +0,1 / −12,5 / −3,1 (+25,3 / +13,0 / +13,5 / +9,6).
+
+*(1) Der Überschuss sitzt in einzelnen Moden, nicht in einem Frequenzgang.* Die tiefsten Moden des Steinway (38,2 /
+60,6 / 82,6 / 100,4 Hz; η 0,011–0,012, T60 5,1 / 3,2 / 2,3 / 1,9 s) tragen Abstrahlgewichte |G| von 0,149 / 0,108
+(links) und 0,108 / 0,065 (rechts) gegen 0,02–0,04 für die Moden zwischen 200 und 400 Hz; die Mode 164,9 Hz trägt
+rechts 0,081. A0 trifft mit k3 (82,5 Hz) die Mode 82,56 und mit k6 (165,0 Hz) die Mode 164,89 — beide innerhalb
+0,1 Hz bei 1–2 Hz Breite; die Spitze des Tons kommt mit dem Hochschwingen von k6 (Anstiegszeit 2/(η·ω) = 0,33 s). C2
+steht mit k1 (65,4 Hz) auf der Flanke der Mode 60,6 Hz (Breite η·f = 0,7 Hz); die 133 ms sind ihr Hochschwingen.
+Terzvergleich Modell − *Salamander* (Form), in dB:
+
+| Taste | 39 Hz | 50 | 62 | 79 | 99 | 125 | 157 | 198 |
+|---|---|---|---|---|---|---|---|---|
+| A0 | +18 | +16 | +28 | +7 | −7 | −2 | +16 | −3 |
+| C2 | +29 | −20 | +21 | −4 | +5 | −8 | +15 | +1 |
+| C4 | +36 | −25 | +38 | +14 | +19 | +10 | +29 | +3 |
+
+In jedem der drei Töne klingen unsere Moden 38 und 61 Hz (Bänder 39, 62) 16–38 dB zu laut mit, die Mode 165 Hz (Band
+157) 15–29 dB; im Band 50 Hz ist *Salamander* 20–25 dB stärker — dort klingt die tiefste Mode des Yamaha C5 in jedem
+Ton mit, an C4 (v12) aber 24 dB unter dem Band des Grundtons (Band 50: −21,9, Band 250: +2,4), während unsere tiefsten
+Moden an C4 nahe am Grundton liegen. Der Trend über die Tasten 21–48 (`terz_trend.py`, |H| an den Teiltönen bei
+ebener Kraft) ist derselbe: Bänder 39 / 62 +12 … +28, Bänder 79–250 −10 … −21. Jede Taste erregt die tiefsten Moden
+mit dem Anschlag; der Unterschied zum Yamaha liegt in ihrem Gewicht am Hörort, nicht in der Erregung.
+
+*(2) Was ein glatter Kurzschluss, Dämpfung und Stimmung bringen* (an Kraft × Antwort, Stufe −12; A = Hochpass-Shelf
+W = (1 − a) + a·(jf/f_c)/(1 + jf/f_c) auf der Abstrahlung, A2 = zweite Ordnung, D = η der Moden unter `bis` Hz auf den
+Wert, T = Körper um 25 Cent gegen die Saite verstimmt; Terz-Bass = Effektivwert der Form-Abweichung 40–200 Hz):
+
+| Variante | A0 Einsatz ms | C2 Einsatz ms | C2 k2 / k3 / k4 / k5 | A0 k3 / k6 / k7 | Terz-Bass A0 / C2 | C4 Pegel / k2 |
+|---|---|---|---|---|---|---|
+| *Salamander* | 23,5 | 65 | +25 / +13 / +13,5 / +10 | +40 / +30 / +23 | 0 / 0 | — |
+| V0 heute | 332 | 133 | −7 / 0 / −12,5 / −3 | +25,5 / +37 / +9 | 14,8 / 15,8 | 0 / 0 |
+| A a = 1, f_c = 200 | 367 | 20 | −2 / +7 / −4 / +6 | +34 / +51 / +24 | 9,8 / 14,6 | −1,4 / +1,4 |
+| A2 f_c = 200 | 367 | 20 | +3 / +14 / +4 / +14 | +43 / +64 / +38 | 10,6 / 17,6 | −2,5 / +2,8 |
+| D η = 0,03 bis 300 Hz | 189 | 20 | −7 / 0 / −14 / −3 | +21 / +32 / +7 | 12,2 / 14,2 | −0,3 / +0,3 |
+| A + D (200; 0,03 bis 150) | 367 | 20 | −2 / +7 / −4 / +6 | +30 / +51 / +23,5 | 9,6 / 16,5 | −1,4 / +1,4 |
+| T +25 Cent | 183 | 53 | −5 / −5 / −12,5 / −4 | +24 / +38 / +9 | 13,0 / 16,1 | +0,6 / +2,7 |
+| T −25 Cent | 115 | 56 | −9 / +1 / −14 / +1 | +23 / +27,5 / 0 | 15,7 / 15,0 | +0,5 / −1,5 |
+
+Lesart: Jede Variante heilt den Einsatz von C2 (das Hochschwingen der Mode 60,6 Hz). Den Einsatz von A0 bringt kein
+Filter unter 0,33 s — ein Hochpass nimmt dem Grundton (27,5 Hz) mehr als der Mode 165 Hz, k6 steigt auf +51 … +64
+(*Salamander* +30). 24 ms sind mit keinem Boden aus Holz erreichbar, solange ein Teilton auf einer Mode sitzt: die
+Anstiegszeit 1/(π·η·f) beträgt bei 165 Hz und η 0,03 noch 64 ms; bei *Salamander* trägt keine Bodenmode den Ton. C2
+kommt mit A2 (f_c 200) auf k2 +3 dB — 22 dB unter dem Ziel; der Rest ist die Mode 60,6 Hz selbst (|G| 0,108) und die
+Form des Yamaha-Bodens. Dämpfung auf Eges 2–3 % ändert am Spektrum nichts. Die Streckstimmung (T −25 Cent) nimmt k6
+von der Mode (A0 115 ms) — eine Stimmungsfrage (Railsback), kein Bodenfix, aber eine eigene Entscheidung wert.
+
+*(3) Urteil.* Das Ziel „Abstrahlung unter 150 Hz ohne Schallwand“ ist als Filter nachgerechnet und trifft nicht. Was
+fehlt, ist der Kurzschluss **je Mode aus ihrer Form**: Für die erste Mode (alles in Phase) kommen am Hörort 17 cm
+über dem Boden rund drei Viertel von ∫φ/R dS aus Flächen weiter als 0,3 m — der Anteil, den die Rückseite ohne
+Schallwand bei tiefen Frequenzen auslöscht (Schätzung −12 dB für die Mode 38 Hz; Moden mit Knotenlinien löschen ihre
+fernen Anteile selbst); für die Mode 165 Hz (λ/2 = 1 m, Umweg über den Rand 0,5–1,5 m) bleibt wenig Auslöschung. Ein
+zweiseitiges Rayleigh-Integral (Vorderseite − Rückseite über den nächsten Randpunkt mit Randtiefe h, oberhalb f_s
+abgeschattet) ist mit der `.lvinstbody` allein nicht rechenbar — sie trägt G, nicht die Formen —, es braucht das
+Werkzeug (Steinway 22 min); **nicht gerechnet, nur geschätzt.** Der Kipppunkt von HU2 a („neues Abstrahlmodell statt
+einer Korrektur unter 150 Hz“) ist damit erreicht → Vorlage HU4 (Chat S160).
+
 **31d-8, 8.2 bis 8.5 gebaut (S157, nach dem Wechsel auf Opus):**
 - **8.2:** `grand_piano.lvinst` aus dem Werkzeug (`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1`), Kurven und Tastatur gleich der
   Vorgabe (Wächter „Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe“); `ergaenze` trägt `keyboard` durch;
@@ -4017,6 +4080,20 @@ Fundstelle, nur Abruf, kein Browser), dazu die Spreizung des Modells je Lage üb
 eine neue Tafel als Vorlage, danach der Fader so, dass die Spitze bei −1 dBFS liegt (NP1 a).** Grund: der in DY1 a
 vereinbarte Weg; eine Tafel mit Quelle gilt auch für Étude und Ballade (CH1 a, CH2 a). Verworfen: b (Tafel jetzt
 halbieren, ohne Quelle). Kippt, wenn die Recherche keine brauchbare Quelle findet — dann b mit Messung.
+
+**DY2 a ausgeführt (S160, auf Patriks Wort „erst nocturne_demo.lvloop anpassen“ nach der Messung der Datei):** Die
+gerechnete Nocturne hatte eine Loudness Range von 21,6 LU und Anschlagsspitzen über 23,8 dB (5 … 95 %), bei einer
+Tafel von 30 dB; das Modell spreizt am Ausgang **0,9–1,4 dB je dB Stufe** (A0 … A7 bei Stufen −30 … 0 über
+`LUMIVIZ_LOOP_WAV`, `spreizung_messen.py`: RMS-Steigung 0,97 / 0,86 / 1,09 / 1,08 / 1,15 / 1,38 / 1,22 / 1,29, Mittel
+1,13; Spitze 1,21). Quelle für die Abstände: Goebl, Bresin & Galembo 2004, *Once again: The perception of piano touch
+and tone* (ISMA 2004, Nara; OFAI TR-2004-02), S. 2, §2.2: „hammer velocities ranged from 0.37 to 4.07 m/s with a mean
+of 1.65 m/s“ (gespielte Einzeltöne C4, pressed und struck) — 20,8 dB; dazu KTH, Askenfelt & Jansson, *From touch to
+string vibration*, Abb. 5: „The dynamic span ranges from pp to ff, corresponding to 33 dB“ (Größe nicht genannt), und
+Hickmans Ampico-Messung 1929 (18,2 dB je Hammer, nur über mmdigest.com, Sekundärquelle). *Salamander* v1 → v16 an C4:
+18,4 dB (Hörproben 31d, Verstärkungen). **Neue Tafel:** ppp −21, pp −18, p −14, mp −11, mf −8, f −4, ff 0 (0,45 … 5 m/s
+Hammer; Stufe 0 = 5 m/s nach HK2 a, KTH nennt forte „about 5 m/s“), Akzent 4 dB, Gabel 4 dB; Fader +1,65 dB (Spitze
+mit +1,4 dB bei 0,866 = −1,25 dBFS, NP1 a verlangt −1). Loop neu geschrieben (nur Stärken und Gain), `loop_werte.txt`
+und `klangfassung.txt` nachgezogen. Erwartete Spanne am Ausgang 19 (Bass) bis 29 dB (Diskant).
 
 ✅ **N3 a** (Patrik S157): **Das Pedal genau nach *Ped.* und ✱ der Gesamtausgabe auf Sustain (1 beim Treten, 0 beim
 Heben); wo die Ausgabe nichts zeigt, kein Pedal.** Grund: Treue zur Quelle (UF15 a). Verworfen: b (nach heutiger
@@ -5388,6 +5465,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.100.0 | 2026-10-28 | Session 160 (Fable 5.1). Befund HU4 (Boden im Bass): Zielgrößen mit dem Stulov-Hammer (A0 332 ms, C2 133 ms); der Überschuss sitzt in den Moden 38 und 61 Hz (beide Hörorte) und 165 Hz (rechts) mit 3- bis 8-fachem Abstrahlgewicht gegen 200–400 Hz; Hochpass-Shelf, Dämpfung und Streckstimmung an Kraft × Antwort gerechnet — kein Filter trifft A0, C2 k2 höchstens +3 statt +25 dB; Kurzschluss je Mode aus der Form (zweiseitiges Rayleigh) als Weg, nicht gerechnet; Kipppunkt von HU2 a erreicht; Entscheid HU4 a. DY2 a ausgeführt: Spreizung des Modells 0,9–1,4 dB je dB Stufe gemessen, Quelle Goebl, Bresin & Galembo 2004 (0,37–4,07 m/s), neue Tafel ppp −21 … ff 0, Akzent und Gabel 4 dB, Fader +1,65 dB; `nocturne_demo.lvloop`, `loop_werte.txt`, `klangfassung.txt` nachgezogen. |
 | 0.99.0 | 2026-10-28 | Session 159. HU3 a (R_H nachtragen) — vor dem Bau als Fehllesung erkannt (verlorenes Minus in RT-0425 Gl. 5, Abb. 4c; R_H wirkungslos); Befund p über Taste 71 extrapoliert; HU3-1 vorgelegt, Empfehlung nach Patriks Rückfrage auf c geändert (Helligkeit je Stärke an Salamander trifft Stulov, RT-0425 kaum); **HU3-1 c gebaut:** Hammer nach Stulov Gl. 9 mit Hysterese (`hammerHysteresis`, `hammerRelaxation`, `.lvinst` 20, Klangfassung 4, `grand_piano.lvinst` Level 4,0355, `loop_werte.txt` fünf Zeilen), Fall HU3-1 (Kontaktzeit, Helligkeit je Stärke), Chabassier-Fall als Band; C8 0,86 / 0,52 ms. Regel (global): nicht das Einfache empfehlen, jede Option gegen alle Zielgrößen rechnen. |
 | 0.98.0 | 2026-10-28 | Session 159. HU2 a (Reihenfolge: Prüfgröße, HU3 Hammer, HU4 Boden, dann SM4 b mit zweiter Ebene); HU2 a (1) gebaut: Hüllkurve vorwärts als Mess- und Setzgröße (`Vorwaerts`, `huellkurveZeiten`, Kanalmittel in der Energie), `salamander_c5.txt` mit den neuen Zeilen, Wächter, Bericht im dauerhaften Test; Tabelle Salamander gegen Modell. |
 | 0.97.0 | 2026-10-28 | Session 159 (Fable 5.1). Befund HU1 a am gerechneten Ton: Rechenweg = Modell; `lateDecay` nie gesetzt (3·`decay` gegen 36–38 s an C4), `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (Zwei-Geraden-Suche je Kanal unstet; Hüllkurve vorwärts 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig), im Bass der Boden (Schallwand ohne Kurzschluss, tiefe Moden mit T60 3–5 s), im Diskant der Hammer (Kontakt 1,3–1,6 ms, Kraft bricht über 5–6 kHz weg); Messfall `LUMIVIZ_HU1_WAV`; Berichtigung zur Tabelle S158 (C2: Teilton 2, nicht Grundton); Tabelle „Offen“ nachgeführt; HU2 offen. |

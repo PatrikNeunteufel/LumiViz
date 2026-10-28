@@ -447,14 +447,19 @@ Partitur (N7 a) — Loop-Takt *n* enthält Partiturtakt *n*. Ab der Kadenz weich
 sie ab (N8 a): Partiturtakt 32 = Loop-Takte 32–36, 33 = 37, 34 = 38–39, Takt 40
 klingt aus.
 
-**Stärke (N2 a, DY1 a).** Die Zeichen der Ausgabe nach einer festen Tafel in dB
-der Anschlagstufe: ppp −30, pp −24, p −18, mp −15, mf −12, f −6, ff 0; ein Akzent
-6 dB über der Umgebung; *sfp* f auf dem Schlag, danach p. Vor dem ersten Zeichen
-p (*espress. dolce*). Gabeln und *cresc.* führen gleichmäßig zum nächsten
-Zeichen, höchstens bis zum Ende ihres Takts; steht dort ein Buchstabe, zu seiner
-Stufe, sonst um 6 dB hin. Was kein Buchstabe ist (*con forza*, Takt 30), ändert
-die Stufe nicht. Am Flügel spreizt das Modell die Tafel (schneller Hammer, härterer
-Filz): p → f misst 13 dB bei C4, 17 dB bei A5.
+**Stärke (N2 a, DY1 a, DY2 a).** Die Zeichen der Ausgabe nach einer festen Tafel
+in dB der Anschlagstufe (Stufe 0 = 5 m/s Hammer): ppp −21, pp −18, p −14, mp −11,
+mf −8, f −4, ff 0; ein Akzent 4 dB über der Umgebung; *sfp* f auf dem Schlag,
+danach p. Vor dem ersten Zeichen p (*espress. dolce*). Gabeln und *cresc.* führen
+gleichmäßig zum nächsten Zeichen, höchstens bis zum Ende ihres Takts; steht dort
+ein Buchstabe, zu seiner Stufe, sonst um 4 dB hin. Was kein Buchstabe ist (*con
+forza*, Takt 30), ändert die Stufe nicht. Die Tafel spannt 21 dB (S160, DY2 a):
+gemessene Hammergeschwindigkeiten gespielter Töne reichen von 0,37 bis 4,07 m/s
+(Goebl, Bresin & Galembo 2004, *Once again: The perception of piano touch and
+tone*, ISMA 2004 Nara, §2.2; OFAI TR-2004-02, S. 2), also 21 dB; die Tafel setzt
+ppp 0,45 m/s … ff 5 m/s. Die alte Tafel (S157: ppp −30 … ff 0) gab am Ausgang
+26–41 dB, weil das Modell spreizt (Stulov-Hammer): 0,9–1,4 dB je dB Stufe, im
+Bass 1,0, im Diskant 1,3–1,4 (gemessen S160 an A0 … A7, Stufen −30 … 0).
 
 **Pedal (N3 a).** Sustain genau nach *Ped.* und ✱ der Gesamtausgabe; wo sie nichts
 zeigt (Takte 14–24, Teile von 30), kein Pedal. Die Kadenz liegt ganz im Pedal, der

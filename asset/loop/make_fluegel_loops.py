@@ -84,15 +84,19 @@ def grand_piano_demo():
 
 NOCTURNE_TAKT = 48  # 12/8: zwoelf Achtel zu vier Schritten (Zweiunddreissigstel)
 NOCTURNE_AUFTAKT = 44  # Schritt des Auftakts in Takt 0 — er liegt im Loop bei 0 (N7 a)
-# N2 a: die Tafel in dB der Anschlagstufe; ein Akzent 6 dB ueber der Umgebung
-NOCTURNE_STUFEN = {"ppp": -30, "pp": -24, "p": -18, "mp": -15, "mf": -12, "f": -6, "ff": 0}
-NOCTURNE_AKZENT_DB = 6
-NOCTURNE_GABEL_DB = 6  # eine Gabel ohne Buchstaben an ihrem Ende fuehrt so weit hin (DY1 a)
+# N2 a: die Tafel in dB der Anschlagstufe (Stufe 0 = 5 m/s Hammer, HK2 a). Seit S160 (DY2 a) auf 21 dB gespreizt:
+# gemessene Hammergeschwindigkeiten gespielter Toene reichen von 0,37 bis 4,07 m/s (Goebl, Bresin & Galembo 2004,
+# ISMA Nara, §2.2 „Stimuli“; OFAI TR-2004-02, S. 2), die Tafel setzt ppp 0,45 m/s ... ff 5 m/s; das Modell spreizt am Ausgang 0,9-1,4 dB je dB Stufe (S160,
+# `spreizung_messen.py`), die alte Tafel (ppp -30 ... ff 0, S157) gab 26-41 dB. Ein Akzent 4 dB ueber der Umgebung.
+NOCTURNE_STUFEN = {"ppp": -21, "pp": -18, "p": -14, "mp": -11, "mf": -8, "f": -4, "ff": 0}
+NOCTURNE_AKZENT_DB = 4
+NOCTURNE_GABEL_DB = 4  # eine Gabel ohne Buchstaben an ihrem Ende fuehrt so weit hin (DY1 a)
 NOCTURNE_GABELN = {"<": 1, "cresc.": 1, ">": -1, "dim.": -1}
 NOCTURNE_VORGABE = "p"  # vor dem ersten Zeichen (die Ausgabe: espress. dolce, ohne Buchstaben)
-# Fader des Kanals (9.5, S158): die Spitze der gerechneten Nocturne (die Kadenz im ff) bei −1 dBFS; mit +10 dB lag sie
-# bei 2,40 (+7,6 dB) und die leisen Stellen so laut wie grand_piano_demo
-NOCTURNE_GAIN_DB = 1.4
+# Fader des Kanals (9.5, S158, NP1 a): die Spitze der gerechneten Nocturne (die Kadenz im ff) bei −1 dBFS; mit +10 dB
+# lag sie bei 2,40 (+7,6 dB) und die leisen Stellen so laut wie grand_piano_demo. S160: mit +1,4 dB lag sie bei 0,866
+# (−1,25 dBFS), darum +1,65 dB (LUMIVIZ_LOOP_WAV misst sie: „groesster Betrag“).
+NOCTURNE_GAIN_DB = 1.65
 RECHTE_HAND, LINKE_HAND = 1, 2  # Stimmen nach System (N5 a)
 TONNAMEN = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
