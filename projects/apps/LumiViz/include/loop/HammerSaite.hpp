@@ -132,10 +132,16 @@ struct HammerSaite
     Tastenkurve verstimmungCent;
     /// Hammer mass (linear), in g, 1 … 30.
     Tastenkurve hammerMasseG;
-    /// Hammer stiffness Q0 (log), in N/mm^p (F = Q0·u^p, Stulov Gl. 4), 1 … 1e6.
+    /// Hammer stiffness Q0 (log), in N/mm^p (F = Q0·u^p bei langsamer Last, Stulov Gl. 4), 1 … 1e6.
     Tastenkurve hammerSteife;
     /// Hammer exponent p (linear), 1 … 6.
     Tastenkurve hammerExponent;
+    /// Hammer hysteresis ε (linear, HU3-1 c): der Anteil der Steife, den der Filz mit der Zeit τ abbaut —
+    /// Stulov 2005 / Stulov & Kartofelev 2009, Gl. 2: F = F0·[u^p − (ε/τ)·∫u^p(ξ)·e^(−(t−ξ)/τ)dξ] mit
+    /// F0 = Q0/(1 − ε); 0 … 0,999, mit 0 rechnet der Hammer wie F = Q0·u^p.
+    Tastenkurve hammerHysterese;
+    /// Hammer relaxation τ (log), in µs, 0,01 … 1000.
+    Tastenkurve hammerRelaxationUs;
     /// Strike position (linear): wo der Hammer trifft, als Anteil der Saite
     /// von der Agraffe aus, 0,02 … 0,5.
     Tastenkurve anschlagStelle;
@@ -183,8 +189,9 @@ struct HammerSaite
 /// Die Saiten im Chor an einer Taste: die Kurve, auf eine ganze Zahl gerundet (HK1 a).
 [[nodiscard]] int chorAn(const HammerSaite& saite, int taste);
 
-/// Die Vorgaben einer neuen Hammer-Saite (Befunde S146, S152): Hammer nach RT-0425
-/// Gl. 2–4 (Stuetzpunkte alle sechs Tasten); B bis E2 gemessen an *Salamander*, darueber
+/// Die Vorgaben einer neuen Hammer-Saite (Befunde S146, S152, S159): Hammer nach Stulov &
+/// Kartofelev 2009 Gl. 9 — Masse, p, Q0, Hysterese ε und τ (HU3-1 c; Stuetzpunkte alle sechs
+/// Tasten); B bis E2 gemessen an *Salamander*, darueber
 /// nach Rigaud Gl. 5; Laenge, Masse, Laengsverhaeltnis und Anschlagstelle aus RT-0425
 /// Anhang A (C1 … B7, ausgewaehlte Tasten, auf 2 % genau); Decay, High decay, Detune und
 /// Bridge angle gemessen an *Salamander* durch das Modell hindurch (31d-4, an den 30 Tasten
@@ -206,6 +213,15 @@ void richteHammerSaite(HammerSaite& saite);
 [[nodiscard]] double rtHammerExponent(int i);
 [[nodiscard]] double rtHammerSteifeNm(int i);
 [[nodiscard]] double rtHammerSteife(int i);
+/// Stulov & Kartofelev 2009, Gl. 9 (nach Stulov 2005) — die Groessen des Hammers an Taste n
+/// (1 … 88, n = MIDI − 20): Masse in g, Exponent p, statische Steife Q0 in N/mm^p, Hysterese ε
+/// und Relaxation τ in µs (HU3-1 c, S159: die Helligkeit je Staerke an *Salamander* entschied
+/// den Kipppunkt von HT2 a fuer Stulov).
+[[nodiscard]] double stulovHammerMasseG(int n);
+[[nodiscard]] double stulovHammerExponent(int n);
+[[nodiscard]] double stulovHammerSteife(int n);
+[[nodiscard]] double stulovHammerHysterese(int n);
+[[nodiscard]] double stulovHammerRelaxationUs(int n);
 /// Rigaud, David & Daudet 2011, Gl. 4/5: B an MIDI-Nummer m, mit dem
 /// Diskantsteg der Arbeit (s_T = 9,26·10⁻², y_T = −13,64) und dem Bassteg
 /// `sB`, `yB`.

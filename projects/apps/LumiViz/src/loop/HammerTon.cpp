@@ -49,8 +49,10 @@ struct Werte
     int chor = 1;
     double cent = 0.0;
     double hammerKg = 0.01;
-    double q0 = 1.0;           ///< N/mm^p
+    double q0 = 1.0;           ///< N/mm^p, die statische Steife
     double p = 2.5;
+    double eps = 0.0;          ///< Hysterese ε (HU3-1 c): F0 = q0/(1 − ε)
+    double tauS = 0.0;         ///< Relaxation τ, s
     double stelle = 0.12;
     double sigmaDaempfer = 0.0;
     double laenge = 1.0;       ///< m
@@ -83,6 +85,8 @@ Werte werteAn(const HammerSaite& s, const HammerAnschlag& a)
     w.hammerKg = lin(s.hammerMasseG) * 1e-3;
     w.q0 = log(s.hammerSteife);
     w.p = lin(s.hammerExponent);
+    w.eps = std::clamp(lin(s.hammerHysterese), 0.0, 0.999);
+    w.tauS = log(s.hammerRelaxationUs) * 1e-6;
     w.stelle = lin(s.anschlagStelle);
     w.sigmaDaempfer = kLn1000 / log(s.daempferS);
     w.laenge = log(s.saitenLaengeM);
@@ -513,6 +517,13 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
         }
     };
     const auto messEnde = std::llround(0.03 * fs);
+    // Stulov Gl. 2 (HU3-1 c): F = F0·[φ − (ε/τ)·∫φ(ξ)·e^(−(t−ξ)/τ)dξ], φ = (Δy)₊^p, F0 = Q0/(1 − ε) — das
+    // Gedaechtnis des Filzes als Rekursion ueber den feinen Schritt (φ je Schritt konstant):
+    // I ← I·e^(−Δt/τ) + φ·τ·(1 − e^(−Δt/τ)); bei stehendem φ wird I = φ·τ und F = Q0·φ. Mit ε = 0 rechnet der
+    // Hammer wie vor HU3-1 (F = Q0·φ). Unter null zieht der Filz nicht.
+    const double f0Hammer = w.q0 / (1.0 - w.eps);
+    const double kern = w.tauS > 0.0 ? std::exp(-dtFein / w.tauS) : 0.0;
+    double gedaechtnis = 0.0;
     for (; n < kontaktMax; ++n)
     {
         double aus = 0.0;
@@ -525,7 +536,9 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
             double saiteY = 0.0;
             for (const Mode& m : moden) saiteY += m.abnahme * m.zustand.imag();
             const double druck = (hammerY - saiteY) * 1000.0;  // mm
-            const double kraft = druck > 0.0 ? w.q0 * std::pow(druck, w.p) : 0.0;
+            const double phi = druck > 0.0 ? std::pow(druck, w.p) : 0.0;
+            gedaechtnis = gedaechtnis * kern + phi * w.tauS * (1.0 - kern);
+            const double kraft = std::max(0.0, f0Hammer * (phi - (w.tauS > 0.0 ? w.eps * gedaechtnis / w.tauS : 0.0)));
             // die Moden sehen die Kraft erst im naechsten Schritt (Impulsinvarianz, Gl. 10)
             for (Mode& m : moden) m.zustand = m.polFein * (m.zustand + m.eingang * (kraft * dtFein));
             hammerV -= kraft / w.hammerKg * dtFein;

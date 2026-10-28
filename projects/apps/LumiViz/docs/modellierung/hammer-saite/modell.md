@@ -27,7 +27,7 @@ Jede Größe ist eine Kurve aus Stützpunkten an Tasten (MIDI 21–108), in ihre
 | Hohe Teiltöne (`highDecay`) | log | gemessen an *Salamander* (T60 bei 10·f1 zu T60 bei f1): Bass um 0,95, C4 0,64, Diskant 0,02–0,04 (31d-4) |
 | Saiten im Chor (`strings`) | linear, gerundet | vorläufig 1 bis F♯1, 2 bis C3, 3 darüber |
 | Verstimmung (`detune`) | linear | gemessen an *Salamander* an der Schwebung der Teiltöne 1–3, durch das Modell hindurch, ab C♯2 (zwei Saiten): 0,6–5 Cent (31d-4); im hohen Diskant ohne Treffer, interpoliert |
-| Hammermasse, Exponent, Steife (`hammerMass`, `hammerExponent`, `hammerStiffness`) | linear, linear, log | Chabassier & Duruflé, RT-0425, Gl. 2–4 (HT2 a), Steife umgerechnet Q0 = K_H·10⁻³ᵖ N/mm^p |
+| Hammermasse, Exponent, Steife, Hysterese, Relaxation (`hammerMass`, `hammerExponent`, `hammerStiffness`, `hammerHysteresis`, `hammerRelaxation`) | linear, linear, log, linear, log | Stulov & Kartofelev 2009, Gl. 9 nach Stulov 2005 (HU3-1 c, S159): m = 11,074 − 0,074·n + 10⁻⁴·n² g, p = 3,7 + 0,015·n, Q0 = 183·e^(0,045·n) N/mm^p, ε = 0,9894 − 8,8·10⁻⁵·n², τ = (2,72 − 0,02·n + 9·10⁻⁵·n²) µs, n = MIDI − 20. Davor (HT2 a) RT-0425 Gl. 2–4 ohne R_H — der Hammer wurde mit der Stärke kaum heller und war über Taste 71 extrapoliert weich (Befund S159) |
 | Anschlagstelle (`strikePosition`) | linear | 0,12 der Länge ab Agraffe (RT-0425 Anhang A) |
 | Dämpfer (`damper`) | log | vorläufig 0,8 s … 0,2 s — aus *Salamander* nicht messbar (D1 a); `undampedFrom` 89 aus der SFZ von *Salamander* |
 | Länge, Masse je m (`stringLength`, `stringMass`) | log | RT-0425 Anhang A, µ = ρπd²/4 (HT1 a) |
@@ -50,7 +50,11 @@ Chors.
 
 ## 4. Hammer
 
-Masse m_H mit der Feder F = Q0·(Δy[mm])^p für Δy > 0 (Bank 2010, Gl. 12; ohne Hysterese, wie Bank). Δy = y_H − y_S,
+Masse m_H mit dem Filz nach Stulov (HU3-1 c, S159; Stulov & Kartofelev 2009, Gl. 2):
+F = F0·[Φ(t) − (ε/τ)·∫₀ᵗ Φ(ξ)·e^(−(t−ξ)/τ) dξ] mit Φ = (Δy[mm])₊^p und F0 = Q0/(1 − ε) — bei langsamer Last
+F = Q0·Φ (Gl. 4), beim schnellen Laden härter, beim Entlasten weicher (Hysterese); das Integral als Rekursion über
+den feinen Schritt (Φ je Schritt konstant: I ← I·e^(−Δt/τ) + Φ·τ·(1 − e^(−Δt/τ))), F nie unter null; mit ε = 0 die
+Feder F = Q0·Φ wie vor S159 (Bank 2010, Gl. 12). Δy = y_H − y_S,
 y_S = Σ_k sin(kπ x_H)·Y_k / N (der Hammer trifft N Saiten, die sich während des Kontakts gemeinsam bewegen).
 Geschwindigkeit beim Anschlag v = 5 m/s · 10^(Stufe/20) (HK2 a, HT6 a). Der Kontakt läuft achtfach feiner, bis der
 Hammer 1 ms frei ist (höchstens 30 ms).
@@ -109,6 +113,15 @@ E1 fällt in 3 s um 8,14 dB (soll 8,14); Teiltöne 5, 10, 15 auf 1 Cent nach B; 
 Grundton −21 gegen −32 dB); zwei Stufen mit Verstimmung (C4 13,6 → 2,5 dB/s); Dämpfer; Phantomteilton wächst mit ES
 (+18 dB bei neunfachem ES); Auslenkung gegen Chabassier Tab. IV 0,4 … 0,6 der Tabelle; Rechenzeit 2,3 % der
 Echtzeit im Bass, 1,1 % in der Mitte.
+
+## 9a. Geprüft mit dem Hammer nach Stulov (Release-clang, S159, HU3-1 c)
+
+Kontaktzeit mf / ff: A0 6,6 / 5,4 ms, C2 3,6 / 2,9, C4 2,3 / 1,8, C6 1,40 / 1,09, G7 1,05 / 0,71, C8 0,86 / 0,52 (am
+Flügel „about 4 ms in the bass to less than 1 ms in the highest treble“, Askenfelt & Jansson, KTH). Helligkeit je
+Stärke (dB Teilton n gegen Grundton je dB Pegel, n = 2 … 8): C4 0,32 / 0,27 / 0,64 / 0,87 / 1,12 / 1,98 / 2,72
+(*Salamander* 0,20 / 0,25 / 0,69 / 0,98 / 0,97 / 1,65 / 1,92), C6 0,38 / 0,78 / 1,08 / 1,11 / 1,09 / 2,50 / 3,65
+(*Salamander* 1,17 / 0,73 / 2,18 / 1,48 / 1,53 / 1,81 / 2,55) — mit RT-0425 an C6 0,3 bei allen n. Auslenkung gegen
+Chabassier Tab. IV 0,32 … 0,74 der Tabelle (vorher 0,36 … 0,74).
 
 ## 10. Bekannte Grenzen
 

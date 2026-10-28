@@ -119,6 +119,8 @@ constexpr Grenzen kGrenzeCent{0.0, 20.0};
 constexpr Grenzen kGrenzeMasse{1.0, 30.0};
 constexpr Grenzen kGrenzeSteife{1.0, 1e6};
 constexpr Grenzen kGrenzeExponent{1.0, 6.0};
+constexpr Grenzen kGrenzeHysterese{0.0, 0.999};
+constexpr Grenzen kGrenzeRelaxation{0.01, 1000.0};
 constexpr Grenzen kGrenzeStelle{0.02, 0.5};
 constexpr Grenzen kGrenzeDaempfer{0.01, 10.0};
 constexpr Grenzen kGrenzeLaenge{0.02, 8.0};
@@ -161,10 +163,13 @@ HammerSaite baueVorgabe()
                                          {36, 8.776e-5}, {39, 7.436e-5}});
     for (const int m : kVorgabeTasten)
         if (m > 40) s.inharmonizitaet.punkte.push_back(TastenWert{m, rigaudB(m, kRigaudBassSteigung, kRigaudBassAchse)});
-    // belegt (HT2 a): der Hammer nach RT-0425 Gl. 2–4 (Taste i = MIDI − 20)
-    s.hammerMasseG = kurveAus(kHammerTasten, [](int m) { return rtHammerMasseG(m - 20); });
-    s.hammerExponent = kurveAus(kHammerTasten, [](int m) { return rtHammerExponent(m - 20); });
-    s.hammerSteife = kurveAus(kHammerTasten, [](int m) { return rtHammerSteife(m - 20); });
+    // belegt (HU3-1 c, S159; davor HT2 a nach RT-0425 Gl. 2–4): der Hammer nach Stulov & Kartofelev 2009 Gl. 9
+    // (Taste n = MIDI − 20) — die Helligkeit je Staerke an Salamander trifft Stulov, RT-0425 kaum (Befund S159)
+    s.hammerMasseG = kurveAus(kHammerTasten, [](int m) { return stulovHammerMasseG(m - 20); });
+    s.hammerExponent = kurveAus(kHammerTasten, [](int m) { return stulovHammerExponent(m - 20); });
+    s.hammerSteife = kurveAus(kHammerTasten, [](int m) { return stulovHammerSteife(m - 20); });
+    s.hammerHysterese = kurveAus(kHammerTasten, [](int m) { return stulovHammerHysterese(m - 20); });
+    s.hammerRelaxationUs = kurveAus(kHammerTasten, [](int m) { return stulovHammerRelaxationUs(m - 20); });
     // belegt (HT1 a): RT-0425 Anhang A, C1 … B7 — µ = ρπd²/4, f_l0/f0 = √(EA/T0) mit
     // E = 2,02·10¹¹ Pa; die Tasten so gewaehlt, dass die Kurve jede Taste der Tabelle auf
     // 2 % trifft (E2 | F2: der Sprung am Bassteg)
@@ -296,6 +301,8 @@ void richteHammerSaite(HammerSaite& saite)
     richteKurve(saite.hammerMasseG, kGrenzeMasse.von, kGrenzeMasse.bis, v.hammerMasseG);
     richteKurve(saite.hammerSteife, kGrenzeSteife.von, kGrenzeSteife.bis, v.hammerSteife);
     richteKurve(saite.hammerExponent, kGrenzeExponent.von, kGrenzeExponent.bis, v.hammerExponent);
+    richteKurve(saite.hammerHysterese, kGrenzeHysterese.von, kGrenzeHysterese.bis, v.hammerHysterese);
+    richteKurve(saite.hammerRelaxationUs, kGrenzeRelaxation.von, kGrenzeRelaxation.bis, v.hammerRelaxationUs);
     richteKurve(saite.anschlagStelle, kGrenzeStelle.von, kGrenzeStelle.bis, v.anschlagStelle);
     richteKurve(saite.daempferS, kGrenzeDaempfer.von, kGrenzeDaempfer.bis, v.daempferS);
     richteKurve(saite.saitenLaengeM, kGrenzeLaenge.von, kGrenzeLaenge.bis, v.saitenLaengeM);
@@ -322,6 +329,9 @@ QJsonObject hammerSaiteAlsJson(const HammerSaite& s)
                        {QStringLiteral("hammerMass"), kurveAlsJson(s.hammerMasseG)},
                        {QStringLiteral("hammerStiffness"), kurveAlsJson(s.hammerSteife)},
                        {QStringLiteral("hammerExponent"), kurveAlsJson(s.hammerExponent)},
+                       // seit Fassung 20 (HU3-1 c): die Hysterese des Filzes nach Stulov, immer geschrieben
+                       {QStringLiteral("hammerHysteresis"), kurveAlsJson(s.hammerHysterese)},
+                       {QStringLiteral("hammerRelaxation"), kurveAlsJson(s.hammerRelaxationUs)},
                        {QStringLiteral("strikePosition"), kurveAlsJson(s.anschlagStelle)},
                        {QStringLiteral("damper"), kurveAlsJson(s.daempferS)},
                        {QStringLiteral("stringLength"), kurveAlsJson(s.saitenLaengeM)},
@@ -352,6 +362,8 @@ HammerSaite hammerSaiteAusJson(const QJsonObject& o)
     s.hammerMasseG = kurveAusJson(o.value(QStringLiteral("hammerMass")));
     s.hammerSteife = kurveAusJson(o.value(QStringLiteral("hammerStiffness")));
     s.hammerExponent = kurveAusJson(o.value(QStringLiteral("hammerExponent")));
+    s.hammerHysterese = kurveAusJson(o.value(QStringLiteral("hammerHysteresis")));
+    s.hammerRelaxationUs = kurveAusJson(o.value(QStringLiteral("hammerRelaxation")));
     s.anschlagStelle = kurveAusJson(o.value(QStringLiteral("strikePosition")));
     s.daempferS = kurveAusJson(o.value(QStringLiteral("damper")));
     s.saitenLaengeM = kurveAusJson(o.value(QStringLiteral("stringLength")));
@@ -387,6 +399,31 @@ double rtHammerSteife(int i)
 {
     // K_H·u^p mit u in m = K_H·10⁻³ᵖ·u^p mit u in mm
     return rtHammerSteifeNm(i) * std::pow(10.0, -3.0 * rtHammerExponent(i));
+}
+
+double stulovHammerMasseG(int n)
+{
+    return 11.074 - 0.074 * n + 1e-4 * n * n;
+}
+
+double stulovHammerExponent(int n)
+{
+    return 3.7 + 0.015 * n;
+}
+
+double stulovHammerSteife(int n)
+{
+    return 183.0 * std::exp(0.045 * n);
+}
+
+double stulovHammerHysterese(int n)
+{
+    return 0.9894 - 8.8e-5 * n * n;
+}
+
+double stulovHammerRelaxationUs(int n)
+{
+    return 2.72 - 0.02 * n + 9e-5 * n * n;
 }
 
 double rigaudB(int m, double sB, double yB)

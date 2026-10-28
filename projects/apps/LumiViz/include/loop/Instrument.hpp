@@ -631,10 +631,13 @@ struct Instrument
 // `strikeUnevennessSoft` und `strikeUnevennessLoud` (u, 0 … 1, an Anschlagstufe −16 und −4), je eine Kurve,
 // immer geschrieben; eine aeltere Datei bekommt fuer sie die Vorgabe. Ein aelteres Programm stiess alle
 // Saiten eines Chors gleich.
-// Geschrieben wird Fassung 19.
+// Fassung 20 (S159, HU3-1 c): `hammerString` traegt die Hysterese des Filzes nach Stulov — `hammerHysteresis`
+// (ε, 0 … 0,999) und `hammerRelaxation` (τ in µs), je eine Kurve, immer geschrieben; eine aeltere Datei bekommt
+// fuer sie die Vorgabe (Stulov Gl. 9). Ein aelteres Programm rechnete den Hammer als Feder F = Q0·u^p.
+// Geschrieben wird Fassung 20.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 19;
+inline constexpr int kInstrumentFassung = 20;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

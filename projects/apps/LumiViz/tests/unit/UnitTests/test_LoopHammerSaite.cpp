@@ -19,7 +19,7 @@
  *   ohne Ueberschwingen, die logarithmische Skala, Richten.
  * - Die Vorgaben: Hammer und Saiten nach Chabassier & Durufle RT-0425 (HT1 a, HT2 a), B nach
  *   Rigaud Gl. 5, der Chor.
- * - Die Datei: Fassung 19 (seit S154: der Stoss je Saite, US4 a; S153: die zweite Ebene, P7 a; S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
+ * - Die Datei: Fassung 20 (seit S159: die Hysterese des Hammers nach Stulov, HU3-1 c; S154: der Stoss je Saite, US4 a; S153: die zweite Ebene, P7 a; S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
  *   `keyboard`; nur die Paare aus HA2 a; die Tastatur in ihren Grenzen.
  * - Die Anschlagstaerke (HK2 a): Stufen, Hammergeschwindigkeit, Rest, `:a<stufe>`.
  * - Die Hammer-Saite ist keine gegriffene Saite; seit 31b klingt sie (gemessen in
@@ -194,19 +194,31 @@ TEST_CASE("Loop Hammer-Saite 31a Vorgaben")
     CHECK(rigaudB(21, kRigaudBassSteigung, kRigaudBassAchse) == doctest::Approx(2.8e-4).epsilon(0.05));
     CHECK(rigaudB(41, kRigaudBassSteigung, kRigaudBassAchse) == doctest::Approx(1.35e-4).epsilon(0.05));
 
+    // Stulov & Kartofelev 2009 Gl. 9 (HU3-1 c): an Taste 1 m 11,0 g, p 3,715, Q0 191 N/mm^p, ε 0,989, τ 2,70 µs;
+    // an Taste 88 m 5,33 g, p 5,02, Q0 9600, ε 0,308, τ 1,66 µs
+    CHECK(stulovHammerMasseG(1) == doctest::Approx(11.0001));
+    CHECK(stulovHammerExponent(88) == doctest::Approx(5.02));
+    CHECK(stulovHammerSteife(88) == doctest::Approx(183.0 * std::exp(0.045 * 88)));
+    CHECK(stulovHammerHysterese(1) == doctest::Approx(0.9893));
+    CHECK(stulovHammerHysterese(88) == doctest::Approx(0.308).epsilon(0.01));
+    CHECK(stulovHammerRelaxationUs(88) == doctest::Approx(1.66).epsilon(0.01));
     const HammerSaite& v = hammerSaiteVorgabe();
     for (const int taste : {21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99, 105, 108})
     {
-        CHECK(wertAn(v.hammerMasseG, taste, KurvenSkala::Linear) == doctest::Approx(rtHammerMasseG(taste - 20)));
-        CHECK(wertAn(v.hammerExponent, taste, KurvenSkala::Linear) == doctest::Approx(rtHammerExponent(taste - 20)));
-        CHECK(wertAn(v.hammerSteife, taste, KurvenSkala::Logarithmisch) == doctest::Approx(rtHammerSteife(taste - 20)));
+        CHECK(wertAn(v.hammerMasseG, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerMasseG(taste - 20)));
+        CHECK(wertAn(v.hammerExponent, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerExponent(taste - 20)));
+        CHECK(wertAn(v.hammerSteife, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerSteife(taste - 20)));
+        CHECK(wertAn(v.hammerHysterese, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerHysterese(taste - 20)));
+        CHECK(wertAn(v.hammerRelaxationUs, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerRelaxationUs(taste - 20)));
     }
-    // zwischen den Stuetzpunkten: die Masse genau (eine Gerade), p und Q0 nah, B nah
+    // zwischen den Stuetzpunkten: p genau (eine Gerade), Q0 genau (eine Gerade in ln), Masse, ε und τ nah (Parabeln), B nah
     for (int taste = 21; taste <= 108; ++taste)
     {
-        CHECK(wertAn(v.hammerMasseG, taste, KurvenSkala::Linear) == doctest::Approx(rtHammerMasseG(taste - 20)));
-        CHECK(wertAn(v.hammerExponent, taste, KurvenSkala::Linear) == doctest::Approx(rtHammerExponent(taste - 20)).epsilon(0.01));
-        CHECK(wertAn(v.hammerSteife, taste, KurvenSkala::Logarithmisch) == doctest::Approx(rtHammerSteife(taste - 20)).epsilon(0.02));
+        CHECK(wertAn(v.hammerMasseG, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerMasseG(taste - 20)).epsilon(0.01));
+        CHECK(wertAn(v.hammerExponent, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerExponent(taste - 20)).epsilon(0.001));
+        CHECK(wertAn(v.hammerSteife, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerSteife(taste - 20)).epsilon(0.005));
+        CHECK(wertAn(v.hammerHysterese, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerHysterese(taste - 20)).epsilon(0.01));
+        CHECK(wertAn(v.hammerRelaxationUs, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerRelaxationUs(taste - 20)).epsilon(0.02));
         CHECK(wertAn(v.inharmonizitaet, taste, KurvenSkala::Logarithmisch) ==
               doctest::Approx(rigaudB(taste, kRigaudBassSteigung, kRigaudBassAchse)).epsilon(0.1));
     }
@@ -257,13 +269,13 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         instrument.tastatur->mitte = PedalArt::Moderator;
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 19);  // seit S154: der Stoss je Saite (US4 a); S153: die zweite Ebene (P7 a); S150: soundboard.body
+        CHECK(json.value(QStringLiteral("version")).toInt() == 20);  // seit S159: die Hysterese des Hammers (HU3-1 c); S154: der Stoss je Saite (US4 a); S153: die zweite Ebene (P7 a); S150: soundboard.body
         const QJsonObject schicht = json.value(QStringLiteral("layers")).toArray().first().toObject();
         CHECK(schicht.value(QStringLiteral("stringModel")).toString() == QStringLiteral("modal"));
         CHECK(schicht.value(QStringLiteral("excitation")).toString() == QStringLiteral("hammer"));
         const QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
         for (const char* feld : {"inharmonicity", "decay", "lateDecay", "highDecay", "strings", "detune", "hammerMass", "hammerStiffness",
-                                 "hammerExponent", "strikePosition", "damper", "stringLength", "stringMass",
+                                 "hammerExponent", "hammerHysteresis", "hammerRelaxation", "strikePosition", "damper", "stringLength", "stringMass",
                                  "longitudinalRatio", "bridgeAngle", "polarizationAngle", "polarizationDetune",
                                  "horizontalRatio", "strikeUnevennessSoft", "strikeUnevennessLoud"})
         {

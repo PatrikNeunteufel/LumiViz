@@ -74,7 +74,7 @@ PEGEL = {
     "finger_bass": (1.0, 1.1852),
     "flute": (0.8, 0.5298),
     "ghost": (0.7, 0.4897),
-    "grand_piano": (4.1788, 4.1788),
+    "grand_piano": (4.0355, 4.0355),  # S159 (HU3-1 c, Hammer nach Stulov): -13,097 LUFS bei 4,1788 -> 4,0355; die Loops sind fuer den Bezug geschrieben, darum alt = neu
     "growl_bass": (0.55, 0.3081),
     "guitar": (1.0, 2.0941),
     "guitar_old": (1.0, 2.2333),

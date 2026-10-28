@@ -6,8 +6,9 @@
  *
  * Nach Bank, Zambon & Fontana 2010: je Teilton k der Saite ein gedaempfter
  * Resonator, angestossen mit b0 = 2/(Lµ) an der Anschlagstelle, abgenommen als
- * Kraft am Steg (w_b,k = kπT0/L); der Hammer eine Masse mit der Feder
- * F = Q0·Δy^p, ohne Hysterese. Die Moden sind komplexe Pole nach der
+ * Kraft am Steg (w_b,k = kπT0/L); der Hammer eine Masse mit dem Filz nach Stulov
+ * (HU3-1 c, S159): F = F0·[Δy^p − (ε/τ)·∫Δy^p·e^(−(t−ξ)/τ)dξ], F0 = Q0/(1 − ε) — mit
+ * ε = 0 die Feder F = Q0·Δy^p ohne Hysterese. Die Moden sind komplexe Pole nach der
  * Impulsinvarianz — eine Verzoegerung um einen Takt, keine verzoegerungsfreie
  * Schleife mit dem Hammer. Waehrend des Kontakts laeuft die Rechnung achtfach
  * feiner (`kHammerUeberabtastung`).

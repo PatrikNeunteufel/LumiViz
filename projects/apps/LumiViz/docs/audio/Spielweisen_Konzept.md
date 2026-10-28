@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.97.0
+> **Version:** 0.99.0
 > **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -3724,7 +3724,162 @@ Modell nach 0,30 s (alle Fassungen gleich, `decay` dort 1,84 s = Randwert der Ku
 (`lateDecay` nie gesetzt; `decay` auf ein Messziel gesetzt, das die erste Stufe verfehlt; der Hammer bis Taste 88
 extrapoliert) — **und** drei Grenzen des Modells selbst: der Chor trägt ohne zweite Ebene keinen Nachklang, das
 Gesetz σ(f²) ist monoton, die Schallwand hat keinen Kurzschluss. SM4 b allein (mit γ, δ, h fest) träfe deshalb nicht.
-Wie weiter: **HU2** (Entscheid Patrik, im Chat S159 vorgelegt).
+
+✅ **HU2 a** (Patrik S159): **Zuerst die Prüfgröße, dann Hammer und Boden als eigene Entscheide, zuletzt das Setzen
+mit der zweiten Ebene.** (1) Die Hüllkurve vorwärts wird Mess- und Setzgröße: je Taste und Teilton 1 bis 3 die
+Steigung der ersten 0,5 s nach der Spitze (erste Stufe), die Tiefe des Knicks und die späte Schroeder-Steigung
+(zweite Stufe), Median über Ebenen und Kanäle, dazu der ganze Ton (ab Spitze bis −20/−30/−40 dB); `salamander_c5.txt`
+bekommt diese Größen, der dauerhafte Test rechnet sie an Modell und *Salamander* mit derselben Rechnung. (2) **HU3**
+(Hammer im Diskant: R_H nach RT-0425 Gl. 5, Masse und Steife ab C6 gegen eine Kontaktzeit unter 1 ms an C8) und
+**HU4** (Boden: Abstrahlung unter rund 150 Hz ohne Schallwand, Dämpfung der tiefsten Moden) werden einzeln vorgelegt
+und vor dem Setzen gebaut, weil das Setzen durch Boden und Hammer hindurch misst. (3) Dann SM4 b (31i, SP2 a) mit γ,
+δ, h, u, `decay`, `lateDecay` frei, Start γ 30°, gegen die neue Prüfgröße; 8.5 als Hörwahl entfällt, gehört wird das
+Ergebnis des Setzens. Grund: ein Setzen ist nur so gut wie sein Ziel, und das heutige Ziel ist nachweislich falsch;
+es misst durch Boden und Hammer hindurch, also muss vorher stehen, was dort falsch ist, sonst wird zweimal gesetzt;
+die zweite Ebene ist nach Weinreich der Träger des Nachklangs. Verworfen: b (SM4 b zuerst, wörtlich nach dem Kipppunkt
+von HU1 a — müsste mit neuem Hammer und Boden wiederholt werden, rund eine Stunde je Durchgang), c (nur Werte von Hand
+— verschiebt Zahlen, erreicht den Diskant nicht). Kippt, wenn HU3 oder HU4 sich als großer Umbau erweisen (etwa ein
+neues Abstrahlmodell statt einer Korrektur unter 150 Hz) — dann b zuerst und HU4 als Nachtrag zu 31i.
+
+**HU2 a (1) gebaut (S159): die Hüllkurve vorwärts als Mess- und Setzgröße.** In `Teiltonmessung.hpp` je Teilton
+`Vorwaerts` (Schritt 7 der Messung): die Gerade über die ersten 0,5 s nach der Spitze als T60 (`t60`, mindestens
+zehn Rahmen, höchstens bis zum Ende des Bereichs) und, wo die Zwei-Geraden-Suche zwei Stufen fand, die Tiefe des
+Knicks (`knickTiefeDb`) als die Energie ab dem Knick gegen die Energie ab dem Anfang des Bereichs — die Kurve nach
+Schroeder am Knick, stetig auch am Modell mit seinen vollständigen Auslöschungen, wo der Pegel am Knick selbst in
+einem Einbruch liegen kann. In `Fluegelmessung.hpp` der ganze Ton (`huellkurveZeiten`): die Energie über 50 ms
+gemittelt, ab der Spitze bis −20 / −30 / −40 dB in s. **Beides aus dem Kanalmittel in der Energie** (wie die Kurven,
+K1 a), in beiden Kanälen derselbe Wert: an *Salamander* laufen die Kanäle auseinander — C4, Teilton 1 fällt links in
+den ersten 0,5 s mit 12 dB/s, rechts mit 23 dB/s (links ist dort 5 dB leiser und trägt früh mehr Nachklang); der
+Median über beide Kanäle lag bei 4,9 s und beschrieb keinen von beiden. `salamander_c5.txt` trägt je Taste
+`vorwaerts_t60[_2/_3]`, `knick_tiefe_db[_2/_3]`, `huelle_20/30/40_s` (Median über v6–v16; neu gemessen in 28 s, die
+Kurvendatei blieb Bit für Bit gleich). Tests: in `test_Teiltonmessung` „HU2 Huellkurve vorwaerts“ (zwei Stufen 2,5 /
+36 s mit 20 dB Abstand: T60 vorwärts 2,5 s ± 15 %, Knick −4 … −16 dB; eine Stufe 4 s: 4 s ± 5 %, kein Knick, der
+ganze Ton −20/−30/−40 dB nach 1,33 / 2,0 / 2,67 s; ein kurzer Ton: 0, wo er nicht hinreicht); in `test_LoopSalamander`
+„mitgelieferte Werte“ der Wächter (die Zeilen stehen, an C4 T60 vorwärts 2–3,5 s, Knick −10 … −22 dB, −40 dB nach
+mehr als 6 s); der dauerhafte Test (UF5 a) berichtet die Prüfgröße an Modell und *Salamander* mit derselben Rechnung
+(bis SM4 b nur Bericht). Bereich `*Teiltonmessung*,*Salamander*` 37 / 37 unter Release-clang und Testing-MSVC;
+kein voller Lauf (Patrik S159: nur Messhilfen im Testbaum und die Wertedatei geändert, nichts in der App). Was sie
+zeigt (*Salamander* | Modell mit der Vorgabe, Stufen −30 … 0 wie v1–v16):
+
+| Taste | T60 vorwärts T1 / T2 / T3 s | Knick T1 dB | ganzer Ton bis −20 / −30 / −40 dB s |
+|---|---|---|---|
+| A0 | 2,2 / 7,4 / 13,6 \| 15,4 / 13,4 / — | — \| — | 5,6 / 10,3 / 17,8 \| 5,7 / 8,3 / 11,0 |
+| C2 | 13,3 / 3,0 / 1,1 \| 9,5 / 4,1 / 13,1 | — \| — | 1,2 / 8,1 / 15,3 \| 4,7 / 9,1 / 12,0 |
+| C4 | **2,6** / 3,3 / 2,0 \| **4,8** / 4,6 / 4,8 | **−14,3** \| **−33,3** | 0,9 / 3,0 / **7,9** \| 1,3 / 2,6 / **4,2** |
+| C6 | 1,5 / 1,3 / 1,4 \| 1,1 / 2,2 / 1,8 | −25,6 \| −38,9 | 0,6 / 0,9 / 1,6 \| 0,3 / 0,6 / 1,3 |
+| C8 | 0,35 / — / — \| 3,2 / 1,2 / 0,6 | — \| — | 0,19 / 0,46 / 1,15 \| 0,12 / 0,26 / 0,53 |
+
+Gegen die alte Größe: `t60_frueh` an C4 5,37 s, vorwärts 2,64 s; die Tiefe des Knicks zeigt am Modell (−33 dB) gegen
+*Salamander* (−14 dB) unmittelbar, was HU1 a fand — der Chor legt zu wenig in die zweite Stufe. Der ganze Ton von
+*Salamander* reicht an C4 über v6–v16 im Median nach 7,9 s auf −40 dB (die Hörprobe v2 nach 11,4 s: leiser gespielt
+ist der Nachklang relativ länger). Im Bass trägt Teilton 1 an C2 vorwärts 13 s (einstufig), die Teiltöne 2 und 3
+fallen mit 1–3 s; an A0 ist Teilton 1 in der Aufnahme zu schwach für eine Zahl (`n` 21 von 22, aber 2,2 s gegen den
+dritten mit 13,6 s — mit Vorsicht zu lesen). Weiter: HU3 (Hammer), HU4 (Boden), dann SM4 b gegen diese Größen.
+
+✅ **HU3 a** (Patrik S159): **R_H wird nachgetragen, wie HT2 a es offenließ.** Die Kraft im Kontakt wird
+F = Q0·Φ + R0·dΦ/dt mit Φ = (Δy)₊^p (Chabassier, Joly & Chaigne 2013, Gl. 13; dΦ/dt aus dem feinen Schritt, F nie
+unter null); R0 kommt als neue Kurve *Hammer damping* (log) in die Hammer-Saite, Vorgabe aus RT-0425 Gl. 5
+(R_H = K_H·10^(0,04366·i − 2,294)) umgerechnet wie Q0 (R0 = R_H·10⁻³ᵖ N·s/mm^p), `.lvinst` Fassung 20, Regler im
+Creator; Masse und Steife bleiben RT-0425. Prüfgrößen: Kontaktzeit je Taste (Ziel unter 1 ms an C8, rund 4 ms im
+Bass — Askenfelt & Jansson, KTH), die Auslenkung gegen Chabassier Tab. IV (bestehender Fall), das Spektrum der Kraft
+an C6 und C8 gegen *Salamander* (Teilton 2 an C8 bei −30 dB statt −111); danach Pegel neu messen
+(`instrument_pegel.py`, `loop_werte.txt`), Klangfassung hochzählen. Grund: K_H und R_H sind bei Chabassier ein Satz
+(RT-0425 Gl. 4 und 5; beim Laden überwiegt der R-Term den K-Term um (R/K)·p·v/δ, an C8 rund 10⁵) — LumiViz hatte
+die eine Hälfte übernommen und die andere weggelassen, darum ist der Hammer oben weich (30 N erst bei 0,87 mm
+Eindruck an C8, Puls 1,6 ms, über 5–6 kHz nichts). Verworfen: b (Stulov — keine Parameter je Taste, das Verhältnis
+zu den Saiten aus RT-0425 bliebe ungemessen), c (Masse und Q0 im Diskant von Hand — erfindet Werte, lässt den Bass
+unberührt). Kippt auf b, wenn mit R_H die Kontaktzeit an C8 über 1 ms bleibt, die Auslenkung gegen Tab. IV schlechter
+wird oder der R-Term die Rechnung mit achtfacher Überabtastung instabil macht.
+
+**Befund S159 (vor dem Bau von HU3 a — die Grundlage war falsch, Claude):** Die Formel R_H = K_H·10^(0,04366·i − 2,294)
+stammt aus dem Text, den das Abrufwerkzeug aus dem PDF zog; **Abb. 4(c) von RT-0425 zeigt R_H flach zwischen 10⁵ und
+10⁶ über die ganze Tastatur** (K_H steigt von 10⁸ auf 10¹²), die Formel liest sich also R_H = K_H·10^(−0,04366·i −
+2,294) — ein verlorenes Minus (an Taste 1 ergibt das 2,3·10⁵, an Taste 88 1,5·10⁶, wie in der Abbildung). Damit ist
+R/K an C8 7·10⁻⁷ s statt 35 s, und der R-Term ist beim Laden eine Korrektur von wenigen Prozent, nicht das
+Hunderttausendfache. Nachgerechnet mit einer Replik des Kontakts (`hammer_kontakt.py`, modale Saite, Hammer wie
+`rechneHammerTon`, achtfach feiner; lokal unter `.claude/handover/hoerproben_31d/messung/`), Kontaktzeit in ms:
+
+| Fassung | C6 mf / ff | C8 mf / ff | Impuls an C8 mf, k2 / k3 rel. k1 |
+|---|---|---|---|
+| RT-0425 wie gebaut (ohne R) | 1,48 / 1,17 | **1,75** / 0,92 | −35 / −42 dB |
+| mit R_H (richtiges Vorzeichen) | 1,46 / 1,15 | 1,75 / 0,91 | −35 / −42 dB |
+| p = 3,0 statt 3,54 (C8) bzw. 2,84 (C6) | 1,74 / 1,25 | **0,79** / 0,55 | −22 / −51 dB |
+| Masse 3,5 g | 1,17 / 0,81 | 1,55 / 0,79 | −22 / −65 dB |
+| Masse 3,5 g und p = 3,0 | 1,41 / 0,94 | 0,67 / 0,45 | −23 / −39 dB |
+| K_H hundertfach | 1,04 / 1,00 | 0,78 / 0,54 | −27 / −32 dB |
+
+**R_H bewirkt nichts; der Hebel an C8 ist der Exponent p.** Gl. 3 ist eine Parabel in der Taste, die über die
+Tabelle der veröffentlichten Simulationen hinaus (Chabassier, Joly & Chaigne 2013, Tab. III: letzte Note bei
+1571 Hz, G6, Taste 71 — dort p = 3,0, K_H 2,3·10¹¹, M_H 6,77 g; Gl. 3 gibt an Taste 71 ebenfalls 3,0) bis 3,54 an
+Taste 88 weiterläuft; mit p = 3,0 fällt die Kontaktzeit an C8 unter 1 ms, Teilton 2 des Impulses steigt von −35 auf
+−22 dB. An C6 (p 2,84) hilft p nicht — dort braucht es einen leichteren oder härteren Hammer (3,5 g: 1,17 ms; K_H
+hundertfach: 1,04 ms). HU3 a wird so nicht gebaut; Entscheid **HU3-1** (im Chat S159 vorgelegt).
+
+**Befund S159 (Frage Patrik: liefert Stulov nicht das beste Ergebnis?):** Stulov & Kartofelev 2009 Gl. 9 (nach
+Stulov 2005) gibt für alle 88 Hämmer Masse, p, Q0 und die Hysterese (ε, τ): an C6 m 6,75 g, p 4,66, Q0 3260 N/mm^p;
+an C8 5,34 g, p 5,02, Q0 9600 (RT-0425: p 2,84 / 3,54, Q0 334 / 49). Kontaktzeit (Replik `hammer_stulov.py`): C8 mf
+0,89 ms, ff 0,55 (RT-0425 1,75 / 0,92; p fest 3,0: 0,79 / 0,55); C6 1,42 / 1,11 (RT-0425 1,48 / 1,17) — die
+Hysterese ändert daran unter 2 %. **Entscheidend ist eine andere Größe: die Helligkeit je Anschlagstärke**
+(`helligkeit_n` in `salamander_c5.txt`: dB von Teilton n gegen den Grundton je dB Pegel des Grundtons), die nur am
+Hammer hängt (Saite und Boden sind linear) und aus dem Kraftimpuls folgt (`hammer_helligkeit.py`, Stufen −30 … 0):
+
+| Taste | n = 2 / 3 / 4 / 5 / 6 / 7 / 8 | *Salamander* | RT-0425 (wie gebaut) | Stulov Gl. 9 |
+|---|---|---|---|---|
+| C4 | | 0,20 / 0,25 / 0,69 / 0,98 / 0,97 / 1,65 / 1,92 | 0,28 / 0,09 / 0,42 / 0,48 / 0,68 / 1,21 / 1,47 | 0,35 / 0,34 / 0,73 / 1,01 / 1,21 / 1,98 / 2,77 |
+| C6 | | 1,17 / 0,73 / 2,18 / 1,48 / 1,53 / 1,81 / 2,55 | 0,00 / 0,33 / 0,31 / 0,29 / 0,24 / 0,32 / 0,29 | 0,29 / 0,44 / 0,63 / 0,98 / 0,79 / 1,03 / 1,18 |
+
+Der Hammer nach RT-0425 wird mit der Stärke kaum heller (an C6 0,3 dB je dB bei allen Teiltönen; *Salamander* 0,7–2,5)
+— das ist, was das Hörurteil S158 an 08/09 fand („kein Unterschied der Klangfarbe“ zwischen den Stufen). Stulov liegt
+an C4 nah, an C6 näher, noch unter *Salamander*. Das ist der Kipppunkt von HT2 a im Wortlaut („Kippt auf b, wenn in
+31d die Helligkeit je Stärke gegen *Salamander* mit Stulov besser passt“). **Empfehlung für HU3-1 geändert auf c**
+(Stulov).
+
+✅ **HU3-1 c** (Patrik S159; ersetzt HU3 a, kippt HT2 a auf dessen Option b): **Der Hammer kommt vollständig von Stulov**
+(Stulov & Kartofelev 2009, Gl. 9 nach Stulov 2005): Masse m = 11,074 − 0,074·n + 10⁻⁴·n² g, p = 3,7 + 0,015·n,
+Q0 = 183·e^(0,045·n) N/mm^p, Hysterese ε = 0,9894 − 8,8·10⁻⁵·n², τ = (2,72 − 0,02·n + 9·10⁻⁵·n²) µs, n = MIDI − 20 —
+als Vorgabe der Kurven `hammerMass`, `hammerExponent`, `hammerStiffness` und zweier neuer Kurven `hammerHysteresis`
+(ε, linear, 0 … 0,999) und `hammerRelaxation` (τ in µs, log); die Kraft nach Gl. 2, F = F0·[u^p − (ε/τ)·∫u^p(ξ)·e^(−(t−ξ)/τ)dξ]
+mit F0 = Q0/(1 − ε), das Integral als Rekursion im feinen Schritt; `.lvinst` Fassung 20; die Saiten bleiben RT-0425.
+Prüfgrößen: Kontaktzeit je Taste (unter 1 ms an C8, rund 4 ms im Bass), **Helligkeit je Stärke gegen
+`helligkeit_n` von *Salamander*** (neu als Fall), die Auslenkung gegen Chabassier Tab. IV (bestehender Fall, Toleranz
+nach Befund), Spektrum der Kraft an C6 und C8; danach Pegel neu messen (`instrument_pegel.py --messung`,
+`loop_werte.txt`), `kKlangfassung` hochzählen, `grand_piano.lvinst` neu schreiben. Grund: die gemessene Helligkeit
+je Stärke entscheidet HT2 a's Kipppunkt für Stulov; der Satz ist für alle 88 Hämmer belegt, ohne Extrapolation.
+Patrik dazu (Regel für alle Projekte, globale CLAUDE.md): nicht das Einfache empfehlen, sondern das Beste und
+Richtige — eine Einsparung beim Bau wird beim Suchen in fehlerhaften Resultaten um ein Vielfaches verloren.
+Verworfen: a (p festhalten — ändert die Helligkeit je Stärke nicht), b (Masse nach Conklin dazu — mischt Quellen,
+ohne die Helligkeit zu treffen). Kippt zurück auf a, wenn die Auslenkung gegen Tab. IV mit Stulov um mehr als das
+Doppelte abweicht oder die Rechnung mit achtfacher Überabtastung instabil wird.
+
+**HU3-1 c gebaut (S159):** `HammerSaite` trägt `hammerHysterese` (ε, linear, 0 … 0,999) und `hammerRelaxationUs` (τ,
+log, 0,01 … 1000 µs); `stulovHammer*(n)` liefern Gl. 9, die Vorgabe nimmt sie an den sechzehn Hammer-Tasten (p und ln Q0
+sind Geraden, Masse, ε und τ Parabeln — zwischen den Stützpunkten auf 1 % bzw. 2 %); `rechneHammerTon` rechnet im
+Kontakt F = F0·[φ − (ε/τ)·I] mit der Rekursion I ← I·e^(−Δt/τ) + φ·τ·(1 − e^(−Δt/τ)) über den feinen Schritt, F nie
+unter null, mit ε = 0 wie vorher. `.lvinst` Fassung 20 (`hammerHysteresis`, `hammerRelaxation`, immer geschrieben),
+`kKlangfassung` 4, `grand_piano.lvinst` neu geschrieben (Level 4,1788 → 4,0355: gemessen −13,097 LUFS, die Loops des
+Flügels sind für den Bezug geschrieben, darum alt = neu in `instrument_pegel.py`), `klangfassung.txt` neu (nur Abdrücke).
+Die Bezugstöne 31d-7 (`hammer_bezug_saite.json`, RT-0425-Hammer in der Datei) rechnen mit ε = 0 weiter Bit für Bit
+wie vorher. Neu `test_LoopHammerTon` „HU3-1 Stulov: Kontaktzeit je Taste und Helligkeit je Staerke“; der Fall
+„Anschlag gegen Chabassier“ bewacht die Auslenkung jetzt als Band 0,25 … 1,5 der Tabelle (vorher Approx ±50 %, das
+RT-0425 mit 0,36 … 0,74 knapp bestand; Stulov 0,32 … 0,74 — die Auslenkung liegt seit 31b unter der Tabelle, Ursache
+offen, `modell.md` §10). Gemessen am Modell (Kraft am Steg ohne Boden, Release-clang):
+
+| Taste | Kontakt mf / ff, ms (RT-0425 davor) | Helligkeit je Stärke n = 2 … 8 (*Salamander*) |
+|---|---|---|
+| A0 | 6,60 / 5,37 (5,7 bei 0,5 m/s an D♯1) | — |
+| C2 | 3,56 / 2,88 (3,8 bei 1,5 m/s) | — |
+| C4 | 2,34 / 1,84 (2,2–2,9 an F3) | 0,32 / 0,27 / 0,64 / 0,87 / 1,12 / 1,98 / 2,72 (0,20 / 0,25 / 0,69 / 0,98 / 0,97 / 1,65 / 1,92) |
+| C6 | 1,40 / 1,09 (1,48 / 1,17) | 0,38 / 0,78 / 1,08 / 1,11 / 1,09 / 2,50 / 3,65 (1,17 / 0,73 / 2,18 / 1,48 / 1,53 / 1,81 / 2,55) |
+| G7 | 1,05 / 0,71 | — |
+| C8 | **0,86 / 0,52** (1,75 / 0,92) | — |
+
+Die Helligkeit je Stärke trifft *Salamander* jetzt an C4 bis auf 0,2 dB/dB, an C6 ab Teilton 4 innerhalb des Doppelten
+(RT-0425: 0,3 bei allen n); die Kontaktzeit an C8 liegt unter 1 ms, im Bass bei 5–7 ms (KTH „about 4 ms“ — Stulovs
+eigene Rechnung für Basshämmer, Abb. 2 seiner Arbeit, hier nicht gegengeprüft). Bereich `*Hammer*,*Loop Werte*,
+*Klangfassung*,*Loop Pegel*,*Instrument*,*Salamander*,*Nocturne*,*Fluegel*,*Bausteine*,*Teiltonmessung*` 146 / 146
+unter Release-clang und Testing-MSVC; kein voller Lauf (Patrik S159). **Hörproben des neuen Hammers:** keine
+angelegt — nach HU2 a wird nach dem Setzen gehört; wer vorher hören will: `LUMIVIZ_31D_WAV` legt die neun Dateien in
+rund 10 s neu ab (die Fassung „nach 31d-4“ darin rechnet jetzt mit dem Stulov-Hammer).
 
 **31d-8, 8.2 bis 8.5 gebaut (S157, nach dem Wechsel auf Opus):**
 - **8.2:** `grand_piano.lvinst` aus dem Werkzeug (`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1`), Kurven und Tastatur gleich der
@@ -4058,7 +4213,7 @@ Gesamtausgabe bei IMSLP als Scan vor. *Angaben aus den Werkseiten bei IMSLP, im 
 
 | Schritt | Inhalt | Stand | hängt an |
 |---|---|---|---|
-| 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | Hörurteil S158 (Patrik) mit Messung: „grob falsch“ → HU1 a Diagnose → **Befund S159** (Fable): Rechenweg = Modell; `lateDecay` nie gesetzt, `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (C4 5,4 statt 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig, nicht 10°), im Bass der Boden (Schallwand, tiefe Moden), im Diskant der Hammer (Kontakt 1,3–1,6 ms statt unter 1 ms) → **HU2 offen** | HU2 |
+| 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | Hörurteil S158 (Patrik) mit Messung: „grob falsch“ → HU1 a Diagnose → **Befund S159** (Fable): Rechenweg = Modell; `lateDecay` nie gesetzt, `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (C4 5,4 statt 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig, nicht 10°), im Bass der Boden (Schallwand, tiefe Moden), im Diskant der Hammer (Kontakt 1,3–1,6 ms statt unter 1 ms) → **HU2 a:** (1) Prüfgröße Hüllkurve vorwärts — **gebaut S159** (`Vorwaerts`, `huellkurveZeiten`, Kanalmittel; `salamander_c5.txt` neu, Wächter, UF5 a berichtet), (2) **HU3-1 c gebaut S159** (Hammer nach Stulov Gl. 9 mit Hysterese, `.lvinst` 20, Klangfassung 4; C8 0,86 ms, Helligkeit je Stärke nahe Salamander), HU4 Boden offen, (3) SM4 b mit zweiter Ebene | HU4 |
 | 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — `Offene_Punkte` §7); `LumiViz.exe` neu | — |
 | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | ruht; nach dem Befund S159 greifen die vorgelegten Werte γ 0–20° nicht (jede waagrechte Mode bekommt sin²γ/N) — Form von 8.5 nach HU2 neu | HU2 |
 | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
@@ -5233,6 +5388,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.99.0 | 2026-10-28 | Session 159. HU3 a (R_H nachtragen) — vor dem Bau als Fehllesung erkannt (verlorenes Minus in RT-0425 Gl. 5, Abb. 4c; R_H wirkungslos); Befund p über Taste 71 extrapoliert; HU3-1 vorgelegt, Empfehlung nach Patriks Rückfrage auf c geändert (Helligkeit je Stärke an Salamander trifft Stulov, RT-0425 kaum); **HU3-1 c gebaut:** Hammer nach Stulov Gl. 9 mit Hysterese (`hammerHysteresis`, `hammerRelaxation`, `.lvinst` 20, Klangfassung 4, `grand_piano.lvinst` Level 4,0355, `loop_werte.txt` fünf Zeilen), Fall HU3-1 (Kontaktzeit, Helligkeit je Stärke), Chabassier-Fall als Band; C8 0,86 / 0,52 ms. Regel (global): nicht das Einfache empfehlen, jede Option gegen alle Zielgrößen rechnen. |
+| 0.98.0 | 2026-10-28 | Session 159. HU2 a (Reihenfolge: Prüfgröße, HU3 Hammer, HU4 Boden, dann SM4 b mit zweiter Ebene); HU2 a (1) gebaut: Hüllkurve vorwärts als Mess- und Setzgröße (`Vorwaerts`, `huellkurveZeiten`, Kanalmittel in der Energie), `salamander_c5.txt` mit den neuen Zeilen, Wächter, Bericht im dauerhaften Test; Tabelle Salamander gegen Modell. |
 | 0.97.0 | 2026-10-28 | Session 159 (Fable 5.1). Befund HU1 a am gerechneten Ton: Rechenweg = Modell; `lateDecay` nie gesetzt (3·`decay` gegen 36–38 s an C4), `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (Zwei-Geraden-Suche je Kanal unstet; Hüllkurve vorwärts 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig), im Bass der Boden (Schallwand ohne Kurzschluss, tiefe Moden mit T60 3–5 s), im Diskant der Hammer (Kontakt 1,3–1,6 ms, Kraft bricht über 5–6 kHz weg); Messfall `LUMIVIZ_HU1_WAV`; Berichtigung zur Tabelle S158 (C2: Teilton 2, nicht Grundton); Tabelle „Offen“ nachgeführt; HU2 offen. |
 | 0.93.0 | 2026-10-27 | Session 157 (Sitzung mit Fable 5.1). Lage: Hörproben 31d seit dem 25.10. ungehört, das Setzen ein Forschungsproblem (Auflösung der Aufnahme), der Flügel im Programm nicht anspielbar; SP1 a (31d-8 „Spielbar“ vor SM4 b: Hörurteil, `grand_piano` mitgeliefert, Demo-Loop, u/γ/δ nach Gehör), SP2 a (Levenberg–Marquardt über die Stützpunkte der Kurven, ändert ZF6 a), SP3 a (Eindeutigkeit an den Messgrößen, ändert ZF8 a (3)); Teilplan 31d-8 (8.1–8.7) so geklärt, dass der Bau ohne Rückfrage läuft; Lehren für die übrigen Klassen in `InstrumentsCalculation/LEHREN_SETZEN_FLUEGEL.md`. |
 | 0.92.0 | 2026-10-27 | Session 156. Rechenweg der Probe gemessen (`LUMIVIZ_75_ZEIT`, Taktprobe: Wärmegrenze), Längskraft und Pool bitgleich schneller; Probe 7.5.4 neu (54 min): (1), (5), (6), (8), K6-1 a halten, (2), (3), (4), (7) verfehlt; Gegenprobe der Sprünge (Regel (b)); GP1 a, RV1 a gebaut; Probe nach RV1 a verfehlt wieder → SM4 b gilt (GP1 a), 7.5.5 läuft nicht, Teilplan SM4 b offen; PB1 a (Berichte unter `modellierung/hammer-saite/proben/`). |
