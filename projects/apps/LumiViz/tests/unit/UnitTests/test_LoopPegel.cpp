@@ -506,4 +506,84 @@ TEST_SUITE("LoopPegel")
         }
         vergissGemerkteAbstaende();
     }
+
+    TEST_CASE("Loop Pegel CR1: der Creator misst nach einer Aenderung auf einem Thread und merkt sich die Werte")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        const Instrument orgel = *findeInstrument(QStringLiteral("organ"));
+        Instrument laut = orgel;
+        laut.laut *= 2.0;  // 6,02 dB ueber dem Bezug
+        vergissGemerkteAbstaende();
+        const int vorher = gemesseneAbstaende();
+
+        InstrumentCreator creator;  // nicht gezeigt
+        creator.oeffne(laut);
+        const auto* zeile = creator.findChild<QLabel*>(QStringLiteral("creatorLoudness"));
+        const auto* angleichen = creator.findChild<QPushButton*>(QStringLiteral("creatorMatch"));
+        REQUIRE(zeile != nullptr);
+        REQUIRE(angleichen != nullptr);
+
+        // was der Takt tut: nicht gemerkt, also auf dem Thread — die Oberflaeche kommt sofort zurueck
+        creator.starteMessung();
+        CHECK(creator.misstNoch());
+        CHECK_FALSE(creator.abstand().has_value());
+        CHECK(zeile->text() == QStringLiteral("Measuring loudness..."));
+        CHECK_FALSE(angleichen->isEnabled());
+        // der Takt des Creators sammelt das Ergebnis ein
+        for (int runde = 0; runde < 600 && creator.misstNoch(); ++runde)
+        {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+            QThread::msleep(50);
+        }
+        REQUIRE_FALSE(creator.misstNoch());
+        REQUIRE(creator.abstand().has_value());
+        CHECK(*creator.abstand() == doctest::Approx(6.02).epsilon(0.01));
+        CHECK(zeile->text() == QStringLiteral("6.0 dB louder than the other instruments"));
+        CHECK(angleichen->isEnabled());
+        CHECK(gemesseneAbstaende() == vorher + 1);
+
+        // gemerkt: ein zweiter Creator mit demselben Instrument zeigt es sofort, misst nicht noch einmal
+        {
+            InstrumentCreator zweiter;
+            zweiter.oeffne(laut);
+            zweiter.starteMessung();
+            CHECK_FALSE(zweiter.misstNoch());
+            REQUIRE(zweiter.abstand().has_value());
+            CHECK(*zweiter.abstand() == doctest::Approx(6.02).epsilon(0.01));
+            CHECK(gemesseneAbstaende() == vorher + 1);
+        }
+
+        // waehrend der Messung geaendert: das Ergebnis gilt nicht mehr, gemessen wird das Instrument, wie es jetzt ist
+        creator.aendere([](Instrument& i) { i.laut *= 0.75; });  // ein Wert, der noch nicht gemerkt ist
+        creator.starteMessung();
+        CHECK(creator.misstNoch());
+        creator.aendere([&orgel](Instrument& i) { i.laut = orgel.laut; });  // auf dem Bezug, noch nicht gemerkt
+        creator.starteMessung();  // laeuft schon: wartet auf die erste
+        creator.warteAufAbstand();
+        REQUIRE(creator.abstand().has_value());
+        CHECK(std::abs(*creator.abstand()) <= 0.05);
+        CHECK(zeile->text() == QStringLiteral("as loud as the other instruments"));
+        CHECK(gemesseneAbstaende() == vorher + 3);
+
+        // nicht messbar (Drums): ohne Thread
+        creator.oeffne(*findeInstrument(QStringLiteral("drum_kick")));
+        creator.starteMessung();
+        CHECK_FALSE(creator.misstNoch());
+        CHECK_FALSE(creator.abstand().has_value());
+        CHECK(zeile->text() == QStringLiteral("Drums follow the kits"));
+
+        // laeuft noch eine Messung, wenn der Creator stirbt, wartet er auf sie
+        {
+            InstrumentCreator kurz;
+            Instrument neu = orgel;
+            neu.laut *= 1.25;  // noch nicht gemerkt (1,5 ist es schon: 2 · 0,75 oben)
+            kurz.oeffne(neu);
+            kurz.starteMessung();
+            CHECK(kurz.misstNoch());
+        }
+        vergissGemerkteAbstaende();
+    }
 }

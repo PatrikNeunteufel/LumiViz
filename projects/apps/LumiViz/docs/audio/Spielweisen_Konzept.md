@@ -1,7 +1,7 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.94.0
-> **Datum:** 2026-10-27 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.95.0
+> **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
 > Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8)
@@ -3679,6 +3679,10 @@ p −18, mp −15, mf −12, f −6, ff 0 dB; Crescendo und Diminuendo gleichmä
 über der Umgebung; die Tafel steht in der Beschreibung des Loops.** Grund: jede Stärke folgt aus dem Zeichen der
 Ausgabe; mf = −12 dB ist die Stufe der Hörproben. Verworfen: b (nach Gehör). Kippt, wenn die Hörproben zeigen, dass die
 Stufen zu eng oder zu weit liegen — dann ändert sich nur die Tafel.
+
+**Befund S158 (Kostprobe Takte 0–15, `.claude/handover/nocturne_31d9/kostprobe.py`; Patrik: die Unterschiede sind teilweise sehr extrem):** gemessen am `grand_piano` (RMS der ersten 0,5 s), sechs Stufen der Tafel ergeben 6,6–7,2 dB Klang bei C4 und 7,4–9,4 dB bei A5 — p → f 13,3 dB (C4) und 17,3 dB (A5) statt 12; das Modell spreizt (der Filz wird bei schnellerem Hammer härter), am stärksten in der Lage der Melodie; ein Akzent wird dort zu +8–9 dB. Ein Akkord der linken Hand liegt 1,8 dB über einem Ton derselben Stufe. Die Kostprobe führte die Gabeln noch nicht aus — die Stufe sprang.
+
+✅ **DY1 a** (Patrik S158): **Die Gabeln und *cresc.* zuerst nach N2 a ausführen, dann neu hören; klingt es dann immer noch extrem, die Tafel mit Messung je Lage und einer Quelle für die Abstände neu vorlegen.** Eine Gabel führt gleichmäßig zum nächsten Zeichen, höchstens bis zum Ende ihres Takts (die Daten tragen ihr Ende nicht); steht dort ein Buchstabe, zu seiner Stufe, sonst um 6 dB hin. Grund: die Tafel nicht an einer Fassung beurteilen, die N2 a noch nicht ausführt. Verworfen: b (die Tafel als Pegel am Ausgang, im Skript über eine gemessene Kurve je Lage umgerechnet). Kippt, wenn auch mit Gabeln die Akzente und f-Stellen hart klingen — dann b oder eine engere Tafel. Hörurteil bei Patrik, gesammelt später.
 
 ✅ **N3 a** (Patrik S157): **Das Pedal genau nach *Ped.* und ✱ der Gesamtausgabe auf Sustain (1 beim Treten, 0 beim
 Heben); wo die Ausgabe nichts zeigt, kein Pedal.** Grund: Treue zur Quelle (UF15 a). Verworfen: b (nach heutiger

@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.291.0
-> **Datum:** 2026-10-28 (Session 157)
+> **Version:** 1.292.0
+> **Datum:** 2026-10-28 (Session 158)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3103,7 +3103,7 @@ Idee Preset-Warmup/Pre-Roll.
   **S149: PL31 a** — erst 31c abschließen, vorher alle Umfangsfragen klären; geklärt mit PS1 a, PF1 a, KV1 a, AW1 a,
   FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; **fester Plan IP1, 31c-6 bis 31c-9** im
   `Spielweisen_Konzept` §4.1; IP1 (Fenster *Instruments* misst im Hintergrund, Loop_Konzept §4n) davor — **gebaut
-  S149**, Release-clang `*Pegel*,*Palette*` 115 / 115. **Offen bei CMakeCraft:** die Konfiguration Testing baut
+  S149**, Release-clang `*Pegel*,*Palette*` 115 / 115; **S158: CR1 a** — der Creator misst ebenso auf einem Thread und gemerkt (beim Flügel vorher 0,65–1,9 s im Vordergrund nach jeder Änderung), gebaut; **offen:** *Chords* mit dem Flügel ist im Messfall schnell (2–3 ms, das erste Öffnen 0,5 s für jedes Instrument) — welcher Weg bei Patrik „ewig“ dauert, ist nicht nachgestellt. **Offen bei CMakeCraft:** die Konfiguration Testing baut
   unter MSVC mit `/MT` und ohne Optimierung (CC-Befund F1, F2) — **TC1 a** (Patrik S149): Testing optimiert mit
   Asserts und Debug-Info (`/O2 /Ob1 /Zi`, `-O2 -g`, ohne `NDEBUG`), CRT `/MD`, Pflichtzeile
   `project(<Name> LANGUAGES NONE)`; in CMakeCraft v0.13.0, mit SH und CS geklärt (beide ohne Einwand). Unter v0.13.0
@@ -3210,7 +3210,7 @@ Idee Preset-Warmup/Pre-Roll.
   | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | offen — Patrik | Proben liegen |
   | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
   | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
-  | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, 9.2 entschieden (VZ1 a, VZ2 a), 9.3 gebaut; 9.4 Übertragung läuft (TR1 a): Takte 0–15 von 34 übertragen (Arbeitsstand lokal unter `.claude/handover/nocturne_31d9/`), noch keine `.lvloop` | — |
+  | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1 gelesen, 9.2 entschieden (VZ1 a, VZ2 a), 9.3 gebaut; 9.4 Übertragung läuft (TR1 a): Takte 0–15 von 34 übertragen (Arbeitsstand lokal unter `.claude/handover/nocturne_31d9/`); Kostprobe der Takte 0–15 als `.lvloop` (S158, `kostprobe.py`, mit Gabeln nach DY1 a) — Hörurteil bei Patrik | — |
   | 31d-7 C | vierte Fassung der Hörproben, `modell.md` §2, §5, §6, §9, §10 | offen | 8.6 |
   | 31e | Mitschwingen (UF8 a, UF9 a) | offen, Plan steht | — |
   | 31f | Spielweisen: halbes Pedal, Sostenuto, Una corda, Geräusche (UF10 a, UF11 a) | offen, Plan steht | 31e |
@@ -6295,6 +6295,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.292.0 | 2026-10-28 | Session 158. §7 Spielweisen: Kostprobe der Nocturne (Takte 0–15) als `.lvloop`, Befund zur Spreizung der Tafel am Flügel, DY1 a (Gabeln zuerst). CR1 a (der Creator misst auf einem Thread, gemerkt, wie IP1 a) gebaut; *Chords* beim Flügel offen. |
 | 1.290.0 | 2026-10-27 | Session 157 (Fable 5.1). §7 Spielweisen: SP1 a (31d-8 „Spielbar“ vor SM4 b), SP2 a (Levenberg–Marquardt über die Stützpunkte), SP3 a (Eindeutigkeit an den Messgrößen); Teilplan 31d-8 (8.1–8.7); Lehren für InstrumentsCalculation. Nichts gebaut. |
 | 1.289.0 | 2026-10-27 | Session 156. §7 Spielweisen: Probe 7.5.4 zweimal (Pool, bitgleich schneller), SM4 a gekippt (GP1 a, RV1 a), Teilplan SM4 b (ZF1 a–ZF9 a), ZZ1 a (ein Anlauf, sonst Gehör), PB1 a; voller Lauf 1631 / 1631 unter beiden Compilern. |
 | 1.288.0 | 2026-10-26 | Session 155. §7 Spielweisen: Teilplan 7.5 (K1 a–K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a); 7.5.1–7.5.3 gebaut (Kurven nach Schroeder, `salamander_kurven.txt`, Kurvenabstand); Probe 7.5.4 gestartet; Recherche Grenzen, `Bibliothek_offen.md`. |

@@ -24,11 +24,13 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Pegel.hpp"
 
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QDropEvent>
+#include <QElapsedTimer>
 #include <QLabel>
 #include <QMimeData>
 #include <QMouseEvent>
@@ -89,6 +91,51 @@ std::vector<int> hoehen(const Muster& m)
 }
 
 }  // namespace
+
+// Messung (S158, Patrik: Chords und Edit instrument dauern beim Fluegel „ewig“): die Zeit fuer das Oeffnen von
+// Editor, Chords und Creator je Instrument; meldet nur Zahlen, laeuft nur mit LUMIVIZ_OEFFNEN_MESSUNG=1
+TEST_CASE("Loop Akkord Fenster S158: Zeit fuer das Oeffnen je Instrument (LUMIVIZ_OEFFNEN_MESSUNG)")
+{
+    if (qEnvironmentVariableIntValue("LUMIVIZ_OEFFNEN_MESSUNG") != 1)
+    {
+        MESSAGE("LUMIVIZ_OEFFNEN_MESSUNG nicht gesetzt — keine Messung");
+        return;
+    }
+    Anwendung anwendung;
+    for (const char* name : {"guitar", "house_piano", "grand_piano", "guitar", "grand_piano"})
+    {
+        Loop loop;
+        Muster mel;
+        mel.name = QStringLiteral("Mel");
+        mel.art = MusterArt::Instrument;
+        mel.instrument = QLatin1String(name);
+        mel.noten = {Note{0, 4, 60, 0.8}};
+        loop.muster = {mel};
+        loop.kanaele = {{QStringLiteral("Lead"), true, {{QStringLiteral("Mel"), 0, 1}}}};
+        loop.richte();
+        QElapsedTimer uhr;
+        uhr.start();
+        InstrumentEditor editor;
+        REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
+        const qint64 zeigen = uhr.restart();
+        editor.oeffneAkkorde(false);
+        const qint64 akkorde1 = uhr.restart();
+        editor.oeffneAkkorde(false);
+        const qint64 akkorde2 = uhr.restart();
+        const bool creator = editor.oeffneCreator(false);
+        const qint64 bearbeiten = uhr.restart();
+        // was der Creator ueber seinen Takt (m_messTakt) danach im Vordergrund misst
+        Instrument instrument;
+        REQUIRE(holeInstrument(mel.instrument, instrument));
+        uhr.restart();
+        const auto abstand = abstandZumBezug(instrument, 44100);
+        const qint64 messen = uhr.restart();
+        MESSAGE(std::string(name) << ": zeige " << zeigen << " ms, Chords " << akkorde1 << " ms, noch einmal "
+                                  << akkorde2 << " ms, Creator " << bearbeiten << " ms"
+                                  << (creator ? "" : " (nicht geoeffnet)") << ", Pegel messen " << messen << " ms ("
+                                  << (abstand ? *abstand : 0.0) << " dB)");
+    }
+}
 
 TEST_CASE("Loop Akkord Fenster 26e-2: anhoeren in vier Spielarten, fremde Toene, Lage")
 {

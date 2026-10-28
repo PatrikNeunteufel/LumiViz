@@ -17,6 +17,7 @@
 #include "loop/SaitenZeile.hpp"
 #include "loop/StrumZeile.hpp"
 #include "loop/SignalWeg.hpp"
+#include "loop/Tonspeicher.hpp"  // instrumentAbdruck: misst die Messung noch das Instrument (CR1 a)?
 
 #include <QAction>
 #include <QButtonGroup>
@@ -54,7 +55,9 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
+#include <thread>
 #include <utility>
 
 namespace lumi::loop
@@ -467,10 +470,25 @@ void Tastenleiste::mouseReleaseEvent(QMouseEvent*)
 // InstrumentCreator
 // =============================================================================
 
+/// CR1 a: der Thread schreibt `ergebnis` und setzt danach `fertig`; gelesen wird erst nach `join`.
+struct InstrumentCreator::Messung
+{
+    std::thread faden;
+    std::atomic<bool> fertig{false};
+    QByteArray abdruck;  ///< des gemessenen Instruments
+    std::optional<double> ergebnis;
+};
+
 InstrumentCreator::InstrumentCreator(QWidget* parent) : QWidget(parent, Qt::Tool)
 {
     setObjectName(QStringLiteral("loopInstrumentCreator"));
     setupUI();
+}
+
+InstrumentCreator::~InstrumentCreator()
+{
+    // eine Messung laesst sich nicht abbrechen (die Standardprobe rechnet am Stueck); was sie misst, ist danach gemerkt
+    if (m_messung != nullptr && m_messung->faden.joinable()) m_messung->faden.join();
 }
 
 QString InstrumentCreator::vorhoerDatei()
@@ -564,7 +582,10 @@ void InstrumentCreator::setupUI()
     m_messTakt = new QTimer(this);
     m_messTakt->setSingleShot(true);
     m_messTakt->setInterval(300);
-    connect(m_messTakt, &QTimer::timeout, this, &InstrumentCreator::messeAbstand);
+    connect(m_messTakt, &QTimer::timeout, this, &InstrumentCreator::starteMessung);
+    m_messFertig = new QTimer(this);
+    m_messFertig->setInterval(100);
+    connect(m_messFertig, &QTimer::timeout, this, &InstrumentCreator::sieheNachMessung);
 
     // --- die zweite Zeile (Stufe 14b; Skizze gebilligt, Patrik S114): was das
     // Fenster „Instruments" von einem Instrument zeigt und wonach es filtert
@@ -2144,7 +2165,65 @@ Instrument InstrumentCreator::fuerBild(bool nurGewaehlte) const
 void InstrumentCreator::messeAbstand()
 {
     m_messTakt->stop();
-    m_abstand = abstandZumBezug(m_instrument, 44100);
+    zeigeAbstand(abstandZumBezugGemerkt(m_instrument, kPegelRate));
+}
+
+void InstrumentCreator::starteMessung()
+{
+    m_messTakt->stop();
+    // Gemerktes sofort; was nicht messbar ist, ist nie gemerkt und braucht keinen Thread
+    if (const auto gemerkt = gemerkterAbstand(m_instrument, kPegelRate))
+    {
+        zeigeAbstand(*gemerkt);
+        return;
+    }
+    if (!pegelMessbar(m_instrument))
+    {
+        zeigeAbstand(std::nullopt);
+        return;
+    }
+    if (m_messung != nullptr) return;  // laeuft: danach sieht `sieheNachMessung`, ob das Instrument noch so ist
+    m_abstand.reset();
+    m_angleichen->setEnabled(false);
+    m_abstandZeile->setText(tr("Measuring loudness..."));
+    m_abstandZeile->setStyleSheet(QString());
+    m_abstandZeile->setEnabled(false);
+    m_messung = std::make_unique<Messung>();
+    Messung* messung = m_messung.get();
+    messung->abdruck = instrumentAbdruck(m_instrument);
+    messung->faden = std::thread([messung, instrument = m_instrument] {
+        messung->ergebnis = abstandZumBezugGemerkt(instrument, kPegelRate);
+        messung->fertig.store(true);
+    });
+    m_messFertig->start();
+}
+
+void InstrumentCreator::sieheNachMessung()
+{
+    if (m_messung == nullptr || !m_messung->fertig.load()) return;
+    if (m_messung->faden.joinable()) m_messung->faden.join();
+    const bool nochSo = m_messung->abdruck == instrumentAbdruck(m_instrument);
+    const std::optional<double> ergebnis = m_messung->ergebnis;
+    m_messung.reset();
+    m_messFertig->stop();
+    if (nochSo)
+        zeigeAbstand(ergebnis);
+    else
+        starteMessung();  // inzwischen geaendert: das Instrument, wie es jetzt ist
+}
+
+void InstrumentCreator::warteAufAbstand()
+{
+    while (m_messung != nullptr)
+    {
+        if (m_messung->faden.joinable()) m_messung->faden.join();
+        sieheNachMessung();
+    }
+}
+
+void InstrumentCreator::zeigeAbstand(const std::optional<double>& abstand)
+{
+    m_abstand = abstand;
     m_angleichen->setEnabled(m_abstand.has_value() && std::abs(*m_abstand) > 0.05);
     if (!m_abstand)
     {
@@ -2152,6 +2231,7 @@ void InstrumentCreator::messeAbstand()
                                     ? tr("Drums follow the kits")
                                     : tr("Loudness not measured — a sample is not loaded"));
         m_abstandZeile->setStyleSheet(QString());
+        m_abstandZeile->setEnabled(true);
         return;
     }
     const double a = *m_abstand;
@@ -2170,7 +2250,7 @@ void InstrumentCreator::messeAbstand()
 
 bool InstrumentCreator::gleicheAn()
 {
-    const std::optional<double> laut = lautAufBezug(m_instrument, 44100);
+    const std::optional<double> laut = lautAufBezug(m_instrument, kPegelRate);
     if (!laut || std::abs(*laut - m_instrument.laut) < 1e-9) return false;
     aendere([&laut](Instrument& i) { i.laut = *laut; });
     messeAbstand();

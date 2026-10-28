@@ -241,6 +241,8 @@ class InstrumentCreator : public QWidget
 
 public:
     explicit InstrumentCreator(QWidget* parent = nullptr);
+    /// Bricht nicht ab, wartet: eine laufende Messung des Pegels endet erst mit ihrem Instrument (CR1 a).
+    ~InstrumentCreator() override;
 
     /// Dieses Instrument zeigen — eine Kopie. Sein `name` sagt, woher es
     /// kommt: ein mitgeliefertes (Name) oder eine eigene Datei (Pfad).
@@ -292,9 +294,19 @@ public:
     bool speichere();
 
     // --- Match level (Stufe 27f, Entscheid Patrik LL14 a) -------------------
-    /// Die Standardprobe jetzt messen und die Anzeige stellen (nach einer
-    /// Aenderung geschieht es von selbst, kurz verzoegert).
+    /// Die Standardprobe jetzt messen und die Anzeige stellen — gemerkt, im
+    /// Vordergrund (vor Match und Save, die den Wert brauchen). Nach einer
+    /// Aenderung geschieht es von selbst, kurz verzoegert, auf einem Thread.
     void messeAbstand();
+    /// Was der Takt nach einer Aenderung tut (CR1 a, wie IP1 a im Fenster
+    /// *Instruments*): Gemerktes sofort zeigen, sonst auf einem Thread messen
+    /// und solange *Measuring loudness...* zeigen. Laeuft schon eine Messung,
+    /// misst der Creator danach das Instrument, wie es dann ist.
+    void starteMessung();
+    /// Ob gerade auf dem Thread gemessen wird.
+    [[nodiscard]] bool misstNoch() const { return m_messung != nullptr; }
+    /// Warten, bis keine Messung mehr laeuft, und das Ergebnis zeigen (fuer Tests).
+    void warteAufAbstand();
     /// Der zuletzt gemessene Abstand zum Bezug in dB (positiv = lauter); leer =
     /// nicht zu messen (Drums, Sample ohne Aufnahme, still).
     [[nodiscard]] std::optional<double> abstand() const { return m_abstand; }
@@ -601,6 +613,14 @@ private:
     QLabel* m_abstandZeile = nullptr;     ///< wie weit es vom Bezug liegt (27f)
     QTimer* m_messTakt = nullptr;         ///< misst kurz nach einer Aenderung
     std::optional<double> m_abstand;
+    /// Die Messung des Pegels auf ihrem Thread (CR1 a); in InstrumentCreator.cpp.
+    struct Messung;
+    std::unique_ptr<Messung> m_messung;  ///< nullptr = es wird nicht gemessen
+    QTimer* m_messFertig = nullptr;      ///< sieht nach, ob die Messung fertig ist
+    /// Den Abstand zeigen: Zeile, Farbe, Match.
+    void zeigeAbstand(const std::optional<double>& abstand);
+    /// Ist die Messung fertig, ihr Ergebnis zeigen — wenn das Instrument noch so ist, sonst neu messen.
+    void sieheNachMessung();
     // die zweite Zeile im Kopf (Stufe 14b): fuer das Fenster „Instruments"
     QComboBox* m_art = nullptr;
     QLineEdit* m_genres = nullptr;

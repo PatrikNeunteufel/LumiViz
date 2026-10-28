@@ -54,7 +54,6 @@ const QString kKopfEigene = QStringLiteral("My files");
 constexpr int kHoeheBass = 36;    // C2
 constexpr int kHoeheSonst = 60;   // C4
 
-constexpr int kPegelRate = 44100;   // die Rate der Messung (27f), wie im Creator
 constexpr int kMessTaktMs = 100;    // so oft sieht das Fenster nach, ob die Messung fertig ist
 
 }  // namespace

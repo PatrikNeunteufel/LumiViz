@@ -36,6 +36,10 @@ inline constexpr double kInstrumentBezugLufs = -13.4;
 /// oder das Fenster *Instruments* es markiert (Stufe 27f, Entscheid Patrik LL14 a).
 inline constexpr double kBezugToleranzDb = 1.0;
 
+/// Die Rate, in der der Creator und das Fenster *Instruments* messen (27f) — eine,
+/// damit beide denselben gemerkten Wert finden (IP1 a, CR1 a).
+inline constexpr int kPegelRate = 44100;
+
 /// Wie weit die Standardprobe von `instrument` vom Bezug abweicht, in dB
 /// (positiv = lauter als die anderen). Leer = nicht zu messen: die Art `drums`
 /// (sie folgen den Kits, LL10 a), eine Sample-Schicht, deren Aufnahme nicht

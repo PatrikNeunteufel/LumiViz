@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.107.0
-> **Datum:** 2026-10-24 (Session 149)
+> **Version:** 0.108.0
+> **Datum:** 2026-10-28 (Session 158)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3857,6 +3857,32 @@ Threads benutzt) — der Kipppunkt trat nicht ein. Test „Loop Pegel IP1“ in 
 Release-clang `*Pegel*,*Palette*` 115 / 115; Testing-MSVC baut. Nicht gemessen: wie lange das Öffnen bei Patrik
 vorher dauerte.
 
+**Befund S158 (Meldung Patrik: *Edit instrument* und *Chords* dauern beim Flügel „ewig“; gemessen mit dem Messfall
+„Loop Akkord Fenster S158“, `LUMIVIZ_OEFFNEN_MESSUNG=1`, Release-clang):** Der Creator misst nach jeder Änderung
+(Takt 300 ms) über `abstandZumBezug` im Vordergrund und ohne Merken — dieselbe Lücke wie vor IP1, nur im Creator.
+`grand_piano`: Öffnen 163–384 ms, Messen **652–1900 ms**; `guitar` 39–45 ms, `house_piano` 19 ms. *Chords* allein:
+das erste Öffnen 0,5 s (die mitgelieferten Akkorde werden einmal gelesen, gleich für jedes Instrument), danach mit dem
+Flügel 2–3 ms — im Fall nicht langsam; welcher Weg bei Patrik dauert, ist offen.
+
+✅ **CR1 a** (Patrik S158): **Der Creator misst wie das Fenster *Instruments* nach IP1 a: Gemerktes nimmt er sofort,
+den Rest misst ein Thread; eine neue Änderung macht das laufende Ergebnis ungültig, solange gemessen wird, zeigt die
+Zeile *Measuring loudness...*; dazu ein Fall in `test_LoopPegel`.** Grund: dieselbe Regel an der zweiten Stelle, an der
+gemessen wird — Messung und Ergebnis an einem Ort, gleiches Verhalten. Verworfen: b (nur auf Knopfdruck messen — die
+laufende Rückmeldung beim Bauen eines Instruments fiele weg). Kippt, wenn das Fenster beim Flügel trotz Thread merklich
+hängt — dann ist der Rest das Öffnen selbst (bis 384 ms), eine eigene Frage.
+
+**Gebaut CR1 (S158):** `kPegelRate` (44100) steht in `loop/Pegel.hpp` statt je einmal in Creator und Fenster — beide
+finden denselben gemerkten Wert. `InstrumentCreator`: der Takt nach einer Änderung ruft `starteMessung` — Gemerktes
+(`gemerkterAbstand`) und nicht Messbares sofort, sonst ein `std::thread` (`Messung`: Abdruck des Instruments,
+Ergebnis, fertig) mit `abstandZumBezugGemerkt`; ein Takt von 100 ms (`sieheNachMessung`) zeigt das Ergebnis, wenn
+der Abdruck noch stimmt, sonst misst er das Instrument, wie es dann ist; eine Änderung während der Messung startet
+keinen zweiten Thread. `messeAbstand` (vor Match und Save, die den Wert brauchen) misst weiter im Vordergrund, jetzt
+gemerkt. Die Standardprobe lässt sich nicht mitten im Rechnen abbrechen: der Destruktor wartet höchstens eine Messung
+(beim Flügel bis rund 2 s). `misstNoch`, `warteAufAbstand` für Tests. Test „Loop Pegel CR1“: die Oberfläche kommt sofort
+zurück, der Takt zeigt das Ergebnis, ein zweiter Creator misst nicht noch einmal, eine Änderung mitten in der Messung,
+Drums ohne Thread, der Creator stirbt mitten in der Messung. Release-clang `*Pegel*` 31 / 31, Editor, Palette, Chords
+und Creator 32 / 32.
+
 **27g (S139):** Hörprobe Titanium vorher und nachher (lokal unter
 `.claude/handover/lautheit_s139/hoerproben/`), je Kanal gemessen: Guitar −45,2 → −34,3 LUFS
 (+10,9), Pad −36,6 → −34,2, Bass −29,4 → −33,2, Piano −25,9 → −29,9, FX −37,1 → −39,0; Drums,
@@ -4027,6 +4053,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.108.0** (S158, 2026-10-28): §4n Befund zum langsamen Creator beim Flügel (gemessen); CR1 a (der Creator misst auf einem Thread, gemerkt, wie IP1 a); CR1 gebaut; `kPegelRate` in `loop/Pegel.hpp`.
 - **0.107.0** (S149, 2026-10-24): §4n Befund zum langsamen Öffnen des Fensters *Instruments* (Pegelmessung auf dem Thread der Oberfläche); IP1 a (im Hintergrund messen, gemerkt unter Abdruck und Klangfassung); IP1 gebaut.
 - **0.106.0** (S144, 2026-10-22): §3.2 der Audio-Clip im Loop kommt nach der Hammer-Saite (Patrik).
 - **0.105.0** (S144, 2026-10-22): §4 Datei — `.lvloop` Fassung 13 mit `channels[].clips[].frozen` (Stufe 30f-1, Spielweisen_Konzept FV2 a).
