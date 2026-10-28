@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.293.0
-> **Datum:** 2026-10-28 (Session 158)
+> **Version:** 1.294.0
+> **Datum:** 2026-10-28 (Session 159)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3205,9 +3205,9 @@ Idee Preset-Warmup/Pre-Roll.
 
   | Schritt | Inhalt | Stand | hängt an |
   |---|---|---|---|
-  | 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | Hörurteil S158 (Patrik) mit Messung: „grob falsch“ (Nachklang in Mitte/Diskant zu kurz, Bass-Anfang falsch, C8 ohne Obertöne) → **HU1 a: zuerst Diagnose** (mit Fable) | — |
+  | 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | Hörurteil S158 (Patrik) mit Messung: „grob falsch“ → HU1 a Diagnose → **Befund S159** (Fable, `Spielweisen_Konzept` §4.1): Rechenweg = Modell; `lateDecay` nie gesetzt, `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (C4 5,4 statt 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig, nicht 10°), im Bass der Boden (Schallwand, tiefe Moden), im Diskant der Hammer (Kontakt 1,3–1,6 ms statt unter 1 ms) → **HU2 offen** | HU2 |
   | 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — §7 Backlog); `LumiViz.exe` neu | — |
-  | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | ruht (HU1 a) | Diagnose HU1 a |
+  | 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | ruht; nach dem Befund S159 greifen die vorgelegten Werte γ 0–20° nicht (jede waagrechte Mode bekommt sin²γ/N) — Form von 8.5 nach HU2 neu | HU2 |
   | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
   | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
   | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1–9.6 fertig (S158): ganz übertragen (TR1 a, Kistner gegengeprüft), `nocturne_demo` mitgeliefert (Daten `asset/loop/nocturne_op9_2.py`, 40 Takte, 3:38), Fader +1,4 dB (Spitze −1 dBFS), Werte und Klangfassung, Hörprobe; voll 1640 / 1640 unter Release-clang (587 s) und Testing-MSVC (600 s) — NP1 a (Fader +1,4 dB); Hörurteil (DY1 a) bei Patrik | — |

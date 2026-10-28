@@ -426,3 +426,117 @@ TEST_CASE("Loop Salamander 31d-8 Hoerproben u, gamma, delta (LUMIVIZ_31D8_WAV)")
     std::ofstream(ziel / "liste.txt", std::ios::binary) << liste.str();
     MESSAGE(liste.str());
 }
+
+TEST_CASE("Loop Salamander HU1 Diagnose (LUMIVIZ_HU1_WAV)")
+{
+    // HU1 a (S159): die Glieder des Rechenwegs einzeln ablegen, damit ein Skript daneben die Huellkurve vorwaerts
+    // und die Teiltoene misst — je Taste die Kraft am Steg (ohne Boden), die Antwort des Bodens und der Ton wie im
+    // Programm, in Fassungen der Hammer-Saite: Vorgabe, vor 31d, Late decay wie Salamander (Teilton 1, sonst 2,
+    // sonst 3), dazu u = 0,25, dazu gamma 10 Grad / delta 3 Cent, dazu High decay wie Salamander. Stufe -12 (mf).
+    const QString zielVariable = qEnvironmentVariable("LUMIVIZ_HU1_WAV");
+    if (zielVariable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_HU1_WAV=<Ordner> legt Kraft, Bodenantwort und Ton je Taste in Fassungen ab (HU1 a)");
+        return;
+    }
+    const std::filesystem::path ziel = zielVariable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    const std::shared_ptr<const lumi::loop::BodenImKlang> boden = lumi::loop::bodenVon(QStringLiteral("lib:steinway_d"));
+    REQUIRE_MESSAGE(boden, "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    lumi::loop::tonspeicher().leere();
+    const std::optional<SalamanderWerte> gelesen = liesWerte("projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_c5.txt");
+    REQUIRE(gelesen.has_value());
+    const std::vector<TastenWerte> salamander = tastenWerteAus(*gelesen);
+    const auto salamanderAn = [&](int midi) -> const TastenWerte* {
+        for (const TastenWerte& w : salamander)
+            if (w.midi == midi) return &w;
+        return nullptr;
+    };
+    const auto spaetVon = [&](int midi, double sonst) {
+        const TastenWerte* w = salamanderAn(midi);
+        if (w == nullptr) return sonst;
+        if (w->t60Spaet.anzahl > 0) return w->t60Spaet.wert;
+        for (const Wert& v : w->t60SpaetK)
+            if (v.anzahl > 0) return v.wert;
+        return sonst;
+    };
+    const auto hochVon = [&](int midi, double sonst) {
+        const TastenWerte* w = salamanderAn(midi);
+        return w != nullptr && w->highDecay.anzahl > 0 ? w->highDecay.wert : sonst;
+    };
+    const auto schreibe = [&](const std::string& name, std::span<const float> stereo) {
+        REQUIRE(lumi::audio::schreibeWav(QString::fromStdU16String((ziel / name).u16string()), stereo, kRate,
+                                         lumi::audio::WavTiefe::Gleitkomma32)
+                    .geschrieben);
+    };
+    const lumi::loop::HammerSaite vorgabe = lumi::loop::hammerSaiteVorgabe();
+    constexpr int kStufe = -12;
+    std::ostringstream liste;
+    liste << std::fixed << std::setprecision(3) << "HU1 a: je Taste k<midi>_<fassung>.wav (Ton wie im Programm, Stereo, Pa in Einheiten von "
+          << lumi::loop::kSchalldruckBezug << " Pa), k<midi>_<fassung>_kraft.wav (Kraft am Steg ohne Boden, in Einheiten von "
+          << lumi::loop::kHammerKraftBezug << " N, beide Kanaele gleich), k<midi>_boden.wav (Antwort des Bodens, Pa/N). Stufe " << kStufe
+          << ".\n";
+    for (const int midi : {21, 36, 60, 84, 108})
+    {
+        CAPTURE(midi);
+        const double haltenS = midi <= 36 ? 18.0 : midi <= 60 ? 12.0 : midi <= 84 ? 6.0 : 3.0;
+        const auto frames = static_cast<std::size_t>(haltenS * kRate);
+        const double decayVorgabe = lumi::loop::wertAn(vorgabe.abklingS, midi, lumi::loop::KurvenSkala::Logarithmisch);
+        const double spaetS = spaetVon(midi, 7.0 * decayVorgabe);
+        const double hochSal = hochVon(midi, 0.0);
+        const auto ueberallWert = [](double wert) { return lumi::loop::Tastenkurve{{{21, wert}, {108, wert}}, {}}; };
+        std::vector<std::pair<std::string, lumi::loop::HammerSaite>> fassungen;
+        fassungen.emplace_back("vorgabe", vorgabe);
+        fassungen.emplace_back("vor31d", vorgabeVor31d());
+        lumi::loop::HammerSaite spaet = vorgabe;
+        spaet.abklingSpaetS.abweichungen = {{midi, spaetS}};
+        fassungen.emplace_back("spaet_sal", spaet);
+        lumi::loop::HammerSaite stoss = spaet;
+        stoss.stossLeise = ueberallWert(0.25);
+        stoss.stossLaut = ueberallWert(0.25);
+        fassungen.emplace_back("spaet_sal_u25", stoss);
+        lumi::loop::HammerSaite pol = spaet;
+        pol.polarisationWinkelGrad = ueberallWert(10.0);
+        pol.polarisationCent = ueberallWert(3.0);
+        fassungen.emplace_back("spaet_sal_pol", pol);
+        if (hochSal > 0.0)
+        {
+            lumi::loop::HammerSaite hoch = spaet;
+            hoch.abklingHoch.abweichungen = {{midi, hochSal}};
+            fassungen.emplace_back("spaet_sal_hoch", hoch);
+        }
+        // die Antwort des Bodens an dieser Taste
+        const std::shared_ptr<const lumi::loop::Klang> antwort = lumi::loop::bodenAntwortFuer(*boden, midi, kRate);
+        REQUIRE(antwort);
+        schreibe("k" + std::to_string(midi) + "_boden.wav", antwort->daten);
+        liste << "MIDI " << midi << ": gehalten " << haltenS << " s; Vorgabe decay " << decayVorgabe << " s, lateDecay "
+              << lumi::loop::wertAn(vorgabe.abklingSpaetS, midi, lumi::loop::KurvenSkala::Logarithmisch) << " s, highDecay "
+              << lumi::loop::wertAn(vorgabe.abklingHoch, midi, lumi::loop::KurvenSkala::Logarithmisch) << ", detune "
+              << lumi::loop::wertAn(vorgabe.verstimmungCent, midi, lumi::loop::KurvenSkala::Linear) << " Cent, Saiten "
+              << lumi::loop::chorAn(vorgabe, midi) << "; Salamander lateDecay " << spaetS << " s, highDecay " << hochSal
+              << "; Antwort des Bodens " << antwort->frames() << " Frames\n";
+        for (const auto& [name, saite] : fassungen)
+        {
+            // die Kraft am Steg (ohne Boden)
+            lumi::loop::HammerAnschlag a;
+            a.taste = midi;
+            a.hz = tastenFrequenz(midi);
+            a.stufe = kStufe;
+            a.halten = static_cast<std::int64_t>(frames);
+            a.gedaempft = midi < lumi::loop::kUngedaempftAbVorgabe;
+            a.rate = kRate;
+            std::vector<float> mono;
+            lumi::loop::rechneHammerTon(saite, a, mono, static_cast<std::int64_t>(frames));
+            std::vector<float> kraft(2 * mono.size());
+            for (std::size_t i = 0; i < mono.size(); ++i) kraft[2 * i] = kraft[2 * i + 1] = mono[i];
+            schreibe("k" + std::to_string(midi) + "_" + name + "_kraft.wav", kraft);
+            // der Ton wie im Programm, auf die gehaltene Laenge geschnitten
+            const lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
+            std::vector<float> ton = rechne(instrument, midi, kStufe, haltenS);
+            ton.resize(2 * std::min(frames, ton.size() / 2));
+            schreibe("k" + std::to_string(midi) + "_" + name + ".wav", ton);
+        }
+    }
+    std::ofstream(ziel / "liste.txt", std::ios::binary) << liste.str();
+    MESSAGE(liste.str());
+}

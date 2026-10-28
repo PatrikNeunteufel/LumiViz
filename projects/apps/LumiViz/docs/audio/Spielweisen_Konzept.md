@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.96.0
+> **Version:** 0.97.0
 > **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -3632,6 +3632,100 @@ Messung, nicht auf fehlende Feinabstimmung; neu setzen auf einem falschen Weg de
 Diagnose nach der Modellwahl mit Fable. Neu als Prüfgröße für jede weitere Probe: die Hüllkurve vorwärts gegen
 *Salamander* (Einsatz bis Spitze, −20/−30/−40 dB) — nicht nur je Teilton.
 
+**Befund S159 (HU1 a, Diagnose am gerechneten Ton; Fable):** Werkzeug ist der neue Messfall „Loop Salamander HU1
+Diagnose“ (`LUMIVIZ_HU1_WAV=<Ordner>`, `test_LoopSalamanderHoerproben.cpp`, rund eine Minute): je Taste A0, C2, C4, C6,
+C8 bei Stufe −12 die Kraft am Steg (ohne Boden), die Antwort des Bodens und der Ton wie im Programm, in sechs
+Fassungen der Hammer-Saite — Vorgabe; vor 31d; `lateDecay` wie *Salamander*; dazu u = 0,25; dazu γ 10° / δ 3 Cent;
+dazu `highDecay` wie *Salamander*. Auswertung mit `hu1_mess.py` (Hüllkurve vorwärts, Teiltöne, Spektrum der ersten
+0,5 s, Antwort des Bodens), die Moden des Chors mit `chor_c4.py` / `ebenen2.py` in numpy nachgerechnet, die Messung
+der Stufen mit `zweistufen_probe.py` / `salamander_c4_stufen.py` an den Kurven und den WAVs von *Salamander* geprüft
+(alle lokal unter `.claude/handover/hoerproben_31d/messung/`, Ergebnisse unter `hu1/`). Die Fassung „Vorgabe“ trifft
+die Zahlen der Hörproben S158 (C4 mf −40 dB nach 4,07 s, vor 31d 7,63 s). **Der Rechenweg tut, was `modell.md`
+sagt** — Kraft, Boden und Ton hängen zusammen wie beschrieben, die Moden des Chors stimmen mit der Nachrechnung
+überein; kein Fehler im Code gefunden. Die Ursachen liegen in drei Gliedern, je mit Gegenprobe in beide Richtungen:
+
+*(1) Mitte und Diskant — die zweite Stufe ist nie gesetzt, die erste falsch gemessen, und der Chor allein trägt
+keinen Nachklang.* Hüllkurve vorwärts C4 mf, ab der Spitze bis −20 / −30 / −40 dB, in s:
+
+| Fassung | Ton durch den Boden | Kraft am Steg (ohne Boden) |
+|---|---|---|
+| *Salamander* v2 | 0,88 / 1,37 / **11,42** | — |
+| Vorgabe (nach 31d-4; `decay` 5,29, `lateDecay` 15,9, 0,80 Cent) | 1,38 / 2,50 / **4,07** | 1,43 / 2,42 / 4,39 |
+| vor 31d (`decay` 8,8, `lateDecay` 26,4) | 1,84 / 3,38 / 7,63 | 1,98 / 3,69 / 7,54 |
+| `lateDecay` wie *Salamander* (37,9 s) | 1,35 / 3,43 / **8,79** | 1,41 / 3,77 / 8,62 |
+| dazu u = 0,25 · dazu γ 10° / δ 3 · dazu `highDecay` 0,894 | 8,86 · 8,95 · 8,85 | 8,71 · 8,15 · 8,69 |
+
+- **`lateDecay`:** vorläufig 3·`decay` (HT3 a), nie gesetzt (S3 a nahm es aus dem Setzen). *Salamander* misst die
+  zweite Stufe an C4 mit 36–38 s (Teilton 1: späte Schroeder-Steigung 1,6–1,7 dB/s an allen Ebenen v6–v16); das
+  Dreifache von 5,29 s sind 15,9 s, vor 31d das Dreifache von 8,8 s = 26 s — **darum klang „vor“ länger, obwohl
+  nichts daran gesetzt war.** Mit 37,9 s kommt C4 von 4,1 auf 8,8 s (Richtung hin: 15,9 → 4,1; 26 → 7,6; 37,9 → 8,8).
+  Über die Tastatur ist die gesetzte zweite Stufe 0,2- bis 4,6-mal so lang wie die gemessene (C4 2,4, C6 3,2, Mitte
+  1,4–3,3); der Boden ändert an der Länge nichts (Kraft ohne Boden gleich).
+- **`decay` (erste Stufe):** 5,29 s an C4 kommt aus einer Messung, deren Wert (`t60_frueh` 5,37 s) die eigene Kurve
+  nicht wiedergibt: die Schroeder-Kurve des Grundtons von *Salamander* fällt in den ersten 0,5 s mit 21–22 dB/s
+  (T60 2,7 s, alle elf Ebenen), die Hüllkurve vorwärts mit 23–24 dB/s (T60 2,5–2,8 s, beide Kanäle, v6/v10/v16);
+  der Knick liegt bei 0,7–0,8 s und −15 dB. Die Zwei-Geraden-Suche nach Schroeder ist je Kanal unstet (linker Kanal:
+  Knick 0,5–8 s, früh 1,2–3,7 s, einmal einstufig; rechter Kanal stets 2,2 s / 34 s), der Median über Ebenen und
+  Kanäle wird 5,4 s. Am Modell misst dieselbe Messung sauber (Ton Vorgabe C4: 4,4 / 17,0 s, `LUMIVIZ_31D7_MODEN`) —
+  **„durch das Modell hindurch“ traf 31d-4 ein falsches Ziel:** der Grundton fällt im Modell in 1,6 s um 20 dB, bei
+  *Salamander* in 0,77 s; −30 dB erreicht der Ton bei 2,5 s statt 1,4 s. Die Hüllkurve vorwärts ist die robuste
+  Prüfgröße — auch als Setzziel.
+- **Höhere Teiltöne und der Chor:** *Salamander* hält an C4 auch Teilton 2 und 3 zweistufig (2,5 / 17,6 s; 9,3 /
+  37,9 s), Teilton 3 klingt länger als der Grundton (bis −20 dB 2,1 s gegen 0,77 s). Das Modell kann beides nicht:
+  σ_k = σ_1·(1 + h·((f_k/f_1)² − 1)) ist monoton, und die Kopplung σ_V = (σ_früh − σ_spät)/N wächst nicht mit k, die
+  Verstimmung Δω_k = k·Δω_1 schon — ab Teilton 2 (C4) bzw. schon am Grundton (C6: Δω/σ_V = 5,7) entkoppeln die
+  Saiten: jede klingt mit σ_s + σ_V ab, keine Mode trägt σ_s allein, der Nachklang fehlt, dafür Schwebungen mit
+  vollständigen Auslöschungen (Teilton 3 und 4 an C4: erste Unterschreitung von −20 dB nach 0,8–1,0 s, letzte
+  Überschreitung nach 1,9–4,1 s). Nachgerechnet (`ebenen2.py`): mit *Salamanders* Größen an C4 (erste Stufe 2,5 s,
+  zweite 36 s, Schwebung 0,8 Cent) legt der Chor **−36 dB** in die langsamen Moden (*Salamander*: Knick −15 dB);
+  u = 0,5 bringt −26 dB, Verstimmung 2 Cent −19 dB, γ 30° / δ 3 Cent −12 dB; **γ 10° (wie in 8.5 vorgesehen) nur
+  −30 dB**, weil jede waagrechte Mode sin²γ/N bekommt. An C6 (1,9 s / 8 s / 1,9 Cent) gibt es im Chor gar keine erste
+  Stufe mehr (alle Moden bei 4 s), erst mit 0,5 Cent einen Knick bei −21 dB. **Der Nachklang nach Weinreich muss aus
+  der zweiten Ebene kommen (γ um 30°, mit δ und h), nicht aus der Verstimmung des Chors**; ein Setzen (SM4 b) braucht
+  γ, δ, h als freie Größen und die Hüllkurve vorwärts (Knick-Tiefe, erste und zweite Stufe) als Ziel.
+
+*(2) Bass — der Boden formt den Anfang und das Spektrum.* Einsatz bis Spitze: A0 *Salamander* 24 ms, Ton **367**
+ms, Kraft am Steg 37 ms; C2 65 / **133** / 16 ms (C4 37 / 24 / 5; C6 14 / 5 / 5). Die Antwort des Bodens am
+Stegpunkt von A0 fällt erst nach 0,45 s um 40 dB; die tiefsten Moden des Steinway liegen bei 38, 61 und 83 Hz mit
+η = 0,011 (Dämpfungsgesetz RT-0425 Gl. 1: T60 3–5 s), der dritte Teilton von A0 (82,5 Hz) sitzt auf der Mode bei
+82,6 Hz und schwingt sie 0,3 s lang hoch. Spektrum der ersten 0,5 s, Teiltöne 2–5 relativ zum Grundton, in dB:
+
+| Taste | *Salamander* | Modell, Ton | Modell, Kraft am Steg | Boden \|H\| an k·f0 gegen 1 kHz |
+|---|---|---|---|---|
+| C2 | +25 / +13 / +14 / +10 | −7 / 0 / −11 / −1 | +3 / +3 / +1 / 0 | k1 +2,5 · k2 −6,5 · k3 −0,6 · k4 −9,7 · k5 +2,9 |
+| A0 (k3, k6, k7) | +40 / +30 / +23 | +27 / +37 / +8 | +7 / +4 / −1 | k1 −22 · k3 +2,8 · k6 +14 · k7 −13 |
+
+Die Saite liefert ein ebenes Spektrum; der Boden des Modells strahlt 65 Hz so stark ab wie 1 kHz — die Platte in der
+unendlichen Schallwand (BM6 a) kennt keinen akustischen Kurzschluss, der am Flügel unter rund 100–200 Hz den
+Grundton der tiefen Tasten gegen die Teiltöne um 20–30 dB zurücknimmt → zu viel Grundton, zu wenig Teiltöne 2–5
+(„dumpf“, „wie ein Rohr“). Dazu steht `decay` im Bass aus dem Ausgleich über die Teiltöne (13–15 s): *Salamander*
+C2 hat den Grundton einstufig mit 34–40 s, Teilton 2 und 3 zweistufig mit 2,4–2,7 s / 50–90 s (Knick −15 dB) —
+das Modell klingt überall mit 22 s (zwei Saiten, entkoppelt): kein schneller erster Abfall (Ton −20 dB nach 5,3 s
+gegen 1,4 s; −40 dB 14,0 gegen 15,5 s). **Berichtigung zur Tabelle S158:** „bei C2 fällt der Grundton im Modell in
+0,13 s um 20 dB“ — die Zeile war Teilton 2 (das Skript nummerierte die Zeilen, nicht die Teiltöne; der Grundton bei
+65 Hz liegt zwischen den FFT-Punkten), und die 0,13 s sind der breitbandige Anschlag über einem schwachen Teilton 2,
+kein Abklingen; `huelle_31d.py` berichtigt.
+
+*(3) C8 ohne Obertöne — der Hammer.* Spektrum der ersten 0,5 s relativ zum Grundton: C8 *Salamander* k2 −30, k3
+−33, k4 −39 dB; **Kraft am Steg −111, −134, −136 dB**; Antwort des Bodens an k2–k4 +7, +6, +9 dB gegen 1 kHz (der
+statistische Teil reicht bis 20 kHz) → nicht der Boden. C6: *Salamander* k5–k8 −78, −79, −83, −85 (Rauschgrenze der
+Aufnahme), Kraft −68, −99, −93, −122 — **oberhalb 5–6 kHz bricht die Kraft des Modells weg.** Der Kraftimpuls ist
+glatt und lang: erster Halbbogen am Steg C8 1,6 ms, C6 1,2 ms; Kontaktzeiten des Modells (`HammerMessung`, Fall
+„Anschlag gegen Chabassier“): Taste 27 2,8–5,7 ms, 36 3,8 ms, 53 2,2–2,9 ms, 73 1,4 ms, 91 1,3 ms. Am Flügel: „the
+contact durations decrease from about 4 ms in the bass to less than 1 ms in the highest treble“ (A. Askenfelt &
+E. Jansson, *From touch to string vibration: String contact duration and dynamic level*, KTH-Vorlesung,
+speech.kth.se/music/5_lectures/askenflt/stricont.html, Wortlaut zitiert vom Abrufwerkzeug 2026-10-28). Ursache: der
+Hammer nach RT-0425 Gl. 2–4 bis Taste 88 extrapoliert (Masse 5,7 g, p 3,54, Q0 so weich, dass 40 N erst bei 0,9 mm
+Eindruck stehen), ohne den Term R_H aus Gl. 5 (HT2 a: „ohne Hysterese, wie Bank“); dazu trägt die Saite an C8 nur
+fünf Teiltöne unter 0,45·fs — der Puls kann keine Riffel haben. Ganzer Ton C8: *Salamander* −30 dB nach 2,15 s,
+Modell nach 0,30 s (alle Fassungen gleich, `decay` dort 1,84 s = Randwert der Kurve ab 102; *Salamander* 0,38 / 1,1 s).
+
+**Urteil zum Kipppunkt von HU1 a:** teils erreicht. Der Rechenweg stimmt (Code = Modell), falsch sind **Werte**
+(`lateDecay` nie gesetzt; `decay` auf ein Messziel gesetzt, das die erste Stufe verfehlt; der Hammer bis Taste 88
+extrapoliert) — **und** drei Grenzen des Modells selbst: der Chor trägt ohne zweite Ebene keinen Nachklang, das
+Gesetz σ(f²) ist monoton, die Schallwand hat keinen Kurzschluss. SM4 b allein (mit γ, δ, h fest) träfe deshalb nicht.
+Wie weiter: **HU2** (Entscheid Patrik, im Chat S159 vorgelegt).
+
 **31d-8, 8.2 bis 8.5 gebaut (S157, nach dem Wechsel auf Opus):**
 - **8.2:** `grand_piano.lvinst` aus dem Werkzeug (`LUMIVIZ_GRAND_PIANO_SCHREIBEN=1`), Kurven und Tastatur gleich der
   Vorgabe (Wächter „Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe“); `ergaenze` trägt `keyboard` durch;
@@ -3964,9 +4058,9 @@ Gesamtausgabe bei IMSLP als Scan vor. *Angaben aus den Werkseiten bei IMSLP, im 
 
 | Schritt | Inhalt | Stand | hängt an |
 |---|---|---|---|
-| 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | Hörurteil S158 (Patrik) mit Messung: „grob falsch“ (Nachklang in Mitte/Diskant zu kurz, Bass-Anfang falsch, C8 ohne Obertöne) → **HU1 a: zuerst Diagnose** (mit Fable) | — |
+| 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | Hörurteil S158 (Patrik) mit Messung: „grob falsch“ → HU1 a Diagnose → **Befund S159** (Fable): Rechenweg = Modell; `lateDecay` nie gesetzt, `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (C4 5,4 statt 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig, nicht 10°), im Bass der Boden (Schallwand, tiefe Moden), im Diskant der Hammer (Kontakt 1,3–1,6 ms statt unter 1 ms) → **HU2 offen** | HU2 |
 | 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — `Offene_Punkte` §7); `LumiViz.exe` neu | — |
-| 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | ruht (HU1 a) | Diagnose HU1 a |
+| 31d-8 · 8.5 | Wahl je Datei in `hoerproben_31d8/liste.txt` (u, γ, δ) | ruht; nach dem Befund S159 greifen die vorgelegten Werte γ 0–20° nicht (jede waagrechte Mode bekommt sin²γ/N) — Form von 8.5 nach HU2 neu | HU2 |
 | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
 | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
 | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1–9.6 fertig (S158): ganz übertragen (TR1 a, Kistner gegengeprüft), `nocturne_demo` mitgeliefert (Daten `asset/loop/nocturne_op9_2.py`, 40 Takte, 3:38), Fader +1,4 dB (Spitze −1 dBFS), Werte und Klangfassung, Hörprobe; voll 1640 / 1640 unter Release-clang (587 s) und Testing-MSVC (600 s) — NP1 a (Fader +1,4 dB); Hörurteil (DY1 a) bei Patrik | — |
@@ -5139,6 +5233,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.97.0 | 2026-10-28 | Session 159 (Fable 5.1). Befund HU1 a am gerechneten Ton: Rechenweg = Modell; `lateDecay` nie gesetzt (3·`decay` gegen 36–38 s an C4), `decay` an ein Messziel gesetzt, das die erste Stufe verfehlt (Zwei-Geraden-Suche je Kanal unstet; Hüllkurve vorwärts 2,5–2,8 s), der Chor trägt ohne zweite Ebene keinen Nachklang (γ um 30° nötig), im Bass der Boden (Schallwand ohne Kurzschluss, tiefe Moden mit T60 3–5 s), im Diskant der Hammer (Kontakt 1,3–1,6 ms, Kraft bricht über 5–6 kHz weg); Messfall `LUMIVIZ_HU1_WAV`; Berichtigung zur Tabelle S158 (C2: Teilton 2, nicht Grundton); Tabelle „Offen“ nachgeführt; HU2 offen. |
 | 0.93.0 | 2026-10-27 | Session 157 (Sitzung mit Fable 5.1). Lage: Hörproben 31d seit dem 25.10. ungehört, das Setzen ein Forschungsproblem (Auflösung der Aufnahme), der Flügel im Programm nicht anspielbar; SP1 a (31d-8 „Spielbar“ vor SM4 b: Hörurteil, `grand_piano` mitgeliefert, Demo-Loop, u/γ/δ nach Gehör), SP2 a (Levenberg–Marquardt über die Stützpunkte der Kurven, ändert ZF6 a), SP3 a (Eindeutigkeit an den Messgrößen, ändert ZF8 a (3)); Teilplan 31d-8 (8.1–8.7) so geklärt, dass der Bau ohne Rückfrage läuft; Lehren für die übrigen Klassen in `InstrumentsCalculation/LEHREN_SETZEN_FLUEGEL.md`. |
 | 0.92.0 | 2026-10-27 | Session 156. Rechenweg der Probe gemessen (`LUMIVIZ_75_ZEIT`, Taktprobe: Wärmegrenze), Längskraft und Pool bitgleich schneller; Probe 7.5.4 neu (54 min): (1), (5), (6), (8), K6-1 a halten, (2), (3), (4), (7) verfehlt; Gegenprobe der Sprünge (Regel (b)); GP1 a, RV1 a gebaut; Probe nach RV1 a verfehlt wieder → SM4 b gilt (GP1 a), 7.5.5 läuft nicht, Teilplan SM4 b offen; PB1 a (Berichte unter `modellierung/hammer-saite/proben/`). |
 | 0.91.0 | 2026-10-26 | Session 154. 31d-7 B: TB1 a (Tiefe der Einbrüche je Periode, `einbruchDb`); erstes Setzen mit γ und δ nicht brauchbar, SZ1 a (Untersuchung der Tiefe im Chor); SZ2 a (ungleicher Stoß je Saite, Plan erweitern), US1 a bis US7 a, Teilplan 7.1–7.7; 7.1 Messgrenze (US6 a gekippt, US6-1 a: 90 dB), 7.2 Stoß im Modell (`.lvinst` 19, Klangfassung 3), 7.3 Tests; 7.4 zweite Stufe im Diskant: RB1 a (Blindanteil) nach Befund am Körper zurückgenommen, RB1-1 a (Ursache die Verstimmung der Vorgabe); 7.5 Setzen zweimal nicht brauchbar → SZ3 a (am Modell der Moden), Probe Moden gegen Ton, SM1 a, SM2 a, SM3 a (gekippt), SM4 a (an den Abklingkurven je Teilton, eigener Teilplan offen); Frage Patrik Moden und Waveguides (an `InstrumentsCalculation`). |
