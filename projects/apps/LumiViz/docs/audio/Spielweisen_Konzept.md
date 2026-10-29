@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.102.0
+> **Version:** 0.103.0
 > **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4; Session 162: 7.5.9 gebaut, Nullprobe)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4; Session 162: 7.5.9 gebaut, Nullprobe, 7.5.10 gebaut)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -3616,6 +3616,31 @@ späte Stufe (`t60_spaet_k` Median r 5–10 an allen drei Fassungen, an 0–5 vo
 die Tiefe der Einbrüche heran (`tiefe_db_k` Median r 6,8 / 7,1 / 3,4 → 1,1 / 2,2 / 1,0), die erste Stufe vorwärts liegt
 bei r 1,6–2,9. **Für 7.5.10 geschätzt:** eine Iteration (1 + 9 Auswertungen auf einem Pool) rund 2–3 min, 20 Iterationen
 je Startpunkt 40–55 min, beide Startpunkte mit verworfenen Schritten bis rund 2 h.
+
+**7.5.10 gebaut (S162) — Levenberg–Marquardt über die Stützpunkte (ZF6 a, SP2 a):** `LevenbergMarquardt.hpp` (reines C++,
+ohne Eigen): Schritt (JᵀJ + λ·diag(JᵀJ))·δ = −Jᵀr, Gauß mit Spaltenpivot, eine Diagonale von null für die Dämpfung auf
+10⁻¹² der größten gehoben; λ Start 10⁻³, ÷ 10 bei kleinerem Rest, × 10 und verworfen bei größerem (bis 10 Versuche je
+Iteration); Grenzen durch Abschneiden nach dem Schritt; Ende, wenn jeder Schritt unter 1 % liegt (log 0,01, linear
+1 % des Bereichs), kein Versuch den Rest senkt, oder nach 20 Iterationen; Wiederaufnahme mit Punkt, λ und Zahl der
+Iterationen. `jacobiJeGruppe` (eine Auswertung je Kurve, alle ihre Stützpunkte zugleich ausgelenkt) und
+`jacobiEinzeln`. `Suche.hpp`: Residuen Taste für Taste, **mit Vorzeichen** (`Abweichung::residuum` = (m − z) / τ, bei
+Faktor ln(m/z) / τ; Lesart Claude S162 — der Betrag allein ist an null nicht glatt), Gruppen je Kurve, Zeilen je
+Stützpunkt, Schritt der finiten Differenz = das Ende (1 %, nach unten an der oberen Grenze), die Kurven im Format von
+`baueVorgabe()`, Datei je Iteration mit `x` voll genau (Wiederaufnahme) und der Diagonale von JᵀJ je Stützpunkt
+(„nicht aufgelöst“, wo √diag · Bereich unter 0,1 Toleranzen bleibt — Lesart Claude S162 für SP3 a). Neu
+`test_LoopSalamanderSuche` (vier Fälle; Werkzeuge `LUMIVIZ_75_SUCHE`, `…_SUCHE_START`, `LUMIVIZ_75_NM`,
+`LUMIVIZ_75_JACOBI=1`). **Belegt:** LM findet an einem verrauschten Abklingen a und b auf 0,1 %; am Rosenbrock mit dem
+Minimum jenseits der Grenze endet er an der Grenze und meldet sie — braucht dort aber 200 Iterationen (das Abschneiden
+bremst an einer aktiven Grenze; in der Suche mit 20 Iterationen kann ein Stützpunkt an einer Grenze deshalb früh
+stehen bleiben); an atan(x) ab 3 verwirft er im ersten Schritt viermal und hebt λ jedes Mal. **Die Jacobi-Matrix je
+Kurve gleicht am Ton an 33 und 60 der einzeln ausgelenkten bitgleich** (0 von 512 Einträgen verschieden, 26
+Auswertungen in 47 s) — die Lesart S161 hält: der Ton einer Taste hängt an keinem Stützpunkt einer anderen. Eine
+Iteration an 60 allein (8 Parameter, 11 Auswertungen in 5–7 s): Rest 1682 → 660. **Befund:** an 60 wirken `gamma` und
+`h` nicht (√diag · Bereich 7·10⁻⁷) — im Chor ab zwei Saiten steht δ fest auf 0, und ohne δ bleibt die zweite Ebene
+wirkungslos (wie 8.5: γ nur mit δ wirksam); in der Suche sind das 52 von 232 Stützpunkten ohne Wirkung (Frage an S163).
+Rechenzeit: eine Auswertung aller 30 Tasten 12–16 s, eine Iteration (1 + 9 Auswertungen auf einem Pool, dazu je
+verworfenem Schritt eine) rund 2–3 min; die Suche über beide Startpunkte höchstens rund 1,5–2 h. **Die Suche selbst und
+der Vergleich mit Nelder–Mead sind noch nicht gelaufen** (nach Rücksprache mit Patrik).
 
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**

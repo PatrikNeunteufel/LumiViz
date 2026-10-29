@@ -121,6 +121,8 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Untergrenze und Verhaeltnis")
     CHECK(k.modell == doctest::Approx(-2.0));
     CHECK(k.toleranz == doctest::Approx(0.5));
     CHECK(k.verhaeltnis == doctest::Approx(2.0));
+    CHECK(k.residuum == doctest::Approx(2.0));  // das Modell liegt ueber dem Ziel
+    CHECK(v.residuum == doctest::Approx(std::log(1.2) / 0.2));
     CHECK_FALSE(k.getroffen);
 
     const Abweichung& s = abweichung(t, "schwebung_db_1");

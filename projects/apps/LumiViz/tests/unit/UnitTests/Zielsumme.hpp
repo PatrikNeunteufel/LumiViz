@@ -65,6 +65,9 @@ struct Abweichung
     double ziel = 0.0;
     double toleranz = 0.0;
     double verhaeltnis = 0.0;
+    /// Das Verhaeltnis mit Vorzeichen (7.5.10): (m − z) / τ, bei Faktor ln(m/z) / τ — das Residuum der Suche; |residuum|
+    /// = verhaeltnis. Fehlt der Modellwert, `kFehltVerhaeltnis`.
+    double residuum = 0.0;
     bool getroffen = false;
     bool fehlt = false;
 };
@@ -98,12 +101,14 @@ inline TastenSumme vergleiche(int midi, const TastenZiele& ziel, const std::vect
         if (gueltig && a.toleranz > 0.0)
         {
             a.modell = m.wert;
-            a.verhaeltnis = abstandIn(z.skala, m.wert, z.ziel.wert) / a.toleranz;
+            a.residuum = (z.skala == Skala::Faktor ? std::log(m.wert / z.ziel.wert) : m.wert - z.ziel.wert) / a.toleranz;
+            a.verhaeltnis = std::abs(a.residuum);
         }
         else
         {
             a.fehlt = true;
             a.verhaeltnis = kFehltVerhaeltnis;
+            a.residuum = kFehltVerhaeltnis;
         }
         a.getroffen = !a.fehlt && a.verhaeltnis <= 1.0;
         t.summe += a.verhaeltnis * a.verhaeltnis;
@@ -137,6 +142,16 @@ inline std::vector<GroesseJeEbene> modellGroessen(const std::vector<TonHuellen>&
         alle.push_back(std::move(je));
     }
     return alle;
+}
+
+/// Die Residuen aller Tasten hintereinander, je Taste in der Reihenfolge ihrer Groessen (die des Ziels) — der Vektor,
+/// dessen Quadratsumme Levenberg–Marquardt senkt (7.5.10). Die Zeilen einer Taste liegen beisammen.
+inline std::vector<double> residuen(const std::vector<TastenSumme>& tasten)
+{
+    std::vector<double> r;
+    for (const TastenSumme& t : tasten)
+        for (const Abweichung& a : t.groessen) r.push_back(a.residuum);
+    return r;
 }
 
 /// Ueber alle Tasten: Σ r², getroffene und alle Groessen, fehlende, fertige Tasten und die Ausreisser (eine Taste ueber
