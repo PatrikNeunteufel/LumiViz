@@ -1,0 +1,5 @@
+# Suche 7.5.10 (S162) — Kurzfassung
+Startpunkt 1: Rest 11290.1, Ende Schritte klein, 15 Iterationen
+Startpunkt 2: Rest 16540.6, Ende Iterationen, 20 Iterationen
+beide getroffen an 71 von 456 Messgroessen (eindeutig nach SP3 a: nein)
+groesster Abstand der Stuetzpunkte 800.0 %

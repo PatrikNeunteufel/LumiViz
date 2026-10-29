@@ -1,0 +1,514 @@
+# Ergebnis der Suche 7.5.10, Startpunkt 2, clang, 20 Iterationen, 224 Auswertungen in diesem Lauf, 3172 s; Ende: Iterationen
+rest	16540.6
+an der Grenze	90: decay 33 oben; decay 36 unten; decay 48 unten; decay 57 oben; decay 60 oben; decay 63 oben; decay 66 oben; decay 78 oben; decay 81 oben; decay 108 unten; lateDecay 24 unten; lateDecay 27 unten; lateDecay 33 unten; lateDecay 36 oben; lateDecay 45 unten; lateDecay 48 oben; lateDecay 54 unten; lateDecay 60 unten; lateDecay 63 oben; lateDecay 66 unten; lateDecay 69 oben; lateDecay 78 unten; lateDecay 81 oben; lateDecay 87 unten; lateDecay 90 unten; lateDecay 93 unten; lateDecay 99 unten; lateDecay 102 unten; lateDecay 105 unten; lateDecay 108 unten; highDecay 21 oben; highDecay 24 unten; highDecay 30 unten; highDecay 33 oben; highDecay 36 unten; highDecay 42 oben; highDecay 48 oben; highDecay 54 oben; highDecay 57 unten; highDecay 60 oben; highDecay 63 oben; highDecay 66 oben; highDecay 69 oben; highDecay 72 oben; highDecay 75 unten; highDecay 84 oben; highDecay 93 unten; highDecay 108 unten; detune 33 oben; detune 42 oben; detune 48 oben; detune 78 oben; u leise 42 oben; u leise 54 oben; u leise 72 unten; u leise 78 unten; u leise 96 oben; u leise 102 oben; u leise 108 oben; u laut 48 oben; u laut 54 oben; u laut 57 oben; u laut 63 unten; u laut 66 unten; u laut 72 unten; u laut 78 unten; u laut 81 oben; u laut 96 oben; u laut 99 unten; u laut 108 oben; gamma 24 unten; gamma 33 unten; gamma 48 oben; gamma 66 unten; gamma 72 unten; gamma 75 oben; gamma 78 unten; gamma 84 unten; gamma 90 oben; gamma 93 unten; gamma 99 oben; gamma 102 unten; delta 21 unten; delta 24 oben; h 24 unten; h 27 unten; h 36 unten; h 48 oben; h 69 unten; h 72 oben;
+x	2.7703482792923024	3.2369563155204126	3.2963714529189141	3.1131551047911374	3.5826852577075323	1.6000607506215037	2.7652140280229025	2.1481233916189528	3.2702270740936807	0.66663207490419041	2.2288755444923867	2.1181045680525203	2.4256872901280291	2.7651863924730193	1.8179144267049061	2.4232971681563091	2.161759796933413	1.6494424060990251	1.8593155392142402	2.1749789683888996	1.5816555314216487	0.92957935815098314	1.4898976880551531	1.6523072436688995	1.5326349088104023	0.36464885953264614	1.143431102482128	0.72521197042072616	0.28059405325609948	-0.49047848243512115	4.0386277744996937	2.6183685955567015	2.8924067229865345	4.3617013546478409	2.4843509398542776	4.8956732756265744	4.6202649394029001	2.9902625778295855	2.173993858621059	3.9625259876012526	3.0964436358757439	1.3660916538023711	2.351356175594209	1.6664481671508802	2.9166890662135385	1.324418957401803	3.5091545231672474	2.7001495570722893	2.700040487568367	1.0762530627235651	2.6800621645620413	0.085761493733326422	2.4394442757112431	1.4134230285081431	0.78785111602924274	0.096054382523117154	0.41034208518766846	0.60831524504324774	0.60831524504324774	0.60831524504324774	-0.018540475157378486	-0.26098572586016683	-0.23718560550354595	-0.25182851630283942	-0.016792472018476019	-0.29807574951941396	-0.061889958627054119	-0.01462363507314049	-0.26848940670969307	-0.026717691085862916	-0.30829127686142344	-0.048450888109295431	-0.78970040786208395	-0.088236445677003686	-0.1187830692210237	-0.15931705445883101	-0.21251464822753416	-0.28135793726835567	-2.1352949254133757	-2.2169682551665812	-2.484206462653781	-0.76826784298313577	-2.5479304088264341	-3.2106135861562182	-3.5952578252081797	-2.6429110901999771	-3.7852568936021171	-3.2030421906156503	-3.0383812543469046	-4.2726913198395993	6	1.1037443449819528	1.2452006260993982	6	5.6745901455192165	6	3.3898172970331686	1.2745728863303858	2.176916409126521	2.2968788221783605	2.6242214247732654	4.1002138996056221	3.3605326027658413	2.5782212405902079	0.98244911939651458	6	2.0501178907310837	1.8932209312450936	2.482764025533998	2.2740973397755346	3.1389132731671801	4.4837185514680895	1.8915775590117223	1.7448548322659159	2.513852237854076	4.2516001947361346	0.0048504912162986788	0.06835268105889912	0.032272353189444138	1	0.39591317280899341	0.072958203882323019	0.31866964798684905	1	0.51686044325504332	0.029386532565475389	0.19947938615793318	0.95749422747101942	0.64625937464985972	0	0.00019760187105850608	0	0.11614983251925604	0.17451455080305744	0.016851130633567836	0.062297257680888181	0.03134873735665146	1	0.1907452097961059	1	0.18399433073865731	1	0.83066908187685606	0.91734399055600724	0.014687500646586365	0.74247766332283882	0.11624226600221262	1	0.73180819476986614	1	1	0.34475284398363831	0	0	0.13537662464013242	0	0.23521644234749403	0	1	0.46345454154510057	0.89005604130955573	0.91831145125411318	0.88396332510690934	1	0	0.78713998807540964	0.83002118999675834	1	0.19231952350722684	0	21.720840848559774	42.421342322461079	0	25.003005690417481	44.9998838604699	40.995099239429614	21.637909747158623	45	44.963769527595232	25.936294373304531	43.986509863374039	31.73065464438994	44.899974967645669	0	43.55037562158703	0	45	0	44.990630298149462	0	44.99974618712875	45	0	33.281387484078294	45	0	1.7605626993303293e-06	41.25	0	8	4.4817068150503596	1.2893066747596442	0.0098025444039719425	0	0	0.25330484764899419	0.25	0	0.11088810603967746	0.043367155504758781	0.25	1	0.017370278243696122	0.25	0.25	0.25	0.17385080815220047	0.25	0	1	0.00022892024500142043	0.25	0.15471686014310226	0.25	0.0085124847932852785	0.25	0.25	0.25	0.25	0.25	0.00013582428880584867	0.25
+
+## Kurven (wie baueVorgabe, direkt einsetzbar)
+    // decay (ohne Quelle, Faktor 3)
+    s.abklingS = kurveAusPunkten({{21, 15.96}, {24, 25.46}, {27, 27.01}, {30, 22.49}, {33, 35.97}, {36, 4.953}, {39, 15.88}, {42, 8.569}, {45, 26.32}, {48, 1.948}, {51, 9.289}, {54, 8.315}, {57, 11.31}, {60, 15.88}, {63, 6.159}, {66, 11.28}, {69, 8.686}, {72, 5.204}, {75, 6.419}, {78, 8.802}, {81, 4.863}, {84, 2.533}, {87, 4.437}, {90, 5.219}, {93, 4.63}, {96, 1.44}, {99, 3.138}, {102, 2.065}, {105, 1.324}, {108, 0.6123}});
+    // lateDecay (ohne Quelle, Faktor 3; nie kuerzer als decay)
+    s.abklingSpaetS = kurveAusPunkten({{21, 56.75}, {24, 25.46}, {27, 27.01}, {30, 78.39}, {33, 35.97}, {36, 133.7}, {39, 101.5}, {42, 19.89}, {45, 26.32}, {48, 52.59}, {51, 22.12}, {54, 8.315}, {57, 11.31}, {60, 15.88}, {63, 18.48}, {66, 11.28}, {69, 33.42}, {72, 14.88}, {75, 14.88}, {78, 8.802}, {81, 14.59}, {84, 2.533}, {87, 11.47}, {90, 5.219}, {93, 4.63}, {96, 1.44}, {99, 3.138}, {102, 2.065}, {105, 1.837}, {108, 1.837}});
+    // highDecay (Bensa 2003)
+    s.abklingHoch = kurveAusPunkten({{21, 0.9816}, {24, 0.7703}, {27, 0.7888}, {30, 0.7774}, {33, 0.9833}, {36, 0.7422}, {39, 0.94}, {42, 0.9855}, {45, 0.7645}, {48, 0.9736}, {51, 0.7347}, {54, 0.9527}, {57, 0.454}, {60, 0.9155}, {63, 0.888}, {66, 0.8527}, {69, 0.8085}, {72, 0.7548}, {75, 0.1182}, {78, 0.1089}, {81, 0.08339}, {84, 0.4638}, {87, 0.07824}, {90, 0.04033}, {93, 0.02745}, {96, 0.07115}, {99, 0.0227}, {102, 0.04064}, {105, 0.04791}, {108, 0.01394}});
+    // detune (Kirk, Cuenca, Plath; Start an der Schwebung (SG3 a))
+    s.verstimmungCent = kurveAusPunkten({{21, 3.014}, {24, 3.014}, {27, 3.014}, {30, 3.014}, {33, 6}, {36, 1.104}, {39, 1.245}, {42, 6}, {45, 5.675}, {48, 6}, {51, 3.39}, {54, 1.275}, {57, 2.177}, {60, 2.297}, {63, 2.624}, {66, 4.1}, {69, 3.361}, {72, 2.578}, {75, 0.9824}, {78, 6}, {81, 2.05}, {84, 1.893}, {87, 2.483}, {90, 2.274}, {93, 3.139}, {96, 4.484}, {99, 1.892}, {102, 1.745}, {105, 2.514}, {108, 4.252}});
+    // u leise (ohne Quelle, 0-1)
+    s.stossLeise = kurveAusPunkten({{21, 0}, {24, 0}, {27, 0}, {30, 0}, {33, 0.00485}, {36, 0.06835}, {39, 0.03227}, {42, 1}, {45, 0.3959}, {48, 0.07296}, {51, 0.3187}, {54, 1}, {57, 0.5169}, {60, 0.02939}, {63, 0.1995}, {66, 0.9575}, {69, 0.6463}, {72, 0}, {75, 0.0001976}, {78, 0}, {81, 0.1161}, {84, 0.1745}, {87, 0.01685}, {90, 0.0623}, {93, 0.03135}, {96, 1}, {99, 0.1907}, {102, 1}, {105, 0.184}, {108, 1}});
+    // u laut (ohne Quelle, 0-1)
+    s.stossLaut = kurveAusPunkten({{21, 0}, {24, 0}, {27, 0}, {30, 0}, {33, 0.8307}, {36, 0.9173}, {39, 0.01469}, {42, 0.7425}, {45, 0.1162}, {48, 1}, {51, 0.7318}, {54, 1}, {57, 1}, {60, 0.3448}, {63, 0}, {66, 0}, {69, 0.1354}, {72, 0}, {75, 0.2352}, {78, 0}, {81, 1}, {84, 0.4635}, {87, 0.8901}, {90, 0.9183}, {93, 0.884}, {96, 1}, {99, 0}, {102, 0.7871}, {105, 0.83}, {108, 1}});
+    // gamma (ohne Quelle, 0-45 Grad (SG2 a), Start 30 (HU2 a (3)))
+    s.polarisationWinkelGrad = kurveAusPunkten({{21, 0.1923}, {24, 0}, {27, 21.72}, {30, 42.42}, {33, 0}, {36, 25}, {39, 45}, {42, 41}, {45, 21.64}, {48, 45}, {51, 44.96}, {54, 25.94}, {57, 43.99}, {60, 31.73}, {63, 44.9}, {66, 0}, {69, 43.55}, {72, 0}, {75, 45}, {78, 0}, {81, 44.99}, {84, 0}, {87, 45}, {90, 45}, {93, 0}, {96, 33.28}, {99, 45}, {102, 0}, {105, 1.761e-06}, {108, 41.25}});
+    // delta (Tan 2017, Mori 2004; 0-8 Cent)
+    s.polarisationCent = kurveAusPunkten({{21, 0}, {24, 8}, {27, 4.482}, {30, 1.289}, {33, 0}, {36, 0}, {39, 0}, {42, 0}, {45, 0}, {48, 0}, {51, 0}, {54, 0}, {57, 0}, {60, 0}, {63, 0}, {66, 0}, {69, 0}, {72, 0}, {75, 0}, {78, 0}, {81, 0}, {84, 0}, {87, 0}, {90, 0}, {93, 0}, {96, 0}, {99, 0}, {102, 0}, {105, 0}, {108, 0}});
+    // h (0-1 (P7 a))
+    s.waagrechtVerhaeltnis = kurveAusPunkten({{21, 0.009803}, {24, 0}, {27, 0}, {30, 0.2533}, {33, 0.25}, {36, 0}, {39, 0.1109}, {42, 0.04337}, {45, 0.25}, {48, 1}, {51, 0.01737}, {54, 0.25}, {57, 0.25}, {60, 0.25}, {63, 0.1739}, {66, 0.25}, {69, 0}, {72, 1}, {75, 0.0002289}, {78, 0.25}, {81, 0.1547}, {84, 0.25}, {87, 0.008512}, {90, 0.25}, {93, 0.25}, {96, 0.25}, {99, 0.25}, {102, 0.25}, {105, 0.0001358}, {108, 0.25}});
+
+## Je Taste und Groesse
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+21 | 1208.766 | 0 / 12 | 0 | vorwaerts_t60_3 24.736; t60_spaet_3 14.512; huelle_40_s 13.598
+    huelle_20_s [faktor] Modell 5.283646 Ziel 5.623 Toleranz 0.030 r 2.106
+    huelle_30_s [faktor] Modell 7.903667 Ziel 10.299 Toleranz 0.066 r 3.981
+    huelle_40_s [faktor] Modell 10.611521 Ziel 17.764 Toleranz 0.038 r 13.598
+    knick_tiefe_db_3 [db] Modell -21.683736 Ziel -16.722 Toleranz 0.500 r 9.924
+    schwebung_db_2 [db] Modell 0.000229 Ziel 1.830 Toleranz 0.870 r 2.103
+    t60_spaet [faktor] Modell 13.835496 Ziel 26.413 Toleranz 0.153 r 4.224
+    t60_spaet_2 [faktor] Modell 15.821837 Ziel 54.364 Toleranz 0.382 r 3.234
+    t60_spaet_3 [faktor] Modell 15.451484 Ziel 23.728 Toleranz 0.030 r 14.512
+    tiefe_db_2 [db] Modell 0.850880 Ziel 6.595 Toleranz 2.323 r 2.472
+    vorwaerts_t60 [faktor] Modell 16.904029 Ziel 2.649 Toleranz 0.300 r 6.185
+    vorwaerts_t60_2 [faktor] Modell 14.277671 Ziel 7.403 Toleranz 0.279 r 2.354
+    vorwaerts_t60_3 [faktor] Modell 28.326410 Ziel 13.635 Toleranz 0.030 r 24.736
+24 | 171.123 | 1 / 11 | 0 | t60_spaet_2 8.196; huelle_20_s 5.394; vorwaerts_t60_3 4.701
+    huelle_20_s [faktor] Modell 7.346542 Ziel 5.589 Toleranz 0.051 r 5.394
+    huelle_30_s [faktor] Modell 11.338604 Ziel 10.300 Toleranz 0.030 r 3.252
+    huelle_40_s [faktor] Modell 15.494354 Ziel 16.953 Toleranz 0.030 r 3.043
+    schwebung_db_2 [db] Modell 0.006961 Ziel 1.886 Toleranz 0.832 r 2.260
+    schwebung_db_3 [db] Modell 0.011301 Ziel 3.133 Toleranz 0.895 r 3.489
+    t60_spaet_2 [faktor] Modell 24.434219 Ziel 48.057 Toleranz 0.083 r 8.196
+    t60_spaet_3 [faktor] Modell 24.093683 Ziel 23.400 Toleranz 0.040 r 0.723 getroffen
+    tiefe_db_2 [db] Modell 1.546903 Ziel 2.978 Toleranz 0.654 r 2.188
+    tiefe_db_3 [db] Modell 2.282249 Ziel 7.818 Toleranz 1.943 r 2.849
+    vorwaerts_t60_2 [faktor] Modell 14.041404 Ziel 45.203 Toleranz 0.786 r 1.487
+    vorwaerts_t60_3 [faktor] Modell 10.971189 Ziel 27.335 Toleranz 0.194 r 4.701
+27 | 997.911 | 1 / 12 | 0 | vorwaerts_t60 23.074; t60_spaet_3 15.985; t60_spaet_2 9.133
+    huelle_20_s [faktor] Modell 7.920708 Ziel 6.357 Toleranz 0.038 r 5.836
+    huelle_30_s [faktor] Modell 12.201562 Ziel 13.505 Toleranz 0.030 r 3.433
+    huelle_40_s [faktor] Modell 16.540021 Ziel 18.778 Toleranz 0.044 r 2.878
+    knick_tiefe_db_2 [db] Modell -12.756624 Ziel -9.645 Toleranz 0.500 r 6.222
+    schwebung_db_2 [db] Modell 0.126385 Ziel 0.959 Toleranz 0.500 r 1.666
+    t60_spaet [faktor] Modell 25.046758 Ziel 47.613 Toleranz 0.243 r 2.643
+    t60_spaet_2 [faktor] Modell 24.883652 Ziel 32.595 Toleranz 0.030 r 9.133
+    t60_spaet_3 [faktor] Modell 22.659594 Ziel 14.127 Toleranz 0.030 r 15.985
+    tiefe_db_2 [db] Modell 3.562409 Ziel 1.277 Toleranz 0.500 r 4.571
+    vorwaerts_t60 [faktor] Modell 13.349615 Ziel 1.353 Toleranz 0.099 r 23.074
+    vorwaerts_t60_2 [faktor] Modell 18.885777 Ziel 16.272 Toleranz 0.092 r 1.618
+    vorwaerts_t60_3 [faktor] Modell 13.992530 Ziel 13.670 Toleranz 0.034 r 0.684 getroffen
+30 | 224.537 | 2 / 10 | 0 | t60_spaet_3 11.265; t60_spaet_2 7.990; schwebung_db_3 3.639
+    huelle_20_s [faktor] Modell 6.526271 Ziel 6.097 Toleranz 0.055 r 1.234
+    huelle_30_s [faktor] Modell 12.252125 Ziel 10.276 Toleranz 0.149 r 1.180
+    schwebung_db_3 [db] Modell 7.571018 Ziel 1.480 Toleranz 1.674 r 3.639
+    t60_spaet [faktor] Modell 14.888137 Ziel 35.779 Toleranz 0.497 r 1.766
+    t60_spaet_2 [faktor] Modell 15.489759 Ziel 19.616 Toleranz 0.030 r 7.990
+    t60_spaet_3 [faktor] Modell 9.920048 Ziel 6.594 Toleranz 0.036 r 11.265
+    tiefe_db_3 [db] Modell 3.420574 Ziel 3.529 Toleranz 2.634 r 0.041 getroffen
+    vorwaerts_t60 [faktor] Modell 9.168700 Ziel 5.640 Toleranz 0.366 r 1.329
+    vorwaerts_t60_2 [faktor] Modell 19.516482 Ziel 27.690 Toleranz 0.100 r 3.514
+    vorwaerts_t60_3 [faktor] Modell 10.936300 Ziel 10.610 Toleranz 0.048 r 0.635 getroffen
+33 | 1798.499 | 3 / 16 | 0 | huelle_20_s 29.075; knick_tiefe_db_2 19.412; t60_spaet_3 13.877
+    huelle_20_s [faktor] Modell 9.666521 Ziel 4.093 Toleranz 0.030 r 29.075
+    huelle_30_s [faktor] Modell 16.184375 Ziel 11.457 Toleranz 0.051 r 6.776
+    huelle_40_s [faktor] Modell 20.152125 Ziel 20.425 Toleranz 0.030 r 0.456 getroffen
+    knick_tiefe_db_2 [db] Modell -5.643647 Ziel -15.350 Toleranz 0.500 r 19.412
+    schwebung_db_1 [db] Modell 0.143014 Ziel 1.020 Toleranz 1.016 r 0.863 getroffen
+    schwebung_db_2 [db] Modell 0.264440 Ziel 3.640 Toleranz 0.500 r 6.750
+    schwebung_db_3 [db] Modell 0.345794 Ziel 11.278 Toleranz 3.415 r 3.202
+    t60_spaet [faktor] Modell 33.878465 Ziel 76.593 Toleranz 0.357 r 2.284
+    t60_spaet_2 [faktor] Modell 33.136951 Ziel 51.025 Toleranz 0.040 r 10.904
+    t60_spaet_3 [faktor] Modell 33.554437 Ziel 51.236 Toleranz 0.031 r 13.877
+    tiefe_db_1 [db] Modell 12.072299 Ziel 13.866 Toleranz 3.917 r 0.458 getroffen
+    tiefe_db_2 [db] Modell 12.746874 Ziel 10.349 Toleranz 0.969 r 2.473
+    tiefe_db_3 [db] Modell 26.905704 Ziel 24.288 Toleranz 2.440 r 1.073
+    vorwaerts_t60 [faktor] Modell 17.441184 Ziel 2.360 Toleranz 0.173 r 11.546
+    vorwaerts_t60_2 [faktor] Modell 10.347090 Ziel 19.491 Toleranz 0.242 r 2.620
+    vorwaerts_t60_3 [faktor] Modell 4.250722 Ziel 10.234 Toleranz 0.288 r 3.046
+36 | 823.857 | 2 / 15 | 0 | t60_spaet 15.744; vorwaerts_t60_3 14.418; knick_tiefe_db_2 13.288
+    huelle_20_s [faktor] Modell 1.558312 Ziel 1.225 Toleranz 0.030 r 8.135
+    huelle_30_s [faktor] Modell 5.143792 Ziel 8.067 Toleranz 0.139 r 3.246
+    huelle_40_s [faktor] Modell 12.326375 Ziel 15.339 Toleranz 0.033 r 6.645
+    knick_tiefe_db_2 [db] Modell -9.085409 Ziel -15.729 Toleranz 0.500 r 13.288
+    knick_tiefe_db_3 [db] Modell -5.730788 Ziel -16.035 Toleranz 2.192 r 4.702
+    schwebung_db_2 [db] Modell 1.056911 Ziel 2.634 Toleranz 0.500 r 3.154
+    schwebung_db_3 [db] Modell 0.853085 Ziel 1.908 Toleranz 0.550 r 1.917
+    t60_spaet [faktor] Modell 20.318221 Ziel 32.683 Toleranz 0.030 r 15.744
+    t60_spaet_2 [faktor] Modell 50.065305 Ziel 49.985 Toleranz 0.086 r 0.019 getroffen
+    t60_spaet_3 [faktor] Modell 36.234746 Ziel 47.843 Toleranz 0.148 r 1.874
+    tiefe_db_2 [db] Modell 11.424721 Ziel 14.031 Toleranz 0.500 r 5.212
+    tiefe_db_3 [db] Modell 0.461181 Ziel 3.856 Toleranz 12.710 r 0.267 getroffen
+    vorwaerts_t60 [faktor] Modell 3.955751 Ziel 13.318 Toleranz 1.000 r 1.214
+    vorwaerts_t60_2 [faktor] Modell 2.818452 Ziel 2.988 Toleranz 0.035 r 1.648
+    vorwaerts_t60_3 [faktor] Modell 4.983170 Ziel 1.114 Toleranz 0.104 r 14.418
+39 | 897.122 | 0 / 16 | 0 | vorwaerts_t60_2 18.630; t60_spaet_3 16.215; huelle_20_s 9.585
+    huelle_20_s [faktor] Modell 7.778000 Ziel 2.983 Toleranz 0.100 r 9.585
+    huelle_30_s [faktor] Modell 12.004188 Ziel 9.175 Toleranz 0.197 r 1.361
+    huelle_40_s [faktor] Modell 18.484229 Ziel 16.592 Toleranz 0.030 r 3.654
+    knick_tiefe_db [db] Modell -14.874374 Ziel -17.441 Toleranz 0.500 r 5.132
+    schwebung_db_1 [db] Modell 1.897735 Ziel 4.256 Toleranz 0.500 r 4.717
+    schwebung_db_2 [db] Modell 15.855010 Ziel 5.466 Toleranz 6.960 r 1.493
+    schwebung_db_3 [db] Modell 0.897858 Ziel 7.126 Toleranz 1.664 r 3.742
+    t60_spaet [faktor] Modell 51.450379 Ziel 54.347 Toleranz 0.030 r 1.853
+    t60_spaet_2 [faktor] Modell 28.365841 Ziel 38.790 Toleranz 0.207 r 1.512
+    t60_spaet_3 [faktor] Modell 27.646148 Ziel 44.647 Toleranz 0.030 r 16.215
+    tiefe_db_1 [db] Modell 3.635410 Ziel 6.470 Toleranz 1.009 r 2.809
+    tiefe_db_2 [db] Modell 35.403198 Ziel 27.043 Toleranz 3.954 r 2.114
+    tiefe_db_3 [db] Modell 30.735672 Ziel 13.213 Toleranz 10.249 r 1.710
+    vorwaerts_t60 [faktor] Modell 11.871105 Ziel 6.912 Toleranz 0.058 r 9.306
+    vorwaerts_t60_2 [faktor] Modell 12.621605 Ziel 2.637 Toleranz 0.084 r 18.630
+    vorwaerts_t60_3 [faktor] Modell 10.822183 Ziel 4.174 Toleranz 0.345 r 2.761
+42 | 618.795 | 2 / 11 | 0 | t60_spaet_2 18.338; t60_spaet 13.922; vorwaerts_t60_2 5.898
+    huelle_20_s [faktor] Modell 3.377979 Ziel 2.411 Toleranz 0.116 r 2.915
+    huelle_30_s [faktor] Modell 5.457167 Ziel 5.674 Toleranz 0.270 r 0.144 getroffen
+    huelle_40_s [faktor] Modell 7.396146 Ziel 12.616 Toleranz 0.130 r 4.112
+    knick_tiefe_db_2 [db] Modell -4.462928 Ziel -15.617 Toleranz 3.867 r 2.884
+    knick_tiefe_db_3 [db] Modell -1.975376 Ziel -4.515 Toleranz 2.052 r 1.238
+    t60_spaet [faktor] Modell 11.309749 Ziel 7.494 Toleranz 0.030 r 13.922
+    t60_spaet_2 [faktor] Modell 11.909698 Ziel 47.070 Toleranz 0.075 r 18.338
+    t60_spaet_3 [faktor] Modell 11.618127 Ziel 20.637 Toleranz 0.152 r 3.778
+    vorwaerts_t60 [faktor] Modell 7.584757 Ziel 7.429 Toleranz 0.030 r 0.703 getroffen
+    vorwaerts_t60_2 [faktor] Modell 7.745261 Ziel 2.832 Toleranz 0.171 r 5.898
+    vorwaerts_t60_3 [faktor] Modell 9.354584 Ziel 2.764 Toleranz 0.621 r 1.964
+45 | 716.003 | 2 / 17 | 0 | knick_tiefe_db_2 14.742; t60_spaet_2 14.653; knick_tiefe_db 9.178
+    huelle_20_s [faktor] Modell 6.067750 Ziel 4.147 Toleranz 0.095 r 3.989
+    huelle_30_s [faktor] Modell 10.374979 Ziel 8.610 Toleranz 0.032 r 5.865
+    knick_tiefe_db [db] Modell -10.748851 Ziel -15.338 Toleranz 0.500 r 9.178
+    knick_tiefe_db_2 [db] Modell -4.545092 Ziel -11.916 Toleranz 0.500 r 14.742
+    knick_tiefe_db_3 [db] Modell -1.012915 Ziel -4.982 Toleranz 1.015 r 3.912
+    schwebung_db_1 [db] Modell 1.817454 Ziel 5.785 Toleranz 0.500 r 7.935
+    schwebung_db_2 [db] Modell 0.668567 Ziel 4.592 Toleranz 3.313 r 1.184
+    schwebung_db_3 [db] Modell 1.119088 Ziel 5.913 Toleranz 1.147 r 4.180
+    t60_spaet [faktor] Modell 23.541880 Ziel 31.422 Toleranz 0.048 r 5.978
+    t60_spaet_2 [faktor] Modell 24.247852 Ziel 37.392 Toleranz 0.030 r 14.653
+    t60_spaet_3 [faktor] Modell 18.473162 Ziel 20.702 Toleranz 0.153 r 0.743 getroffen
+    tiefe_db_1 [db] Modell 10.426314 Ziel 7.648 Toleranz 1.176 r 2.363
+    tiefe_db_2 [db] Modell 17.029504 Ziel 10.060 Toleranz 5.683 r 1.226
+    tiefe_db_3 [db] Modell 15.396675 Ziel 18.602 Toleranz 4.804 r 0.667 getroffen
+    vorwaerts_t60 [faktor] Modell 8.103562 Ziel 17.460 Toleranz 0.409 r 1.877
+    vorwaerts_t60_2 [faktor] Modell 2.709332 Ziel 3.784 Toleranz 0.304 r 1.099
+    vorwaerts_t60_3 [faktor] Modell 1.881371 Ziel 5.660 Toleranz 0.571 r 1.930
+48 | 1324.739 | 3 / 18 | 0 | knick_tiefe_db 25.500; vorwaerts_t60_3 12.211; t60_spaet 12.177
+    huelle_20_s [faktor] Modell 1.157271 Ziel 1.713 Toleranz 1.055 r 0.372 getroffen
+    huelle_30_s [faktor] Modell 1.632083 Ziel 3.653 Toleranz 0.384 r 2.099
+    huelle_40_s [faktor] Modell 2.758417 Ziel 8.348 Toleranz 0.404 r 2.741
+    knick_tiefe_db [db] Modell -8.170816 Ziel -20.921 Toleranz 0.500 r 25.500
+    knick_tiefe_db_2 [db] Modell -46.536046 Ziel -16.496 Toleranz 11.453 r 2.623
+    knick_tiefe_db_3 [db] Modell -14.985732 Ziel -10.806 Toleranz 0.665 r 6.280
+    schwebung_db_1 [db] Modell 0.785387 Ziel 3.134 Toleranz 0.664 r 3.535
+    schwebung_db_2 [db] Modell 2.965764 Ziel 2.523 Toleranz 1.256 r 0.353 getroffen
+    schwebung_db_3 [db] Modell 0.633251 Ziel 1.541 Toleranz 0.785 r 1.156
+    t60_spaet [faktor] Modell 9.876105 Ziel 16.945 Toleranz 0.044 r 12.177
+    t60_spaet_2 [faktor] Modell 3.578899 Ziel 25.544 Toleranz 0.626 r 3.140
+    t60_spaet_3 [faktor] Modell 3.717028 Ziel 11.166 Toleranz 0.221 r 4.987
+    tiefe_db_1 [db] Modell 2.583714 Ziel 6.289 Toleranz 2.221 r 1.669
+    tiefe_db_2 [db] Modell 12.754393 Ziel 3.881 Toleranz 24.460 r 0.363 getroffen
+    tiefe_db_3 [db] Modell 9.184048 Ziel 3.002 Toleranz 0.518 r 11.938
+    vorwaerts_t60 [faktor] Modell 1.441848 Ziel 1.044 Toleranz 0.030 r 10.912
+    vorwaerts_t60_2 [faktor] Modell 2.041863 Ziel 8.512 Toleranz 0.607 r 2.353
+    vorwaerts_t60_3 [faktor] Modell 4.538825 Ziel 6.512 Toleranz 0.030 r 12.211
+51 | 463.789 | 1 / 16 | 0 | huelle_40_s 8.894; t60_spaet_3 8.484; huelle_20_s 8.127
+    huelle_20_s [faktor] Modell 3.707375 Ziel 1.625 Toleranz 0.101 r 8.127
+    huelle_30_s [faktor] Modell 6.786208 Ziel 3.190 Toleranz 0.098 r 7.712
+    huelle_40_s [faktor] Modell 7.744125 Ziel 5.173 Toleranz 0.045 r 8.894
+    knick_tiefe_db [db] Modell -11.702755 Ziel -14.711 Toleranz 4.578 r 0.657 getroffen
+    knick_tiefe_db_2 [db] Modell -19.432960 Ziel -32.259 Toleranz 2.272 r 5.645
+    knick_tiefe_db_3 [db] Modell -3.587575 Ziel -10.844 Toleranz 1.135 r 6.395
+    schwebung_db_2 [db] Modell 1.705667 Ziel 2.375 Toleranz 0.500 r 1.338
+    schwebung_db_3 [db] Modell 1.758214 Ziel 3.632 Toleranz 0.639 r 2.932
+    t60_spaet [faktor] Modell 12.064329 Ziel 7.203 Toleranz 0.164 r 3.135
+    t60_spaet_2 [faktor] Modell 13.293039 Ziel 32.098 Toleranz 0.222 r 3.966
+    t60_spaet_3 [faktor] Modell 14.567674 Ziel 18.720 Toleranz 0.030 r 8.484
+    tiefe_db_2 [db] Modell 14.993671 Ziel 9.613 Toleranz 3.856 r 1.395
+    tiefe_db_3 [db] Modell 12.820618 Ziel 4.698 Toleranz 1.301 r 6.244
+    vorwaerts_t60 [faktor] Modell 7.255098 Ziel 4.205 Toleranz 0.278 r 1.961
+    vorwaerts_t60_2 [faktor] Modell 4.485917 Ziel 5.497 Toleranz 0.089 r 2.272
+    vorwaerts_t60_3 [faktor] Modell 2.703455 Ziel 1.835 Toleranz 0.073 r 5.302
+54 | 354.670 | 5 / 14 | 0 | vorwaerts_t60_3 15.534; t60_spaet_2 7.745; huelle_20_s 5.222
+    huelle_20_s [faktor] Modell 2.065562 Ziel 1.694 Toleranz 0.038 r 5.222
+    huelle_30_s [faktor] Modell 3.195625 Ziel 2.847 Toleranz 0.042 r 2.747
+    huelle_40_s [faktor] Modell 4.593187 Ziel 6.441 Toleranz 0.289 r 1.168
+    knick_tiefe_db_2 [db] Modell -26.200980 Ziel -26.429 Toleranz 7.388 r 0.031 getroffen
+    schwebung_db_2 [db] Modell 3.012925 Ziel 5.043 Toleranz 3.218 r 0.631 getroffen
+    schwebung_db_3 [db] Modell 2.083691 Ziel 2.191 Toleranz 3.111 r 0.035 getroffen
+    t60_spaet [faktor] Modell 7.400892 Ziel 6.005 Toleranz 0.121 r 1.730
+    t60_spaet_2 [faktor] Modell 8.127137 Ziel 36.308 Toleranz 0.193 r 7.745
+    t60_spaet_3 [faktor] Modell 8.059467 Ziel 9.106 Toleranz 0.084 r 1.460
+    tiefe_db_2 [db] Modell 9.004102 Ziel 8.455 Toleranz 15.638 r 0.035 getroffen
+    tiefe_db_3 [db] Modell 10.176305 Ziel 5.647 Toleranz 12.124 r 0.374 getroffen
+    vorwaerts_t60 [faktor] Modell 5.219778 Ziel 3.917 Toleranz 0.139 r 2.069
+    vorwaerts_t60_2 [faktor] Modell 6.172587 Ziel 4.366 Toleranz 0.128 r 2.696
+    vorwaerts_t60_3 [faktor] Modell 6.695809 Ziel 13.739 Toleranz 0.046 r 15.534
+57 | 210.685 | 5 / 16 | 0 | knick_tiefe_db_2 9.097; t60_spaet 7.103; t60_spaet_2 5.085
+    huelle_20_s [faktor] Modell 2.247292 Ziel 2.341 Toleranz 0.399 r 0.102 getroffen
+    huelle_30_s [faktor] Modell 3.964521 Ziel 5.039 Toleranz 0.126 r 1.911
+    huelle_40_s [faktor] Modell 7.405771 Ziel 6.433 Toleranz 0.116 r 1.211
+    knick_tiefe_db_2 [db] Modell -9.963821 Ziel -16.142 Toleranz 0.679 r 9.097
+    schwebung_db_1 [db] Modell 1.795318 Ziel 2.408 Toleranz 1.242 r 0.493 getroffen
+    schwebung_db_2 [db] Modell 0.660043 Ziel 3.012 Toleranz 1.326 r 1.774
+    schwebung_db_3 [db] Modell 10.151099 Ziel 3.603 Toleranz 2.809 r 2.331
+    t60_spaet [faktor] Modell 8.866117 Ziel 12.752 Toleranz 0.051 r 7.103
+    t60_spaet_2 [faktor] Modell 11.119980 Ziel 20.332 Toleranz 0.119 r 5.085
+    t60_spaet_3 [faktor] Modell 9.688177 Ziel 7.627 Toleranz 0.070 r 3.399
+    tiefe_db_1 [db] Modell 6.846646 Ziel 4.297 Toleranz 0.695 r 3.671
+    tiefe_db_2 [db] Modell 9.144543 Ziel 8.486 Toleranz 2.810 r 0.234 getroffen
+    tiefe_db_3 [db] Modell 11.088607 Ziel 7.138 Toleranz 13.171 r 0.300 getroffen
+    vorwaerts_t60 [faktor] Modell 8.288287 Ziel 10.550 Toleranz 0.101 r 2.398
+    vorwaerts_t60_2 [faktor] Modell 3.764859 Ziel 3.086 Toleranz 0.436 r 0.457 getroffen
+    vorwaerts_t60_3 [faktor] Modell 5.888560 Ziel 2.695 Toleranz 0.306 r 2.557
+60 | 1038.035 | 3 / 16 | 0 | knick_tiefe_db_2 20.063; t60_spaet_3 17.376; t60_spaet 12.904
+    huelle_20_s [faktor] Modell 1.788333 Ziel 0.901 Toleranz 0.113 r 6.070
+    huelle_30_s [faktor] Modell 6.466104 Ziel 3.007 Toleranz 0.905 r 0.846 getroffen
+    huelle_40_s [faktor] Modell 7.456250 Ziel 7.931 Toleranz 0.049 r 1.269
+    knick_tiefe_db [db] Modell -6.504537 Ziel -13.980 Toleranz 9.958 r 0.751 getroffen
+    knick_tiefe_db_2 [db] Modell -6.126206 Ziel -16.158 Toleranz 0.500 r 20.063
+    knick_tiefe_db_3 [db] Modell -11.438300 Ziel -23.595 Toleranz 8.115 r 1.498
+    schwebung_db_2 [db] Modell 3.245876 Ziel 7.539 Toleranz 1.287 r 3.336
+    schwebung_db_3 [db] Modell 1.621275 Ziel 7.063 Toleranz 1.415 r 3.845
+    t60_spaet [faktor] Modell 17.390762 Ziel 30.470 Toleranz 0.043 r 12.904
+    t60_spaet_2 [faktor] Modell 15.750230 Ziel 20.446 Toleranz 0.078 r 3.353
+    t60_spaet_3 [faktor] Modell 15.326616 Ziel 29.737 Toleranz 0.038 r 17.376
+    tiefe_db_2 [db] Modell 22.741438 Ziel 13.335 Toleranz 3.369 r 2.792
+    tiefe_db_3 [db] Modell 23.379511 Ziel 10.366 Toleranz 4.967 r 2.620
+    vorwaerts_t60 [faktor] Modell 9.712369 Ziel 2.642 Toleranz 0.804 r 1.619
+    vorwaerts_t60_2 [faktor] Modell 4.728587 Ziel 3.288 Toleranz 0.043 r 8.398
+    vorwaerts_t60_3 [faktor] Modell 2.605230 Ziel 1.954 Toleranz 0.832 r 0.345 getroffen
+63 | 807.316 | 6 / 17 | 0 | t60_spaet_3 25.138; t60_spaet 6.812; t60_spaet_2 6.810
+    huelle_20_s [faktor] Modell 2.310229 Ziel 1.672 Toleranz 1.195 r 0.271 getroffen
+    huelle_30_s [faktor] Modell 4.652604 Ziel 3.237 Toleranz 0.144 r 2.524
+    huelle_40_s [faktor] Modell 5.337333 Ziel 6.259 Toleranz 0.041 r 3.867
+    knick_tiefe_db [db] Modell -5.879168 Ziel -7.021 Toleranz 0.500 r 2.284
+    knick_tiefe_db_3 [db] Modell -12.362798 Ziel -29.604 Toleranz 4.652 r 3.706
+    schwebung_db_1 [db] Modell 5.728937 Ziel 2.002 Toleranz 5.559 r 0.670 getroffen
+    schwebung_db_2 [db] Modell 4.098285 Ziel 4.541 Toleranz 0.500 r 0.885 getroffen
+    schwebung_db_3 [db] Modell 1.251344 Ziel 6.663 Toleranz 4.443 r 1.218
+    t60_spaet [faktor] Modell 10.154085 Ziel 16.028 Toleranz 0.067 r 6.812
+    t60_spaet_2 [faktor] Modell 10.874767 Ziel 13.300 Toleranz 0.030 r 6.810
+    t60_spaet_3 [faktor] Modell 10.866197 Ziel 31.341 Toleranz 0.042 r 25.138
+    tiefe_db_1 [db] Modell 23.715785 Ziel 9.134 Toleranz 15.089 r 0.966 getroffen
+    tiefe_db_2 [db] Modell 24.005865 Ziel 24.843 Toleranz 0.944 r 0.887 getroffen
+    tiefe_db_3 [db] Modell 25.236866 Ziel 9.790 Toleranz 9.284 r 1.664
+    vorwaerts_t60 [faktor] Modell 3.937248 Ziel 2.149 Toleranz 0.492 r 1.230
+    vorwaerts_t60_2 [faktor] Modell 1.933658 Ziel 1.830 Toleranz 0.317 r 0.175 getroffen
+    vorwaerts_t60_3 [faktor] Modell 1.207066 Ziel 3.853 Toleranz 0.201 r 5.789
+66 | 294.925 | 7 / 18 | 0 | t60_spaet_2 9.936; knick_tiefe_db 7.835; knick_tiefe_db_2 5.419
+    huelle_20_s [faktor] Modell 2.734771 Ziel 1.163 Toleranz 0.252 r 3.399
+    huelle_30_s [faktor] Modell 4.907104 Ziel 3.010 Toleranz 0.158 r 3.088
+    huelle_40_s [faktor] Modell 5.930438 Ziel 6.696 Toleranz 0.177 r 0.684 getroffen
+    knick_tiefe_db [db] Modell -6.310607 Ziel -10.228 Toleranz 0.500 r 7.835
+    knick_tiefe_db_2 [db] Modell -14.798860 Ziel -24.521 Toleranz 1.794 r 5.419
+    knick_tiefe_db_3 [db] Modell -14.263778 Ziel -23.560 Toleranz 3.230 r 2.878
+    schwebung_db_1 [db] Modell 2.567537 Ziel 1.532 Toleranz 2.175 r 0.476 getroffen
+    schwebung_db_2 [db] Modell 0.239524 Ziel 5.378 Toleranz 1.024 r 5.017
+    schwebung_db_3 [db] Modell 0.222826 Ziel 3.652 Toleranz 0.886 r 3.869
+    t60_spaet [faktor] Modell 10.139214 Ziel 15.787 Toleranz 0.129 r 3.425
+    t60_spaet_2 [faktor] Modell 11.043891 Ziel 17.683 Toleranz 0.047 r 9.936
+    t60_spaet_3 [faktor] Modell 10.980130 Ziel 15.691 Toleranz 0.080 r 4.456
+    tiefe_db_1 [db] Modell 9.849988 Ziel 7.167 Toleranz 11.670 r 0.230 getroffen
+    tiefe_db_2 [db] Modell 9.710100 Ziel 8.444 Toleranz 0.751 r 1.686
+    tiefe_db_3 [db] Modell 8.276116 Ziel 4.513 Toleranz 16.687 r 0.226 getroffen
+    vorwaerts_t60 [faktor] Modell 3.757445 Ziel 3.568 Toleranz 0.312 r 0.166 getroffen
+    vorwaerts_t60_2 [faktor] Modell 2.081734 Ziel 2.457 Toleranz 0.603 r 0.275 getroffen
+    vorwaerts_t60_3 [faktor] Modell 2.375896 Ziel 1.607 Toleranz 0.504 r 0.775 getroffen
+69 | 188.253 | 1 / 18 | 0 | vorwaerts_t60 6.237; knick_tiefe_db_3 6.066; schwebung_db_1 4.365
+    huelle_20_s [faktor] Modell 3.565083 Ziel 0.645 Toleranz 0.533 r 3.207
+    huelle_30_s [faktor] Modell 5.983750 Ziel 1.485 Toleranz 0.608 r 2.293
+    huelle_40_s [faktor] Modell 9.813521 Ziel 3.373 Toleranz 0.331 r 3.224
+    knick_tiefe_db [db] Modell -3.957915 Ziel -18.957 Toleranz 8.482 r 1.768
+    knick_tiefe_db_2 [db] Modell -6.063436 Ziel -20.356 Toleranz 4.240 r 3.371
+    knick_tiefe_db_3 [db] Modell -9.357462 Ziel -32.887 Toleranz 3.879 r 6.066
+    schwebung_db_1 [db] Modell 7.232552 Ziel 2.031 Toleranz 1.192 r 4.365
+    schwebung_db_2 [db] Modell 1.514293 Ziel 4.443 Toleranz 0.730 r 4.013
+    schwebung_db_3 [db] Modell 0.127311 Ziel 5.921 Toleranz 2.388 r 2.426
+    t60_spaet [faktor] Modell 12.283939 Ziel 10.702 Toleranz 0.081 r 1.698
+    t60_spaet_2 [faktor] Modell 16.143994 Ziel 17.621 Toleranz 0.043 r 2.039
+    t60_spaet_3 [faktor] Modell 15.668015 Ziel 17.061 Toleranz 0.030 r 2.881
+    tiefe_db_1 [db] Modell 11.278813 Ziel 7.214 Toleranz 2.537 r 1.603
+    tiefe_db_2 [db] Modell 12.200120 Ziel 7.138 Toleranz 1.699 r 2.980
+    tiefe_db_3 [db] Modell 11.961533 Ziel 15.145 Toleranz 2.408 r 1.322
+    vorwaerts_t60 [faktor] Modell 3.775592 Ziel 1.834 Toleranz 0.116 r 6.237
+    vorwaerts_t60_2 [faktor] Modell 1.868141 Ziel 1.838 Toleranz 0.585 r 0.028 getroffen
+    vorwaerts_t60_3 [faktor] Modell 2.387708 Ziel 2.730 Toleranz 0.084 r 1.596
+72 | 1246.449 | 3 / 18 | 0 | t60_spaet_2 22.621; knick_tiefe_db 17.873; huelle_20_s 12.999
+    huelle_20_s [faktor] Modell 1.367646 Ziel 0.566 Toleranz 0.068 r 12.999
+    huelle_30_s [faktor] Modell 2.996875 Ziel 1.908 Toleranz 0.525 r 0.860 getroffen
+    huelle_40_s [faktor] Modell 4.056792 Ziel 3.275 Toleranz 0.147 r 1.460
+    knick_tiefe_db [db] Modell -8.111348 Ziel -17.048 Toleranz 0.500 r 17.873
+    knick_tiefe_db_2 [db] Modell -12.451390 Ziel -19.935 Toleranz 1.604 r 4.666
+    knick_tiefe_db_3 [db] Modell -11.133414 Ziel -25.365 Toleranz 3.177 r 4.479
+    schwebung_db_1 [db] Modell 1.848509 Ziel 5.237 Toleranz 3.110 r 1.090
+    schwebung_db_2 [db] Modell 0.586085 Ziel 6.115 Toleranz 0.680 r 8.129
+    schwebung_db_3 [db] Modell 6.875418 Ziel 7.300 Toleranz 0.714 r 0.596 getroffen
+    t60_spaet [faktor] Modell 8.942039 Ziel 18.643 Toleranz 0.296 r 2.481
+    t60_spaet_2 [faktor] Modell 9.027098 Ziel 17.617 Toleranz 0.030 r 22.621
+    t60_spaet_3 [faktor] Modell 8.857941 Ziel 12.411 Toleranz 0.116 r 2.901
+    tiefe_db_1 [db] Modell 35.250832 Ziel 9.485 Toleranz 9.769 r 2.637
+    tiefe_db_2 [db] Modell 35.207108 Ziel 19.017 Toleranz 4.658 r 3.476
+    tiefe_db_3 [db] Modell 28.380716 Ziel 13.012 Toleranz 2.684 r 5.727
+    vorwaerts_t60 [faktor] Modell 2.296057 Ziel 1.821 Toleranz 0.030 r 7.849
+    vorwaerts_t60_2 [faktor] Modell 1.137635 Ziel 7.604 Toleranz 0.794 r 2.392
+    vorwaerts_t60_3 [faktor] Modell 1.748520 Ziel 1.349 Toleranz 0.509 r 0.510 getroffen
+75 | 374.073 | 5 / 18 | 0 | schwebung_db_2 11.769; t60_spaet_3 7.938; vorwaerts_t60_2 7.185
+    huelle_20_s [faktor] Modell 1.158271 Ziel 0.946 Toleranz 1.135 r 0.178 getroffen
+    huelle_30_s [faktor] Modell 1.462021 Ziel 2.430 Toleranz 0.349 r 1.457
+    huelle_40_s [faktor] Modell 3.253687 Ziel 6.228 Toleranz 0.516 r 1.258
+    knick_tiefe_db [db] Modell -9.753684 Ziel -12.370 Toleranz 5.717 r 0.458 getroffen
+    knick_tiefe_db_2 [db] Modell -33.564597 Ziel -37.350 Toleranz 2.676 r 1.415
+    knick_tiefe_db_3 [db] Modell -24.847633 Ziel -29.846 Toleranz 0.750 r 6.662
+    schwebung_db_1 [db] Modell 0.827882 Ziel 2.894 Toleranz 2.754 r 0.750 getroffen
+    schwebung_db_2 [db] Modell 2.169200 Ziel 8.054 Toleranz 0.500 r 11.769
+    schwebung_db_3 [db] Modell 5.069126 Ziel 6.568 Toleranz 0.859 r 1.745
+    t60_spaet [faktor] Modell 10.066795 Ziel 16.685 Toleranz 0.151 r 3.338
+    t60_spaet_2 [faktor] Modell 7.756503 Ziel 13.781 Toleranz 0.084 r 6.848
+    t60_spaet_3 [faktor] Modell 7.040189 Ziel 9.768 Toleranz 0.041 r 7.938
+    tiefe_db_1 [db] Modell 10.869611 Ziel 3.066 Toleranz 8.341 r 0.936 getroffen
+    tiefe_db_2 [db] Modell 29.581231 Ziel 20.359 Toleranz 5.020 r 1.837
+    tiefe_db_3 [db] Modell 29.746549 Ziel 21.716 Toleranz 5.956 r 1.348
+    vorwaerts_t60 [faktor] Modell 5.068862 Ziel 2.443 Toleranz 0.798 r 0.915 getroffen
+    vorwaerts_t60_2 [faktor] Modell 2.748198 Ziel 1.938 Toleranz 0.049 r 7.185
+    vorwaerts_t60_3 [faktor] Modell 1.303541 Ziel 2.361 Toleranz 0.415 r 1.432
+78 | 1407.916 | 3 / 18 | 0 | huelle_30_s 25.519; knick_tiefe_db_3 16.198; t60_spaet_3 12.533
+    huelle_20_s [faktor] Modell 0.948333 Ziel 0.619 Toleranz 0.272 r 1.566
+    huelle_30_s [faktor] Modell 1.759104 Ziel 0.827 Toleranz 0.030 r 25.519
+    huelle_40_s [faktor] Modell 2.558167 Ziel 1.610 Toleranz 0.487 r 0.950 getroffen
+    knick_tiefe_db [db] Modell -3.635967 Ziel -18.466 Toleranz 2.441 r 6.074
+    knick_tiefe_db_2 [db] Modell -7.834399 Ziel -17.060 Toleranz 0.819 r 11.265
+    knick_tiefe_db_3 [db] Modell -4.228981 Ziel -13.738 Toleranz 0.587 r 16.198
+    schwebung_db_1 [db] Modell 2.255987 Ziel 6.388 Toleranz 2.803 r 1.474
+    schwebung_db_2 [db] Modell 0.271647 Ziel 5.212 Toleranz 2.719 r 1.817
+    schwebung_db_3 [db] Modell 0.127257 Ziel 8.819 Toleranz 1.528 r 5.686
+    t60_spaet [faktor] Modell 8.720051 Ziel 17.695 Toleranz 0.087 r 8.092
+    t60_spaet_2 [faktor] Modell 7.015798 Ziel 12.546 Toleranz 0.136 r 4.265
+    t60_spaet_3 [faktor] Modell 5.258018 Ziel 10.180 Toleranz 0.053 r 12.533
+    tiefe_db_1 [db] Modell 33.534606 Ziel 8.078 Toleranz 4.750 r 5.360
+    tiefe_db_2 [db] Modell 30.810537 Ziel 11.467 Toleranz 10.797 r 1.792
+    tiefe_db_3 [db] Modell 34.184829 Ziel 21.726 Toleranz 16.801 r 0.742 getroffen
+    vorwaerts_t60 [faktor] Modell 1.392381 Ziel 1.573 Toleranz 0.160 r 0.762 getroffen
+    vorwaerts_t60_2 [faktor] Modell 10.400289 Ziel 3.123 Toleranz 0.845 r 1.423
+    vorwaerts_t60_3 [faktor] Modell 7.621475 Ziel 1.168 Toleranz 0.510 r 3.680
+81 | 172.866 | 6 / 18 | 0 | huelle_40_s 6.998; t60_spaet 5.926; knick_tiefe_db_3 4.459
+    huelle_20_s [faktor] Modell 1.101500 Ziel 0.642 Toleranz 0.237 r 2.277
+    huelle_30_s [faktor] Modell 2.897896 Ziel 1.665 Toleranz 0.677 r 0.819 getroffen
+    huelle_40_s [faktor] Modell 4.330000 Ziel 2.733 Toleranz 0.066 r 6.998
+    knick_tiefe_db [db] Modell -6.907938 Ziel -14.793 Toleranz 2.664 r 2.960
+    knick_tiefe_db_2 [db] Modell -3.994956 Ziel -19.026 Toleranz 4.108 r 3.659
+    knick_tiefe_db_3 [db] Modell -11.701502 Ziel -22.499 Toleranz 2.422 r 4.459
+    schwebung_db_1 [db] Modell 0.608976 Ziel 5.897 Toleranz 1.693 r 3.123
+    schwebung_db_2 [db] Modell 0.797066 Ziel 4.753 Toleranz 4.533 r 0.873 getroffen
+    schwebung_db_3 [db] Modell 0.858313 Ziel 6.066 Toleranz 2.556 r 2.037
+    t60_spaet [faktor] Modell 8.676669 Ziel 14.223 Toleranz 0.083 r 5.926
+    t60_spaet_2 [faktor] Modell 6.547957 Ziel 10.816 Toleranz 0.137 r 3.669
+    t60_spaet_3 [faktor] Modell 4.570571 Ziel 5.569 Toleranz 0.077 r 2.581
+    tiefe_db_1 [db] Modell 13.471071 Ziel 15.087 Toleranz 2.311 r 0.699 getroffen
+    tiefe_db_2 [db] Modell 13.185602 Ziel 14.827 Toleranz 4.387 r 0.374 getroffen
+    tiefe_db_3 [db] Modell 12.162114 Ziel 10.662 Toleranz 1.179 r 1.273
+    vorwaerts_t60 [faktor] Modell 1.871344 Ziel 2.450 Toleranz 0.141 r 1.909
+    vorwaerts_t60_2 [faktor] Modell 1.848074 Ziel 1.488 Toleranz 0.497 r 0.436 getroffen
+    vorwaerts_t60_3 [faktor] Modell 2.268037 Ziel 1.973 Toleranz 0.890 r 0.156 getroffen
+84 | 208.656 | 6 / 18 | 0 | t60_spaet_2 8.740; t60_spaet_3 6.516; knick_tiefe_db_2 6.481
+    huelle_20_s [faktor] Modell 0.423500 Ziel 0.584 Toleranz 0.778 r 0.414 getroffen
+    huelle_30_s [faktor] Modell 0.567063 Ziel 0.922 Toleranz 0.241 r 2.015
+    huelle_40_s [faktor] Modell 1.058583 Ziel 1.638 Toleranz 0.160 r 2.738
+    knick_tiefe_db [db] Modell -30.872960 Ziel -26.036 Toleranz 1.548 r 3.126
+    knick_tiefe_db_2 [db] Modell -29.930896 Ziel -35.186 Toleranz 0.811 r 6.481
+    knick_tiefe_db_3 [db] Modell -15.204140 Ziel -21.886 Toleranz 10.188 r 0.656 getroffen
+    schwebung_db_1 [db] Modell 8.973693 Ziel 4.907 Toleranz 4.489 r 0.906 getroffen
+    schwebung_db_2 [db] Modell 2.156019 Ziel 3.904 Toleranz 0.715 r 2.447
+    schwebung_db_3 [db] Modell 0.614993 Ziel 3.026 Toleranz 2.271 r 1.062
+    t60_spaet [faktor] Modell 2.418704 Ziel 6.975 Toleranz 0.302 r 3.512
+    t60_spaet_2 [faktor] Modell 2.624722 Ziel 6.362 Toleranz 0.101 r 8.740
+    t60_spaet_3 [faktor] Modell 2.503780 Ziel 3.651 Toleranz 0.058 r 6.516
+    tiefe_db_1 [db] Modell 16.529051 Ziel 14.598 Toleranz 9.027 r 0.214 getroffen
+    tiefe_db_2 [db] Modell 18.984341 Ziel 19.488 Toleranz 5.602 r 0.090 getroffen
+    tiefe_db_3 [db] Modell 16.674163 Ziel 12.629 Toleranz 2.220 r 1.822
+    vorwaerts_t60 [faktor] Modell 1.242003 Ziel 1.504 Toleranz 0.596 r 0.322 getroffen
+    vorwaerts_t60_2 [faktor] Modell 1.183947 Ziel 1.323 Toleranz 0.110 r 1.008
+    vorwaerts_t60_3 [faktor] Modell 1.614842 Ziel 1.386 Toleranz 0.145 r 1.054
+87 | 114.197 | 5 / 18 | 0 | knick_tiefe_db_3 6.861; knick_tiefe_db_2 3.836; t60_spaet_3 3.408
+    huelle_20_s [faktor] Modell 0.651104 Ziel 0.415 Toleranz 0.214 r 2.106
+    huelle_30_s [faktor] Modell 1.788167 Ziel 1.058 Toleranz 0.409 r 1.284
+    huelle_40_s [faktor] Modell 3.629417 Ziel 2.476 Toleranz 0.272 r 1.407
+    knick_tiefe_db [db] Modell -4.167414 Ziel -13.748 Toleranz 7.803 r 1.228
+    knick_tiefe_db_2 [db] Modell -10.799345 Ziel -22.283 Toleranz 2.993 r 3.836
+    knick_tiefe_db_3 [db] Modell -12.338009 Ziel -20.074 Toleranz 1.127 r 6.861
+    schwebung_db_1 [db] Modell 0.454069 Ziel 5.169 Toleranz 4.188 r 1.126
+    schwebung_db_2 [db] Modell 3.156263 Ziel 4.513 Toleranz 1.554 r 0.873 getroffen
+    schwebung_db_3 [db] Modell 0.615464 Ziel 2.099 Toleranz 0.500 r 2.968
+    t60_spaet [faktor] Modell 7.257014 Ziel 7.655 Toleranz 0.097 r 0.553 getroffen
+    t60_spaet_2 [faktor] Modell 5.533414 Ziel 4.874 Toleranz 0.107 r 1.185
+    t60_spaet_3 [faktor] Modell 3.833708 Ziel 4.284 Toleranz 0.033 r 3.408
+    tiefe_db_1 [db] Modell 15.250474 Ziel 11.941 Toleranz 3.216 r 1.029
+    tiefe_db_2 [db] Modell 10.655677 Ziel 8.714 Toleranz 2.180 r 0.891 getroffen
+    tiefe_db_3 [db] Modell 16.035474 Ziel 10.564 Toleranz 7.988 r 0.685 getroffen
+    vorwaerts_t60 [faktor] Modell 1.730181 Ziel 1.244 Toleranz 0.728 r 0.453 getroffen
+    vorwaerts_t60_2 [faktor] Modell 5.271990 Ziel 2.020 Toleranz 0.367 r 2.615
+    vorwaerts_t60_3 [faktor] Modell 3.854872 Ziel 2.298 Toleranz 0.170 r 3.050
+90 | 122.290 | 6 / 16 | 0 | huelle_30_s 6.579; schwebung_db_1 5.352; schwebung_db_2 4.686
+    huelle_20_s [faktor] Modell 0.297438 Ziel 0.294 Toleranz 0.047 r 0.220 getroffen
+    huelle_30_s [faktor] Modell 1.293229 Ziel 1.571 Toleranz 0.030 r 6.579
+    huelle_40_s [faktor] Modell 2.300667 Ziel 2.098 Toleranz 0.204 r 0.452 getroffen
+    knick_tiefe_db_2 [db] Modell -12.731740 Ziel -15.575 Toleranz 4.796 r 0.593 getroffen
+    schwebung_db_1 [db] Modell 2.588419 Ziel 7.891 Toleranz 0.991 r 5.352
+    schwebung_db_2 [db] Modell 0.783165 Ziel 3.532 Toleranz 0.587 r 4.686
+    schwebung_db_3 [db] Modell 6.361593 Ziel 7.620 Toleranz 1.086 r 1.159
+    t60_spaet [faktor] Modell 5.223027 Ziel 5.386 Toleranz 0.030 r 1.038
+    t60_spaet_2 [faktor] Modell 3.319509 Ziel 3.047 Toleranz 0.030 r 2.893
+    t60_spaet_3 [faktor] Modell 1.813391 Ziel 1.962 Toleranz 0.035 r 2.238
+    tiefe_db_1 [db] Modell 13.871385 Ziel 12.656 Toleranz 3.176 r 0.383 getroffen
+    tiefe_db_2 [db] Modell 14.430941 Ziel 12.210 Toleranz 1.422 r 1.562
+    tiefe_db_3 [db] Modell 14.219641 Ziel 14.695 Toleranz 3.943 r 0.121 getroffen
+    vorwaerts_t60 [faktor] Modell 1.548333 Ziel 1.205 Toleranz 0.118 r 2.120
+    vorwaerts_t60_2 [faktor] Modell 3.957989 Ziel 2.216 Toleranz 0.263 r 2.201
+    vorwaerts_t60_3 [faktor] Modell 1.591622 Ziel 1.809 Toleranz 0.502 r 0.254 getroffen
+93 | 412.723 | 7 / 16 | 0 | t60_spaet 12.383; knick_tiefe_db_2 10.286; huelle_40_s 8.605
+    huelle_20_s [faktor] Modell 0.190562 Ziel 0.231 Toleranz 0.934 r 0.206 getroffen
+    huelle_30_s [faktor] Modell 0.782375 Ziel 0.869 Toleranz 0.407 r 0.258 getroffen
+    huelle_40_s [faktor] Modell 1.423542 Ziel 0.953 Toleranz 0.047 r 8.605
+    knick_tiefe_db [db] Modell -13.097553 Ziel -28.663 Toleranz 1.959 r 7.945
+    knick_tiefe_db_2 [db] Modell -29.748145 Ziel -42.545 Toleranz 1.244 r 10.286
+    knick_tiefe_db_3 [db] Modell -5.394910 Ziel -10.457 Toleranz 5.443 r 0.930 getroffen
+    schwebung_db_1 [db] Modell 0.617244 Ziel 3.687 Toleranz 2.688 r 1.142
+    schwebung_db_2 [db] Modell 2.794050 Ziel 5.392 Toleranz 3.650 r 0.712 getroffen
+    t60_spaet [faktor] Modell 4.599575 Ziel 6.633 Toleranz 0.030 r 12.383
+    t60_spaet_2 [faktor] Modell 1.901999 Ziel 2.229 Toleranz 0.113 r 1.402
+    t60_spaet_3 [faktor] Modell 1.000425 Ziel 1.117 Toleranz 0.120 r 0.916 getroffen
+    tiefe_db_1 [db] Modell 14.077504 Ziel 7.109 Toleranz 2.732 r 2.550
+    tiefe_db_2 [db] Modell 16.164120 Ziel 13.199 Toleranz 2.069 r 1.433
+    vorwaerts_t60 [faktor] Modell 1.947179 Ziel 1.869 Toleranz 0.030 r 1.390
+    vorwaerts_t60_2 [faktor] Modell 1.739395 Ziel 1.852 Toleranz 0.234 r 0.269 getroffen
+    vorwaerts_t60_3 [faktor] Modell 1.130404 Ziel 1.015 Toleranz 0.207 r 0.520 getroffen
+96 | 18.627 | 8 / 15 | 0 | huelle_40_s 2.714; t60_spaet 1.818; knick_tiefe_db_2 1.229
+    huelle_20_s [faktor] Modell 0.160917 Ziel 0.248 Toleranz 0.357 r 1.209
+    huelle_30_s [faktor] Modell 0.329688 Ziel 0.435 Toleranz 0.270 r 1.023
+    huelle_40_s [faktor] Modell 0.496563 Ziel 0.873 Toleranz 0.208 r 2.714
+    knick_tiefe_db [db] Modell -30.812512 Ziel -30.610 Toleranz 1.837 r 0.110 getroffen
+    knick_tiefe_db_2 [db] Modell -19.875606 Ziel -21.211 Toleranz 1.087 r 1.229
+    schwebung_db_1 [db] Modell 0.428993 Ziel 1.677 Toleranz 1.090 r 1.146
+    schwebung_db_2 [db] Modell 6.387206 Ziel 6.344 Toleranz 0.881 r 0.049 getroffen
+    t60_spaet [faktor] Modell 1.472464 Ziel 3.866 Toleranz 0.531 r 1.818
+    t60_spaet_2 [faktor] Modell 1.365437 Ziel 1.557 Toleranz 0.233 r 0.565 getroffen
+    t60_spaet_3 [faktor] Modell 0.584937 Ziel 0.598 Toleranz 0.035 r 0.634 getroffen
+    tiefe_db_1 [db] Modell 9.392244 Ziel 17.171 Toleranz 11.465 r 0.679 getroffen
+    tiefe_db_2 [db] Modell 10.240815 Ziel 11.322 Toleranz 3.039 r 0.356 getroffen
+    vorwaerts_t60 [faktor] Modell 1.506275 Ziel 1.058 Toleranz 0.339 r 1.042
+    vorwaerts_t60_2 [faktor] Modell 0.992511 Ziel 0.995 Toleranz 0.049 r 0.052 getroffen
+    vorwaerts_t60_3 [faktor] Modell 0.663555 Ziel 0.639 Toleranz 0.081 r 0.464 getroffen
+99 | 97.950 | 4 / 14 | 0 | knick_tiefe_db 5.776; knick_tiefe_db_2 5.125; t60_spaet 3.353
+    huelle_20_s [faktor] Modell 0.156646 Ziel 0.186 Toleranz 0.133 r 1.290
+    huelle_30_s [faktor] Modell 0.389604 Ziel 0.303 Toleranz 0.285 r 0.884 getroffen
+    huelle_40_s [faktor] Modell 0.466292 Ziel 1.343 Toleranz 0.516 r 2.052
+    knick_tiefe_db [db] Modell -8.222685 Ziel -17.864 Toleranz 1.669 r 5.776
+    knick_tiefe_db_2 [db] Modell -13.044717 Ziel -20.981 Toleranz 1.549 r 5.125
+    knick_tiefe_db_3 [db] Modell -12.402016 Ziel -16.270 Toleranz 7.733 r 0.500 getroffen
+    schwebung_db_1 [db] Modell 2.993350 Ziel 8.144 Toleranz 3.669 r 1.404
+    t60_spaet [faktor] Modell 3.170713 Ziel 4.320 Toleranz 0.092 r 3.353
+    t60_spaet_2 [faktor] Modell 1.345318 Ziel 1.590 Toleranz 0.062 r 2.687
+    t60_spaet_3 [faktor] Modell 0.639368 Ziel 1.149 Toleranz 0.270 r 2.169
+    tiefe_db_1 [db] Modell 23.144805 Ziel 15.520 Toleranz 8.289 r 0.920 getroffen
+    vorwaerts_t60 [faktor] Modell 1.133710 Ziel 0.974 Toleranz 0.226 r 0.673 getroffen
+    vorwaerts_t60_2 [faktor] Modell 1.258108 Ziel 1.024 Toleranz 0.112 r 1.831
+    vorwaerts_t60_3 [faktor] Modell 0.706716 Ziel 0.796 Toleranz 0.093 r 1.278
+102 | 46.902 | 7 / 14 | 0 | t60_spaet 3.478; vorwaerts_t60_2 2.944; tiefe_db_1 2.718
+    huelle_20_s [faktor] Modell 0.225229 Ziel 0.227 Toleranz 0.149 r 0.038 getroffen
+    huelle_30_s [faktor] Modell 0.759646 Ziel 0.700 Toleranz 0.271 r 0.302 getroffen
+    huelle_40_s [faktor] Modell 0.897396 Ziel 1.577 Toleranz 0.561 r 1.005
+    knick_tiefe_db [db] Modell -30.081487 Ziel -30.063 Toleranz 0.622 r 0.030 getroffen
+    knick_tiefe_db_2 [db] Modell -16.069403 Ziel -26.072 Toleranz 4.051 r 2.469
+    knick_tiefe_db_3 [db] Modell -9.259920 Ziel -15.745 Toleranz 3.930 r 1.650
+    schwebung_db_1 [db] Modell 6.557316 Ziel 3.437 Toleranz 3.600 r 0.867 getroffen
+    t60_spaet [faktor] Modell 2.042444 Ziel 4.071 Toleranz 0.198 r 3.478
+    t60_spaet_2 [faktor] Modell 1.067064 Ziel 1.012 Toleranz 0.118 r 0.453 getroffen
+    t60_spaet_3 [faktor] Modell 0.613373 Ziel 0.709 Toleranz 0.054 r 2.669
+    tiefe_db_1 [db] Modell 9.432728 Ziel 14.746 Toleranz 1.955 r 2.718
+    vorwaerts_t60 [faktor] Modell 1.438793 Ziel 1.215 Toleranz 0.348 r 0.485 getroffen
+    vorwaerts_t60_2 [faktor] Modell 1.081853 Ziel 0.718 Toleranz 0.139 r 2.944
+    vorwaerts_t60_3 [faktor] Modell 0.684554 Ziel 0.636 Toleranz 0.104 r 0.712 getroffen
+105 | 151.526 | 2 / 14 | 0 | huelle_20_s 9.458; huelle_30_s 3.486; t60_spaet_3 3.263
+    huelle_20_s [faktor] Modell 0.100521 Ziel 0.215 Toleranz 0.080 r 9.458
+    huelle_30_s [faktor] Modell 0.202708 Ziel 0.439 Toleranz 0.222 r 3.486
+    huelle_40_s [faktor] Modell 0.446917 Ziel 0.787 Toleranz 0.303 r 1.871
+    knick_tiefe_db [db] Modell -7.745866 Ziel -15.854 Toleranz 4.618 r 1.756
+    knick_tiefe_db_2 [db] Modell -5.278036 Ziel -13.414 Toleranz 5.643 r 1.442
+    knick_tiefe_db_3 [db] Modell -22.338407 Ziel -21.821 Toleranz 10.387 r 0.050 getroffen
+    schwebung_db_1 [db] Modell 1.103991 Ziel 5.478 Toleranz 3.639 r 1.202
+    t60_spaet [faktor] Modell 1.612708 Ziel 2.208 Toleranz 0.111 r 2.826
+    t60_spaet_2 [faktor] Modell 0.807514 Ziel 0.761 Toleranz 0.058 r 1.031
+    t60_spaet_3 [faktor] Modell 0.557618 Ziel 0.956 Toleranz 0.165 r 3.263
+    tiefe_db_1 [db] Modell 12.685526 Ziel 12.629 Toleranz 0.604 r 0.093 getroffen
+    vorwaerts_t60 [faktor] Modell 1.905929 Ziel 0.965 Toleranz 0.213 r 3.192
+    vorwaerts_t60_2 [faktor] Modell 0.923300 Ziel 0.697 Toleranz 0.098 r 2.866
+    vorwaerts_t60_3 [faktor] Modell 0.583326 Ziel 0.806 Toleranz 0.249 r 1.302
+108 | 27.446 | 1 / 6 | 0 | vorwaerts_t60 2.977; huelle_20_s 2.320; knick_tiefe_db 2.147
+    huelle_20_s [faktor] Modell 0.075563 Ziel 0.194 Toleranz 0.407 r 2.320
+    huelle_30_s [faktor] Modell 0.193792 Ziel 0.460 Toleranz 0.431 r 2.008
+    huelle_40_s [faktor] Modell 0.378312 Ziel 1.146 Toleranz 0.524 r 2.115
+    knick_tiefe_db [db] Modell -4.932473 Ziel -19.662 Toleranz 6.859 r 2.147
+    t60_spaet [faktor] Modell 0.840295 Ziel 0.816 Toleranz 0.103 r 0.289 getroffen
+    vorwaerts_t60 [faktor] Modell 1.062453 Ziel 0.654 Toleranz 0.163 r 2.977
+Gesamt: Summe r^2 16540.646, getroffen 107 / 456, fehlend 0, fertige Tasten 0 / 30, Ausreisser 33

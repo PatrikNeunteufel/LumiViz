@@ -1,0 +1,38 @@
+2026-10-29T13:50:09	Start, clang, 11 Threads, 232 Parameter; eine Auswertung 13.8 s, geschaetzt hoechstens 1.53 h
+2026-10-29T13:52:20	Startpunkt 1 Iteration 1: Rest 42853.7 -> 24757.2, getroffen 137 / 456, lambda 0.000100, 0 verworfen, 131 s
+2026-10-29T13:54:45	Startpunkt 1 Iteration 2: Rest 24757.2 -> 22011.8, getroffen 139 / 456, lambda 0.001000, 2 verworfen, 145 s
+2026-10-29T13:56:55	Startpunkt 1 Iteration 3: Rest 22011.8 -> 21541.8, getroffen 137 / 456, lambda 0.010000, 2 verworfen, 130 s
+2026-10-29T13:59:04	Startpunkt 1 Iteration 4: Rest 21541.8 -> 19608.5, getroffen 141 / 456, lambda 0.010000, 1 verworfen, 129 s
+2026-10-29T14:00:54	Startpunkt 1 Iteration 5: Rest 19608.5 -> 18398.0, getroffen 142 / 456, lambda 0.001000, 0 verworfen, 109 s
+2026-10-29T14:04:22	Startpunkt 1 Iteration 6: Rest 18398.0 -> 16146.3, getroffen 136 / 456, lambda 0.010000, 2 verworfen, 208 s
+2026-10-29T14:06:52	Startpunkt 1 Iteration 7: Rest 16146.3 -> 16024.8, getroffen 131 / 456, lambda 0.010000, 1 verworfen, 150 s
+2026-10-29T14:09:08	Startpunkt 1 Iteration 8: Rest 16024.8 -> 15840.5, getroffen 139 / 456, lambda 0.010000, 1 verworfen, 136 s
+2026-10-29T14:12:39	Startpunkt 1 Iteration 9: Rest 15840.5 -> 13848.9, getroffen 146 / 456, lambda 0.100000, 2 verworfen, 211 s
+2026-10-29T14:15:59	Startpunkt 1 Iteration 10: Rest 13848.9 -> 12607.3, getroffen 153 / 456, lambda 0.100000, 1 verworfen, 200 s
+2026-10-29T14:18:22	Startpunkt 1 Iteration 11: Rest 12607.3 -> 11720.1, getroffen 152 / 456, lambda 0.100000, 1 verworfen, 143 s
+2026-10-29T14:20:46	Startpunkt 1 Iteration 12: Rest 11720.1 -> 11477.6, getroffen 149 / 456, lambda 1.000000, 2 verworfen, 144 s
+2026-10-29T14:23:10	Startpunkt 1 Iteration 13: Rest 11477.6 -> 11293.1, getroffen 149 / 456, lambda 1.000000, 1 verworfen, 144 s
+2026-10-29T14:26:24	Startpunkt 1 Iteration 14: Rest 11293.1 -> 11290.1, getroffen 149 / 456, lambda 100.000000, 3 verworfen, 193 s
+2026-10-29T14:29:12	Startpunkt 1 Iteration 15: Rest 11290.1 -> 11290.1, getroffen 149 / 456, lambda 1000.000000, 1 verworfen, 169 s, Ende: Schritte klein
+2026-10-29T14:29:12	Startpunkt 1 fertig: Schritte klein, Rest 11290.1
+2026-10-29T14:32:01	Startpunkt 2 Iteration 1: Rest 61363.1 -> 39460.0, getroffen 111 / 456, lambda 0.000100, 0 verworfen, 168 s
+2026-10-29T14:34:34	Startpunkt 2 Iteration 2: Rest 39460.0 -> 33693.6, getroffen 105 / 456, lambda 0.000100, 1 verworfen, 153 s
+2026-10-29T14:37:21	Startpunkt 2 Iteration 3: Rest 33693.6 -> 24306.5, getroffen 112 / 456, lambda 0.010000, 3 verworfen, 167 s
+2026-10-29T14:39:54	Startpunkt 2 Iteration 4: Rest 24306.5 -> 22040.0, getroffen 107 / 456, lambda 0.010000, 1 verworfen, 153 s
+2026-10-29T14:42:38	Startpunkt 2 Iteration 5: Rest 22040.0 -> 20042.0, getroffen 115 / 456, lambda 0.010000, 1 verworfen, 164 s
+2026-10-29T14:45:04	Startpunkt 2 Iteration 6: Rest 20042.0 -> 19508.6, getroffen 118 / 456, lambda 0.010000, 1 verworfen, 146 s
+2026-10-29T14:48:03	Startpunkt 2 Iteration 7: Rest 19508.6 -> 18634.4, getroffen 108 / 456, lambda 0.100000, 2 verworfen, 179 s
+2026-10-29T14:50:20	Startpunkt 2 Iteration 8: Rest 18634.4 -> 17326.5, getroffen 105 / 456, lambda 0.100000, 1 verworfen, 137 s
+2026-10-29T14:52:41	Startpunkt 2 Iteration 9: Rest 17326.5 -> 17051.2, getroffen 109 / 456, lambda 0.100000, 1 verworfen, 142 s
+2026-10-29T14:54:45	Startpunkt 2 Iteration 10: Rest 17051.2 -> 17022.0, getroffen 105 / 456, lambda 0.100000, 1 verworfen, 123 s
+2026-10-29T14:57:01	Startpunkt 2 Iteration 11: Rest 17022.0 -> 16881.1, getroffen 109 / 456, lambda 1.000000, 2 verworfen, 136 s
+2026-10-29T14:59:18	Startpunkt 2 Iteration 12: Rest 16881.1 -> 16870.5, getroffen 110 / 456, lambda 0.100000, 0 verworfen, 137 s
+2026-10-29T15:01:54	Startpunkt 2 Iteration 13: Rest 16870.5 -> 16842.8, getroffen 109 / 456, lambda 0.100000, 1 verworfen, 156 s
+2026-10-29T15:04:42	Startpunkt 2 Iteration 14: Rest 16842.8 -> 16840.4, getroffen 112 / 456, lambda 0.100000, 1 verworfen, 168 s
+2026-10-29T15:08:01	Startpunkt 2 Iteration 15: Rest 16840.4 -> 16755.1, getroffen 108 / 456, lambda 1.000000, 2 verworfen, 199 s
+2026-10-29T15:10:00	Startpunkt 2 Iteration 16: Rest 16755.1 -> 16698.2, getroffen 109 / 456, lambda 0.100000, 0 verworfen, 119 s
+2026-10-29T15:12:28	Startpunkt 2 Iteration 17: Rest 16698.2 -> 16624.5, getroffen 108 / 456, lambda 1.000000, 2 verworfen, 147 s
+2026-10-29T15:15:00	Startpunkt 2 Iteration 18: Rest 16624.5 -> 16573.8, getroffen 108 / 456, lambda 1.000000, 1 verworfen, 152 s
+2026-10-29T15:18:38	Startpunkt 2 Iteration 19: Rest 16573.8 -> 16556.2, getroffen 108 / 456, lambda 1.000000, 1 verworfen, 219 s
+2026-10-29T15:22:05	Startpunkt 2 Iteration 20: Rest 16556.2 -> 16540.6, getroffen 107 / 456, lambda 1.000000, 1 verworfen, 206 s, Ende: Iterationen
+2026-10-29T15:22:05	Startpunkt 2 fertig: Iterationen, Rest 16540.6

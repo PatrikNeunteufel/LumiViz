@@ -1,0 +1,304 @@
+# Suche 7.5.10 (SP2 a), Startpunkt 2, Iteration 10
+rest	17022
+rest_vorher	17051.2
+lambda	0.10000000000000001
+lambda_vorher	0.1
+versuche	2
+verworfen	1
+angenommen	1
+schritt_anteil	100
+dauer_s	123.268
+getroffen	105 / 456
+ende	
+x	2.7847843624536583	3.2275968455093378	3.2927700864807772	3.1459081015000927	3.5826852577075323	1.6000607506215037	2.7340124275989788	2.2589334717652401	3.2725682390649746	0.66663207490419041	2.2802597272475684	2.0933051675463772	2.4256872901280291	2.7651863924730193	1.8179144267049061	2.4196134957242506	2.1273018082307344	1.6006890914175818	1.7809728029461691	2.0922062051308918	1.5816555314216487	0.93745468736612247	1.5169537084455729	1.6468041363619359	1.4753854242321141	0.34958594784487507	1.1343601492654085	0.72049390260434276	0.5776894942195534	-0.49047848243512115	4.0386277744996937	2.6183685955567015	2.8924067229865345	4.3946986279820344	2.4843509398542776	4.8956732756265744	4.5974274322191286	3.076422417936874	2.173993858621059	3.9625259876012526	3.1155261741079801	1.3660916538023711	2.351356175594209	1.6664481671508802	2.9166890662135385	1.324418957401803	3.4813286587814551	2.5093373581001366	2.8073117094594946	1.0762530627235651	2.6800621645620413	0.085761493733326422	2.4394442757112431	1.4134230285081431	0.78785111602924274	0.096054382523117154	0.41034208518766846	0.60831524504324774	0.60831524504324774	0.60831524504324774	-0.018540475157378486	-0.26098572586016683	-0.24994940302373625	-0.25182851630283942	-0.24764119663618667	-0.29807574951941396	-0.022486102381090996	-0.01462363507314049	-0.3070437299669867	-0.026717691085862916	-0.50331354774651071	-0.048450888109295431	-0.78970040786208395	-0.088236445677003686	-0.1187830692210237	-0.15931705445883101	-0.21251464822753416	-0.28135793726835567	-2.1352949254133757	-2.2525085002696161	-2.5318046658520879	-0.95754674386833172	-2.5564329127114869	-3.0986686936623768	-3.5952578252081797	-2.6358691646281365	-3.8785190015325561	-3.2083250093079831	-2.9499039280974029	-2.5705659776907455	6	1.2414535297686915	1.2487039395230566	6	5.884007498827061	6	3.3948443123187912	1.5314440463964651	2.1896985567829597	2.2168307798417484	2.6349146544196387	4.0806017934399481	3.3886141192701134	2.5760293818756406	0.97830243110659865	6	1.9453473169348434	1.9445389963320667	2.4828706566994256	2.4383927700211436	3.1827247987861562	4.4805795450204204	1.7970870134735739	1.743514120828457	2.4500518379590672	4.277738243833225	0	0.060324220454558194	0.036056162699322415	1	0.49646534038498702	0.036851352494895254	0.38460981074664219	1	0.51053801328842108	0.13813070035220498	0.21389430160152795	0.92229214153119565	0.6656400219811297	0	0.019945414839217551	0	0.071224804087151664	0.15790348350965056	0.012871433188671726	0.076690430395415496	0.02078256121179092	0.8618235607840472	0.15656409945701377	1	0.22043853887887316	1	0.85343753818821078	0.81755814326408993	0.010028518709693419	0.58792219412380187	0	1	0.67269172825863599	1	1	0.20306625028638675	0	0.027873787098655563	0.058388649274603979	0	0.22268818361308995	0	1	0.45016162482344191	0.88679630260011133	1	0.85708797516121438	1	0.036153677231084931	0.78763308864458859	0.89941145897312891	1	0.19231952350722684	0	20.479875831498646	41.560387498982415	26.653844320121237	27.983314021410752	43.578548999557853	39.484891392441085	0	45	45	39.42977145958568	45	45	45	0	43.524990926311304	0	45	0	0.00021318690353812033	0	44.999963231735904	0	0	0	0	45	0	41.25	0	8	4.4186732420524555	1.292358673485978	0	0	0	0.22684435058840843	0.25	0	0	0.18408425348922963	0.25	1	0.023251577788203893	0.25	0.25	0.25	1	0.25	1	1	0	0.25	0.047705085833400704	0.25	0.001654571884157908	0.25	0.25	0.25	0.25	0.25	0	0.25
+
+## Kurven (wie baueVorgabe)
+    // decay (ohne Quelle, Faktor 3)
+    s.abklingS = kurveAusPunkten({{21, 16.2}, {24, 25.22}, {27, 26.92}, {30, 23.24}, {33, 35.97}, {36, 4.953}, {39, 15.39}, {42, 9.573}, {45, 26.38}, {48, 1.948}, {51, 9.779}, {54, 8.112}, {57, 11.31}, {60, 15.88}, {63, 6.159}, {66, 11.24}, {69, 8.392}, {72, 4.956}, {75, 5.936}, {78, 8.103}, {81, 4.863}, {84, 2.553}, {87, 4.558}, {90, 5.19}, {93, 4.373}, {96, 1.418}, {99, 3.109}, {102, 2.055}, {105, 1.782}, {108, 0.6123}});
+    // lateDecay (ohne Quelle, Faktor 3; nie kuerzer als decay)
+    s.abklingSpaetS = kurveAusPunkten({{21, 56.75}, {24, 25.22}, {27, 26.92}, {30, 81.02}, {33, 35.97}, {36, 133.7}, {39, 99.23}, {42, 21.68}, {45, 26.38}, {48, 52.59}, {51, 22.55}, {54, 8.112}, {57, 11.31}, {60, 15.88}, {63, 18.48}, {66, 11.24}, {69, 32.5}, {72, 12.3}, {75, 16.57}, {78, 8.103}, {81, 14.59}, {84, 2.553}, {87, 11.47}, {90, 5.19}, {93, 4.373}, {96, 1.418}, {99, 3.109}, {102, 2.055}, {105, 1.837}, {108, 1.837}});
+    // highDecay (Bensa 2003)
+    s.abklingHoch = kurveAusPunkten({{21, 0.9816}, {24, 0.7703}, {27, 0.7788}, {30, 0.7774}, {33, 0.7806}, {36, 0.7422}, {39, 0.9778}, {42, 0.9855}, {45, 0.7356}, {48, 0.9736}, {51, 0.6045}, {54, 0.9527}, {57, 0.454}, {60, 0.9155}, {63, 0.888}, {66, 0.8527}, {69, 0.8085}, {72, 0.7548}, {75, 0.1182}, {78, 0.1051}, {81, 0.07952}, {84, 0.3838}, {87, 0.07758}, {90, 0.04511}, {93, 0.02745}, {96, 0.07166}, {99, 0.02068}, {102, 0.04042}, {105, 0.05234}, {108, 0.07649}});
+    // detune (Kirk, Cuenca, Plath; Start an der Schwebung (SG3 a))
+    s.verstimmungCent = kurveAusPunkten({{21, 3.014}, {24, 3.014}, {27, 3.014}, {30, 3.014}, {33, 6}, {36, 1.241}, {39, 1.249}, {42, 6}, {45, 5.884}, {48, 6}, {51, 3.395}, {54, 1.531}, {57, 2.19}, {60, 2.217}, {63, 2.635}, {66, 4.081}, {69, 3.389}, {72, 2.576}, {75, 0.9783}, {78, 6}, {81, 1.945}, {84, 1.945}, {87, 2.483}, {90, 2.438}, {93, 3.183}, {96, 4.481}, {99, 1.797}, {102, 1.744}, {105, 2.45}, {108, 4.278}});
+    // u leise (ohne Quelle, 0-1)
+    s.stossLeise = kurveAusPunkten({{21, 0}, {24, 0}, {27, 0}, {30, 0}, {33, 0}, {36, 0.06032}, {39, 0.03606}, {42, 1}, {45, 0.4965}, {48, 0.03685}, {51, 0.3846}, {54, 1}, {57, 0.5105}, {60, 0.1381}, {63, 0.2139}, {66, 0.9223}, {69, 0.6656}, {72, 0}, {75, 0.01995}, {78, 0}, {81, 0.07122}, {84, 0.1579}, {87, 0.01287}, {90, 0.07669}, {93, 0.02078}, {96, 0.8618}, {99, 0.1566}, {102, 1}, {105, 0.2204}, {108, 1}});
+    // u laut (ohne Quelle, 0-1)
+    s.stossLaut = kurveAusPunkten({{21, 0}, {24, 0}, {27, 0}, {30, 0}, {33, 0.8534}, {36, 0.8176}, {39, 0.01003}, {42, 0.5879}, {45, 0}, {48, 1}, {51, 0.6727}, {54, 1}, {57, 1}, {60, 0.2031}, {63, 0}, {66, 0.02787}, {69, 0.05839}, {72, 0}, {75, 0.2227}, {78, 0}, {81, 1}, {84, 0.4502}, {87, 0.8868}, {90, 1}, {93, 0.8571}, {96, 1}, {99, 0.03615}, {102, 0.7876}, {105, 0.8994}, {108, 1}});
+    // gamma (ohne Quelle, 0-45 Grad (SG2 a), Start 30 (HU2 a (3)))
+    s.polarisationWinkelGrad = kurveAusPunkten({{21, 0.1923}, {24, 0}, {27, 20.48}, {30, 41.56}, {33, 26.65}, {36, 27.98}, {39, 43.58}, {42, 39.48}, {45, 0}, {48, 45}, {51, 45}, {54, 39.43}, {57, 45}, {60, 45}, {63, 45}, {66, 0}, {69, 43.52}, {72, 0}, {75, 45}, {78, 0}, {81, 0.0002132}, {84, 0}, {87, 45}, {90, 0}, {93, 0}, {96, 0}, {99, 0}, {102, 45}, {105, 0}, {108, 41.25}});
+    // delta (Tan 2017, Mori 2004; 0-8 Cent)
+    s.polarisationCent = kurveAusPunkten({{21, 0}, {24, 8}, {27, 4.419}, {30, 1.292}, {33, 0}, {36, 0}, {39, 0}, {42, 0}, {45, 0}, {48, 0}, {51, 0}, {54, 0}, {57, 0}, {60, 0}, {63, 0}, {66, 0}, {69, 0}, {72, 0}, {75, 0}, {78, 0}, {81, 0}, {84, 0}, {87, 0}, {90, 0}, {93, 0}, {96, 0}, {99, 0}, {102, 0}, {105, 0}, {108, 0}});
+    // h (0-1 (P7 a))
+    s.waagrechtVerhaeltnis = kurveAusPunkten({{21, 0}, {24, 0}, {27, 0}, {30, 0.2268}, {33, 0.25}, {36, 0}, {39, 0}, {42, 0.1841}, {45, 0.25}, {48, 1}, {51, 0.02325}, {54, 0.25}, {57, 0.25}, {60, 0.25}, {63, 1}, {66, 0.25}, {69, 1}, {72, 1}, {75, 0}, {78, 0.25}, {81, 0.04771}, {84, 0.25}, {87, 0.001655}, {90, 0.25}, {93, 0.25}, {96, 0.25}, {99, 0.25}, {102, 0.25}, {105, 0}, {108, 0.25}});
+
+## Rest je Taste
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+21 | 1210.493 | 0 / 12 | 0 | vorwaerts_t60_3 25.547; t60_spaet_3 14.065; huelle_40_s 13.207
+24 | 170.945 | 1 / 11 | 0 | t60_spaet_2 8.300; huelle_20_s 5.229; vorwaerts_t60_3 4.724
+27 | 1003.667 | 0 / 12 | 0 | vorwaerts_t60 23.160; t60_spaet_3 15.951; t60_spaet_2 9.404
+30 | 264.953 | 1 / 10 | 0 | t60_spaet_3 12.151; t60_spaet_2 6.859; huelle_20_s 6.568
+33 | 1780.991 | 3 / 16 | 0 | huelle_20_s 28.819; knick_tiefe_db_2 19.324; t60_spaet_3 14.471
+36 | 847.995 | 2 / 15 | 0 | t60_spaet 15.537; vorwaerts_t60_3 14.321; knick_tiefe_db_2 13.002
+39 | 898.243 | 0 / 16 | 0 | vorwaerts_t60_2 18.337; t60_spaet_3 17.071; huelle_20_s 9.418
+42 | 672.037 | 1 / 11 | 0 | t60_spaet 17.199; t60_spaet_2 16.987; vorwaerts_t60_2 5.692
+45 | 756.175 | 3 / 17 | 0 | t60_spaet_2 14.963; knick_tiefe_db_2 14.948; knick_tiefe_db 8.966
+48 | 1330.786 | 3 / 18 | 0 | knick_tiefe_db 25.021; vorwaerts_t60_3 13.133; tiefe_db_3 12.846
+51 | 463.396 | 1 / 16 | 0 | huelle_40_s 8.977; huelle_20_s 8.161; t60_spaet_3 8.026
+54 | 381.142 | 5 / 14 | 0 | vorwaerts_t60_3 16.916; t60_spaet_2 7.680; huelle_20_s 4.174
+57 | 211.003 | 5 / 16 | 0 | knick_tiefe_db_2 9.108; t60_spaet 6.994; t60_spaet_2 5.084
+60 | 1088.110 | 4 / 16 | 0 | knick_tiefe_db_2 19.562; t60_spaet_3 17.850; t60_spaet 13.664
+63 | 806.651 | 4 / 17 | 0 | t60_spaet_3 25.138; t60_spaet 6.765; t60_spaet_2 6.718
+66 | 296.032 | 7 / 18 | 0 | t60_spaet_2 10.011; knick_tiefe_db 7.696; knick_tiefe_db_2 5.357
+69 | 195.345 | 1 / 18 | 0 | knick_tiefe_db_3 6.002; vorwaerts_t60 5.932; schwebung_db_1 4.420
+72 | 1317.901 | 3 / 18 | 0 | t60_spaet_2 26.268; knick_tiefe_db 15.305; huelle_20_s 12.732
+75 | 403.207 | 5 / 18 | 0 | schwebung_db_2 13.459; t60_spaet_3 7.692; knick_tiefe_db_3 7.182
+78 | 1422.427 | 4 / 18 | 0 | huelle_30_s 25.363; knick_tiefe_db_3 15.435; t60_spaet_3 14.397
+81 | 181.252 | 6 / 18 | 0 | huelle_40_s 7.642; t60_spaet 5.891; knick_tiefe_db_3 4.129
+84 | 212.803 | 7 / 18 | 0 | t60_spaet_2 8.666; t60_spaet_3 7.339; knick_tiefe_db_2 5.900
+87 | 114.611 | 5 / 18 | 0 | knick_tiefe_db_3 6.980; knick_tiefe_db_2 3.881; vorwaerts_t60_3 3.094
+90 | 185.076 | 6 / 16 | 0 | huelle_30_s 8.507; schwebung_db_3 6.830; schwebung_db_1 5.334
+93 | 428.414 | 6 / 16 | 0 | t60_spaet 14.157; knick_tiefe_db_2 9.167; huelle_40_s 8.178
+96 | 19.336 | 9 / 15 | 0 | huelle_40_s 2.827; t60_spaet 1.841; huelle_20_s 1.217
+99 | 120.390 | 3 / 14 | 0 | t60_spaet_2 5.491; knick_tiefe_db 5.427; knick_tiefe_db_2 4.810
+102 | 47.213 | 7 / 14 | 0 | t60_spaet 3.498; vorwaerts_t60_2 2.902; t60_spaet_3 2.798
+105 | 163.799 | 2 / 14 | 0 | huelle_20_s 9.458; vorwaerts_t60_2 4.491; vorwaerts_t60 4.105
+108 | 27.560 | 1 / 6 | 0 | vorwaerts_t60 2.974; huelle_20_s 2.320; knick_tiefe_db 2.144
+Gesamt: Summe r^2 17021.954, getroffen 105 / 456, fehlend 0, fertige Tasten 0 / 30, Ausreisser 33
+
+## An der Grenze
+101: decay 33 oben; decay 36 unten; decay 45 oben; decay 48 unten; decay 57 oben; decay 60 oben; decay 63 oben; decay 81 oben; decay 108 unten; lateDecay 24 unten; lateDecay 27 unten; lateDecay 33 unten; lateDecay 36 oben; lateDecay 45 unten; lateDecay 48 oben; lateDecay 54 unten; lateDecay 60 unten; lateDecay 63 oben; lateDecay 66 unten; lateDecay 78 unten; lateDecay 81 oben; lateDecay 87 unten; lateDecay 90 unten; lateDecay 93 unten; lateDecay 99 unten; lateDecay 102 unten; lateDecay 105 unten; lateDecay 108 unten; highDecay 21 oben; highDecay 24 unten; highDecay 27 unten; highDecay 30 unten; highDecay 36 unten; highDecay 39 oben; highDecay 42 oben; highDecay 45 unten; highDecay 48 oben; highDecay 51 unten; highDecay 54 oben; highDecay 57 unten; highDecay 60 oben; highDecay 63 oben; highDecay 66 oben; highDecay 69 oben; highDecay 72 oben; highDecay 75 unten; highDecay 93 unten; highDecay 108 oben; detune 33 oben; detune 42 oben; detune 48 oben; detune 78 oben; u leise 33 unten; u leise 42 oben; u leise 54 oben; u leise 72 unten; u leise 78 unten; u leise 102 oben; u leise 108 oben; u laut 45 unten; u laut 48 oben; u laut 54 oben; u laut 57 oben; u laut 63 unten; u laut 72 unten; u laut 78 unten; u laut 81 oben; u laut 90 oben; u laut 96 oben; u laut 108 oben; gamma 24 unten; gamma 45 unten; gamma 48 oben; gamma 51 oben; gamma 57 oben; gamma 60 oben; gamma 63 oben; gamma 66 unten; gamma 72 unten; gamma 75 oben; gamma 78 unten; gamma 84 unten; gamma 90 unten; gamma 93 unten; gamma 96 unten; gamma 99 unten; gamma 102 oben; gamma 105 unten; delta 21 unten; delta 24 oben; h 21 unten; h 24 unten; h 27 unten; h 36 unten; h 39 unten; h 48 oben; h 63 oben; h 69 oben; h 72 oben; h 75 unten; h 105 unten;
+
+## Diagonale von J^T J je Stuetzpunkt (vor dem Schritt): Kurve, Taste, diag, Wirkung ueber den Bereich in Toleranzen
+decay	21	7896	195.2
+decay	24	4069	140.2
+decay	27	6293	174.3
+decay	30	434.7	45.81
+decay	33	1434	83.19
+decay	36	5131	157.4
+decay	39	2122	101.2
+decay	42	1126	73.72
+decay	45	1792	93.01
+decay	48	2261	104.5
+decay	51	527.2	50.45
+decay	54	1866	94.91
+decay	57	852.9	64.17
+decay	60	1499	85.08
+decay	63	710.7	58.58
+decay	66	918.3	66.58
+decay	69	589.3	53.34
+decay	72	805.3	62.35
+decay	75	820.5	62.94
+decay	78	695.1	57.93
+decay	81	155.1	27.36
+decay	84	2097	100.6
+decay	87	376.3	42.62
+decay	90	3087	122.1
+decay	93	2234	103.9
+decay	96	1685	90.19
+decay	99	684	57.47
+decay	102	2853	117.4
+decay	105	60.05	17.03
+decay	108	25.72	11.14
+lateDecay	21	0	0	nicht aufgeloest
+lateDecay	24	0	0	nicht aufgeloest
+lateDecay	27	0	0	nicht aufgeloest
+lateDecay	30	90.28	20.88
+lateDecay	33	0	0	nicht aufgeloest
+lateDecay	36	192.4	30.48
+lateDecay	39	228	33.18
+lateDecay	42	86.29	20.41
+lateDecay	45	0	0	nicht aufgeloest
+lateDecay	48	137.5	25.76
+lateDecay	51	372.4	42.4
+lateDecay	54	0	0	nicht aufgeloest
+lateDecay	57	0	0	nicht aufgeloest
+lateDecay	60	0	0	nicht aufgeloest
+lateDecay	63	299.1	38
+lateDecay	66	0	0	nicht aufgeloest
+lateDecay	69	2160	102.1
+lateDecay	72	445.4	46.37
+lateDecay	75	394.3	43.63
+lateDecay	78	0	0	nicht aufgeloest
+lateDecay	81	66.85	17.96
+lateDecay	84	0	0	nicht aufgeloest
+lateDecay	87	246.7	34.51
+lateDecay	90	0	0	nicht aufgeloest
+lateDecay	93	0	0	nicht aufgeloest
+lateDecay	96	0	0	nicht aufgeloest
+lateDecay	99	0	0	nicht aufgeloest
+lateDecay	102	0	0	nicht aufgeloest
+lateDecay	105	180	29.48
+lateDecay	108	12.68	7.826
+highDecay	21	452	5.761
+highDecay	24	132.5	2.815
+highDecay	27	140.4	2.776
+highDecay	30	20.29	1.063
+highDecay	33	12.99	0.8961
+highDecay	36	1046	9.021
+highDecay	39	18.7	1.382
+highDecay	42	11.81	0.7562
+highDecay	45	11.49	0.9735
+highDecay	48	38.36	2.284
+highDecay	51	31.42	2.62
+highDecay	54	21.51	2.718
+highDecay	57	5.694	1.728
+highDecay	60	5.394	2.045
+highDecay	63	7.549	2.888
+highDecay	66	2.144	1.804
+highDecay	69	8.498	4.128
+highDecay	72	3.043	2.785
+highDecay	75	300.8	30.64
+highDecay	78	67.79	15.79
+highDecay	81	57.54	15.51
+highDecay	84	20.58	9.717
+highDecay	87	311.7	38.92
+highDecay	90	545.9	52.08
+highDecay	93	254	35.32
+highDecay	96	275.6	35.94
+highDecay	99	244.9	32.51
+highDecay	102	175.8	25.96
+highDecay	105	70.16	15.17
+highDecay	108	1.551e-14	2.12e-07	nicht aufgeloest
+detune	33	104	61.19
+detune	36	551.8	140.9
+detune	39	2756	315
+detune	42	7.998	16.97
+detune	45	77.54	52.84
+detune	48	269.6	98.51
+detune	51	1010	190.7
+detune	54	59.34	46.22
+detune	57	353.2	112.8
+detune	60	769.1	166.4
+detune	63	960	185.9
+detune	66	68.36	49.61
+detune	69	832.7	173.1
+detune	72	1.592e+04	757.2
+detune	75	7428	517.1
+detune	78	238.3	92.61
+detune	81	457.1	128.3
+detune	84	627.9	150.4
+detune	87	1213	208.9
+detune	90	747.1	205
+detune	93	1454	286
+detune	96	463.5	161.5
+detune	99	102.9	76.07
+detune	102	409.1	151.7
+detune	105	364.9	143.3
+detune	108	24.61	37.21
+u leise	33	3627	60.22
+u leise	36	4676	68.38
+u leise	39	4365	66.07
+u leise	42	339.5	18.43
+u leise	45	257.8	16.05
+u leise	48	1685	41.04
+u leise	51	202.7	14.24
+u leise	54	233.2	15.27
+u leise	57	164.3	12.82
+u leise	60	354	18.82
+u leise	63	1947	44.13
+u leise	66	51.48	7.175
+u leise	69	97.49	9.874
+u leise	72	37.43	6.118
+u leise	75	304.7	17.46
+u leise	78	44.19	6.647
+u leise	81	217.1	14.73
+u leise	84	153.9	12.4
+u leise	87	125	11.18
+u leise	90	325.1	18.03
+u leise	93	243.8	15.62
+u leise	96	2.072	1.439
+u leise	99	25.13	5.013
+u leise	102	5.23	2.287
+u leise	105	412.7	20.31
+u leise	108	0.06542	0.2558
+u laut	33	144.3	12.01
+u laut	36	1928	43.91
+u laut	39	1210	34.78
+u laut	42	98.05	9.902
+u laut	45	71.1	8.432
+u laut	48	423.7	20.58
+u laut	51	50.09	7.077
+u laut	54	26.86	5.183
+u laut	57	16.72	4.089
+u laut	60	90.62	9.52
+u laut	63	504.7	22.47
+u laut	66	13.42	3.663
+u laut	69	25.28	5.028
+u laut	72	22.03	4.693
+u laut	75	77.62	8.81
+u laut	78	28.43	5.332
+u laut	81	56.77	7.534
+u laut	84	38.69	6.221
+u laut	87	32.3	5.684
+u laut	90	91.59	9.57
+u laut	93	61.21	7.823
+u laut	96	17.1	4.135
+u laut	99	6.422	2.534
+u laut	102	23.65	4.863
+u laut	105	133.2	11.54
+u laut	108	1.612	1.27
+gamma	21	0	0	nicht aufgeloest
+gamma	24	1.349e-05	0.1653
+gamma	27	1.419	53.6
+gamma	30	0.5698	33.97
+gamma	33	3.581e-16	8.516e-07	nicht aufgeloest
+gamma	36	2.73e-20	7.435e-09	nicht aufgeloest
+gamma	39	2.34e-19	2.177e-08	nicht aufgeloest
+gamma	42	3.045e-24	7.853e-11	nicht aufgeloest
+gamma	45	8.018e-17	4.03e-07	nicht aufgeloest
+gamma	48	0.0009172	1.363
+gamma	51	1.745e-20	5.944e-09	nicht aufgeloest
+gamma	54	9.963e-18	1.42e-07	nicht aufgeloest
+gamma	57	2.956e-15	2.447e-06	nicht aufgeloest
+gamma	60	6.191e-16	1.12e-06	nicht aufgeloest
+gamma	63	3.232e-15	2.558e-06	nicht aufgeloest
+gamma	66	2.581e-09	0.002286	nicht aufgeloest
+gamma	69	2.013e-21	2.019e-09	nicht aufgeloest
+gamma	72	9.741e-07	0.04441	nicht aufgeloest
+gamma	75	0	0	nicht aufgeloest
+gamma	78	1.687e-07	0.01848	nicht aufgeloest
+gamma	81	2.672e-24	7.355e-11	nicht aufgeloest
+gamma	84	1.042e-06	0.04593	nicht aufgeloest
+gamma	87	0	0	nicht aufgeloest
+gamma	90	4.456e-09	0.003004	nicht aufgeloest
+gamma	93	1.921e-06	0.06237	nicht aufgeloest
+gamma	96	1.575e-06	0.05647	nicht aufgeloest
+gamma	99	1.442e-07	0.01709	nicht aufgeloest
+gamma	102	5.439e-08	0.0105	nicht aufgeloest
+gamma	105	0	0	nicht aufgeloest
+gamma	108	0	0	nicht aufgeloest
+delta	21	6.254e-09	0.0006326	nicht aufgeloest
+delta	24	0	0	nicht aufgeloest
+delta	27	55.04	59.35
+delta	30	1.587e+04	1008
+h	21	0	0	nicht aufgeloest
+h	24	0	0	nicht aufgeloest
+h	27	0	0	nicht aufgeloest
+h	30	1185	34.42
+h	33	0	0	nicht aufgeloest
+h	36	1.079e-16	1.039e-08	nicht aufgeloest
+h	39	2.733e-18	1.653e-09	nicht aufgeloest
+h	42	2.957e-20	1.72e-10	nicht aufgeloest
+h	45	0	0	nicht aufgeloest
+h	48	2010	44.83
+h	51	1.09e-20	1.044e-10	nicht aufgeloest
+h	54	0	0	nicht aufgeloest
+h	57	0	0	nicht aufgeloest
+h	60	0	0	nicht aufgeloest
+h	63	4.397e-12	2.097e-06	nicht aufgeloest
+h	66	0	0	nicht aufgeloest
+h	69	1.291e-16	1.136e-08	nicht aufgeloest
+h	72	0.0005792	0.02407	nicht aufgeloest
+h	75	7.124e-17	8.441e-09	nicht aufgeloest
+h	78	0	0	nicht aufgeloest
+h	81	4.568e-19	6.759e-10	nicht aufgeloest
+h	84	0	0	nicht aufgeloest
+h	87	0	0	nicht aufgeloest
+h	90	0	0	nicht aufgeloest
+h	93	0	0	nicht aufgeloest
+h	96	0	0	nicht aufgeloest
+h	99	0	0	nicht aufgeloest
+h	102	0	0	nicht aufgeloest
+h	105	0	0	nicht aufgeloest
+h	108	0	0	nicht aufgeloest

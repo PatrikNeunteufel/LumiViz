@@ -1,0 +1,692 @@
+# Vergleich der Startpunkte 1 und 2 (SP3 a)
+## Je Stuetzpunkt: Kurve, Taste, Wert 1, Wert 2, Abstand (log: %, linear: % des Bereichs)
+decay	21	21.6441	15.9642	35.58
+decay	24	25.9330	25.4561	1.87
+decay	27	17.1079	27.0144	57.91
+decay	30	35.1995	22.4919	56.50
+decay	33	12.0957	35.9700	197.38
+decay	36	5.0478	4.9533	1.91
+decay	39	14.1914	15.8824	11.92
+decay	42	11.8218	8.5688	37.96
+decay	45	26.3790	26.3173	0.23
+decay	48	1.9477	1.9477	0.00
+decay	51	2.9915	9.2894	210.53
+decay	54	10.9508	8.3154	31.69
+decay	57	7.7768	11.3100	45.43
+decay	60	2.6368	15.8820	502.32
+decay	63	2.3670	6.1590	160.21
+decay	66	6.9538	11.2830	62.26
+decay	69	3.8609	8.6864	124.98
+decay	72	1.9986	5.2041	160.39
+decay	75	2.6577	6.4193	141.54
+decay	78	1.5843	8.8020	455.57
+decay	81	2.2519	4.8630	115.95
+decay	84	1.2007	2.5334	111.00
+decay	87	3.8233	4.4366	16.04
+decay	90	5.4206	5.2190	3.86
+decay	93	5.3037	4.6304	14.54
+decay	96	0.5425	1.4400	165.42
+decay	99	1.1582	3.1375	170.91
+decay	102	1.9258	2.0652	7.24
+decay	105	2.0200	1.3239	52.58
+decay	108	1.6013	0.6123	161.51
+lateDecay	21	15.9867	56.7484	254.97
+lateDecay	24	85.8089	13.7133	525.73
+lateDecay	27	75.0415	18.0367	316.05
+lateDecay	30	18.7733	78.3904	317.56
+lateDecay	33	107.9400	11.9933	800.00
+lateDecay	36	133.7100	133.7100	0.00
+lateDecay	39	108.2100	101.5209	6.59
+lateDecay	42	7.4933	19.8909	165.45
+lateDecay	45	14.9833	8.7933	70.39
+lateDecay	48	12.4879	52.5900	321.13
+lateDecay	51	28.3227	22.1191	28.05
+lateDecay	54	8.4138	3.9200	114.64
+lateDecay	57	24.1599	10.4998	130.10
+lateDecay	60	44.9685	5.2933	749.53
+lateDecay	63	18.4800	18.4800	0.00
+lateDecay	66	19.7049	3.7600	424.07
+lateDecay	69	33.4200	33.4200	0.00
+lateDecay	72	18.5430	14.8820	24.60
+lateDecay	75	22.5443	14.8803	51.50
+lateDecay	78	26.4030	2.9337	800.00
+lateDecay	81	14.5860	14.5860	0.00
+lateDecay	84	5.3196	1.0895	388.24
+lateDecay	87	11.4667	11.4667	0.00
+lateDecay	90	4.1100	4.1100	0.00
+lateDecay	93	4.8241	2.1987	119.41
+lateDecay	96	4.5810	1.1008	316.14
+lateDecay	99	5.1214	1.5073	239.76
+lateDecay	102	1.8373	1.8373	0.00
+lateDecay	105	1.8373	1.8373	0.00
+lateDecay	108	2.8255	1.8373	53.78
+highDecay	21	0.9816	0.9816	0.00
+highDecay	24	0.7703	0.7703	0.00
+highDecay	27	0.9844	0.7888	24.79
+highDecay	30	0.7774	0.7774	0.00
+highDecay	33	0.7669	0.9833	28.22
+highDecay	36	0.7422	0.7422	0.00
+highDecay	39	0.9778	0.9400	4.02
+highDecay	42	0.9855	0.9855	0.00
+highDecay	45	0.7356	0.7645	3.93
+highDecay	48	0.9736	0.9736	0.00
+highDecay	51	0.7223	0.7347	1.71
+highDecay	54	0.5607	0.9527	69.92
+highDecay	57	0.4540	0.4540	0.00
+highDecay	60	0.9155	0.9155	0.00
+highDecay	63	0.8880	0.8880	0.00
+highDecay	66	0.8527	0.8527	0.00
+highDecay	69	0.8085	0.8085	0.00
+highDecay	72	0.7548	0.7548	0.00
+highDecay	75	0.1182	0.1182	0.00
+highDecay	78	0.0968	0.1089	12.51
+highDecay	81	0.0777	0.0834	7.27
+highDecay	84	0.0622	0.4638	645.12
+highDecay	87	0.0936	0.0782	19.66
+highDecay	90	0.0339	0.0403	18.94
+highDecay	93	0.0275	0.0275	0.00
+highDecay	96	0.0574	0.0712	23.99
+highDecay	99	0.0283	0.0227	24.61
+highDecay	102	0.0352	0.0406	15.57
+highDecay	105	0.0388	0.0479	23.35
+highDecay	108	0.0764	0.0139	448.10
+detune	33	0.2501	6.0000	95.83
+detune	36	2.7365	1.1037	27.21
+detune	39	1.2656	1.2452	0.34
+detune	42	6.0000	6.0000	0.00
+detune	45	1.5992	5.6746	67.92
+detune	48	1.1234	6.0000	81.28
+detune	51	1.2611	3.3898	35.48
+detune	54	0.7820	1.2746	8.21
+detune	57	0.6912	2.1769	24.76
+detune	60	0.8002	2.2969	24.95
+detune	63	0.4620	2.6242	36.04
+detune	66	1.1732	4.1002	48.78
+detune	69	0.9044	3.3605	40.94
+detune	72	0.5752	2.5782	33.38
+detune	75	0.4698	0.9824	8.54
+detune	78	0.6149	6.0000	89.75
+detune	81	0.6050	2.0501	24.09
+detune	84	0.5277	1.8932	22.76
+detune	87	0.8475	2.4828	27.25
+detune	90	0.9348	2.2741	17.86
+detune	93	3.0668	3.1389	0.96
+detune	96	2.7844	4.4837	22.66
+detune	99	0.7444	1.8916	15.30
+detune	102	0.9561	1.7449	10.52
+detune	105	1.5637	2.5139	12.67
+detune	108	0.4867	4.2516	50.20
+u leise	33	0.1763	0.0049	17.15
+u leise	36	0.1490	0.0684	8.07
+u leise	39	0.0065	0.0323	2.57
+u leise	42	0.9606	1.0000	3.94
+u leise	45	0.1657	0.3959	23.02
+u leise	48	1.0000	0.0730	92.70
+u leise	51	0.3932	0.3187	7.45
+u leise	54	0.2281	1.0000	77.19
+u leise	57	0.2742	0.5169	24.27
+u leise	60	0.1773	0.0294	14.79
+u leise	63	1.0000	0.1995	80.05
+u leise	66	0.6610	0.9575	29.65
+u leise	69	0.2078	0.6463	43.85
+u leise	72	0.6468	0.0000	64.68
+u leise	75	0.0440	0.0002	4.38
+u leise	78	0.2943	0.0000	29.43
+u leise	81	0.2582	0.1161	14.20
+u leise	84	1.0000	0.1745	82.55
+u leise	87	1.0000	0.0169	98.31
+u leise	90	0.1586	0.0623	9.63
+u leise	93	0.0474	0.0313	1.60
+u leise	96	0.7181	1.0000	28.19
+u leise	99	0.1995	0.1907	0.87
+u leise	102	0.0369	1.0000	96.31
+u leise	105	0.0546	0.1840	12.94
+u leise	108	0.3756	1.0000	62.44
+u laut	33	0.7164	0.8307	11.42
+u laut	36	0.2872	0.9173	63.01
+u laut	39	0.0707	0.0147	5.60
+u laut	42	0.5448	0.7425	19.77
+u laut	45	0.0000	0.1162	11.62
+u laut	48	1.0000	1.0000	0.00
+u laut	51	0.1881	0.7318	54.37
+u laut	54	0.1510	1.0000	84.90
+u laut	57	0.9966	1.0000	0.34
+u laut	60	0.4680	0.3448	12.32
+u laut	63	1.0000	0.0000	100.00
+u laut	66	0.0044	0.0000	0.44
+u laut	69	0.7243	0.1354	58.89
+u laut	72	0.0000	0.0000	0.00
+u laut	75	0.3312	0.2352	9.60
+u laut	78	0.7298	0.0000	72.98
+u laut	81	0.0176	1.0000	98.24
+u laut	84	0.4778	0.4635	1.44
+u laut	87	1.0000	0.8901	10.99
+u laut	90	0.5225	0.9183	39.58
+u laut	93	0.8858	0.8840	0.19
+u laut	96	0.0000	1.0000	100.00
+u laut	99	0.1303	0.0000	13.03
+u laut	102	0.7503	0.7871	3.68
+u laut	105	0.4348	0.8300	39.52
+u laut	108	0.0000	1.0000	100.00
+gamma	21	45.0000	0.1923	99.57
+gamma	24	15.0333	0.0000	33.41
+gamma	27	21.2819	21.7208	0.98
+gamma	30	45.0000	42.4213	5.73
+gamma	33	39.3953	0.0000	87.55
+gamma	36	29.4150	25.0030	9.80
+gamma	39	44.3175	44.9999	1.52
+gamma	42	33.3444	40.9951	17.00
+gamma	45	3.1745	21.6379	41.03
+gamma	48	0.0247	45.0000	99.95
+gamma	51	31.8642	44.9638	29.11
+gamma	54	25.9273	25.9363	0.02
+gamma	57	35.9870	43.9865	17.78
+gamma	60	31.0871	31.7307	1.43
+gamma	63	44.8039	44.9000	0.21
+gamma	66	37.8497	0.0000	84.11
+gamma	69	44.9617	43.5504	3.14
+gamma	72	0.0000	0.0000	0.00
+gamma	75	30.0379	45.0000	33.25
+gamma	78	24.8844	0.0000	55.30
+gamma	81	29.9734	44.9906	33.37
+gamma	84	31.4421	0.0000	69.87
+gamma	87	45.0000	44.9997	0.00
+gamma	90	38.4813	45.0000	14.49
+gamma	93	0.0000	0.0000	0.00
+gamma	96	0.0000	33.2814	73.96
+gamma	99	30.9317	45.0000	31.26
+gamma	102	0.0000	0.0000	0.00
+gamma	105	40.4134	0.0000	89.81
+gamma	108	30.1140	41.2500	24.75
+delta	21	4.3078	0.0000	53.85
+delta	24	0.4665	8.0000	94.17
+delta	27	2.4144	4.4817	25.84
+delta	30	1.5044	1.2893	2.69
+h	21	0.0000	0.0098	0.98
+h	24	0.1529	0.0000	15.29
+h	27	0.0000	0.0000	0.00
+h	30	0.0000	0.2533	25.33
+h	33	0.0435	0.2500	20.65
+h	36	0.0005	0.0000	0.05
+h	39	0.0000	0.1109	11.09
+h	42	0.0000	0.0434	4.34
+h	45	0.0000	0.2500	25.00
+h	48	0.0267	1.0000	97.33
+h	51	0.0000	0.0174	1.74
+h	54	0.0393	0.2500	21.07
+h	57	0.0000	0.2500	25.00
+h	60	0.5070	0.2500	25.70
+h	63	1.0000	0.1739	82.61
+h	66	0.0552	0.2500	19.48
+h	69	0.0000	0.0000	0.00
+h	72	0.0000	1.0000	100.00
+h	75	0.0000	0.0002	0.02
+h	78	0.9675	0.2500	71.75
+h	81	0.0000	0.1547	15.47
+h	84	0.9999	0.2500	74.99
+h	87	0.0011	0.0085	0.74
+h	90	0.0000	0.2500	25.00
+h	93	0.0000	0.2500	25.00
+h	96	0.8594	0.2500	60.94
+h	99	0.9901	0.2500	74.01
+h	102	0.0000	0.2500	25.00
+h	105	0.7347	0.0001	73.45
+h	108	0.0000	0.2500	25.00
+
+## Je Messgroesse: Taste, Groesse, r 1, r 2, beide getroffen
+21	huelle_20_s	1.17	2.11
+21	huelle_30_s	0.11	3.98
+21	huelle_40_s	9.10	13.60
+21	knick_tiefe_db_3	3.28	9.92
+21	schwebung_db_2	0.38	2.10
+21	t60_spaet	4.42	4.22
+21	t60_spaet_2	2.48	3.23
+21	t60_spaet_3	2.99	14.51
+21	tiefe_db_2	11.63	2.47
+21	vorwaerts_t60	7.10	6.19
+21	vorwaerts_t60_2	2.69	2.35
+21	vorwaerts_t60_3	8.79	24.74
+24	huelle_20_s	4.81	5.39
+24	huelle_30_s	2.98	3.25
+24	huelle_40_s	0.85	3.04
+24	schwebung_db_2	2.15	2.26
+24	schwebung_db_3	2.28	3.49
+24	t60_spaet_2	8.52	8.20
+24	t60_spaet_3	1.65	0.72
+24	tiefe_db_2	2.18	2.19
+24	tiefe_db_3	2.71	2.85
+24	vorwaerts_t60_2	1.47	1.49
+24	vorwaerts_t60_3	4.67	4.70
+27	huelle_20_s	0.50	5.84
+27	huelle_30_s	5.64	3.43
+27	huelle_40_s	0.69	2.88
+27	knick_tiefe_db_2	8.15	6.22
+27	schwebung_db_2	8.91	1.67
+27	t60_spaet	10.00	2.64
+27	t60_spaet_2	2.11	9.13
+27	t60_spaet_3	5.35	15.98
+27	tiefe_db_2	6.82	4.57
+27	vorwaerts_t60	10.00	23.07
+27	vorwaerts_t60_2	1.12	1.62
+27	vorwaerts_t60_3	0.68	0.68	ja
+30	huelle_20_s	7.22	1.23
+30	huelle_30_s	1.93	1.18
+30	schwebung_db_3	4.76	3.64
+30	t60_spaet	1.68	1.77
+30	t60_spaet_2	8.76	7.99
+30	t60_spaet_3	13.50	11.26
+30	tiefe_db_3	0.25	0.04	ja
+30	vorwaerts_t60	1.78	1.33
+30	vorwaerts_t60_2	0.10	3.51
+30	vorwaerts_t60_3	5.02	0.64
+33	huelle_20_s	0.19	29.08
+33	huelle_30_s	1.67	6.78
+33	huelle_40_s	0.52	0.46	ja
+33	knick_tiefe_db_2	0.33	19.41
+33	schwebung_db_1	2.93	0.86
+33	schwebung_db_2	2.46	6.75
+33	schwebung_db_3	1.51	3.20
+33	t60_spaet	2.32	2.28
+33	t60_spaet_2	2.71	10.90
+33	t60_spaet_3	4.32	13.88
+33	tiefe_db_1	2.05	0.46
+33	tiefe_db_2	1.77	2.47
+33	tiefe_db_3	0.84	1.07
+33	vorwaerts_t60	8.53	11.55
+33	vorwaerts_t60_2	2.42	2.62
+33	vorwaerts_t60_3	1.97	3.05
+36	huelle_20_s	16.03	8.14
+36	huelle_30_s	4.43	3.25
+36	huelle_40_s	10.80	6.65
+36	knick_tiefe_db_2	15.16	13.29
+36	knick_tiefe_db_3	5.11	4.70
+36	schwebung_db_2	1.45	3.15
+36	schwebung_db_3	3.92	1.92
+36	t60_spaet	8.81	15.74
+36	t60_spaet_2	15.23	0.02
+36	t60_spaet_3	10.91	1.87
+36	tiefe_db_2	1.97	5.21
+36	tiefe_db_3	1.05	0.27
+36	vorwaerts_t60	1.22	1.21
+36	vorwaerts_t60_2	2.72	1.65
+36	vorwaerts_t60_3	12.82	14.42
+39	huelle_20_s	8.90	9.58
+39	huelle_30_s	1.18	1.36
+39	huelle_40_s	0.54	3.65
+39	knick_tiefe_db	4.11	5.13
+39	schwebung_db_1	4.46	4.72
+39	schwebung_db_2	1.43	1.49
+39	schwebung_db_3	3.84	3.74
+39	t60_spaet	2.57	1.85
+39	t60_spaet_2	1.98	1.51
+39	t60_spaet_3	19.01	16.22
+39	tiefe_db_1	3.72	2.81
+39	tiefe_db_2	2.13	2.11
+39	tiefe_db_3	1.66	1.71
+39	vorwaerts_t60	7.80	9.31
+39	vorwaerts_t60_2	17.52	18.63
+39	vorwaerts_t60_3	2.43	2.76
+42	huelle_20_s	2.77	2.92
+42	huelle_30_s	0.28	0.14	ja
+42	huelle_40_s	4.32	4.11
+42	knick_tiefe_db_2	2.83	2.88
+42	knick_tiefe_db_3	1.18	1.24
+42	t60_spaet	14.74	13.92
+42	t60_spaet_2	18.51	18.34
+42	t60_spaet_3	3.86	3.78
+42	vorwaerts_t60	6.13	0.70
+42	vorwaerts_t60_2	5.41	5.90
+42	vorwaerts_t60_3	1.36	1.96
+45	huelle_20_s	4.01	3.99
+45	huelle_30_s	7.29	5.87
+45	knick_tiefe_db	1.31	9.18
+45	knick_tiefe_db_2	10.79	14.74
+45	knick_tiefe_db_3	2.12	3.91
+45	schwebung_db_1	4.49	7.93
+45	schwebung_db_2	1.54	1.18
+45	schwebung_db_3	2.27	4.18
+45	t60_spaet	9.29	5.98
+45	t60_spaet_2	17.18	14.65
+45	t60_spaet_3	0.46	0.74	ja
+45	tiefe_db_1	1.03	2.36
+45	tiefe_db_2	2.22	1.23
+45	tiefe_db_3	0.42	0.67	ja
+45	vorwaerts_t60	0.63	1.88
+45	vorwaerts_t60_2	3.77	1.10
+45	vorwaerts_t60_3	1.11	1.93
+48	huelle_20_s	0.52	0.37	ja
+48	huelle_30_s	1.16	2.10
+48	huelle_40_s	1.85	2.74
+48	knick_tiefe_db	17.12	25.50
+48	knick_tiefe_db_2	0.46	2.62
+48	knick_tiefe_db_3	1.66	6.28
+48	schwebung_db_1	3.03	3.54
+48	schwebung_db_2	1.55	0.35
+48	schwebung_db_3	1.56	1.16
+48	t60_spaet	14.21	12.18
+48	t60_spaet_2	1.42	3.14
+48	t60_spaet_3	1.11	4.99
+48	tiefe_db_1	2.02	1.67
+48	tiefe_db_2	0.27	0.36	ja
+48	tiefe_db_3	4.16	11.94
+48	vorwaerts_t60	13.22	10.91
+48	vorwaerts_t60_2	2.35	2.35
+48	vorwaerts_t60_3	29.88	12.21
+51	huelle_20_s	6.39	8.13
+51	huelle_30_s	0.35	7.71
+51	huelle_40_s	0.28	8.89
+51	knick_tiefe_db	1.33	0.66
+51	knick_tiefe_db_2	3.16	5.64
+51	knick_tiefe_db_3	0.61	6.39
+51	schwebung_db_2	0.59	1.34
+51	schwebung_db_3	0.73	2.93
+51	t60_spaet	4.27	3.14
+51	t60_spaet_2	4.08	3.97
+51	t60_spaet_3	7.15	8.48
+51	tiefe_db_2	2.20	1.40
+51	tiefe_db_3	9.12	6.24
+51	vorwaerts_t60	1.38	1.96
+51	vorwaerts_t60_2	7.84	2.27
+51	vorwaerts_t60_3	4.22	5.30
+54	huelle_20_s	7.49	5.22
+54	huelle_30_s	6.55	2.75
+54	huelle_40_s	0.83	1.17
+54	knick_tiefe_db_2	0.24	0.03	ja
+54	schwebung_db_2	0.13	0.63	ja
+54	schwebung_db_3	1.08	0.03
+54	t60_spaet	3.40	1.73
+54	t60_spaet_2	4.65	7.74
+54	t60_spaet_3	3.79	1.46
+54	tiefe_db_2	0.14	0.04	ja
+54	tiefe_db_3	0.66	0.37	ja
+54	vorwaerts_t60	3.41	2.07
+54	vorwaerts_t60_2	4.16	2.70
+54	vorwaerts_t60_3	12.72	15.53
+57	huelle_20_s	0.19	0.10	ja
+57	huelle_30_s	0.40	1.91
+57	huelle_40_s	1.25	1.21
+57	knick_tiefe_db_2	10.24	9.10
+57	schwebung_db_1	1.31	0.49
+57	schwebung_db_2	1.55	1.77
+57	schwebung_db_3	0.33	2.33
+57	t60_spaet	5.21	7.10
+57	t60_spaet_2	1.28	5.09
+57	t60_spaet_3	2.69	3.40
+57	tiefe_db_1	1.71	3.67
+57	tiefe_db_2	2.80	0.23
+57	tiefe_db_3	0.40	0.30	ja
+57	vorwaerts_t60	3.49	2.40
+57	vorwaerts_t60_2	0.42	0.46	ja
+57	vorwaerts_t60_3	3.69	2.56
+60	huelle_20_s	1.46	6.07
+60	huelle_30_s	0.15	0.85	ja
+60	huelle_40_s	1.56	1.27
+60	knick_tiefe_db	0.15	0.75	ja
+60	knick_tiefe_db_2	0.76	20.06
+60	knick_tiefe_db_3	1.04	1.50
+60	schwebung_db_2	3.89	3.34
+60	schwebung_db_3	0.85	3.84
+60	t60_spaet	6.48	12.90
+60	t60_spaet_2	3.68	3.35
+60	t60_spaet_3	15.34	17.38
+60	tiefe_db_2	1.89	2.79
+60	tiefe_db_3	1.33	2.62
+60	vorwaerts_t60	0.09	1.62
+60	vorwaerts_t60_2	6.91	8.40
+60	vorwaerts_t60_3	0.26	0.35	ja
+63	huelle_20_s	0.55	0.27	ja
+63	huelle_30_s	1.51	2.52
+63	huelle_40_s	8.04	3.87
+63	knick_tiefe_db	4.61	2.28
+63	knick_tiefe_db_3	1.47	3.71
+63	schwebung_db_1	0.00	0.67	ja
+63	schwebung_db_2	8.93	0.88
+63	schwebung_db_3	0.26	1.22
+63	t60_spaet	3.71	6.81
+63	t60_spaet_2	16.70	6.81
+63	t60_spaet_3	22.26	25.14
+63	tiefe_db_1	0.22	0.97	ja
+63	tiefe_db_2	4.73	0.89
+63	tiefe_db_3	1.36	1.66
+63	vorwaerts_t60	0.11	1.23
+63	vorwaerts_t60_2	0.88	0.17	ja
+63	vorwaerts_t60_3	2.39	5.79
+66	huelle_20_s	1.69	3.40
+66	huelle_30_s	2.48	3.09
+66	huelle_40_s	1.20	0.68
+66	knick_tiefe_db	4.55	7.84
+66	knick_tiefe_db_2	7.36	5.42
+66	knick_tiefe_db_3	2.75	2.88
+66	schwebung_db_1	0.60	0.48	ja
+66	schwebung_db_2	3.30	5.02
+66	schwebung_db_3	0.28	3.87
+66	t60_spaet	1.28	3.43
+66	t60_spaet_2	7.60	9.94
+66	t60_spaet_3	3.24	4.46
+66	tiefe_db_1	0.36	0.23	ja
+66	tiefe_db_2	3.48	1.69
+66	tiefe_db_3	0.43	0.23	ja
+66	vorwaerts_t60	1.49	0.17
+66	vorwaerts_t60_2	1.01	0.28
+66	vorwaerts_t60_3	1.45	0.77
+69	huelle_20_s	1.24	3.21
+69	huelle_30_s	1.52	2.29
+69	huelle_40_s	2.79	3.22
+69	knick_tiefe_db	0.91	1.77
+69	knick_tiefe_db_2	2.08	3.37
+69	knick_tiefe_db_3	5.25	6.07
+69	schwebung_db_1	0.82	4.37
+69	schwebung_db_2	3.00	4.01
+69	schwebung_db_3	1.19	2.43
+69	t60_spaet	0.40	1.70
+69	t60_spaet_2	12.06	2.04
+69	t60_spaet_3	18.91	2.88
+69	tiefe_db_1	0.12	1.60
+69	tiefe_db_2	2.32	2.98
+69	tiefe_db_3	0.60	1.32
+69	vorwaerts_t60	6.03	6.24
+69	vorwaerts_t60_2	0.86	0.03	ja
+69	vorwaerts_t60_3	1.20	1.60
+72	huelle_20_s	1.79	13.00
+72	huelle_30_s	1.08	0.86
+72	huelle_40_s	0.20	1.46
+72	knick_tiefe_db	0.93	17.87
+72	knick_tiefe_db_2	1.12	4.67
+72	knick_tiefe_db_3	2.41	4.48
+72	schwebung_db_1	0.56	1.09
+72	schwebung_db_2	2.01	8.13
+72	schwebung_db_3	9.40	0.60
+72	t60_spaet	0.31	2.48
+72	t60_spaet_2	6.81	22.62
+72	t60_spaet_3	2.59	2.90
+72	tiefe_db_1	0.57	2.64
+72	tiefe_db_2	1.80	3.48
+72	tiefe_db_3	0.80	5.73
+72	vorwaerts_t60	0.46	7.85
+72	vorwaerts_t60_2	1.74	2.39
+72	vorwaerts_t60_3	0.42	0.51	ja
+75	huelle_20_s	0.10	0.18	ja
+75	huelle_30_s	2.06	1.46
+75	huelle_40_s	1.25	1.26
+75	knick_tiefe_db	0.65	0.46	ja
+75	knick_tiefe_db_2	1.51	1.41
+75	knick_tiefe_db_3	9.01	6.66
+75	schwebung_db_1	0.04	0.75	ja
+75	schwebung_db_2	0.67	11.77
+75	schwebung_db_3	1.42	1.74
+75	t60_spaet	1.52	3.34
+75	t60_spaet_2	0.46	6.85
+75	t60_spaet_3	6.35	7.94
+75	tiefe_db_1	0.46	0.94	ja
+75	tiefe_db_2	3.24	1.84
+75	tiefe_db_3	0.29	1.35
+75	vorwaerts_t60	0.07	0.91	ja
+75	vorwaerts_t60_2	0.05	7.18
+75	vorwaerts_t60_3	1.37	1.43
+78	huelle_20_s	1.59	1.57
+78	huelle_30_s	0.39	25.52
+78	huelle_40_s	1.05	0.95
+78	knick_tiefe_db	0.77	6.07
+78	knick_tiefe_db_2	0.70	11.27
+78	knick_tiefe_db_3	0.08	16.20
+78	schwebung_db_1	2.18	1.47
+78	schwebung_db_2	0.61	1.82
+78	schwebung_db_3	1.05	5.69
+78	t60_spaet	1.51	8.09
+78	t60_spaet_2	0.06	4.26
+78	t60_spaet_3	2.25	12.53
+78	tiefe_db_1	0.33	5.36
+78	tiefe_db_2	0.77	1.79
+78	tiefe_db_3	0.10	0.74	ja
+78	vorwaerts_t60	0.33	0.76	ja
+78	vorwaerts_t60_2	1.10	1.42
+78	vorwaerts_t60_3	0.05	3.68
+81	huelle_20_s	0.06	2.28
+81	huelle_30_s	0.87	0.82	ja
+81	huelle_40_s	1.33	7.00
+81	knick_tiefe_db	2.99	2.96
+81	knick_tiefe_db_2	0.37	3.66
+81	knick_tiefe_db_3	0.43	4.46
+81	schwebung_db_1	0.22	3.12
+81	schwebung_db_2	0.73	0.87	ja
+81	schwebung_db_3	2.20	2.04
+81	t60_spaet	1.87	5.93
+81	t60_spaet_2	3.34	3.67
+81	t60_spaet_3	3.40	2.58
+81	tiefe_db_1	0.45	0.70	ja
+81	tiefe_db_2	0.59	0.37	ja
+81	tiefe_db_3	3.36	1.27
+81	vorwaerts_t60	1.19	1.91
+81	vorwaerts_t60_2	0.36	0.44	ja
+81	vorwaerts_t60_3	0.92	0.16	ja
+84	huelle_20_s	0.58	0.41	ja
+84	huelle_30_s	0.60	2.02
+84	huelle_40_s	0.75	2.74
+84	knick_tiefe_db	0.15	3.13
+84	knick_tiefe_db_2	0.35	6.48
+84	knick_tiefe_db_3	1.00	0.66
+84	schwebung_db_1	1.53	0.91
+84	schwebung_db_2	0.95	2.45
+84	schwebung_db_3	0.69	1.06
+84	t60_spaet	1.69	3.51
+84	t60_spaet_2	0.51	8.74
+84	t60_spaet_3	0.42	6.52
+84	tiefe_db_1	1.34	0.21
+84	tiefe_db_2	0.34	0.09	ja
+84	tiefe_db_3	1.38	1.82
+84	vorwaerts_t60	0.26	0.32	ja
+84	vorwaerts_t60_2	0.94	1.01
+84	vorwaerts_t60_3	2.06	1.05
+87	huelle_20_s	5.08	2.11
+87	huelle_30_s	2.82	1.28
+87	huelle_40_s	1.77	1.41
+87	knick_tiefe_db	1.15	1.23
+87	knick_tiefe_db_2	4.32	3.84
+87	knick_tiefe_db_3	7.63	6.86
+87	schwebung_db_1	0.75	1.13
+87	schwebung_db_2	2.67	0.87
+87	schwebung_db_3	7.37	2.97
+87	t60_spaet	0.10	0.55	ja
+87	t60_spaet_2	2.37	1.18
+87	t60_spaet_3	2.59	3.41
+87	tiefe_db_1	1.13	1.03
+87	tiefe_db_2	3.12	0.89
+87	tiefe_db_3	0.04	0.69	ja
+87	vorwaerts_t60	1.51	0.45
+87	vorwaerts_t60_2	0.80	2.61
+87	vorwaerts_t60_3	1.75	3.05
+90	huelle_20_s	15.27	0.22
+90	huelle_30_s	5.02	6.58
+90	huelle_40_s	1.55	0.45
+90	knick_tiefe_db_2	0.14	0.59	ja
+90	schwebung_db_1	6.50	5.35
+90	schwebung_db_2	1.89	4.69
+90	schwebung_db_3	1.74	1.16
+90	t60_spaet	0.63	1.04
+90	t60_spaet_2	1.10	2.89
+90	t60_spaet_3	1.19	2.24
+90	tiefe_db_1	2.16	0.38
+90	tiefe_db_2	2.26	1.56
+90	tiefe_db_3	0.42	0.12	ja
+90	vorwaerts_t60	6.88	2.12
+90	vorwaerts_t60_2	2.86	2.20
+90	vorwaerts_t60_3	1.33	0.25
+93	huelle_20_s	0.21	0.21	ja
+93	huelle_30_s	0.17	0.26	ja
+93	huelle_40_s	11.70	8.61
+93	knick_tiefe_db	8.82	7.94
+93	knick_tiefe_db_2	13.01	10.29
+93	knick_tiefe_db_3	1.06	0.93
+93	schwebung_db_1	1.06	1.14
+93	schwebung_db_2	0.70	0.71	ja
+93	t60_spaet	8.03	12.38
+93	t60_spaet_2	1.85	1.40
+93	t60_spaet_3	0.34	0.92	ja
+93	tiefe_db_1	2.44	2.55
+93	tiefe_db_2	1.22	1.43
+93	vorwaerts_t60	1.14	1.39
+93	vorwaerts_t60_2	0.43	0.27	ja
+93	vorwaerts_t60_3	1.23	0.52
+96	huelle_20_s	1.27	1.21
+96	huelle_30_s	1.42	1.02
+96	huelle_40_s	2.45	2.71
+96	knick_tiefe_db	0.53	0.11	ja
+96	knick_tiefe_db_2	1.12	1.23
+96	schwebung_db_1	0.88	1.15
+96	schwebung_db_2	0.15	0.05	ja
+96	t60_spaet	1.75	1.82
+96	t60_spaet_2	0.62	0.56	ja
+96	t60_spaet_3	0.36	0.63	ja
+96	tiefe_db_1	0.12	0.68	ja
+96	tiefe_db_2	0.27	0.36	ja
+96	vorwaerts_t60	1.06	1.04
+96	vorwaerts_t60_2	1.19	0.05
+96	vorwaerts_t60_3	0.30	0.46	ja
+99	huelle_20_s	1.27	1.29
+99	huelle_30_s	0.23	0.88	ja
+99	huelle_40_s	2.06	2.05
+99	knick_tiefe_db	2.50	5.78
+99	knick_tiefe_db_2	0.08	5.12
+99	knick_tiefe_db_3	0.44	0.50	ja
+99	schwebung_db_1	1.23	1.40
+99	t60_spaet	0.95	3.35
+99	t60_spaet_2	0.29	2.69
+99	t60_spaet_3	0.68	2.17
+99	tiefe_db_1	0.06	0.92	ja
+99	vorwaerts_t60	0.35	0.67	ja
+99	vorwaerts_t60_2	2.37	1.83
+99	vorwaerts_t60_3	0.94	1.28
+102	huelle_20_s	0.80	0.04	ja
+102	huelle_30_s	2.53	0.30
+102	huelle_40_s	1.43	1.01
+102	knick_tiefe_db	0.64	0.03	ja
+102	knick_tiefe_db_2	0.43	2.47
+102	knick_tiefe_db_3	1.23	1.65
+102	schwebung_db_1	0.68	0.87	ja
+102	t60_spaet	4.26	3.48
+102	t60_spaet_2	1.20	0.45
+102	t60_spaet_3	0.28	2.67
+102	tiefe_db_1	1.18	2.72
+102	vorwaerts_t60	0.90	0.49	ja
+102	vorwaerts_t60_2	0.92	2.94
+102	vorwaerts_t60_3	0.41	0.71	ja
+105	huelle_20_s	9.46	9.46
+105	huelle_30_s	3.49	3.49
+105	huelle_40_s	2.67	1.87
+105	knick_tiefe_db	1.09	1.76
+105	knick_tiefe_db_2	0.81	1.44
+105	knick_tiefe_db_3	0.50	0.05	ja
+105	schwebung_db_1	1.28	1.20
+105	t60_spaet	1.02	2.83
+105	t60_spaet_2	0.32	1.03
+105	t60_spaet_3	2.43	3.26
+105	tiefe_db_1	0.03	0.09	ja
+105	vorwaerts_t60	1.12	3.19
+105	vorwaerts_t60_2	3.26	2.87
+105	vorwaerts_t60_3	1.27	1.30
+108	huelle_20_s	2.32	2.32
+108	huelle_30_s	1.68	2.01
+108	huelle_40_s	2.25	2.11
+108	knick_tiefe_db	1.85	2.15
+108	t60_spaet	0.03	0.29	ja
+108	vorwaerts_t60	2.13	2.98

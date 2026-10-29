@@ -1,0 +1,6 @@
+# Nelder-Mead gegen Levenberg-Marquardt (ZF6 a, ZF9 a), clang, 2026-10-29T13:35:26
+# je Taste allein, nur ihre Stuetzpunkte frei, ab Startpunkt 1; Nelder-Mead hoechstens 150 Auswertungen, Anfangsschritt log ln 1,6, linear 0,25 des Bereichs
+Taste | Parameter | Rest Start | NM Rest | NM Auswertungen | NM s | LM Rest | LM Auswertungen | LM Iterationen | LM s | LM Ende
+33 | 8 | 2940.392 | 153.674 | 151 | 420.399 | 163.971 | 58 | 5 | 90.545 | Schritte klein
+60 | 8 | 1682.308 | 699.757 | 151 | 179.286 | 148.771 | 223 | 20 | 145.128 | Iterationen
+84 | 8 | 335.696 | 68.649 | 150 | 23.109 | 18.282 | 68 | 6 | 5.626 | Schritte klein
