@@ -6,6 +6,7 @@
     "stepsPerBeat": 4,
     "swing": 0.0,
     "volume": 0.35,
+    "limiter": true,
     "tags": {
         "title": "Nocturne Op. 9 No. 2",
         "artist": "Frédéric Chopin",
@@ -1450,7 +1451,7 @@
                     "repeat": 1
                 }
             ],
-            "gain": 1.2
+            "gain": 7.0
         }
     ]
 }

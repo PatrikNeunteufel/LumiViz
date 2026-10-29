@@ -4178,6 +4178,17 @@ mit +1,4 dB bei 0,866 = −1,25 dBFS, NP1 a verlangt −1), nach HU4-1 a (neuer 
 0,891 = −1,00 dBFS). Loop neu geschrieben (nur Stärken und Gain), `loop_werte.txt` und `klangfassung.txt` nachgezogen.
 Gemessen am gerechneten Loop: Loudness Range 21,6 → 15,5 LU, Anschlagsspitzen 5 … 95 % 23,8 → 18,1 dB.
 
+✅ **NP2 a** (Patrik S161; ersetzt NP1 a): **Der Fader der Nocturne steht auf +7 dB, der Limiter des Loops ist an
+(`limiter` in der Datei, immer geschrieben); beides schreibt `make_fluegel_loops.py`.** Patrik hatte die Nocturne am
+28.10. im Programm gehört und mit +5 dB und Limiter gespeichert (das Programm schrieb dabei die Datei im Repo; Fassung
+lokal unter `.claude/handover/hoerproben_31d/nocturne_patrik_2026-10-28_gain5_limiter.lvloop`) und fand auch +5 dB noch
+etwas leise. Nachgerechnet an der gerechneten Nocturne (Tafel 21 dB): bei +7 dB liegt die Spitze bei +4,8 dBFS
+(`loop_werte.txt` 1,737, ohne Limiter gerechnet), über 0 dBFS liegen rund 0,7 s von 213 s — der Limiter fasst die
+Kadenz um bis zu 5 dB, sonst nichts. Grund: der Einwand von NP1 a (der Limiter stauchte die ff-Stellen) galt für
++10 dB bei der Tafel von 30 dB (2,3 s über 0 dBFS, bis 7,4 dB); mit der engen Tafel bleibt das Demo sonst leiser als
+jedes andere. Verworfen: b (NP1 a: +1,2 dB, Spitze −1 dBFS, kein Limiter — lauter nur am Regler des Programms).
+Kippt, wenn das Hörurteil die Kadenz gestaucht findet — dann zurück auf den Wert, bei dem der Limiter nur sie fasst.
+
 ✅ **N3 a** (Patrik S157): **Das Pedal genau nach *Ped.* und ✱ der Gesamtausgabe auf Sustain (1 beim Treten, 0 beim
 Heben); wo die Ausgabe nichts zeigt, kein Pedal.** Grund: Treue zur Quelle (UF15 a). Verworfen: b (nach heutiger
 Spielpraxis). Kippt, wenn die Ausgabe an Stellen kein Pedal zeigt, an denen es offensichtlich fehlt — dann je Stelle
