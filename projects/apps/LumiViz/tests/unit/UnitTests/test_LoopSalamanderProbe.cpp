@@ -28,7 +28,9 @@
 #include "Fluegelmessung.hpp"
 #include "Kurvenabstand.hpp"
 #include "ModellMessung.hpp"
+#include "Modellton.hpp"
 #include "NelderMead.hpp"
+#include "Suchkurven.hpp"
 
 #include "audio/WavDatei.hpp"
 #include "loop/Boden.hpp"
@@ -69,7 +71,10 @@ constexpr int kProbeTasten[] = {33, 48, 60, 66, 81, 84};
 constexpr int kSchnittPunkte = 15;
 constexpr int kSucheHoechstens = 150;
 
-using KurvenFeld = lumi::loop::Tastenkurve lumi::loop::HammerSaite::*;
+using modelltest::bensaBand;
+using modelltest::fluegelMit;
+using modelltest::KurvenFeld;
+using modelltest::parallelJe;
 
 /// Eine freie Groesse einer Taste mit ihren Grenzen (SQ2 a).
 struct Groesse
@@ -82,18 +87,6 @@ struct Groesse
     double start = 0.0;
     std::string herkunft;
 };
-
-/// `highDecay` nach Bensa et al. 2003, Gl. 37a/b, mit dem Streuband b1 × 0,5…3, b2 × 0,5…1,5 (SQ2 a); die
-/// Wellenzahl π/L mit der Laenge aus der Vorgabe (Annahme: die Laengen des C6 fehlen).
-std::pair<double, double> bensaBand(int midi, double laengeM)
-{
-    const double f0 = tastenFrequenz(midi);
-    const double b1 = std::max(1e-3, 4.4e-3 * f0 - 0.04);
-    const double b2 = 1.0e-6 * f0 + 1e-5;
-    const double xi2 = std::pow(std::numbers::pi / laengeM, 2.0);
-    const auto hd = [&](double c1, double c2) { return (c1 * b1 + c2 * b2 * xi2) / (c1 * b1 + 100.0 * c2 * b2 * xi2); };
-    return {hd(0.5, 1.5), hd(3.0, 0.5)};
-}
 
 std::vector<Groesse> groessenAn(int midi, const TastenWerte& z, const lumi::loop::HammerSaite& v)
 {
@@ -190,18 +183,6 @@ Bewertung bewerte(int midi, const std::vector<TonKurven>& jeEbene, const KurvenB
     return b;
 }
 
-/// `einer(i)` fuer i = 0 … zahl − 1 auf `threads` Threads; jede Aufgabe rechnet fuer sich.
-void parallelJe(int zahl, unsigned threads, const std::function<void(int)>& einer)
-{
-    std::atomic<int> naechste{0};
-    std::vector<std::thread> arbeiter;
-    for (unsigned a = 0; a < std::max(1u, threads); ++a)
-        arbeiter.emplace_back([&] {
-            for (int i = naechste++; i < zahl; i = naechste++) einer(i);
-        });
-    for (std::thread& t : arbeiter) t.join();
-}
-
 /// So viele Ebenen v6–v16 hat eine Auswertung.
 constexpr int kAuswertungEbenen = kEbenen - kKurvenEbeneAb + 1;
 
@@ -215,14 +196,6 @@ std::vector<TonKurven> jeEbene(const std::function<TonKurven(int)>& einer)
     std::vector<TonKurven> kurven(static_cast<std::size_t>(kAuswertungEbenen));
     parallelJe(kAuswertungEbenen, kPoolThreads, [&](int i) { kurven[static_cast<std::size_t>(i)] = einer(kKurvenEbeneAb + i); });
     return kurven;
-}
-
-/// Der Fluegel der Probe mit der Saite `saite`.
-lumi::loop::Instrument fluegelMit(const lumi::loop::HammerSaite& saite)
-{
-    lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
-    instrument.tastatur->ungedaempftAb = 89;  // D1 a
-    return instrument;
 }
 
 /// Die Kurven einer Ebene des gerechneten Tons wie im Programm (K4 a), gehalten `dauerMs`.

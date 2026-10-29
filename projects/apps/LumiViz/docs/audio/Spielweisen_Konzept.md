@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.101.0
+> **Version:** 0.102.0
 > **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4; Session 162: 7.5.9 gebaut, Nullprobe)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -3585,6 +3585,37 @@ Toleranz weiter fast überall (17–30 von 20–30 Tasten). Struktur: 20 / 24 / 
 ersten Stufe über 0,5 s. Grenzfälle der Mehrheit (5 von 11 Ebenen mit Knick an 33 Teilton 3, 54 Teilton 3, 57 Teilton
 1 → eine Gerade) sind Kanten in der *Definition* des Ziels, nicht in der Messung des Modells — das Ziel ist einmal
 festgelegt (ZF3 a).
+
+**7.5.9 gebaut (S162, Opus nach Bauauftrag `auftrag_7.5.9-7.5.10.md`) — Ziel nach ZF5 a und Nullprobe:**
+`Zielsumme.hpp` (reines C++): je Taste und Größe aus `salamander_ziel.txt` r = d / max(τ, τ_min) mit der Untergrenze UG1 a
+(`untergrenze`: ln 1,03 · 0,5 dB · 2 % des Ziels), d in der Skala der Größe; getroffen bei r ≤ 1, fertig eine Taste mit
+allen Größen getroffen; Ziel der Suche Σ r² über alle Tasten; eine Größe mit Ziel ohne Modellwert r = 10 (Lesart S161),
+Größen ohne Ziel zählen nicht; `gesamt` mit Ausreißern (über dem Dreifachen des Mittels, SP2 a), `berichte`.
+`Modellton.hpp`: der Flügel der Suche (`fluegelMit`, D1 a), je Taste drei Töne an v6/v10/v16 (SG1 a), gehalten so lang
+wie die Struktur reicht und 1,5 s (K5 a; reicht überall über das Ziel `huelle_40_s` hinaus), gemessen am Kanalmittel und
+an der Struktur (`modellGroessen`); `werteAus` rechnet viele Auswertungen zugleich auf einem Pool (höchstens 11 Threads,
+die längsten Töne zuerst). `Suchkurven.hpp`: die neun Kurven nach der Tabelle des Auftrags, **232 Parameter** (decay,
+lateDecay, highDecay, gamma, h je 30; detune, u leise, u laut je 26 im Chor ab zwei Saiten; delta 4), Startpunkte 1 und
+2, `klemme`, `saiteAus` (Stützpunkte, keine Abweichungen, die späte Stufe nie kürzer als die frühe). `parallelJe`,
+`fluegelMit` und `bensaBand` stehen jetzt dort statt in `test_LoopSalamanderProbe.cpp`. Neu `test_LoopSalamanderZiel`
+(vier Fälle und das Werkzeug `LUMIVIZ_75_NULLPROBE`). **Lesarten (Claude S162):** (1) Eine Kurve trägt an allen 30
+gemessenen Tasten einen Stützpunkt — frei an den berechtigten, fest mit dem Wert der Vorgabe an den übrigen; sonst
+verschöbe etwa `delta` mit Stützpunkten nur bei 21–30 den Wert an jeder Taste darüber (die Kurve hält am Rand fest). (2)
+Median wie überall in der Messung (`detail::median`): bei gerader Zahl der obere der beiden mittleren Werte — betrifft den
+Start von `detune`, wo zwei Teiltöne schweben (an 60: 0,763 statt 0,663 Cent). (3) „Salamander gegen sich selbst“ misst
+je Ebene v6–v16 einzeln gegen das Ziel (über alle Ebenen wäre r = 0 per Konstruktion): an 60 Median r 0,12 aus 176
+Werten; dazu prüft der Fall, dass die Messung über alle Ebenen das Ziel der Datei auf r < 10⁻³ wiedergibt. (4) Die
+Nullprobe wertet drei Fassungen aus: die reine Vorgabe, Startpunkt 1 nach der ganzen Tabelle (γ 30°, detune an der
+Schwebung, u 0,25, δ an der Schwebung) und Startpunkt 2. (5) Der Bericht liegt nach PB1 a als Ordner
+`proben/S162_nullprobe/` statt als `nullprobe_S162.md`. Im Ziel steht keine Größe in Cent (die Schwebung ist an der
+Struktur ein Anteil in dB) — die Untergrenze 2 % wirkt heute nirgends.
+**Nullprobe** (Release-clang, 11 Threads; eine Auswertung = 30 Tasten × 3 Ebenen in **12–16 s**): Vorgabe Σ r² 63 947,
+getroffen 86 / 456, fehlend 3; **Startpunkt 1 Σ r² 42 854, getroffen 128 / 456**, fehlend 1; Startpunkt 2 Σ r² 61 363,
+getroffen 116 / 456, fehlend 6; keine Taste fertig; Ausreißer überall 36 (dazu 63 bzw. 93). Am weitesten weg ist die
+späte Stufe (`t60_spaet_k` Median r 5–10 an allen drei Fassungen, an 0–5 von 29 Tasten getroffen); der Stoß u 0,25 holt
+die Tiefe der Einbrüche heran (`tiefe_db_k` Median r 6,8 / 7,1 / 3,4 → 1,1 / 2,2 / 1,0), die erste Stufe vorwärts liegt
+bei r 1,6–2,9. **Für 7.5.10 geschätzt:** eine Iteration (1 + 9 Auswertungen auf einem Pool) rund 2–3 min, 20 Iterationen
+je Startpunkt 40–55 min, beide Startpunkte mit verworfenen Schritten bis rund 2 h.
 
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
