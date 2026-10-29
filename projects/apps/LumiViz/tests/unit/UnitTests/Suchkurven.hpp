@@ -13,7 +13,8 @@
  * als feste Stuetzpunkte; zwischen den gemessenen Tasten interpoliert die Kurve wie jede andere). Die Koordinate der
  * Suche ist ln(Wert) bei den Zeiten und `highDecay`, sonst der Wert; die Grenzen wirken durch Abschneiden (`klemme`).
  * Weil die Interpolation am Stuetzpunkt den Stuetzpunkt selbst liefert, wirkt der Stuetzpunkt einer Taste nur auf den
- * Ton dieser Taste (die Grundlage der Jacobi-Matrix je Kurve in 7.5.10).
+ * Ton dieser Taste (die Grundlage der Jacobi-Matrix je Kurve in 7.5.10). Mit `deltaImChor` ist δ an allen Tasten frei
+ * (Probe 7.5.11, S163: im Chor steht δ sonst fest auf 0, und ohne δ wirken γ und h dort nicht — nur fuer die Werkzeuge).
  ****************************************************************************************
  */
 
@@ -112,8 +113,10 @@ inline std::optional<double> schwebungCentAn(const lumi::messung::TonStruktur& s
 }
 
 /// Die neun Kurven der Suche an den `tasten` (die gemessenen von *Salamander*) um die Saite `basis` (die Vorgabe),
-/// Grenzen und Start nach der Tabelle des Bauauftrags 7.5.9 §3.3 (SQ2 a, HU2 a (3), SG2 a, SG3 a).
-inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector<int>& tasten, const lumi::messung::Strukturen& strukturen)
+/// Grenzen und Start nach der Tabelle des Bauauftrags 7.5.9 §3.3 (SQ2 a, HU2 a (3), SG2 a, SG3 a); `deltaImChor` gibt
+/// δ auch an Tasten mit zwei und drei Saiten frei (Probe 7.5.11).
+inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector<int>& tasten, const lumi::messung::Strukturen& strukturen,
+                         bool deltaImChor = false)
 {
     using lumi::loop::HammerSaite;
     using lumi::loop::KurvenSkala;
@@ -153,7 +156,7 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
     using Grenzen = std::tuple<double, double, double>;
     const auto alle = [](int) { return true; };
     const auto chor2 = [&basis](int t) { return lumi::loop::chorAn(basis, t) >= 2; };
-    const auto chor1 = [&basis](int t) { return lumi::loop::chorAn(basis, t) == 1; };
+    const auto deltaFrei = [&basis, deltaImChor](int t) { return deltaImChor || lumi::loop::chorAn(basis, t) == 1; };
 
     kurve("decay", &HammerSaite::abklingS, true, "ohne Quelle, Faktor 3", alle, [&](int t) {
         const double s = log(&HammerSaite::abklingS, t);
@@ -178,7 +181,7 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
         });
     kurve("gamma", &HammerSaite::polarisationWinkelGrad, false, "ohne Quelle, 0-45 Grad (SG2 a), Start 30 (HU2 a (3))", alle,
           [](int) { return Grenzen{0.0, 45.0, 30.0}; });
-    kurve("delta", &HammerSaite::polarisationCent, false, "Tan 2017, Mori 2004; 0-8 Cent", chor1, [&](int t) {
+    kurve("delta", &HammerSaite::polarisationCent, false, "Tan 2017, Mori 2004; 0-8 Cent", deltaFrei, [&](int t) {
         const double v = lin(&HammerSaite::polarisationCent, t);
         const std::optional<double> c = schwebung(t);
         return Grenzen{0.0, 8.0, v > 0.0 ? v : (c ? *c : 0.0)};

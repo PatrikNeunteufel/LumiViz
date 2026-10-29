@@ -16,6 +16,13 @@
  * - `LUMIVIZ_75_NM=<Ordner>` vergleicht Nelder–Mead (hoechstens 150 Auswertungen) mit Levenberg–Marquardt an den Tasten
  *   33, 60, 84 je allein (nur die Stuetzpunkte dieser Taste frei) und legt `nm.txt` ab.
  * - `LUMIVIZ_75_JACOBI=1` vergleicht im Fall „Jacobi je Kurve“ die Ableitungen am Ton an 33 und 60.
+ * Probe 7.5.11 (S163):
+ * - `LUMIVIZ_75_SCHNITT=<Ordner>` legt je Parameter einen Schnitt mit 15 Punkten ueber seinen Bereich (ZF8 a (2)) an den
+ *   Tasten 33, 48, 60, 66, 81, 84 (`LUMIVIZ_75_SCHNITT_TASTEN=33,60`) — am Startpunkt 1 oder, mit
+ *   `LUMIVIZ_75_SCHNITT_VON=<Suchordner>`, an der letzten Iteration von Startpunkt 1 dort; schreibt `schnitt.txt`.
+ * - `LUMIVIZ_75_TASTE=<Ordner>` sucht mit Levenberg–Marquardt je Taste allein (nur ihre Stuetzpunkte frei) an denselben
+ *   Tasten (`LUMIVIZ_75_TASTE_TASTEN`), ab Startpunkt 1 (`LUMIVIZ_75_TASTE_START=2`); schreibt `taste.txt`.
+ * - `LUMIVIZ_75_DELTA_CHOR=1` gibt in diesen beiden Werkzeugen δ auch im Chor frei (`suchraum(…, deltaImChor)`).
  ****************************************************************************************
  */
 
@@ -75,8 +82,9 @@ double sekundenSeit(std::chrono::steady_clock::time_point t)
     return std::chrono::duration<double>(std::chrono::steady_clock::now() - t).count();
 }
 
-/// Die Aufgabe an den `tasten` um die Vorgabe, mit Struktur und Ziel aus den mitgelieferten Dateien.
-modelltest::SuchAufgabe aufgabe(const std::vector<int>& tasten)
+/// Die Aufgabe an den `tasten` um die Vorgabe, mit Struktur und Ziel aus den mitgelieferten Dateien; `deltaImChor` nur
+/// in den Werkzeugen der Probe 7.5.11.
+modelltest::SuchAufgabe aufgabe(const std::vector<int>& tasten, bool deltaImChor = false)
 {
     const std::optional<Strukturen> strukturen = liesStruktur(kStrukturDatei);
     const std::optional<Ziele> ziele = liesZiele(kZielDatei);
@@ -86,8 +94,28 @@ modelltest::SuchAufgabe aufgabe(const std::vector<int>& tasten)
     a.tasten = tasten;
     a.strukturen = *strukturen;
     a.ziele = *ziele;
-    a.raum = modelltest::suchraum(lumi::loop::hammerSaiteVorgabe(), tasten, a.strukturen);
+    a.raum = modelltest::suchraum(lumi::loop::hammerSaiteVorgabe(), tasten, a.strukturen, deltaImChor);
     return a;
+}
+
+/// `LUMIVIZ_75_DELTA_CHOR=1` (Probe 7.5.11): δ auch im Chor frei.
+bool deltaImChorVerlangt()
+{
+    return qEnvironmentVariable("LUMIVIZ_75_DELTA_CHOR") == QStringLiteral("1");
+}
+
+/// Die Tasten der Probe nach ZF8 a, oder die aus `variable` („33,60,84“).
+std::vector<int> probeTasten(const char* variable)
+{
+    std::vector<int> tasten{33, 48, 60, 66, 81, 84};
+    if (const QString t = qEnvironmentVariable(variable); !t.isEmpty())
+    {
+        tasten.clear();
+        std::istringstream s(t.toStdString());
+        std::string teil;
+        while (std::getline(s, teil, ',')) tasten.push_back(std::stoi(teil));
+    }
+    return tasten;
 }
 
 /// Die Residuen vieler Punkte am Ton (zaehlt die Auswertungen).
@@ -529,5 +557,182 @@ TEST_CASE("Loop Salamander 7.5.10 Nelder-Mead gegen Levenberg-Marquardt (LUMIVIZ
     }
     std::ofstream aus(ordner / "nm.txt", std::ios::binary);
     aus << b.str();
+    REQUIRE(static_cast<bool>(aus));
+}
+
+TEST_CASE("Loop Salamander 7.5.11 Probe: Schnitt je Parameter (LUMIVIZ_75_SCHNITT)")
+{
+    const QString variable = qEnvironmentVariable("LUMIVIZ_75_SCHNITT");
+    if (variable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_75_SCHNITT=<Ordner> legt je Parameter einen Schnitt mit 15 Punkten an 33, 48, 60, 66, 81, 84 (ZF8 a (2)); "
+                "LUMIVIZ_75_SCHNITT_VON=<Suchordner> nimmt die letzte Iteration von Startpunkt 1 als Punkt (rund 5 min)");
+        return;
+    }
+    const std::filesystem::path ordner = variable.toStdU16String();
+    std::filesystem::create_directories(ordner);
+    const bool deltaChor = deltaImChorVerlangt();
+    const modelltest::SuchAufgabe alle = aufgabe(modelltest::salamanderMidi(), deltaChor);
+
+    // der Punkt: Startpunkt 1 oder die letzte Iteration von Startpunkt 1 einer Suche
+    std::vector<double> x = modelltest::startpunkt(alle.raum, 1);
+    std::string punkt = "Startpunkt 1";
+    if (const QString von = qEnvironmentVariable("LUMIVIZ_75_SCHNITT_VON"); !von.isEmpty())
+    {
+        const std::optional<modelltest::LetzteIteration> l = modelltest::liesLetzteIteration(std::filesystem::path(von.toStdU16String()), 1);
+        REQUIRE(l.has_value());
+        REQUIRE(l->x.size() == alle.raum.zahl());
+        x = l->x;
+        punkt = "Iteration " + std::to_string(l->nummer) + " von Startpunkt 1 aus " + von.toStdString();
+    }
+
+    constexpr int kPunkte = 15;
+    const std::vector<int> tasten = probeTasten("LUMIVIZ_75_SCHNITT_TASTEN");
+    std::ostringstream b;
+    b << std::fixed << std::setprecision(3) << "# Probe 7.5.11, ZF8 a (2): Schnitt je Parameter mit " << kPunkte
+      << " Punkten ueber seinen Bereich (die uebrigen Parameter am Punkt), " << compilerName() << ", "
+      << QDateTime::currentDateTime().toString(Qt::ISODate).toStdString() << "\n# Punkt: " << punkt << (deltaChor ? "; delta auch im Chor frei" : "")
+      << "\n# Je Taste und Parameter: Wert am Punkt | die " << kPunkte << " Summen r^2 der Taste von unten nach oben | Spanne (groesste - kleinste) | "
+      << "Minima (Rand zaehlt) | groesster Sprung zwischen Nachbarn gegen das Dreifache des mittleren | Residuen mit Kante (groesster Nachbarsprung "
+      << "ueber 1 Toleranz und ueber dem Dreifachen ihres mittleren) | Wechsel fehlt/da\n# Glatt (ZF8 a (2)): hoechstens ein Minimum, Sprung <= 1\n";
+    int glatt = 0;
+    int parameter = 0;
+    for (const int taste : tasten)
+    {
+        modelltest::SuchAufgabe a = alle;
+        a.tasten = {taste};
+        std::vector<std::vector<double>> punkte;
+        std::vector<std::pair<std::size_t, std::size_t>> wer;  // Kurve, Parameter
+        std::size_t j = 0;
+        for (std::size_t k = 0; k < a.raum.kurven.size(); ++k)
+        {
+            const modelltest::SuchKurve& kurve = a.raum.kurven[k];
+            for (std::size_t i = 0; i < kurve.tasten.size(); ++i, ++j)
+            {
+                if (kurve.tasten[i] != taste) continue;
+                wer.emplace_back(k, j);
+                const double u = kurve.koordinate(kurve.unten[i]);
+                const double o = kurve.koordinate(kurve.oben[i]);
+                for (int m = 0; m < kPunkte; ++m)
+                {
+                    std::vector<double> p = x;
+                    p[j] = u + (o - u) * static_cast<double>(m) / (kPunkte - 1);
+                    punkte.push_back(std::move(p));
+                }
+            }
+        }
+        punkte.push_back(x);
+        const auto t0 = std::chrono::steady_clock::now();
+        const std::vector<modelltest::Bewertet> bew = modelltest::bewerte(a, punkte);
+        const double sekunden = sekundenSeit(t0);
+        const modelltest::Bewertet& amPunkt = bew.back();
+        const double summeAmPunkt = quadratsumme(amPunkt.r);
+        b << "\n## Taste " << taste << ": Summe r^2 am Punkt " << summeAmPunkt << ", getroffen " << amPunkt.tasten.front().getroffen << " / " << amPunkt.r.size()
+          << ", " << wer.size() << " Parameter, " << std::setprecision(0) << sekunden << " s\n" << std::setprecision(3);
+        for (std::size_t w = 0; w < wer.size(); ++w)
+        {
+            const modelltest::SuchKurve& kurve = a.raum.kurven[wer[w].first];
+            const auto bei = [&](int m) -> const modelltest::Bewertet& { return bew[w * kPunkte + static_cast<std::size_t>(m)]; };
+            std::vector<double> s;
+            for (int m = 0; m < kPunkte; ++m) s.push_back(quadratsumme(bei(m).r));
+            int minima = 0;
+            for (int m = 0; m < kPunkte; ++m)
+            {
+                const bool links = m == 0 || s[static_cast<std::size_t>(m)] < s[static_cast<std::size_t>(m - 1)];
+                const bool rechts = m == kPunkte - 1 || s[static_cast<std::size_t>(m)] < s[static_cast<std::size_t>(m + 1)];
+                if (links && rechts) ++minima;
+            }
+            double mittel = 0.0;
+            double groesst = 0.0;
+            for (int m = 0; m + 1 < kPunkte; ++m)
+            {
+                const double d = std::abs(s[static_cast<std::size_t>(m + 1)] - s[static_cast<std::size_t>(m)]);
+                mittel += d;
+                groesst = std::max(groesst, d);
+            }
+            mittel /= kPunkte - 1;
+            const double sprung = mittel > 0.0 ? groesst / (3.0 * mittel) : 0.0;
+            int kanten = 0;
+            int wechsel = 0;
+            for (std::size_t i = 0; i < amPunkt.r.size(); ++i)
+            {
+                double gr = 0.0;
+                double mi = 0.0;
+                int n = 0;
+                for (int m = 0; m + 1 < kPunkte; ++m)
+                {
+                    const Abweichung& a1 = bei(m).tasten.front().groessen[i];
+                    const Abweichung& a2 = bei(m + 1).tasten.front().groessen[i];
+                    if (a1.fehlt != a2.fehlt)
+                    {
+                        ++wechsel;
+                        continue;
+                    }
+                    const double d = std::abs(a2.residuum - a1.residuum);
+                    gr = std::max(gr, d);
+                    mi += d;
+                    ++n;
+                }
+                if (n > 0 && gr > 1.0 && gr > 3.0 * mi / n) ++kanten;
+            }
+            const bool istGlatt = minima <= 1 && sprung <= 1.0;
+            glatt += istGlatt ? 1 : 0;
+            ++parameter;
+            b << kurve.name << '\t' << kurve.wert(x[wer[w].second]) << "\t|";
+            for (const double v : s) b << ' ' << v;
+            b << "\t| Spanne " << *std::max_element(s.begin(), s.end()) - *std::min_element(s.begin(), s.end()) << " | Minima " << minima << " | Sprung " << sprung
+              << " | Kanten " << kanten << " | Wechsel " << wechsel << (istGlatt ? " | glatt" : " | NICHT glatt") << '\n';
+        }
+        MESSAGE("Taste " << taste << ": " << wer.size() << " Parameter in " << sekunden << " s");
+    }
+    b << "\nGlatt nach ZF8 a (2): " << glatt << " / " << parameter << " Parameter\n";
+    std::ofstream aus(ordner / "schnitt.txt", std::ios::binary);
+    aus << b.str();
+    REQUIRE(static_cast<bool>(aus));
+    MESSAGE("Glatt " << glatt << " / " << parameter << ", Bericht " << (ordner / "schnitt.txt").string());
+}
+
+TEST_CASE("Loop Salamander 7.5.11 Probe: Levenberg-Marquardt je Taste allein (LUMIVIZ_75_TASTE)")
+{
+    const QString variable = qEnvironmentVariable("LUMIVIZ_75_TASTE");
+    if (variable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_75_TASTE=<Ordner> sucht je Taste allein an 33, 48, 60, 66, 81, 84 (LUMIVIZ_75_TASTE_TASTEN), ab Startpunkt 1 "
+                "(LUMIVIZ_75_TASTE_START=2); mit LUMIVIZ_75_DELTA_CHOR=1 delta auch im Chor frei (rund 10 min)");
+        return;
+    }
+    const std::filesystem::path ordner = variable.toStdU16String();
+    std::filesystem::create_directories(ordner);
+    const bool deltaChor = deltaImChorVerlangt();
+    const int start = qEnvironmentVariable("LUMIVIZ_75_TASTE_START") == QStringLiteral("2") ? 2 : 1;
+    std::ostringstream b;
+    b << std::fixed << std::setprecision(3) << "# Probe 7.5.11: Levenberg-Marquardt je Taste allein (nur ihre Stuetzpunkte frei), " << compilerName() << ", "
+      << QDateTime::currentDateTime().toString(Qt::ISODate).toStdString() << "\n# Startpunkt " << start << (deltaChor ? "; delta auch im Chor frei" : "")
+      << "\n# Taste | Parameter | Rest Start | Rest Ende | getroffen / alle | Iterationen | Auswertungen | s | Ende | an der Grenze\n";
+    std::ostringstream einzeln;
+    einzeln << std::setprecision(4);
+    for (const int taste : probeTasten("LUMIVIZ_75_TASTE_TASTEN"))
+    {
+        const modelltest::SuchAufgabe a = aufgabe({taste}, deltaChor);
+        const std::vector<double> x0 = modelltest::startpunkt(a.raum, start);
+        const double restStart = quadratsumme(modelltest::bewerte(a, {x0}).front().r);
+        std::vector<double> diagonale;
+        const TonSuche lm = sucheAmTon(a, LmStart{x0, LmEinstellungen{}.lambdaStart}, LmEinstellungen{},
+                                       [&diagonale](const LmIteration& it, const std::vector<TastenSumme>&, double) { diagonale = it.diagonale; });
+        const TastenSumme& t = lm.tasten.front();
+        b << taste << " | " << x0.size() << " | " << restStart << " | " << lm.ergebnis.rest << " | " << t.getroffen << " / " << t.groessen.size() << " | "
+          << lm.ergebnis.iterationen << " | " << lm.auswertungen << " | " << std::setprecision(0) << lm.sekunden << std::setprecision(3) << " | " << lm.ergebnis.ende
+          << " | " << modelltest::grenzenText(a.raum, modelltest::lmRaum(a.raum), lm.ergebnis.x) << '\n';
+        einzeln << "\n## Taste " << taste << " — Parameter am Ende (Kurve, Wert) und Wirkung (sqrt(diag) x Bereich, Toleranzen)\n";
+        std::size_t j = 0;
+        for (const modelltest::SuchKurve& k : a.raum.kurven)
+            for (std::size_t i = 0; i < k.tasten.size(); ++i, ++j)
+                einzeln << k.name << '\t' << k.wert(lm.ergebnis.x[j]) << '\t' << (j < diagonale.size() ? std::sqrt(diagonale[j]) * k.bereich(i) : 0.0) << '\n';
+        einzeln << berichte(lm.tasten, true);
+        MESSAGE("Taste " << taste << ": Rest " << restStart << " -> " << lm.ergebnis.rest << ", getroffen " << t.getroffen << " / " << t.groessen.size() << " ("
+                         << lm.ergebnis.iterationen << " Iterationen, " << lm.sekunden << " s, " << lm.ergebnis.ende << ")");
+    }
+    std::ofstream aus(ordner / "taste.txt", std::ios::binary);
+    aus << b.str() << einzeln.str();
     REQUIRE(static_cast<bool>(aus));
 }

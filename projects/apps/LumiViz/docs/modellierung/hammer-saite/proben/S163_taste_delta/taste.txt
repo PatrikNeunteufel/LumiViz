@@ -1,0 +1,197 @@
+# Probe 7.5.11: Levenberg-Marquardt je Taste allein (nur ihre Stuetzpunkte frei), clang, 2026-10-29T18:23:00
+# Startpunkt 1; delta auch im Chor frei
+# Taste | Parameter | Rest Start | Rest Ende | getroffen / alle | Iterationen | Auswertungen | s | Ende | an der Grenze
+33 | 9 | 2471.286 | 620.758 | 4 / 16 | 9 | 103 | 172 | Schritte klein | 2: highDecay 33 unten; h 33 unten;
+48 | 9 | 4370.361 | 1416.444 | 3 / 18 | 16 | 179 | 109 | Schritte klein | 4: highDecay 48 oben; u leise 48 oben; delta 48 unten; h 48 unten;
+60 | 9 | 1409.507 | 105.215 | 9 / 16 | 14 | 156 | 217 | Schritte klein | 3: highDecay 60 oben; u laut 60 unten; h 60 unten;
+66 | 9 | 1191.327 | 113.099 | 10 / 18 | 6 | 70 | 80 | Schritte klein | 2: highDecay 66 oben; h 66 unten;
+81 | 9 | 457.320 | 25.121 | 12 / 18 | 7 | 80 | 29 | Schritte klein | 4: lateDecay 81 oben; highDecay 81 unten; u laut 81 unten; h 81 unten;
+84 | 9 | 305.477 | 10.235 | 15 / 18 | 16 | 179 | 28 | Schritte klein | 1: u leise 84 oben;
+
+## Taste 33 — Parameter am Ende (Kurve, Wert) und Wirkung (sqrt(diag) x Bereich, Toleranzen)
+decay	8.671	59.9
+lateDecay	56.98	67.04
+highDecay	0.7669	2.405
+detune	1.727	353.3
+u leise	0.5176	13.12
+u laut	0.6055	10.23
+gamma	41.72	126.9
+delta	1.222	873.7
+h	0	60.3
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+33 | 620.758 | 4 / 16 | 0 | huelle_20_s 16.479; t60_spaet_3 12.608; t60_spaet_2 6.774
+    huelle_20_s [faktor] Modell 6.661521 Ziel 4.093 Toleranz 0.030 r 16.479
+    huelle_30_s [faktor] Modell 11.650896 Ziel 11.457 Toleranz 0.051 r 0.329 getroffen
+    huelle_40_s [faktor] Modell 18.148958 Ziel 20.425 Toleranz 0.030 r 3.998
+    knick_tiefe_db_2 [db] Modell -13.389892 Ziel -15.350 Toleranz 0.500 r 3.919
+    schwebung_db_1 [db] Modell 4.965412 Ziel 1.020 Toleranz 1.016 r 3.885
+    schwebung_db_2 [db] Modell 3.959275 Ziel 3.640 Toleranz 0.500 r 0.640 getroffen
+    schwebung_db_3 [db] Modell 10.366260 Ziel 11.278 Toleranz 3.415 r 0.267 getroffen
+    t60_spaet [faktor] Modell 32.072138 Ziel 76.593 Toleranz 0.357 r 2.438
+    t60_spaet_2 [faktor] Modell 39.022660 Ziel 51.025 Toleranz 0.040 r 6.774
+    t60_spaet_3 [faktor] Modell 34.878570 Ziel 51.236 Toleranz 0.031 r 12.608
+    tiefe_db_1 [db] Modell 31.330307 Ziel 13.866 Toleranz 3.917 r 4.459
+    tiefe_db_2 [db] Modell 13.122502 Ziel 10.349 Toleranz 0.969 r 2.861
+    tiefe_db_3 [db] Modell 20.559224 Ziel 24.288 Toleranz 2.440 r 1.528
+    vorwaerts_t60 [faktor] Modell 7.584975 Ziel 2.360 Toleranz 0.173 r 6.739
+    vorwaerts_t60_2 [faktor] Modell 7.586067 Ziel 19.491 Toleranz 0.242 r 3.905
+    vorwaerts_t60_3 [faktor] Modell 8.754499 Ziel 10.234 Toleranz 0.288 r 0.541 getroffen
+Gesamt: Summe r^2 620.758, getroffen 4 / 16, fehlend 0, fertige Tasten 0 / 1, Ausreisser keine
+
+## Taste 48 — Parameter am Ende (Kurve, Wert) und Wirkung (sqrt(diag) x Bereich, Toleranzen)
+decay	1.949	408.3
+lateDecay	27.1	43.66
+highDecay	0.9736	2.147
+detune	3.814	305.7
+u leise	1	48.79
+u laut	0.4725	24.41
+gamma	42.07	1.072e-05
+delta	0	888
+h	0	0
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+48 | 1416.444 | 3 / 18 | 0 | knick_tiefe_db 28.562; vorwaerts_t60 15.583; vorwaerts_t60_3 9.990
+    huelle_20_s [faktor] Modell 1.431708 Ziel 1.713 Toleranz 1.055 r 0.170 getroffen
+    huelle_30_s [faktor] Modell 2.257917 Ziel 3.653 Toleranz 0.384 r 1.254
+    huelle_40_s [faktor] Modell 3.549646 Ziel 8.348 Toleranz 0.404 r 2.117
+    knick_tiefe_db [db] Modell -6.639934 Ziel -20.921 Toleranz 0.500 r 28.562
+    knick_tiefe_db_2 [db] Modell -38.341439 Ziel -16.496 Toleranz 11.453 r 1.907
+    knick_tiefe_db_3 [db] Modell -16.175145 Ziel -10.806 Toleranz 0.665 r 8.068
+    schwebung_db_1 [db] Modell 0.240232 Ziel 3.134 Toleranz 0.664 r 4.356
+    schwebung_db_2 [db] Modell 7.285254 Ziel 2.523 Toleranz 1.256 r 3.793
+    schwebung_db_3 [db] Modell 2.246101 Ziel 1.541 Toleranz 0.785 r 0.898 getroffen
+    t60_spaet [faktor] Modell 12.048034 Ziel 16.945 Toleranz 0.044 r 7.693
+    t60_spaet_2 [faktor] Modell 4.317313 Ziel 25.544 Toleranz 0.626 r 2.840
+    t60_spaet_3 [faktor] Modell 3.582926 Ziel 11.166 Toleranz 0.221 r 5.154
+    tiefe_db_1 [db] Modell 0.878818 Ziel 6.289 Toleranz 2.221 r 2.437
+    tiefe_db_2 [db] Modell 20.360803 Ziel 3.881 Toleranz 24.460 r 0.674 getroffen
+    tiefe_db_3 [db] Modell 6.501064 Ziel 3.002 Toleranz 0.518 r 6.757
+    vorwaerts_t60 [faktor] Modell 1.655344 Ziel 1.044 Toleranz 0.030 r 15.583
+    vorwaerts_t60_2 [faktor] Modell 2.878606 Ziel 8.512 Toleranz 0.607 r 1.787
+    vorwaerts_t60_3 [faktor] Modell 4.846760 Ziel 6.512 Toleranz 0.030 r 9.990
+Gesamt: Summe r^2 1416.444, getroffen 3 / 18, fehlend 0, fertige Tasten 0 / 1, Ausreisser keine
+
+## Taste 60 — Parameter am Ende (Kurve, Wert) und Wirkung (sqrt(diag) x Bereich, Toleranzen)
+decay	3.415	71.9
+lateDecay	47.57	47.19
+highDecay	0.9155	1.056
+detune	0.6975	567.3
+u leise	0.3101	21.4
+u laut	0	9.894
+gamma	18.56	21.04
+delta	0.9061	458.1
+h	0	49.44
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+60 | 105.215 | 9 / 16 | 0 | t60_spaet_3 8.089; tiefe_db_2 3.965; tiefe_db_3 2.795
+    huelle_20_s [faktor] Modell 0.923792 Ziel 0.901 Toleranz 0.113 r 0.218 getroffen
+    huelle_30_s [faktor] Modell 3.182771 Ziel 3.007 Toleranz 0.905 r 0.063 getroffen
+    huelle_40_s [faktor] Modell 7.934583 Ziel 7.931 Toleranz 0.049 r 0.009 getroffen
+    knick_tiefe_db [db] Modell -13.056993 Ziel -13.980 Toleranz 9.958 r 0.093 getroffen
+    knick_tiefe_db_2 [db] Modell -15.041956 Ziel -16.158 Toleranz 0.500 r 2.232
+    knick_tiefe_db_3 [db] Modell -14.531196 Ziel -23.595 Toleranz 8.115 r 1.117
+    schwebung_db_2 [db] Modell 8.441916 Ziel 7.539 Toleranz 1.287 r 0.701 getroffen
+    schwebung_db_3 [db] Modell 6.255281 Ziel 7.063 Toleranz 1.415 r 0.571 getroffen
+    t60_spaet [faktor] Modell 30.653418 Ziel 30.470 Toleranz 0.043 r 0.138 getroffen
+    t60_spaet_2 [faktor] Modell 24.192879 Ziel 20.446 Toleranz 0.078 r 2.162
+    t60_spaet_3 [faktor] Modell 21.842231 Ziel 29.737 Toleranz 0.038 r 8.089
+    tiefe_db_2 [db] Modell 26.692053 Ziel 13.335 Toleranz 3.369 r 3.965
+    tiefe_db_3 [db] Modell 24.246749 Ziel 10.366 Toleranz 4.967 r 2.795
+    vorwaerts_t60 [faktor] Modell 3.168220 Ziel 2.642 Toleranz 0.804 r 0.226 getroffen
+    vorwaerts_t60_2 [faktor] Modell 3.009808 Ziel 3.288 Toleranz 0.043 r 2.041
+    vorwaerts_t60_3 [faktor] Modell 2.918472 Ziel 1.954 Toleranz 0.832 r 0.482 getroffen
+Gesamt: Summe r^2 105.215, getroffen 9 / 16, fehlend 0, fertige Tasten 0 / 1, Ausreisser keine
+
+## Taste 66 — Parameter am Ende (Kurve, Wert) und Wirkung (sqrt(diag) x Bereich, Toleranzen)
+decay	6.625	37.21
+lateDecay	17.78	44.13
+highDecay	0.8527	1.936
+detune	1.154	525.9
+u leise	0.3625	13.47
+u laut	0.3596	7.212
+gamma	27.8	25.76
+delta	1.292	774.8
+h	0	10.5
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+66 | 113.099 | 10 / 18 | 0 | knick_tiefe_db_2 7.112; t60_spaet_2 5.177; tiefe_db_2 3.790
+    huelle_20_s [faktor] Modell 1.488521 Ziel 1.163 Toleranz 0.252 r 0.981 getroffen
+    huelle_30_s [faktor] Modell 4.073521 Ziel 3.010 Toleranz 0.158 r 1.912
+    huelle_40_s [faktor] Modell 7.825792 Ziel 6.696 Toleranz 0.177 r 0.879 getroffen
+    knick_tiefe_db [db] Modell -10.238362 Ziel -10.228 Toleranz 0.500 r 0.020 getroffen
+    knick_tiefe_db_2 [db] Modell -11.761428 Ziel -24.521 Toleranz 1.794 r 7.112
+    knick_tiefe_db_3 [db] Modell -15.489734 Ziel -23.560 Toleranz 3.230 r 2.499
+    schwebung_db_1 [db] Modell 5.082454 Ziel 1.532 Toleranz 2.175 r 1.632
+    schwebung_db_2 [db] Modell 5.212425 Ziel 5.378 Toleranz 1.024 r 0.162 getroffen
+    schwebung_db_3 [db] Modell 4.810184 Ziel 3.652 Toleranz 0.886 r 1.307
+    t60_spaet [faktor] Modell 16.218813 Ziel 15.787 Toleranz 0.129 r 0.209 getroffen
+    t60_spaet_2 [faktor] Modell 13.836650 Ziel 17.683 Toleranz 0.047 r 5.177
+    t60_spaet_3 [faktor] Modell 13.805981 Ziel 15.691 Toleranz 0.080 r 1.597
+    tiefe_db_1 [db] Modell 16.155286 Ziel 7.167 Toleranz 11.670 r 0.770 getroffen
+    tiefe_db_2 [db] Modell 11.290233 Ziel 8.444 Toleranz 0.751 r 3.790
+    tiefe_db_3 [db] Modell 19.022283 Ziel 4.513 Toleranz 16.687 r 0.869 getroffen
+    vorwaerts_t60 [faktor] Modell 4.775399 Ziel 3.568 Toleranz 0.312 r 0.934 getroffen
+    vorwaerts_t60_2 [faktor] Modell 3.040260 Ziel 2.457 Toleranz 0.603 r 0.353 getroffen
+    vorwaerts_t60_3 [faktor] Modell 2.189430 Ziel 1.607 Toleranz 0.504 r 0.613 getroffen
+Gesamt: Summe r^2 113.099, getroffen 10 / 18, fehlend 0, fertige Tasten 0 / 1, Ausreisser keine
+
+## Taste 81 — Parameter am Ende (Kurve, Wert) und Wirkung (sqrt(diag) x Bereich, Toleranzen)
+decay	2.151	27.71
+lateDecay	14.59	35.4
+highDecay	0.07023	12.51
+detune	0.5978	279.2
+u leise	0.4506	12.31
+u laut	0	6.158
+gamma	30.48	11.63
+delta	0.5565	420.7
+h	0	27.83
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+81 | 25.121 | 12 / 18 | 0 | knick_tiefe_db 2.355; t60_spaet_2 2.303; vorwaerts_t60 1.989
+    huelle_20_s [faktor] Modell 0.593375 Ziel 0.642 Toleranz 0.237 r 0.333 getroffen
+    huelle_30_s [faktor] Modell 1.406750 Ziel 1.665 Toleranz 0.677 r 0.249 getroffen
+    huelle_40_s [faktor] Modell 2.742229 Ziel 2.733 Toleranz 0.066 r 0.051 getroffen
+    knick_tiefe_db [db] Modell -21.065265 Ziel -14.793 Toleranz 2.664 r 2.355
+    knick_tiefe_db_2 [db] Modell -17.152849 Ziel -19.026 Toleranz 4.108 r 0.456 getroffen
+    knick_tiefe_db_3 [db] Modell -21.547643 Ziel -22.499 Toleranz 2.422 r 0.393 getroffen
+    schwebung_db_1 [db] Modell 5.736520 Ziel 5.897 Toleranz 1.693 r 0.095 getroffen
+    schwebung_db_2 [db] Modell 5.961187 Ziel 4.753 Toleranz 4.533 r 0.266 getroffen
+    schwebung_db_3 [db] Modell 1.203207 Ziel 6.066 Toleranz 2.556 r 1.902
+    t60_spaet [faktor] Modell 14.708989 Ziel 14.223 Toleranz 0.083 r 0.403 getroffen
+    t60_spaet_2 [faktor] Modell 7.893227 Ziel 10.816 Toleranz 0.137 r 2.303
+    t60_spaet_3 [faktor] Modell 4.936187 Ziel 5.569 Toleranz 0.077 r 1.576
+    tiefe_db_1 [db] Modell 13.829190 Ziel 15.087 Toleranz 2.311 r 0.544 getroffen
+    tiefe_db_2 [db] Modell 14.057667 Ziel 14.827 Toleranz 4.387 r 0.175 getroffen
+    tiefe_db_3 [db] Modell 8.960859 Ziel 10.662 Toleranz 1.179 r 1.443
+    vorwaerts_t60 [faktor] Modell 1.850455 Ziel 2.450 Toleranz 0.141 r 1.989
+    vorwaerts_t60_2 [faktor] Modell 1.069787 Ziel 1.488 Toleranz 0.497 r 0.663 getroffen
+    vorwaerts_t60_3 [faktor] Modell 0.996701 Ziel 1.973 Toleranz 0.890 r 0.767 getroffen
+Gesamt: Summe r^2 25.121, getroffen 12 / 18, fehlend 0, fertige Tasten 0 / 1, Ausreisser keine
+
+## Taste 84 — Parameter am Ende (Kurve, Wert) und Wirkung (sqrt(diag) x Bereich, Toleranzen)
+decay	1.229	33.48
+lateDecay	4.905	84.86
+highDecay	0.07565	31.36
+detune	0.5155	370.2
+u leise	1	8.373
+u laut	0.4245	3.767
+gamma	21.89	20.07
+delta	1.069	396.5
+h	0.07355	21.08
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+84 | 10.235 | 15 / 18 | 0 | t60_spaet 2.258; vorwaerts_t60_3 1.191; knick_tiefe_db_3 1.065
+    huelle_20_s [faktor] Modell 0.345562 Ziel 0.584 Toleranz 0.778 r 0.675 getroffen
+    huelle_30_s [faktor] Modell 0.784625 Ziel 0.922 Toleranz 0.241 r 0.670 getroffen
+    huelle_40_s [faktor] Modell 1.488875 Ziel 1.638 Toleranz 0.160 r 0.600 getroffen
+    knick_tiefe_db [db] Modell -25.536386 Ziel -26.036 Toleranz 1.548 r 0.323 getroffen
+    knick_tiefe_db_2 [db] Modell -34.945050 Ziel -35.186 Toleranz 0.811 r 0.297 getroffen
+    knick_tiefe_db_3 [db] Modell -32.738504 Ziel -21.886 Toleranz 10.188 r 1.065
+    schwebung_db_1 [db] Modell 6.344540 Ziel 4.907 Toleranz 4.489 r 0.320 getroffen
+    schwebung_db_2 [db] Modell 3.781453 Ziel 3.904 Toleranz 0.715 r 0.172 getroffen
+    schwebung_db_3 [db] Modell 3.948834 Ziel 3.026 Toleranz 2.271 r 0.406 getroffen
+    t60_spaet [faktor] Modell 3.530307 Ziel 6.975 Toleranz 0.302 r 2.258
+    t60_spaet_2 [faktor] Modell 6.414597 Ziel 6.362 Toleranz 0.101 r 0.081 getroffen
+    t60_spaet_3 [faktor] Modell 3.629583 Ziel 3.651 Toleranz 0.058 r 0.102 getroffen
+    tiefe_db_1 [db] Modell 19.607163 Ziel 14.598 Toleranz 9.027 r 0.555 getroffen
+    tiefe_db_2 [db] Modell 16.627368 Ziel 19.488 Toleranz 5.602 r 0.511 getroffen
+    tiefe_db_3 [db] Modell 12.445652 Ziel 12.629 Toleranz 2.220 r 0.083 getroffen
+    vorwaerts_t60 [faktor] Modell 1.181257 Ziel 1.504 Toleranz 0.596 r 0.406 getroffen
+    vorwaerts_t60_2 [faktor] Modell 1.284260 Ziel 1.323 Toleranz 0.110 r 0.271 getroffen
+    vorwaerts_t60_3 [faktor] Modell 1.166805 Ziel 1.386 Toleranz 0.145 r 1.191
+Gesamt: Summe r^2 10.235, getroffen 15 / 18, fehlend 0, fertige Tasten 0 / 1, Ausreisser keine

@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.104.0
-> **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.105.0
+> **Datum:** 2026-10-29 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4; Session 162: 7.5.9 gebaut, Nullprobe, 7.5.10 gebaut, Suche gelaufen)
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4; Session 162: 7.5.9 gebaut, Nullprobe, 7.5.10 gebaut, Suche gelaufen; Session 163: Probe 7.5.11 verfehlt mit Befunden, V2 a, Teilplan 7.5.12–7.5.14)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
@@ -3662,6 +3662,97 @@ bedeutungslos. **Offen für S163:** die Probe 7.5.11 nach ZF8 a mit SP3 a (verfe
 h im Chor (δ fest 0) aus der Suche genommen werden; ob Start 2 mit mehr Iterationen tiefer käme (Wiederaufnahme aus
 `iteration_2_20.txt` möglich).
 
+**Probe 7.5.11 (S163, Sitzung mit Fable 5.1) — Vorfragen und Urteil.** Ausgewertet an den Iterationsdateien von S162
+(Skripte `schritte.py`, `kopplung.py` im Scratchpad) und an zwei neuen Werkzeugen in `test_LoopSalamanderSuche.cpp`:
+`LUMIVIZ_75_SCHNITT` (je Parameter ein Schnitt mit 15 Punkten über seinen Bereich, ZF8 a (2); `…_VON=<Suchordner>` nimmt
+die letzte Iteration von Startpunkt 1), `LUMIVIZ_75_TASTE` (Levenberg–Marquardt je Taste allein), beide an den Tasten
+33, 48, 60, 66, 81, 84 nach ZF8 a; `LUMIVIZ_75_DELTA_CHOR=1` gibt in beiden δ auch im Chor frei (`suchraum(…,
+deltaImChor)`). Berichte `proben/S163_schnitt/`, `S163_taste/`, `S163_taste_delta/`. Release-clang `*7.5.9*,*7.5.10*,
+*7.5.11*` 13 / 13; Testing-MSVC gebaut, kein Lauf (UF17-1 a); kein Rechenkern berührt.
+*Vorfrage (c), Marquardt-Skalierung — bestätigt:* Stützpunkte mit Wirkung unter 0,1 Toleranzen über den Bereich machen
+in 11 % ihrer Schritte mehr als 10 % des Bereichs (90-%-Quantil 14–21 %, oft von Rand zu Rand), bei Wirkung über 100
+sind es 2 % (Quantil 2,5–2,8 %); von den Stützpunkten „an der Grenze“ sind 24 (Start 1) bzw. 30 (Start 2) solche
+Wanderer. Das Ende „Schritte klein“ bei Start 1 trat erst bei λ = 1000 ein — Dämpfung, nicht Konvergenz.
+*Vorfrage (a), γ und h im Chor — exakt wirkungslos, bei h = 1 numerisch schädlich:* bei δ = 0 ist je Saite D ein
+Vielfaches der Einheit, senk ⊥ waag, und a·senk_j = D_j·senk_j − σ_V·senk liegt im senkrechten Unterraum — für jedes γ
+und h; der Hammer stößt und der Steg liest in senk. Der Schnitt zeigt Σ r² über γ und h an allen sechs Tasten konstant
+(Spanne 0,000). Die „Wirkungen“ bis 98 Toleranzen (γ an 84, Iteration 12) traten erst auf, nachdem h als Wanderer auf 1
+gesprungen war: dort sind senkrechte und waagrechte Mode entartet, `zerlegeKlein` lässt das Nachschärfen aus (Abstand
+der Eigenwerte unter 10⁻⁸), die Eigenvektoren werden beliebig, und die Residuen der ganzen Taste rauschen (Wirkung 0 →
+98 → 0 → 61 über vier Iterationen; Schnitt h an 84: 18,514 konstant, am Rand h = 1 18,741). Mit δ auch im Chor frei
+wirken γ und h (10–127 Toleranzen); LM je Taste allein trifft dann an vier von sechs Tasten deutlich mehr:
+
+| Taste | Gesamtsuche S162, Start 1 (Σ r², Treffer) | LM allein, δ fest 0 | LM allein, δ frei |
+|---|---|---|---|
+| 33 | 142 (4 / 16) | 164 (4 / 16) | 621 (4 / 16) |
+| 48 | 1615 (3 / 18) | 1196 (5 / 18) | 1416 (3 / 18) |
+| 60 | 366 (6 / 16) | 149 (7 / 16) | 105 (9 / 16) |
+| 66 | 192 (4 / 18) | 203 (5 / 18) | 113 (10 / 18) |
+| 81 | 58 (10 / 18) | 37 (12 / 18) | 25 (12 / 18) |
+| 84 | 18,5 (12 / 18) | 18,3 (11 / 18) | 10,2 (15 / 18) |
+| Treffer | 39 / 104 | 44 / 104 | 53 / 104 |
+
+An 33 und 48 fand die Suche mit δ von einem anderen Start aus ein schlechteres Minimum (δ an 48 lief auf 0); das Minimum
+ohne δ ist im Raum mit δ enthalten.
+*Vorfrage (b), Start 2 — nein:* die letzten zehn Iterationen brachten 2,8 % des Rests, die Treffer stehen bei 107–112.
+Der Befund dahinter: weil ein Stützpunkt nur seine Taste bewegt, zerfällt die Suche in 30 unabhängige Aufgaben, und das
+gemeinsame λ koppelt sie künstlich — in den angenommenen Schritten von Start 1 verschlechterten sich bis zu 18 Tasten
+zugleich (Iteration 2: 13 Tasten um 5136 gegen 7882 Gewinn anderswo). Der beste Stand je Taste über beide Startpunkte
+läge ohne neue Rechnung bei Σ r² 9086 und 204 / 456 Treffern.
+*Die Probe nach ZF8 a mit SP3 a:* (1) Rechenzeit gehalten (93 min unter Last). (2) Glätte **verfehlt an 6 von 6
+Tasten** — `detune` hat überall 2–4 Minima und 9–15 Residuen mit Kante: das Ziel „Schwebung als Anteil bei der
+Frequenz von *Salamander*“ (ZF3 a) ist in `detune` wellig (läuft die Schwebungsfrequenz des Modells an der
+Messfrequenz vorbei, oszilliert der Anteil); dazu Kanten bei `highDecay` am Bandrand und bei u = 0; 17 von 48
+Parametern glatt, ohne γ/h 17 von 36. (3) Eindeutig **verfehlt** (71 / 456). (4) Grenze: `highDecay` endet an 19 von
+30 Tasten am Bensa-Band, oben und unten gemischt — Kipppunkt nicht erreicht, Befund. (9) 149 / 456, beste Taste
+12 / 18. Der beste bekannte Punkt je Taste liegt im Mittel bei r ≈ 3; die großen Reste bei `t60_spaet_k`,
+`vorwaerts_t60_k`, `knick_tiefe_db_k` mit τ = 0,03 (UG1 a). **Kipppunkte:** SG2 a (γ an 45°) und SG3 a (`detune` mit
+h oder γ nicht eindeutig) sind gegenstandslos, solange γ und h ohne Wirkung sind; UG1 a (Schwebungsreste über der
+Hälfte der Summe) nicht gerechnet. **Lesarten S163:** ein Schnitt zählt den Rand als Minimum; „Kante“ = größter
+Nachbarsprung eines Residuums über 1 Toleranz und über dem Dreifachen seines mittleren; die Toleranz der Aufnahme ist
+Gewicht in der Suche, das Urteil „getroffen“ ist gegen ein anderes Instrument (Steinway-D-Körper, Yamaha-C5-Aufnahme)
+mit τ = 0,03 je Teilton von keiner Suche erreichbar — SP3 a misst so das Modell, nicht die Suche.
+**Mögliche Wege (S163, für Patrik aufgelistet):** Ebene Suche — (1) je Taste eigenes λ und eigene Annahme, (2) Wanderer
+stilllegen, (3) γ/h festhalten oder δ im Chor frei, (4) mehrere Startpunkte je Taste; Ebene Ziel — (5) `detune`
+gestaffelt (1D durch das Modell an die Schwebungsfrequenz, dann LM), (6) Schwebungsgröße glätten (neues Messgerät),
+(7) Schwelle (3) als Gleichheit der Startpunkte neu fassen; Ebene Modell — (8) Dämpfung je Teilton 1–3 frei, (9) der
+Körper des anderen Instruments (Erklärung, kein Weg), (10) nach Gehör (ZZ1 a).
+
+✅ **V2 a** (Patrik S163; kippt ZZ1 a einmal, „vorläufig letzter Anlauf, Optimierung später noch möglich“; betrifft
+SP2 a für δ, SP3 a, SG3 a): **Der Plan A–D gilt als zweiter und vorläufig letzter Anlauf, mit Schwellen aus Phase B,
+die vorher feststehen. A — die Suche in Ordnung bringen: A1 δ auch im Chor frei, Untergrenze 0,01 Cent gegen die
+Entartung; A2 je Taste eigenes λ, eigene Annahme und eigenes Ende, die Auswertung gemeinsam auf dem Pool; A3
+Stützpunkte unter 0,1 Toleranzen Wirkung ohne Schritt, im Bericht „ohne Wirkung“; A4 `detune` gestaffelt — je Taste
+eindimensional durch das Modell an die Schwebungsfrequenz von *Salamander*, dann die übrigen Parameter mit LM; A5 je
+Taste drei Startpunkte, der beste gilt; Lauf über Nacht, Probe mit dem Schnitt-Werkzeug. B — das Urteil hörbar machen:
+B1 je Größe eine hörbare Schwelle neben der Toleranz (aus der Literatur recherchiert, nicht geschätzt); B2 SP3 a neu:
+eindeutig ist, wenn die Startpunkte an jeder Größe gleich enden (auf eine Toleranz), „hörbar getroffen“ nach B1 gezählt,
+Treffer nach ZF1 a im Bericht; B3 Ausreißer-Tasten je Teilton benannt. C — das Modell nur bei systematischem Befund:
+C1 Dämpfung je Teilton 1–3 als Abweichung vom Potenzgesetz, wenn die Reste nach A je Teilton gleichgerichtet sind; C2
+das Bensa-Band gegen die Literatur prüfen. D — hören und setzen: D1 Hörproben nach A an 24, 33, 60, 84, 96 gegen
+*Salamander*; D2 die Kurven in `baueVorgabe()`, nach Gehör nur, wo das Ohr widerspricht, dann Pegel, `loop_werte`,
+Klangfassung, Release-clang-App; D3 31d-7 C und 31e. Verfehlt die Probe nach den Schwellen aus B wieder, gilt ZZ1 a ohne
+weitere Frage; eine spätere Optimierung (Patrik: Big Data auf Spark, auch mit anderen Instrumenten — Antwort S163 im
+Handover) bleibt möglich, als eigener Entscheid.** Grund: der Nachklang, den das Hörurteil S158 vermisst, entsteht
+nach Weinreich aus der Drehung der Schwingungsebene, und die ist im Chor aus; A1 schaltet sie ein, und die Probe an
+sechs Tasten zeigt, dass das Modell dann mehr trifft (53 gegen 44, an 84 15 von 18); die Suche hat in S162 nicht so
+gearbeitet, wie SP2 a sie meint (Kopplung über λ, 52 tote Parameter, Rauschen bei h = 1), und Schwelle (3) ist mit
+einem anderen Instrument als Bezug von keiner Suche erreichbar. Verworfen: b (ZZ1 a wie entschieden — bleibt dem
+Ausstieg treu, wiegt weniger, weil der Plan kein neues Messgerät baut, sondern Umsetzungsfehler behebt und die Physik
+vervollständigt, die SP2 a aus Vorsicht wegließ, und den Ausstieg mit festen Schwellen behält), c (nur A, Urteil nach
+ZF8 a / SP3 a unverändert — scheitert nach den Zahlen sicher). Kippt auf b, wenn Patrik die Treue zu *Salamander* nicht
+mehr als Ziel sieht; kippt auf C-zuerst, wenn der Bericht nach A systematische Reste je Teilton zeigt, die δ im Chor
+nicht trägt. **Erwartung, aus den Daten gerechnet:** A2 allein 204 Treffer und Σ r² 9086; A1 an sechs Tasten 9 von 104
+zusätzlich; zusammen grob 230–260 von 456 — was darüber liegt, ist Modellgrenze.
+
+**Teilplan nach V2 a (Nummern fest, PL31 a; ergänzt ZF9 a):** **7.5.12** = Phase A (A1–A5; Bausitzung mit Opus nach
+Auftrag, Lauf über Nacht rund 3–4 h, Probe nach ZF8 a mit Schnitt und Vergleich — die Probe 7.5.11 wiederholt), **7.5.13**
+= Phase B (B1 Recherche der Hörschwellen als Bericht unter `docs/modellierung/hammer-saite/`, B2/B3 als Entscheide vor
+dem Lauf von 7.5.12), **7.5.14** = Phase C (nur bei Befund, Rechenkern, `.lvinst`-Fassung, voller Lauf), danach **7.5.5**
+Setzen nach SE1 a mit den Werkzeugen aus 7.5.12 (= D1, D2) und **7.5.6** Vorgabe, dann 31d-7 C und 31e (D3). Aufwand:
+zwei bis drei Bausitzungen, zwei Rechenläufe über Nacht, zwei Hörrunden; C nur bedingt. Reihenfolge: 7.5.13 (B1 Recherche,
+B2/B3 Entscheide) vor dem Lauf von 7.5.12, der Bau von 7.5.12 kann parallel beginnen.
+
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
 
@@ -5744,6 +5835,8 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.105.0 | 2026-10-29 | Session 163 (Fable 5.1). Probe 7.5.11: Vorfragen (c) bestätigt (Wanderer unter der Marquardt-Skalierung), (a) γ und h im Chor exakt wirkungslos, bei h = 1 Rauschen der entarteten Eigenzerlegung, mit δ im Chor frei 53 statt 44 Treffer an sechs Tasten, (b) Start 2 nicht wieder aufnehmen — die Kopplung über das gemeinsame λ ist der Hebel (bester Stand je Taste 9086 / 204); Probe verfehlt an (2) Glätte (`detune` wellig) und (3); zehn Wege aufgelistet; V2 a (Plan A–D als zweiter, vorläufig letzter Anlauf), Teilplan 7.5.12–7.5.14; Werkzeuge `LUMIVIZ_75_SCHNITT`, `LUMIVIZ_75_TASTE`, `LUMIVIZ_75_DELTA_CHOR`. |
+| 0.102.0–0.104.0 | 2026-10-29 | Session 162 (Opus 5.5, Bauauftrag). 7.5.9 gebaut (Zielsumme, Kurven der Suche, Nullprobe), 7.5.10 gebaut (Levenberg–Marquardt über die Stützpunkte, Jacobi je Kurve), Suche und Vergleich mit Nelder–Mead gelaufen (Zeilen in dieser Tabelle in S162 nicht nachgetragen; nachgeholt S163). |
 | 0.101.0 | 2026-10-29 | Session 161 (Fable 5.1). Dritter Körper `steinway_d_glass_same_mass` neu (Fassung 3), voller Lauf beide Compiler; NP2 a (Nocturne +7 dB mit Limiter); vor 7.5.7 die Entscheide SG1 a (drei Ebenen in der Suche), SG2 a (γ 0–45°, ohne Quelle), SG3 a (`detune` frei, Start an der Schwebung); 7.5.7 gebaut (Toleranzen je Größe aus Ebenen und Kanälen, `werte/salamander_toleranzen.txt`, Befund: die Kanäle bestimmen die Toleranz), UG1 a (Untergrenze aus der Messgenauigkeit, in 7.5.9), UF17-1 a (voller Lauf nur bei großen Änderungen oder auf Anforderung). |
 | 0.100.0 | 2026-10-28 | Session 160 (Fable 5.1). Befund HU4 (Boden im Bass): Zielgrößen mit dem Stulov-Hammer (A0 332 ms, C2 133 ms); der Überschuss sitzt in den Moden 38 und 61 Hz (beide Hörorte) und 165 Hz (rechts) mit 3- bis 8-fachem Abstrahlgewicht gegen 200–400 Hz; Hochpass-Shelf, Dämpfung und Streckstimmung an Kraft × Antwort gerechnet — kein Filter trifft A0, C2 k2 höchstens +3 statt +25 dB; Kurzschluss je Mode aus der Form (zweiseitiges Rayleigh) als Weg, nicht gerechnet; Kipppunkt von HU2 a erreicht; Entscheid HU4 a. DY2 a ausgeführt: Spreizung des Modells 0,9–1,4 dB je dB Stufe gemessen, Quelle Goebl, Bresin & Galembo 2004 (0,37–4,07 m/s), neue Tafel ppp −21 … ff 0, Akzent und Gabel 4 dB, Fader +1,2 dB; `nocturne_demo.lvloop`, `loop_werte.txt`, `klangfassung.txt` nachgezogen. HU4 a gebaut und geprobt (Rückseite: 0 dB im Nahfeld), HU4-2 b (bleibt, aus), HU4-1 a gebaut (Dämpfungsgesetz im Bauplan Fassung 3, c = 4,5; `steinway_d` und `steinway_d_glass` neu, `grand_piano` Level 4,2418, Klangfassung 5). |
 | 0.99.0 | 2026-10-28 | Session 159. HU3 a (R_H nachtragen) — vor dem Bau als Fehllesung erkannt (verlorenes Minus in RT-0425 Gl. 5, Abb. 4c; R_H wirkungslos); Befund p über Taste 71 extrapoliert; HU3-1 vorgelegt, Empfehlung nach Patriks Rückfrage auf c geändert (Helligkeit je Stärke an Salamander trifft Stulov, RT-0425 kaum); **HU3-1 c gebaut:** Hammer nach Stulov Gl. 9 mit Hysterese (`hammerHysteresis`, `hammerRelaxation`, `.lvinst` 20, Klangfassung 4, `grand_piano.lvinst` Level 4,0355, `loop_werte.txt` fünf Zeilen), Fall HU3-1 (Kontaktzeit, Helligkeit je Stärke), Chabassier-Fall als Band; C8 0,86 / 0,52 ms. Regel (global): nicht das Einfache empfehlen, jede Option gegen alle Zielgrößen rechnen. |
