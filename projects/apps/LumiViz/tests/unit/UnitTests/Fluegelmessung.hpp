@@ -13,9 +13,11 @@
  * Dazu fuer das Setzen an den Kurven (31d-7 B, 7.5.2): `messeTon` mit `TonKurven` legt je Teilton 1–3 die
  * Kurve nach Schroeder und die Autokovarianz ab (Kanaele in der Energie gemittelt, `kanalMittel`);
  * `schreibeKurven` / `liesKurven` halten sie je Taste und Ebene v6–v16 in `werte/salamander_kurven.txt`.
- * 7.5.7 (ZF4 a): `toleranzen` misst je Taste und Groesse die Streuung der Aufnahme selbst — benachbarte Ebenen am
- * Kanalmittel und die beiden Kanaele derselben Ebene (`messeTon` mit `einzeln`), die groessere ist die Toleranz;
- * `schreibeToleranzen` / `liesToleranzen` halten sie in `werte/salamander_toleranzen.txt`.
+ * 7.5.7 (ZF4 a): `toleranzAus` misst je Groesse die Streuung der Aufnahme selbst — benachbarte Ebenen am Kanalmittel
+ * und die beiden Kanaele derselben Ebene (`messeTon` mit `einzeln`), die groessere ist die Toleranz; `ziele` legt
+ * Ziel (Median ueber die Ebenen) und Toleranz je Groesse zusammen, `schreibeZiele` / `liesZiele` halten sie in
+ * `werte/salamander_ziel.txt`. Die Groessen an der Struktur des Ziels (7.5.8) liefert `Strukturmessung.hpp`
+ * (`messeTon` mit `huellen`).
  *
  * Die Tasten von *Salamander*: 30 in kleinen Terzen von A0 bis C8, je 16 Ebenen `v1`–`v16`
  * (Befund S152). `undampedFrom` steht nicht hier — es kommt aus der SFZ (D1 a).
@@ -264,9 +266,26 @@ inline TonKurven kurvenAus(const std::vector<Teilton>& links, const std::vector<
 /// Ein Ton in Stereo: die Blende am Ende einmal an der Summe beider Kanaele bestimmt und an beiden
 /// gleich abgeschnitten (`endeVorBlende`), dann jeder Kanal gemessen. `kurven` (wenn gegeben) bekommt die
 /// Kurven fuer das Setzen (7.5.2) — aus derselben Messung, die Werte aendern sich nicht.
+/// Die Huellen eines Tons fuer die Messung an der Struktur (7.5.8, ZF3 a): je Teilton 1–3 das Kanalmittel (K1 a) und
+/// jeder Kanal fuer sich, mit `pegelDb`, `bodenDb` und Bereich (`Teilton`).
+struct TonHuellen
+{
+    std::vector<Teilton> mittel;
+    std::vector<Teilton> links;
+    std::vector<Teilton> rechts;
+};
+
+/// Der Teilton k einer Liste, `nullptr` ohne ihn.
+inline const Teilton* teiltonK(const std::vector<Teilton>& v, int k)
+{
+    for (const Teilton& t : v)
+        if (t.k == k) return &t;
+    return nullptr;
+}
+
 inline std::array<KanalMessung, 2> messeTon(std::span<const float> stereo, int rate, double nennFrequenz,
                                             const lumi::loop::Fft& fft, bool mitPhantomen, TonKurven* kurven = nullptr,
-                                            std::array<KanalMessung, 2>* einzeln = nullptr)
+                                            std::array<KanalMessung, 2>* einzeln = nullptr, TonHuellen* huellen = nullptr)
 {
     auto [links, rechts] = trenne(stereo);
     const double laengeS = static_cast<double>(links.size()) / rate;
@@ -288,6 +307,19 @@ inline std::array<KanalMessung, 2> messeTon(std::span<const float> stereo, int r
     // 7.5.7 (ZF4 a): jeder Kanal fuer sich, bevor die Huellkurve vorwaerts und der ganze Ton durch das Kanalmittel
     // ersetzt werden — daran misst `toleranzen` den Abstand der beiden Kanaele.
     if (einzeln != nullptr) *einzeln = ton;
+    if (huellen != nullptr)
+    {
+        huellen->links = huellenL;
+        huellen->rechts = huellenR;
+        huellen->mittel.clear();
+        for (int k = 1; k <= kKurvenTeiltoene; ++k)
+        {
+            const Teilton* l = teiltonK(huellenL, k);
+            const Teilton* r = teiltonK(huellenR, k);
+            if (l == nullptr && r == nullptr) continue;
+            huellen->mittel.push_back(kanalMittel(l != nullptr ? *l : Teilton{}, r != nullptr ? *r : Teilton{}));
+        }
+    }
     // HU2 a (S159): die Huellkurve vorwaerts und der ganze Ton aus dem Kanalmittel in der Energie (wie die Kurven, K1 a) —
     // in beiden Kanaelen derselbe Wert. Grund: an Salamander laufen die Kanaele auseinander (C4, Teilton 1: links faellt
     // der Grundton in den ersten 0,5 s mit 12 dB/s, rechts mit 23 dB/s — der linke Kanal ist dort 5 dB leiser und traegt
@@ -953,74 +985,151 @@ inline std::vector<SetzGroesse> setzGroessen()
     return g;
 }
 
-/// Die Toleranzen einer Taste (ZF4 a). `messungen[e]` ist Ebene e + 1 wie in `verdichte` (aus `messeTon`: Huellkurve
-/// vorwaerts und ganzer Ton als Kanalmittel), `einzeln[e]` dieselbe Ebene mit jedem Kanal fuer sich (`messeTon` mit
-/// `einzeln`; leer erlaubt — dann ohne Kanalabstand fuer die Groessen des Kanalmittels). Eingehen die Ebenen ab
-/// `kKurvenEbeneAb`; der Abstand benachbarter Ebenen am Kanalmittel der Groesse (beide Kanaele erkannt: ihr Mittel in der
-/// Skala, einer: der eine), der Abstand der Kanaele je Ebene, wo beide erkannt sind; je Groesse der Median.
-inline TastenToleranzen toleranzen(const std::vector<std::array<KanalMessung, 2>>& messungen,
-                                   const std::vector<std::array<KanalMessung, 2>>& einzeln = {})
+/// Die Werte einer Groesse an einer Ebene: am Kanalmittel und je Kanal (`std::nullopt`, wo sie nicht gemessen ist).
+struct EbenenWerte
 {
-    TastenToleranzen t;
+    std::optional<double> mittel;
+    std::array<std::optional<double>, 2> kanaele;
+};
+
+/// Eine Groesse mit ihren Werten je Ebene (ab `kKurvenEbeneAb`, in der Reihenfolge der Ebenen).
+struct GroesseJeEbene
+{
+    std::string name;
+    Skala skala = Skala::Dezibel;
+    std::vector<EbenenWerte> ebenen;
+};
+
+/// Die Toleranz aus den Werten je Ebene (ZF4 a): der Median des Abstands benachbarter Ebenen am Kanalmittel (wo beide
+/// gemessen sind) und der Median des Abstands der beiden Kanaele derselben Ebene (wo beide gemessen sind).
+inline Toleranz toleranzAus(Skala skala, const std::vector<EbenenWerte>& ebenen)
+{
+    std::vector<double> ebenenAbstand;
+    std::vector<double> kanalAbstand;
+    for (std::size_t i = 0; i < ebenen.size(); ++i)
+    {
+        if (i + 1 < ebenen.size() && ebenen[i].mittel && ebenen[i + 1].mittel)
+            ebenenAbstand.push_back(abstandIn(skala, *ebenen[i].mittel, *ebenen[i + 1].mittel));
+        if (ebenen[i].kanaele[0] && ebenen[i].kanaele[1])
+            kanalAbstand.push_back(abstandIn(skala, *ebenen[i].kanaele[0], *ebenen[i].kanaele[1]));
+    }
+    Toleranz tol;
+    tol.skala = skala;
+    tol.paareEbenen = static_cast<int>(ebenenAbstand.size());
+    tol.paareKanaele = static_cast<int>(kanalAbstand.size());
+    if (!ebenenAbstand.empty()) tol.ebenen = detail::median(std::move(ebenenAbstand));
+    if (!kanalAbstand.empty()) tol.kanaele = detail::median(std::move(kanalAbstand));
+    return tol;
+}
+
+/// Das Ziel einer Groesse: der Median der Werte am Kanalmittel ueber die Ebenen (ZF3 a: einmal gemessen, als Ziel).
+inline Wert zielAus(const std::vector<EbenenWerte>& ebenen)
+{
+    std::vector<double> w;
+    for (const EbenenWerte& e : ebenen)
+        if (e.mittel) w.push_back(*e.mittel);
+    return detail::medianWert(std::move(w));
+}
+
+/// Die Groessen aus der Erkennung je Ebene (ZF2 a mit HU2 a, `setzGroessen`): `messungen[e]` ist Ebene e + 1 wie in
+/// `verdichte` (aus `messeTon`: Huellkurve vorwaerts und ganzer Ton als Kanalmittel), `einzeln[e]` dieselbe Ebene mit
+/// jedem Kanal fuer sich (`messeTon` mit `einzeln`; leer erlaubt — dann ohne Kanalabstand fuer die Groessen des
+/// Kanalmittels). Das Kanalmittel einer Groesse je Kanal: beide erkannt, ihr Mittel in der Skala; einer, der eine.
+inline std::vector<GroesseJeEbene> erkennungsGroessen(const std::vector<std::array<KanalMessung, 2>>& messungen,
+                                                      const std::vector<std::array<KanalMessung, 2>>& einzeln = {})
+{
+    std::vector<GroesseJeEbene> alle;
     for (const SetzGroesse& g : setzGroessen())
     {
-        std::vector<double> jeEbene, ebenenAbstand, kanalAbstand;
-        std::vector<bool> ebeneDa;
+        GroesseJeEbene je{g.name, g.skala, {}};
         for (std::size_t e = static_cast<std::size_t>(kKurvenEbeneAb) - 1; e < messungen.size(); ++e)
         {
+            EbenenWerte w;
             const std::optional<double> l = messungen[e][0].erkannt ? g.wert(messungen[e][0], g.k) : std::nullopt;
             const std::optional<double> r = messungen[e][1].erkannt ? g.wert(messungen[e][1], g.k) : std::nullopt;
-            if (l && r) jeEbene.push_back(mittelIn(g.skala, *l, *r));
-            else if (l || r) jeEbene.push_back(l ? *l : *r);
-            ebeneDa.push_back(l.has_value() || r.has_value());
-            if (!ebeneDa.back()) jeEbene.push_back(0.0);
+            if (l && r) w.mittel = mittelIn(g.skala, *l, *r);
+            else if (l || r) w.mittel = l ? *l : *r;
             const auto& k = e < einzeln.size() ? einzeln[e] : messungen[e];
-            const std::optional<double> kl = k[0].erkannt ? g.wert(k[0], g.k) : std::nullopt;
-            const std::optional<double> kr = k[1].erkannt ? g.wert(k[1], g.k) : std::nullopt;
-            if (kl && kr) kanalAbstand.push_back(abstandIn(g.skala, *kl, *kr));
+            w.kanaele[0] = k[0].erkannt ? g.wert(k[0], g.k) : std::nullopt;
+            w.kanaele[1] = k[1].erkannt ? g.wert(k[1], g.k) : std::nullopt;
+            je.ebenen.push_back(w);
         }
-        for (std::size_t i = 0; i + 1 < jeEbene.size(); ++i)
-            if (ebeneDa[i] && ebeneDa[i + 1]) ebenenAbstand.push_back(abstandIn(g.skala, jeEbene[i], jeEbene[i + 1]));
-        Toleranz tol;
-        tol.skala = g.skala;
-        tol.paareEbenen = static_cast<int>(ebenenAbstand.size());
-        tol.paareKanaele = static_cast<int>(kanalAbstand.size());
-        if (!ebenenAbstand.empty()) tol.ebenen = detail::median(std::move(ebenenAbstand));
-        if (!kanalAbstand.empty()) tol.kanaele = detail::median(std::move(kanalAbstand));
-        if (tol.gemessen()) t[g.name] = tol;
+        alle.push_back(std::move(je));
     }
+    return alle;
+}
+
+/// Die Toleranzen einer Taste aus den Groessen je Ebene (ZF4 a); nur Groessen mit wenigstens einem Paar.
+inline TastenToleranzen toleranzen(const std::vector<GroesseJeEbene>& groessen)
+{
+    TastenToleranzen t;
+    for (const GroesseJeEbene& g : groessen)
+        if (const Toleranz tol = toleranzAus(g.skala, g.ebenen); tol.gemessen()) t[g.name] = tol;
     return t;
 }
 
-inline const char* const kToleranzenKopf =
-    "# Toleranzen von Salamander Grand Piano V3 (Yamaha C5), Alexander Holm 2011, CC BY 3.0\n"
+/// Wie `toleranzen(erkennungsGroessen(messungen, einzeln))`.
+inline TastenToleranzen toleranzen(const std::vector<std::array<KanalMessung, 2>>& messungen,
+                                   const std::vector<std::array<KanalMessung, 2>>& einzeln = {})
+{
+    return toleranzen(erkennungsGroessen(messungen, einzeln));
+}
+
+/// Ziel und Toleranz einer Groesse an einer Taste (7.5.9 liest sie; UG1 a: die Untergrenze kommt beim Teilen, nicht hier).
+struct ZielGroesse
+{
+    Skala skala = Skala::Dezibel;
+    Wert ziel;
+    Toleranz toleranz;
+};
+using TastenZiele = std::map<std::string, ZielGroesse>;
+using Ziele = std::map<int, TastenZiele>;
+
+/// Ziel und Toleranz je Groesse aus den Groessen je Ebene; nur Groessen mit einem Ziel und wenigstens einem Paar.
+inline TastenZiele ziele(const std::vector<GroesseJeEbene>& groessen)
+{
+    TastenZiele z;
+    for (const GroesseJeEbene& g : groessen)
+    {
+        const Wert ziel = zielAus(g.ebenen);
+        const Toleranz tol = toleranzAus(g.skala, g.ebenen);
+        if (ziel.anzahl > 0 && tol.gemessen()) z[g.name] = {g.skala, ziel, tol};
+    }
+    return z;
+}
+
+inline const char* const kZielKopf =
+    "# Ziel und Toleranz von Salamander Grand Piano V3 (Yamaha C5), Alexander Holm 2011, CC BY 3.0\n"
     "# (http://creativecommons.org/licenses/by/3.0/), Fassung 48 kHz/24 bit von archive.org, SHA-256 des Archivs\n"
     "# 04a4442f2432d846f7a6aaf7156e83e06a84342f4d7475e6e070587b3b28ef21. Nur Zahlen; geschrieben von\n"
-    "# test_LoopSalamander.cpp (LUMIVIZ_SALAMANDER=<Ordner>), Messung Teiltonmessung.hpp / Fluegelmessung.hpp.\n"
-    "# 7.5.7 (Spielweisen_Konzept ZF1 a, ZF2 a, ZF4 a): je Taste und Groesse die Streuung der Aufnahme selbst, in der\n"
-    "# Skala der Groesse — faktor = |ln(a/b)| (Zeiten), db, cent. ebenen = Median des Abstands benachbarter Ebenen\n"
-    "# v6-v16 am Kanalmittel; kanaele = Median des Abstands links/rechts derselben Ebene; toleranz = die groessere.\n"
-    "# Zeile: Taste <Tab> Groesse <Tab> Skala <Tab> Toleranz <Tab> Ebenen <Tab> Kanaele <Tab> Paare Ebenen <Tab> Paare Kanaele\n";
+    "# test_LoopSalamander.cpp (LUMIVIZ_SALAMANDER=<Ordner>), Messung Teiltonmessung.hpp / Fluegelmessung.hpp /\n"
+    "# Strukturmessung.hpp. 7.5.7 und 7.5.8 (Spielweisen_Konzept ZF1 a-ZF4 a): je Taste und Groesse, gemessen an der\n"
+    "# Struktur des Ziels (salamander_struktur.txt), in der Skala der Groesse — faktor = |ln(a/b)| (Zeiten), db, cent.\n"
+    "# ziel = Median ueber die Ebenen v6-v16 am Kanalmittel (anzahl Ebenen); ebenen = Median des Abstands benachbarter\n"
+    "# Ebenen am Kanalmittel; kanaele = Median des Abstands links/rechts derselben Ebene; toleranz = die groessere (ZF4 a).\n"
+    "# Zeile: Taste <Tab> Groesse <Tab> Skala <Tab> Ziel <Tab> Anzahl <Tab> Toleranz <Tab> Ebenen <Tab> Kanaele <Tab> Paare Ebenen\n"
+    "#   <Tab> Paare Kanaele\n";
 
-inline bool schreibeToleranzen(const std::filesystem::path& pfad, const Toleranzen& toleranzen)
+inline bool schreibeZiele(const std::filesystem::path& pfad, const Ziele& ziele)
 {
     std::ofstream aus(pfad, std::ios::binary);
     if (!aus) return false;
     aus.precision(6);
-    aus << kToleranzenKopf;
-    for (const auto& [midi, je] : toleranzen)
-        for (const auto& [name, t] : je)
-            if (t.gemessen())
-                aus << midi << '\t' << name << '\t' << skalaName(t.skala) << '\t' << t.wert() << '\t' << t.ebenen << '\t' << t.kanaele << '\t'
-                    << t.paareEbenen << '\t' << t.paareKanaele << '\n';
+    aus << kZielKopf;
+    for (const auto& [midi, je] : ziele)
+        for (const auto& [name, z] : je)
+            if (z.ziel.anzahl > 0 && z.toleranz.gemessen())
+                aus << midi << '\t' << name << '\t' << skalaName(z.skala) << '\t' << z.ziel.wert << '\t' << z.ziel.anzahl << '\t'
+                    << z.toleranz.wert() << '\t' << z.toleranz.ebenen << '\t' << z.toleranz.kanaele << '\t' << z.toleranz.paareEbenen << '\t'
+                    << z.toleranz.paareKanaele << '\n';
     return static_cast<bool>(aus);
 }
 
-inline std::optional<Toleranzen> liesToleranzen(const std::filesystem::path& pfad)
+inline std::optional<Ziele> liesZiele(const std::filesystem::path& pfad)
 {
     std::ifstream ein(pfad, std::ios::binary);
     if (!ein) return std::nullopt;
-    Toleranzen alle;
+    Ziele alle;
     std::string zeile;
     while (std::getline(ein, zeile))
     {
@@ -1030,16 +1139,18 @@ inline std::optional<Toleranzen> liesToleranzen(const std::filesystem::path& pfa
         std::stringstream s(zeile);
         std::string teil;
         while (std::getline(s, teil, '\t')) teile.push_back(teil);
-        if (teile.size() != 8) return std::nullopt;
+        if (teile.size() != 10) return std::nullopt;
         const std::optional<Skala> skala = skalaAus(teile[2]);
         if (!skala) return std::nullopt;
-        Toleranz t;
-        t.skala = *skala;
-        t.ebenen = std::stod(teile[4]);
-        t.kanaele = std::stod(teile[5]);
-        t.paareEbenen = std::stoi(teile[6]);
-        t.paareKanaele = std::stoi(teile[7]);
-        alle[std::stoi(teile[0])][teile[1]] = t;
+        ZielGroesse z;
+        z.skala = *skala;
+        z.ziel = {std::stod(teile[3]), std::stoi(teile[4])};
+        z.toleranz.skala = *skala;
+        z.toleranz.ebenen = std::stod(teile[6]);
+        z.toleranz.kanaele = std::stod(teile[7]);
+        z.toleranz.paareEbenen = std::stoi(teile[8]);
+        z.toleranz.paareKanaele = std::stoi(teile[9]);
+        alle[std::stoi(teile[0])][teile[1]] = z;
     }
     return alle;
 }

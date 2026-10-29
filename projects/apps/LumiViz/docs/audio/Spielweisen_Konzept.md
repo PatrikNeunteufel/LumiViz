@@ -3559,6 +3559,33 @@ rund 10 min je Compiler (seit `nocturne_demo` in den Tests über alle Loops, S15
 eine Wertedatei — Patrik: „ist der volle Lauf schon nötig?“. Verworfen: b (UF17 a wörtlich). Kippt zurück, wenn ein
 voller Lauf einen Fehler findet, den ein enger Lauf eines Teilschritts davor billiger gefunden hätte.
 
+**7.5.8 gebaut (S161) — die Messung an der Struktur des Ziels (ZF3 a):** `Strukturmessung.hpp`. Die Struktur je Taste und
+Teilton 1–3 kommt einmal aus der Erkennung an *Salamander* am Kanalmittel der Ebenen v6–v16 (`strukturAus`: Bereich,
+Knick nach `zweiStufen`, Schwebungsfrequenz nach `findeSchwebung`; `verdichteStruktur`: Bereich als Median, Knick und
+Schwebung nur, wo mindestens die Hälfte der Ebenen sie erkennt — sonst eine Gerade bzw. keine Schwebung) und steht in
+`werte/salamander_struktur.txt` (96 Zeilen). An dieser Struktur messen **beide Seiten dieselbe Rechnung**
+(`misstAnStruktur`): die erste Stufe vorwärts ab der eigenen Spitze (HU2 a), die Tiefe des Knicks am Knick der Struktur,
+die späte Stufe als Gerade an der Kurve nach Schroeder ab diesem Knick bis 1 s vor dem Ende (ohne Knick: über den
+Bereich), die Schwebung als Anteil des Rests um die Geraden bei der Frequenz der Struktur (Spitze zu Spitze,
+`schwebung_db_k`) und die Tiefe der Einbrüche je Periode dieser Frequenz (`tiefe_db_k`); alles ohne Schwelle und ohne Wahl
+eines Kandidaten, synthetisch belegt stetig (Knick der Struktur 1,5 … 2,5 s gegen einen Ton mit Knick bei 2 s; Frequenz
+0,8 … 1,2 Hz gegen 1 Hz). **Lesart von ZF3 a:** „wie bisher mit Erkennung gemessen, einmal, als Ziel“ liefert die
+*Struktur*; die *Werte* des Ziels kommen aus derselben Strukturmessung an *Salamander* (Median über die Ebenen), sonst
+verglichen zwei verschiedene Schätzer (etwa die späte Stufe mit und ohne Abzug der frühen). Ziel und Toleranz je Größe
+stehen zusammen in `werte/salamander_ziel.txt` (466 Zeilen; die Datei `salamander_toleranzen.txt` aus 7.5.7 ist darin
+aufgegangen und entfällt); `messeTon` gibt dafür die Hüllen je Teilton heraus (`TonHuellen`: Kanalmittel, links,
+rechts). Neu `test_LoopSalamanderStruktur` (vier Fälle), `test_LoopSalamander` schreibt beide Dateien mit
+`LUMIVIZ_SALAMANDER`. **Befund:** An der festen Struktur werden die Toleranzen enger als mit Erkennung je Ebene —
+Mediane über die Tasten: späte Stufe Faktor 1,10 / 1,09 / 1,05 (vorher 1,29 / 1,26 / 1,48; die Erkennung sprang
+zwischen den Ebenen), erste Stufe 1,24 / 1,26 / 1,22 (1,40 / 1,26 / 1,22), Tiefe des Knicks 2,0 / 1,8 / 3,2 dB (3,7 /
+4,3 / 4,2), Tiefe der Einbrüche 3,2 / 3,0 / 4,8 dB (3,7 / 5,9 / 5,0), Anteil der Schwebung 2,7 / 0,9 / 1,4 dB bei
+Zielen von 4,3 / 4,5 / 5,9 dB; der ganze Ton unverändert (Faktor 1,14 / 1,25 / 1,17). Die Kanäle bestimmen die
+Toleranz weiter fast überall (17–30 von 20–30 Tasten). Struktur: 20 / 24 / 20 Tasten mit Knick (Teilton 1 / 2 / 3), 20 /
+24 / 21 mit Schwebung; ohne Knick trägt `t60_spaet` die eine Gerade über den Bereich (ZF3 a „sonst eine“), neben der
+ersten Stufe über 0,5 s. Grenzfälle der Mehrheit (5 von 11 Ebenen mit Knick an 33 Teilton 3, 54 Teilton 3, 57 Teilton
+1 → eine Gerade) sind Kanten in der *Definition* des Ziels, nicht in der Messung des Modells — das Ziel ist einmal
+festgelegt (ZF3 a).
+
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
 
