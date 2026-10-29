@@ -23,6 +23,10 @@
  *   auch `salamander_kurven.txt`);
  *   der Ordner ist `…\Salamander\SalamanderGrandPianoV3_48khz24bit` (README dort). Ohne die
  *   Variable meldet der Fall das und prueft nichts.
+ * - 7.5.7 (ZF1 a, ZF2 a, ZF4 a): `werte/salamander_toleranzen.txt` — je Taste und Groesse die Streuung der Aufnahme
+ *   zwischen benachbarten Ebenen v6–v16 und zwischen den beiden Kanaelen, die groessere als Toleranz; an Zahlen von
+ *   Hand und die Datei hin und zurueck; die mitgelieferte Datei: 30 Tasten, jede Toleranz endlich, Bericht je Groesse.
+ *   `LUMIVIZ_SALAMANDER` schreibt sie mit.
  * - Teil 2: der Boden im Vergleich (UF6 a) an Zahlen von Hand; `LUMIVIZ_31D3_MODELL=<Ordner>` misst den
  *   gerechneten Steinway D wie im Programm (Stufen −30 … 0 dB an der Stelle der Ebenen, V1 a) und den
  *   Glasboden, vergleicht mit `werte/salamander_c5.txt` und legt `modell_steinway.txt` und
@@ -77,6 +81,7 @@ namespace
 
 const std::filesystem::path kWerteDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_c5.txt";
 const std::filesystem::path kKurvenDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_kurven.txt";
+const std::filesystem::path kToleranzenDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_toleranzen.txt";
 
 /// Eine Messung von Hand: Teilton 1 bei `pegel`, Teilton 2 bei `pegel − 6 + steigung·(pegel + 40)`.
 KanalMessung kanal(double pegel, double steigung, double b, double t60, bool zwei)
@@ -86,15 +91,15 @@ KanalMessung kanal(double pegel, double steigung, double b, double t60, bool zwe
     m.f0 = 110.0;
     m.b = b;
     m.pegelDb = pegel;
-    TeiltonKurz t1{1, 110.0, pegel, {}, {}};
+    TeiltonKurz t1{1, 110.0, pegel, {}, {}, {}};
     t1.abklingen.erkannt = true;
     t1.abklingen.zweiStufen = zwei;
     t1.abklingen.t60Frueh = t60;
     t1.abklingen.t60Spaet = zwei ? 3.0 * t60 : t60;
     t1.abklingen.knickS = zwei ? 2.0 : 0.0;
     m.teiltoene.push_back(t1);
-    m.teiltoene.push_back({2, 220.0, pegel - 6.0 + steigung * (pegel + 40.0), {}, {}});
-    for (int k = 3; k <= 5; ++k) m.teiltoene.push_back({k, 110.0 * k, pegel - 10.0 * k, {}, {}});
+    m.teiltoene.push_back({2, 220.0, pegel - 6.0 + steigung * (pegel + 40.0), {}, {}, {}});
+    for (int k = 3; k <= 5; ++k) m.teiltoene.push_back({k, 110.0 * k, pegel - 10.0 * k, {}, {}, {}});
     return m;
 }
 
@@ -346,6 +351,156 @@ TEST_CASE("Loop Salamander 31d-7 B mitgelieferte Kurven (7.5.2)")
                                     << quantil(schwebung, 0.9) << " dB");
 }
 
+TEST_CASE("Loop Salamander 7.5.7 Toleranzen aus Ebenen und Kanaelen (ZF4 a)")
+{
+    // 16 Ebenen von Hand, ab v6 zaehlen sie (kKurvenEbeneAb): Teilton 1 vorwaerts 2 s · 1,1^e in beiden Kanaelen
+    // gleich (Kanalmittel wie aus `messeTon`), einzeln links um den Faktor 1,2 laenger; die Tiefe links 10 + 0,5·e dB,
+    // rechts 3 dB mehr; der ganze Ton bis −20 dB 5 s · 1,05^e ohne Kanalunterschied; kein Knick, keine spaete Stufe.
+    std::vector<std::array<KanalMessung, 2>> messungen, einzeln;
+    for (int e = 1; e <= kEbenen; ++e)
+    {
+        const double t60 = 2.0 * std::pow(1.1, e);
+        const auto kanal = [&](double vorwaerts, double tiefe) {
+            KanalMessung m;
+            m.erkannt = true;
+            m.f0 = 110.0;
+            TeiltonKurz t1{1, 110.0, 0.0, {}, {}, {}};
+            t1.vorwaerts.erkannt = true;
+            t1.vorwaerts.t60 = vorwaerts;
+            t1.schwebung.erkannt = true;
+            t1.schwebung.frequenz = 0.5;
+            t1.schwebung.einbruchDb = tiefe;
+            m.teiltoene.push_back(t1);
+            m.huelleS = {5.0 * std::pow(1.05, e), 0.0, 0.0};
+            return m;
+        };
+        const double tiefeL = 10.0 + 0.5 * e;
+        messungen.push_back({kanal(t60, tiefeL), kanal(t60, tiefeL + 3.0)});
+        einzeln.push_back({kanal(1.2 * t60, tiefeL), kanal(t60, tiefeL + 3.0)});
+    }
+    const TastenToleranzen t = toleranzen(messungen, einzeln);
+    REQUIRE(t.count("vorwaerts_t60") == 1);
+    REQUIRE(t.count("tiefe_db_1") == 1);
+    REQUIRE(t.count("schwebung_cent_1") == 1);
+    REQUIRE(t.count("huelle_20_s") == 1);
+    CHECK(t.count("knick_tiefe_db") == 0);  // nicht erkannt: keine Toleranz
+    CHECK(t.count("t60_spaet") == 0);
+    CHECK(t.count("vorwaerts_t60_2") == 0);
+    CHECK(t.count("huelle_30_s") == 0);
+    const Toleranz& v = t.at("vorwaerts_t60");
+    CHECK(v.skala == Skala::Faktor);
+    CHECK(v.paareEbenen == kEbenen - kKurvenEbeneAb);      // v6 … v16: zehn Paare
+    CHECK(v.paareKanaele == kEbenen - kKurvenEbeneAb + 1);  // elf Ebenen
+    CHECK(v.ebenen == doctest::Approx(std::log(1.1)));
+    CHECK(v.kanaele == doctest::Approx(std::log(1.2)));
+    CHECK(v.wert() == doctest::Approx(std::log(1.2)));  // ZF4 a: die groessere
+    const Toleranz& tiefe = t.at("tiefe_db_1");
+    CHECK(tiefe.skala == Skala::Dezibel);
+    CHECK(tiefe.ebenen == doctest::Approx(0.5));  // am Kanalmittel: 0,5 dB je Ebene
+    CHECK(tiefe.kanaele == doctest::Approx(3.0));
+    CHECK(tiefe.wert() == doctest::Approx(3.0));
+    const Toleranz& schwebung = t.at("schwebung_cent_1");
+    CHECK(schwebung.skala == Skala::Cent);
+    // eine exakte Null: `Approx(0).scale(0)` vergleicht strikt kleiner und liesse sie nicht durch
+    const doctest::Approx null = doctest::Approx(0.0).epsilon(1e-12);
+    CHECK(schwebung.ebenen == null);  // ueberall 0,5 Hz an 110 Hz
+    CHECK(schwebung.kanaele == null);
+    const Toleranz& huelle = t.at("huelle_20_s");
+    CHECK(huelle.ebenen == doctest::Approx(std::log(1.05)));
+    CHECK(huelle.kanaele == null);
+    CHECK(huelle.wert() == doctest::Approx(std::log(1.05)));
+    // ohne `einzeln` fehlt der Kanalabstand des Kanalmittels, die Groessen je Kanal behalten ihn
+    const TastenToleranzen ohne = toleranzen(messungen);
+    CHECK(ohne.at("vorwaerts_t60").kanaele == null);
+    CHECK(ohne.at("tiefe_db_1").kanaele == doctest::Approx(3.0));
+
+    // die Datei hin und zurueck
+    const std::filesystem::path ordner =
+        std::filesystem::temp_directory_path() / ("lumiviz_toleranzen_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    REQUIRE(std::filesystem::create_directories(ordner));
+    const std::filesystem::path pfad = ordner / "toleranzen.txt";
+    Toleranzen alle;
+    alle[60] = t;
+    alle[66]["tiefe_db_2"] = Toleranz{Skala::Dezibel, 1.25, 0.5, 10, 11};
+    alle[66]["leer"] = Toleranz{};  // nicht gemessen: nicht geschrieben
+    REQUIRE(schreibeToleranzen(pfad, alle));
+    const std::optional<Toleranzen> gelesen = liesToleranzen(pfad);
+    REQUIRE(gelesen.has_value());
+    REQUIRE(gelesen->size() == 2);
+    CHECK(gelesen->at(60).size() == t.size());
+    CHECK(gelesen->at(60).at("vorwaerts_t60").skala == Skala::Faktor);
+    CHECK(gelesen->at(60).at("vorwaerts_t60").kanaele == doctest::Approx(std::log(1.2)));
+    CHECK(gelesen->at(60).at("vorwaerts_t60").paareEbenen == kEbenen - kKurvenEbeneAb);
+    REQUIRE(gelesen->at(66).size() == 1);
+    CHECK(gelesen->at(66).at("tiefe_db_2").wert() == doctest::Approx(1.25));
+    CHECK(gelesen->at(66).at("tiefe_db_2").paareKanaele == 11);
+    std::filesystem::remove_all(ordner);
+}
+
+TEST_CASE("Loop Salamander 7.5.7 mitgelieferte Toleranzen (ZF1 a, ZF4 a)")
+{
+    // ZF1 a: die Schwellen stehen fest, bevor gesetzt wird — hier liegen sie; je Groesse der Bericht, wie gross sie sind
+    const std::optional<Toleranzen> alle = liesToleranzen(kToleranzenDatei);
+    REQUIRE_MESSAGE(alle.has_value(), "werte/salamander_toleranzen.txt nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
+    const std::optional<SalamanderWerte> werte = liesWerte(kWerteDatei);
+    REQUIRE(werte.has_value());
+    REQUIRE(alle->size() == salamanderTasten().size());
+    std::ostringstream bericht;
+    bericht << std::fixed << std::setprecision(3)
+            << "Toleranzen (ZF4 a): Groesse | Skala | Tasten | Median | kleinste | groesste | Kanaele groesser an | "
+               "Toleranz >= Wert bzw. Faktor 2 an\n";
+    for (const SetzGroesse& g : setzGroessen())
+    {
+        std::vector<double> tol;
+        int kanaeleMehr = 0, weit = 0;
+        for (const auto& [midi, je] : *alle)
+        {
+            const auto it = je.find(g.name);
+            if (it == je.end()) continue;
+            const Toleranz& t = it->second;
+            CAPTURE(midi);
+            CAPTURE(g.name);
+            CHECK(t.skala == g.skala);
+            CHECK(std::isfinite(t.wert()));
+            CHECK(t.wert() >= 0.0);
+            CHECK(t.paareEbenen <= kEbenen - kKurvenEbeneAb);
+            CHECK(t.paareKanaele <= kEbenen - kKurvenEbeneAb + 1);
+            tol.push_back(t.wert());
+            kanaeleMehr += t.kanaele > t.ebenen ? 1 : 0;
+            // "fast jeder Wert trifft" (ZF1 a, ZF2 a): Zeiten ab dem Faktor 2, Pegel und Cent ab dem Wert selbst
+            // (Schwebung und Tiefe je Teilton stehen in der Wertedatei nur zusammengefasst — dann gegen die Zeile ohne _k)
+            double bezug = 0.0;
+            if (g.skala == Skala::Faktor) bezug = std::log(2.0);
+            else
+            {
+                std::string zeile = g.name;
+                if (zeile.rfind("schwebung_cent_", 0) == 0) zeile = "schwebung_cent";
+                if (zeile.rfind("tiefe_db_", 0) == 0) zeile = "tiefe_db";
+                const auto wz = werte->find(midi);
+                if (wz != werte->end())
+                    if (const auto z = wz->second.find(zeile); z != wz->second.end() && z->second.size() >= 2) bezug = std::abs(std::stod(z->second[0]));
+            }
+            weit += bezug > 0.0 && t.wert() >= bezug ? 1 : 0;
+        }
+        if (tol.empty())
+        {
+            bericht << g.name << " | " << skalaName(g.skala) << " | 0\n";
+            continue;
+        }
+        std::sort(tol.begin(), tol.end());
+        bericht << g.name << " | " << skalaName(g.skala) << " | " << tol.size() << " | " << tol[tol.size() / 2] << " | " << tol.front() << " | "
+                << tol.back() << " | " << kanaeleMehr << " | " << weit << '\n';
+    }
+    MESSAGE(bericht.str());
+    for (const auto& [midi, je] : *alle)
+    {
+        CAPTURE(midi);
+        CHECK(!je.empty());
+        // die erste Stufe vorwaerts von Teilton 1 oder 2 traegt an jeder Taste eine Toleranz
+        CHECK((je.count("vorwaerts_t60") > 0 || je.count("vorwaerts_t60_2") > 0));
+    }
+}
+
 TEST_CASE("Loop Salamander 31d-3 Boden im Vergleich (UF6 a)")
 {
     // drei Tasten; a = b + eine gemeinsame Kurve (Raum, Mikrofon) + bei Taste 2 ein Buckel von 3 dB in einem Band
@@ -431,6 +586,7 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
     const lumi::loop::Fft& fft = lumi::loop::fft();
     std::vector<std::vector<std::array<KanalMessung, 2>>> messungen(tasten.size());
     std::vector<std::vector<TonKurven>> kurven(tasten.size());  // 7.5.2: je Taste die Ebenen ab `kKurvenEbeneAb`
+    std::vector<std::vector<std::array<KanalMessung, 2>>> einzeln(tasten.size());  // 7.5.7: jeder Kanal fuer sich
     std::vector<std::string> fehler(tasten.size());
     std::atomic<std::size_t> naechste{0};
     const unsigned zahl = std::max(1u, std::min(8u, std::thread::hardware_concurrency()));
@@ -450,8 +606,10 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
                     }
                     const bool phantome = taste.midi <= kPhantomBis && e == kEbenen;
                     TonKurven k;
+                    std::array<KanalMessung, 2> jeKanal;
                     messungen[i].push_back(
-                        messeTon(wav->stereo, wav->rate, tastenFrequenz(taste.midi), fft, phantome, e >= kKurvenEbeneAb ? &k : nullptr));
+                        messeTon(wav->stereo, wav->rate, tastenFrequenz(taste.midi), fft, phantome, e >= kKurvenEbeneAb ? &k : nullptr, &jeKanal));
+                    einzeln[i].push_back(jeKanal);
                     if (e >= kKurvenEbeneAb) kurven[i].push_back(k);
                 }
             }
@@ -472,6 +630,32 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
     REQUIRE(schreibeKurven(kKurvenDatei, bezug));
     MESSAGE("Kurven: " << bezug.size() << " geschrieben nach " << kKurvenDatei.string() << ", "
                        << std::filesystem::file_size(kKurvenDatei) / 1024 << " KiB");
+
+    // 7.5.7 (ZF4 a): die Toleranzen je Taste und Groesse aus Ebenen und Kanaelen
+    Toleranzen toleranzenAlle;
+    for (std::size_t i = 0; i < tasten.size(); ++i) toleranzenAlle[tasten[i].midi] = toleranzen(messungen[i], einzeln[i]);
+    REQUIRE(schreibeToleranzen(kToleranzenDatei, toleranzenAlle));
+    {
+        std::ostringstream tb;
+        tb << std::fixed << std::setprecision(3) << "Toleranzen geschrieben nach " << kToleranzenDatei.string()
+           << "\nGroesse | Skala | Tasten | Median Toleranz | Median Ebenen | Median Kanaele | Kanaele groesser an\n";
+        for (const SetzGroesse& g : setzGroessen())
+        {
+            std::vector<double> tol, eb, ka;
+            int kanaeleMehr = 0;
+            for (const auto& [midi, je] : toleranzenAlle)
+                if (const auto it = je.find(g.name); it != je.end())
+                {
+                    tol.push_back(it->second.wert());
+                    eb.push_back(it->second.ebenen);
+                    ka.push_back(it->second.kanaele);
+                    kanaeleMehr += it->second.kanaele > it->second.ebenen ? 1 : 0;
+                }
+            tb << g.name << " | " << skalaName(g.skala) << " | " << tol.size() << " | " << detail::medianWert(tol).wert << " | "
+               << detail::medianWert(eb).wert << " | " << detail::medianWert(ka).wert << " | " << kanaeleMehr << '\n';
+        }
+        MESSAGE(tb.str());
+    }
 
     std::ostringstream bericht;
     bericht << std::fixed << std::setprecision(2) << "Salamander gemessen in " << dauer << " s, geschrieben nach "

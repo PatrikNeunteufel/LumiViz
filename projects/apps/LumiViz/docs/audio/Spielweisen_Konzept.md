@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.100.0
+> **Version:** 0.101.0
 > **Datum:** 2026-10-28 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -3477,6 +3477,88 @@ sie benennt. Verworfen: b (ZF8 a (3) wie entschieden — misst die Aufnahme, nic
 Toleranzen aus 7.5.7 so groß ausfallen, dass fast jeder Parameterwert hineinfällt — dann ist der Kipppunkt von ZF1 a
 ohnehin erreicht.
 
+**Vor 7.5.7 (S161; im Gespräch TP1–TP3 genannt — die Kürzel sind hier durch die Tempo-Spur belegt, deshalb SG):**
+
+✅ **SG1 a** (Patrik S161; ändert K4 a für die Suche): **Die Suche rechnet je Taste drei Ebenen, v6, v10 und v16 (leise,
+Mitte, laut — u leise und u laut haben so je ihr Ziel); die Toleranz nach ZF4 a kommt weiter aus allen elf Ebenen v6–v16;
+Probe und Schlussbericht rechnen zum Schluss alle elf.** Grund: die Zielgrößen sind Mediane über die Ebenen, drei Stützen
+tragen den Verlauf über die Stärke; jede Iteration kürzt sich von rund 10 auf 3 min, und der Schlussbericht an elf Ebenen
+zeigt, ob die Suche mit drei etwas verfehlt hat. Verworfen: b (alle elf Ebenen wie K4 a — Ziel und Modell gleich
+gemessen; wiegt weniger, weil die Toleranz die Streuung über die Ebenen schon enthält). Kippt auf b, wenn der
+Schlussbericht an elf Ebenen Größen außerhalb der Toleranz zeigt, die an drei innerhalb lagen.
+
+✅ **SG2 a** (Patrik S161; ändert SQ2 a für γ): **γ bekommt die Grenze 0–45°, im Bericht als „ohne Quelle“ benannt wie
+`decay` und `lateDecay`; Start 30° (HU2 a (3)). Tans 22° steht als Vergleich im Bericht, nicht als Grenze.** Grund: die
+25° stammen aus Tans Simulation, die SQ2 a nach seinem eigenen Grundsatz nicht als Grenze zulässt; sie bänden die Suche
+an die Stelle, die HU1 a als zu eng erkannt hat (γ um 10° legt −30 dB in die langsamen Moden, γ 30° mit δ 3 Cent −12 dB,
+*Salamander* zeigt den Knick bei −15 dB). 45° ist die Mitte zwischen senkrecht und waagrecht; darüber vertauschen die
+Eigenrichtungen ihre Rolle. Verworfen: b (0–25° bleibt, Start 25° — Treue zu SQ2 a, wiegt weniger, weil dort für γ keine
+Messung steht; ZF8 a meldet ohnehin, wenn die Suche an einer Grenze endet). Kippt, wenn die Suche an mehr als der Hälfte
+der Tasten an 45° endet — dann ist das Modell der zweiten Ebene zu prüfen, nicht die Grenze.
+
+✅ **SG3 a** (Patrik S161; ergänzt HU2 a (3) um `detune` und `highDecay`, SP2 a gilt): **`detune` wird in SM4 b frei
+gesucht wie in SP2 a (nur ab zwei Saiten), Start je Taste an der Schwebung von *Salamander* statt an der Vorgabe aus
+31d-4; die Schwebung bleibt Zielgröße nach ZF5 a. Die Liste in HU2 a (3) war verkürzt, nicht abschließend.** Grund:
+Richtung der Abhängigkeit — das Modell erzeugt die Schwebung aus Verstimmung und Kopplung, also findet die Suche durch das
+Modell hindurch die Verstimmung, die die gemessene Schwebung ergibt (S1 a); die beobachtete Schwebung ist im gekoppelten
+Chor der Abstand der gekoppelten Moden, nicht die Verstimmung (Befund S154: an 81 schwebt das Modell mit 3,76 Cent bei
+0,92 Hz, *Salamander* bei 0,24 Hz, mit 0,57 Cent trifft es). Die Eindeutigkeit sichert das Ziel: die Schwebungsfrequenz
+legt `detune` fest, die späte Stufe h und γ, die Jacobi-Matrix je Stützpunkt (ZF8 a) meldet, wenn zwei Größen denselben
+Stützpunkt bewegen. Verworfen: b (`detune` fest auf der gemessenen Schwebung, Prüfgröße im Bericht — setzt eine
+Modellgröße gleich einer Messgröße, die sie nur im ungekoppelten Grenzfall ist, an 81 um den Faktor vier falsch; die
+Ersparnis einer Größe ist kein Argument). Kippt, wenn die Probe 7.5.11 an mehr als einem Viertel der Tasten `detune` und
+h oder γ am selben Stützpunkt als nicht eindeutig meldet — dann wird `detune` an diesen Tasten festgehalten, nicht überall.
+
+**7.5.7 gebaut (S161) — die Toleranzen nach ZF4 a:** `toleranzen` in `Fluegelmessung.hpp` misst je Taste und Größe
+(ZF2 a mit HU2 a: je Teilton 1–3 `vorwaerts_t60`, `knick_tiefe_db`, `t60_spaet`, `schwebung_cent_k`, `tiefe_db_k`; dazu
+`huelle_20/30/40_s`) den Median des Abstands benachbarter Ebenen v6–v16 am Kanalmittel und den Median des Abstands der
+beiden Kanäle derselben Ebene (`messeTon` gibt dafür jeden Kanal für sich heraus, `einzeln`), die größere ist die Toleranz;
+jede Größe in ihrer Skala — Zeiten als Faktor (|ln a/b|, wie die Zeiten unter den Parametern in SP2 a), Pegel und Tiefen in
+dB, die Schwebung in Cent; Abweichung und Toleranz teilen die Skala (ZF5 a). Datei `werte/salamander_toleranzen.txt`
+(460 Zeilen, `LUMIVIZ_SALAMANDER` schreibt sie mit; `salamander_c5.txt` und `salamander_kurven.txt` blieben dabei
+gleich), zwei Fälle in `test_LoopSalamander` (Zahlen von Hand, Datei hin und zurück; die mitgelieferte Datei mit
+Bericht). **Befund:** (1) Die Kanäle bestimmen die Toleranz fast überall (an 25–30 von 30 Tasten je Größe größer als
+die Ebenen) — der Nachtrag vor ZF4 a bestätigt sich an jeder Größe. Mediane über die Tasten: erste Stufe Teilton 1
+Faktor 1,40 (Ebenen allein 1,01), Teilton 2/3 1,26 / 1,22; späte Stufe 1,29 / 1,26 / 1,48; Tiefe des Knicks 3,7 / 4,3 /
+4,2 dB; Tiefe der Einbrüche 3,7 / 5,9 / 5,0 dB; Schwebung 0,33 / 0,33 / 0,10 Cent; der ganze Ton bis −20/−30/−40 dB
+Faktor 1,14 / 1,25 / 1,17. (2) „Fast jeder Wert trifft“ (ZF1 a, ZF2 a: Zeiten ab Faktor 2, Pegel und Cent ab dem Wert
+selbst) an 0–7 von 21–30 Tasten je Größe — keine Größe fällt insgesamt heraus; je Taste fällt sie dort über das Gewicht
+heraus (ZF7 a). Weit: erste Stufe Teilton 1 an 24, 27, 36, 60, 75, 87 (Faktor 2,1–3,7); späte Stufe Teilton 3 an 36
+(Faktor 22); Tiefe Teilton 2 an 48 (26,6 dB bei 5,5 dB Wert). (3) Die kleinsten Toleranzen liegen an der Auflösung der
+Messung: Faktor 0,007 (0,7 % der Zeit, 48 Teilton 3), 0,16 dB (42 Tiefe Teilton 3), 0,006 Cent (78 Teilton 3, 102
+Teilton 1 — 0,01 Hz, die Rasterweite der Schwebungssuche an 10 s); keine ist null. Ohne Untergrenze liegt das größte
+Gewicht 1/Toleranz² je Größe beim 29- bis 3100-fachen des typischen (Median) — bei der Schwebung am höchsten, weil die
+Schwebung in beiden Kanälen und allen Ebenen dieselbe ist (sie gehört den Saiten, nicht dem Mikrofon). Kipppunkt von
+ZF5 a („nahe null“) berührt → **UG1 vorgelegt.** (4) An 21 und 24 hat die erste Stufe von Teilton 1 am Kanalmittel
+keine Ebenen-Paare (0 bzw. 1 Messung auch in `salamander_c5.txt`), je Kanal aber 10–11: das Kanalmittel aus HU2 a braucht
+den Schnitt beider Bereiche, und an A0/C1 ist Teilton 1 in einem Kanal zu kurz messbar; die Toleranz dort kommt allein
+aus den Kanälen (Faktor 2,0 / 2,4). Kein Umbau: ZF7 a — ein Ziel fehlt, wo *Salamander* die Struktur nicht trägt;
+Teilton 2 trägt dort.
+
+✅ **UG1 a** (Patrik S161; ergänzt ZF5 a, Kipppunkt „nahe null“): **Die Toleranz einer Größe ist mindestens die
+Messgenauigkeit der Teiltonmessung an synthetischen Signalen (31d-1): Zeiten Faktor 1,03 (0,03 im Logarithmus), Pegel
+und Tiefen 0,5 dB, Schwebung 2 % des gemessenen Werts in Cent. Angewendet in 7.5.9 beim Teilen der Abweichung durch die
+Toleranz; `salamander_toleranzen.txt` bleibt reine Messung, die Grenze steht mit Quelle im Code.** Nachgerechnet an den
+460 Toleranzen: 37 werden angehoben, das größte Gewicht 1/Toleranz² gegen das typische sinkt bei Zeiten und Pegeln von
+bis zu 1003 auf höchstens 175; bei der Schwebung bleibt es bei bis zu 3100 — sie ist wirklich so genau (gleich in beiden
+Kanälen und allen Ebenen, sie gehört den Saiten), und `verstimmungCent` hat ab 33 an jeder gemessenen Taste einen
+Stützpunkt, die Suche kann sie je Taste treffen. Grund: eine Toleranz kann nicht kleiner sein, als die Messung genau ist,
+und diese Genauigkeit ist gemessen und belegt. Verworfen: b (ein Viertel des Medians der Größe über die Tasten — 77
+angehoben, Gewicht höchstens 16-fach; wirft die echte Schärfe der Schwebung weg, eine statistische Setzung ohne
+physikalischen Grund), c (keine Untergrenze — gewichtet, was die Messung selbst nicht unterscheidet). Kippt auf b allein
+für die Schwebung, wenn die Probe 7.5.11 zeigt, dass die Schwebungsreste mehr als die Hälfte der Summe tragen, obwohl
+`detune` dort einen Stützpunkt hat — dann muss die Grenze das Modell abbilden, nicht die Messung.
+
+✅ **UF17-1 a** (Patrik S161; ändert UF17 a und ZF9 a für dieses Projekt): **Der volle Lauf (beide Compiler, rund 10 min
+je Compiler) läuft nur noch bei großen Änderungen oder auf Patriks Anforderung.** Groß heißt (Lesart Claude, von Patrik zu
+berichtigen): Code, den mehrere Bereiche mitbenutzen (Rechenkern, Klangerzeuger, Engine, Dienste, `lumi::ui::Achse`),
+eine neue Fassung einer Datei (`.lvinst`, `.lvloop`, `.lvinstbody`, …), Build-System, `Solution.json` oder Externals.
+Sonst gilt MT1 a: je Teilschritt eng unter Release-clang, am Stufenende die engen Fälle der Stufe einmal unter
+Testing-MSVC und der Bereich; gebaut wird weiter unter beiden Compilern (S99). Grund: der volle Lauf dauert inzwischen
+rund 10 min je Compiler (seit `nocturne_demo` in den Tests über alle Loops, S158), und 7.5.7 änderte nur Testcode und
+eine Wertedatei — Patrik: „ist der volle Lauf schon nötig?“. Verworfen: b (UF17 a wörtlich). Kippt zurück, wenn ein
+voller Lauf einen Fehler findet, den ein enger Lauf eines Teilschritts davor billiger gefunden hätte.
+
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
 
@@ -5559,6 +5641,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.101.0 | 2026-10-29 | Session 161 (Fable 5.1). Dritter Körper `steinway_d_glass_same_mass` neu (Fassung 3), voller Lauf beide Compiler; NP2 a (Nocturne +7 dB mit Limiter); vor 7.5.7 die Entscheide SG1 a (drei Ebenen in der Suche), SG2 a (γ 0–45°, ohne Quelle), SG3 a (`detune` frei, Start an der Schwebung); 7.5.7 gebaut (Toleranzen je Größe aus Ebenen und Kanälen, `werte/salamander_toleranzen.txt`, Befund: die Kanäle bestimmen die Toleranz), UG1 a (Untergrenze aus der Messgenauigkeit, in 7.5.9), UF17-1 a (voller Lauf nur bei großen Änderungen oder auf Anforderung). |
 | 0.100.0 | 2026-10-28 | Session 160 (Fable 5.1). Befund HU4 (Boden im Bass): Zielgrößen mit dem Stulov-Hammer (A0 332 ms, C2 133 ms); der Überschuss sitzt in den Moden 38 und 61 Hz (beide Hörorte) und 165 Hz (rechts) mit 3- bis 8-fachem Abstrahlgewicht gegen 200–400 Hz; Hochpass-Shelf, Dämpfung und Streckstimmung an Kraft × Antwort gerechnet — kein Filter trifft A0, C2 k2 höchstens +3 statt +25 dB; Kurzschluss je Mode aus der Form (zweiseitiges Rayleigh) als Weg, nicht gerechnet; Kipppunkt von HU2 a erreicht; Entscheid HU4 a. DY2 a ausgeführt: Spreizung des Modells 0,9–1,4 dB je dB Stufe gemessen, Quelle Goebl, Bresin & Galembo 2004 (0,37–4,07 m/s), neue Tafel ppp −21 … ff 0, Akzent und Gabel 4 dB, Fader +1,2 dB; `nocturne_demo.lvloop`, `loop_werte.txt`, `klangfassung.txt` nachgezogen. HU4 a gebaut und geprobt (Rückseite: 0 dB im Nahfeld), HU4-2 b (bleibt, aus), HU4-1 a gebaut (Dämpfungsgesetz im Bauplan Fassung 3, c = 4,5; `steinway_d` und `steinway_d_glass` neu, `grand_piano` Level 4,2418, Klangfassung 5). |
 | 0.99.0 | 2026-10-28 | Session 159. HU3 a (R_H nachtragen) — vor dem Bau als Fehllesung erkannt (verlorenes Minus in RT-0425 Gl. 5, Abb. 4c; R_H wirkungslos); Befund p über Taste 71 extrapoliert; HU3-1 vorgelegt, Empfehlung nach Patriks Rückfrage auf c geändert (Helligkeit je Stärke an Salamander trifft Stulov, RT-0425 kaum); **HU3-1 c gebaut:** Hammer nach Stulov Gl. 9 mit Hysterese (`hammerHysteresis`, `hammerRelaxation`, `.lvinst` 20, Klangfassung 4, `grand_piano.lvinst` Level 4,0355, `loop_werte.txt` fünf Zeilen), Fall HU3-1 (Kontaktzeit, Helligkeit je Stärke), Chabassier-Fall als Band; C8 0,86 / 0,52 ms. Regel (global): nicht das Einfache empfehlen, jede Option gegen alle Zielgrößen rechnen. |
 | 0.98.0 | 2026-10-28 | Session 159. HU2 a (Reihenfolge: Prüfgröße, HU3 Hammer, HU4 Boden, dann SM4 b mit zweiter Ebene); HU2 a (1) gebaut: Hüllkurve vorwärts als Mess- und Setzgröße (`Vorwaerts`, `huellkurveZeiten`, Kanalmittel in der Energie), `salamander_c5.txt` mit den neuen Zeilen, Wächter, Bericht im dauerhaften Test; Tabelle Salamander gegen Modell. |
