@@ -17,10 +17,10 @@
  * Ein Akkord setzt nur Noten (S-T1 a): das Muster merkt sich nicht, aus welchem
  * Akkord sie kamen.
  *
- * - **Ablage** (S-T3 a): mitgeliefert unter `asset/loop/chords` (auch in
- *   Unterordnern, beim Pfad darunter ohne Endung genannt: `guitar/c_major_1`);
- *   eigene im Benutzerordner unter `chords`, als `user:<name>`; sonst der Pfad
- *   einer Datei.
+ * - **Ablage** (S-T3 a): mitgeliefert unter `asset/loop/chords` in Sammlungen
+ *   `<sammlung>.lvchords` (S167, AK1 a: eine Datei je Stimmung statt tausender
+ *   einzelner), genannt `<sammlung>/<name>`: `guitar/c_major_1`; eigene im
+ *   Benutzerordner unter `chords`, als `user:<name>`; sonst der Pfad einer Datei.
  *
  * Kein Qt-Widget, keine Audio-Engine.
  */
@@ -102,12 +102,37 @@ bool ausJson(const QJsonObject& wurzel, Akkord& akkord, bool* zuNeu = nullptr);
 bool ladeAkkord(const QString& pfad, Akkord& akkord, bool* zuNeu = nullptr);
 bool speichereAkkord(const QString& pfad, const Akkord& akkord);
 
+// --- Sammlung (S167, AK1 a) ----------------------------------------------------
+
+inline constexpr int kAkkordSammlungFassung = 1;
+inline constexpr const char* kAkkordSammlungEndung = ".lvchords";
+
+/// Viele Akkorde einer Stimmung in einer Datei (Format `lumiviz-chord-collection`,
+/// Fassung 1): `description`, die Stimmung `open` (fehlt bei Voicings) und unter
+/// `chords` je Akkord `name` und das Objekt einer `.lvchord`. Grund: Windows prueft
+/// jede Datei beim ersten Oeffnen — 6373 einzelne brauchten 25,6 s, sechs Sammlungen 34 ms.
+struct AkkordSammlung
+{
+    QString name;          ///< der Dateiname ohne Endung: `guitar`
+    QString beschreibung;
+    std::vector<int> leer;  ///< die Stimmung aller Griffbilder; leer = nur Voicings
+    std::vector<Akkord> akkorde;  ///< genannt `<name>/<akkord>`, in der Reihenfolge der Datei
+};
+
+/// Eine Sammlung ganz lesen. Ein Akkord ohne nennbaren Namen, der nicht gilt, doppelt
+/// steht oder nicht zur Stimmung der Sammlung passt, faellt weg; `name` aus dem Dateinamen.
+bool ladeAkkordSammlung(const QString& pfad, AkkordSammlung& sammlung, bool* zuNeu = nullptr);
+
 // --- Ablage ------------------------------------------------------------------
 
 /// `asset/loop/chords` — neben der Exe oder im Projektordner. Leer = nicht da.
 [[nodiscard]] QString mitgelieferterAkkordOrdner();
-/// Die mitgelieferten Akkorde, nach Titel; einmal gelesen.
-[[nodiscard]] const std::vector<Akkord>& mitgelieferteAkkorde();
+/// Alle mitgelieferten Akkorde, nach Titel. Jede Sammlung wird beim ersten Bedarf
+/// gelesen und gemerkt (sicher von mehreren Threads aus).
+[[nodiscard]] std::vector<Akkord> mitgelieferteAkkorde();
+/// Die mitgelieferten Akkorde, die zu `saiten` passen (`passtZu`), nach Titel —
+/// liest nur die Sammlungen dieser Stimmung (bei Voicings nur `voicings`).
+[[nodiscard]] std::vector<Akkord> mitgelieferteAkkorde(const Saitensatz& saiten);
 /// Der Ordner der eigenen Akkorde im Benutzerordner (`chords`).
 [[nodiscard]] QString eigenerAkkordOrdner();
 void setzeEigenenAkkordOrdnerFuerTests(const QString& ordner);

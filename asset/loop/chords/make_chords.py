@@ -6,24 +6,29 @@ docs/audio/Saiten_Konzept.md §1).
 Der Ordner ist das npm-Paket `@tombatossals/chords-db` 0.5.1 (`lib/guitar.json`, `lib/ukulele.json`,
 `LICENSE`), geladen S137 nach `...\\cmake\\ChordsDb\\0.5.1`, seit S155 auf der Wechselplatte unter
 `E:\\samples\\ChordsDb\\0.5.1` — ausserhalb des Repos, wie die Originale der
-Samples. Schreibt neben dieses Skript je Akkord eine `.lvchord` (Fassung 1, `loop/Akkord.hpp`):
+Samples. Schreibt neben dieses Skript je Sammlung eine Datei `<sammlung>.lvchords` (Format
+`lumiviz-chord-collection` Fassung 1, `loop/Akkord.hpp`; seit S167, AK1 a): im Kopf die Stimmung
+`open` der Griffbilder (bei `voicings` fehlt sie), unter `chords` je Akkord eine Zeile — `name` und
+das Objekt einer `.lvchord` (Fassung 1). Eine Datei statt tausender: Windows prueft jede Datei beim
+ersten Oeffnen, 6373 einzelne brauchten so 25,6 s, sechs Sammlungen 34 ms (gemessen S167).
 
-- `guitar/`, `ukulele/`: jede Lage aus chords-db (MIT, D. Rubert; `CREDITS.md`). Die Buende stehen
+- `guitar`, `ukulele`: jede Lage aus chords-db (MIT, D. Rubert; `CREDITS.md`). Die Buende stehen
   dort ab `baseFret` (1 = der Bund `baseFret`); umgerechnet wird auf Buende ab dem Sattel und gegen
   `midi` der Quelle geprueft — eine Abweichung bricht ab.
-- `drop_d/`, `bass/`, `violin/`: gerechnet nach der Regel aus S-T4 a (`gerechnet`), `origin`
+- `drop_d`, `bass`, `violin`: gerechnet nach der Regel aus S-T4 a (`gerechnet`), `origin`
   `computed`: die Akkordtoene ueber die Saiten, hoechstens vier Buende Spannweite, leere Saiten
   bevorzugt, der Grundton im Bass, hoechstens vier Finger (ein Barre zaehlt als einer), die
   klingenden Saiten ohne Luecke.
-- `voicings/`: je Grundton und Art Grundstellung, Umkehrungen und eine weite Lage (Lehrbuchwissen,
+- `voicings`: je Grundton und Art Grundstellung, Umkehrungen und eine weite Lage (Lehrbuchwissen,
   `ABSTAENDE`).
 
 Die Arten (`ABSTAENDE`) liest es aus `types.json` daneben — dieselbe Datei liest das Programm
 (`akkordArten()`, S-T13 a); sie ist keine Ausgabe dieses Skripts.
 
-Der Dateiname ist der Name unter `asset/loop/chords` (`guitar/c_major_1`). Kein Zufall: zwei Laeufe
-ergeben dieselben Dateien. Vorher werden die `.lvchord` dieser Ordner geloescht (alles hier ist
-erzeugt). Zum Schluss: die Zahl je Ordner — `test_LoopAkkordVorlagen.cpp` traegt sie.
+Sammlung und `name` ergeben die Nennung im Programm (`guitar/c_major_1`). Kein Zufall: zwei Laeufe
+ergeben dieselben Dateien, die Akkorde nach Namen geordnet. Vorher werden die Sammlungen und die
+Ordner mit einzelnen `.lvchord` aus der Zeit vor S167 geloescht (alles hier ist erzeugt). Zum
+Schluss: die Zahl je Sammlung — `test_LoopAkkord.cpp` traegt sie.
 """
 import itertools
 import json
@@ -100,9 +105,40 @@ def akkord_json(titel, ton, art, beschreibung, herkunft=None, saiten=None, voici
     return o
 
 
-def schreibe(pfad, daten):
-    pfad.parent.mkdir(parents=True, exist_ok=True)
-    pfad.write_text(json.dumps(daten, indent=4, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+# je Sammlung die Akkorde (Name, Objekt einer `.lvchord`); `schreibe_sammlungen` legt sie ab
+SAMMLUNGEN = {}
+
+BESCHREIBUNG = {
+    "guitar": "Guitar, standard tuning: every position from chords-db 0.5.1 (MIT, D. Rubert).",
+    "ukulele": "Ukulele, standard tuning: every position from chords-db 0.5.1 (MIT, D. Rubert).",
+    "drop_d": "Guitar, drop D: computed by rule (no source for this tuning).",
+    "bass": "Bass, four strings: computed by rule (no source for this tuning).",
+    "violin": "Violin: computed by rule (no source for this tuning).",
+    "voicings": "Voicings without strings: root position, inversions and an open position per chord type.",
+}
+
+
+def sammle(sammlung, name, daten):
+    SAMMLUNGEN.setdefault(sammlung, []).append((name, daten))
+
+
+def schreibe_sammlungen():
+    """Je Sammlung eine `.lvchords`: der Kopf mehrzeilig, je Akkord eine Zeile (lesbare Diffs)."""
+    for sammlung, akkorde in SAMMLUNGEN.items():
+        akkorde = sorted(akkorde)
+        if len({n for n, _ in akkorde}) != len(akkorde):
+            sys.exit(f"{sammlung}: ein Name doppelt")
+        stimmungen = {tuple(d["strings"]["open"]) if "strings" in d else None for _, d in akkorde}
+        if len(stimmungen) != 1:
+            sys.exit(f"{sammlung}: mehr als eine Stimmung")
+        stimmung = stimmungen.pop()
+        kopf = [f'    "format": "lumiviz-chord-collection"', f'    "version": 1',
+                f'    "description": {json.dumps(BESCHREIBUNG[sammlung], ensure_ascii=False)}']
+        if stimmung is not None:
+            kopf.append(f'    "open": {json.dumps(list(stimmung))}')
+        zeilen = ["        " + json.dumps({"name": n, **d}, ensure_ascii=False) for n, d in akkorde]
+        text = "{\n" + ",\n".join(kopf) + ',\n    "chords": [\n' + ",\n".join(zeilen) + "\n    ]\n}\n"
+        (ORDNER / f"{sammlung}.lvchords").write_text(text, encoding="utf-8", newline="\n")
 
 
 def lage_text(nummer, buende):
@@ -142,8 +178,7 @@ def aus_quelle(quelle, instrument):
                     sys.exit(f"kein gueltiger Name: {name}")
                 beschreibung = lage_text(nummer, buende)
                 saiten = {"open": leer, "frets": buende, "fingers": lage["fingers"], "barres": barre}
-                schreibe(ORDNER / instrument / f"{name}.lvchord",
-                         akkord_json(symbol(schluessel, art), ton, art, beschreibung, saiten=saiten))
+                sammle(instrument, name, akkord_json(symbol(schluessel, art), ton, art, beschreibung, saiten=saiten))
                 zahl += 1
     return zahl
 
@@ -238,8 +273,8 @@ def gerechnete():
                     name = f"{schreibweise(ton)}_{art_name(art)}_{nummer}"
                     beschreibung = lage_text(nummer, buende) + " — computed by rule (no source for this tuning)"
                     saiten = {"open": leer, "frets": buende, "fingers": finger, "barres": barre}
-                    schreibe(ORDNER / ordner / f"{name}.lvchord",
-                             akkord_json(symbol(GRUNDTOENE[ton], art), ton, art, beschreibung, "computed", saiten))
+                    sammle(ordner, name,
+                           akkord_json(symbol(GRUNDTOENE[ton], art), ton, art, beschreibung, "computed", saiten))
                     zahl += 1
         zahlen[ordner] = zahl
     return zahlen
@@ -273,8 +308,8 @@ def voicings():
         for art in VOICING_ARTEN:
             for kennung, beschreibung, abstaende in voicings_einer_art(art):
                 name = f"{schreibweise(ton)}_{art_name(art)}_{kennung}"
-                schreibe(ORDNER / "voicings" / f"{name}.lvchord",
-                         akkord_json(symbol(GRUNDTOENE[ton], art), ton, art, beschreibung, voicing=abstaende))
+                sammle("voicings", name,
+                       akkord_json(symbol(GRUNDTOENE[ton], art), ton, art, beschreibung, voicing=abstaende))
                 zahl += 1
     return zahl
 
@@ -283,12 +318,17 @@ def main():
     if len(sys.argv) != 2:
         sys.exit(__doc__)
     quelle = pathlib.Path(sys.argv[1])
-    for ordner in ["guitar", "ukulele", "voicings", *GERECHNET_STIMMUNGEN]:
-        for alt in (ORDNER / ordner).glob("*.lvchord"):
-            alt.unlink()
+    for sammlung in ["guitar", "ukulele", "voicings", *GERECHNET_STIMMUNGEN]:
+        (ORDNER / f"{sammlung}.lvchords").unlink(missing_ok=True)
+        alt = ORDNER / sammlung  # die einzelnen `.lvchord` vor S167
+        if alt.is_dir():
+            for datei in alt.glob("*.lvchord"):
+                datei.unlink()
+            alt.rmdir()
     zahlen = {"guitar": aus_quelle(quelle, "guitar"), "ukulele": aus_quelle(quelle, "ukulele")}
     zahlen.update(gerechnete())
     zahlen["voicings"] = voicings()
+    schreibe_sammlungen()
     for ordner, zahl in zahlen.items():
         print(f"{ordner}: {zahl}")
     print("zusammen:", sum(zahlen.values()))

@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.302.0
-> **Datum:** 2026-10-30 (Sessions 164 bis 166)
+> **Version:** 1.303.0
+> **Datum:** 2026-10-30 (Sessions 164 bis 167)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3103,7 +3103,7 @@ Idee Preset-Warmup/Pre-Roll.
   **S149: PL31 a** — erst 31c abschließen, vorher alle Umfangsfragen klären; geklärt mit PS1 a, PF1 a, KV1 a, AW1 a,
   FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; **fester Plan IP1, 31c-6 bis 31c-9** im
   `Spielweisen_Konzept` §4.1; IP1 (Fenster *Instruments* misst im Hintergrund, Loop_Konzept §4n) davor — **gebaut
-  S149**, Release-clang `*Pegel*,*Palette*` 115 / 115; **S158: CR1 a** — der Creator misst ebenso auf einem Thread und gemerkt (beim Flügel vorher 0,65–1,9 s im Vordergrund nach jeder Änderung), gebaut; **offen:** *Chords* mit dem Flügel ist im Messfall schnell (2–3 ms, das erste Öffnen 0,5 s für jedes Instrument) — welcher Weg bei Patrik „ewig“ dauert, ist nicht nachgestellt. **Offen bei CMakeCraft:** die Konfiguration Testing baut
+  S149**, Release-clang `*Pegel*,*Palette*` 115 / 115; **S158: CR1 a** — der Creator misst ebenso auf einem Thread und gemerkt (beim Flügel vorher 0,65–1,9 s im Vordergrund nach jeder Änderung), gebaut; ~~*Chords* mit dem Flügel „ewig“~~ **erledigt S167 (AK1 a):** nicht der Flügel, sondern das erste Lesen von 6373 einzelnen `.lvchord` (frisch 25,6 s, jede Datei wird von Windows geprüft); jetzt sechs Sammlungen `.lvchords` (34 ms), gelesen je Stimmung (`Saiten_Konzept` §5ze). **Offen bei CMakeCraft:** die Konfiguration Testing baut
   unter MSVC mit `/MT` und ohne Optimierung (CC-Befund F1, F2) — **TC1 a** (Patrik S149): Testing optimiert mit
   Asserts und Debug-Info (`/O2 /Ob1 /Zi`, `-O2 -g`, ohne `NDEBUG`), CRT `/MD`, Pflichtzeile
   `project(<Name> LANGUAGES NONE)`; in CMakeCraft v0.13.0, mit SH und CS geklärt (beide ohne Einwand). Unter v0.13.0
@@ -6296,6 +6296,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.303.0 | 2026-10-30 | Session 167 (Opus 5.5). §7 Instrumente: *Chords* friert beim ersten Öffnen ein — Ursache gemessen (6373 einzelne `.lvchord`, frisch 25,6 s), AK1 a: Sammlungen `.lvchords` je Stimmung, lazy gelesen (`Saiten_Konzept` §5ze). |
 | 1.302.0 | 2026-10-30 | Session 166 (Opus 5.5). §7 Spielweisen: 31d-8 · 8.5 — Hörproben nach PV1 a an 33, 60, 84 (p, mf, ff; *Salamander* / Vorgabe / Suche „ohne A4“) unter `.claude/handover/hoerproben_pv1/`, dazu der blinde Hörtest `tools/hoertest/` (Wunsch Patrik); Antworten bei Patrik. Neu die Zeile 8.5-HT: Hörtest als eigenes Projekt HörTest_Helper (HT1 a–HT9 a). |
 | 1.301.0 | 2026-10-30 | Sessions 164 und 165 (Opus 5.5). §7 Spielweisen: 7.5.13 B1 (Hörschwellen recherchiert), HW1 a–HW4 a, Bauauftrag 7.5.12; 7.5.12 gebaut (S165), Probelauf und A4-Wege an sechs Tasten, Glätte an keinem Weg; PV1 a — Probe 7.5.12 verfehlt, ZZ1 a, kein Lauf über Nacht. Tabelle „Offen — Stufe 31 bis zum Ende“: 8.1 auf den Zustand gekürzt (Verlauf im Konzept), 8.5 als Hörproben für das Setzen nach Gehör neu gefasst. |
 | 1.300.0 | 2026-10-29 | Session 163 (Fable 5.1). §7 Spielweisen: Probe 7.5.11 verfehlt mit Befunden (Wanderer, γ/h ohne δ wirkungslos, Entartung bei h = 1, Kopplung über λ, `detune` wellig); V2 a (Plan A–D als zweiter, vorläufig letzter Anlauf), Teilplan 7.5.12–7.5.14; Werkzeuge Schnitt, LM je Taste, δ im Chor; Lehren und Bauauftrag für InstrumentsCalculation. |

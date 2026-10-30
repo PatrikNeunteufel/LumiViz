@@ -2,11 +2,11 @@
 
 ## chords-db (guitar and ukulele)
 
-The chord shapes under `guitar/` and `ukulele/` come from **chords-db** by David Rubert
+The chord shapes in `guitar.lvchords` and `ukulele.lvchords` come from **chords-db** by David Rubert
 (<https://github.com/tombatossals/chords-db>), npm package `@tombatossals/chords-db` version 0.5.1,
 files `lib/guitar.json` and `lib/ukulele.json`, under the **MIT License** (below).
 
-LumiViz converted them: one file `.lvchord` per position, frets counted from the nut instead of from
+LumiViz converted them: one entry per position (one file `.lvchord` each until 2026-10-30), frets counted from the nut instead of from
 `baseFret`, checked against the `midi` notes of the source (`make_chords.py`). Guitar: standard tuning
 E A D G B E, 2069 positions. Ukulele: G C E A, 2114 positions.
 

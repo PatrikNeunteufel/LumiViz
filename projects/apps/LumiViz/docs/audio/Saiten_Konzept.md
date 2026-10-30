@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.40.0
-> **Datum:** 2026-10-23 (Session 146: S-A1 a — die Auskunft heißt `InstrumentVon`, HT5 a im Spielweisen_Konzept; §6–§6c und die Berichte 24c, 24f, 25 nach `docs/modellierung/gezupfte-saite/recherche/`; Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
+> **Version:** 0.41.0
+> **Datum:** 2026-10-30 (Session 167: §5ze — die mitgelieferten Akkorde als Sammlungen `.lvchords`, AK1 a; Session 146: S-A1 a — die Auskunft heißt `InstrumentVon`, HT5 a im Spielweisen_Konzept; §6–§6c und die Berichte 24c, 24f, 25 nach `docs/modellierung/gezupfte-saite/recherche/`; Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
 > Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
 > 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f, 26g und 26h gebaut (ohne den vollen Lauf), §5zb bis §5zd; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
@@ -1855,8 +1855,8 @@ S. 117, Özaslan 2010 S. 458).
   gesetzt), `description`, dann `strings` (`open`, `frets`, `fingers`, `barres`) oder
   `voicing`. Nicht gültig: fremdes Format, Fassung von morgen (`zuNeu`), ohne Grundton,
   ohne gespielte Saite, ohne Ton.
-- **Ablage:** `mitgelieferterAkkordOrdner` (`asset/loop/chords`, mit Unterordnern, genannt
-  beim Pfad darunter: `guitar/c_major_1`), `eigenerAkkordOrdner` (`chords`, `user:<name>`),
+- **Ablage:** `mitgelieferterAkkordOrdner` (`asset/loop/chords`, ~~mit Unterordnern~~ seit
+  S167 Sammlungen `.lvchords`, §5ze; genannt `guitar/c_major_1`), `eigenerAkkordOrdner` (`chords`, `user:<name>`),
   `holeAkkord`, `setzeEigenenAkkordOrdnerFuerTests`.
 - **Umrechnung:** `passtZu` (Griffbild: dieselben leeren Saiten, das Capo zählt nicht;
   Voicing: ein Instrument ohne Saiten), `passendeAkkorde`, `toeneDesGriffbilds` (mit Capo,
@@ -2135,6 +2135,35 @@ Dialog *Edit chord*.
   in `test_LoopSaiten` ist `tabs_demo` neben `tapping_demo` ausgenommen (Saiten gesetzt),
   mitgelieferte Loops jetzt 40.
 - **Noch offen:** der volle Lauf (Patrik S138: „den vollen Lauf noch nicht"); Sichttest.
+
+### 5ze. Sammlungen statt einzelner Dateien (gebaut S167, AK1 a)
+
+- **Befund Patrik (S167):** *Chords...* hält die Oberfläche beim ersten Öffnen nach dem
+  Programmstart lange an (Gitarre rund 22 s, beim Flügel ebenso; der Ton läuft weiter), danach
+  nicht mehr. **Ursache gemessen:** `mitgelieferteAkkorde()` las alle 6373 einzelnen `.lvchord`
+  im Vordergrund; Windows prüft jede Datei beim ersten Öffnen — frisch kopiert 25,6 s für alle,
+  wieder gelesen 0,25 s. Dieselben Daten in sechs Dateien: 34 ms. Der Messfall aus S158 (2–3 ms,
+  „das erste Öffnen 0,5 s“) las die Dateien des Repos, die längst geprüft waren.
+- **AK1 a (Patrik S167):** je Ordner eine Sammlung `asset/loop/chords/<sammlung>.lvchords`
+  (Format `lumiviz-chord-collection`, Fassung 1): `description`, die Stimmung `open` (fehlt bei
+  `voicings`), unter `chords` je Akkord `name` und das Objekt einer `.lvchord` — derselbe Leser
+  `ausJson`. Ein Akkord, der nicht zur Stimmung passt, doppelt steht, keinen nennbaren Namen hat
+  oder nicht gilt, fällt weg. Die Nennung bleibt `<sammlung>/<name>` (`guitar/c_major_1`) —
+  Favoriten, *Recently used* und Loops gelten weiter. Eigene Akkorde bleiben einzelne `.lvchord`.
+  Verworfen: b (lazy je Grundton aus einzelnen Dateien — rund 0,7 s je Grundton, die Suche über
+  alle wieder 25 s).
+- **Lazy je Sammlung:** `MitgelieferteSammlungen` liest beim ersten Bedarf die Köpfe aller sechs
+  Dateien und die Akkorde einer Sammlung erst, wenn sie gebraucht wird;
+  `mitgelieferteAkkorde(saiten)` nur die Sammlungen dieser Stimmung (beim Flügel nur
+  `voicings`), `holeAkkord` nur die Sammlung der Nennung, `mitgelieferteAkkorde()` alle. Sicher
+  von mehreren Threads aus (eine Sperre).
+- **`make_chords.py`** sammelt statt zu schreiben (`sammle`, `schreibe_sammlungen`): je Akkord
+  eine Zeile, nach Namen; löscht die Ordner von vorher. In einer Kopie gelaufen: 6373 Akkorde,
+  jedes Objekt gleich der Datei von vorher. `make_tab_loops.py` liest die Vorlagen aus den
+  Sammlungen (`vorlage`), gegen HEAD geprüft. `asset/Asset.cmake`: `chords/*.lvchords`.
+- Tests: in `test_LoopAkkord` „26b“ über die Sammlungen (Zahl, Stimmung, keine Ordner mehr) und
+  neu „AK1“ (Kopf, Stimmung, was wegfällt, Fassung von morgen); `test_LoopGriffbild` liest die
+  Sammlungen.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

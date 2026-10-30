@@ -377,11 +377,11 @@ S137, S-T4 a).
 ## Mitgelieferte Akkorde — `asset/loop/chords/` (MIT)
 
 Die Griffbilder für Gitarre (Standardstimmung) und Ukulele unter
-`asset/loop/chords/guitar/` und `ukulele/` stammen aus **chords-db** von David
+`asset/loop/chords/guitar.lvchords` und `ukulele.lvchords` stammen aus **chords-db** von David
 Rubert (<https://github.com/tombatossals/chords-db>, npm-Paket
 `@tombatossals/chords-db` 0.5.1), unter der **MIT License**
 („Copyright (c) 2016 David Rubert“; geprüft S137). LumiViz hat sie umgerechnet:
-je Lage eine Datei `.lvchord`, die Bünde ab dem Sattel, gegen die Töne der
+je Lage ein Eintrag (bis S167 eine Datei `.lvchord`), die Bünde ab dem Sattel, gegen die Töne der
 Quelle geprüft (`asset/loop/chords/make_chords.py`). Der Lizenztext steht in
 **`asset/loop/chords/CREDITS.md`** — diese Datei geht mit neben die Exe. Die
 Griffbilder unter `drop_d/`, `bass/`, `violin/` und die Voicings unter

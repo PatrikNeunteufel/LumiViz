@@ -11,8 +11,8 @@
  * @details
  * Ohne Fenster und ohne Qt-Anwendung; eigene Akkorde in einem Wegwerf-Ordner
  * (`setzeEigenenAkkordOrdnerFuerTests`). Seit 26b die mitgelieferten Vorlagen aus
- * `asset/loop/chords/make_chords.py` (Zahl je Ordner; vom Arbeitsordner aus gelesen — die
- * Test-Exe aus dem Projekt-Root starten).
+ * `asset/loop/chords/make_chords.py` (Zahl je Sammlung `.lvchords`, seit S167 AK1 a; vom
+ * Arbeitsordner aus gelesen — die Test-Exe aus dem Projekt-Root starten).
  ****************************************************************************************
  */
 
@@ -325,22 +325,27 @@ TEST_SUITE("LoopAkkord")
             {QStringLiteral("add9"), {0, 4, 7, 14}},
         };
         const QDir basis(looptest::repoWurzel().filePath(QStringLiteral("asset/loop/chords")));
+        // seit S167 (AK1 a) nur Sammlungen, keine Ordner mit einzelnen Dateien mehr
+        CHECK(basis.entryList({QStringLiteral("*.lvchords")}, QDir::Files).size() == static_cast<int>(ordner.size()));
+        CHECK(basis.entryList(QDir::Dirs | QDir::NoDotAndDotDot).isEmpty());
         int zusammen = 0;
         for (const Ordner& o : ordner)
         {
             CAPTURE(o.name);
-            const QDir hier(basis.filePath(QLatin1String(o.name)));
-            const QStringList dateien = hier.entryList({QStringLiteral("*.lvchord")}, QDir::Files);
-            CHECK(dateien.size() == o.zahl);
-            zusammen += static_cast<int>(dateien.size());
+            AkkordSammlung sammlung;
+            REQUIRE(ladeAkkordSammlung(basis.filePath(QLatin1String(o.name) + QLatin1String(kAkkordSammlungEndung)), sammlung));
+            CHECK(sammlung.name == QLatin1String(o.name));
+            CHECK(sammlung.leer == o.leer);
+            CHECK_FALSE(sammlung.beschreibung.isEmpty());
+            CHECK(static_cast<int>(sammlung.akkorde.size()) == o.zahl);
+            zusammen += static_cast<int>(sammlung.akkorde.size());
             Saitensatz saiten;
             saiten.leer = o.leer;
-            for (const QString& datei : dateien)
+            for (const Akkord& a : sammlung.akkorde)
             {
-                CAPTURE(datei.toStdString());
-                Akkord a;
-                REQUIRE(ladeAkkord(hier.filePath(datei), a));
-                CHECK(istEigenerName(QFileInfo(datei).completeBaseName()));
+                CAPTURE(a.name.toStdString());
+                CHECK(a.name.startsWith(QLatin1String(o.name) + QLatin1Char('/')));
+                CHECK(istEigenerName(a.name.section(QLatin1Char('/'), 1)));
                 CHECK(a.herkunft == (o.gerechnet ? QString::fromLatin1(kHerkunftGerechnet) : QString()));
                 if (o.leer.empty())
                 {
@@ -376,24 +381,84 @@ TEST_SUITE("LoopAkkord")
         }
         CHECK(zusammen == 6373);
 
-        // bekannte Griffe: C-Dur in der ersten Lage (chords-db x32010), ein Voicing
+        // bekannte Griffe: C-Dur in der ersten Lage (chords-db x32010), ein Voicing — das Programm
+        // findet sie bei der Nennung `<sammlung>/<name>` (vom Arbeitsordner aus)
         Akkord c;
-        REQUIRE(ladeAkkord(basis.filePath(QStringLiteral("guitar/c_major_1.lvchord")), c));
+        REQUIRE(holeAkkord(QStringLiteral("guitar/c_major_1"), c));
         CHECK(c.buende == std::vector<int>{-1, 3, 2, 0, 1, 0});
         CHECK(c.titel == QStringLiteral("C"));
         CHECK(c.beschreibung == QStringLiteral("Position 1, open"));
         Akkord g7;
-        REQUIRE(ladeAkkord(basis.filePath(QStringLiteral("voicings/g_7_inv1.lvchord")), g7));
+        REQUIRE(holeAkkord(QStringLiteral("voicings/g_7_inv1"), g7));
         CHECK(g7.titel == QStringLiteral("G7"));
         CHECK(g7.abstaende == std::vector<int>{0, 3, 6, 8});  // B D F G
+        Akkord fehlt;
+        CHECK_FALSE(holeAkkord(QStringLiteral("guitar/kein_akkord"), fehlt));
+        CHECK_FALSE(holeAkkord(QStringLiteral("keine_sammlung/c_major_1"), fehlt));
 
-        // das Programm findet sie beim Pfad unter `asset/loop/chords` (vom Arbeitsordner aus)
         CHECK(static_cast<int>(mitgelieferteAkkorde().size()) == zusammen);
-        Akkord geholt;
-        REQUIRE(holeAkkord(QStringLiteral("guitar/c_major_1"), geholt));
-        CHECK(geholt.buende == c.buende);
-        CHECK(passendeAkkorde(mitgelieferteAkkorde(), gitarre()).size() == 2069);
-        CHECK(passendeAkkorde(mitgelieferteAkkorde(), Saitensatz{}).size() == 876);
+        // je Stimmung nur ihre Sammlung — gleich dem Filter ueber alle
+        CHECK(mitgelieferteAkkorde(gitarre()) == passendeAkkorde(mitgelieferteAkkorde(), gitarre()));
+        CHECK(mitgelieferteAkkorde(gitarre()).size() == 2069);
+        CHECK(mitgelieferteAkkorde(Saitensatz{}) == passendeAkkorde(mitgelieferteAkkorde(), Saitensatz{}));
+        CHECK(mitgelieferteAkkorde(Saitensatz{}).size() == 876);
+        Saitensatz fremd;
+        fremd.leer = {41, 46, 51, 56, 60, 65};  // eine Stimmung ohne Sammlung
+        CHECK(mitgelieferteAkkorde(fremd).empty());
+    }
+
+    TEST_CASE("Loop Akkord AK1: die Sammlung .lvchords — Kopf, Stimmung, was wegfaellt")
+    {
+        const QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        const auto schreibe = [&](const QString& name, const QByteArray& text) {
+            const QString pfad = ordner.filePath(name);
+            QFile datei(pfad);
+            REQUIRE(datei.open(QIODevice::WriteOnly));
+            datei.write(text);
+            return pfad;
+        };
+        const QByteArray griff = R"("format": "lumiviz-chord", "version": 1, "root": "C", "type": "major")";
+        const QString pfad = schreibe(QStringLiteral("probe.lvchords"), QByteArray(R"({
+    "format": "lumiviz-chord-collection", "version": 1, "description": "Probe", "open": [40, 45, 50, 55, 59, 64],
+    "chords": [
+        {"name": "c_eins", )") + griff + R"(, "title": "C", "strings": {"open": [40, 45, 50, 55, 59, 64], "frets": [-1, 3, 2, 0, 1, 0]}},
+        {"name": "c_eins", )" + griff + R"(, "title": "doppelt", "strings": {"open": [40, 45, 50, 55, 59, 64], "frets": [-1, 3, 2, 0, 1, 0]}},
+        {"name": "andere_stimmung", )" + griff + R"(, "strings": {"open": [38, 45, 50, 55, 59, 64], "frets": [0, 3, 2, 0, 1, 0]}},
+        {"name": "voicing_hier", )" + griff + R"(, "voicing": [0, 4, 7]},
+        {"name": "Kein Name", )" + griff + R"(, "strings": {"open": [40, 45, 50, 55, 59, 64], "frets": [-1, 3, 2, 0, 1, 0]}},
+        {"name": "ohne_titel", )" + griff + R"(, "strings": {"open": [40, 45, 50, 55, 59, 64], "frets": [-1, 3, 2, 0, 1, 0]}}
+    ]
+})");
+        AkkordSammlung s;
+        REQUIRE(ladeAkkordSammlung(pfad, s));
+        CHECK(s.name == QStringLiteral("probe"));
+        CHECK(s.beschreibung == QStringLiteral("Probe"));
+        CHECK(s.leer == std::vector<int>{40, 45, 50, 55, 59, 64});
+        // der doppelte, die fremde Stimmung, das Voicing in einer Sammlung mit Stimmung, der Name ohne Nennung: weg
+        REQUIRE(s.akkorde.size() == 2);
+        CHECK(s.akkorde[0].name == QStringLiteral("probe/c_eins"));
+        CHECK(s.akkorde[0].titel == QStringLiteral("C"));
+        CHECK(s.akkorde[1].titel == QStringLiteral("ohne_titel"));
+
+        // Voicings: ohne `open`, ein Griffbild faellt weg
+        REQUIRE(ladeAkkordSammlung(schreibe(QStringLiteral("v.lvchords"), QByteArray(R"({"format": "lumiviz-chord-collection", "version": 1,
+            "chords": [{"name": "c_root", )") + griff + R"(, "voicing": [0, 4, 7]},
+                       {"name": "griff", )" + griff + R"(, "strings": {"open": [40, 45, 50, 55, 59, 64], "frets": [-1, 3, 2, 0, 1, 0]}}]})"),
+                                   s));
+        CHECK(s.leer.empty());
+        REQUIRE(s.akkorde.size() == 1);
+        CHECK(s.akkorde[0].abstaende == std::vector<int>{0, 4, 7});
+
+        // eine Fassung von morgen, ein fremdes Format, kein JSON
+        bool zuNeu = false;
+        CHECK_FALSE(ladeAkkordSammlung(schreibe(QStringLiteral("neu.lvchords"),
+                                                R"({"format": "lumiviz-chord-collection", "version": 2, "chords": []})"),
+                                       s, &zuNeu));
+        CHECK(zuNeu);
+        CHECK_FALSE(ladeAkkordSammlung(schreibe(QStringLiteral("fremd.lvchords"), R"({"format": "lumiviz-chord", "version": 1})"), s));
+        CHECK_FALSE(ladeAkkordSammlung(schreibe(QStringLiteral("kaputt.lvchords"), "{ kein json"), s));
+        CHECK(s.name == QStringLiteral("v"));  // bleibt, wenn nichts gelesen wurde
     }
 
     TEST_CASE("Loop Akkord 26a: Datensicherung und Publish kennen die Akkorde")

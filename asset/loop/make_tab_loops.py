@@ -21,6 +21,7 @@ Rechnung gesetzt, nicht nach Gehoer.
 """
 
 import json
+import sys
 
 from make_examples import HIER, als_text
 from make_genres import Bau
@@ -41,16 +42,24 @@ def bend_zurueck(hoehe):
     return [[0.0, 0.0], [0.3, hoehe], [0.6, hoehe], [0.9, 0.0]]
 
 
+def vorlage(nennung):
+    """Ein Akkord der Vorlagen bei seiner Nennung `<sammlung>/<name>` (seit S167 in `<sammlung>.lvchords`)."""
+    sammlung, name = nennung.split("/")
+    for akkord in json.loads((AKKORDE / (sammlung + ".lvchords")).read_text(encoding="utf-8"))["chords"]:
+        if akkord["name"] == name:
+            return akkord
+    sys.exit(f"keine Vorlage: {nennung}")
+
+
 def griffbild(nennung):
     """Die Toene eines Griffbilds der Vorlagen: (Tonhoehe, Saite) je gespielter Saite."""
-    daten = json.loads((AKKORDE / (nennung + ".lvchord")).read_text(encoding="utf-8"))["strings"]
+    daten = vorlage(nennung)["strings"]
     return [(leer + bund, s) for s, (leer, bund) in enumerate(zip(daten["open"], daten["frets"])) if bund >= 0]
 
 
 def voicing(nennung, tiefster):
     """Die Toene eines Voicings der Vorlagen mit dem tiefsten auf `tiefster`."""
-    daten = json.loads((AKKORDE / (nennung + ".lvchord")).read_text(encoding="utf-8"))
-    return [tiefster + a for a in daten["voicing"]]
+    return [tiefster + a for a in vorlage(nennung)["voicing"]]
 
 
 def fertig(b):

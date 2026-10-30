@@ -192,14 +192,13 @@ TEST_CASE("Loop Griffbild 26e-1: die Arten gegen die mitgelieferten Vorlagen")
     int vollstaendigErkannt = 0;
     int alle = 0;
     int alleErkannt = 0;
-    for (const char* ordner : {"guitar", "ukulele", "drop_d", "bass", "violin", "voicings"})
+    for (const char* name : {"guitar", "ukulele", "drop_d", "bass", "violin", "voicings"})
     {
-        const QDir hier(basis.filePath(QLatin1String(ordner)));
-        for (const QString& datei : hier.entryList({QStringLiteral("*.lvchord")}, QDir::Files))
+        AkkordSammlung sammlung;
+        REQUIRE(ladeAkkordSammlung(basis.filePath(QLatin1String(name) + QLatin1String(kAkkordSammlungEndung)), sammlung));
+        for (const Akkord& a : sammlung.akkorde)
         {
-            CAPTURE(datei.toStdString());
-            Akkord a;
-            REQUIRE(ladeAkkord(hier.filePath(datei), a));
+            CAPTURE(a.name.toStdString());
             const QString art = artOhneBass(a.art);
             if (art == QLatin1String("alt") || art == QLatin1String("7sg")) continue;
             const AkkordArt* bekannt = artNamens(art);

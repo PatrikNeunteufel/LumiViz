@@ -15,9 +15,12 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QSaveFile>
+#include <QSet>
 #include <QStandardPaths>
 
 #include <algorithm>
+#include <mutex>
+#include <optional>
 
 namespace lumi::loop
 {
@@ -47,15 +50,20 @@ std::vector<int> ausFeld(const QJsonValue& wert, int ersatz)
     return werte;
 }
 
-/// Die Akkorde eines Ordners: mit `rekursiv` auch in Unterordnern, genannt beim
-/// Pfad darunter ohne Endung (`guitar/c_major_1`); sonst `vorsatz` + Dateiname.
-std::vector<Akkord> leseOrdner(const QString& ordner, const QString& vorsatz, bool rekursiv)
+void ordneNachTitel(std::vector<Akkord>& alle)
+{
+    std::stable_sort(alle.begin(), alle.end(), [](const Akkord& a, const Akkord& b) {
+        const int titel = a.titel.compare(b.titel, Qt::CaseInsensitive);
+        return titel != 0 ? titel < 0 : a.name < b.name;  // gleiche Titel (Lagen): nach Nennung
+    });
+}
+
+/// Die Akkorde eines Ordners (ohne Unterordner), genannt `vorsatz` + Dateiname.
+std::vector<Akkord> leseOrdner(const QString& ordner, const QString& vorsatz)
 {
     std::vector<Akkord> alle;
     if (ordner.isEmpty() || !QFileInfo(ordner).isDir()) return alle;
-    const QDir basis(ordner);
-    QDirIterator lauf(ordner, {QStringLiteral("*") + QLatin1String(kAkkordDateiEndung)}, QDir::Files,
-                      rekursiv ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
+    QDirIterator lauf(ordner, {QStringLiteral("*") + QLatin1String(kAkkordDateiEndung)}, QDir::Files);
     while (lauf.hasNext())
     {
         const QString pfad = lauf.next();
@@ -63,16 +71,140 @@ std::vector<Akkord> leseOrdner(const QString& ordner, const QString& vorsatz, bo
         if (!istEigenerName(name)) continue;  // ein Name, den niemand nennen kann
         Akkord akkord;
         if (!ladeAkkord(pfad, akkord)) continue;
-        const QString unten = QFileInfo(basis.relativeFilePath(pfad)).path();
-        akkord.name = vorsatz + (unten == QLatin1String(".") ? name : unten + QLatin1Char('/') + name);
+        akkord.name = vorsatz + name;
         alle.push_back(std::move(akkord));
     }
-    std::stable_sort(alle.begin(), alle.end(), [](const Akkord& a, const Akkord& b) {
-        const int titel = a.titel.compare(b.titel, Qt::CaseInsensitive);
-        return titel != 0 ? titel < 0 : a.name < b.name;  // gleiche Titel (Lagen): nach Nennung
-    });
+    ordneNachTitel(alle);
     return alle;
 }
+
+const QString kSammlungFormat = QStringLiteral("lumiviz-chord-collection");
+
+/// Der Kopf einer Sammlung: Format, Fassung, Beschreibung, Stimmung — die Akkorde bleiben.
+bool liesSammlungKopf(const QJsonObject& wurzel, AkkordSammlung& sammlung, bool* zuNeu)
+{
+    if (zuNeu != nullptr) *zuNeu = false;
+    if (wurzel.value(QStringLiteral("format")).toString() != kSammlungFormat) return false;
+    if (wurzel.value(QStringLiteral("version")).toInt(1) > kAkkordSammlungFassung)
+    {
+        if (zuNeu != nullptr) *zuNeu = true;
+        return false;
+    }
+    sammlung.beschreibung = wurzel.value(QStringLiteral("description")).toString().trimmed();
+    sammlung.leer = ausFeld(wurzel.value(QStringLiteral("open")), 0);
+    sammlung.akkorde.clear();
+    return true;
+}
+
+/// Die Akkorde unter `chords` in die Sammlung, deren Kopf schon gelesen ist.
+void liesSammlungAkkorde(const QJsonArray& feld, AkkordSammlung& sammlung)
+{
+    const QString vorsatz = sammlung.name + QLatin1Char('/');
+    QSet<QString> genannt;
+    for (const Akkord& a : sammlung.akkorde) genannt.insert(a.name);
+    for (const QJsonValue& wert : feld)
+    {
+        const QJsonObject o = wert.toObject();
+        const QString name = o.value(QStringLiteral("name")).toString();
+        if (!istEigenerName(name)) continue;  // ein Name, den niemand nennen kann
+        Akkord akkord;
+        if (!ausJson(o, akkord)) continue;
+        // die Stimmung der Sammlung gilt fuer jedes Griffbild; ohne Stimmung nur Voicings
+        if (akkord.leer != sammlung.leer) continue;
+        akkord.name = vorsatz + name;
+        if (akkord.titel.isEmpty()) akkord.titel = name;
+        if (genannt.contains(akkord.name)) continue;  // doppelt: der erste gilt
+        genannt.insert(akkord.name);
+        sammlung.akkorde.push_back(std::move(akkord));
+    }
+}
+
+/// Die mitgelieferten Sammlungen: beim ersten Bedarf jede Datei gelesen und ihr Kopf
+/// gemerkt (sechs Dateien), die Akkorde einer Sammlung erst, wenn sie gebraucht wird.
+class MitgelieferteSammlungen
+{
+public:
+    static MitgelieferteSammlungen& ablage()
+    {
+        static MitgelieferteSammlungen ablage;
+        return ablage;
+    }
+
+    /// Die Akkorde der Sammlungen, fuer die `waehle(kopf)` gilt, nach Titel.
+    template <typename Wahl>
+    std::vector<Akkord> akkorde(Wahl waehle)
+    {
+        const std::lock_guard sperre(m_sperre);
+        liesKoepfe();
+        std::vector<Akkord> alle;
+        for (Eintrag& e : m_eintraege)
+        {
+            if (!waehle(e.sammlung)) continue;
+            liesAkkorde(e);
+            alle.insert(alle.end(), e.sammlung.akkorde.begin(), e.sammlung.akkorde.end());
+        }
+        ordneNachTitel(alle);
+        return alle;
+    }
+
+    /// Einen Akkord bei seiner Nennung `<sammlung>/<name>`; liest nur diese Sammlung.
+    std::optional<Akkord> finde(const QString& nennung)
+    {
+        const QString sammlung = nennung.section(QLatin1Char('/'), 0, 0);
+        const std::lock_guard sperre(m_sperre);
+        liesKoepfe();
+        for (Eintrag& e : m_eintraege)
+        {
+            if (e.sammlung.name != sammlung) continue;
+            liesAkkorde(e);
+            for (const Akkord& a : e.sammlung.akkorde)
+                if (a.name == nennung) return a;
+        }
+        return std::nullopt;
+    }
+
+private:
+    struct Eintrag
+    {
+        AkkordSammlung sammlung;  ///< Kopf; die Akkorde nach `liesAkkorde`
+        QJsonArray roh;           ///< `chords`, bis die Akkorde gelesen sind
+        bool gelesen = false;
+    };
+
+    void liesKoepfe()
+    {
+        // nur, wenn der Ordner da war — sonst beim naechsten Mal noch einmal
+        if (!m_eintraege.empty()) return;
+        const QString ordner = mitgelieferterAkkordOrdner();
+        if (ordner.isEmpty()) return;
+        const QDir basis(ordner);
+        for (const QString& datei :
+             basis.entryList({QStringLiteral("*") + QLatin1String(kAkkordSammlungEndung)}, QDir::Files, QDir::Name))
+        {
+            QFile f(basis.filePath(datei));
+            if (!f.open(QIODevice::ReadOnly)) continue;
+            QJsonParseError fehler;
+            const QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &fehler);
+            if (fehler.error != QJsonParseError::NoError || !doc.isObject()) continue;
+            Eintrag e;
+            e.sammlung.name = QFileInfo(datei).completeBaseName();
+            if (!istEigenerName(e.sammlung.name) || !liesSammlungKopf(doc.object(), e.sammlung, nullptr)) continue;
+            e.roh = doc.object().value(QStringLiteral("chords")).toArray();
+            m_eintraege.push_back(std::move(e));
+        }
+    }
+
+    static void liesAkkorde(Eintrag& e)
+    {
+        if (e.gelesen) return;
+        liesSammlungAkkorde(e.roh, e.sammlung);
+        e.roh = QJsonArray();
+        e.gelesen = true;
+    }
+
+    std::mutex m_sperre;
+    std::vector<Eintrag> m_eintraege;
+};
 
 }  // namespace
 
@@ -220,6 +352,22 @@ bool speichereAkkord(const QString& pfad, const Akkord& akkord)
     return datei.write(doc.toJson(QJsonDocument::Indented)) >= 0 && datei.commit();
 }
 
+bool ladeAkkordSammlung(const QString& pfad, AkkordSammlung& sammlung, bool* zuNeu)
+{
+    if (zuNeu != nullptr) *zuNeu = false;
+    QFile datei(pfad);
+    if (!datei.open(QIODevice::ReadOnly)) return false;
+    QJsonParseError fehler;
+    const QJsonDocument doc = QJsonDocument::fromJson(datei.readAll(), &fehler);
+    if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
+    AkkordSammlung neu;
+    neu.name = QFileInfo(pfad).completeBaseName();
+    if (!liesSammlungKopf(doc.object(), neu, zuNeu)) return false;
+    liesSammlungAkkorde(doc.object().value(QStringLiteral("chords")).toArray(), neu);
+    sammlung = std::move(neu);
+    return true;
+}
+
 // --- Ablage ------------------------------------------------------------------
 
 QString mitgelieferterAkkordOrdner()
@@ -230,12 +378,17 @@ QString mitgelieferterAkkordOrdner()
     return QFileInfo(ordner).isDir() ? ordner : QString();
 }
 
-const std::vector<Akkord>& mitgelieferteAkkorde()
+std::vector<Akkord> mitgelieferteAkkorde()
 {
-    // einmal gelesen und gemerkt — aber nur, wenn der Ordner da war
-    static std::vector<Akkord> alle;
-    if (alle.empty()) alle = leseOrdner(mitgelieferterAkkordOrdner(), QString(), true);
-    return alle;
+    return MitgelieferteSammlungen::ablage().akkorde([](const AkkordSammlung&) { return true; });
+}
+
+std::vector<Akkord> mitgelieferteAkkorde(const Saitensatz& saiten)
+{
+    // eine Sammlung traegt eine Stimmung: sie passt ganz oder gar nicht (wie `passtZu`)
+    return MitgelieferteSammlungen::ablage().akkorde([&saiten](const AkkordSammlung& kopf) {
+        return kopf.leer.empty() ? !saiten.istSaiteninstrument() : kopf.leer == saiten.leer;
+    });
 }
 
 QString eigenerAkkordOrdner()
@@ -259,7 +412,7 @@ QString eigeneAkkordDatei(const QString& name)
 
 std::vector<Akkord> eigeneAkkorde()
 {
-    return leseOrdner(eigenerAkkordOrdner(), QLatin1String(kEigenVorsatz), false);
+    return leseOrdner(eigenerAkkordOrdner(), QLatin1String(kEigenVorsatz));
 }
 
 bool holeAkkord(const QString& nennung, Akkord& akkord)
@@ -275,10 +428,9 @@ bool holeAkkord(const QString& nennung, Akkord& akkord)
     }
     if (nennung.endsWith(QLatin1String(kAkkordDateiEndung), Qt::CaseInsensitive) || QFileInfo(nennung).isAbsolute())
         return ladeAkkord(nennung, akkord);
-    const std::vector<Akkord>& alle = mitgelieferteAkkorde();
-    const auto it = std::find_if(alle.begin(), alle.end(), [&nennung](const Akkord& a) { return a.name == nennung; });
-    if (it == alle.end()) return false;
-    akkord = *it;
+    std::optional<Akkord> mitgeliefert = MitgelieferteSammlungen::ablage().finde(nennung);
+    if (!mitgeliefert) return false;
+    akkord = std::move(*mitgeliefert);
     return true;
 }
 

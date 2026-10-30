@@ -537,7 +537,7 @@ void AkkordFenster::liesNeu()
         m_favoriten = einstellungen.value(QLatin1String(kFavoriten)).toStringList();
         m_zuletzt = einstellungen.value(QLatin1String(kZuletzt)).toStringList();
     }
-    m_alle = passendeAkkorde(mitgelieferteAkkorde(), m_saiten);
+    m_alle = mitgelieferteAkkorde(m_saiten);  // nur die Sammlungen dieser Stimmung (AK1 a)
     for (Akkord& eigener : passendeAkkorde(eigeneAkkorde(), m_saiten)) m_alle.push_back(std::move(eigener));
     {
         // die Arten, die es zu dieser Stimmung gibt — die Wahl bleibt, wenn es sie noch gibt
