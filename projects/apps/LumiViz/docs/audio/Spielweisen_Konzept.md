@@ -3810,7 +3810,8 @@ eine Ausreißer-Taste ist eine nicht hörbar getroffene Taste mit |r| über dem 
 je Größe benannt. C1 (7.5.14) wird ausgelöst, wenn nach A eine Abklinggröße je Teilton (`vorwaerts_t60_k`,
 `t60_spaet_k`) systematisch ist.** Grund: bei 18 Größen mit je 10–20 Tasten melden eine feste Prozentgrenze oder ein
 unkorrigierter Test zufällig „systematische“ Größen, und gerade die lösen den teuersten Schritt aus (Rechenkern, voller
-Lauf). Gerechnet: S162 Start 1 systematisch `t60_spaet_2` (0 / 15 zu lang) und `t60_spaet_3` (1 / 13) — der Nachklang,
+Lauf). Gerechnet: S162 Start 1 systematisch `t60_spaet_2` (0 von 15 zu lang) und `t60_spaet_3` (1 von 14 zu lang; in
+S164 als „1 / 13“ geschrieben = 1 zu lang, 13 zu kurz, berichtigt S165) — der Nachklang,
 den das Hörurteil S158 vermisst; an der Vorgabe acht Größen (`t60_spaet` ×3, `huelle_30/40`, `tiefe_db` ×3).
 Verworfen: b (≥ 75 % in eine Richtung, ohne Test — rund acht Größen an S162, ohne Quelle), c (ohne Korrektur, p < 0,05
 je Größe — vier Größen, bei 18 Tests fast eine falsche Meldung zu erwarten). Kippt auf c, wenn nach A je Größe nur
