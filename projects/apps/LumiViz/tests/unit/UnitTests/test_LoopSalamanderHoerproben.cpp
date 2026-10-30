@@ -48,6 +48,10 @@
 #include "loop/HammerSaite.hpp"
 #include "loop/Tonspeicher.hpp"
 
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QString>
 #include <QtGlobal>
 
@@ -246,6 +250,25 @@ const char* gehoerVon(const std::string& groesse)
     if (groesse.rfind("t60_spaet", 0) == 0 || groesse.rfind("knick_tiefe", 0) == 0) return "Nachklang";
     if (groesse.rfind("schwebung", 0) == 0 || groesse.rfind("tiefe_db", 0) == 0) return "Schwebung";
     return "sonst";
+}
+
+/// Die Fragen des Hoertests PV1 (S166, Wunsch Patrik): je Klang auf 1–5, links und rechts die Pole. Sie zielen auf
+/// das, was 8.6 und 31d-7 C brauchen — Klangfarbe und das hohle, sinusartige ("hoelele", Patrik S166), Laenge und
+/// Nachklang (HW4 a), Schwebung (u, γ, δ).
+QJsonArray hoertestFragen()
+{
+    const auto frage = [](const char* id, const char* text, const char* links, const char* rechts) {
+        return QJsonObject{{QStringLiteral("id"), QString::fromUtf8(id)},
+                           {QStringLiteral("text"), QString::fromUtf8(text)},
+                           {QStringLiteral("links"), QString::fromUtf8(links)},
+                           {QStringLiteral("rechts"), QString::fromUtf8(rechts)}};
+    };
+    return QJsonArray{frage("gesamt", "Klingt wie ein echter Flügel", "gar nicht", "ganz"),
+                      frage("farbe", "Klangfarbe", "dumpf", "hell, farbig"),
+                      frage("hohl", "Hohl, ein einzelner Sinus hörbar", "gar nicht", "stark"),
+                      frage("laenge", "Länge: wie lange man den Ton hört", "kurz", "lang"),
+                      frage("nachklang", "Nachklang: leiser Rest nach dem ersten Abklingen", "keiner", "deutlich"),
+                      frage("schwebung", "Schwebung: Wabern, Pulsieren", "ruhig", "stark")};
 }
 
 /// Σ r² einer Taste aus dem Abschnitt "Je Taste und Groesse" einer Ergebnisdatei der Suche; ohne die Zeile −1.
@@ -676,6 +699,13 @@ TEST_CASE("Loop Salamander PV1 Hoerproben Vorgabe und Suche (LUMIVIZ_PV1_WAV)")
         int ebene;
         const char* staerke;
     } ebenen[] = {{modelltest::kSuchEbenen[0], "p"}, {modelltest::kSuchEbenen[1], "mf"}, {modelltest::kSuchEbenen[2], "ff"}};
+    // fuer den Hoertest (tools/hoertest): jede Fassung einzeln unter einzeln/, dazu hoertest.json mit den Paaren
+    // Salamander–Vorgabe, Vorgabe–Suche, Salamander–Suche je Taste und Staerke und je Taste einem Kontrollpaar (zweimal
+    // derselbe Klang)
+    std::filesystem::create_directories(ziel / "einzeln");
+    QJsonArray klaenge;
+    QJsonArray paare;
+    const char* fassungen[] = {"salamander", "vorgabe", "suche"};
     int nr = 1;
     for (const auto& t : tasten)
     {
@@ -741,13 +771,54 @@ TEST_CASE("Loop Salamander PV1 Hoerproben Vorgabe und Suche (LUMIVIZ_PV1_WAV)")
                   << zahl(haltenS, 1) << " s; u an der Stufe Vorgabe " << zahl(stossBei(vorgabeSaite, t.midi, stufe), 3) << ", Suche "
                   << zahl(stossBei(sucheSaite, t.midi, stufe), 3) << "; Verstaerkung " << zahl(gs, 1) << " / " << zahl(gv, 1) << " / "
                   << zahl(gx, 1) << " dB" << (leiser > 0.0 ? "; gemeinsam " + zahl(leiser, 1) + " dB leiser" : std::string()) << '\n';
+            const std::string stamm = "k" + std::to_string(t.midi) + "_" + e.staerke;
+            const std::vector<float>* teile[] = {&sal, &tv, &ts};
+            for (int f = 0; f < 3; ++f)
+            {
+                const std::string einzeln = "einzeln/" + stamm + "_" + fassungen[f] + ".wav";
+                REQUIRE(lumi::audio::schreibeWav(QString::fromStdU16String((ziel / einzeln).u16string()), *teile[f], kRate,
+                                                 lumi::audio::WavTiefe::Gleitkomma32)
+                            .geschrieben);
+                klaenge.append(QJsonObject{{QStringLiteral("id"), QString::fromStdString(stamm + "_" + fassungen[f])},
+                                           {QStringLiteral("datei"), QString::fromStdString(einzeln)},
+                                           {QStringLiteral("taste"), t.midi},
+                                           {QStringLiteral("name"), QString::fromUtf8(t.name)},
+                                           {QStringLiteral("staerke"), QString::fromUtf8(e.staerke)},
+                                           {QStringLiteral("fassung"), QString::fromUtf8(fassungen[f])},
+                                           {QStringLiteral("sekunden"), haltenS}});
+            }
+            const auto paar = [&](int a, int b, bool kontrolle) {
+                paare.append(QJsonObject{{QStringLiteral("id"), QString::fromStdString(stamm + "_" + fassungen[a] + "_" + fassungen[b])},
+                                              {QStringLiteral("a"), QString::fromStdString(stamm + "_" + fassungen[a])},
+                                              {QStringLiteral("b"), QString::fromStdString(stamm + "_" + fassungen[b])},
+                                              {QStringLiteral("kontrolle"), kontrolle}});
+            };
+            paar(0, 1, false);
+            paar(1, 2, false);
+            paar(0, 2, false);
+            if (std::string(e.staerke) == "mf")
+            {
+                const int gleich = t.midi == 33 ? 1 : t.midi == 60 ? 2 : 0;  // Kontrolle an mf: A1 Vorgabe, C4 Suche, C6 Salamander
+                paar(gleich, gleich, true);
+            }
             ++nr;
         }
         liste << "  Frage: je Datei Laenge, Nachklang, Schwebung — ist 2 oder 3 naeher an 1? Wo 3 naeher ist: die Schwebung der\n"
               << "  Suche (u, gamma, delta) als Wert nehmen, oder zu stark / zu schwach / metallisch / passt?\n";
     }
     liste << "\nDie Wahl je Taste kommt in Schritt 8.6 als Stuetzpunkte von u, gamma, delta in baueVorgabe() (Konzept §4.1,\n"
-          << "Teilplan 31d-8, PV1 a); zwischen 33, 60, 84 interpoliert, innerhalb SQ2 a.\n";
+          << "Teilplan 31d-8, PV1 a); zwischen 33, 60, 84 interpoliert, innerhalb SQ2 a.\n"
+          << "\nBlind vergleichen: python -X utf8 -I tools/hoertest/hoertest.py " << ziel.generic_string()
+          << " (einzeln/ und hoertest.json; die Antworten landen in antworten.jsonl daneben).\n";
     std::ofstream(ziel / "liste.txt", std::ios::binary) << liste.str();
+    QFile test(QString::fromStdU16String((ziel / "hoertest.json").u16string()));
+    REQUIRE(test.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    test.write(QJsonDocument(QJsonObject{{QStringLiteral("titel"), QStringLiteral("PV1 a: Salamander, Vorgabe, Suche ohne A4")},
+                                         {QStringLiteral("fragen"), hoertestFragen()},
+                                         {QStringLiteral("klaenge"), klaenge},
+                                         {QStringLiteral("vergleiche"), paare}})
+                   .toJson());
+    test.close();
+    CHECK(paare.size() == 30);
     MESSAGE(liste.str());
 }

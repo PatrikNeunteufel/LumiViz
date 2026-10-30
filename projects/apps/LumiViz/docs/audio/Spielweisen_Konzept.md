@@ -3965,6 +3965,22 @@ Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler 
   0,40 / 0, 25,1°, 0,81 Cent; C6 0,95 / 0,90, 18,4°, 1,07 Cent; die Vorgabe trägt überall 0. **Befund:** γ an A1 liegt
   mit 41,0° außerhalb SQ2 a (0–25°), innerhalb der für die Suche erweiterten Grenze SG2 a (0–45°); nach PV1 a setzt
   Patrik innerhalb SQ2 a. Die Wahl je Taste (Vorgabe, Suche, oder ein Wert dazwischen je Größe) kommt in 8.6.
+
+  **Hörurteil S166 (Patrik), `hoerproben_pv1` 01 und 02** (1 *Salamander* | 2 Vorgabe | 3 Suche): 01 A1 p — 1 klar,
+  hell, viel Klangfarbe, lang; 2 dumpf, wenig Klangfarbe, mehr „hölele“ (hohl; oft ein stärker hörbarer Sinus), kurz;
+  3 etwas klarer, nicht so dumpf, etwas mehr Farbe, aber noch etwas „hölele“, Länge scheint besser. 02 A1 mf — 1 klar;
+  2 noch immer „hölele“; 3 etwas besser, aber noch etwas dumpf. Dazu: drei Fassungen hintereinander sind schwer zu
+  vergleichen, die Vorgabe ist durchweg schlechter. **Wunsch Patrik:** paarweise blind vergleichen (1–2, 2–3, 1–3),
+  A und B zufällig zugeordnet, jedes Paar läuft, bis er weitergeht, und je Klang gezielte Fragen. Gebaut als
+  `tools/hoertest/` (`hoertest.py` mit `index.html`, nur Standardbibliothek, nur 127.0.0.1): das Werkzeug
+  `LUMIVIZ_PV1_WAV` schreibt dazu jede Fassung einzeln (`einzeln/`) und `hoertest.json` — 27 Paare (je Taste und
+  Stärke *Salamander*–Vorgabe, Vorgabe–Suche, *Salamander*–Suche) und drei Kontrollpaare an mf (zweimal derselbe
+  Klang: A1 Vorgabe, C4 Suche, C6 *Salamander*); Fragen je Klang auf 1–5: wie ein echter Flügel, Klangfarbe (dumpf …
+  hell), hohl / einzelner Sinus, Länge, Nachklang, Schwebung; dazu welcher mehr nach Flügel klingt und eine Bemerkung.
+  Die Antworten landen je Paar in `antworten.jsonl`, `--auswertung` ordnet sie den Fassungen zu (`auswertung.txt`).
+  Befund aus der Liste (keine Ursache): an A1 liegen bei der Vorgabe die späte Stufe (18 s gegen 77 s) und die
+  Einbrüche (`tiefe_db_1`, `_2` 40 / 49 dB gegen 14 / 10 dB) am weitesten von *Salamander*; ob sie das „hohl“
+  tragen, sollen die getrennten Fragen „Klangfarbe“, „hohl“ und „Schwebung“ im Hörtest zeigen.
 - **8.6 Gehör eintragen** (nach Patriks Wahl aus 8.5, ohne weitere Rückfrage): die gewählten Werte als Stützpunkte in
   `baueVorgabe()` — `stossLeise`/`stossLaut` an 33, 60, 84 (gleich, bis Patrik leise und laut verschieden hört),
   `polarisationWinkelGrad` und `polarisationCent` je mit Stützpunkten 24 und 27 aus der Wahl, 30 wie 27, `polarisationCent`
@@ -5991,7 +6007,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.107.0 | 2026-10-30 | Session 166 (Opus 5.5). 31d-8 · 8.5 nach PV1 a: Hörproben an 33, 60, 84 je bei p, mf, ff (*Salamander*, Vorgabe, Suche „ohne A4“), Werkzeug `LUMIVIZ_PV1_WAV`, Ablage `.claude\handover\hoerproben_pv1\`; Befund γ an A1 der Suche außerhalb SQ2 a. |
+| 0.107.0 | 2026-10-30 | Session 166 (Opus 5.5). 31d-8 · 8.5 nach PV1 a: Hörproben an 33, 60, 84 je bei p, mf, ff (*Salamander*, Vorgabe, Suche „ohne A4“), Werkzeug `LUMIVIZ_PV1_WAV`, Ablage `.claude\handover\hoerproben_pv1\`; Befund γ an A1 der Suche außerhalb SQ2 a; Hörurteil S166 zu 01/02, auf Patriks Wunsch der blinde Paarvergleich `tools/hoertest/`. |
 | 0.106.0 | 2026-10-30 | Session 164 (Opus 5.5). 7.5.13 B1: Hörschwellen recherchiert (Bericht `docs/modellierung/hammer-saite/recherche/2026-10-30_S164_hoerschwellen.md`, kein Klavier-Hörversuch gefunden, tragende Stellen nachgelesen); HW1 a (Zahlen: Zeiten nach Tolonen & Järveläinen 2000 Satz 1, Knick 0,5 dB, Schwebungstiefe nach Ewert 2002), HW2 a (getroffen und eindeutig bei max(τ, S)), HW3 a (Bestehen der Probe 7.5.12), HW4 a (systematisch nach Vorzeichentest mit Holm, Auslöser C1); Bauauftrag 7.5.12 (`.claude/handover/auftrag_7.5.12.md`). Nach dem Bau in S165 (7.5.12 gebaut, A4-Wege an sechs Tasten, Glätte überall 0 von 6): PV1 a — Probe 7.5.12 verfehlt, ZZ1 a, kein Lauf über Nacht, Hörproben an 33, 60, 84 als Vorschlag für das Gehör; HW4 a berichtigt (`t60_spaet_3` 1 von 14 zu lang). |
 | 0.105.0 | 2026-10-29 | Session 163 (Fable 5.1). Probe 7.5.11: Vorfragen (c) bestätigt (Wanderer unter der Marquardt-Skalierung), (a) γ und h im Chor exakt wirkungslos, bei h = 1 Rauschen der entarteten Eigenzerlegung, mit δ im Chor frei 53 statt 44 Treffer an sechs Tasten, (b) Start 2 nicht wieder aufnehmen — die Kopplung über das gemeinsame λ ist der Hebel (bester Stand je Taste 9086 / 204); Probe verfehlt an (2) Glätte (`detune` wellig) und (3); zehn Wege aufgelistet; V2 a (Plan A–D als zweiter, vorläufig letzter Anlauf), Teilplan 7.5.12–7.5.14; Werkzeuge `LUMIVIZ_75_SCHNITT`, `LUMIVIZ_75_TASTE`, `LUMIVIZ_75_DELTA_CHOR`. |
 | 0.102.0–0.104.0 | 2026-10-29 | Session 162 (Opus 5.5, Bauauftrag). 7.5.9 gebaut (Zielsumme, Kurven der Suche, Nullprobe), 7.5.10 gebaut (Levenberg–Marquardt über die Stützpunkte, Jacobi je Kurve), Suche und Vergleich mit Nelder–Mead gelaufen (Zeilen in dieser Tabelle in S162 nicht nachgetragen; nachgeholt S163). |

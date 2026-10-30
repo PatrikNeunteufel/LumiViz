@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hörtest</title>
+<style>
+  :root { --grund: #f6f5f2; --flaeche: #ffffff; --text: #1d1d1b; --leise: #6b6a66; --linie: #d9d7d0;
+          --a: #2d6cdf; --b: #c2571a; --gut: #2f7d32; }
+  @media (prefers-color-scheme: dark) {
+    :root { --grund: #1b1b1a; --flaeche: #262624; --text: #ecebe6; --leise: #a19f98; --linie: #3a3936;
+            --a: #6f9cf0; --b: #e58a4f; --gut: #6cbf70; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--grund); color: var(--text); font: 15px/1.45 system-ui, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 4px 0 2px; }
+  .leise { color: var(--leise); }
+  .karte { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+  .spieler { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .lampe { width: 120px; height: 64px; border-radius: 10px; border: 2px solid var(--linie); display: grid; place-items: center;
+           font-size: 30px; font-weight: 700; color: var(--leise); }
+  .lampe.an.A { border-color: var(--a); color: var(--a); background: color-mix(in srgb, var(--a) 14%, transparent); }
+  .lampe.an.B { border-color: var(--b); color: var(--b); background: color-mix(in srgb, var(--b) 14%, transparent); }
+  button { font: inherit; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--linie); background: var(--grund);
+           color: var(--text); cursor: pointer; }
+  button.wahl { border-color: var(--text); font-weight: 600; }
+  button.haupt { background: var(--gut); border-color: var(--gut); color: #fff; font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { padding: 6px 4px; border-bottom: 1px solid var(--linie); text-align: center; }
+  th.frage, td.frage { text-align: left; }
+  td.frage small { display: block; color: var(--leise); }
+  .kopfA { color: var(--a); } .kopfB { color: var(--b); }
+  td.trenner { border-left: 2px solid var(--linie); }
+  label.punkt { display: inline-block; padding: 2px 3px; cursor: pointer; }
+  textarea { width: 100%; min-height: 48px; font: inherit; background: var(--grund); color: var(--text);
+             border: 1px solid var(--linie); border-radius: 8px; padding: 6px; }
+  .zeile { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+  .fehlt { color: var(--b); }
+  @media (max-width: 640px) { label.punkt { padding: 2px 1px; } th, td { padding: 4px 1px; font-size: 13px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="titel">Hörtest</h1>
+  <div class="leise" id="stand">lädt …</div>
+
+  <div class="karte" id="start">
+    <p>Je Vergleich hörst du zwei Klänge, <b>A</b> und <b>B</b>. Welcher welcher ist, wird zufällig festgelegt und nicht
+    angezeigt. Bewerte beide für sich auf jeder Zeile (1 = linker Pol, 5 = rechter Pol, ? = kann ich nicht sagen) und
+    sag, welcher mehr nach echtem Flügel klingt. Die Klänge laufen abwechselnd, bis du <b>Weiter</b> drückst.
+    Jede Antwort wird sofort gespeichert; du kannst jederzeit aufhören und später weitermachen.</p>
+    <button class="haupt" id="los">Los</button>
+  </div>
+
+  <div id="test" hidden>
+    <div class="karte">
+      <div class="zeile">
+        <div><b id="wer"></b> <span class="leise" id="nummer"></span></div>
+        <div class="leise" id="laden"></div>
+      </div>
+      <div class="spieler" style="margin-top:10px">
+        <div class="lampe A" id="lampeA">A</div>
+        <div class="lampe B" id="lampeB">B</div>
+        <div>
+          <div style="margin-bottom:6px">
+            <button id="wechsel" class="wahl">A ↔ B abwechselnd</button>
+            <button id="nurA">nur A</button>
+            <button id="nurB">nur B</button>
+            <button id="stopp">Stopp</button>
+          </div>
+          <div>
+            <button id="ganz" class="wahl">ganzer Ton</button>
+            <button id="anfang">nur Anfang (3 s)</button>
+            <label class="leise" style="margin-left:8px">Lautstärke <input type="range" id="lautstaerke" min="0" max="1" step="0.01" value="0.8"></label>
+          </div>
+        </div>
+      </div>
+      <div class="leise" style="margin-top:6px">Leertaste: Stopp / weiter abspielen · Taste 1: nur A · Taste 2: nur B · Taste 3: abwechselnd</div>
+    </div>
+
+    <div class="karte">
+      <table>
+        <thead><tr><th class="frage"></th><th colspan="6" class="kopfA">A</th><th colspan="6" class="kopfB trenner">B</th></tr></thead>
+        <tbody id="fragen"></tbody>
+      </table>
+      <div style="margin-top:12px">Welcher klingt mehr nach echtem Flügel?
+        <label class="punkt"><input type="radio" name="vorzug" value="A"> A</label>
+        <label class="punkt"><input type="radio" name="vorzug" value="gleich"> gleich</label>
+        <label class="punkt"><input type="radio" name="vorzug" value="B"> B</label>
+      </div>
+      <div style="margin-top:10px"><textarea id="bemerkung" placeholder="Bemerkung (frei, z. B. was dir auffällt)"></textarea></div>
+      <div class="zeile" style="margin-top:10px">
+        <span class="fehlt" id="fehlt"></span>
+        <span><button id="spaeter">später</button> <button class="haupt" id="weiter" disabled>Weiter</button></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="karte" id="fertig" hidden><b>Fertig — alle Vergleiche beantwortet. Danke!</b>
+    <div class="leise">Die Antworten liegen in antworten.jsonl im Ordner der Klänge.</div></div>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let test, klaenge, warteschlange = [], aktuell = null, beantwortet = 0;
+let ctx, haupt, puffer = {}, cache = new Map();
+let modus = "wechsel", ausschnitt = "ganz", laufNr = 0, quelle = null, gestartet = 0, abspielungen = { A: 0, B: 0 };
+
+function mische(liste) {
+  for (let i = liste.length - 1; i > 0; --i) { const j = Math.floor(Math.random() * (i + 1)); [liste[i], liste[j]] = [liste[j], liste[i]]; }
+  return liste;
+}
+
+async function lade(id) {
+  if (!cache.has(id)) {
+    cache.set(id, fetch("/k/" + klaenge[id].datei).then((r) => { if (!r.ok) throw new Error(klaenge[id].datei); return r.arrayBuffer(); })
+                                                     .then((b) => ctx.decodeAudioData(b)));
+  }
+  return cache.get(id);
+}
+
+function lampe(x) {
+  $("lampeA").classList.toggle("an", x === "A");
+  $("lampeB").classList.toggle("an", x === "B");
+}
+
+function stopp() {
+  ++laufNr;
+  if (quelle) { try { quelle.stop(); } catch (e) {} quelle = null; }
+  lampe(null);
+}
+
+function spiele(x, nr) {
+  return new Promise((fertig) => {
+    if (nr !== laufNr) return fertig();
+    const s = ctx.createBufferSource();
+    s.buffer = puffer[x];
+    const blende = ctx.createGain();
+    s.connect(blende).connect(haupt);
+    const dauer = ausschnitt === "anfang" ? Math.min(3, s.buffer.duration) : s.buffer.duration;
+    const t0 = ctx.currentTime + 0.02;
+    if (ausschnitt === "anfang") {
+      blende.gain.setValueAtTime(1, t0 + dauer - 0.08);
+      blende.gain.linearRampToValueAtTime(0, t0 + dauer);
+    }
+    // ein gestoppter Klang meldet sein Ende spaeter — dann laeuft schon der naechste, dessen Anzeige bleibt
+    s.onended = () => { if (quelle === s) { quelle = null; lampe(null); } fertig(); };
+    quelle = s;
+    lampe(x);
+    ++abspielungen[x];
+    s.start(t0, 0, dauer);
+  });
+}
+
+const warte = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function schleife() {
+  stopp();
+  const nr = laufNr;
+  while (nr === laufNr) {
+    const folge = modus === "wechsel" ? ["A", "B"] : [modus];
+    for (const x of folge) {
+      await spiele(x, nr);
+      if (nr !== laufNr) return;
+      await warte(x === "A" && modus === "wechsel" ? 700 : 1500);
+      if (nr !== laufNr) return;
+    }
+  }
+}
+
+function setzeWahl(gruppe, id) {
+  for (const b of gruppe) $(b).classList.toggle("wahl", b === id);
+}
+
+function baueFragen() {
+  const zeilen = test.fragen.map((f) => {
+    const zellen = (seite) => [1, 2, 3, 4, 5, "?"].map((w, i) =>
+      `<td${seite === "B" && i === 0 ? ' class="trenner"' : ""}><label class="punkt"><input type="radio" name="${f.id}_${seite}" value="${w}"><br>${w}</label></td>`).join("");
+    return `<tr><td class="frage">${f.text}<small>1 = ${f.links} · 5 = ${f.rechts}</small></td>${zellen("A")}${zellen("B")}</tr>`;
+  });
+  $("fragen").innerHTML = zeilen.join("");
+}
+
+function gewaehlt(name) {
+  const e = document.querySelector(`input[name="${name}"]:checked`);
+  return e ? e.value : null;
+}
+
+function pruefe() {
+  const fehlen = [];
+  for (const f of test.fragen) for (const s of ["A", "B"]) if (gewaehlt(`${f.id}_${s}`) === null) fehlen.push(`${f.text} (${s})`);
+  if (gewaehlt("vorzug") === null) fehlen.push("welcher mehr nach Flügel klingt");
+  $("fehlt").textContent = fehlen.length ? `noch offen: ${fehlen.length}` : "";
+  $("fehlt").title = fehlen.join("\n");
+  $("weiter").disabled = fehlen.length > 0;
+}
+
+function stand() {
+  $("stand").textContent = `${beantwortet} von ${test.vergleiche.length} Vergleichen beantwortet` +
+    (warteschlange.length ? ` · noch ${warteschlange.length + (aktuell ? 1 : 0)} offen` : "");
+}
+
+async function naechster() {
+  stopp();
+  aktuell = warteschlange.shift() || null;
+  if (!aktuell) { $("test").hidden = true; $("fertig").hidden = false; stand(); return; }
+  stand();
+  for (const e of document.querySelectorAll("#test input[type=radio]")) e.checked = false;
+  $("bemerkung").value = "";
+  pruefe();
+  const k = klaenge[aktuell.a];
+  $("wer").textContent = `${k.name.toUpperCase()} · ${k.staerke}`;
+  $("nummer").textContent = `(Vergleich ${beantwortet + 1} von ${test.vergleiche.length})`;
+  $("laden").textContent = "lädt …";
+  [puffer.A, puffer.B] = await Promise.all([lade(aktuell.a), lade(aktuell.b)]);
+  $("laden").textContent = "";
+  abspielungen = { A: 0, B: 0 };
+  gestartet = performance.now();
+  if (warteschlange[0]) { lade(warteschlange[0].a); lade(warteschlange[0].b); }
+  schleife();
+}
+
+async function weiter() {
+  const werte = { A: {}, B: {} };
+  for (const f of test.fragen) for (const s of ["A", "B"]) {
+    const w = gewaehlt(`${f.id}_${s}`);
+    werte[s][f.id] = w === "?" ? null : Number(w);
+  }
+  const antwort = { id: aktuell.id, a: aktuell.a, b: aktuell.b, werte, vorzug: gewaehlt("vorzug"),
+                    bemerkung: $("bemerkung").value.trim(), sekunden: Math.round((performance.now() - gestartet) / 1000),
+                    abspielungen, ausschnitt, modus };
+  $("weiter").disabled = true;
+  const r = await fetch("/antwort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(antwort) });
+  if (!r.ok) { $("fehlt").textContent = "Speichern fehlgeschlagen — läuft der Server noch?"; $("weiter").disabled = false; return; }
+  ++beantwortet;
+  naechster();
+}
+
+async function start() {
+  test = await (await fetch("/hoertest.json")).json();
+  klaenge = Object.fromEntries(test.klaenge.map((k) => [k.id, k]));
+  const schon = new Set(await (await fetch("/antworten")).json());
+  beantwortet = test.vergleiche.filter((v) => schon.has(v.id)).length;
+  // je Vergleich zufaellig, welcher Klang A ist
+  warteschlange = mische(test.vergleiche.filter((v) => !schon.has(v.id))
+    .map((v) => (Math.random() < 0.5 ? { id: v.id, a: v.a, b: v.b } : { id: v.id, a: v.b, b: v.a })));
+  $("titel").textContent = "Hörtest — " + (test.titel || "");
+  baueFragen();
+  stand();
+  if (!warteschlange.length) { $("start").hidden = true; $("fertig").hidden = false; }
+}
+
+$("los").onclick = async () => {
+  ctx = new AudioContext();
+  haupt = ctx.createGain();
+  haupt.gain.value = Number($("lautstaerke").value);
+  haupt.connect(ctx.destination);
+  $("start").hidden = true;
+  $("test").hidden = false;
+  naechster();
+};
+$("wechsel").onclick = () => { modus = "wechsel"; setzeWahl(["wechsel", "nurA", "nurB"], "wechsel"); schleife(); };
+$("nurA").onclick = () => { modus = "A"; setzeWahl(["wechsel", "nurA", "nurB"], "nurA"); schleife(); };
+$("nurB").onclick = () => { modus = "B"; setzeWahl(["wechsel", "nurA", "nurB"], "nurB"); schleife(); };
+$("stopp").onclick = () => stopp();
+$("ganz").onclick = () => { ausschnitt = "ganz"; setzeWahl(["ganz", "anfang"], "ganz"); schleife(); };
+$("anfang").onclick = () => { ausschnitt = "anfang"; setzeWahl(["ganz", "anfang"], "anfang"); schleife(); };
+$("lautstaerke").oninput = (e) => { if (haupt) haupt.gain.value = Number(e.target.value); };
+$("weiter").onclick = weiter;
+$("spaeter").onclick = () => { if (aktuell) warteschlange.push(aktuell); naechster(); };
+document.addEventListener("change", (e) => { if (e.target.type === "radio") pruefe(); });
+document.addEventListener("keydown", (e) => {
+  if (!aktuell || e.target.tagName === "TEXTAREA") return;
+  if (e.key === " ") { e.preventDefault(); quelle ? stopp() : schleife(); }
+  else if (e.key === "1") $("nurA").click();
+  else if (e.key === "2") $("nurB").click();
+  else if (e.key === "3") $("wechsel").click();
+});
+start().catch((e) => { $("stand").textContent = "Fehler: " + e.message; });
+</script>
+</body>
+</html>
