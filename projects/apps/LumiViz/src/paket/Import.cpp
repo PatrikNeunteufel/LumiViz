@@ -58,6 +58,14 @@ QString eigenePfad(Art art, const QString& name, const QString& endung)
             if (ordner.isEmpty() || !lp::istEigenerName(name)) return {};
             return QDir(ordner).filePath(name + QLatin1Char('.') + endung);
         }
+        case Art::Muster:
+        case Art::Clip:
+        case Art::Spur:
+        {
+            const QString ordner = lp::eigenerAustauschOrdner(*austauschArt(art));
+            if (ordner.isEmpty() || !lp::istEigenerName(name)) return {};
+            return QDir(ordner).filePath(name + QLatin1Char('.') + artText(art));
+        }
         case Art::Loop: break;
     }
     return {};
@@ -347,6 +355,15 @@ bool schreibe(Art art, const QByteArray& daten, const QString& pfad, const Umben
             if (!lp::ausJson(json, akkord)) return false;
             return lp::speichereAkkord(pfad, akkord);
         }
+        case Art::Muster:
+        case Art::Clip:
+        case Art::Spur:
+        {
+            lp::Loop teil;
+            if (!lp::austauschAusText(daten, *austauschArt(art), teil)) return false;
+            benenneUm(teil, um);
+            return lp::speichereAustausch(*austauschArt(art), teil, pfad);
+        }
     }
     return false;
 }
@@ -377,7 +394,8 @@ void legeWellenformen(const Gelesen& g, const PaketWahl& wahl, PaketErgebnis& er
 
 std::optional<Art> artAusText(const QString& text)
 {
-    for (const Art art : {Art::Instrument, Art::Kit, Art::Loop, Art::Kontur, Art::Sample, Art::Akkord})
+    for (const Art art : {Art::Instrument, Art::Kit, Art::Loop, Art::Kontur, Art::Sample, Art::Akkord, Art::Muster,
+                          Art::Clip, Art::Spur})
         if (artText(art) == text) return art;
     return std::nullopt;
 }

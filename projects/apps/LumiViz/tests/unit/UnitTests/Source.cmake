@@ -179,6 +179,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKern.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAustausch.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAustauschMenue.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_PublishAustausch.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWiedergabe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpieler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopComposerAbfragen.cpp"

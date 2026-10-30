@@ -57,6 +57,9 @@ $types = @(
     @{ Ext = '.lvinst';  ProgId = 'LumiViz.Instrument';  Text = 'LumiViz Instrument';        Icon = 'lumiviz_lvinst.ico';  Own = $true  }
     @{ Ext = '.lvkit';   ProgId = 'LumiViz.Kit';         Text = 'LumiViz Drum Kit';          Icon = 'lumiviz_lvkit.ico';   Own = $true  }
     @{ Ext = '.lvchord'; ProgId = 'LumiViz.Chord';       Text = 'LumiViz Chord';             Icon = 'lumiviz_lvchord.ico'; Own = $true  }
+    @{ Ext = '.lvpattern'; ProgId = 'LumiViz.Pattern';   Text = 'LumiViz Pattern';           Icon = 'lumiviz_lvpattern.ico'; Own = $true }
+    @{ Ext = '.lvclip';  ProgId = 'LumiViz.Clip';        Text = 'LumiViz Clip';              Icon = 'lumiviz_lvclip.ico';  Own = $true  }
+    @{ Ext = '.lvtrack'; ProgId = 'LumiViz.Track';       Text = 'LumiViz Track';             Icon = 'lumiviz_lvtrack.ico'; Own = $true  }
     @{ Ext = '.lvinstbodyplan'; ProgId = 'LumiViz.InstrumentBodyPlan'; Text = 'LumiViz Instrument Body Plan'; Icon = 'lumiviz_lvinstbodyplan.ico'; Own = $true }
     @{ Ext = '.lvinstbody'; ProgId = 'LumiViz.InstrumentBody'; Text = 'LumiViz Instrument Body'; Icon = 'lumiviz_lvinstbody.ico'; Own = $true }
     @{ Ext = '.lvcontour'; ProgId = 'LumiViz.Contour';   Text = 'LumiViz Contour';           Icon = 'lumiviz_lvcontour.ico'; Own = $true }

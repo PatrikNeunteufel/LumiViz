@@ -172,6 +172,10 @@ const std::vector<Bereich>& bereiche()
         {QStringLiteral("kits"), QStringLiteral("Kits"), {QStringLiteral("kits")}, {}, true},
         // eigene Akkorde (Loop, Stufe 26a; Entscheid S-T3 a, S137): Griffbilder und Voicings als `user:<name>`
         {QStringLiteral("chords"), QStringLiteral("Chords"), {QStringLiteral("chords")}, {}, true},
+        // eigene Muster, Clips und Spuren (Loop, Stufe 33; Entscheid PE1-1 a, S167): `.lvpattern`
+        // unter `patterns`, `.lvclip` und `.lvtrack` unter `tracks`
+        {QStringLiteral("patterns"), QStringLiteral("Patterns"), {QStringLiteral("patterns")}, {}, true},
+        {QStringLiteral("tracks"), QStringLiteral("Tracks and clips"), {QStringLiteral("tracks")}, {}, true},
         // eigene Samples (Loop, Stufe 11a; Entscheid S1 a): Instrumente nennen sie als `user:<name>`
         {QStringLiteral("samples"), QStringLiteral("Samples"), {QStringLiteral("samples")}, {}, true},
         // eigene Formen (Klang aus einer Form, Stufe 19a; Entscheid D2 a): Schichten nennen sie als `user:<name>`

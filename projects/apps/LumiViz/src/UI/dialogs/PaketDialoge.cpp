@@ -89,6 +89,9 @@ QString gruppenTitel(pk::Art art)
         case pk::Art::Kontur: return QObject::tr("Shapes");
         case pk::Art::Sample: return QObject::tr("Samples");
         case pk::Art::Akkord: return QObject::tr("Chords");
+        case pk::Art::Muster: return QObject::tr("Patterns");
+        case pk::Art::Clip: return QObject::tr("Clips");
+        case pk::Art::Spur: return QObject::tr("Tracks");
         case pk::Art::Loop: return QObject::tr("Loops");
     }
     return {};
@@ -155,6 +158,9 @@ int nutzerZahl(pk::Art art, const QString& name)
             return zahl;
         }
         case pk::Art::Akkord:  // ein Akkord setzt nur Noten — niemand nennt ihn (S-T1 a)
+        case pk::Art::Muster:  // Muster, Clips und Spuren werden eingesetzt, nicht genannt (Stufe 33)
+        case pk::Art::Clip:
+        case pk::Art::Spur:
         case pk::Art::Loop: break;
     }
     return 0;
@@ -172,6 +178,9 @@ QString paketArtWort(pk::Art art)
         case pk::Art::Kontur: return QObject::tr("shape");
         case pk::Art::Sample: return QObject::tr("sample");
         case pk::Art::Akkord: return QObject::tr("chord");
+        case pk::Art::Muster: return QObject::tr("pattern");
+        case pk::Art::Clip: return QObject::tr("clip");
+        case pk::Art::Spur: return QObject::tr("track");
     }
     return {};
 }
@@ -995,7 +1004,8 @@ void zeigePublishDatei(QWidget* parent, const FreezeTon& ton)
     for (const QString& endung : lp::sampleEndungen()) samples << QStringLiteral("*.") + endung;
     const QString datei = QFileDialog::getOpenFileName(
         parent, QObject::tr("Publish a file"), startOrdner(einstellungen, kLetzterQuellOrdner),
-        QObject::tr("Loops, instruments, kits, shapes (*.lvloop *.lvinst *.lvkit *.lvcontour);;Samples (%1);;All files (*)")
+        QObject::tr("Loops, instruments, kits, shapes, patterns, clips, tracks (*.lvloop *.lvinst *.lvkit *.lvcontour "
+                    "*.lvpattern *.lvclip *.lvtrack);;Samples (%1);;All files (*)")
             .arg(samples.join(QLatin1Char(' '))));
     if (datei.isEmpty()) return;
     einstellungen.setValue(QLatin1String(kLetzterQuellOrdner), QFileInfo(datei).absolutePath());

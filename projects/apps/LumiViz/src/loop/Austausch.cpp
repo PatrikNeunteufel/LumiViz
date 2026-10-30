@@ -142,15 +142,20 @@ std::optional<Loop> spurDatei(const Loop& loop, int kanal)
     return teil;
 }
 
-bool speichereAustausch(AustauschArt art, const Loop& teil, const QString& pfad)
+QByteArray austauschText(AustauschArt art, const Loop& teil, const QString& basisOrdner)
 {
     QJsonObject huelle;
     huelle[QStringLiteral("format")] = formatVon(art);
     huelle[QStringLiteral("version")] = kAustauschFassung;
-    huelle[QStringLiteral("loop")] = alsJson(teil, QFileInfo(pfad).absolutePath());
+    huelle[QStringLiteral("loop")] = alsJson(teil, basisOrdner);
+    return loopDateiText(huelle);
+}
+
+bool speichereAustausch(AustauschArt art, const Loop& teil, const QString& pfad)
+{
     QSaveFile datei(pfad);
     if (!datei.open(QIODevice::WriteOnly)) return false;
-    return datei.write(loopDateiText(huelle)) >= 0 && datei.commit();
+    return datei.write(austauschText(art, teil, QFileInfo(pfad).absolutePath())) >= 0 && datei.commit();
 }
 
 bool ladeAustausch(const QString& pfad, AustauschArt art, Loop& teil, QStringList* bericht, bool* zuNeu)
@@ -158,8 +163,15 @@ bool ladeAustausch(const QString& pfad, AustauschArt art, Loop& teil, QStringLis
     if (zuNeu != nullptr) *zuNeu = false;
     QFile datei(pfad);
     if (!datei.open(QIODevice::ReadOnly)) return false;
+    return austauschAusText(datei.readAll(), art, teil, QFileInfo(pfad).absolutePath(), bericht, zuNeu);
+}
+
+bool austauschAusText(const QByteArray& text, AustauschArt art, Loop& teil, const QString& basisOrdner,
+                      QStringList* bericht, bool* zuNeu)
+{
+    if (zuNeu != nullptr) *zuNeu = false;
     QJsonParseError fehler;
-    const QJsonDocument doc = QJsonDocument::fromJson(datei.readAll(), &fehler);
+    const QJsonDocument doc = QJsonDocument::fromJson(text, &fehler);
     if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
     const QJsonObject huelle = doc.object();
     if (huelle.value(QStringLiteral("format")).toString() != formatVon(art)) return false;
@@ -170,7 +182,7 @@ bool ladeAustausch(const QString& pfad, AustauschArt art, Loop& teil, QStringLis
     }
     Loop gelesen;
     QStringList hier;
-    if (!ausJson(huelle.value(QStringLiteral("loop")).toObject(), gelesen, QFileInfo(pfad).absolutePath(), &hier))
+    if (!ausJson(huelle.value(QStringLiteral("loop")).toObject(), gelesen, basisOrdner, &hier))
         return false;
     if (!hatGestalt(art, gelesen)) return false;
     if (bericht != nullptr) *bericht = hier;

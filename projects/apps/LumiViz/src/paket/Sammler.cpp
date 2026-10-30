@@ -105,6 +105,9 @@ QString eigenerOrdner(Art art)
         case Art::Kontur: return sh::eigenerKonturOrdner();
         case Art::Sample: return lp::eigenerSampleOrdner();
         case Art::Akkord: return lp::eigenerAkkordOrdner();
+        case Art::Muster:
+        case Art::Clip:
+        case Art::Spur: return lp::eigenerAustauschOrdner(*austauschArt(art));
         case Art::Loop: break;
     }
     return {};
@@ -134,6 +137,9 @@ QString vorgabeName(Art art)
         case Art::Kontur: return QStringLiteral("shape");
         case Art::Sample: return QStringLiteral("sample");
         case Art::Akkord: return QStringLiteral("chord");
+        case Art::Muster: return QStringLiteral("pattern");
+        case Art::Clip: return QStringLiteral("clip");
+        case Art::Spur: return QStringLiteral("track");
         case Art::Loop: return QStringLiteral("loop");
     }
     return QStringLiteral("file");
@@ -230,22 +236,18 @@ private:
                 lp::Loop loop;
                 if (!lp::ladeLoop(datei, loop)) return scheitert(datei);
                 m_von = dateiName;
-                for (const lp::Muster& muster : loop.muster)
-                {
-                    if (muster.art == lp::MusterArt::Instrument)
-                    {
-                        besuche(Art::Instrument, muster.instrument, basis);
-                        continue;
-                    }
-                    besuche(Art::Kit, muster.kit, basis);
-                    for (const lp::Spur& spur : muster.spuren)
-                    {
-                        if (!spur.instrument.isEmpty())
-                            besuche(Art::Instrument, spur.instrument, basis);
-                        else
-                            besuche(Art::Sample, spur.klang, basis);
-                    }
-                }
+                besucheMuster(loop, basis);
+                return m_von;
+            }
+            case Art::Muster:
+            case Art::Clip:
+            case Art::Spur:
+            {
+                // ein kleiner Loop (Stufe 33): er nennt, was seine Muster nennen
+                lp::Loop teil;
+                if (!lp::ladeAustausch(datei, *austauschArt(art), teil)) return scheitert(datei);
+                m_von = dateiName;
+                besucheMuster(teil, basis);
                 return m_von;
             }
             case Art::Kontur:
@@ -266,6 +268,27 @@ private:
             }
         }
         return {};
+    }
+
+    /// Was die Muster eines Loops nennen: Instrument, Kit, je Spur Instrument oder Sample.
+    void besucheMuster(const lp::Loop& loop, const QString& basis)
+    {
+        for (const lp::Muster& muster : loop.muster)
+        {
+            if (muster.art == lp::MusterArt::Instrument)
+            {
+                besuche(Art::Instrument, muster.instrument, basis);
+                continue;
+            }
+            besuche(Art::Kit, muster.kit, basis);
+            for (const lp::Spur& spur : muster.spuren)
+            {
+                if (!spur.instrument.isEmpty())
+                    besuche(Art::Instrument, spur.instrument, basis);
+                else
+                    besuche(Art::Sample, spur.klang, basis);
+            }
+        }
     }
 
     /// Die Hauptdatei laesst sich nicht lesen: kein Fund. Eine Zugehoerige, die
@@ -290,7 +313,10 @@ private:
             case Art::Kit: a = loeseKit(nennung, basis); break;
             case Art::Kontur: a = loeseKontur(nennung, basis); break;
             case Art::Sample: a = loeseSample(nennung, basis); break;
-            case Art::Akkord:  // wird nicht genannt
+            case Art::Akkord:  // wird nicht genannt, ebenso die folgenden
+            case Art::Muster:
+            case Art::Clip:
+            case Art::Spur:
             case Art::Loop: break;
         }
         switch (a.was)
@@ -369,13 +395,31 @@ QString artText(Art art)
         case Art::Kontur: return QStringLiteral("lvcontour");
         case Art::Sample: return QStringLiteral("sample");
         case Art::Akkord: return QStringLiteral("lvchord");
+        case Art::Muster: return QStringLiteral("lvpattern");
+        case Art::Clip: return QStringLiteral("lvclip");
+        case Art::Spur: return QStringLiteral("lvtrack");
     }
     return {};
+}
+
+std::optional<lp::AustauschArt> austauschArt(Art art)
+{
+    switch (art)
+    {
+        case Art::Muster: return lp::AustauschArt::Muster;
+        case Art::Clip: return lp::AustauschArt::Clip;
+        case Art::Spur: return lp::AustauschArt::Spur;
+        default: break;
+    }
+    return std::nullopt;
 }
 
 std::optional<Art> artVonDatei(const QString& datei)
 {
     const QString endung = QFileInfo(datei).suffix().toLower();
+    if (endung == QLatin1String("lvpattern")) return Art::Muster;
+    if (endung == QLatin1String("lvclip")) return Art::Clip;
+    if (endung == QLatin1String("lvtrack")) return Art::Spur;
     if (endung == QLatin1String("lvinst")) return Art::Instrument;
     if (endung == QLatin1String("lvkit")) return Art::Kit;
     if (endung == QLatin1String("lvloop")) return Art::Loop;
@@ -402,6 +446,9 @@ Befund befundDerNennung(Art art, const QString& nennung, const QString& basis, Q
         case Art::Kontur: a = loeseKontur(nennung, basis); break;
         case Art::Sample: a = loeseSample(nennung, basis); break;
         case Art::Akkord:
+        case Art::Muster:
+        case Art::Clip:
+        case Art::Spur:
         case Art::Loop: break;
     }
     if (datei != nullptr) *datei = a.was == Aufloesung::Datei ? a.pfad : QString();

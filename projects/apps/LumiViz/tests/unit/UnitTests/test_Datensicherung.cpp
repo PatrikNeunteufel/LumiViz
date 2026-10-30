@@ -101,11 +101,13 @@ const ds::ImportBereich* finde(const ds::Inhalt& inhalt, const QString& id)
 TEST_CASE("Datensicherung: die Bereiche — feste Namen, jeder mit Ordner, nur die Songtexte anfangs aus")
 {
     const auto& bereiche = ds::bereiche();
-    // seit S137 dazu „Chords" (Loop, Stufe 26a); S123: „Kits" (Stufe 21a); S120: „Shapes" (Klang aus einer Form,
-    // Stufe 19a); S115: „Samples" (Loop, Stufe 11a)
-    REQUIRE(bereiche.size() == 13);
+    // seit S167 dazu „Patterns" und „Tracks and clips" (Loop, Stufe 33, PE1-1 a); S137: „Chords" (Loop, Stufe 26a);
+    // S123: „Kits" (Stufe 21a); S120: „Shapes" (Klang aus einer Form, Stufe 19a); S115: „Samples" (Loop, Stufe 11a)
+    REQUIRE(bereiche.size() == 15);
     CHECK(ds::findeBereich(QStringLiteral("kits"))->ordner == QStringList{QStringLiteral("kits")});
     CHECK(ds::findeBereich(QStringLiteral("chords"))->ordner == QStringList{QStringLiteral("chords")});
+    CHECK(ds::findeBereich(QStringLiteral("patterns"))->ordner == QStringList{QStringLiteral("patterns")});
+    CHECK(ds::findeBereich(QStringLiteral("tracks"))->ordner == QStringList{QStringLiteral("tracks")});
     QStringList ids;
     for (const ds::Bereich& bereich : bereiche)
     {

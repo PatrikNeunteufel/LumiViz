@@ -81,6 +81,11 @@ bool speichereAustausch(AustauschArt art, const Loop& teil, const QString& pfad)
 /// `.lvtrack` ein Kanal). Fehlt eine genannte Datei, steht das im `bericht`.
 bool ladeAustausch(const QString& pfad, AustauschArt art, Loop& teil, QStringList* bericht = nullptr,
                    bool* zuNeu = nullptr);
+/// Dasselbe ohne Datei — der Text, wie `speichereAustausch` ihn schreibt (Publish packt
+/// Bytes); Pfade relativ zu `basisOrdner`.
+[[nodiscard]] QByteArray austauschText(AustauschArt art, const Loop& teil, const QString& basisOrdner = {});
+bool austauschAusText(const QByteArray& text, AustauschArt art, Loop& teil, const QString& basisOrdner = {},
+                      QStringList* bericht = nullptr, bool* zuNeu = nullptr);
 
 // --- Umrechnung (PE2 a) ---------------------------------------------------------
 

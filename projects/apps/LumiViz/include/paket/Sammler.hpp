@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include "loop/Austausch.hpp"
+
 #include <QString>
 #include <QStringList>
 
@@ -39,11 +41,18 @@ enum class Art : int
     /// Ein Akkord (`.lvchord`, Stufe 26a, S-T3 a): nennt nichts, wird von nichts genannt —
     /// er geht nur als Hauptding ins Paket.
     Akkord,
+    /// Muster, Clip und Spur als Dateien (Loop, Stufe 33, PE1-1 a): sie nennen wie ein Loop,
+    /// werden nicht genannt und kommen beim Empfaenger in seinen Benutzerordner.
+    Muster,
+    Clip,
+    Spur,
 };
 
 /// Wie die Art im Manifest und im Namen des Pakets steht: `lvinst`, `lvkit`,
-/// `lvloop`, `lvcontour`, `sample`, `lvchord`.
+/// `lvloop`, `lvcontour`, `sample`, `lvchord`, `lvpattern`, `lvclip`, `lvtrack`.
 [[nodiscard]] QString artText(Art art);
+/// Muster, Clip und Spur als Art der Dateien im Loop (`loop/Austausch.hpp`); nichts = keine davon.
+[[nodiscard]] std::optional<loop::AustauschArt> austauschArt(Art art);
 /// Die Art einer Datei nach ihrer Endung; ein Sample an jeder Endung von
 /// `loop::sampleEndungen`. Leer = keine Art, die sich veroeffentlichen laesst.
 [[nodiscard]] std::optional<Art> artVonDatei(const QString& datei);

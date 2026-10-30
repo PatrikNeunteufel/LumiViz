@@ -26,6 +26,9 @@ Windows).
 | `.lvinst` (Instrument, S120) | `lumiviz_lvinst.ico` — Marke mit Klaviertasten | erzeugt aus `lumiviz.ico` | Instrument-Editor (Kopfzeile), Import data (Liste) |
 | `.lvkit` (Drum-Kit, S124) | `lumiviz_lvkit.ico` — Marke mit Snare und gekreuzten Sticks (Entscheide Patrik I1 a, I2 a) | erzeugt aus `lumiviz.ico` | Drum-Editor (Knopf Kit), Import data (Liste) |
 | `.lvchord` (Akkord: Griffbild oder Voicing, S137) | `lumiviz_lvchord.ico` — Marke mit einem Griffbild (Entscheid S-T3 a, Wunsch Patrik) | erzeugt aus `lumiviz.ico` | noch nicht (Fenster Chords, Stufe 26e) |
+| `.lvpattern` (Muster eines Loops, S167) | `lumiviz_lvpattern.ico` — Marke mit Noten einer Piano-Roll | erzeugt aus `lumiviz.ico` | Publish, Import data |
+| `.lvclip` (Clip eines Loops, S167) | `lumiviz_lvclip.ico` — Marke mit einem Clip und der Naht zur Wiederholung | erzeugt aus `lumiviz.ico` | Publish, Import data |
+| `.lvtrack` (Spur eines Loops, S167) | `lumiviz_lvtrack.ico` — Marke mit einer Zeile aus drei Clips | erzeugt aus `lumiviz.ico` | Publish, Import data |
 | `.lvinstbodyplan` (Bauplan eines Instrumentkörpers, S147) | `lumiviz_lvinstbodyplan.ico` — Marke mit dem Umriss eines Resonanzbodens, Rippen und Steg (Entscheid IC1 a, Fassung P1) | erzeugt aus `lumiviz.ico`, Umriss aus `asset/loop/instrument_bodies/steinway_d.lvinstbodyplan` | noch nicht |
 | `.lvinstbody` (gerechneter Instrumentkörper, S147) | `lumiviz_lvinstbody.ico` — Marke mit demselben Umriss und einer Mode (IC1 a, Fassung K1) | erzeugt aus `lumiviz.ico`, wie oben | noch nicht |
 | `.lvcontour` (Kontur für die Waveform Shape, S120 — die Datei gibt es noch nicht) | `lumiviz_lvcontour.ico` — Marke mit Kontur und Stift | erzeugt aus `lumiviz.ico` | noch nicht |
@@ -54,6 +57,9 @@ zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
 | ![lumiviz_lvinst](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinst.png) | `lumiviz_lvinst.ico` | `.lvinst` |
 | ![lumiviz_lvkit](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvkit.png) | `lumiviz_lvkit.ico` | `.lvkit` |
 | ![lumiviz_lvchord](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvchord.png) | `lumiviz_lvchord.ico` | `.lvchord` |
+| ![lumiviz_lvpattern](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvpattern.png) | `lumiviz_lvpattern.ico` | `.lvpattern` |
+| ![lumiviz_lvclip](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvclip.png) | `lumiviz_lvclip.ico` | `.lvclip` |
+| ![lumiviz_lvtrack](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvtrack.png) | `lumiviz_lvtrack.ico` | `.lvtrack` |
 | ![lumiviz_lvinstbodyplan](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinstbodyplan.png) | `lumiviz_lvinstbodyplan.ico` | `.lvinstbodyplan` |
 | ![lumiviz_lvinstbody](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinstbody.png) | `lumiviz_lvinstbody.ico` | `.lvinstbody` |
 | ![lumiviz_lvcontour](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvcontour.png) | `lumiviz_lvcontour.ico` | `.lvcontour` |
@@ -78,7 +84,9 @@ zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
 **Diese Tabellen sind die Liste der zugewiesenen Icons** (Stand S120, 2026-10-13).
 Ohne eigenes Icon sind heute: Knoten-Voreinstellungen (`.json`, ohne eigene
 Endung), Playlists (`.m3u8`), die Presets der einzelnen Visualizer (`.lvp` —
-in S120 nicht nachgesehen, ob das Format noch geschrieben wird).
+in S120 nicht nachgesehen, ob das Format noch geschrieben wird), die Sammlungen der
+mitgelieferten Akkorde (`.lvchords`, S167 — sie liegen nur neben der Exe, niemand öffnet
+sie von Hand).
 
 **Die acht Icons aus S120** (Entscheid Patrik I1 a: alle als Marke mit einem
 Zeichen im Kreis; die Zeichen an vier Vorschaublättern gewählt — für `.lvloop`
@@ -111,6 +119,9 @@ eintragen"; die Liste im Skript und diese Tabelle zusammen pflegen):
 | `.lvinst` | `LumiViz.Instrument` | `lumiviz_lvinst.ico` | `-Apply` |
 | `.lvkit` | `LumiViz.Kit` | `lumiviz_lvkit.ico` | `-Apply` (S124) |
 | `.lvchord` | `LumiViz.Chord` | `lumiviz_lvchord.ico` | `-Apply` (S137) |
+| `.lvpattern` | `LumiViz.Pattern` | `lumiviz_lvpattern.ico` | `-Apply` (S167) |
+| `.lvclip` | `LumiViz.Clip` | `lumiviz_lvclip.ico` | `-Apply` (S167) |
+| `.lvtrack` | `LumiViz.Track` | `lumiviz_lvtrack.ico` | `-Apply` (S167) |
 | `.lvinstbodyplan` | `LumiViz.InstrumentBodyPlan` | `lumiviz_lvinstbodyplan.ico` | `-Apply` (S147) |
 | `.lvinstbody` | `LumiViz.InstrumentBody` | `lumiviz_lvinstbody.ico` | `-Apply` (S147) |
 | `.lvcontour` | `LumiViz.Contour` | `lumiviz_lvcontour.ico` | `-Apply` |
@@ -186,7 +197,7 @@ powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icon
 - **`-Apply`** trägt die eigenen Endungen ein (`.lvfx`, `.lvfx2`, `.lvkar`,
   `.lvtrail`, `.lvcomp`, seit S120 `.lvloop`, `.lvinst`, `.lvcontour`,
   `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, seit S124 `.lvkit`, seit S137 `.lvchord`, seit S147
-  `.lvinstbodyplan` und `.lvinstbody`), **`-Foreign`** dazu `.avs`,
+  `.lvinstbodyplan` und `.lvinstbody`, seit S167 `.lvpattern`, `.lvclip`, `.lvtrack`), **`-Foreign`** dazu `.avs`,
   `.milk`, `.milk2`, `.lrc`, `.grad`. Audioformate nie.
 - **`-Remove`** entfernt genau die eigenen Einträge (Schlüssel `LumiViz.*` und
   Endungen, die auf einen davon zeigen).

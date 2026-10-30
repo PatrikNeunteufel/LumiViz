@@ -4,7 +4,7 @@ Aufruf (normales Python mit Pillow):
 
     python asset/img/logo/icons/build_lvfx2_icons.py
 
-Erzeugt neunzehn .ico (16–256 px) neben diesem Skript:
+Erzeugt zweiundzwanzig .ico (16–256 px) neben diesem Skript:
 
 - `lumiviz_lvfx2.ico`   „Stapel"  — das Icon vorn, zwei abgedunkelte Kopien
                         versetzt dahinter. Das Datei-Icon fuer `.lvfx2`
@@ -36,6 +36,10 @@ Erzeugt neunzehn .ico (16–256 px) neben diesem Skript:
   `lumiviz_lvinstbody.ico` derselbe Umriss mit einer Mode — fuer Koerper
                         `.lvinstbody` (Session 147, Entscheid IC1 a). Der Umriss
                         kommt aus `asset/loop/instrument_bodies/steinway_d.lvinstbodyplan`.
+- `lumiviz_lvpattern.ico`, `lumiviz_lvclip.ico`, `lumiviz_lvtrack.ico` „Marke" mit Noten
+                        einer Piano-Roll, einem Clip mit Wiederholung, einer Zeile mit drei
+                        Clips — die Datei-Icons fuer Muster, Clips und Spuren (Session 167,
+                        Loop Stufe 33).
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 - `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
@@ -304,6 +308,54 @@ def zeichen_griffbild(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
         d.ellipse((x - k, y - k, x + k, y + k), fill=(*farbe, 255))
 
 
+# --- Muster, Clip und Spur als Dateien (Session 167, Loop Stufe 33, Wunsch Patrik) ------------
+
+def zeichen_muster(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Ein Muster, wie es im Editor steht: vier Noten als Balken einer Piano-Roll,
+    versetzt in Zeit und Hoehe, in den Farben des Logos."""
+    h = int(r * 0.22)
+    links, rechts = cx - int(r * 0.62), cx + int(r * 0.62)
+    breite = rechts - links
+    for zeile, (von, bis, farbe) in enumerate(((0.00, 0.40, CYAN), (0.30, 0.62, MAGENTA),
+                                                (0.55, 1.00, BERNSTEIN), (0.00, 0.22, MAGENTA))):
+        y = cy - int(r * 0.58) + zeile * int(r * 0.32)
+        d.rounded_rectangle((links + int(breite * von), y, links + int(breite * bis), y + h),
+                            radius=int(h * 0.35), fill=(*farbe, 255))
+
+
+def zeichen_clip(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Ein Clip wie auf der Taktachse: ein Block, in der Mitte die Naht zur Wiederholung,
+    darin dieselben zwei Noten zweimal."""
+    links, rechts = cx - int(r * 0.70), cx + int(r * 0.70)
+    oben, unten = cy - int(r * 0.42), cy + int(r * 0.42)
+    d.rounded_rectangle((links, oben, rechts, unten), radius=int(r * 0.14), fill=(40, 120, 160, 255),
+                        outline=(*CYAN, 255), width=14)
+    mitte = cx
+    for y in range(oben + 18, unten - 18, 44):  # die Naht gestrichelt
+        d.line([(mitte, y), (mitte, y + 24)], fill=(235, 235, 235, 255), width=12)
+    h = int(r * 0.13)
+    for start in (links, mitte):
+        x = start + int(r * 0.12)
+        d.rounded_rectangle((x, cy - int(r * 0.24), x + int(r * 0.30), cy - int(r * 0.24) + h),
+                            radius=int(h * 0.4), fill=(*BERNSTEIN, 255))
+        d.rounded_rectangle((x + int(r * 0.22), cy + int(r * 0.08), x + int(r * 0.50), cy + int(r * 0.08) + h),
+                            radius=int(h * 0.4), fill=(*MAGENTA, 255))
+
+
+def zeichen_spur(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Eine Spur: eine Zeile der Taktachse mit drei Clips hintereinander."""
+    links, rechts = cx - int(r * 0.78), cx + int(r * 0.78)
+    oben, unten = cy - int(r * 0.30), cy + int(r * 0.30)
+    d.rectangle((links, oben - 10, rechts, unten + 10), fill=LEER)
+    luecke = int(r * 0.06)
+    teile = ((0.00, 0.38, CYAN), (0.38, 0.62, MAGENTA), (0.62, 1.00, BERNSTEIN))
+    breite = rechts - links
+    for von, bis, farbe in teile:
+        d.rounded_rectangle((links + int(breite * von) + luecke // 2, oben,
+                             links + int(breite * bis) - luecke // 2, unten),
+                            radius=int(r * 0.08), fill=(*farbe, 255))
+
+
 BAUPLAN = ORDNER.parents[2] / "loop" / "instrument_bodies" / "steinway_d.lvinstbodyplan"
 HELL = (235, 235, 235, 255)
 
@@ -448,6 +500,10 @@ def main() -> int:
     # Session 147: Bauplan und Koerper eines Instruments (.lvinstbodyplan, .lvinstbody)
     als_ico(marke(icon, zeichen_bauplan), "lumiviz_lvinstbodyplan.ico")
     als_ico(marke(icon, zeichen_koerper), "lumiviz_lvinstbody.ico")
+    # Session 167: Muster, Clip und Spur als Dateien (.lvpattern, .lvclip, .lvtrack)
+    als_ico(marke(icon, zeichen_muster), "lumiviz_lvpattern.ico")
+    als_ico(marke(icon, zeichen_clip), "lumiviz_lvclip.ico")
+    als_ico(marke(icon, zeichen_spur), "lumiviz_lvtrack.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     als_ico(komposition(icon), "lumiviz_lvcomp.ico")
     # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein

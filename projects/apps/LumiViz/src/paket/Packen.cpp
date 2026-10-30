@@ -80,23 +80,17 @@ public:
             {
                 lp::Loop loop;
                 if (!lp::ladeLoop(datei, loop)) return {};
-                for (lp::Muster& muster : loop.muster)
-                {
-                    if (muster.art == lp::MusterArt::Instrument)
-                    {
-                        muster.instrument = neu(Art::Instrument, muster.instrument, basis);
-                        continue;
-                    }
-                    muster.kit = neu(Art::Kit, muster.kit, basis);
-                    for (lp::Spur& spur : muster.spuren)
-                    {
-                        if (!spur.instrument.isEmpty())
-                            spur.instrument = neu(Art::Instrument, spur.instrument, basis);
-                        else
-                            spur.klang = neu(Art::Sample, spur.klang, basis);
-                    }
-                }
+                schreibeMusterUm(loop, basis);
                 return QJsonDocument(lp::alsJson(loop)).toJson(QJsonDocument::Indented);
+            }
+            case Art::Muster:
+            case Art::Clip:
+            case Art::Spur:
+            {
+                lp::Loop teil;
+                if (!lp::ladeAustausch(datei, *austauschArt(art), teil)) return {};
+                schreibeMusterUm(teil, basis);
+                return lp::austauschText(*austauschArt(art), teil);
             }
             case Art::Kontur:
             case Art::Sample:
@@ -107,6 +101,27 @@ public:
 
 private:
     std::map<Art, std::map<QString, QString>> m_namen;
+
+    /// Was die Muster eines Loops nennen, auf die Namen beim Empfaenger.
+    void schreibeMusterUm(lp::Loop& loop, const QString& basis) const
+    {
+        for (lp::Muster& muster : loop.muster)
+        {
+            if (muster.art == lp::MusterArt::Instrument)
+            {
+                muster.instrument = neu(Art::Instrument, muster.instrument, basis);
+                continue;
+            }
+            muster.kit = neu(Art::Kit, muster.kit, basis);
+            for (lp::Spur& spur : muster.spuren)
+            {
+                if (!spur.instrument.isEmpty())
+                    spur.instrument = neu(Art::Instrument, spur.instrument, basis);
+                else
+                    spur.klang = neu(Art::Sample, spur.klang, basis);
+            }
+        }
+    }
 
     /// Zeigt die Nennung auf eine Zugehoerige, heisst sie `user:<name>`; sonst bleibt sie.
     [[nodiscard]] QString neu(Art art, const QString& nennung, const QString& basis) const
@@ -142,6 +157,9 @@ QString bereichOrdner(Art art)
         case Art::Kontur: return QStringLiteral("contours");
         case Art::Sample: return QStringLiteral("samples");
         case Art::Akkord: return QStringLiteral("chords");
+        case Art::Muster: return QStringLiteral("patterns");
+        case Art::Clip:
+        case Art::Spur: return QStringLiteral("tracks");
         case Art::Loop: break;
     }
     return {};
@@ -156,6 +174,9 @@ QString bereichId(Art art)
         case Art::Kontur: return QStringLiteral("shapes");
         case Art::Sample: return QStringLiteral("samples");
         case Art::Akkord: return QStringLiteral("chords");
+        case Art::Muster: return QStringLiteral("patterns");
+        case Art::Clip:
+        case Art::Spur: return QStringLiteral("tracks");
         case Art::Loop: break;
     }
     return {};

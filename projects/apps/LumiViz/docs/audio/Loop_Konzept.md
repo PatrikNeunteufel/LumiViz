@@ -3990,7 +3990,7 @@ genannt wird, was das Muster spielt, mitgepackt wird nichts (dafür gibt es Publ
 | 33b | Umrechnung nach PE2 a: Noten mit Versatz, Drum-Zeilen, Akkord-Einträge, Spuren über der Zeit, Expression am Clip, Takte; Bericht der verschobenen Schläge; Tests mit Bezug | erledigt 2026-10-30 (S167, `rechneUm`, `test_LoopAustausch` 33b) |
 | 33c | Einsetzen: Namen (mitbenutzen oder `_2`), Ort (Takt und Kanal, neuer Kanal); Tests (Undo mit 33d) | erledigt 2026-10-30 (S167, `setzeEin`, `test_LoopAustausch` 33c) |
 | 33d | Bedienung: die Menüs der Taktachse, Dateidialoge mit Benutzerordner als Vorgabe; Tests über die Taktachse mit Menü- und Dialogbeobachter, Bild | erledigt 2026-10-30 (S167, `test_LoopAustauschMenue`) |
-| 33e | Datensicherung (zwei Bereiche), Publish (drei Arten), Icons | offen |
+| 33e | Datensicherung (zwei Bereiche), Publish (drei Arten), Icons | erledigt 2026-10-30 (S167, `test_PublishAustausch`, Datensicherung 15 Bereiche) |
 | 33f | Abschluss: Benutzerhandbuch §16 und §17, Doku, Sichttest-Liste; Bereich und voller Lauf unter beiden Compilern (neue Dateiarten, UF17-1 a) | offen |
 
 **Wie 33a–33c gebaut sind (S167):** `loop/Austausch.hpp` — die Hülle schreibt `alsJson` des
@@ -4014,6 +4014,18 @@ erscheint nur, wenn es etwas zu sagen gibt: umgerechnet (mit der Zahl verschoben
 umbenannt, kein Platz und darum ein neuer Kanal, fehlende Dateien; eine falsche oder zu neue
 Datei meldet sich als Warnung. In Tests: `Taktachse::setzeDateiwahlFuerTests`,
 `setzeAustauschBasisFuerTests`; `LUMIVIZ_AUSTAUSCH_BILD=<datei.png>` legt ein Bild ab.
+
+**Wie 33e gebaut ist (S167):** Datensicherung mit den Bereichen `patterns` („Patterns“) und
+`tracks` („Tracks and clips“), jetzt 15. Publish kennt die Arten `Muster`, `Clip`, `Spur`
+(`lvpattern`, `lvclip`, `lvtrack`; `paket::austauschArt`): gesammelt wird wie bei einem Loop
+(`besucheMuster`, gemeinsam mit dem Loop), umgeschrieben ebenso (`schreibeMusterUm`), abgelegt
+aber wie ein eigenes Ding unter `data/patterns` bzw. `data/tracks` mit Namen — der Empfänger
+bekommt sie in seinen Benutzerordner, ohne nach einem Ort zu fragen. `Austausch` hat dafür
+`austauschText` und `austauschAusText` (Bytes statt Datei). *Publish a file* bietet die drei
+Endungen an. Icons `lumiviz_lvpattern.ico` (Noten einer Piano-Roll), `lumiviz_lvclip.ico` (ein
+Clip mit der Naht zur Wiederholung), `lumiviz_lvtrack.ico` (eine Zeile mit drei Clips), in
+`register_file_icons.ps1` eingetragen; das Skript in einer Kopie gelaufen, die übrigen Icons
+Byte für Byte gleich.
 
 ## 5. Stufen
 
