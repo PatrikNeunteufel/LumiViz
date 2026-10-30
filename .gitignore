@@ -471,3 +471,7 @@ asset/free_Tabs/**
 /projects/apps/LumiViz/docs/modellierung/**/quellen/
 # Eingang für Downloads aus Patriks Browser (S155): wird nach quellen/ einsortiert, nie versioniert
 /dld/
+# Hoertests (HT8 a, S166): Klaenge und Hoerbeispiele schreibt das Werkzeug des Tests neu; Listen, Antworten,
+# Auswertungen und klaenge.sha256 sind versioniert
+/hoertest/**/klaenge/
+/hoertest/beispiele/

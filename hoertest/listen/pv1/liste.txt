@@ -1,0 +1,106 @@
+Hoerproben PV1 a (31d-8, Schritt 8.5 nach ZZ1 a), gleich laut auf -23.0 LUFS integriert (EBU R128).
+Salamander Grand Piano V3 (Yamaha C5), Alexander Holm 2011, CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/),
+Fassung 48 kHz/24 bit von archive.org; hier geschnitten und im Pegel angeglichen.
+Modell: Hammer-Saite mit dem Boden des Steinway D (lib:steinway_d), ungedaempft ab 89, wie in der Suche.
+
+Je Datei hintereinander, mit einer Sekunde Stille:
+  1 Salamander | 2 Vorgabe (31d-4, heute im Programm) | 3 Suche 7.5.12 ohne A4 (nur Vorschlag fuer das Ohr)
+Punkt: Zeile x aus projects/apps/LumiViz/docs/modellierung/hammer-saite/proben/S165_suche2_probe_ohne_a4/ergebnis_1.txt; optionen	delta_im_chor=1	delta_unten=0.01	detune_fest=0	delta_fest=0	delta_start_unten=0.
+Je Taste drei Staerken an den Ebenen der Suche: p = v6 (Stufe -20 dB), mf = v10 (-12), ff = v16 (0).
+Jede Fassung fuer sich gleich laut: die Staerke hoert man an der Klangfarbe, nicht am Pegel.
+Gehalten wie Salamander vor der Blende der Aufnahme, hoechstens 30 s.
+
+Je Taste die Groessen des Ziels (Salamander) gegen beide Fassungen, gemessen wie in der Suche (alle drei Ebenen
+zusammen); (h) = hoerbar getroffen nach HW2 a. Laenge = Huelle vorwaerts (wie lange man den Ton hoert),
+Nachklang = spaete Stufe und Knick, Schwebung = Schwebung und Einbrueche je Teilton (_1 bis _3 = Teilton).
+
+== a1 (MIDI 33, 2 Saiten) ==
+Kurven an der Taste, Vorgabe -> Suche: decay 11.990 -> 13.313; lateDecay 35.980 -> 53.926; highDecay 0.972 -> 0.924; detune 3.014 -> 1.978; u leise 0.000 -> 0.106; u laut 0.000 -> 0.213; gamma 0.000 -> 40.988; delta 0.000 -> 1.223; h 0.000 -> 0.004;
+Summe r^2 Vorgabe 4528.6, Suche 576.1
+  Laenge: hoerbar getroffen Vorgabe 2 von 6, Suche 3 von 6
+    huelle_20_s        Salamander 4.09 s | Vorgabe 4.71 s (h) | Suche 6.63 s
+    huelle_30_s        Salamander 11.46 s | Vorgabe 8.39 s | Suche 11.48 s (h)
+    huelle_40_s        Salamander 20.43 s | Vorgabe 11.15 s | Suche 17.38 s (h)
+    vorwaerts_t60      Salamander 2.36 s | Vorgabe 9.78 s | Suche 10.87 s
+    vorwaerts_t60_2    Salamander 19.49 s | Vorgabe 9.17 s | Suche 10.66 s
+    vorwaerts_t60_3    Salamander 10.23 s | Vorgabe 9.09 s (h) | Suche 12.35 s (h)
+  Nachklang: hoerbar getroffen Vorgabe 0 von 4, Suche 1 von 4
+    knick_tiefe_db_2   Salamander -15.35 dB | Vorgabe -8.17 dB | Suche -12.87 dB
+    t60_spaet          Salamander 76.59 s | Vorgabe 17.56 s | Suche 35.14 s
+    t60_spaet_2        Salamander 51.03 s | Vorgabe 17.28 s | Suche 45.91 s (h)
+    t60_spaet_3        Salamander 51.24 s | Vorgabe 17.62 s | Suche 37.52 s
+  Schwebung: hoerbar getroffen Vorgabe 1 von 6, Suche 2 von 6
+    schwebung_db_1     Salamander 1.02 dB | Vorgabe 11.39 dB | Suche 4.56 dB
+    schwebung_db_2     Salamander 3.64 dB | Vorgabe 2.28 dB | Suche 1.63 dB
+    schwebung_db_3     Salamander 11.28 dB | Vorgabe 1.06 dB | Suche 12.80 dB (h)
+    tiefe_db_1         Salamander 13.87 dB | Vorgabe 40.31 dB | Suche 27.08 dB
+    tiefe_db_2         Salamander 10.35 dB | Vorgabe 49.09 dB | Suche 13.68 dB
+    tiefe_db_3         Salamander 24.29 dB | Vorgabe 32.96 dB (h) | Suche 19.67 dB (h)
+01_a1_p.wav: a1 p (Salamander v6, Stufe -20 dB), je 21.6 s; u an der Stufe Vorgabe 0.000, Suche 0.106; Verstaerkung 5.5 / 28.9 / 31.8 dB
+02_a1_mf.wav: a1 mf (Salamander v10, Stufe -12 dB), je 21.4 s; u an der Stufe Vorgabe 0.000, Suche 0.142; Verstaerkung 4.4 / 22.1 / 25.4 dB
+03_a1_ff.wav: a1 ff (Salamander v16, Stufe 0 dB), je 21.2 s; u an der Stufe Vorgabe 0.000, Suche 0.213; Verstaerkung -2.9 / 12.6 / 15.2 dB
+  Frage: je Datei Laenge, Nachklang, Schwebung — ist 2 oder 3 naeher an 1? Wo 3 naeher ist: die Schwebung der
+  Suche (u, gamma, delta) als Wert nehmen, oder zu stark / zu schwach / metallisch / passt?
+
+== c4 (MIDI 60, 3 Saiten) ==
+Kurven an der Taste, Vorgabe -> Suche: decay 5.294 -> 3.405; lateDecay 15.880 -> 47.640; highDecay 0.644 -> 0.916; detune 0.805 -> 0.729; u leise 0.000 -> 0.398; u laut 0.000 -> 0.000; gamma 0.000 -> 25.130; delta 0.000 -> 0.814; h 0.000 -> 0.000;
+Summe r^2 Vorgabe 1791.5, Suche 114.6
+  Laenge: hoerbar getroffen Vorgabe 3 von 6, Suche 6 von 6
+    huelle_20_s        Salamander 0.90 s | Vorgabe 1.32 s | Suche 0.91 s (h)
+    huelle_30_s        Salamander 3.01 s | Vorgabe 2.58 s (h) | Suche 2.74 s (h)
+    huelle_40_s        Salamander 7.93 s | Vorgabe 4.18 s | Suche 8.65 s (h)
+    vorwaerts_t60      Salamander 2.64 s | Vorgabe 4.82 s (h) | Suche 3.14 s (h)
+    vorwaerts_t60_2    Salamander 3.29 s | Vorgabe 4.57 s (h) | Suche 2.95 s (h)
+    vorwaerts_t60_3    Salamander 1.95 s | Vorgabe 4.52 s | Suche 2.78 s (h)
+  Nachklang: hoerbar getroffen Vorgabe 2 von 6, Suche 3 von 6
+    knick_tiefe_db     Salamander -13.98 dB | Vorgabe -8.72 dB (h) | Suche -13.04 dB (h)
+    knick_tiefe_db_2   Salamander -16.16 dB | Vorgabe -13.37 dB | Suche -14.13 dB
+    knick_tiefe_db_3   Salamander -23.59 dB | Vorgabe -21.22 dB (h) | Suche -13.26 dB
+    t60_spaet          Salamander 30.47 s | Vorgabe 14.13 s | Suche 29.29 s (h)
+    t60_spaet_2        Salamander 20.45 s | Vorgabe 12.02 s | Suche 23.36 s (h)
+    t60_spaet_3        Salamander 29.74 s | Vorgabe 9.15 s | Suche 22.26 s
+  Schwebung: hoerbar getroffen Vorgabe 0 von 4, Suche 1 von 4
+    schwebung_db_2     Salamander 7.54 dB | Vorgabe 3.37 dB | Suche 6.49 dB (h)
+    schwebung_db_3     Salamander 7.06 dB | Vorgabe 3.42 dB | Suche 1.11 dB
+    tiefe_db_2         Salamander 13.34 dB | Vorgabe 51.02 dB | Suche 21.53 dB
+    tiefe_db_3         Salamander 10.37 dB | Vorgabe 48.79 dB | Suche 15.69 dB
+04_c4_p.wav: c4 p (Salamander v6, Stufe -20 dB), je 14.2 s; u an der Stufe Vorgabe 0.000, Suche 0.398; Verstaerkung 5.9 / 33.4 / 34.0 dB
+05_c4_mf.wav: c4 mf (Salamander v10, Stufe -12 dB), je 13.6 s; u an der Stufe Vorgabe 0.000, Suche 0.265; Verstaerkung 1.7 / 24.2 / 28.1 dB
+06_c4_ff.wav: c4 ff (Salamander v16, Stufe 0 dB), je 13.6 s; u an der Stufe Vorgabe 0.000, Suche 0.000; Verstaerkung -2.8 / 13.8 / 17.1 dB
+  Frage: je Datei Laenge, Nachklang, Schwebung — ist 2 oder 3 naeher an 1? Wo 3 naeher ist: die Schwebung der
+  Suche (u, gamma, delta) als Wert nehmen, oder zu stark / zu schwach / metallisch / passt?
+
+== c6 (MIDI 84, 3 Saiten) ==
+Kurven an der Taste, Vorgabe -> Suche: decay 1.075 -> 1.143; lateDecay 3.225 -> 4.869; highDecay 0.336 -> 0.076; detune 2.885 -> 0.530; u leise 0.000 -> 0.949; u laut 0.000 -> 0.905; gamma 0.000 -> 18.437; delta 0.000 -> 1.074; h 0.000 -> 0.015;
+Summe r^2 Vorgabe 653.4, Suche 9.8
+  Laenge: hoerbar getroffen Vorgabe 2 von 6, Suche 6 von 6
+    huelle_20_s        Salamander 0.58 s | Vorgabe 0.21 s | Suche 0.35 s (h)
+    huelle_30_s        Salamander 0.92 s | Vorgabe 0.55 s | Suche 0.90 s (h)
+    huelle_40_s        Salamander 1.64 s | Vorgabe 0.62 s | Suche 1.50 s (h)
+    vorwaerts_t60      Salamander 1.50 s | Vorgabe 1.10 s (h) | Suche 1.21 s (h)
+    vorwaerts_t60_2    Salamander 1.32 s | Vorgabe 2.19 s | Suche 1.34 s (h)
+    vorwaerts_t60_3    Salamander 1.39 s | Vorgabe 1.76 s (h) | Suche 1.19 s (h)
+  Nachklang: hoerbar getroffen Vorgabe 2 von 6, Suche 4 von 6
+    knick_tiefe_db     Salamander -26.04 dB | Vorgabe -26.79 dB (h) | Suche -25.01 dB (h)
+    knick_tiefe_db_2   Salamander -35.19 dB | Vorgabe -27.30 dB | Suche -34.88 dB (h)
+    knick_tiefe_db_3   Salamander -21.89 dB | Vorgabe -20.57 dB (h) | Suche -32.57 dB
+    t60_spaet          Salamander 6.98 s | Vorgabe 1.97 s | Suche 3.76 s
+    t60_spaet_2        Salamander 6.36 s | Vorgabe 1.82 s | Suche 6.34 s (h)
+    t60_spaet_3        Salamander 3.65 s | Vorgabe 1.63 s | Suche 3.63 s (h)
+  Schwebung: hoerbar getroffen Vorgabe 2 von 6, Suche 6 von 6
+    schwebung_db_1     Salamander 4.91 dB | Vorgabe 0.62 dB (h) | Suche 7.84 dB (h)
+    schwebung_db_2     Salamander 3.90 dB | Vorgabe 1.57 dB | Suche 3.58 dB (h)
+    schwebung_db_3     Salamander 3.03 dB | Vorgabe 1.14 dB (h) | Suche 4.19 dB (h)
+    tiefe_db_1         Salamander 14.60 dB | Vorgabe 45.63 dB | Suche 22.25 dB (h)
+    tiefe_db_2         Salamander 19.49 dB | Vorgabe 34.29 dB | Suche 16.12 dB (h)
+    tiefe_db_3         Salamander 12.63 dB | Vorgabe 34.28 dB | Suche 12.52 dB (h)
+07_c6_p.wav: c6 p (Salamander v6, Stufe -20 dB), je 4.5 s; u an der Stufe Vorgabe 0.000, Suche 0.949; Verstaerkung 12.6 / 33.2 / 33.9 dB; gemeinsam 2.5 dB leiser
+08_c6_mf.wav: c6 mf (Salamander v10, Stufe -12 dB), je 4.2 s; u an der Stufe Vorgabe 0.000, Suche 0.934; Verstaerkung 5.3 / 22.0 / 22.6 dB; gemeinsam 1.6 dB leiser
+09_c6_ff.wav: c6 ff (Salamander v16, Stufe 0 dB), je 4.3 s; u an der Stufe Vorgabe 0.000, Suche 0.905; Verstaerkung -1.8 / 8.9 / 8.2 dB; gemeinsam 2.6 dB leiser
+  Frage: je Datei Laenge, Nachklang, Schwebung — ist 2 oder 3 naeher an 1? Wo 3 naeher ist: die Schwebung der
+  Suche (u, gamma, delta) als Wert nehmen, oder zu stark / zu schwach / metallisch / passt?
+
+Die Wahl je Taste kommt in Schritt 8.6 als Stuetzpunkte von u, gamma, delta in baueVorgabe() (Konzept §4.1,
+Teilplan 31d-8, PV1 a); zwischen 33, 60, 84 interpoliert, innerhalb SQ2 a.
+
+Blind vergleichen: python -X utf8 -I tools/hoertest/hoertest.py C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/.claude/handover/hoerproben_pv1 (einzeln/ und hoertest.json; die Antworten landen in antworten.jsonl daneben).

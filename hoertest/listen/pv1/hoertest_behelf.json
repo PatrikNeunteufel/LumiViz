@@ -1,0 +1,468 @@
+{
+    "fragen": [
+        {
+            "id": "gesamt",
+            "links": "gar nicht",
+            "rechts": "ganz",
+            "text": "Klingt wie ein echter Flügel"
+        },
+        {
+            "id": "farbe",
+            "links": "dumpf",
+            "rechts": "hell, farbig",
+            "text": "Klangfarbe"
+        },
+        {
+            "id": "hohl",
+            "links": "gar nicht",
+            "rechts": "stark",
+            "text": "Hohl, ein einzelner Sinus hörbar"
+        },
+        {
+            "id": "laenge",
+            "links": "kurz",
+            "rechts": "lang",
+            "text": "Länge: wie lange man den Ton hört"
+        },
+        {
+            "id": "nachklang",
+            "links": "keiner",
+            "rechts": "deutlich",
+            "text": "Nachklang: leiser Rest nach dem ersten Abklingen"
+        },
+        {
+            "id": "schwebung",
+            "links": "ruhig",
+            "rechts": "stark",
+            "text": "Schwebung: Wabern, Pulsieren"
+        }
+    ],
+    "klaenge": [
+        {
+            "datei": "einzeln/k33_p_salamander.wav",
+            "fassung": "salamander",
+            "id": "k33_p_salamander",
+            "name": "a1",
+            "sekunden": 21.6,
+            "staerke": "p",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_p_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k33_p_vorgabe",
+            "name": "a1",
+            "sekunden": 21.6,
+            "staerke": "p",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_p_suche.wav",
+            "fassung": "suche",
+            "id": "k33_p_suche",
+            "name": "a1",
+            "sekunden": 21.6,
+            "staerke": "p",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_mf_salamander.wav",
+            "fassung": "salamander",
+            "id": "k33_mf_salamander",
+            "name": "a1",
+            "sekunden": 21.4,
+            "staerke": "mf",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_mf_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k33_mf_vorgabe",
+            "name": "a1",
+            "sekunden": 21.4,
+            "staerke": "mf",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_mf_suche.wav",
+            "fassung": "suche",
+            "id": "k33_mf_suche",
+            "name": "a1",
+            "sekunden": 21.4,
+            "staerke": "mf",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_ff_salamander.wav",
+            "fassung": "salamander",
+            "id": "k33_ff_salamander",
+            "name": "a1",
+            "sekunden": 21.25,
+            "staerke": "ff",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_ff_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k33_ff_vorgabe",
+            "name": "a1",
+            "sekunden": 21.25,
+            "staerke": "ff",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k33_ff_suche.wav",
+            "fassung": "suche",
+            "id": "k33_ff_suche",
+            "name": "a1",
+            "sekunden": 21.25,
+            "staerke": "ff",
+            "taste": 33
+        },
+        {
+            "datei": "einzeln/k60_p_salamander.wav",
+            "fassung": "salamander",
+            "id": "k60_p_salamander",
+            "name": "c4",
+            "sekunden": 14.25,
+            "staerke": "p",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_p_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k60_p_vorgabe",
+            "name": "c4",
+            "sekunden": 14.25,
+            "staerke": "p",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_p_suche.wav",
+            "fassung": "suche",
+            "id": "k60_p_suche",
+            "name": "c4",
+            "sekunden": 14.25,
+            "staerke": "p",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_mf_salamander.wav",
+            "fassung": "salamander",
+            "id": "k60_mf_salamander",
+            "name": "c4",
+            "sekunden": 13.6,
+            "staerke": "mf",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_mf_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k60_mf_vorgabe",
+            "name": "c4",
+            "sekunden": 13.6,
+            "staerke": "mf",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_mf_suche.wav",
+            "fassung": "suche",
+            "id": "k60_mf_suche",
+            "name": "c4",
+            "sekunden": 13.6,
+            "staerke": "mf",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_ff_salamander.wav",
+            "fassung": "salamander",
+            "id": "k60_ff_salamander",
+            "name": "c4",
+            "sekunden": 13.55,
+            "staerke": "ff",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_ff_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k60_ff_vorgabe",
+            "name": "c4",
+            "sekunden": 13.55,
+            "staerke": "ff",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k60_ff_suche.wav",
+            "fassung": "suche",
+            "id": "k60_ff_suche",
+            "name": "c4",
+            "sekunden": 13.55,
+            "staerke": "ff",
+            "taste": 60
+        },
+        {
+            "datei": "einzeln/k84_p_salamander.wav",
+            "fassung": "salamander",
+            "id": "k84_p_salamander",
+            "name": "c6",
+            "sekunden": 4.45,
+            "staerke": "p",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_p_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k84_p_vorgabe",
+            "name": "c6",
+            "sekunden": 4.45,
+            "staerke": "p",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_p_suche.wav",
+            "fassung": "suche",
+            "id": "k84_p_suche",
+            "name": "c6",
+            "sekunden": 4.45,
+            "staerke": "p",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_mf_salamander.wav",
+            "fassung": "salamander",
+            "id": "k84_mf_salamander",
+            "name": "c6",
+            "sekunden": 4.2,
+            "staerke": "mf",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_mf_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k84_mf_vorgabe",
+            "name": "c6",
+            "sekunden": 4.2,
+            "staerke": "mf",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_mf_suche.wav",
+            "fassung": "suche",
+            "id": "k84_mf_suche",
+            "name": "c6",
+            "sekunden": 4.2,
+            "staerke": "mf",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_ff_salamander.wav",
+            "fassung": "salamander",
+            "id": "k84_ff_salamander",
+            "name": "c6",
+            "sekunden": 4.3,
+            "staerke": "ff",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_ff_vorgabe.wav",
+            "fassung": "vorgabe",
+            "id": "k84_ff_vorgabe",
+            "name": "c6",
+            "sekunden": 4.3,
+            "staerke": "ff",
+            "taste": 84
+        },
+        {
+            "datei": "einzeln/k84_ff_suche.wav",
+            "fassung": "suche",
+            "id": "k84_ff_suche",
+            "name": "c6",
+            "sekunden": 4.3,
+            "staerke": "ff",
+            "taste": 84
+        }
+    ],
+    "titel": "PV1 a: Salamander, Vorgabe, Suche ohne A4",
+    "vergleiche": [
+        {
+            "a": "k33_p_salamander",
+            "b": "k33_p_vorgabe",
+            "id": "k33_p_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_p_vorgabe",
+            "b": "k33_p_suche",
+            "id": "k33_p_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_p_salamander",
+            "b": "k33_p_suche",
+            "id": "k33_p_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_mf_salamander",
+            "b": "k33_mf_vorgabe",
+            "id": "k33_mf_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_mf_vorgabe",
+            "b": "k33_mf_suche",
+            "id": "k33_mf_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_mf_salamander",
+            "b": "k33_mf_suche",
+            "id": "k33_mf_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_mf_vorgabe",
+            "b": "k33_mf_vorgabe",
+            "id": "k33_mf_vorgabe_vorgabe",
+            "kontrolle": true
+        },
+        {
+            "a": "k33_ff_salamander",
+            "b": "k33_ff_vorgabe",
+            "id": "k33_ff_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_ff_vorgabe",
+            "b": "k33_ff_suche",
+            "id": "k33_ff_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k33_ff_salamander",
+            "b": "k33_ff_suche",
+            "id": "k33_ff_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_p_salamander",
+            "b": "k60_p_vorgabe",
+            "id": "k60_p_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_p_vorgabe",
+            "b": "k60_p_suche",
+            "id": "k60_p_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_p_salamander",
+            "b": "k60_p_suche",
+            "id": "k60_p_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_mf_salamander",
+            "b": "k60_mf_vorgabe",
+            "id": "k60_mf_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_mf_vorgabe",
+            "b": "k60_mf_suche",
+            "id": "k60_mf_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_mf_salamander",
+            "b": "k60_mf_suche",
+            "id": "k60_mf_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_mf_suche",
+            "b": "k60_mf_suche",
+            "id": "k60_mf_suche_suche",
+            "kontrolle": true
+        },
+        {
+            "a": "k60_ff_salamander",
+            "b": "k60_ff_vorgabe",
+            "id": "k60_ff_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_ff_vorgabe",
+            "b": "k60_ff_suche",
+            "id": "k60_ff_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k60_ff_salamander",
+            "b": "k60_ff_suche",
+            "id": "k60_ff_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_p_salamander",
+            "b": "k84_p_vorgabe",
+            "id": "k84_p_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_p_vorgabe",
+            "b": "k84_p_suche",
+            "id": "k84_p_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_p_salamander",
+            "b": "k84_p_suche",
+            "id": "k84_p_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_mf_salamander",
+            "b": "k84_mf_vorgabe",
+            "id": "k84_mf_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_mf_vorgabe",
+            "b": "k84_mf_suche",
+            "id": "k84_mf_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_mf_salamander",
+            "b": "k84_mf_suche",
+            "id": "k84_mf_salamander_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_mf_salamander",
+            "b": "k84_mf_salamander",
+            "id": "k84_mf_salamander_salamander",
+            "kontrolle": true
+        },
+        {
+            "a": "k84_ff_salamander",
+            "b": "k84_ff_vorgabe",
+            "id": "k84_ff_salamander_vorgabe",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_ff_vorgabe",
+            "b": "k84_ff_suche",
+            "id": "k84_ff_vorgabe_suche",
+            "kontrolle": false
+        },
+        {
+            "a": "k84_ff_salamander",
+            "b": "k84_ff_suche",
+            "id": "k84_ff_salamander_suche",
+            "kontrolle": false
+        }
+    ]
+}

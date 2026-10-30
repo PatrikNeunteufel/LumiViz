@@ -23,5 +23,12 @@
   zufällig, laufen abwechselnd bis „Weiter“, nur A / nur B, ganzer Ton oder nur der Anfang, je Klang sechs Fragen
   auf 1–5 und welcher mehr nach Flügel klingt). Das Werkzeug `LUMIVIZ_PV1_WAV` schreibt dazu jede Fassung einzeln und
   `hoertest.json`: 27 Paare und drei Kontrollpaare (zweimal derselbe Klang).
+- **Hörtest als eigenes Werkzeug** (Entscheide HT1 a bis HT4 a): Der Hörtest wird ein eigenes Projekt `HörTest_Helper`
+  neben SichtTest_Helper, als Qt-Programm. Es dient für alle Instrumente, mit vier Prüfarten (Einzelklang, Paar, ABX,
+  Reihe), Merkmalen mit Erklärung und Hörbeispielen, Kontrollen in drei Stufen und mehreren Prüfern. Kataloge, Listen
+  und Klänge liefert LumiViz in einem eigenen Ordner `hoertest/`. Versioniert werden dort Listen und Antworten; die
+  Klänge schreibt das Werkzeug des Tests neu (HT8 a). Die Tonausgabe übernimmt miniaudio, BASS ist das Ausweichen
+  (HT5 a). Eine Hüllkurve erscheint erst nach der Antwort (HT6 a). Angelegt sind Konzept und Bau-Dateien; gebaut ist
+  noch nichts. `tools/hoertest/` bleibt bis dahin der Behelf.
 - Tests: 1677 Cases (+1 Werkzeug); der neue Fall unter Release-clang grün (271 Prüfungen, rund 25 s), die Datei 4 / 4;
   Testing-MSVC gebaut, kein Lauf (UF17-1 a); kein Rechenkern berührt.

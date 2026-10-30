@@ -3890,7 +3890,7 @@ die übrigen 24 Tasten braucht ZZ1 a nicht), c (das Glätte-Kriterium nachträgl
 als Anteil bei fester Frequenz misst, ist in jedem schwebungsverschiebenden Parameter wellig; das hätte vor V2 a geprüft
 werden müssen, jetzt wäre es das Verschieben des Ziels nach dem Ergebnis). Kippt auf c als neuen, dritten Anlauf, wenn
 Patrik die Treue zu *Salamander* höher stellt als den gesetzten Ausstieg; auf b, wenn er an mehr als drei Tasten
-Vorschläge für das Gehör will. Lehre für InstrumentsCalculation: L16 (`LEHREN_SETZEN_FLUEGEL.md` §5).
+Vorschläge für das Gehör will. Lehre für InstrumentsCalculation: L16 (`LEHREN_SETZEN_FLUEGEL.md` §6).
 
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
