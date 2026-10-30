@@ -4,7 +4,7 @@ Aufruf (normales Python mit Pillow):
 
     python asset/img/logo/icons/build_lvfx2_icons.py
 
-Erzeugt dreiundzwanzig .ico (16–256 px) neben diesem Skript:
+Erzeugt vierundzwanzig .ico (16–256 px) neben diesem Skript:
 
 - `lumiviz_lvfx2.ico`   „Stapel"  — das Icon vorn, zwei abgedunkelte Kopien
                         versetzt dahinter. Das Datei-Icon fuer `.lvfx2`
@@ -42,6 +42,8 @@ Erzeugt dreiundzwanzig .ico (16–256 px) neben diesem Skript:
                         Loop Stufe 33).
 - `lumiviz_lvchords.ico` „Marke" mit drei Griffbildern hintereinander — das Datei-Icon fuer
                         die Sammlungen der mitgelieferten Akkorde `.lvchords` (Session 167, I1 a).
+- `lumiviz_lvp.ico`     „Marke" mit fuenf Equalizer-Balken — das Datei-Icon fuer die Presets
+                        der klassischen Visualizer `.lvp` (Session 167, I1 a).
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 - `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
@@ -310,6 +312,20 @@ def zeichen_griffbild(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
         d.ellipse((x - k, y - k, x + k, y + k), fill=(*farbe, 255))
 
 
+def zeichen_balken(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Das Preset eines klassischen Visualizers (Session 167, `.lvp`, nach I1 a): fuenf
+    Balken eines Equalizers in den Farben des Logos, auf einer gemeinsamen Grundlinie."""
+    hoehen = (0.45, 0.80, 1.00, 0.62, 0.35)
+    farben = (CYAN, CYAN, MAGENTA, BERNSTEIN, BERNSTEIN)
+    b, luecke = int(r * 0.20), int(r * 0.07)
+    x0 = cx - (5 * b + 4 * luecke) // 2
+    unten = cy + int(r * 0.50)
+    for i, (hoehe, farbe) in enumerate(zip(hoehen, farben)):
+        x = x0 + i * (b + luecke)
+        d.rounded_rectangle((x, unten - int(r * 1.00 * hoehe), x + b, unten), radius=int(b * 0.25),
+                            fill=(*farbe, 255))
+
+
 def zeichen_griffbilder(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
     """Eine Sammlung von Akkorden (Session 167, `.lvchords`, nach I1 a): drei kleine
     Griffbilder hintereinander, das vordere mit Fingern in den Farben des Logos."""
@@ -533,6 +549,8 @@ def main() -> int:
     als_ico(marke(icon, zeichen_spur), "lumiviz_lvtrack.ico")
     # Session 167: die Sammlungen der mitgelieferten Akkorde (.lvchords, nach I1 a)
     als_ico(marke(icon, zeichen_griffbilder), "lumiviz_lvchords.ico")
+    # Session 167: die Presets der klassischen Visualizer (.lvp, nach I1 a)
+    als_ico(marke(icon, zeichen_balken), "lumiviz_lvp.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     als_ico(komposition(icon), "lumiviz_lvcomp.ico")
     # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein

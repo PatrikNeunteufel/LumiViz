@@ -26,6 +26,7 @@ Windows).
 | `.lvinst` (Instrument, S120) | `lumiviz_lvinst.ico` — Marke mit Klaviertasten | erzeugt aus `lumiviz.ico` | Instrument-Editor (Kopfzeile), Import data (Liste) |
 | `.lvkit` (Drum-Kit, S124) | `lumiviz_lvkit.ico` — Marke mit Snare und gekreuzten Sticks (Entscheide Patrik I1 a, I2 a) | erzeugt aus `lumiviz.ico` | Drum-Editor (Knopf Kit), Import data (Liste) |
 | `.lvchord` (Akkord: Griffbild oder Voicing, S137) | `lumiviz_lvchord.ico` — Marke mit einem Griffbild (Entscheid S-T3 a, Wunsch Patrik) | erzeugt aus `lumiviz.ico` | noch nicht (Fenster Chords, Stufe 26e) |
+| `.lvp` (Preset eines klassischen Visualizers: Equalizer, Oscilloscope, Superscope, Waveform, Pulsing; S167) | `lumiviz_lvp.ico` — Marke mit fünf Equalizer-Balken (nach I1 a; Entscheid Patrik LP1 a, S167: eigene Marke statt `lumiviz.ico` wie `.lvfx` — die beiden Formate sind nicht austauschbar; kippt, wenn `.lvp` in `.lvfx` aufgeht) | erzeugt aus `lumiviz.ico` | noch nicht (nur im Explorer) |
 | `.lvchords` (Sammlung der mitgelieferten Akkorde, S167, AK1 a) | `lumiviz_lvchords.ico` — Marke mit drei Griffbildern hintereinander (nach I1 a) | erzeugt aus `lumiviz.ico` | noch nicht (nur im Explorer) |
 | `.lvpattern` (Muster eines Loops, S167) | `lumiviz_lvpattern.ico` — Marke mit Noten einer Piano-Roll | erzeugt aus `lumiviz.ico` | Publish, Import data |
 | `.lvclip` (Clip eines Loops, S167) | `lumiviz_lvclip.ico` — Marke mit einem Clip und der Naht zur Wiederholung | erzeugt aus `lumiviz.ico` | Publish, Import data |
@@ -58,6 +59,7 @@ zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
 | ![lumiviz_lvinst](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinst.png) | `lumiviz_lvinst.ico` | `.lvinst` |
 | ![lumiviz_lvkit](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvkit.png) | `lumiviz_lvkit.ico` | `.lvkit` |
 | ![lumiviz_lvchord](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvchord.png) | `lumiviz_lvchord.ico` | `.lvchord` |
+| ![lumiviz_lvp](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvp.png) | `lumiviz_lvp.ico` | `.lvp` |
 | ![lumiviz_lvchords](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvchords.png) | `lumiviz_lvchords.ico` | `.lvchords` |
 | ![lumiviz_lvpattern](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvpattern.png) | `lumiviz_lvpattern.ico` | `.lvpattern` |
 | ![lumiviz_lvclip](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvclip.png) | `lumiviz_lvclip.ico` | `.lvclip` |
@@ -85,8 +87,8 @@ zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
 
 **Diese Tabellen sind die Liste der zugewiesenen Icons** (Stand S120, 2026-10-13).
 Ohne eigenes Icon sind heute: Knoten-Voreinstellungen (`.json`, ohne eigene
-Endung), Playlists (`.m3u8`), die Presets der einzelnen Visualizer (`.lvp` —
-in S120 nicht nachgesehen, ob das Format noch geschrieben wird).
+Endung) und Playlists (`.m3u8`). Die Presets der einzelnen Visualizer (`.lvp`) haben
+seit S167 eines — das Format wird noch geschrieben (Config-Panel, `presets/visuals/<id>/`).
 
 **Die acht Icons aus S120** (Entscheid Patrik I1 a: alle als Marke mit einem
 Zeichen im Kreis; die Zeichen an vier Vorschaublättern gewählt — für `.lvloop`
@@ -119,6 +121,7 @@ eintragen"; die Liste im Skript und diese Tabelle zusammen pflegen):
 | `.lvinst` | `LumiViz.Instrument` | `lumiviz_lvinst.ico` | `-Apply` |
 | `.lvkit` | `LumiViz.Kit` | `lumiviz_lvkit.ico` | `-Apply` (S124) |
 | `.lvchord` | `LumiViz.Chord` | `lumiviz_lvchord.ico` | `-Apply` (S137) |
+| `.lvp` | `LumiViz.VisualizerPreset` | `lumiviz_lvp.ico` | `-Apply` (S167) |
 | `.lvchords` | `LumiViz.ChordCollection` | `lumiviz_lvchords.ico` | `-Apply` (S167) |
 | `.lvpattern` | `LumiViz.Pattern` | `lumiviz_lvpattern.ico` | `-Apply` (S167) |
 | `.lvclip` | `LumiViz.Clip` | `lumiviz_lvclip.ico` | `-Apply` (S167) |
@@ -198,7 +201,7 @@ powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icon
 - **`-Apply`** trägt die eigenen Endungen ein (`.lvfx`, `.lvfx2`, `.lvkar`,
   `.lvtrail`, `.lvcomp`, seit S120 `.lvloop`, `.lvinst`, `.lvcontour`,
   `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, seit S124 `.lvkit`, seit S137 `.lvchord`, seit S147
-  `.lvinstbodyplan` und `.lvinstbody`, seit S167 `.lvchords`, `.lvpattern`, `.lvclip`, `.lvtrack`), **`-Foreign`** dazu `.avs`,
+  `.lvinstbodyplan` und `.lvinstbody`, seit S167 `.lvp`, `.lvchords`, `.lvpattern`, `.lvclip`, `.lvtrack`), **`-Foreign`** dazu `.avs`,
   `.milk`, `.milk2`, `.lrc`, `.grad`. Audioformate nie.
 - **`-Remove`** entfernt genau die eigenen Einträge (Schlüssel `LumiViz.*` und
   Endungen, die auf einen davon zeigen).
