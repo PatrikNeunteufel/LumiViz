@@ -1333,8 +1333,12 @@ bool speichereLoop(const Loop& loop, const QString& pfad)
 {
     QSaveFile datei(pfad);
     if (!datei.open(QIODevice::WriteOnly)) return false;
-    const QJsonDocument doc(alsJson(loop, QFileInfo(pfad).absolutePath()));
-    return datei.write(zahlenreihenAufEineZeile(doc.toJson(QJsonDocument::Indented))) >= 0 && datei.commit();
+    return datei.write(loopDateiText(alsJson(loop, QFileInfo(pfad).absolutePath()))) >= 0 && datei.commit();
+}
+
+QByteArray loopDateiText(const QJsonObject& wurzel)
+{
+    return zahlenreihenAufEineZeile(QJsonDocument(wurzel).toJson(QJsonDocument::Indented));
 }
 
 bool ladeLoop(const QString& pfad, Loop& loop, QStringList* bericht)

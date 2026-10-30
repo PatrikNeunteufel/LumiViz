@@ -700,5 +700,8 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner =
 
 bool speichereLoop(const Loop& loop, const QString& pfad);
 bool ladeLoop(const QString& pfad, Loop& loop, QStringList* bericht = nullptr);
+/// JSON als Text, wie eine `.lvloop` ihn schreibt: eingerueckt, Zahlenreihen auf
+/// einer Zeile (auch fuer Dateien, die einen Loop tragen — Stufe 33, `Austausch.hpp`).
+[[nodiscard]] QByteArray loopDateiText(const QJsonObject& wurzel);
 
 }  // namespace lumi::loop

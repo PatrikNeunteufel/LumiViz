@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.108.0
-> **Datum:** 2026-10-28 (Session 158)
+> **Version:** 0.109.0
+> **Datum:** 2026-10-30 (Session 167)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3927,6 +3927,82 @@ Bezug, derselbe Bezug in Programm und Skript. **Offen:** Load instrument als Sch
 ein Instrument über 1 wird dabei leiser; die Kits (27d) spielen die Instrumente mit dem neuen
 Pegel, bis 27d sie nachzieht.
 
+## 4o. Muster, Clips und Spuren als Dateien (Stufe 33 — Entscheide Patrik S167)
+
+**Wunsch Patrik (S167):** eigene Kreationen in anderen Loops wiederverwenden — ein Muster
+(„alles, was im Pattern-Editor editiert wurde“, mit der Angabe des Instruments), ein Clip und
+eine ganze Spur mit den Wiederholungen ihrer Clips, den Effekten und der Lautstärke. Kein Paket:
+genannt wird, was das Muster spielt, mitgepackt wird nichts (dafür gibt es Publish).
+
+### Die Entscheide
+
+- **PE1** (Patrik): Speichern und Laden über Dateidialoge; Vorgabe ist der Benutzerordner
+  (`patterns` für `.lvpattern`, `tracks` für `.lvtrack` und `.lvclip`), gespeichert und geladen
+  werden kann überall. Keine eigene Liste, kein Fenster.
+- **PE1-1 a:** Datensicherung mit zwei Bereichen *Patterns* und *Tracks*; Publish kennt die Arten
+  `lvpattern`, `lvclip`, `lvtrack` und packt die genannten eigenen Instrumente, Kits und Samples
+  mit wie bei einer `.lvloop`.
+- **PE2 a:** Ein Muster aus einem anderen Raster oder einer anderen Taktart wird nach **Schlägen**
+  umgerechnet: Noten landen auf dem nächsten Schritt, den Rest trägt `versatzAnfang`/`versatzEnde`
+  (zeitlich genau); Schläge eines Drum-Musters auf den nächsten Schritt, zwei auf einem werden
+  einer (der lautere), der Import meldet, wie viele verschoben wurden; Takte aus den Schlägen,
+  aufgerundet. Gleiches Raster: Bit für Bit unverändert.
+- **PE3 b:** Die Clips einer `.lvtrack` behalten ihre Takte; der Import legt einen neuen Kanal an.
+- **LC1 a:** `.lvclip` ist ein Clip als Baustein — sein Muster ganz, Wiederholungen, Effekte,
+  *FX*, Expression, Freeze-Abdruck; Drum und Instrument; umgerechnet nach PE2 a, wenn das Raster
+  abweicht.
+
+### Was festliegt (von Claude gesetzt, S167)
+
+- **Eine Quelle für das Format:** jede der drei Dateien trägt einen kleinen Loop —
+  `{"format": "lumiviz-pattern" | "lumiviz-clip" | "lumiviz-track", "version": 1, "loop": <das
+  Objekt einer .lvloop>}`. Geschrieben und gelesen mit `alsJson`/`ausJson` des Loops, also mit
+  jeder Fassung und Umstellung der `.lvloop` von selbst; Pfade eigener Dateien relativ zur Datei
+  wie dort. Raster und Taktart stehen darin (`beatsPerBar`, `stepsPerBeat`); Tempo, Swing,
+  Lautstärke und Limiter des kleinen Loops werden beim Import nicht übernommen.
+  - `.lvpattern`: ein Muster, kein Kanal.
+  - `.lvclip`: ein Kanal mit einem Clip ab Takt 0 und sein Muster.
+  - `.lvtrack`: der Kanal (Name, an, Fader) mit allen Clips an ihren Takten und jedes Muster, das
+    ein Clip nennt.
+- **Später Wave-Muster** (Stufe 15): kommen als eigene Art des Musters in derselben Datei dazu,
+  ohne neue Fassung der Hülle.
+- **Namen:** steht im Ziel ein Muster gleichen Namens mit gleichem Inhalt, wird es mitbenutzt;
+  mit anderem Inhalt bekommt das neue `_2`, `_3`, … wie *Keep both*.
+- **Fehlt** ein genanntes Instrument, Kit oder Sample, meldet der Loop es wie beim Öffnen einer
+  `.lvloop`.
+- **Bedienung** (über die Menüs der Taktachse, Undo über den CommandBus):
+  - am Clip: *Export pattern...* (seine Basis) und *Export clip...*;
+  - am Kopf eines Kanals: *Export track...*;
+  - auf einem freien Takt eines Kanals, neben *New drumkit clip*: *Import pattern...* (ein Clip
+    mit einer Wiederholung) und *Import clip...*, beide ab diesem Takt in diesem Kanal; reicht
+    der Platz bis zum nächsten Clip nicht, kommt der Clip in einen neuen Kanal (mit Meldung);
+  - auf der freien Fläche, neben *Add channel*: *Import track...*.
+- **Umrechnung im Clip:** die Expression-Kurve steht in Takten — umgerechnet über die Schläge wie
+  das Muster; Start und Wiederholungen bleiben (PE3 b: Takt n bleibt Takt n).
+- **Icons** `lumiviz_lvpattern`, `lumiviz_lvclip`, `lumiviz_lvtrack` aus
+  `asset/img/logo/icons/build_lvfx2_icons.py`, im Stil von `lvchord`.
+
+### Teilschritte (fest)
+
+| Schritt | Inhalt | Stand |
+|---|---|---|
+| 33a | Modell und Datei: `loop/Austausch` — herauslösen (`musterDatei`, `clipDatei`, `spurDatei`), schreiben, lesen, die drei Formate; Tests | erledigt 2026-10-30 (S167, `test_LoopAustausch` 33a) |
+| 33b | Umrechnung nach PE2 a: Noten mit Versatz, Drum-Zeilen, Akkord-Einträge, Spuren über der Zeit, Expression am Clip, Takte; Bericht der verschobenen Schläge; Tests mit Bezug | erledigt 2026-10-30 (S167, `rechneUm`, `test_LoopAustausch` 33b) |
+| 33c | Einsetzen: Namen (mitbenutzen oder `_2`), Ort (Takt und Kanal, neuer Kanal); Tests (Undo mit 33d) | erledigt 2026-10-30 (S167, `setzeEin`, `test_LoopAustausch` 33c) |
+| 33d | Bedienung: die Menüs der Taktachse, Dateidialoge mit Benutzerordner als Vorgabe; Tests über die Taktachse mit Menü- und Dialogbeobachter, Bild | offen |
+| 33e | Datensicherung (zwei Bereiche), Publish (drei Arten), Icons | offen |
+| 33f | Abschluss: Benutzerhandbuch §16 und §17, Doku, Sichttest-Liste; Bereich und voller Lauf unter beiden Compilern (neue Dateiarten, UF17-1 a) | offen |
+
+**Wie 33a–33c gebaut sind (S167):** `loop/Austausch.hpp` — die Hülle schreibt `alsJson` des
+kleinen Loops unter `loop` (Text wie eine `.lvloop`: `loopDateiText`, neu in `Loop.hpp`), das
+Lesen prüft Format, Fassung und Gestalt der Art. `rechneUm` arbeitet am kleinen Loop vor dem
+Einsetzen; eine Note fällt auf den Schritt **an oder vor** ihrem Anfang (der Versatz ist nie
+negativ), ein Drum-Schlag auf den nächsten, bei genau halbem Abstand den früheren (sonst fiele
+der letzte Schlag hinter das Ende). `setzeEin` vergibt erst alle Namen, dann nennen die Clips die
+neuen — so trifft ein neuer Name (`Drums` → `Drums_2`) nie ein Muster der Datei, das selbst
+`Drums_2` heißt (das wird `Drums_2_2`). Gleiche Schläge in anderer Taktart ergeben dasselbe
+Muster und werden mitbenutzt.
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -3957,6 +4033,7 @@ Pegel, bis 27d sie nachzieht.
 | 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; **21c gebaut** (S124: das Fenster Kits, `loop/KitFenster`; die Auswahl Sound als Bauteil `loop/KlangAuswahl`; Edit kits... im Drum-Editor; `LoopPanel::spieleSchlaege`; die zuletzt geöffneten Loops; `test_LoopKitFenster.cpp`, drei Fälle, `LUMIVIZ_KIT_FENSTER_BILD`; im Programm ungesehen) ; **21d gebaut** (S124, Entscheide D1 a bis D6 a: 37 Stereo-Samples aus DrumGizmo, drei gerechnete Besen, Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes, Brush Swing; vierzehn Kits) ; **21e gemacht** (S124: Icon `lumiviz_lvkit.ico` — Entscheid I2 a, Fassung A: Snare von der Seite mit gekreuzten Sticks, am Vorschaublatt aus drei gewählt; am Knopf Kit und in Import data; `register_file_icons.ps1` mit `.lvkit`; Benutzerhandbuch 1.163.0 §16 „Kits", §17; Liste `Sichttest_Kits.md` (lokal); voller Lauf 1215 / 1215, 0 Skips) — **Stufe 21 fertig**, im Programm ungesehen bis auf Patriks ersten Blick (K10 a) |
 | 22 | **Kurze Muster, Auffüllen, Kopie mit Zeitraum, Springen** (§4m) | S124: Entscheide B1 a, B2 a, B3 a, B4 b; gebaut; `test_LoopTakteSprung.cpp`, vier Fälle; Benutzerhandbuch 1.165.0; **im Programm ungesehen** |
 | 18 | **Pan je Schicht und acht Schichten je Instrument** — die erste Stufe aus [Shape_Konzept.md](Shape_Konzept.md) §6a und §14 (Klang aus einer Form; die Stufen 19 und 20 stehen dort) | S120: Entscheid Z3 a (S119) und „Grenze auf acht" (Patrik S120, davor gemessen); **gebaut:** `Schicht::pan` mit dem Gesetz von Spur und Muster (links `min(1, 1 − pan)`, rechts `min(1, 1 + pan)`), `kSchichtenMax` 8, `.lvinst` Fassung 8; im Creator der Regler **Pan** im Kasten Level, der Kasten nennt ihn neben der Mitte; alte Instrumente rechnen Bit für Bit wie vorher (`test_LoopWerte` unverändert grün); ein neuer Fall in `test_LoopInstrument.cpp`, Ergänzungen in `test_LoopInstrumentEditor.cpp`; Benutzerhandbuch 1.153.0, Liste 10 Abschnitt V; **im Programm ungesehen und ungehört** |
+| 33 | **Muster, Clips und Spuren als Dateien** (§4o): `.lvpattern`, `.lvclip`, `.lvtrack`, Umrechnung des Rasters, Import und Export an der Taktachse | S167: Entscheide PE1, PE1-1 a, PE2 a, PE3 b, LC1 a; offen |
 | 27 | **Lautstärke im Loop** (§4n): Messung nach `audio/`, Instrumente und Kits auf einen Bezug, Fader je Kanal, Limiter, *Match level* | S139: Entscheide LL1 a bis LL14 a; gebaut 27a bis 27g — der volle Lauf steht aus (Patrik) |
 
 ---
@@ -4053,6 +4130,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.109.0** (S167, 2026-10-30): §4o NEU Muster, Clips und Spuren als Dateien (Stufe 33): `.lvpattern`, `.lvclip`, `.lvtrack`; Entscheide PE1, PE1-1 a, PE2 a, PE3 b, LC1 a; Teilschritte 33a–33f.
 - **0.108.0** (S158, 2026-10-28): §4n Befund zum langsamen Creator beim Flügel (gemessen); CR1 a (der Creator misst auf einem Thread, gemerkt, wie IP1 a); CR1 gebaut; `kPegelRate` in `loop/Pegel.hpp`.
 - **0.107.0** (S149, 2026-10-24): §4n Befund zum langsamen Öffnen des Fensters *Instruments* (Pegelmessung auf dem Thread der Oberfläche); IP1 a (im Hintergrund messen, gemerkt unter Abdruck und Klangfassung); IP1 gebaut.
 - **0.106.0** (S144, 2026-10-22): §3.2 der Audio-Clip im Loop kommt nach der Hammer-Saite (Patrik).

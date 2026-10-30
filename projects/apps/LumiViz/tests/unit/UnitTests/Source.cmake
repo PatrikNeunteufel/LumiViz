@@ -177,6 +177,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopTakteSprung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEffekteSchalter.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKern.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopAustausch.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWiedergabe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpieler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopComposerAbfragen.cpp"
