@@ -23,13 +23,24 @@
  * Proben fuer u (Stoss je Saite) an 33, 60, 84 bei mf und ff, γ und δ an 24 und 27 ab (Salamander
  * hat nur kleine Terzen; γ wirkt nur mit δ, δ nur an Tasten mit einer Saite) — je Datei Salamander
  * und vier Werte innerhalb SQ2 a; Patrik waehlt nach Gehoer (8.6).
+ *
+ * PV1 a (S164, ZZ1 a; gebaut S166): `LUMIVIZ_PV1_WAV=<Ordner>` mit `LUMIVIZ_SALAMANDER` legt je Taste 33, 60, 84 und
+ * Ebene der Suche (v6, v10, v16) Salamander | Vorgabe | Suche 7.5.12 "ohne A4" ab (der Punkt aus
+ * `proben/S165_suche2_probe_ohne_a4/ergebnis_1.txt`, nur Vorschlag fuer das Ohr), dazu in `liste.txt` je Taste die
+ * Groessen des Ziels gegen beide Fassungen, nach Laenge, Nachklang und Schwebung — Patrik setzt u, γ, δ nach Gehoer.
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
 #include "Fluegelmessung.hpp"
+#include "Hoerschwellen.hpp"
 #include "ModellMessung.hpp"
+#include "Modellton.hpp"
+#include "Strukturmessung.hpp"
+#include "Suche.hpp"
+#include "Suchkurven.hpp"
+#include "Zielsumme.hpp"
 
 #include "audio/Lautheit.hpp"
 #include "audio/WavDatei.hpp"
@@ -202,6 +213,50 @@ lumi::loop::Tastenkurve ueberall(double wert)
 std::string nummer(int nr)
 {
     return (nr < 10 ? "0" : "") + std::to_string(nr);
+}
+
+const std::filesystem::path kStrukturDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_struktur.txt";
+const std::filesystem::path kZielDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/salamander_ziel.txt";
+const std::filesystem::path kHoerschwellenDatei = "projects/apps/LumiViz/tests/unit/UnitTests/werte/hoerschwellen.txt";
+/// Der Weg "ohne A4" der Suche 7.5.12 (S165): hoerbar getroffen 60 von 104 an den sechs Tasten (PV1 a).
+const std::filesystem::path kSucheOhneA4 = "projects/apps/LumiViz/docs/modellierung/hammer-saite/proben/S165_suche2_probe_ohne_a4";
+
+std::string zahl(double wert, int stellen)
+{
+    std::ostringstream s;
+    s << std::fixed << std::setprecision(stellen) << wert;
+    return s.str();
+}
+
+/// Der Stoss an einer Stufe wie im Rechenkern (`HammerTon.cpp`, US2 a): leise und laut an ihren Stufen, dazwischen linear.
+double stossBei(const lumi::loop::HammerSaite& s, int midi, int stufe)
+{
+    const double zwischen = std::clamp(static_cast<double>(stufe - lumi::loop::kStossStufeLeise) /
+                                           (lumi::loop::kStossStufeLaut - lumi::loop::kStossStufeLeise),
+                                       0.0, 1.0);
+    const double leise = std::clamp(lumi::loop::wertAn(s.stossLeise, midi, lumi::loop::KurvenSkala::Linear), 0.0, 1.0);
+    const double laut = std::clamp(lumi::loop::wertAn(s.stossLaut, midi, lumi::loop::KurvenSkala::Linear), 0.0, 1.0);
+    return leise + zwischen * (laut - leise);
+}
+
+/// Worauf eine Groesse des Ziels hoert: Laenge (Huelle vorwaerts), Nachklang (spaete Stufe, Knick) oder Schwebung.
+const char* gehoerVon(const std::string& groesse)
+{
+    if (groesse.rfind("vorwaerts_t60", 0) == 0 || groesse.rfind("huelle_", 0) == 0) return "Laenge";
+    if (groesse.rfind("t60_spaet", 0) == 0 || groesse.rfind("knick_tiefe", 0) == 0) return "Nachklang";
+    if (groesse.rfind("schwebung", 0) == 0 || groesse.rfind("tiefe_db", 0) == 0) return "Schwebung";
+    return "sonst";
+}
+
+/// Σ r² einer Taste aus dem Abschnitt "Je Taste und Groesse" einer Ergebnisdatei der Suche; ohne die Zeile −1.
+double summeAusDatei(const std::string& text, int midi)
+{
+    const std::size_t abschnitt = text.find("## Je Taste und Groesse");
+    if (abschnitt == std::string::npos) return -1.0;
+    const std::string kopf = "\n" + std::to_string(midi) + " | ";
+    const std::size_t zeile = text.find(kopf, abschnitt);
+    if (zeile == std::string::npos) return -1.0;
+    return std::stod(text.substr(zeile + kopf.size()));
 }
 
 }  // namespace
@@ -537,6 +592,162 @@ TEST_CASE("Loop Salamander HU1 Diagnose (LUMIVIZ_HU1_WAV)")
             schreibe("k" + std::to_string(midi) + "_" + name + ".wav", ton);
         }
     }
+    std::ofstream(ziel / "liste.txt", std::ios::binary) << liste.str();
+    MESSAGE(liste.str());
+}
+
+TEST_CASE("Loop Salamander PV1 Hoerproben Vorgabe und Suche (LUMIVIZ_PV1_WAV)")
+{
+    // PV1 a (S164): die Probe 7.5.12 ist verfehlt, ZZ1 a gilt — Patrik setzt u, γ und δ nach Gehoer an 33, 60, 84. Je
+    // Taste und Ebene der Suche (v6, v10, v16 an den Stufen −20, −12, 0; SG1 a, V1 a) hintereinander Salamander, die
+    // Vorgabe und der Punkt der Suche "ohne A4" (Vorschlag fuer das Ohr, kein gesetzter Wert), wie in der Suche im
+    // Fluegel `fluegelMit`; jede Fassung auf −23 LUFS, gemeinsam unter −1 dBFS, gehalten wie Salamander vor der Blende,
+    // hoechstens 30 s. Die Liste stellt je Taste die Groessen des Ziels gegen beide Fassungen, gemessen wie in der Suche;
+    // Σ r² der Suche muss die Ergebnisdatei wiedergeben, sonst ist der Raum falsch gebaut.
+    const QString zielVariable = qEnvironmentVariable("LUMIVIZ_PV1_WAV");
+    const QString salamanderVariable = qEnvironmentVariable("LUMIVIZ_SALAMANDER");
+    if (zielVariable.isEmpty() || salamanderVariable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_PV1_WAV=<Ordner> mit LUMIVIZ_SALAMANDER=<Ordner> legt die Hoerproben PV1 a (Vorgabe und Suche ohne A4) ab");
+        return;
+    }
+    const std::filesystem::path ziel = zielVariable.toStdU16String();
+    const std::filesystem::path salamander = salamanderVariable.toStdU16String();
+    std::filesystem::create_directories(ziel);
+    REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
+    lumi::loop::tonspeicher().leere();
+
+    // der Punkt der Suche und ihr Raum; ergebnis_1.txt traegt die Zeile `optionen` nicht (sie steht in
+    // ergebnis_bester.txt, dort ist der beste je Taste Startpunkt 1 — derselbe Punkt)
+    const std::filesystem::path ergebnis = kSucheOhneA4 / "ergebnis_1.txt";
+    const std::filesystem::path bester = kSucheOhneA4 / "ergebnis_bester.txt";
+    const std::vector<double> x = modelltest::liesX(ergebnis);
+    REQUIRE_MESSAGE(!x.empty(), ergebnis.string());
+    std::optional<modelltest::SuchOptionen> optionen = modelltest::liesSuchOptionen(ergebnis);
+    if (!optionen)
+    {
+        REQUIRE(modelltest::liesX(bester) == x);
+        optionen = modelltest::liesSuchOptionen(bester);
+    }
+    REQUIRE(optionen.has_value());
+    const std::optional<Strukturen> strukturen = liesStruktur(kStrukturDatei);
+    const std::optional<Ziele> ziele = liesZiele(kZielDatei);
+    const HoerschwellenGelesen schwellen = liesHoerschwellen(kHoerschwellenDatei);
+    REQUIRE(strukturen.has_value());
+    REQUIRE(ziele.has_value());
+    REQUIRE_MESSAGE(schwellen.werte.has_value(), schwellen.fehler);
+    const std::vector<int> suchTasten{33, 48, 60, 66, 81, 84};  // die Tasten der Probe (ZF8 a), wie im Lauf
+    modelltest::Suchraum raum = modelltest::suchraum(lumi::loop::hammerSaiteVorgabe(), suchTasten, *strukturen, *optionen);
+    (void)modelltest::setzeDetuneAus(ergebnis, raum);
+    (void)modelltest::setzeFestAus(ergebnis, raum, "delta");
+    REQUIRE(x.size() == raum.zahl());
+    std::ostringstream gelesen;
+    gelesen << std::ifstream(ergebnis, std::ios::binary).rdbuf();
+    const std::string text = gelesen.str();
+    REQUIRE_MESSAGE(text.find(modelltest::kurvenText(raum, x)) != std::string::npos, "die Kurven weichen vom Abschnitt Kurven der Datei ab");
+
+    const lumi::loop::HammerSaite& vorgabeSaite = lumi::loop::hammerSaiteVorgabe();
+    const lumi::loop::HammerSaite sucheSaite = modelltest::saiteAus(raum, x);
+    const lumi::loop::Instrument vorgabe = modelltest::fluegelMit(vorgabeSaite);
+    const lumi::loop::Instrument suche = modelltest::fluegelMit(sucheSaite);
+
+    std::ostringstream liste;
+    liste << "Hoerproben PV1 a (31d-8, Schritt 8.5 nach ZZ1 a), gleich laut auf " << zahl(kZielLufs, 1) << " LUFS integriert (EBU R128).\n"
+          << "Salamander Grand Piano V3 (Yamaha C5), Alexander Holm 2011, CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/),\n"
+          << "Fassung 48 kHz/24 bit von archive.org; hier geschnitten und im Pegel angeglichen.\n"
+          << "Modell: Hammer-Saite mit dem Boden des Steinway D (lib:steinway_d), ungedaempft ab 89, wie in der Suche.\n\n"
+          << "Je Datei hintereinander, mit einer Sekunde Stille:\n"
+          << "  1 Salamander | 2 Vorgabe (31d-4, heute im Programm) | 3 Suche 7.5.12 ohne A4 (nur Vorschlag fuer das Ohr)\n"
+          << "Punkt: Zeile x aus " << ergebnis.generic_string() << "; " << modelltest::optionenZeile(*optionen) << ".\n"
+          << "Je Taste drei Staerken an den Ebenen der Suche: p = v6 (Stufe -20 dB), mf = v10 (-12), ff = v16 (0).\n"
+          << "Jede Fassung fuer sich gleich laut: die Staerke hoert man an der Klangfarbe, nicht am Pegel.\n"
+          << "Gehalten wie Salamander vor der Blende der Aufnahme, hoechstens 30 s.\n\n"
+          << "Je Taste die Groessen des Ziels (Salamander) gegen beide Fassungen, gemessen wie in der Suche (alle drei Ebenen\n"
+          << "zusammen); (h) = hoerbar getroffen nach HW2 a. Laenge = Huelle vorwaerts (wie lange man den Ton hoert),\n"
+          << "Nachklang = spaete Stufe und Knick, Schwebung = Schwebung und Einbrueche je Teilton (_1 bis _3 = Teilton).\n";
+
+    const struct
+    {
+        int midi;
+        const char* name;
+    } tasten[] = {{33, "a1"}, {60, "c4"}, {84, "c6"}};
+    const struct
+    {
+        int ebene;
+        const char* staerke;
+    } ebenen[] = {{modelltest::kSuchEbenen[0], "p"}, {modelltest::kSuchEbenen[1], "mf"}, {modelltest::kSuchEbenen[2], "ff"}};
+    int nr = 1;
+    for (const auto& t : tasten)
+    {
+        CAPTURE(t.midi);
+        const TastenSumme v = vergleiche(t.midi, ziele->at(t.midi), modelltest::modellAn(vorgabeSaite, t.midi, strukturen->at(t.midi)));
+        const TastenSumme s = vergleiche(t.midi, ziele->at(t.midi), modelltest::modellAn(sucheSaite, t.midi, strukturen->at(t.midi)));
+        CHECK(s.summe == doctest::Approx(summeAusDatei(text, t.midi)).epsilon(2e-4));
+        REQUIRE(v.groessen.size() == s.groessen.size());
+
+        liste << "\n== " << t.name << " (MIDI " << t.midi << ", " << lumi::loop::chorAn(vorgabeSaite, t.midi) << " Saiten) ==\n"
+              << "Kurven an der Taste, Vorgabe -> Suche:";
+        for (const modelltest::SuchKurve& k : raum.kurven)
+            liste << ' ' << k.name << ' ' << zahl(lumi::loop::wertAn(vorgabeSaite.*k.feld, t.midi, k.skala()), 3) << " -> "
+                  << zahl(lumi::loop::wertAn(sucheSaite.*k.feld, t.midi, k.skala()), 3) << ';';
+        liste << "\nSumme r^2 Vorgabe " << zahl(v.summe, 1) << ", Suche " << zahl(s.summe, 1) << '\n';
+        for (const char* gehoer : {"Laenge", "Nachklang", "Schwebung", "sonst"})
+        {
+            int zahlGroessen = 0;
+            int trifftV = 0;
+            int trifftS = 0;
+            std::ostringstream zeilen;
+            for (std::size_t i = 0; i < v.groessen.size(); ++i)
+            {
+                const Abweichung& a = v.groessen[i];
+                const Abweichung& b = s.groessen[i];
+                REQUIRE(a.groesse == b.groesse);
+                if (std::string(gehoerVon(a.groesse)) != gehoer) continue;
+                const bool hv = hoerbarGetroffen(*schwellen.werte, a);
+                const bool hs = hoerbarGetroffen(*schwellen.werte, b);
+                ++zahlGroessen;
+                trifftV += hv ? 1 : 0;
+                trifftS += hs ? 1 : 0;
+                const char* einheit = a.skala == Skala::Faktor ? " s" : a.skala == Skala::Cent ? " Cent" : " dB";
+                const auto wert = [&](const Abweichung& w, bool h) {
+                    return w.fehlt ? std::string("fehlt") : zahl(w.modell, 2) + einheit + (h ? " (h)" : "");
+                };
+                zeilen << "    " << std::left << std::setw(18) << a.groesse << std::right << " Salamander " << zahl(a.ziel, 2) << einheit
+                       << " | Vorgabe " << wert(a, hv) << " | Suche " << wert(b, hs) << '\n';
+            }
+            if (zahlGroessen == 0) continue;
+            liste << "  " << gehoer << ": hoerbar getroffen Vorgabe " << trifftV << " von " << zahlGroessen << ", Suche " << trifftS << " von "
+                  << zahlGroessen << '\n'
+                  << zeilen.str();
+        }
+
+        for (const auto& e : ebenen)
+        {
+            const int stufe = modelltest::stufeVonEbene(e.ebene);
+            std::vector<float> sal = liesEbene(salamander, t.midi, e.ebene);
+            const std::size_t frames = std::min(framesVorBlende(sal), static_cast<std::size_t>(30 * kRate));
+            const double haltenS = static_cast<double>(frames) / kRate;
+            std::vector<float> tv = rechne(vorgabe, t.midi, stufe, haltenS);
+            std::vector<float> ts = rechne(suche, t.midi, stufe, haltenS);
+            const double gs = richte(sal, frames);
+            const double gv = richte(tv, frames);
+            const double gx = richte(ts, frames);
+            const double leiser = unterSpitze({&sal, &tv, &ts});
+            const std::string datei = nummer(nr) + "_" + t.name + "_" + e.staerke + ".wav";
+            REQUIRE(lumi::audio::schreibeWav(QString::fromStdU16String((ziel / datei).u16string()), folge({sal, tv, ts}), kRate,
+                                             lumi::audio::WavTiefe::Gleitkomma32)
+                        .geschrieben);
+            liste << datei << ": " << t.name << ' ' << e.staerke << " (Salamander v" << e.ebene << ", Stufe " << stufe << " dB), je "
+                  << zahl(haltenS, 1) << " s; u an der Stufe Vorgabe " << zahl(stossBei(vorgabeSaite, t.midi, stufe), 3) << ", Suche "
+                  << zahl(stossBei(sucheSaite, t.midi, stufe), 3) << "; Verstaerkung " << zahl(gs, 1) << " / " << zahl(gv, 1) << " / "
+                  << zahl(gx, 1) << " dB" << (leiser > 0.0 ? "; gemeinsam " + zahl(leiser, 1) + " dB leiser" : std::string()) << '\n';
+            ++nr;
+        }
+        liste << "  Frage: je Datei Laenge, Nachklang, Schwebung — ist 2 oder 3 naeher an 1? Wo 3 naeher ist: die Schwebung der\n"
+              << "  Suche (u, gamma, delta) als Wert nehmen, oder zu stark / zu schwach / metallisch / passt?\n";
+    }
+    liste << "\nDie Wahl je Taste kommt in Schritt 8.6 als Stuetzpunkte von u, gamma, delta in baueVorgabe() (Konzept §4.1,\n"
+          << "Teilplan 31d-8, PV1 a); zwischen 33, 60, 84 interpoliert, innerhalb SQ2 a.\n";
     std::ofstream(ziel / "liste.txt", std::ios::binary) << liste.str();
     MESSAGE(liste.str());
 }

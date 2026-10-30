@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.301.0
-> **Datum:** 2026-10-30 (Sessions 164 und 165)
+> **Version:** 1.302.0
+> **Datum:** 2026-10-30 (Sessions 164 bis 166)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3207,7 +3207,7 @@ Idee Preset-Warmup/Pre-Roll.
   |---|---|---|---|
   | 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | erledigt 2026-10-30 (PV1 a → ZZ1 a, Setzen nach Gehör in 8.5 und 8.6); Verlauf: `Spielweisen_Konzept` §4.1 von „Hörurteil S158“ bis PV1 a | — |
   | 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — §7 Backlog); `LumiViz.exe` neu | — |
-  | 31d-8 · 8.5 | Hörproben für das Setzen nach Gehör (ZZ1 a, PV1 a): je Taste 33, 60, 84 *Salamander* / Vorgabe / Suche „ohne A4“ (`proben/S165_suche2_probe_ohne_a4/`), dazu Patriks Wahl von u, γ, δ | offen — Hörproben bauen (S166), dann Patrik | — |
+  | 31d-8 · 8.5 | Hörproben für das Setzen nach Gehör (ZZ1 a, PV1 a): je Taste 33, 60, 84 *Salamander* / Vorgabe / Suche „ohne A4“ (`proben/S165_suche2_probe_ohne_a4/`), dazu Patriks Wahl von u, γ, δ | in Arbeit seit 2026-10-30 (S166, 8.5): Hörproben `hoerproben_pv1` abgelegt, Wahl bei Patrik | — |
   | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
   | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
   | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1–9.6 fertig (S158): ganz übertragen (TR1 a, Kistner gegengeprüft), `nocturne_demo` mitgeliefert (Daten `asset/loop/nocturne_op9_2.py`, 40 Takte, 3:38), Fader +1,4 dB (Spitze −1 dBFS), Werte und Klangfassung, Hörprobe; voll 1640 / 1640 unter Release-clang (587 s) und Testing-MSVC (600 s) — NP1 a (Fader +1,4 dB); Hörurteil (DY1 a) bei Patrik; **DY2 a ausgeführt (S160):** die gerechnete Nocturne hatte 21,6 LU Loudness Range (Patrik: „zu krass“), das Modell spreizt 0,9–1,4 dB je dB Stufe (gemessen A0 … A7), Quelle Goebl, Bresin & Galembo 2004 (Hammer 0,37–4,07 m/s = 21 dB) → Tafel ppp −21 … ff 0, Akzent und Gabel 4 dB, Fader +1,2 dB (Spitze −1,0 dBFS mit dem Boden nach HU4-1 a), 15,5 LU; **NP2 a (S161):** Fader +7 dB mit Limiter nach Patriks Hörurteil (+5 dB noch etwas leise; Spitze +4,8 dBFS, der Limiter fasst rund 0,7 s der Kadenz); Loop, Werte, Klangfassung nachgezogen | — |
@@ -6295,6 +6295,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.302.0 | 2026-10-30 | Session 166 (Opus 5.5). §7 Spielweisen: 31d-8 · 8.5 — Hörproben nach PV1 a an 33, 60, 84 (p, mf, ff; *Salamander* / Vorgabe / Suche „ohne A4“) unter `.claude/handover/hoerproben_pv1/`, Wahl bei Patrik. |
 | 1.301.0 | 2026-10-30 | Sessions 164 und 165 (Opus 5.5). §7 Spielweisen: 7.5.13 B1 (Hörschwellen recherchiert), HW1 a–HW4 a, Bauauftrag 7.5.12; 7.5.12 gebaut (S165), Probelauf und A4-Wege an sechs Tasten, Glätte an keinem Weg; PV1 a — Probe 7.5.12 verfehlt, ZZ1 a, kein Lauf über Nacht. Tabelle „Offen — Stufe 31 bis zum Ende“: 8.1 auf den Zustand gekürzt (Verlauf im Konzept), 8.5 als Hörproben für das Setzen nach Gehör neu gefasst. |
 | 1.300.0 | 2026-10-29 | Session 163 (Fable 5.1). §7 Spielweisen: Probe 7.5.11 verfehlt mit Befunden (Wanderer, γ/h ohne δ wirkungslos, Entartung bei h = 1, Kopplung über λ, `detune` wellig); V2 a (Plan A–D als zweiter, vorläufig letzter Anlauf), Teilplan 7.5.12–7.5.14; Werkzeuge Schnitt, LM je Taste, δ im Chor; Lehren und Bauauftrag für InstrumentsCalculation. |
 | 1.299.0 | 2026-10-29 | Session 162 (Opus 5.5). §7 Spielweisen: 7.5.9 und 7.5.10 gebaut, Suche und Vergleich mit Nelder–Mead gelaufen (Zeile in S162 nicht nachgetragen, nachgeholt S163). |
