@@ -1,11 +1,12 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.105.0
-> **Datum:** 2026-10-29 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> **Version:** 0.106.0
+> **Datum:** 2026-10-30 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
-> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4; Session 162: 7.5.9 gebaut, Nullprobe, 7.5.10 gebaut, Suche gelaufen; Session 163: Probe 7.5.11 verfehlt mit Befunden, V2 a, Teilplan 7.5.12–7.5.14)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157);
+> Session 143: TS1 a, WX2 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a; Session 144: FV1 a, FV2 a, FZ4 a bis FZ7 a; Session 145: FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a; Session 146: HK1 a, HK2 a, 31a gebaut, HT1 a bis HT7 a, 31b-1 bis 31b-3 gebaut, KB1 a; Session 147: BM1 a, PL31c a, HT7 b, BM2 a, GB1 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM5-1 a, 31c-1 gebaut, IC1 a, BM4 a, 31c-2 gebaut, EL1 a, 31c-3 gebaut; Session 148: EG1 a, EG2 a, 31c-4 gebaut, BM6 a, BM6-1 a, PL31c-5 a, 31c-5a gebaut, Befund Dämpfung, 31c-5b gebaut, ST1 a, 31c-5c gebaut, 31c-5d gebaut; Session 149: BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a; Session 150: PF2 a, 31c-6 Teil 3 und 4 gebaut, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, 31c-6 Teil 5 gebaut, FF1 a, 31c-7 Schritt 1 bis 5 gebaut; Session 151: 31c-8 Teil 1 und 2 gebaut, RS1 a, AW2 a, AW3 a, AW3-1 a, 31c-9 gebaut — 31c fertig; UF1 a bis UF17 a, IK1, fester Plan 31d bis 31h; Session 152: 31d-1 gebaut — Salamander beschafft und geprüft, WL1 a, 31d-2 gebaut, D1 a, V1 a, 31d-3 gebaut, S1 a bis S3 a, 31d-4 und 31d-5 gebaut, 31d-6 begonnen: N1 a, N2 a, 31d-7 als „Plan erweitern“; Session 153: P1 a bis P8 a, Teilplan 31d-7, ZS1 a, P3-1 a, RZ1 a, RZ1-1 a, WK1 a; Session 154: TB1 a, SZ1 a, SZ2 a, US1 a bis US7 a, Teilplan 7.1–7.7, US6-1 a (US6 a gekippt), RB1 a (zurückgenommen), RB1-1 a, SZ3 a, SM1 a bis SM3 a (SM3 a gekippt), SM4 a; Session 155: K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a; Session 156: GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a; Session 157: SP1 a bis SP3 a, Teilplan 31d-8; Session 158: DY1 a, CR1 a, NP1 a, HU1 a, DY2 a; Session 159: Befund HU1 a; Session 160: Befund HU4; Session 162: 7.5.9 gebaut, Nullprobe, 7.5.10 gebaut, Suche gelaufen; Session 163: Probe 7.5.11 verfehlt mit Befunden, V2 a, Teilplan 7.5.12–7.5.14; Session 164: 7.5.13 B1 recherchiert, HW1 a bis HW4 a, Bauauftrag 7.5.12)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a, WX1 a bis WX9 a, HB1 a, FZ1 a bis FZ3 a, FV1 a, FV2 a, FZ4 a bis FZ7 a, FP1 a bis FP3 a, BL1 a, BL2 a, HS1 a, HS2 a, HA1 a bis HA4 a, HK1 a, HK2 a, HT1 a bis HT6 a, HT7 b (löst das vorläufige HT7 a ab), KB1 a, BM1 a, BM2 a, BM3 a, BM3-1 a, BM3-2 a, BM5 a, BM4 a, BM5-1 a, PL31c a, GB1 a, IC1 a, EL1 a, EG1 a, EG2 a, BM6 a, BM6-1 a, PL31c-5 a, ST1 a, BM7 a, PL31 a, PS1 a, PF1 a, KV1 a, AW1 a, FT1 a, PG1 a, SB1 a, DM1 a, GL1 a, VA1 a, ZA1 a, EM1 a, PF2 a, PF3 a, PS2 a, PS3 a, KV2 a, PS4 a, FF1 a, RS1 a, AW2 a, AW3 a (gekippt), AW3-1 a, UF1 a bis UF17 a, IK1, WL1 a, D1 a, V1 a, S1 a, S2 a, S3 a, N1 a, N2 a, P1 a bis P8 a, ZS1 a, P3-1 a, RZ1-1 a, WK1 a, TB1 a, SZ1 a, SZ2 a, US1 a bis US5 a, US6-1 a, US7 a, RB1-1 a, SZ3 a, SM1 a, SM2 a, SM4 a, K1 a bis K6 a, K6-1 a, SQ1 a, SQ2 a, SW1 a, SE1 a, GP1 a, RV1 a, PB1 a, ZF1 a bis ZF9 a, ZZ1 a, SP1 a bis SP3 a und TS1 a (Patrik S139–S157); SG1 a bis SG3 a, UG1 a, UF17-1 a, V2 a, HW1 a bis HW4 a
+(Patrik S161–S164);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -3753,6 +3754,68 @@ Setzen nach SE1 a mit den Werkzeugen aus 7.5.12 (= D1, D2) und **7.5.6** Vorgabe
 zwei bis drei Bausitzungen, zwei Rechenläufe über Nacht, zwei Hörrunden; C nur bedingt. Reihenfolge: 7.5.13 (B1 Recherche,
 B2/B3 Entscheide) vor dem Lauf von 7.5.12, der Bau von 7.5.12 kann parallel beginnen.
 
+**7.5.13 B1 — Hörschwellen recherchiert (S164, Opus 5.5; Bericht
+`docs/modellierung/hammer-saite/recherche/2026-10-30_S164_hoerschwellen.md`, tragende Stellen selbst nachgelesen).**
+Ein Hörversuch an Klaviertönen wurde nicht gefunden; am nächsten liegt Tolonen & Järveläinen 2000 (physikalisches
+Modell einer gezupften Saite, 2-s-Töne, fünf Hörer, 50-%-Punkt „verschieden“). *Zeiten* (`vorwaerts_t60_k`,
+`t60_spaet_k`, `huelle_*`): Gesamtabklingen hörbar kürzer ab τ/τref 0,70–0,79, länger ab 1,43–1,50 (Tab. 6, Sätze
+1–4), Empfehlung der Autoren 75–140 % (S. 15); mit kürzerer Hördauer viel gröber (0,6 s: oben bis 5,6), von f0
+kaum abhängig; je **einzelnem** Teilton und für die späte Stufe keine Zahl (Järveläinen & Karjalainen 2002 nur
+qualitativ „deutliche Abweichungen erlaubt“, Original nicht erreichbar); Raumakustik 5 % (ISO 3382-1, nur sekundär),
+gemessen 6–39 %. *Knicktiefe:* nicht gefunden; Ersatz Pegelunterscheidung 0,5–1,4 dB (Übertragung, kein Beleg).
+*Schwebungstiefe* (`schwebung_db_k`, `tiefe_db_k`): Erkennen m ≈ 0,05 (Spitze-Spitze 0,9 dB), Unterscheiden ≈ 1,2 dB
+in 20 lg m bei m ≥ 0,13, darunter steigend bis 4,1 dB bei m = 0,04 (Ewert 2002 S. 41–42, Sinusträger, 16 Hz) — in
+Spitze-Spitze: 2 → 2,36 dB, 6 → 6,98 dB, 10 → 11,95 dB; langsame Raten (0,1–5 Hz) mit wenigen Perioden nicht gemessen.
+*Schwebungsfrequenz:* für 0,1–5 Hz kein direkter Wert; Analoga 5–6 % (Vibrato-Rate an Saitenklängen, Zeitintervalle).
+*Pegel:* Gesamt 0,5–1,4 dB, ein Teilton im Komplex 0,8–1,5 dB unter 1 kHz. Die Optionen von HW1–HW4 sind an S162
+(Start 1 und 2), S163 (sechs Tasten) und der Nullprobe gerechnet (Skripte `b2_optionen.py`, `b3_vorzeichen.py`,
+Scratchpad S164); die Zahlen stehen je Entscheid.
+
+✅ **HW1 a** (Patrik S164; B2, setzt die Zahlen aus B1): **Hörschwellen je Größe, in `werte/hoerschwellen.txt` mit
+Quelle: Zeiten (`vorwaerts_t60_k`, `t60_spaet_k`, `huelle_*`) hörbar kürzer ab dem Faktor 0,7923, länger ab 1,4309
+(Tolonen & Järveläinen 2000, Tab. 6, Satz 1, strengster Satz der 2-s-Töne) — ln 0,233 kürzer, ln 0,358 länger;
+Knicktiefe 0,5 dB (Pegelunterscheidung, oberes Ende nach Jesteadt et al. 1977 — Übertragung, kein Beleg für den
+Knick); Schwebungs- und Einbruchtiefe nach Ewert 2002 S. 41–42 (Unterscheidung 1,2 dB in 20 lg m ab 20 lg m = −18 dB,
+darunter linear bis 4,1 dB bei −28 dB, darunter 4,1 dB; unter 0,87 dB Spitze-Spitze auf beiden Seiten gleich);
+Schwebungsfrequenz 6 % (Vibrato-Rate, Järveläinen 2003 S. 38 — für die Prüfung g nach A4).** Grund: Tolonens Daten
+zeigen die Schwelle mit der Hördauer enger werdend (Faktor 5,6 bei 0,6 s, 1,45 bei 2 s); ein Klavierton wird 5–30 s
+gehört, seine Schwelle liegt eher unter dem strengsten 2-s-Satz als darüber; eine zu großzügige Schwelle ließe hörbar
+falsche Ergebnisse als getroffen durch. Gerechnet (|d| ≤ S / |d| ≤ max(τ, S), von 456): S162 Start 1 164 / 215,
+Vorgabe 92 / 124 (ZF1 a 149 bzw. 86). Verworfen: b (Empfehlung der Autoren 75–140 %, Knick 1 dB: 181 / 226 — über kurze
+Töne gemittelt), c (ISO 3382-1 5 %: 76 / 160 — Raumnachhall an Rauschen, strenger als die Streuung der Aufnahme, gegen
+ZF1 a). Kippt auf c, wenn die Hörproben D1 an Tasten, die hier als hörbar getroffen zählen, einen hörbaren Unterschied
+zeigen; auf eine eigene Messung (ABX an zwei bis drei Tasten), wenn Patrik dafür hören will.
+
+✅ **HW2 a** (Patrik S164; B2, ändert SP3 a): **Hörbar getroffen ist eine Größe bei |d| ≤ max(τ, S); eindeutig ist sie,
+wenn die drei Startpunkte an ihr höchstens max(τ, S) auseinander enden (größter Abstand in der Skala der Größe); die
+Treffer nach ZF1 a bleiben im Bericht.** Grund: unter τ unterscheidet die Aufnahme nicht (ZF1 a), unter S das Ohr
+nicht — ein Unterschied, den keins von beiden auflöst, ist weder Fehler noch Mehrdeutigkeit. Gerechnet (S162, Start 1
+gegen 2): eindeutig 268 / 456 Größen (b: 185), Tasten mit allen Größen eindeutig 2 / 30 (b: 1). Verworfen: b (S allein,
+eindeutig auf τ wörtlich nach V2 a — an Größen mit kleinem S strenger als die Messung). Kippt auf b, wenn max(τ, S) an
+einer Größenart fast jeden Wert durchlässt.
+
+✅ **HW3 a** (Patrik S164; ändert ZF8 a (3) und (9) für 7.5.12): **Die Probe 7.5.12 besteht, wenn (2) die Glätte an
+mindestens 5 von 6 Probetasten hält (Parameter ohne `detune`, das fest ist), (3) mindestens 5/6 der Messgrößen der
+sechs Probetasten eindeutig nach HW2 a sind (Tasten, die nach ZF1 a nicht erreichbar sind, zählen nicht) und am
+besten Punkt mehr Größen hörbar getroffen sind als an der Vorgabe (Nullprobe nach HW1 a: 124 / 456); die Zahl der
+Treffer ist sonst Bericht.** Grund: die Probe prüft, ob die Suche funktioniert (Grund von ZF8 a); das Verhältnis 5/6
+bleibt, gemessen je Größe, wo es messbar ist; „besser als die Vorgabe“ verhindert, dass Schlechteres gesetzt wird.
+Verworfen: b (ZF8 a wörtlich je Taste mit allen Größen — nach S162 2 / 30, beurteilt das Modell statt der Suche, der
+Fehler, den S163 an SP3 a fand), c (dazu ≥ 230 / 456 nach ZF1 a — macht aus der Prognose von V2 a eine Schwelle).
+Kippt auf c, wenn die Treue zu *Salamander* Bedingung werden soll, nicht nur Richtung.
+
+✅ **HW4 a** (Patrik S164; B3 und Auslöser von C1): **Systematisch ist eine Größe, wenn die nicht hörbar getroffenen
+Tasten im Vorzeichentest (zweiseitig, exakt) in eine Richtung abweichen, Holm-Korrektur über alle Größen, α = 0,05;
+eine Ausreißer-Taste ist eine nicht hörbar getroffene Taste mit |r| über dem Dreifachen des Medians von |r| der Größe,
+je Größe benannt. C1 (7.5.14) wird ausgelöst, wenn nach A eine Abklinggröße je Teilton (`vorwaerts_t60_k`,
+`t60_spaet_k`) systematisch ist.** Grund: bei 18 Größen mit je 10–20 Tasten melden eine feste Prozentgrenze oder ein
+unkorrigierter Test zufällig „systematische“ Größen, und gerade die lösen den teuersten Schritt aus (Rechenkern, voller
+Lauf). Gerechnet: S162 Start 1 systematisch `t60_spaet_2` (0 / 15 zu lang) und `t60_spaet_3` (1 / 13) — der Nachklang,
+den das Hörurteil S158 vermisst; an der Vorgabe acht Größen (`t60_spaet` ×3, `huelle_30/40`, `tiefe_db` ×3).
+Verworfen: b (≥ 75 % in eine Richtung, ohne Test — rund acht Größen an S162, ohne Quelle), c (ohne Korrektur, p < 0,05
+je Größe — vier Größen, bei 18 Tests fast eine falsche Meldung zu erwarten). Kippt auf c, wenn nach A je Größe nur
+noch wenige Tasten (unter rund acht) nicht getroffen sind — dann erkennt Holm selbst eine einheitliche Richtung nicht.
+
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
 
@@ -5835,6 +5898,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.106.0 | 2026-10-30 | Session 164 (Opus 5.5). 7.5.13 B1: Hörschwellen recherchiert (Bericht `docs/modellierung/hammer-saite/recherche/2026-10-30_S164_hoerschwellen.md`, kein Klavier-Hörversuch gefunden, tragende Stellen nachgelesen); HW1 a (Zahlen: Zeiten nach Tolonen & Järveläinen 2000 Satz 1, Knick 0,5 dB, Schwebungstiefe nach Ewert 2002), HW2 a (getroffen und eindeutig bei max(τ, S)), HW3 a (Bestehen der Probe 7.5.12), HW4 a (systematisch nach Vorzeichentest mit Holm, Auslöser C1); Bauauftrag 7.5.12 (`.claude/handover/auftrag_7.5.12.md`). |
 | 0.105.0 | 2026-10-29 | Session 163 (Fable 5.1). Probe 7.5.11: Vorfragen (c) bestätigt (Wanderer unter der Marquardt-Skalierung), (a) γ und h im Chor exakt wirkungslos, bei h = 1 Rauschen der entarteten Eigenzerlegung, mit δ im Chor frei 53 statt 44 Treffer an sechs Tasten, (b) Start 2 nicht wieder aufnehmen — die Kopplung über das gemeinsame λ ist der Hebel (bester Stand je Taste 9086 / 204); Probe verfehlt an (2) Glätte (`detune` wellig) und (3); zehn Wege aufgelistet; V2 a (Plan A–D als zweiter, vorläufig letzter Anlauf), Teilplan 7.5.12–7.5.14; Werkzeuge `LUMIVIZ_75_SCHNITT`, `LUMIVIZ_75_TASTE`, `LUMIVIZ_75_DELTA_CHOR`. |
 | 0.102.0–0.104.0 | 2026-10-29 | Session 162 (Opus 5.5, Bauauftrag). 7.5.9 gebaut (Zielsumme, Kurven der Suche, Nullprobe), 7.5.10 gebaut (Levenberg–Marquardt über die Stützpunkte, Jacobi je Kurve), Suche und Vergleich mit Nelder–Mead gelaufen (Zeilen in dieser Tabelle in S162 nicht nachgetragen; nachgeholt S163). |
 | 0.101.0 | 2026-10-29 | Session 161 (Fable 5.1). Dritter Körper `steinway_d_glass_same_mass` neu (Fassung 3), voller Lauf beide Compiler; NP2 a (Nocturne +7 dB mit Limiter); vor 7.5.7 die Entscheide SG1 a (drei Ebenen in der Suche), SG2 a (γ 0–45°, ohne Quelle), SG3 a (`detune` frei, Start an der Schwebung); 7.5.7 gebaut (Toleranzen je Größe aus Ebenen und Kanälen, `werte/salamander_toleranzen.txt`, Befund: die Kanäle bestimmen die Toleranz), UG1 a (Untergrenze aus der Messgenauigkeit, in 7.5.9), UF17-1 a (voller Lauf nur bei großen Änderungen oder auf Anforderung). |

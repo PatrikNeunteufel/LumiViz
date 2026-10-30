@@ -1,0 +1,17 @@
+# Hoerschwellen je Messgroesse der Suche nach HW1 a (Spielweisen_Konzept §4.1, S164; Recherche
+# docs/modellierung/hammer-saite/recherche/2026-10-30_S164_hoerschwellen.md). Von Hand geschrieben, nicht von einem Test.
+# Gebraucht in 7.5.12 (LUMIVIZ_75_PROBE12): hoerbar getroffen bei |d| <= max(tau, S), eindeutig bei einem Abstand der
+# Startpunkte <= max(tau, S) (HW2 a).
+# Zeile: Groessenmuster (Praefix, der laengste passende gilt) <Tab> Skala <Tab> unten <Tab> oben <Tab> Quelle
+#   faktor: d = ln(Modell / Ziel); gleich, wenn -unten <= d <= oben (unten = Modell kuerzer, oben = Modell laenger)
+#   db:     d = Modell - Ziel; gleich, wenn -unten <= d <= oben
+#   ewert:  Spitze-Spitze-Tiefe in dB; m = tanh(pp * ln10 / 40); gleich, wenn der groessere Wert hoechstens
+#           pp(m_klein * 10^(D/20)) ist, D = 1,2 dB fuer 20 lg m >= -18 dB, linear bis 4,1 dB bei -28 dB, darunter 4,1 dB;
+#           liegen beide unter 0,87 dB, sind sie gleich; die Spalten unten/oben bleiben leer (-)
+vorwaerts_t60	faktor	0.232815	0.358304	Tolonen & Jaervelaeinen 2000, AES Preprint 5205, Tab. 6 S. 11, Satz 1 (0,7923 / 1,4309)
+t60_spaet	faktor	0.232815	0.358304	wie vorwaerts_t60 (fuer die spaete Stufe keine Zahl gefunden; Jaervelaeinen 2003 S. 38 nur qualitativ)
+huelle_	faktor	0.232815	0.358304	wie vorwaerts_t60 (Gesamtabklingen der Saite)
+knick_tiefe_db	db	0.5	0.5	Pegelunterscheidung, Jesteadt, Wier & Green 1977 (sekundaer) — Uebertragung, kein Beleg fuer den Knick
+schwebung_db	ewert	-	-	Ewert 2002, Diss. Oldenburg, S. 41-42 (= Ewert & Dau 2004, JASA 116, 478-490), Sinustraeger, fm 16 Hz
+tiefe_db	ewert	-	-	wie schwebung_db
+schwebung_hz	faktor	0.058269	0.058269	Vibrato-Rate 6 %, Jaervelaeinen 2003 S. 38 — nur fuer die Pruefung g nach A4, keine Groesse des Ziels
