@@ -14,6 +14,15 @@
  * `iterationenHoechstens`. Die Jacobi-Matrix je Gruppe (`jacobiJeGruppe`) lenkt alle Parameter einer Gruppe zugleich
  * aus — gueltig, wenn jeder Parameter der Gruppe nur auf seine eigenen Zeilen wirkt (Lesart Claude S161: ein
  * Stuetzpunkt wirkt nur auf den Ton seiner Taste).
+ *
+ * 7.5.12 (V2 a, A2 und A3): `levenbergMarquardtJeBlock` fuehrt dieselbe Suche je Block (je Taste) mit eigenem λ,
+ * eigener Annahme und eigenem Ende; die Bloecke sind disjunkt und haben eigene Residuen. Alle aktiven Bloecke werden
+ * zusammen ausgewertet: der Rueckruf `LmResiduenBloecke(punkte, bloecke)` gibt eine flache Liste zurueck, Eintrag
+ * `p · bloecke.size() + k` sind die Residuen des Blocks `bloecke[k]` am Punkt `punkte[p]`. Die Jacobi-Matrix entsteht
+ * aus einer Auswertung je Gruppe (alle Parameter der Gruppe in allen aktiven Bloecken ausgelenkt), die Versuchsschritte
+ * aller noch nicht entschiedenen Bloecke liegen in einem gemeinsamen Punkt. Ein beendeter Block wird nicht mehr
+ * ausgewertet. A3: ein Parameter, dessen Wirkung √diag(JᵀJ) · Bereich am aktuellen Punkt unter `wirkungMindestens`
+ * Toleranzen liegt, bekommt keinen Schritt (`lmSchritt` mit Maske) — die Entscheidung faellt je Iteration neu.
  ****************************************************************************************
  */
 
@@ -131,6 +140,24 @@ inline std::vector<double> lmSchritt(const Matrix& j, const std::vector<double>&
     return loese(std::move(a), std::move(g));
 }
 
+/// Der Schritt nur fuer die Parameter mit `frei[p]` (A3): die uebrigen fallen aus dem Gleichungssystem (Spalte
+/// gestrichen) und bekommen 0. Sind alle frei, bitgleich `lmSchritt(j, r, lambda)`.
+inline std::vector<double> lmSchritt(const Matrix& j, const std::vector<double>& r, double lambda, const std::vector<bool>& frei)
+{
+    std::vector<std::size_t> spalten;
+    for (std::size_t p = 0; p < j.spalten; ++p)
+        if (frei[p]) spalten.push_back(p);
+    if (spalten.size() == j.spalten) return lmSchritt(j, r, lambda);
+    std::vector<double> delta(j.spalten, 0.0);
+    if (spalten.empty()) return delta;
+    Matrix jf(j.zeilen, spalten.size());
+    for (std::size_t i = 0; i < j.zeilen; ++i)
+        for (std::size_t q = 0; q < spalten.size(); ++q) jf(i, q) = j(i, spalten[q]);
+    const std::vector<double> d = lmSchritt(jf, r, lambda);
+    for (std::size_t q = 0; q < spalten.size(); ++q) delta[spalten[q]] = d[q];
+    return delta;
+}
+
 /// Grenzen und Ende je Parameter (in der Koordinate der Suche).
 struct LmRaum
 {
@@ -146,6 +173,9 @@ struct LmEinstellungen
     double lambdaFaktor = 10.0;
     int iterationenHoechstens = 20;
     int versucheHoechstens = 10;
+    /// A3 (nur `levenbergMarquardtJeBlock`): ein Parameter mit weniger Wirkung √diag(JᵀJ) · Bereich (in Toleranzen)
+    /// bekommt keinen Schritt (SP3 a, Lesart Claude S162; Wert aus 7.5.10 `kNichtAufgeloest`).
+    double wirkungMindestens = 0.1;
 };
 
 /// Was eine Iteration getan hat (fuer Bericht und Dateien).
@@ -338,6 +368,286 @@ inline Matrix jacobiEinzeln(const LmResiduenViele& viele, const std::vector<doub
     for (std::size_t j = 0; j < x.size(); ++j)
         for (std::size_t i = 0; i < r.size(); ++i) jm(i, j) = (rs[j][i] - r[i]) / h[j];
     return jm;
+}
+
+// ---- 7.5.12 (A2, A3): je Block ----------------------------------------------------------------------------------
+
+/// Ein Block: die Parameter einer Taste (Indizes in x, in der Reihenfolge der Spalten seiner Jacobi-Matrix).
+struct LmBlock
+{
+    std::vector<std::size_t> parameter;
+};
+
+/// Die Residuen der Bloecke `bloecke` an jedem der `punkte`, flach: Eintrag p · bloecke.size() + k gehoert zu
+/// `punkte[p]` und `bloecke[k]`.
+using LmResiduenBloecke =
+    std::function<std::vector<std::vector<double>>(const std::vector<std::vector<double>>& punkte, const std::vector<std::size_t>& bloecke)>;
+
+/// Was ein Block in einer Iteration getan hat.
+struct LmBlockSchritt
+{
+    bool aktiv = false;  ///< in dieser Iteration gerechnet
+    double restVorher = 0.0;
+    double rest = 0.0;
+    double lambdaVorher = 0.0;
+    double lambda = 0.0;
+    int versuche = 0;
+    int verworfen = 0;
+    bool angenommen = false;
+    double schrittAnteil = 0.0;
+    std::vector<double> diagonale;         ///< von JᵀJ des Blocks, je Parameter des Blocks
+    std::vector<std::size_t> ohneWirkung;  ///< Parameter (Indizes in x) ohne Schritt nach A3
+    std::string ende;                      ///< leer, solange der Block weiterlaeuft
+};
+
+/// Was eine Iteration ueber alle Bloecke getan hat.
+struct LmIterationBloecke
+{
+    int nummer = 0;
+    std::vector<double> x;  ///< nach der Iteration
+    std::vector<LmBlockSchritt> bloecke;
+    int auswertungen = 0;  ///< Punkte × Bloecke dieser Iteration, mit denen der Jacobi-Matrix
+};
+
+/// Der Stand eines Blocks.
+struct LmBlockStand
+{
+    std::vector<double> r;
+    double rest = 0.0;
+    double lambda = 0.0;
+    int iterationen = 0;
+    int auswertungen = 0;  ///< wie `LmErgebnis::auswertungen`: Residuen dieses Blocks ohne die der Jacobi-Matrix
+    std::string ende;
+    std::vector<double> diagonale;         ///< aus der letzten Iteration
+    std::vector<std::size_t> ohneWirkung;  ///< aus der letzten Iteration
+};
+
+struct LmErgebnisBloecke
+{
+    std::vector<double> x;
+    std::vector<LmBlockStand> bloecke;
+    int iterationen = 0;   ///< gemeinsame Iterationen (die Nummer der Dateien)
+    int auswertungen = 0;  ///< Punkte × Bloecke, mit denen der Jacobi-Matrix
+    std::vector<std::size_t> anGrenze;
+};
+
+/// Wo die Suche je Block beginnt (Wiederaufnahme): leere Listen heissen `lambdaStart`, 0 Iterationen, aktiv.
+struct LmStartBloecke
+{
+    LmStartBloecke() = default;
+    LmStartBloecke(std::vector<double> x_) : x(std::move(x_)) {}
+
+    std::vector<double> x;
+    int nummer = 0;  ///< gemeinsame Iterationen schon gelaufen
+    std::vector<double> lambda;
+    std::vector<int> iteration;
+    std::vector<std::string> ende;
+};
+
+using LmBeobachterBloecke = std::function<void(const LmIterationBloecke&)>;
+
+/// Levenberg–Marquardt je Block (s. Dateikopf): `gruppen` sind die Gruppen der finiten Differenz (in jedem Block
+/// hoechstens ein Parameter je Gruppe), `differenz` der Schritt je Parameter (`differenzSchritte`).
+inline LmErgebnisBloecke levenbergMarquardtJeBlock(const LmResiduenBloecke& residuen, const std::vector<LmBlock>& bloecke,
+                                                   const std::vector<std::vector<std::size_t>>& gruppen, const std::vector<double>& differenz,
+                                                   const LmStartBloecke& start, const LmRaum& raum, const LmEinstellungen& einst = {},
+                                                   const LmBeobachterBloecke& beobachter = {})
+{
+    const std::size_t nb = bloecke.size();
+    LmErgebnisBloecke e;
+    e.x = klemmeIn(raum, start.x);
+    e.iterationen = start.nummer;
+    e.bloecke.resize(nb);
+    std::vector<std::size_t> blockVon(e.x.size(), nb);
+    std::vector<std::size_t> spalteVon(e.x.size(), 0);
+    for (std::size_t b = 0; b < nb; ++b)
+    {
+        for (std::size_t q = 0; q < bloecke[b].parameter.size(); ++q)
+        {
+            blockVon[bloecke[b].parameter[q]] = b;
+            spalteVon[bloecke[b].parameter[q]] = q;
+        }
+        LmBlockStand& st = e.bloecke[b];
+        st.lambda = start.lambda.empty() ? einst.lambdaStart : start.lambda[b];
+        st.iterationen = start.iteration.empty() ? 0 : start.iteration[b];
+        st.ende = start.ende.empty() ? std::string() : start.ende[b];
+    }
+    {
+        std::vector<std::size_t> alle(nb);
+        for (std::size_t b = 0; b < nb; ++b) alle[b] = b;
+        const std::vector<std::vector<double>> rs = residuen({e.x}, alle);
+        e.auswertungen += static_cast<int>(nb);
+        for (std::size_t b = 0; b < nb; ++b)
+        {
+            e.bloecke[b].r = rs[b];
+            e.bloecke[b].rest = quadratsumme(rs[b]);
+            ++e.bloecke[b].auswertungen;
+        }
+    }
+    while (true)
+    {
+        std::vector<std::size_t> aktiv;
+        std::vector<std::size_t> aktivIndex(nb, nb);
+        for (std::size_t b = 0; b < nb; ++b)
+        {
+            LmBlockStand& st = e.bloecke[b];
+            if (st.ende.empty() && st.iterationen >= einst.iterationenHoechstens) st.ende = "Iterationen";
+            if (st.ende.empty())
+            {
+                aktivIndex[b] = aktiv.size();
+                aktiv.push_back(b);
+            }
+        }
+        if (aktiv.empty()) break;
+        LmIterationBloecke it;
+        it.nummer = ++e.iterationen;
+        it.bloecke.resize(nb);
+        std::vector<bool> parameterAktiv(e.x.size(), false);
+        for (const std::size_t b : aktiv)
+        {
+            for (const std::size_t j : bloecke[b].parameter) parameterAktiv[j] = true;
+            LmBlockStand& st = e.bloecke[b];
+            LmBlockSchritt& s = it.bloecke[b];
+            s.aktiv = true;
+            s.restVorher = st.rest;
+            s.lambdaVorher = st.lambda;
+            ++st.iterationen;
+        }
+
+        // (1) die Jacobi-Matrix je aktivem Block: eine Auswertung je Gruppe, alle Gruppen in einem Aufruf
+        const std::vector<double> h = differenzSchritte(raum, e.x, differenz);
+        std::vector<std::vector<double>> punkte;
+        std::vector<std::size_t> gruppeVon;
+        for (std::size_t g = 0; g < gruppen.size(); ++g)
+        {
+            std::vector<double> p = e.x;
+            bool ausgelenkt = false;
+            for (const std::size_t j : gruppen[g])
+                if (parameterAktiv[j])
+                {
+                    p[j] += h[j];
+                    ausgelenkt = true;
+                }
+            if (!ausgelenkt) continue;
+            punkte.push_back(std::move(p));
+            gruppeVon.push_back(g);
+        }
+        std::vector<Matrix> jb(nb);
+        for (const std::size_t b : aktiv) jb[b] = Matrix(e.bloecke[b].r.size(), bloecke[b].parameter.size());
+        if (!punkte.empty())
+        {
+            const std::vector<std::vector<double>> rs = residuen(punkte, aktiv);
+            it.auswertungen += static_cast<int>(punkte.size() * aktiv.size());
+            for (std::size_t pi = 0; pi < punkte.size(); ++pi)
+                for (const std::size_t j : gruppen[gruppeVon[pi]])
+                {
+                    if (!parameterAktiv[j]) continue;
+                    const std::size_t b = blockVon[j];
+                    const std::vector<double>& rr = rs[pi * aktiv.size() + aktivIndex[b]];
+                    const std::vector<double>& r0 = e.bloecke[b].r;
+                    for (std::size_t i = 0; i < r0.size(); ++i) jb[b](i, spalteVon[j]) = (rr[i] - r0[i]) / h[j];
+                }
+        }
+
+        // A3: Parameter ohne Wirkung bekommen keinen Schritt
+        std::vector<std::vector<bool>> frei(nb);
+        for (const std::size_t b : aktiv)
+        {
+            LmBlockSchritt& s = it.bloecke[b];
+            s.diagonale = diagonaleJtJ(jb[b]);
+            frei[b].assign(bloecke[b].parameter.size(), true);
+            for (std::size_t q = 0; q < bloecke[b].parameter.size(); ++q)
+            {
+                const std::size_t j = bloecke[b].parameter[q];
+                if (std::sqrt(s.diagonale[q]) * (raum.oben[j] - raum.unten[j]) < einst.wirkungMindestens)
+                {
+                    frei[b][q] = false;
+                    s.ohneWirkung.push_back(j);
+                }
+            }
+        }
+
+        // (2) die Versuche: jeder noch nicht entschiedene Block mit seinem λ, alle in einem gemeinsamen Punkt
+        std::vector<bool> entschieden(nb, false);
+        std::vector<bool> klein(nb, false);
+        while (true)
+        {
+            std::vector<double> xv = e.x;
+            std::vector<std::size_t> versuch;
+            for (const std::size_t b : aktiv)
+            {
+                if (entschieden[b]) continue;
+                LmBlockSchritt& s = it.bloecke[b];
+                if (s.versuche >= einst.versucheHoechstens)
+                {
+                    entschieden[b] = true;
+                    continue;
+                }
+                const LmBlockStand& st = e.bloecke[b];
+                const std::vector<double> delta = lmSchritt(jb[b], st.r, st.lambda, frei[b]);
+                double anteil = 0.0;
+                for (std::size_t q = 0; q < delta.size(); ++q)
+                {
+                    const std::size_t j = bloecke[b].parameter[q];
+                    xv[j] = std::clamp(e.x[j] + delta[q], raum.unten[j], raum.oben[j]);
+                    anteil = std::max(anteil, std::abs(xv[j] - e.x[j]) / raum.ende[j]);
+                }
+                s.schrittAnteil = anteil;
+                if (anteil < 1.0)
+                {
+                    klein[b] = true;
+                    entschieden[b] = true;
+                    for (const std::size_t j : bloecke[b].parameter) xv[j] = e.x[j];
+                    continue;
+                }
+                versuch.push_back(b);
+            }
+            if (versuch.empty()) break;
+            const std::vector<std::vector<double>> rv = residuen({xv}, versuch);
+            it.auswertungen += static_cast<int>(versuch.size());
+            for (std::size_t k = 0; k < versuch.size(); ++k)
+            {
+                const std::size_t b = versuch[k];
+                LmBlockStand& st = e.bloecke[b];
+                LmBlockSchritt& s = it.bloecke[b];
+                ++st.auswertungen;
+                ++s.versuche;
+                const double restNeu = quadratsumme(rv[k]);
+                if (restNeu < st.rest)
+                {
+                    for (const std::size_t j : bloecke[b].parameter) e.x[j] = xv[j];
+                    st.r = rv[k];
+                    st.rest = restNeu;
+                    st.lambda /= einst.lambdaFaktor;
+                    s.angenommen = true;
+                    entschieden[b] = true;
+                    continue;
+                }
+                ++s.verworfen;
+                st.lambda *= einst.lambdaFaktor;
+            }
+        }
+
+        // (3) das Ende je Block
+        for (const std::size_t b : aktiv)
+        {
+            LmBlockStand& st = e.bloecke[b];
+            LmBlockSchritt& s = it.bloecke[b];
+            if (klein[b]) st.ende = "Schritte klein";
+            else if (!s.angenommen) st.ende = "kein besserer Schritt";
+            if (st.ende.empty() && st.iterationen >= einst.iterationenHoechstens) st.ende = "Iterationen";
+            s.rest = st.rest;
+            s.lambda = st.lambda;
+            s.ende = st.ende;
+            st.diagonale = s.diagonale;
+            st.ohneWirkung = s.ohneWirkung;
+        }
+        e.auswertungen += it.auswertungen;
+        it.x = e.x;
+        if (beobachter) beobachter(it);
+    }
+    e.anGrenze = anGrenzeIn(raum, e.x);
+    return e;
 }
 
 }  // namespace lumi::messung

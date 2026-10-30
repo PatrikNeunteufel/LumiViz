@@ -1,0 +1,110 @@
+# Suche 7.5.12 (V2 a, je Taste), Startpunkt 1, Iteration 3
+rest	3032.22
+rest_vorher	3418.12
+aktive_tasten	6 / 6
+angenommen	5
+versuche	20
+verworfen	15
+auswertungen	68
+dauer_s	47.1179
+getroffen	34 / 104
+ende	
+lambda_je_taste	0.01	10	100	0.01	0.01	1
+ende_je_taste	aktiv	aktiv	Schritte klein	aktiv	aktiv	aktiv
+iterationen_je_taste	3	3	3	3	3	3
+detune_fest	33=3.8311058191107934	48=2.0937592285642181	60=0.8571428571428571	66=0.90357881142280316	81=1.6426353128560613	84=1.4754510428535375
+x	1.3962470492950592	0.66663207490419041	0.9898961911532167	1.6700479638127332	1.3401321996804223	0.98030315082607034	4.517614383544621	3.9499581851451455	3.7045677725149706	3.1987626223272776	2.6333142047582641	0.61984255046815795	-0.016792472018476019	-0.026717691085862916	-0.088236445677003686	-1.3910909794858992	-2.6560250147829976	-0.76826784298313577	0.085022649054752056	1	0.070686765201255733	0.52351456424729237	1	1	1	0.021932931303833274	1	0.049624639073494126	0	0.20313281606057879	19.661638097119443	0	24.417724501687935	24.351134978328716	37.911980379843996	40.907615343085077	1.321244200213503	0.83420826150584193	0.89066087312007525	0.9559312048442391	0.70511110625357687	1.0177255984467801	0	1	1	0	0	0
+
+## Je Taste: Rest vorher, Rest, lambda vorher, lambda, Versuche, verworfen, angenommen, Ende
+33	752.42	396.269	1e-05	0.01	5	4	1	-
+48	1721.88	1714.58	10	10	2	1	1	-
+60	359.428	359.428	0.1	100	3	3	0	Schritte klein
+66	187.427	177.033	0.01	0.01	2	1	1	-
+81	128.727	121.53	0.01	0.01	2	1	1	-
+84	268.235	263.376	0.0001	1	6	5	1	-
+
+## Kurven (wie baueVorgabe)
+    // decay (ohne Quelle, Faktor 3)
+    s.abklingS = kurveAusPunkten({{33, 4.04}, {48, 1.948}, {60, 2.691}, {66, 5.312}, {81, 3.82}, {84, 2.665}});
+    // lateDecay (ohne Quelle, Faktor 3; nie kuerzer als decay)
+    s.abklingSpaetS = kurveAusPunkten({{33, 91.62}, {48, 51.93}, {60, 40.63}, {66, 24.5}, {81, 13.92}, {84, 2.665}});
+    // highDecay (Bensa 2003)
+    s.abklingHoch = kurveAusPunkten({{33, 0.9833}, {48, 0.9736}, {60, 0.9155}, {66, 0.2488}, {81, 0.07023}, {84, 0.4638}});
+    // detune (fest (A4): Start nach SG3 a, je Taste an die Schwebung gesetzt)
+    s.verstimmungCent = kurveAusPunkten({{33, 3.831}, {48, 2.094}, {60, 0.8571}, {66, 0.9036}, {81, 1.643}, {84, 1.475}});
+    // u leise (ohne Quelle, 0-1)
+    s.stossLeise = kurveAusPunkten({{33, 0.08502}, {48, 1}, {60, 0.07069}, {66, 0.5235}, {81, 1}, {84, 1}});
+    // u laut (ohne Quelle, 0-1)
+    s.stossLaut = kurveAusPunkten({{33, 1}, {48, 0.02193}, {60, 1}, {66, 0.04962}, {81, 0}, {84, 0.2031}});
+    // gamma (ohne Quelle, 0-45 Grad (SG2 a), Start 30 (HU2 a (3)))
+    s.polarisationWinkelGrad = kurveAusPunkten({{33, 19.66}, {48, 0}, {60, 24.42}, {66, 24.35}, {81, 37.91}, {84, 40.91}});
+    // delta (Tan 2017, Mori 2004; 0-8 Cent)
+    s.polarisationCent = kurveAusPunkten({{33, 1.321}, {48, 0.8342}, {60, 0.8907}, {66, 0.9559}, {81, 0.7051}, {84, 1.018}});
+    // h (0-1 (P7 a))
+    s.waagrechtVerhaeltnis = kurveAusPunkten({{33, 0}, {48, 1}, {60, 1}, {66, 0}, {81, 0}, {84, 0}});
+
+## Rest je Taste
+Taste | Summe r^2 | getroffen / alle | fehlend | groesste r
+33 | 396.269 | 1 / 16 | 0 | t60_spaet_3 11.225; vorwaerts_t60_2 7.085; huelle_40_s 7.067
+48 | 1714.580 | 7 / 18 | 0 | vorwaerts_t60_3 30.249; knick_tiefe_db 23.099; vorwaerts_t60 13.476
+60 | 359.428 | 6 / 16 | 0 | t60_spaet_3 14.957; vorwaerts_t60_2 7.383; t60_spaet 6.124
+66 | 177.033 | 7 / 18 | 0 | tiefe_db_2 7.192; t60_spaet_2 6.598; knick_tiefe_db_2 5.642
+81 | 121.530 | 7 / 18 | 0 | huelle_40_s 6.754; t60_spaet 5.118; knick_tiefe_db_3 3.909
+84 | 263.376 | 6 / 18 | 0 | knick_tiefe_db_2 8.013; t60_spaet_2 6.409; t60_spaet_3 5.298
+Gesamt: Summe r^2 3032.216, getroffen 34 / 104, fehlend 0, fertige Tasten 0 / 6, Ausreisser 48
+
+## An der Grenze
+20: decay 48 unten; highDecay 33 oben; highDecay 48 oben; highDecay 60 oben; highDecay 66 unten; highDecay 81 unten; highDecay 84 oben; u leise 48 oben; u leise 81 oben; u leise 84 oben; u laut 33 oben; u laut 60 oben; u laut 81 unten; gamma 48 unten; h 33 unten; h 48 oben; h 60 oben; h 66 unten; h 81 unten; h 84 unten;
+
+## Ohne Wirkung (A3, kein Schritt)
+4: lateDecay 84; delta 48; h 48; h 84;
+
+## Diagonale von J^T J je Stuetzpunkt (vor dem Schritt, je Taste aus ihrer letzten Iteration): Kurve, Taste, diag, Wirkung ueber den Bereich in Toleranzen
+decay	33	243	34.25
+decay	48	1208	76.38
+decay	60	991.9	69.2
+decay	66	414.1	44.71
+decay	81	141.1	26.1
+decay	84	1900	95.77
+lateDecay	33	306	38.44
+lateDecay	48	37.39	13.44
+lateDecay	60	705.8	58.37
+lateDecay	66	234.3	33.64
+lateDecay	81	218.9	32.51
+lateDecay	84	0	0	nicht aufgeloest
+highDecay	33	230.9	3.778
+highDecay	48	2.677	0.6034
+highDecay	60	1.743	1.162
+highDecay	66	14.42	4.677
+highDecay	81	62.57	16.18
+highDecay	84	15.48	8.427
+u leise	33	8774	93.67
+u leise	48	1186	34.44
+u leise	60	457.6	21.39
+u leise	66	277.2	16.65
+u leise	81	31.29	5.593
+u leise	84	37.67	6.138
+u laut	33	255.3	15.98
+u laut	48	299.5	17.31
+u laut	60	111.8	10.57
+u laut	66	20.95	4.577
+u laut	81	8.005	2.829
+u laut	84	9.354	3.058
+gamma	33	1.513	55.35
+gamma	48	5.662e-06	0.1071
+gamma	60	0.1577	17.87
+gamma	66	1.221	49.73
+gamma	81	0.2117	20.71
+gamma	84	1.769	59.85
+delta	33	1152	271.2
+delta	48	1.898e-22	1.101e-10	nicht aufgeloest
+delta	60	1165	272.8
+delta	66	2105	366.6
+delta	81	5776	607.2
+delta	84	2172	372.4
+h	33	2.668e+04	163.3
+h	48	1.825e-17	4.272e-09	nicht aufgeloest
+h	60	20.8	4.56
+h	66	991.2	31.48
+h	81	329.1	18.14
+h	84	0	0	nicht aufgeloest

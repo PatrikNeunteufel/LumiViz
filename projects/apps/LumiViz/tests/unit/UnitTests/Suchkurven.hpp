@@ -15,6 +15,12 @@
  * Weil die Interpolation am Stuetzpunkt den Stuetzpunkt selbst liefert, wirkt der Stuetzpunkt einer Taste nur auf den
  * Ton dieser Taste (die Grundlage der Jacobi-Matrix je Kurve in 7.5.10). Mit `deltaImChor` ist δ an allen Tasten frei
  * (Probe 7.5.11, S163: im Chor steht δ sonst fest auf 0, und ohne δ wirken γ und h dort nicht — nur fuer die Werkzeuge).
+ *
+ * 7.5.12 (V2 a): `SuchOptionen` statt des Schalters. A1: die Suche 7.5.12 gibt δ an allen Tasten frei, mit der
+ * Untergrenze 0,01 Cent (Lesart S163: numerischer Abstand von der Entartung beider Ebenen, nicht Physik). A4: `detune`
+ * steht fest (`detuneFest`) — an den Tasten mit Chor ab zwei Saiten mit dem Start nach SG3 a, den die Stufe vor der
+ * Suche je Taste ersetzt (`setzeFest`). A5: Startpunkt 3 ist das Spiegelbild von 2; `besterJeTaste` setzt aus mehreren
+ * Laeufen je Taste den besten zusammen. Die Vorgabe `SuchOptionen{}` gibt den Suchraum von 7.5.9 bitgleich.
  ****************************************************************************************
  */
 
@@ -112,11 +118,31 @@ inline std::optional<double> schwebungCentAn(const lumi::messung::TonStruktur& s
     return lumi::messung::detail::median(std::move(cent));
 }
 
+/// Wie der Suchraum gebaut wird; die Vorgabe ist der von 7.5.9 (die Suche 7.5.12 nimmt `suchOptionen7512()`).
+struct SuchOptionen
+{
+    bool deltaImChor = false;     ///< δ auch an Tasten mit zwei und drei Saiten frei (Probe 7.5.11, A1)
+    double deltaUntenCent = 0.0;  ///< die Untergrenze von δ an jeder freien Taste (A1: 0,01)
+    bool detuneFest = false;      ///< `detune` nicht frei, sondern fest (A4)
+};
+
+inline SuchOptionen suchOptionen7512()
+{
+    return {true, 0.01, true};
+}
+
+/// Der Bereich von `detune` an einer Taste (Tabelle 7.5.9: bis 6 Cent, ab 90 bis 7,5).
+inline double detuneObenCent(int taste)
+{
+    return taste < 90 ? 6.0 : 7.5;
+}
+
 /// Die neun Kurven der Suche an den `tasten` (die gemessenen von *Salamander*) um die Saite `basis` (die Vorgabe),
-/// Grenzen und Start nach der Tabelle des Bauauftrags 7.5.9 §3.3 (SQ2 a, HU2 a (3), SG2 a, SG3 a); `deltaImChor` gibt
-/// δ auch an Tasten mit zwei und drei Saiten frei (Probe 7.5.11).
+/// Grenzen und Start nach der Tabelle des Bauauftrags 7.5.9 §3.3 (SQ2 a, HU2 a (3), SG2 a, SG3 a), mit den Optionen
+/// `optionen` (s. Dateikopf). Mit `detuneFest` steht `detune` an allen Tasten fest: im Chor ab zwei Saiten mit dem Start
+/// nach SG3 a (in die Grenzen), sonst mit der Vorgabe.
 inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector<int>& tasten, const lumi::messung::Strukturen& strukturen,
-                         bool deltaImChor = false)
+                         const SuchOptionen& optionen = {})
 {
     using lumi::loop::HammerSaite;
     using lumi::loop::KurvenSkala;
@@ -156,7 +182,8 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
     using Grenzen = std::tuple<double, double, double>;
     const auto alle = [](int) { return true; };
     const auto chor2 = [&basis](int t) { return lumi::loop::chorAn(basis, t) >= 2; };
-    const auto deltaFrei = [&basis, deltaImChor](int t) { return deltaImChor || lumi::loop::chorAn(basis, t) == 1; };
+    const auto deltaFrei = [&basis, &optionen](int t) { return optionen.deltaImChor || lumi::loop::chorAn(basis, t) == 1; };
+    const auto detuneFrei = [&](int t) { return !optionen.detuneFest && chor2(t); };
 
     kurve("decay", &HammerSaite::abklingS, true, "ohne Quelle, Faktor 3", alle, [&](int t) {
         const double s = log(&HammerSaite::abklingS, t);
@@ -170,10 +197,23 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
         const auto [u, o] = bensaBand(t, log(&HammerSaite::saitenLaengeM, t));
         return Grenzen{u, o, log(&HammerSaite::abklingHoch, t)};
     });
-    kurve("detune", &HammerSaite::verstimmungCent, false, "Kirk, Cuenca, Plath; Start an der Schwebung (SG3 a)", chor2, [&](int t) {
+    const auto detuneGrenzen = [&](int t) {
         const std::optional<double> c = schwebung(t);
-        return Grenzen{0.0, t < 90 ? 6.0 : 7.5, c ? *c : lin(&HammerSaite::verstimmungCent, t)};
-    });
+        return Grenzen{0.0, detuneObenCent(t), c ? *c : lin(&HammerSaite::verstimmungCent, t)};
+    };
+    kurve("detune", &HammerSaite::verstimmungCent, false, "Kirk, Cuenca, Plath; Start an der Schwebung (SG3 a)", detuneFrei, detuneGrenzen);
+    if (optionen.detuneFest)
+    {
+        // A4: fest am Start nach SG3 a, wo der Chor zwei oder drei Saiten hat
+        SuchKurve& d = raum.kurven.back();
+        d.herkunft = "fest (A4): Start nach SG3 a, je Taste an die Schwebung gesetzt";
+        for (std::size_t i = 0; i < d.festTasten.size(); ++i)
+            if (chor2(d.festTasten[i]))
+            {
+                const auto [u, o, s] = detuneGrenzen(d.festTasten[i]);
+                d.festWerte[i] = std::clamp(s, u, o);
+            }
+    }
     for (const auto& [name, feld] : {std::pair{"u leise", &HammerSaite::stossLeise}, std::pair{"u laut", &HammerSaite::stossLaut}})
         kurve(name, feld, false, "ohne Quelle, 0-1", chor2, [&, feld = feld](int t) {
             const double v = lin(feld, t);
@@ -184,7 +224,7 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
     kurve("delta", &HammerSaite::polarisationCent, false, "Tan 2017, Mori 2004; 0-8 Cent", deltaFrei, [&](int t) {
         const double v = lin(&HammerSaite::polarisationCent, t);
         const std::optional<double> c = schwebung(t);
-        return Grenzen{0.0, 8.0, v > 0.0 ? v : (c ? *c : 0.0)};
+        return Grenzen{optionen.deltaUntenCent, 8.0, v > 0.0 ? v : (c ? *c : 0.0)};
     });
     kurve("h", &HammerSaite::waagrechtVerhaeltnis, false, "0-1 (P7 a)", alle,
           [&](int t) { return Grenzen{0.0, 1.0, lin(&HammerSaite::waagrechtVerhaeltnis, t)}; });
@@ -201,8 +241,9 @@ inline std::vector<double> klemme(const Suchraum& raum, std::vector<double> x)
     return x;
 }
 
-/// Startpunkt 1 (die Starts der Tabelle) oder 2 (ZF6 a, SP2 a: log-Groessen × 1,6, lineare + 0,25 des Bereichs, dann
-/// in die Grenzen) als Koordinaten.
+/// Startpunkt 1 (die Starts der Tabelle), 2 (ZF6 a, SP2 a: log-Groessen × 1,6, lineare + 0,25 des Bereichs) oder 3
+/// (A5, Lesart S164: das Spiegelbild von 2 — log ÷ 1,6, lineare − 0,25 des Bereichs), dann in die Grenzen; als
+/// Koordinaten.
 inline std::vector<double> startpunkt(const Suchraum& raum, int nummer)
 {
     std::vector<double> x;
@@ -211,9 +252,86 @@ inline std::vector<double> startpunkt(const Suchraum& raum, int nummer)
         {
             double c = k.koordinate(k.start[i]);
             if (nummer == 2) c += k.log ? std::log(1.6) : 0.25 * (k.oben[i] - k.unten[i]);
+            else if (nummer == 3) c -= k.log ? std::log(1.6) : 0.25 * (k.oben[i] - k.unten[i]);
             x.push_back(c);
         }
     return klemme(raum, std::move(x));
+}
+
+/// Der feste Wert der Kurve `name` an `taste` (A4: `detune` je Taste nach der Stufe); falsch, wo die Taste dort nicht
+/// fest ist.
+inline bool setzeFest(Suchraum& raum, const std::string& name, int taste, double wert)
+{
+    for (SuchKurve& k : raum.kurven)
+        if (k.name == name)
+            for (std::size_t i = 0; i < k.festTasten.size(); ++i)
+                if (k.festTasten[i] == taste)
+                {
+                    k.festWerte[i] = wert;
+                    return true;
+                }
+    return false;
+}
+
+/// Der feste Wert der Kurve `name` an `taste`, wenn sie dort fest ist.
+inline std::optional<double> festWert(const Suchraum& raum, const std::string& name, int taste)
+{
+    for (const SuchKurve& k : raum.kurven)
+        if (k.name == name)
+            for (std::size_t i = 0; i < k.festTasten.size(); ++i)
+                if (k.festTasten[i] == taste) return k.festWerte[i];
+    return std::nullopt;
+}
+
+/// Die Parameter einer Taste (Indizes in x) — ein Block der Suche 7.5.12.
+inline std::vector<std::size_t> parameterDerTaste(const Suchraum& raum, int taste)
+{
+    std::vector<std::size_t> p;
+    std::size_t j = 0;
+    for (const SuchKurve& k : raum.kurven)
+        for (std::size_t i = 0; i < k.tasten.size(); ++i, ++j)
+            if (k.tasten[i] == taste) p.push_back(j);
+    return p;
+}
+
+/// Ein Lauf der Suche (A5): sein Raum (mit den festen Werten nach A4), sein Punkt und je Taste Σ r².
+struct SuchLauf
+{
+    Suchraum raum;
+    std::vector<double> x;
+    std::vector<double> summeJeTaste;  ///< in der Reihenfolge von `tasten`
+};
+
+/// Der beste Lauf je Taste zusammengesetzt (A5): je Taste der mit der kleinsten Summe (bei Gleichstand der fruehere),
+/// seine Stuetzpunkte und seine festen Werte an dieser Taste. Die Laeufe teilen dieselben Kurven und Tasten.
+struct BesterJeTaste
+{
+    Suchraum raum;
+    std::vector<double> x;
+    std::vector<std::size_t> herkunft;  ///< je Taste der Index des Laufs
+};
+
+inline BesterJeTaste besterJeTaste(const std::vector<SuchLauf>& laeufe, const std::vector<int>& tasten)
+{
+    BesterJeTaste b;
+    b.raum = laeufe.front().raum;
+    b.x = laeufe.front().x;
+    for (std::size_t t = 0; t < tasten.size(); ++t)
+    {
+        std::size_t best = 0;
+        for (std::size_t l = 1; l < laeufe.size(); ++l)
+            if (laeufe[l].summeJeTaste[t] < laeufe[best].summeJeTaste[t]) best = l;
+        b.herkunft.push_back(best);
+        for (const std::size_t j : parameterDerTaste(b.raum, tasten[t])) b.x[j] = laeufe[best].x[j];
+        for (std::size_t k = 0; k < b.raum.kurven.size(); ++k)
+        {
+            SuchKurve& ziel = b.raum.kurven[k];
+            const SuchKurve& von = laeufe[best].raum.kurven[k];
+            for (std::size_t i = 0; i < ziel.festTasten.size(); ++i)
+                if (ziel.festTasten[i] == tasten[t]) ziel.festWerte[i] = von.festWerte[i];
+        }
+    }
+    return b;
 }
 
 /// Die Saite mit den Parametern `x` (Koordinaten; in die Grenzen geklemmt): je Kurve Stuetzpunkte an allen gemessenen

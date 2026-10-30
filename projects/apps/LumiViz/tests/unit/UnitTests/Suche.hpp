@@ -155,8 +155,9 @@ inline std::string kurvenText(const Suchraum& raum, const std::vector<double>& x
 }
 
 /// Wie stark die Residuen auf einen Stuetzpunkt ueber seinen ganzen Bereich antworten: √diag(JᵀJ) · Bereich, in
-/// Toleranzen. Unter `kNichtAufgeloest` gilt er als von der Aufnahme nicht aufgeloest (SP3 a; Lesart Claude S162).
-inline constexpr double kNichtAufgeloest = 0.1;
+/// Toleranzen. Unter `kNichtAufgeloest` gilt er als von der Aufnahme nicht aufgeloest (SP3 a; Lesart Claude S162) —
+/// seit 7.5.12 (A3) dieselbe Schwelle, unter der `levenbergMarquardtJeBlock` keinen Schritt macht.
+inline constexpr double kNichtAufgeloest = lumi::messung::LmEinstellungen{}.wirkungMindestens;
 
 inline std::string diagonaleText(const Suchraum& raum, const std::vector<double>& diagonale)
 {
@@ -215,13 +216,154 @@ inline bool schreibeIteration(const std::filesystem::path& ordner, int start, co
     return static_cast<bool>(aus);
 }
 
-/// Die letzte geschriebene Iteration eines Startpunkts: Nummer, x und λ — zur Wiederaufnahme.
+/// Die festen Werte von `detune` je Taste als eine Zeile `detune_fest<Tab>taste=wert…` (7.5.12, A4), voll genau.
+inline std::string detuneZeile(const Suchraum& raum)
+{
+    std::ostringstream s;
+    s << std::setprecision(17) << "detune_fest";
+    for (const SuchKurve& k : raum.kurven)
+        if (k.name == "detune")
+            for (std::size_t i = 0; i < k.festTasten.size(); ++i) s << '\t' << k.festTasten[i] << '=' << k.festWerte[i];
+    return s.str();
+}
+
+/// Liest die Zeile `detune_fest` einer Datei und setzt die Werte in `raum`; falsch ohne die Zeile.
+inline bool setzeDetuneAus(const std::filesystem::path& pfad, Suchraum& raum)
+{
+    std::ifstream ein(pfad, std::ios::binary);
+    std::string zeile;
+    while (std::getline(ein, zeile))
+    {
+        if (!zeile.empty() && zeile.back() == '\r') zeile.pop_back();
+        if (zeile != "detune_fest" && zeile.rfind("detune_fest\t", 0) != 0) continue;  // ohne feste Taste ohne Tab
+        std::istringstream s(zeile.size() > 12 ? zeile.substr(12) : std::string());
+        std::string teil;
+        while (std::getline(s, teil, '\t'))
+        {
+            const std::size_t gleich = teil.find('=');
+            if (gleich != std::string::npos) setzeFest(raum, "detune", std::stoi(teil.substr(0, gleich)), std::stod(teil.substr(gleich + 1)));
+        }
+        return true;
+    }
+    return false;
+}
+
+/// Die Zeile `x` einer Datei (Iteration oder Ergebnis), voll genau.
+inline std::vector<double> liesX(const std::filesystem::path& pfad)
+{
+    std::ifstream ein(pfad, std::ios::binary);
+    std::string zeile;
+    std::vector<double> x;
+    while (std::getline(ein, zeile))
+    {
+        if (!zeile.empty() && zeile.back() == '\r') zeile.pop_back();
+        if (zeile.rfind("x\t", 0) != 0) continue;
+        std::istringstream s(zeile.substr(2));
+        std::string teil;
+        while (std::getline(s, teil, '\t')) x.push_back(std::stod(teil));
+        break;
+    }
+    return x;
+}
+
+/// Die Diagonale ueber alle Parameter aus den Bloecken (7.5.12): je aktivem Block die dieser Iteration, sonst bleibt
+/// der Wert in `diagonale` (aus einer frueheren Iteration).
+inline void diagonaleAusBloecken(const std::vector<lumi::messung::LmBlock>& bloecke, const lumi::messung::LmIterationBloecke& it,
+                                 std::vector<double>& diagonale)
+{
+    for (std::size_t b = 0; b < bloecke.size(); ++b)
+        if (it.bloecke[b].aktiv)
+            for (std::size_t q = 0; q < bloecke[b].parameter.size(); ++q) diagonale[bloecke[b].parameter[q]] = it.bloecke[b].diagonale[q];
+}
+
+/// Die Stuetzpunkte ohne Wirkung (A3) als „Kurve Taste;“.
+inline std::string ohneWirkungText(const Suchraum& raum, const std::vector<std::size_t>& parameter)
+{
+    std::ostringstream s;
+    for (const std::size_t p : parameter)
+    {
+        std::size_t j = 0;
+        for (const SuchKurve& k : raum.kurven)
+        {
+            if (p < j + k.tasten.size())
+            {
+                s << ' ' << k.name << ' ' << k.tasten[p - j] << ';';
+                break;
+            }
+            j += k.tasten.size();
+        }
+    }
+    return std::to_string(parameter.size()) + (parameter.empty() ? std::string() : ":" + s.str());
+}
+
+/// Die Datei einer Iteration der Suche je Taste (7.5.12): wie `schreibeIteration`, dazu je Taste λ, Ende und
+/// Iterationen (Zeilen `lambda_je_taste`, `ende_je_taste`, `iterationen_je_taste` in der Reihenfolge der Tasten, fuer die
+/// Wiederaufnahme; ein aktiver Block steht als „aktiv“), die Stuetzpunkte ohne Wirkung und `detune_fest`.
+inline bool schreibeIterationBloecke(const std::filesystem::path& ordner, int start, const lumi::messung::LmIterationBloecke& it,
+                                     const lumi::messung::LmErgebnisBloecke& stand, const SuchAufgabe& a,
+                                     const std::vector<lumi::messung::TastenSumme>& tasten, const std::vector<double>& diagonale, double dauerS)
+{
+    std::ofstream aus(iterationsDatei(ordner, start, it.nummer), std::ios::binary);
+    if (!aus) return false;
+    const lumi::messung::Gesamt g = lumi::messung::gesamt(tasten);
+    double restVorher = 0.0;
+    int aktiv = 0, angenommen = 0, verworfen = 0, versuche = 0;
+    bool alleFertig = true;
+    std::vector<std::size_t> ohne;
+    for (std::size_t b = 0; b < it.bloecke.size(); ++b)
+    {
+        const lumi::messung::LmBlockSchritt& s = it.bloecke[b];
+        restVorher += s.aktiv ? s.restVorher : stand.bloecke[b].rest;
+        aktiv += s.aktiv ? 1 : 0;
+        angenommen += s.angenommen ? 1 : 0;
+        verworfen += s.verworfen;
+        versuche += s.versuche;
+        alleFertig = alleFertig && !stand.bloecke[b].ende.empty();
+        ohne.insert(ohne.end(), stand.bloecke[b].ohneWirkung.begin(), stand.bloecke[b].ohneWirkung.end());
+    }
+    std::sort(ohne.begin(), ohne.end());
+    aus << std::setprecision(6) << "# Suche 7.5.12 (V2 a, je Taste), Startpunkt " << start << ", Iteration " << it.nummer << '\n'
+        << "rest\t" << g.summe << "\nrest_vorher\t" << restVorher << "\naktive_tasten\t" << aktiv << " / " << it.bloecke.size() << "\nangenommen\t"
+        << angenommen << "\nversuche\t" << versuche << "\nverworfen\t" << verworfen << "\nauswertungen\t" << it.auswertungen << "\ndauer_s\t" << dauerS
+        << "\ngetroffen\t" << g.getroffen << " / " << g.groessen << "\nende\t" << (alleFertig ? "alle Tasten" : "") << std::setprecision(17)
+        << "\nlambda_je_taste";
+    for (const lumi::messung::LmBlockStand& b : stand.bloecke) aus << '\t' << b.lambda;
+    aus << "\nende_je_taste";
+    for (const lumi::messung::LmBlockStand& b : stand.bloecke) aus << '\t' << (b.ende.empty() ? std::string("aktiv") : b.ende);
+    aus << "\niterationen_je_taste";
+    for (const lumi::messung::LmBlockStand& b : stand.bloecke) aus << '\t' << b.iterationen;
+    aus << '\n' << detuneZeile(a.raum) << "\nx";
+    for (const double v : it.x) aus << '\t' << v;
+    aus << std::setprecision(6) << "\n\n## Je Taste: Rest vorher, Rest, lambda vorher, lambda, Versuche, verworfen, angenommen, Ende\n";
+    for (std::size_t b = 0; b < it.bloecke.size(); ++b)
+    {
+        const lumi::messung::LmBlockSchritt& s = it.bloecke[b];
+        aus << a.tasten[b] << '\t';
+        if (s.aktiv)
+            aus << s.restVorher << '\t' << s.rest << '\t' << s.lambdaVorher << '\t' << s.lambda << '\t' << s.versuche << '\t' << s.verworfen << '\t'
+                << (s.angenommen ? 1 : 0) << '\t' << (s.ende.empty() ? "-" : s.ende) << '\n';
+        else
+            aus << "beendet (" << stand.bloecke[b].ende << ")\n";
+    }
+    aus << "\n## Kurven (wie baueVorgabe)\n" << kurvenText(a.raum, it.x) << "\n## Rest je Taste\n" << lumi::messung::berichte(tasten)
+        << "\n## An der Grenze\n" << grenzenText(a.raum, lmRaum(a.raum), it.x) << "\n\n## Ohne Wirkung (A3, kein Schritt)\n" << ohneWirkungText(a.raum, ohne)
+        << "\n\n## Diagonale von J^T J je Stuetzpunkt (vor dem Schritt, je Taste aus ihrer letzten Iteration): Kurve, Taste, diag, Wirkung ueber den "
+           "Bereich in Toleranzen\n"
+        << diagonaleText(a.raum, diagonale);
+    return static_cast<bool>(aus);
+}
+
+/// Die letzte geschriebene Iteration eines Startpunkts: Nummer, x und λ — zur Wiederaufnahme; seit 7.5.12 auch je Taste
+/// (leer bei Dateien der Suche 7.5.10).
 struct LetzteIteration
 {
     int nummer = 0;
     std::vector<double> x;
     double lambda = 0.0;
     std::string ende;
+    std::vector<double> lambdaJeTaste;
+    std::vector<std::string> endeJeTaste;  ///< leer = aktiv
+    std::vector<int> iterationenJeTaste;
 };
 
 inline std::optional<LetzteIteration> liesLetzteIteration(const std::filesystem::path& ordner, int start)
@@ -239,13 +381,17 @@ inline std::optional<LetzteIteration> liesLetzteIteration(const std::filesystem:
         std::istringstream s(zeile);
         std::string kopf;
         std::getline(s, kopf, '\t');
+        std::string teil;
         if (kopf == "lambda") s >> l.lambda;
         else if (kopf == "ende") std::getline(s, l.ende);
         else if (kopf == "x")
-        {
-            std::string teil;
             while (std::getline(s, teil, '\t')) l.x.push_back(std::stod(teil));
-        }
+        else if (kopf == "lambda_je_taste")
+            while (std::getline(s, teil, '\t')) l.lambdaJeTaste.push_back(std::stod(teil));
+        else if (kopf == "ende_je_taste")
+            while (std::getline(s, teil, '\t')) l.endeJeTaste.push_back(teil == "aktiv" ? std::string() : teil);
+        else if (kopf == "iterationen_je_taste")
+            while (std::getline(s, teil, '\t')) l.iterationenJeTaste.push_back(std::stoi(teil));
     }
     if (l.x.empty()) return std::nullopt;
     return l;

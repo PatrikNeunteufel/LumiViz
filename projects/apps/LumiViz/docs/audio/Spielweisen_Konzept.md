@@ -3816,6 +3816,33 @@ Verworfen: b (≥ 75 % in eine Richtung, ohne Test — rund acht Größen an S16
 je Größe — vier Größen, bei 18 Tests fast eine falsche Meldung zu erwarten). Kippt auf c, wenn nach A je Größe nur
 noch wenige Tasten (unter rund acht) nicht getroffen sind — dann erkennt Holm selbst eine einheitliche Richtung nicht.
 
+**7.5.12 gebaut (S165, Opus 5.5; Bauauftrag `.claude/handover/auftrag_7.5.12.md`) — Probelauf an sechs Tasten: A4 macht
+es schlechter.** Gebaut unter `tests/unit/UnitTests/`, kein Rechenkern: `levenbergMarquardtJeBlock` (A2: je Taste λ,
+Annahme, Ende; alle aktiven Tasten in einem Aufruf; A3: Stützpunkte unter 0,1 Toleranzen ohne Schritt, je Iteration neu),
+`SuchOptionen` (A1: δ an allen Tasten frei ab 0,01 Cent; `detune` fest), Startpunkt 3 und `besterJeTaste` (A5),
+`Schwebungsstufe.hpp` (A4: 15 Rasterpunkte, Goldener Schnitt, die Mitte des letzten Intervalls; der Start bleibt, wenn er
+nicht schlechter ist — Lesart S165), `Hoerschwellen.hpp` und `Probe7512.hpp` (HW1 a–HW4 a), die Werkzeuge
+`LUMIVIZ_75_SUCHE2`, `…_A4`, `…_SCHNITT_X`, `…_PROBE12`. Release-clang `*7.5.9*,*7.5.10*,*7.5.11*,*7.5.12*` 26 / 26,
+Testing-MSVC gebaut, kein Lauf (UF17-1 a). Der Block-LM gibt je Block bitgleich, was der LM je Block allein gibt; δ =
+0,01 Cent liegt an 84 um den Faktor 3,8·10⁵ (Teilton 1) über der Schwelle des Nachschärfens in `zerlegeKlein`, Σ r²
+hängt dort stetig an h (relativ 2,5·10⁻¹⁰ zwischen h = 1 und 1 − 10⁻⁶). Gegengerechnet an S162 Start 1: hörbar gleich
+164, hörbar getroffen 215, systematisch nur `t60_spaet_2` und `t60_spaet_3` — **`t60_spaet_3` nach HW1 a 1 von 14 zu
+lang, nicht 1 von 13** (die 13 stammen aus der Option b von HW1, 75–140 %; Taste 48 liegt mit 0,784 unter 0,7923).
+*Probelauf* (Startpunkt 1, 33, 48, 60, 66, 81, 84; `proben/S165_suche2_probe/`, 8,5 min, eine Auswertung der sechs Tasten
+3,6 s, eine Iteration 35–50 s, A4 121 s): Σ r² 2565, getroffen 34 / 104, hörbar getroffen 50 / 104 — gegen „LM allein, δ
+frei“ (S163) an 60 359 statt 105, an 81 119 statt 25, an 84 250 statt 10,2, an 66 105 statt 113, an 33 278 statt 621,
+an 48 1454 statt 1416. **Schlechter an drei der vier Tasten, an denen δ half — nach dem Auftrag nicht weiterbauen.**
+*Gegenprobe ohne A4* (`LUMIVIZ_75_SUCHE2_OHNE_A4=1`, `detune` frei in der Suche, sonst gleich;
+`proben/S165_suche2_probe_ohne_a4/`, 7,7 min): Σ r² 2257, getroffen 50 / 104, hörbar getroffen 60 — je Taste 576, 1418,
+115, 115, 24,3, 9,8: die Suche je Taste trifft S163 „δ frei“ (53 / 104) wieder, nur 60 liegt leicht darunter (7 statt 9
+getroffen). **Die Ursache ist A4:** an 60, 81, 84 setzt A4 `detune` auf 0,86 / 1,64 / 1,48 Cent, die gute Lösung liegt
+bei 0,73 / 0,58 / 0,53 mit δ 0,81 / 0,55 / 1,07 — die Schwebung von *Salamander* entsteht aus `detune` und δ zusammen,
+und δ steht zu Beginn schon an der Schwebung in Cent; A4 passt allein `detune` an und legt es fest. Dazu steigt g von
+nach A4 bis zum Ende an 4 von 6 Tasten über das Doppelte (Befund nach Auftrag §5.1). Offen für die nächste Sitzung (Fable,
+Merkmal 1 — die Prämisse von A4 steht in Frage): wie A4 weitergeht (weglassen, `detune` und δ gemeinsam setzen, oder A4
+nur als Startwert und `detune` frei in der Suche); erst danach der Lauf über Nacht (alle 30 Tasten, drei Startpunkte,
+geschätzt höchstens rund 3 h).
+
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
 
