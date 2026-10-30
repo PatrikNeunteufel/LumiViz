@@ -88,6 +88,16 @@
                     "expression": [
                     ],
                     "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.4,
+                            "decay": 1.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.5,
+                            "type": "reverb"
+                        }
+                    ],
                     "pattern": "Beat 2",
                     "repeat": 1,
                     "start": 3
@@ -99,6 +109,16 @@
                         [4.375, 1]
                     ],
                     "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.4,
+                            "decay": 1.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.5,
+                            "type": "reverb"
+                        }
+                    ],
                     "pattern": "Beat 2",
                     "repeat": 2,
                     "start": 11
@@ -110,6 +130,16 @@
                         [4.375, 1]
                     ],
                     "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.4,
+                            "decay": 1.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.5,
+                            "type": "reverb"
+                        }
+                    ],
                     "pattern": "Beat 2",
                     "repeat": 2,
                     "start": 31
@@ -121,6 +151,16 @@
                         [4.375, 1]
                     ],
                     "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.4,
+                            "decay": 1.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.5,
+                            "type": "reverb"
+                        }
+                    ],
                     "pattern": "Beat 2",
                     "repeat": 2,
                     "start": 52
@@ -248,6 +288,8 @@
                 "hand": "halfBeat",
                 "spread": 8
             },
+            "voices": [
+            ],
             "volume": 0.5489
         },
         {
@@ -301,6 +343,8 @@
                 "hand": "halfBeat",
                 "spread": 8
             },
+            "voices": [
+            ],
             "volume": 0.4424
         },
         {
@@ -336,6 +380,8 @@
                 "hand": "halfBeat",
                 "spread": 8
             },
+            "voices": [
+            ],
             "volume": 0.4355
         },
         {
@@ -592,6 +638,8 @@
                 "hand": "halfBeat",
                 "spread": 7
             },
+            "voices": [
+            ],
             "volume": 1
         }
     ],
@@ -602,6 +650,6 @@
         "genre": "Hip-Hop",
         "title": "Beatbox Groove"
     },
-    "version": 13,
+    "version": 14,
     "volume": 0.26
 }
