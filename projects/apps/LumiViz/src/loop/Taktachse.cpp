@@ -14,9 +14,14 @@
 #include <QInputDialog>
 
 #include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
+#include "loop/Instrument.hpp"           // eigenerName
+#include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMenu>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
@@ -1638,6 +1643,144 @@ void Taktachse::kanalSchalten(int kanal, bool an)
     uebernimm(neu, m_kanal, m_clip, an ? tr("Channel on") : tr("Channel off"));
 }
 
+// --- Stufe 33: Muster, Clips und Spuren als Dateien ---------------------------------
+
+namespace
+{
+
+Taktachse::Dateiwahl& dateiwahlImTest()
+{
+    static Taktachse::Dateiwahl wahl;
+    return wahl;
+}
+
+QString filterVon(AustauschArt art)
+{
+    switch (art)
+    {
+    case AustauschArt::Muster: return Taktachse::tr("Pattern (*.lvpattern);;All files (*)");
+    case AustauschArt::Clip: return Taktachse::tr("Clip (*.lvclip);;All files (*)");
+    case AustauschArt::Spur: return Taktachse::tr("Track (*.lvtrack);;All files (*)");
+    }
+    return {};
+}
+
+QString wortVon(AustauschArt art)
+{
+    switch (art)
+    {
+    case AustauschArt::Muster: return Taktachse::tr("pattern");
+    case AustauschArt::Clip: return Taktachse::tr("clip");
+    case AustauschArt::Spur: return Taktachse::tr("track");
+    }
+    return {};
+}
+
+/// Eine Meldung ueber den Dialog-Weg der Bedienhilfe (in Tests abfragbar).
+void melde(QWidget* parent, QMessageBox::Icon art, const QString& titel, const QString& text)
+{
+    QMessageBox box(art, titel, text, QMessageBox::Ok, parent);
+    lumi::ui::fuehreDialogAus(box);
+}
+
+/// Fragt nach der Datei — vorgeschlagen im Benutzerordner der Art unter `name`.
+QString frageDatei(QWidget* parent, bool speichern, AustauschArt art, const QString& titel, const QString& name)
+{
+    const QString ordner = eigenerAustauschOrdner(art);
+    if (!ordner.isEmpty()) (void)QDir().mkpath(ordner);
+    const QString datei = name.isEmpty() ? QString() : eigenerName(name) + austauschEndung(art);
+    const QString vorschlag = datei.isEmpty() ? ordner : QDir(ordner).filePath(datei);
+    if (dateiwahlImTest()) return dateiwahlImTest()(speichern, titel, vorschlag, filterVon(art));
+    return speichern ? QFileDialog::getSaveFileName(parent, titel, vorschlag, filterVon(art))
+                     : QFileDialog::getOpenFileName(parent, titel, vorschlag, filterVon(art));
+}
+
+bool schreibe(QWidget* parent, AustauschArt art, const std::optional<Loop>& teil, const QString& titel, const QString& name)
+{
+    if (!teil) return false;
+    QString pfad = frageDatei(parent, true, art, titel, name);
+    if (pfad.isEmpty()) return false;
+    if (QFileInfo(pfad).suffix().isEmpty()) pfad += austauschEndung(art);
+    if (speichereAustausch(art, *teil, pfad)) return true;
+    melde(parent, QMessageBox::Warning, titel, Taktachse::tr("Could not write %1").arg(QDir::toNativeSeparators(pfad)));
+    return false;
+}
+
+}  // namespace
+
+void Taktachse::setzeDateiwahlFuerTests(Dateiwahl wahl)
+{
+    dateiwahlImTest() = std::move(wahl);
+}
+
+bool Taktachse::exportiereMuster(int kanal, int clip)
+{
+    if (!m_geladen || kanal < 0 || kanal >= static_cast<int>(m_loop.kanaele.size())) return false;
+    const Kanal& k = m_loop.kanaele[static_cast<std::size_t>(kanal)];
+    if (clip < 0 || clip >= static_cast<int>(k.clips.size())) return false;
+    const QString muster = k.clips[static_cast<std::size_t>(clip)].muster;
+    return schreibe(this, AustauschArt::Muster, musterDatei(m_loop, muster), tr("Export pattern"), muster);
+}
+
+bool Taktachse::exportiereClip(int kanal, int clip)
+{
+    const std::optional<Loop> teil = m_geladen ? clipDatei(m_loop, kanal, clip) : std::nullopt;
+    return schreibe(this, AustauschArt::Clip, teil, tr("Export clip"),
+                    teil ? teil->kanaele[0].clips[0].muster : QString());
+}
+
+bool Taktachse::exportiereSpur(int kanal)
+{
+    const std::optional<Loop> teil = m_geladen ? spurDatei(m_loop, kanal) : std::nullopt;
+    return schreibe(this, AustauschArt::Spur, teil, tr("Export track"), teil ? teil->kanaele[0].name : QString());
+}
+
+bool Taktachse::importiere(AustauschArt art, int kanal, int takt)
+{
+    if (!m_geladen || m_griff != Griff::Keiner) return false;
+    const QString titel = art == AustauschArt::Muster ? tr("Import pattern")
+                          : art == AustauschArt::Clip ? tr("Import clip")
+                                                      : tr("Import track");
+    const QString pfad = frageDatei(this, false, art, titel, QString());
+    if (pfad.isEmpty()) return false;
+    Loop teil;
+    QStringList fehlt;
+    bool zuNeu = false;
+    if (!ladeAustausch(pfad, art, teil, &fehlt, &zuNeu))
+    {
+        melde(this, QMessageBox::Warning, titel,
+              zuNeu ? tr("%1 was written by a newer version of LumiViz.").arg(QFileInfo(pfad).fileName())
+                    : tr("%1 is not a %2 file.").arg(QFileInfo(pfad).fileName(), wortVon(art)));
+        return false;
+    }
+    Loop neu = m_loop;
+    const Einsetzung e = setzeEin(neu, std::move(teil), art, kanal, takt);
+    if (e.kanal < 0) return false;
+    // markiert ist danach der eingesetzte Clip (bei einer Spur keiner)
+    int clip = -1;
+    if (art != AustauschArt::Spur)
+        clip = findeClip(neu, ClipOrt{e.kanal, std::max(0, takt)});
+    m_gruppe.clear();
+    uebernimm(neu, e.kanal, clip, titel);
+
+    QStringList text;
+    if (e.umgerechnet)
+    {
+        text << tr("Converted to this loop: %1 beats per bar, %2 steps per beat.")
+                    .arg(neu.schlaegeJeTakt)
+                    .arg(neu.schritteJeSchlag);
+        if (e.umrechnung.verschoben > 0)
+            text << tr("Drum hits moved to the nearest step: %1, of which merged: %2.")
+                        .arg(e.umrechnung.verschoben)
+                        .arg(e.umrechnung.zusammengelegt);
+    }
+    for (const QString& name : e.umbenannt) text << tr("A different pattern of that name exists — imported as %1.").arg(name);
+    if (e.neuerKanal && art != AustauschArt::Spur) text << tr("No room at that bar — placed in a new channel.");
+    text += fehlt;
+    if (!text.isEmpty()) melde(this, QMessageBox::Information, titel, text.join(QLatin1Char('\n')));
+    return true;
+}
+
 void Taktachse::contextMenuEvent(QContextMenuEvent* event)
 {
     if (!m_geladen) return;
@@ -1670,6 +1813,10 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         menu.addAction(k.an ? tr("Turn channel off") : tr("Turn channel on"), this,
                        [this, kanal, an = k.an] { kanalSchalten(kanal, !an); });
         menu.addAction(tr("Delete channel"), this, [this, kanal] { kanalLoeschen(kanal); });
+        // Stufe 33 (PE1, PE3 b): der Kanal mit allen Clips und ihren Mustern als Datei
+        menu.addSeparator();
+        menu.addAction(tr("Export track..."), this, [this, kanal] { (void)exportiereSpur(kanal); })
+            ->setObjectName(QStringLiteral("loopExportTrack"));
         lumi::ui::zeigeMenue(menu, event->globalPos());
         return;
     }
@@ -1718,6 +1865,15 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         }
         QAction* freeze = menu.addAction(freezeEintrag, this, [this, ein = !alleEingefroren] { (void)verlangeFreeze(ein); });
         freeze->setObjectName(QStringLiteral("loopClipFreeze"));
+        // Stufe 33 (PE1, LC1 a): die Basis oder der Clip als Datei — nur einer
+        QAction* exportMuster =
+            menu.addAction(tr("Export pattern..."), this, [this, clipKanal, clip] { (void)exportiereMuster(clipKanal, clip); });
+        exportMuster->setObjectName(QStringLiteral("loopExportPattern"));
+        exportMuster->setEnabled(!gruppe);
+        QAction* exportClip =
+            menu.addAction(tr("Export clip..."), this, [this, clipKanal, clip] { (void)exportiereClip(clipKanal, clip); });
+        exportClip->setObjectName(QStringLiteral("loopExportClip"));
+        exportClip->setEnabled(!gruppe);
         menu.addSeparator();
         menu.addAction(gruppe ? tr("Duplicate %1 clips").arg(zahl) : tr("Duplicate"), this,
                        [this] { (void)dupliziereAuswahl(); });
@@ -1749,9 +1905,17 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
                 (void)neuerClip(kanal, takt, MusterArt::Instrument);
             });
             instrument->setEnabled(neu->isEnabled());
+            // Stufe 33 (PE1, LC1 a): ab diesem Takt; ohne Platz in einem neuen Kanal
+            menu.addAction(tr("Import pattern..."), this,
+                           [this, kanal, takt] { (void)importiere(AustauschArt::Muster, kanal, takt); })
+                ->setObjectName(QStringLiteral("loopImportPattern"));
+            menu.addAction(tr("Import clip..."), this, [this, kanal, takt] { (void)importiere(AustauschArt::Clip, kanal, takt); })
+                ->setObjectName(QStringLiteral("loopImportClip"));
             menu.addSeparator();
         }
         menu.addAction(tr("Add channel"), this, [this] { kanalHinzu(); });
+        menu.addAction(tr("Import track..."), this, [this] { (void)importiere(AustauschArt::Spur); })
+            ->setObjectName(QStringLiteral("loopImportTrack"));
         menu.addAction(tr("Select all clips"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
     }
     fuelleZoomMenue(menu);

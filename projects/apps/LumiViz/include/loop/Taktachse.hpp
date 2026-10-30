@@ -18,6 +18,7 @@
 #pragma once
 
 #include "UI/widgets/Achse.hpp"
+#include "loop/Austausch.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/Freeze.hpp"
 #include "loop/Loop.hpp"
@@ -29,6 +30,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <utility>
 #include <vector>
@@ -144,6 +146,25 @@ public:
     /// *Freeze clip* / *Unfreeze clip* (Stufe 30g, FZ4 a B) fuer die markierten Clips verlangen.
     /// false = keiner markiert.
     bool verlangeFreeze(bool einfrieren);
+
+    // --- Stufe 33 (Loop_Konzept §4o, PE1, LC1 a): Muster, Clips und Spuren als Dateien ---
+    /// Wie die Menues nach einer Datei fragen: `speichern` = Speichern-Dialog; der Pfad
+    /// oder leer (abgebrochen). Ohne Ersatz `QFileDialog`; in Tests ersetzbar.
+    using Dateiwahl =
+        std::function<QString(bool speichern, const QString& titel, const QString& vorschlag, const QString& filter)>;
+    static void setzeDateiwahlFuerTests(Dateiwahl wahl);
+    /// *Export pattern...* (die Basis des Clips), *Export clip...*, *Export track...*: fragt
+    /// nach der Datei — vorgeschlagen im Benutzerordner — und schreibt sie. false =
+    /// abgebrochen oder nicht geschrieben (dann mit Meldung).
+    bool exportiereMuster(int kanal, int clip);
+    bool exportiereClip(int kanal, int clip);
+    bool exportiereSpur(int kanal);
+    /// *Import pattern...* und *Import clip...* ab `takt` in `kanal`, *Import track...* als
+    /// neuer Kanal: fragt nach der Datei, setzt ein (mit Undo) und meldet, was dabei
+    /// geschah (umgerechnet, umbenannt, neuer Kanal, fehlende Dateien). false = abgebrochen
+    /// oder keine solche Datei (dann mit Meldung).
+    bool importiere(AustauschArt art, int kanal = -1, int takt = 0);
+
     /// Die Marken (FZ4 a A), je Clip — Kanal, Starttakt —; ein Clip ohne Eintrag hat keine.
     void setzeFreezeMarken(std::map<std::pair<int, int>, FreezeMarke> marken);
     [[nodiscard]] FreezeMarke freezeMarke(int kanal, int startTakt) const;

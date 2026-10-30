@@ -50,6 +50,12 @@ inline constexpr const char* kSpurDateiEndung = ".lvtrack";
 /// Die Art nach der Endung einer Datei; nichts = keine dieser drei.
 [[nodiscard]] std::optional<AustauschArt> austauschArtVonDatei(const QString& datei);
 
+/// Der Ordner im Benutzerordner, den die Dialoge vorschlagen (PE1): `patterns` fuer
+/// `.lvpattern`, `tracks` fuer `.lvclip` und `.lvtrack`. Leer = kein Benutzerordner.
+[[nodiscard]] QString eigenerAustauschOrdner(AustauschArt art);
+/// In Tests: statt des Benutzerordners `basis` (darunter `patterns`, `tracks`); leer = zurueck.
+void setzeAustauschBasisFuerTests(const QString& basis);
+
 // --- herausloesen -------------------------------------------------------------
 // Der kleine Loop traegt Tempo, Taktart, Raster und Swing des Loops, keine Tags;
 // Lautstaerke und Limiter bleiben bei ihren Vorgaben (der Import uebernimmt sie nicht).

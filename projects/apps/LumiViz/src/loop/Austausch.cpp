@@ -5,11 +5,13 @@
 
 #include "loop/Austausch.hpp"
 
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
+#include <QStandardPaths>
 
 #include <algorithm>
 #include <cmath>
@@ -75,6 +77,30 @@ std::optional<AustauschArt> austauschArtVonDatei(const QString& datei)
     for (const AustauschArt art : {AustauschArt::Muster, AustauschArt::Clip, AustauschArt::Spur})
         if (datei.endsWith(austauschEndung(art), Qt::CaseInsensitive)) return art;
     return std::nullopt;
+}
+
+namespace
+{
+
+QString& basisImTest()
+{
+    static QString basis;
+    return basis;
+}
+
+}  // namespace
+
+QString eigenerAustauschOrdner(AustauschArt art)
+{
+    const QString basis = !basisImTest().isEmpty() ? basisImTest()
+                                                   : QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (basis.isEmpty()) return {};
+    return QDir(basis).filePath(art == AustauschArt::Muster ? QStringLiteral("patterns") : QStringLiteral("tracks"));
+}
+
+void setzeAustauschBasisFuerTests(const QString& basis)
+{
+    basisImTest() = basis;
 }
 
 std::optional<Loop> musterDatei(const Loop& loop, const QString& name)

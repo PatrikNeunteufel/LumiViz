@@ -3989,7 +3989,7 @@ genannt wird, was das Muster spielt, mitgepackt wird nichts (dafür gibt es Publ
 | 33a | Modell und Datei: `loop/Austausch` — herauslösen (`musterDatei`, `clipDatei`, `spurDatei`), schreiben, lesen, die drei Formate; Tests | erledigt 2026-10-30 (S167, `test_LoopAustausch` 33a) |
 | 33b | Umrechnung nach PE2 a: Noten mit Versatz, Drum-Zeilen, Akkord-Einträge, Spuren über der Zeit, Expression am Clip, Takte; Bericht der verschobenen Schläge; Tests mit Bezug | erledigt 2026-10-30 (S167, `rechneUm`, `test_LoopAustausch` 33b) |
 | 33c | Einsetzen: Namen (mitbenutzen oder `_2`), Ort (Takt und Kanal, neuer Kanal); Tests (Undo mit 33d) | erledigt 2026-10-30 (S167, `setzeEin`, `test_LoopAustausch` 33c) |
-| 33d | Bedienung: die Menüs der Taktachse, Dateidialoge mit Benutzerordner als Vorgabe; Tests über die Taktachse mit Menü- und Dialogbeobachter, Bild | offen |
+| 33d | Bedienung: die Menüs der Taktachse, Dateidialoge mit Benutzerordner als Vorgabe; Tests über die Taktachse mit Menü- und Dialogbeobachter, Bild | erledigt 2026-10-30 (S167, `test_LoopAustauschMenue`) |
 | 33e | Datensicherung (zwei Bereiche), Publish (drei Arten), Icons | offen |
 | 33f | Abschluss: Benutzerhandbuch §16 und §17, Doku, Sichttest-Liste; Bereich und voller Lauf unter beiden Compilern (neue Dateiarten, UF17-1 a) | offen |
 
@@ -4002,6 +4002,18 @@ der letzte Schlag hinter das Ende). `setzeEin` vergibt erst alle Namen, dann nen
 neuen — so trifft ein neuer Name (`Drums` → `Drums_2`) nie ein Muster der Datei, das selbst
 `Drums_2` heißt (das wird `Drums_2_2`). Gleiche Schläge in anderer Taktart ergeben dasselbe
 Muster und werden mitbenutzt.
+
+**Wie 33d gebaut ist (S167):** in `Taktachse` die Einträge *Export pattern...* und *Export
+clip...* am Clip (hinter *Freeze clip*, grau bei mehreren markierten), *Export track...* am
+Kanalnamen, *Import pattern...* und *Import clip...* auf einem freien Takt, *Import track...*
+auf der freien Fläche; dahinter `exportiereMuster`, `exportiereClip`, `exportiereSpur`,
+`importiere`. Der Dialog schlägt `<Benutzerordner>/patterns` bzw. `tracks` mit dem Namen der
+Basis oder des Kanals vor (`eigenerName`); fehlt die Endung, wird sie angehängt. Der Import geht
+über `bearbeitet` und damit über Undo; markiert ist danach der eingesetzte Clip. Eine Meldung
+erscheint nur, wenn es etwas zu sagen gibt: umgerechnet (mit der Zahl verschobener Schläge),
+umbenannt, kein Platz und darum ein neuer Kanal, fehlende Dateien; eine falsche oder zu neue
+Datei meldet sich als Warnung. In Tests: `Taktachse::setzeDateiwahlFuerTests`,
+`setzeAustauschBasisFuerTests`; `LUMIVIZ_AUSTAUSCH_BILD=<datei.png>` legt ein Bild ab.
 
 ## 5. Stufen
 

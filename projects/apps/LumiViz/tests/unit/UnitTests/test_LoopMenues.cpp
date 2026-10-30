@@ -201,7 +201,7 @@ TEST_SUITE("Loop Menues")
         rechts(achse, QPoint(10, percY));
         CHECK(fang.texte == QStringList{QStringLiteral("Rename channel..."), QStringLiteral("Move channel up"),
                                         QStringLiteral("Move channel down"), QStringLiteral("Turn channel off"),
-                                        QStringLiteral("Delete channel")});
+                                        QStringLiteral("Delete channel"), QStringLiteral("Export track...")});
         CHECK(fang.grau == QStringList{QStringLiteral("Move channel down")});  // Perc ist der letzte
         CHECK(fang.dialogTitel == QStringLiteral("Rename channel"));
         CHECK(fang.dialogText == QStringLiteral("Perc"));
