@@ -4,7 +4,7 @@ Aufruf (normales Python mit Pillow):
 
     python asset/img/logo/icons/build_lvfx2_icons.py
 
-Erzeugt zweiundzwanzig .ico (16–256 px) neben diesem Skript:
+Erzeugt dreiundzwanzig .ico (16–256 px) neben diesem Skript:
 
 - `lumiviz_lvfx2.ico`   „Stapel"  — das Icon vorn, zwei abgedunkelte Kopien
                         versetzt dahinter. Das Datei-Icon fuer `.lvfx2`
@@ -40,6 +40,8 @@ Erzeugt zweiundzwanzig .ico (16–256 px) neben diesem Skript:
                         einer Piano-Roll, einem Clip mit Wiederholung, einer Zeile mit drei
                         Clips — die Datei-Icons fuer Muster, Clips und Spuren (Session 167,
                         Loop Stufe 33).
+- `lumiviz_lvchords.ico` „Marke" mit drei Griffbildern hintereinander — das Datei-Icon fuer
+                        die Sammlungen der mitgelieferten Akkorde `.lvchords` (Session 167, I1 a).
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 - `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
@@ -308,6 +310,31 @@ def zeichen_griffbild(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
         d.ellipse((x - k, y - k, x + k, y + k), fill=(*farbe, 255))
 
 
+def zeichen_griffbilder(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Eine Sammlung von Akkorden (Session 167, `.lvchords`, nach I1 a): drei kleine
+    Griffbilder hintereinander, das vordere mit Fingern in den Farben des Logos."""
+    hell = (235, 235, 235, 255)
+    b, h = int(r * 0.30), int(r * 0.38)
+    for stufe, (dx, dy) in enumerate(((-0.22, -0.24), (0.0, -0.02), (0.22, 0.20))):
+        x0, y0 = cx + int(r * dx) - b, cy + int(r * dy) - h
+        vorn = stufe == 2
+        d.rectangle((x0 - 8, y0 - 8, x0 + 2 * b + 8, y0 + 2 * h + 8), fill=MARKE_GRUND)
+        farbe = hell if vorn else (120, 126, 138, 255)
+        d.rectangle((x0, y0 - 10, x0 + 2 * b, y0 + 10), fill=farbe)  # der Sattel
+        for i in range(1, 3):
+            y = y0 + 2 * h * i // 3
+            d.line([(x0, y), (x0 + 2 * b, y)], fill=(150, 156, 168, 255), width=9)
+        for i in range(4):
+            x = x0 + 2 * b * i // 3
+            d.line([(x, y0), (x, y0 + 2 * h)], fill=farbe, width=10)
+        if vorn:
+            k = int(r * 0.11)
+            for saite, bund, f in ((1, 0, CYAN), (2, 1, MAGENTA), (3, 1, BERNSTEIN)):
+                x = x0 + 2 * b * saite // 3
+                y = y0 + 2 * h * (2 * bund + 1) // 6
+                d.ellipse((x - k, y - k, x + k, y + k), fill=(*f, 255))
+
+
 # --- Muster, Clip und Spur als Dateien (Session 167, Loop Stufe 33, Wunsch Patrik) ------------
 
 def zeichen_muster(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
@@ -504,6 +531,8 @@ def main() -> int:
     als_ico(marke(icon, zeichen_muster), "lumiviz_lvpattern.ico")
     als_ico(marke(icon, zeichen_clip), "lumiviz_lvclip.ico")
     als_ico(marke(icon, zeichen_spur), "lumiviz_lvtrack.ico")
+    # Session 167: die Sammlungen der mitgelieferten Akkorde (.lvchords, nach I1 a)
+    als_ico(marke(icon, zeichen_griffbilder), "lumiviz_lvchords.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     als_ico(komposition(icon), "lumiviz_lvcomp.ico")
     # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein
