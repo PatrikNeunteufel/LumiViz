@@ -216,36 +216,85 @@ inline bool schreibeIteration(const std::filesystem::path& ordner, int start, co
     return static_cast<bool>(aus);
 }
 
-/// Die festen Werte von `detune` je Taste als eine Zeile `detune_fest<Tab>taste=wert…` (7.5.12, A4), voll genau.
-inline std::string detuneZeile(const Suchraum& raum)
+/// Die festen Werte der Kurve `name` je Taste als eine Zeile `<name>_fest<Tab>taste=wert…` (7.5.12, A4), voll genau.
+inline std::string festZeile(const Suchraum& raum, const std::string& name)
 {
     std::ostringstream s;
-    s << std::setprecision(17) << "detune_fest";
+    s << std::setprecision(17) << name << "_fest";
     for (const SuchKurve& k : raum.kurven)
-        if (k.name == "detune")
+        if (k.name == name)
             for (std::size_t i = 0; i < k.festTasten.size(); ++i) s << '\t' << k.festTasten[i] << '=' << k.festWerte[i];
     return s.str();
 }
 
-/// Liest die Zeile `detune_fest` einer Datei und setzt die Werte in `raum`; falsch ohne die Zeile.
+inline std::string detuneZeile(const Suchraum& raum)
+{
+    return festZeile(raum, "detune");
+}
+
+/// Liest die Zeile `<name>_fest` einer Datei und setzt die Werte in `raum`; falsch ohne die Zeile.
+inline bool setzeFestAus(const std::filesystem::path& pfad, Suchraum& raum, const std::string& name)
+{
+    std::ifstream ein(pfad, std::ios::binary);
+    std::string zeile;
+    const std::string kopf = name + "_fest";
+    while (std::getline(ein, zeile))
+    {
+        if (!zeile.empty() && zeile.back() == '\r') zeile.pop_back();
+        if (zeile != kopf && zeile.rfind(kopf + '\t', 0) != 0) continue;  // ohne feste Taste ohne Tab
+        std::istringstream s(zeile.size() > kopf.size() ? zeile.substr(kopf.size() + 1) : std::string());
+        std::string teil;
+        while (std::getline(s, teil, '\t'))
+        {
+            const std::size_t gleich = teil.find('=');
+            if (gleich != std::string::npos) setzeFest(raum, name, std::stoi(teil.substr(0, gleich)), std::stod(teil.substr(gleich + 1)));
+        }
+        return true;
+    }
+    return false;
+}
+
 inline bool setzeDetuneAus(const std::filesystem::path& pfad, Suchraum& raum)
+{
+    return setzeFestAus(pfad, raum, "detune");
+}
+
+/// Die Optionen des Suchraums als Zeile `optionen<Tab>…` (S165: SCHNITT_X und PROBE12 bauen damit denselben Raum).
+inline std::string optionenZeile(const SuchOptionen& o)
+{
+    std::ostringstream s;
+    s << std::setprecision(17) << "optionen\tdelta_im_chor=" << o.deltaImChor << "\tdelta_unten=" << o.deltaUntenCent << "\tdetune_fest=" << o.detuneFest
+      << "\tdelta_fest=" << o.deltaFest << "\tdelta_start_unten=" << o.deltaStartUnten;
+    return s.str();
+}
+
+/// Die Optionen aus der Zeile `optionen` einer Datei; ohne die Zeile `std::nullopt` (Dateien vor den A4-Wegen).
+inline std::optional<SuchOptionen> liesSuchOptionen(const std::filesystem::path& pfad)
 {
     std::ifstream ein(pfad, std::ios::binary);
     std::string zeile;
     while (std::getline(ein, zeile))
     {
         if (!zeile.empty() && zeile.back() == '\r') zeile.pop_back();
-        if (zeile != "detune_fest" && zeile.rfind("detune_fest\t", 0) != 0) continue;  // ohne feste Taste ohne Tab
-        std::istringstream s(zeile.size() > 12 ? zeile.substr(12) : std::string());
+        if (zeile.rfind("optionen\t", 0) != 0) continue;
+        SuchOptionen o;
+        std::istringstream s(zeile.substr(9));
         std::string teil;
         while (std::getline(s, teil, '\t'))
         {
             const std::size_t gleich = teil.find('=');
-            if (gleich != std::string::npos) setzeFest(raum, "detune", std::stoi(teil.substr(0, gleich)), std::stod(teil.substr(gleich + 1)));
+            if (gleich == std::string::npos) continue;
+            const std::string name = teil.substr(0, gleich);
+            const std::string wert = teil.substr(gleich + 1);
+            if (name == "delta_im_chor") o.deltaImChor = wert == "1";
+            else if (name == "delta_unten") o.deltaUntenCent = std::stod(wert);
+            else if (name == "detune_fest") o.detuneFest = wert == "1";
+            else if (name == "delta_fest") o.deltaFest = wert == "1";
+            else if (name == "delta_start_unten") o.deltaStartUnten = wert == "1";
         }
-        return true;
+        return o;
     }
-    return false;
+    return std::nullopt;
 }
 
 /// Die Zeile `x` einer Datei (Iteration oder Ergebnis), voll genau.

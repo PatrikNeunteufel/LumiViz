@@ -1,0 +1,3 @@
+# Suche 7.5.12 (V2 a) — Kurzfassung, 6 Tasten
+Startpunkt 1: Rest 4324.9, getroffen (ZF1 a) 34 / 104, hoerbar getroffen (HW2 a) 41, 12 Iterationen, Enden Schritte klein 6; an der Grenze 18, g nach A4 4.072, g am Ende 9.798
+bester je Taste: Rest 4324.9, getroffen (ZF1 a) 34 / 104, hoerbar getroffen (HW2 a) 41, herkunft 33=1 48=1 60=1 66=1 81=1 84=1

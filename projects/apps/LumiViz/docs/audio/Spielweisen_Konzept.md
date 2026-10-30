@@ -3844,6 +3844,38 @@ Merkmal 1 — die Prämisse von A4 steht in Frage): wie A4 weitergeht (weglassen
 nur als Startwert und `detune` frei in der Suche); erst danach der Lauf über Nacht (alle 30 Tasten, drei Startpunkte,
 geschätzt höchstens rund 3 h).
 
+**A4-Wege (S165, Auftrag S164 nach Patrik „a: Varianten rechnen“; Zahlen ohne Urteil).** Je Weg die Suche 7.5.12 an
+33, 48, 60, 66, 81, 84 ab Startpunkt 1, dann der Schnitt am Ende (`LUMIVIZ_75_SCHNITT_X`, 15 Punkte je Parameter) und
+`LUMIVIZ_75_PROBE12`; Ordner `proben/S165_a4_v1/`, `…_v2/`, `…_v3/`, dazu die beiden aus dem Probelauf. Schalter in
+`LUMIVIZ_75_SUCHE2`: `…_A4=start|gemeinsam|fest|aus`, `…_DELTA_START=unten`; die Ergebnisdateien tragen eine Zeile
+`optionen`, mit der Schnitt und Probe denselben Raum bauen. *Lesarten S165:* Weg (1) — A4 rechnet im Raum mit festem
+`detune` am Startpunkt, danach startet `detune` am Ergebnis und ist frei. Weg (2) — `detune` und δ zusammen: Raster 7 × 7
+über beide Bereiche (δ ab 0,01 Cent), dann zwei Runden je Koordinate Raster 5 und Goldener Schnitt im Intervall ± einen
+Rasterschritt, in der zweiten ± ein Viertel; danach beide fest, γ, h und der Rest in der Suche. Weg (3) — A4 wie gebaut,
+δ startet an 0,01 Cent. „Glatt“ wie HW3 a (2): eine Taste ist glatt, wenn jeder ihrer Parameter ohne `detune` glatt ist;
+freies `detune` als eigene Zeile. g ist der Abstand der Schwebungsfrequenz (Σ_k (ln f_M / f_S)², fehlend (ln 3)²) über
+die sechs Tasten; „ohne A4“ am Ende nachgemessen (`LUMIVIZ_75_G_AM`).
+
+| Weg | Σ r² | getroffen (ZF1 a) | hörbar getroffen (HW2 a) | glatte Tasten (Parameter ohne `detune`) | `detune` glatt | g Start → nach A4 → Ende |
+|---|---|---|---|---|---|---|
+| A4 wie gebaut (fest) | 2565 | 34 / 104 | 50 / 104 | 0 / 6 (16 / 48) | fest | 10,32 → 4,48 → 9,04 |
+| ohne A4 (`detune` frei) | 2257 | 50 / 104 | 60 / 104 | 0 / 6 (16 / 48) | 0 / 6 | — → — → 7,77 |
+| (1) A4 nur als Start | 2471 | 42 / 104 | 55 / 104 | 0 / 6 (10 / 48) | 0 / 6 | 10,32 → 4,48 → 11,11 |
+| (2) `detune` und δ gemeinsam, fest | 2320 | 33 / 104 | 45 / 104 | 0 / 6 (12 / 42) | fest | 10,32 → 2,54 → 11,06 |
+| (3) A4 fest, δ startet bei 0,01 | 4325 | 34 / 104 | 41 / 104 | 0 / 6 (12 / 48) | fest | 9,49 → 4,07 → 9,80 |
+
+An der Vorgabe sind an diesen sechs Tasten 26 / 104 hörbar getroffen ((9') überall erfüllt; (3) mit einem Startpunkt
+nicht prüfbar). Glatt je Kurve (Tasten von 6), in der Reihenfolge wie gebaut / ohne A4 / (1) / (2) / (3): `decay` 2 / 3 /
+2 / 2 / 3, `lateDecay` 3 / 3 / 2 / 2 / 2, `highDecay` 4 / 4 / 2 / 3 / 3, `u leise` 2 / 2 / 2 / 2 / 0, `u laut` 2 / 2 / 1 /
+1 / 1, `gamma` 1 / 1 / 0 / 1 / 2, `h` 2 / 1 / 1 / 1 / 1, **δ 0 / 0 / 0 / – / 0** (in (2) fest), **`detune` frei 0 / 0**.
+Je Taste Σ r² (33, 48, 60, 66, 81, 84): wie gebaut 278, 1454, 359, 105, 119, 250; ohne A4 576, 1418, 115, 115, 24,3,
+9,8; (1) 164, 1539, 375, 100, 106, 186; (2) 207, 812, 528, 206, 165, 402; (3) 1450, 1749, 357, 67, 216, 486. Am Ende
+stehen `detune` / δ an 60, 81, 84: ohne A4 0,73 / 0,81, 0,58 / 0,55, 0,53 / 1,07; (1) 0,80 / 0,48, 1,80 / 0,79, 1,92 /
+0,67; (2) 1,00 / 5,34, 1,90 / 0,06, 1,61 / 0,08 (an 48 δ = 8, an der oberen Grenze); (3) 0,43 / 0,24, 1,90 / 0,41,
+1,29 / 0,10. Was die Zahlen zeigen (Befund, kein Urteil): an jedem Weg ist jede Größe, die die Schwebung trägt, im
+Schnitt wellig — δ an 0 von 6 Tasten glatt, freies `detune` ebenso; g steigt an jedem Weg mit A4 in der Suche wieder auf
+9–11. Dauer je Weg: Suche 7,9–8,5 min (A4 87–121 s, gemeinsam 298 s), Schnitt 5–8 min.
+
 **Teilplan 31d-8 „Spielbar“ (S157; Nummern fest, PL31 a; so geklärt, dass der Bau ohne Rückfrage läuft — Anweisung
 Patrik S157; je Teilschritt eng unter Release-clang, am Ende 8.7 beide Compiler und der volle Lauf, UF17 a):**
 

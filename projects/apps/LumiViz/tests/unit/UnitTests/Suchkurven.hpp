@@ -124,6 +124,8 @@ struct SuchOptionen
     bool deltaImChor = false;     ///< δ auch an Tasten mit zwei und drei Saiten frei (Probe 7.5.11, A1)
     double deltaUntenCent = 0.0;  ///< die Untergrenze von δ an jeder freien Taste (A1: 0,01)
     bool detuneFest = false;      ///< `detune` nicht frei, sondern fest (A4)
+    bool deltaFest = false;       ///< δ fest wie `detune` (A4-Weg 2, S165: beide gemeinsam gesetzt)
+    bool deltaStartUnten = false; ///< δ startet an der Untergrenze statt an der Schwebung (A4-Weg 3, S165)
 };
 
 inline SuchOptionen suchOptionen7512()
@@ -182,7 +184,8 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
     using Grenzen = std::tuple<double, double, double>;
     const auto alle = [](int) { return true; };
     const auto chor2 = [&basis](int t) { return lumi::loop::chorAn(basis, t) >= 2; };
-    const auto deltaFrei = [&basis, &optionen](int t) { return optionen.deltaImChor || lumi::loop::chorAn(basis, t) == 1; };
+    const auto deltaOffen = [&basis, &optionen](int t) { return optionen.deltaImChor || lumi::loop::chorAn(basis, t) == 1; };
+    const auto deltaFrei = [&](int t) { return !optionen.deltaFest && deltaOffen(t); };
     const auto detuneFrei = [&](int t) { return !optionen.detuneFest && chor2(t); };
 
     kurve("decay", &HammerSaite::abklingS, true, "ohne Quelle, Faktor 3", alle, [&](int t) {
@@ -221,11 +224,24 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
         });
     kurve("gamma", &HammerSaite::polarisationWinkelGrad, false, "ohne Quelle, 0-45 Grad (SG2 a), Start 30 (HU2 a (3))", alle,
           [](int) { return Grenzen{0.0, 45.0, 30.0}; });
-    kurve("delta", &HammerSaite::polarisationCent, false, "Tan 2017, Mori 2004; 0-8 Cent", deltaFrei, [&](int t) {
+    const auto deltaGrenzen = [&](int t) {
         const double v = lin(&HammerSaite::polarisationCent, t);
         const std::optional<double> c = schwebung(t);
-        return Grenzen{optionen.deltaUntenCent, 8.0, v > 0.0 ? v : (c ? *c : 0.0)};
-    });
+        return Grenzen{optionen.deltaUntenCent, 8.0, optionen.deltaStartUnten ? optionen.deltaUntenCent : (v > 0.0 ? v : (c ? *c : 0.0))};
+    };
+    kurve("delta", &HammerSaite::polarisationCent, false, "Tan 2017, Mori 2004; 0-8 Cent", deltaFrei, deltaGrenzen);
+    if (optionen.deltaFest)
+    {
+        // A4-Weg 2: fest am Start, wo δ sonst frei waere; die Stufe setzt es je Taste mit detune
+        SuchKurve& d = raum.kurven.back();
+        d.herkunft = "fest (A4 gemeinsam mit detune)";
+        for (std::size_t i = 0; i < d.festTasten.size(); ++i)
+            if (deltaOffen(d.festTasten[i]))
+            {
+                const auto [u, o, s] = deltaGrenzen(d.festTasten[i]);
+                d.festWerte[i] = std::clamp(s, u, o);
+            }
+    }
     kurve("h", &HammerSaite::waagrechtVerhaeltnis, false, "0-1 (P7 a)", alle,
           [&](int t) { return Grenzen{0.0, 1.0, lin(&HammerSaite::waagrechtVerhaeltnis, t)}; });
     return raum;
@@ -268,6 +284,21 @@ inline bool setzeFest(Suchraum& raum, const std::string& name, int taste, double
                 if (k.festTasten[i] == taste)
                 {
                     k.festWerte[i] = wert;
+                    return true;
+                }
+    return false;
+}
+
+/// Der Start der Kurve `name` an einer freien `taste` (A4-Weg 1: detune startet am Ergebnis von A4), in die Grenzen;
+/// falsch, wo die Taste dort nicht frei ist.
+inline bool setzeStart(Suchraum& raum, const std::string& name, int taste, double wert)
+{
+    for (SuchKurve& k : raum.kurven)
+        if (k.name == name)
+            for (std::size_t i = 0; i < k.tasten.size(); ++i)
+                if (k.tasten[i] == taste)
+                {
+                    k.start[i] = std::clamp(wert, k.unten[i], k.oben[i]);
                     return true;
                 }
     return false;

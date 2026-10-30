@@ -1,0 +1,18 @@
+2026-10-30T11:32:00	Start 7.5.12, clang, 11 Threads, 6 Tasten, 42 Parameter in 7 Gruppen; eine Auswertung 3.4 s, geschaetzt hoechstens 0.20 h
+2026-10-30T11:36:58	Startpunkt 1: A4 (gemeinsam) an 6 Tasten, Summe g 10.3195 -> 2.5399, 298 s
+2026-10-30T11:37:21	Startpunkt 1 Iteration 1: Rest 8068.4 -> 3942.7, aktive Tasten 6 / 6, angenommen 6, getroffen 30 / 104, ohne Wirkung 2, 48 Auswertungen, 22 s
+2026-10-30T11:37:46	Startpunkt 1 Iteration 2: Rest 3942.7 -> 2903.0, aktive Tasten 6 / 6, angenommen 6, getroffen 29 / 104, ohne Wirkung 3, 57 Auswertungen, 25 s
+2026-10-30T11:38:15	Startpunkt 1 Iteration 3: Rest 2903.0 -> 2669.5, aktive Tasten 6 / 6, angenommen 5, getroffen 31 / 104, ohne Wirkung 5, 66 Auswertungen, 29 s
+2026-10-30T11:38:35	Startpunkt 1 Iteration 4: Rest 2669.5 -> 2435.1, aktive Tasten 5 / 6, angenommen 5, getroffen 34 / 104, ohne Wirkung 7, 46 Auswertungen, 21 s
+2026-10-30T11:38:57	Startpunkt 1 Iteration 5: Rest 2435.1 -> 2360.5, aktive Tasten 5 / 6, angenommen 4, getroffen 33 / 104, ohne Wirkung 6, 51 Auswertungen, 22 s
+2026-10-30T11:39:14	Startpunkt 1 Iteration 6: Rest 2360.5 -> 2341.2, aktive Tasten 4 / 6, angenommen 4, getroffen 32 / 104, ohne Wirkung 6, 35 Auswertungen, 17 s
+2026-10-30T11:39:34	Startpunkt 1 Iteration 7: Rest 2341.2 -> 2332.8, aktive Tasten 4 / 6, angenommen 2, getroffen 32 / 104, ohne Wirkung 6, 39 Auswertungen, 20 s
+2026-10-30T11:39:40	Startpunkt 1 Iteration 8: Rest 2332.8 -> 2327.4, aktive Tasten 2 / 6, angenommen 2, getroffen 33 / 104, ohne Wirkung 6, 17 Auswertungen, 6 s
+2026-10-30T11:39:46	Startpunkt 1 Iteration 9: Rest 2327.4 -> 2323.9, aktive Tasten 2 / 6, angenommen 2, getroffen 33 / 104, ohne Wirkung 6, 19 Auswertungen, 6 s
+2026-10-30T11:39:53	Startpunkt 1 Iteration 10: Rest 2323.9 -> 2320.6, aktive Tasten 2 / 6, angenommen 2, getroffen 33 / 104, ohne Wirkung 6, 17 Auswertungen, 6 s
+2026-10-30T11:39:58	Startpunkt 1 Iteration 11: Rest 2320.6 -> 2320.6, aktive Tasten 2 / 6, angenommen 1, getroffen 33 / 104, ohne Wirkung 6, 18 Auswertungen, 5 s
+2026-10-30T11:39:59	Startpunkt 1 Iteration 12: Rest 2320.6 -> 2320.3, aktive Tasten 1 / 6, angenommen 1, getroffen 33 / 104, ohne Wirkung 6, 8 Auswertungen, 1 s
+2026-10-30T11:39:59	Startpunkt 1 Iteration 13: Rest 2320.3 -> 2320.2, aktive Tasten 1 / 6, angenommen 1, getroffen 33 / 104, ohne Wirkung 6, 10 Auswertungen, 1 s
+2026-10-30T11:40:00	Startpunkt 1 Iteration 14: Rest 2320.2 -> 2319.8, aktive Tasten 1 / 6, angenommen 1, getroffen 33 / 104, ohne Wirkung 6, 8 Auswertungen, 1 s
+2026-10-30T11:40:01	Startpunkt 1 Iteration 15: Rest 2319.8 -> 2319.8, aktive Tasten 1 / 6, angenommen 0, getroffen 33 / 104, ohne Wirkung 6, 10 Auswertungen, 1 s
+2026-10-30T11:40:04	Startpunkt 1 fertig: Rest 2319.8, getroffen 33 / 104, Enden Schritte klein 6, 484 s

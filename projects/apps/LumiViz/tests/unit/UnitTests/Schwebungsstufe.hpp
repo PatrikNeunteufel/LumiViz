@@ -243,6 +243,9 @@ struct DetuneTaste
     std::array<double, lumi::messung::kKurvenTeiltoene> zielHz{};
     std::array<double, lumi::messung::kKurvenTeiltoene> modellVorherHz{};
     std::array<double, lumi::messung::kKurvenTeiltoene> modellNachherHz{};
+    bool mitDelta = false;  ///< A4-Weg 2 (S165): δ gemeinsam mit detune gesetzt
+    double deltaVorher = 0.0;
+    double deltaNachher = 0.0;
 };
 
 struct DetuneStufe
@@ -377,13 +380,14 @@ inline std::string stufeText(const std::vector<DetuneTaste>& tasten)
 {
     std::ostringstream s;
     s << std::setprecision(17)
-      << "# taste\tgesetzt\tdetune_vorher\tdetune_nachher\tg_vorher\tg_nachher\tziel_hz_1..3\tmodell_vorher_hz_1..3\tmodell_nachher_hz_1..3\tgrund\n";
+      << "# taste\tgesetzt\tdetune_vorher\tdetune_nachher\tg_vorher\tg_nachher\tziel_hz_1..3\tmodell_vorher_hz_1..3\tmodell_nachher_hz_1..3\tgrund"
+         "\tmit_delta\tdelta_vorher\tdelta_nachher\n";
     for (const DetuneTaste& d : tasten)
     {
         s << d.taste << '\t' << (d.gesetzt ? 1 : 0) << '\t' << d.vorher << '\t' << d.nachher << '\t' << d.gVorher << '\t' << d.gNachher;
         for (const auto* hz : {&d.zielHz, &d.modellVorherHz, &d.modellNachherHz})
             for (const double v : *hz) s << '\t' << v;
-        s << '\t' << (d.grund.empty() ? "-" : d.grund) << '\n';
+        s << '\t' << (d.grund.empty() ? "-" : d.grund) << '\t' << (d.mitDelta ? 1 : 0) << '\t' << d.deltaVorher << '\t' << d.deltaNachher << '\n';
     }
     return s.str();
 }
@@ -418,18 +422,211 @@ inline std::optional<std::vector<DetuneTaste>> liesStufe(const std::filesystem::
             d.modellNachherHz[k] = std::stod(f[12 + k]);
         }
         d.grund = f[15] == "-" ? std::string() : f[15];
+        if (f.size() >= 19)
+        {
+            d.mitDelta = f[16] == "1";
+            d.deltaVorher = std::stod(f[17]);
+            d.deltaNachher = std::stod(f[18]);
+        }
         tasten.push_back(d);
     }
     if (tasten.empty()) return std::nullopt;
     return tasten;
 }
 
-/// Der Raum mit `detune` wie in der Stufe gesetzt.
+/// Der Raum mit `detune` (und δ, wo gemeinsam gesetzt) wie in der Stufe.
 inline Suchraum raumNachStufe(Suchraum raum, const std::vector<DetuneTaste>& tasten)
 {
     for (const DetuneTaste& d : tasten)
-        if (d.gesetzt) setzeFest(raum, "detune", d.taste, d.nachher);
+        if (d.gesetzt)
+        {
+            setzeFest(raum, "detune", d.taste, d.nachher);
+            if (d.mitDelta) setzeFest(raum, "delta", d.taste, d.deltaNachher);
+        }
     return raum;
+}
+
+/// A4-Weg 1 (S165): `detune` startet am Ergebnis der Stufe und bleibt frei — der Raum `frei` (detune frei) bekommt die
+/// Starts.
+inline Suchraum raumMitStartAusStufe(Suchraum frei, const std::vector<DetuneTaste>& tasten)
+{
+    for (const DetuneTaste& d : tasten)
+        if (d.gesetzt) setzeStart(frei, "detune", d.taste, d.nachher);
+    return frei;
+}
+
+/// A4-Weg 2 (S165): `detune` und δ je Taste gemeinsam an die Schwebung, dann beide fest. Lesart S165: ein Raster 7 × 7
+/// ueber beide Bereiche (detune 0 bis 6 bzw. 7,5 Cent, δ von der Untergrenze bis 8 Cent), dann zwei Runden
+/// abwechselnd je Koordinate `minimiere1D` (5 Rasterpunkte, Goldener Schnitt) im Intervall ± einem Rasterschritt um den
+/// besten Punkt, in der zweiten Runde ± einem Viertel; der Start bleibt, wenn er nicht schlechter ist. Der Raum muss
+/// `detune` und δ fest tragen (`SuchOptionen::detuneFest`, `deltaFest`).
+inline DetuneStufe stufeDetuneDelta(const SuchAufgabe& a, const std::vector<double>& x)
+{
+    const auto anfang = std::chrono::steady_clock::now();
+    DetuneStufe st;
+    st.raum = a.raum;
+    std::vector<int> gesetzt;
+    std::vector<double> dUnten, dOben, pUnten, pOben;
+    std::vector<lumi::messung::TonStruktur> ziel;
+    for (const int t : a.tasten)
+    {
+        DetuneTaste d;
+        d.taste = t;
+        d.vorher = festWert(a.raum, "detune", t).value_or(0.0);
+        d.nachher = d.vorher;
+        d.deltaVorher = festWert(a.raum, "delta", t).value_or(0.0);
+        d.deltaNachher = d.deltaVorher;
+        const auto z = a.strukturen.find(t);
+        if (z != a.strukturen.end()) d.zielHz = schwebungsHz(z->second);
+        if (lumi::loop::chorAn(a.raum.basis, t) < 2) d.grund = "eine Saite";
+        else if (z == a.strukturen.end() || !schwebtImZiel(z->second)) d.grund = "keine Schwebung im Ziel";
+        else if (!festWert(a.raum, "detune", t) || !festWert(a.raum, "delta", t)) d.grund = "detune oder delta nicht fest";
+        else
+        {
+            d.gesetzt = true;
+            d.mitDelta = true;
+            gesetzt.push_back(t);
+            dUnten.push_back(0.0);
+            dOben.push_back(detuneObenCent(t));
+            pUnten.push_back(0.01);  // die Untergrenze von A1
+            pOben.push_back(8.0);
+            ziel.push_back(z->second);
+        }
+        st.tasten.push_back(d);
+    }
+    if (gesetzt.empty())
+    {
+        st.sekunden = std::chrono::duration<double>(std::chrono::steady_clock::now() - anfang).count();
+        return st;
+    }
+    const std::size_t n = gesetzt.size();
+    const auto saite = [&](const std::vector<double>& detune, const std::vector<double>& delta) {
+        Suchraum r = a.raum;
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            setzeFest(r, "detune", gesetzt[i], detune[i]);
+            setzeFest(r, "delta", gesetzt[i], delta[i]);
+        }
+        return saiteAus(r, x);
+    };
+    // je Spalte ein Paar (detune, δ) je Taste; zurueck g je Spalte und Taste
+    const auto werte = [&](const std::vector<std::vector<double>>& detune, const std::vector<std::vector<double>>& delta) {
+        std::vector<lumi::loop::HammerSaite> saiten;
+        for (std::size_t s = 0; s < detune.size(); ++s) saiten.push_back(saite(detune[s], delta[s]));
+        const auto m = strukturenDesModells(saiten, gesetzt, a.strukturen);
+        ++st.aufrufe;
+        st.auswertungen += static_cast<int>(saiten.size() * n);
+        std::vector<std::vector<double>> g(m.size(), std::vector<double>(n));
+        for (std::size_t s = 0; s < m.size(); ++s)
+            for (std::size_t i = 0; i < n; ++i) g[s][i] = schwebungsAbstand(m[s][i], ziel[i]);
+        return g;
+    };
+    std::vector<double> startD, startP;
+    for (const DetuneTaste& d : st.tasten)
+        if (d.gesetzt)
+        {
+            startD.push_back(d.vorher);
+            startP.push_back(d.deltaVorher);
+        }
+
+    // das Raster 7 × 7 und der Start in einem Aufruf
+    constexpr int kRaster = 7;
+    std::vector<std::vector<double>> rd, rp;
+    rd.push_back(startD);
+    rp.push_back(startP);
+    for (int u = 0; u < kRaster; ++u)
+        for (int v = 0; v < kRaster; ++v)
+        {
+            rd.emplace_back(n);
+            rp.emplace_back(n);
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                rd.back()[i] = dUnten[i] + (dOben[i] - dUnten[i]) * u / (kRaster - 1);
+                rp.back()[i] = pUnten[i] + (pOben[i] - pUnten[i]) * v / (kRaster - 1);
+            }
+        }
+    const std::vector<std::vector<double>> gr = werte(rd, rp);
+    std::vector<double> gStart(n), bestD(n), bestP(n), bestG(n);
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        gStart[i] = gr[0][i];
+        std::size_t b = 1;
+        for (std::size_t s = 2; s < gr.size(); ++s)
+            if (gr[s][i] < gr[b][i]) b = s;
+        bestD[i] = rd[b][i];
+        bestP[i] = rp[b][i];
+        bestG[i] = gr[b][i];
+    }
+    // zwei Runden je Koordinate
+    for (int runde = 0; runde < 2; ++runde)
+    {
+        const double anteil = runde == 0 ? 1.0 : 0.25;
+        for (int koordinate = 0; koordinate < 2; ++koordinate)
+        {
+            std::vector<double> unten(n), oben(n);
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                const double schritt = anteil * (koordinate == 0 ? (dOben[i] - dUnten[i]) : (pOben[i] - pUnten[i])) / (kRaster - 1);
+                const double mitte = koordinate == 0 ? bestD[i] : bestP[i];
+                unten[i] = std::max(koordinate == 0 ? dUnten[i] : pUnten[i], mitte - schritt);
+                oben[i] = std::min(koordinate == 0 ? dOben[i] : pOben[i], mitte + schritt);
+            }
+            const Ziel1DSpalten g = [&](const std::vector<std::vector<double>>& spalten) {
+                std::vector<std::vector<double>> d, p;
+                for (const std::vector<double>& s : spalten)
+                {
+                    d.push_back(koordinate == 0 ? s : bestD);
+                    p.push_back(koordinate == 0 ? bestP : s);
+                }
+                return werte(d, p);
+            };
+            const std::vector<Minimum1D> m = minimiere1D(unten, oben, g, 5, 0.01, 8);
+            for (std::size_t i = 0; i < n; ++i)
+                if (m[i].g < bestG[i])
+                {
+                    (koordinate == 0 ? bestD[i] : bestP[i]) = m[i].x;
+                    bestG[i] = m[i].g;
+                }
+        }
+    }
+    std::size_t i = 0;
+    for (DetuneTaste& d : st.tasten)
+    {
+        if (!d.gesetzt) continue;
+        d.gVorher = gStart[i];
+        if (bestG[i] < gStart[i])
+        {
+            d.nachher = bestD[i];
+            d.deltaNachher = bestP[i];
+        }
+        d.gNachher = std::min(bestG[i], gStart[i]);
+        setzeFest(st.raum, "detune", d.taste, d.nachher);
+        setzeFest(st.raum, "delta", d.taste, d.deltaNachher);
+        ++i;
+    }
+    // die Frequenzen am Start und am Ergebnis (fuer den Bericht)
+    {
+        std::vector<double> nd, np;
+        for (const DetuneTaste& d : st.tasten)
+            if (d.gesetzt)
+            {
+                nd.push_back(d.nachher);
+                np.push_back(d.deltaNachher);
+            }
+        const auto m = strukturenDesModells({saite(startD, startP), saite(nd, np)}, gesetzt, a.strukturen);
+        ++st.aufrufe;
+        st.auswertungen += static_cast<int>(2 * n);
+        i = 0;
+        for (DetuneTaste& d : st.tasten)
+            if (d.gesetzt)
+            {
+                d.modellVorherHz = schwebungsHz(m[0][i]);
+                d.modellNachherHz = schwebungsHz(m[1][i]);
+                ++i;
+            }
+    }
+    st.sekunden = std::chrono::duration<double>(std::chrono::steady_clock::now() - anfang).count();
+    return st;
 }
 
 }  // namespace modelltest

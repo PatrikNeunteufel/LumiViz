@@ -17,3 +17,5 @@
 2026-10-30T10:52:01	Startpunkt 1 fertig: Rest 2565.2, getroffen 34 / 104, Enden Schritte klein 6, 509 s
 2026-10-30T10:54:14	Start 7.5.12, clang, 11 Threads, 6 Tasten, 48 Parameter in 8 Gruppen; eine Auswertung 4.4 s, geschaetzt hoechstens 0.28 h
 2026-10-30T10:54:14	Startpunkt 1 schon fertig
+2026-10-30T11:48:32	Start 7.5.12, clang, 11 Threads, 6 Tasten, 48 Parameter in 8 Gruppen; eine Auswertung 4.5 s, geschaetzt hoechstens 0.28 h
+2026-10-30T11:48:32	Startpunkt 1 schon fertig

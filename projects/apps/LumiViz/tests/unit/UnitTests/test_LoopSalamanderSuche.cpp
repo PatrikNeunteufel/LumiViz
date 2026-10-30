@@ -595,8 +595,16 @@ TEST_CASE("Loop Salamander 7.5.11 Probe: Schnitt je Parameter (LUMIVIZ_75_SCHNIT
     std::filesystem::create_directories(ordner);
     const bool deltaChor = deltaImChorVerlangt();
     const QString vonX = qEnvironmentVariable("LUMIVIZ_75_SCHNITT_X");
-    modelltest::SuchAufgabe alle =
-        aufgabe(modelltest::salamanderMidi(), vonX.isEmpty() ? modelltest::SuchOptionen{deltaChor} : modelltest::suchOptionen7512());
+    // mit LUMIVIZ_75_SCHNITT_X die Tasten und Optionen aus der Datei (die A4-Wege, S165), sonst die von 7.5.12
+    std::vector<int> suchTasten = modelltest::salamanderMidi();
+    if (!vonX.isEmpty())
+    {
+        suchTasten.clear();
+        for (const TastenSumme& t : liesBericht(vonX.toStdU16String())) suchTasten.push_back(t.midi);
+    }
+    modelltest::SuchAufgabe alle = aufgabe(suchTasten, vonX.isEmpty() ? modelltest::SuchOptionen{deltaChor}
+                                                                      : modelltest::liesSuchOptionen(vonX.toStdU16String())
+                                                                            .value_or(modelltest::suchOptionen7512()));
 
     // der Punkt: Startpunkt 1, die letzte Iteration von Startpunkt 1 einer Suche oder (7.5.12) die Zeile x einer
     // Ergebnisdatei mit dem Suchraum 7.5.12 — detune ist dort fest und wird nicht geschnitten
@@ -606,10 +614,12 @@ TEST_CASE("Loop Salamander 7.5.11 Probe: Schnitt je Parameter (LUMIVIZ_75_SCHNIT
     {
         const std::filesystem::path pfad = vonX.toStdU16String();
         REQUIRE(modelltest::setzeDetuneAus(pfad, alle.raum));
+        (void)modelltest::setzeFestAus(pfad, alle.raum, "delta");
         x = modelltest::liesX(pfad);
         REQUIRE(x.size() == alle.raum.zahl());
         std::ostringstream d;
-        d << "Zeile x aus " << vonX.toStdString() << "; Suchraum 7.5.12 (delta ueberall frei ab 0,01 Cent, detune fest:";
+        d << "Zeile x aus " << vonX.toStdString() << "; " << modelltest::optionenZeile(modelltest::liesSuchOptionen(pfad).value_or(modelltest::suchOptionen7512()))
+          << " (detune fest, wo nicht frei:";
         for (const int t : probeTasten("LUMIVIZ_75_SCHNITT_TASTEN")) d << ' ' << t << '=' << modelltest::festWert(alle.raum, "detune", t).value_or(0.0);
         d << " Cent)";
         punkt = d.str();
@@ -1042,6 +1052,35 @@ TEST_CASE("Loop Salamander 7.5.12 Suchraum: delta an allen Tasten frei, detune f
     // die Saite aus Startpunkt 1 traegt detune am Start nach SG3 a
     CHECK(lumi::loop::wertAn(modelltest::saiteAus(neu.raum, modelltest::startpunkt(neu.raum, 1)).verstimmungCent, 60, lumi::loop::KurvenSkala::Linear) ==
           doctest::Approx(*modelltest::festWert(neu.raum, "detune", 60)));
+    // die A4-Wege (S165): δ fest mit dem Start, δ startet unten, der Start von detune setzbar, die Zeile der Optionen
+    {
+        modelltest::SuchOptionen o = modelltest::suchOptionen7512();
+        o.deltaFest = true;
+        o.deltaStartUnten = true;
+        const modelltest::Suchraum r = aufgabe(tasten, o).raum;
+        CHECK(kurveNamens(r, "delta").tasten.empty());
+        CHECK(*modelltest::festWert(r, "delta", 60) == 0.01);
+        CHECK(r.zahl() == 5 * 30 + 2 * 26);
+        modelltest::SuchOptionen frei = modelltest::suchOptionen7512();
+        frei.detuneFest = false;
+        modelltest::Suchraum rf = aufgabe(tasten, frei).raum;
+        CHECK(modelltest::setzeStart(rf, "detune", 60, 2.5));
+        CHECK(modelltest::startpunkt(rf, 1)[parameterIndex(rf, "detune", 60)] == 2.5);
+        CHECK_FALSE(modelltest::setzeStart(rf, "detune", 21, 2.5));
+        const std::filesystem::path pfad = std::filesystem::temp_directory_path() / "lumiviz_test_optionen_7512.txt";
+        std::ofstream(pfad, std::ios::binary) << "kopf\n" << modelltest::optionenZeile(o) << '\n' << modelltest::festZeile(r, "delta") << '\n';
+        const std::optional<modelltest::SuchOptionen> gelesen = modelltest::liesSuchOptionen(pfad);
+        REQUIRE(gelesen.has_value());
+        CHECK(gelesen->deltaFest);
+        CHECK(gelesen->deltaStartUnten);
+        CHECK(gelesen->detuneFest);
+        CHECK(gelesen->deltaUntenCent == 0.01);
+        modelltest::Suchraum r2 = r;
+        REQUIRE(modelltest::setzeFest(r2, "delta", 60, 3.0));
+        CHECK(modelltest::setzeFestAus(pfad, r2, "delta"));
+        CHECK(*modelltest::festWert(r2, "delta", 60) == 0.01);
+        std::filesystem::remove(pfad);
+    }
     // setzeFest aendert den festen Wert, nur wo die Taste fest ist
     {
         modelltest::Suchraum r = neu.raum;
@@ -1629,11 +1668,20 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
     }
     const std::filesystem::path ordner = variable.toStdU16String();
     std::filesystem::create_directories(ordner);
-    // Gegenprobe (S165, Befund des Probelaufs): ohne A4 bleibt detune frei in der Suche, sonst alles wie 7.5.12
-    const bool ohneA4 = qEnvironmentVariable("LUMIVIZ_75_SUCHE2_OHNE_A4") == QStringLiteral("1");
+    // die Wege von A4 (S165): „fest“ wie gebaut, „aus“ (detune frei in der Suche; auch LUMIVIZ_75_SUCHE2_OHNE_A4=1),
+    // „start“ (A4 gibt nur den Start von detune, frei in der Suche), „gemeinsam“ (detune und δ zusammen gesetzt, dann
+    // beide fest); LUMIVIZ_75_SUCHE2_DELTA_START=unten laesst δ an der Untergrenze starten
+    std::string weg = qEnvironmentVariable("LUMIVIZ_75_SUCHE2_A4", QStringLiteral("fest")).toStdString();
+    if (qEnvironmentVariable("LUMIVIZ_75_SUCHE2_OHNE_A4") == QStringLiteral("1")) weg = "aus";
+    REQUIRE((weg == "fest" || weg == "aus" || weg == "start" || weg == "gemeinsam"));
     modelltest::SuchOptionen optionen = modelltest::suchOptionen7512();
-    optionen.detuneFest = !ohneA4;
+    optionen.detuneFest = weg == "fest" || weg == "gemeinsam";
+    optionen.deltaFest = weg == "gemeinsam";
+    optionen.deltaStartUnten = qEnvironmentVariable("LUMIVIZ_75_SUCHE2_DELTA_START") == QStringLiteral("unten");
     const modelltest::SuchAufgabe basis = aufgabe(tastenAus("LUMIVIZ_75_SUCHE2_TASTEN"), optionen);
+    modelltest::SuchOptionen stufeOptionen = optionen;
+    stufeOptionen.detuneFest = true;
+    const modelltest::SuchAufgabe stufeBasis = aufgabe(basis.tasten, stufeOptionen);
     std::vector<int> starts{1, 2, 3};
     if (const QString nur = qEnvironmentVariable("LUMIVIZ_75_SUCHE2_START"); !nur.isEmpty()) starts = {nur.toInt()};
     const HoerschwellenGelesen schwellen = liesHoerschwellen(kHoerschwellenDatei);
@@ -1670,9 +1718,11 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
             continue;
         }
         modelltest::SuchAufgabe a = basis;
-        const std::vector<double> x0 = modelltest::startpunkt(a.raum, start);
+        // die Stufe rechnet im Raum mit festem detune (beim Weg „start“ nur fuer die Stufe), am Startpunkt dort
+        const modelltest::SuchAufgabe& stufe = weg == "start" ? stufeBasis : basis;
+        const std::vector<double> xStufe = modelltest::startpunkt(stufe.raum, start);
 
-        // A4: detune je Taste an die Schwebung, dann fest (bei der Wiederaufnahme aus der Datei)
+        // A4: detune (beim Weg „gemeinsam“ mit δ) je Taste an die Schwebung (bei der Wiederaufnahme aus der Datei)
         std::vector<modelltest::DetuneTaste> a4;
         if (const auto gelesen = modelltest::liesStufe(datei(ordner, "a4", start)); gelesen)
         {
@@ -1681,19 +1731,20 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
         }
         else
         {
-            const modelltest::DetuneStufe st = modelltest::stufeDetune(a, x0);
+            const modelltest::DetuneStufe st = weg == "gemeinsam" ? modelltest::stufeDetuneDelta(stufe, xStufe) : modelltest::stufeDetune(stufe, xStufe);
             a4 = st.tasten;
             std::ofstream aus(datei(ordner, "a4", start), std::ios::binary);
-            aus << "# A4 (7.5.12): detune je Taste an die Schwebung von Salamander, Startpunkt " << start << ", " << st.aufrufe << " Aufrufe, "
-                << st.auswertungen << " Auswertungen (Saite x Taste), " << zahl(st.sekunden, 0) << " s\n"
+            aus << "# A4 (7.5.12, Weg " << weg << "): detune je Taste an die Schwebung von Salamander, Startpunkt " << start << ", " << st.aufrufe
+                << " Aufrufe, " << st.auswertungen << " Auswertungen (Saite x Taste), " << zahl(st.sekunden, 0) << " s\n"
                 << modelltest::stufeText(a4);
             REQUIRE(static_cast<bool>(aus));
             int gesetzt = 0;
             for (const modelltest::DetuneTaste& d : a4) gesetzt += d.gesetzt ? 1 : 0;
-            fortschritt("Startpunkt " + s + ": A4 an " + std::to_string(gesetzt) + " Tasten, Summe g " + zahl(summeG(a4, false), 4) + " -> " +
+            fortschritt("Startpunkt " + s + ": A4 (" + weg + ") an " + std::to_string(gesetzt) + " Tasten, Summe g " + zahl(summeG(a4, false), 4) + " -> " +
                         zahl(summeG(a4, true), 4) + ", " + zahl(st.sekunden, 0) + " s");
         }
-        a.raum = modelltest::raumNachStufe(a.raum, a4);
+        a.raum = weg == "start" ? modelltest::raumMitStartAusStufe(a.raum, a4) : modelltest::raumNachStufe(a.raum, a4);
+        const std::vector<double> x0 = modelltest::startpunkt(a.raum, start);
 
         // A2/A3: Levenberg-Marquardt je Taste
         LmStartBloecke lmStart(x0);
@@ -1745,13 +1796,15 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
         for (const auto& [ende, n] : enden) endenText << (endenText.tellp() > 0 ? ", " : "") << ende << ' ' << n;
         const Gesamt g = gesamt(t.tasten);
         std::ofstream aus(datei(ordner, "ergebnis", start), std::ios::binary);
-        aus << "# Ergebnis der Suche 7.5.12 (V2 a: A1-A5), Startpunkt " << start << ", " << compilerName() << ", " << t.ergebnis.iterationen
+        aus << "# Ergebnis der Suche 7.5.12 (V2 a: A1-A5, A4-Weg " << weg << (optionen.deltaStartUnten ? ", delta startet unten" : "") << "), Startpunkt "
+            << start << ", " << compilerName() << ", " << t.ergebnis.iterationen
             << " Iterationen, " << t.auswertungen << " Auswertungen (Punkt x Taste) in diesem Lauf, " << zahl(sekundenSeit(anfang), 0)
             << " s; Enden: " << endenText.str() << "\nrest\t" << g.summe << "\ngetroffen\t" << g.getroffen << " / " << g.groessen
             << "\nhoerbar_getroffen\t" << hoerZahlen(*schwellen.werte, t.tasten).hoerbarGetroffen << " / " << g.groessen << "\nan der Grenze\t"
             << modelltest::grenzenText(a.raum, modelltest::lmRaum(a.raum), t.ergebnis.x) << "\nohne_wirkung\t" << modelltest::ohneWirkungText(a.raum, ohne)
             << "\ng_nach_a4\t" << summeG(a4, true) << "\ng_am_ende\t" << summeG(amEnde, true) << '\n'
-            << modelltest::detuneZeile(a.raum) << "\nx" << std::setprecision(17);
+            << modelltest::optionenZeile(optionen) << '\n' << modelltest::detuneZeile(a.raum) << '\n' << modelltest::festZeile(a.raum, "delta") << "\nx"
+            << std::setprecision(17);
         for (const double v : t.ergebnis.x) aus << '\t' << v;
         aus << std::setprecision(6) << "\n\n## Je Taste: Iterationen, lambda, Ende, Stuetzpunkte ohne Wirkung\n";
         for (std::size_t b = 0; b < t.ergebnis.bloecke.size(); ++b)
@@ -1785,6 +1838,7 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
         modelltest::SuchLauf l;
         l.raum = basis.raum;
         REQUIRE(modelltest::setzeDetuneAus(datei(ordner, "ergebnis", start), l.raum));
+        (void)modelltest::setzeFestAus(datei(ordner, "ergebnis", start), l.raum, "delta");
         l.x = modelltest::liesX(datei(ordner, "ergebnis", start));
         REQUIRE(l.x.size() == basis.raum.zahl());
         std::vector<TastenSumme> b = liesBericht(datei(ordner, "ergebnis", start));
@@ -1813,7 +1867,8 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
             abweichung = std::max(abweichung, std::abs(bb.tasten[t].summe - laeufe[bester.herkunft[t]].summeJeTaste[t]));
         }
         // die Summen der Quelle stehen in der Ergebnisdatei auf drei Stellen
-        aus << "\nabweichung_zur_quelle\t" << abweichung << '\n' << modelltest::detuneZeile(bester.raum) << "\nx" << std::setprecision(17);
+        aus << "\nabweichung_zur_quelle\t" << abweichung << '\n' << modelltest::optionenZeile(optionen) << '\n' << modelltest::detuneZeile(bester.raum) << '\n'
+            << modelltest::festZeile(bester.raum, "delta") << "\nx" << std::setprecision(17);
         for (const double v : bester.x) aus << '\t' << v;
         aus << std::setprecision(6) << "\n\n## Kurven (wie baueVorgabe, direkt einsetzbar)\n" << modelltest::kurvenText(bester.raum, bester.x)
             << "\n## Je Taste und Groesse\n" << berichte(bb.tasten, true);
@@ -1928,10 +1983,18 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
 namespace
 {
 
-/// Je Taste aus `schnitt.txt`: ob jeder ihrer Parameter glatt ist (ZF8 a (2)); leer ohne Datei.
-std::map<int, bool> glattJeTaste(const std::filesystem::path& pfad)
+/// Je Taste aus `schnitt.txt`: ob jeder ihrer Parameter ohne `detune` glatt ist (ZF8 a (2), HW3 a); `detune`, wo es
+/// geschnitten ist (A4-Wege mit freiem detune, S165), als eigene Zeile. Leer ohne Datei.
+struct GlattTaste
 {
-    std::map<int, bool> glatt;
+    bool glatt = true;        ///< alle Parameter ohne detune
+    bool mitDetune = false;   ///< detune geschnitten
+    bool detuneGlatt = false;
+};
+
+std::map<int, GlattTaste> glattJeTaste(const std::filesystem::path& pfad)
+{
+    std::map<int, GlattTaste> glatt;
     std::ifstream ein(pfad, std::ios::binary);
     std::string zeile;
     int taste = 0;
@@ -1941,10 +2004,18 @@ std::map<int, bool> glattJeTaste(const std::filesystem::path& pfad)
         if (zeile.rfind("## Taste ", 0) == 0)
         {
             taste = std::stoi(zeile.substr(9));
-            glatt[taste] = true;
+            glatt[taste] = GlattTaste{};
+            continue;
         }
-        else if (taste != 0 && zeile.find("| NICHT glatt") != std::string::npos)
-            glatt[taste] = false;
+        if (taste == 0 || zeile.find("glatt") == std::string::npos) continue;
+        const bool nicht = zeile.find("| NICHT glatt") != std::string::npos;
+        if (zeile.rfind("detune\t", 0) == 0)
+        {
+            glatt[taste].mitDetune = true;
+            glatt[taste].detuneGlatt = !nicht;
+        }
+        else if (nicht)
+            glatt[taste].glatt = false;
     }
     return glatt;
 }
@@ -1968,6 +2039,41 @@ std::string belegteGrenze(const modelltest::Suchraum& raum, const std::vector<do
 }
 
 }  // namespace
+
+TEST_CASE("Loop Salamander 7.5.12 Schwebung am Ergebnis (LUMIVIZ_75_G_AM)")
+{
+    // S165, A4-Wege: g (Abstand der Schwebungsfrequenz, Schwebungsstufe.hpp) an einem Ergebnis messen — auch dort, wo A4
+    // nichts gesetzt hat (Weg „aus“); an den Tasten mit Chor ab zwei Saiten und Schwebung im Ziel
+    const QString variable = qEnvironmentVariable("LUMIVIZ_75_G_AM");
+    if (variable.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_75_G_AM=<ergebnis_*.txt> misst g je Taste am Punkt der Datei und schreibt g_am_<name>.txt daneben (rund 15 s)");
+        return;
+    }
+    const std::filesystem::path pfad = variable.toStdU16String();
+    std::vector<int> tasten;
+    for (const TastenSumme& t : liesBericht(pfad)) tasten.push_back(t.midi);
+    modelltest::SuchAufgabe a = aufgabe(tasten, modelltest::liesSuchOptionen(pfad).value_or(modelltest::suchOptionen7512()));
+    REQUIRE(modelltest::setzeDetuneAus(pfad, a.raum));
+    (void)modelltest::setzeFestAus(pfad, a.raum, "delta");
+    const std::vector<double> x = modelltest::liesX(pfad);
+    REQUIRE(x.size() == a.raum.zahl());
+    std::vector<modelltest::DetuneTaste> liste;
+    for (const int t : tasten)
+    {
+        modelltest::DetuneTaste d;
+        d.taste = t;
+        const auto z = a.strukturen.find(t);
+        d.gesetzt = lumi::loop::chorAn(a.raum.basis, t) >= 2 && z != a.strukturen.end() && modelltest::schwebtImZiel(z->second);
+        if (z != a.strukturen.end()) d.zielHz = modelltest::schwebungsHz(z->second);
+        liste.push_back(d);
+    }
+    const std::vector<modelltest::DetuneTaste> am = modelltest::schwebungAm(a, x, liste);
+    std::ofstream aus(pfad.parent_path() / ("g_am_" + pfad.stem().string() + ".txt"), std::ios::binary);
+    aus << "# g am Punkt von " << pfad.filename().string() << " (g_nachher), S165\n" << modelltest::stufeText(am);
+    REQUIRE(static_cast<bool>(aus));
+    MESSAGE("Summe g " << summeG(am, true));
+}
 
 TEST_CASE("Loop Salamander 7.5.12 Probe (LUMIVIZ_75_PROBE12)")
 {
@@ -1996,8 +2102,10 @@ TEST_CASE("Loop Salamander 7.5.12 Probe (LUMIVIZ_75_PROBE12)")
     REQUIRE_FALSE(bester.empty());
     std::vector<int> tasten;
     for (const TastenSumme& t : bester) tasten.push_back(t.midi);
-    modelltest::SuchAufgabe a = aufgabe(tasten, modelltest::suchOptionen7512());
+    modelltest::SuchAufgabe a =
+        aufgabe(tasten, modelltest::liesSuchOptionen(ordner / "ergebnis_bester.txt").value_or(modelltest::suchOptionen7512()));
     REQUIRE(modelltest::setzeDetuneAus(ordner / "ergebnis_bester.txt", a.raum));
+    (void)modelltest::setzeFestAus(ordner / "ergebnis_bester.txt", a.raum, "delta");
     const std::vector<double> xBester = modelltest::liesX(ordner / "ergebnis_bester.txt");
     REQUIRE(xBester.size() == a.raum.zahl());
 
@@ -2016,13 +2124,15 @@ TEST_CASE("Loop Salamander 7.5.12 Probe (LUMIVIZ_75_PROBE12)")
 
     // (2) Glaette an den Probetasten
     const std::vector<int> probe{33, 48, 60, 66, 81, 84};
-    const std::map<int, bool> glatt = glattJeTaste(ordner / "schnitt.txt");
-    int glattTasten = 0, glattGeprueft = 0;
+    const std::map<int, GlattTaste> glatt = glattJeTaste(ordner / "schnitt.txt");
+    int glattTasten = 0, glattGeprueft = 0, detuneGeschnitten = 0, detuneGlatt = 0;
     for (const int t : probe)
         if (const auto it = glatt.find(t); it != glatt.end())
         {
             ++glattGeprueft;
-            glattTasten += it->second ? 1 : 0;
+            glattTasten += it->second.glatt ? 1 : 0;
+            detuneGeschnitten += it->second.mitDetune ? 1 : 0;
+            detuneGlatt += it->second.mitDetune && it->second.detuneGlatt ? 1 : 0;
         }
     const bool zwei = glattGeprueft == 6 && glattTasten >= 5;
     b << "(2) Glaette (alle Parameter einer Taste glatt, ohne detune): ";
@@ -2032,8 +2142,15 @@ TEST_CASE("Loop Salamander 7.5.12 Probe (LUMIVIZ_75_PROBE12)")
     {
         b << glattTasten << " / " << glattGeprueft << " Probetasten glatt —";
         for (const int t : probe)
-            if (glatt.count(t)) b << ' ' << t << (glatt.at(t) ? " glatt" : " nicht");
+            if (glatt.count(t)) b << ' ' << t << (glatt.at(t).glatt ? " glatt" : " nicht");
         b << (zwei ? " — erfuellt (>= 5 / 6)\n" : " — verfehlt\n");
+        if (detuneGeschnitten > 0)
+        {
+            b << "    detune (frei, eigene Zeile): glatt an " << detuneGlatt << " / " << detuneGeschnitten << " —";
+            for (const int t : probe)
+                if (glatt.count(t) && glatt.at(t).mitDetune) b << ' ' << t << (glatt.at(t).detuneGlatt ? " glatt" : " nicht");
+            b << '\n';
+        }
     }
 
     // (3) eindeutig nach HW2 a an den Probetasten ueber die Startpunkte
