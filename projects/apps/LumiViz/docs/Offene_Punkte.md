@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.303.0
-> **Datum:** 2026-10-30 (Sessions 164 bis 167)
+> **Version:** 1.304.0
+> **Datum:** 2026-10-31 (Sessions 164 bis 167)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -4127,6 +4127,16 @@ Idee Preset-Warmup/Pre-Roll.
     `blendStrength`; bereinigt S129). **Offen:** **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
     Post-Bloom, mit Render Scale).
 
+### ⬜ Muster, Clips und Spuren als Dateien — Stufe 33 gebaut, Sichttest offen (S167)
+
+Wunsch Patrik S167 (Priorität 2): eigene Muster in anderen Loops wiederverwenden. `.lvpattern`,
+`.lvclip`, `.lvtrack` mit Export und Import an der Taktachse, Umrechnung nach Schlägen, Datensicherung,
+Publish, Icons — Plan, Entscheide (PE1, PE1-1 a, PE2 a, PE3 b, LC1 a) und Bau in `Loop_Konzept.md` §4o.
+Sichttest-Liste `.claude/handover/Sichttest_Austausch.md` (lokal; dazu *Chords* nach AK1 a).
+**Befund beim vollen Lauf (S167):** `Kits 21c` rot, weil `mitgelieferteLoopDateien()` jede `.lvloop` unter
+`asset/loop` zählt — auch die Arbeitsdatei `comp2.lvloop` (sie nennt das Kit `classic`); dieselbe Art Befund
+wie W1 a (S129) bei `Loop Werte`.
+
 ### 🟡 Lautstärke im Loop — Stufe 27 gebaut, Sichttest und voller Lauf offen (S139)
 
 Patrik S139: Instrumente klangen im Loop teils zu leise (Titanium). Gemessen (EBU R128): die
@@ -6296,6 +6306,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.304.0 | 2026-10-31 | Session 167. §7 NEU „Muster, Clips und Spuren als Dateien“ (Stufe 33 gebaut, Sichttest offen; Befund `mitgelieferteLoopDateien` zählt Arbeitsdateien). |
 | 1.303.0 | 2026-10-30 | Session 167 (Opus 5.5). §7 Instrumente: *Chords* friert beim ersten Öffnen ein — Ursache gemessen (6373 einzelne `.lvchord`, frisch 25,6 s), AK1 a: Sammlungen `.lvchords` je Stimmung, lazy gelesen (`Saiten_Konzept` §5ze). |
 | 1.302.0 | 2026-10-30 | Session 166 (Opus 5.5). §7 Spielweisen: 31d-8 · 8.5 — Hörproben nach PV1 a an 33, 60, 84 (p, mf, ff; *Salamander* / Vorgabe / Suche „ohne A4“) unter `.claude/handover/hoerproben_pv1/`, dazu der blinde Hörtest `tools/hoertest/` (Wunsch Patrik); Antworten bei Patrik. Neu die Zeile 8.5-HT: Hörtest als eigenes Projekt HörTest_Helper (HT1 a–HT9 a). |
 | 1.301.0 | 2026-10-30 | Sessions 164 und 165 (Opus 5.5). §7 Spielweisen: 7.5.13 B1 (Hörschwellen recherchiert), HW1 a–HW4 a, Bauauftrag 7.5.12; 7.5.12 gebaut (S165), Probelauf und A4-Wege an sechs Tasten, Glätte an keinem Weg; PV1 a — Probe 7.5.12 verfehlt, ZZ1 a, kein Lauf über Nacht. Tabelle „Offen — Stufe 31 bis zum Ende“: 8.1 auf den Zustand gekürzt (Verlauf im Konzept), 8.5 als Hörproben für das Setzen nach Gehör neu gefasst. |

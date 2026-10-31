@@ -1,0 +1,255 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "color": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Clear",
+                "onlyFirst": false,
+                "type": "clear"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "colorBlend": 0,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                        ],
+                        "dotSize": 13,
+                        "enabled": true,
+                        "frameCode": "t=t+0.015",
+                        "gradientPreset": "theblue",
+                        "initCode": "n=300; t=0; pi=acos(-1)",
+                        "lineBlend": 1,
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "r=0.1+i*0.7+v*0.15; a=i*pi*8+t; x=sin(a)*r; y=cos(a)*r",
+                        "pointCount": 500,
+                        "renderMode": 0,
+                        "spectrumSource": false,
+                        "type": "superScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Blur",
+                        "roundUp": false,
+                        "strength": 1,
+                        "type": "blur"
+                    },
+                    {
+                        "beatCode": "",
+                        "color": 16777215,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Add Borders",
+                        "size": 26,
+                        "type": "addBorders"
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "d = d * (1.01 + (cos((r-$PI*0.5) * 4) * 0.04));\nr = r + (0.03 * sin(d * $PI * 4));",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "blendIn": 2,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "beatCode": "",
+                        "colorLeft": 3830667,
+                        "colorRight": 16774502,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "left": true,
+                        "mode": 1,
+                        "name": "Bass Spin",
+                        "right": true,
+                        "smoothing": 0.699999988079071,
+                        "spinStep": 0.5235983729362488,
+                        "type": "bassSpin"
+                    },
+                    {
+                        "blend": true,
+                        "builtinRemap": 1,
+                        "code": "t = sin(d * $PI);\nd = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 1,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "beatCode": "",
+                        "beatReverse": true,
+                        "beatReverseSpeed": 4,
+                        "beatZoomJump": false,
+                        "blend": false,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Roto Blitter",
+                        "rotDir": 24,
+                        "subpixel": true,
+                        "type": "rotoBlitter",
+                        "zoomScale": 30,
+                        "zoomScale2": 30
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 2,
+                        "durationFrames": 16,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Mosaic",
+                        "onBeat": true,
+                        "quality": 100,
+                        "quality2": 62,
+                        "type": "mosaic"
+                    },
+                    {
+                        "beatCode": "",
+                        "beatFaderB": 8,
+                        "beatFaderG": -8,
+                        "beatFaderR": 8,
+                        "enabled": true,
+                        "faderB": -2,
+                        "faderG": 14,
+                        "faderR": 8,
+                        "frameCode": "faderr=6*sin(time*0.5); faderg=6*sin(time*0.5+2.1); faderb=6*sin(time*0.5+4.2);",
+                        "initCode": "",
+                        "name": "Colorfade",
+                        "onBeatFrames": 7,
+                        "onBeatRandom": false,
+                        "slowFade": true,
+                        "type": "colorfade"
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "beatCode": "",
+                "code": "// Tunnel Pull: pulls the image towards the centre each frame and turns it slightly -\n// the feedback builds the classic tunnel (needs a source in front).\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.06 + 0.05 * bass;\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float sog = 0.97 - 0.04 * bass;\n    return 0.5 + mat2(c, -s, s, c) * d * sog;\n}\n",
+                "enabled": true,
+                "frameCode": "",
+                "gridX": 96,
+                "gridY": 72,
+                "initCode": "",
+                "mixAmount": 1,
+                "name": "Mesh Warp",
+                "type": "meshWarp",
+                "wrapUv": false
+            },
+            {
+                "beatCode": "",
+                "blend": 0,
+                "enabled": false,
+                "fragCode": "//\tAdapted from https://www.omniref.com/ruby/gems/essytas/0.0.1/files/lib/glsl/sepia.frag\n\nvoid main() {\n\n\tvec4 rawColor = IMG_THIS_PIXEL(inputImage);\n\tvec4 color = rawColor;\n\tvec4 sepia1 = vec4( 0.2, 0.05, 0.0, 1.0 );    \n\tvec4 sepia2 = vec4( 1.0, 0.9, 0.5, 1.0 );\n\tfloat sepiaMix = dot(vec3(0.3, 0.59, 0.11), color.rgb);\n\tcolor = mix(color, vec4(sepiaMix), 0.5);\n\tvec4 sepia = mix(sepia1, sepia2, sepiaMix);\n\tsepia = vec4( min( vec3( 1.0 ), sepia.rgb ), color.a );\n\t\n\tfloat bright = 0.05;\n\tsepia = sepia + vec4(bright, bright, bright, 0.0);\n\tsepia.rgb = ((vec3(2.0) * (sepia.rgb - vec3(0.5))) * vec3(contrast) / vec3(2.0)) + vec3(0.5);\n\tsepia.a = rawColor.a;\n\tgl_FragColor = sepia;\n\n}",
+                "frameCode": "",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Sepia Tone"
+                },
+                "initCode": "",
+                "mixAmount": 1,
+                "name": "Sepia Tone",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "contrast",
+                            "max": 1.2,
+                            "min": 0.8,
+                            "typ": 2,
+                            "zahl": 0.8
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

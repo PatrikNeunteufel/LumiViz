@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.203.0
-> **Datum:** 2026-10-23
+> **Version:** 1.204.0
+> **Datum:** 2026-10-31
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -274,9 +274,10 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   in **eine Datei** (`.lvdata`) schreiben und wieder einlesen — zum Sichern oder für einen
   anderen Rechner. *Export your data* zeigt die Bereiche mit der Zahl deiner Dateien
   (Visualizer presets, Gradients, Module presets, Shader templates, Karaoke presets and
-  trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments, Samples, Shapes —
-  der letzte NEU in 1.154.0: eigene Formen, wie sie das Fenster **Edit shape** anlegt
-  (§16)); abgesetzt
+  trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments, Kits, Chords, Patterns,
+  Tracks and clips, Samples, Shapes, Downloaded lyrics — *Shapes* seit 1.154.0: eigene Formen, wie
+  sie das Fenster **Edit shape** anlegt (§16); *Patterns* und *Tracks and clips* seit 1.204.0
+  (§16, „Muster, Clips und Spuren als Dateien“)); abgesetzt
   darunter und anfangs aus stehen *Settings* (Tastenkürzel, Favoriten, Optionen — nie die
   Fensterlage, gemerkte Ordner oder der Shadertoy-Schlüssel) und *Downloaded lyrics* (die
   geladenen Songtexte mit deinen Versätzen). *Import data* zeigt nur, was in der Datei
@@ -2743,6 +2744,7 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 | → **Effects...** | Öffnet das Fenster **Clip effects** für die markierten Clips — siehe „Effekte am Clip" |
 | → **Export audio...** | Den Clip als WAV-Datei, mit Nachklang — siehe „Als WAV exportieren“ |
 | → **Freeze clip** / **Unfreeze clip** | Den Clip einmal fertig rechnen und ab dann als Wellenform spielen — oder wieder live. Bei mehreren markierten „Freeze 3 clips“ — siehe „Clips einfrieren: Freeze“ |
+| → **Export pattern...** / **Export clip...** | NEU in 1.204.0. Die Basis allein (`.lvpattern`) oder den Clip mit Wiederholungen, Effekten und Kurve (`.lvclip`) als Datei, um sie in einem anderen Loop wieder einzusetzen — siehe „Muster, Clips und Spuren als Dateien“. Bei mehreren markierten grau |
 | → **Rename base...** | Benennt die Basis um — für alle Clips, die sie spielen |
 | → **Delete** (auch Entf) | Entfernt den Clip, bei mehreren alle markierten. Spielt danach kein Clip mehr eine Basis, geht sie mit |
 | → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor |
@@ -2753,7 +2755,9 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 | → **Clear expression** | Nimmt die Kurve des Clips weg; grau, wenn er keine hat |
 | Kurve und Länge | Die Punkte stehen in Takten ab dem Anfang des Clips: wird er länger, bleibt die Kurve, wo sie ist, und dahinter gilt der letzte Wert; wird er kürzer, bleiben die Punkte dahinter erhalten (blass, nicht zu hören) und kommen zurück, wenn er wieder länger wird. Wer den Clip verschiebt, nimmt die Kurve mit |
 | Rechtsklick auf eine freie Stelle → **Add channel** | Ein neuer Kanal „Channel N" |
-| Rechtsklick auf einen Kanalnamen | **Rename channel...**, **Turn channel off** / **on**, **Delete channel** |
+| Rechtsklick auf eine freie Stelle im Kanal → **Import pattern...** / **Import clip...** | NEU in 1.204.0. Setzt eine `.lvpattern` (als Clip mit einer Wiederholung) oder eine `.lvclip` ab diesem Takt ein; ist bis zum nächsten Clip kein Platz, in einem neuen Kanal |
+| Rechtsklick auf eine freie Stelle → **Import track...** | NEU in 1.204.0. Setzt eine `.lvtrack` als neuen Kanal ein, die Clips an ihren Takten |
+| Rechtsklick auf einen Kanalnamen | **Rename channel...**, **Turn channel off** / **on**, **Delete channel**, NEU in 1.204.0 **Export track...** (der Kanal mit allen Clips und ihren Basen als `.lvtrack`) |
 | Esc beim Ziehen | Bricht den Zug ab |
 
 Clips einer Basis tragen **dieselbe Farbe** — so sind verbundene Kopien zu
@@ -3587,6 +3591,34 @@ Daten. Die `.lvloop` merkt sich am Clip nur, dass er eingefroren ist (`frozen`).
 einem anderen Rechner, wird die Wellenform dort neu gerechnet — außer sie kam mit **Publish** mit
 („Weitergeben: Publish“). *Export audio...* rechnet immer live.
 
+### Muster, Clips und Spuren als Dateien
+
+NEU in 1.204.0. Was du in einem Loop gebaut hast, lässt sich in einem anderen wieder einsetzen —
+eine Basis, ein Clip oder eine ganze Spur. Die Dateien nennen ihr Instrument, Kit und ihre Samples
+nur beim Namen, wie die `.lvloop` selbst; um sie samt eigenen Instrumenten weiterzugeben, gibt es
+**Publish** (unten).
+
+| Datei | Was darin ist | Exportieren | Einsetzen |
+|---|---|---|---|
+| `.lvpattern` | eine Basis: alles, was der Drum- oder Instrument-Editor bearbeitet (Spuren, Noten, Akkord-Einträge, Strum, Spuren über der Zeit, Stimmen), dazu ihr Kit oder Instrument beim Namen | Rechtsklick auf einen Clip → **Export pattern...** | Rechtsklick auf eine freie Stelle im Kanal → **Import pattern...**: ein Clip mit einer Wiederholung ab diesem Takt |
+| `.lvclip` | ein Clip: seine Basis, die Wiederholungen, die Effekte samt Schalter *FX*, die Expression-Kurve | Rechtsklick auf einen Clip → **Export clip...** | Rechtsklick auf eine freie Stelle im Kanal → **Import clip...**: ab diesem Takt |
+| `.lvtrack` | eine Spur: der Kanal mit Name, an/aus und Fader, alle Clips an ihren Takten, alle ihre Basen | Rechtsklick auf den Kanalnamen → **Export track...** | Rechtsklick auf eine freie Stelle → **Import track...**: ein neuer Kanal, die Clips an denselben Takten wie vorher |
+
+- **Wo:** Der Dialog schlägt deinen Benutzerordner vor — `patterns` für Basen, `tracks` für Clips
+  und Spuren —, speichern und laden kannst du überall. Ohne Endung hängt LumiViz sie an.
+- **Kein Platz:** Reicht bei *Import pattern...* oder *Import clip...* der Platz bis zum nächsten
+  Clip nicht, kommt der Clip in einen neuen Kanal. Danach ist der eingesetzte Clip markiert.
+- **Gleiche Namen:** Gibt es im Loop schon eine Basis gleichen Namens mit gleichem Inhalt, spielt
+  der neue Clip sie mit. Mit anderem Inhalt heißt die eingesetzte `<Name>_2`.
+- **Anderer Takt, anderes Raster:** Kommt die Datei aus einem Loop mit anderer Taktart oder
+  anderen Schritten je Schlag, rechnet LumiViz sie nach **Schlägen** um: Noten bleiben genau, wo
+  sie waren (zwischen zwei Schritten mit Versatz), Schläge eines Drum-Musters fallen auf den
+  nächsten Schritt — fallen zwei auf einen, bleibt der lautere. Die Länge in Takten folgt aus den
+  Schlägen. Eine Meldung nennt, was umgerechnet, umbenannt oder verschoben wurde und was fehlt.
+- **Rückgängig:** Ein Import lässt sich mit **Ctrl+Z** zurücknehmen.
+- Die Ordner `patterns` und `tracks` gehören zu den eigenen Daten (*Export...* in Settings, §8:
+  *Patterns*, *Tracks and clips*).
+
 ### Weitergeben: Publish
 
 Ein Loop nennt seine Instrumente, Klänge und sein Kit, ein Instrument seine
@@ -3597,7 +3629,8 @@ nennt, in **eine Datei**: `<name>.<art>.lvdata`, etwa `titan.lvloop.lvdata`.
 - **Wo:** als letzter Knopf neben Save im Panel **Loop**, im
   **Instrument-Creator**, im Fenster **Kits**, in **Edit shape** und in **Record
   sample**; dazu **File → Publish a file...** für eine Datei, die gerade nicht
-  offen ist. Publish nimmt die **gespeicherte** Fassung — mit ungespeicherten
+  offen ist — auch für `.lvpattern`, `.lvclip` und `.lvtrack` (seit 1.204.0; beim Empfänger
+  kommen sie in seine Ordner `patterns` und `tracks`). Publish nimmt die **gespeicherte** Fassung — mit ungespeicherten
   Änderungen fragt es nach (das Panel Loop bietet gleich das Speichern an).
   Mitgeliefertes hat keine eigene Datei: davon erst mit Save as... eine Kopie
   machen.
@@ -3665,6 +3698,11 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvkit](bilder/handbuch/icons/lumiviz_lvkit.png) | `.lvkit` | Drum-Kit für den Loop (§16, Kits) | Drum-Editor, Knopf Kit; Import data, Liste „Let me decide for each file" |
 | ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | Instrument-Editor vor dem Namen des Instruments; Import data, Liste „Let me decide for each file" |
 | ![lvchord](bilder/handbuch/icons/lumiviz_lvchord.png) | `.lvchord` | Akkord für den Loop: ein Griffbild oder ein Voicing (§16, Akkorde) | Import data, Liste „Let me decide for each file" |
+| ![lvchords](bilder/handbuch/icons/lumiviz_lvchords.png) | `.lvchords` | die mitgelieferten Akkorde einer Stimmung in einer Datei (neben der Exe) | nur im Explorer |
+| ![lvpattern](bilder/handbuch/icons/lumiviz_lvpattern.png) | `.lvpattern` | Basis eines Loops (§16, „Muster, Clips und Spuren als Dateien“) | Publish, Import data |
+| ![lvclip](bilder/handbuch/icons/lumiviz_lvclip.png) | `.lvclip` | Clip eines Loops mit Wiederholungen und Effekten (§16, ebenda) | Publish, Import data |
+| ![lvtrack](bilder/handbuch/icons/lumiviz_lvtrack.png) | `.lvtrack` | Spur eines Loops: Kanal mit allen Clips (§16, ebenda) | Publish, Import data |
+| ![lvp](bilder/handbuch/icons/lumiviz_lvp.png) | `.lvp` | Preset eines klassischen Visualizers (Equalizer, Oscilloscope, Superscope, Waveform, Pulsing) | nur im Explorer |
 | ![lvinstbodyplan](bilder/handbuch/icons/lumiviz_lvinstbodyplan.png) | `.lvinstbodyplan` | Bauplan eines Instrumentkörpers: Umriss, Platte, Rippen und Steg eines Resonanzbodens, mitgeliefert der Steinway D | noch nirgends als Icon (im Bau, Stufe 31c) |
 | ![lvinstbody](bilder/handbuch/icons/lumiviz_lvinstbody.png) | `.lvinstbody` | aus dem Bauplan gerechneter Instrumentkörper (seine Moden) | noch nirgends als Icon (im Bau, Stufe 31c) |
 | ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Form aus einer oder mehreren Konturen — der Knoten **Shape** der Effect Chain zeichnet sie (§11), eine Shape-Schicht im Instrument-Creator spielt sie, das Fenster **Edit shape** legt sie an (§16) | noch nirgends als Icon |
@@ -3684,8 +3722,7 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![audio](bilder/handbuch/icons/audio.png) | übrige Audioformate | Musik | Audio Browser |
 | ![lrc](bilder/handbuch/icons/lyrics_lrc.png) | `.lrc` | Songtext mit Zeiten | noch nirgends als Icon |
 
-Ohne eigenes Icon sind Playlists (`.m3u8`), Knoten-Voreinstellungen (`.json`)
-und die Presets der einzelnen Visualizer (`.lvp`). Die acht Icons von
+Ohne eigenes Icon sind Playlists (`.m3u8`) und Knoten-Voreinstellungen (`.json`). Die acht Icons von
 `.lvloop` bis `.grad` gibt es seit Fassung 1.150.0; in der App stehen sie, wo
 ein Dateiname steht oder Dateien verschiedener Art untereinander (Spalte
 rechts), im Explorer erscheinen alle nach dem Eintragen. In Listen, in denen
@@ -3757,6 +3794,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.204.0 | 2026-10-31 | Session 167. §16 NEU „Muster, Clips und Spuren als Dateien“: `.lvpattern`, `.lvclip`, `.lvtrack` — Export und Import an der Taktachse, Umrechnung nach Schlägen, gleiche Namen, Publish; §17 die drei dazu und `.lvchords`, `.lvp` mit Icons. |
 | 1.203.0 | 2026-10-23 | Session 147. §17 Dateitypen: `.lvinstbodyplan` (Bauplan eines Instrumentkörpers) und `.lvinstbody` (gerechneter Körper) mit ihren Icons (Entscheid IC1 a). |
 | 1.202.0 | 2026-10-22 | Session 145. §16 Loop NEU **Clips einfrieren: Freeze** — Sanduhr mit Rechenzeit, Freeze clip / Unfreeze clip, die Marken frozen, computing, changed, missing (Kurzformen), wo die Wellenformen liegen (Stufen 30f–30h); „Weitergeben: Publish“ mit eingefrorenen Clips (Gruppe Frozen clips, Include frozen clips, der Import prüft; Stufe 30i). §8 Settings → Panels NEU **Freeze hint**. |
 | 1.201.0 | 2026-10-22 | Session 143. §8 Settings → Panels NEU **Frozen Clips** mit Grenze, Stand und **Clear frozen clips** (Stufe 30e; Einfrieren selbst folgt). |
