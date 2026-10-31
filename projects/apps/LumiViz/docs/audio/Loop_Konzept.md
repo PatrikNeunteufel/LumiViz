@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.110.0
-> **Datum:** 2026-10-31 (Session 168)
+> **Version:** 0.111.0
+> **Datum:** 2026-11-01 (Session 168)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -4100,11 +4100,104 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
   4 beats per bar · 4 steps per beat · swing 20 %“ (Tooltip „Set in the Loop panel“), rechts **Swing offset**
   (−100 … +100) mit „plays …“; im Instrument-Editor unter der Zeile Instrument, vor Strum und Lanes.
 
-### Teilschritte (fest bis 15a; die übrigen nach Skizze und Plan)
+- **SK15-1 a — Skizze der Wave-Clips gebilligt (S168):** ein eigenes Fenster **Wave editor** wie Drum- und
+  Instrument-Editor (ein Fenster, die Basis wechselt darin, Undo über den CommandBus; Ausschnitt und Lage gehören
+  zum Muster, darum nicht am Clip in der Taktachse — verworfen b):
+  - **Kopf:** Base (mit „used by n clips“), Fit, Bars, Play pattern, FX, Peak.
+  - **Zeile Datei:** File (Nennung, Länge, Rate, Kanäle), **Browse...**, **Record...**, **Edit sample...** (das
+    Fenster *Record sample*, Stufe 17), **Gain** (dB), **Fade in**, **Fade out** (ms).
+  - **Zeile Tempo:** **Reference tempo**, **Set to loop tempo**, **Follow tempo** (mit Hinweis „plays 1.25× as fast
+    when on“), **Pitch method** (*General* / *Voice*, WV6 a).
+  - **Zeile Raster:** die RasterZeile (grau „Grid of the loop …“), ohne Swing offset.
+  - **Fläche** über einem Taktlineal: oben **Expression** und **Pitch** wie im Instrument-Editor (in Schritten); in der
+    Mitte die **Welle** — der Ausschnitt an zwei Griffen (Sekunden der Datei), die ganze Welle verschoben für die Lage
+    (rastet in Schritten, mit Shift Bruchteile), der Teil der Datei außerhalb grau; unten **Autotune** — die gemessene
+    Tonhöhe gestrichelt, darüber die Zielnoten als Kästen mit Zielton, Cent und Strength (ziehen, teilen mit
+    Ctrl+Klick, verbinden, Entf), darunter Key, Skala, **Detect notes**, Strength, Speed und der Haken *Selected
+    section only*.
+  - **Taktachse:** der Wave-Clip zeigt seine Wellenform; Marken ♪ (Autotune hat Abschnitte), ~ (Follow tempo an),
+    *source changed* (nach Bounce, WV7 a). Auf einem freien Takt **New wave clip...** (Datei wählen, Frage nach
+    S2 a) und **Record wave clip...**; am Drum- und Instrument-Clip **Bounce to wave clip**.
+  - Von Claude gesetzt (mit der Skizze gebilligt): die Menüeinträge, die Marken, *Edit sample...*, Gain und Blenden
+    am Muster, Shift für Bruchteile, *Selected section only*.
+
+- **WV8 a — vorab gerechnet:** ein Wave-Muster wird im Hintergrund gerechnet wie die Töne (Stufe 29) — Ausschnitt
+  mit Gain und Blenden, gedehnt bei *Follow tempo* auf das Tempo des Loops, in der Tonhöhe nach Autotune und
+  Pitch-Spur — und liegt als Klang `wave:<abdruck>` im Tonspeicher (Abdruck aus dem Inhalt der Datei, den Feldern
+  des Musters, Tempo und Raster des Loops, wo sie wirken, und der Klangfassung). Der Rechenkern spielt ihn je
+  Wiederholung ab Musteranfang + Lage, am Musterende mit *Fade out* geschnitten; Expression und die Kurve am Clip
+  wirken beim Abspielen wie bei den Tönen. Während eine neue Fassung gerechnet wird, spielt die bisherige; beim
+  ersten Öffnen „Preparing sounds… n / m“. Ohne Dehnen und Tonhöhe nur dekodiert und geschnitten. Die Messung mit
+  pYIN je Datei einmal, gemerkt unter dem Inhalts-Hash (Arbeitsspeicher und eine kleine Datei im Benutzerbereich
+  neben `frozen`). Grund: eine fertige Wellenform ergibt an jeder Stelle dieselben Werte (`test_LoopKern`), pYIN
+  braucht die ganze Datei, und Freeze, Export und Bounce nehmen dieselbe Rechnung. Verworfen b (beim Abspielen:
+  der Anfang klänge nach einem Sprung anders, zwei Rechenwege). Kippt, wenn der Prüfstein aus WV6 a lange
+  Rechenzeiten zeigt — dann eine Vorschau des Ausschnitts während des Rechnens (eigene Frage nach der Messung).
+- **WV9 a — Autotune nur als Spur:** Autotune gibt es nur als Spur am Wave-Muster (WV4 a), keinen Baustein in der
+  Effektreihe. Q1 und die Zeile in §4j („Autotune käme später als weiterer Baustein am Clip“) gelten damit als
+  erfüllt: die Spur mit *Detect notes* und Tonart verhält sich wie das klassische Autotune, Strength 100 % und
+  Speed 0 geben die bekannte Klangfarbe. Grund: eine erkennbare Tonhöhe gibt es nur am Wave-Muster mit einer Stimme;
+  ein Baustein dort wäre eine zweite Ablage derselben Korrektur, und nach anderen Effekten (Hall, Verzerrung) misst
+  die Tonhöhe am schlechtesten. Kippt, wenn Autotune ein Signal ziehen soll, das erst im Clip entsteht (etwa die
+  Ausgabe der Talkbox) — dann ein Baustein mit der Talkbox-Stufe.
+
+### Was festliegt (von Claude gesetzt, S168)
+
+- **Modell:** `MusterArt::Wave`. Ein Wave-Muster trägt `takte`, `datei` (Nennung wie eine Sample-Schicht, WV2 a),
+  `start`/`ende` (Sekunden der Datei; `ende` 0 = bis zum Ende), `versatz` (Schritte, mit Bruchteil, auch negativ),
+  `gainDb`, `fadeInMs`, `fadeOutMs`, `bezugBpm`, `folgtTempo`, `tonhoehenArt` (*General* / *Voice*), `zeitspuren` (nur
+  Expression und Pitch), `autotune` (Grundton, Skala, Strength, Speed als Vorgabe; `abschnitte` je Anfang und Ende in
+  Sekunden der Datei, Zielton als MIDI-Nummer und Cent, eigene Strength und Speed) und `herkunft` (nach *Bounce*: der
+  Ursprungsclip als kleiner Loop in der Hülle aus §4o, sonst leer). Kein `swingOffset` (RS1-1 a), keine Spuren
+  Sustain, Sostenuto, Vibrato.
+- **Datei:** `.lvloop` **Fassung 16**, `kind: "wave"`, alle Felder immer geschrieben. Die Hüllen aus §4o tragen
+  Wave-Muster ohne eigene Fassung (Q6). `rechneUm` (§4o) rechnet `versatz`, Takte und die Spuren nach Schlägen um;
+  Ausschnitt und Autotune stehen in Dateizeit und bleiben.
+- **Grenzen:** Takte 1 … 512 (WV3 a); Gain −60 … +24 dB wie der Fader; Blenden 0 … 10 000 ms; Bezugstempo wie BPM
+  (20 … 400); Strength 0 … 1; Speed 0 … 500 ms; Abschnitte höchstens 4096.
+- **Klänge:** `klangNamen` nennt je Wave-Muster und wirksamem Stand einen Klang `wave:<abdruck>` (WV8 a); der Abdruck
+  geht in den Freeze-Abdruck ein wie die Klänge der Instrumente (FZ2 a).
+- **Prüfung je Teilschritt** nach UF17-1 a: voller Lauf bei 15b (neue Dateifassung), 15c (Rechenkern), 15f (neues
+  External), 15m (Abschluss); sonst eng unter Release-clang, beide Compiler gebaut.
+- **Modell der Sitzungen:** Bau nach diesem Plan mit Opus. Fable-Kandidat: die Auswertung des Prüfsteins 15h, wenn
+  die Zahlen keine klare Wahl ergeben (Merkmal 1 oder 3).
+
+### Teilschritte (fest)
 
 | Schritt | Inhalt | Stand |
 |---|---|---|
 | 15a | Raster und Swing im Kopf des Loop-Panels, Swing offset je Muster (RS1 a, RS1-1 a, SK15a-1 a): Modell, `.lvloop` Fassung 15, Rechenkern und Saitenplan, Panel, beide Editoren, Tests, Handbuch | erledigt 2026-10-31 (S168; voller Lauf 1688 / 1688 unter Release-clang und Testing-MSVC) |
+| 15b | Modell und Datei des Wave-Musters (B1): `MusterArt::Wave`, alle Felder aus „Was festliegt“, `.lvloop` Fassung 16, `richte`, Hüllen aus §4o, `rechneUm`; Tests ohne Ton | offen |
+| 15c | Rechnen ohne Dehnen und Tonhöhe (B1, B2, WV8 a): dekodieren, Ausschnitt, Gain, Blenden, Lage, Fade out am Musterende; Klang `wave:<abdruck>` im Tonspeicher über den Tonauftrag; der Rechenkern spielt ihn je Wiederholung, Expression und Kurve am Clip beim Abspielen; Freeze, Export audio und der Loop im Composer; Tests gegen von Hand gerechnete Abtastwerte | offen |
+| 15d | Fenster **Wave editor** nach SK15-1 a, ohne Autotune und ohne Follow tempo (beide grau mit Hinweis): Kopf, Zeile Datei, Zeile Tempo, RasterZeile, Welle mit Griffen und Lage, Spur Expression; Tests über das Fenster, Bild | offen |
+| 15e | Taktachse und Austausch (B1, B8): *New wave clip...*, die Wellenform am Clip, Marken; Edit base und Doppelklick öffnen den Wave editor; Datensicherung und Publish (die Dateien als Samples, WV2 a), `.lvpattern`/`.lvclip`/`.lvtrack` mit Wave-Mustern; Tests über Taktachse und Panel | offen |
+| 15f | Die Schnittstelle `Dehner` mit **Signalsmith Stretch** (WV6 a): External unter `externals/` mit eigener `Include.cmake`, fester Seed und `std::mt19937`, CREDITS und Notices; Tests gegen die Schnittstelle mit Bezugswerten, Gleichheit zwischen MSVC und clang geprüft; die Spur **Pitch** wirkt (*General*) | offen |
+| 15g | Der Tonhöhenverlauf mit **pYIN** (eigener Nachbau nach Mauch & Dixon 2014 auf `loop/Grundton`), gemerkt je Datei (WV8 a); Tests an gerechneten Tönen mit Gleiten und Vibrato; **Messfall an echtem Gesang** (Quelle siehe unten) | offen |
+| 15h | **TD-PSOLA** als zweite Umsetzung von `Dehner` (*Voice*) und der **Prüfstein** (WV6 a): gerechnete Stimmen mit bekannten Formanten, Formantlage vorher/nachher, Fehler der Zieltonhöhe in Cent, Rechenzeit, MSVC/clang; Hörproben an Patrik; Bericht unter `docs/modellierung/wave-clips/proben/`. Ohne Vorteil für PSOLA fällt *Voice* weg (WV6 a b) | offen |
+| 15i | Die Spur **Autotune** (WV4 a, WV9 a): Rechnung (Zielnoten, Strength, Speed, mit der Pitch-Spur zusammen), *Detect notes* mit Tonart, die Spur im Wave editor mit Zielnoten über der gemessenen Kurve, Marke ♪; Tests über das Fenster | offen |
+| 15j | **Follow tempo** (B3, WV1-1 a): Bezugstempo, *Set to loop tempo*, Dehnen auf das Tempo des Loops, Marke ~; Tests mit Tempowechsel des Loops | offen |
+| 15k | **Aufnahme und Bounce** (B5, B6, WV7 a): *Record wave clip...* und *Record...* im Editor über das Fenster *Record sample*; *Bounce to wave clip* mit Nachklang bis −60 dB, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | offen |
+| 15l | **Steuersignal** (B7, WV5 a): ein Baustein nennt einen Kanal, abgegriffen vor Fader und Schalter, genannte Kanäle zuerst, Kreis erkannt, Abdruck mit dem Kanal; ein Prüfbaustein im Test (die Talkbox ist eine eigene Stufe) | offen |
+| 15m | Abschluss: Benutzerhandbuch §16 und §17, Sichttest-Liste, Bereich und voller Lauf unter beiden Compilern | offen |
+
+**Offen vor 15g:** eine Aufnahme echten Gesangs für den Messfall — einstimmig, ohne Hall, mit Gleiten und Vibrato,
+unter einer freien Lizenz oder von Patrik selbst; Quelle und Ablage (außerhalb des Repos wie *Salamander*) als Frage
+vor 15g.
+
+### Abgleich mit den Quellen (S168)
+
+| Quelle | Wo im Plan |
+|---|---|
+| Q1 Autotune als Effekt am Clip, Messung mit *Detect* geteilt | WV9 a (als Spur statt Baustein, begründet); Messung: 15g baut pYIN auf `loop/Grundton` |
+| Q2 Audio-Clip als dritte Art mit Autotune-Spur; Ort, Datei, Bearbeitung offen | 15b–15e (WV2 a Datei, WV3 a Bearbeitung, SK15-1 a Ort), 15i (Spur) |
+| Q3 nach Freeze; *Bounce* (F1 c) | 15c nutzt den Weg von Freeze (Wellenform im Rechenkern), 15k *Bounce* (WV7 a) |
+| Q4 Stufentabelle Zeile 15 | die Zeile nennt §4p; Stand nachgeführt |
+| Q5 `loop/Grundton`, an echten Aufnahmen nie geprüft | 15g (Messfall an echtem Gesang) |
+| Q6 Wave-Muster in derselben Hülle, ohne neue Fassung | 15b, 15e |
+| Q7 F1 a–F5 a: Abdruck, Ordner `frozen`, Publish | 15c (Freeze eines Wave-Clips), „Klänge“ oben (Abdruck), 15e (Publish) |
+| Q8 *Export audio...* mit derselben Rechnung | 15c |
+| Q9 SF3 a, SF5 d: Spur Pitch, Expression am Clip | 15d (Expression), 15f (Pitch); Sustain, Sostenuto, Vibrato von Claude weggelassen, nicht entschieden (ein Wave-Muster hat keine Noten zum Halten; Vibrato ginge über die Spur Pitch) |
+| Q10 Talkbox braucht Wave-Clips | 15l (Steuersignal, WV5 a); die Talkbox selbst danach als eigene Stufe |
 
 **Wie 15a gebaut ist (S168):** `Muster::swingOffset` (−1 … 1 wie `Loop::swing`), `swingVon(loop, muster)` —
 ohne Offset genau `loop.swing`, sonst Summe auf 0 … 1; `richte` begrenzt; `.lvloop` **Fassung 15** mit
@@ -4143,7 +4236,7 @@ in zwölf Prüfungen auf 15.
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
-| 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2, §4p) | in Arbeit seit 2026-10-31 (S168, Planung): Entscheide WV1 a–WV7 a, RS1 a, RS1-1 a; Skizze und Plan offen |
+| 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2, §4p) | in Arbeit seit 2026-10-31 (S168): 15a erledigt, Teilplan 15b–15m fest, nächster Schritt 15b |
 | 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
 | 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen freigegeben (B2 a); **17a gebaut** (das Fenster: `bearbeite`, Save und Save as..., die Rückfragen; ein Fall mit fünf Teilen in `test_LoopAufnahmeFenster.cpp`) ; **17b gebaut** (der Knopf Edit... im Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden; im Fall zur Sample-Schicht in `test_LoopInstrumentEditor.cpp`) ; **17c gemacht** (Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D, voller Lauf 1153 / 1153); **Stufe 17 fertig — im Programm ungesehen** |
 | 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; **21c gebaut** (S124: das Fenster Kits, `loop/KitFenster`; die Auswahl Sound als Bauteil `loop/KlangAuswahl`; Edit kits... im Drum-Editor; `LoopPanel::spieleSchlaege`; die zuletzt geöffneten Loops; `test_LoopKitFenster.cpp`, drei Fälle, `LUMIVIZ_KIT_FENSTER_BILD`; im Programm ungesehen) ; **21d gebaut** (S124, Entscheide D1 a bis D6 a: 37 Stereo-Samples aus DrumGizmo, drei gerechnete Besen, Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes, Brush Swing; vierzehn Kits) ; **21e gemacht** (S124: Icon `lumiviz_lvkit.ico` — Entscheid I2 a, Fassung A: Snare von der Seite mit gekreuzten Sticks, am Vorschaublatt aus drei gewählt; am Knopf Kit und in Import data; `register_file_icons.ps1` mit `.lvkit`; Benutzerhandbuch 1.163.0 §16 „Kits", §17; Liste `Sichttest_Kits.md` (lokal); voller Lauf 1215 / 1215, 0 Skips) — **Stufe 21 fertig**, im Programm ungesehen bis auf Patriks ersten Blick (K10 a) |
@@ -4246,6 +4339,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.111.0** (S168, 2026-11-01): §4p 15a erledigt; SK15-1 a (Skizze der Wave-Clips als Beschreibung), WV8 a (vorab gerechnet), WV9 a (Autotune nur als Spur); „Was festliegt“ (Modell, Fassung 16, Grenzen), Teilplan 15b–15m, Abgleich mit Q1–Q10.
 - **0.110.0** (S168, 2026-10-31): §4p NEU Wave-Clips (Stufe 15): Quellen, Entscheide WV1 a, WV1-1 a, WV2 a–WV7 a, RS1 a, RS1-1 a; Recherche unter `modellierung/wave-clips/`; Stufentabelle Zeile 15.
 - **0.109.0** (S167, 2026-10-30): §4o NEU Muster, Clips und Spuren als Dateien (Stufe 33): `.lvpattern`, `.lvclip`, `.lvtrack`; Entscheide PE1, PE1-1 a, PE2 a, PE3 b, LC1 a; Teilschritte 33a–33f.
 - **0.108.0** (S158, 2026-10-28): §4n Befund zum langsamen Creator beim Flügel (gemessen); CR1 a (der Creator misst auf einem Thread, gemerkt, wie IP1 a); CR1 gebaut; `kPegelRate` in `loop/Pegel.hpp`.
