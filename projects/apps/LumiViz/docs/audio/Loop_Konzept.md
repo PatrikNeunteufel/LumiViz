@@ -3991,7 +3991,7 @@ genannt wird, was das Muster spielt, mitgepackt wird nichts (dafür gibt es Publ
 | 33c | Einsetzen: Namen (mitbenutzen oder `_2`), Ort (Takt und Kanal, neuer Kanal); Tests (Undo mit 33d) | erledigt 2026-10-30 (S167, `setzeEin`, `test_LoopAustausch` 33c) |
 | 33d | Bedienung: die Menüs der Taktachse, Dateidialoge mit Benutzerordner als Vorgabe; Tests über die Taktachse mit Menü- und Dialogbeobachter, Bild | erledigt 2026-10-30 (S167, `test_LoopAustauschMenue`) |
 | 33e | Datensicherung (zwei Bereiche), Publish (drei Arten), Icons | erledigt 2026-10-30 (S167, `test_PublishAustausch`, Datensicherung 15 Bereiche) |
-| 33f | Abschluss: Benutzerhandbuch §16 und §17, Doku, Sichttest-Liste; Bereich und voller Lauf unter beiden Compilern (neue Dateiarten, UF17-1 a) | erledigt 2026-10-31 (S167; voller Lauf je 1684 / 1685, rot nur `Kits 21c` wegen einer Arbeitsdatei unter `asset/loop`, Offene_Punkte §7) |
+| 33f | Abschluss: Benutzerhandbuch §16 und §17, Doku, Sichttest-Liste; Bereich und voller Lauf unter beiden Compilern (neue Dateiarten, UF17-1 a) | erledigt 2026-10-31 (S167; voller Lauf je 1684 / 1685, rot nur `Kits 21c` wegen einer Arbeitsdatei unter `asset/loop` — nach KF1 a grün, Offene_Punkte §7) |
 
 **Wie 33a–33c gebaut sind (S167):** `loop/Austausch.hpp` — die Hülle schreibt `alsJson` des
 kleinen Loops unter `loop` (Text wie eine `.lvloop`: `loopDateiText`, neu in `Loop.hpp`), das

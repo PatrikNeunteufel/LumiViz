@@ -4134,8 +4134,10 @@ Wunsch Patrik S167 (Priorität 2): eigene Muster in anderen Loops wiederverwende
 Publish, Icons — Plan, Entscheide (PE1, PE1-1 a, PE2 a, PE3 b, LC1 a) und Bau in `Loop_Konzept.md` §4o.
 Sichttest-Liste `.claude/handover/Sichttest_Austausch.md` (lokal; dazu *Chords* nach AK1 a).
 **Befund beim vollen Lauf (S167):** `Kits 21c` rot, weil `mitgelieferteLoopDateien()` jede `.lvloop` unter
-`asset/loop` zählt — auch die Arbeitsdatei `comp2.lvloop` (sie nennt das Kit `classic`); dieselbe Art Befund
-wie W1 a (S129) bei `Loop Werte`.
+`asset/loop` zählt — auch die Arbeitsdatei `comp2.lvloop` (sie nennt das Kit `classic`). **KF1 a (Patrik S167),
+erledigt:** wie W1 a — der Test gibt mit `setzeMitgelieferteLoopsFuerTests` die Liste aus `asset/Asset.cmake`
+vor (`looptest::mitgelieferteLoops()`); die App bleibt, wie sie ist. Kit- und Shape-Fälle unter beiden
+Compilern grün (15 / 15).
 
 ### 🟡 Lautstärke im Loop — Stufe 27 gebaut, Sichttest und voller Lauf offen (S139)
 

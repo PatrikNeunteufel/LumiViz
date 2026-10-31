@@ -22,6 +22,8 @@
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
 
+#include "LoopOhneEngine.hpp"  // mitgelieferteLoops
+
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
@@ -345,6 +347,15 @@ TEST_SUITE("LoopKitFenster")
         char* argv[2] = {arg0, nullptr};
         QApplication app{argc, argv};
         EigeneEinstellungen einstellungen;
+        // gezaehlt werden nur die mitgelieferten Loops aus asset/Asset.cmake — Arbeitsdateien
+        // unter asset/loop nicht (KF1 a, S167, wie W1 a)
+        const QStringList geliefert = looptest::mitgelieferteLoops();
+        REQUIRE(geliefert.size() >= 40);
+        setzeMitgelieferteLoopsFuerTests(geliefert);
+        struct Zurueck
+        {
+            ~Zurueck() { setzeMitgelieferteLoopsFuerTests(std::nullopt); }
+        } zurueck;
         QTemporaryDir tmp;
         REQUIRE(tmp.isValid());
         setzeEigenenKitOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("kits")));

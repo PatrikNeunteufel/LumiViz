@@ -173,6 +173,10 @@ void merkeGeoeffnetenLoop(const QString& pfad);
 [[nodiscard]] QStringList zuletztGeoeffneteLoops();
 /// Die mitgelieferten Loops: jede `.lvloop` unter `asset/loop`, auch in Unterordnern.
 [[nodiscard]] QStringList mitgelieferteLoopDateien();
+/// In Tests: statt des Ordners diese Dateien — die Liste aus `asset/Asset.cmake`, damit
+/// Arbeitsdateien unter `asset/loop` nicht mitzaehlen (KF1 a, S167, wie W1 a). Ohne Wert
+/// (`std::nullopt`) zurueck auf den Ordner.
+void setzeMitgelieferteLoopsFuerTests(std::optional<QStringList> dateien);
 /// Nennt ein Muster des Loops dieses Kit (Feld `kit`, K4 a)?
 [[nodiscard]] bool nenntKit(const Loop& loop, const QString& nennung);
 /// Die Dateien unter `dateien`, deren Loop das Kit nennt — beim Dateinamen ohne

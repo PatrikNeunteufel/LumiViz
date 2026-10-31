@@ -551,8 +551,25 @@ QStringList zuletztGeoeffneteLoops()
     return liste;
 }
 
+namespace
+{
+
+std::optional<QStringList>& mitgelieferteLoopsImTest()
+{
+    static std::optional<QStringList> dateien;
+    return dateien;
+}
+
+}  // namespace
+
+void setzeMitgelieferteLoopsFuerTests(std::optional<QStringList> dateien)
+{
+    mitgelieferteLoopsImTest() = std::move(dateien);
+}
+
 QStringList mitgelieferteLoopDateien()
 {
+    if (const auto& imTest = mitgelieferteLoopsImTest()) return *imTest;
     const QString ordner = lumi::core::mitgeliefert::ordner(QStringLiteral("loop"));
     if (ordner.isEmpty()) return {};
     QStringList dateien;
