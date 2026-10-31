@@ -62,7 +62,8 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
 
     const double schrittFrames = rate * 60.0 / loop.bpm / loop.schritteJeSchlag;
     ablauf.schrittFrames = schrittFrames;
-    const double swingFrames = loop.swing * 0.5 * schrittFrames;
+    // Stufe 15a (RS1-1 a): der Swing je Muster — der des Loops mit dem Offset des Musters
+    const auto swingFramesVon = [&](const Muster& m) { return swingVon(loop, m) * 0.5 * schrittFrames; };
     const int jeTakt = loop.schritteJeTakt();
     QHash<QString, int> klangVon;
     for (int i = 0; i < ablauf.klangNamen.size(); ++i) klangVon.insert(ablauf.klangNamen[i], i);
@@ -88,6 +89,7 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
             const ClipToene& toeneDesClips = saitenToene[clipNr];
             const Muster* muster = loop.findeMuster(clip.muster);
             if (muster == nullptr) continue;
+            const double swingFrames = swingFramesVon(*muster);
             // eingefroren (Stufe 30f): die Wellenform als ein Klang ab dem Anfang des Clips, mit
             // Fader und Lautstaerke des Loops (F3 a) — Effekte und Expression stecken in ihr
             if (const auto ort = eingefroren.find({static_cast<int>(kanalNr), clip.startTakt}); ort != eingefroren.end())

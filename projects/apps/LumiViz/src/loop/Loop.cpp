@@ -67,8 +67,11 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // 14 (S157, Stufe 31d-9, Entscheide HD2 a, HD2-1 a, N1 a): je Note die Stimme und der
 // Versatz von Anfang und Ende in Bruchteilen eines Schritts (in der Zeile der Note, wenn
 // gesetzt), am Instrument-Muster die Namen der Stimmen `voices` (immer geschrieben) — ein
-// aelteres Programm verloere beides still. Geschrieben wird immer 14.
-constexpr int kVersion = 14;
+// aelteres Programm verloere beides still.
+// 15 (S168, Stufe 15a, Entscheid RS1-1 a): je Muster `swingOffset`, der Abstand seines Swings
+// zum Swing des Loops, immer geschrieben — ein aelteres Programm swingte still falsch.
+// Geschrieben wird immer 15.
+constexpr int kVersion = 15;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -628,6 +631,13 @@ const Muster* Loop::findeMuster(const QString& name) const
     return it == muster.end() ? nullptr : &*it;
 }
 
+double swingVon(const Loop& loop, const Muster& muster)
+{
+    // ohne Offset genau der Swing des Loops — alte Loops rechnen Bit fuer Bit wie bis Fassung 14
+    if (muster.swingOffset == 0.0) return loop.swing;
+    return std::clamp(loop.swing + muster.swingOffset, 0.0, 1.0);
+}
+
 double Kanal::gainFaktor() const
 {
     if (gainDb <= kKanalGainMinDb) return 0.0;  // an der unteren Grenze: −∞
@@ -892,6 +902,7 @@ void Loop::richte(QStringList* bericht)
         else
             namen.append(m.name);
         m.takte = std::clamp(m.takte, kTakteMin, kTakteMax);
+        m.swingOffset = inGrenzen(m.swingOffset, -kSwingOffsetMax, kSwingOffsetMax, 0.0);
         if (m.art == MusterArt::Instrument)
         {
             // ein Instrument hat keine Spuren; seine Noten bleiben im Muster
@@ -1030,6 +1041,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
         QJsonObject o;
         o[QStringLiteral("name")] = m.name;
         o[QStringLiteral("bars")] = m.takte;
+        o[QStringLiteral("swingOffset")] = m.swingOffset;  // seit Fassung 15, immer
         if (m.art == MusterArt::Instrument)
         {
             o[QStringLiteral("kind")] = kArtInstrument;
@@ -1192,6 +1204,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             continue;
         }
         m.takte = o.value(QStringLiteral("bars")).toInt(kTakteNeu);
+        m.swingOffset = o.value(QStringLiteral("swingOffset")).toDouble(0.0);  // seit Fassung 15; fehlt es: wie der Loop
         if (art == kArtInstrument)
         {
             m.art = MusterArt::Instrument;

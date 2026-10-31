@@ -65,6 +65,7 @@ struct Akkord;
 class InstrumentCreator;
 class InstrumentPalette;
 class StrumZeile;
+class RasterZeile;
 
 /// Das Raster der Noten. Es rollt selbst — waagrecht (lange Muster) und
 /// senkrecht (sechs Oktaven): Klaviatur, Kopf und die Zeile der Lautstaerken
@@ -601,6 +602,11 @@ public:
     void setzeLaut(double laut);
     void setzePan(double pan);
     void setzeStumm(bool stumm);
+    /// Der Swing offset des Musters (Stufe 15a, RS1-1 a) — Raster und Swing des Loops
+    /// stellt das Loop-Panel ein (RS1 a).
+    void setzeSwingOffset(double offset);
+    /// Die Zeile mit Raster und Swing offset (fuer Tests).
+    [[nodiscard]] RasterZeile* rasterZeile() const { return m_rasterZeile; }
     /// *String choice* (Stufe 23f, S-U2 a): die Regel dieses Musters fuer Noten
     /// ohne eigene Saite. Die Auswahl steht nur da, wenn das Instrument Saiten traegt.
     void setzeSaitenwahl(Saitenwahl wahl);
@@ -745,6 +751,7 @@ private:
     QComboBox* m_saitenWahl = nullptr;
     QLabel* m_saitenHinweis = nullptr;
     StrumZeile* m_strumZeile = nullptr;  ///< H (Stufe 24e, S-W5 a)
+    RasterZeile* m_rasterZeile = nullptr;  ///< Raster des Loops und Swing offset (Stufe 15a)
     QCheckBox* m_tabHaken = nullptr;     ///< F (Stufe 26c, S-T5 a): die Tab-Linien zeigen; der Editor merkt die Stellung
     // --- Stufe 28d (Skizze §1a, SK1 a): die Zeile Lanes
     QWidget* m_spurZeile = nullptr;

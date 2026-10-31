@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.204.0
+> **Version:** 1.205.0
 > **Datum:** 2026-10-31
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2664,6 +2664,7 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | **New** / **Load...** / **Save** / **Save As...** | Ein leerer Loop mit einem Kanal; eine Datei laden; speichern. New, Load und das Beenden von LumiViz fragen nach, wenn Ungespeichertes verloren ginge (Save / Discard / Cancel). Der zuletzt geladene Loop steht nach dem Neustart wieder da |
 | **Play** / **Stop** | Spielt den Loop im Kreis — von vorn oder ab der grünen Marke im Lineal |
 | **BPM** | Das Tempo des ganzen Loops, 20 bis 400 |
+| **Beats per bar**, **Steps per beat**, **Swing** | NEU in 1.205.0 hier (bis 1.204.0 im Drum-Editor). Das Raster des **ganzen Loops**: Schläge je Takt, Schritte je Schlag (1 bis 16) und Swing — er verzögert jeden zweiten Schritt eines Schlags, bei 100 % um einen halben Schritt, an Drum-Schritten wie an Noten. Ein Muster kann mit seinem **Swing offset** davon abweichen (Drum- und Instrument-Editor). Je ein Schritt für Ctrl+Z |
 | Zeile daneben | Tempo, Zahl der Kanäle, Takte und Dauer eines Durchlaufs; beim Spielen rechts die Stelle als *Bar · Step* |
 | **Scroll with playhead** | Standard an. Läuft eine Marke — **Play**, **Play pattern** oder der Composer —, folgen ihr die Achse und die Editoren, wenn sie hineingezoomt oder länger als das Fenster sind; stetig oder seitenweise wie für den Composer eingestellt (Settings). Während du an einem Rollbalken ziehst, rollt nichts. Spielt der Composer denselben Loop mehrfach zugleich, steht die Marke beim lautesten Clip, die übrigen sind blasser zu sehen. Liegt ein Muster im Loop zugleich in mehreren Kanälen, zeigt sein Editor jede Stelle — voll die des zuletzt begonnenen Clips |
 | **Fit** | Zeigt den ganzen Loop, die Zeilen in normaler Höhe (auch Ctrl+0) |
@@ -2855,7 +2856,8 @@ siehe unten.)
 | **Play pattern** / **Stop** | Spielt nur dieses Muster im Kreis; eine Marke läuft durch das Raster. Mit den Effekten eines Clips dieser Basis — siehe **FX** |
 | **FX** | Die Effekte beim Abspielen an oder aus. Sie gehören dem **Bezugsclip**: dem im Panel Loop markierten Clip, wenn er diese Basis spielt, sonst ihrem ersten Clip (der Tooltip nennt ihn, etwa „Drums, bar 5"). Es ist derselbe Schalter wie im Loop: aus, klingt dieser Clip auch im ganzen Loop trocken. Grau, wenn der Clip keine Effekte hat. Ein Schritt für Ctrl+Z |
 | **Peak** | Der größte Ausschlag der Summe, solange etwas spielt. Über 1 steht er **rot**: dann übersteuert der Loop — eine Spur oder den Loop leiser stellen |
-| **Beats per bar**, **Steps per beat**, **Swing** | Das Raster des **ganzen Loops**, nicht nur dieses Musters. Swing verzögert jeden zweiten Schritt eines Schlags |
+| **Grid of the loop** | NEU in 1.205.0. Grau: das Raster des **ganzen Loops** — Schläge je Takt, Schritte je Schlag, Swing. Eingestellt wird es im Kopf des Panels Loop neben **BPM** (bis 1.204.0 stand es hier) |
+| **Swing offset** | NEU in 1.205.0. So viel swingt **dieses Muster** mehr (+) oder weniger (−) als der Loop, in Prozentpunkten; 0 = wie der Loop. Dahinter **plays**: mit welchem Swing das Muster spielt (Swing des Loops und Offset, 0 bis 100 %). Ein Solist swingt oft etwas weniger als das Schlagzeug. Ein Schritt für Ctrl+Z |
 | **M** | Die Spur ist stumm |
 | **Role** | Die Rolle der Spur im Kit (kick, snare, hat …) — siehe „Kits" unten |
 | **Sound** | Was die Spur spielt — siehe „Der Klang einer Spur" unten |
@@ -3048,7 +3050,10 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | **Ctrl+Mausrad**, **Alt+Mausrad**, **Ctrl+Alt+Mausrad** | NEU in 1.190.0. Zoomt die Zeit, die Höhe der Zeilen oder beides — wie die Zeitachse des Composers. **Fit** im Kopf zeigt wieder das ganze Muster in der Breite und die Noten in der Höhe. Der Tooltip von Fit nennt die Gesten |
 
 Das Raster (Schläge je Takt, Schritte je Schlag, Swing) gilt für den ganzen
-Loop und wird im Drum-Editor gestellt. Wird es gröber, gehen Noten verloren,
+Loop und wird im Kopf des Panels Loop gestellt (seit 1.205.0; vorher im
+Drum-Editor). Unter der Zeile **Instrument** zeigt der Instrument-Editor es
+grau an, daneben den **Swing offset** dieses Musters — dieselbe Zeile wie im
+Drum-Editor. Swing wirkt auf Noten genauso wie auf Schritte. Wird es gröber, gehen Noten verloren,
 deren Einsatz es nicht mehr gibt; die Länge einer Note bleibt dieselbe Zeit.
 Eine Note endet spätestens am Ende ihres Musters.
 
@@ -3794,6 +3799,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.205.0 | 2026-10-31 | Session 168. §16 Raster und Swing im Kopf des Panels Loop neben BPM (bisher im Drum-Editor); in Drum- und Instrument-Editor die Zeile „Grid of the loop“ mit **Swing offset** je Muster. |
 | 1.204.0 | 2026-10-31 | Session 167. §16 NEU „Muster, Clips und Spuren als Dateien“: `.lvpattern`, `.lvclip`, `.lvtrack` — Export und Import an der Taktachse, Umrechnung nach Schlägen, gleiche Namen, Publish; §17 die drei dazu und `.lvchords`, `.lvp` mit Icons. |
 | 1.203.0 | 2026-10-23 | Session 147. §17 Dateitypen: `.lvinstbodyplan` (Bauplan eines Instrumentkörpers) und `.lvinstbody` (gerechneter Körper) mit ihren Icons (Entscheid IC1 a). |
 | 1.202.0 | 2026-10-22 | Session 145. §16 Loop NEU **Clips einfrieren: Freeze** — Sanduhr mit Rechenzeit, Freeze clip / Unfreeze clip, die Marken frozen, computing, changed, missing (Kurzformen), wo die Wellenformen liegen (Stufen 30f–30h); „Weitergeben: Publish“ mit eingefrorenen Clips (Gruppe Frozen clips, Include frozen clips, der Import prüft; Stufe 30i). §8 Settings → Panels NEU **Freeze hint**. |

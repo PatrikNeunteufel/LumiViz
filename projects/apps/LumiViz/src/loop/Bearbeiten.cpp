@@ -586,6 +586,16 @@ bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag)
     return true;
 }
 
+bool setzeSwingOffset(Loop& loop, const QString& muster, double offset)
+{
+    Muster* ziel = musterIn(loop, muster);
+    if (ziel == nullptr || !std::isfinite(offset)) return false;
+    const double neu = std::clamp(offset, -kSwingOffsetMax, kSwingOffsetMax);
+    if (neu == ziel->swingOffset) return false;
+    ziel->swingOffset = neu;
+    return true;
+}
+
 int spurHinzu(Loop& loop, const QString& muster, const QStringList& kitKlaenge)
 {
     Muster* ziel = musterIn(loop, muster);

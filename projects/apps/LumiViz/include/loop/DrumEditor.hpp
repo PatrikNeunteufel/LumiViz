@@ -64,6 +64,7 @@ class InstrumentCreator;
 class InstrumentPalette;
 class KitFenster;
 class KlangAuswahl;
+class RasterZeile;
 struct Instrument;
 struct Schicht;
 
@@ -298,8 +299,9 @@ public:
 
     // --- was die Bedienelemente ausloesen (auch fuer Tests) -----------------
     void setzeTakte(int takte);
-    void setzeRaster(int schlaegeJeTakt, int schritteJeSchlag);
-    void setzeSwing(double swing);
+    /// Der Swing offset des Musters (Stufe 15a, RS1-1 a) — Raster und Swing des Loops
+    /// stellt das Loop-Panel ein (RS1 a).
+    void setzeSwingOffset(double offset);
     void spurHinzu();
     void spurLoeschen(int spur);
     void spurUmbenennen(int spur, const QString& name);
@@ -574,9 +576,7 @@ private:
     QPushButton* m_play = nullptr;
     QLabel* m_spitze = nullptr;
     QLabel* m_hinweis = nullptr;
-    QSpinBox* m_schlaege = nullptr;
-    QSpinBox* m_jeSchlag = nullptr;
-    QDoubleSpinBox* m_swing = nullptr;
+    RasterZeile* m_rasterZeile = nullptr;  ///< Raster des Loops und Swing offset (Stufe 15a)
     QVBoxLayout* m_spurSpalte = nullptr;
     std::vector<SpurZeile> m_spuren;
     QPushButton* m_spurNeu = nullptr;

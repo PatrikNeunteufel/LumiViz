@@ -15,6 +15,7 @@
 #include "loop/KitFenster.hpp"
 #include "loop/KlangAuswahl.hpp"
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
+#include "loop/RasterZeile.hpp"
 #include "loop/Sample.hpp"
 #include "loop/SampleFrage.hpp"
 #include "loop/SignalWeg.hpp"  // abweichFarbe: die Hinweisfarbe
@@ -934,31 +935,10 @@ void DrumEditor::setupUI()
     m_kitZeile->hide();
     aussen->addWidget(m_kitZeile);
 
-    auto* raster = new QHBoxLayout;
-    m_schlaege = new QSpinBox(this);
-    m_schlaege->setObjectName(QStringLiteral("drumBeats"));
-    m_schlaege->setRange(1, kRasterMax);
-    m_schlaege->setKeyboardTracking(false);
-    m_jeSchlag = new QSpinBox(this);
-    m_jeSchlag->setObjectName(QStringLiteral("drumStepsPerBeat"));
-    m_jeSchlag->setRange(1, kRasterMax);
-    m_jeSchlag->setKeyboardTracking(false);
-    m_swing = new QDoubleSpinBox(this);
-    m_swing->setObjectName(QStringLiteral("drumSwing"));
-    m_swing->setRange(0.0, 100.0);
-    m_swing->setDecimals(0);
-    m_swing->setSuffix(QStringLiteral(" %"));
-    m_swing->setKeyboardTracking(false);
-    m_swing->setToolTip(tr("Delays every second step of a beat; at 100 % by half a step"));
-    raster->addWidget(new QLabel(tr("Grid of the whole loop:"), this));
-    raster->addWidget(new QLabel(tr("Beats per bar"), this));
-    raster->addWidget(m_schlaege);
-    raster->addWidget(new QLabel(tr("Steps per beat"), this));
-    raster->addWidget(m_jeSchlag);
-    raster->addWidget(new QLabel(tr("Swing"), this));
-    raster->addWidget(m_swing);
-    raster->addStretch(1);
-    aussen->addLayout(raster);
+    // Stufe 15a (RS1 a, SK15a-1 a): das Raster des Loops nur angezeigt — eingestellt wird es im
+    // Loop-Panel —, dazu der Swing offset dieses Musters (RS1-1 a)
+    m_rasterZeile = new RasterZeile(QStringLiteral("drum"), this);
+    aussen->addWidget(m_rasterZeile);
 
     // --- links die Kopfzeilen der Spuren, rechts das Raster; es rollt nur das Raster
     auto* koerper = new QHBoxLayout;
@@ -1052,9 +1032,7 @@ void DrumEditor::setupUI()
     aussen->addStretch(1);
 
     connect(m_takte, &QSpinBox::valueChanged, this, [this](int takte) { setzeTakte(takte); });
-    connect(m_schlaege, &QSpinBox::valueChanged, this, [this](int schlaege) { setzeRaster(schlaege, m_jeSchlag->value()); });
-    connect(m_jeSchlag, &QSpinBox::valueChanged, this, [this](int jeSchlag) { setzeRaster(m_schlaege->value(), jeSchlag); });
-    connect(m_swing, &QDoubleSpinBox::valueChanged, this, [this](double prozent) { setzeSwing(prozent / 100.0); });
+    connect(m_rasterZeile, &RasterZeile::offsetGeaendert, this, &DrumEditor::setzeSwingOffset);
     connect(m_play, &QPushButton::clicked, this, [this] { Q_EMIT spielenVerlangt(!m_spielt); });
     connect(m_spurNeu, &QPushButton::clicked, this, &DrumEditor::spurNeuGeklickt);
     connect(m_raster, &SchrittRaster::spurGewaehlt, this, [this](int spur) { waehleSpur(spur); });
@@ -1164,17 +1142,12 @@ void DrumEditor::zeigeAlles()
     m_nutzer->setText(tr("· used by %1 clips").arg(basisNutzer(m_loop, m_muster)));
     {
         const QSignalBlocker a(m_takte);
-        const QSignalBlocker b(m_schlaege);
-        const QSignalBlocker c(m_jeSchlag);
-        const QSignalBlocker d(m_swing);
         m_takte->setValue(ziel->takte);
         const QSignalBlocker e(m_wiederholen);
         m_wiederholen->setChecked(wiederholenBeimVerlaengern());  // der andere Editor kann ihn umgestellt haben
         zeigeFx();
-        m_schlaege->setValue(m_loop.schlaegeJeTakt);
-        m_jeSchlag->setValue(m_loop.schritteJeSchlag);
-        m_swing->setValue(m_loop.swing * 100.0);
     }
+    m_rasterZeile->zeige(m_loop, *ziel);
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
     baueSpuren(*ziel);
     passeSpurHoeheAn();  // das Raster in voller Hoehe, die Kopfzeilen so hoch wie seine Spuren
@@ -1620,19 +1593,11 @@ void DrumEditor::setzeTakte(int takte)
     Q_EMIT bearbeitet(neu, tr("Change pattern length"));
 }
 
-void DrumEditor::setzeRaster(int schlaegeJeTakt, int schritteJeSchlag)
+void DrumEditor::setzeSwingOffset(double offset)
 {
     Loop neu = m_loop;
-    if (!lumi::loop::setzeRaster(neu, schlaegeJeTakt, schritteJeSchlag)) return;
-    Q_EMIT bearbeitet(neu, tr("Change grid"));
-}
-
-void DrumEditor::setzeSwing(double swing)
-{
-    Loop neu = m_loop;
-    neu.swing = std::clamp(swing, 0.0, 1.0);
-    if (neu == m_loop) return;
-    Q_EMIT bearbeitet(neu, tr("Change swing"));
+    if (!lumi::loop::setzeSwingOffset(neu, m_muster, offset)) return;
+    Q_EMIT bearbeitet(neu, tr("Change swing offset"));
 }
 
 void DrumEditor::spurHinzu()

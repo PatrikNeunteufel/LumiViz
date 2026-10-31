@@ -39,6 +39,7 @@
 #include <QFileInfo>
 #include <QImage>
 #include <QKeyEvent>
+#include <QDoubleSpinBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -629,21 +630,31 @@ TEST_SUITE("LoopDrumEditor")
         auto* basis = editor.findChild<QLabel*>(QStringLiteral("drumBase"));
         auto* nutzer = editor.findChild<QLabel*>(QStringLiteral("drumUsers"));
         auto* takte = editor.findChild<QSpinBox*>(QStringLiteral("drumBars"));
-        auto* schlaege = editor.findChild<QSpinBox*>(QStringLiteral("drumBeats"));
+        // Stufe 15a (RS1 a): das Raster steht hier nur noch als Text — eingestellt wird es im Loop-Panel
+        auto* rasterText = editor.findChild<QLabel*>(QStringLiteral("drumGrid"));
+        auto* offset = editor.findChild<QDoubleSpinBox*>(QStringLiteral("drumSwingOffset"));
+        auto* spielt = editor.findChild<QLabel*>(QStringLiteral("drumSwingPlays"));
+        CHECK(editor.findChild<QSpinBox*>(QStringLiteral("drumBeats")) == nullptr);
+        CHECK(editor.findChild<QDoubleSpinBox*>(QStringLiteral("drumSwing")) == nullptr);
         auto* laut = editor.findChild<QLabel*>(QStringLiteral("drumStepVolume"));
         auto* spitze = editor.findChild<QLabel*>(QStringLiteral("drumPeak"));
         auto* play = editor.findChild<QPushButton*>(QStringLiteral("drumPlay"));
         REQUIRE(basis != nullptr);
         REQUIRE(nutzer != nullptr);
         REQUIRE(takte != nullptr);
-        REQUIRE(schlaege != nullptr);
+        REQUIRE(rasterText != nullptr);
+        REQUIRE(offset != nullptr);
+        REQUIRE(spielt != nullptr);
         REQUIRE(laut != nullptr);
         REQUIRE(spitze != nullptr);
         REQUIRE(play != nullptr);
         CHECK(basis->text() == QStringLiteral("Grund"));
         CHECK(nutzer->text().contains(QStringLiteral("used by 3 clips")));
         CHECK(takte->value() == 4);
-        CHECK(schlaege->value() == 4);
+        CHECK(rasterText->text() == QStringLiteral("Grid of the loop: 4 beats per bar · 4 steps per beat · swing 0 %"));
+        CHECK_FALSE(rasterText->isEnabled());  // grau: eine Auskunft
+        CHECK(offset->value() == 0.0);
+        CHECK(spielt->text() == QStringLiteral("plays 0 %"));
         CHECK(laut->text() == QStringLiteral("Step volume: Kick"));
         CHECK(editor.raster()->muster() == probe().muster[0]);
         CHECK_FALSE(editor.grab().isNull());
@@ -655,15 +666,26 @@ TEST_SUITE("LoopDrumEditor")
         CHECK(editor.loop().findeMuster(QStringLiteral("Grund"))->takte == 6);
         CHECK(editor.loop().kanaele[0].clips[1].startTakt == 6);
         CHECK(editor.raster()->muster().zeilen[0].size() == 96);
-        // das Raster des ganzen Loops
-        schlaege->setValue(3);
-        CHECK(zuletzt == QStringLiteral("Change grid"));
-        CHECK(editor.loop().schlaegeJeTakt == 3);
-        editor.setzeSwing(0.25);
-        CHECK(editor.loop().swing == doctest::Approx(0.25));
+        // das Raster des ganzen Loops kommt vom Panel (setLoop) und steht dann da
+        {
+            Loop anders = editor.loop();
+            REQUIRE(setzeRaster(anders, 3, 4));
+            anders.swing = 0.25;
+            editor.setLoop(anders);
+        }
+        CHECK(rasterText->text() == QStringLiteral("Grid of the loop: 3 beats per bar · 4 steps per beat · swing 25 %"));
+        CHECK(spielt->text() == QStringLiteral("plays 25 %"));
+        // der Swing offset dieses Musters (RS1-1 a): das Feld meldet, gespielt wird Loop + Offset
+        offset->setValue(-10.0);
+        CHECK(zuletzt == QStringLiteral("Change swing offset"));
+        CHECK(editor.loop().findeMuster(QStringLiteral("Grund"))->swingOffset == doctest::Approx(-0.1));
+        CHECK(spielt->text() == QStringLiteral("plays 15 %"));
         const int vorher = aenderungen;
-        editor.setzeSwing(0.25);  // derselbe Wert: kein Schritt fuer Undo
+        editor.setzeSwingOffset(-0.1);  // derselbe Wert: kein Schritt fuer Undo
         CHECK(aenderungen == vorher);
+        editor.setzeSwingOffset(-0.5);  // mehr, als der Loop swingt: gespielt wird 0
+        CHECK(spielt->text() == QStringLiteral("plays 0 %"));
+        editor.setzeSwingOffset(0.0);
 
         // Spuren
         editor.spurHinzu();

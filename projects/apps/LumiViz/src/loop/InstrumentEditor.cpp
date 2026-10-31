@@ -15,6 +15,7 @@
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentPalette.hpp"
 #include "loop/StrumZeile.hpp"
+#include "loop/RasterZeile.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -2553,6 +2554,11 @@ void InstrumentEditor::setupUI()
     zeile->addWidget(m_hinweis);
     zeile->addStretch(1);
     aussen->addLayout(zeile);
+    // Stufe 15a (RS1 a, SK15a-1 a): das Raster des Loops nur angezeigt, dazu der Swing offset
+    // dieses Musters (RS1-1 a) — dieselbe Zeile wie im Drum-Editor
+    m_rasterZeile = new RasterZeile(QStringLiteral("instrument"), this);
+    connect(m_rasterZeile, &RasterZeile::offsetGeaendert, this, &InstrumentEditor::setzeSwingOffset);
+    aussen->addWidget(m_rasterZeile);
     // H (Stufe 24e, S-W5 a): Strum dieses Musters — dasselbe Element wie N im Creator,
     // im Raster des Loops; nur, wenn das Instrument Saiten traegt
     m_strumZeile = new StrumZeile(QStringLiteral("editorStrum"), this);
@@ -2924,6 +2930,7 @@ void InstrumentEditor::zeigeAlles()
         m_tabHaken->setVisible(mitSaiten);  // F (Stufe 26c)
         // D (Stufe 26e-2): bei jedem Instrument — mit Saiten Griffbilder, sonst Voicings (26f, S-T14 a)
     }
+    m_rasterZeile->zeige(m_loop, *ziel);
     m_raster->setTempo(m_loop.bpm);
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
     zeigeSpurZeile();
@@ -3160,6 +3167,13 @@ void InstrumentEditor::setzeSaitenwahl(Saitenwahl wahl)
     ziel->saitenwahl = wahl;
     if (neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Change string choice"));
+}
+
+void InstrumentEditor::setzeSwingOffset(double offset)
+{
+    Loop neu = m_loop;
+    if (!lumi::loop::setzeSwingOffset(neu, m_muster, offset)) return;
+    Q_EMIT bearbeitet(neu, tr("Change swing offset"));
 }
 
 void InstrumentEditor::setzeStrum(const Strum& strum)

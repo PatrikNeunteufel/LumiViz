@@ -50,6 +50,7 @@
 #include <QSettings>
 #include <QShortcut>
 #include <QSignalBlocker>
+#include <QSpinBox>
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -189,6 +190,23 @@ void LoopPanel::setzeTags(const LoopTags& tags)
     bearbeite(neuer, tr("Edit tags"));
 }
 
+void LoopPanel::setzeRaster(int schlaegeJeTakt, int schritteJeSchlag)
+{
+    if (!m_geladen) return;
+    Loop neuer = m_loop;
+    if (!lumi::loop::setzeRaster(neuer, schlaegeJeTakt, schritteJeSchlag)) return;
+    bearbeite(neuer, tr("Change grid"));
+}
+
+void LoopPanel::setzeSwing(double swing)
+{
+    if (!m_geladen || !std::isfinite(swing)) return;
+    Loop neuer = m_loop;
+    neuer.swing = std::clamp(swing, 0.0, 1.0);
+    if (neuer == m_loop) return;
+    bearbeite(neuer, tr("Change swing"));
+}
+
 void LoopPanel::frageNachTags()
 {
     if (!m_geladen) return;
@@ -286,6 +304,26 @@ void LoopPanel::setupUI()
     m_bpm->setDecimals(1);
     m_bpm->setKeyboardTracking(false);  // erst die fertige Zahl gilt — nicht jede Ziffer ein Schritt fuer Undo
     m_bpm->setToolTip(tr("Tempo of the whole loop, in beats per minute"));
+    // Stufe 15a (RS1 a, SK15a-1 a): das Raster und der Swing des ganzen Loops — bis S168 nur im
+    // Drum-Editor, obwohl sie fuer jedes Muster gelten
+    m_schlaege = new QSpinBox(this);
+    m_schlaege->setObjectName(QStringLiteral("loopBeats"));
+    m_schlaege->setRange(1, kRasterMax);
+    m_schlaege->setKeyboardTracking(false);
+    m_schlaege->setToolTip(tr("Beats per bar, for every pattern of the loop"));
+    m_jeSchlag = new QSpinBox(this);
+    m_jeSchlag->setObjectName(QStringLiteral("loopStepsPerBeat"));
+    m_jeSchlag->setRange(1, kRasterMax);
+    m_jeSchlag->setKeyboardTracking(false);
+    m_jeSchlag->setToolTip(tr("Steps per beat: the grid of the drum and instrument editors"));
+    m_swing = new QDoubleSpinBox(this);
+    m_swing->setObjectName(QStringLiteral("loopSwing"));
+    m_swing->setRange(0.0, 100.0);
+    m_swing->setDecimals(0);
+    m_swing->setSuffix(QStringLiteral(" %"));
+    m_swing->setKeyboardTracking(false);
+    m_swing->setToolTip(tr("Delays every second step of a beat; at 100 % by half a step.\n"
+                           "Applies to every drum and instrument pattern; a pattern can differ by its swing offset"));
     m_info = new QLabel(this);
     m_info->setObjectName(QStringLiteral("loopInfo"));
     m_stelle = new QLabel(this);
@@ -297,6 +335,12 @@ void LoopPanel::setupUI()
     spielReihe->addWidget(m_play);
     spielReihe->addWidget(bpmName);
     spielReihe->addWidget(m_bpm);
+    spielReihe->addWidget(new QLabel(tr("Beats per bar"), this));
+    spielReihe->addWidget(m_schlaege);
+    spielReihe->addWidget(new QLabel(tr("Steps per beat"), this));
+    spielReihe->addWidget(m_jeSchlag);
+    spielReihe->addWidget(new QLabel(tr("Swing"), this));
+    spielReihe->addWidget(m_swing);
     spielReihe->addWidget(m_info, 1);
     spielReihe->addWidget(m_stelle);
     // Mitlaufen (S127, Entscheid Patrik W3 a): wie im Composer, Vorgabe an
@@ -376,6 +420,9 @@ void LoopPanel::setupUI()
         neuer.bpm = bpm;
         bearbeite(neuer, tr("Change tempo"));
     });
+    connect(m_schlaege, &QSpinBox::valueChanged, this, [this](int schlaege) { setzeRaster(schlaege, m_jeSchlag->value()); });
+    connect(m_jeSchlag, &QSpinBox::valueChanged, this, [this](int jeSchlag) { setzeRaster(m_schlaege->value(), jeSchlag); });
+    connect(m_swing, &QDoubleSpinBox::valueChanged, this, [this](double prozent) { setzeSwing(prozent / 100.0); });
     connect(m_fit, &QPushButton::clicked, m_achse, &Taktachse::setzeZoomZurueck);
     auto* fitKuerzel = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_0), this);
     fitKuerzel->setContext(Qt::WidgetWithChildrenShortcut);
@@ -1150,6 +1197,9 @@ void LoopPanel::zeigeDatei()
     m_speichernUnter->setEnabled(m_geladen);
     m_tags->setEnabled(m_geladen);
     m_bpm->setEnabled(m_geladen);
+    m_schlaege->setEnabled(m_geladen);
+    m_jeSchlag->setEnabled(m_geladen);
+    m_swing->setEnabled(m_geladen);
     meldeStand();  // jede Aenderung an Loop oder Datei kommt hier vorbei
     m_dateiIcon->setVisible(m_geladen && !m_dateiIcon->pixmap().isNull());
     if (!m_geladen)
@@ -1165,7 +1215,13 @@ void LoopPanel::zeigeDatei()
     m_dateiZeile->setToolTip(m_datei.isEmpty() ? QString() : QDir::toNativeSeparators(m_datei));
     {
         const QSignalBlocker ruhe(m_bpm);
+        const QSignalBlocker a(m_schlaege);
+        const QSignalBlocker b(m_jeSchlag);
+        const QSignalBlocker c(m_swing);
         m_bpm->setValue(m_loop.bpm);
+        m_schlaege->setValue(m_loop.schlaegeJeTakt);
+        m_jeSchlag->setValue(m_loop.schritteJeSchlag);
+        m_swing->setValue(m_loop.swing * 100.0);
     }
     {
         const QSignalBlocker ruhe(m_limiter);

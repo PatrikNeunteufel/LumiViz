@@ -47,6 +47,9 @@ inline constexpr int kTakteMin = 1;
 /// bestaetigt mit B1 a).
 inline constexpr int kTakteNeu = 4;
 inline constexpr int kTakteMax = 64;   ///< hoechstens so viele Takte je Muster
+/// Der Abstand des Swings eines Musters zum Swing des Loops (Stufe 15a, Entscheid Patrik
+/// RS1-1 a): −1 … 1 wie `Loop::swing` (0 … 1), im Programm in Prozentpunkten.
+inline constexpr double kSwingOffsetMax = 1.0;
 
 /// Der Vorsatz eines Klangs aus dem mitgelieferten Kit: `kit:kick`.
 [[nodiscard]] bool istKitKlang(const QString& klang);
@@ -320,6 +323,10 @@ struct Muster
     QString name;
     MusterArt art = MusterArt::Drumkit;
     int takte = kTakteNeu;
+    /// Swing offset (Stufe 15a, RS1-1 a): so viel swingt das Muster mehr (+) oder weniger
+    /// (−) als der Loop, −`kSwingOffsetMax` … `kSwingOffsetMax`; 0 = wie der Loop. Gespielt
+    /// wird `swingVon`. In der Datei `swingOffset` (seit Fassung 15, immer geschrieben).
+    double swingOffset = 0.0;
 
     // --- Drumkit ---
     std::vector<Spur> spuren;
@@ -688,6 +695,10 @@ struct Loop
     /// danach im `bericht`.
     void richte(QStringList* bericht = nullptr);
 };
+
+/// Der Swing, mit dem `muster` spielt (Stufe 15a, RS1-1 a): der des Loops und der Offset
+/// des Musters, auf 0 … 1. Mit Offset 0 genau `loop.swing`.
+[[nodiscard]] double swingVon(const Loop& loop, const Muster& muster);
 
 /// Der Loop als JSON. Pfade von Sample-Dateien werden relativ zu
 /// `basisOrdner` abgelegt, wenn sie darunter liegen — sonst absolut.

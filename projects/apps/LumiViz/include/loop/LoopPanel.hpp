@@ -44,6 +44,7 @@ class QDoubleSpinBox;
 class QCheckBox;
 class QLabel;
 class QPushButton;
+class QSpinBox;
 class QTimer;
 
 namespace lumi::loop
@@ -109,6 +110,12 @@ public:
     /// Die Tags des Loops setzen (Titel, Kuenstler … — dasselbe Schema wie bei
     /// einem Song), ueber Undo.
     void setzeTags(const LoopTags& tags);
+    /// Das Raster des ganzen Loops (Stufe 15a, RS1 a: im Kopf neben BPM, bis S168 im
+    /// Drum-Editor), ueber Undo; je 1 bis `kRasterMax` (`setzeRaster` in Bearbeiten.hpp).
+    void setzeRaster(int schlaegeJeTakt, int schritteJeSchlag);
+    /// Der Swing des ganzen Loops, 0 … 1, ueber Undo; ein Muster weicht mit seinem
+    /// Swing offset davon ab (RS1-1 a).
+    void setzeSwing(double swing);
     /// Zaehlt jedes New und Load: ein Schritt fuer Undo gilt nur fuer die
     /// Ladung, in der er entstand.
     [[nodiscard]] int ladung() const { return m_ladung; }
@@ -295,6 +302,9 @@ private:
     QPushButton* m_tags = nullptr;
     QPushButton* m_play = nullptr;
     QDoubleSpinBox* m_bpm = nullptr;
+    QSpinBox* m_schlaege = nullptr;   ///< Beats per bar (Stufe 15a, RS1 a)
+    QSpinBox* m_jeSchlag = nullptr;   ///< Steps per beat
+    QDoubleSpinBox* m_swing = nullptr;
     QLabel* m_info = nullptr;
     QLabel* m_stelle = nullptr;
     QPushButton* m_fit = nullptr;

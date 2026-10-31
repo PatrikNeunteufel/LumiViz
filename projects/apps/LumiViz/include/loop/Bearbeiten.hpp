@@ -137,6 +137,10 @@ void setzeWiederholenBeimVerlaengern(bool an);
 /// derselben Stelle im Schlag, auch zwischen zwei Schritten; nur in einem Schlag,
 /// den es nicht mehr gibt, geht er.
 bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag);
+/// Den Swing offset eines Musters setzen (Stufe 15a, RS1-1 a), begrenzt auf
+/// −`kSwingOffsetMax` … `kSwingOffsetMax`. false = das Muster gibt es nicht, oder
+/// es aendert sich nichts.
+bool setzeSwingOffset(Loop& loop, const QString& muster, double offset);
 /// Eine Spur an das Muster haengen („Track N"), mit einer leeren Zeile. Ihr
 /// Klang ist der erste aus `kitKlaenge`, den das Muster noch nicht spielt —
 /// sind alle vergeben oder ist die Liste leer, bleibt sie ohne Klang. Gibt

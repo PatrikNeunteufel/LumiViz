@@ -332,7 +332,8 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
 
     // dieselbe Stelle wie `plane`, in Millisekunden
     const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
-    const double swingMs = loop.swing * 0.5 * schrittMs;
+    // Stufe 15a (RS1-1 a): der Swing je Muster, wie in `plane`
+    const auto swingMsVon = [&](const Muster& m) { return swingVon(loop, m) * 0.5 * schrittMs; };
     const int jeTakt = loop.schritteJeTakt();
     const double durchlaufMs = loop.durchlaufMs();
 
@@ -382,6 +383,7 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         }
         const Gegriffen& g = ort->second;
         if (!g.saiten.istSaiteninstrument()) continue;
+        const double swingMs = swingMsVon(*muster);
 
         const auto runden = static_cast<std::size_t>(std::max(1, clip.wiederholungen));
         toene[c].assign(runden, std::vector<GeplanterTon>(muster->noten.size()));
@@ -491,6 +493,7 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         const Muster* muster = loop.findeMuster(clip.muster);
         if (muster == nullptr) continue;
         if (muster->zeitspuren.von(Steuerspur::Expression).empty() && clip.expression.empty()) continue;
+        const double swingMs = swingMsVon(*muster);
         for (std::size_t r = 0; r < toene[c].size(); ++r)
             for (std::size_t i = 0; i < toene[c][r].size(); ++i)
             {
@@ -536,7 +539,7 @@ void setzeKette(TonAngabe& ton, const Loop& loop, const Muster& muster, const Ke
     if (kette.kopf >= muster.noten.size() || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return;
     // dieselben Stellen wie `toeneImKanal`: Schritte mal Schrittlaenge, mit Swing
     const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
-    const double swingMs = loop.swing * 0.5 * schrittMs;
+    const double swingMs = swingVon(loop, muster) * 0.5 * schrittMs;
     const auto startMs = [&](const Note& note) {
         const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
         return note.schritt * schrittMs + (versetzt ? swingMs : 0.0);
