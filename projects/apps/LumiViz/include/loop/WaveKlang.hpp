@@ -20,6 +20,7 @@
 #pragma once
 
 #include "loop/Loop.hpp"
+#include "loop/PYin.hpp"
 #include "loop/Rechenkern.hpp"
 
 #include <QString>
@@ -44,8 +45,10 @@ struct WaveKlang
     /// Halbtoenen, dazwischen linear (`kurveBei`). Leer, wenn kein Punkt die Tonhoehe aendert:
     /// dann klingt der Klang Bit fuer Bit wie ohne Spur.
     std::vector<SpurPunkt> tonhoehe;
+    /// Stufe 15i: die Abschnitte der Spur Autotune (Sekunden der Datei); leer = ohne.
+    std::vector<AutotuneAbschnitt> autotune;
     /// Stufe 15h: *Pitch method* Voice (TD-PSOLA, `dehnerStimme()`) statt General. Wirkt nur
-    /// mit Spur; ohne Spur immer false, damit der Name gleich bleibt.
+    /// mit Spur Pitch oder Autotune; ohne beide immer false, damit der Name gleich bleibt.
     bool stimme = false;
 
     [[nodiscard]] bool operator==(const WaveKlang&) const = default;
@@ -55,8 +58,8 @@ struct WaveKlang
 [[nodiscard]] bool istWaveKlang(const QString& name);
 /// Der Name: `wave:<start>,<ende>,<versatz>,<laenge>,<gain>,<fadeIn>,<fadeOut>|<datei>`, mit
 /// Spur Pitch je Punkt `;<ms>:<halbtoene>` vor dem `|` — die Zahlen so, dass sie genau
-/// zurueckgelesen werden, mit *Voice* danach `;voice` (Stufe 15h). Ohne Spur derselbe Name wie
-/// seit 15c.
+/// zurueckgelesen werden, je Abschnitt Autotune `;at:<anfang>:<ende>:<ton>:<cent>:<strength>:<speed>`
+/// (Stufe 15i), mit *Voice* danach `;voice` (Stufe 15h). Ohne Spuren derselbe Name wie seit 15c.
 [[nodiscard]] QString waveKlangName(const WaveKlang& klang);
 /// Den Namen wieder zerlegen. false = kein Klang eines Wave-Musters.
 bool zerlegeWaveKlang(const QString& name, WaveKlang& klang);
@@ -81,7 +84,10 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& klang);
 /// ist b Abtastwerte lang (vor a still); ist nichts zu hoeren, ist er leer.
 /// Mit Spur Pitch (Stufe 15f) geht das hoerbare Stueck a … b vor Gain und Blenden durch den
 /// `Dehner` (`dehner()`, *General*, WV6 a; mit `stimme` `dehnerStimme()`, Stufe 15h), gleich
-/// lang, die Tonhoehe bei Abtastwert k nach der Spur an der Stelle k / rate.
-[[nodiscard]] Klang rechneWave(const WaveKlang& klang, const std::vector<float>& datei, int rate);
+/// lang, die Tonhoehe bei Abtastwert k nach der Spur an der Stelle k / rate. Mit Abschnitten
+/// Autotune und dem Verlauf der Datei (`verlauf`, Stufe 15i) kommt die Korrektur an der Stelle
+/// (k + d) / rate der Datei dazu (`autotuneKorrektur`); ohne Verlauf wirkt Autotune nicht.
+[[nodiscard]] Klang rechneWave(const WaveKlang& klang, const std::vector<float>& datei, int rate,
+                               const Tonhoehenverlauf* verlauf = nullptr);
 
 }  // namespace lumi::loop

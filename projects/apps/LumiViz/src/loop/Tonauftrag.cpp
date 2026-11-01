@@ -11,6 +11,7 @@
 #include "loop/Kit.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Sample.hpp"
+#include "loop/Tonhoehenspeicher.hpp"
 #include "loop/Tonspeicher.hpp"
 #include "loop/WaveKlang.hpp"
 
@@ -296,7 +297,14 @@ void Tonauftrag::lade(std::size_t einer)
             m_zeilen[einer] << QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(wave.datei));
             return;
         }
-        auto geteilt = std::make_shared<const Klang>(rechneWave(wave, datei, m_rate));
+        // Stufe 15i: mit Autotune der Verlauf der ganzen Datei (pYIN, gemerkt je Inhalt)
+        std::optional<Tonhoehenverlauf> verlauf;
+        if (!wave.autotune.empty())
+        {
+            verlauf = tonhoehenverlaufVon(klangDatei(wave.datei), m_dekodierer, m_rate);
+            if (!verlauf) m_zeilen[einer] << QStringLiteral("Pitch not measured, Autotune off: %1").arg(QDir::toNativeSeparators(wave.datei));
+        }
+        auto geteilt = std::make_shared<const Klang>(rechneWave(wave, datei, m_rate, verlauf ? &*verlauf : nullptr));
         if (!schluessel.isEmpty()) tonspeicher().lege(schluessel, geteilt, msSeit(anfang));
         m_ergebnis[einer] = std::move(geteilt);
         return;

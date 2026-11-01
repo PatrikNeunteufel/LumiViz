@@ -24,6 +24,7 @@
 #include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
 #include "loop/WaveEditor.hpp"
+#include "TonhoehenOrdner.hpp"
 #include "paket/Import.hpp"
 #include "paket/Packen.hpp"
 #include "paket/Sammler.hpp"
@@ -248,6 +249,7 @@ TEST_SUITE("LoopWaveTaktachse")
 
     TEST_CASE("Loop Wave 15e: das Loop-Panel oeffnet den Wave editor")
     {
+        TonhoehenOrdner tonhoehe;  // Stufe 15i: der Editor misst im Hintergrund
         Anwendung anwendung;
         EigeneEinstellungen einstellungen;
         QTemporaryDir ordner;

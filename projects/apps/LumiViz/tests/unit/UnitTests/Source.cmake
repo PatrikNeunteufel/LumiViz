@@ -150,6 +150,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopFft.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopDehner.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopDehnerPruefstein.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopAutotune.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopPYin.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Teiltonmessung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Kurvenabstand.cpp"

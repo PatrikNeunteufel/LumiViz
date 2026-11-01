@@ -6,7 +6,9 @@
 #include "loop/WaveEditor.hpp"
 
 #include "loop/AufnahmeFenster.hpp"
+#include "loop/Autotune.hpp"
 #include "loop/Kit.hpp"  // klangDatei
+#include "loop/Tonhoehenspeicher.hpp"
 #include "loop/RasterZeile.hpp"
 #include "loop/Sample.hpp"
 #include "loop/SampleFrage.hpp"
@@ -25,6 +27,7 @@
 #include <QFileInfo>
 #include <QHBoxLayout>
 #include <QHelpEvent>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
@@ -36,13 +39,16 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSpinBox>
+#include <QTimer>
 #include <QToolTip>
 #include <QVBoxLayout>
 #include <QWheelEvent>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
+#include <thread>
 #include <tuple>
 #include <utility>
 
@@ -115,6 +121,27 @@ QString spurName(Steuerspur spur)
 
 constexpr std::array<Steuerspur, 2> kFlaechenSpuren{Steuerspur::Expression, Steuerspur::Pitch};
 
+/// Stufe 15i: in dieser Rate misst der Editor die Tonhoehe (die Zeiten haengen nicht an ihr).
+constexpr int kTonhoeheRate = 44100;
+/// So kurz darf eine Zielnote hoechstens werden, in Sekunden der Datei.
+constexpr double kNoteMin = 0.02;
+
+const std::array<const char*, 12> kTonNamen{"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+
+/// Ein Ton als Name: „C4“ (MIDI 60), „A#3“.
+QString tonName(int midi)
+{
+    return QString::fromLatin1(kTonNamen[static_cast<std::size_t>(((midi % 12) + 12) % 12)]) + QString::number(midi / 12 - 1);
+}
+
+/// Eine Zielnote als Text: „C4 +12 ct · 80 %“.
+QString notenText(const AutotuneAbschnitt& a)
+{
+    QString text = tonName(a.zielHoehe);
+    if (a.zielCent != 0) text += QStringLiteral(" %1%2 ct").arg(a.zielCent > 0 ? QStringLiteral("+") : QString()).arg(a.zielCent);
+    return text + QStringLiteral(" · %1 %").arg(std::lround(a.staerke * 100.0));
+}
+
 }  // namespace
 
 WaveBild waveBildVon(const QString& datei, const Dekodierer& dekodierer, double maxSekunden)
@@ -166,13 +193,115 @@ void WaveFlaeche::setMuster(const Muster& muster, const Loop& loop)
     m_schrittMs = loop.bpm > 0.0 && loop.schritteJeSchlag > 0 ? 60000.0 / loop.bpm / loop.schritteJeSchlag : 0.0;
     m_schritteJeTakt = loop.schritteJeTakt();
     if (m_zug == Zug::Keiner) m_vorher = muster;
+    if (m_note >= static_cast<int>(m_muster.wave.autotune.abschnitte.size())) waehleNote(-1);
+    berechneTonbereich();
     update();
 }
 
 void WaveFlaeche::setBild(WaveBild bild)
 {
     m_bild = std::move(bild);
+    berechneTonbereich();
     update();
+}
+
+void WaveFlaeche::setVerlauf(Tonhoehenverlauf verlauf)
+{
+    m_verlauf = std::move(verlauf);
+    berechneTonbereich();
+    update();
+}
+
+void WaveFlaeche::waehleNote(int note)
+{
+    const int neu = note >= 0 && note < static_cast<int>(m_muster.wave.autotune.abschnitte.size()) ? note : -1;
+    if (neu == m_note) return;
+    m_note = neu;
+    update();
+    Q_EMIT noteGewaehlt(m_note);
+}
+
+void WaveFlaeche::berechneTonbereich()
+{
+    // die gesungenen Toene im Ausschnitt und die Zielnoten; sonst um C4
+    double unten = 1e9;
+    double oben = -1e9;
+    const double von = m_muster.wave.start;
+    const double bis = ausschnittEnde() > 0.0 ? ausschnittEnde() : 1e9;
+    for (std::size_t k = 0; k < m_verlauf.hz.size(); ++k)
+    {
+        const double t = m_verlauf.zeitS(k);
+        if (m_verlauf.hz[k] <= 0.0f || t < von || t >= bis) continue;
+        const double midi = midiVonHz(m_verlauf.hz[k]);
+        unten = std::min(unten, midi);
+        oben = std::max(oben, midi);
+    }
+    for (const AutotuneAbschnitt& a : m_muster.wave.autotune.abschnitte)
+    {
+        unten = std::min(unten, static_cast<double>(a.zielHoehe));
+        oben = std::max(oben, static_cast<double>(a.zielHoehe));
+    }
+    if (unten > oben)
+    {
+        unten = 60.0 - kAutotuneTonMin / 2.0;
+        oben = 60.0 + kAutotuneTonMin / 2.0;
+    }
+    int u = static_cast<int>(std::floor(unten)) - 1;
+    int o = static_cast<int>(std::ceil(oben)) + 1;
+    while (o - u < kAutotuneTonMin)
+    {
+        --u;
+        ++o;
+    }
+    m_tonUnten = std::clamp(u, 0, 127);
+    m_tonOben = std::clamp(o, m_tonUnten + 1, 127);
+}
+
+double WaveFlaeche::yVonMidi(double midi) const
+{
+    const double oben = autotuneOben() + 4.0;
+    const double unten = autotuneOben() + kAutotuneHoehe - 4.0;
+    return unten - (midi - m_tonUnten) / (m_tonOben - m_tonUnten) * (unten - oben);
+}
+
+double WaveFlaeche::midiVonY(double y) const
+{
+    const double oben = autotuneOben() + 4.0;
+    const double unten = autotuneOben() + kAutotuneHoehe - 4.0;
+    return m_tonUnten + (unten - y) / (unten - oben) * (m_tonOben - m_tonUnten);
+}
+
+double WaveFlaeche::dateiVonX(double x) const
+{
+    return m_muster.wave.start + (schrittVonX(x) - m_muster.wave.versatz) * schrittMs() / 1000.0;
+}
+
+int WaveFlaeche::noteBei(QPoint ort) const
+{
+    int note = -1;
+    (void)notenGriffBei(ort, &note);
+    return note;
+}
+
+WaveFlaeche::Zug WaveFlaeche::notenGriffBei(QPoint ort, int* note) const
+{
+    *note = -1;
+    if (ort.y() < autotuneOben() || schrittMs() <= 0.0) return Zug::Keiner;
+    const std::vector<AutotuneAbschnitt>& alle = m_muster.wave.autotune.abschnitte;
+    const double halb = std::max(4.0, (yVonMidi(0.0) - yVonMidi(1.0)) / 2.0);
+    for (std::size_t i = 0; i < alle.size(); ++i)
+    {
+        const double links = xVonDatei(alle[i].anfang);
+        const double rechts = xVonDatei(alle[i].ende);
+        const double y = yVonMidi(alle[i].zielHoehe + alle[i].zielCent / 100.0);
+        if (std::abs(ort.y() - y) > halb || ort.x() < links - kGriff || ort.x() > rechts + kGriff) continue;
+        *note = static_cast<int>(i);
+        // die Kanten nur, wo die Note breit genug ist, dass auch die Mitte bleibt
+        if (rechts - links > 3 * kGriff && std::abs(ort.x() - links) <= kGriff) return Zug::NoteAnfang;
+        if (rechts - links > 3 * kGriff && std::abs(ort.x() - rechts) <= kGriff) return Zug::NoteEnde;
+        return Zug::Note;
+    }
+    return Zug::NeueNote;
 }
 
 void WaveFlaeche::setMarke(double schritt)
@@ -297,6 +426,18 @@ WaveFlaeche::Zug WaveFlaeche::griffBei(QPoint ort) const
 
 void WaveFlaeche::zeigeZeiger(QPoint ort)
 {
+    if (ort.y() >= autotuneOben())
+    {
+        int note = -1;
+        switch (m_zug != Zug::Keiner ? m_zug : notenGriffBei(ort, &note))
+        {
+            case Zug::NoteAnfang:
+            case Zug::NoteEnde: setCursor(Qt::SizeHorCursor); return;
+            case Zug::Note: setCursor(Qt::SizeAllCursor); return;
+            case Zug::NeueNote: setCursor(Qt::CrossCursor); return;
+            default: unsetCursor(); return;
+        }
+    }
     switch (griffBei(ort))
     {
         case Zug::Anfang:
@@ -433,12 +574,8 @@ void WaveFlaeche::paintEvent(QPaintEvent*)
         if (ende > 0.0) kante(xVonSchritt(schrittVonDatei(ende)));
     }
 
-    // --- die Spur Autotune: kommt mit Stufe 15i
-    const QRectF autotune(0, wUnten, breite, kAutotuneHoehe);
-    p.fillRect(autotune, farben.window());
-    p.setPen(farben.color(QPalette::PlaceholderText));
-    p.drawText(autotune.adjusted(4, 0, 0, 0), Qt::AlignVCenter | Qt::AlignLeft,
-               tr("Autotune — comes in a later version: target notes over the measured pitch"));
+    // --- die Spur Autotune (Stufe 15i)
+    zeichneAutotune(p, QRectF(0, wUnten, breite, kAutotuneHoehe));
 
     // --- die Abspielmarke
     if (m_marke >= 0.0)
@@ -449,12 +586,133 @@ void WaveFlaeche::paintEvent(QPaintEvent*)
     }
 }
 
+void WaveFlaeche::zeichneAutotune(QPainter& p, const QRectF& spur)
+{
+    const QPalette& farben = palette();
+    p.save();
+    p.setClipRect(spur);
+    p.fillRect(spur, farben.alternateBase());
+    p.setPen(farben.color(QPalette::Midlight));
+    p.drawLine(spur.topLeft(), spur.topRight());
+    const double breite = spur.width();
+    // die Halbtoene als feine Linien, je C mit Namen
+    for (int ton = m_tonUnten; ton <= m_tonOben; ++ton)
+    {
+        const double y = yVonMidi(ton);
+        QColor linie = farben.color(QPalette::Mid);
+        linie.setAlpha(ton % 12 == 0 ? 160 : 50);
+        p.setPen(linie);
+        p.drawLine(QPointF(0, y), QPointF(breite, y));
+        if (ton % 12 == 0)
+        {
+            p.setPen(farben.color(QPalette::PlaceholderText));
+            p.drawText(QPointF(2.0, y - 2.0), tonName(ton));
+        }
+    }
+    const double ms = schrittMs();
+    if (ms <= 0.0 || m_muster.wave.datei.isEmpty())
+    {
+        p.restore();
+        return;
+    }
+    // die Zielnoten als Kaesten, einen Halbton hoch
+    const double hoehe = std::max(8.0, yVonMidi(0.0) - yVonMidi(1.0));
+    const std::vector<AutotuneAbschnitt>& alle = m_muster.wave.autotune.abschnitte;
+    for (std::size_t i = 0; i < alle.size(); ++i)
+    {
+        const AutotuneAbschnitt& a = alle[i];
+        const QRectF kasten(QPointF(xVonDatei(a.anfang), yVonMidi(a.zielHoehe + a.zielCent / 100.0) - hoehe / 2.0),
+                            QPointF(xVonDatei(a.ende), yVonMidi(a.zielHoehe + a.zielCent / 100.0) + hoehe / 2.0));
+        if (kasten.right() < 0.0 || kasten.left() > breite) continue;
+        // hell gefuellt, damit die Kurven darin zu sehen bleiben; die Staerke als Deckkraft
+        const bool gewaehlt = static_cast<int>(i) == m_note;
+        QColor fuellung = farben.color(QPalette::Highlight);
+        fuellung.setAlpha((gewaehlt ? 90 : 35) + static_cast<int>(50 * a.staerke));
+        p.fillRect(kasten, fuellung);
+        p.setPen(QPen(farben.color(gewaehlt ? QPalette::WindowText : QPalette::Highlight), gewaehlt ? 2.0 : 1.0));
+        p.drawRect(kasten);
+        // der Name ueber dem Kasten: im Kasten (ein Halbton hoch) waere er nicht zu lesen
+        if (kasten.width() > 40.0)
+        {
+            p.setPen(farben.color(gewaehlt ? QPalette::WindowText : QPalette::PlaceholderText));
+            p.drawText(QPointF(kasten.left() + 2.0, kasten.top() - 3.0), notenText(a));
+        }
+    }
+    if (m_verlauf.hz.empty())
+    {
+        p.setPen(farben.color(QPalette::PlaceholderText));
+        p.drawText(spur.adjusted(40, 0, 0, 0), Qt::AlignVCenter | Qt::AlignLeft,
+                   tr("Autotune — the sung pitch is not measured yet"));
+        p.restore();
+        return;
+    }
+    // die gesungene Tonhoehe gestrichelt, die korrigierte fein darueber
+    const std::vector<double> korrektur = autotuneKorrektur(alle, m_verlauf);
+    QPainterPath gesungen;
+    QPainterPath korrigiert;
+    bool offen = false;
+    bool korrOffen = false;
+    for (std::size_t k = 0; k < m_verlauf.hz.size(); ++k)
+    {
+        const double x = xVonDatei(m_verlauf.zeitS(k));
+        if (m_verlauf.hz[k] <= 0.0f || x < -10.0 || x > breite + 10.0)
+        {
+            offen = korrOffen = false;
+            continue;
+        }
+        const double midi = midiVonHz(m_verlauf.hz[k]);
+        const QPointF punkt(x, yVonMidi(midi));
+        offen ? gesungen.lineTo(punkt) : gesungen.moveTo(punkt);
+        offen = true;
+        if (std::abs(korrektur[k]) > 1e-3)
+        {
+            const QPointF ziel(x, yVonMidi(midi + korrektur[k]));
+            korrOffen ? korrigiert.lineTo(ziel) : korrigiert.moveTo(ziel);
+            korrOffen = true;
+        }
+        else
+            korrOffen = false;
+    }
+    p.setPen(QPen(farben.color(QPalette::WindowText), 1.0, Qt::DashLine));
+    p.drawPath(gesungen);
+    p.setPen(QPen(QColor(0xe0, 0x90, 0x30), 1.5));
+    p.drawPath(korrigiert);
+    p.restore();
+}
+
 void WaveFlaeche::mousePressEvent(QMouseEvent* event)
 {
     const QPoint ort = event->position().toPoint();
     if (event->button() != Qt::LeftButton) return QWidget::mousePressEvent(event);
     m_vorher = m_muster;
     m_zugSchritt = schrittVonX(ort.x());
+    if (ort.y() >= autotuneOben())
+    {
+        // Stufe 15i: eine Zielnote waehlen, teilen, ziehen — oder eine neue aufziehen
+        if (schrittMs() <= 0.0 || m_muster.wave.datei.isEmpty()) return;
+        int note = -1;
+        m_zug = notenGriffBei(ort, &note);
+        m_zugSekunde = dateiVonX(ort.x());
+        m_zugMidi = midiVonY(ort.y());
+        Autotune& at = m_muster.wave.autotune;
+        if ((event->modifiers() & Qt::ControlModifier) != 0)
+        {
+            m_zug = Zug::Keiner;
+            if (note >= 0 && teileAbschnitt(at, m_zugSekunde)) melde(tr("Split note"));
+            return;
+        }
+        if (m_zug == Zug::NeueNote)
+        {
+            const AutotuneAbschnitt neu{m_zugSekunde, m_zugSekunde, std::clamp(static_cast<int>(std::lround(m_zugMidi)), 0, 127),
+                                        0, at.staerke, at.speedMs};
+            const auto platz = std::lower_bound(at.abschnitte.begin(), at.abschnitte.end(), neu.anfang,
+                                                [](const AutotuneAbschnitt& a, double t) { return a.anfang < t; });
+            note = static_cast<int>(at.abschnitte.insert(platz, neu) - at.abschnitte.begin());
+        }
+        waehleNote(note);
+        zeigeZeiger(ort);
+        return;
+    }
     if (ort.y() < kLinealHoehe)
     {
         const int schritt = std::clamp(static_cast<int>(std::floor(m_zugSchritt)), 0, std::max(0, static_cast<int>(schritte()) - 1));
@@ -497,6 +755,8 @@ void WaveFlaeche::mouseMoveEvent(QMouseEvent* event)
     }
     if (m_zug == Zug::Punkt)
         zieheSpurPunkt(ort, (event->modifiers() & Qt::AltModifier) != 0, (event->modifiers() & Qt::ShiftModifier) != 0);
+    else if (m_zug == Zug::Note || m_zug == Zug::NoteAnfang || m_zug == Zug::NoteEnde || m_zug == Zug::NeueNote)
+        zieheNote(ort, (event->modifiers() & Qt::ShiftModifier) != 0);
     else
         zieheWelle(ort, (event->modifiers() & Qt::ShiftModifier) != 0);
 }
@@ -513,14 +773,85 @@ void WaveFlaeche::mouseReleaseEvent(QMouseEvent* event)
         case Zug::Ende: melde(tr("Trim wave end")); break;
         case Zug::Lage: melde(tr("Move wave")); break;
         case Zug::Punkt: melde(m_spur == Steuerspur::Pitch ? tr("Change pitch") : tr("Change expression")); break;
+        case Zug::Note: melde(tr("Move note")); break;
+        case Zug::NoteAnfang:
+        case Zug::NoteEnde: melde(tr("Trim note")); break;
+        case Zug::NeueNote:
+        {
+            // ohne Laenge (ein Klick auf freie Flaeche): keine Note, keine Wahl
+            std::vector<AutotuneAbschnitt>& alle = m_muster.wave.autotune.abschnitte;
+            if (m_note >= 0 && m_note < static_cast<int>(alle.size()) &&
+                alle[static_cast<std::size_t>(m_note)].ende - alle[static_cast<std::size_t>(m_note)].anfang < kNoteMin)
+            {
+                alle.erase(alle.begin() + m_note);
+                waehleNote(-1);
+            }
+            melde(tr("Add note"));
+            break;
+        }
         case Zug::Keiner: break;
     }
     zeigeZeiger(event->position().toPoint());
 }
 
+void WaveFlaeche::zieheNote(QPoint ort, bool fein)
+{
+    std::vector<AutotuneAbschnitt>& alle = m_muster.wave.autotune.abschnitte;
+    const std::vector<AutotuneAbschnitt>& vorher = m_vorher.wave.autotune.abschnitte;
+    if (m_note < 0 || m_note >= static_cast<int>(alle.size())) return;
+    AutotuneAbschnitt& a = alle[static_cast<std::size_t>(m_note)];
+    const double sekunde = dateiVonX(ort.x());
+    switch (m_zug)
+    {
+        case Zug::Note:
+        {
+            if (m_note >= static_cast<int>(vorher.size())) return;
+            const AutotuneAbschnitt& alt = vorher[static_cast<std::size_t>(m_note)];
+            const double weg = std::max(sekunde - m_zugSekunde, -alt.anfang);
+            a.anfang = alt.anfang + weg;
+            a.ende = alt.ende + weg;
+            const double ton = midiVonY(ort.y()) - m_zugMidi;
+            if (fein)
+            {
+                // in Cent: der Ton nimmt auf, was ueber einen halben Halbton hinausgeht
+                const auto cent = alt.zielHoehe * 100 + alt.zielCent + static_cast<int>(std::lround(ton * 100.0));
+                a.zielHoehe = static_cast<int>(std::lround(cent / 100.0));
+                a.zielCent = cent - 100 * a.zielHoehe;
+            }
+            else
+            {
+                a.zielHoehe = alt.zielHoehe + static_cast<int>(std::lround(ton));
+                a.zielCent = alt.zielCent;
+            }
+            a.zielHoehe = std::clamp(a.zielHoehe, 0, 127);
+            break;
+        }
+        case Zug::NoteAnfang: a.anfang = std::clamp(sekunde, 0.0, a.ende - kNoteMin); break;
+        case Zug::NoteEnde: a.ende = std::max(sekunde, a.anfang + kNoteMin); break;
+        case Zug::NeueNote:
+            a.anfang = std::max(0.0, std::min(m_zugSekunde, sekunde));
+            a.ende = std::max(m_zugSekunde, sekunde);
+            break;
+        default: break;
+    }
+    update();
+}
+
 void WaveFlaeche::mouseDoubleClickEvent(QMouseEvent* event)
 {
     const QPoint ort = event->position().toPoint();
+    if (ort.y() >= autotuneOben())
+    {
+        // Stufe 15i: ein Doppelklick auf eine Zielnote nimmt sie weg
+        const int note = noteBei(ort);
+        if (note < 0) return QWidget::mouseDoubleClickEvent(event);
+        m_zug = Zug::Keiner;
+        m_vorher = m_muster;
+        m_muster.wave.autotune.abschnitte.erase(m_muster.wave.autotune.abschnitte.begin() + note);
+        waehleNote(-1);
+        melde(tr("Delete note"));
+        return;
+    }
     bool inSpur = false;
     const Steuerspur spur = spurBei(ort.y(), &inSpur);
     const int punkt = inSpur ? spurPunktBei(ort, spur) : -1;
@@ -533,9 +864,71 @@ void WaveFlaeche::mouseDoubleClickEvent(QMouseEvent* event)
     melde(tr("Delete point"));
 }
 
+void WaveFlaeche::notenMenue(QContextMenuEvent* event)
+{
+    const QPoint ort = event->pos();
+    const int note = noteBei(ort);
+    if (note >= 0) waehleNote(note);
+    Autotune& at = m_muster.wave.autotune;
+    QMenu menue(this);
+    menue.setObjectName(QStringLiteral("waveAutotuneMenu"));
+    QAction* teilen = menue.addAction(tr("Split here"));
+    teilen->setEnabled(note >= 0);
+    QAction* verbinden = menue.addAction(tr("Join with next"));
+    verbinden->setEnabled(note >= 0 && note + 1 < static_cast<int>(at.abschnitte.size()));
+    QAction* weg = menue.addAction(tr("Delete note"));
+    weg->setEnabled(note >= 0);
+    menue.addSeparator();
+    QAction* leeren = menue.addAction(tr("Clear notes"));
+    leeren->setEnabled(!at.abschnitte.empty());
+    QAction* gewaehlt = lumi::ui::zeigeMenue(menue, event->globalPos());
+    if (gewaehlt == nullptr) return;
+    m_vorher = m_muster;
+    if (gewaehlt == teilen)
+    {
+        if (teileAbschnitt(at, dateiVonX(ort.x()))) melde(tr("Split note"));
+    }
+    else if (gewaehlt == verbinden)
+    {
+        if (verbindeAbschnitte(at, static_cast<std::size_t>(note))) melde(tr("Join notes"));
+    }
+    else if (gewaehlt == weg)
+    {
+        at.abschnitte.erase(at.abschnitte.begin() + note);
+        waehleNote(-1);
+        melde(tr("Delete note"));
+    }
+    else if (gewaehlt == leeren)
+    {
+        at.abschnitte.clear();
+        waehleNote(-1);
+        melde(tr("Clear notes"));
+    }
+}
+
+void WaveFlaeche::keyPressEvent(QKeyEvent* event)
+{
+    // Stufe 15i: Entf nimmt die gewaehlte Zielnote weg
+    if ((event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) && m_note >= 0)
+    {
+        m_vorher = m_muster;
+        m_muster.wave.autotune.abschnitte.erase(m_muster.wave.autotune.abschnitte.begin() + m_note);
+        waehleNote(-1);
+        melde(tr("Delete note"));
+        event->accept();
+        return;
+    }
+    QWidget::keyPressEvent(event);
+}
+
 void WaveFlaeche::contextMenuEvent(QContextMenuEvent* event)
 {
     const QPoint ort = event->pos();
+    if (ort.y() >= autotuneOben())
+    {
+        notenMenue(event);
+        return;
+    }
     bool inSpur = false;
     const Steuerspur spur = spurBei(ort.y(), &inSpur);
     if (!inSpur) return;
@@ -613,13 +1006,26 @@ bool WaveFlaeche::event(QEvent* event)
             case Zug::Ende: text = tr("End of the section: %1 s in the file — drag").arg(ausschnittEnde(), 0, 'f', 3); break;
             case Zug::Lage: text = tr("Drag to move the wave in steps (Shift: in fractions of a step)"); break;
             case Zug::Keiner:
-            case Zug::Punkt:  // griffBei liefert ihn nie
+            case Zug::Punkt:  // griffBei liefert diese nie
+            case Zug::Note:
+            case Zug::NoteAnfang:
+            case Zug::NoteEnde:
+            case Zug::NeueNote:
                 text = tr("Grey: outside the section · hatched: outside the pattern — not heard");
                 break;
         }
     }
     else
-        text = tr("Autotune comes in a later version");
+    {
+        const int note = noteBei(ort);
+        if (note >= 0)
+            text = tr("%1 — drag to move (Shift: in cents), drag an edge to trim, Ctrl+click to split, double-click "
+                      "or Del to delete")
+                       .arg(notenText(m_muster.wave.autotune.abschnitte[static_cast<std::size_t>(note)]));
+        else
+            text = tr("Autotune: dashed the sung pitch, orange the corrected — drag to add a target note, or use "
+                      "Detect notes below");
+    }
     QToolTip::showText(hilfe->globalPos(), text, this);
     return true;
 }
@@ -691,6 +1097,23 @@ void WaveFlaeche::melde(const QString& was)
     // je Stelle ein Punkt, in den Grenzen — wie `richte` es hielte
     for (const Steuerspur spur : kFlaechenSpuren)
         richtePunkte(m_muster.zeitspuren.von(spur), spurMin(spur), spurMax(spur), schritte());
+    // die Zielnoten gerichtet; die gewaehlte bleibt gewaehlt, auch wenn sie den Platz wechselt
+    std::vector<AutotuneAbschnitt>& alle = m_muster.wave.autotune.abschnitte;
+    const std::optional<AutotuneAbschnitt> gewaehlt =
+        m_note >= 0 && m_note < static_cast<int>(alle.size()) ? std::optional(alle[static_cast<std::size_t>(m_note)]) : std::nullopt;
+    richteAutotune(m_muster.wave.autotune);
+    if (gewaehlt)
+    {
+        int neu = -1;
+        for (std::size_t i = 0; i < alle.size(); ++i)
+            if (alle[i].zielHoehe == gewaehlt->zielHoehe && alle[i].anfang < gewaehlt->ende && alle[i].ende > gewaehlt->anfang)
+            {
+                neu = static_cast<int>(i);
+                break;
+            }
+        m_note = -2;  // erzwingt die Meldung, auch wenn der Platz gleich bleibt
+        waehleNote(neu);
+    }
     if (m_muster == m_vorher) return;
     m_vorher = m_muster;
     Q_EMIT geaendert(m_muster, was);
@@ -698,10 +1121,26 @@ void WaveFlaeche::melde(const QString& was)
 
 // --- das Fenster ------------------------------------------------------------------------
 
+/// Stufe 15i: der Thread schreibt `verlauf` und setzt danach `fertig`; gelesen wird erst nach
+/// `join` (wie die Messung im Instrument-Creator, CR1 a).
+struct WaveEditor::Messung
+{
+    std::thread faden;
+    std::atomic<bool> fertig{false};
+    QString stand;  ///< fuer welche Datei und welchen Stand
+    std::optional<Tonhoehenverlauf> verlauf;
+};
+
 WaveEditor::WaveEditor(QWidget* parent) : QWidget(parent, Qt::Window)
 {
     setObjectName(QStringLiteral("waveEditor"));
     setupUI();
+}
+
+WaveEditor::~WaveEditor()
+{
+    // eine Messung laesst sich nicht abbrechen; was sie misst, ist danach gemerkt
+    if (m_messung != nullptr && m_messung->faden.joinable()) m_messung->faden.join();
 }
 
 void WaveEditor::setzeLageMerken(bool an)
@@ -872,9 +1311,72 @@ void WaveEditor::setupUI()
     m_rollX->setObjectName(QStringLiteral("waveScroll"));
     aussen->addWidget(m_flaeche, 1);
     aussen->addWidget(m_rollX);
+
+    // --- Zeile Autotune (Stufe 15i, SK15-1 a): unter der Flaeche
+    auto* autotune = new QHBoxLayout;
+    m_grundton = new QComboBox(this);
+    m_grundton->setObjectName(QStringLiteral("waveKey"));
+    for (int ton = 0; ton < 12; ++ton) m_grundton->addItem(QString::fromLatin1(kTonNamen[static_cast<std::size_t>(ton)]), ton);
+    m_grundton->setToolTip(tr("Key for Detect notes"));
+    m_skala = new QComboBox(this);
+    m_skala->setObjectName(QStringLiteral("waveScale"));
+    m_skala->addItem(tr("Chromatic"), static_cast<int>(Skala::Chromatisch));
+    m_skala->addItem(tr("Major"), static_cast<int>(Skala::Dur));
+    m_skala->addItem(tr("Minor"), static_cast<int>(Skala::Moll));
+    m_skala->setToolTip(tr("Scale for Detect notes — Chromatic: every semitone is a target"));
+    m_erkennen = new QPushButton(tr("Detect notes"), this);
+    m_erkennen->setObjectName(QStringLiteral("waveDetectNotes"));
+    m_erkennen->setToolTip(tr("Target notes from the sung pitch, on the notes of the key — replaces the notes in the "
+                              "section (or, with Selected section only, under the selected note)"));
+    m_staerke = new QSpinBox(this);
+    m_staerke->setObjectName(QStringLiteral("waveStrength"));
+    m_staerke->setRange(0, 100);
+    m_staerke->setSuffix(tr(" %"));
+    m_staerke->setKeyboardTracking(false);
+    m_staerke->setToolTip(tr("How far the pitch is pulled to the target — of the selected note, without one for new "
+                             "notes"));
+    m_speed = new QSpinBox(this);
+    m_speed->setObjectName(QStringLiteral("waveSpeed"));
+    m_speed->setRange(0, static_cast<int>(kAutotuneSpeedMaxMs));
+    m_speed->setSuffix(tr(" ms"));
+    m_speed->setKeyboardTracking(false);
+    m_speed->setToolTip(tr("How fast the pitch reaches the target — 0 jumps (the hard sound); of the selected note, "
+                           "without one for new notes"));
+    m_nurGewaehlte = new QCheckBox(tr("Selected section only"), this);
+    m_nurGewaehlte->setObjectName(QStringLiteral("waveSelectedOnly"));
+    m_nurGewaehlte->setToolTip(tr("Detect notes only under the selected note"));
+    m_autotuneHinweis = new QLabel(this);
+    m_autotuneHinweis->setObjectName(QStringLiteral("waveAutotuneHint"));
+    m_autotuneHinweis->setEnabled(false);
+    m_stimmeNehmen = new QPushButton(tr("Use Voice"), this);
+    m_stimmeNehmen->setObjectName(QStringLiteral("waveUseVoice"));
+    m_stimmeNehmen->setToolTip(tr("Detect notes found a single voice: Voice keeps its formants when the pitch moves"));
+    m_stimmeNehmen->hide();
+    autotune->addWidget(new QLabel(tr("Autotune"), this));
+    autotune->addWidget(new QLabel(tr("Key"), this));
+    autotune->addWidget(m_grundton);
+    autotune->addWidget(m_skala);
+    autotune->addWidget(m_erkennen);
+    autotune->addSpacing(12);
+    autotune->addWidget(new QLabel(tr("Strength"), this));
+    autotune->addWidget(m_staerke);
+    autotune->addWidget(new QLabel(tr("Speed"), this));
+    autotune->addWidget(m_speed);
+    autotune->addWidget(m_nurGewaehlte);
+    autotune->addSpacing(12);
+    autotune->addWidget(m_autotuneHinweis);
+    autotune->addWidget(m_stimmeNehmen);
+    autotune->addStretch(1);
+    aussen->addLayout(autotune);
+    m_messFertig = new QTimer(this);
+    m_messFertig->setInterval(100);
+    connect(m_messFertig, &QTimer::timeout, this, &WaveEditor::sieheNachTonhoehe);
+
     m_hilfe = new QLabel(tr("Wave: drag an edge to trim the section · drag inside to move it in steps (Shift: fractions) · "
                             "Expression, Pitch: click to add a point (Alt: off the grid; Pitch in semitones, Shift: "
                             "hundredths), double-click deletes · "
+                            "Autotune: drag to add a target note, drag a note to move it (Shift: cents), Ctrl+click "
+                            "splits, Del deletes · "
                             "Ctrl+wheel: zoom · ruler: Play pattern starts there"),
                          this);
     m_hilfe->setObjectName(QStringLiteral("waveHelp"));
@@ -921,12 +1423,23 @@ void WaveEditor::setupUI()
         });
     });
     connect(m_flaeche, &WaveFlaeche::abspielstelleGewaehlt, this, &WaveEditor::abspielstelleGewaehlt);
+    connect(m_flaeche, &WaveFlaeche::noteGewaehlt, this, [this] { zeigeAutotune(); });
+    connect(m_grundton, &QComboBox::activated, this, [this](int) {
+        setzeTonart(m_grundton->currentData().toInt(), static_cast<Skala>(m_skala->currentData().toInt()));
+    });
+    connect(m_skala, &QComboBox::activated, this, [this](int) {
+        setzeTonart(m_grundton->currentData().toInt(), static_cast<Skala>(m_skala->currentData().toInt()));
+    });
+    connect(m_erkennen, &QPushButton::clicked, this, [this] { (void)erkenneNoten(); });
+    connect(m_staerke, &QSpinBox::valueChanged, this, [this](int prozent) { setzeStaerke(prozent / 100.0); });
+    connect(m_speed, &QSpinBox::valueChanged, this, [this](int ms) { setzeSpeed(ms); });
+    connect(m_stimmeNehmen, &QPushButton::clicked, this, [this] { setzeTonhoehenArt(TonhoehenArt::Stimme); });
     connect(m_flaeche, &WaveFlaeche::massGeaendert, this, &WaveEditor::passeRollbalkenAn);
     connect(m_rollX, &QScrollBar::valueChanged, this, [this](int wert) {
         m_flaeche->setRoll(wert / 100.0);  // der Balken zaehlt in Hundertsteln eines Schritts
     });
 
-    resize(1100, 480);
+    resize(1100, 600);
     if (lageMerken()) (void)restoreGeometry(QSettings().value(QLatin1String(kLage)).toByteArray());
 }
 
@@ -934,6 +1447,7 @@ void WaveEditor::setDekodierer(Dekodierer dekodierer)
 {
     m_dekodierer = std::move(dekodierer);
     m_bildVon.clear();
+    m_verlaufVon.clear();
     ladeBild();
     m_dateiInfo->setText(dateiInfoText());
 }
@@ -1065,6 +1579,7 @@ void WaveEditor::zeigeAlles()
     m_flaeche->setMuster(*ziel, m_loop);
     m_dateiInfo->setText(dateiInfoText());
     zeigeFx();
+    zeigeAutotune();
     passeRollbalkenAn();
 }
 
@@ -1081,6 +1596,177 @@ void WaveEditor::ladeBild()
     if (stand == m_bildVon) return;
     m_bildVon = stand;
     m_flaeche->setBild(waveBildVon(datei, m_dekodierer));
+    starteTonhoehe(datei, stand);
+}
+
+void WaveEditor::starteTonhoehe(const QString& datei, const QString& stand)
+{
+    if (stand == m_verlaufVon) return;
+    m_verlaufVon = stand;
+    m_flaeche->setVerlauf({});
+    m_stimmeVorschlag = false;
+    if (datei.isEmpty() || !m_dekodierer || !QFileInfo(datei).isFile())
+    {
+        zeigeAutotune();
+        return;
+    }
+    if (m_messung != nullptr)
+    {
+        zeigeAutotune();
+        return;  // laeuft: danach sieht `sieheNachTonhoehe`, ob es noch die Datei ist
+    }
+    m_messung = std::make_unique<Messung>();
+    Messung* messung = m_messung.get();
+    messung->stand = stand;
+    messung->faden = std::thread([messung, datei, dekodierer = m_dekodierer] {
+        messung->verlauf = tonhoehenverlaufVon(datei, dekodierer, kTonhoeheRate);
+        messung->fertig.store(true);
+    });
+    m_messFertig->start();
+    zeigeAutotune();
+}
+
+void WaveEditor::sieheNachTonhoehe()
+{
+    if (m_messung == nullptr || !m_messung->fertig.load()) return;
+    if (m_messung->faden.joinable()) m_messung->faden.join();
+    const QString stand = m_messung->stand;
+    std::optional<Tonhoehenverlauf> verlauf = std::move(m_messung->verlauf);
+    m_messung.reset();
+    m_messFertig->stop();
+    if (stand == m_verlaufVon)
+    {
+        if (verlauf) m_flaeche->setVerlauf(std::move(*verlauf));
+        zeigeAutotune();
+        return;
+    }
+    // inzwischen eine andere Datei: die, wie sie jetzt ist
+    const QString jetzt = m_verlaufVon;
+    m_verlaufVon.clear();
+    const Muster* ziel = basis();
+    starteTonhoehe(ziel != nullptr ? klangDatei(ziel->wave.datei) : QString(), jetzt);
+}
+
+bool WaveEditor::tonhoeheBereit() const
+{
+    return m_messung == nullptr && !m_flaeche->verlauf().hz.empty();
+}
+
+void WaveEditor::warteAufTonhoehe()
+{
+    while (m_messung != nullptr)
+    {
+        if (m_messung->faden.joinable()) m_messung->faden.join();
+        sieheNachTonhoehe();
+    }
+}
+
+bool WaveEditor::stimmeVorgeschlagen() const
+{
+    const Muster* ziel = basis();
+    return m_stimmeVorschlag && ziel != nullptr && ziel->wave.tonhoehenArt == TonhoehenArt::Allgemein;
+}
+
+QString WaveEditor::autotuneHinweis() const
+{
+    return m_autotuneHinweis->text();
+}
+
+void WaveEditor::zeigeAutotune()
+{
+    const Muster* ziel = basis();
+    if (ziel == nullptr) return;
+    const Autotune& at = ziel->wave.autotune;
+    const int note = m_flaeche->gewaehlteNote();
+    const AutotuneAbschnitt* gewaehlt =
+        note >= 0 && note < static_cast<int>(at.abschnitte.size()) ? &at.abschnitte[static_cast<std::size_t>(note)] : nullptr;
+    {
+        const QSignalBlocker a(m_grundton);
+        const QSignalBlocker b(m_skala);
+        const QSignalBlocker c(m_staerke);
+        const QSignalBlocker d(m_speed);
+        m_grundton->setCurrentIndex(m_grundton->findData(at.grundton));
+        m_skala->setCurrentIndex(m_skala->findData(static_cast<int>(at.skala)));
+        m_staerke->setValue(static_cast<int>(std::lround((gewaehlt != nullptr ? gewaehlt->staerke : at.staerke) * 100.0)));
+        m_speed->setValue(static_cast<int>(std::lround(gewaehlt != nullptr ? gewaehlt->speedMs : at.speedMs)));
+    }
+    const bool gemessen = !m_flaeche->verlauf().hz.empty();
+    m_erkennen->setEnabled(gemessen);
+    m_nurGewaehlte->setEnabled(gewaehlt != nullptr);
+    QString hinweis;
+    if (m_messung != nullptr)
+        hinweis = tr("Measuring pitch...");
+    else if (!ziel->wave.datei.isEmpty() && !gemessen)
+        hinweis = tr("Pitch not measured");
+    else if (gewaehlt != nullptr)
+        hinweis = tr("Selected: %1").arg(notenText(*gewaehlt));
+    else if (!at.abschnitte.empty())
+        hinweis = tr("%1 target notes").arg(at.abschnitte.size());
+    if (stimmeVorgeschlagen()) hinweis = tr("One voice found — Voice keeps its formants");
+    m_autotuneHinweis->setText(hinweis);
+    m_stimmeNehmen->setVisible(stimmeVorgeschlagen());
+}
+
+void WaveEditor::setzeTonart(int grundton, Skala skala)
+{
+    (void)aendere(tr("Change key"), [grundton, skala](Muster& m) {
+        m.wave.autotune.grundton = grundton;
+        m.wave.autotune.skala = skala;
+    });
+}
+
+void WaveEditor::setzeStaerke(double staerke)
+{
+    const int note = m_flaeche->gewaehlteNote();
+    (void)aendere(tr("Change strength"), [note, staerke](Muster& m) {
+        std::vector<AutotuneAbschnitt>& alle = m.wave.autotune.abschnitte;
+        if (note >= 0 && note < static_cast<int>(alle.size()))
+            alle[static_cast<std::size_t>(note)].staerke = staerke;
+        else
+            m.wave.autotune.staerke = staerke;
+    });
+}
+
+void WaveEditor::setzeSpeed(double ms)
+{
+    const int note = m_flaeche->gewaehlteNote();
+    (void)aendere(tr("Change speed"), [note, ms](Muster& m) {
+        std::vector<AutotuneAbschnitt>& alle = m.wave.autotune.abschnitte;
+        if (note >= 0 && note < static_cast<int>(alle.size()))
+            alle[static_cast<std::size_t>(note)].speedMs = ms;
+        else
+            m.wave.autotune.speedMs = ms;
+    });
+}
+
+void WaveEditor::setzeNurGewaehlte(bool an)
+{
+    m_nurGewaehlte->setChecked(an);
+}
+
+bool WaveEditor::erkenneNoten()
+{
+    const Muster* ziel = basis();
+    const Tonhoehenverlauf& verlauf = m_flaeche->verlauf();
+    if (ziel == nullptr || verlauf.hz.empty()) return false;
+    // der Bereich: der Ausschnitt — oder die Zeit der gewaehlten Note
+    double von = ziel->wave.start;
+    double bis = m_flaeche->ausschnittEnde() > 0.0 ? m_flaeche->ausschnittEnde() : 1e9;
+    const int note = m_flaeche->gewaehlteNote();
+    const std::vector<AutotuneAbschnitt>& alle = ziel->wave.autotune.abschnitte;
+    if (m_nurGewaehlte->isChecked() && note >= 0 && note < static_cast<int>(alle.size()))
+    {
+        von = alle[static_cast<std::size_t>(note)].anfang;
+        bis = alle[static_cast<std::size_t>(note)].ende;
+    }
+    const NotenErkennung gefunden = lumi::loop::erkenneNoten(verlauf, ziel->wave.autotune, von, bis);
+    m_stimmeVorschlag = gefunden.eineStimme;
+    m_flaeche->waehleNote(-1);
+    const bool geaendert = aendere(tr("Detect notes"), [&gefunden, von, bis](Muster& m) {
+        ersetzeAbschnitte(m.wave.autotune, gefunden.abschnitte, von, bis);
+    });
+    zeigeAutotune();
+    return geaendert || !gefunden.abschnitte.empty();
 }
 
 QString WaveEditor::dateiText() const

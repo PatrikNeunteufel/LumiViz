@@ -7,7 +7,10 @@
  * dem Hinweis zu Follow tempo; das Raster ohne Swing offset), die Felder und Knoepfe (je ein
  * Schritt fuer Undo), die Gesten in der Flaeche (Ausschnitt an den Kanten, Lage in Schritten
  * und mit Shift in Bruchteilen, Punkte der Spur Expression, *Clear lane*, das Lineal), FX und
- * was in 15d noch grau ist (Follow tempo, Record..., Autotune).
+ * was in 15d noch grau ist (Follow tempo). Seit 15i die Spur Autotune: messen im Hintergrund,
+ * *Detect notes* mit *Use Voice*, Key und Scale, Strength fuer Vorgabe und Note, Zielnoten ziehen,
+ * teilen, verbinden, aufziehen, loeschen, *Selected section only*;
+ * `LUMIVIZ_WAVE_AUTOTUNE_BILD=<datei.png>` legt ein Bild mit zwei Zielnoten ab.
  *
  * Ohne Ton und ohne gezeigtes Fenster (`WA_DontShowOnScreen`). Der Dekodierer liefert zwei
  * Sekunden gleichmaessigen Ton; die Datei ist eine kleine echte WAV (fuer Rate und Kanaele).
@@ -20,6 +23,7 @@
 #include "loop/RasterZeile.hpp"
 #include "loop/Sample.hpp"
 #include "loop/WaveEditor.hpp"
+#include "TonhoehenOrdner.hpp"
 #include "UI/widgets/Bedienhilfe.hpp"
 
 #include <QAction>
@@ -39,7 +43,11 @@
 #include <QSpinBox>
 #include <QTemporaryDir>
 
+#include <QKeyEvent>
+
+#include <cmath>
 #include <cstdint>
+#include <numbers>
 
 using namespace lumi::loop;
 
@@ -109,6 +117,25 @@ std::vector<float> zweiSekunden(const QString&, int rate, double)
     return std::vector<float>(static_cast<std::size_t>(2 * 2 * rate), 0.5f);
 }
 
+/// Stufe 15i: zwei Sekunden Gesang — bis 1 s A3 30 Cent zu hoch, danach C4 20 Cent zu tief,
+/// mit Obertoenen bis 5 kHz.
+std::vector<float> gesungen(const QString&, int rate, double)
+{
+    const auto n = static_cast<std::int64_t>(2 * rate);
+    std::vector<float> d(static_cast<std::size_t>(2 * n));
+    double phase = 0.0;
+    for (std::int64_t i = 0; i < n; ++i)
+    {
+        const double midi = i < rate ? 57.3 : 59.8;
+        const double f = 440.0 * std::pow(2.0, (midi - 69.0) / 12.0);
+        phase += 2.0 * std::numbers::pi * f / rate;
+        double w = 0.0;
+        for (int k = 1; k * f < 5000.0; ++k) w += std::sin(k * phase) / k;
+        d[static_cast<std::size_t>(2 * i)] = d[static_cast<std::size_t>(2 * i + 1)] = static_cast<float>(0.2 * w);
+    }
+    return d;
+}
+
 /// 120 BPM, 4/4, vier Schritte je Schlag: ein Schritt 125 ms. Ein Wave-Muster von einem Takt,
 /// Ausschnitt 0,5 … 1,0 s, Lage 2 Schritte; ein Clip ab Takt 0, dazu ein Drum-Muster.
 Loop probe(const QString& datei)
@@ -152,6 +179,7 @@ void ziehe(QWidget* ziel, QPoint von, QPoint nach, Qt::KeyboardModifiers tasten 
 /// Der Editor mit dem Loop, gelegt (nicht gezeigt), die Flaeche mit 10 Pixeln je Schritt ab 0.
 struct Bestand
 {
+    TonhoehenOrdner tonhoehe;  // Stufe 15i: der Editor misst im Hintergrund — als erstes, stirbt zuletzt
     QTemporaryDir ordner;
     QString datei;
     WaveEditor editor;
@@ -171,7 +199,7 @@ struct Bestand
         });
         REQUIRE(editor.zeige(probe(datei), QStringLiteral("Voc")));
         editor.setAttribute(Qt::WA_DontShowOnScreen);
-        editor.resize(1000, 520);
+        editor.resize(1000, 680);  // seit 15i mit der Spur Autotune und ihrer Zeile
         editor.show();
         editor.flaeche()->setSchrittBreite(10.0);
         editor.flaeche()->setRoll(0.0);
@@ -406,6 +434,174 @@ TEST_SUITE("LoopWaveEditor")
             b.editor.findChild<QPushButton*>(QStringLiteral("waveFit"))->click();
             CHECK(f->schrittBreite() == doctest::Approx((f->width() - 4.0) / 16.0));
             CHECK(f->roll() == 0.0);
+        }
+    }
+
+    TEST_CASE("Loop Wave editor 15i: die Spur Autotune — messen, Detect notes, Zielnoten bearbeiten")
+    {
+        Anwendung anwendung;
+        EigeneEinstellungen einstellungen;
+        Bestand b;
+        WaveEditor& e = b.editor;
+        WaveFlaeche* f = e.flaeche();
+        // der Verlauf gilt je Inhalt der Datei: fuer den Gesang ein anderer Inhalt als fuer den Ton davor
+        e.warteAufTonhoehe();
+        {
+            QFile datei(b.datei);
+            REQUIRE(datei.open(QIODevice::Append));
+            datei.write("sung");
+        }
+        e.setDekodierer(&gesungen);
+        e.warteAufTonhoehe();
+        REQUIRE(e.tonhoeheBereit());
+        // 40 Pixel je Schritt: der Ausschnitt 0,5 … 1,0 s liegt bei Schritt 2 … 6, also x 80 … 240
+        f->setSchrittBreite(40.0);
+        f->setRoll(0.0);
+        CHECK(f->xVonDatei(0.5) == doctest::Approx(80.0));
+        auto* erkennen = e.findChild<QPushButton*>(QStringLiteral("waveDetectNotes"));
+        auto* staerke = e.findChild<QSpinBox*>(QStringLiteral("waveStrength"));
+        auto* nehmen = e.findChild<QPushButton*>(QStringLiteral("waveUseVoice"));
+        REQUIRE(erkennen != nullptr);
+        CHECK(erkennen->isEnabled());
+        // die Spur zeigt den gesungenen Ton
+        CHECK(f->tonUnten() <= 57);
+        CHECK(f->tonOben() >= 58);
+        CHECK(f->tonOben() - f->tonUnten() >= WaveFlaeche::kAutotuneTonMin);
+        const auto noten = [&b]() -> const std::vector<AutotuneAbschnitt>& { return b.wave().autotune.abschnitte; };
+
+        // Detect notes im Ausschnitt: eine Note A3, die Vorgabe 100 % / 20 ms; eine Stimme — Use Voice
+        erkennen->click();
+        REQUIRE_FALSE(b.gemeldet.isEmpty());
+        CHECK(b.gemeldet.back() == QStringLiteral("Detect notes"));
+        REQUIRE(noten().size() == 1);
+        CHECK(noten()[0].zielHoehe == 57);
+        CHECK(noten()[0].anfang == doctest::Approx(0.5).epsilon(0.02));
+        CHECK(noten()[0].ende == doctest::Approx(1.0).epsilon(0.02));
+        CHECK(noten()[0].staerke == 1.0);
+        CHECK(noten()[0].speedMs == 20.0);
+        CHECK(e.stimmeVorgeschlagen());
+        CHECK(nehmen->isVisibleTo(&e));
+        nehmen->click();
+        CHECK(b.wave().tonhoehenArt == TonhoehenArt::Stimme);
+        CHECK_FALSE(e.stimmeVorgeschlagen());
+        CHECK_FALSE(nehmen->isVisibleTo(&e));
+
+        // Key und Scale
+        e.setzeTonart(2, Skala::Dur);
+        CHECK(b.gemeldet.back() == QStringLiteral("Change key"));
+        CHECK(b.wave().autotune.grundton == 2);
+        CHECK(b.wave().autotune.skala == Skala::Dur);
+
+        // Strength ohne Wahl: die Vorgabe; mit Wahl: die Note
+        staerke->setValue(50);
+        CHECK(b.wave().autotune.staerke == 0.5);
+        CHECK(noten()[0].staerke == 1.0);
+        const int mitteX = static_cast<int>(f->xVonDatei(0.75));
+        const int aY = static_cast<int>(std::lround(f->yVonMidi(57.0)));
+        maus(f, QEvent::MouseButtonPress, QPoint(mitteX, aY), Qt::LeftButton);
+        maus(f, QEvent::MouseButtonRelease, QPoint(mitteX, aY), Qt::NoButton);
+        CHECK(f->gewaehlteNote() == 0);
+        CHECK(staerke->value() == 100);
+        staerke->setValue(70);
+        CHECK(b.gemeldet.back() == QStringLiteral("Change strength"));
+        CHECK(noten()[0].staerke == doctest::Approx(0.7));
+
+        // ziehen: einen Halbton hoeher, die Zeit bleibt; mit Shift in Cent
+        ziehe(f, QPoint(mitteX, aY), QPoint(mitteX, static_cast<int>(std::lround(f->yVonMidi(58.0)))));
+        CHECK(b.gemeldet.back() == QStringLiteral("Move note"));
+        CHECK(noten()[0].zielHoehe == 58);
+        CHECK(noten()[0].anfang == doctest::Approx(0.5).epsilon(0.02));
+        const int bY = static_cast<int>(std::lround(f->yVonMidi(58.0)));
+        const int bY2 = static_cast<int>(std::lround(f->yVonMidi(58.3)));
+        // erwartet: der Weg in Pixeln, in Cent umgerechnet (ein Pixel sind rund 10 Cent)
+        const auto erwartet = static_cast<int>(std::lround((f->midiVonY(bY2) - f->midiVonY(bY)) * 100.0));
+        ziehe(f, QPoint(mitteX, bY), QPoint(mitteX, bY2), Qt::ShiftModifier);
+        CHECK(noten()[0].zielHoehe == 58);
+        CHECK(noten()[0].zielCent == erwartet);
+        CHECK(std::abs(erwartet - 30) <= 11);
+
+        // Ctrl+Klick teilt, Join with next verbindet
+        const int cY = static_cast<int>(std::lround(f->yVonMidi(58.0 + noten()[0].zielCent / 100.0)));
+        maus(f, QEvent::MouseButtonPress, QPoint(mitteX, cY), Qt::LeftButton, Qt::ControlModifier);
+        maus(f, QEvent::MouseButtonRelease, QPoint(mitteX, cY), Qt::NoButton, Qt::ControlModifier);
+        CHECK(b.gemeldet.back() == QStringLiteral("Split note"));
+        REQUIRE(noten().size() == 2);
+        CHECK(noten()[0].ende == doctest::Approx(0.75).epsilon(0.02));
+        QStringList eintraege;
+        lumi::ui::setzeMenueBeobachterFuerTests([&](QMenu& menue) -> QAction* {
+            QAction* verbinden = nullptr;
+            for (QAction* a : menue.actions())
+            {
+                if (a->isSeparator()) continue;
+                eintraege << a->text() + (a->isEnabled() ? QString() : QStringLiteral(" (off)"));
+                if (a->text() == QStringLiteral("Join with next")) verbinden = a;
+            }
+            return verbinden;
+        });
+        const QPoint links(static_cast<int>(f->xVonDatei(0.6)), cY);
+        QContextMenuEvent rechts(QContextMenuEvent::Mouse, links, f->mapToGlobal(links));
+        QCoreApplication::sendEvent(f, &rechts);
+        lumi::ui::setzeMenueBeobachterFuerTests({});
+        CHECK(eintraege == QStringList{QStringLiteral("Split here"), QStringLiteral("Join with next"),
+                                       QStringLiteral("Delete note"), QStringLiteral("Clear notes")});
+        CHECK(b.gemeldet.back() == QStringLiteral("Join notes"));
+        REQUIRE(noten().size() == 1);
+        CHECK(noten()[0].ende == doctest::Approx(1.0).epsilon(0.02));
+
+        // auf freier Flaeche aufziehen: eine neue Note mit Ton unter der Maus und der Vorgabe
+        // der Ton, wie die Spur ihn vor dem Zug zeigt (danach zeigt sie auch die neue Note)
+        const int neuTon = f->tonUnten() + 1;
+        const int neuY = static_cast<int>(std::lround(f->yVonMidi(neuTon)));
+        ziehe(f, QPoint(static_cast<int>(f->xVonDatei(1.2)), neuY), QPoint(static_cast<int>(f->xVonDatei(1.4)), neuY));
+        CHECK(b.gemeldet.back() == QStringLiteral("Add note"));
+        REQUIRE(noten().size() == 2);
+        CHECK(noten()[1].zielHoehe == neuTon);
+        CHECK(noten()[1].anfang == doctest::Approx(1.2).epsilon(0.02));
+        CHECK(noten()[1].ende == doctest::Approx(1.4).epsilon(0.02));
+        CHECK(noten()[1].staerke == 0.5);  // die Vorgabe von oben
+        // ein Klick auf freie Flaeche legt keine an
+        const int frei = static_cast<int>(f->xVonDatei(1.7));
+        const int vorher = static_cast<int>(b.gemeldet.size());
+        maus(f, QEvent::MouseButtonPress, QPoint(frei, neuY), Qt::LeftButton);
+        maus(f, QEvent::MouseButtonRelease, QPoint(frei, neuY), Qt::NoButton);
+        CHECK(static_cast<int>(b.gemeldet.size()) == vorher);
+
+        // Entf nimmt die gewaehlte weg, ein Doppelklick die andere
+        f->waehleNote(1);
+        QKeyEvent entf(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
+        QCoreApplication::sendEvent(f, &entf);
+        CHECK(b.gemeldet.back() == QStringLiteral("Delete note"));
+        REQUIRE(noten().size() == 1);
+        const int dY = static_cast<int>(std::lround(f->yVonMidi(noten()[0].zielHoehe + noten()[0].zielCent / 100.0)));
+        maus(f, QEvent::MouseButtonPress, QPoint(mitteX, dY), Qt::LeftButton);
+        maus(f, QEvent::MouseButtonRelease, QPoint(mitteX, dY), Qt::NoButton);
+        maus(f, QEvent::MouseButtonDblClick, QPoint(mitteX, dY), Qt::LeftButton);
+        maus(f, QEvent::MouseButtonRelease, QPoint(mitteX, dY), Qt::NoButton);
+        CHECK(noten().empty());
+
+        // Selected section only: nur unter der gewaehlten Note neu
+        e.setzeNurGewaehlte(false);
+        CHECK(e.erkenneNoten());
+        REQUIRE(noten().size() == 1);
+        f->waehleNote(0);
+        e.setzeNurGewaehlte(true);
+        CHECK(e.erkenneNoten());
+        CHECK(noten().size() == 1);
+
+        const QString bild = qEnvironmentVariable("LUMIVIZ_WAVE_AUTOTUNE_BILD");
+        if (!bild.isEmpty())
+        {
+            Loop zwei = b.zuletzt;
+            Muster* w = musterIn(zwei, QStringLiteral("Voc"));
+            w->wave.start = 0.0;
+            w->wave.ende = 0.0;
+            w->wave.versatz = 0.0;
+            w->wave.autotune.abschnitte = {{0.1, 0.95, 57, 0, 1.0, 20.0}, {1.05, 1.9, 60, 0, 0.6, 80.0}};
+            zwei.richte();
+            e.setLoop(zwei);
+            f->passeEin();
+            f->waehleNote(1);
+            CHECK(e.grab().save(bild));
         }
     }
 }

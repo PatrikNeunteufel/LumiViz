@@ -12,8 +12,12 @@
  * ueber einem Taktlineal: oben die Spur Expression, in der Mitte die Welle, unten die Spur
  * Autotune.
  *
- * In Stufe 15d noch grau, mit Hinweis: *Follow tempo* (15j), die Spur Autotune (15i),
- * *Record...* (15k). Die Spur Pitch kommt mit 15f, wenn sie wirkt.
+ * **Spur Autotune** (Stufe 15i, WV4 a): die gemessene Tonhoehe (pYIN, im Hintergrund gemessen und
+ * je Datei gemerkt) gestrichelt, die korrigierte fein darueber, die Zielnoten als Kaesten; unter
+ * der Flaeche Key, Scale, *Detect notes*, Strength, Speed und *Selected section only*. Findet
+ * *Detect notes* eine Stimme, schlaegt der Editor *Voice* vor (WV6 a).
+ *
+ * Noch grau, mit Hinweis: *Follow tempo* (15j).
  *
  * Er aendert den Loop nicht selbst: er meldet die neue Fassung mit `bearbeitet`, das
  * Loop-Panel fuehrt sie ueber Undo aus und gibt sie mit `setLoop` zurueck.
@@ -22,17 +26,22 @@
 
 #include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/Loop.hpp"
+#include "loop/PYin.hpp"        // Tonhoehenverlauf
 #include "loop/Tonauftrag.hpp"  // Dekodierer
 
 #include <QPointer>
+#include <QRectF>
 #include <QString>
 #include <QWidget>
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <vector>
 
 class IAudioEngine;
+class QPainter;
+class QTimer;
 class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
@@ -80,6 +89,12 @@ struct WaveBild
 /// im Menue *Delete point* und *Clear lane*. Pitch (Stufe 15f) zeigt ±`kPitchBereich`
 /// Halbtoene und rastet auf ganze Halbtoene, mit Shift auf Hundertstel. Ein Klick ins Lineal
 /// waehlt die Stelle, an der *Play pattern* beginnt.
+///
+/// Spur Autotune (Stufe 15i): ein Klick waehlt eine Zielnote; ziehen verschiebt sie in der Zeit
+/// und in Halbtoenen (mit Shift in Cent), an ihren Kanten kuerzt oder verlaengert man sie;
+/// Ziehen auf freier Flaeche legt eine neue an (Ton unter der Maus, Strength und Speed der
+/// Vorgabe); Ctrl+Klick teilt sie, ein Doppelklick oder Entf nimmt sie weg; im Menue *Split
+/// here*, *Join with next*, *Delete note*, *Clear notes*.
 class WaveFlaeche : public QWidget
 {
     Q_OBJECT
@@ -91,6 +106,12 @@ public:
     [[nodiscard]] const Muster& muster() const { return m_muster; }
     void setBild(WaveBild bild);
     [[nodiscard]] const WaveBild& bild() const { return m_bild; }
+    /// Der gemessene Tonhoehenverlauf der Datei (Stufe 15i); leer = (noch) keiner.
+    void setVerlauf(Tonhoehenverlauf verlauf);
+    [[nodiscard]] const Tonhoehenverlauf& verlauf() const { return m_verlauf; }
+    /// Die gewaehlte Zielnote (Platz in `autotune.abschnitte`); −1 = keine.
+    [[nodiscard]] int gewaehlteNote() const { return m_note; }
+    void waehleNote(int note);
     /// Die Abspielmarke im Muster (Schritt mit Bruchteil); unter null = keine.
     void setMarke(double schritt);
     [[nodiscard]] double marke() const { return m_marke; }
@@ -113,7 +134,9 @@ public:
 
     static constexpr int kLinealHoehe = 18;
     static constexpr int kSpurHoehe = 40;
-    static constexpr int kAutotuneHoehe = 30;
+    static constexpr int kAutotuneHoehe = 120;
+    /// Die Spur Autotune zeigt mindestens so viele Halbtoene (von Claude gesetzt, 15i).
+    static constexpr int kAutotuneTonMin = 12;
     static constexpr int kGriff = 5;  ///< so weit neben einer Kante greift man sie
     /// Die Spur Pitch zeigt so viele Halbtoene nach oben und unten (von Claude gesetzt, 15f);
     /// was weiter reicht, steht gekappt am Rand.
@@ -132,6 +155,19 @@ public:
     [[nodiscard]] double spurWertVonY(int y, Steuerspur spur = Steuerspur::Expression, bool fein = false) const;
     [[nodiscard]] int spurPunktBei(QPoint ort, Steuerspur spur = Steuerspur::Expression) const;
 
+    // --- Spur Autotune (Stufe 15i) -------------------------------------------------
+    [[nodiscard]] int autotuneOben() const { return welleUnten(); }
+    /// Der tiefste und hoechste gezeigte Ton (MIDI): aus Messung und Zielnoten, mindestens
+    /// `kAutotuneTonMin` Halbtoene.
+    [[nodiscard]] int tonUnten() const { return m_tonUnten; }
+    [[nodiscard]] int tonOben() const { return m_tonOben; }
+    [[nodiscard]] double yVonMidi(double midi) const;
+    [[nodiscard]] double midiVonY(double y) const;
+    [[nodiscard]] double xVonDatei(double sekunde) const { return xVonSchritt(schrittVonDatei(sekunde)); }
+    [[nodiscard]] double dateiVonX(double x) const;
+    /// Die Zielnote unter dem Ort (−1 = keine).
+    [[nodiscard]] int noteBei(QPoint ort) const;
+
 Q_SIGNALS:
     /// Ein Zug ist fertig: das neue Muster und ein Wort fuer Undo.
     void geaendert(const lumi::loop::Muster& neu, const QString& was);
@@ -139,6 +175,8 @@ Q_SIGNALS:
     void abspielstelleGewaehlt(int schritt);
     /// Die Breite eines Schritts hat sich geaendert (Ctrl+Rad, Fit) — der Rollbalken folgt.
     void massGeaendert();
+    /// Eine andere Zielnote ist gewaehlt (−1 = keine) — Strength und Speed zeigen sie.
+    void noteGewaehlt(int note);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -148,6 +186,7 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
     bool event(QEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
@@ -159,7 +198,17 @@ private:
         Ende,    ///< die rechte Kante
         Lage,    ///< die ganze Welle
         Punkt,   ///< ein Punkt einer Spur (`m_spur`)
+        Note,        ///< eine Zielnote, in Zeit und Ton
+        NoteAnfang,  ///< ihre linke Kante
+        NoteEnde,    ///< ihre rechte Kante
+        NeueNote,    ///< eine neue, aufgezogen auf freier Flaeche
     };
+    /// Was in der Spur Autotune unter dem Ort zu greifen ist.
+    [[nodiscard]] Zug notenGriffBei(QPoint ort, int* note) const;
+    void zieheNote(QPoint ort, bool fein);
+    void berechneTonbereich();
+    void zeichneAutotune(QPainter& p, const QRectF& spur);
+    void notenMenue(QContextMenuEvent* event);
     /// Wert und Lage einer Spur: unten, oben, der Wert ohne Punkte.
     [[nodiscard]] static double spurUnten(Steuerspur spur);
     [[nodiscard]] static double spurOberGrenze(Steuerspur spur);
@@ -184,6 +233,13 @@ private:
     int m_punkt = -1;          ///< beim Ziehen eines Punkts: sein Platz in der Spur
     Steuerspur m_spur = Steuerspur::Expression;  ///< die Spur dieses Punkts
     double m_zugSchritt = 0.0;  ///< wo der Zug begann, in Schritten
+    // Stufe 15i
+    Tonhoehenverlauf m_verlauf;
+    int m_note = -1;            ///< die gewaehlte Zielnote
+    int m_tonUnten = 48;
+    int m_tonOben = 72;
+    double m_zugSekunde = 0.0;  ///< wo ein Zug in der Spur Autotune begann, in Sekunden der Datei
+    double m_zugMidi = 0.0;     ///< und auf welchem Ton
 };
 
 class WaveEditor : public QWidget
@@ -192,6 +248,7 @@ class WaveEditor : public QWidget
 
 public:
     explicit WaveEditor(QWidget* parent = nullptr);
+    ~WaveEditor() override;
 
     /// Diese Basis des Loops zeigen. false = es gibt sie nicht (oder sie ist kein
     /// Wave-Muster) — der Editor bleibt, wie er war.
@@ -246,6 +303,23 @@ public:
     void setzeBezugAufLoop();
     void setzeTonhoehenArt(TonhoehenArt art);
 
+    // --- Spur Autotune (Stufe 15i) ---------------------------------------------------
+    /// Key und Scale fuer *Detect notes*.
+    void setzeTonart(int grundton, Skala skala);
+    /// Strength (0 … 1) und Speed (ms): der gewaehlten Zielnote, ohne Wahl die Vorgabe am Muster.
+    void setzeStaerke(double staerke);
+    void setzeSpeed(double ms);
+    /// *Detect notes*: im Ausschnitt — mit *Selected section only* und einer gewaehlten Note nur in
+    /// ihrer Zeit — die Zielnoten neu. false = noch nichts gemessen oder nichts gefunden.
+    bool erkenneNoten();
+    void setzeNurGewaehlte(bool an);
+    /// Ist der Verlauf gemessen? Und bis er es ist warten (Tests).
+    [[nodiscard]] bool tonhoeheBereit() const;
+    void warteAufTonhoehe();
+    /// Hat *Detect notes* eine Stimme gefunden, waehrend *General* gilt? Dann steht *Use Voice* da.
+    [[nodiscard]] bool stimmeVorgeschlagen() const;
+    [[nodiscard]] QString autotuneHinweis() const;
+
     /// Wie die Datei in der Zeile steht: Titel, Laenge, Rate, Kanaele (fuer Tests).
     [[nodiscard]] QString dateiText() const;
     [[nodiscard]] QString dateiInfoText() const;
@@ -282,6 +356,24 @@ private:
     bool aendere(const QString& was, const std::function<void(Muster&)>& aenderung);
     /// Was das Fenster *Record sample* gespeichert hat.
     void nimmBearbeitetes(const QString& nennung, double vornWegMs);
+    /// Stufe 15i: den Verlauf der Datei messen (im Hintergrund, gemerkt je Inhalt).
+    void starteTonhoehe(const QString& datei, const QString& stand);
+    void sieheNachTonhoehe();
+    void zeigeAutotune();
+
+    struct Messung;
+    std::unique_ptr<Messung> m_messung;  ///< nullptr = es wird nicht gemessen
+    QTimer* m_messFertig = nullptr;
+    QString m_verlaufVon;  ///< fuer welche Datei (und welchen Stand) der Verlauf gilt
+    bool m_stimmeVorschlag = false;
+    QComboBox* m_grundton = nullptr;
+    QComboBox* m_skala = nullptr;
+    QPushButton* m_erkennen = nullptr;
+    QSpinBox* m_staerke = nullptr;
+    QSpinBox* m_speed = nullptr;
+    QCheckBox* m_nurGewaehlte = nullptr;
+    QLabel* m_autotuneHinweis = nullptr;
+    QPushButton* m_stimmeNehmen = nullptr;
 
     std::function<IAudioEngine*()> m_engineGeber;
     QPointer<AufnahmeFenster> m_aufnahme;

@@ -5,6 +5,7 @@
 
 #include "loop/WaveKlang.hpp"
 
+#include "loop/Autotune.hpp"
 #include "loop/Dehner.hpp"
 
 #include <QStringList>
@@ -42,7 +43,12 @@ QString waveKlangName(const WaveKlang& k)
                             zahl(k.gainDb),  zahl(k.fadeInMs), zahl(k.fadeOutMs)};
     QString name = kWaveVorsatz + werte.join(QLatin1Char(','));
     for (const SpurPunkt& p : k.tonhoehe) name += QLatin1Char(';') + zahl(p.stelle) + QLatin1Char(':') + zahl(p.wert);
-    if (k.stimme && !k.tonhoehe.empty()) name += QLatin1Char(';') + kStimme;
+    // Stufe 15i: je Abschnitt Autotune `;at:<anfang>:<ende>:<ton>:<cent>:<strength>:<speed>`
+    for (const AutotuneAbschnitt& a : k.autotune)
+        name += QStringLiteral(";at:") + QStringList{zahl(a.anfang), zahl(a.ende), QString::number(a.zielHoehe),
+                                                     QString::number(a.zielCent), zahl(a.staerke), zahl(a.speedMs)}
+                                             .join(QLatin1Char(':'));
+    if (k.stimme && (!k.tonhoehe.empty() || !k.autotune.empty())) name += QLatin1Char(';') + kStimme;
     return name + QLatin1Char('|') + k.datei;
 }
 
@@ -55,15 +61,31 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& k)
     // Stufe 15f: hinter den Werten je Punkt der Spur Pitch `;<ms>:<halbtoene>`
     const QStringList teile = rest.left(trenner).split(QLatin1Char(';'));
     std::vector<SpurPunkt> tonhoehe;
+    std::vector<AutotuneAbschnitt> autotune;
     bool stimme = false;
     for (qsizetype i = 1; i < teile.size(); ++i)
     {
         // Stufe 15h: `;voice` als letztes, nur mit Spur
-        if (teile[i] == kStimme && i + 1 == teile.size() && !tonhoehe.empty())
+        if (teile[i] == kStimme && i + 1 == teile.size() && (!tonhoehe.empty() || !autotune.empty()))
         {
             stimme = true;
             continue;
         }
+        // Stufe 15i: ein Abschnitt Autotune
+        if (teile[i].startsWith(QLatin1String("at:")))
+        {
+            const QStringList w = teile[i].mid(3).split(QLatin1Char(':'));
+            if (w.size() != 6) return false;
+            bool ok[6] = {};
+            const AutotuneAbschnitt a{w[0].toDouble(&ok[0]), w[1].toDouble(&ok[1]), w[2].toInt(&ok[2]),
+                                      w[3].toInt(&ok[3]), w[4].toDouble(&ok[4]), w[5].toDouble(&ok[5])};
+            if (!std::all_of(std::begin(ok), std::end(ok), [](bool b) { return b; })) return false;
+            if (!std::isfinite(a.anfang) || !std::isfinite(a.ende) || !std::isfinite(a.staerke) || !std::isfinite(a.speedMs))
+                return false;
+            autotune.push_back(a);
+            continue;
+        }
+        if (!autotune.empty()) return false;  // Punkte der Spur Pitch stehen vor den Abschnitten
         const QStringList paar = teile[i].split(QLatin1Char(':'));
         if (paar.size() != 2) return false;
         bool okStelle = false;
@@ -91,6 +113,7 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& k)
     neu.fadeInMs = z[5];
     neu.fadeOutMs = z[6];
     neu.tonhoehe = std::move(tonhoehe);
+    neu.autotune = std::move(autotune);
     neu.stimme = stimme;
     k = std::move(neu);
     return true;
@@ -113,10 +136,11 @@ WaveKlang waveKlangVon(const Loop& loop, const Muster& muster)
     // Stufe 15f: die Spur Pitch in Millisekunden — nur, wenn ein Punkt die Tonhoehe aendert
     const std::vector<SpurPunkt>& pitch = muster.zeitspuren.von(Steuerspur::Pitch);
     if (std::any_of(pitch.begin(), pitch.end(), [](const SpurPunkt& p) { return p.wert != 0.0; }))
-    {
         for (const SpurPunkt& p : pitch) k.tonhoehe.push_back({p.stelle * schrittMs, p.wert});
-        k.stimme = w.tonhoehenArt == TonhoehenArt::Stimme;  // Stufe 15h
-    }
+    // Stufe 15i: nur Abschnitte, die etwas tun (Strength ueber 0)
+    for (const AutotuneAbschnitt& a : w.autotune.abschnitte)
+        if (a.staerke > 0.0) k.autotune.push_back(a);
+    k.stimme = (!k.tonhoehe.empty() || !k.autotune.empty()) && w.tonhoehenArt == TonhoehenArt::Stimme;  // Stufe 15h
     return k;
 }
 
@@ -134,7 +158,7 @@ double waveGainFaktor(double gainDb)
     return std::pow(10.0, std::min(gainDb, kWaveGainMaxDb) / 20.0);
 }
 
-Klang rechneWave(const WaveKlang& k, const std::vector<float>& datei, int rate)
+Klang rechneWave(const WaveKlang& k, const std::vector<float>& datei, int rate, const Tonhoehenverlauf* verlauf)
 {
     Klang klang;
     if (rate <= 0) return klang;
@@ -153,10 +177,16 @@ Klang rechneWave(const WaveKlang& k, const std::vector<float>& datei, int rate)
     // das hoerbare Stueck a … b aus der Datei; mit Spur Pitch durch den Dehner (Stufe 15f)
     std::vector<float> stueck(datei.begin() + static_cast<std::ptrdiff_t>(2 * (a + d)),
                               datei.begin() + static_cast<std::ptrdiff_t>(2 * (b + d)));
-    if (!k.tonhoehe.empty())
-        stueck = (k.stimme ? dehnerStimme() : dehner()).rechne(stueck, rate, b - a, [&k, a, rate](std::int64_t i) {
-            return kurveBei(k.tonhoehe, 1000.0 * static_cast<double>(a + i) / rate, 0.0);
-        });
+    // Stufe 15i: die Korrektur aus Autotune je Rahmen der Datei
+    const bool mitAutotune = !k.autotune.empty() && verlauf != nullptr && !verlauf->hz.empty();
+    const std::vector<double> korrektur = mitAutotune ? autotuneKorrektur(k.autotune, *verlauf) : std::vector<double>{};
+    if (!k.tonhoehe.empty() || mitAutotune)
+        stueck = (k.stimme ? dehnerStimme() : dehner())
+                     .rechne(stueck, rate, b - a, [&k, &korrektur, verlauf, mitAutotune, a, d, rate](std::int64_t i) {
+                         const double spur = k.tonhoehe.empty() ? 0.0 : kurveBei(k.tonhoehe, 1000.0 * static_cast<double>(a + i) / rate, 0.0);
+                         const double gezogen = mitAutotune ? autotuneBei(korrektur, *verlauf, static_cast<double>(a + i + d) / rate) : 0.0;
+                         return spur + gezogen;
+                     });
     klang.daten.assign(static_cast<std::size_t>(2 * b), 0.0f);
     for (std::int64_t i = a; i < b; ++i)
     {
