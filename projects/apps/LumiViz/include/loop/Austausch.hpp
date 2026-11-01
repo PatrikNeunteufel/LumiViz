@@ -25,6 +25,7 @@
 
 #include "loop/Loop.hpp"
 
+#include <QJsonObject>
 #include <QString>
 #include <QStringList>
 
@@ -86,6 +87,11 @@ bool ladeAustausch(const QString& pfad, AustauschArt art, Loop& teil, QStringLis
 [[nodiscard]] QByteArray austauschText(AustauschArt art, const Loop& teil, const QString& basisOrdner = {});
 bool austauschAusText(const QByteArray& text, AustauschArt art, Loop& teil, const QString& basisOrdner = {},
                       QStringList* bericht = nullptr, bool* zuNeu = nullptr);
+/// Dasselbe als JSON-Objekt — die Huelle in einer anderen Datei, etwa die Herkunft eines
+/// Wave-Musters in der `.lvloop` (Stufe 15b, WV7 a).
+[[nodiscard]] QJsonObject austauschAlsJson(AustauschArt art, const Loop& teil, const QString& basisOrdner = {});
+bool austauschAusJson(const QJsonObject& huelle, AustauschArt art, Loop& teil, const QString& basisOrdner = {},
+                      QStringList* bericht = nullptr, bool* zuNeu = nullptr);
 
 // --- Umrechnung (PE2 a) ---------------------------------------------------------
 
@@ -108,6 +114,8 @@ struct Umrechnung
 ///   umgerechnet, die Expression am Clip (in Takten) ueber die Schlaege.
 /// - Takte eines Musters aus seinen Schlaegen, aufgerundet; Start und Wiederholungen
 ///   der Clips bleiben (PE3 b).
+/// - Ein Wave-Muster (Stufe 15b): die Lage in Schritten ebenso; Ausschnitt und Autotune
+///   stehen in Sekunden der Datei und bleiben.
 /// Gleiche Taktart und gleiches Raster: nichts aendert sich, Bit fuer Bit.
 Umrechnung rechneUm(Loop& teil, int schlaegeJeTakt, int schritteJeSchlag);
 

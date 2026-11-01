@@ -391,7 +391,7 @@ bool setzeMusterTakte(Loop& loop, const QString& muster, int takte, bool wiederh
     Muster* ziel = musterIn(loop, muster);
     if (ziel == nullptr) return false;
     const int alt = ziel->takte;
-    ziel->takte = std::clamp(takte, kTakteMin, kTakteMax);
+    ziel->takte = std::clamp(takte, kTakteMin, taktHoechstens(ziel->art));
     const int neu = ziel->takte;
     // Zeilen auf die neue Laenge, und Clips, die jetzt ineinander reichten, ruecken nach hinten
     loop.richte();

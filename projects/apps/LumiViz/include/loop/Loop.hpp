@@ -22,6 +22,7 @@
 
 #include "loop/Bausteine.hpp"
 #include "loop/Auskunft.hpp"  // InstrumentVon (HT5 a); bringt Saiten.hpp mit
+#include "loop/WaveMuster.hpp"
 #include "loop/Zeitspur.hpp"
 
 #include <QJsonObject>
@@ -115,12 +116,21 @@ struct Spur
 };
 
 /// Die Art eines Musters — sie bestimmt seinen Editor: ein Drumkit (Spuren und
-/// Schritte) oder ein Instrument (Noten mit Tonhoehe und Laenge, Stufe 9).
+/// Schritte), ein Instrument (Noten mit Tonhoehe und Laenge, Stufe 9) oder eine
+/// Tondatei (Wave, Stufe 15b, WV1 a).
 enum class MusterArt : int
 {
     Drumkit = 0,
     Instrument = 1,
+    Wave = 2,
 };
+
+/// So viele Takte traegt ein Muster dieser Art hoechstens: ein Wave-Muster
+/// `kWaveTakteMax` (WV3 a), die uebrigen `kTakteMax`.
+[[nodiscard]] constexpr int taktHoechstens(MusterArt art)
+{
+    return art == MusterArt::Wave ? kWaveTakteMax : kTakteMax;
+}
 
 /// Die Tonhoehen einer Note, als MIDI-Nummer: A0 bis C8, der Umfang eines
 /// Klaviers (60 = C4, 69 = A4 mit 440 Hz). Bis Stufe 22 C1 bis C7; erweitert
@@ -372,7 +382,14 @@ struct Muster
     /// Expression, Vibrato, Pitch und die Schalter der Klang-Spielweisen, in
     /// Schritten dieses Musters (Zeitspur.hpp). Leer = die Vorgaben des
     /// Instruments. In der Datei `lanes` (seit Fassung 12, immer geschrieben).
+    /// Ein Wave-Muster traegt hier nur Expression und Pitch (Stufe 15b).
     Zeitspuren zeitspuren;
+
+    // --- Wave (Stufe 15b) ---
+    /// Datei, Ausschnitt, Lage, Gain, Blenden, Tempo, Verfahren, Autotune und Herkunft
+    /// (WaveMuster.hpp); Laenge `takte` und Spuren `zeitspuren` stehen oben. Bei den
+    /// anderen Arten die Vorgaben. In der Datei seit Fassung 16 (`kind: "wave"`).
+    WaveAngaben wave;
 
     [[nodiscard]] bool operator==(const Muster&) const = default;
 };

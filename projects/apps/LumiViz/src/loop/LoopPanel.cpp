@@ -942,6 +942,8 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
 {
     const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
     if (basis == nullptr) return false;
+    // ein Wave-Muster bekommt seinen Editor mit Stufe 15d — bis dahin keinen
+    if (basis->art == MusterArt::Wave) return false;
     // die Art der Basis bestimmt den Editor (Stufe 9b): je Art ein Fenster
     if (basis->art == MusterArt::Instrument)
     {

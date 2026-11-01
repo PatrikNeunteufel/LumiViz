@@ -5,6 +5,7 @@
 
 #include "loop/Loop.hpp"
 
+#include "loop/Austausch.hpp"  // die Huelle der Herkunft eines Wave-Musters (Stufe 15b)
 #include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
 #include "loop/Sample.hpp"
@@ -70,14 +71,18 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // aelteres Programm verloere beides still.
 // 15 (S168, Stufe 15a, Entscheid RS1-1 a): je Muster `swingOffset`, der Abstand seines Swings
 // zum Swing des Loops, immer geschrieben — ein aelteres Programm swingte still falsch.
-// Geschrieben wird immer 15.
-constexpr int kVersion = 15;
+// 16 (S169, Stufe 15b, Entscheide WV1 a bis WV9 a): die Art `wave` — ein Muster spielt eine
+// Tondatei, alle Felder immer geschrieben; ein aelteres Programm liesse das Muster mit
+// seinen Clips weg (unbekannte Art, mit Zeile im Bericht).
+// Geschrieben wird immer 16.
+constexpr int kVersion = 16;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
 const QString kFrozenVorsatz = QStringLiteral("frozen:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
 const QString kArtInstrument = QStringLiteral("instrument");
+const QString kArtWave = QStringLiteral("wave");
 
 /// Sieht der Text aus wie ein Abdruck (`clipAbdruck`: 40 Zeichen 0–9, a–f)?
 bool istAbdruck(const QString& text)
@@ -357,6 +362,104 @@ ClipEffekte effekteAusJson(const QJsonObject& o, QStringList* bericht)
     if (const QJsonValue wert = o.value(kBausteinHall); wert.isObject())
         e.reihe.emplace_back(hallAusJson(wert.toObject()));
     return e;
+}
+
+// --- Klaenge und Wave-Muster ---
+
+/// Die Zeile fuer den Bericht, wenn ein genannter Klang fehlt — ein eigenes oder
+/// mitgeliefertes Sample, eine Datei; leer = er ist da (oder ein Klang des Kits, oder keiner).
+QString fehltKlang(const QString& klang)
+{
+    if (istEigenerKlang(klang) || istBibliotheksKlang(klang))
+    {
+        const QString datei = sampleDatei(klang);
+        if (datei.isEmpty() || !QFileInfo::exists(datei)) return QStringLiteral("Sample not found: %1").arg(klang);
+        return {};
+    }
+    if (!klang.isEmpty() && !istKitKlang(klang) && !QFileInfo::exists(klang))
+        return QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(klang));
+    return {};
+}
+
+/// Ein Wave-Muster in `o` (Name, Takte und Art stehen schon da): seit Fassung 16, alle
+/// Felder immer geschrieben.
+QJsonObject waveAlsJson(const Muster& m, const QString& basisOrdner, QJsonObject o)
+{
+    const WaveAngaben& w = m.wave;
+    // eine Nennung wie eine Sample-Schicht (WV2 a): ein eigenes oder mitgeliefertes beim Namen
+    o[QStringLiteral("file")] =
+        istMitgelieferterKlang(w.datei) || istEigenerKlang(w.datei) ? w.datei : fuerDatei(w.datei, basisOrdner);
+    o[QStringLiteral("start")] = w.start;
+    o[QStringLiteral("end")] = w.ende;
+    o[QStringLiteral("offset")] = w.versatz;
+    o[QStringLiteral("gain")] = w.gainDb;
+    o[QStringLiteral("fadeIn")] = w.fadeInMs;
+    o[QStringLiteral("fadeOut")] = w.fadeOutMs;
+    o[QStringLiteral("referenceBpm")] = w.bezugBpm;
+    o[QStringLiteral("followTempo")] = w.folgtTempo;
+    o[QStringLiteral("pitchMethod")] = tonhoehenArtName(w.tonhoehenArt);
+    o[QStringLiteral("lanes")] = zeitspurenAlsJson(m.zeitspuren);
+    // Autotune: je Abschnitt eine Zeile Anfang, Ende, Zielton, Cent, Strength, Speed
+    QJsonArray abschnitte;
+    for (const AutotuneAbschnitt& a : w.autotune.abschnitte)
+        abschnitte.append(QJsonArray{a.anfang, a.ende, a.zielHoehe, a.zielCent, a.staerke, a.speedMs});
+    o[QStringLiteral("autotune")] = QJsonObject{
+        {QStringLiteral("key"), w.autotune.grundton},
+        {QStringLiteral("scale"), skalaName(w.autotune.skala)},
+        {QStringLiteral("strength"), w.autotune.staerke},
+        {QStringLiteral("speed"), w.autotune.speedMs},
+        {QStringLiteral("sections"), abschnitte},
+    };
+    // die Herkunft nach Bounce (WV7 a) in der Huelle einer `.lvclip` (§4o); leer = keine
+    o[QStringLiteral("origin")] =
+        w.herkunft.leer() ? QJsonObject{} : austauschAlsJson(AustauschArt::Clip, w.herkunft.clip(), basisOrdner);
+    return o;
+}
+
+void waveAusJson(const QJsonObject& o, Muster& m, const QString& basisOrdner, QStringList* bericht)
+{
+    WaveAngaben& w = m.wave;
+    const QString datei = o.value(QStringLiteral("file")).toString();
+    w.datei = istMitgelieferterKlang(datei) || istEigenerKlang(datei) ? datei : ausDatei(datei, basisOrdner);
+    if (bericht != nullptr)
+        if (const QString zeile = fehltKlang(w.datei); !zeile.isEmpty() && !bericht->contains(zeile))
+            bericht->append(zeile);
+    w.start = o.value(QStringLiteral("start")).toDouble(0.0);
+    w.ende = o.value(QStringLiteral("end")).toDouble(0.0);
+    w.versatz = o.value(QStringLiteral("offset")).toDouble(0.0);
+    w.gainDb = o.value(QStringLiteral("gain")).toDouble(0.0);
+    w.fadeInMs = o.value(QStringLiteral("fadeIn")).toDouble(0.0);
+    w.fadeOutMs = o.value(QStringLiteral("fadeOut")).toDouble(0.0);
+    w.bezugBpm = o.value(QStringLiteral("referenceBpm")).toDouble(120.0);
+    w.folgtTempo = o.value(QStringLiteral("followTempo")).toBool(false);
+    w.tonhoehenArt = tonhoehenArtAusName(o.value(QStringLiteral("pitchMethod")).toString());
+    m.zeitspuren = zeitspurenAusJson(o.value(QStringLiteral("lanes")).toObject());
+    const QJsonObject autotune = o.value(QStringLiteral("autotune")).toObject();
+    w.autotune.grundton = autotune.value(QStringLiteral("key")).toInt(0);
+    w.autotune.skala = skalaAusName(autotune.value(QStringLiteral("scale")).toString());
+    w.autotune.staerke = autotune.value(QStringLiteral("strength")).toDouble(w.autotune.staerke);
+    w.autotune.speedMs = autotune.value(QStringLiteral("speed")).toDouble(w.autotune.speedMs);
+    for (const QJsonValue& av : autotune.value(QStringLiteral("sections")).toArray())
+    {
+        const QJsonArray werte = av.toArray();
+        if (werte.size() < 3) continue;
+        AutotuneAbschnitt a;
+        a.anfang = werte[0].toDouble();
+        a.ende = werte[1].toDouble();
+        a.zielHoehe = werte[2].toInt(60);
+        a.zielCent = werte.size() > 3 ? werte[3].toInt(0) : 0;
+        a.staerke = werte.size() > 4 ? werte[4].toDouble(w.autotune.staerke) : w.autotune.staerke;
+        a.speedMs = werte.size() > 5 ? werte[5].toDouble(w.autotune.speedMs) : w.autotune.speedMs;
+        w.autotune.abschnitte.push_back(a);
+    }
+    const QJsonObject herkunft = o.value(QStringLiteral("origin")).toObject();
+    if (herkunft.isEmpty()) return;
+    // was in der Herkunft fehlt, meldet erst *Bounce again* — gespielt wird sie nicht
+    Loop clip;
+    if (austauschAusJson(herkunft, AustauschArt::Clip, clip, basisOrdner))
+        w.herkunft = Herkunft(std::move(clip));
+    else if (bericht != nullptr)
+        bericht->append(QStringLiteral("Bounce origin not readable: %1").arg(m.name));
 }
 
 }  // namespace
@@ -901,8 +1004,34 @@ void Loop::richte(QStringList* bericht)
         }
         else
             namen.append(m.name);
-        m.takte = std::clamp(m.takte, kTakteMin, kTakteMax);
+        m.takte = std::clamp(m.takte, kTakteMin, taktHoechstens(m.art));
         m.swingOffset = inGrenzen(m.swingOffset, -kSwingOffsetMax, kSwingOffsetMax, 0.0);
+        if (m.art == MusterArt::Wave)
+        {
+            // eine Tondatei hat weder Spuren noch Noten, keinen Swing offset (RS1-1 a) und von
+            // den Spuren ueber der Zeit nur Expression und Pitch (Stufe 15b)
+            m.spuren.clear();
+            m.zeilen.clear();
+            m.kit.clear();
+            m.instrument.clear();
+            m.noten.clear();
+            m.stimmen.clear();
+            m.saitenwahl = Saitenwahl::JeKlang;
+            m.strum = Strum{};
+            m.anschlaege.clear();
+            m.laut = 1.0;
+            m.pan = 0.0;
+            m.stumm = false;
+            m.swingOffset = 0.0;
+            for (const Steuerspur spur : kAlleSteuerspuren)
+                if (spur != Steuerspur::Expression && spur != Steuerspur::Pitch) m.zeitspuren.von(spur).clear();
+            m.zeitspuren.schalter.clear();
+            const double schritte = static_cast<double>(m.takte) * schritteJeTakt();
+            richteZeitspuren(m.zeitspuren, schritte);
+            richteWave(m.wave, schritte);
+            continue;
+        }
+        m.wave = WaveAngaben{};  // nur ein Wave-Muster traegt sie
         if (m.art == MusterArt::Instrument)
         {
             // ein Instrument hat keine Spuren; seine Noten bleiben im Muster
@@ -1041,6 +1170,13 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
         QJsonObject o;
         o[QStringLiteral("name")] = m.name;
         o[QStringLiteral("bars")] = m.takte;
+        if (m.art == MusterArt::Wave)
+        {
+            // seit Fassung 16, alle Felder immer — ohne Swing offset (RS1-1 a)
+            o[QStringLiteral("kind")] = kArtWave;
+            muster.append(waveAlsJson(m, basisOrdner, o));
+            continue;
+        }
         o[QStringLiteral("swingOffset")] = m.swingOffset;  // seit Fassung 15, immer
         if (m.art == MusterArt::Instrument)
         {
@@ -1197,13 +1333,20 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
         // eine Art, die diese Fassung nicht kennt: das Muster bleibt weg,
         // seine Clips meldet `richte`
         const QString art = o.value(QStringLiteral("kind")).toString(kArtDrumkit);
-        if (art != kArtDrumkit && art != kArtInstrument)
+        if (art != kArtDrumkit && art != kArtInstrument && art != kArtWave)
         {
             if (bericht != nullptr)
                 bericht->append(QStringLiteral("Unknown pattern kind '%1': %2").arg(art, m.name));
             continue;
         }
         m.takte = o.value(QStringLiteral("bars")).toInt(kTakteNeu);
+        if (art == kArtWave)  // seit Fassung 16
+        {
+            m.art = MusterArt::Wave;
+            waveAusJson(o, m, basisOrdner, bericht);
+            neu.muster.push_back(std::move(m));
+            continue;
+        }
         m.swingOffset = o.value(QStringLiteral("swingOffset")).toDouble(0.0);  // seit Fassung 15; fehlt es: wie der Loop
         if (art == kArtInstrument)
         {
@@ -1285,14 +1428,8 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                     if (istInstrumentDatei(spur.instrument) && !QFileInfo::exists(spur.instrument))
                         zeile = QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(spur.instrument));
                 }
-                else if (istEigenerKlang(spur.klang) || istBibliotheksKlang(spur.klang))
-                {
-                    const QString datei = sampleDatei(spur.klang);
-                    if (datei.isEmpty() || !QFileInfo::exists(datei))
-                        zeile = QStringLiteral("Sample not found: %1").arg(spur.klang);
-                }
-                else if (!spur.klang.isEmpty() && !istKitKlang(spur.klang) && !QFileInfo::exists(spur.klang))
-                    zeile = QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(spur.klang));
+                else
+                    zeile = fehltKlang(spur.klang);
                 if (!zeile.isEmpty() && !bericht->contains(zeile)) bericht->append(zeile);
             }
             m.spuren.push_back(std::move(spur));

@@ -142,13 +142,18 @@ std::optional<Loop> spurDatei(const Loop& loop, int kanal)
     return teil;
 }
 
-QByteArray austauschText(AustauschArt art, const Loop& teil, const QString& basisOrdner)
+QJsonObject austauschAlsJson(AustauschArt art, const Loop& teil, const QString& basisOrdner)
 {
     QJsonObject huelle;
     huelle[QStringLiteral("format")] = formatVon(art);
     huelle[QStringLiteral("version")] = kAustauschFassung;
     huelle[QStringLiteral("loop")] = alsJson(teil, basisOrdner);
-    return loopDateiText(huelle);
+    return huelle;
+}
+
+QByteArray austauschText(AustauschArt art, const Loop& teil, const QString& basisOrdner)
+{
+    return loopDateiText(austauschAlsJson(art, teil, basisOrdner));
 }
 
 bool speichereAustausch(AustauschArt art, const Loop& teil, const QString& pfad)
@@ -173,7 +178,13 @@ bool austauschAusText(const QByteArray& text, AustauschArt art, Loop& teil, cons
     QJsonParseError fehler;
     const QJsonDocument doc = QJsonDocument::fromJson(text, &fehler);
     if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
-    const QJsonObject huelle = doc.object();
+    return austauschAusJson(doc.object(), art, teil, basisOrdner, bericht, zuNeu);
+}
+
+bool austauschAusJson(const QJsonObject& huelle, AustauschArt art, Loop& teil, const QString& basisOrdner,
+                      QStringList* bericht, bool* zuNeu)
+{
+    if (zuNeu != nullptr) *zuNeu = false;
     if (huelle.value(QStringLiteral("format")).toString() != formatVon(art)) return false;
     if (huelle.value(QStringLiteral("version")).toInt(1) > kAustauschFassung)
     {
@@ -205,8 +216,12 @@ Umrechnung rechneUm(Loop& teil, int schlaegeJeTakt, int schritteJeSchlag)
     {
         const int schlaege = m.takte * teil.schlaegeJeTakt;
         const int takte = std::clamp(static_cast<int>(std::ceil(static_cast<double>(schlaege) / schlaegeJeTakt - kGenau)),
-                                     kTakteMin, kTakteMax);
+                                     kTakteMin, taktHoechstens(m.art));
         const int schritte = takte * schlaegeJeTakt * schritteJeSchlag;
+
+        // ein Wave-Muster (Stufe 15b): die Lage in Schritten; Ausschnitt und Autotune stehen
+        // in Sekunden der Datei und bleiben, die Herkunft traegt ihr eigenes Raster
+        m.wave.versatz *= schritt;
 
         for (Note& n : m.noten)
         {

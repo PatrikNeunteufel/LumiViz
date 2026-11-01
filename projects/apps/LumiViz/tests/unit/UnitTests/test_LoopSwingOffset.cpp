@@ -110,10 +110,10 @@ TEST_SUITE("LoopSwingOffset")
     {
         Loop loop = zweiDrums(0.3, -0.1);
 
-        SUBCASE("immer geschrieben, Fassung 15, und wieder gelesen")
+        SUBCASE("immer geschrieben, seit Fassung 15, und wieder gelesen")
         {
             const QJsonObject json = alsJson(loop);
-            CHECK(json.value(QStringLiteral("version")).toInt() == 15);
+            CHECK(json.value(QStringLiteral("version")).toInt() == 16);
             const QJsonArray muster = json.value(QStringLiteral("patterns")).toArray();
             REQUIRE(muster.size() == 2);
             CHECK(muster[0].toObject().contains(QStringLiteral("swingOffset")));  // auch 0 steht da
