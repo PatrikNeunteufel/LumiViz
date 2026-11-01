@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.116.0
+> **Version:** 0.117.0
 > **Datum:** 2026-11-01 (Session 169)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -4251,10 +4251,16 @@ Wiedergabe steht sie still); `KlickGeber` spielt fünf Klicks, `messeLatenz` fin
 (Ergebnis, gefunden / erwartet, Streuung; unter drei Klicks keine Messung); `schneideTake` legt den Take an seine
 Stelle in der Uhr, mit abgezogener Latenz, was vor der Aufnahme läge, bleibt still; `aufnahmeFassung` gibt dem Loop
 das Einzählen (reicht es vor Takt 0, rücken alle Clips nach hinten) und den Klick als eigenen Kanal (`kit:hat_closed`,
-die Eins 1,0, sonst 0,6). Die Latenz wird je Paar aus Ein- und Ausgang gemerkt (QSettings `loop/latency/…`).
+die Eins 1,0, sonst 0,6). Bei *Click only* und *Nothing* endet der Loop am Aufnahmetakt (`schneideAb`: Clips ab dort
+fallen weg, eine Wiederholung über die Grenze spielt eine auf die Takte davor gekürzte Kopie ihres Musters
+`<Name> (count-in)` mit Effekten und Kurve des Clips, nicht eingefroren — von Claude gesetzt; die Kurve Expression
+taugte dafür nicht, eingefrorene Clips und Saiten wenden sie anders an); die Fassung reicht mit Klick oder einem
+stillen Muster `Silence (recording)` bis zum Ende des Takes, bei „until Stop“ bis 600 s, damit der Spieler während
+des Takes nicht an den Anfang springt. Die Latenz wird je Paar aus Ein- und Ausgang gemerkt (QSettings `loop/latency/…`).
 Das Fenster *Measure latency* (`loop/LatenzFenster`) misst über einen eigenen Mixer mit dem Klickgeber als Uhr,
-*Use* merkt den Wert. Das Fenster *Record sample* hat einen Modus für Wave-Clips (`beginneWaveClip`): die Zeile
-Starts at bar / Count-in / Length / Click while recording / Latency mit *Measure latency...*, der Streifen,
+*Use* merkt den Wert. Das Fenster *Record sample* hat einen Modus für Wave-Clips (`beginneWaveClip`): der Hinweis
+auf Kopfhörer, die Zeile Starts at bar / Count-in / Length / Play while recording (MH1 a, `Mithoeren`, gemerkt
+unter `loop/recordPlayWhile`) / Latency mit *Measure latency...*, der Streifen,
 *Keep take* / *Discard*; der Loop spielt ab dem Einzähltakt, die Aufnahme beginnt, wenn er hörbar spielt, in der
 Rate der Wiedergabe, höchstens 600 s; Stop rundet auf das Ende des Takts. Ein Take bleibt, wie er ankam — keine
 Blende an den Enden, kein Normalize (von Claude gesetzt: Blenden und Gain trägt das Wave-Muster seit 15c, und
@@ -4262,8 +4268,8 @@ die Haken Trim silence und Normalize sind in diesem Modus nicht zu sehen). *Keep
 Sample „Take n“ ab. Im Programm: `Spieler::uhr()`, in der Taktachse *Record wave clip...* (`waveAufnahmeVerlangt`),
 im Wave editor *Record...* (`aufnahmeVerlangt`), im Loop-Panel `nimmWaveClipAuf` — ein neuer Take legt einen
 Wave-Clip am Starttakt an, *Record...* ersetzt die Datei des Musters (Ausschnitt und Lage auf 0). Tests:
-`test_LoopAufnahmeUhr` (vier Fälle: Uhr, Latenz, Take, Fassung; *Measure latency* gegen ein ideales Gerät aus
-Pappe; der Take sitzt im Takt; das Panel), `PappAufnahme.hpp` mit Uhr und `block()`.
+`test_LoopAufnahmeUhr` (fünf Fälle: Uhr, Latenz, Take, Fassung und `schneideAb`; *Measure latency* gegen ein ideales
+Gerät aus Pappe; der Take sitzt im Takt; Play while recording; das Panel), `PappAufnahme.hpp` mit Uhr und `block()`.
 
 **Offen vor 15g:** eine Aufnahme echten Gesangs für den Messfall — einstimmig, ohne Hall, mit Gleiten und Vibrato,
 unter einer freien Lizenz oder von Patrik selbst; Quelle und Ablage (außerhalb des Repos wie *Salamander*) als Frage
@@ -4303,6 +4309,14 @@ Stelle im Loop, keine Latenz). Ein Live-Loop-Modus braucht Aufnahmen, die zur la
   Sample ab und setzt den Wave-Clip an den Starttakt, mit abgezogener Latenz), **Discard**. Der Loop spielt ab dem
   Einzähltakt, die Aufnahme beginnt genau an der Taktgrenze. (B) das kleine Fenster **Measure latency**: fünf Klicks
   ausgeben und am Eingang wiederfinden, Ergebnis mit Streuung, **Use**. Gezeichnet mit dem Zeichenwerkzeug in S169.
+- **MH1 a — Play while recording (Patrik S169, nach dem ersten Versuch im Programm):** Befund: ohne Kopfhörer nahm
+  das eingebaute Mikrofon (Realtek Microphone Array, der einzige aktive Eingang) den Loop aus den Lautsprechern mit
+  auf — der Aufnahmeweg war richtig. Statt des Hakens *Click while recording* eine Auswahl **Play while recording**:
+  *Loop and click* (Vorgabe, wie bisher), *Click only*, *Nothing* (der Loop spielt nur das Einzählen, während des
+  Takes ist es still, die Takte zeigt der Streifen); gemerkt. Unter dem Eingang der Hinweis „Without headphones the
+  microphone hears the speakers — use headphones, or play only the click or nothing.“ Die Datei ändert sich nicht.
+  Verworfen b (nur der Hinweis: ohne Kopfhörer bliebe der Loop im Take), c (der Loop spielt nie mit: nähme das
+  Mitspielen mit Kopfhörern weg). Die Stufe „nur der Loop, ohne Klick“ des alten Hakens entfällt damit.
 
 ### Abgleich mit den Quellen (S168)
 
@@ -4459,6 +4473,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.117.0** (S169, 2026-11-01): §4p MH1 a — *Play while recording* (Loop and click, Click only, Nothing) mit Hinweis auf Kopfhörer statt *Click while recording*; „Wie 15k-1 gebaut ist“ nachgeführt (`schneideAb`, stille Fassung bis 600 s).
 - **0.116.0** (S169, 2026-11-01): §4p 15k-1 erledigt („Wie 15k-1 gebaut ist“): Uhr der Aufnahme, *Measure latency*, *Record wave clip...* und *Record...* im Wave editor; ein Take bleibt ohne Blende und Normalize (von Claude gesetzt).
 - **0.115.0** (S169, 2026-11-01): §4p 15e erledigt („Wie 15e gebaut ist“): *New wave clip...*, die Welle am Clip, der Wave editor im Panel, Publish.
 - **0.114.0** (S169, 2026-11-01): §4p 15d erledigt („Wie 15d gebaut ist“): das Fenster Wave editor.

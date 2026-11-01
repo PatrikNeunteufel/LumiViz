@@ -42,6 +42,7 @@ namespace
 {
 
 const char* const kEingangGemerkt = "loop/recordInput";
+const char* const kMithoerenGemerkt = "loop/recordPlayWhile";  // MH1 a
 constexpr int kTaktMs = 30;
 
 QString sekunden(double wert, int stellen)
@@ -167,6 +168,14 @@ void AufnahmeFenster::setupUI()
     {
         auto* spalten = new QVBoxLayout(m_waveZeile);
         spalten->setContentsMargins(0, 0, 0, 0);
+        // MH1 a: das Mikrofon hoert die Lautsprecher — direkt unter dem Eingang gesagt
+        m_kopfhoerer = new QLabel(tr("Without headphones the microphone hears the speakers — use headphones, or play "
+                                     "only the click or nothing."),
+                                  m_waveZeile);
+        m_kopfhoerer->setObjectName(QStringLiteral("recordHeadphonesHint"));
+        m_kopfhoerer->setWordWrap(true);
+        m_kopfhoerer->setEnabled(false);
+        spalten->addWidget(m_kopfhoerer);
         auto* zeile = new QHBoxLayout;
         m_startTakt = new QSpinBox(m_waveZeile);
         m_startTakt->setObjectName(QStringLiteral("recordStartBar"));
@@ -183,15 +192,20 @@ void AufnahmeFenster::setupUI()
         m_laenge->addItem(tr("until Stop"), 0);
         for (const int takte : {1, 2, 4, 8, 16, 32}) m_laenge->addItem(takte == 1 ? tr("1 bar") : tr("%1 bars").arg(takte), takte);
         m_laenge->setToolTip(tr("Until Stop: Stop ends the take at the end of the bar"));
-        m_klick = new QCheckBox(tr("Click while recording"), m_waveZeile);
-        m_klick->setObjectName(QStringLiteral("recordClick"));
+        m_mithoeren = new QComboBox(m_waveZeile);
+        m_mithoeren->setObjectName(QStringLiteral("recordPlayWhile"));
+        m_mithoeren->addItem(tr("Loop and click"), static_cast<int>(Mithoeren::LoopUndKlick));
+        m_mithoeren->addItem(tr("Click only"), static_cast<int>(Mithoeren::NurKlick));
+        m_mithoeren->addItem(tr("Nothing"), static_cast<int>(Mithoeren::Nichts));
+        m_mithoeren->setToolTip(tr("What plays during the take — the count-in always plays the loop and the click"));
         zeile->addWidget(new QLabel(tr("Starts at bar"), m_waveZeile));
         zeile->addWidget(m_startTakt);
         zeile->addWidget(new QLabel(tr("Count-in"), m_waveZeile));
         zeile->addWidget(m_einzaehlen);
         zeile->addWidget(new QLabel(tr("Length"), m_waveZeile));
         zeile->addWidget(m_laenge);
-        zeile->addWidget(m_klick);
+        zeile->addWidget(new QLabel(tr("Play while recording"), m_waveZeile));
+        zeile->addWidget(m_mithoeren);
         zeile->addStretch(1);
         spalten->addLayout(zeile);
         auto* latenz = new QHBoxLayout;
@@ -219,6 +233,10 @@ void AufnahmeFenster::setupUI()
         connect(m_latenz, &QSpinBox::valueChanged, this, [this] { zeigeAlles(); });
         for (QComboBox* wahl : {m_einzaehlen, m_laenge})
             connect(wahl, QOverload<int>::of(&QComboBox::activated), this, [this] { zeigeAlles(); });
+        connect(m_mithoeren, QOverload<int>::of(&QComboBox::activated), this, [this] {
+            QSettings().setValue(QLatin1String(kMithoerenGemerkt), m_mithoeren->currentData().toInt());
+            zeigeAlles();
+        });
         connect(m_startTakt, &QSpinBox::valueChanged, this, [this] { zeigeAlles(); });
     }
     m_waveZeile->hide();
@@ -912,7 +930,10 @@ void AufnahmeFenster::closeEvent(QCloseEvent* event)
 void AufnahmeFenster::beginneWaveClip(WaveAufnahme auftrag)
 {
     beginne();
-    const WaveAufnahmePlan plan = auftrag.plan;
+    WaveAufnahmePlan plan = auftrag.plan;
+    // MH1 a: was beim letzten Mal waehrend des Takes spielte — ohne Kopfhoerer bleibt es so
+    if (const QVariant gemerkt = QSettings().value(QLatin1String(kMithoerenGemerkt)); gemerkt.isValid())
+        plan.mithoeren = static_cast<Mithoeren>(std::clamp(gemerkt.toInt(), 0, static_cast<int>(Mithoeren::Nichts)));
     m_wave = std::move(auftrag);
     {
         // ein Take bleibt, wie er aufgenommen ist: kein Schnitt an der Stille, kein Anheben — er sitzt im Takt
@@ -937,7 +958,7 @@ WaveAufnahmePlan AufnahmeFenster::plan() const
     p.startTakt = m_startTakt->value() - 1;
     p.einzaehlen = m_einzaehlen->currentData().toInt();
     p.takte = m_laenge->currentData().toInt();
-    p.klick = m_klick->isChecked();
+    p.mithoeren = static_cast<Mithoeren>(m_mithoeren->currentData().toInt());
     return p;
 }
 
@@ -946,7 +967,7 @@ void AufnahmeFenster::setzePlan(const WaveAufnahmePlan& plan)
     const QSignalBlocker a(m_startTakt);
     const QSignalBlocker b(m_einzaehlen);
     const QSignalBlocker c(m_laenge);
-    const QSignalBlocker d(m_klick);
+    const QSignalBlocker d(m_mithoeren);
     m_startTakt->setValue(plan.startTakt + 1);
     m_einzaehlen->setCurrentIndex(std::max(0, m_einzaehlen->findData(std::clamp(plan.einzaehlen, 0, 2))));
     // eine Laenge, die die Liste nicht kennt (die eines Musters), kommt dazu
@@ -957,7 +978,7 @@ void AufnahmeFenster::setzePlan(const WaveAufnahmePlan& plan)
         index = m_laenge->count() - 1;
     }
     m_laenge->setCurrentIndex(index);
-    m_klick->setChecked(plan.klick);
+    m_mithoeren->setCurrentIndex(std::max(0, m_mithoeren->findData(static_cast<int>(plan.mithoeren))));
     zeigeAlles();
 }
 
@@ -1181,6 +1202,11 @@ QString AufnahmeFenster::streifenText() const
     else
         teile << (p.takte > 0 ? tr("bar %1 – %2 · recording").arg(start).arg(start + p.takte - 1)
                               : tr("from bar %1 · recording until Stop, to the end of that bar").arg(start));
+    // MH1 a: was waehrend des Takes spielt, wenn es nicht der Loop ist
+    if (p.mithoeren == Mithoeren::NurKlick)
+        teile << tr("only the click plays");
+    else if (p.mithoeren == Mithoeren::Nichts)
+        teile << tr("silent while recording");
     return teile.join(QStringLiteral(" | "));
 }
 
@@ -1200,7 +1226,7 @@ void AufnahmeFenster::zeigeWave()
     const bool laeuft = m_phase != WavePhase::Bereit;
     m_record->setEnabled(m_engine != nullptr && m_eingang->count() > 0 && !laeuft);
     m_stop->setEnabled(laeuft);
-    for (QWidget* feld : std::initializer_list<QWidget*>{m_startTakt, m_einzaehlen, m_laenge, m_klick, m_latenz, m_eingang})
+    for (QWidget* feld : std::initializer_list<QWidget*>{m_startTakt, m_einzaehlen, m_laenge, m_mithoeren, m_latenz, m_eingang})
         feld->setEnabled(!laeuft);
     m_streifen->setText(streifenText());
     m_behalten->setEnabled(!laeuft && m_takeTakte > 0 && frames() > 0);

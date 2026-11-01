@@ -19,6 +19,7 @@ namespace
 
 constexpr int kMindestensGefunden = 3;
 const QString kKlickName = QStringLiteral("Click (recording)");
+const QString kStilleName = QStringLiteral("Silence (recording)");  // MH1 a: Nothing
 
 std::int64_t median(std::vector<std::int64_t> werte)
 {
@@ -174,27 +175,100 @@ Aufnahmefassung aufnahmeFassung(const Loop& loop, const WaveAufnahmePlan& plan)
     f.aufnahmeTakt = start + verschoben;
     f.abspielTakt = f.aufnahmeTakt - einzaehlen;
 
+    // die Takte des Takes, die die Fassung traegt: bei Loop and click bis Stop bis zum Ende des
+    // Loops (dann beginnt er von vorn); sonst schweigt der Loop ab dem Take, und die Fassung
+    // muss bis zur hoechsten Laenge reichen, sonst sprang der Spieler zurueck an den Anfang
     const int durchlauf = f.loop.durchlaufTakte();
-    const int aufnahme = plan.klick ? (plan.takte > 0 ? plan.takte : std::max(1, durchlauf - f.aufnahmeTakt)) : 0;
-    const int klickTakte = einzaehlen + aufnahme;
-    if (klickTakte <= 0) return f;
-    // der Klick: auf jedem Schlag, die Eins lauter
-    Muster klick;
-    klick.name = kKlickName;
-    for (int n = 2; f.loop.findeMuster(klick.name) != nullptr; ++n) klick.name = kKlickName + QStringLiteral(" %1").arg(n);
-    klick.takte = 1;
-    klick.spuren = {{QStringLiteral("Click"), QStringLiteral("kit:hat_closed"), 1.0, 0.0, false}};
-    std::vector<double> zeile(static_cast<std::size_t>(f.loop.schritteJeTakt()), 0.0);
-    for (int schlag = 0; schlag < f.loop.schlaegeJeTakt; ++schlag)
-        zeile[static_cast<std::size_t>(schlag * f.loop.schritteJeSchlag)] = schlag == 0 ? 1.0 : 0.6;
-    klick.zeilen = {zeile};
-    f.loop.muster.push_back(klick);
+    const double taktS = f.loop.bpm > 0.0 ? 60.0 / f.loop.bpm * f.loop.schlaegeJeTakt : 2.0;
+    const int aufnahme = plan.takte > 0                                  ? plan.takte
+                         : plan.mithoeren == Mithoeren::LoopUndKlick ? std::max(1, durchlauf - f.aufnahmeTakt)
+                                                                         : static_cast<int>(std::ceil(kTakeHoechstensSekunden / taktS)) + 1;
+    if (plan.mithoeren != Mithoeren::LoopUndKlick) schneideAb(f.loop, f.aufnahmeTakt);
+    const auto freierName = [&f](const QString& name) {
+        QString frei = name;
+        for (int n = 2; f.loop.findeMuster(frei) != nullptr; ++n) frei = name + QStringLiteral(" %1").arg(n);
+        return frei;
+    };
+    // der Klick: auf jedem Schlag, die Eins lauter; Stille: dasselbe ohne Schlaege
+    const auto taktMuster = [&f](const QString& name, bool klingt) {
+        Muster m;
+        m.name = name;
+        m.takte = 1;
+        m.spuren = {{QStringLiteral("Click"), QStringLiteral("kit:hat_closed"), 1.0, 0.0, false}};
+        std::vector<double> zeile(static_cast<std::size_t>(f.loop.schritteJeTakt()), 0.0);
+        if (klingt)
+            for (int schlag = 0; schlag < f.loop.schlaegeJeTakt; ++schlag)
+                zeile[static_cast<std::size_t>(schlag * f.loop.schritteJeSchlag)] = schlag == 0 ? 1.0 : 0.6;
+        m.zeilen = {zeile};
+        return m;
+    };
+    const bool klickImTake = plan.mithoeren != Mithoeren::Nichts;
     Kanal kanal;
-    kanal.name = klick.name;
-    kanal.clips = {LoopClip(klick.name, f.abspielTakt, klickTakte)};
+    const int klickTakte = einzaehlen + (klickImTake ? aufnahme : 0);
+    if (klickTakte > 0)
+    {
+        Muster klick = taktMuster(freierName(kKlickName), true);
+        kanal.clips.emplace_back(klick.name, f.abspielTakt, klickTakte);
+        f.loop.muster.push_back(std::move(klick));
+    }
+    if (!klickImTake)
+    {
+        Muster still = taktMuster(freierName(kStilleName), false);
+        kanal.clips.emplace_back(still.name, f.aufnahmeTakt, aufnahme);
+        f.loop.muster.push_back(std::move(still));
+    }
+    if (kanal.clips.empty()) return f;
+    kanal.name = kanal.clips.front().muster;
     f.loop.kanaele.push_back(std::move(kanal));
     f.loop.richte();
     return f;
+}
+
+void schneideAb(Loop& loop, int takt)
+{
+    std::vector<Muster> kopien;
+    for (Kanal& kanal : loop.kanaele)
+    {
+        std::vector<LoopClip> bleiben;
+        for (const LoopClip& clip : kanal.clips)
+        {
+            const Muster* muster = loop.findeMuster(clip.muster);
+            if (muster == nullptr || clip.startTakt >= takt) continue;
+            const int laenge = std::max(1, muster->takte);
+            const int davor = takt - clip.startTakt;
+            const int ganze = std::min(clip.wiederholungen, davor / laenge);
+            if (ganze > 0)
+            {
+                LoopClip c = clip;
+                c.wiederholungen = ganze;
+                bleiben.push_back(std::move(c));
+            }
+            const int rest = davor - ganze * laenge;
+            if (ganze >= clip.wiederholungen || rest <= 0) continue;
+            // die angeschnittene Wiederholung: das Muster auf die Takte davor gekuerzt (richte
+            // nimmt, was dahinter liegt) — ein anderer Klang, also nicht eingefroren
+            Muster kurz = *muster;
+            const QString basis = muster->name + QStringLiteral(" (count-in)");
+            kurz.name = basis;
+            const auto vergeben = [&](const QString& name) {
+                return loop.findeMuster(name) != nullptr ||
+                       std::any_of(kopien.begin(), kopien.end(), [&name](const Muster& m) { return m.name == name; });
+            };
+            for (int n = 2; vergeben(kurz.name); ++n) kurz.name = basis + QStringLiteral(" %1").arg(n);
+            kurz.takte = rest;
+            LoopClip c = clip;
+            c.muster = kurz.name;
+            c.startTakt = clip.startTakt + ganze * laenge;
+            c.wiederholungen = 1;
+            c.frozen.clear();
+            for (SpurPunkt& p : c.expression) p.stelle -= ganze * laenge;  // die Kurve bleibt, wo sie war
+            bleiben.push_back(std::move(c));
+            kopien.push_back(std::move(kurz));
+        }
+        kanal.clips = std::move(bleiben);
+    }
+    for (Muster& m : kopien) loop.muster.push_back(std::move(m));
+    loop.richte();
 }
 
 double taktFrames(const Loop& loop, int rate)

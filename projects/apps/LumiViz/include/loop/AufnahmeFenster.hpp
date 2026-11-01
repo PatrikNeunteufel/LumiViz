@@ -234,7 +234,7 @@ public:
     /// So lang darf eine Aufnahme hoechstens sein, in Sekunden.
     static constexpr double kHoechstensSekunden = 30.0;
     /// So lang darf ein Take fuer einen Wave-Clip hoechstens sein (von Claude gesetzt).
-    static constexpr double kWaveHoechstensSekunden = 600.0;
+    static constexpr double kWaveHoechstensSekunden = kTakeHoechstensSekunden;
     /// Kuerzer als das wird ein Ausschnitt nicht, in Millisekunden.
     static constexpr double kAusschnittMinMs = 10.0;
 
@@ -319,7 +319,8 @@ private:
     QSpinBox* m_startTakt = nullptr;
     QComboBox* m_einzaehlen = nullptr;
     QComboBox* m_laenge = nullptr;
-    QCheckBox* m_klick = nullptr;
+    QComboBox* m_mithoeren = nullptr;  ///< *Play while recording* (MH1 a)
+    QLabel* m_kopfhoerer = nullptr;    ///< der Hinweis unter dem Eingang (MH1 a)
     QSpinBox* m_latenz = nullptr;
     QLabel* m_latenzStand = nullptr;
     QLabel* m_streifen = nullptr;

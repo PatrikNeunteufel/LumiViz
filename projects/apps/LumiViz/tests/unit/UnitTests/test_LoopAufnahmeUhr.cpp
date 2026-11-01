@@ -29,10 +29,13 @@
 #include "services/ServiceContainer.hpp"
 
 #include <QApplication>
+#include <QComboBox>
 #include <QCoreApplication>
+#include <QLabel>
 #include <QSettings>
 #include <QTemporaryDir>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -150,7 +153,7 @@ TEST_SUITE("LoopAufnahmeUhr")
         {
             const Loop loop = vierTakte();
             // ab Takt 0 mit einem Takt Einzaehlen: alles rueckt um einen Takt
-            const Aufnahmefassung f = aufnahmeFassung(loop, {0, 1, 2, true});
+            const Aufnahmefassung f = aufnahmeFassung(loop, {0, 1, 2, Mithoeren::LoopUndKlick});
             CHECK(f.abspielTakt == 0);
             CHECK(f.aufnahmeTakt == 1);
             CHECK(f.loop.kanaele[0].clips[0].startTakt == 1);
@@ -163,15 +166,64 @@ TEST_SUITE("LoopAufnahmeUhr")
             CHECK(klickMuster->spuren[0].klang == QStringLiteral("kit:hat_closed"));
             CHECK(klickMuster->zeilen[0][0] == 1.0);  // die Eins lauter
             CHECK(klickMuster->zeilen[0][4] == 0.6);
-            // ab Takt 3 mit zwei Takten Einzaehlen, ohne Klick waehrend der Aufnahme: nichts rueckt
-            const Aufnahmefassung g = aufnahmeFassung(loop, {3, 2, 0, false});
+            // ab Takt 3 mit zwei Takten Einzaehlen, Nothing (MH1 a): nichts rueckt, der Loop endet an
+            // Takt 3, danach ist es still bis zur hoechsten Laenge des Takes
+            const Aufnahmefassung g = aufnahmeFassung(loop, {3, 2, 0, Mithoeren::Nichts});
             CHECK(g.abspielTakt == 1);
             CHECK(g.aufnahmeTakt == 3);
-            CHECK(g.loop.kanaele[0].clips[0].startTakt == 0);
-            CHECK(g.loop.kanaele[1].clips[0].wiederholungen == 2);  // nur das Einzaehlen
-            // ohne Einzaehlen und ohne Klick: kein Kanal dazu
-            CHECK(aufnahmeFassung(loop, {2, 0, 0, false}).loop.kanaele.size() == 1);
+            REQUIRE(g.loop.kanaele.size() == 2);
+            REQUIRE(g.loop.kanaele[0].clips.size() == 1);
+            const LoopClip& kurz = g.loop.kanaele[0].clips[0];
+            CHECK(kurz.startTakt == 0);
+            CHECK(kurz.muster == QStringLiteral("D (count-in)"));
+            CHECK(g.loop.clipTakte(kurz) == 3);
+            REQUIRE(g.loop.kanaele[1].clips.size() == 2);
+            CHECK(g.loop.kanaele[1].clips[0].wiederholungen == 2);  // nur das Einzaehlen klickt
+            const LoopClip& still = g.loop.kanaele[1].clips[1];
+            CHECK(still.startTakt == 3);
+            CHECK(still.wiederholungen == 301);  // 600 s bei 2 s je Takt, und einer dazu
+            const Muster* stillMuster = g.loop.findeMuster(still.muster);
+            REQUIRE(stillMuster != nullptr);
+            CHECK(std::all_of(stillMuster->zeilen[0].begin(), stillMuster->zeilen[0].end(), [](double w) { return w == 0.0; }));
+            CHECK(g.loop.durchlaufTakte() == 304);  // der Spieler springt waehrend des Takes nicht zurueck
+            // Click only ab Takt 3 fuer zwei Takte: der Loop bis Takt 3, der Klick bis zum Ende des Takes
+            const Aufnahmefassung h = aufnahmeFassung(loop, {2, 1, 2, Mithoeren::NurKlick});
+            CHECK(h.loop.clipTakte(h.loop.kanaele[0].clips[0]) == 2);
+            REQUIRE(h.loop.kanaele[1].clips.size() == 1);
+            CHECK(h.loop.kanaele[1].clips[0].startTakt == 1);
+            CHECK(h.loop.kanaele[1].clips[0].wiederholungen == 3);
+            // ohne Einzaehlen, Loop and click: der Loop bleibt ganz, der Klick nur im Take
+            const Aufnahmefassung k = aufnahmeFassung(loop, {2, 0, 1, Mithoeren::LoopUndKlick});
+            CHECK(k.loop.kanaele[0].clips[0] == loop.kanaele[0].clips[0]);
+            CHECK(k.loop.kanaele[1].clips[0].startTakt == 2);
+            CHECK(k.loop.kanaele[1].clips[0].wiederholungen == 1);
             CHECK(taktFrames(loop, kRate) == doctest::Approx(96000.0));
+        }
+        SUBCASE("schneideAb: ganze Wiederholungen bleiben, die angeschnittene wird gekuerzt")
+        {
+            Loop loop = vierTakte();
+            loop.muster[0].zeilen[0][0] = 1.0;                       // Takt 1 des Musters
+            loop.muster[0].zeilen[0][3 * loop.schritteJeTakt()] = 1.0;  // Takt 4 des Musters
+            loop.kanaele[0].clips[0].wiederholungen = 3;               // Takte 0 … 11
+            loop.kanaele[0].clips[0].expression = {{5.0, 0.5}, {7.0, 1.0}};
+            loop.kanaele[0].clips[0].frozen = QString(40, QLatin1Char('a'));
+            loop.kanaele.push_back({QStringLiteral("L"), true, {{QStringLiteral("D"), 8, 1}}});  // ganz dahinter
+            loop.richte();
+            schneideAb(loop, 6);
+            REQUIRE(loop.kanaele[0].clips.size() == 2);
+            CHECK(loop.kanaele[0].clips[0].wiederholungen == 1);
+            CHECK(loop.kanaele[0].clips[0].frozen == QString(40, QLatin1Char('a')));  // unveraendert: bleibt eingefroren
+            const LoopClip& kurz = loop.kanaele[0].clips[1];
+            CHECK(kurz.startTakt == 4);
+            CHECK(loop.clipTakte(kurz) == 2);
+            CHECK(kurz.frozen.isEmpty());
+            CHECK(kurz.expression == std::vector<SpurPunkt>{{1.0, 0.5}, {3.0, 1.0}});
+            const Muster* kurzMuster = loop.findeMuster(kurz.muster);
+            REQUIRE(kurzMuster != nullptr);
+            CHECK(kurzMuster->zeilen[0].size() == static_cast<std::size_t>(2 * loop.schritteJeTakt()));
+            CHECK(kurzMuster->zeilen[0][0] == 1.0);
+            CHECK(loop.kanaele[1].clips.empty());
+            CHECK(loop.durchlaufTakte() == 6);
         }
         SUBCASE("die Latenz je Paar aus Eingang und Ausgang")
         {
@@ -248,7 +300,7 @@ TEST_SUITE("LoopAufnahmeUhr")
         fenster.setEngine(&engine);
         AufnahmeFenster::WaveAufnahme auftrag;
         auftrag.loop = vierTakte();
-        auftrag.plan = {2, 1, 0, true};  // ab Takt 3, ein Takt Einzaehlen, bis Stop
+        auftrag.plan = {2, 1, 0, Mithoeren::LoopUndKlick};  // ab Takt 3, ein Takt Einzaehlen, bis Stop
         auftrag.ausgang = QStringLiteral("Speakers");
         auftrag.rate = kRate;
         auftrag.spiele = [&](const Loop& fassung, int takt) {
@@ -263,7 +315,7 @@ TEST_SUITE("LoopAufnahmeUhr")
         CHECK(fenster.waveModus());
         CHECK(fenster.windowTitle() == QStringLiteral("Record wave clip"));
         CHECK(fenster.latenzMs() == 25.0);  // gemerkt fuer Mic und Speakers
-        CHECK(fenster.plan() == WaveAufnahmePlan{2, 1, 0, true});
+        CHECK(fenster.plan() == WaveAufnahmePlan{2, 1, 0, Mithoeren::LoopUndKlick});
         CHECK(fenster.streifenText() == QStringLiteral("bar 2 · count-in | from bar 3 · recording until Stop, to the end of that bar"));
 
         REQUIRE(fenster.starteAufnahme());
@@ -321,6 +373,53 @@ TEST_SUITE("LoopAufnahmeUhr")
         CHECK(nennung == behalten);
         CHECK(start == 2);
         CHECK(takte == 1);
+    }
+
+    TEST_CASE("Loop Aufnahme 15k-1: Play while recording — gemerkt, mit Hinweis (MH1 a)")
+    {
+        Anwendung anwendung;
+        EigeneEinstellungen einstellungen;
+        papp::AufnahmeEngine engine;
+        engine.eingaenge = {papp::eingang(3, QStringLiteral("Mic"), true)};
+        Loop gespielt;
+        AufnahmeFenster fenster;
+        fenster.setEngine(&engine);
+        AufnahmeFenster::WaveAufnahme auftrag;
+        auftrag.loop = vierTakte();
+        auftrag.plan = {2, 1, 2, Mithoeren::LoopUndKlick};
+        auftrag.rate = kRate;
+        auftrag.spiele = [&](const Loop& fassung, int) {
+            gespielt = fassung;
+            return true;
+        };
+        auftrag.uhr = [] { return std::int64_t{0}; };
+        fenster.beginneWaveClip(auftrag);
+        auto* wahl = fenster.findChild<QComboBox*>(QStringLiteral("recordPlayWhile"));
+        REQUIRE(wahl != nullptr);
+        CHECK(wahl->count() == 3);
+        CHECK(wahl->currentText() == QStringLiteral("Loop and click"));
+        auto* hinweis = fenster.findChild<QLabel*>(QStringLiteral("recordHeadphonesHint"));
+        REQUIRE(hinweis != nullptr);
+        CHECK(hinweis->text().startsWith(QStringLiteral("Without headphones the microphone hears the speakers")));
+        CHECK_FALSE(fenster.streifenText().contains(QStringLiteral("silent")));
+
+        // Nothing waehlen, wie mit der Maus: gemerkt, im Streifen gesagt, die Fassung schweigt ab dem Take
+        wahl->setCurrentIndex(2);
+        Q_EMIT wahl->activated(2);
+        CHECK(fenster.plan().mithoeren == Mithoeren::Nichts);
+        CHECK(fenster.streifenText().endsWith(QStringLiteral("silent while recording")));
+        REQUIRE(fenster.starteAufnahme());
+        REQUIRE(gespielt.kanaele.size() == 2);
+        CHECK(gespielt.kanaele[0].clips[0].muster == QStringLiteral("D (count-in)"));
+        CHECK(gespielt.kanaele[1].clips.size() == 2);  // der Klick im Einzaehlen, dann die Stille
+        REQUIRE(fenster.stoppeAufnahme());  // noch beim Vorbereiten: nichts behalten
+        CHECK_FALSE(fenster.stoppeAufnahme());  // wieder bereit
+
+        // ein neuer Auftrag mit der Vorgabe: es bleibt bei Nothing
+        AufnahmeFenster zweites;
+        zweites.setEngine(&engine);
+        zweites.beginneWaveClip(auftrag);
+        CHECK(zweites.plan().mithoeren == Mithoeren::Nichts);
     }
 
     TEST_CASE("Loop Aufnahme 15k-1: das Panel — Record wave clip... und Keep take")

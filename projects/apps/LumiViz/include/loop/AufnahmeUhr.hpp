@@ -108,13 +108,26 @@ void merkeLatenzMs(const QString& eingang, const QString& ausgang, double ms);
 
 // --- der Loop, der zur Aufnahme spielt -------------------------------------------------
 
+/// So lang wird ein Take hoechstens (von Claude gesetzt).
+inline constexpr double kTakeHoechstensSekunden = 600.0;
+
+/// *Play while recording* (Entscheid Patrik MH1 a, S169): was waehrend des Takes zu hoeren
+/// ist. Ohne Kopfhoerer hoert das Mikrofon die Lautsprecher — dann nur der Klick oder nichts.
+/// Das Einzaehlen spielt immer Loop und Klick.
+enum class Mithoeren
+{
+    LoopUndKlick,  ///< *Loop and click*
+    NurKlick,      ///< *Click only*
+    Nichts,        ///< *Nothing*
+};
+
 /// Was aufgenommen wird (SK15k-1 a A).
 struct WaveAufnahmePlan
 {
     int startTakt = 0;   ///< *Starts at bar*: hier beginnt der Take (0 = der erste Takt)
     int einzaehlen = 1;  ///< *Count-in* in Takten, 0 … 2
     int takte = 0;       ///< *Length* in Takten; 0 = bis *Stop*
-    bool klick = true;   ///< *Click while recording*
+    Mithoeren mithoeren = Mithoeren::LoopUndKlick;  ///< *Play while recording*
 
     [[nodiscard]] bool operator==(const WaveAufnahmePlan&) const = default;
 };
@@ -129,9 +142,17 @@ struct Aufnahmefassung
 
 /// Die Fassung zum Aufnehmen: reicht das Einzaehlen vor Takt 0, ruecken alle Clips um so viele
 /// Takte nach hinten; dazu ein Kanal mit dem Klick (`kit:hat_closed` auf jedem Schlag, die
-/// Eins lauter) — beim Einzaehlen immer, waehrend der Aufnahme mit `klick` (bei *Length* „bis
-/// Stop“ bis zum Ende des Loops).
+/// Eins lauter) — beim Einzaehlen immer, waehrend der Aufnahme ausser bei `Mithoeren::Nichts`.
+/// Bei *Loop and click* bis zum Ende des Takes, bei *Length* „bis Stop“ bis zum Ende des Loops.
+/// Bei *Click only* und *Nothing* endet der Loop am Aufnahmetakt (`schneideAb`), und die Fassung
+/// reicht still oder mit dem Klick bis zum Ende des Takes — bei „bis Stop“ bis
+/// `kTakeHoechstensSekunden`, damit der Spieler nicht an den Anfang zurueckspringt.
 [[nodiscard]] Aufnahmefassung aufnahmeFassung(const Loop& loop, const WaveAufnahmePlan& plan);
+
+/// Der Loop endet am Takt `takt`: Clips ab dort fallen weg, eine Wiederholung, die ueber ihn
+/// reicht, spielt eine auf die Takte davor gekuerzte Kopie ihres Musters (`<Name> (count-in)`,
+/// mit Effekten und Kurve des Clips, nicht eingefroren). Danach `richte`.
+void schneideAb(Loop& loop, int takt);
 
 /// Ein Takt in Abtastwerten bei `rate` (wie der Rechenkern ihn rechnet).
 [[nodiscard]] double taktFrames(const Loop& loop, int rate);
