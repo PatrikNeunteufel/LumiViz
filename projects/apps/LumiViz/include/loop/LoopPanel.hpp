@@ -24,6 +24,7 @@
 #include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/Freeze.hpp"      // FrozenZustand (Stufe 30g)
 #include "loop/FreezeAuftrag.hpp"
+#include "loop/BounceAuftrag.hpp"  // Stufe 15k-2
 #include "loop/Loop.hpp"
 #include "loop/Spieler.hpp"
 #include "services/IEventBus.hpp"
@@ -229,7 +230,25 @@ public:
     /// Was die Hinweiszeile beim Einfrieren sagt (FZ4 a D); leer = es rechnet nichts.
     [[nodiscard]] QString freezeHinweis() const;
 
+    // --- Bounce (Stufe 15k-2, Entscheid WV7 a) -------------------------------------
+    /// *Bounce to wave clip* fuer den Drum- oder Instrument-Clip an `ort`: rechnet im Hintergrund,
+    /// legt die Datei als eigenes Sample ab und ersetzt den Clip — ein Undo-Schritt. false = nicht
+    /// moeglich, oder es wird schon gebounct.
+    bool bounce(ClipOrt ort);
+    /// *Bounce again* am Wave-Clip `ort` (mit Herkunft): den Ursprungsclip mit dem jetzigen Muster
+    /// neu rechnen; das Wave-Muster nennt danach die neue Datei.
+    bool bounceErneut(ClipOrt ort);
+    /// *Revert to source*: sofort, ein Undo-Schritt.
+    bool quelleZurueck(ClipOrt ort);
+    [[nodiscard]] bool bouncet() const { return m_bounce != nullptr; }
+    /// Warten, bis der Bounce fertig ist, und ihn uebernehmen — blockiert. Fuer Tests.
+    void warteAufBounce();
+    /// Was beim letzten Bounce nicht gelang (Klaenge, die fehlten, ein veraenderter Clip); leer = nichts.
+    [[nodiscard]] const QStringList& bounceBericht() const { return m_bounceBericht; }
+
 private:
+    void starteBounce(Loop rechnung, ClipOrt ort, QString wave);
+    void pruefeBounce();
     void setupUI();
     void frageNachDatei();
     void frageNachTags();
@@ -338,6 +357,10 @@ private:
     int m_startSchritt = 0;  ///< B4: wo Play beginnt
 
     std::unique_ptr<FreezeAuftrag> m_freeze;  ///< rechnet gerade (Stufe 30g); endet vor der Engine
+    std::unique_ptr<BounceAuftrag> m_bounce;  ///< rechnet gerade (Stufe 15k-2); endet vor der Engine
+    QString m_bounceWave;                     ///< *Bounce again*: dieses Wave-Muster; leer = ein neuer Bounce
+    std::optional<Loop> m_bounceVorher;       ///< der Clip, wie er beim Start war (`clipDatei`) — aendert er sich, gilt der Bounce nicht
+    QStringList m_bounceBericht;
     std::vector<ClipOrt> m_freezeWarte;       ///< kommen nach dem laufenden Auftrag dran
     std::map<std::pair<int, int>, FrozenZustand> m_freezeZustand;  ///< je eingefrorenem Clip
     QStringList m_freezeBericht;              ///< was beim letzten Einfrieren auffiel

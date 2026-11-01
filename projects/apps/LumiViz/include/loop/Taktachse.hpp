@@ -139,6 +139,9 @@ public:
     /// Was die Marke eines Wave-Clips sagt: „~“ (*Follow tempo* an), „♪“ (Autotune hat
     /// Abschnitte), beides oder leer.
     [[nodiscard]] static QString waveMarke(const Muster& basis);
+    /// Dasselbe, und nach *Bounce* „source changed“, wenn das Muster der Herkunft im Loop nicht mehr
+    /// so ist (Stufe 15k-2, WV7 a).
+    [[nodiscard]] static QString waveMarke(const Muster& basis, const Loop& loop);
     /// Eine verbundene Kopie hinter den angeklickten Clip legen — sind mehrere
     /// markiert, Kopien von allen, als Gruppe dahinter.
     bool dupliziereAuswahl();
@@ -272,6 +275,10 @@ Q_SIGNALS:
     void exportVerlangt(int kanal, int startTakt);
     /// Die markierten Clips sollen einfrieren (`true`) oder ihre Marke verlieren (Stufe 30g).
     void freezeVerlangt(bool einfrieren);
+    /// Stufe 15k-2 (WV7 a): *Bounce to wave clip* (`erneut` false) oder *Bounce again* fuer diesen Clip.
+    void bounceVerlangt(int kanal, int startTakt, bool erneut);
+    /// *Revert to source* fuer diesen Wave-Clip.
+    void quelleVerlangt(int kanal, int startTakt);
     /// Ein Klick oder Zug im Lineal (B4): dorthin springen, oder dort beginnen.
     void stelleGewaehlt(int schritt);
     /// Ein Hinweis zur Bedienung unter der Maus (Stufe 27e-2: am Fader, auch sein

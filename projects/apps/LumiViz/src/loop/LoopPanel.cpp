@@ -24,6 +24,9 @@
 #include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
 #include "loop/AufnahmeFenster.hpp"  // Stufe 15k-1
+#include "loop/Aufnahme.hpp"        // speichereAufnahme (Stufe 15k-2)
+#include "loop/Austausch.hpp"       // clipDatei
+#include "loop/Bounce.hpp"
 #include "loop/Tonspeicher.hpp"
 #include "loop/WaveEditor.hpp"
 #include "shape/Kontur.hpp"  // zaehleZeichnungFassung
@@ -171,6 +174,7 @@ LoopPanel::~LoopPanel()
     // die Audio-Engine lebt laenger als die Panels: hier noch freigeben
     m_spieler.halte(false);
     m_freeze.reset();  // Stufe 30g: sein Dekodierer nutzt die Engine (Bootstrap_Integration.md §6.7)
+    m_bounce.reset();  // Stufe 15k-2: ebenso
     if (m_meldetSong) meldeLaufendenLoop(nullptr);
     vergissBeendenFrage(this);
     meldeOffen({}, {});  // niemand hat mehr einen Loop offen
@@ -454,6 +458,10 @@ void LoopPanel::setupUI()
     connect(m_exportieren, &QPushButton::clicked, this, [this] { (void)oeffneExport(); });
     // Stufe 30g (FZ4 a B): Freeze clip / Unfreeze clip
     connect(m_achse, &Taktachse::freezeVerlangt, this, [this](bool einfrieren) { (void)friereEin(einfrieren); });
+    connect(m_achse, &Taktachse::bounceVerlangt, this, [this](int kanal, int start, bool erneut) {
+        (void)(erneut ? bounceErneut(ClipOrt{kanal, start}) : bounce(ClipOrt{kanal, start}));
+    });
+    connect(m_achse, &Taktachse::quelleVerlangt, this, [this](int kanal, int start) { (void)quelleZurueck(ClipOrt{kanal, start}); });
     // B4 (S124): ein Klick ins Lineal — dorthin springen, oder dort beginnen
     connect(m_achse, &Taktachse::stelleGewaehlt, this, &LoopPanel::setzeStartstelle);
     connect(m_achse, &Taktachse::zeilenProzentGeaendert, this,
@@ -1335,6 +1343,7 @@ void LoopPanel::beimTakt()
     }
     m_spitze = std::max(m_spitze, m_spieler.nimmSpitze());
     pruefeFreeze();  // Stufe 30g
+    pruefeBounce();  // Stufe 15k-2
     // Stufe 30h: neue Toene im Speicher — neu messen; die Settings etwa jede Sekunde
     if (tonspeicher().stand().gelegt != m_gelegtGesehen)
     {
@@ -1473,8 +1482,15 @@ void LoopPanel::zeigeStand()
     // TV5 a: was gerechnet wird, steht an der Stelle von „Bar · Step"
     const bool bereitetVor = spielt && m_solo.isEmpty() && m_spieler.wartet();
     const QString vorbereitet = QStringLiteral("%1 / %2").arg(m_spieler.vorbereitet()).arg(m_spieler.vorzubereiten());
-    // Stufe 30g (FZ4 a D): was gerade eingefroren wird
-    const QString friertText = freezeHinweis();
+    // Stufe 30g (FZ4 a D): was gerade eingefroren wird; Stufe 15k-2: was gebounct wird
+    QString friertText = freezeHinweis();
+    if (m_bounce != nullptr)
+    {
+        const QString bounceText = tr("Bouncing %1 … %2 %")
+                                       .arg(clipText(m_bounce->loop(), m_bounce->ort()))
+                                       .arg(static_cast<int>(std::lround(100.0 * m_bounce->anteil())));
+        friertText = friertText.isEmpty() ? bounceText : friertText + QStringLiteral(" · ") + bounceText;
+    }
     setzeText(m_stelle, [&]() -> QString {
         if (bereitetVor) return tr("Preparing sounds… %1").arg(vorbereitet);
         if (arrangement < 0.0) return friertText;
@@ -1660,6 +1676,105 @@ void LoopPanel::pruefeFreeze()
     starteFreeze(std::move(naechste));
     bestimmeFreeze(false);
     zeigeStand();
+}
+
+// --- Bounce (Stufe 15k-2) ------------------------------------------------------------------
+
+bool LoopPanel::bounce(ClipOrt ort)
+{
+    if (!m_geladen || m_bounce != nullptr) return false;
+    Loop rechnung = m_loop;
+    rechnung.richte();
+    if (!bounceMoeglich(rechnung, ort)) return false;
+    starteBounce(std::move(rechnung), ort, {});
+    return true;
+}
+
+bool LoopPanel::bounceErneut(ClipOrt ort)
+{
+    if (!m_geladen || m_bounce != nullptr) return false;
+    Loop rechnung = m_loop;
+    rechnung.richte();
+    const int clip = findeClip(rechnung, ort);
+    if (clip < 0) return false;
+    const QString wave = rechnung.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(clip)].muster;
+    // gerechnet wird der Ursprungsclip mit dem jetzigen Muster, an der Stelle des Wave-Clips
+    if (!setzeQuelleZurueck(rechnung, ort)) return false;
+    starteBounce(std::move(rechnung), ort, wave);
+    return true;
+}
+
+bool LoopPanel::quelleZurueck(ClipOrt ort)
+{
+    if (!m_geladen) return false;
+    Loop neu = m_loop;
+    if (!setzeQuelleZurueck(neu, ort)) return false;
+    bearbeite(neu, tr("Revert to source"));
+    return true;
+}
+
+void LoopPanel::starteBounce(Loop rechnung, ClipOrt ort, QString wave)
+{
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    Dekodierer dekodierer = [engine](const QString& datei, int rate, double maxSekunden) {
+        return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};
+    };
+    m_bounceBericht.clear();
+    m_bounceWave = std::move(wave);
+    m_bounceVorher = clipDatei(rechnung, ort.kanal, findeClip(rechnung, ort));
+    m_bounce = std::make_unique<BounceAuftrag>(std::move(rechnung), ort, freezeRate(), std::move(dekodierer));
+    zeigeStand();
+}
+
+void LoopPanel::pruefeBounce()
+{
+    if (m_bounce == nullptr || !m_bounce->beendet()) return;
+    const std::unique_ptr<BounceAuftrag> fertig = std::move(m_bounce);
+    const ClipOrt ort = fertig->ort();
+    m_bounceBericht = fertig->bericht();
+    const std::optional<Wellenform> welle = fertig->welle();
+    // der Clip, wie er jetzt ist — hat er sich seit dem Start geaendert, gilt die Rechnung nicht
+    Loop jetzt = m_loop;
+    jetzt.richte();
+    const bool erneut = !m_bounceWave.isEmpty();
+    const bool zurueck = !erneut || setzeQuelleZurueck(jetzt, ort);
+    const int clip = findeClip(jetzt, ort);
+    const bool gleich = zurueck && clip >= 0 && clipDatei(jetzt, ort.kanal, clip) == m_bounceVorher;
+    if (!welle || welle->klang.frames() == 0 || !gleich)
+    {
+        if (!gleich) m_bounceBericht << tr("The clip changed while bouncing — nothing was replaced");
+        else m_bounceBericht << tr("Could not bounce %1").arg(clipText(fertig->loop(), ort));
+        zeigeStand();
+        return;
+    }
+    // die Datei: ein eigenes Sample (WV2 a), benannt nach dem Muster, nie ueber ein vorhandenes
+    const LoopClip& quelle = fertig->loop().kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(findeClip(fertig->loop(), ort))];
+    QString titel = quelle.muster + QStringLiteral(" bounce");
+    if (!eigeneSampleDatei(eigenerName(titel)).isEmpty()) titel = vorschlagKopieTitel(titel);
+    const QString nennung = speichereAufnahme(welle->klang.daten, welle->rate, titel);
+    if (nennung.isEmpty())
+    {
+        m_bounceBericht << tr("Could not write the bounced file to My samples");
+        zeigeStand();
+        return;
+    }
+    Loop neu = m_loop;
+    if (erneut)
+    {
+        if (erneuereBounce(neu, m_bounceWave, fertig->loop(), ort, nennung, *welle)) bearbeite(neu, tr("Bounce again"));
+    }
+    else if (!setzeBounceEin(neu, ort, nennung, *welle).isEmpty())
+        bearbeite(neu, tr("Bounce to wave clip"));
+    zeigeStand();
+}
+
+void LoopPanel::warteAufBounce()
+{
+    while (m_bounce != nullptr)
+    {
+        m_bounce->warte();
+        pruefeBounce();
+    }
 }
 
 void LoopPanel::warteAufFreeze()

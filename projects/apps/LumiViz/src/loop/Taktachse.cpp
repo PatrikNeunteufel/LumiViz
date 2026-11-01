@@ -7,6 +7,7 @@
 
 #include "UI/widgets/Farbreihen.hpp"  // dieselben Farbreihen wie die Kanaele des Composers (S128, N1 b)
 #include "loop/Bearbeiten.hpp"
+#include "loop/Bounce.hpp"  // Stufe 15k-2
 
 #include <QAction>
 #include <QContextMenuEvent>
@@ -675,7 +676,7 @@ void Taktachse::paintEvent(QPaintEvent*)
             // Stufe 15e (SK15-1 a): die Marken eines Wave-Clips — ~ Follow tempo, ♪ Autotune
             if (basis != nullptr && basis->art == MusterArt::Wave && r.width() >= 48 && namePasst(r.height()))
             {
-                if (const QString marke = waveMarke(*basis); !marke.isEmpty())
+                if (const QString marke = waveMarke(*basis, m_loop); !marke.isEmpty())
                 {
                     const int breit = fontMetrics().horizontalAdvance(marke) + 8;
                     const int markeHoch = std::min(r.height() - 4, fontMetrics().height() + 2);
@@ -1804,6 +1805,14 @@ QString Taktachse::waveMarke(const Muster& basis)
     return marke;
 }
 
+QString Taktachse::waveMarke(const Muster& basis, const Loop& loop)
+{
+    // Stufe 15k-2 (WV7 a): nach Bounce, wenn das Muster der Herkunft nicht mehr so ist
+    QString marke = waveMarke(basis);
+    if (quelleGeaendert(loop, basis)) marke += (marke.isEmpty() ? QString() : QStringLiteral(" ")) + tr("source changed");
+    return marke;
+}
+
 void Taktachse::zeichneWelle(QPainter& p, const Muster& basis, const LoopClip& clip, const QRect& r)
 {
     if (basis.wave.datei.isEmpty() || m_loop.bpm <= 0.0 || m_loop.schritteJeSchlag <= 0) return;
@@ -1988,6 +1997,30 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         }
         QAction* freeze = menu.addAction(freezeEintrag, this, [this, ein = !alleEingefroren] { (void)verlangeFreeze(ein); });
         freeze->setObjectName(QStringLiteral("loopClipFreeze"));
+        // Stufe 15k-2 (WV7 a): ein Drum- oder Instrument-Clip wird zum Wave-Clip; nach Bounce zurueck oder neu
+        {
+            const int start = m_loop.kanaele[static_cast<std::size_t>(clipKanal)].clips[static_cast<std::size_t>(clip)].startTakt;
+            const Muster* basis =
+                m_loop.findeMuster(m_loop.kanaele[static_cast<std::size_t>(clipKanal)].clips[static_cast<std::size_t>(clip)].muster);
+            if (basis != nullptr && basis->art == MusterArt::Wave && hatQuelle(*basis))
+            {
+                QAction* nochmal = menu.addAction(tr("Bounce again"), this,
+                                                  [this, clipKanal, start] { Q_EMIT bounceVerlangt(clipKanal, start, true); });
+                nochmal->setObjectName(QStringLiteral("loopBounceAgain"));
+                nochmal->setEnabled(!gruppe);
+                QAction* zurueck = menu.addAction(tr("Revert to source"), this,
+                                                  [this, clipKanal, start] { Q_EMIT quelleVerlangt(clipKanal, start); });
+                zurueck->setObjectName(QStringLiteral("loopRevertToSource"));
+                zurueck->setEnabled(!gruppe);
+            }
+            else if (basis != nullptr && basis->art != MusterArt::Wave)
+            {
+                QAction* bounce = menu.addAction(tr("Bounce to wave clip"), this,
+                                                 [this, clipKanal, start] { Q_EMIT bounceVerlangt(clipKanal, start, false); });
+                bounce->setObjectName(QStringLiteral("loopBounce"));
+                bounce->setEnabled(!gruppe);
+            }
+        }
         // Stufe 33 (PE1, LC1 a): die Basis oder der Clip als Datei — nur einer
         QAction* exportMuster =
             menu.addAction(tr("Export pattern..."), this, [this, clipKanal, clip] { (void)exportiereMuster(clipKanal, clip); });
