@@ -167,6 +167,10 @@ public:
     [[nodiscard]] double dateiVonX(double x) const;
     /// Die Zielnote unter dem Ort (−1 = keine).
     [[nodiscard]] int noteBei(QPoint ort) const;
+    /// Findet der Verlauf im Ausschnitt (oder zwischen `von` und `bis`, Sekunden der Datei)
+    /// mindestens einen gesungenen Rahmen? Ohne Verlauf false.
+    [[nodiscard]] bool gesungenImAusschnitt() const;
+    [[nodiscard]] bool gesungenZwischen(double von, double bis) const;
 
 Q_SIGNALS:
     /// Ein Zug ist fertig: das neue Muster und ein Wort fuer Undo.

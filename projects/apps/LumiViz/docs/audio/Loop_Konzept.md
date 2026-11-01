@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.125.0
+> **Version:** 0.126.0
 > **Datum:** 2026-11-01 (Session 170)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -4381,7 +4381,11 @@ Klick wählt, Ziehen verschiebt in Zeit und Halbtönen (Shift: Cent), Kanten kü
 an, Ctrl+Klick teilt, Doppelklick oder Entf löscht; Menü *Split here*, *Join with next*, *Delete note*, *Clear notes*.
 Zeile darunter: Key, Scale, *Detect notes*, Strength, Speed (der gewählten Note, sonst die Vorgabe am Muster),
 *Selected section only*; findet *Detect notes* eine Stimme, während *General* gilt, steht „One voice found“ mit *Use
-Voice* da (WV6 a). Die Marke ♪ in der Taktachse gibt es seit 15e. Von Claude gesetzt: τ = Speed / 3, Hysterese 0,3,
+Voice* da (WV6 a). **Ohne Gesang** (nach Patriks erstem Versuch im Programm: eine Beatbox-Aufnahme, pYIN fand 0 von
+449 Rahmen gesungen, die gezogenen Zielnoten taten nichts): findet der Verlauf im Ausschnitt keinen gesungenen Rahmen,
+stehen in Spur und Zeile „No sung pitch in this section — Autotune needs a single sung voice (not beatbox or
+speech)“; findet *Detect notes* nichts, ersetzt es nichts und sagt „No notes found — nothing sung in this section“
+(bzw. „… the sung parts are too short“). Die Marke ♪ in der Taktachse gibt es seit 15e. Von Claude gesetzt: τ = Speed / 3, Hysterese 0,3,
 Lücke 60 ms, kürzeste Note 80 ms, die Schwellen für „eine Stimme“, die Höhe der Spur, kürzeste gezogene Note 20 ms,
 Messrate des Editors 44,1 kHz. Tests: `test_LoopAutotune` (Korrektur, *Detect notes*, Bearbeiten, Name, gerechnet mit
 *General* und *Voice* auf 3 Cent, Tonauftrag), in `test_LoopWaveEditor` „15i: die Spur Autotune“
@@ -4604,6 +4608,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.126.0** (S170, 2026-11-01): §4p 15i — Hinweis ohne Gesang im Wave editor; *Detect notes* ersetzt ohne Fund nichts.
 - **0.125.0** (S170, 2026-11-01): §4p 15i erledigt („Wie 15i gebaut ist“): die Spur Autotune — Korrektur, *Detect notes* mit Tonart, Spur und Zeile im Wave editor, *Use Voice*.
 - **0.124.0** (S170, 2026-11-01): §4p PY2 a — Talregel in Stufe 1 von pYIN (wie librosa), `kTonhoehenFassung` 2, Bericht an vocadito `proben/S170_pyin_vocadito.md`.
 - **0.123.0** (S170, 2026-11-01): §4p 15h erledigt („Wie 15h gebaut ist“, „Prüfstein 15h“): TD-PSOLA als *Voice*, Prüfstein an acht gerechneten Stimmen — PSOLA bleibt nach WV6 a; Befund pYIN bei hohen Stimmen (Frage PY2).

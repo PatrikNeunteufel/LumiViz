@@ -437,6 +437,31 @@ TEST_SUITE("LoopWaveEditor")
         }
     }
 
+    TEST_CASE("Loop Wave editor 15i: nichts gesungen — der Editor sagt es, Detect notes ersetzt nichts")
+    {
+        // nach dem ersten Versuch im Programm (S170): eine Beatbox-Aufnahme hat keine Tonhoehe, Zielnoten taeten nichts
+        Anwendung anwendung;
+        EigeneEinstellungen einstellungen;
+        Bestand b;  // der Dekodierer liefert gleichmaessigen Pegel: gemessen, aber nichts gesungen
+        WaveEditor& e = b.editor;
+        e.warteAufTonhoehe();
+        REQUIRE(e.tonhoeheBereit());
+        CHECK_FALSE(e.flaeche()->gesungenImAusschnitt());
+        const QString keinGesang =
+            QStringLiteral("No sung pitch in this section — Autotune needs a single sung voice (not beatbox or speech)");
+        CHECK(e.autotuneHinweis() == keinGesang);
+        // eine von Hand gezogene Note bleibt, Detect notes ersetzt sie nicht durch nichts
+        Loop mitNote = probe(b.datei);
+        musterIn(mitNote, QStringLiteral("Voc"))->wave.autotune.abschnitte = {{0.6, 0.9, 57, 0, 1.0, 20.0}};
+        mitNote.richte();
+        e.setLoop(mitNote);
+        CHECK(e.autotuneHinweis() == keinGesang);
+        CHECK_FALSE(e.erkenneNoten());
+        CHECK(e.autotuneHinweis() == QStringLiteral("No notes found — nothing sung in this section"));
+        CHECK(b.gemeldet.isEmpty());
+        CHECK_FALSE(e.stimmeVorgeschlagen());
+    }
+
     TEST_CASE("Loop Wave editor 15i: die Spur Autotune — messen, Detect notes, Zielnoten bearbeiten")
     {
         Anwendung anwendung;

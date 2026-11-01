@@ -142,6 +142,12 @@ QString notenText(const AutotuneAbschnitt& a)
     return text + QStringLiteral(" · %1 %").arg(std::lround(a.staerke * 100.0));
 }
 
+/// Gemessen, aber im Ausschnitt nichts gesungen (S170, nach dem ersten Versuch im Programm).
+QString keinGesangText()
+{
+    return WaveFlaeche::tr("No sung pitch in this section — Autotune needs a single sung voice (not beatbox or speech)");
+}
+
 }  // namespace
 
 WaveBild waveBildVon(const QString& datei, const Dekodierer& dekodierer, double maxSekunden)
@@ -274,6 +280,21 @@ double WaveFlaeche::midiVonY(double y) const
 double WaveFlaeche::dateiVonX(double x) const
 {
     return m_muster.wave.start + (schrittVonX(x) - m_muster.wave.versatz) * schrittMs() / 1000.0;
+}
+
+bool WaveFlaeche::gesungenImAusschnitt() const
+{
+    return gesungenZwischen(m_muster.wave.start, ausschnittEnde() > 0.0 ? ausschnittEnde() : 1e9);
+}
+
+bool WaveFlaeche::gesungenZwischen(double von, double bis) const
+{
+    for (std::size_t k = 0; k < m_verlauf.hz.size(); ++k)
+    {
+        const double t = m_verlauf.zeitS(k);
+        if (t >= von && t < bis && m_verlauf.hz[k] > 0.0f) return true;
+    }
+    return false;
 }
 
 int WaveFlaeche::noteBei(QPoint ort) const
@@ -645,6 +666,12 @@ void WaveFlaeche::zeichneAutotune(QPainter& p, const QRectF& spur)
                    tr("Autotune — the sung pitch is not measured yet"));
         p.restore();
         return;
+    }
+    // gemessen, aber nichts gesungen: Zielnoten taeten nichts — das sagen, statt still zu bleiben
+    if (!gesungenImAusschnitt())
+    {
+        p.setPen(farben.color(QPalette::WindowText));
+        p.drawText(spur.adjusted(40, 0, 0, 0), Qt::AlignVCenter | Qt::AlignLeft, keinGesangText());
     }
     // die gesungene Tonhoehe gestrichelt, die korrigierte fein darueber
     const std::vector<double> korrektur = autotuneKorrektur(alle, m_verlauf);
@@ -1698,6 +1725,8 @@ void WaveEditor::zeigeAutotune()
         hinweis = tr("Measuring pitch...");
     else if (!ziel->wave.datei.isEmpty() && !gemessen)
         hinweis = tr("Pitch not measured");
+    else if (!m_flaeche->gesungenImAusschnitt())
+        hinweis = keinGesangText();
     else if (gewaehlt != nullptr)
         hinweis = tr("Selected: %1").arg(notenText(*gewaehlt));
     else if (!at.abschnitte.empty())
@@ -1760,6 +1789,13 @@ bool WaveEditor::erkenneNoten()
         bis = alle[static_cast<std::size_t>(note)].ende;
     }
     const NotenErkennung gefunden = lumi::loop::erkenneNoten(verlauf, ziel->wave.autotune, von, bis);
+    if (gefunden.abschnitte.empty())
+    {
+        // nichts ersetzen, aber sagen, warum nichts geschieht
+        m_autotuneHinweis->setText(m_flaeche->gesungenZwischen(von, bis) ? tr("No notes found — the sung parts are too short")
+                                                                         : tr("No notes found — nothing sung in this section"));
+        return false;
+    }
     m_stimmeVorschlag = gefunden.eineStimme;
     m_flaeche->waehleNote(-1);
     const bool geaendert = aendere(tr("Detect notes"), [&gefunden, von, bis](Muster& m) {
