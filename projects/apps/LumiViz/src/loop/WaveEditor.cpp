@@ -198,6 +198,7 @@ void WaveFlaeche::setMuster(const Muster& muster, const Loop& loop)
     // ein Schritt in ms — wie `waveKlangVon` ihn rechnet
     m_schrittMs = loop.bpm > 0.0 && loop.schritteJeSchlag > 0 ? 60000.0 / loop.bpm / loop.schritteJeSchlag : 0.0;
     m_schritteJeTakt = loop.schritteJeTakt();
+    m_tempo = waveTempoFaktor(muster.wave, loop.bpm);
     if (m_zug == Zug::Keiner) m_vorher = muster;
     if (m_note >= static_cast<int>(m_muster.wave.autotune.abschnitte.size())) waehleNote(-1);
     berechneTonbereich();
@@ -279,7 +280,7 @@ double WaveFlaeche::midiVonY(double y) const
 
 double WaveFlaeche::dateiVonX(double x) const
 {
-    return m_muster.wave.start + (schrittVonX(x) - m_muster.wave.versatz) * schrittMs() / 1000.0;
+    return m_muster.wave.start + (schrittVonX(x) - m_muster.wave.versatz) * dateiJeSchritt();
 }
 
 bool WaveFlaeche::gesungenImAusschnitt() const
@@ -374,9 +375,9 @@ double WaveFlaeche::schrittVonX(double x) const
 
 double WaveFlaeche::schrittVonDatei(double sekunde) const
 {
-    const double ms = schrittMs();
-    if (ms <= 0.0) return m_muster.wave.versatz;
-    return m_muster.wave.versatz + (sekunde - m_muster.wave.start) * 1000.0 / ms;
+    const double jeSchritt = dateiJeSchritt();
+    if (jeSchritt <= 0.0) return m_muster.wave.versatz;
+    return m_muster.wave.versatz + (sekunde - m_muster.wave.start) / jeSchritt;
 }
 
 double WaveFlaeche::ausschnittEnde() const
@@ -557,8 +558,8 @@ void WaveFlaeche::paintEvent(QPaintEvent*)
             // die Sekunden der Datei unter dieser Spalte
             const double s0 = schrittVonX(x);
             const double s1 = schrittVonX(x + 1);
-            const double f0 = m_muster.wave.start + (s0 - m_muster.wave.versatz) * ms / 1000.0;
-            const double f1 = m_muster.wave.start + (s1 - m_muster.wave.versatz) * ms / 1000.0;
+            const double f0 = m_muster.wave.start + (s0 - m_muster.wave.versatz) * dateiJeSchritt();
+            const double f1 = m_muster.wave.start + (s1 - m_muster.wave.versatz) * dateiJeSchritt();
             if (f1 < 0.0 || f0 >= m_bild.sekunden) continue;
             const float spitze = waveSpitze(m_bild, f0, f1);
             const bool imAusschnitt = f0 >= m_muster.wave.start && f0 < ende;
@@ -1066,13 +1067,13 @@ void WaveFlaeche::resizeEvent(QResizeEvent* event)
 
 void WaveFlaeche::zieheWelle(QPoint ort, bool frei)
 {
-    const double ms = schrittMs();
-    if (ms <= 0.0) return;
+    const double jeSchritt = dateiJeSchritt();  // mit Follow tempo gedehnt (15j)
+    if (jeSchritt <= 0.0) return;
     const double schritt = schrittVonX(ort.x());
     WaveAngaben& w = m_muster.wave;
     const WaveAngaben& alt = m_vorher.wave;
     // die Sekunde der Datei unter der Maus, wie das Muster vor dem Zug lag
-    const double sekunde = alt.start + (schritt - alt.versatz) * ms / 1000.0;
+    const double sekunde = alt.start + (schritt - alt.versatz) * jeSchritt;
     const double ende = alt.ende > 0.0 ? alt.ende : (m_bild.sekunden > 0.0 ? m_bild.sekunden : 0.0);
     switch (m_zug)
     {
@@ -1082,7 +1083,7 @@ void WaveFlaeche::zieheWelle(QPoint ort, bool frei)
             const double bis = ende > 0.0 ? ende - kAusschnittMin : sekunde;
             const double neu = std::clamp(sekunde, 0.0, std::max(0.0, bis));
             w.start = neu;
-            w.versatz = alt.versatz + (neu - alt.start) * 1000.0 / ms;
+            w.versatz = alt.versatz + (neu - alt.start) / jeSchritt;
             break;
         }
         case Zug::Ende:
@@ -1303,9 +1304,8 @@ void WaveEditor::setupUI()
     m_bezugAufLoop->setToolTip(tr("The reference tempo becomes the tempo of the loop now"));
     m_folgt = new QCheckBox(tr("Follow tempo"), this);
     m_folgt->setObjectName(QStringLiteral("waveFollowTempo"));
-    m_folgt->setEnabled(false);
-    m_folgt->setToolTip(tr("Stretching to the tempo of the loop, without changing the pitch, comes in a later version. "
-                           "Until then the file plays as recorded"));
+    m_folgt->setToolTip(tr("Stretch the file from the reference tempo to the tempo of the loop, without changing the "
+                           "pitch — off: the file plays as recorded"));
     m_folgtHinweis = new QLabel(this);
     m_folgtHinweis->setObjectName(QStringLiteral("waveFollowHint"));
     m_folgtHinweis->setEnabled(false);
@@ -1420,6 +1420,7 @@ void WaveEditor::setupUI()
     connect(m_fadeOut, &QSpinBox::valueChanged, this, [this](int ms) { setzeFadeOut(ms); });
     connect(m_bezug, &QDoubleSpinBox::valueChanged, this, [this](double bpm) { setzeBezugBpm(bpm); });
     connect(m_bezugAufLoop, &QPushButton::clicked, this, [this] { setzeBezugAufLoop(); });
+    connect(m_folgt, &QCheckBox::toggled, this, [this](bool an) { setzeFolgtTempo(an); });
     connect(m_tonhoehe, &QComboBox::activated, this,
             [this](int index) { setzeTonhoehenArt(static_cast<TonhoehenArt>(m_tonhoehe->itemData(index).toInt())); });
     connect(m_sampleBearbeiten, &QPushButton::clicked, this, [this] {
@@ -1971,6 +1972,11 @@ void WaveEditor::setzeBezugAufLoop()
 {
     const double bpm = m_loop.bpm;
     (void)aendere(tr("Set reference to loop tempo"), [bpm](Muster& m) { m.wave.bezugBpm = bpm; });
+}
+
+void WaveEditor::setzeFolgtTempo(bool an)
+{
+    (void)aendere(an ? tr("Follow tempo") : tr("Play as recorded"), [an](Muster& m) { m.wave.folgtTempo = an; });
 }
 
 void WaveEditor::setzeTonhoehenArt(TonhoehenArt art)

@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.309.0
+> **Version:** 1.310.0
 > **Datum:** 2026-11-01 (Sessions 164 bis 170)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2628,12 +2628,13 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     ~~Icons für `.lvloop`, `.lvinst`, `.lvdata`~~ (seit S120); Wunsch an CMakeCraft: Daten-Ordner
     einer App als Angabe in `Solution.json`. Folge von D9 a: **eine unter
     `asset/` geänderte Datei sieht `LumiViz.exe` erst nach einem Bau**
-  - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — in Arbeit seit 2026-10-31 (S168): 15a bis 15i und
-    15k-1 erledigt (S169, S170), nächster Schritt 15j, Teilplan in
+  - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — in Arbeit seit 2026-10-31 (S168): 15a bis 15j und
+    15k-1 erledigt (S169, S170), nächster Schritt 15k-2, Teilplan in
     `Loop_Konzept.md` §4p. ⬜ **Im Programm ungesehen bzw. ungehört:** Wave editor (15d, Bilder
     `.claude/handover/wave_editor_15d.png`), Wave-Clips in der Taktachse (15e, `wave_achse_15e.png`), *Record wave
     clip* mit *Nothing — record right away*, Leuchte und stillem Einzählen (MH2 a, LD1 a), die Spur Pitch (15f), die
-    Spur Autotune (15i, Bild `.claude/handover/wave_autotune_15i.png`; Hören mit eigener Aufnahme), die
+    Spur Autotune (15i, Bild `.claude/handover/wave_autotune_15i.png`; Hören mit eigener Aufnahme), *Follow tempo*
+    (15j), die
     Hörproben des Prüfsteins 15h (`.claude/handover/hoerproben_15h/`, Liste im Bericht
     `docs/modellierung/wave-clips/proben/S170_pruefstein_15h.md`). Nicht ausgeglichen: die Eingangslatenz bei der
     freien Aufnahme (LD1 a). Beobachten in 15i: mit *Voice* folgt der Pegel den Formanten (bis −18 dB bei großen
@@ -2828,6 +2829,19 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Vorlage.
 
 ## 7. Backlog (bewusst nichts tun)
+
+### ⚪ Idee: bessere Tonhöhenerkennung für Autotune (Wunsch Patrik S170, „spätere Optimierung“)
+
+Heute misst pYIN (15g, PY2 a) jeden **einstimmigen Ton mit Tonhöhe** — Gesang, Summen, Pfeifen, ein einzelnes
+Instrument —, nicht aber Beatbox, Sprechen oder Akkorde (dort gibt es keine eine Tonhöhe; S170: `take_1` 0 von 449
+Rahmen). Wege für später, je eigener Entscheid mit Messung an vocadito und an Instrumenten:
+(a) **neuronale Erkennung** (SwiftF0, MIT, 14 386 Parameter, 47–2094 Hz, ONNX; CREPE/torchcrepe, MIT, TensorFlow bzw.
+PyTorch — laut Recherche `wave-clips/recherche/2026-10-31_S168_dehnen_tonhoehe_messung.md`): robuster bei Rauschen,
+Hall und leisem Grundton; offen: ONNX Runtime als External, Gleichheit MSVC/clang, Rechenzeit;
+(b) **mehrstimmige Erkennung** (Noten aus Akkorden, etwa für *Detect notes* an Gitarre oder Klavier) — korrigieren
+ließe sich damit nur mit Trennung der Stimmen, eine eigene große Stufe; Verfahren nicht recherchiert;
+(c) **Sprache und Rap**: Tonhöhe nur in stimmhaften Silben, Autotune dort als Effekt — pYIN findet sie, wenn die
+Stimme gesungen klingt; mehr nicht geprüft.
 
 ### ⚪ Befund: „Datensicherung: nur gewaehlte Bereiche“ einmal rot im vollen Lauf unter Testing-MSVC (S157)
 
@@ -6316,6 +6330,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.310.0 | 2026-11-01 | Session 170. §6 Loop: 15j gebaut (*Follow tempo*), nächster Schritt 15k-2; im Programm ungesehen. §7 Idee: bessere Tonhöhenerkennung für Autotune. |
 | 1.309.0 | 2026-11-01 | Session 170. §6 Loop: 15i gebaut (Spur Autotune), nächster Schritt 15j; im Programm ungesehen. |
 | 1.308.0 | 2026-11-01 | Session 170. §6 Loop: PY2 a (Talregel in pYIN) umgesetzt, nächster Schritt 15i. |
 | 1.307.0 | 2026-11-01 | Session 170. §6 Loop: Stufe 15 — 15h gebaut (TD-PSOLA als *Voice*, Prüfstein: PSOLA bleibt), Hörproben 15h offen, Frage PY2 (pYIN bei hohen Stimmen) vor 15i. |

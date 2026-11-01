@@ -1817,6 +1817,7 @@ void Taktachse::zeichneWelle(QPainter& p, const Muster& basis, const LoopClip& c
     const double schrittS = 60.0 / m_loop.bpm / m_loop.schritteJeSchlag;
     const WaveAngaben& w = basis.wave;
     const double ende = w.ende > 0.0 ? std::min(w.ende, bild.sekunden) : bild.sekunden;
+    const double tempo = waveTempoFaktor(w, m_loop.bpm);  // Stufe 15j: mit Follow tempo gedehnt
     const double mitte = r.center().y();
     const double halb = r.height() * 0.4;
     p.setPen(QColor(255, 255, 255, 110));
@@ -1827,8 +1828,8 @@ void Taktachse::zeichneWelle(QPainter& p, const Muster& basis, const LoopClip& c
         // die Stelle im Muster (jede Wiederholung beginnt neu) und die Sekunden der Datei dort
         const double s0 = std::fmod((x - r.left()) / pxJeTakt * schritteJeTakt, musterSchritte);
         const double s1 = s0 + schritteJeTakt / pxJeTakt;
-        const double f0 = std::max(w.start, w.start + (s0 - w.versatz) * schrittS);
-        const double f1 = std::min(ende, w.start + (s1 - w.versatz) * schrittS);
+        const double f0 = std::max(w.start, w.start + (s0 - w.versatz) * schrittS * tempo);
+        const double f1 = std::min(ende, w.start + (s1 - w.versatz) * schrittS * tempo);
         if (f1 <= f0) continue;
         const float spitze = waveSpitze(bild, f0, f1);
         p.drawLine(QPointF(x + 0.5, mitte - spitze * halb), QPointF(x + 0.5, mitte + spitze * halb));

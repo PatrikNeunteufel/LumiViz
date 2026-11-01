@@ -147,6 +147,11 @@ void richteAutotune(Autotune& autotune);
 /// reicht die Lage in beide Richtungen (weiter waere nichts zu hoeren).
 void richteWave(WaveAngaben& wave, double schritte);
 
+/// *Follow tempo* (Stufe 15j, WV1-1 a): so viel schneller spielt die Datei — Tempo des Loops durch
+/// Bezugstempo; ohne *Follow tempo* (oder ohne Tempo) genau 1. Die Tonhoehe bleibt. Eine Sekunde
+/// der Datei dauert im Muster 1 / Faktor Sekunden; die Lage bleibt in Schritten.
+[[nodiscard]] double waveTempoFaktor(const WaveAngaben& wave, double loopBpm);
+
 /// Wie die Werte in einer Datei heissen: `general`/`voice`, `chromatic`/`major`/`minor`.
 [[nodiscard]] QString tonhoehenArtName(TonhoehenArt art);
 [[nodiscard]] TonhoehenArt tonhoehenArtAusName(const QString& name);

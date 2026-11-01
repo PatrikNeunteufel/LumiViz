@@ -17,7 +17,8 @@
  * der Flaeche Key, Scale, *Detect notes*, Strength, Speed und *Selected section only*. Findet
  * *Detect notes* eine Stimme, schlaegt der Editor *Voice* vor (WV6 a).
  *
- * Noch grau, mit Hinweis: *Follow tempo* (15j).
+ * *Follow tempo* (Stufe 15j) dehnt auf das Tempo des Loops; die Welle zeigt die Datei dann
+ * gedehnt, die Griffe und Zielnoten folgen.
  *
  * Er aendert den Loop nicht selbst: er meldet die neue Fassung mit `bearbeitet`, das
  * Loop-Panel fuehrt sie ueber Undo aus und gibt sie mit `setLoop` zurueck.
@@ -223,11 +224,14 @@ private:
     void zieheWelle(QPoint ort, bool frei);
     void zieheSpurPunkt(QPoint ort, bool frei, bool fein);
     [[nodiscard]] double schrittMs() const { return m_schrittMs; }
+    /// So viele Sekunden der Datei liegen in einem Schritt — mit *Follow tempo* mal den Faktor (15j).
+    [[nodiscard]] double dateiJeSchritt() const { return m_schrittMs / 1000.0 * m_tempo; }
     void melde(const QString& was);
 
     Muster m_muster;
     Muster m_vorher;  ///< vor dem Zug — gemeldet wird nur, was sich geaendert hat
     double m_schrittMs = 125.0;  ///< ein Schritt beim Tempo des Loops
+    double m_tempo = 1.0;        ///< Stufe 15j: `waveTempoFaktor` des Musters
     int m_schritteJeTakt = 16;
     WaveBild m_bild;
     double m_marke = -1.0;
@@ -305,6 +309,8 @@ public:
     void setzeBezugBpm(double bpm);
     /// *Set to loop tempo*.
     void setzeBezugAufLoop();
+    /// *Follow tempo* (Stufe 15j): auf das Tempo des Loops gedehnt, die Tonhoehe bleibt.
+    void setzeFolgtTempo(bool an);
     void setzeTonhoehenArt(TonhoehenArt art);
 
     // --- Spur Autotune (Stufe 15i) ---------------------------------------------------

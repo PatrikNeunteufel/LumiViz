@@ -47,8 +47,10 @@ struct WaveKlang
     std::vector<SpurPunkt> tonhoehe;
     /// Stufe 15i: die Abschnitte der Spur Autotune (Sekunden der Datei); leer = ohne.
     std::vector<AutotuneAbschnitt> autotune;
+    /// Stufe 15j: *Follow tempo* — so viel schneller spielt die Datei (`waveTempoFaktor`); 1 = im Original.
+    double tempo = 1.0;
     /// Stufe 15h: *Pitch method* Voice (TD-PSOLA, `dehnerStimme()`) statt General. Wirkt nur
-    /// mit Spur Pitch oder Autotune; ohne beide immer false, damit der Name gleich bleibt.
+    /// mit Spur Pitch, Autotune oder Follow tempo; ohne alle immer false, damit der Name gleich bleibt.
     bool stimme = false;
 
     [[nodiscard]] bool operator==(const WaveKlang&) const = default;
@@ -59,7 +61,8 @@ struct WaveKlang
 /// Der Name: `wave:<start>,<ende>,<versatz>,<laenge>,<gain>,<fadeIn>,<fadeOut>|<datei>`, mit
 /// Spur Pitch je Punkt `;<ms>:<halbtoene>` vor dem `|` — die Zahlen so, dass sie genau
 /// zurueckgelesen werden, je Abschnitt Autotune `;at:<anfang>:<ende>:<ton>:<cent>:<strength>:<speed>`
-/// (Stufe 15i), mit *Voice* danach `;voice` (Stufe 15h). Ohne Spuren derselbe Name wie seit 15c.
+/// (Stufe 15i), mit *Follow tempo* `;tempo:<faktor>` (Stufe 15j), mit *Voice* danach `;voice`
+/// (Stufe 15h). Ohne Spuren und im Original derselbe Name wie seit 15c.
 [[nodiscard]] QString waveKlangName(const WaveKlang& klang);
 /// Den Namen wieder zerlegen. false = kein Klang eines Wave-Musters.
 bool zerlegeWaveKlang(const QString& name, WaveKlang& klang);
@@ -87,6 +90,9 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& klang);
 /// lang, die Tonhoehe bei Abtastwert k nach der Spur an der Stelle k / rate. Mit Abschnitten
 /// Autotune und dem Verlauf der Datei (`verlauf`, Stufe 15i) kommt die Korrektur an der Stelle
 /// (k + d) / rate der Datei dazu (`autotuneKorrektur`); ohne Verlauf wirkt Autotune nicht.
+/// Mit *Follow tempo* (`tempo` r ≠ 1, Stufe 15j) liegt Abtastwert k bei start · rate + (k − v) · r
+/// der Datei (v = Lage in Abtastwerten); hoerbar von max(0, v) bis v + (E − start · rate) / r,
+/// das Stueck geht immer durch den Dehner, die Tonhoehe bleibt.
 [[nodiscard]] Klang rechneWave(const WaveKlang& klang, const std::vector<float>& datei, int rate,
                                const Tonhoehenverlauf* verlauf = nullptr);
 

@@ -833,6 +833,13 @@
             "enabled": true,
             "gain": 7,
             "name": "vocal"
+        },
+        {
+            "clips": [
+            ],
+            "enabled": true,
+            "gain": 0,
+            "name": "Channel 4"
         }
     ],
     "format": "lumiviz-loop",
@@ -1426,15 +1433,12 @@
                 "key": 5,
                 "scale": "major",
                 "sections": [
-                    [0.11985927213895192, 0.822670458771897, 54, 0, 1, 63],
-                    [0.8281186075054857, 1.1550075315208093, 59, 0, 1, 63],
-                    [1.176800126455164, 1.5690668352735517, 57, 0, 1, 63]
                 ],
                 "speed": 20,
                 "strength": 1
             },
             "bars": 1,
-            "end": 0,
+            "end": 2.60258152173913,
             "fadeIn": 0,
             "fadeOut": 0,
             "file": "user:take_1",
@@ -1456,12 +1460,12 @@
                 ]
             },
             "name": "take_1",
-            "offset": 0,
+            "offset": 0.05000000000000002,
             "origin": {
             },
             "pitchMethod": "general",
             "referenceBpm": 92,
-            "start": 0
+            "start": 0.008152173913043483
         }
     ],
     "stepsPerBeat": 4,

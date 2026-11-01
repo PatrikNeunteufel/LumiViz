@@ -48,7 +48,8 @@ QString waveKlangName(const WaveKlang& k)
         name += QStringLiteral(";at:") + QStringList{zahl(a.anfang), zahl(a.ende), QString::number(a.zielHoehe),
                                                      QString::number(a.zielCent), zahl(a.staerke), zahl(a.speedMs)}
                                              .join(QLatin1Char(':'));
-    if (k.stimme && (!k.tonhoehe.empty() || !k.autotune.empty())) name += QLatin1Char(';') + kStimme;
+    if (k.tempo != 1.0) name += QStringLiteral(";tempo:") + zahl(k.tempo);  // Stufe 15j
+    if (k.stimme && (!k.tonhoehe.empty() || !k.autotune.empty() || k.tempo != 1.0)) name += QLatin1Char(';') + kStimme;
     return name + QLatin1Char('|') + k.datei;
 }
 
@@ -62,15 +63,25 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& k)
     const QStringList teile = rest.left(trenner).split(QLatin1Char(';'));
     std::vector<SpurPunkt> tonhoehe;
     std::vector<AutotuneAbschnitt> autotune;
+    double tempo = 1.0;
     bool stimme = false;
     for (qsizetype i = 1; i < teile.size(); ++i)
     {
-        // Stufe 15h: `;voice` als letztes, nur mit Spur
-        if (teile[i] == kStimme && i + 1 == teile.size() && (!tonhoehe.empty() || !autotune.empty()))
+        // Stufe 15h: `;voice` als letztes, nur mit Spur oder Follow tempo
+        if (teile[i] == kStimme && i + 1 == teile.size() && (!tonhoehe.empty() || !autotune.empty() || tempo != 1.0))
         {
             stimme = true;
             continue;
         }
+        // Stufe 15j: `;tempo:<faktor>` nach den Abschnitten
+        if (teile[i].startsWith(QLatin1String("tempo:")))
+        {
+            bool ok = false;
+            tempo = teile[i].mid(6).toDouble(&ok);
+            if (!ok || !std::isfinite(tempo) || tempo <= 0.0 || tempo == 1.0) return false;
+            continue;
+        }
+        if (tempo != 1.0) return false;  // nach dem Tempo kommt nur noch `voice`
         // Stufe 15i: ein Abschnitt Autotune
         if (teile[i].startsWith(QLatin1String("at:")))
         {
@@ -114,6 +125,7 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& k)
     neu.fadeOutMs = z[6];
     neu.tonhoehe = std::move(tonhoehe);
     neu.autotune = std::move(autotune);
+    neu.tempo = tempo;
     neu.stimme = stimme;
     k = std::move(neu);
     return true;
@@ -140,14 +152,16 @@ WaveKlang waveKlangVon(const Loop& loop, const Muster& muster)
     // Stufe 15i: nur Abschnitte, die etwas tun (Strength ueber 0)
     for (const AutotuneAbschnitt& a : w.autotune.abschnitte)
         if (a.staerke > 0.0) k.autotune.push_back(a);
-    k.stimme = (!k.tonhoehe.empty() || !k.autotune.empty()) && w.tonhoehenArt == TonhoehenArt::Stimme;  // Stufe 15h
+    k.tempo = waveTempoFaktor(w, loop.bpm);  // Stufe 15j
+    k.stimme = (!k.tonhoehe.empty() || !k.autotune.empty() || k.tempo != 1.0) && w.tonhoehenArt == TonhoehenArt::Stimme;  // Stufe 15h
     return k;
 }
 
 double waveBedarfSekunden(const WaveKlang& k)
 {
     // bis zum Ende der letzten hoerbaren Stelle: der Musteranfang liegt bei start − versatz in der Datei
-    double bis = k.startS + (k.laengeMs - k.versatzMs) / 1000.0;
+    // mit Follow tempo (Stufe 15j) braucht eine Sekunde des Musters `tempo` Sekunden der Datei
+    double bis = k.startS + (k.laengeMs - k.versatzMs) / 1000.0 * (k.tempo > 0.0 ? k.tempo : 1.0);
     if (k.endeS > 0.0) bis = std::min(bis, k.endeS);
     return std::max(0.0, bis) + 0.01;  // ein Rest fuer das Runden auf Abtastwerte
 }
@@ -164,27 +178,51 @@ Klang rechneWave(const WaveKlang& k, const std::vector<float>& datei, int rate, 
     if (rate <= 0) return klang;
     const auto dateiFrames = static_cast<std::int64_t>(datei.size() / 2);
     const std::int64_t n = std::max<std::int64_t>(0, static_cast<std::int64_t>(std::ceil(k.laengeMs * rate / 1000.0 - 1e-9)));
-    const std::int64_t d = std::llround((k.startS - k.versatzMs / 1000.0) * rate);
-    const std::int64_t anfang = std::llround(k.startS * rate);
     const std::int64_t ende = k.endeS > 0.0 ? std::min(dateiFrames, std::llround(k.endeS * rate)) : dateiFrames;
-    const std::int64_t a = std::max<std::int64_t>(0, anfang - d);
-    const std::int64_t b = std::min(n, ende - d);
-    if (b <= a) return klang;
+    // Stufe 15j: mit *Follow tempo* liegt Abtastwert k des Musters bei start + (k − v) · r in der
+    // Datei (v = die Lage in Abtastwerten, r = `tempo`); ohne genau wie seit 15c
+    const bool gedehnt = k.tempo != 1.0 && k.tempo > 0.0;
+    const double v = k.versatzMs * rate / 1000.0;
+    const std::int64_t d = std::llround((k.startS - k.versatzMs / 1000.0) * rate);
+    std::int64_t a = 0;
+    std::int64_t b = 0;
+    std::int64_t von = 0;  // der erste Abtastwert der Datei im hoerbaren Stueck
+    std::int64_t bis = 0;
+    if (!gedehnt)
+    {
+        a = std::max<std::int64_t>(0, std::llround(k.startS * rate) - d);
+        b = std::min(n, ende - d);
+        von = a + d;
+        bis = b + d;
+    }
+    else
+    {
+        const double anfang = k.startS * rate;
+        a = std::max<std::int64_t>(0, std::llround(v));
+        b = std::min(n, std::llround(v + (static_cast<double>(ende) - anfang) / k.tempo));
+        von = std::clamp<std::int64_t>(std::llround(anfang + (static_cast<double>(a) - v) * k.tempo), 0, dateiFrames);
+        bis = std::clamp<std::int64_t>(std::llround(anfang + (static_cast<double>(b) - v) * k.tempo), von, dateiFrames);
+    }
+    if (b <= a || bis <= von) return klang;
+    // die Sekunde der Datei unter Abtastwert i des hoerbaren Stuecks
+    const auto dateiSekunde = [&k, gedehnt, a, d, v, rate](std::int64_t i) {
+        return gedehnt ? k.startS + (static_cast<double>(a + i) - v) * k.tempo / rate : static_cast<double>(a + i + d) / rate;
+    };
 
     const double gain = waveGainFaktor(k.gainDb);
     const double fadeIn = k.fadeInMs * rate / 1000.0;
     const double fadeOut = k.fadeOutMs * rate / 1000.0;
-    // das hoerbare Stueck a … b aus der Datei; mit Spur Pitch durch den Dehner (Stufe 15f)
-    std::vector<float> stueck(datei.begin() + static_cast<std::ptrdiff_t>(2 * (a + d)),
-                              datei.begin() + static_cast<std::ptrdiff_t>(2 * (b + d)));
+    // das hoerbare Stueck aus der Datei; mit Spur Pitch, Autotune oder Follow tempo durch den Dehner
+    std::vector<float> stueck(datei.begin() + static_cast<std::ptrdiff_t>(2 * von),
+                              datei.begin() + static_cast<std::ptrdiff_t>(2 * bis));
     // Stufe 15i: die Korrektur aus Autotune je Rahmen der Datei
     const bool mitAutotune = !k.autotune.empty() && verlauf != nullptr && !verlauf->hz.empty();
     const std::vector<double> korrektur = mitAutotune ? autotuneKorrektur(k.autotune, *verlauf) : std::vector<double>{};
-    if (!k.tonhoehe.empty() || mitAutotune)
+    if (!k.tonhoehe.empty() || mitAutotune || gedehnt)
         stueck = (k.stimme ? dehnerStimme() : dehner())
-                     .rechne(stueck, rate, b - a, [&k, &korrektur, verlauf, mitAutotune, a, d, rate](std::int64_t i) {
+                     .rechne(stueck, rate, b - a, [&k, &korrektur, &dateiSekunde, verlauf, mitAutotune, a, rate](std::int64_t i) {
                          const double spur = k.tonhoehe.empty() ? 0.0 : kurveBei(k.tonhoehe, 1000.0 * static_cast<double>(a + i) / rate, 0.0);
-                         const double gezogen = mitAutotune ? autotuneBei(korrektur, *verlauf, static_cast<double>(a + i + d) / rate) : 0.0;
+                         const double gezogen = mitAutotune ? autotuneBei(korrektur, *verlauf, dateiSekunde(i)) : 0.0;
                          return spur + gezogen;
                      });
     klang.daten.assign(static_cast<std::size_t>(2 * b), 0.0f);

@@ -76,6 +76,12 @@ void richteAutotune(Autotune& autotune)
         liste.resize(static_cast<std::size_t>(kAutotuneAbschnitteMax));
 }
 
+double waveTempoFaktor(const WaveAngaben& wave, double loopBpm)
+{
+    if (!wave.folgtTempo || !(wave.bezugBpm > 0.0) || !(loopBpm > 0.0)) return 1.0;
+    return loopBpm / wave.bezugBpm;
+}
+
 void richteWave(WaveAngaben& wave, double schritte)
 {
     wave.datei = wave.datei.trimmed();

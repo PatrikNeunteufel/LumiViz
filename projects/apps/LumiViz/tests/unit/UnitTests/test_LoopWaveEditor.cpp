@@ -225,8 +225,8 @@ TEST_SUITE("LoopWaveEditor")
         CHECK(e.dateiInfoText() == QStringLiteral("2.00 s · 44100 Hz · mono"));
         CHECK(e.findChild<QSpinBox*>(QStringLiteral("waveBars"))->maximum() == kWaveTakteMax);
         CHECK(e.tempoHinweis() == QStringLiteral("plays as recorded when on — the tempos are the same"));
-        // grau: Follow tempo (15j); Record... seit 15k-1 hell; Edit sample... nur fuer ein eigenes
-        CHECK_FALSE(e.findChild<QCheckBox*>(QStringLiteral("waveFollowTempo"))->isEnabled());
+        // Follow tempo seit 15j und Record... seit 15k-1 hell; Edit sample... nur fuer ein eigenes
+        CHECK(e.findChild<QCheckBox*>(QStringLiteral("waveFollowTempo"))->isEnabled());
         CHECK(e.findChild<QPushButton*>(QStringLiteral("waveRecord"))->isEnabled());
         CHECK_FALSE(e.findChild<QPushButton*>(QStringLiteral("waveEditSample"))->isEnabled());
         // das Raster des Loops, ohne Swing offset (RS1-1 a)
@@ -435,6 +435,37 @@ TEST_SUITE("LoopWaveEditor")
             CHECK(f->schrittBreite() == doctest::Approx((f->width() - 4.0) / 16.0));
             CHECK(f->roll() == 0.0);
         }
+    }
+
+    TEST_CASE("Loop Wave editor 15j: Follow tempo — an und aus, die Welle folgt, Undo-Worte")
+    {
+        Anwendung anwendung;
+        EigeneEinstellungen einstellungen;
+        Bestand b;
+        WaveEditor& e = b.editor;
+        WaveFlaeche* f = e.flaeche();
+        auto* folgt = e.findChild<QCheckBox*>(QStringLiteral("waveFollowTempo"));
+        // Bezugstempo 60 bei einem Loop mit 120: Faktor 2
+        e.setzeBezugBpm(60.0);
+        CHECK(e.tempoHinweis() == QStringLiteral("plays 2.00× as fast when on"));
+        const double breiteAus = f->xVonDatei(1.0) - f->xVonDatei(0.5);
+        folgt->click();
+        CHECK(b.gemeldet.back() == QStringLiteral("Follow tempo"));
+        CHECK(b.wave().folgtTempo);
+        CHECK(folgt->isChecked());
+        // eine halbe Sekunde der Datei ist im Muster halb so breit; der Anfang des Ausschnitts bleibt
+        CHECK(f->xVonDatei(1.0) - f->xVonDatei(0.5) == doctest::Approx(breiteAus / 2.0));
+        CHECK(f->schrittVonDatei(0.5) == doctest::Approx(2.0));
+        CHECK(f->ausschnittEnde() == 1.0);
+        // der Klang traegt das Tempo; die Welle am Ende des Ausschnitts zu ziehen rechnet gedehnt
+        CHECK(b.zuletzt.klangNamen().join(QLatin1Char(' ')).contains(QStringLiteral(";tempo:2|")));
+        ziehe(f, QPoint(static_cast<int>(f->xVonDatei(1.0)), b.welleY()), QPoint(static_cast<int>(f->xVonDatei(0.75)), b.welleY()));
+        CHECK(b.gemeldet.back() == QStringLiteral("Trim wave end"));
+        CHECK(b.wave().ende == doctest::Approx(0.75).epsilon(0.02));
+        folgt->click();
+        CHECK(b.gemeldet.back() == QStringLiteral("Play as recorded"));
+        CHECK_FALSE(b.wave().folgtTempo);
+        CHECK_FALSE(b.zuletzt.klangNamen().join(QLatin1Char(' ')).contains(QStringLiteral(";tempo:")));
     }
 
     TEST_CASE("Loop Wave editor 15i: nichts gesungen — der Editor sagt es, Detect notes ersetzt nichts")
