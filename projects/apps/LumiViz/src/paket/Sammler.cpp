@@ -270,11 +270,18 @@ private:
         return {};
     }
 
-    /// Was die Muster eines Loops nennen: Instrument, Kit, je Spur Instrument oder Sample.
+    /// Was die Muster eines Loops nennen: Instrument, Kit, je Spur Instrument oder Sample;
+    /// ein Wave-Muster seine Datei als Sample (Stufe 15e, WV2 a) und was seine Herkunft nennt.
     void besucheMuster(const lp::Loop& loop, const QString& basis)
     {
         for (const lp::Muster& muster : loop.muster)
         {
+            if (muster.art == lp::MusterArt::Wave)
+            {
+                besuche(Art::Sample, muster.wave.datei, basis);
+                if (!muster.wave.herkunft.leer()) besucheMuster(muster.wave.herkunft.clip(), basis);
+                continue;
+            }
             if (muster.art == lp::MusterArt::Instrument)
             {
                 besuche(Art::Instrument, muster.instrument, basis);

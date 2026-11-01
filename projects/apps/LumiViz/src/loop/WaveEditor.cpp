@@ -5,6 +5,7 @@
 
 #include "loop/WaveEditor.hpp"
 
+#include "loop/AufnahmeFenster.hpp"
 #include "loop/Kit.hpp"  // klangDatei
 #include "loop/RasterZeile.hpp"
 #include "loop/Sample.hpp"
@@ -120,6 +121,17 @@ WaveBild waveBildVon(const QString& datei, const Dekodierer& dekodierer, double 
     }
     std::tie(bild.rate, bild.kanaele) = wavKopf(datei);
     return bild;
+}
+
+float waveSpitze(const WaveBild& bild, double von, double bis)
+{
+    if (bild.spitzen.empty() || bis < 0.0 || von >= bild.sekunden) return 0.0f;
+    const double jeSpitze = static_cast<double>(WaveBild::kSpitzenFrames) / WaveBild::kBildRate;
+    const auto i0 = static_cast<std::size_t>(std::max(0.0, von / jeSpitze));
+    const auto i1 = std::min(bild.spitzen.size(), static_cast<std::size_t>(std::max(0.0, bis / jeSpitze)) + 1);
+    float spitze = 0.0f;
+    for (std::size_t i = i0; i < i1; ++i) spitze = std::max(spitze, bild.spitzen[i]);
+    return spitze;
 }
 
 // --- die Flaeche ------------------------------------------------------------------------
@@ -326,7 +338,6 @@ void WaveFlaeche::paintEvent(QPaintEvent*)
         // der Rest der Datei: deutlich zu sehen, aber matt — in hellem und dunklem Thema
         QColor grau = farben.color(QPalette::WindowText);
         grau.setAlpha(80);
-        const double jeSpitze = static_cast<double>(WaveBild::kSpitzenFrames) / WaveBild::kBildRate;
         for (int x = 0; x < breite; ++x)
         {
             // die Sekunden der Datei unter dieser Spalte
@@ -335,10 +346,7 @@ void WaveFlaeche::paintEvent(QPaintEvent*)
             const double f0 = m_muster.wave.start + (s0 - m_muster.wave.versatz) * ms / 1000.0;
             const double f1 = m_muster.wave.start + (s1 - m_muster.wave.versatz) * ms / 1000.0;
             if (f1 < 0.0 || f0 >= m_bild.sekunden) continue;
-            const auto i0 = static_cast<std::size_t>(std::max(0.0, f0 / jeSpitze));
-            const auto i1 = std::min(m_bild.spitzen.size(), static_cast<std::size_t>(std::max(0.0, f1 / jeSpitze)) + 1);
-            float spitze = 0.0f;
-            for (std::size_t i = i0; i < i1; ++i) spitze = std::max(spitze, m_bild.spitzen[i]);
+            const float spitze = waveSpitze(m_bild, f0, f1);
             const bool imAusschnitt = f0 >= m_muster.wave.start && f0 < ende;
             const bool imMuster = s0 >= 0.0 && s0 < alle;
             p.setPen(imAusschnitt && imMuster ? hell : grau);
@@ -739,6 +747,11 @@ void WaveEditor::setupUI()
     datei->addWidget(m_fadeIn);
     datei->addWidget(new QLabel(tr("Fade out"), this));
     datei->addWidget(m_fadeOut);
+    m_hinweis = new QLabel(this);
+    m_hinweis->setObjectName(QStringLiteral("waveHint"));
+    m_hinweis->setEnabled(false);
+    datei->addSpacing(12);
+    datei->addWidget(m_hinweis);
     datei->addStretch(1);
     aussen->addLayout(datei);
 
@@ -811,7 +824,10 @@ void WaveEditor::setupUI()
     connect(m_tonhoehe, &QComboBox::activated, this,
             [this](int index) { setzeTonhoehenArt(static_cast<TonhoehenArt>(m_tonhoehe->itemData(index).toInt())); });
     connect(m_sampleBearbeiten, &QPushButton::clicked, this, [this] {
-        if (const Muster* m = basis()) Q_EMIT sampleBearbeitenVerlangt(m->wave.datei);
+        if (oeffneSampleBearbeiten()) return;
+        QMessageBox::information(this, tr("Edit sample"),
+                                 tr("This sample could not be opened. Edit sample... works on samples up to %1 s.")
+                                     .arg(AufnahmeFenster::kHoechstensSekunden, 0, 'f', 0));
     });
     connect(m_suchen, &QPushButton::clicked, this, [this] {
         QSettings einstellungen;
@@ -849,6 +865,70 @@ void WaveEditor::setDekodierer(Dekodierer dekodierer)
     m_dekodierer = std::move(dekodierer);
     m_bildVon.clear();
     ladeBild();
+    m_dateiInfo->setText(dateiInfoText());
+}
+
+void WaveEditor::setEngineGeber(std::function<IAudioEngine*()> geber)
+{
+    m_engineGeber = std::move(geber);
+}
+
+AufnahmeFenster* WaveEditor::aufnahmeFenster() const
+{
+    return m_aufnahme;
+}
+
+void WaveEditor::setHinweis(const QString& text)
+{
+    if (m_hinweis->text() != text) m_hinweis->setText(text);
+}
+
+bool WaveEditor::oeffneSampleBearbeiten(bool zeigen)
+{
+    const Muster* m = basis();
+    if (m == nullptr || !istEigenerKlang(m->wave.datei) || !m_dekodierer) return false;
+    if (m_flaeche->bild().sekunden > AufnahmeFenster::kHoechstensSekunden) return false;
+    std::vector<float> stereo =
+        m_dekodierer(klangDatei(m->wave.datei), kSampleRate, AufnahmeFenster::kHoechstensSekunden + 1.0);
+    if (stereo.empty()) return false;
+    if (m_aufnahme == nullptr)
+    {
+        m_aufnahme = new AufnahmeFenster(this);
+        connect(m_aufnahme, &AufnahmeFenster::gespeichert, this,
+                [this](const QString& nennung, double vornWegMs) { nimmBearbeitetes(nennung, vornWegMs); });
+    }
+    // die Engine, wie sie jetzt ist — sie kann seit dem letzten Mal eine andere sein
+    m_aufnahme->setEngine(m_engineGeber ? m_engineGeber() : nullptr);
+    m_bearbeitet = m->wave.datei;
+    m_aufnahme->bearbeite(m_bearbeitet, std::move(stereo), kSampleRate);
+    if (zeigen)
+    {
+        m_aufnahme->show();
+        m_aufnahme->raise();
+        m_aufnahme->activateWindow();
+    }
+    return true;
+}
+
+void WaveEditor::nimmBearbeitetes(const QString& nennung, double vornWegMs)
+{
+    const Muster* m = basis();
+    if (m == nullptr) return;
+    // die Datei ist neu geschrieben: Bild und Klang neu
+    m_bildVon.clear();
+    if (nennung != m->wave.datei)
+        setzeDatei(nennung);  // Save as...: das Muster nennt die neue Datei
+    else if (vornWegMs > 0.0 && nennung == m_bearbeitet)
+    {
+        // vorn weggeschnitten: der Ausschnitt rueckt mit, der Ton bleibt, wo er ist
+        const double weg = vornWegMs / 1000.0;
+        (void)aendere(tr("Edit sample"), [weg](Muster& muster) {
+            muster.wave.start = std::max(0.0, muster.wave.start - weg);
+            if (muster.wave.ende > 0.0) muster.wave.ende = std::max(muster.wave.start + 0.01, muster.wave.ende - weg);
+        });
+    }
+    zeigeAlles();
+    Q_EMIT klaengeGeaendert();
 }
 
 bool WaveEditor::zeige(const Loop& loop, const QString& muster)
@@ -905,8 +985,10 @@ void WaveEditor::zeigeAlles()
     m_datei->setText(w.datei.isEmpty() ? tr("(none)") : sampleTitel(w.datei));
     m_datei->setToolTip(QDir::toNativeSeparators(w.datei));
     m_sampleBearbeiten->setEnabled(istEigenerKlang(w.datei));
-    m_sampleBearbeiten->setToolTip(istEigenerKlang(w.datei) ? tr("Open this sample in the Record sample window")
-                                                             : tr("Only one of My samples can be edited here"));
+    m_sampleBearbeiten->setToolTip(istEigenerKlang(w.datei)
+                                       ? tr("Open this sample in the Record sample window (up to %1 s)")
+                                             .arg(AufnahmeFenster::kHoechstensSekunden, 0, 'f', 0)
+                                       : tr("Only one of My samples can be edited here"));
     m_folgtHinweis->setText(tempoHinweis());
     m_rasterZeile->zeige(m_loop, *ziel);
     ladeBild();

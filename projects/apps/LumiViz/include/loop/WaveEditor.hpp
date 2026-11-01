@@ -24,6 +24,7 @@
 #include "loop/Loop.hpp"
 #include "loop/Tonauftrag.hpp"  // Dekodierer
 
+#include <QPointer>
 #include <QString>
 #include <QWidget>
 
@@ -31,6 +32,7 @@
 #include <optional>
 #include <vector>
 
+class IAudioEngine;
 class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
@@ -42,6 +44,7 @@ class QSpinBox;
 namespace lumi::loop
 {
 
+class AufnahmeFenster;
 class RasterZeile;
 
 /// Was von einer Tondatei zu zeigen ist: ihre Spitzen und was sie ist.
@@ -62,6 +65,8 @@ struct WaveBild
 /// Das Bild einer Datei rechnen: dekodiert ueber `dekodierer` (bis `maxSekunden`), Rate und
 /// Kanaele aus dem Kopf, wenn es eine WAV ist. Leer (sekunden 0) = nicht zu lesen.
 [[nodiscard]] WaveBild waveBildVon(const QString& datei, const Dekodierer& dekodierer, double maxSekunden = 3600.0);
+/// Die groesste Spitze zwischen den Sekunden `von` und `bis` der Datei; 0 ausserhalb.
+[[nodiscard]] float waveSpitze(const WaveBild& bild, double von, double bis);
 
 /// Die Flaeche: Taktlineal, Spur Expression, Welle, Spur Autotune. Sie rollt selbst
 /// waagrecht (`setRoll`); ihr Muster haelt sie bis zum Loslassen, dann meldet sie es einmal.
@@ -186,6 +191,17 @@ public:
     /// Womit die Datei zum Zeigen dekodiert wird (das Loop-Panel reicht den der Engine).
     /// Ohne ihn zeigt die Flaeche keine Welle.
     void setDekodierer(Dekodierer dekodierer);
+    /// Wer die Engine nennt, ueber die das Fenster *Record sample* spielt (Stufe 15e).
+    void setEngineGeber(std::function<IAudioEngine*()> geber);
+    /// *Edit sample...*: das eigene Sample im Fenster *Record sample* oeffnen (wie im
+    /// Instrument-Creator). Speichert es, gilt danach die neue Fassung — unter neuem Namen
+    /// (*Save as...*) nennt das Muster diesen; was vorn weggeschnitten wurde, rueckt den
+    /// Ausschnitt mit, der Ton bleibt, wo er ist. false = kein eigenes Sample, nicht zu lesen
+    /// oder laenger als das Fenster fasst. `zeigen` false fuellt es nur (fuer Tests).
+    bool oeffneSampleBearbeiten(bool zeigen = true);
+    [[nodiscard]] AufnahmeFenster* aufnahmeFenster() const;
+    /// Ein Satz in der Zeile Datei: warum Play pattern gerade still ist. Leer = keiner.
+    void setHinweis(const QString& text);
 
     /// Spielt gerade dieses Muster allein — und wo steht es (Schritt im Muster)?
     void setSpielt(bool spielt, double schritt);
@@ -230,8 +246,8 @@ Q_SIGNALS:
     void spielenVerlangt(bool spielen);
     /// Ein Klick ins Lineal: spielt das Muster allein, springt es dorthin.
     void abspielstelleGewaehlt(int schritt);
-    /// *Edit sample...*: das eigene Sample im Fenster *Record sample* bearbeiten.
-    void sampleBearbeitenVerlangt(const QString& nennung);
+    /// *Edit sample...* hat die Datei neu geschrieben: wer spielt, laedt den Klang neu.
+    void klaengeGeaendert();
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -246,6 +262,13 @@ private:
     [[nodiscard]] const Muster* basis() const { return m_loop.findeMuster(m_muster); }
     /// Das Muster aendern und melden; false = es aenderte sich nichts.
     bool aendere(const QString& was, const std::function<void(Muster&)>& aenderung);
+    /// Was das Fenster *Record sample* gespeichert hat.
+    void nimmBearbeitetes(const QString& nennung, double vornWegMs);
+
+    std::function<IAudioEngine*()> m_engineGeber;
+    QPointer<AufnahmeFenster> m_aufnahme;
+    QString m_bearbeitet;  ///< das Sample, das *Edit sample...* geoeffnet hat
+    QLabel* m_hinweis = nullptr;
 
     Loop m_loop;
     QString m_muster;

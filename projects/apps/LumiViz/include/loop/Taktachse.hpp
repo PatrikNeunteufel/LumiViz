@@ -22,6 +22,7 @@
 #include "loop/Bearbeiten.hpp"
 #include "loop/Freeze.hpp"
 #include "loop/Loop.hpp"
+#include "loop/WaveEditor.hpp"  // WaveBild, Dekodierer (Stufe 15e)
 
 #include <QColor>
 #include <QPoint>
@@ -123,6 +124,21 @@ public:
     /// Einen leeren Clip (4 Takte) an den Takt legen — ein Drumkit oder, mit
     /// `MusterArt::Instrument`, ein Instrument. false = kein Platz.
     bool neuerClip(int kanal, int takt, MusterArt art = MusterArt::Drumkit);
+    /// *New wave clip...* (Stufe 15e, WV2 a): fragt nach einer Tondatei (`Dateiwahl`), dann
+    /// wie bei einer Sample-Schicht, ob sie zu den eigenen Samples kommt (S2 a), und legt den
+    /// Clip an (`setzeWaveClipEin`). false = abgebrochen oder nicht zu kopieren.
+    bool neuerWaveClip(int kanal, int takt);
+    /// Einen Wave-Clip fuer `nennung` an den Takt legen (`neuerWaveClip` in Bearbeiten.hpp):
+    /// die Laenge aus der Datei, ohne Platz ein neuer Kanal. false = nicht moeglich.
+    bool setzeWaveClipEin(int kanal, int takt, const QString& nennung);
+    /// Womit die Taktachse Wave-Dateien liest — fuer ihre Laenge und die Welle am Clip. Ohne
+    /// ihn zeigt ein Wave-Clip keine Welle, und ein neuer ist `kTakteNeu` lang.
+    void setzeDekodierer(Dekodierer dekodierer);
+    /// Das Bild einer Wave-Datei (gemerkt je Datei und Stand); leer = nicht zu lesen.
+    [[nodiscard]] const WaveBild& waveBild(const QString& nennung) const;
+    /// Was die Marke eines Wave-Clips sagt: „~“ (*Follow tempo* an), „♪“ (Autotune hat
+    /// Abschnitte), beides oder leer.
+    [[nodiscard]] static QString waveMarke(const Muster& basis);
     /// Eine verbundene Kopie hinter den angeklickten Clip legen — sind mehrere
     /// markiert, Kopien von allen, als Gruppe dahinter.
     bool dupliziereAuswahl();
@@ -296,6 +312,10 @@ private:
     void zieheAusdruck(QPoint ort, bool frei);
     /// Die Kurve eines Clips zeichnen (aus `paintEvent`).
     void zeichneAusdruck(QPainter& p, int kanal, int clip, const QRect& r);
+    /// Stufe 15e: die Welle eines Wave-Clips zeichnen, je Wiederholung (aus `paintEvent`).
+    void zeichneWelle(QPainter& p, const Muster& basis, const LoopClip& clip, const QRect& r);
+    Dekodierer m_dekodierer;                        ///< Stufe 15e: womit Wave-Dateien gezeigt werden
+    mutable std::map<QString, WaveBild> m_bilder;  ///< je Datei und Stand das Bild
     int m_ausdruckIndex = -1;    ///< der gegriffene Punkt
     bool m_ausdruckNeu = false;  ///< der Zug begann mit einem neuen Punkt
     bool m_hinweisAusdruck = false;  ///< der Hinweis spricht gerade von der Kurve

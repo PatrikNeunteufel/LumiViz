@@ -54,6 +54,7 @@ class ClipEffektFenster;
 class DrumEditor;
 class InstrumentEditor;
 class Taktachse;
+class WaveEditor;
 
 /// Die Antwort auf die Rueckfrage bei Ungespeichertem.
 enum class Rueckfrage
@@ -144,6 +145,9 @@ public:
     /// nach der Art der Basis; nullptr, solange noch kein Instrument-Muster
     /// geoeffnet wurde. Je Art gibt es ein Fenster.
     [[nodiscard]] InstrumentEditor* instrumentEditor() const;
+    /// Das Fenster des Wave editors (Stufe 15d/15e); nullptr, solange noch kein
+    /// Wave-Muster geoeffnet wurde.
+    [[nodiscard]] WaveEditor* waveEditor() const;
     /// Einen Ton des Instruments dieser Basis anspielen, einen Schlag lang
     /// (ein Klick auf eine Taste des Instrument-Editors). Spielt gerade der
     /// Loop oder ein Muster, geschieht nichts — man hoert es schon. false =
@@ -270,6 +274,7 @@ private:
     IEventBus::SubscriberHandle m_importSubscription;   ///< nach einem Import neu lesen (S125)
     QPointer<DrumEditor> m_editor;
     QPointer<InstrumentEditor> m_instrumentEditor;
+    QPointer<WaveEditor> m_waveEditor;  ///< Stufe 15e
     QPointer<ClipEffektFenster> m_effekte;
     int m_vorhoeren = 0;    ///< die Nummer des Tons, der gerade angespielt wird; 0 = keiner
     bool m_meldetSong = false;  ///< der Loop ist als laufender Song gemeldet (7a)

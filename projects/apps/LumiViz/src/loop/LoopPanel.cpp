@@ -24,6 +24,7 @@
 #include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
 #include "loop/Tonspeicher.hpp"
+#include "loop/WaveEditor.hpp"
 #include "shape/Kontur.hpp"  // zaehleZeichnungFassung
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
@@ -376,6 +377,11 @@ void LoopPanel::setupUI()
 
     m_achse = new Taktachse(this);
     m_achse->setZeilenProzent(QSettings().value(QLatin1String(kZeilenProzent), 100).toInt());
+    // Stufe 15e: Wave-Dateien liest die Taktachse ueber die Engine, wie sie beim Lesen ist
+    m_achse->setzeDekodierer([this](const QString& datei, int rate, double maxSekunden) {
+        IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+        return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};
+    });
     aussen->addWidget(new lumi::ui::AchsenRahmen(m_achse, this), 1);
 
     m_clipZeile = new QLabel(this);
@@ -526,6 +532,7 @@ void LoopPanel::neu()
     m_achse->setLoop(m_loop, true);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);  // seine Basis gibt es nicht mehr: er schliesst sich
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
+    if (m_waveEditor != nullptr) m_waveEditor->setLoop(m_loop);
     bestimmeFreeze();
     zeigeDatei();
     zeigeClip();
@@ -549,6 +556,7 @@ bool LoopPanel::lade(const QString& pfad)
     m_achse->setLoop(m_loop, true);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);  // gibt es seine Basis hier nicht, schliesst er sich
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
+    if (m_waveEditor != nullptr) m_waveEditor->setLoop(m_loop);
     // H1 a: die Toene schon jetzt im Hintergrund rechnen — Play findet sie dann im Speicher
     if (IAudioEngine* engine = services().tryResolve<IAudioEngine>()) m_spieler.ladeVor(*engine);
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
@@ -625,6 +633,7 @@ void LoopPanel::setzeLoop(const Loop& loop)
     m_achse->zeigeBearbeitet(m_loop);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
+    if (m_waveEditor != nullptr) m_waveEditor->setLoop(m_loop);
     bestimmeFreeze();  // Stufe 30g: veraendert, oder (nach Undo) wieder eingefroren
     zeigeDatei();
     zeigeClip();
@@ -707,6 +716,11 @@ DrumEditor* LoopPanel::editor() const
 InstrumentEditor* LoopPanel::instrumentEditor() const
 {
     return m_instrumentEditor;
+}
+
+WaveEditor* LoopPanel::waveEditor() const
+{
+    return m_waveEditor;
 }
 
 ClipEffektFenster* LoopPanel::effektFenster() const
@@ -942,8 +956,46 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
 {
     const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
     if (basis == nullptr) return false;
-    // ein Wave-Muster bekommt seinen Editor mit Stufe 15d — bis dahin keinen
-    if (basis->art == MusterArt::Wave) return false;
+    // Stufe 15e: ein Wave-Muster oeffnet den Wave editor (15d)
+    if (basis->art == MusterArt::Wave)
+    {
+        if (m_waveEditor == nullptr)
+        {
+            m_waveEditor = new WaveEditor(this);
+            connect(m_waveEditor, &WaveEditor::bearbeitet, this, &LoopPanel::bearbeite);
+            connect(m_waveEditor, &WaveEditor::spielenVerlangt, this, [this](bool spielen) {
+                if (spielen && m_waveEditor != nullptr)
+                    (void)spieleMuster(m_waveEditor->muster());
+                else
+                    halte();
+            });
+            connect(m_waveEditor, &WaveEditor::abspielstelleGewaehlt, this, [this](int schritt) {
+                if (m_waveEditor != nullptr && m_spieler.spielt() && m_solo == m_waveEditor->muster())
+                    (void)m_spieler.springe(schritt);
+            });
+            // Edit sample... hat die Datei neu geschrieben: der Klang wird neu geladen
+            connect(m_waveEditor, &WaveEditor::klaengeGeaendert, this, [this] {
+                if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
+                m_achse->update();
+                meldeStand();
+            });
+            m_waveEditor->setEngineGeber([this] { return services().tryResolve<IAudioEngine>(); });
+            m_waveEditor->setDekodierer([this](const QString& datei, int rate, double maxSekunden) {
+                IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+                return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};
+            });
+        }
+        m_waveEditor->setMarkierterClip(markierterClip());
+        if (!m_waveEditor->zeige(m_loop, muster)) return false;
+        if (zeigen)
+        {
+            m_waveEditor->show();
+            m_waveEditor->raise();
+            m_waveEditor->activateWindow();
+        }
+        zeigeStand();
+        return true;
+    }
     // die Art der Basis bestimmt den Editor (Stufe 9b): je Art ein Fenster
     if (basis->art == MusterArt::Instrument)
     {
@@ -1189,7 +1241,7 @@ void LoopPanel::beimTakt()
     }
     if (isVisible() || (m_editor != nullptr && m_editor->isVisible()) ||
         (m_instrumentEditor != nullptr && m_instrumentEditor->isVisible()) ||
-        (m_effekte != nullptr && m_effekte->isVisible()))
+        (m_waveEditor != nullptr && m_waveEditor->isVisible()) || (m_effekte != nullptr && m_effekte->isVisible()))
         zeigeStand();
 }
 
@@ -1250,6 +1302,7 @@ void LoopPanel::zeigeClip()
     // und ein Muster, das allein spielt, spielt mit seinen Effekten
     if (m_editor != nullptr) m_editor->setMarkierterClip(markierterClip());
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setMarkierterClip(markierterClip());
+    if (m_waveEditor != nullptr) m_waveEditor->setMarkierterClip(markierterClip());
     if (!m_solo.isEmpty() && m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
     // das Fenster der Effekte folgt den Marken — und jeder neuen Fassung
     if (m_effekte != nullptr) m_effekte->zeige(m_achse->loop(), m_achse->markierte());
@@ -1406,6 +1459,19 @@ void LoopPanel::zeigeStand()
                                        : allein && m_spieler.bereitet() ? tr("Updating sounds %1").arg(vorbereitet)
                                        : spielt       ? tr("Keys are silent while the loop plays")
                                                       : QString());
+    }
+    if (m_waveEditor != nullptr)
+    {
+        // Stufe 15e: wie die anderen Editoren — Marke, Spitze, warum Play pattern still ist
+        const bool allein = spielt && !m_solo.isEmpty() && m_solo == m_waveEditor->muster();
+        m_waveEditor->setSpielt(allein, m_spieler.stelleSchritte());
+        if (!allein) m_waveEditor->zeigeMarke(imMuster(m_waveEditor->muster(), false));
+        m_waveEditor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
+        const bool musterWartet = m_spieler.wartet() && m_solo == m_waveEditor->muster();
+        m_waveEditor->setHinweis(!darf          ? tr("The Composer plays the audio — Play pattern is silent")
+                                 : musterWartet ? tr("Preparing sounds… %1").arg(vorbereitet)
+                                 : allein && m_spieler.bereitet() ? tr("Updating sounds %1").arg(vorbereitet)
+                                                                  : QString());
     }
 
     QStringList zeilen = m_ladeBericht;

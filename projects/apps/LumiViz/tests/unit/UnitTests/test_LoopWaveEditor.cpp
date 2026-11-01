@@ -262,11 +262,10 @@ TEST_SUITE("LoopWaveEditor")
             REQUIRE(e.nimmDatei(b.datei, true));
             CHECK(b.wave().datei == QStringLiteral("user:voc"));
             CHECK(e.findChild<QPushButton*>(QStringLiteral("waveEditSample"))->isEnabled());
-            QStringList verlangt;
-            QObject::connect(&e, &WaveEditor::sampleBearbeitenVerlangt, [&verlangt](const QString& n) { verlangt << n; });
-            e.findChild<QPushButton*>(QStringLiteral("waveEditSample"))->click();
+            // Stufe 15e: das Fenster Record sample mit diesem Sample, nicht gezeigt
+            CHECK(e.oeffneSampleBearbeiten(false));
+            CHECK(e.aufnahmeFenster() != nullptr);
             setzeEigenenSampleOrdnerFuerTests(QString());
-            CHECK(verlangt == QStringList{QStringLiteral("user:voc")});
         }
         SUBCASE("FX: der Schalter des Bezugsclips")
         {

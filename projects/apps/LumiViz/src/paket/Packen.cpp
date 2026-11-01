@@ -107,6 +107,18 @@ private:
     {
         for (lp::Muster& muster : loop.muster)
         {
+            if (muster.art == lp::MusterArt::Wave)
+            {
+                // Stufe 15e (WV2 a): die Datei wie ein Sample; die Herkunft ebenso umgeschrieben
+                muster.wave.datei = neu(Art::Sample, muster.wave.datei, basis);
+                if (!muster.wave.herkunft.leer())
+                {
+                    lp::Loop herkunft = muster.wave.herkunft.clip();
+                    schreibeMusterUm(herkunft, basis);
+                    muster.wave.herkunft = lp::Herkunft(std::move(herkunft));
+                }
+                continue;
+            }
             if (muster.art == lp::MusterArt::Instrument)
             {
                 muster.instrument = neu(Art::Instrument, muster.instrument, basis);

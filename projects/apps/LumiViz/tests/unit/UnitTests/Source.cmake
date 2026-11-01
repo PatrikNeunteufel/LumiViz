@@ -183,6 +183,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWaveMuster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWaveKlang.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWaveEditor.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopWaveTaktachse.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishAustausch.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWiedergabe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpieler.cpp"

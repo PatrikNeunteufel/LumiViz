@@ -84,6 +84,15 @@ struct ClipOrt
 
 /// Der Platz des Clips in seinem Kanal; -1 = es gibt ihn nicht.
 [[nodiscard]] int findeClip(const Loop& loop, ClipOrt ort);
+
+/// Einen Wave-Clip anlegen (Stufe 15e, WV2 a, WV3 a): eine neue Basis, benannt nach der
+/// Datei (`titel`; ist er vergeben: „titel 1", „titel 2" …), die `nennung` spielt — so viele
+/// Takte, wie `sekunden` beim Tempo des Loops brauchen, aufgerundet (unbekannt, also 0:
+/// `kTakteNeu`); Bezugstempo = das Tempo des Loops. Ist im Kanal ab `startTakt` kein Platz
+/// dafuer, kommt der Clip in einen neuen Kanal am Ende, benannt nach der Basis (wie *Import
+/// pattern...*). Leer = kein solcher Kanal oder keine Nennung; nichts geaendert.
+std::optional<ClipOrt> neuerWaveClip(Loop& loop, int kanal, int startTakt, const QString& nennung,
+                                     const QString& titel, double sekunden);
 /// Der Clip, dessen Effekte ein Editor beim Abspielen seines Musters nimmt
 /// (Entscheid E1 a, S124): `markiert`, wenn er dieses Muster spielt — sonst
 /// der erste Clip des Musters (Kanaele und Clips der Reihe nach). Leer = das

@@ -100,6 +100,41 @@ QString folgeBasis(const Loop& alt, const QString& name, const Loop& neu)
     return folge;
 }
 
+std::optional<ClipOrt> neuerWaveClip(Loop& loop, int kanal, int startTakt, const QString& nennung,
+                                     const QString& titel, double sekunden)
+{
+    if (!gibtKanal(loop, kanal) || nennung.isEmpty() || startTakt < 0) return std::nullopt;
+    Muster basis;
+    const QString vorsatz = titel.trimmed().isEmpty() ? QStringLiteral("Wave") : titel.trimmed();
+    const auto vergeben = [&loop](const QString& name) { return loop.findeMuster(name) != nullptr; };
+    basis.name = vergeben(vorsatz) ? freierName(vorsatz, vergeben) : vorsatz;
+    basis.art = MusterArt::Wave;
+    // WV3 a: die Laenge bei Bezugstempo (= Tempo des Loops), aufgerundet auf Takte
+    const double taktSekunden = loop.bpm > 0.0 ? loop.schlaegeJeTakt * 60.0 / loop.bpm : 0.0;
+    basis.takte = sekunden > 0.0 && taktSekunden > 0.0
+                      ? std::clamp(static_cast<int>(std::ceil(sekunden / taktSekunden - 1e-9)), kTakteMin, kWaveTakteMax)
+                      : kTakteNeu;
+    basis.wave.datei = nennung;
+    basis.wave.bezugBpm = loop.bpm;
+    LoopClip clip;
+    clip.muster = basis.name;
+    clip.startTakt = startTakt;
+    if (!istFrei(loop, kanal, startTakt, basis.takte))
+    {
+        // kein Platz: ein neuer Kanal am Ende, wie beim Import (§4o)
+        Kanal neu;
+        neu.name = basis.name;
+        loop.kanaele.push_back(std::move(neu));
+        kanal = static_cast<int>(loop.kanaele.size()) - 1;
+    }
+    loop.muster.push_back(std::move(basis));
+    Kanal& ziel = loop.kanaele[static_cast<std::size_t>(kanal)];
+    ziel.clips.push_back(clip);
+    (void)ordne(ziel, startTakt);
+    loop.richte();
+    return ClipOrt{kanal, startTakt};
+}
+
 int neuerClip(Loop& loop, int kanal, int startTakt, MusterArt art)
 {
     if (!istFrei(loop, kanal, startTakt, kTakteNeu)) return -1;

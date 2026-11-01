@@ -15,6 +15,10 @@
 
 #include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include "loop/Instrument.hpp"           // eigenerName
+#include "loop/Kit.hpp"                  // klangDatei (Stufe 15e)
+#include "loop/Sample.hpp"
+#include "loop/SampleFrage.hpp"          // S2 a beim neuen Wave-Clip
+#include <QDateTime>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -26,6 +30,7 @@
 #include <QPainter>
 #include <QPalette>
 #include <QPolygonF>
+#include <QSettings>
 #include <QToolTip>
 #include <QWheelEvent>
 
@@ -41,6 +46,7 @@ namespace
 
 /// So nah an einer Kante des Clips greift die Maus die Kante statt des Clips.
 constexpr int kKantenNaehe = 6;
+const char* const kWaveOrdner = "loop/newWaveClipFolder";  ///< wo New wave clip... zuletzt war (Stufe 15e)
 
 /// Abstand der Striche im Lineal, in Ticks: die kleinste Zahl ganzer Takte,
 /// bei der die Beschriftungen nicht zusammenstossen (48 Pixel).
@@ -623,6 +629,9 @@ void Taktachse::paintEvent(QPaintEvent*)
             p.drawRoundedRect(
                 r.intersected(QRect(kopfBreite() - 12, r.top(), width() - kopfBreite() + 24, r.height())), 4, 4);
             p.setBrush(Qt::NoBrush);
+            // Stufe 15e (SK15-1 a): ein Wave-Clip zeigt seine Welle, unter Kurve und Namen
+            if (const Muster* welle = m_loop.findeMuster(clip.muster); welle != nullptr && welle->art == MusterArt::Wave)
+                zeichneWelle(p, *welle, clip, r);
             // Stufe 28e (Skizze §1a): die Expression als Kurve auf dem Clip, unter dem Namen
             zeichneAusdruck(p, k, c, r);
 
@@ -662,6 +671,24 @@ void Taktachse::paintEvent(QPaintEvent*)
                 namensFeld.setRight(feld.left() - 4);
                 frei = feld.left() - 4;
                 p.setPen(Qt::white);  // der Name bleibt hell, auch neben einer matten Marke
+            }
+            // Stufe 15e (SK15-1 a): die Marken eines Wave-Clips — ~ Follow tempo, ♪ Autotune
+            if (basis != nullptr && basis->art == MusterArt::Wave && r.width() >= 48 && namePasst(r.height()))
+            {
+                if (const QString marke = waveMarke(*basis); !marke.isEmpty())
+                {
+                    const int breit = fontMetrics().horizontalAdvance(marke) + 8;
+                    const int markeHoch = std::min(r.height() - 4, fontMetrics().height() + 2);
+                    const QRect feld(frei - breit, r.center().y() - markeHoch / 2, breit, markeHoch);
+                    p.setPen(Qt::NoPen);
+                    p.setBrush(QColor(0, 0, 0, 70));
+                    p.drawRoundedRect(feld, 3, 3);
+                    p.setBrush(Qt::NoBrush);
+                    p.setPen(Qt::white);
+                    p.drawText(feld, Qt::AlignCenter, marke);
+                    namensFeld.setRight(std::min(namensFeld.right(), feld.left() - 4));
+                    frei = feld.left() - 4;
+                }
             }
             // die Marke Freeze (Stufe 30g, FZ4 a A): links vom „fx" — durchgezogen eingefroren,
             // gepunktet beim Rechnen, gestrichelt und matter, wenn der Clip live spielt; ist kein
@@ -1713,6 +1740,101 @@ void Taktachse::setzeDateiwahlFuerTests(Dateiwahl wahl)
     dateiwahlImTest() = std::move(wahl);
 }
 
+// --- Stufe 15e: Wave-Clips -------------------------------------------------------------
+
+bool Taktachse::neuerWaveClip(int kanal, int takt)
+{
+    if (!m_geladen || m_griff != Griff::Keiner) return false;
+    QSettings einstellungen;
+    const QString ordner = einstellungen.value(QLatin1String(kWaveOrdner)).toString();
+    const QString titel = tr("New wave clip");
+    const QString filter = tr("Audio (*.wav *.mp3 *.flac *.ogg);;All files (*)");
+    const QString pfad = dateiwahlImTest() ? dateiwahlImTest()(false, titel, ordner, filter)
+                                           : QFileDialog::getOpenFileName(this, titel, ordner, filter);
+    if (pfad.isEmpty()) return false;
+    einstellungen.setValue(QLatin1String(kWaveOrdner), QFileInfo(pfad).absolutePath());
+    // WV2 a: dieselbe Frage wie bei einer Sample-Schicht (S2 a), mit demselben Merker
+    const SampleKopie wahl =
+        waehleSampleKopie(this, pfad, tr("Without a copy the pattern names the file at"), QStringLiteral("loopWaveCopyDialog"));
+    if (wahl == SampleKopie::Fragen) return false;
+    const QString nennung = wahl == SampleKopie::Kopieren ? nimmZuEigenen(pfad) : pfad;
+    if (nennung.isEmpty())
+    {
+        melde(this, QMessageBox::Warning, titel, tr("Could not copy %1 to My samples").arg(QDir::toNativeSeparators(pfad)));
+        return false;
+    }
+    return setzeWaveClipEin(kanal, takt, nennung);
+}
+
+bool Taktachse::setzeWaveClipEin(int kanal, int takt, const QString& nennung)
+{
+    if (!m_geladen || m_griff != Griff::Keiner) return false;
+    const double sekunden = waveBild(nennung).sekunden;
+    Loop neu = m_loop;
+    const std::optional<ClipOrt> ort =
+        lumi::loop::neuerWaveClip(neu, kanal, takt, nennung, QFileInfo(klangDatei(nennung)).completeBaseName(), sekunden);
+    if (!ort) return false;
+    m_gruppe.clear();  // markiert ist danach der neue Clip
+    uebernimm(neu, ort->kanal, findeClip(neu, *ort), tr("New wave clip"));
+    return true;
+}
+
+void Taktachse::setzeDekodierer(Dekodierer dekodierer)
+{
+    m_dekodierer = std::move(dekodierer);
+    m_bilder.clear();
+    update();
+}
+
+const WaveBild& Taktachse::waveBild(const QString& nennung) const
+{
+    const QString datei = klangDatei(nennung);
+    const QFileInfo info(datei);
+    const QString stand = datei + QLatin1Char('|') + QString::number(info.size()) + QLatin1Char('|') +
+                          QString::number(info.lastModified().toMSecsSinceEpoch());
+    if (const auto ort = m_bilder.find(stand); ort != m_bilder.end()) return ort->second;
+    return m_bilder.emplace(stand, waveBildVon(datei, m_dekodierer)).first->second;
+}
+
+QString Taktachse::waveMarke(const Muster& basis)
+{
+    QString marke;
+    if (basis.wave.folgtTempo) marke += QLatin1Char('~');
+    if (!basis.wave.autotune.abschnitte.empty()) marke += QChar(0x266A);
+    return marke;
+}
+
+void Taktachse::zeichneWelle(QPainter& p, const Muster& basis, const LoopClip& clip, const QRect& r)
+{
+    if (basis.wave.datei.isEmpty() || m_loop.bpm <= 0.0 || m_loop.schritteJeSchlag <= 0) return;
+    const WaveBild& bild = waveBild(basis.wave.datei);
+    if (bild.spitzen.empty()) return;
+    const int alle = basis.takte * std::max(1, clip.wiederholungen);
+    const double pxJeTakt = alle > 0 ? static_cast<double>(xVonTakt(clip.startTakt + alle) - xVonTakt(clip.startTakt)) / alle : 0.0;
+    if (pxJeTakt <= 0.0) return;
+    const double schritteJeTakt = m_loop.schritteJeTakt();
+    const double musterSchritte = basis.takte * schritteJeTakt;
+    const double schrittS = 60.0 / m_loop.bpm / m_loop.schritteJeSchlag;
+    const WaveAngaben& w = basis.wave;
+    const double ende = w.ende > 0.0 ? std::min(w.ende, bild.sekunden) : bild.sekunden;
+    const double mitte = r.center().y();
+    const double halb = r.height() * 0.4;
+    p.setPen(QColor(255, 255, 255, 110));
+    const int links = std::max(r.left() + 1, kopfBreite());
+    const int rechts = std::min(r.right() - 1, width());
+    for (int x = links; x < rechts; ++x)
+    {
+        // die Stelle im Muster (jede Wiederholung beginnt neu) und die Sekunden der Datei dort
+        const double s0 = std::fmod((x - r.left()) / pxJeTakt * schritteJeTakt, musterSchritte);
+        const double s1 = s0 + schritteJeTakt / pxJeTakt;
+        const double f0 = std::max(w.start, w.start + (s0 - w.versatz) * schrittS);
+        const double f1 = std::min(ende, w.start + (s1 - w.versatz) * schrittS);
+        if (f1 <= f0) continue;
+        const float spitze = waveSpitze(bild, f0, f1);
+        p.drawLine(QPointF(x + 0.5, mitte - spitze * halb), QPointF(x + 0.5, mitte + spitze * halb));
+    }
+}
+
 bool Taktachse::exportiereMuster(int kanal, int clip)
 {
     if (!m_geladen || kanal < 0 || kanal >= static_cast<int>(m_loop.kanaele.size())) return false;
@@ -1905,6 +2027,10 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
                 (void)neuerClip(kanal, takt, MusterArt::Instrument);
             });
             instrument->setEnabled(neu->isEnabled());
+            // Stufe 15e (SK15-1 a): eine Tondatei; reicht der Platz nicht, kommt sie in einen neuen Kanal
+            QAction* wave = menu.addAction(tr("New wave clip..."), this, [this, kanal, takt] { (void)neuerWaveClip(kanal, takt); });
+            wave->setObjectName(QStringLiteral("loopNewWaveClip"));
+            wave->setEnabled(istFrei(m_loop, kanal, takt, 1));
             // Stufe 33 (PE1, LC1 a): ab diesem Takt; ohne Platz in einem neuen Kanal
             menu.addAction(tr("Import pattern..."), this,
                            [this, kanal, takt] { (void)importiere(AustauschArt::Muster, kanal, takt); })
