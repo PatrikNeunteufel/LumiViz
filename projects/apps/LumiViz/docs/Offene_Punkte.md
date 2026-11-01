@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.304.0
-> **Datum:** 2026-10-31 (Sessions 164 bis 167)
+> **Version:** 1.305.0
+> **Datum:** 2026-11-01 (Sessions 164 bis 168)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2628,8 +2628,10 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     ~~Icons für `.lvloop`, `.lvinst`, `.lvdata`~~ (seit S120); Wunsch an CMakeCraft: Daten-Ordner
     einer App als Angabe in `Solution.json`. Folge von D9 a: **eine unter
     `asset/` geänderte Datei sieht `LumiViz.exe` erst nach einem Bau**
-  - ⚪ **15 Wave-Clips (Tonspuren wie Gesang) und Autotune am Clip** —
-    zurückgestellt (Patrik S113: Autotune darf warten, bis es Wave-Clips gibt)
+  - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — in Arbeit seit 2026-10-31 (S168): 15a erledigt
+    (Raster und Swing im Kopf des Loop-Panels, Swing offset je Muster, `.lvloop` Fassung 15; im Programm
+    ungesehen), Teilplan 15b–15m fest (`Loop_Konzept.md` §4p), nächster Schritt 15b. Offen vor 15g: eine Aufnahme
+    echten Gesangs für den Messfall (Quelle, Lizenz, Ablage)
   - 🟠 **Rückmeldung Patrik zum Instrument-Editor (S110):** Tasten anspielen
     und Notenlängen ziehen gingen bei ihm nicht — beides war gebaut.
     Nachgebessert (Griff, Mauszeiger, Hinweis bei stummen Tasten); **nicht
@@ -3208,7 +3210,7 @@ Idee Preset-Warmup/Pre-Roll.
   | 31d-8 · 8.1 | Hörurteil über `hoerproben_31d` (neun Dateien) | erledigt 2026-10-30 (PV1 a → ZZ1 a, Setzen nach Gehör in 8.5 und 8.6); Verlauf: `Spielweisen_Konzept` §4.1 von „Hörurteil S158“ bis PV1 a | — |
   | 31d-8 · 8.4 | *Grand piano demo* neu als ein Muster (HD1 a), Pegel alt = neu, Gain 0, ohne Freeze (DL1 a) | gebaut S157 (Muster *Piano*, 83 Noten; Spitze 0,066 → 0,277); voll Release-clang 1634 / 1634, Testing-MSVC 1633 / 1634 (rot nur ein Fall der Datensicherung, allein 5 / 5 grün — §7 Backlog); `LumiViz.exe` neu | — |
   | 31d-8 · 8.5 | Hörproben für das Setzen nach Gehör (ZZ1 a, PV1 a): je Taste 33, 60, 84 *Salamander* / Vorgabe / Suche „ohne A4“ (`proben/S165_suche2_probe_ohne_a4/`), dazu Patriks Wahl von u, γ, δ | in Arbeit seit 2026-10-30 (S166, 8.5): Hörtest `tools/hoertest` an `hoerproben_pv1` bereit, Antworten bei Patrik | — |
-  | 31d-8 · 8.5-HT | Hörtest über das Werkzeug HörTest_Helper (HT1 a–HT9 a, Konzept dort 0.2.0): Ordner `hoertest/` (HT8 a), Katalog Flügel, PV1 als Liste; `tools/hoertest/` entfällt danach | offen | HörTest_Helper Stufe S2 |
+  | 31d-8 · 8.5-HT | Hörtest über das Werkzeug HörTest_Helper (HT1 a–HT14 a, Konzept dort 0.3.0 §12): Ordner `hoertest/` (HT8 a), Katalog Flügel, PV1 als Liste (LV-2, freigegeben S168, Auftrag `.claude/handover/auftrag_LV-2_pv1_liste.md`), Behelf-Antworten umschreiben (LV-3, nach S2); `tools/hoertest/` entfällt danach | offen, LV-2 freigegeben 2026-10-31 (S168) | LV-3 nach HörTest_Helper Stufe S2 |
   | 31d-8 · 8.6 | Gehör eintragen (`baueVorgabe()`), Werkzeug, Wertedateien | offen | 8.5 |
   | 31d-8 · 8.7 | Abschluss: beide Compiler voll, Rechenzeit mit Taktprobe, `modell.md` §2 | offen | 8.6 |
   | 31d-9 | Nocturne Op. 9 Nr. 2 ganz (CH1 a): Übertragung nach UF15 a, ein Muster mit Pedal-Spur, Stimmen je Note (HD2 a, HD2-1 a: bis 16, neue Fassung der `.lvloop`) | 9.1–9.6 fertig (S158): ganz übertragen (TR1 a, Kistner gegengeprüft), `nocturne_demo` mitgeliefert (Daten `asset/loop/nocturne_op9_2.py`, 40 Takte, 3:38), Fader +1,4 dB (Spitze −1 dBFS), Werte und Klangfassung, Hörprobe; voll 1640 / 1640 unter Release-clang (587 s) und Testing-MSVC (600 s) — NP1 a (Fader +1,4 dB); Hörurteil (DY1 a) bei Patrik; **DY2 a ausgeführt (S160):** die gerechnete Nocturne hatte 21,6 LU Loudness Range (Patrik: „zu krass“), das Modell spreizt 0,9–1,4 dB je dB Stufe (gemessen A0 … A7), Quelle Goebl, Bresin & Galembo 2004 (Hammer 0,37–4,07 m/s = 21 dB) → Tafel ppp −21 … ff 0, Akzent und Gabel 4 dB, Fader +1,2 dB (Spitze −1,0 dBFS mit dem Boden nach HU4-1 a), 15,5 LU; **NP2 a (S161):** Fader +7 dB mit Limiter nach Patriks Hörurteil (+5 dB noch etwas leise; Spitze +4,8 dBFS, der Limiter fasst rund 0,7 s der Kadenz); Loop, Werte, Klangfassung nachgezogen | — |
@@ -6308,6 +6310,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.305.0 | 2026-11-01 | Session 168. §6 Loop: Stufe 15 Wave-Clips in Arbeit — 15a gebaut (Raster und Swing im Loop-Panel, Swing offset, Fassung 15), Teilplan 15b–15m; 8.5-HT: HT-1 entschieden, LV-2 freigegeben. |
 | 1.304.0 | 2026-10-31 | Session 167. §7 NEU „Muster, Clips und Spuren als Dateien“ (Stufe 33 gebaut, Sichttest offen; Befund `mitgelieferteLoopDateien` zählt Arbeitsdateien). |
 | 1.303.0 | 2026-10-30 | Session 167 (Opus 5.5). §7 Instrumente: *Chords* friert beim ersten Öffnen ein — Ursache gemessen (6373 einzelne `.lvchord`, frisch 25,6 s), AK1 a: Sammlungen `.lvchords` je Stimmung, lazy gelesen (`Saiten_Konzept` §5ze). |
 | 1.302.0 | 2026-10-30 | Session 166 (Opus 5.5). §7 Spielweisen: 31d-8 · 8.5 — Hörproben nach PV1 a an 33, 60, 84 (p, mf, ff; *Salamander* / Vorgabe / Suche „ohne A4“) unter `.claude/handover/hoerproben_pv1/`, dazu der blinde Hörtest `tools/hoertest/` (Wunsch Patrik); Antworten bei Patrik. Neu die Zeile 8.5-HT: Hörtest als eigenes Projekt HörTest_Helper (HT1 a–HT9 a). |

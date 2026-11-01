@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.111.0
-> **Datum:** 2026-11-01 (Session 168)
+> **Version:** 0.112.0
+> **Datum:** 2026-11-01 (Session 169)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -4184,6 +4184,18 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
 unter einer freien Lizenz oder von Patrik selbst; Quelle und Ablage (außerhalb des Repos wie *Salamander*) als Frage
 vor 15g.
 
+**Vorgabe Patrik (S169) zu 15k:** die Aufnahme berücksichtigt einen **später folgenden Live-Loop-Modus**. Heute nimmt
+die Engine ohne Bezug zur Wiedergabe auf (`IAudioEngine::recordStart` … `recordStop`, Stufe 11b: ein Puffer, keine
+Stelle im Loop, keine Latenz). Ein Live-Loop-Modus braucht Aufnahmen, die zur laufenden Wiedergabe gehören.
+
+- **WV10 a — Zielbild des Live-Loop-Modus (Patrik S169):** er nimmt auf, während der Loop läuft; Start und Stopp auf
+  einer Taktgrenze, auf Wunsch mit Einzählen; das Aufgenommene spielt ab der nächsten Wiederholung mit; weitere
+  Durchgänge legen sich als Schichten darüber (Overdub). Aufgenommen wird **Ton in Wave-Clips und live gespielte Noten
+  in Instrument- und Drum-Muster** (Tastatur des Rechners oder MIDI-Gerät); beide nehmen ihre Stelle im Loop aus
+  derselben Uhr und ziehen die gemessene Latenz ab. Verworfen b (nur Ton): ließe den Weg zu live gespielten Noten
+  liegen, für den L1 a den Rechenkern gewählt hat. Der Modus selbst ist eine eigene Stufe nach 15.
+- Was 15k von der gemeinsamen Grundlage selbst baut, ist offen (WV10-1).
+
 ### Abgleich mit den Quellen (S168)
 
 | Quelle | Wo im Plan |
@@ -4339,6 +4351,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.112.0** (S169, 2026-11-01): §4p Vorgabe Patrik zu 15k — die Aufnahme berücksichtigt einen späteren Live-Loop-Modus; WV10 a (Zielbild: Ton und Noten, Overdub, Taktgrenze, Latenzausgleich); WV10-1 offen.
 - **0.111.0** (S168, 2026-11-01): §4p 15a erledigt; SK15-1 a (Skizze der Wave-Clips als Beschreibung), WV8 a (vorab gerechnet), WV9 a (Autotune nur als Spur); „Was festliegt“ (Modell, Fassung 16, Grenzen), Teilplan 15b–15m, Abgleich mit Q1–Q10.
 - **0.110.0** (S168, 2026-10-31): §4p NEU Wave-Clips (Stufe 15): Quellen, Entscheide WV1 a, WV1-1 a, WV2 a–WV7 a, RS1 a, RS1-1 a; Recherche unter `modellierung/wave-clips/`; Stufentabelle Zeile 15.
 - **0.109.0** (S167, 2026-10-30): §4o NEU Muster, Clips und Spuren als Dateien (Stufe 33): `.lvpattern`, `.lvclip`, `.lvtrack`; Entscheide PE1, PE1-1 a, PE2 a, PE3 b, LC1 a; Teilschritte 33a–33f.
