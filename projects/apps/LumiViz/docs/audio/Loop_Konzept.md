@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.120.0
+> **Version:** 0.121.0
 > **Datum:** 2026-11-01 (Session 169)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -4296,9 +4296,17 @@ Kurve je Block, zweimal Bit für Bit gleich, kurze und leere Klänge, Bezugswert
 beide Compiler — neu mit `LUMIVIZ_DEHNER_BEZUG_SCHREIBEN=1` —, Rechenzeit); in `test_LoopWaveKlang` „15f: die Spur
 Pitch“, in `test_LoopWaveEditor` die Spur Pitch über die Fläche.
 
-**Offen vor 15g:** eine Aufnahme echten Gesangs für den Messfall — einstimmig, ohne Hall, mit Gleiten und Vibrato,
-unter einer freien Lizenz oder von Patrik selbst; Quelle und Ablage (außerhalb des Repos wie *Salamander*) als Frage
-vor 15g.
+**GA1 a — Messfall an Vocadito (Patrik S169):** der Messfall von 15g misst pYIN an **vocadito** (Bittner, Pasalo,
+Bosch, Meseguer Brocal, Rubinstein 2021; Zenodo 5578807, CC BY 4.0): 40 Ausschnitte einstimmigen Gesangs, mono 16 bit
+44,1 kHz, zusammen 817 s, mit beschrifteter Tonhöhe je 5,8 ms — gemessen werden der Anteil der Frames innerhalb 50 Cent,
+die Erkennung gesungen / nicht gesungen und Oktavfehler je Ausschnitt, mit `LUMIVIZ_VOCADITO=<Ordner>`; der Bericht
+unter `docs/modellierung/wave-clips/proben/`. Gleiten und Vibrato belegen zusätzlich gerechnete Töne mit bekanntem
+Verlauf; eine eigene Aufnahme Patriks ist jederzeit Hörprobe, kein Prüfmaß. Nachgesehen: in allen 40 Ausschnitten
+Gleiten (über 150 Cent in 50 ms), Schwanken über 20 Cent in 5–79 % der 200-ms-Fenster — die Kippbedingung (zu grob,
+zu wenig Bewegung) trifft nicht zu. Verworfen b (eigene Aufnahme ohne beschriftete Tonhöhe: nur Plausibilität).
+**Ablage** (Vorgabe Patrik, wie InstrumentsCalculation): `…\cmake\samples\Gesang\Vocadito_Zenodo5578807\`, im Repo
+`HERKUNFT.md`, `SHA256SUMS`, `LADELISTE.tsv` unter `docs/modellierung/wave-clips/daten/Vocadito_Zenodo5578807/`; nicht
+mehr Gebrauchtes archiviert Patrik auf die externe Platte.
 
 **Vorgabe Patrik (S169) zu 15k:** die Aufnahme berücksichtigt einen **später folgenden Live-Loop-Modus**. Heute nimmt
 die Engine ohne Bezug zur Wiedergabe auf (`IAudioEngine::recordStart` … `recordStop`, Stufe 11b: ein Puffer, keine
@@ -4516,6 +4524,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.121.0** (S169, 2026-11-01): §4p GA1 a — Messfall von 15g an vocadito (Zenodo 5578807, CC BY 4.0), Ablage unter `…\cmake\samples\Gesang\`, Herkunft im Repo unter `docs/modellierung/wave-clips/daten/`.
 - **0.120.0** (S169, 2026-11-01): §4p 15f erledigt („Wie 15f gebaut ist“): External Signalsmith Stretch, Schnittstelle `Dehner`, die Spur Pitch wirkt und steht im Wave editor.
 - **0.119.0** (S169, 2026-11-01): §4p LD1 a — Leuchte je Schlag, bei *Nothing* stilles Einzählen, Stop auf das Taktende, Trim silence nur hinten; „Wie 15k-1 gebaut ist“ nachgeführt.
 - **0.118.0** (S169, 2026-11-01): §4p MH2 a — *Nothing — record right away* als Vorgabe (frei wie ein Sample, auf ganze Takte); „Wie 15k-1 gebaut ist“ nachgeführt; LD1 (Leuchte je Takt) offen.
