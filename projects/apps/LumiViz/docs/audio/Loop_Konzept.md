@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.128.0
+> **Version:** 0.129.0
 > **Datum:** 2026-11-01 (Session 170)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -4077,7 +4077,8 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
   Stimmen mit bekannten Formanten (Formantlage vorher/nachher, Fehler der Zieltonhöhe in Cent, Rechenzeit, Gleichheit
   MSVC/clang), Hörproben an Patrik. Ohne Vorteil für PSOLA gilt b (nur Signalsmith), ohne neue Frage.
 - **WV7 a — Bounce:** *Bounce to wave clip* am Drum- und Instrument-Clip rechnet wie *Export audio…* und Freeze
-  (F3 a, alle Wiederholungen, Nachklang bis −60 dB, nicht über den Anfang des nächsten Clips im Kanal). Die WAV wird
+  (F3 a, alle Wiederholungen, Nachklang wie dort bis unter −96 dB — berichtigt mit BC1 a, vorher „bis −60 dB“ —, nicht
+  über den Anfang des nächsten Clips im Kanal). Die WAV wird
   ein eigenes Sample (WV2 a); das Wave-Muster: Länge des Clips plus Takte des Nachklangs, Bezugstempo = Tempo des
   Loops, *Follow tempo* aus. Der Clip wird **an seinem Ort ersetzt** (eine Wiederholung, keine Effekte, keine
   Expression — beides ist eingerechnet). Das Wave-Muster merkt sich die **Herkunft** als kleinen Loop in der Hülle
@@ -4178,7 +4179,7 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
 | 15i | Die Spur **Autotune** (WV4 a, WV9 a): Rechnung (Zielnoten, Strength, Speed, mit der Pitch-Spur zusammen), *Detect notes* mit Tonart, die Spur im Wave editor mit Zielnoten über der gemessenen Kurve, Marke ♪; Tests über das Fenster | erledigt 2026-11-01 (S170; eng unter Release-clang und Testing-MSVC) |
 | 15j | **Follow tempo** (B3, WV1-1 a): Bezugstempo, *Set to loop tempo*, Dehnen auf das Tempo des Loops, Marke ~; Tests mit Tempowechsel des Loops | erledigt 2026-11-01 (S170; eng unter Release-clang und Testing-MSVC) |
 | 15k-1 | **Aufnahme** (B5, WV10-1 a, WR1 a, SK15k-1 a; vor 15f gebaut): die Aufnahme an der Wiedergabe (Stelle in der Uhr, unabhängig von Wave-Clips), *Measure latency* je Paar aus Ein- und Ausgang; *Record wave clip...* bei laufendem Loop auf Taktgrenzen mit Einzählen, und *Record...* im Wave editor über das Fenster *Record sample*; Tests | erledigt 2026-11-01 (S169; eng 92 / 92 unter Release-clang und Testing-MSVC) |
-| 15k-2 | **Bounce** (B6, WV7 a): *Bounce to wave clip* mit Nachklang bis −60 dB, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | erledigt 2026-11-01 (S170; eng unter Release-clang und Testing-MSVC) |
+| 15k-2 | **Bounce** (B6, WV7 a, BC1 a): *Bounce to wave clip* mit Nachklang wie Freeze, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | erledigt 2026-11-01 (S170; eng unter Release-clang und Testing-MSVC) |
 | 15l | **Steuersignal** (B7, WV5 a): ein Baustein nennt einen Kanal, abgegriffen vor Fader und Schalter, genannte Kanäle zuerst, Kreis erkannt, Abdruck mit dem Kanal; ein Prüfbaustein im Test (die Talkbox ist eine eigene Stufe) | offen |
 | 15m | Abschluss: Benutzerhandbuch §16 und §17, Sichttest-Liste, Bereich und voller Lauf unter beiden Compilern | offen |
 
@@ -4421,6 +4422,12 @@ mit Herkunft **Bounce again** und **Revert to source**; die Marke **source chang
 „<Muster> bounce“, die Blende 20 ms, ein neues Sample je Bounce. Tests: `test_LoopBounce` (ohne Fenster und über das
 Panel mit Menü, Rechnung, Sample im Wegwerf-Ordner, Undo, *source changed*, *Bounce again*, *Revert to source*).
 
+- **BC1 a — Nachklang beim Bounce wie Freeze und Export (Patrik S170):** WV7 a nannte „Nachklang bis −60 dB“ und
+  zugleich „rechnet wie *Export audio…* und Freeze“ — die rechnen bis unter −96 dB (`kNachklangStilleDb`, WX4 a).
+  Berichtigt: eine Rechnung für Freeze, Export und Bounce. Gemessen (Klavier-Clip 4 s, Hall 1,8 s): Datei 5,55 s, über
+  −60 dBFS bis 4,57 s — beide Grenzen 3 Takte. Verworfen b (Schnitt bei −60 dB nur für Bounce). Kippt, wenn lange
+  Hallfahnen regelmäßig ganze Takte beinahe Stille anhängen.
+
 **Vorgabe Patrik (S169) zu 15k:** die Aufnahme berücksichtigt einen **später folgenden Live-Loop-Modus**. Heute nimmt
 die Engine ohne Bezug zur Wiedergabe auf (`IAudioEngine::recordStart` … `recordStop`, Stufe 11b: ein Puffer, keine
 Stelle im Loop, keine Latenz). Ein Live-Loop-Modus braucht Aufnahmen, die zur laufenden Wiedergabe gehören.
@@ -4637,6 +4644,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.129.0** (S170, 2026-11-01): §4p BC1 a — WV7 a berichtigt: Nachklang beim Bounce wie Freeze und Export (bis unter −96 dB).
 - **0.128.0** (S170, 2026-11-01): §4p 15k-2 erledigt („Wie 15k-2 gebaut ist“): *Bounce to wave clip*, *Bounce again*, *Revert to source*, *source changed*.
 - **0.127.0** (S170, 2026-11-01): §4p 15j erledigt („Wie 15j gebaut ist“): *Follow tempo* dehnt auf das Tempo des Loops, `waveTempoFaktor`, `;tempo:` im Namen.
 - **0.126.0** (S170, 2026-11-01): §4p 15i — Hinweis ohne Gesang im Wave editor; *Detect notes* ersetzt ohne Fund nichts.
