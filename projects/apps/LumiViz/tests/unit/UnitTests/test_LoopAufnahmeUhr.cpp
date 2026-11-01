@@ -33,6 +33,7 @@
 #include <QCoreApplication>
 #include <QLabel>
 #include <QSettings>
+#include <QSpinBox>
 #include <QTemporaryDir>
 
 #include <algorithm>
@@ -220,6 +221,34 @@ TEST_SUITE("LoopAufnahmeUhr")
             CHECK(loop.kanaele[1].clips.empty());
             CHECK(loop.durchlaufTakte() == 6);
         }
+        SUBCASE("die Leuchte (LD1 a): je Schlag kurz an, auf der Eins hell")
+        {
+            const Loop loop = vierTakte();  // 120 BPM, 4/4: ein Schlag 24 000, ein Takt 96 000
+            const auto an = static_cast<std::int64_t>(kLeuchteS * kRate);  // 5760
+            CHECK(leuchteBei(-1, loop, kRate) == Leuchte::Aus);
+            CHECK(leuchteBei(0, loop, kRate) == Leuchte::Eins);
+            CHECK(leuchteBei(an - 1, loop, kRate) == Leuchte::Eins);
+            CHECK(leuchteBei(an, loop, kRate) == Leuchte::Aus);
+            CHECK(leuchteBei(24000, loop, kRate) == Leuchte::Schlag);
+            CHECK(leuchteBei(72000 + 100, loop, kRate) == Leuchte::Schlag);
+            CHECK(leuchteBei(96000, loop, kRate) == Leuchte::Eins);
+            CHECK(leuchteBei(5 * 96000 + 3 * 24000, loop, kRate) == Leuchte::Schlag);
+            Loop dreiViertel = loop;
+            dreiViertel.schlaegeJeTakt = 3;
+            CHECK(leuchteBei(72000, dreiViertel, kRate) == Leuchte::Eins);
+        }
+        SUBCASE("GlatteUhr: zwischen den Bloecken fortgeschrieben, hoechstens 50 ms voraus")
+        {
+            GlatteUhr uhr;
+            CHECK(uhr.jetzt(0, kRate) == 0);
+            uhr.lies(1000, 0);
+            CHECK(uhr.jetzt(10, kRate) == 1480);
+            uhr.lies(1000, 20);  // derselbe Stand: die Zeit bleibt die des Wechsels
+            CHECK(uhr.jetzt(20, kRate) == 1960);
+            CHECK(uhr.jetzt(100, kRate) == 1000 + 2400);
+            uhr.lies(2200, 30);
+            CHECK(uhr.jetzt(30, kRate) == 2200);
+        }
         SUBCASE("die Latenz je Paar aus Eingang und Ausgang")
         {
             Anwendung anwendung;
@@ -396,16 +425,20 @@ TEST_SUITE("LoopAufnahmeUhr")
         auto* hinweis = fenster.findChild<QLabel*>(QStringLiteral("recordHeadphonesHint"));
         REQUIRE(hinweis != nullptr);
         CHECK(hinweis->text().startsWith(QStringLiteral("Without headphones the microphone hears the speakers")));
-        // frei: kein Einzaehlen, keine Laenge, keine Latenz
+        // frei: die Leuchte zaehlt still ein (LD1 a), keine Latenz
         auto* einzaehlen = fenster.findChild<QComboBox*>(QStringLiteral("recordCountIn"));
+        auto* latenz = fenster.findChild<QSpinBox*>(QStringLiteral("recordLatency"));
         REQUIRE(einzaehlen != nullptr);
-        CHECK_FALSE(einzaehlen->isEnabled());
-        CHECK(fenster.streifenText().contains(QStringLiteral("Record starts at once, nothing plays")));
+        REQUIRE(latenz != nullptr);
+        CHECK(einzaehlen->isEnabled());
+        CHECK_FALSE(latenz->isEnabled());
+        CHECK(fenster.streifenText() ==
+              QStringLiteral("the light counts in 1 bar | bar 3 – 4 · recording | nothing plays"));
         // Click only waehlen, wie mit der Maus: gemerkt, im Streifen gesagt, der Loop schweigt ab dem Take
         wahl->setCurrentIndex(1);
         Q_EMIT wahl->activated(1);
         CHECK(fenster.plan().mithoeren == Mithoeren::NurKlick);
-        CHECK(einzaehlen->isEnabled());
+        CHECK(latenz->isEnabled());
         CHECK(fenster.streifenText().endsWith(QStringLiteral("only the click plays")));
         REQUIRE(fenster.starteAufnahme());
         REQUIRE(gespielt.kanaele.size() == 2);
@@ -447,30 +480,47 @@ TEST_SUITE("LoopAufnahmeUhr")
         REQUIRE(fenster.starteAufnahme());
         CHECK_FALSE(gespielt);  // nichts spielt
         REQUIRE(engine.rufe == QStringList{QStringLiteral("start 3 48000 600")});
-        CHECK(fenster.streifenText().contains(QStringLiteral("recording — nothing plays")));
-        // 0,5 s Stille, 2,5 s Ton, 0,5 s Stille — wie es beim Sample ankaeme
-        std::vector<float> an;
-        const auto haenge = [&an](int frames, bool ton) {
+        CHECK(fenster.streifenText() == QStringLiteral("counting in with the light… | nothing plays"));
+        const auto haenge = [&engine](int frames, bool ton) {
+            std::vector<float> an;
             for (int k = 0; k < frames; ++k)
             {
                 const float wert = ton ? 0.5f * static_cast<float>(std::sin(2.0 * 3.14159265358979 * 220.0 * k / kRate)) : 0.0f;
                 an.insert(an.end(), {wert, wert});
             }
+            engine.block(an);
         };
+        // LD1 a: die Aufnahme ist die Uhr — Abtastwert 0 ist die Eins des Einzaehltakts
+        haenge(1000, false);
+        fenster.leuchtTakt();
+        CHECK(fenster.leuchte() == Leuchte::Eins);
+        haenge(kRate / 2 - 1000 + 100, false);  // knapp hinter Schlag 2
+        fenster.leuchtTakt();
+        CHECK(fenster.leuchte() == Leuchte::Schlag);
+        // der Rest des Einzaehlens, dann 0,5 s Stille und 2,5 s Ton — der Einsatz liegt auf Schlag 2
+        haenge(2 * kRate - kRate / 2 - 100, false);
         haenge(kRate / 2, false);
         haenge(kRate * 5 / 2, true);
-        haenge(kRate / 2, false);
-        engine.block(an);
         fenster.takt();
+        CHECK(fenster.streifenText().startsWith(QStringLiteral("recording bar 6")));
+        // Stop in Takt 6: die Aufnahme laeuft bis zum Ende des Takts
         REQUIRE(fenster.stoppeAufnahme());
+        CHECK_FALSE(engine.rufe.contains(QStringLiteral("stop")));
+        CHECK(fenster.streifenText().contains(QStringLiteral("ends at the end of the bar")));
+        haenge(kRate + kRate / 20, false);  // bis hinter das Ende von Takt 6
+        fenster.takt();
         CHECK(engine.rufe.contains(QStringLiteral("stop")));
-        // Trim silence wie beim Sample: um 2,5 s bleiben, das sind zwei Takte
-        CHECK(fenster.frames() == 3 * kRate + kRate / 2);
-        const auto bleibt = static_cast<double>(fenster.ergebnis().size() / 2) / kRate;
-        CHECK(bleibt > 2.4);
-        CHECK(bleibt < 3.0);
+        // der Take: zwei ganze Takte ab der Eins nach dem Einzaehlen; Trim silence nur hinten —
+        // die halbe Sekunde vor dem Einsatz bleibt, sonst rueckte er auf die Eins
+        CHECK(fenster.frames() == 4 * kRate);
+        const std::vector<float> take = fenster.ergebnis();
+        const auto bleibt = static_cast<double>(take.size() / 2) / kRate;
+        CHECK(bleibt > 3.0);
+        CHECK(bleibt < 3.2);
+        CHECK(take[2 * (kRate / 4)] == 0.0f);                  // vor dem Einsatz still
+        CHECK(std::abs(take[2 * (kRate / 2 + 60)]) > 0.01f);   // der Ton beginnt nach 0,5 s
         CHECK(fenster.takeTakte() == 2);
-        CHECK(fenster.streifenText() == QStringLiteral("take: bar 5 – 6 (2 bars)"));
+        CHECK(fenster.streifenText() == QStringLiteral("take: bar 5 – 6 (2 bars) | nothing plays"));
 
         QString nennung;
         int start = -1;

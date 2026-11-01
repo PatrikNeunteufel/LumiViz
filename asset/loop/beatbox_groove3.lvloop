@@ -202,9 +202,636 @@
         },
         {
             "clips": [
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 16
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 20
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 21
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 24
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 25
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 28
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 29
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 32
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 33
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 36
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 37
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 40
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 41
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 44
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 45
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 48
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 49
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 52
+                },
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "path": [
+                        {
+                            "damping": 0.29,
+                            "decay": 0.8,
+                            "mix": 0.25,
+                            "on": true,
+                            "size": 0.27,
+                            "type": "reverb"
+                        },
+                        {
+                            "drive": 0.3,
+                            "mix": 1,
+                            "on": true,
+                            "tone": 0.5,
+                            "type": "distortion"
+                        },
+                        {
+                            "damping": 0.3,
+                            "feedback": 0.4,
+                            "mix": 0.35,
+                            "on": false,
+                            "time": "1/2",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "take_1",
+                    "repeat": 1,
+                    "start": 53
+                }
             ],
             "enabled": true,
-            "gain": 0,
+            "gain": 7,
             "name": "Channel 4"
         }
     ],
@@ -793,6 +1420,45 @@
             "voices": [
             ],
             "volume": 1
+        },
+        {
+            "autotune": {
+                "key": 0,
+                "scale": "chromatic",
+                "sections": [
+                ],
+                "speed": 20,
+                "strength": 1
+            },
+            "bars": 1,
+            "end": 0,
+            "fadeIn": 0,
+            "fadeOut": 0,
+            "file": "user:take_1",
+            "followTempo": false,
+            "gain": 0,
+            "kind": "wave",
+            "lanes": {
+                "expression": [
+                ],
+                "pitch": [
+                ],
+                "sostenuto": [
+                ],
+                "sustain": [
+                ],
+                "switches": {
+                },
+                "vibrato": [
+                ]
+            },
+            "name": "take_1",
+            "offset": 0,
+            "origin": {
+            },
+            "pitchMethod": "general",
+            "referenceBpm": 92,
+            "start": 0
         }
     ],
     "stepsPerBeat": 4,
@@ -802,6 +1468,6 @@
         "genre": "Hip-Hop",
         "title": "Beatbox Groove"
     },
-    "version": 15,
+    "version": 16,
     "volume": 0.26
 }

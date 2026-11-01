@@ -230,7 +230,21 @@ void AufnahmeFenster::setupUI()
         m_streifen = new QLabel(m_waveZeile);
         m_streifen->setObjectName(QStringLiteral("recordStrip"));
         m_streifen->setFrameShape(QFrame::StyledPanel);
-        spalten->addWidget(m_streifen);
+        // LD1 a: die Leuchte — auf jedem Schlag kurz an, auf der Eins hell
+        m_leuchtBild = new QLabel(m_waveZeile);
+        m_leuchtBild->setObjectName(QStringLiteral("recordBeatLight"));
+        m_leuchtBild->setFixedSize(18, 18);
+        m_leuchtBild->setToolTip(tr("Lights on every beat, brightest on the first beat of the bar"));
+        auto* streifenZeile = new QHBoxLayout;
+        streifenZeile->addWidget(m_leuchtBild);
+        streifenZeile->addWidget(m_streifen, 1);
+        spalten->addLayout(streifenZeile);
+        m_leuchtTakt = new QTimer(this);
+        m_leuchtTakt->setInterval(10);
+        connect(m_leuchtTakt, &QTimer::timeout, this, &AufnahmeFenster::leuchtTakt);
+        m_zeit.start();
+        m_leuchte = Leuchte::Schlag;  // damit setzeLeuchte die Farbe sicher setzt
+        setzeLeuchte(Leuchte::Aus);
         connect(messen, &QPushButton::clicked, this, [this] { (void)oeffneLatenzmessung(); });
         connect(m_latenz, &QSpinBox::valueChanged, this, [this] { zeigeAlles(); });
         for (QComboBox* wahl : {m_einzaehlen, m_laenge})
@@ -506,7 +520,24 @@ bool AufnahmeFenster::stoppeAufnahme()
     {
         if (m_phase == WavePhase::Bereit && m_nimmtAuf)
         {
-            stoppeFrei();
+            // frei (LD1 a): beim Einzaehlen nichts behalten; sonst bis zum Ende dieses Takts weiter
+            const std::int64_t jetzt = m_engine->recordedFrames();
+            const double takt = taktFrames(m_wave->loop, m_wave->rate);
+            if (jetzt < m_freiVon || takt <= 0.0)
+            {
+                (void)m_engine->recordStop();
+                m_nimmtAuf = false;
+                m_takt->stop();
+                m_pegel->setValue(0);
+                zeigeAlles();
+                return true;
+            }
+            if (m_freiBis < 0)
+            {
+                const auto takte = std::max<std::int64_t>(1, static_cast<std::int64_t>(std::ceil((jetzt - m_freiVon) / takt)));
+                m_freiBis = m_freiVon + std::llround(static_cast<double>(takte) * takt);
+            }
+            zeigeAlles();
             return true;
         }
         if (m_phase == WavePhase::Bereit) return false;
@@ -545,7 +576,7 @@ void AufnahmeFenster::setzeAufnahme(std::vector<float> stereo, int rate)
     // Ein eigenes Sample bleibt offen — Save schreibt die Aufnahme unter seinem Namen (M4 a).
     if (herkunft() != Herkunft::Eigenes) m_nennung.clear();
     m_frisch = true;
-    m_ausschnitt = m_ohneStille->isChecked() ? ohneStille(*m_daten, m_rate) : Ausschnitt{0, frames()};
+    m_ausschnitt = m_ohneStille->isChecked() ? ohneStilleHier() : Ausschnitt{0, frames()};
     zeigeBild();
     zeigeAlles();
 }
@@ -571,7 +602,7 @@ void AufnahmeFenster::setzeOhneStille(bool an)
         const QSignalBlocker ruhe(m_ohneStille);
         m_ohneStille->setChecked(an);
     }
-    if (m_daten != nullptr) setzeAusschnitt(an ? ohneStille(*m_daten, m_rate) : Ausschnitt{0, frames()});
+    if (m_daten != nullptr) setzeAusschnitt(an ? ohneStilleHier() : Ausschnitt{0, frames()});
 }
 
 void AufnahmeFenster::setzeNormalisieren(bool an)
@@ -785,6 +816,21 @@ void AufnahmeFenster::takt()
         taktWave();
         return;
     }
+    if (m_wave && m_nimmtAuf)
+    {
+        // frei (MH2 a, LD1 a): Pegel wie beim Sample; zu Ende am Ende des Takts nach Stop, oder voll
+        const float spitze = m_engine->recordLevel();
+        const double db = spitze > 0.0f ? 20.0 * std::log10(static_cast<double>(spitze)) : -100.0;
+        m_pegel->setValue(static_cast<int>(std::clamp((db + 48.0) / 48.0, 0.0, 1.0) * 100.0));
+        const auto rest = static_cast<std::int64_t>(0.05 * m_wave->rate);
+        if (!m_engine->isRecording() || (m_freiBis >= 0 && m_engine->recordedFrames() >= m_freiBis + rest))
+        {
+            stoppeFrei();
+            return;
+        }
+        zeigeAlles();
+        return;
+    }
     if (m_nimmtAuf)
     {
         // der Pegel: der groesste Betrag seit dem letzten Takt, in Dezibel auf die Breite gelegt (-48 dB bis 0)
@@ -932,6 +978,8 @@ void AufnahmeFenster::closeEvent(QCloseEvent* event)
     }
     m_nimmtAuf = false;
     m_takt->stop();
+    m_leuchtTakt->stop();
+    setzeLeuchte(Leuchte::Aus);
     QWidget::closeEvent(event);
 }
 
@@ -1057,6 +1105,8 @@ bool AufnahmeFenster::starteWave()
     }
     m_phase = WavePhase::Wartet;
     m_takt->start();
+    m_glatt.vergiss();
+    m_leuchtTakt->start();  // LD1 a
     zeigeAlles();
     return true;
 }
@@ -1162,6 +1212,12 @@ bool AufnahmeFenster::starteFrei()
     if (m_engine == nullptr || m_eingang->count() == 0 || m_nimmtAuf || m_wave->rate <= 0) return false;
     halte();
     m_meldung.clear();
+    // LD1 a: die Aufnahme ist die Uhr — erst zaehlt die Leuchte still ein, dann beginnt der Take
+    // auf der Eins; mit einer festen Laenge steht sein Ende schon fest
+    const double takt = taktFrames(m_wave->loop, m_wave->rate);
+    const WaveAufnahmePlan p = plan();
+    m_freiVon = std::llround(std::clamp(p.einzaehlen, 0, 2) * takt);
+    m_freiBis = p.takte > 0 ? m_freiVon + std::llround(p.takte * takt) : -1;
     if (!m_engine->recordStart(m_eingang->currentData().toInt(), m_wave->rate, kWaveHoechstensSekunden))
     {
         m_meldung = tr("Could not open this input. Is the microphone allowed for desktop apps in the Windows privacy settings?");
@@ -1169,7 +1225,9 @@ bool AufnahmeFenster::starteFrei()
         return false;
     }
     m_nimmtAuf = true;
+    m_glatt.vergiss();
     m_takt->start();
+    m_leuchtTakt->start();
     zeigeAlles();
     return true;
 }
@@ -1180,15 +1238,58 @@ void AufnahmeFenster::stoppeFrei()
     std::vector<float> daten = m_engine->recordStop();
     m_takt->stop();
     m_pegel->setValue(0);
-    if (daten.size() < 4)
+    const double takt = taktFrames(m_wave->loop, m_wave->rate);
+    const auto da = static_cast<std::int64_t>(daten.size() / 2);
+    if (da <= m_freiVon + 1 || takt <= 0.0)
     {
         m_meldung = tr("Nothing arrived from this input.");
         zeigeAlles();
         return;
     }
-    m_takeTakte = 0;
+    // voll geworden ohne Stop: bis zum Ende des Takts, der Rest ist still
+    const std::int64_t bis = m_freiBis >= 0 ? m_freiBis
+                                            : m_freiVon + std::llround(std::ceil((da - m_freiVon) / takt) * takt);
+    m_takeTakte = std::max(1, static_cast<int>(std::lround((bis - m_freiVon) / takt)));
     m_takeFrei = true;
-    setzeAufnahme(std::move(daten), m_wave->rate);  // Trim silence wie beim Sample
+    // der Take ab der Eins nach dem Einzaehlen; Trim silence wie beim Sample, aber nur hinten
+    setzeAufnahme(schneideTake(daten, 0, 0, m_freiVon, bis), m_wave->rate);
+}
+
+Ausschnitt AufnahmeFenster::ohneStilleHier() const
+{
+    Ausschnitt a = ohneStille(*m_daten, m_rate);
+    if (m_wave && m_takeFrei) a.von = 0;  // LD1 a: der Take beginnt auf der Eins
+    return a;
+}
+
+void AufnahmeFenster::leuchtTakt()
+{
+    std::int64_t stelle = -1;
+    const qint64 ms = m_zeit.elapsed();
+    if (m_wave && m_engine != nullptr && m_phase == WavePhase::Bereit && m_nimmtAuf)
+    {
+        // frei: Abtastwert 0 der Aufnahme ist die Eins des ersten Einzaehltakts
+        m_glatt.lies(m_engine->recordedFrames(), ms);
+        stelle = m_glatt.jetzt(ms, m_wave->rate);
+    }
+    else if (m_wave && m_wave->uhr && m_phase != WavePhase::Bereit && !(m_wave->bereit && !m_wave->bereit()))
+    {
+        // im Takt: die Uhr der Wiedergabe steht auf Takten des Loops
+        m_glatt.lies(m_wave->uhr(), ms);
+        stelle = m_glatt.jetzt(ms, m_wave->rate);
+    }
+    else if (m_phase == WavePhase::Bereit)
+        m_leuchtTakt->stop();  // nichts laeuft mehr (beim Laden des Loops wartet sie)
+    setzeLeuchte(m_wave ? leuchteBei(stelle, m_wave->loop, m_wave->rate) : Leuchte::Aus);
+}
+
+void AufnahmeFenster::setzeLeuchte(Leuchte leuchte)
+{
+    if (leuchte == m_leuchte) return;
+    m_leuchte = leuchte;
+    const char* farbe = leuchte == Leuchte::Eins ? "#ff4d3d" : leuchte == Leuchte::Schlag ? "#c9862b" : "#3c3c3c";
+    m_leuchtBild->setStyleSheet(QStringLiteral("background-color: %1; border-radius: 9px; border: 1px solid #222;")
+                                    .arg(QLatin1String(farbe)));
 }
 
 void AufnahmeFenster::richteHaken()
@@ -1248,13 +1349,26 @@ QString AufnahmeFenster::streifenText() const
     QStringList teile;
     if (p.mithoeren == Mithoeren::Frei && m_phase == WavePhase::Bereit)
     {
-        // MH2 a: nichts spielt — der Take kommt an den Starttakt, aufgerundet auf ganze Takte
-        if (m_nimmtAuf)
-            teile << tr("recording — nothing plays");
+        // MH2 a, LD1 a: nichts spielt — die Leuchte zaehlt still ein, der Take beginnt auf der Eins
+        if (m_nimmtAuf && m_wave->rate > 0)
+        {
+            const double takt = std::max(1.0, taktFrames(m_wave->loop, m_wave->rate));
+            const std::int64_t jetzt = m_engine != nullptr ? m_engine->recordedFrames() : 0;
+            if (jetzt < m_freiVon)
+                teile << tr("counting in with the light…");
+            else
+                teile << tr("recording bar %1").arg(start + static_cast<int>((jetzt - m_freiVon) / takt));
+            if (p.takte <= 0 && m_freiBis >= 0) teile << tr("ends at the end of the bar");
+        }
         else if (takeTakte() > 0)
             teile << tr("take: bar %1 – %2 (%3 bars)").arg(start).arg(start + takeTakte() - 1).arg(takeTakte());
         else
-            teile << tr("from bar %1 · Record starts at once, nothing plays · the take is rounded up to whole bars").arg(start);
+        {
+            if (p.einzaehlen > 0) teile << (p.einzaehlen == 1 ? tr("the light counts in 1 bar") : tr("the light counts in %1 bars").arg(p.einzaehlen));
+            teile << (p.takte > 0 ? tr("bar %1 – %2 · recording").arg(start).arg(start + p.takte - 1)
+                                  : tr("from bar %1 · recording until Stop, to the end of that bar").arg(start));
+        }
+        teile << tr("nothing plays");
         return teile.join(QStringLiteral(" | "));
     }
     if (p.einzaehlen > 0) teile << tr("bar %1 · count-in").arg(start - p.einzaehlen < 1 ? QStringLiteral("…") : QString::number(start - p.einzaehlen));
@@ -1300,10 +1414,9 @@ void AufnahmeFenster::zeigeWave()
     m_stop->setEnabled(laeuft);
     for (QWidget* feld : std::initializer_list<QWidget*>{m_startTakt, m_mithoeren, m_eingang})
         feld->setEnabled(!laeuft);
-    // frei zaehlt nichts ein, und es gibt keine Uhr, gegen die eine Latenz zu rechnen waere
-    const bool imTakt = plan().mithoeren != Mithoeren::Frei;
-    for (QWidget* feld : std::initializer_list<QWidget*>{m_einzaehlen, m_laenge, m_latenz})
-        feld->setEnabled(!laeuft && imTakt);
+    for (QWidget* feld : std::initializer_list<QWidget*>{m_einzaehlen, m_laenge}) feld->setEnabled(!laeuft);
+    // frei spielt nichts: es gibt keinen Weg zum Lautsprecher und zurueck, keine Latenz abzuziehen
+    m_latenz->setEnabled(!laeuft && plan().mithoeren != Mithoeren::Frei);
     m_streifen->setText(streifenText());
     m_behalten->setEnabled(!laeuft && takeTakte() > 0 && frames() > 0);
     m_verwerfen->setEnabled(!laeuft && frames() > 0);

@@ -32,6 +32,7 @@
 #include "loop/Aufnahme.hpp"
 #include "loop/AufnahmeUhr.hpp"  // Stufe 15k-1
 
+#include <QElapsedTimer>
 #include <QPointer>
 #include <QString>
 #include <QWidget>
@@ -231,6 +232,9 @@ public:
     QString behalteTake();
     /// **Discard:** den Take verwerfen.
     void verwirfTake();
+    /// LD1 a: die Leuchte neu stellen — ihr Zeitgeber ruft das alle 10 ms, solange etwas laeuft.
+    void leuchtTakt();
+    [[nodiscard]] Leuchte leuchte() const { return m_leuchte; }
 
     /// So lang darf eine Aufnahme hoechstens sein, in Sekunden.
     static constexpr double kHoechstensSekunden = 30.0;
@@ -311,6 +315,9 @@ private:
     void stoppeFrei();
     /// Trim silence und Normalize gelten nur frei; im Takt bleibt ein Take, wie er ankam.
     void richteHaken();
+    /// Trim silence — bei einem frei aufgenommenen Take nur hinten: er beginnt auf der Eins (LD1 a).
+    [[nodiscard]] Ausschnitt ohneStilleHier() const;
+    void setzeLeuchte(Leuchte leuchte);
     void zeigeWave();
     [[nodiscard]] double taktFramesJetzt() const;
     [[nodiscard]] std::int64_t latenzFrames() const;
@@ -321,6 +328,14 @@ private:
     std::int64_t m_bisUhr = -1;  ///< hier endet er; −1 = noch offen (bis Stop)
     int m_takeTakte = 0;
     bool m_takeFrei = false;  ///< der Take im Bild ist frei aufgenommen (MH2 a)
+    // frei (LD1 a): Abtastwerte der Aufnahme; das Einzaehlen ist der Anfang, der Take beginnt danach
+    std::int64_t m_freiVon = 0;
+    std::int64_t m_freiBis = -1;  ///< −1 = bis Stop; nach Stop das Ende des Takts
+    QLabel* m_leuchtBild = nullptr;
+    QTimer* m_leuchtTakt = nullptr;
+    QElapsedTimer m_zeit;
+    GlatteUhr m_glatt;
+    Leuchte m_leuchte = Leuchte::Aus;
     QPointer<LatenzFenster> m_latenzFenster;
     QWidget* m_waveZeile = nullptr;
     QSpinBox* m_startTakt = nullptr;

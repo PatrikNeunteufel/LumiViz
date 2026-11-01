@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.118.0
+> **Version:** 0.119.0
 > **Datum:** 2026-11-01 (Session 169)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -4260,8 +4260,9 @@ Das Fenster *Measure latency* (`loop/LatenzFenster`) misst über einen eigenen M
 *Use* merkt den Wert. Das Fenster *Record sample* hat einen Modus für Wave-Clips (`beginneWaveClip`): der Hinweis
 auf Kopfhörer, die Zeile Starts at bar / Count-in / Length / Play while recording (MH1 a, MH2 a, `Mithoeren`:
 `LoopUndKlick` 0, `NurKlick` 1, `Frei` 2, gemerkt unter `loop/recordPlayWhile`; frei: `starteFrei`/`stoppeFrei`
-wie beim Sample, `takeTakte` aus dem Ausschnitt aufgerundet, Trim silence an) / Latency mit *Measure latency...*,
-der Streifen,
+wie beim Sample, die Aufnahme ist die Uhr — der Take von `m_freiVon` (nach dem Einzählen) bis zum Ende des Takts
+nach Stop über `schneideTake`, `ohneStilleHier` schneidet nur hinten, `takeTakte` aus dem Ausschnitt aufgerundet) /
+Latency mit *Measure latency...*, die Leuchte (LD1 a: `leuchteBei`, `GlatteUhr`, `leuchtTakt`) und der Streifen,
 *Keep take* / *Discard*; der Loop spielt ab dem Einzähltakt, die Aufnahme beginnt, wenn er hörbar spielt, in der
 Rate der Wiedergabe, höchstens 600 s; Stop rundet auf das Ende des Takts. Ein Take bleibt, wie er ankam — keine
 Blende an den Enden, kein Normalize (von Claude gesetzt: Blenden und Gain trägt das Wave-Muster seit 15c, und
@@ -4269,8 +4270,9 @@ die Haken Trim silence und Normalize sind in diesem Modus nicht zu sehen). *Keep
 Sample „Take n“ ab. Im Programm: `Spieler::uhr()`, in der Taktachse *Record wave clip...* (`waveAufnahmeVerlangt`),
 im Wave editor *Record...* (`aufnahmeVerlangt`), im Loop-Panel `nimmWaveClipAuf` — ein neuer Take legt einen
 Wave-Clip am Starttakt an, *Record...* ersetzt die Datei des Musters (Ausschnitt und Lage auf 0). Tests:
-`test_LoopAufnahmeUhr` (sechs Fälle: Uhr, Latenz, Take, Fassung und `schneideAb`; *Measure latency* gegen ein ideales
-Gerät aus Pappe; der Take sitzt im Takt; Play while recording; frei aufgenommen (MH2 a); das Panel),
+`test_LoopAufnahmeUhr` (sechs Fälle: Uhr, Latenz, Take, Fassung, `schneideAb`, Leuchte und `GlatteUhr`; *Measure
+latency* gegen ein ideales Gerät aus Pappe; der Take sitzt im Takt; Play while recording; frei aufgenommen mit
+stillem Einzählen und Leuchte (MH2 a, LD1 a); das Panel),
 `PappAufnahme.hpp` mit Uhr und `block()`.
 
 **Offen vor 15g:** eine Aufnahme echten Gesangs für den Messfall — einstimmig, ohne Hall, mit Gleiten und Vibrato,
@@ -4326,7 +4328,17 @@ Stelle im Loop, keine Latenz). Ein Live-Loop-Modus braucht Aufnahmen, die zur la
   *Normalize level*; *Keep take* legt den Take an *Starts at bar*, aufgerundet auf ganze Takte; Count-in, Length und
   Latency sind ausgegraut. *Click only* und *Loop and click* bleiben für Kopfhörer (Take genau im Takt, Latenz
   abgezogen). Das *Nothing* aus MH1 a (einzählen, dann still) entfällt. Verworfen b (immer frei, Mitspielen erst mit
-  dem Live-Loop-Modus). Dazu Patrik: eine Leuchte, die je Takt aufleuchtet (offen, LD1).
+  dem Live-Loop-Modus). Dazu Patrik: eine Leuchte, die je Takt aufleuchtet (LD1).
+- **LD1 a — Leuchte je Schlag, stilles Einzählen (Patrik S169):** Startzeit und Tempo sind bekannt — die Aufnahme
+  zählt ihre Abtastwerte selbst. Eine Leuchte neben dem Streifen, auf jedem Schlag kurz an, auf der Eins hell, in
+  allen drei Stufen. Bei *Nothing* sind Count-in und Length wieder wählbar: Record startet sofort, die Leuchte zählt
+  still ein, der Take beginnt genau auf der Eins von *Starts at bar*; Stop nimmt bis zum Ende des Takts weiter auf;
+  *Trim silence* schneidet nur hinten (vorn geschnitten rückte jeder Einsatz auf die Eins — bei 120 BPM 4/4 bis
+  1,5 s daneben, gerechnet). Verworfen b (Leuchte nur je Takt als Hinweis, Trim an beiden Enden). Von Claude gesetzt:
+  120 ms je Schlag, Farben, ein eigener Zeitgeber von 10 ms, die Uhr zwischen den Blöcken fortgeschrieben
+  (`GlatteUhr`, höchstens 50 ms voraus). **Nicht ausgeglichen:** die Leuchte zeigt den Stand der Aufnahme, der um die
+  Eingangslatenz spät ist — um so viel liegt ein Einsatz auf die Leuchte im Take spät; gemessen ist nur Hin- und
+  Rückweg zusammen.
 
 ### Abgleich mit den Quellen (S168)
 
@@ -4483,6 +4495,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.119.0** (S169, 2026-11-01): §4p LD1 a — Leuchte je Schlag, bei *Nothing* stilles Einzählen, Stop auf das Taktende, Trim silence nur hinten; „Wie 15k-1 gebaut ist“ nachgeführt.
 - **0.118.0** (S169, 2026-11-01): §4p MH2 a — *Nothing — record right away* als Vorgabe (frei wie ein Sample, auf ganze Takte); „Wie 15k-1 gebaut ist“ nachgeführt; LD1 (Leuchte je Takt) offen.
 - **0.117.0** (S169, 2026-11-01): §4p MH1 a — *Play while recording* (Loop and click, Click only, Nothing) mit Hinweis auf Kopfhörer statt *Click while recording*; „Wie 15k-1 gebaut ist“ nachgeführt (`schneideAb`, stille Fassung bis 600 s).
 - **0.116.0** (S169, 2026-11-01): §4p 15k-1 erledigt („Wie 15k-1 gebaut ist“): Uhr der Aufnahme, *Measure latency*, *Record wave clip...* und *Record...* im Wave editor; ein Take bleibt ohne Blende und Normalize (von Claude gesetzt).

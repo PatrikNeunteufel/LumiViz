@@ -255,4 +255,28 @@ double taktFrames(const Loop& loop, int rate)
     return schrittFrames * loop.schritteJeTakt();
 }
 
+Leuchte leuchteBei(std::int64_t stelle, const Loop& loop, int rate)
+{
+    if (stelle < 0 || loop.bpm <= 0.0 || loop.schlaegeJeTakt <= 0 || rate <= 0) return Leuchte::Aus;
+    const double schlag = rate * 60.0 / loop.bpm;
+    const auto nummer = static_cast<std::int64_t>(std::floor(static_cast<double>(stelle) / schlag));
+    const double imSchlag = static_cast<double>(stelle) - static_cast<double>(nummer) * schlag;
+    if (imSchlag >= kLeuchteS * rate) return Leuchte::Aus;
+    return nummer % loop.schlaegeJeTakt == 0 ? Leuchte::Eins : Leuchte::Schlag;
+}
+
+void GlatteUhr::lies(std::int64_t roh, std::int64_t ms)
+{
+    if (roh == m_roh) return;
+    m_roh = roh;
+    m_ms = ms;
+}
+
+std::int64_t GlatteUhr::jetzt(std::int64_t ms, int rate) const
+{
+    if (m_roh < 0) return 0;
+    const auto voraus = static_cast<std::int64_t>(std::max<std::int64_t>(0, ms - m_ms) * rate / 1000);
+    return m_roh + std::min(voraus, static_cast<std::int64_t>(kVorausS * rate));
+}
+
 }  // namespace lumi::loop

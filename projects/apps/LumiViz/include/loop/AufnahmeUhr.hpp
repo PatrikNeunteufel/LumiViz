@@ -157,4 +157,37 @@ void schneideAb(Loop& loop, int takt);
 /// Ein Takt in Abtastwerten bei `rate` (wie der Rechenkern ihn rechnet).
 [[nodiscard]] double taktFrames(const Loop& loop, int rate);
 
+// --- die Leuchte (Entscheid Patrik LD1 a, S169) ----------------------------------------
+
+/// Was die Leuchte im Fenster zeigt: auf jedem Schlag kurz an, auf der Eins hell.
+enum class Leuchte
+{
+    Aus,
+    Schlag,
+    Eins,
+};
+/// So lang leuchtet sie je Schlag, in Sekunden (von Claude gesetzt).
+inline constexpr double kLeuchteS = 0.12;
+/// Die Leuchte an der Stelle `stelle` (Abtastwerte ab dem Anfang von Takt 0, bei `rate`):
+/// Schlaege und Takte nach Tempo und Taktart von `loop`. Vor 0: aus.
+[[nodiscard]] Leuchte leuchteBei(std::int64_t stelle, const Loop& loop, int rate);
+
+/// Eine Uhr, die nur blockweise weiterzaehlt (die Aufnahme alle 25 ms, der Spieler je Puffer),
+/// zwischen den Bloecken nach der vergangenen Zeit fortgeschrieben — sonst ruckelte die Leuchte
+/// um einen Block. Hoechstens `kVorausS` ueber den letzten Stand hinaus.
+class GlatteUhr
+{
+public:
+    static constexpr double kVorausS = 0.05;
+    /// Den rohen Stand `roh` zur Zeit `ms` lesen; die Zeit merkt sie nur, wenn er sich aendert.
+    void lies(std::int64_t roh, std::int64_t ms);
+    /// Die Stelle zur Zeit `ms` bei `rate`; vor dem ersten Lesen 0.
+    [[nodiscard]] std::int64_t jetzt(std::int64_t ms, int rate) const;
+    void vergiss() { m_roh = -1; }
+
+private:
+    std::int64_t m_roh = -1;
+    std::int64_t m_ms = 0;
+};
+
 }  // namespace lumi::loop
