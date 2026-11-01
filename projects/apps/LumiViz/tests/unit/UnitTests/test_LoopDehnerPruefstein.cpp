@@ -31,8 +31,7 @@
  * Der dauerhafte Fall prueft PSOLA an zwei Stimmen und ±5 Halbtoenen und dass der Pruefstein
  * Signalsmith ohne Formanterhalt als solchen erkennt. **Der volle Pruefstein** mit
  * `LUMIVIZ_PRUEFSTEIN_15H=<Ordner>`: acht Stimmen, sechs Tonhoehen und eine Dehnung, jede
- * Umsetzung, dazu Signalsmith mit Formanterhalt (`dehnerSignalsmithFormanten`) und PSOLA mit der
- * Talregel von pYIN (`nurImBereich`); schreibt `pruefstein.md` und die Hoerproben dorthin; mit
+ * Umsetzung, dazu Signalsmith mit Formanterhalt (`dehnerSignalsmithFormanten`); schreibt `pruefstein.md` und die Hoerproben dorthin; mit
  * `LUMIVIZ_VOCADITO=<Ordner von vocadito>` dazu zwei echte Stimmen als Hoerproben.
  ****************************************************************************************
  */
@@ -93,11 +92,9 @@ const std::array<Stimme, 8> kStimmen{{
 }};
 
 /// Der Anteil der Rahmen, die pYIN gesungen findet (die Stimme singt durchgehend).
-double gesungenProzent(const std::vector<float>& d, bool nurImBereich)
+double gesungenProzent(const std::vector<float>& d)
 {
-    PYinEinstellungen e;
-    e.nurImBereich = nurImBereich;
-    const Tonhoehenverlauf v = messeTonhoehenverlauf(d, kRate, e);
+    const Tonhoehenverlauf v = messeTonhoehenverlauf(d, kRate);
     std::size_t gesungen = 0;
     for (const float f : v.hz) gesungen += f > 0.0f ? 1 : 0;
     return v.hz.empty() ? 0.0 : 100.0 * static_cast<double>(gesungen) / static_cast<double>(v.hz.size());
@@ -418,7 +415,7 @@ Messung miss(const Dehner& u, const Stimme& s, const std::vector<float>& ein, do
 /// Kurzname einer Umsetzung fuer Dateien und Tabellen.
 std::string kurz(const Dehner& u)
 {
-    if (u.name().rfind("TD-PSOLA", 0) == 0) return u.name().find("range") != std::string::npos ? "psola_range" : "psola";
+    if (u.name().rfind("TD-PSOLA", 0) == 0) return "psola";
     return u.behaeltFormanten() ? "signalsmith_formants" : "signalsmith";
 }
 
@@ -502,12 +499,8 @@ TEST_SUITE("LoopDehnerPruefstein")
         }
         REQUIRE(QDir().mkpath(ordner));
         std::vector<std::unique_ptr<Dehner>> alle = dehnerUmsetzungen();
-        // zum Vergleich: Signalsmith mit Formanterhalt (der Gegenkandidat), PSOLA mit Marken aus pYIN
-        // mit der Talregel (Befund S170)
+        // zum Vergleich: Signalsmith mit Formanterhalt (der Gegenkandidat)
         alle.insert(alle.begin() + 1, dehnerSignalsmithFormanten());
-        PYinEinstellungen imBereich;
-        imBereich.nurImBereich = true;
-        alle.push_back(dehnerPsola(imBereich));
         const std::array<double, 6> tonhoehen{-12.0, -7.0, -3.0, 3.0, 7.0, 12.0};
         QString text;
         QTextStream t(&text);
@@ -524,8 +517,8 @@ TEST_SUITE("LoopDehnerPruefstein")
             REQUIRE(schreibeWav(QDir(ordner).filePath(QString::fromLatin1(s.name) + QStringLiteral("_0.wav")), ein, kRate));
             t << "## " << s.name << " (F " << s.formanten[0] << ", " << s.formanten[1] << ", " << s.formanten[2] << " Hz"
               << (s.vibratoCent > 0.0 ? ", Vibrato ±40 Cent" : "") << ")\n\n"
-              << "pYIN findet am Klang " << zahl(gesungenProzent(ein, false)) << " % der Rahmen gesungen, nur im Bereich des HMM "
-              << zahl(gesungenProzent(ein, true)) << " % (PSOLA verschiebt nur, wo gesungen).\n\n"
+              << "pYIN findet am Klang " << zahl(gesungenProzent(ein)) << " % der Rahmen gesungen (PSOLA verschiebt nur, wo "
+              << "gesungen).\n\n"
               << "| Umsetzung | Halbtöne | Dauer | Cent | Hülle dB | F1 % | F2 % | F1 Hz | F2 Hz | Pegel dB | Pegel gegen Hülle dB | Neben dB |\n"
               << "|---|---|---|---|---|---|---|---|---|---|---|---|\n";
             std::vector<std::pair<double, double>> faelle;

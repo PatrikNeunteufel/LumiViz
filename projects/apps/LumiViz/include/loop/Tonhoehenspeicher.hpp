@@ -27,7 +27,8 @@ namespace lumi::loop
 {
 
 /// Die Fassung der Messung: aendert sich die Rechnung, kommt eine neue — alte Dateien gelten nicht mehr.
-inline constexpr int kTonhoehenFassung = 1;
+/// 2 seit PY2 a (S170, Talregel in Stufe 1 von pYIN).
+inline constexpr int kTonhoehenFassung = 2;
 
 /// Der Ordner `pitch` im Benutzerbereich; leer = keiner.
 [[nodiscard]] QString tonhoehenOrdner();

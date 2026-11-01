@@ -17,8 +17,11 @@
  * **Messfall an echtem Gesang (GA1 a):** mit `LUMIVIZ_VOCADITO=<Ordner von vocadito>` misst
  * pYIN alle 40 Ausschnitte mit den drei Verteilungen des Papers gegen die beschriftete
  * Tonhoehe und schreibt den Bericht nach
- * `docs/modellierung/wave-clips/proben/S169_pyin_vocadito.md`. Ohne die Variable meldet er
- * das und prueft nichts.
+ * `docs/modellierung/wave-clips/proben/S170_pyin_vocadito.md` (seit PY2 a; der Stand davor in
+ * `S169_pyin_vocadito.md`). Ohne die Variable meldet er das und prueft nichts.
+ *
+ * **Talregel (PY2 a, S170):** ein gerechneter Klang, dessen halbe Periode ueber dem HMM liegt
+ * (Sopran bei 440 Hz), wird gesungen erkannt.
  ****************************************************************************************
  */
 
@@ -172,6 +175,17 @@ TEST_SUITE("LoopPYin")
         CHECK(a.groesste() < 5.0);
     }
 
+    TEST_CASE("Loop PYin PY2 a Talregel: die halbe Periode ueber dem HMM macht den Rahmen nicht stumm")
+    {
+        // 440 Hz, der zweite Teilton zehnmal so stark: d′ hat ein tiefes Tal bei der halben Periode
+        // (880 Hz, ueber der obersten Stufe 875 Hz) — ab τ = 2 gesucht galt jeder Rahmen als stumm
+        const std::vector<float> stereo = ton([](double) { return 440.0; }, 1.0, kRate, {0.1, 1.0, 0.0});
+        const Tonhoehenverlauf v = messeTonhoehenverlauf(stereo, kRate);
+        const Abweichung a = abweichung(v, 0.1, 0.9, [](double) { return 440.0; });
+        CHECK(a.fehlt == 0);
+        CHECK(a.groesste() < 5.0);
+    }
+
     TEST_CASE("Loop PYin 15g Rate und Wiederholung: 48 kHz misst dieselben Zeiten, zweimal gleich")
     {
         const auto gleiten = [](double t) { return 180.0 * std::pow(2.0, 0.5 * t); };
@@ -283,18 +297,11 @@ TEST_SUITE("LoopPYin")
             }
         };
         const auto anteil = [](long long a, long long b) { return b > 0 ? 100.0 * static_cast<double>(a) / static_cast<double>(b) : 0.0; };
-        // S170: mit LUMIVIZ_PYIN_IM_BEREICH=1 sucht Stufe 1 nur im Bereich des HMM (`nurImBereich`);
-        // der Bericht geht dann in eine eigene Datei, der von S169 bleibt
-        const bool imBereich = qEnvironmentVariableIntValue("LUMIVIZ_PYIN_IM_BEREICH") == 1;
         QString bericht;
         QTextStream b(&bericht);
-        if (imBereich)
-            b << "# pYIN an vocadito mit Perioden nur im Bereich des HMM (S170, Befund aus dem Prüfstein 15h)\n\n"
-              << "Wie `S169_pyin_vocadito.md`, aber Stufe 1 sucht τ nur zwischen der obersten Stufe des HMM und 55 Hz "
-                 "(`PYinEinstellungen::nurImBereich`).\n\n";
-        else
-            b << "# pYIN an vocadito (S169, Stufe 15g, GA1 a)\n\n";
-        b
+        b << "# pYIN an vocadito (S170, nach PY2 a — Talregel in Stufe 1)\n\n"
+          << "Seit PY2 a nimmt Stufe 1 je Schwelle das erste Tal von d′ im Bereich des HMM (wie librosa `pyin`); "
+             "der Stand davor steht in `S169_pyin_vocadito.md`.\n\n"
           << "Geschrieben von `test_LoopPYin.cpp` (Fall „Messfall an vocadito“, `LUMIVIZ_VOCADITO`). Quelle: vocadito, "
              "Zenodo 5578807, CC BY 4.0 (`docs/modellierung/wave-clips/daten/Vocadito_Zenodo5578807/HERKUNFT.md`). "
              "Rahmen 2048, Schritt 256 bei 44,1 kHz — dasselbe Raster wie die Beschriftung; Rahmen k ist um k · 256 "
@@ -332,7 +339,6 @@ TEST_SUITE("LoopPYin")
             {
                 PYinEinstellungen e;
                 e.schwelleMittel = mittel[m];
-                e.nurImBereich = imBereich;
                 const auto anfang = std::chrono::steady_clock::now();
                 const Tonhoehenverlauf v = messeTonhoehenverlauf(inhalt->stereo, inhalt->rate, e);
                 ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - anfang).count();
@@ -382,8 +388,7 @@ TEST_SUITE("LoopPYin")
         b.flush();
 
         const QString ziel = QDir(QFileInfo(QString::fromLocal8Bit(__FILE__)).absolutePath())
-                                 .filePath(imBereich ? QStringLiteral("../../../docs/modellierung/wave-clips/proben/S170_pyin_vocadito_im_bereich.md")
-                                                     : QStringLiteral("../../../docs/modellierung/wave-clips/proben/S169_pyin_vocadito.md"));
+                                 .filePath(QStringLiteral("../../../docs/modellierung/wave-clips/proben/S170_pyin_vocadito.md"));
         QDir().mkpath(QFileInfo(ziel).absolutePath());
         QFile aus(ziel);
         REQUIRE(aus.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));

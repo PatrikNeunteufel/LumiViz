@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.307.0
+> **Version:** 1.308.0
 > **Datum:** 2026-11-01 (Sessions 164 bis 170)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2629,7 +2629,7 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     einer App als Angabe in `Solution.json`. Folge von D9 a: **eine unter
     `asset/` geänderte Datei sieht `LumiViz.exe` erst nach einem Bau**
   - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — in Arbeit seit 2026-10-31 (S168): 15a bis 15h und
-    15k-1 erledigt (S169, S170), nächster Schritt 15i nach der Frage PY2 (pYIN bei hohen Stimmen), Teilplan in
+    15k-1 erledigt (S169, S170), nächster Schritt 15i, Teilplan in
     `Loop_Konzept.md` §4p. ⬜ **Im Programm ungesehen bzw. ungehört:** Wave editor (15d, Bilder
     `.claude/handover/wave_editor_15d.png`), Wave-Clips in der Taktachse (15e, `wave_achse_15e.png`), *Record wave
     clip* mit *Nothing — record right away*, Leuchte und stillem Einzählen (MH2 a, LD1 a), die Spur Pitch (15f), die
@@ -6315,6 +6315,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.308.0 | 2026-11-01 | Session 170. §6 Loop: PY2 a (Talregel in pYIN) umgesetzt, nächster Schritt 15i. |
 | 1.307.0 | 2026-11-01 | Session 170. §6 Loop: Stufe 15 — 15h gebaut (TD-PSOLA als *Voice*, Prüfstein: PSOLA bleibt), Hörproben 15h offen, Frage PY2 (pYIN bei hohen Stimmen) vor 15i. |
 | 1.306.0 | 2026-11-01 | Session 169. §6 Loop: Stufe 15 — 15b bis 15g und 15k-1 gebaut (Wave-Muster, Wave editor, Taktachse, Aufnahme mit Leuchte, Signalsmith Stretch, pYIN), nächster Schritt 15h; im Programm ungesehen. |
 | 1.305.0 | 2026-11-01 | Session 168. §6 Loop: Stufe 15 Wave-Clips in Arbeit — 15a gebaut (Raster und Swing im Loop-Panel, Swing offset, Fassung 15), Teilplan 15b–15m; 8.5-HT: HT-1 entschieden, LV-2 freigegeben. |

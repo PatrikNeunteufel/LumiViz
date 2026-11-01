@@ -1,6 +1,6 @@
-# pYIN an vocadito mit Perioden nur im Bereich des HMM (S170, Befund aus dem Prüfstein 15h)
+# pYIN an vocadito (S170, nach PY2 a — Talregel in Stufe 1)
 
-Wie `S169_pyin_vocadito.md`, aber Stufe 1 sucht τ nur zwischen der obersten Stufe des HMM und 55 Hz (`PYinEinstellungen::nurImBereich`).
+Seit PY2 a nimmt Stufe 1 je Schwelle das erste Tal von d′ im Bereich des HMM (wie librosa `pyin`); der Stand davor steht in `S169_pyin_vocadito.md`.
 
 Geschrieben von `test_LoopPYin.cpp` (Fall „Messfall an vocadito“, `LUMIVIZ_VOCADITO`). Quelle: vocadito, Zenodo 5578807, CC BY 4.0 (`docs/modellierung/wave-clips/daten/Vocadito_Zenodo5578807/HERKUNFT.md`). Rahmen 2048, Schritt 256 bei 44,1 kHz — dasselbe Raster wie die Beschriftung; Rahmen k ist um k · 256 zentriert. Gemessen gegen `Annotations/F0` (0 Hz = nicht gesungen).
 
@@ -71,4 +71,4 @@ RPA 50 %, wenn die Messung um d Rahmen gegen die Beschriftung verschoben wird �
 |---|---|---|---|---|---|---|---|
 | RPA 50 % | 79.89 | 83.66 | 85.82 | 86.29 | 86.17 | 84.36 | 80.70 | 
 
-**Rechenzeit:** 38.6 s fuer 3 × 817.1 s Ton (1.58 % der Echtzeit je Messung), Build siehe Lauf.
+**Rechenzeit:** 34.4 s fuer 3 × 817.1 s Ton (1.40 % der Echtzeit je Messung), Build siehe Lauf.

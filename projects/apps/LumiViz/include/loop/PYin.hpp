@@ -7,8 +7,8 @@
  * **Stufe 1 (§2.1 des Papers):** je Rahmen die Differenzfunktion d(τ) (Gl. 1, ueber die
  * Autokorrelation Gl. 2 und 3 mit `loop/Fft`), normiert wie bei YIN zu d′(τ). Statt einer
  * Schwelle s gelten 100 Schwellen 0,01 … 1 mit einer Beta-Verteilung als Gewicht; je Schwelle
- * waehlt YIN eine Periode (die kleinste mit d′ < s, bis in ihr Tal; sonst das kleinste d′ mit dem
- * Gewicht p_a = 0,01). Die Summe der Gewichte je Periode ist ihre Wahrscheinlichkeit (Gl. 4, 5);
+ * waehlt YIN eine Periode (das erste Tal mit d′ < s im Bereich des HMM; sonst das tiefste Tal im
+ * Bereich mit dem Gewicht p_a = 0,01). Die Summe der Gewichte je Periode ist ihre Wahrscheinlichkeit (Gl. 4, 5);
  * die Frequenz wird wie bei YIN parabolisch verfeinert.
  *
  * **Stufe 2 (§2.2):** ein HMM mit 480 Stufen zu 10 Cent von 55 Hz bis knapp 880 Hz, je Stufe ein
@@ -17,9 +17,14 @@
  * dreieckig gewichtet (Gl. 8); Anfang gleich verteilt ueber die Zustaende nicht gesungen;
  * Viterbi.
  *
- * **Abweichung vom Text des Papers:** dort steht fuer die Beta-Verteilungen „α = 1“; Bild 2 und
- * die genannten Mittelwerte 0,1 / 0,15 / 0,2 passen nur zu α = 2 (Herleitung in
- * docs/modellierung/wave-clips/recherche/2026-11-01_S169_pyin.md).
+ * **Abweichungen vom Text des Papers:** (1) dort steht fuer die Beta-Verteilungen „α = 1“; Bild 2
+ * und die genannten Mittelwerte 0,1 / 0,15 / 0,2 passen nur zu α = 2 (Herleitung in
+ * docs/modellierung/wave-clips/recherche/2026-11-01_S169_pyin.md). (2) **Talregel** (Entscheid
+ * Patrik PY2 a, S170; wie librosa `pyin`): das Paper sucht ab τ = 2 die erste Stelle unter s. Bei
+ * hohen Stimmen liegt die halbe Periode (oder ein Tal bei einem Formanten um 1 kHz) dann ueber
+ * der obersten Stufe des HMM, faellt weg, und der Rahmen gilt als stumm — ein Sopran bei 440 Hz
+ * war zu 0 % gesungen, mit der Regel zu 99,6 %; an vocadito gleich (Bericht
+ * docs/modellierung/wave-clips/proben/S170_pruefstein_15h.md).
  *
  * Rahmen 2048, Schritt 256 bei 44,1 kHz wie im Paper — bei anderer Rate dieselben Zeiten.
  * Rahmen k beginnt W / 2 vor dem Abtastwert k · Schritt (W = halbe Rahmenlaenge; vor dem
@@ -53,12 +58,6 @@ struct PYinEinstellungen
     double pa = 0.01;            ///< Gewicht des kleinsten d′, wenn keine Periode unter der Schwelle liegt (Gl. 5)
     double wechsel = 0.01;       ///< Wechsel gesungen / nicht gesungen je Rahmen (Gl. 7)
     int sprungStufen = 25;       ///< so weit springt die Tonhoehe hoechstens je Rahmen (Gl. 8)
-    /// Stufe 1 nimmt je Schwelle das erste **Tal** von d′ mit einer Periode im Bereich des HMM
-    /// (55 Hz … oberste Stufe) statt der ersten Stelle ab τ = 2 (wie librosa `pyin`). Sonst waehlt
-    /// YIN bei einer hohen Stimme die halbe Periode oder ein Tal bei einem Formanten, die Frequenz
-    /// liegt ueber dem HMM, und der Rahmen gilt als stumm (Befund S170, Pruefstein 15h: Sopran bei
-    /// 440 Hz zu 0 % gesungen). Aus bis zum Entscheid; nur fuer den Vergleich.
-    bool nurImBereich = false;
 };
 
 /// Ein Kandidat aus Stufe 1.

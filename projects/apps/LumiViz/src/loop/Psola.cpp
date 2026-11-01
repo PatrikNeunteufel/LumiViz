@@ -148,7 +148,7 @@ class DehnerPsola final : public Dehner
 public:
     explicit DehnerPsola(const PYinEinstellungen& pyin) : m_pyin(pyin) {}
 
-    [[nodiscard]] std::string name() const override { return m_pyin.nurImBereich ? "TD-PSOLA, pYIN in range" : "TD-PSOLA"; }
+    [[nodiscard]] std::string name() const override { return "TD-PSOLA"; }
     [[nodiscard]] bool behaeltFormanten() const override { return true; }
 
     [[nodiscard]] std::vector<float> rechne(const std::vector<float>& stereo, int rate, std::int64_t ausFrames,

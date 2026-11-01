@@ -106,12 +106,15 @@ double verfeinertHz(const std::vector<double>& dn, int rate, std::int64_t tau)
     return rate / (static_cast<double>(tau) + versatz);
 }
 
-/// Stufe 1 mit `nurImBereich` (S170, wie librosa `pyin`): je Schwelle das erste **Tal** von d′
-/// unter s mit einer Periode im Bereich des HMM; sonst das tiefste Tal im Bereich mit p_a.
-std::vector<PYinKandidat> kandidatenImBereich(const std::vector<double>& dn, int rate,
-                                              const std::array<double, kSchwellen>& gewichte, double pa)
+/// Stufe 1 an einer normierten Differenzfunktion (Gl. 4, 5) mit der **Talregel** (PY2 a, S170;
+/// wie librosa `pyin`): je Schwelle s das erste Tal von d′ unter s mit einer Periode im Bereich
+/// des HMM, mit seinem Gewicht; ohne eines das tiefste Tal im Bereich mit p_a. Die Frequenz
+/// parabolisch verfeinert.
+std::vector<PYinKandidat> kandidatenAus(const std::vector<double>& dn, int rate, const std::array<double, kSchwellen>& gewichte,
+                                        double pa)
 {
     const auto halb = static_cast<std::int64_t>(dn.size());
+    if (halb < 4) return {};
     const auto von = std::max<std::int64_t>(2, static_cast<std::int64_t>(std::ceil(rate / pyinStufeHz(kPYinStufen - 1))));
     const auto bis = std::min<std::int64_t>(halb - 1, static_cast<std::int64_t>(std::floor(rate / kPYinUntenHz)) + 1);
     std::vector<std::int64_t> taeler;
@@ -135,55 +138,6 @@ std::vector<PYinKandidat> kandidatenImBereich(const std::vector<double>& dn, int
             je[*erstes] += gewichte[static_cast<std::size_t>(i)];
     }
     for (const auto& [tau, p] : je) kandidaten.push_back({verfeinertHz(dn, rate, tau), p});
-    return kandidaten;
-}
-
-/// Stufe 1 an einer normierten Differenzfunktion (Gl. 4, 5): je Schwelle die Periode, die YIN
-/// waehlte, mit ihrem Gewicht; die Frequenz parabolisch verfeinert.
-std::vector<PYinKandidat> kandidatenAus(const std::vector<double>& dn, int rate, const std::array<double, kSchwellen>& gewichte,
-                                        double pa, bool nurImBereich)
-{
-    const auto halb = static_cast<std::int64_t>(dn.size());
-    std::vector<PYinKandidat> kandidaten;
-    if (halb < 4) return kandidaten;
-    if (nurImBereich) return kandidatenImBereich(dn, rate, gewichte, pa);
-    // gesucht wird τ in [von, bis), ab 2 wie im Paper
-    const std::int64_t von = 2;
-    const std::int64_t bis = halb - 1;
-    // das laufende Minimum ab τ = von: die erste Stelle unter s ist die erste, an der es unter s faellt
-    std::vector<double> minimum(static_cast<std::size_t>(halb), 1e300);
-    std::int64_t kleinste = von;
-    for (std::int64_t tau = von; tau < bis; ++tau)
-    {
-        minimum[static_cast<std::size_t>(tau)] = std::min(tau > von ? minimum[static_cast<std::size_t>(tau - 1)] : 1e300, dn[static_cast<std::size_t>(tau)]);
-        if (dn[static_cast<std::size_t>(tau)] < dn[static_cast<std::size_t>(kleinste)]) kleinste = tau;
-    }
-    std::map<std::int64_t, double> je;  // Periode → Summe der Gewichte
-    for (int i = 0; i < kSchwellen; ++i)
-    {
-        const double s = (i + 1) / 100.0;
-        const double gewicht = gewichte[static_cast<std::size_t>(i)];
-        // die kleinste Periode mit d′ < s, bis in ihr Tal
-        const auto erste = std::find_if(minimum.begin() + von, minimum.begin() + bis, [s](double m) { return m < s; });
-        if (erste == minimum.begin() + bis)
-        {
-            je[kleinste] += pa * gewicht;  // keine darunter: das kleinste d′, mit p_a (Gl. 5)
-            continue;
-        }
-        auto tau = static_cast<std::int64_t>(erste - minimum.begin());
-        while (tau + 1 < bis && dn[static_cast<std::size_t>(tau + 1)] < dn[static_cast<std::size_t>(tau)]) ++tau;
-        je[tau] += gewicht;
-    }
-    for (const auto& [tau, p] : je)
-    {
-        // parabolisch zwischen den Nachbarn verfeinert, wie bei YIN
-        const double l = dn[static_cast<std::size_t>(tau - 1)];
-        const double m = dn[static_cast<std::size_t>(tau)];
-        const double r = dn[static_cast<std::size_t>(tau + 1)];
-        const double nenner = l - 2.0 * m + r;
-        const double versatz = nenner > 0.0 ? std::clamp(0.5 * (l - r) / nenner, -0.5, 0.5) : 0.0;
-        kandidaten.push_back({rate / (static_cast<double>(tau) + versatz), p});
-    }
     return kandidaten;
 }
 
@@ -215,7 +169,7 @@ std::vector<PYinKandidat> pyinKandidaten(const std::vector<double>& mono, int ra
     if (rate <= 0) return {};
     const Masse m = masseBei(rate);
     return kandidatenAus(normierteDifferenz(mono, mitte - m.halb / 2, m.halb), rate, schwellenGewichte(einstellungen.schwelleMittel),
-                         einstellungen.pa, einstellungen.nurImBereich);
+                         einstellungen.pa);
 }
 
 Tonhoehenverlauf messeTonhoehenverlauf(const std::vector<float>& stereo, int rate, const PYinEinstellungen& e)
@@ -236,7 +190,7 @@ Tonhoehenverlauf messeTonhoehenverlauf(const std::vector<float>& stereo, int rat
     std::vector<std::vector<PYinKandidat>> kandidaten(static_cast<std::size_t>(rahmen));
     for (std::int64_t k = 0; k < rahmen; ++k)
         kandidaten[static_cast<std::size_t>(k)] =
-            kandidatenAus(normierteDifferenz(mono, k * m.schritt - m.halb / 2, m.halb), rate, gewichte, e.pa, e.nurImBereich);
+            kandidatenAus(normierteDifferenz(mono, k * m.schritt - m.halb / 2, m.halb), rate, gewichte, e.pa);
 
     // --- Stufe 2: das HMM (§2.2) — Zustand = Stufe + M · (gesungen ? 0 : 1)
     const int stufen = kPYinStufen;
