@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.305.0
-> **Datum:** 2026-11-01 (Sessions 164 bis 168)
+> **Version:** 1.306.0
+> **Datum:** 2026-11-01 (Sessions 164 bis 169)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2628,10 +2628,12 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     ~~Icons für `.lvloop`, `.lvinst`, `.lvdata`~~ (seit S120); Wunsch an CMakeCraft: Daten-Ordner
     einer App als Angabe in `Solution.json`. Folge von D9 a: **eine unter
     `asset/` geänderte Datei sieht `LumiViz.exe` erst nach einem Bau**
-  - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — in Arbeit seit 2026-10-31 (S168): 15a erledigt
-    (Raster und Swing im Kopf des Loop-Panels, Swing offset je Muster, `.lvloop` Fassung 15; im Programm
-    ungesehen), Teilplan 15b–15m fest (`Loop_Konzept.md` §4p), nächster Schritt 15b. Offen vor 15g: eine Aufnahme
-    echten Gesangs für den Messfall (Quelle, Lizenz, Ablage)
+  - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — in Arbeit seit 2026-10-31 (S168): 15a bis 15g und
+    15k-1 erledigt (S169), nächster Schritt 15h (TD-PSOLA und Prüfstein; Auswertung Fable-Kandidat), Teilplan in
+    `Loop_Konzept.md` §4p. ⬜ **Im Programm ungesehen bzw. ungehört:** Wave editor (15d, Bilder
+    `.claude/handover/wave_editor_15d.png`), Wave-Clips in der Taktachse (15e, `wave_achse_15e.png`), *Record wave
+    clip* mit *Nothing — record right away*, Leuchte und stillem Einzählen (MH2 a, LD1 a), die Spur Pitch (15f). Nicht
+    ausgeglichen: die Eingangslatenz bei der freien Aufnahme (LD1 a)
   - 🟠 **Rückmeldung Patrik zum Instrument-Editor (S110):** Tasten anspielen
     und Notenlängen ziehen gingen bei ihm nicht — beides war gebaut.
     Nachgebessert (Griff, Mauszeiger, Hinweis bei stummen Tasten); **nicht
@@ -6310,6 +6312,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.306.0 | 2026-11-01 | Session 169. §6 Loop: Stufe 15 — 15b bis 15g und 15k-1 gebaut (Wave-Muster, Wave editor, Taktachse, Aufnahme mit Leuchte, Signalsmith Stretch, pYIN), nächster Schritt 15h; im Programm ungesehen. |
 | 1.305.0 | 2026-11-01 | Session 168. §6 Loop: Stufe 15 Wave-Clips in Arbeit — 15a gebaut (Raster und Swing im Loop-Panel, Swing offset, Fassung 15), Teilplan 15b–15m; 8.5-HT: HT-1 entschieden, LV-2 freigegeben. |
 | 1.304.0 | 2026-10-31 | Session 167. §7 NEU „Muster, Clips und Spuren als Dateien“ (Stufe 33 gebaut, Sichttest offen; Befund `mitgelieferteLoopDateien` zählt Arbeitsdateien). |
 | 1.303.0 | 2026-10-30 | Session 167 (Opus 5.5). §7 Instrumente: *Chords* friert beim ersten Öffnen ein — Ursache gemessen (6373 einzelne `.lvchord`, frisch 25,6 s), AK1 a: Sammlungen `.lvchords` je Stimmung, lazy gelesen (`Saiten_Konzept` §5ze). |
