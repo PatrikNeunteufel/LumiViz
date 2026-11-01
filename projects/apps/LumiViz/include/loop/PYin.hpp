@@ -53,6 +53,12 @@ struct PYinEinstellungen
     double pa = 0.01;            ///< Gewicht des kleinsten d′, wenn keine Periode unter der Schwelle liegt (Gl. 5)
     double wechsel = 0.01;       ///< Wechsel gesungen / nicht gesungen je Rahmen (Gl. 7)
     int sprungStufen = 25;       ///< so weit springt die Tonhoehe hoechstens je Rahmen (Gl. 8)
+    /// Stufe 1 nimmt je Schwelle das erste **Tal** von d′ mit einer Periode im Bereich des HMM
+    /// (55 Hz … oberste Stufe) statt der ersten Stelle ab τ = 2 (wie librosa `pyin`). Sonst waehlt
+    /// YIN bei einer hohen Stimme die halbe Periode oder ein Tal bei einem Formanten, die Frequenz
+    /// liegt ueber dem HMM, und der Rahmen gilt als stumm (Befund S170, Pruefstein 15h: Sopran bei
+    /// 440 Hz zu 0 % gesungen). Aus bis zum Entscheid; nur fuer den Vergleich.
+    bool nurImBereich = false;
 };
 
 /// Ein Kandidat aus Stufe 1.

@@ -283,9 +283,18 @@ TEST_SUITE("LoopPYin")
             }
         };
         const auto anteil = [](long long a, long long b) { return b > 0 ? 100.0 * static_cast<double>(a) / static_cast<double>(b) : 0.0; };
+        // S170: mit LUMIVIZ_PYIN_IM_BEREICH=1 sucht Stufe 1 nur im Bereich des HMM (`nurImBereich`);
+        // der Bericht geht dann in eine eigene Datei, der von S169 bleibt
+        const bool imBereich = qEnvironmentVariableIntValue("LUMIVIZ_PYIN_IM_BEREICH") == 1;
         QString bericht;
         QTextStream b(&bericht);
-        b << "# pYIN an vocadito (S169, Stufe 15g, GA1 a)\n\n"
+        if (imBereich)
+            b << "# pYIN an vocadito mit Perioden nur im Bereich des HMM (S170, Befund aus dem Prüfstein 15h)\n\n"
+              << "Wie `S169_pyin_vocadito.md`, aber Stufe 1 sucht τ nur zwischen der obersten Stufe des HMM und 55 Hz "
+                 "(`PYinEinstellungen::nurImBereich`).\n\n";
+        else
+            b << "# pYIN an vocadito (S169, Stufe 15g, GA1 a)\n\n";
+        b
           << "Geschrieben von `test_LoopPYin.cpp` (Fall „Messfall an vocadito“, `LUMIVIZ_VOCADITO`). Quelle: vocadito, "
              "Zenodo 5578807, CC BY 4.0 (`docs/modellierung/wave-clips/daten/Vocadito_Zenodo5578807/HERKUNFT.md`). "
              "Rahmen 2048, Schritt 256 bei 44,1 kHz — dasselbe Raster wie die Beschriftung; Rahmen k ist um k · 256 "
@@ -323,6 +332,7 @@ TEST_SUITE("LoopPYin")
             {
                 PYinEinstellungen e;
                 e.schwelleMittel = mittel[m];
+                e.nurImBereich = imBereich;
                 const auto anfang = std::chrono::steady_clock::now();
                 const Tonhoehenverlauf v = messeTonhoehenverlauf(inhalt->stereo, inhalt->rate, e);
                 ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - anfang).count();
@@ -372,7 +382,8 @@ TEST_SUITE("LoopPYin")
         b.flush();
 
         const QString ziel = QDir(QFileInfo(QString::fromLocal8Bit(__FILE__)).absolutePath())
-                                 .filePath(QStringLiteral("../../../docs/modellierung/wave-clips/proben/S169_pyin_vocadito.md"));
+                                 .filePath(imBereich ? QStringLiteral("../../../docs/modellierung/wave-clips/proben/S170_pyin_vocadito_im_bereich.md")
+                                                     : QStringLiteral("../../../docs/modellierung/wave-clips/proben/S169_pyin_vocadito.md"));
         QDir().mkpath(QFileInfo(ziel).absolutePath());
         QFile aus(ziel);
         REQUIRE(aus.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));

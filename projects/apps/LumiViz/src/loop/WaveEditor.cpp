@@ -848,8 +848,8 @@ void WaveEditor::setupUI()
     m_tonhoehe->addItem(tr("General"), static_cast<int>(TonhoehenArt::Allgemein));
     m_tonhoehe->addItem(tr("Voice"), static_cast<int>(TonhoehenArt::Stimme));
     m_tonhoehe->setToolTip(tr("How tempo and pitch are changed: General for any material, Voice for a single voice.\n"
-                              "The Pitch lane uses General; Voice comes in a later version and works like General "
-                              "until then"));
+                              "Voice keeps the formants of a single voice when the pitch moves; for anything else "
+                              "use General"));
     tempo->addWidget(new QLabel(tr("Reference tempo"), this));
     tempo->addWidget(m_bezug);
     tempo->addWidget(m_bezugAufLoop);

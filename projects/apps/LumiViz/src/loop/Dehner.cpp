@@ -5,6 +5,9 @@
 
 #include "loop/Dehner.hpp"
 
+#include "loop/PYin.hpp"
+#include "loop/Psola.hpp"
+
 #include <signalsmith-stretch.h>
 
 #include <algorithm>
@@ -33,10 +36,19 @@ struct Kanaele
 /// Fuer ein Stueck fester Laenge wie im README der Bibliothek: am Anfang `seek` mit
 /// `inputLatency()` Abtastwerten, am Ende `inputLatency()` Stille und `flush`; das Ergebnis traegt
 /// `outputLatency()` Vorlauf, der wegfaellt.
+/// Mit `formanten` haelt Stretch die Huelle des Spektrums fest (`setFormantFactor(1, true)`,
+/// Grundton fuer die Huelle je Block aus pYIN, `setFormantBase`) — der Gegenkandidat zu PSOLA im
+/// Pruefstein 15h.
 class DehnerSignalsmith final : public Dehner
 {
 public:
-    [[nodiscard]] std::string name() const override { return "Signalsmith Stretch 1.4.0"; }
+    explicit DehnerSignalsmith(bool formanten = false) : m_formanten(formanten) {}
+
+    [[nodiscard]] std::string name() const override
+    {
+        return m_formanten ? "Signalsmith Stretch 1.4.0, formants kept" : "Signalsmith Stretch 1.4.0";
+    }
+    [[nodiscard]] bool behaeltFormanten() const override { return m_formanten; }
 
     [[nodiscard]] std::vector<float> rechne(const std::vector<float>& stereo, int rate, std::int64_t ausFrames,
                                             const std::function<double(std::int64_t)>& halbtoene) const override
@@ -48,6 +60,7 @@ public:
 
         signalsmith::stretch::SignalsmithStretch<float, std::mt19937> stretch(kSamen);
         stretch.presetDefault(2, static_cast<float>(rate));
+        if (m_formanten) stretch.setFormantFactor(1.0f, true);
         const std::int64_t ein = stretch.inputLatency();
         const std::int64_t aus = stretch.outputLatency();
 
@@ -71,9 +84,26 @@ public:
         const std::int64_t anfang = ein;
         std::int64_t gelesen = anfang;
         double tonhoehe = std::nan("");
+        // mit Formanterhalt: der Grundton fuer die Huelle aus pYIN statt der eigenen Schaetzung von
+        // Stretch (die bei tiefen Stimmen eine Oktave daneben lag, Pruefstein 15h)
+        const Tonhoehenverlauf verlauf = m_formanten ? messeTonhoehenverlauf(stereo, rate) : Tonhoehenverlauf{};
+        double grundton = std::nan("");
         for (std::int64_t k = 0; k < ausFrames; k += kDehnerBlock)
         {
             const std::int64_t block = std::min<std::int64_t>(kDehnerBlock, ausFrames - k);
+            if (m_formanten && verlauf.schritt > 0 && !verlauf.hz.empty())
+            {
+                const auto rahmen = std::clamp<std::int64_t>(
+                    std::llround(static_cast<double>(k + block / 2) * verhaeltnis / verlauf.schritt), 0,
+                    static_cast<std::int64_t>(verlauf.hz.size()) - 1);
+                const double hz = verlauf.hz[static_cast<std::size_t>(rahmen)];  // 0 = stumm: Stretch schaetzt selbst
+                if (!(hz == grundton))
+                {
+                    // in Bruchteilen der Abtastrate wie alle Frequenzen von Stretch (`stft.freqToBin`)
+                    stretch.setFormantBase(static_cast<float>(hz / rate));
+                    grundton = hz;
+                }
+            }
             // die Tonhoehe gilt an der Stelle, die gerade gerechnet wird — `aus` vor der Ausgabe,
             // also genau bei Abtastwert k des Ergebnisses
             const double ht = halbtoene ? halbtoene(k + block / 2) : 0.0;
@@ -97,6 +127,9 @@ public:
         }
         return ergebnis;
     }
+
+private:
+    bool m_formanten = false;
 };
 
 }  // namespace
@@ -105,13 +138,25 @@ std::vector<std::unique_ptr<Dehner>> dehnerUmsetzungen()
 {
     std::vector<std::unique_ptr<Dehner>> alle;
     alle.push_back(std::make_unique<DehnerSignalsmith>());
+    alle.push_back(dehnerPsola());
     return alle;
+}
+
+std::unique_ptr<Dehner> dehnerSignalsmithFormanten()
+{
+    return std::make_unique<DehnerSignalsmith>(true);
 }
 
 const Dehner& dehner()
 {
     static const DehnerSignalsmith vorgabe;
     return vorgabe;
+}
+
+const Dehner& dehnerStimme()
+{
+    static const std::unique_ptr<Dehner> stimme = dehnerPsola();
+    return *stimme;
 }
 
 }  // namespace lumi::loop

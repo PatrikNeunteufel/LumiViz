@@ -13,12 +13,16 @@
  * gerechneten Ton: die Frequenz ueber Nulldurchgaenge in der Mitte (die Raender tragen den
  * Ein- und Ausschwung des Verfahrens), der Pegel als Effektivwert.
  *
- * - Tonhoehe: +12, −12, +7 und 0 Halbtoene an einem Sinus, die Laenge bleibt.
+ * - Tonhoehe: +12, −12, +7 und 0 Halbtoene an einem Sinus, die Laenge bleibt — nur fuer
+ *   Umsetzungen ohne Formanterhalt (mit ihm folgt der Pegel der Huelle, ein Sinus bleibt kein
+ *   Sinus der neuen Hoehe); an einem Klang mit Obertoenen fuer jede (Stufe 15h), gemessen mit
+ *   pYIN.
  * - Dauer: doppelt und halb so lang, die Tonhoehe bleibt.
- * - Eine Kurve je Block: erst 0, dann +7 Halbtoene.
+ * - Eine Kurve je Block: erst 0, dann +7 Halbtoene, am Klang mit Obertoenen.
  * - Zweimal gerechnet ist Bit fuer Bit gleich; kurze und leere Klaenge.
- * - Bezugswerte `werte/dehner_bezug.txt` — beide Compiler pruefen gegen dieselbe Datei; neu mit
- *   `LUMIVIZ_DEHNER_BEZUG_SCHREIBEN=1`.
+ * - Bezugswerte `werte/dehner_bezug.txt` (die Vorgabe) und `werte/dehner_bezug_<name>.txt` (jede
+ *   weitere Umsetzung, Stufe 15h) — beide Compiler pruefen gegen dieselbe Datei; neu mit
+ *   `LUMIVIZ_DEHNER_BEZUG_SCHREIBEN=1` (schreibt alle).
  * - Rechenzeit (meldet nur Zahlen).
  ****************************************************************************************
  */
@@ -26,6 +30,7 @@
 #include <doctest.h>
 
 #include "loop/Dehner.hpp"
+#include "loop/PYin.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -36,7 +41,9 @@
 
 #include <chrono>
 #include <cmath>
+#include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <numbers>
 #include <vector>
 
@@ -93,6 +100,33 @@ double effektiv(const std::vector<float>& d, std::int64_t von, std::int64_t bis)
 
 const auto konstant = [](double ht) { return [ht](std::int64_t) { return ht; }; };
 
+/// Ein Klang mit Obertoenen (Stufe 15h): alle Teiltoene unter 6 kHz mit 1 / k, in beiden Kanaelen.
+std::vector<float> obertoene(double hz, std::int64_t frames, double pegel = 0.2)
+{
+    std::vector<float> d(static_cast<std::size_t>(2 * frames));
+    for (std::int64_t i = 0; i < frames; ++i)
+    {
+        double w = 0.0;
+        for (int k = 1; k * hz < 6000.0; ++k)
+            w += std::sin(2.0 * std::numbers::pi * k * hz * static_cast<double>(i) / kRate) / k;
+        d[static_cast<std::size_t>(2 * i)] = static_cast<float>(pegel * w);
+        d[static_cast<std::size_t>(2 * i + 1)] = static_cast<float>(pegel * w);
+    }
+    return d;
+}
+
+/// Der Grundton zwischen `von` und `bis` mit pYIN: der Median der gesungenen Rahmen.
+double grundton(const std::vector<float>& d, std::int64_t von, std::int64_t bis)
+{
+    const std::vector<float> stueck(d.begin() + static_cast<std::ptrdiff_t>(2 * von), d.begin() + static_cast<std::ptrdiff_t>(2 * bis));
+    std::vector<float> hz;
+    for (const float f : messeTonhoehenverlauf(stueck, kRate).hz)
+        if (f > 0.0f) hz.push_back(f);
+    if (hz.empty()) return 0.0;
+    std::nth_element(hz.begin(), hz.begin() + static_cast<std::ptrdiff_t>(hz.size() / 2), hz.end());
+    return hz[hz.size() / 2];
+}
+
 /// Zahlen in [−1, 1), auf jedem Rechner dieselben (SplitMix64).
 std::vector<float> rauschen(std::int64_t frames, std::uint64_t samen)
 {
@@ -109,9 +143,20 @@ std::vector<float> rauschen(std::int64_t frames, std::uint64_t samen)
     return d;
 }
 
-QString bezugsDatei()
+/// Die Bezugsdatei einer Umsetzung: die Vorgabe `dehner_bezug.txt`, jede weitere
+/// `dehner_bezug_<name>.txt` (Kleinbuchstaben und Ziffern, sonst `-`).
+QString bezugsDatei(const Dehner& u, bool vorgabe)
 {
-    return QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir().filePath(QStringLiteral("werte/dehner_bezug.txt"));
+    QString datei = QStringLiteral("werte/dehner_bezug.txt");
+    if (!vorgabe)
+    {
+        QString kurz;
+        for (const QChar c : QString::fromStdString(u.name()).toLower())
+            kurz += c.isLetterOrNumber() ? c : QLatin1Char('-');
+        while (kurz.contains(QStringLiteral("--"))) kurz.replace(QStringLiteral("--"), QStringLiteral("-"));
+        datei = QStringLiteral("werte/dehner_bezug_") + kurz + QStringLiteral(".txt");
+    }
+    return QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir().filePath(datei);
 }
 
 }  // namespace
@@ -125,6 +170,7 @@ TEST_SUITE("LoopDehner")
         const double pegelEin = effektiv(ein, kRate / 2, 3 * kRate / 2);
         for (const auto& u : dehnerUmsetzungen())
         {
+            if (u->behaeltFormanten()) continue;  // dafuer der Fall mit Obertoenen
             CAPTURE(u->name());
             for (const double ht : {12.0, -12.0, 7.0, 0.0})
             {
@@ -136,6 +182,23 @@ TEST_SUITE("LoopDehner")
                 const double verhaeltnis = effektiv(aus, kRate / 2, 3 * kRate / 2) / pegelEin;
                 CHECK(verhaeltnis > 0.84);
                 CHECK(verhaeltnis < 1.19);
+            }
+        }
+    }
+
+    TEST_CASE("Loop Dehner 15h Tonhoehe: ein Klang mit Obertoenen steigt und faellt, jede Umsetzung")
+    {
+        const std::int64_t n = 2 * kRate;
+        const std::vector<float> ein = obertoene(220.0, n);
+        for (const auto& u : dehnerUmsetzungen())
+        {
+            CAPTURE(u->name());
+            for (const double ht : {12.0, -12.0, 7.0, 0.0})
+            {
+                CAPTURE(ht);
+                const std::vector<float> aus = u->rechne(ein, kRate, n, konstant(ht));
+                REQUIRE(aus.size() == ein.size());
+                CHECK(grundton(aus, kRate / 2, 3 * kRate / 2) == doctest::Approx(220.0 * std::pow(2.0, ht / 12.0)).epsilon(0.005));
             }
         }
     }
@@ -158,8 +221,9 @@ TEST_SUITE("LoopDehner")
 
     TEST_CASE("Loop Dehner 15f Kurve: die Tonhoehe je Block, erst 0, dann +7 Halbtoene")
     {
+        // seit 15h am Klang mit Obertoenen, gemessen mit pYIN — so gilt der Fall fuer jede Umsetzung
         const std::int64_t n = 2 * kRate;
-        const std::vector<float> ein = sinus(440.0, n);
+        const std::vector<float> ein = obertoene(220.0, n);
         for (const auto& u : dehnerUmsetzungen())
         {
             CAPTURE(u->name());
@@ -168,8 +232,8 @@ TEST_SUITE("LoopDehner")
                 gefragt.push_back(k);
                 return k < kRate ? 0.0 : 7.0;
             });
-            CHECK(frequenz(aus, kRate / 5, 4 * kRate / 5) == doctest::Approx(440.0).epsilon(0.005));
-            CHECK(frequenz(aus, 6 * kRate / 5, 9 * kRate / 5) == doctest::Approx(440.0 * std::pow(2.0, 7.0 / 12.0)).epsilon(0.005));
+            CHECK(grundton(aus, kRate / 5, 4 * kRate / 5) == doctest::Approx(220.0).epsilon(0.005));
+            CHECK(grundton(aus, 6 * kRate / 5, 9 * kRate / 5) == doctest::Approx(220.0 * std::pow(2.0, 7.0 / 12.0)).epsilon(0.005));
             // je Block einmal gefragt, in der Mitte des Blocks
             REQUIRE(!gefragt.empty());
             CHECK(gefragt.front() == kDehnerBlock / 2);
@@ -201,47 +265,53 @@ TEST_SUITE("LoopDehner")
         const std::vector<float> rest = rauschen(kRate, 11);
         for (std::size_t i = 0; i < ein.size(); ++i) ein[i] += zweiter[i] + 0.02f * rest[i];
         const auto kurve = [](std::int64_t k) { return 5.0 * static_cast<double>(k) / kRate; };
-        const Dehner& u = *dehnerUmsetzungen().front();
-        const std::vector<float> aus = u.rechne(ein, kRate, kRate * 5 / 4, kurve);
-        REQUIRE(aus.size() == static_cast<std::size_t>(2 * kRate * 5 / 4));
-        // der Effektivwert je Viertel und zehn einzelne Abtastwerte, links und rechts
-        std::vector<double> werte;
-        for (int v = 0; v < 5; ++v) werte.push_back(effektiv(aus, v * kRate / 4, (v + 1) * kRate / 4));
-        for (int j = 1; j <= 10; ++j)
+        const std::vector<std::unique_ptr<Dehner>> alle = dehnerUmsetzungen();
+        for (std::size_t nr = 0; nr < alle.size(); ++nr)
         {
-            const auto i = static_cast<std::size_t>(2 * (j * 5800));
-            werte.push_back(aus[i]);
-            werte.push_back(aus[i + 1]);
-        }
-        if (qEnvironmentVariableIntValue("LUMIVIZ_DEHNER_BEZUG_SCHREIBEN") == 1)
-        {
-            QFile datei(bezugsDatei());
-            REQUIRE(datei.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
-            QTextStream schreib(&datei);
-            schreib.setRealNumberPrecision(12);
-            schreib << "# " << QString::fromStdString(u.name())
-                    << ": 220 + 330 Hz und Rauschen, 1 s auf 1,25 s, Tonhoehe 0 bis +5 Halbtoene - geschrieben von "
-                       "test_LoopDehner.cpp (LUMIVIZ_DEHNER_BEZUG_SCHREIBEN=1)\n";
-            schreib << "# fuenf Effektivwerte je Viertelsekunde, dann zehnmal links und rechts an 5800 j\n";
-            for (const double w : werte) schreib << w << '\n';
-            MESSAGE("dehner_bezug.txt neu geschrieben");
-            return;
-        }
-        QFile datei(bezugsDatei());
-        REQUIRE_MESSAGE(datei.open(QIODevice::ReadOnly | QIODevice::Text),
-                        "werte/dehner_bezug.txt fehlt — mit LUMIVIZ_DEHNER_BEZUG_SCHREIBEN=1 schreiben");
-        std::vector<double> bezug;
-        while (!datei.atEnd())
-        {
-            const QString zeile = QString::fromUtf8(datei.readLine()).trimmed();
-            if (zeile.isEmpty() || zeile.startsWith(QLatin1Char('#'))) continue;
-            bezug.push_back(zeile.toDouble());
-        }
-        REQUIRE(bezug.size() == werte.size());
-        for (std::size_t i = 0; i < werte.size(); ++i)
-        {
-            CAPTURE(i);
-            CHECK(werte[i] == doctest::Approx(bezug[i]).epsilon(1e-5).scale(0.3));
+            const Dehner& u = *alle[nr];
+            CAPTURE(u.name());
+            const QString pfad = bezugsDatei(u, nr == 0);
+            const std::vector<float> aus = u.rechne(ein, kRate, kRate * 5 / 4, kurve);
+            REQUIRE(aus.size() == static_cast<std::size_t>(2 * kRate * 5 / 4));
+            // der Effektivwert je Viertel und zehn einzelne Abtastwerte, links und rechts
+            std::vector<double> werte;
+            for (int v = 0; v < 5; ++v) werte.push_back(effektiv(aus, v * kRate / 4, (v + 1) * kRate / 4));
+            for (int j = 1; j <= 10; ++j)
+            {
+                const auto i = static_cast<std::size_t>(2 * (j * 5800));
+                werte.push_back(aus[i]);
+                werte.push_back(aus[i + 1]);
+            }
+            if (qEnvironmentVariableIntValue("LUMIVIZ_DEHNER_BEZUG_SCHREIBEN") == 1)
+            {
+                QFile datei(pfad);
+                REQUIRE(datei.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
+                QTextStream schreib(&datei);
+                schreib.setRealNumberPrecision(12);
+                schreib << "# " << QString::fromStdString(u.name())
+                        << ": 220 + 330 Hz und Rauschen, 1 s auf 1,25 s, Tonhoehe 0 bis +5 Halbtoene - geschrieben von "
+                           "test_LoopDehner.cpp (LUMIVIZ_DEHNER_BEZUG_SCHREIBEN=1)\n";
+                schreib << "# fuenf Effektivwerte je Viertelsekunde, dann zehnmal links und rechts an 5800 j\n";
+                for (const double w : werte) schreib << w << '\n';
+                MESSAGE(QFileInfo(pfad).fileName().toStdString() << " neu geschrieben");
+                continue;
+            }
+            QFile datei(pfad);
+            REQUIRE_MESSAGE(datei.open(QIODevice::ReadOnly | QIODevice::Text),
+                            QFileInfo(pfad).fileName().toStdString() << " fehlt — mit LUMIVIZ_DEHNER_BEZUG_SCHREIBEN=1 schreiben");
+            std::vector<double> bezug;
+            while (!datei.atEnd())
+            {
+                const QString zeile = QString::fromUtf8(datei.readLine()).trimmed();
+                if (zeile.isEmpty() || zeile.startsWith(QLatin1Char('#'))) continue;
+                bezug.push_back(zeile.toDouble());
+            }
+            REQUIRE(bezug.size() == werte.size());
+            for (std::size_t i = 0; i < werte.size(); ++i)
+            {
+                CAPTURE(i);
+                CHECK(werte[i] == doctest::Approx(bezug[i]).epsilon(1e-5).scale(0.3));
+            }
         }
     }
 

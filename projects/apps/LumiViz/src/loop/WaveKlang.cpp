@@ -22,6 +22,7 @@ namespace
 
 const QString kWaveVorsatz = QStringLiteral("wave:");
 constexpr int kWerte = 7;
+const QString kStimme = QStringLiteral("voice");
 
 QString zahl(double wert)
 {
@@ -41,6 +42,7 @@ QString waveKlangName(const WaveKlang& k)
                             zahl(k.gainDb),  zahl(k.fadeInMs), zahl(k.fadeOutMs)};
     QString name = kWaveVorsatz + werte.join(QLatin1Char(','));
     for (const SpurPunkt& p : k.tonhoehe) name += QLatin1Char(';') + zahl(p.stelle) + QLatin1Char(':') + zahl(p.wert);
+    if (k.stimme && !k.tonhoehe.empty()) name += QLatin1Char(';') + kStimme;
     return name + QLatin1Char('|') + k.datei;
 }
 
@@ -53,8 +55,15 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& k)
     // Stufe 15f: hinter den Werten je Punkt der Spur Pitch `;<ms>:<halbtoene>`
     const QStringList teile = rest.left(trenner).split(QLatin1Char(';'));
     std::vector<SpurPunkt> tonhoehe;
+    bool stimme = false;
     for (qsizetype i = 1; i < teile.size(); ++i)
     {
+        // Stufe 15h: `;voice` als letztes, nur mit Spur
+        if (teile[i] == kStimme && i + 1 == teile.size() && !tonhoehe.empty())
+        {
+            stimme = true;
+            continue;
+        }
         const QStringList paar = teile[i].split(QLatin1Char(':'));
         if (paar.size() != 2) return false;
         bool okStelle = false;
@@ -82,6 +91,7 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& k)
     neu.fadeInMs = z[5];
     neu.fadeOutMs = z[6];
     neu.tonhoehe = std::move(tonhoehe);
+    neu.stimme = stimme;
     k = std::move(neu);
     return true;
 }
@@ -103,7 +113,10 @@ WaveKlang waveKlangVon(const Loop& loop, const Muster& muster)
     // Stufe 15f: die Spur Pitch in Millisekunden — nur, wenn ein Punkt die Tonhoehe aendert
     const std::vector<SpurPunkt>& pitch = muster.zeitspuren.von(Steuerspur::Pitch);
     if (std::any_of(pitch.begin(), pitch.end(), [](const SpurPunkt& p) { return p.wert != 0.0; }))
+    {
         for (const SpurPunkt& p : pitch) k.tonhoehe.push_back({p.stelle * schrittMs, p.wert});
+        k.stimme = w.tonhoehenArt == TonhoehenArt::Stimme;  // Stufe 15h
+    }
     return k;
 }
 
@@ -141,7 +154,7 @@ Klang rechneWave(const WaveKlang& k, const std::vector<float>& datei, int rate)
     std::vector<float> stueck(datei.begin() + static_cast<std::ptrdiff_t>(2 * (a + d)),
                               datei.begin() + static_cast<std::ptrdiff_t>(2 * (b + d)));
     if (!k.tonhoehe.empty())
-        stueck = dehner().rechne(stueck, rate, b - a, [&k, a, rate](std::int64_t i) {
+        stueck = (k.stimme ? dehnerStimme() : dehner()).rechne(stueck, rate, b - a, [&k, a, rate](std::int64_t i) {
             return kurveBei(k.tonhoehe, 1000.0 * static_cast<double>(a + i) / rate, 0.0);
         });
     klang.daten.assign(static_cast<std::size_t>(2 * b), 0.0f);

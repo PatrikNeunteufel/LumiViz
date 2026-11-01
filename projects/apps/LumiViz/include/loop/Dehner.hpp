@@ -9,9 +9,9 @@
  * ueber den ganzen Klang.
  *
  * Kein Typ einer fremden Bibliothek geht ueber diese Schnittstelle; die Umsetzung mit
- * Signalsmith Stretch steht in `Dehner.cpp` (`externals/signalsmith-stretch`). Das eigene
- * TD-PSOLA fuer einstimmigen Gesang (WV6 a) kommt in `dehnerUmsetzungen()` dazu, die Tests
- * laufen gegen jede. Reines C++ ohne Qt.
+ * Signalsmith Stretch steht in `Dehner.cpp` (`externals/signalsmith-stretch`), das eigene
+ * TD-PSOLA fuer einstimmigen Gesang (WV6 a, Stufe 15h) in `Psola.cpp`. Die Tests laufen gegen
+ * jede aus `dehnerUmsetzungen()`. Reines C++ ohne Qt.
  */
 #pragma once
 
@@ -36,6 +36,9 @@ class Dehner
 public:
     virtual ~Dehner() = default;
     [[nodiscard]] virtual std::string name() const = 0;
+    /// Bleiben die Formanten, wenn die Tonhoehe sich aendert? Dann folgt der Pegel der Huelle des
+    /// Spektrums — ein Sinus wird nicht einfach ein hoeherer Sinus.
+    [[nodiscard]] virtual bool behaeltFormanten() const { return false; }
     /// `stereo` (links und rechts im Wechsel, `rate` Abtastwerte je Sekunde) auf `ausFrames`
     /// Abtastwerte je Seite bringen; ist es so lang wie vorher, bleibt die Dauer. Die Tonhoehe in
     /// Halbtoenen gibt `halbtoene(k)` fuer Abtastwert k des Ergebnisses, gelesen je
@@ -50,5 +53,13 @@ public:
 
 /// Die Vorgabe, einmal fuer das ganze Programm.
 [[nodiscard]] const Dehner& dehner();
+
+/// *Voice* (WV6 a): TD-PSOLA fuer einstimmigen Gesang, einmal fuer das ganze Programm.
+[[nodiscard]] const Dehner& dehnerStimme();
+
+/// Nur fuer den Pruefstein 15h (Bericht `docs/modellierung/wave-clips/proben/S170_pruefstein_15h.md`):
+/// Signalsmith Stretch mit Formanterhalt (`setFormantFactor(1, true)`, Grundton je Block aus pYIN)
+/// — der Gegenkandidat zu PSOLA, im Programm nicht gewaehlt (Urteil nach WV6 a).
+[[nodiscard]] std::unique_ptr<Dehner> dehnerSignalsmithFormanten();
 
 }  // namespace lumi::loop
