@@ -656,6 +656,25 @@ TEST_CASE("PaletteUi Panel: Startzustand — Host haengt, Baum zeigt die drei Kn
     schnappschuss(*p.panel, "A_panel_start");
 }
 
+// S169: Patrik schloss das Fenster des Visualizers, das Panel behielt den toten Host, und die
+// Live-Anzeige eines Felds las 100 ms spaeter aus ihm (Absturz, LumiViz.log endete mit
+// „VisualizerWidget destructor"). Der Widget meldet jetzt, dass sein Visualizer geht.
+TEST_CASE("PaletteUi Panel S169: stirbt der Visualizer, laesst das Panel ihn los — nur den eigenen")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.panel->hatHost());
+    IEventBus* bus = p.services.tryResolve<IEventBus>();
+    QMutex fremd;
+    bus->publish(VisualizerGoneEvent{&fremd});  // ein anderes Fenster schliesst
+    CHECK(p.panel->hatHost());
+    CHECK(p.panel->host() == &p.vis);
+    bus->publish(VisualizerGoneEvent{&p.mutex});
+    CHECK_FALSE(p.panel->hatHost());
+    CHECK(p.panel->renderMutex() == nullptr);
+    CHECK_FALSE(p.tree->isEnabled());
+}
+
 // S89, KE2 Schritt 2 (Entscheid K2 a): dasselbe Panel an den Baum der
 // Karaoke-Ebene gebunden — der Baum zeigt deren Knoten, ein Edit trifft die
 // Ebene und nicht die Kette, und zurueck steht wieder die Kette da.

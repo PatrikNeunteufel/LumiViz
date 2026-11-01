@@ -134,6 +134,12 @@ VisualizerWidget::~VisualizerWidget()
 {
     BasicLogger::logDebug("VisualizerWidget destructor");
 
+    // S169: panels holding our visualizer let go first — it dies with us
+    if (auto* bus = eventBus())
+    {
+        bus->publish(VisualizerGoneEvent{&m_renderMutex});
+    }
+
     if (m_thread != nullptr)
     {
         // Joins the thread; the thread GL-cleans the active visualizer and

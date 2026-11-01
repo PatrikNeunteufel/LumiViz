@@ -19,8 +19,6 @@ namespace
 
 constexpr int kMindestensGefunden = 3;
 const QString kKlickName = QStringLiteral("Click (recording)");
-const QString kStilleName = QStringLiteral("Silence (recording)");  // MH1 a: Nothing
-
 std::int64_t median(std::vector<std::int64_t> werte)
 {
     const auto mitte = werte.begin() + static_cast<std::ptrdiff_t>(werte.size() / 2);
@@ -176,49 +174,28 @@ Aufnahmefassung aufnahmeFassung(const Loop& loop, const WaveAufnahmePlan& plan)
     f.abspielTakt = f.aufnahmeTakt - einzaehlen;
 
     // die Takte des Takes, die die Fassung traegt: bei Loop and click bis Stop bis zum Ende des
-    // Loops (dann beginnt er von vorn); sonst schweigt der Loop ab dem Take, und die Fassung
-    // muss bis zur hoechsten Laenge reichen, sonst sprang der Spieler zurueck an den Anfang
+    // Loops (dann beginnt er von vorn); bei Click only schweigt der Loop ab dem Take, und der
+    // Klick muss bis zur hoechsten Laenge reichen, sonst sprang der Spieler zurueck an den Anfang
     const int durchlauf = f.loop.durchlaufTakte();
     const double taktS = f.loop.bpm > 0.0 ? 60.0 / f.loop.bpm * f.loop.schlaegeJeTakt : 2.0;
     const int aufnahme = plan.takte > 0                                  ? plan.takte
                          : plan.mithoeren == Mithoeren::LoopUndKlick ? std::max(1, durchlauf - f.aufnahmeTakt)
                                                                          : static_cast<int>(std::ceil(kTakeHoechstensSekunden / taktS)) + 1;
     if (plan.mithoeren != Mithoeren::LoopUndKlick) schneideAb(f.loop, f.aufnahmeTakt);
-    const auto freierName = [&f](const QString& name) {
-        QString frei = name;
-        for (int n = 2; f.loop.findeMuster(frei) != nullptr; ++n) frei = name + QStringLiteral(" %1").arg(n);
-        return frei;
-    };
-    // der Klick: auf jedem Schlag, die Eins lauter; Stille: dasselbe ohne Schlaege
-    const auto taktMuster = [&f](const QString& name, bool klingt) {
-        Muster m;
-        m.name = name;
-        m.takte = 1;
-        m.spuren = {{QStringLiteral("Click"), QStringLiteral("kit:hat_closed"), 1.0, 0.0, false}};
-        std::vector<double> zeile(static_cast<std::size_t>(f.loop.schritteJeTakt()), 0.0);
-        if (klingt)
-            for (int schlag = 0; schlag < f.loop.schlaegeJeTakt; ++schlag)
-                zeile[static_cast<std::size_t>(schlag * f.loop.schritteJeSchlag)] = schlag == 0 ? 1.0 : 0.6;
-        m.zeilen = {zeile};
-        return m;
-    };
-    const bool klickImTake = plan.mithoeren != Mithoeren::Nichts;
+    // der Klick: auf jedem Schlag, die Eins lauter
+    Muster klick;
+    klick.name = kKlickName;
+    for (int n = 2; f.loop.findeMuster(klick.name) != nullptr; ++n) klick.name = kKlickName + QStringLiteral(" %1").arg(n);
+    klick.takte = 1;
+    klick.spuren = {{QStringLiteral("Click"), QStringLiteral("kit:hat_closed"), 1.0, 0.0, false}};
+    std::vector<double> zeile(static_cast<std::size_t>(f.loop.schritteJeTakt()), 0.0);
+    for (int schlag = 0; schlag < f.loop.schlaegeJeTakt; ++schlag)
+        zeile[static_cast<std::size_t>(schlag * f.loop.schritteJeSchlag)] = schlag == 0 ? 1.0 : 0.6;
+    klick.zeilen = {zeile};
+    f.loop.muster.push_back(klick);
     Kanal kanal;
-    const int klickTakte = einzaehlen + (klickImTake ? aufnahme : 0);
-    if (klickTakte > 0)
-    {
-        Muster klick = taktMuster(freierName(kKlickName), true);
-        kanal.clips.emplace_back(klick.name, f.abspielTakt, klickTakte);
-        f.loop.muster.push_back(std::move(klick));
-    }
-    if (!klickImTake)
-    {
-        Muster still = taktMuster(freierName(kStilleName), false);
-        kanal.clips.emplace_back(still.name, f.aufnahmeTakt, aufnahme);
-        f.loop.muster.push_back(std::move(still));
-    }
-    if (kanal.clips.empty()) return f;
-    kanal.name = kanal.clips.front().muster;
+    kanal.name = klick.name;
+    kanal.clips = {LoopClip(klick.name, f.abspielTakt, einzaehlen + aufnahme)};
     f.loop.kanaele.push_back(std::move(kanal));
     f.loop.richte();
     return f;

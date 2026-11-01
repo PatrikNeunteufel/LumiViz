@@ -166,9 +166,9 @@ TEST_SUITE("LoopAufnahmeUhr")
             CHECK(klickMuster->spuren[0].klang == QStringLiteral("kit:hat_closed"));
             CHECK(klickMuster->zeilen[0][0] == 1.0);  // die Eins lauter
             CHECK(klickMuster->zeilen[0][4] == 0.6);
-            // ab Takt 3 mit zwei Takten Einzaehlen, Nothing (MH1 a): nichts rueckt, der Loop endet an
-            // Takt 3, danach ist es still bis zur hoechsten Laenge des Takes
-            const Aufnahmefassung g = aufnahmeFassung(loop, {3, 2, 0, Mithoeren::Nichts});
+            // ab Takt 3 mit zwei Takten Einzaehlen, Click only bis Stop (MH1 a): nichts rueckt, der Loop
+            // endet an Takt 3, der Klick reicht bis zur hoechsten Laenge des Takes
+            const Aufnahmefassung g = aufnahmeFassung(loop, {3, 2, 0, Mithoeren::NurKlick});
             CHECK(g.abspielTakt == 1);
             CHECK(g.aufnahmeTakt == 3);
             REQUIRE(g.loop.kanaele.size() == 2);
@@ -177,14 +177,9 @@ TEST_SUITE("LoopAufnahmeUhr")
             CHECK(kurz.startTakt == 0);
             CHECK(kurz.muster == QStringLiteral("D (count-in)"));
             CHECK(g.loop.clipTakte(kurz) == 3);
-            REQUIRE(g.loop.kanaele[1].clips.size() == 2);
-            CHECK(g.loop.kanaele[1].clips[0].wiederholungen == 2);  // nur das Einzaehlen klickt
-            const LoopClip& still = g.loop.kanaele[1].clips[1];
-            CHECK(still.startTakt == 3);
-            CHECK(still.wiederholungen == 301);  // 600 s bei 2 s je Takt, und einer dazu
-            const Muster* stillMuster = g.loop.findeMuster(still.muster);
-            REQUIRE(stillMuster != nullptr);
-            CHECK(std::all_of(stillMuster->zeilen[0].begin(), stillMuster->zeilen[0].end(), [](double w) { return w == 0.0; }));
+            REQUIRE(g.loop.kanaele[1].clips.size() == 1);
+            CHECK(g.loop.kanaele[1].clips[0].startTakt == 1);
+            CHECK(g.loop.kanaele[1].clips[0].wiederholungen == 2 + 301);  // Einzaehlen, 600 s bei 2 s je Takt und einer
             CHECK(g.loop.durchlaufTakte() == 304);  // der Spieler springt waehrend des Takes nicht zurueck
             // Click only ab Takt 3 fuer zwei Takte: der Loop bis Takt 3, der Klick bis zum Ende des Takes
             const Aufnahmefassung h = aufnahmeFassung(loop, {2, 1, 2, Mithoeren::NurKlick});
@@ -375,7 +370,7 @@ TEST_SUITE("LoopAufnahmeUhr")
         CHECK(takte == 1);
     }
 
-    TEST_CASE("Loop Aufnahme 15k-1: Play while recording — gemerkt, mit Hinweis (MH1 a)")
+    TEST_CASE("Loop Aufnahme 15k-1: Play while recording — gemerkt, mit Hinweis (MH1 a, MH2 a)")
     {
         Anwendung anwendung;
         EigeneEinstellungen einstellungen;
@@ -386,7 +381,7 @@ TEST_SUITE("LoopAufnahmeUhr")
         fenster.setEngine(&engine);
         AufnahmeFenster::WaveAufnahme auftrag;
         auftrag.loop = vierTakte();
-        auftrag.plan = {2, 1, 2, Mithoeren::LoopUndKlick};
+        auftrag.plan = {2, 1, 2};  // mit der Vorgabe, wie das Panel ihn schickt
         auftrag.rate = kRate;
         auftrag.spiele = [&](const Loop& fassung, int) {
             gespielt = fassung;
@@ -397,29 +392,99 @@ TEST_SUITE("LoopAufnahmeUhr")
         auto* wahl = fenster.findChild<QComboBox*>(QStringLiteral("recordPlayWhile"));
         REQUIRE(wahl != nullptr);
         CHECK(wahl->count() == 3);
-        CHECK(wahl->currentText() == QStringLiteral("Loop and click"));
+        CHECK(wahl->currentText() == QStringLiteral("Nothing — record right away"));  // MH2 a: die Vorgabe
         auto* hinweis = fenster.findChild<QLabel*>(QStringLiteral("recordHeadphonesHint"));
         REQUIRE(hinweis != nullptr);
         CHECK(hinweis->text().startsWith(QStringLiteral("Without headphones the microphone hears the speakers")));
-        CHECK_FALSE(fenster.streifenText().contains(QStringLiteral("silent")));
-
-        // Nothing waehlen, wie mit der Maus: gemerkt, im Streifen gesagt, die Fassung schweigt ab dem Take
-        wahl->setCurrentIndex(2);
-        Q_EMIT wahl->activated(2);
-        CHECK(fenster.plan().mithoeren == Mithoeren::Nichts);
-        CHECK(fenster.streifenText().endsWith(QStringLiteral("silent while recording")));
+        // frei: kein Einzaehlen, keine Laenge, keine Latenz
+        auto* einzaehlen = fenster.findChild<QComboBox*>(QStringLiteral("recordCountIn"));
+        REQUIRE(einzaehlen != nullptr);
+        CHECK_FALSE(einzaehlen->isEnabled());
+        CHECK(fenster.streifenText().contains(QStringLiteral("Record starts at once, nothing plays")));
+        // Click only waehlen, wie mit der Maus: gemerkt, im Streifen gesagt, der Loop schweigt ab dem Take
+        wahl->setCurrentIndex(1);
+        Q_EMIT wahl->activated(1);
+        CHECK(fenster.plan().mithoeren == Mithoeren::NurKlick);
+        CHECK(einzaehlen->isEnabled());
+        CHECK(fenster.streifenText().endsWith(QStringLiteral("only the click plays")));
         REQUIRE(fenster.starteAufnahme());
         REQUIRE(gespielt.kanaele.size() == 2);
         CHECK(gespielt.kanaele[0].clips[0].muster == QStringLiteral("D (count-in)"));
-        CHECK(gespielt.kanaele[1].clips.size() == 2);  // der Klick im Einzaehlen, dann die Stille
+        CHECK(gespielt.kanaele[1].clips[0].wiederholungen == 3);  // Einzaehlen und zwei Takte Klick
         REQUIRE(fenster.stoppeAufnahme());  // noch beim Vorbereiten: nichts behalten
         CHECK_FALSE(fenster.stoppeAufnahme());  // wieder bereit
 
-        // ein neuer Auftrag mit der Vorgabe: es bleibt bei Nothing
+        // ein neuer Auftrag mit der Vorgabe: es bleibt bei Click only
         AufnahmeFenster zweites;
         zweites.setEngine(&engine);
         zweites.beginneWaveClip(auftrag);
-        CHECK(zweites.plan().mithoeren == Mithoeren::Nichts);
+        CHECK(zweites.plan().mithoeren == Mithoeren::NurKlick);
+    }
+
+    TEST_CASE("Loop Aufnahme MH2 a: Nothing — frei aufgenommen wie ein Sample, auf ganze Takte")
+    {
+        Anwendung anwendung;
+        EigeneEinstellungen einstellungen;
+        QTemporaryDir samples;
+        REQUIRE(samples.isValid());
+        setzeEigenenSampleOrdnerFuerTests(samples.path());
+        papp::AufnahmeEngine engine;
+        engine.eingaenge = {papp::eingang(3, QStringLiteral("Mic"), true)};
+        bool gespielt = false;
+        AufnahmeFenster fenster;
+        fenster.setEngine(&engine);
+        AufnahmeFenster::WaveAufnahme auftrag;
+        auftrag.loop = vierTakte();  // 2 s je Takt
+        auftrag.plan = {4, 1, 0};
+        auftrag.rate = kRate;
+        auftrag.spiele = [&](const Loop&, int) {
+            gespielt = true;
+            return true;
+        };
+        auftrag.uhr = [] { return std::int64_t{0}; };
+        fenster.beginneWaveClip(auftrag);
+        REQUIRE(fenster.plan().mithoeren == Mithoeren::Frei);
+        REQUIRE(fenster.starteAufnahme());
+        CHECK_FALSE(gespielt);  // nichts spielt
+        REQUIRE(engine.rufe == QStringList{QStringLiteral("start 3 48000 600")});
+        CHECK(fenster.streifenText().contains(QStringLiteral("recording — nothing plays")));
+        // 0,5 s Stille, 2,5 s Ton, 0,5 s Stille — wie es beim Sample ankaeme
+        std::vector<float> an;
+        const auto haenge = [&an](int frames, bool ton) {
+            for (int k = 0; k < frames; ++k)
+            {
+                const float wert = ton ? 0.5f * static_cast<float>(std::sin(2.0 * 3.14159265358979 * 220.0 * k / kRate)) : 0.0f;
+                an.insert(an.end(), {wert, wert});
+            }
+        };
+        haenge(kRate / 2, false);
+        haenge(kRate * 5 / 2, true);
+        haenge(kRate / 2, false);
+        engine.block(an);
+        fenster.takt();
+        REQUIRE(fenster.stoppeAufnahme());
+        CHECK(engine.rufe.contains(QStringLiteral("stop")));
+        // Trim silence wie beim Sample: um 2,5 s bleiben, das sind zwei Takte
+        CHECK(fenster.frames() == 3 * kRate + kRate / 2);
+        const auto bleibt = static_cast<double>(fenster.ergebnis().size() / 2) / kRate;
+        CHECK(bleibt > 2.4);
+        CHECK(bleibt < 3.0);
+        CHECK(fenster.takeTakte() == 2);
+        CHECK(fenster.streifenText() == QStringLiteral("take: bar 5 – 6 (2 bars)"));
+
+        QString nennung;
+        int start = -1;
+        int takte = -1;
+        QObject::connect(&fenster, &AufnahmeFenster::waveTakeBehalten, [&](const QString& n, int s, int t) {
+            nennung = n;
+            start = s;
+            takte = t;
+        });
+        const QString behalten = fenster.behalteTake();
+        setzeEigenenSampleOrdnerFuerTests(QString());
+        CHECK(behalten == QStringLiteral("user:take_1"));
+        CHECK(start == 4);
+        CHECK(takte == 2);
     }
 
     TEST_CASE("Loop Aufnahme 15k-1: das Panel — Record wave clip... und Keep take")

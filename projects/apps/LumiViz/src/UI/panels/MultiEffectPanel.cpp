@@ -1504,6 +1504,11 @@ void MultiEffectPanel::connectToActiveVisualizer()
                             static_cast<IVisualizer*>(e.visualizerPtr)),
                         e.renderMutex);
             }));
+        // S169: unser Visualizer stirbt (sein Fenster wurde geschlossen) — loslassen, sonst
+        // liest die Live-Anzeige eines Felds aus einem toten Host
+        m_eventSubscriptions.push_back(bus->subscribeScoped<VisualizerGoneEvent>([this](const VisualizerGoneEvent& e) {
+            if (m_mutex != nullptr && e.renderMutex == m_mutex) setHost(nullptr, nullptr);
+        }));
         if (m_presetZeile != nullptr)  // S89: Preset-Zeile der Kette
         {
             m_eventSubscriptions.push_back(bus->subscribeScoped<CurrentPresetChangedEvent>(

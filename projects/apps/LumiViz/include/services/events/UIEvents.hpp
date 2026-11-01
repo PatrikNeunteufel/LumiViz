@@ -521,6 +521,23 @@ struct VisualizerChangedEvent : public Event
     {}
 };
 
+/**
+ * @brief Emitted by a VisualizerWidget just before it dies (S169)
+ *
+ * Whoever holds a pointer into its visualizer — recognised by the render
+ * mutex, which belongs to exactly one widget — lets go. Before, a panel kept
+ * the dead visualizer when its dock was closed, and the live display of a
+ * field read from it 100 ms later (crash). Other widgets' visualizers stay.
+ */
+struct VisualizerGoneEvent : public Event
+{
+    EVENT_TYPE_NAME("VisualizerGoneEvent")
+
+    QMutex* renderMutex;  ///< the render mutex of the dying widget
+
+    explicit VisualizerGoneEvent(QMutex* mutex) : renderMutex(mutex) {}
+};
+
 // =============================================================================
 // Layout Events
 // =============================================================================

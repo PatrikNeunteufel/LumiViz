@@ -111,14 +111,14 @@ void merkeLatenzMs(const QString& eingang, const QString& ausgang, double ms);
 /// So lang wird ein Take hoechstens (von Claude gesetzt).
 inline constexpr double kTakeHoechstensSekunden = 600.0;
 
-/// *Play while recording* (Entscheid Patrik MH1 a, S169): was waehrend des Takes zu hoeren
-/// ist. Ohne Kopfhoerer hoert das Mikrofon die Lautsprecher — dann nur der Klick oder nichts.
-/// Das Einzaehlen spielt immer Loop und Klick.
+/// *Play while recording* (Entscheide Patrik MH1 a, MH2 a, S169): was waehrend des Takes zu
+/// hoeren ist. Ohne Kopfhoerer hoert das Mikrofon die Lautsprecher — dann nichts. Die Werte
+/// stehen so in den Einstellungen (`loop/recordPlayWhile`).
 enum class Mithoeren
 {
-    LoopUndKlick,  ///< *Loop and click*
-    NurKlick,      ///< *Click only*
-    Nichts,        ///< *Nothing*
+    LoopUndKlick = 0,  ///< *Loop and click*: einzaehlen, der Take sitzt im Takt (Kopfhoerer)
+    NurKlick = 1,      ///< *Click only*: einzaehlen, nur der Klick spielt weiter (Kopfhoerer)
+    Frei = 2,          ///< *Nothing — record right away*: wie ein Sample, nichts spielt (MH2 a)
 };
 
 /// Was aufgenommen wird (SK15k-1 a A).
@@ -127,7 +127,7 @@ struct WaveAufnahmePlan
     int startTakt = 0;   ///< *Starts at bar*: hier beginnt der Take (0 = der erste Takt)
     int einzaehlen = 1;  ///< *Count-in* in Takten, 0 … 2
     int takte = 0;       ///< *Length* in Takten; 0 = bis *Stop*
-    Mithoeren mithoeren = Mithoeren::LoopUndKlick;  ///< *Play while recording*
+    Mithoeren mithoeren = Mithoeren::Frei;  ///< *Play while recording* (Vorgabe MH2 a)
 
     [[nodiscard]] bool operator==(const WaveAufnahmePlan&) const = default;
 };
@@ -142,11 +142,11 @@ struct Aufnahmefassung
 
 /// Die Fassung zum Aufnehmen: reicht das Einzaehlen vor Takt 0, ruecken alle Clips um so viele
 /// Takte nach hinten; dazu ein Kanal mit dem Klick (`kit:hat_closed` auf jedem Schlag, die
-/// Eins lauter) — beim Einzaehlen immer, waehrend der Aufnahme ausser bei `Mithoeren::Nichts`.
-/// Bei *Loop and click* bis zum Ende des Takes, bei *Length* „bis Stop“ bis zum Ende des Loops.
-/// Bei *Click only* und *Nothing* endet der Loop am Aufnahmetakt (`schneideAb`), und die Fassung
-/// reicht still oder mit dem Klick bis zum Ende des Takes — bei „bis Stop“ bis
-/// `kTakeHoechstensSekunden`, damit der Spieler nicht an den Anfang zurueckspringt.
+/// Eins lauter) — beim Einzaehlen und waehrend der Aufnahme. Bei *Loop and click* bis zum
+/// Ende des Takes, bei *Length* „bis Stop“ bis zum Ende des Loops. Bei *Click only* endet der
+/// Loop am Aufnahmetakt (`schneideAb`), und der Klick reicht bis zum Ende des Takes — bei „bis
+/// Stop“ bis `kTakeHoechstensSekunden`, damit der Spieler nicht an den Anfang zurueckspringt.
+/// `Mithoeren::Frei` spielt keine Fassung (das Fenster nimmt dann wie ein Sample auf).
 [[nodiscard]] Aufnahmefassung aufnahmeFassung(const Loop& loop, const WaveAufnahmePlan& plan);
 
 /// Der Loop endet am Takt `takt`: Clips ab dort fallen weg, eine Wiederholung, die ueber ihn

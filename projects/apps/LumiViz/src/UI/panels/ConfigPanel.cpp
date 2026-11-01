@@ -467,6 +467,12 @@ void ConfigPanel::subscribeToEvents()
         )
     );
 
+    // S169: our visualizer dies with its widget — let go, the pointer would dangle
+    m_eventSubscriptions.push_back(
+        bus->subscribeScoped<VisualizerGoneEvent>([this](const VisualizerGoneEvent& evt) {
+            if (m_renderMutex != nullptr && evt.renderMutex == m_renderMutex) setVisualizer(nullptr, nullptr);
+        }));
+
     // Undo/Redo changed parameter values behind the widgets' back — re-sync.
     m_eventSubscriptions.push_back(
         bus->subscribeScoped<CommandHistoryChangedEvent>(

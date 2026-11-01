@@ -221,8 +221,9 @@ public:
     /// *Measure latency...*: das kleine Fenster oeffnen. `zeigen` false fuellt es nur.
     bool oeffneLatenzmessung(bool zeigen = true);
     [[nodiscard]] LatenzFenster* latenzFenster() const;
-    /// So viele Takte hat der Take im Bild; 0 = keiner.
-    [[nodiscard]] int takeTakte() const { return m_takeTakte; }
+    /// So viele Takte hat der Take im Bild; 0 = keiner. Ein frei aufgenommener (MH2 a):
+    /// sein Ausschnitt, aufgerundet auf ganze Takte.
+    [[nodiscard]] int takeTakte() const;
     /// Was der Streifen sagt: Einzaehlen, Aufnahme, Ende.
     [[nodiscard]] QString streifenText() const;
     /// **Keep take:** als eigenes Sample ablegen, melden (`waveTakeBehalten`), schliessen.
@@ -305,6 +306,11 @@ private:
     void stoppeWave();
     void taktWave();
     void beendeWave();
+    /// MH2 a: *Nothing — record right away* — aufnehmen wie ein Sample, nichts spielt.
+    bool starteFrei();
+    void stoppeFrei();
+    /// Trim silence und Normalize gelten nur frei; im Takt bleibt ein Take, wie er ankam.
+    void richteHaken();
     void zeigeWave();
     [[nodiscard]] double taktFramesJetzt() const;
     [[nodiscard]] std::int64_t latenzFrames() const;
@@ -314,6 +320,7 @@ private:
     std::int64_t m_vonUhr = 0;   ///< hier beginnt der Take, in der Uhr
     std::int64_t m_bisUhr = -1;  ///< hier endet er; −1 = noch offen (bis Stop)
     int m_takeTakte = 0;
+    bool m_takeFrei = false;  ///< der Take im Bild ist frei aufgenommen (MH2 a)
     QPointer<LatenzFenster> m_latenzFenster;
     QWidget* m_waveZeile = nullptr;
     QSpinBox* m_startTakt = nullptr;

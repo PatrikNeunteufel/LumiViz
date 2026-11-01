@@ -169,8 +169,8 @@ void AufnahmeFenster::setupUI()
         auto* spalten = new QVBoxLayout(m_waveZeile);
         spalten->setContentsMargins(0, 0, 0, 0);
         // MH1 a: das Mikrofon hoert die Lautsprecher — direkt unter dem Eingang gesagt
-        m_kopfhoerer = new QLabel(tr("Without headphones the microphone hears the speakers — use headphones, or play "
-                                     "only the click or nothing."),
+        m_kopfhoerer = new QLabel(tr("Without headphones the microphone hears the speakers — then play nothing; "
+                                     "with headphones the click or the loop can play along."),
                                   m_waveZeile);
         m_kopfhoerer->setObjectName(QStringLiteral("recordHeadphonesHint"));
         m_kopfhoerer->setWordWrap(true);
@@ -194,10 +194,12 @@ void AufnahmeFenster::setupUI()
         m_laenge->setToolTip(tr("Until Stop: Stop ends the take at the end of the bar"));
         m_mithoeren = new QComboBox(m_waveZeile);
         m_mithoeren->setObjectName(QStringLiteral("recordPlayWhile"));
-        m_mithoeren->addItem(tr("Loop and click"), static_cast<int>(Mithoeren::LoopUndKlick));
+        m_mithoeren->addItem(tr("Nothing — record right away"), static_cast<int>(Mithoeren::Frei));
         m_mithoeren->addItem(tr("Click only"), static_cast<int>(Mithoeren::NurKlick));
-        m_mithoeren->addItem(tr("Nothing"), static_cast<int>(Mithoeren::Nichts));
-        m_mithoeren->setToolTip(tr("What plays during the take — the count-in always plays the loop and the click"));
+        m_mithoeren->addItem(tr("Loop and click"), static_cast<int>(Mithoeren::LoopUndKlick));
+        m_mithoeren->setToolTip(tr("Nothing: Record starts at once, like a sample — the take goes to the start bar, "
+                                   "rounded up to whole bars. Click only, Loop and click (with headphones): the "
+                                   "loop counts in, and the take sits exactly in time"));
         zeile->addWidget(new QLabel(tr("Starts at bar"), m_waveZeile));
         zeile->addWidget(m_startTakt);
         zeile->addWidget(new QLabel(tr("Count-in"), m_waveZeile));
@@ -235,6 +237,7 @@ void AufnahmeFenster::setupUI()
             connect(wahl, QOverload<int>::of(&QComboBox::activated), this, [this] { zeigeAlles(); });
         connect(m_mithoeren, QOverload<int>::of(&QComboBox::activated), this, [this] {
             QSettings().setValue(QLatin1String(kMithoerenGemerkt), m_mithoeren->currentData().toInt());
+            richteHaken();
             zeigeAlles();
         });
         connect(m_startTakt, &QSpinBox::valueChanged, this, [this] { zeigeAlles(); });
@@ -480,7 +483,7 @@ std::int64_t AufnahmeFenster::minFrames() const
 
 bool AufnahmeFenster::starteAufnahme()
 {
-    if (m_wave) return starteWave();
+    if (m_wave) return plan().mithoeren == Mithoeren::Frei ? starteFrei() : starteWave();
     if (m_engine == nullptr || m_eingang->count() == 0 || m_nimmtAuf) return false;
     halte();
     m_meldung.clear();
@@ -501,6 +504,11 @@ bool AufnahmeFenster::stoppeAufnahme()
 {
     if (m_wave)
     {
+        if (m_phase == WavePhase::Bereit && m_nimmtAuf)
+        {
+            stoppeFrei();
+            return true;
+        }
         if (m_phase == WavePhase::Bereit) return false;
         stoppeWave();
         return true;
@@ -636,9 +644,9 @@ void AufnahmeFenster::halte()
 std::vector<float> AufnahmeFenster::ergebnis() const
 {
     if (m_daten == nullptr) return {};
-    // ein Take sitzt im Takt und bleibt, wie er ankam: Blenden und Gain traegt das Wave-Muster (15c),
-    // Normalize und Trim silence sind in diesem Modus nicht zu sehen
-    if (m_wave) return *m_daten;
+    // ein Take im Takt bleibt, wie er ankam: Blenden und Gain traegt das Wave-Muster (15c), Normalize
+    // und Trim silence sind dann nicht zu sehen; frei aufgenommen gilt, was fuer ein Sample gilt (MH2 a)
+    if (m_wave && !m_takeFrei) return *m_daten;
     return schneideAus(*m_daten, m_rate, m_ausschnitt, m_normal->isChecked(), blenden());
 }
 
@@ -838,11 +846,13 @@ void AufnahmeFenster::zeigeAlles()
     m_stop->setEnabled(m_nimmtAuf);
 
     QString stand;
-    const QString hoechstens = tr("up to %1 s").arg(sekunden(kHoechstensSekunden, 0));
+    // ein Take fuer einen Wave-Clip darf laenger sein, und er nimmt in der Rate der Wiedergabe auf
+    const QString hoechstens = tr("up to %1 s").arg(sekunden(m_wave ? kWaveHoechstensSekunden : kHoechstensSekunden, 0));
+    const int aufnahmeRate = m_wave && m_wave->rate > 0 ? m_wave->rate : kSampleRate;
     if (!m_meldung.isEmpty())
         stand = m_meldung;
     else if (m_nimmtAuf)
-        stand = tr("%1 s recorded · %2").arg(sekunden(static_cast<double>(m_engine->recordedFrames()) / kSampleRate, 1), hoechstens);
+        stand = tr("%1 s recorded · %2").arg(sekunden(static_cast<double>(m_engine->recordedFrames()) / aufnahmeRate, 1), hoechstens);
     else if (aufnahmeDa && m_frisch)
         stand = tr("%1 s recorded").arg(sekunden(static_cast<double>(alle) / m_rate, 1));
     else if (aufnahmeDa)
@@ -933,16 +943,11 @@ void AufnahmeFenster::beginneWaveClip(WaveAufnahme auftrag)
     WaveAufnahmePlan plan = auftrag.plan;
     // MH1 a: was beim letzten Mal waehrend des Takes spielte — ohne Kopfhoerer bleibt es so
     if (const QVariant gemerkt = QSettings().value(QLatin1String(kMithoerenGemerkt)); gemerkt.isValid())
-        plan.mithoeren = static_cast<Mithoeren>(std::clamp(gemerkt.toInt(), 0, static_cast<int>(Mithoeren::Nichts)));
+        plan.mithoeren = static_cast<Mithoeren>(std::clamp(gemerkt.toInt(), 0, static_cast<int>(Mithoeren::Frei)));
     m_wave = std::move(auftrag);
-    {
-        // ein Take bleibt, wie er aufgenommen ist: kein Schnitt an der Stille, kein Anheben — er sitzt im Takt
-        const QSignalBlocker a(m_ohneStille);
-        const QSignalBlocker b(m_normal);
-        m_ohneStille->setChecked(false);
-        m_normal->setChecked(false);
-    }
+    m_takeFrei = false;
     setzePlan(plan);
+    richteHaken();
     // die gemerkte Latenz fuer dieses Paar aus Eingang und Ausgang (WV10-1 a)
     const std::optional<double> gemerkt =
         gemerkteLatenzMs(m_eingang->currentData(Qt::UserRole + 1).toString(), m_wave->ausgang);
@@ -1110,6 +1115,7 @@ void AufnahmeFenster::stoppeWave()
         if (m_wave->halte) m_wave->halte();
         m_phase = WavePhase::Bereit;
         m_takt->stop();
+        m_pegel->setValue(0);  // der Pegel blieb sonst stehen (Bild Patrik S169)
         zeigeAlles();
         return;
     }
@@ -1144,15 +1150,70 @@ void AufnahmeFenster::beendeWave()
     }
     const double takt = taktFramesJetzt();
     m_takeTakte = takt > 0.0 ? std::max(1, static_cast<int>(std::lround(static_cast<double>(m_bisUhr - m_vonUhr) / takt))) : 0;
+    m_takeFrei = false;
     setzeAufnahme(schneideTake(daten, *versatz, latenzFrames(), m_vonUhr, m_bisUhr), m_wave->rate);
     // ein Take wird nicht an der Stille geschnitten: er sitzt im Takt
     m_ausschnitt = Ausschnitt{0, frames()};
     zeigeAlles();
 }
 
+bool AufnahmeFenster::starteFrei()
+{
+    if (m_engine == nullptr || m_eingang->count() == 0 || m_nimmtAuf || m_wave->rate <= 0) return false;
+    halte();
+    m_meldung.clear();
+    if (!m_engine->recordStart(m_eingang->currentData().toInt(), m_wave->rate, kWaveHoechstensSekunden))
+    {
+        m_meldung = tr("Could not open this input. Is the microphone allowed for desktop apps in the Windows privacy settings?");
+        zeigeAlles();
+        return false;
+    }
+    m_nimmtAuf = true;
+    m_takt->start();
+    zeigeAlles();
+    return true;
+}
+
+void AufnahmeFenster::stoppeFrei()
+{
+    m_nimmtAuf = false;
+    std::vector<float> daten = m_engine->recordStop();
+    m_takt->stop();
+    m_pegel->setValue(0);
+    if (daten.size() < 4)
+    {
+        m_meldung = tr("Nothing arrived from this input.");
+        zeigeAlles();
+        return;
+    }
+    m_takeTakte = 0;
+    m_takeFrei = true;
+    setzeAufnahme(std::move(daten), m_wave->rate);  // Trim silence wie beim Sample
+}
+
+void AufnahmeFenster::richteHaken()
+{
+    if (!m_wave) return;
+    // frei: wie ein Sample, vorn und hinten ohne Stille — im Takt: wie er ankam
+    const bool frei = plan().mithoeren == Mithoeren::Frei;
+    const QSignalBlocker a(m_ohneStille);
+    const QSignalBlocker b(m_normal);
+    m_ohneStille->setChecked(frei);
+    m_normal->setChecked(false);
+}
+
+int AufnahmeFenster::takeTakte() const
+{
+    if (!m_wave || !m_takeFrei) return m_takeTakte;
+    const double takt = taktFrames(m_wave->loop, m_rate);
+    const std::int64_t laenge = m_ausschnitt.frames();
+    if (takt <= 0.0 || laenge <= 0) return 0;
+    return std::max(1, static_cast<int>(std::ceil(static_cast<double>(laenge) / takt)));
+}
+
 QString AufnahmeFenster::behalteTake()
 {
-    if (!m_wave || m_takeTakte <= 0 || frames() <= 0) return {};
+    if (!m_wave || takeTakte() <= 0 || frames() <= 0) return {};
     // der erste freie Name „Take 1", „Take 2" …
     QString name;
     for (int n = 1; n < 10000 && name.isEmpty(); ++n)
@@ -1163,7 +1224,7 @@ QString AufnahmeFenster::behalteTake()
     const QString nennung = name.isEmpty() ? QString() : speichereAufnahme(ergebnis(), m_rate, name);
     if (nennung.isEmpty()) return {};
     m_gesichert = true;
-    Q_EMIT waveTakeBehalten(nennung, plan().startTakt, m_takeTakte);
+    Q_EMIT waveTakeBehalten(nennung, plan().startTakt, takeTakte());
     close();
     return nennung;
 }
@@ -1172,6 +1233,7 @@ void AufnahmeFenster::verwirfTake()
 {
     m_daten.reset();
     m_takeTakte = 0;
+    m_takeFrei = false;
     m_gesichert = true;
     m_ausschnitt = {};
     zeigeBild();
@@ -1184,6 +1246,17 @@ QString AufnahmeFenster::streifenText() const
     const WaveAufnahmePlan p = plan();
     const int start = p.startTakt + 1;
     QStringList teile;
+    if (p.mithoeren == Mithoeren::Frei && m_phase == WavePhase::Bereit)
+    {
+        // MH2 a: nichts spielt — der Take kommt an den Starttakt, aufgerundet auf ganze Takte
+        if (m_nimmtAuf)
+            teile << tr("recording — nothing plays");
+        else if (takeTakte() > 0)
+            teile << tr("take: bar %1 – %2 (%3 bars)").arg(start).arg(start + takeTakte() - 1).arg(takeTakte());
+        else
+            teile << tr("from bar %1 · Record starts at once, nothing plays · the take is rounded up to whole bars").arg(start);
+        return teile.join(QStringLiteral(" | "));
+    }
     if (p.einzaehlen > 0) teile << tr("bar %1 · count-in").arg(start - p.einzaehlen < 1 ? QStringLiteral("…") : QString::number(start - p.einzaehlen));
     if (m_phase == WavePhase::Nimmt || m_phase == WavePhase::Endet)
     {
@@ -1197,16 +1270,13 @@ QString AufnahmeFenster::streifenText() const
     }
     else if (m_phase == WavePhase::Wartet)
         teile << tr("preparing the loop…");
-    else if (m_takeTakte > 0)
-        teile << tr("take: bar %1 – %2 (%3 bars)").arg(start).arg(start + m_takeTakte - 1).arg(m_takeTakte);
+    else if (takeTakte() > 0)
+        teile << tr("take: bar %1 – %2 (%3 bars)").arg(start).arg(start + takeTakte() - 1).arg(takeTakte());
     else
         teile << (p.takte > 0 ? tr("bar %1 – %2 · recording").arg(start).arg(start + p.takte - 1)
                               : tr("from bar %1 · recording until Stop, to the end of that bar").arg(start));
     // MH1 a: was waehrend des Takes spielt, wenn es nicht der Loop ist
-    if (p.mithoeren == Mithoeren::NurKlick)
-        teile << tr("only the click plays");
-    else if (p.mithoeren == Mithoeren::Nichts)
-        teile << tr("silent while recording");
+    if (p.mithoeren == Mithoeren::NurKlick) teile << tr("only the click plays");
     return teile.join(QStringLiteral(" | "));
 }
 
@@ -1219,17 +1289,23 @@ void AufnahmeFenster::zeigeWave()
     m_sichern->setVisible(!wave);
     m_sichernAls->setVisible(!wave);
     m_publish->setVisible(!wave);
-    m_ohneStille->setVisible(!wave);
-    m_normal->setVisible(!wave);
+    // MH2 a: frei aufgenommen gilt, was fuer ein Sample gilt — im Takt sind die Haken nicht zu sehen
+    const bool frei = wave && (plan().mithoeren == Mithoeren::Frei || m_takeFrei);
+    m_ohneStille->setVisible(!wave || frei);
+    m_normal->setVisible(!wave || frei);
     if (!wave) return;
     setWindowTitle(tr("Record wave clip"));
-    const bool laeuft = m_phase != WavePhase::Bereit;
+    const bool laeuft = m_phase != WavePhase::Bereit || m_nimmtAuf;
     m_record->setEnabled(m_engine != nullptr && m_eingang->count() > 0 && !laeuft);
     m_stop->setEnabled(laeuft);
-    for (QWidget* feld : std::initializer_list<QWidget*>{m_startTakt, m_einzaehlen, m_laenge, m_mithoeren, m_latenz, m_eingang})
+    for (QWidget* feld : std::initializer_list<QWidget*>{m_startTakt, m_mithoeren, m_eingang})
         feld->setEnabled(!laeuft);
+    // frei zaehlt nichts ein, und es gibt keine Uhr, gegen die eine Latenz zu rechnen waere
+    const bool imTakt = plan().mithoeren != Mithoeren::Frei;
+    for (QWidget* feld : std::initializer_list<QWidget*>{m_einzaehlen, m_laenge, m_latenz})
+        feld->setEnabled(!laeuft && imTakt);
     m_streifen->setText(streifenText());
-    m_behalten->setEnabled(!laeuft && m_takeTakte > 0 && frames() > 0);
+    m_behalten->setEnabled(!laeuft && takeTakte() > 0 && frames() > 0);
     m_verwerfen->setEnabled(!laeuft && frames() > 0);
     if (laeuft) m_stand->setText(m_phase == WavePhase::Wartet ? tr("Preparing the loop…") : tr("Recording…"));
 }
