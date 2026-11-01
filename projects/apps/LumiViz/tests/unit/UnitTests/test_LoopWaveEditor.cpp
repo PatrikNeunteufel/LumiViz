@@ -355,6 +355,41 @@ TEST_SUITE("LoopWaveEditor")
             CHECK(b.gemeldet.back() == QStringLiteral("Clear lane"));
             CHECK(b.zuletzt.findeMuster(QStringLiteral("Voc"))->zeitspuren.von(Steuerspur::Expression).empty());
         }
+        SUBCASE("15f: die Spur Pitch — ganze Halbtoene, mit Shift Hundertstel, eigenes Undo-Wort")
+        {
+            // die Spur Pitch liegt unter Expression: ±12 Halbtoene auf 32 Pixeln (4 Luft oben und unten)
+            const int oben = f->spurOben(Steuerspur::Pitch) + 4;
+            const int unten = f->spurOben(Steuerspur::Pitch) + WaveFlaeche::kSpurHoehe - 4;
+            CHECK(f->spurOben(Steuerspur::Pitch) == f->spurOben() + WaveFlaeche::kSpurHoehe);
+            CHECK(f->welleOben() == f->spurOben(Steuerspur::Pitch) + WaveFlaeche::kSpurHoehe);
+            const int y6 = unten - static_cast<int>(0.75 * (unten - oben));  // +6 Halbtoene
+            const QPoint punkt(50, y6);
+            maus(f, QEvent::MouseButtonPress, punkt, Qt::LeftButton);
+            maus(f, QEvent::MouseButtonRelease, punkt, Qt::NoButton);
+            CHECK(b.gemeldet.back() == QStringLiteral("Change pitch"));
+            const Muster* m = b.zuletzt.findeMuster(QStringLiteral("Voc"));
+            REQUIRE(m != nullptr);
+            REQUIRE(m->zeitspuren.von(Steuerspur::Pitch).size() == 1);
+            CHECK(m->zeitspuren.von(Steuerspur::Pitch)[0].stelle == 5.0);
+            CHECK(m->zeitspuren.von(Steuerspur::Pitch)[0].wert == 6.0);
+            CHECK(m->zeitspuren.von(Steuerspur::Expression).empty());  // die andere Spur bleibt
+            // mit Shift ein Pixel tiefer: Hundertstel statt ganzer Halbtoene
+            const QPoint fein(100, y6 + 1);
+            maus(f, QEvent::MouseButtonPress, fein, Qt::LeftButton, Qt::ShiftModifier);
+            maus(f, QEvent::MouseButtonRelease, fein, Qt::NoButton, Qt::ShiftModifier);
+            const double erwartet = std::round((-12.0 + 24.0 * (unten - (y6 + 1)) / static_cast<double>(unten - oben)) * 100.0) / 100.0;
+            m = b.zuletzt.findeMuster(QStringLiteral("Voc"));
+            REQUIRE(m->zeitspuren.von(Steuerspur::Pitch).size() == 2);
+            CHECK(m->zeitspuren.von(Steuerspur::Pitch)[1].wert == doctest::Approx(erwartet));
+            CHECK(m->zeitspuren.von(Steuerspur::Pitch)[1].wert != std::round(erwartet));
+            // Doppelklick nimmt den ersten weg
+            maus(f, QEvent::MouseButtonPress, punkt, Qt::LeftButton);
+            maus(f, QEvent::MouseButtonRelease, punkt, Qt::NoButton);
+            maus(f, QEvent::MouseButtonDblClick, punkt, Qt::LeftButton);
+            maus(f, QEvent::MouseButtonRelease, punkt, Qt::NoButton);
+            CHECK(b.gemeldet.back() == QStringLiteral("Delete point"));
+            CHECK(b.zuletzt.findeMuster(QStringLiteral("Voc"))->zeitspuren.von(Steuerspur::Pitch).size() == 1);
+        }
         SUBCASE("das Lineal waehlt die Abspielstelle; ein Klick ohne Zug meldet nichts")
         {
             std::vector<int> stellen;

@@ -250,6 +250,33 @@ Schnelle Fourier-Transformation für die Faltung je Ton mit der Antwort des Reso
 > WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 > OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+### Signalsmith Stretch und Signalsmith Linear — `externals/signalsmith-stretch/`
+
+Dehnen und Tonhöhe ändern für das Wave-Muster im Loop (Stufe 15f; hinter `lumi::loop::Dehner` in
+`src/loop/Dehner.cpp`). Die Header `signalsmith-stretch.h` (Stretch 1.4.0, Commit `a670068`, 2026-09-25) sowie
+`signalsmith-linear/stft.h` und `signalsmith-linear/fft.h` (Linear 0.6.4, Commit `de55e6a`, 2026-09-25) liegen
+unverändert im Repository und werden **in die App gebunden**. Herkunft, Fassung und Prüfsummen:
+`externals/signalsmith-stretch/README.md`; die Lizenztexte im Original: `externals/signalsmith-stretch/LICENSE.txt`
+und `externals/signalsmith-stretch/signalsmith-linear/LICENSE.txt`.
+
+> <https://github.com/Signalsmith-Audio/signalsmith-stretch> — **MIT** — Copyright (c) 2022 Geraint Luff /
+> Signalsmith Audio Ltd.
+>
+> <https://github.com/Signalsmith-Audio/linear> — **MIT** — Copyright (c) 2025 Signalsmith Audio
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+> documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+> rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+> permit persons to whom the Software is furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+> Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+> WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+> COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+> OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 ---
 
 ## 2. Portierter Fremdcode in LumiViz-Dateien

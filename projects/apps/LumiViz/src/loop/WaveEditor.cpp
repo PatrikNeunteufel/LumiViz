@@ -100,6 +100,21 @@ QString expressionText(double wert)
                        : WaveFlaeche::tr("%1 (%2 dB)").arg(wert, 0, 'f', 2).arg(expressionDb(wert), 0, 'f', 1);
 }
 
+/// Ein Wert einer Spur als Text: Expression wie oben, Pitch in Halbtoenen wie im Instrument-Editor.
+QString spurText(Steuerspur spur, double wert)
+{
+    if (spur == Steuerspur::Pitch)
+        return WaveFlaeche::tr("%1%2 semitones").arg(wert > 0.0 ? QStringLiteral("+") : QString()).arg(wert, 0, 'f', 2);
+    return expressionText(wert);
+}
+
+QString spurName(Steuerspur spur)
+{
+    return spur == Steuerspur::Pitch ? WaveFlaeche::tr("Pitch") : WaveFlaeche::tr("Expression");
+}
+
+constexpr std::array<Steuerspur, 2> kFlaechenSpuren{Steuerspur::Expression, Steuerspur::Pitch};
+
 }  // namespace
 
 WaveBild waveBildVon(const QString& datei, const Dekodierer& dekodierer, double maxSekunden)
@@ -140,7 +155,7 @@ WaveFlaeche::WaveFlaeche(QWidget* parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("waveArea"));
     setMouseTracking(true);
-    setMinimumHeight(kLinealHoehe + kSpurHoehe + 120 + kAutotuneHoehe);
+    setMinimumHeight(kLinealHoehe + 2 * kSpurHoehe + 120 + kAutotuneHoehe);
     setFocusPolicy(Qt::ClickFocus);
 }
 
@@ -220,22 +235,49 @@ double WaveFlaeche::ausschnittEnde() const
     return m_bild.sekunden;
 }
 
-double WaveFlaeche::spurWertVonY(int y) const
+double WaveFlaeche::spurUnten(Steuerspur spur)
 {
-    const double oben = spurOben() + 4.0;
-    const double unten = spurOben() + kSpurHoehe - 4.0;
-    return std::clamp(1.0 - (y - oben) / (unten - oben), 0.0, 1.0);
+    return spur == Steuerspur::Pitch ? -kPitchBereich : 0.0;
 }
 
-int WaveFlaeche::spurPunktBei(QPoint ort) const
+double WaveFlaeche::spurOberGrenze(Steuerspur spur)
 {
-    const std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(Steuerspur::Expression);
-    const double oben = spurOben() + 4.0;
-    const double unten = spurOben() + kSpurHoehe - 4.0;
+    return spur == Steuerspur::Pitch ? kPitchBereich : 1.0;
+}
+
+Steuerspur WaveFlaeche::spurBei(int y, bool* getroffen) const
+{
+    const bool drin = y >= spurOben(Steuerspur::Expression) && y < welleOben();
+    if (getroffen != nullptr) *getroffen = drin;
+    return y >= spurOben(Steuerspur::Pitch) ? Steuerspur::Pitch : Steuerspur::Expression;
+}
+
+double WaveFlaeche::yVonWert(Steuerspur spur, double wert) const
+{
+    const double oben = spurOben(spur) + 4.0;
+    const double unten = spurOben(spur) + kSpurHoehe - 4.0;
+    const double anteil = std::clamp((wert - spurUnten(spur)) / (spurOberGrenze(spur) - spurUnten(spur)), 0.0, 1.0);
+    return unten - anteil * (unten - oben);
+}
+
+double WaveFlaeche::spurWertVonY(int y, Steuerspur spur, bool fein) const
+{
+    const double oben = spurOben(spur) + 4.0;
+    const double unten = spurOben(spur) + kSpurHoehe - 4.0;
+    const double anteil = std::clamp(1.0 - (y - oben) / (unten - oben), 0.0, 1.0);
+    const double wert = spurUnten(spur) + anteil * (spurOberGrenze(spur) - spurUnten(spur));
+    // Pitch rastet auf ganze Halbtoene, mit Shift auf Hundertstel (von Claude gesetzt, 15f)
+    if (spur == Steuerspur::Pitch) return fein ? std::round(wert * 100.0) / 100.0 : std::round(wert);
+    return wert;
+}
+
+int WaveFlaeche::spurPunktBei(QPoint ort, Steuerspur spur) const
+{
+    const std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(spur);
     for (std::size_t i = 0; i < punkte.size(); ++i)
     {
         const double x = xVonSchritt(punkte[i].stelle);
-        const double y = unten - punkte[i].wert * (unten - oben);
+        const double y = yVonWert(spur, punkte[i].wert);
         if (std::abs(x - ort.x()) <= kPunktFang && std::abs(y - ort.y()) <= kPunktFang) return static_cast<int>(i);
     }
     return -1;
@@ -262,8 +304,10 @@ void WaveFlaeche::zeigeZeiger(QPoint ort)
         case Zug::Lage: setCursor(m_zug == Zug::Lage ? Qt::ClosedHandCursor : Qt::OpenHandCursor); return;
         default: break;
     }
-    if (ort.y() >= spurOben() && ort.y() < welleOben())
-        setCursor(spurPunktBei(ort) >= 0 ? Qt::SizeAllCursor : Qt::CrossCursor);
+    bool inSpur = false;
+    const Steuerspur spur = spurBei(ort.y(), &inSpur);
+    if (inSpur)
+        setCursor(spurPunktBei(ort, spur) >= 0 ? Qt::SizeAllCursor : Qt::CrossCursor);
     else
         unsetCursor();
 }
@@ -294,24 +338,32 @@ void WaveFlaeche::paintEvent(QPaintEvent*)
         }
     }
 
-    // --- die Spur Expression
-    const QRectF spur(0, spurOben(), breite, kSpurHoehe);
-    p.fillRect(spur, farben.alternateBase());
-    const std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(Steuerspur::Expression);
-    const double oben = spurOben() + 4.0;
-    const double unten = spurOben() + kSpurHoehe - 4.0;
-    const auto yVon = [&](double wert) { return unten - wert * (unten - oben); };
-    // der Name unten links: dort liegt die Kurve nur bei sehr leiser Expression
-    p.setPen(farben.color(QPalette::PlaceholderText));
-    p.drawText(QPointF(4.0, spurOben() + kSpurHoehe - 4.0), tr("Expression"));
-    if (punkte.empty())
+    // --- die Spuren Expression und Pitch (Pitch seit 15f)
+    for (const Steuerspur steuer : kFlaechenSpuren)
     {
-        QPen strich(farben.color(QPalette::Mid), 1.0, Qt::DashLine);
-        p.setPen(strich);
-        p.drawLine(QPointF(0, yVon(1.0)), QPointF(breite, yVon(1.0)));
-    }
-    else
-    {
+        const QRectF spur(0, spurOben(steuer), breite, kSpurHoehe);
+        p.fillRect(spur, farben.alternateBase());
+        p.setPen(farben.color(QPalette::Midlight));
+        p.drawLine(spur.bottomLeft(), spur.bottomRight());
+        const std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(steuer);
+        const auto yVon = [&](double wert) { return yVonWert(steuer, wert); };
+        // der Name unten links: dort liegt die Kurve nur bei sehr leiser Expression oder tiefem Pitch
+        p.setPen(farben.color(QPalette::PlaceholderText));
+        p.drawText(QPointF(4.0, spurOben(steuer) + kSpurHoehe - 4.0), spurName(steuer));
+        const double ohne = steuer == Steuerspur::Pitch ? 0.0 : 1.0;  // der Wert ohne Punkte
+        if (punkte.empty())
+        {
+            QPen strich(farben.color(QPalette::Mid), 1.0, Qt::DashLine);
+            p.setPen(strich);
+            p.drawLine(QPointF(0, yVon(ohne)), QPointF(breite, yVon(ohne)));
+            continue;
+        }
+        if (steuer == Steuerspur::Pitch)
+        {
+            // die Null als feine Linie: darueber hoeher, darunter tiefer
+            p.setPen(QPen(farben.color(QPalette::Mid), 1.0, Qt::DotLine));
+            p.drawLine(QPointF(0, yVon(0.0)), QPointF(breite, yVon(0.0)));
+        }
         QPainterPath kurve;
         kurve.moveTo(xVonSchritt(0.0), yVon(punkte.front().wert));
         for (const SpurPunkt& punkt : punkte) kurve.lineTo(xVonSchritt(punkt.stelle), yVon(punkt.wert));
@@ -411,19 +463,21 @@ void WaveFlaeche::mousePressEvent(QMouseEvent* event)
     }
     if (ort.y() < welleOben())
     {
-        // die Spur Expression: einen Punkt greifen — oder einen setzen und weiterziehen
-        m_punkt = spurPunktBei(ort);
+        // eine Spur: einen Punkt greifen — oder einen setzen und weiterziehen
+        m_spur = spurBei(ort.y());
+        m_punkt = spurPunktBei(ort, m_spur);
         if (m_punkt < 0)
         {
             const bool frei = (event->modifiers() & Qt::AltModifier) != 0;
+            const bool fein = (event->modifiers() & Qt::ShiftModifier) != 0;
             double stelle = std::clamp(frei ? m_zugSchritt : std::round(m_zugSchritt), 0.0, schritte());
-            std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(Steuerspur::Expression);
+            std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(m_spur);
             // je Stelle ein Punkt: der neue ersetzt den dort
             punkte.erase(std::remove_if(punkte.begin(), punkte.end(), [stelle](const SpurPunkt& p) { return p.stelle == stelle; }),
                          punkte.end());
             const auto platz = std::lower_bound(punkte.begin(), punkte.end(), stelle,
                                                 [](const SpurPunkt& p, double s) { return p.stelle < s; });
-            m_punkt = static_cast<int>(punkte.insert(platz, SpurPunkt{stelle, spurWertVonY(ort.y())}) - punkte.begin());
+            m_punkt = static_cast<int>(punkte.insert(platz, SpurPunkt{stelle, spurWertVonY(ort.y(), m_spur, fein)}) - punkte.begin());
             update();
         }
         m_zug = Zug::Punkt;
@@ -442,7 +496,7 @@ void WaveFlaeche::mouseMoveEvent(QMouseEvent* event)
         return;
     }
     if (m_zug == Zug::Punkt)
-        zieheSpurPunkt(ort, (event->modifiers() & Qt::AltModifier) != 0);
+        zieheSpurPunkt(ort, (event->modifiers() & Qt::AltModifier) != 0, (event->modifiers() & Qt::ShiftModifier) != 0);
     else
         zieheWelle(ort, (event->modifiers() & Qt::ShiftModifier) != 0);
 }
@@ -458,7 +512,7 @@ void WaveFlaeche::mouseReleaseEvent(QMouseEvent* event)
         case Zug::Anfang: melde(tr("Trim wave start")); break;
         case Zug::Ende: melde(tr("Trim wave end")); break;
         case Zug::Lage: melde(tr("Move wave")); break;
-        case Zug::Punkt: melde(tr("Change expression")); break;
+        case Zug::Punkt: melde(m_spur == Steuerspur::Pitch ? tr("Change pitch") : tr("Change expression")); break;
         case Zug::Keiner: break;
     }
     zeigeZeiger(event->position().toPoint());
@@ -466,11 +520,14 @@ void WaveFlaeche::mouseReleaseEvent(QMouseEvent* event)
 
 void WaveFlaeche::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    const int punkt = spurPunktBei(event->position().toPoint());
+    const QPoint ort = event->position().toPoint();
+    bool inSpur = false;
+    const Steuerspur spur = spurBei(ort.y(), &inSpur);
+    const int punkt = inSpur ? spurPunktBei(ort, spur) : -1;
     if (punkt < 0) return QWidget::mouseDoubleClickEvent(event);
     m_zug = Zug::Keiner;
     m_vorher = m_muster;
-    std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(Steuerspur::Expression);
+    std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(spur);
     // der erste Klick des Doppelklicks hat ihn gegriffen; der Doppelklick nimmt ihn weg
     punkte.erase(punkte.begin() + punkt);
     melde(tr("Delete point"));
@@ -479,18 +536,20 @@ void WaveFlaeche::mouseDoubleClickEvent(QMouseEvent* event)
 void WaveFlaeche::contextMenuEvent(QContextMenuEvent* event)
 {
     const QPoint ort = event->pos();
-    if (ort.y() < spurOben() || ort.y() >= welleOben()) return;
-    const int punkt = spurPunktBei(ort);
+    bool inSpur = false;
+    const Steuerspur spur = spurBei(ort.y(), &inSpur);
+    if (!inSpur) return;
+    const int punkt = spurPunktBei(ort, spur);
     QMenu menue(this);
     menue.setObjectName(QStringLiteral("waveLaneMenu"));
     QAction* weg = menue.addAction(tr("Delete point"));
     weg->setEnabled(punkt >= 0);
     QAction* leeren = menue.addAction(tr("Clear lane"));
-    leeren->setEnabled(!m_muster.zeitspuren.von(Steuerspur::Expression).empty());
+    leeren->setEnabled(!m_muster.zeitspuren.von(spur).empty());
     QAction* gewaehlt = lumi::ui::zeigeMenue(menue, event->globalPos());
     if (gewaehlt == nullptr) return;
     m_vorher = m_muster;
-    std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(Steuerspur::Expression);
+    std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(spur);
     if (gewaehlt == weg)
     {
         punkte.erase(punkte.begin() + punkt);
@@ -531,12 +590,20 @@ bool WaveFlaeche::event(QEvent* event)
         text = tr("Click: Play pattern starts here");
     else if (ort.y() < welleOben())
     {
-        const int punkt = spurPunktBei(ort);
-        text = punkt >= 0 ? tr("Expression: %1 — drag to move, double-click to delete")
-                                .arg(expressionText(m_muster.zeitspuren.von(Steuerspur::Expression)[static_cast<std::size_t>(punkt)].wert))
-             : m_muster.zeitspuren.von(Steuerspur::Expression).empty()
-                 ? tr("Expression: 1 throughout — click to add a point on the step (Alt: off the grid)")
-                 : tr("Expression: click to add a point on the step (Alt: off the grid), right-click: Clear lane");
+        const Steuerspur spur = spurBei(ort.y());
+        const std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(spur);
+        const int punkt = spurPunktBei(ort, spur);
+        if (punkt >= 0)
+            text = tr("%1: %2 — drag to move, double-click to delete")
+                       .arg(spurName(spur), spurText(spur, punkte[static_cast<std::size_t>(punkt)].wert));
+        else if (spur == Steuerspur::Pitch)
+            text = punkte.empty() ? tr("Pitch: as recorded — click to add a point in whole semitones (Shift: hundredths, "
+                                       "Alt: off the grid)")
+                                  : tr("Pitch: click to add a point in whole semitones (Shift: hundredths, Alt: off the "
+                                       "grid), right-click: Clear lane");
+        else
+            text = punkte.empty() ? tr("Expression: 1 throughout — click to add a point on the step (Alt: off the grid)")
+                                  : tr("Expression: click to add a point on the step (Alt: off the grid), right-click: Clear lane");
     }
     else if (ort.y() < welleUnten())
     {
@@ -604,9 +671,9 @@ void WaveFlaeche::zieheWelle(QPoint ort, bool frei)
     update();
 }
 
-void WaveFlaeche::zieheSpurPunkt(QPoint ort, bool frei)
+void WaveFlaeche::zieheSpurPunkt(QPoint ort, bool frei, bool fein)
 {
-    std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(Steuerspur::Expression);
+    std::vector<SpurPunkt>& punkte = m_muster.zeitspuren.von(m_spur);
     if (m_punkt < 0 || m_punkt >= static_cast<int>(punkte.size())) return;
     const auto i = static_cast<std::size_t>(m_punkt);
     // zwischen seinen Nachbarn, im Muster
@@ -615,14 +682,15 @@ void WaveFlaeche::zieheSpurPunkt(QPoint ort, bool frei)
     const double roh = schrittVonX(ort.x());
     double stelle = frei ? roh : std::round(roh);
     stelle = std::clamp(stelle, links, rechts);
-    punkte[i] = SpurPunkt{stelle, spurWertVonY(ort.y())};
+    punkte[i] = SpurPunkt{stelle, spurWertVonY(ort.y(), m_spur, fein)};
     update();
 }
 
 void WaveFlaeche::melde(const QString& was)
 {
     // je Stelle ein Punkt, in den Grenzen — wie `richte` es hielte
-    richtePunkte(m_muster.zeitspuren.von(Steuerspur::Expression), 0.0, 1.0, schritte());
+    for (const Steuerspur spur : kFlaechenSpuren)
+        richtePunkte(m_muster.zeitspuren.von(spur), spurMin(spur), spurMax(spur), schritte());
     if (m_muster == m_vorher) return;
     m_vorher = m_muster;
     Q_EMIT geaendert(m_muster, was);
@@ -780,7 +848,8 @@ void WaveEditor::setupUI()
     m_tonhoehe->addItem(tr("General"), static_cast<int>(TonhoehenArt::Allgemein));
     m_tonhoehe->addItem(tr("Voice"), static_cast<int>(TonhoehenArt::Stimme));
     m_tonhoehe->setToolTip(tr("How tempo and pitch are changed: General for any material, Voice for a single voice.\n"
-                              "It acts once stretching and pitch come — in a later version"));
+                              "The Pitch lane uses General; Voice comes in a later version and works like General "
+                              "until then"));
     tempo->addWidget(new QLabel(tr("Reference tempo"), this));
     tempo->addWidget(m_bezug);
     tempo->addWidget(m_bezugAufLoop);
@@ -804,7 +873,8 @@ void WaveEditor::setupUI()
     aussen->addWidget(m_flaeche, 1);
     aussen->addWidget(m_rollX);
     m_hilfe = new QLabel(tr("Wave: drag an edge to trim the section · drag inside to move it in steps (Shift: fractions) · "
-                            "Expression: click to add a point (Alt: off the grid), double-click deletes · "
+                            "Expression, Pitch: click to add a point (Alt: off the grid; Pitch in semitones, Shift: "
+                            "hundredths), double-click deletes · "
                             "Ctrl+wheel: zoom · ruler: Play pattern starts there"),
                          this);
     m_hilfe->setObjectName(QStringLiteral("waveHelp"));

@@ -68,16 +68,18 @@ struct WaveBild
 /// Die groesste Spitze zwischen den Sekunden `von` und `bis` der Datei; 0 ausserhalb.
 [[nodiscard]] float waveSpitze(const WaveBild& bild, double von, double bis);
 
-/// Die Flaeche: Taktlineal, Spur Expression, Welle, Spur Autotune. Sie rollt selbst
-/// waagrecht (`setRoll`); ihr Muster haelt sie bis zum Loslassen, dann meldet sie es einmal.
+/// Die Flaeche: Taktlineal, Spuren Expression und Pitch, Welle, Spur Autotune. Sie rollt
+/// selbst waagrecht (`setRoll`); ihr Muster haelt sie bis zum Loslassen, dann meldet sie es
+/// einmal.
 ///
 /// Welle: der Ausschnitt farbig, der Rest der Datei grau, ausserhalb des Musters
 /// schraffiert. An seinen Kanten zieht man den Ausschnitt (der Ton bleibt, wo er ist); in
 /// ihm verschiebt man die ganze Welle — sie rastet in Schritten, mit Shift in Bruchteilen.
-/// Spur Expression wie im Instrument-Editor: ein Klick setzt einen Punkt auf den Schritt
-/// (mit Alt frei) und zieht ihn weiter, ein Punkt laesst sich ziehen, ein Doppelklick nimmt
-/// ihn weg; im Menue *Delete point* und *Clear lane*. Ein Klick ins Lineal waehlt die
-/// Stelle, an der *Play pattern* beginnt.
+/// Spuren wie im Instrument-Editor: ein Klick setzt einen Punkt auf den Schritt (mit Alt
+/// frei) und zieht ihn weiter, ein Punkt laesst sich ziehen, ein Doppelklick nimmt ihn weg;
+/// im Menue *Delete point* und *Clear lane*. Pitch (Stufe 15f) zeigt ±`kPitchBereich`
+/// Halbtoene und rastet auf ganze Halbtoene, mit Shift auf Hundertstel. Ein Klick ins Lineal
+/// waehlt die Stelle, an der *Play pattern* beginnt.
 class WaveFlaeche : public QWidget
 {
     Q_OBJECT
@@ -113,13 +115,22 @@ public:
     static constexpr int kSpurHoehe = 40;
     static constexpr int kAutotuneHoehe = 30;
     static constexpr int kGriff = 5;  ///< so weit neben einer Kante greift man sie
-    [[nodiscard]] int spurOben() const { return kLinealHoehe; }
-    [[nodiscard]] int welleOben() const { return kLinealHoehe + kSpurHoehe; }
+    /// Die Spur Pitch zeigt so viele Halbtoene nach oben und unten (von Claude gesetzt, 15f);
+    /// was weiter reicht, steht gekappt am Rand.
+    static constexpr double kPitchBereich = 12.0;
+    [[nodiscard]] int spurOben(Steuerspur spur = Steuerspur::Expression) const
+    {
+        return kLinealHoehe + (spur == Steuerspur::Pitch ? kSpurHoehe : 0);
+    }
+    [[nodiscard]] int welleOben() const { return kLinealHoehe + 2 * kSpurHoehe; }
     [[nodiscard]] int welleUnten() const { return height() - kAutotuneHoehe; }
+    /// Die Spur unter `y`: Expression oder Pitch; liegt `y` in keiner, ist `*getroffen` false.
+    [[nodiscard]] Steuerspur spurBei(int y, bool* getroffen = nullptr) const;
 
-    /// Der Wert der Spur Expression unter `y`; der Punkt unter dem Ort (−1 = keiner).
-    [[nodiscard]] double spurWertVonY(int y) const;
-    [[nodiscard]] int spurPunktBei(QPoint ort) const;
+    /// Der Wert der Spur unter `y` (Pitch auf ganze Halbtoene, mit `fein` auf Hundertstel); der
+    /// Punkt unter dem Ort (−1 = keiner).
+    [[nodiscard]] double spurWertVonY(int y, Steuerspur spur = Steuerspur::Expression, bool fein = false) const;
+    [[nodiscard]] int spurPunktBei(QPoint ort, Steuerspur spur = Steuerspur::Expression) const;
 
 Q_SIGNALS:
     /// Ein Zug ist fertig: das neue Muster und ein Wort fuer Undo.
@@ -147,13 +158,17 @@ private:
         Anfang,  ///< die linke Kante des Ausschnitts
         Ende,    ///< die rechte Kante
         Lage,    ///< die ganze Welle
-        Punkt,   ///< ein Punkt der Spur Expression
+        Punkt,   ///< ein Punkt einer Spur (`m_spur`)
     };
+    /// Wert und Lage einer Spur: unten, oben, der Wert ohne Punkte.
+    [[nodiscard]] static double spurUnten(Steuerspur spur);
+    [[nodiscard]] static double spurOberGrenze(Steuerspur spur);
+    [[nodiscard]] double yVonWert(Steuerspur spur, double wert) const;
     /// Was unter dem Ort in der Welle zu greifen ist.
     [[nodiscard]] Zug griffBei(QPoint ort) const;
     void zeigeZeiger(QPoint ort);
     void zieheWelle(QPoint ort, bool frei);
-    void zieheSpurPunkt(QPoint ort, bool frei);
+    void zieheSpurPunkt(QPoint ort, bool frei, bool fein);
     [[nodiscard]] double schrittMs() const { return m_schrittMs; }
     void melde(const QString& was);
 
@@ -167,6 +182,7 @@ private:
     double m_roll = 0.0;
     Zug m_zug = Zug::Keiner;
     int m_punkt = -1;          ///< beim Ziehen eines Punkts: sein Platz in der Spur
+    Steuerspur m_spur = Steuerspur::Expression;  ///< die Spur dieses Punkts
     double m_zugSchritt = 0.0;  ///< wo der Zug begann, in Schritten
 };
 

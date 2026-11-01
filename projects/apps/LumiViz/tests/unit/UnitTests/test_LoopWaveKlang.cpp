@@ -152,6 +152,60 @@ TEST_SUITE("LoopWaveKlang")
         }
     }
 
+    TEST_CASE("Loop Wave 15f: die Spur Pitch — im Namen nur, wenn sie wirkt, und der Ton steigt")
+    {
+        Loop loop;  // 120 BPM, 4/4, vier Schritte je Schlag: ein Schritt 125 ms
+        Muster m;
+        m.name = QStringLiteral("Voc");
+        m.art = MusterArt::Wave;
+        m.takte = 1;
+        m.wave.datei = QStringLiteral("user:take_1");
+        loop.muster = {m};
+        loop.richte();
+        const QString ohne = waveKlangName(waveKlangVon(loop, loop.muster[0]));
+        CHECK_FALSE(ohne.contains(QLatin1Char(';')));
+        // Punkte, die nichts aendern: derselbe Name wie ohne Spur (Freeze-Abdruck und Tonspeicher bleiben)
+        loop.muster[0].zeitspuren.von(Steuerspur::Pitch) = {{0.0, 0.0}, {8.0, 0.0}};
+        loop.richte();
+        CHECK(waveKlangName(waveKlangVon(loop, loop.muster[0])) == ohne);
+        // ein Punkt, der wirkt: alle Punkte in ms im Namen, genau zurueckzulesen
+        loop.muster[0].zeitspuren.von(Steuerspur::Pitch) = {{0.0, 0.0}, {8.0, 2.5}};
+        loop.richte();
+        const WaveKlang mit = waveKlangVon(loop, loop.muster[0]);
+        CHECK(mit.tonhoehe == std::vector<SpurPunkt>{{0.0, 0.0}, {1000.0, 2.5}});
+        const QString name = waveKlangName(mit);
+        CHECK(name.contains(QStringLiteral(";0:0;1000:2.5|user:take_1")));
+        WaveKlang zurueck;
+        REQUIRE(zerlegeWaveKlang(name, zurueck));
+        CHECK(zurueck == mit);
+        CHECK_FALSE(zerlegeWaveKlang(QStringLiteral("wave:1,2,3,4,5,6,7;1000|x.wav"), zurueck));
+
+        SUBCASE("rechneWave: ohne Spur unveraendert, mit +12 eine Oktave hoeher, gleich lang")
+        {
+            constexpr int rate = 48000;
+            std::vector<float> datei(static_cast<std::size_t>(2 * rate));
+            for (int i = 0; i < rate; ++i)
+                datei[static_cast<std::size_t>(2 * i)] = datei[static_cast<std::size_t>(2 * i + 1)] =
+                    static_cast<float>(0.5 * std::sin(2.0 * 3.14159265358979323846 * 440.0 * i / rate));
+            WaveKlang k;
+            k.laengeMs = 1000.0;
+            const Klang roh = rechneWave(k, datei, rate);
+            CHECK(roh.daten == datei);  // Gain 0 dB, keine Blenden: die Datei selbst
+            k.tonhoehe = {{0.0, 12.0}};
+            const Klang hoeher = rechneWave(k, datei, rate);
+            REQUIRE(hoeher.frames() == roh.frames());
+            // aufsteigende Nulldurchgaenge in der Mitte: doppelt so viele
+            const auto durchgaenge = [](const Klang& klang) {
+                int z = 0;
+                for (std::int64_t i = 12000; i < 36000; ++i)
+                    if (klang.daten[static_cast<std::size_t>(2 * (i - 1))] < 0.0f && klang.daten[static_cast<std::size_t>(2 * i)] >= 0.0f) ++z;
+                return z;
+            };
+            CHECK(durchgaenge(roh) == doctest::Approx(220).epsilon(0.01));
+            CHECK(durchgaenge(hoeher) == doctest::Approx(440).epsilon(0.01));
+        }
+    }
+
     TEST_CASE("Loop Wave 15c: rechneWave gegen von Hand gerechnete Abtastwerte")
     {
         const std::vector<float> datei = rampe(100);

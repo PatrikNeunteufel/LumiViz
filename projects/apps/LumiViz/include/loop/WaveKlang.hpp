@@ -40,14 +40,19 @@ struct WaveKlang
     double gainDb = 0.0;
     double fadeInMs = 0.0;
     double fadeOutMs = 0.0;
+    /// Stufe 15f: die Spur Pitch — Punkte in Millisekunden ab dem Anfang des Musters, Werte in
+    /// Halbtoenen, dazwischen linear (`kurveBei`). Leer, wenn kein Punkt die Tonhoehe aendert:
+    /// dann klingt der Klang Bit fuer Bit wie ohne Spur.
+    std::vector<SpurPunkt> tonhoehe;
 
     [[nodiscard]] bool operator==(const WaveKlang&) const = default;
 };
 
 /// Beginnt der Name mit `wave:`?
 [[nodiscard]] bool istWaveKlang(const QString& name);
-/// Der Name: `wave:<start>,<ende>,<versatz>,<laenge>,<gain>,<fadeIn>,<fadeOut>|<datei>` —
-/// die Zahlen so, dass sie genau zurueckgelesen werden.
+/// Der Name: `wave:<start>,<ende>,<versatz>,<laenge>,<gain>,<fadeIn>,<fadeOut>|<datei>`, mit
+/// Spur Pitch je Punkt `;<ms>:<halbtoene>` vor dem `|` — die Zahlen so, dass sie genau
+/// zurueckgelesen werden. Ohne Spur derselbe Name wie seit 15c.
 [[nodiscard]] QString waveKlangName(const WaveKlang& klang);
 /// Den Namen wieder zerlegen. false = kein Klang eines Wave-Musters.
 bool zerlegeWaveKlang(const QString& name, WaveKlang& klang);
@@ -70,6 +75,9 @@ bool zerlegeWaveKlang(const QString& name, WaveKlang& klang);
 /// `endeS` 0 ihr Ende). Je Abtastwert mal Gain, mal min(1, (k − a) / fadeIn) und
 /// min(1, (b − k) / fadeOut) — beide linear, in Abtastwerten, ohne Blende 1. Der Klang
 /// ist b Abtastwerte lang (vor a still); ist nichts zu hoeren, ist er leer.
+/// Mit Spur Pitch (Stufe 15f) geht das hoerbare Stueck a … b vor Gain und Blenden durch den
+/// `Dehner` (`dehner()`, *General*, WV6 a), gleich lang, die Tonhoehe bei Abtastwert k nach der
+/// Spur an der Stelle k / rate. *Voice* rechnet bis zum eigenen PSOLA (15h) ebenso.
 [[nodiscard]] Klang rechneWave(const WaveKlang& klang, const std::vector<float>& datei, int rate);
 
 }  // namespace lumi::loop

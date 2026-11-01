@@ -122,6 +122,12 @@
       "path": "externals/pocketfft",
       "include": "externals/pocketfft/Include.cmake"
     },
+    "signalsmith-stretch": {
+      "description": "Dehnen und Tonhoehe (Signalsmith-Audio/signalsmith-stretch 1.4.0, Commit a670068 vom 2026-09-25, mit signalsmith-linear 0.6.4, Commit de55e6a; MIT, nur Header) — die Spur Pitch und Follow tempo am Wave-Muster, hinter lumi::loop::Dehner im Kern der App. Lokales External mit EIGENER Include.cmake (Muster pocketfft). Loop_Konzept.md §4p WV6 a (S168), Stufe 15f (S169); Herkunft und Pruefsummen: externals/signalsmith-stretch/README.md",
+      "skip": false,
+      "path": "externals/signalsmith-stretch",
+      "include": "externals/signalsmith-stretch/Include.cmake"
+    },
     "miniz": {
       "description": "Zip lesen und schreiben (Export und Import der eigenen Daten, .lvdata). Lokales External mit EIGENER Include.cmake im Projekt (Feld include) — CMakeCraft kennt miniz nicht. Datenablage_Konzept.md, E2 b (S114); Herkunft und Pruefsumme: externals/miniz/README.md",
       "skip": false,
@@ -233,7 +239,7 @@
 
         "core": {
           "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody" ],
-          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz", "pocketfft" ],
+          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz", "pocketfft", "signalsmith-stretch" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
             "lua54": { "LUA_EMBEDDED": false }
