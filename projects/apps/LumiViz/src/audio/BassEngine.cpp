@@ -56,6 +56,9 @@ struct BassEngine::Impl
     std::mutex recMutex;                 ///< schuetzt `recData`
     std::vector<float> recData;          ///< Stereo, links und rechts im Wechsel
     std::size_t recMax = 0;              ///< so viele Werte hoechstens (`maxSeconds`)
+    /// Stufe 15k-1 (WV10-1 a): die Uhr der Wiedergabe und je Block eine Marke; beide unter `recMutex`.
+    std::function<std::int64_t()> recUhr;
+    std::vector<IAudioEngine::RecordClockMark> recMarken;
     std::atomic<bool> recActive{false};  ///< der Rueckruf sammelt noch
     std::atomic<float> recPeak{0.0f};    ///< der groesste Betrag seit `recordLevel`
     HRECORD recChannel = 0;
@@ -883,6 +886,7 @@ bool BassEngine::recordStart(int deviceId, int sampleRate, double maxSeconds)
     {
         const std::lock_guard<std::mutex> lock(m_impl->recMutex);
         m_impl->recData.clear();
+        m_impl->recMarken.clear();
         m_impl->recMax = static_cast<std::size_t>(maxSeconds * sampleRate) * 2;
     }
     m_impl->recPeak.store(0.0f);
@@ -902,6 +906,9 @@ bool BassEngine::recordStart(int deviceId, int sampleRate, double maxSeconds)
         const std::size_t frei = impl->recMax > impl->recData.size() ? impl->recMax - impl->recData.size() : 0;
         const std::size_t nimm = std::min(zahl, frei);
         impl->recData.insert(impl->recData.end(), werte, werte + nimm);
+        // Stufe 15k-1 (WV10-1 a): wo die Uhr der Wiedergabe stand, als dieser Block ankam
+        if (impl->recUhr)
+            impl->recMarken.push_back({static_cast<std::int64_t>(impl->recData.size() / 2), impl->recUhr()});
         if (nimm < zahl || impl->recData.size() >= impl->recMax)
         {
             impl->recActive.store(false);
@@ -933,6 +940,18 @@ std::int64_t BassEngine::recordedFrames() const
 {
     const std::lock_guard<std::mutex> lock(m_impl->recMutex);
     return static_cast<std::int64_t>(m_impl->recData.size() / 2);
+}
+
+void BassEngine::setRecordClock(std::function<std::int64_t()> clock)
+{
+    const std::lock_guard<std::mutex> lock(m_impl->recMutex);
+    m_impl->recUhr = std::move(clock);
+}
+
+std::vector<IAudioEngine::RecordClockMark> BassEngine::recordClockMarks() const
+{
+    const std::lock_guard<std::mutex> lock(m_impl->recMutex);
+    return m_impl->recMarken;
 }
 
 float BassEngine::recordLevel()

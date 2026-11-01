@@ -197,9 +197,9 @@ TEST_SUITE("LoopWaveEditor")
         CHECK(e.dateiInfoText() == QStringLiteral("2.00 s · 44100 Hz · mono"));
         CHECK(e.findChild<QSpinBox*>(QStringLiteral("waveBars"))->maximum() == kWaveTakteMax);
         CHECK(e.tempoHinweis() == QStringLiteral("plays as recorded when on — the tempos are the same"));
-        // in 15d grau: Follow tempo (15j), Record... (15k); Edit sample... nur fuer ein eigenes
+        // grau: Follow tempo (15j); Record... seit 15k-1 hell; Edit sample... nur fuer ein eigenes
         CHECK_FALSE(e.findChild<QCheckBox*>(QStringLiteral("waveFollowTempo"))->isEnabled());
-        CHECK_FALSE(e.findChild<QPushButton*>(QStringLiteral("waveRecord"))->isEnabled());
+        CHECK(e.findChild<QPushButton*>(QStringLiteral("waveRecord"))->isEnabled());
         CHECK_FALSE(e.findChild<QPushButton*>(QStringLiteral("waveEditSample"))->isEnabled());
         // das Raster des Loops, ohne Swing offset (RS1-1 a)
         CHECK(e.rasterZeile()->rasterText().startsWith(QStringLiteral("Grid of the loop: 4 beats per bar")));

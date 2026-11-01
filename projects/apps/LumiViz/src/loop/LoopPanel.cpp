@@ -23,6 +23,7 @@
 #include "loop/Offen.hpp"
 #include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
+#include "loop/AufnahmeFenster.hpp"  // Stufe 15k-1
 #include "loop/Tonspeicher.hpp"
 #include "loop/WaveEditor.hpp"
 #include "shape/Kontur.hpp"  // zaehleZeichnungFassung
@@ -444,6 +445,8 @@ void LoopPanel::setupUI()
             m_clipZeile->setText(text);
     });
     connect(m_achse, &Taktachse::editorVerlangt, this, [this](const QString& muster) { (void)oeffneEditor(muster); });
+    // Stufe 15k-1: am laufenden Loop in einen Wave-Clip aufnehmen
+    connect(m_achse, &Taktachse::waveAufnahmeVerlangt, this, [this](int kanal, int takt) { (void)nimmWaveClipAuf(kanal, takt); });
     connect(m_achse, &Taktachse::effekteVerlangt, this, [this] { (void)oeffneEffekte(); });
     // Stufe 30c (WX6 a, WX8 a): ein Clip oder der ganze Loop als WAV
     connect(m_achse, &Taktachse::exportVerlangt, this,
@@ -723,6 +726,106 @@ WaveEditor* LoopPanel::waveEditor() const
     return m_waveEditor;
 }
 
+// --- Stufe 15k-1: Aufnahme in einen Wave-Clip (SK15k-1 a) --------------------------------
+
+AufnahmeFenster* LoopPanel::waveAufnahme() const
+{
+    return m_waveAufnahme;
+}
+
+bool LoopPanel::nimmWaveClipAuf(int kanal, int takt, const QString& muster, bool zeigen)
+{
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    if (!m_geladen || engine == nullptr) return false;
+    if (m_waveAufnahme == nullptr)
+    {
+        m_waveAufnahme = new AufnahmeFenster(this);
+        connect(m_waveAufnahme, &AufnahmeFenster::waveTakeBehalten, this, &LoopPanel::nimmTake);
+    }
+    m_aufnahmeKanal = kanal;
+    m_aufnahmeMuster = muster;
+    AufnahmeFenster::WaveAufnahme auftrag;
+    auftrag.loop = m_loop;
+    auftrag.plan.startTakt = std::max(0, takt);
+    if (const Muster* basis = muster.isEmpty() ? nullptr : m_loop.findeMuster(muster))
+    {
+        // Record... im Wave editor: ab dem ersten Clip des Musters, so lang wie das Muster
+        if (const std::optional<ClipOrt> bezug = bezugsclip(m_loop, muster, markierterClip())) auftrag.plan.startTakt = bezug->startTakt;
+        auftrag.plan.takte = basis->takte;
+    }
+    const std::vector<AudioDeviceInfo> ausgaenge = engine->getDevices();
+    const int jetzt = engine->getCurrentDevice();
+    for (const AudioDeviceInfo& a : ausgaenge)
+        if (a.id == jetzt) auftrag.ausgang = a.name;
+    auftrag.rate = engine->getSampleRate();
+    auftrag.spiele = [this](const Loop& fassung, int abspielTakt) { return spieleAufnahme(fassung, abspielTakt); };
+    auftrag.bereit = [this] { return m_spieler.spielt() && !m_spieler.wartet(); };
+    auftrag.halte = [this] { halteAufnahme(); };
+    auftrag.uhr = [this] { return m_spieler.uhr(); };
+    m_waveAufnahme->setEngine(engine);
+    m_waveAufnahme->beginneWaveClip(std::move(auftrag));
+    if (zeigen)
+    {
+        m_waveAufnahme->show();
+        m_waveAufnahme->raise();
+        m_waveAufnahme->activateWindow();
+    }
+    return true;
+}
+
+bool LoopPanel::spieleAufnahme(const Loop& fassung, int abspielTakt)
+{
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
+    if (engine == nullptr || player == nullptr) return false;
+    beendeVorhoeren();
+    m_solo.clear();
+    // die Fassung zum Aufnehmen: mit Einzaehlen und Klick, ab dem Einzaehltakt (wartet der Spieler
+    // auf seine Klaenge, beginnt er dort)
+    m_spieler.setzeLoop(fassung);
+    m_spitze = 0.0f;
+    if (!m_spieler.starte(*engine, *player))
+    {
+        m_spieler.setzeLoop(m_loop);
+        return false;
+    }
+    (void)m_spieler.springe(static_cast<double>(abspielTakt) * fassung.schritteJeTakt());
+    zeigeStand();
+    return true;
+}
+
+void LoopPanel::halteAufnahme()
+{
+    m_spieler.halte(true);
+    m_spieler.setzeLoop(spielFassung());
+    zeigeStand();
+}
+
+void LoopPanel::nimmTake(const QString& nennung, int startTakt, int takte)
+{
+    Loop neu = m_loop;
+    if (!m_aufnahmeMuster.isEmpty())
+    {
+        // Record... im Wave editor: der Take ist die neue Datei des Musters, von seinem Anfang an
+        Muster* ziel = musterIn(neu, m_aufnahmeMuster);
+        if (ziel == nullptr) return;
+        ziel->wave.datei = nennung;
+        ziel->wave.start = 0.0;
+        ziel->wave.ende = 0.0;
+        ziel->wave.versatz = 0.0;
+        ziel->wave.bezugBpm = neu.bpm;
+        neu.richte();
+        bearbeite(neu, tr("Record into wave pattern"));
+        return;
+    }
+    const double taktSekunden = neu.bpm > 0.0 ? neu.schlaegeJeTakt * 60.0 / neu.bpm : 0.0;
+    const std::optional<ClipOrt> ort =
+        neuerWaveClip(neu, m_aufnahmeKanal, startTakt, nennung, sampleTitel(nennung), takte * taktSekunden);
+    if (!ort) return;
+    bearbeite(neu, tr("Record wave clip"));
+    m_achse->waehle(ort->kanal, findeClip(m_loop, *ort));
+}
+
 ClipEffektFenster* LoopPanel::effektFenster() const
 {
     return m_effekte;
@@ -980,6 +1083,10 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                 meldeStand();
             });
             m_waveEditor->setEngineGeber([this] { return services().tryResolve<IAudioEngine>(); });
+            // Stufe 15k-1: Record... — in dieses Muster aufnehmen
+            connect(m_waveEditor, &WaveEditor::aufnahmeVerlangt, this, [this] {
+                if (m_waveEditor != nullptr) (void)nimmWaveClipAuf(-1, 0, m_waveEditor->muster());
+            });
             m_waveEditor->setDekodierer([this](const QString& datei, int rate, double maxSekunden) {
                 IAudioEngine* engine = services().tryResolve<IAudioEngine>();
                 return engine != nullptr ? engine->decodeStereo(datei, rate, maxSekunden) : std::vector<float>{};

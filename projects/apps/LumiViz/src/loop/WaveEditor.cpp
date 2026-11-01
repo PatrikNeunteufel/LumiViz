@@ -704,8 +704,8 @@ void WaveEditor::setupUI()
     m_suchen->setToolTip(tr("Choose an audio file for this pattern (WAV, MP3, FLAC, OGG)"));
     m_aufnehmen = new QPushButton(tr("Record..."), this);
     m_aufnehmen->setObjectName(QStringLiteral("waveRecord"));
-    m_aufnehmen->setEnabled(false);
-    m_aufnehmen->setToolTip(tr("Recording into a wave clip comes in a later version"));
+    m_aufnehmen->setToolTip(tr("Record into this pattern while the loop plays — the take replaces the file"));
+    connect(m_aufnehmen, &QPushButton::clicked, this, &WaveEditor::aufnahmeVerlangt);
     m_sampleBearbeiten = new QPushButton(tr("Edit sample..."), this);
     m_sampleBearbeiten->setObjectName(QStringLiteral("waveEditSample"));
     m_gain = new QDoubleSpinBox(this);

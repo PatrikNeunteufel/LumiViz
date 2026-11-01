@@ -248,6 +248,8 @@ Q_SIGNALS:
     void abspielstelleGewaehlt(int schritt);
     /// *Edit sample...* hat die Datei neu geschrieben: wer spielt, laedt den Klang neu.
     void klaengeGeaendert();
+    /// *Record...* (Stufe 15k-1): in dieses Muster aufnehmen, am laufenden Loop.
+    void aufnahmeVerlangt();
 
 protected:
     void showEvent(QShowEvent* event) override;

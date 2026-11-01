@@ -30,13 +30,17 @@
 
 #include "audio/IAudioEngine.hpp"
 #include "loop/Aufnahme.hpp"
+#include "loop/AufnahmeUhr.hpp"  // Stufe 15k-1
 
+#include <QPointer>
 #include <QString>
 #include <QWidget>
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 class QCheckBox;
@@ -45,12 +49,14 @@ class QLabel;
 class QLineEdit;
 class QProgressBar;
 class QPushButton;
+class QSpinBox;
 class QTimer;
 
 namespace lumi::loop
 {
 
 class KurvenBild;
+class LatenzFenster;
 
 /// Spielt einen Ausschnitt einer Aufnahme als Quelle im Mixer — einmal oder
 /// in Dauerschleife. Der Ausschnitt laesst sich aendern, waehrend sie spielt.
@@ -187,8 +193,48 @@ public:
     /// wird hier abgeschlossen.
     void takt();
 
+    // --- Stufe 15k-1 (SK15k-1 a A): Aufnahme in einen Wave-Clip, am laufenden Loop ---------
+    /// Was das Loop-Panel fuer eine Aufnahme in einen Wave-Clip mitgibt.
+    struct WaveAufnahme
+    {
+        Loop loop;               ///< der Loop, wie er ist
+        WaveAufnahmePlan plan;   ///< die Vorgaben (Starttakt, Einzaehlen, Laenge, Klick)
+        QString ausgang;         ///< der Name des Ausgabegeraets (fuer die gemerkte Latenz)
+        int rate = 0;            ///< die Rate der Wiedergabe — in ihr wird aufgenommen
+        /// Den Loop `fassung` ab `abspielTakt` spielen. false = es geht nicht (der Composer hat den Ton).
+        std::function<bool(const Loop& fassung, int abspielTakt)> spiele;
+        /// Spielt er schon hoerbar (die Klaenge sind da)?
+        std::function<bool()> bereit;
+        std::function<void()> halte;
+        /// Die Uhr der Wiedergabe (`Spieler::uhr`), im Ton- und im Aufnahme-Thread lesbar.
+        std::function<std::int64_t()> uhr;
+    };
+    /// Der Modus fuer Wave-Clips: die Zeile mit Starttakt, Einzaehlen, Laenge, Klick und
+    /// Latenz, statt Save **Keep take** und **Discard**. Ein leeres Fenster.
+    void beginneWaveClip(WaveAufnahme auftrag);
+    [[nodiscard]] bool waveModus() const { return m_wave.has_value(); }
+    /// Die Vorgaben, wie sie in der Zeile stehen.
+    [[nodiscard]] WaveAufnahmePlan plan() const;
+    void setzePlan(const WaveAufnahmePlan& plan);
+    [[nodiscard]] double latenzMs() const;
+    void setzeLatenzMs(double ms);
+    /// *Measure latency...*: das kleine Fenster oeffnen. `zeigen` false fuellt es nur.
+    bool oeffneLatenzmessung(bool zeigen = true);
+    [[nodiscard]] LatenzFenster* latenzFenster() const;
+    /// So viele Takte hat der Take im Bild; 0 = keiner.
+    [[nodiscard]] int takeTakte() const { return m_takeTakte; }
+    /// Was der Streifen sagt: Einzaehlen, Aufnahme, Ende.
+    [[nodiscard]] QString streifenText() const;
+    /// **Keep take:** als eigenes Sample ablegen, melden (`waveTakeBehalten`), schliessen.
+    /// Leer = kein Take im Bild oder nicht zu schreiben; sonst die Nennung `user:<name>`.
+    QString behalteTake();
+    /// **Discard:** den Take verwerfen.
+    void verwirfTake();
+
     /// So lang darf eine Aufnahme hoechstens sein, in Sekunden.
     static constexpr double kHoechstensSekunden = 30.0;
+    /// So lang darf ein Take fuer einen Wave-Clip hoechstens sein (von Claude gesetzt).
+    static constexpr double kWaveHoechstensSekunden = 600.0;
     /// Kuerzer als das wird ein Ausschnitt nicht, in Millisekunden.
     static constexpr double kAusschnittMinMs = 10.0;
 
@@ -198,6 +244,9 @@ Q_SIGNALS:
     /// weggeschnitten, in Millisekunden — wer dort einen Einsatz stehen hat,
     /// zieht ihn mit (M3 a). Negativ = es ist eine andere Aufnahme.
     void gespeichert(const QString& nennung, double vornWegMs);
+    /// Stufe 15k-1: ein Take ist abgelegt (`user:<name>`) — er gehoert ab `startTakt` in den
+    /// Loop, `takte` Takte lang.
+    void waveTakeBehalten(const QString& nennung, int startTakt, int takte);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -243,6 +292,39 @@ private:
     QPushButton* m_sichern = nullptr;
     QPushButton* m_publish = nullptr;
     QTimer* m_takt = nullptr;
+
+    // --- Stufe 15k-1: der Modus fuer Wave-Clips
+    enum class WavePhase
+    {
+        Bereit,    ///< nichts laeuft
+        Wartet,    ///< der Loop laedt oder zaehlt ein; die Aufnahme beginnt, sobald er hoerbar spielt
+        Nimmt,     ///< es wird aufgenommen
+        Endet,     ///< Stop ist gedrueckt: bis zum Ende des Takts (und der Latenz) weiter
+    };
+    bool starteWave();
+    void stoppeWave();
+    void taktWave();
+    void beendeWave();
+    void zeigeWave();
+    [[nodiscard]] double taktFramesJetzt() const;
+    [[nodiscard]] std::int64_t latenzFrames() const;
+    std::optional<WaveAufnahme> m_wave;
+    WavePhase m_phase = WavePhase::Bereit;
+    Aufnahmefassung m_fassung;
+    std::int64_t m_vonUhr = 0;   ///< hier beginnt der Take, in der Uhr
+    std::int64_t m_bisUhr = -1;  ///< hier endet er; −1 = noch offen (bis Stop)
+    int m_takeTakte = 0;
+    QPointer<LatenzFenster> m_latenzFenster;
+    QWidget* m_waveZeile = nullptr;
+    QSpinBox* m_startTakt = nullptr;
+    QComboBox* m_einzaehlen = nullptr;
+    QComboBox* m_laenge = nullptr;
+    QCheckBox* m_klick = nullptr;
+    QSpinBox* m_latenz = nullptr;
+    QLabel* m_latenzStand = nullptr;
+    QLabel* m_streifen = nullptr;
+    QPushButton* m_behalten = nullptr;
+    QPushButton* m_verwerfen = nullptr;
 };
 
 }  // namespace lumi::loop

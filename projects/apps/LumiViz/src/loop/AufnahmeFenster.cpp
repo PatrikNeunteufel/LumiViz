@@ -9,6 +9,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"  // KurvenBild
 #include "loop/Kit.hpp"
+#include "loop/LatenzFenster.hpp"  // Stufe 15k-1
 #include "loop/Loop.hpp"  // istKitKlang
 #include "loop/Sample.hpp"
 
@@ -18,6 +19,8 @@
 #include <QDialog>
 #include <QDir>
 #include <QFileInfo>
+#include <QFrame>
+#include <QSpinBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -158,6 +161,69 @@ void AufnahmeFenster::setupUI()
     oben->addWidget(m_pegel);
     aussen->addLayout(oben);
 
+    // --- Stufe 15k-1 (SK15k-1 a A): die Zeile fuer Wave-Clips, nur in diesem Modus
+    m_waveZeile = new QWidget(this);
+    m_waveZeile->setObjectName(QStringLiteral("recordWaveRow"));
+    {
+        auto* spalten = new QVBoxLayout(m_waveZeile);
+        spalten->setContentsMargins(0, 0, 0, 0);
+        auto* zeile = new QHBoxLayout;
+        m_startTakt = new QSpinBox(m_waveZeile);
+        m_startTakt->setObjectName(QStringLiteral("recordStartBar"));
+        m_startTakt->setRange(1, 9999);
+        m_startTakt->setToolTip(tr("The take begins at this bar"));
+        m_einzaehlen = new QComboBox(m_waveZeile);
+        m_einzaehlen->setObjectName(QStringLiteral("recordCountIn"));
+        m_einzaehlen->addItem(tr("none"), 0);
+        m_einzaehlen->addItem(tr("1 bar"), 1);
+        m_einzaehlen->addItem(tr("2 bars"), 2);
+        m_einzaehlen->setToolTip(tr("Bars the loop plays, with a click, before the take begins"));
+        m_laenge = new QComboBox(m_waveZeile);
+        m_laenge->setObjectName(QStringLiteral("recordLength"));
+        m_laenge->addItem(tr("until Stop"), 0);
+        for (const int takte : {1, 2, 4, 8, 16, 32}) m_laenge->addItem(takte == 1 ? tr("1 bar") : tr("%1 bars").arg(takte), takte);
+        m_laenge->setToolTip(tr("Until Stop: Stop ends the take at the end of the bar"));
+        m_klick = new QCheckBox(tr("Click while recording"), m_waveZeile);
+        m_klick->setObjectName(QStringLiteral("recordClick"));
+        zeile->addWidget(new QLabel(tr("Starts at bar"), m_waveZeile));
+        zeile->addWidget(m_startTakt);
+        zeile->addWidget(new QLabel(tr("Count-in"), m_waveZeile));
+        zeile->addWidget(m_einzaehlen);
+        zeile->addWidget(new QLabel(tr("Length"), m_waveZeile));
+        zeile->addWidget(m_laenge);
+        zeile->addWidget(m_klick);
+        zeile->addStretch(1);
+        spalten->addLayout(zeile);
+        auto* latenz = new QHBoxLayout;
+        m_latenz = new QSpinBox(m_waveZeile);
+        m_latenz->setObjectName(QStringLiteral("recordLatency"));
+        m_latenz->setRange(0, 1000);
+        m_latenz->setSuffix(tr(" ms"));
+        m_latenz->setToolTip(tr("How late a sound arrives: from the loop to the speaker, and from the microphone back"));
+        m_latenzStand = new QLabel(m_waveZeile);
+        m_latenzStand->setObjectName(QStringLiteral("recordLatencyState"));
+        m_latenzStand->setEnabled(false);
+        auto* messen = new QPushButton(tr("Measure latency..."), m_waveZeile);
+        messen->setObjectName(QStringLiteral("recordMeasureLatency"));
+        latenz->addWidget(new QLabel(tr("Latency"), m_waveZeile));
+        latenz->addWidget(m_latenz);
+        latenz->addWidget(m_latenzStand);
+        latenz->addWidget(messen);
+        latenz->addStretch(1);
+        spalten->addLayout(latenz);
+        m_streifen = new QLabel(m_waveZeile);
+        m_streifen->setObjectName(QStringLiteral("recordStrip"));
+        m_streifen->setFrameShape(QFrame::StyledPanel);
+        spalten->addWidget(m_streifen);
+        connect(messen, &QPushButton::clicked, this, [this] { (void)oeffneLatenzmessung(); });
+        connect(m_latenz, &QSpinBox::valueChanged, this, [this] { zeigeAlles(); });
+        for (QComboBox* wahl : {m_einzaehlen, m_laenge})
+            connect(wahl, QOverload<int>::of(&QComboBox::activated), this, [this] { zeigeAlles(); });
+        connect(m_startTakt, &QSpinBox::valueChanged, this, [this] { zeigeAlles(); });
+    }
+    m_waveZeile->hide();
+    aussen->addWidget(m_waveZeile);
+
     // --- Record, Stop, Stand
     m_record = new QPushButton(tr("● Record"), this);
     m_record->setObjectName(QStringLiteral("recordStart"));
@@ -227,13 +293,29 @@ void AufnahmeFenster::setupUI()
     m_publish = new QPushButton(tr("Publish..."), this);
     m_publish->setObjectName(QStringLiteral("recordPublish"));
     m_publish->setToolTip(tr("Pass the sample on as one file"));
+    // Stufe 15k-1: im Modus fuer Wave-Clips statt Save
+    m_verwerfen = new QPushButton(tr("Discard"), this);
+    m_verwerfen->setObjectName(QStringLiteral("recordDiscard"));
+    m_verwerfen->setToolTip(tr("Throw this take away and record again"));
+    m_behalten = new QPushButton(tr("Keep take"), this);
+    m_behalten->setObjectName(QStringLiteral("recordKeepTake"));
+    m_behalten->setToolTip(tr("Save the take to My samples and put it into the loop as a wave clip"));
+    m_verwerfen->hide();
+    m_behalten->hide();
     auto* fuss = new QHBoxLayout;
     fuss->addStretch(1);
     fuss->addWidget(abbrechen);
     fuss->addWidget(m_sichernAls);
     fuss->addWidget(m_sichern);
     fuss->addWidget(m_publish);
+    fuss->addWidget(m_verwerfen);
+    fuss->addWidget(m_behalten);
     aussen->addLayout(fuss);
+    connect(m_verwerfen, &QPushButton::clicked, this, &AufnahmeFenster::verwirfTake);
+    connect(m_behalten, &QPushButton::clicked, this, [this] {
+        if (behalteTake().isEmpty() && takeTakte() > 0)
+            QMessageBox::warning(this, windowTitle(), tr("Could not write the take to My samples"));
+    });
 
     m_takt = new QTimer(this);
     m_takt->setInterval(kTaktMs);
@@ -308,6 +390,10 @@ void AufnahmeFenster::beginne()
 {
     halte();
     if (m_engine != nullptr && m_nimmtAuf) (void)m_engine->recordStop();
+    if (m_wave && m_wave->halte && m_phase != WavePhase::Bereit) m_wave->halte();
+    m_wave.reset();  // Stufe 15k-1: wieder ein Sample
+    m_phase = WavePhase::Bereit;
+    m_takeTakte = 0;
     m_nimmtAuf = false;
     m_daten.reset();
     m_rate = 0;
@@ -376,6 +462,7 @@ std::int64_t AufnahmeFenster::minFrames() const
 
 bool AufnahmeFenster::starteAufnahme()
 {
+    if (m_wave) return starteWave();
     if (m_engine == nullptr || m_eingang->count() == 0 || m_nimmtAuf) return false;
     halte();
     m_meldung.clear();
@@ -394,6 +481,12 @@ bool AufnahmeFenster::starteAufnahme()
 
 bool AufnahmeFenster::stoppeAufnahme()
 {
+    if (m_wave)
+    {
+        if (m_phase == WavePhase::Bereit) return false;
+        stoppeWave();
+        return true;
+    }
     if (m_engine == nullptr || !m_nimmtAuf) return false;
     m_nimmtAuf = false;
     std::vector<float> daten = m_engine->recordStop();
@@ -525,6 +618,9 @@ void AufnahmeFenster::halte()
 std::vector<float> AufnahmeFenster::ergebnis() const
 {
     if (m_daten == nullptr) return {};
+    // ein Take sitzt im Takt und bleibt, wie er ankam: Blenden und Gain traegt das Wave-Muster (15c),
+    // Normalize und Trim silence sind in diesem Modus nicht zu sehen
+    if (m_wave) return *m_daten;
     return schneideAus(*m_daten, m_rate, m_ausschnitt, m_normal->isChecked(), blenden());
 }
 
@@ -658,6 +754,11 @@ void AufnahmeFenster::frageUndSpeichereAls()
 void AufnahmeFenster::takt()
 {
     if (m_engine == nullptr) return;
+    if (m_wave && m_phase != WavePhase::Bereit)
+    {
+        taktWave();
+        return;
+    }
     if (m_nimmtAuf)
     {
         // der Pegel: der groesste Betrag seit dem letzten Takt, in Dezibel auf die Breite gelegt (-48 dB bis 0)
@@ -779,6 +880,7 @@ void AufnahmeFenster::zeigeAlles()
         m_sichern->setToolTip(tr("A new recording has no name yet — use Save as..."));
     else
         m_sichern->setToolTip(tr("Built-in sounds and files stay as they are — use Save as..."));
+    zeigeWave();
 }
 
 void AufnahmeFenster::closeEvent(QCloseEvent* event)
@@ -793,9 +895,317 @@ void AufnahmeFenster::closeEvent(QCloseEvent* event)
     }
     halte();
     if (m_engine != nullptr && m_nimmtAuf) (void)m_engine->recordStop();
+    if (m_wave && m_phase != WavePhase::Bereit)
+    {
+        // Stufe 15k-1: der Loop spielte zur Aufnahme — er haelt mit dem Fenster
+        if (m_engine != nullptr) m_engine->setRecordClock({});
+        if (m_wave->halte) m_wave->halte();
+        m_phase = WavePhase::Bereit;
+    }
     m_nimmtAuf = false;
     m_takt->stop();
     QWidget::closeEvent(event);
+}
+
+// --- Stufe 15k-1: Aufnahme in einen Wave-Clip --------------------------------------------
+
+void AufnahmeFenster::beginneWaveClip(WaveAufnahme auftrag)
+{
+    beginne();
+    const WaveAufnahmePlan plan = auftrag.plan;
+    m_wave = std::move(auftrag);
+    {
+        // ein Take bleibt, wie er aufgenommen ist: kein Schnitt an der Stille, kein Anheben — er sitzt im Takt
+        const QSignalBlocker a(m_ohneStille);
+        const QSignalBlocker b(m_normal);
+        m_ohneStille->setChecked(false);
+        m_normal->setChecked(false);
+    }
+    setzePlan(plan);
+    // die gemerkte Latenz fuer dieses Paar aus Eingang und Ausgang (WV10-1 a)
+    const std::optional<double> gemerkt =
+        gemerkteLatenzMs(m_eingang->currentData(Qt::UserRole + 1).toString(), m_wave->ausgang);
+    setzeLatenzMs(gemerkt.value_or(0.0));
+    m_latenzStand->setText(gemerkt ? tr("measured · %1 → %2").arg(m_eingang->currentText(), m_wave->ausgang)
+                                   : tr("not measured yet"));
+    zeigeAlles();
+}
+
+WaveAufnahmePlan AufnahmeFenster::plan() const
+{
+    WaveAufnahmePlan p;
+    p.startTakt = m_startTakt->value() - 1;
+    p.einzaehlen = m_einzaehlen->currentData().toInt();
+    p.takte = m_laenge->currentData().toInt();
+    p.klick = m_klick->isChecked();
+    return p;
+}
+
+void AufnahmeFenster::setzePlan(const WaveAufnahmePlan& plan)
+{
+    const QSignalBlocker a(m_startTakt);
+    const QSignalBlocker b(m_einzaehlen);
+    const QSignalBlocker c(m_laenge);
+    const QSignalBlocker d(m_klick);
+    m_startTakt->setValue(plan.startTakt + 1);
+    m_einzaehlen->setCurrentIndex(std::max(0, m_einzaehlen->findData(std::clamp(plan.einzaehlen, 0, 2))));
+    // eine Laenge, die die Liste nicht kennt (die eines Musters), kommt dazu
+    int index = m_laenge->findData(plan.takte);
+    if (index < 0)
+    {
+        m_laenge->addItem(plan.takte == 1 ? tr("1 bar") : tr("%1 bars").arg(plan.takte), plan.takte);
+        index = m_laenge->count() - 1;
+    }
+    m_laenge->setCurrentIndex(index);
+    m_klick->setChecked(plan.klick);
+    zeigeAlles();
+}
+
+double AufnahmeFenster::latenzMs() const
+{
+    return m_latenz->value();
+}
+
+void AufnahmeFenster::setzeLatenzMs(double ms)
+{
+    m_latenz->setValue(static_cast<int>(std::lround(ms)));
+}
+
+bool AufnahmeFenster::oeffneLatenzmessung(bool zeigen)
+{
+    if (!m_wave) return false;
+    if (m_latenzFenster == nullptr)
+    {
+        m_latenzFenster = new LatenzFenster(this);
+        connect(m_latenzFenster, &LatenzFenster::latenzGewaehlt, this, [this](double ms) {
+            setzeLatenzMs(ms);
+            m_latenzStand->setText(tr("measured · %1 → %2").arg(m_eingang->currentText(), m_wave ? m_wave->ausgang : QString()));
+        });
+    }
+    m_latenzFenster->setze(m_engine, m_eingang->currentData().toInt(), m_eingang->currentData(Qt::UserRole + 1).toString(),
+                           m_wave->ausgang);
+    if (zeigen)
+    {
+        m_latenzFenster->show();
+        m_latenzFenster->raise();
+        m_latenzFenster->activateWindow();
+    }
+    return true;
+}
+
+LatenzFenster* AufnahmeFenster::latenzFenster() const
+{
+    return m_latenzFenster;
+}
+
+double AufnahmeFenster::taktFramesJetzt() const
+{
+    return m_wave ? taktFrames(m_fassung.loop, m_wave->rate) : 0.0;
+}
+
+std::int64_t AufnahmeFenster::latenzFrames() const
+{
+    return m_wave ? std::llround(latenzMs() * m_wave->rate / 1000.0) : 0;
+}
+
+bool AufnahmeFenster::starteWave()
+{
+    if (!m_wave || m_engine == nullptr || m_eingang->count() == 0 || m_phase != WavePhase::Bereit) return false;
+    if (!m_wave->spiele || !m_wave->uhr || m_wave->rate <= 0) return false;
+    halte();
+    m_meldung.clear();
+    m_daten.reset();
+    m_takeTakte = 0;
+    m_fassung = aufnahmeFassung(m_wave->loop, plan());
+    // die Stelle, an der der Take beginnt — wie der Rechenkern einen Takt rechnet
+    const Loop& f = m_fassung.loop;
+    const double schrittFrames = f.bpm > 0.0 ? m_wave->rate * 60.0 / f.bpm / f.schritteJeSchlag : 0.0;
+    m_vonUhr = std::llround(static_cast<double>(m_fassung.aufnahmeTakt) * f.schritteJeTakt() * schrittFrames);
+    const int takte = plan().takte;
+    m_bisUhr = takte > 0 ? m_vonUhr + std::llround(static_cast<double>(takte) * f.schritteJeTakt() * schrittFrames) : -1;
+    if (!m_wave->spiele(f, m_fassung.abspielTakt))
+    {
+        m_meldung = tr("The loop can't play now — the Composer has the audio.");
+        zeigeAlles();
+        return false;
+    }
+    m_phase = WavePhase::Wartet;
+    m_takt->start();
+    zeigeAlles();
+    return true;
+}
+
+void AufnahmeFenster::taktWave()
+{
+    const std::int64_t uhr = m_wave->uhr();
+    if (m_phase == WavePhase::Wartet)
+    {
+        // erst wenn der Loop hoerbar spielt: dann laeuft die Uhr, und die Aufnahme haengt an ihr
+        if (m_wave->bereit && !m_wave->bereit()) return;
+        m_engine->setRecordClock(m_wave->uhr);
+        if (!m_engine->recordStart(m_eingang->currentData().toInt(), m_wave->rate, kWaveHoechstensSekunden))
+        {
+            m_engine->setRecordClock({});
+            if (m_wave->halte) m_wave->halte();
+            m_phase = WavePhase::Bereit;
+            m_takt->stop();
+            m_meldung = tr("Could not open this input. Is the microphone allowed for desktop apps in the Windows privacy settings?");
+            zeigeAlles();
+            return;
+        }
+        m_nimmtAuf = true;
+        m_phase = WavePhase::Nimmt;
+    }
+    // der Pegel wie beim Sample
+    const float spitze = m_engine->recordLevel();
+    const double db = spitze > 0.0f ? 20.0 * std::log10(static_cast<double>(spitze)) : -100.0;
+    m_pegel->setValue(static_cast<int>(std::clamp((db + 48.0) / 48.0, 0.0, 1.0) * 100.0));
+    // zu Ende: nach dem Ende des Takes und der Latenz, und einem Rest fuer die Bloecke
+    const auto rest = static_cast<std::int64_t>(0.1 * m_wave->rate);
+    if (m_bisUhr >= 0 && uhr >= m_bisUhr + latenzFrames() + rest)
+    {
+        beendeWave();
+        return;
+    }
+    if (!m_engine->isRecording())
+    {
+        // die hoechste Laenge ist erreicht: der Take endet, wo er ist
+        if (m_bisUhr < 0) m_bisUhr = std::max(m_vonUhr + 1, uhr - latenzFrames());
+        beendeWave();
+        return;
+    }
+    zeigeAlles();
+}
+
+void AufnahmeFenster::stoppeWave()
+{
+    const std::int64_t gehoert = m_wave->uhr() - latenzFrames();
+    if (m_phase == WavePhase::Wartet || gehoert < m_vonUhr)
+    {
+        // noch vor dem Take (beim Einzaehlen): nichts behalten
+        if (m_nimmtAuf) (void)m_engine->recordStop();
+        m_engine->setRecordClock({});
+        m_nimmtAuf = false;
+        if (m_wave->halte) m_wave->halte();
+        m_phase = WavePhase::Bereit;
+        m_takt->stop();
+        zeigeAlles();
+        return;
+    }
+    if (m_phase != WavePhase::Nimmt) return;
+    if (m_bisUhr < 0)
+    {
+        // bis Stop: der Take endet am Ende des Takts, in dem Stop gehoert wurde
+        const double takt = taktFramesJetzt();
+        const auto takte = std::max<std::int64_t>(1, static_cast<std::int64_t>(std::ceil((gehoert - m_vonUhr) / takt)));
+        m_bisUhr = m_vonUhr + std::llround(static_cast<double>(takte) * takt);
+    }
+    m_phase = WavePhase::Endet;
+    zeigeAlles();
+}
+
+void AufnahmeFenster::beendeWave()
+{
+    std::vector<float> daten = m_engine->recordStop();
+    const std::vector<IAudioEngine::RecordClockMark> marken = m_engine->recordClockMarks();
+    m_engine->setRecordClock({});
+    m_nimmtAuf = false;
+    if (m_wave->halte) m_wave->halte();
+    m_phase = WavePhase::Bereit;
+    m_takt->stop();
+    m_pegel->setValue(0);
+    const std::optional<std::int64_t> versatz = uhrVersatz(marken);
+    if (!versatz || daten.size() < 4)
+    {
+        m_meldung = tr("Nothing arrived from this input.");
+        zeigeAlles();
+        return;
+    }
+    const double takt = taktFramesJetzt();
+    m_takeTakte = takt > 0.0 ? std::max(1, static_cast<int>(std::lround(static_cast<double>(m_bisUhr - m_vonUhr) / takt))) : 0;
+    setzeAufnahme(schneideTake(daten, *versatz, latenzFrames(), m_vonUhr, m_bisUhr), m_wave->rate);
+    // ein Take wird nicht an der Stille geschnitten: er sitzt im Takt
+    m_ausschnitt = Ausschnitt{0, frames()};
+    zeigeAlles();
+}
+
+QString AufnahmeFenster::behalteTake()
+{
+    if (!m_wave || m_takeTakte <= 0 || frames() <= 0) return {};
+    // der erste freie Name „Take 1", „Take 2" …
+    QString name;
+    for (int n = 1; n < 10000 && name.isEmpty(); ++n)
+    {
+        const QString kandidat = eigenerName(tr("Take %1").arg(n));
+        if (!kandidat.isEmpty() && eigeneSampleDatei(kandidat).isEmpty()) name = kandidat;
+    }
+    const QString nennung = name.isEmpty() ? QString() : speichereAufnahme(ergebnis(), m_rate, name);
+    if (nennung.isEmpty()) return {};
+    m_gesichert = true;
+    Q_EMIT waveTakeBehalten(nennung, plan().startTakt, m_takeTakte);
+    close();
+    return nennung;
+}
+
+void AufnahmeFenster::verwirfTake()
+{
+    m_daten.reset();
+    m_takeTakte = 0;
+    m_gesichert = true;
+    m_ausschnitt = {};
+    zeigeBild();
+    zeigeAlles();
+}
+
+QString AufnahmeFenster::streifenText() const
+{
+    if (!m_wave) return {};
+    const WaveAufnahmePlan p = plan();
+    const int start = p.startTakt + 1;
+    QStringList teile;
+    if (p.einzaehlen > 0) teile << tr("bar %1 · count-in").arg(start - p.einzaehlen < 1 ? QStringLiteral("…") : QString::number(start - p.einzaehlen));
+    if (m_phase == WavePhase::Nimmt || m_phase == WavePhase::Endet)
+    {
+        const double takt = taktFramesJetzt();
+        const std::int64_t gehoert = m_wave->uhr() - latenzFrames();
+        if (gehoert < m_vonUhr)
+            teile << tr("counting in…");
+        else
+            teile << tr("recording bar %1").arg(start + static_cast<int>((gehoert - m_vonUhr) / std::max(1.0, takt)));
+        if (m_phase == WavePhase::Endet) teile << tr("ends at the end of the bar");
+    }
+    else if (m_phase == WavePhase::Wartet)
+        teile << tr("preparing the loop…");
+    else if (m_takeTakte > 0)
+        teile << tr("take: bar %1 – %2 (%3 bars)").arg(start).arg(start + m_takeTakte - 1).arg(m_takeTakte);
+    else
+        teile << (p.takte > 0 ? tr("bar %1 – %2 · recording").arg(start).arg(start + p.takte - 1)
+                              : tr("from bar %1 · recording until Stop, to the end of that bar").arg(start));
+    return teile.join(QStringLiteral(" | "));
+}
+
+void AufnahmeFenster::zeigeWave()
+{
+    const bool wave = m_wave.has_value();
+    m_waveZeile->setVisible(wave);
+    m_behalten->setVisible(wave);
+    m_verwerfen->setVisible(wave);
+    m_sichern->setVisible(!wave);
+    m_sichernAls->setVisible(!wave);
+    m_publish->setVisible(!wave);
+    m_ohneStille->setVisible(!wave);
+    m_normal->setVisible(!wave);
+    if (!wave) return;
+    setWindowTitle(tr("Record wave clip"));
+    const bool laeuft = m_phase != WavePhase::Bereit;
+    m_record->setEnabled(m_engine != nullptr && m_eingang->count() > 0 && !laeuft);
+    m_stop->setEnabled(laeuft);
+    for (QWidget* feld : std::initializer_list<QWidget*>{m_startTakt, m_einzaehlen, m_laenge, m_klick, m_latenz, m_eingang})
+        feld->setEnabled(!laeuft);
+    m_streifen->setText(streifenText());
+    m_behalten->setEnabled(!laeuft && m_takeTakte > 0 && frames() > 0);
+    m_verwerfen->setEnabled(!laeuft && frames() > 0);
+    if (laeuft) m_stand->setText(m_phase == WavePhase::Wartet ? tr("Preparing the loop…") : tr("Recording…"));
 }
 
 }  // namespace lumi::loop

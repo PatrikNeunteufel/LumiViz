@@ -2031,6 +2031,11 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
             QAction* wave = menu.addAction(tr("New wave clip..."), this, [this, kanal, takt] { (void)neuerWaveClip(kanal, takt); });
             wave->setObjectName(QStringLiteral("loopNewWaveClip"));
             wave->setEnabled(istFrei(m_loop, kanal, takt, 1));
+            // Stufe 15k-1 (SK15k-1 a): am laufenden Loop aufnehmen, ab diesem Takt
+            QAction* aufnahme =
+                menu.addAction(tr("Record wave clip..."), this, [this, kanal, takt] { Q_EMIT waveAufnahmeVerlangt(kanal, takt); });
+            aufnahme->setObjectName(QStringLiteral("loopRecordWaveClip"));
+            aufnahme->setEnabled(wave->isEnabled());
             // Stufe 33 (PE1, LC1 a): ab diesem Takt; ohne Platz in einem neuen Kanal
             menu.addAction(tr("Import pattern..."), this,
                            [this, kanal, takt] { (void)importiere(AustauschArt::Muster, kanal, takt); })

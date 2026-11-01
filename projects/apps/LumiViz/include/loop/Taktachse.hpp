@@ -264,6 +264,8 @@ Q_SIGNALS:
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
     /// Der Editor dieser Basis soll sich oeffnen.
     void editorVerlangt(const QString& muster);
+    /// *Record wave clip...* (Stufe 15k-1): ab diesem Takt in diesem Kanal aufnehmen.
+    void waveAufnahmeVerlangt(int kanal, int takt);
     /// Das Fenster „Clip effects" soll sich fuer die markierten Clips oeffnen.
     void effekteVerlangt();
     /// Das Fenster „Export audio" soll sich fuer diesen Clip oeffnen (Stufe 30c).

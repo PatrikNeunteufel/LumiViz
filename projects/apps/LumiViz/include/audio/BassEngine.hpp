@@ -122,6 +122,8 @@ public:
     [[nodiscard]] std::int64_t recordedFrames() const override;
     [[nodiscard]] float recordLevel() override;
     [[nodiscard]] std::vector<float> recordStop() override;
+    void setRecordClock(std::function<std::int64_t()> clock) override;
+    [[nodiscard]] std::vector<RecordClockMark> recordClockMarks() const override;
 
     // FFT / Audio Analysis
     bool getFFTData(AudioStreamHandle stream, float* data, int size) override;

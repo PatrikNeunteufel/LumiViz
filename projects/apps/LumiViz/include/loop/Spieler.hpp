@@ -109,6 +109,10 @@ public:
     /// Die Stelle im laufenden Durchlauf, in Schritten (mit Bruchteil); 0,
     /// wenn er nicht spielt.
     [[nodiscard]] double stelleSchritte() const;
+    /// Stufe 15k-1 (WV10-1 a): die Uhr der Wiedergabe — die Stelle des Klangerzeugers in
+    /// Abtastwerten seit dem Anfang, ohne Umbruch am Ende des Durchlaufs. Im Ton-Thread
+    /// geschrieben, in jedem Thread lesbar (die Uhr einer Aufnahme).
+    [[nodiscard]] std::int64_t uhr() const { return m_erzeuger.stelle(); }
     /// Der groesste Betrag der Summe seit dem letzten Aufruf — vor der
     /// Lautstaerke des Players. Ueber 1 uebersteuert der Loop (L6 a).
     [[nodiscard]] float nimmSpitze() { return m_erzeuger.nimmSpitze(); }

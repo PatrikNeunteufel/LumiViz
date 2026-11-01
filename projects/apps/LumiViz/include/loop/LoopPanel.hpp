@@ -55,6 +55,7 @@ class DrumEditor;
 class InstrumentEditor;
 class Taktachse;
 class WaveEditor;
+class AufnahmeFenster;
 
 /// Die Antwort auf die Rueckfrage bei Ungespeichertem.
 enum class Rueckfrage
@@ -148,6 +149,13 @@ public:
     /// Das Fenster des Wave editors (Stufe 15d/15e); nullptr, solange noch kein
     /// Wave-Muster geoeffnet wurde.
     [[nodiscard]] WaveEditor* waveEditor() const;
+    /// Stufe 15k-1 (SK15k-1 a): das Fenster *Record sample* im Modus fuer Wave-Clips oeffnen —
+    /// *Record wave clip...* ab `takt` in `kanal`, oder mit `muster` *Record...* im Wave editor
+    /// (der Take ersetzt die Datei dieses Musters, ab seinem ersten Clip, so lang wie das
+    /// Muster). Der Loop spielt dazu; *Keep take* legt den Clip an (ein Schritt fuer Undo).
+    /// false = keine Engine. `zeigen` false fuellt es nur (fuer Tests).
+    bool nimmWaveClipAuf(int kanal, int takt, const QString& muster = {}, bool zeigen = true);
+    [[nodiscard]] AufnahmeFenster* waveAufnahme() const;
     /// Einen Ton des Instruments dieser Basis anspielen, einen Schlag lang
     /// (ein Klick auf eine Taste des Instrument-Editors). Spielt gerade der
     /// Loop oder ein Muster, geschieht nichts — man hoert es schon. false =
@@ -275,6 +283,13 @@ private:
     QPointer<DrumEditor> m_editor;
     QPointer<InstrumentEditor> m_instrumentEditor;
     QPointer<WaveEditor> m_waveEditor;  ///< Stufe 15e
+    // --- Stufe 15k-1: Aufnahme in einen Wave-Clip
+    QPointer<AufnahmeFenster> m_waveAufnahme;
+    int m_aufnahmeKanal = -1;
+    QString m_aufnahmeMuster;  ///< leer = ein neuer Clip; sonst das Muster, dessen Datei ersetzt wird
+    bool spieleAufnahme(const Loop& fassung, int abspielTakt);
+    void halteAufnahme();
+    void nimmTake(const QString& nennung, int startTakt, int takte);
     QPointer<ClipEffektFenster> m_effekte;
     int m_vorhoeren = 0;    ///< die Nummer des Tons, der gerade angespielt wird; 0 = keiner
     bool m_meldetSong = false;  ///< der Loop ist als laufender Song gemeldet (7a)

@@ -74,6 +74,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/WaveMuster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WaveKlang.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WaveEditor.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/AufnahmeUhr.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/LatenzFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Pedalplan.cpp"
 )
 set(_local_headers
@@ -139,6 +141,8 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/WaveMuster.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/WaveKlang.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/WaveEditor.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/AufnahmeUhr.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/LatenzFenster.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Pedalplan.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Stueckweise.hpp"
 )

@@ -432,6 +432,25 @@ public:
      */
     [[nodiscard]] virtual std::vector<float> recordStop() { return {}; }
 
+    // --- Aufnahme an der Wiedergabe (Loop, Stufe 15k-1, Entscheid Patrik WV10-1 a) ---
+    // Eine Uhr der Wiedergabe — etwa die Stelle eines Generators in Abtastwerten, in
+    // der Rate der Aufnahme. Die Engine liest sie bei jedem Block, der ankommt, und
+    // merkt sich das Paar (aufgenommen bis hier, Uhr). Daraus folgt, an welcher Stelle
+    // der Uhr ein aufgenommener Abtastwert ankam; die Latenz misst, wer sie braucht.
+
+    /// Ein Block kam an: so viele Abtastwerte (je Seite) waren danach aufgenommen,
+    /// und so stand die Uhr.
+    struct RecordClockMark
+    {
+        std::int64_t recorded = 0;
+        std::int64_t clock = 0;
+    };
+    /// Die Uhr fuer die naechsten Aufnahmen; leer = keine (keine Marken). Sie wird im
+    /// Thread der Aufnahme gelesen und muss dort sicher sein (etwa ein `std::atomic`).
+    virtual void setRecordClock(std::function<std::int64_t()> /*clock*/) {}
+    /// Die Marken der laufenden oder zuletzt beendeten Aufnahme, in ihrer Reihenfolge.
+    [[nodiscard]] virtual std::vector<RecordClockMark> recordClockMarks() const { return {}; }
+
     // =========================================================================
     // FFT / Audio Analysis
     // =========================================================================

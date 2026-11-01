@@ -33,6 +33,19 @@ public:
     bool oeffnet = true;           ///< false = der Eingang laesst sich nicht oeffnen
     QStringList rufe;
     IAudioGenerator* generator = nullptr;
+    /// Stufe 15k-1: die Uhr der Aufnahme und ihre Marken — der Test legt Bloecke mit `block` an.
+    std::function<std::int64_t()> uhr;
+    std::vector<RecordClockMark> marken;
+
+    void setRecordClock(std::function<std::int64_t()> clock) override { uhr = std::move(clock); }
+    [[nodiscard]] std::vector<RecordClockMark> recordClockMarks() const override { return marken; }
+    /// Ein Block kommt an: `werte` (Stereo) haengen an die Aufnahme, und die Uhr wird gelesen.
+    void block(const std::vector<float>& werte)
+    {
+        aufnahme.insert(aufnahme.end(), werte.begin(), werte.end());
+        angekommen = static_cast<std::int64_t>(aufnahme.size() / 2);
+        if (uhr) marken.push_back({angekommen, uhr()});
+    }
 
     [[nodiscard]] std::vector<AudioDeviceInfo> getRecordDevices() const override { return eingaenge; }
     bool recordStart(int deviceId, int sampleRate, double maxSeconds) override
@@ -41,6 +54,7 @@ public:
         if (!oeffnet) return false;
         laeuft = true;
         angekommen = 0;
+        marken.clear();
         return true;
     }
     [[nodiscard]] bool isRecording() const override { return laeuft; }

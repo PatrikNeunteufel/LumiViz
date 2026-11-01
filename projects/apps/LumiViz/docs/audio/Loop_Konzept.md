@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.115.0
+> **Version:** 0.116.0
 > **Datum:** 2026-11-01 (Session 169)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -4177,7 +4177,8 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
 | 15h | **TD-PSOLA** als zweite Umsetzung von `Dehner` (*Voice*) und der **Prüfstein** (WV6 a): gerechnete Stimmen mit bekannten Formanten, Formantlage vorher/nachher, Fehler der Zieltonhöhe in Cent, Rechenzeit, MSVC/clang; Hörproben an Patrik; Bericht unter `docs/modellierung/wave-clips/proben/`. Ohne Vorteil für PSOLA fällt *Voice* weg (WV6 a b) | offen |
 | 15i | Die Spur **Autotune** (WV4 a, WV9 a): Rechnung (Zielnoten, Strength, Speed, mit der Pitch-Spur zusammen), *Detect notes* mit Tonart, die Spur im Wave editor mit Zielnoten über der gemessenen Kurve, Marke ♪; Tests über das Fenster | offen |
 | 15j | **Follow tempo** (B3, WV1-1 a): Bezugstempo, *Set to loop tempo*, Dehnen auf das Tempo des Loops, Marke ~; Tests mit Tempowechsel des Loops | offen |
-| 15k | **Aufnahme und Bounce** (B5, B6, WV7 a, WV10-1 a): Skizze für *Measure latency* und Einzählen; die Aufnahme an der Wiedergabe (Stelle in der Uhr, unabhängig von Wave-Clips), *Measure latency* je Paar aus Ein- und Ausgang; *Record wave clip...* bei laufendem Loop auf Taktgrenzen mit Einzählen, und *Record...* im Editor über das Fenster *Record sample*; *Bounce to wave clip* mit Nachklang bis −60 dB, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | offen |
+| 15k-1 | **Aufnahme** (B5, WV10-1 a, WR1 a, SK15k-1 a; vor 15f gebaut): die Aufnahme an der Wiedergabe (Stelle in der Uhr, unabhängig von Wave-Clips), *Measure latency* je Paar aus Ein- und Ausgang; *Record wave clip...* bei laufendem Loop auf Taktgrenzen mit Einzählen, und *Record...* im Wave editor über das Fenster *Record sample*; Tests | erledigt 2026-11-01 (S169; eng 92 / 92 unter Release-clang und Testing-MSVC) |
+| 15k-2 | **Bounce** (B6, WV7 a): *Bounce to wave clip* mit Nachklang bis −60 dB, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | offen |
 | 15l | **Steuersignal** (B7, WV5 a): ein Baustein nennt einen Kanal, abgegriffen vor Fader und Schalter, genannte Kanäle zuerst, Kreis erkannt, Abdruck mit dem Kanal; ein Prüfbaustein im Test (die Talkbox ist eine eigene Stufe) | offen |
 | 15m | Abschluss: Benutzerhandbuch §16 und §17, Sichttest-Liste, Bereich und voller Lauf unter beiden Compilern | offen |
 
@@ -4242,6 +4243,28 @@ schreibt beides beim Packen auf `user:<name>` um; die Datensicherung sichert ein
 Samples. Die Hüllen aus §4o tragen Wave-Muster seit 15b. Tests: `test_LoopWaveTaktachse` (vier Fälle: Modell,
 Taktachse mit Menü, Panel mit Wave editor, Publish); `LUMIVIZ_WAVE_ACHSE_BILD=<datei.png>` legt ein Bild ab.
 
+**Wie 15k-1 gebaut ist (S169):** Die Engine bekommt `IAudioEngine::setRecordClock` und `recordClockMarks`: je
+Aufnahmeblock eine Marke aus den bis dahin aufgenommenen Abtastwerten und der Uhr der Wiedergabe (Vorgabe: keine
+Uhr, keine Marken; die BassEngine liest die Uhr im Aufnahme-Rückruf). `loop/AufnahmeUhr` rechnet ohne Qt-Fenster:
+`uhrVersatz` ist der Median aus Uhr minus Aufnahme, nur über Blöcke, an denen die Uhr lief (vor dem Start der
+Wiedergabe steht sie still); `KlickGeber` spielt fünf Klicks, `messeLatenz` findet sie in der Aufnahme wieder
+(Ergebnis, gefunden / erwartet, Streuung; unter drei Klicks keine Messung); `schneideTake` legt den Take an seine
+Stelle in der Uhr, mit abgezogener Latenz, was vor der Aufnahme läge, bleibt still; `aufnahmeFassung` gibt dem Loop
+das Einzählen (reicht es vor Takt 0, rücken alle Clips nach hinten) und den Klick als eigenen Kanal (`kit:hat_closed`,
+die Eins 1,0, sonst 0,6). Die Latenz wird je Paar aus Ein- und Ausgang gemerkt (QSettings `loop/latency/…`).
+Das Fenster *Measure latency* (`loop/LatenzFenster`) misst über einen eigenen Mixer mit dem Klickgeber als Uhr,
+*Use* merkt den Wert. Das Fenster *Record sample* hat einen Modus für Wave-Clips (`beginneWaveClip`): die Zeile
+Starts at bar / Count-in / Length / Click while recording / Latency mit *Measure latency...*, der Streifen,
+*Keep take* / *Discard*; der Loop spielt ab dem Einzähltakt, die Aufnahme beginnt, wenn er hörbar spielt, in der
+Rate der Wiedergabe, höchstens 600 s; Stop rundet auf das Ende des Takts. Ein Take bleibt, wie er ankam — keine
+Blende an den Enden, kein Normalize (von Claude gesetzt: Blenden und Gain trägt das Wave-Muster seit 15c, und
+die Haken Trim silence und Normalize sind in diesem Modus nicht zu sehen). *Keep take* legt ihn als eigenes
+Sample „Take n“ ab. Im Programm: `Spieler::uhr()`, in der Taktachse *Record wave clip...* (`waveAufnahmeVerlangt`),
+im Wave editor *Record...* (`aufnahmeVerlangt`), im Loop-Panel `nimmWaveClipAuf` — ein neuer Take legt einen
+Wave-Clip am Starttakt an, *Record...* ersetzt die Datei des Musters (Ausschnitt und Lage auf 0). Tests:
+`test_LoopAufnahmeUhr` (vier Fälle: Uhr, Latenz, Take, Fassung; *Measure latency* gegen ein ideales Gerät aus
+Pappe; der Take sitzt im Takt; das Panel), `PappAufnahme.hpp` mit Uhr und `block()`.
+
 **Offen vor 15g:** eine Aufnahme echten Gesangs für den Messfall — einstimmig, ohne Hall, mit Gleiten und Vibrato,
 unter einer freien Lizenz oder von Patrik selbst; Quelle und Ablage (außerhalb des Repos wie *Salamander*) als Frage
 vor 15g.
@@ -4267,6 +4290,19 @@ Stelle im Loop, keine Latenz). Ein Live-Loop-Modus braucht Aufnahmen, die zur la
   31.10.), der Mixer ohne eigenen Puffer (`BASS_ATTRIB_BUFFER` 0); der Eingang nicht gemessen. Bei 120 BPM ist ein
   Sechzehntel 125 ms (gerechnet). Verworfen b (nur ein leeres Feld in der Schnittstelle): *Record wave clip...* läge
   schon in 15k neben dem Takt, der Live-Loop-Modus müsste die Aufnahme im Kern ersetzen.
+- **WR1 a — Aufnahme vorgezogen (Patrik S169):** 15k wird geteilt. **15k-1 Aufnahme** (WV10-1 a: die Aufnahme an der
+  Wiedergabe, *Measure latency*, *Record wave clip...* und *Record...* im Wave editor) kommt vor 15f; **15k-2 Bounce**
+  (WV7 a) bleibt an der Stelle von 15k, nach 15j. Reihenfolge: 15k-1, 15f, 15g, 15h, 15i, 15j, 15k-2, 15l, 15m. Grund:
+  mit der Aufnahme im Programm entsteht die Aufnahme echten Gesangs für den Messfall vor 15g selbst; Bounce schaltet
+  nichts frei. Verworfen b (15k ganz vorziehen).
+- **SK15k-1 a — Skizze der Aufnahme gebilligt (Patrik S169):** (A) ein Modus des Fensters *Record sample* für
+  Wave-Clips — Input mit Pegel; **Starts at bar** (der angeklickte Takt), **Count-in** (keins, 1 oder 2 Takte, Vorgabe
+  1), **Length** („until Stop“ oder eine feste Zahl Takte), **Click while recording** (Vorgabe an); **Latency** (der
+  gemerkte Wert je Paar aus Ein- und Ausgang, von Hand änderbar) mit **Measure latency...**; ein Streifen mit Einzählen,
+  Aufnahme und Ende; **Record**, **Stop** (rundet auf das Ende des Takts), **Keep take** (legt die Aufnahme als eigenes
+  Sample ab und setzt den Wave-Clip an den Starttakt, mit abgezogener Latenz), **Discard**. Der Loop spielt ab dem
+  Einzähltakt, die Aufnahme beginnt genau an der Taktgrenze. (B) das kleine Fenster **Measure latency**: fünf Klicks
+  ausgeben und am Eingang wiederfinden, Ergebnis mit Streuung, **Use**. Gezeichnet mit dem Zeichenwerkzeug in S169.
 
 ### Abgleich mit den Quellen (S168)
 
@@ -4423,6 +4459,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.116.0** (S169, 2026-11-01): §4p 15k-1 erledigt („Wie 15k-1 gebaut ist“): Uhr der Aufnahme, *Measure latency*, *Record wave clip...* und *Record...* im Wave editor; ein Take bleibt ohne Blende und Normalize (von Claude gesetzt).
 - **0.115.0** (S169, 2026-11-01): §4p 15e erledigt („Wie 15e gebaut ist“): *New wave clip...*, die Welle am Clip, der Wave editor im Panel, Publish.
 - **0.114.0** (S169, 2026-11-01): §4p 15d erledigt („Wie 15d gebaut ist“): das Fenster Wave editor.
 - **0.113.0** (S169, 2026-11-01): §4p 15c erledigt („Wie 15c gebaut ist“): der Klang eines Wave-Musters `wave:<werte>|<datei>` statt `wave:<abdruck>` (von Claude gesetzt, Grund dort), Rechenkern, Tonauftrag, Freeze-Abdruck.
