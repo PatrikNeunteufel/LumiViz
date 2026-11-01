@@ -161,6 +161,8 @@ struct Ablauf
 /// des Loops (beide live, F3 a), ohne Bus und ohne Expression (beides steckt in der
 /// Wellenform), ohne sich selbst abzuschneiden (FV1 a). Die Namen stimmen dann mit
 /// `loop.klangNamen(saiten, eingefroren)` ueberein.
+/// Ein Wave-Muster (Stufe 15c, WV8 a) ist je Kanal eine Stimme: je Wiederholung ein Schlag
+/// am Anfang des Musters, ohne Swing und Panorama, mit Expression des Musters und am Clip.
 [[nodiscard]] Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten = {}, const Eingefroren& eingefroren = {});
 
 /// `frames` Abtastwerte ab `von` nach `aus` schreiben (Stereo, `2 * frames`

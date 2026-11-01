@@ -9,6 +9,7 @@
 #include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
 #include "loop/Sample.hpp"
+#include "loop/WaveKlang.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -865,6 +866,12 @@ QStringList Loop::klangNamen(const InstrumentVon& saiten, const Eingefroren& ein
     for (const Muster& m : muster)
     {
         if (!gebraucht(m)) continue;
+        if (m.art == MusterArt::Wave)
+        {
+            // Stufe 15c (WV8 a): je Wave-Muster ein vorab gerechneter Klang; ohne Datei keiner
+            if (!m.wave.datei.isEmpty()) nimm(waveKlangName(waveKlangVon(*this, m)));
+            continue;
+        }
         if (m.art != MusterArt::Instrument)
         {
             for (const Spur& spur : m.spuren) nimm(spur.spielt());

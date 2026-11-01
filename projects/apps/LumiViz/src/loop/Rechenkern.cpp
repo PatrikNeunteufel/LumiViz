@@ -9,6 +9,7 @@
 #include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
 #include "loop/Stueckweise.hpp"
+#include "loop/WaveKlang.hpp"
 
 #include <QHash>
 
@@ -23,6 +24,9 @@ namespace lumi::loop
 
 namespace
 {
+
+/// Die Stimme eines Wave-Musters in `stimmeVon`: keine Spur hat diese Nummer.
+constexpr std::size_t kWaveStimme = std::numeric_limits<std::size_t>::max();
 
 /// Die Kurve einer Spur ueber die Wiederholungen eines Clips (Stufe 28c-1): je
 /// Durchlauf am Anfang der erste Wert, die Punkte, bis zur Naht der letzte.
@@ -117,13 +121,15 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
             const double faderAmSchlag = bus < 0 ? fader : 1.0;
             const double loopAmSchlag = bus < 0 ? loop.laut : 1.0;
             // Expression (Stufe 28c-1): die Spur des Musters und die Kurve am Clip — an einem
-            // Drumkit nur die Kurve; ein Instrument mit Saiten traegt sie im Ton (28c-2b, SK12 a)
+            // Drumkit nur die Kurve; ein Instrument mit Saiten traegt sie im Ton (28c-2b, SK12 a);
+            // ein Wave-Muster (Stufe 15c) wie ein Instrument ohne Saiten
             int ausdruck = -1;
             if (toeneDesClips.empty())
             {
                 static const std::vector<SpurPunkt> kKeine;
-                const std::vector<SpurPunkt>& spur =
-                    muster->art == MusterArt::Instrument ? muster->zeitspuren.von(Steuerspur::Expression) : kKeine;
+                const std::vector<SpurPunkt>& spur = muster->art == MusterArt::Instrument || muster->art == MusterArt::Wave
+                                                         ? muster->zeitspuren.von(Steuerspur::Expression)
+                                                         : kKeine;
                 if (!spur.empty() || !clip.expression.empty())
                 {
                     const double schritte = static_cast<double>(muster->takte) * jeTakt;
@@ -137,6 +143,33 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                     ausdruck = static_cast<int>(ablauf.ausdruecke.size());
                     ablauf.ausdruecke.push_back(std::move(a));
                 }
+            }
+            if (muster->art == MusterArt::Wave)
+            {
+                // Stufe 15c (WV8 a): je Wiederholung ein Schlag am Anfang des Musters — ohne Swing,
+                // ohne Panorama; die naechste Wiederholung schneidet die vorige ab (sie endet dort)
+                if (muster->wave.datei.isEmpty()) continue;
+                const int klang = klangVon.value(waveKlangName(waveKlangVon(loop, *muster)), -1);
+                const auto [ort, neu] = stimmeVon.try_emplace({muster, kWaveStimme}, ablauf.stimmen.size());
+                if (neu)
+                {
+                    Stimme stimme;
+                    stimme.klang = klang;
+                    ablauf.stimmen.push_back(std::move(stimme));
+                }
+                const auto laut = static_cast<float>(loopAmSchlag * faderAmSchlag);
+                for (int runde = 0; runde < clip.wiederholungen; ++runde)
+                {
+                    Schlag schlag;
+                    schlag.frame = std::llround(static_cast<double>(clip.startTakt + runde * muster->takte) * jeTakt *
+                                                schrittFrames);
+                    schlag.links = laut;
+                    schlag.rechts = laut;
+                    schlag.bus = bus;
+                    schlag.ausdruck = ausdruck;
+                    ablauf.stimmen[ort->second].schlaege.push_back(schlag);
+                }
+                continue;
             }
             if (muster->art == MusterArt::Instrument)
             {

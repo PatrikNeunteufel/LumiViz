@@ -9,6 +9,7 @@
 #include "loop/Kit.hpp"
 #include "loop/Sample.hpp"
 #include "loop/Tonauftrag.hpp"
+#include "loop/WaveKlang.hpp"
 #include "loop/Wellenform.hpp"
 #include "shape/Kontur.hpp"
 
@@ -175,6 +176,9 @@ QByteArray clipAbdruck(const Loop& loop, ClipOrt ort, int rate, const Instrument
     for (Muster& muster : inhalt.muster)
     {
         if (!muster.instrument.isEmpty()) muster.instrument = instrumente.inhalt(muster.instrument);
+        // ein Wave-Muster (Stufe 15c): seine Datei als Inhalt; die Herkunft klingt nicht
+        if (!muster.wave.datei.isEmpty()) muster.wave.datei = verweis(muster.wave.datei, klangDatei(muster.wave.datei));
+        muster.wave.herkunft = Herkunft{};
         for (Spur& spur : muster.spuren)
         {
             if (!spur.instrument.isEmpty())
@@ -201,6 +205,11 @@ QByteArray clipAbdruck(const Loop& loop, ClipOrt ort, int rate, const Instrument
             }
             ton.instrument = instrumente.inhalt(ton.instrument);
             hash.addData(tonKlang(ton).toUtf8());
+        }
+        else if (WaveKlang wave; zerlegeWaveKlang(name, wave))
+        {
+            wave.datei = verweis(wave.datei, klangDatei(wave.datei));  // Stufe 15c
+            hash.addData(waveKlangName(wave).toUtf8());
         }
         else
             hash.addData(verweis(name, klangDatei(name)).toUtf8());

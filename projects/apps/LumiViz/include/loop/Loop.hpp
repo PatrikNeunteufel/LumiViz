@@ -683,6 +683,8 @@ struct Loop
     /// (`frozenKlang`, hinten angehaengt in der Reihenfolge der Kanaele und Clips) statt
     /// seiner Toene — ein Muster, das nur in eingefrorenen Clips liegt, nennt keine.
     /// Ohne `eingefroren` wie bis Stufe 30e.
+    /// Ein Wave-Muster mit Datei (Stufe 15c, WV8 a) nennt seinen vorab gerechneten Klang
+    /// (`waveKlangName`, WaveKlang.hpp).
     [[nodiscard]] QStringList klangNamen(const InstrumentVon& saiten = {}, const Eingefroren& eingefroren = {}) const;
     /// Die Dauer einer Note in Millisekunden, gerundet — wie sie im Namen
     /// ihres Tons steht.

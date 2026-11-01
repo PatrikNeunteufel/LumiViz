@@ -11,7 +11,8 @@
  * - Die Herkunft nach *Bounce* (WV7 a) in der Huelle einer `.lvclip`.
  * - Die Huellen aus §4o tragen Wave-Muster ohne eigene Fassung; `rechneUm` rechnet Lage,
  *   Takte und Spuren nach Schlaegen um, Ausschnitt und Autotune bleiben.
- * - Ein Wave-Muster klingt in Stufe 15b noch nicht: keine Klaenge, keine Stimmen.
+ * - Ein Wave-Muster ohne Datei klingt nicht: keine Klaenge, keine Stimmen (den Klang mit
+ *   Datei rechnet Stufe 15c, test_LoopWaveKlang.cpp).
  *
  * Ohne Ton, ohne Fenster, ohne Qt-Anwendung.
  */
@@ -396,9 +397,10 @@ TEST_SUITE("LoopWaveMuster")
         }
     }
 
-    TEST_CASE("Loop Wave 15b: klingt noch nicht — keine Klaenge, keine Stimmen")
+    TEST_CASE("Loop Wave 15b: ohne Datei klingt es nicht — keine Klaenge, keine Stimmen")
     {
-        const Loop loop = loopMit(vollesWave(QStringLiteral("/x.wav")));
+        // mit Datei klingt es seit Stufe 15c (test_LoopWaveKlang.cpp)
+        const Loop loop = loopMit(vollesWave(QString()));
         CHECK(loop.klangNamen().isEmpty());
         const Ablauf ablauf = plane(loop, 44100);
         CHECK(ablauf.stimmen.empty());

@@ -12,6 +12,7 @@
 #include "loop/Loop.hpp"
 #include "loop/Sample.hpp"
 #include "loop/Tonspeicher.hpp"
+#include "loop/WaveKlang.hpp"
 
 #include <QDir>
 #include <QFileInfo>
@@ -211,6 +212,23 @@ bool Tonauftrag::ausSpeicher(std::size_t einer, QString& schluessel, Geholt*& ge
         m_ergebnis[einer] = tonspeicher().hole(schluessel);
         return m_ergebnis[einer] != nullptr;
     }
+    // ein Wave-Muster (Stufe 15c, WV8 a): der Name beschreibt den Klang, der Stand der Datei
+    // kommt in den Schluessel — wie bei einer Klangdatei
+    if (istWaveKlang(klang))
+    {
+        WaveKlang wave;
+        const QString datei = zerlegeWaveKlang(klang, wave) ? klangDatei(wave.datei) : QString();
+        if (datei.isEmpty())
+        {
+            if (m_zeilen[einer].isEmpty())
+                m_zeilen[einer] << QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(wave.datei));
+            return true;
+        }
+        if (!QFileInfo(datei).isFile()) return false;  // dekodieren: die Engine meldet, was fehlt
+        schluessel = klangSchluessel(klang, datei, m_rate);
+        m_ergebnis[einer] = tonspeicher().hole(schluessel);
+        return m_ergebnis[einer] != nullptr;
+    }
     // eine eingefrorene Wellenform (Stufe 30f): ihr Name ist der Abdruck — eine Datei mit
     // diesem Namen aendert sich nie, Rate und Name genuegen als Schluessel
     if (!abdruckVonKlang(klang).isEmpty())
@@ -264,6 +282,23 @@ void Tonauftrag::lade(std::size_t einer)
         auto neu = std::make_shared<const Klang>(rendereTon(*geholt->instrument, ton, m_rate));
         tonspeicher().lege(schluessel, neu, msSeit(anfang));
         m_ergebnis[einer] = std::move(neu);
+        return;
+    }
+    // ein Wave-Muster (Stufe 15c): so viel der Datei dekodieren, wie der Klang braucht, dann schneiden
+    if (istWaveKlang(klang))
+    {
+        WaveKlang wave;
+        (void)zerlegeWaveKlang(klang, wave);
+        const auto anfang = Uhr::now();
+        const std::vector<float> datei = m_dekodierer(klangDatei(wave.datei), m_rate, waveBedarfSekunden(wave));
+        if (datei.empty())
+        {
+            m_zeilen[einer] << QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(wave.datei));
+            return;
+        }
+        auto geteilt = std::make_shared<const Klang>(rechneWave(wave, datei, m_rate));
+        if (!schluessel.isEmpty()) tonspeicher().lege(schluessel, geteilt, msSeit(anfang));
+        m_ergebnis[einer] = std::move(geteilt);
         return;
     }
     // eine eingefrorene Wellenform (Stufe 30f): aus dem Ordner `frozen`. Laesst sie sich nicht
