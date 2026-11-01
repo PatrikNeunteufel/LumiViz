@@ -30,8 +30,9 @@ class RasterZeile : public QWidget
 
 public:
     /// `kennung`: der Vorsatz der Objektnamen (`drum`, `instrument`) — die Teile
-    /// heissen `<kennung>Grid`, `<kennung>SwingOffset`, `<kennung>SwingPlays`.
-    explicit RasterZeile(const QString& kennung, QWidget* parent = nullptr);
+    /// heissen `<kennung>Grid`, `<kennung>SwingOffset`, `<kennung>SwingPlays`. Ohne
+    /// `mitOffset` (Wave editor, Stufe 15d) nur das Raster.
+    explicit RasterZeile(const QString& kennung, QWidget* parent = nullptr, bool mitOffset = true);
 
     /// Raster und Swing von `loop`, den Offset von `muster` zeigen — ohne `offsetGeaendert`.
     void zeige(const Loop& loop, const Muster& muster);

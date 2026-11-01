@@ -19,7 +19,7 @@ QString swingText(double swing)
     return QStringLiteral("%1 %").arg(std::lround(swing * 100.0));
 }
 
-RasterZeile::RasterZeile(const QString& kennung, QWidget* parent) : QWidget(parent)
+RasterZeile::RasterZeile(const QString& kennung, QWidget* parent, bool mitOffset) : QWidget(parent)
 {
     setObjectName(kennung + QStringLiteral("GridRow"));
     auto* reihe = new QHBoxLayout(this);
@@ -30,6 +30,12 @@ RasterZeile::RasterZeile(const QString& kennung, QWidget* parent) : QWidget(pare
     m_raster->setEnabled(false);  // grau: eine Auskunft
     m_raster->setToolTip(tr("The grid of the whole loop. Set in the Loop panel, next to BPM"));
     reihe->addWidget(m_raster);
+    if (!mitOffset)
+    {
+        // ein Wave-Muster swingt nicht (Stufe 15d, RS1-1 a): nur das Raster
+        reihe->addStretch(1);
+        return;
+    }
     reihe->addSpacing(18);
 
     reihe->addWidget(new QLabel(tr("Swing offset"), this));
@@ -58,6 +64,7 @@ void RasterZeile::zeige(const Loop& loop, const Muster& muster)
                           .arg(loop.schlaegeJeTakt)
                           .arg(loop.schritteJeSchlag)
                           .arg(swingText(loop.swing)));
+    if (m_offset == nullptr) return;
     {
         const QSignalBlocker ruhe(m_offset);
         m_offset->setValue(muster.swingOffset * 100.0);
@@ -72,7 +79,7 @@ QString RasterZeile::rasterText() const
 
 QString RasterZeile::spieltText() const
 {
-    return m_spielt->text();
+    return m_spielt != nullptr ? m_spielt->text() : QString();
 }
 
 }  // namespace lumi::loop
