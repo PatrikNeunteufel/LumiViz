@@ -4176,7 +4176,7 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
 | 15h | **TD-PSOLA** als zweite Umsetzung von `Dehner` (*Voice*) und der **Prüfstein** (WV6 a): gerechnete Stimmen mit bekannten Formanten, Formantlage vorher/nachher, Fehler der Zieltonhöhe in Cent, Rechenzeit, MSVC/clang; Hörproben an Patrik; Bericht unter `docs/modellierung/wave-clips/proben/`. Ohne Vorteil für PSOLA fällt *Voice* weg (WV6 a b) | offen |
 | 15i | Die Spur **Autotune** (WV4 a, WV9 a): Rechnung (Zielnoten, Strength, Speed, mit der Pitch-Spur zusammen), *Detect notes* mit Tonart, die Spur im Wave editor mit Zielnoten über der gemessenen Kurve, Marke ♪; Tests über das Fenster | offen |
 | 15j | **Follow tempo** (B3, WV1-1 a): Bezugstempo, *Set to loop tempo*, Dehnen auf das Tempo des Loops, Marke ~; Tests mit Tempowechsel des Loops | offen |
-| 15k | **Aufnahme und Bounce** (B5, B6, WV7 a): *Record wave clip...* und *Record...* im Editor über das Fenster *Record sample*; *Bounce to wave clip* mit Nachklang bis −60 dB, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | offen |
+| 15k | **Aufnahme und Bounce** (B5, B6, WV7 a, WV10-1 a): Skizze für *Measure latency* und Einzählen; die Aufnahme an der Wiedergabe (Stelle in der Uhr, unabhängig von Wave-Clips), *Measure latency* je Paar aus Ein- und Ausgang; *Record wave clip...* bei laufendem Loop auf Taktgrenzen mit Einzählen, und *Record...* im Editor über das Fenster *Record sample*; *Bounce to wave clip* mit Nachklang bis −60 dB, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | offen |
 | 15l | **Steuersignal** (B7, WV5 a): ein Baustein nennt einen Kanal, abgegriffen vor Fader und Schalter, genannte Kanäle zuerst, Kreis erkannt, Abdruck mit dem Kanal; ein Prüfbaustein im Test (die Talkbox ist eine eigene Stufe) | offen |
 | 15m | Abschluss: Benutzerhandbuch §16 und §17, Sichttest-Liste, Bereich und voller Lauf unter beiden Compilern | offen |
 
@@ -4194,7 +4194,17 @@ Stelle im Loop, keine Latenz). Ein Live-Loop-Modus braucht Aufnahmen, die zur la
   in Instrument- und Drum-Muster** (Tastatur des Rechners oder MIDI-Gerät); beide nehmen ihre Stelle im Loop aus
   derselben Uhr und ziehen die gemessene Latenz ab. Verworfen b (nur Ton): ließe den Weg zu live gespielten Noten
   liegen, für den L1 a den Rechenkern gewählt hat. Der Modus selbst ist eine eigene Stufe nach 15.
-- Was 15k von der gemeinsamen Grundlage selbst baut, ist offen (WV10-1).
+- **WV10-1 a — 15k baut die gemeinsame Grundlage (Patrik S169):** (1) eine **Aufnahme an der Wiedergabe** — die
+  Engine nennt zum ersten aufgenommenen Abtastwert die Stelle in der Uhr der Wiedergabe; die Schnittstelle hängt
+  nicht an Wave-Clips, Noten nutzen sie später; (2) die **Latenz gemessen**: *Measure latency* gibt einen Klick aus
+  und findet ihn am Eingang wieder, gemerkt je Paar aus Ein- und Ausgang, von Hand korrigierbar, abgezogen; (3)
+  *Record wave clip...* nimmt bei **laufendem Loop** auf, Start und Stopp auf einer Taktgrenze, auf Wunsch mit
+  Einzählen. Overdub, das Mitspielen ab der nächsten Wiederholung und die Noten gehören zur Stufe des
+  Live-Loop-Modus. 15k wächst, die Nummern 15b–15m bleiben; vor 15k eine Skizze für *Measure latency* und das
+  Einzählen. Stand der Messung bei der Wahl: Ausgabe 25 ms (BASS, `BASS_DEVICE_LATENCY`, Log der Release-clang-App
+  31.10.), der Mixer ohne eigenen Puffer (`BASS_ATTRIB_BUFFER` 0); der Eingang nicht gemessen. Bei 120 BPM ist ein
+  Sechzehntel 125 ms (gerechnet). Verworfen b (nur ein leeres Feld in der Schnittstelle): *Record wave clip...* läge
+  schon in 15k neben dem Takt, der Live-Loop-Modus müsste die Aufnahme im Kern ersetzen.
 
 ### Abgleich mit den Quellen (S168)
 
@@ -4351,7 +4361,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
-- **0.112.0** (S169, 2026-11-01): §4p Vorgabe Patrik zu 15k — die Aufnahme berücksichtigt einen späteren Live-Loop-Modus; WV10 a (Zielbild: Ton und Noten, Overdub, Taktgrenze, Latenzausgleich); WV10-1 offen.
+- **0.112.0** (S169, 2026-11-01): §4p Vorgabe Patrik zu 15k — die Aufnahme berücksichtigt einen späteren Live-Loop-Modus; WV10 a (Zielbild: Ton und Noten, Overdub, Taktgrenze, Latenzausgleich); WV10-1 a (15k baut die Aufnahme an der Wiedergabe, *Measure latency*, Aufnahme bei laufendem Loop auf Taktgrenzen).
 - **0.111.0** (S168, 2026-11-01): §4p 15a erledigt; SK15-1 a (Skizze der Wave-Clips als Beschreibung), WV8 a (vorab gerechnet), WV9 a (Autotune nur als Spur); „Was festliegt“ (Modell, Fassung 16, Grenzen), Teilplan 15b–15m, Abgleich mit Q1–Q10.
 - **0.110.0** (S168, 2026-10-31): §4p NEU Wave-Clips (Stufe 15): Quellen, Entscheide WV1 a, WV1-1 a, WV2 a–WV7 a, RS1 a, RS1-1 a; Recherche unter `modellierung/wave-clips/`; Stufentabelle Zeile 15.
 - **0.109.0** (S167, 2026-10-30): §4o NEU Muster, Clips und Spuren als Dateien (Stufe 33): `.lvpattern`, `.lvclip`, `.lvtrack`; Entscheide PE1, PE1-1 a, PE2 a, PE3 b, LC1 a; Teilschritte 33a–33f.
