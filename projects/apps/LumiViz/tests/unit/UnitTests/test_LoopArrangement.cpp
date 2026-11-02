@@ -61,6 +61,7 @@ Loop probe()
     loop.muster = {a, b};
     loop.kanaele = {{QStringLiteral("Drums"), true, {{QStringLiteral("A"), 0, 2}, {QStringLiteral("B"), 8, 1}}},
                     {QStringLiteral("Perc"), true, {{QStringLiteral("A"), 4, 1}}}};
+    loop.richte();  // seit Stufe 15l: die Kennungen der Kanaele
     return loop;
 }
 

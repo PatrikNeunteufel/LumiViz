@@ -74,6 +74,10 @@ struct Schlag
     /// Index in `Ablauf::ausdruecke`, wenn sein Clip einen Verlauf Expression
     /// traegt (Stufe 28c-1); -1 = keiner, der Ton klingt, wie er ist.
     int ausdruck = -1;
+    /// Index in `Ablauf::abgriffe`, wenn der Schlag ohne Bus in einem Kanal liegt, den ein
+    /// Baustein als Steuersignal nennt (Stufe 15l); seine Lautstaerke traegt dann weder Fader
+    /// noch Loop — beides traegt der Abgriff. -1 = keiner.
+    int abgriff = -1;
 };
 
 /// Der Verlauf Expression eines Clips (Stufe 28c-1; Entscheide Patrik SF5 d, SK4 a,
@@ -110,8 +114,26 @@ struct Bus
     /// Der Fader des Kanals (Stufe 27e-1) mal die Lautstaerke des Loops (Stufe 30,
     /// WX5 a): wer den Bus nach den Effekten dazumischt, nimmt ihn mal diesen
     /// Faktor. Die Schlaege im Bus tragen beides nicht — so verstellt die
-    /// Lautstaerke des Loops nicht die Zerrung eines Clips.
+    /// Lautstaerke des Loops nicht die Zerrung eines Clips. In einem ausgeschalteten
+    /// Kanal, der nur als Steuersignal klingt (Stufe 15l), 0.
     float faktor = 1.0f;
+    /// Index in `Ablauf::abgriffe`, wenn sein Kanal als Steuersignal genannt ist (Stufe 15l):
+    /// der Bus geht nach den Effekten in den Abgriff, nicht mit `faktor` in die Summe. -1 = nicht.
+    int abgriff = -1;
+    /// Je Baustein der Reihe der Index des Abgriffs, den er als Steuersignal bekommt
+    /// (`steuerKanal`); -1 = keins. Leer = keiner hat eins.
+    std::vector<int> steuer;
+};
+
+/// Ein Kanal, den ein Baustein als Steuersignal nennt (Stufe 15l, Entscheid Patrik WV5 a):
+/// sein Klang hinter den Effekten seiner Clips, vor Fader und Schalter. Wer rechnet,
+/// sammelt ihn in einem eigenen Block, gibt ihn den Bausteinen, die ihn nennen, und mischt
+/// ihn mal `faktor` in die Summe.
+struct Abgriff
+{
+    int kanal = 0;                ///< Index des Kanals im Loop
+    float faktor = 0.0f;          ///< Fader mal Lautstaerke des Loops; 0, wenn der Kanal aus ist
+    std::vector<int> busse;       ///< Indizes in `Ablauf::busse`: die Clips des Kanals mit Effekten
 };
 
 /// Eine Spur eines Musters in einem Kanal, mit allen ihren Schlaegen.
@@ -146,6 +168,11 @@ struct Ablauf
     /// Instrument mit Saiten traegt Expression im Ton (Stufe 28c-2b, SK12 a:
     /// `TonAngabe::ausdruckMuster`, `ausdruckClip`) und hat hier keinen Eintrag.
     std::vector<Ausdruck> ausdruecke;
+    /// Je Kanal, den ein wirksamer Baustein als Steuersignal nennt (auch mittelbar, auch
+    /// ausgeschaltet), einer (Stufe 15l, WV5 a) — **in der Folge, in der sie zu rechnen
+    /// sind**: ein Abgriff steht hinter jedem, dessen Signal seine Busse brauchen. Leer =
+    /// keiner, alles wie bis Stufe 15k.
+    std::vector<Abgriff> abgriffe;
 };
 
 /// Den Loop uebersetzen. Er muss gerichtet sein (`Loop::richte`). Kanaele,
@@ -163,6 +190,9 @@ struct Ablauf
 /// `loop.klangNamen(saiten, eingefroren)` ueberein.
 /// Ein Wave-Muster (Stufe 15c, WV8 a) ist je Kanal eine Stimme: je Wiederholung ein Schlag
 /// am Anfang des Musters, ohne Swing und Panorama, mit Expression des Musters und am Clip.
+/// Ein Kanal, den ein wirksamer Baustein als Steuersignal nennt (Stufe 15l), hat einen
+/// Abgriff — auch ausgeschaltet (dann klingt er nicht, steuert aber); ohne solchen Baustein
+/// rechnet alles Bit fuer Bit wie bis Stufe 15k.
 [[nodiscard]] Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten = {}, const Eingefroren& eingefroren = {});
 
 /// `frames` Abtastwerte ab `von` nach `aus` schreiben (Stereo, `2 * frames`
@@ -173,7 +203,12 @@ struct Ablauf
 /// (auch er wird ueberschrieben) — die Schlaege eines Clips mit Effekten
 /// landen dann dort statt in `aus`, unbearbeitet; wer ruft, rechnet die
 /// Effekte und mischt dazu. Ohne `busAus` geht alles unbearbeitet nach `aus`.
+///
+/// `abgriffAus` (Stufe 15l): je Eintrag in `ablauf.abgriffe` ein Block — die Schlaege ohne
+/// Bus eines genannten Kanals landen dort, ohne Fader und Loop; wer ruft, gibt die Busse
+/// des Kanals dazu und mischt den Block mal `Abgriff::faktor`. Ohne `abgriffAus` gehen sie
+/// mit diesem Faktor nach `aus`.
 void rechne(const Ablauf& ablauf, const Klaenge& klaenge, std::int64_t von, int frames, float* aus,
-            float* const* busAus = nullptr);
+            float* const* busAus = nullptr, float* const* abgriffAus = nullptr);
 
 }  // namespace lumi::loop

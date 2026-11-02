@@ -1908,6 +1908,9 @@ bool Taktachse::importiere(AustauschArt art, int kanal, int takt)
     }
     for (const QString& name : e.umbenannt) text << tr("A different pattern of that name exists — imported as %1.").arg(name);
     if (e.neuerKanal && art != AustauschArt::Spur) text << tr("No room at that bar — placed in a new channel.");
+    if (e.ohneSteuersignal > 0)
+        text << tr("A sidechain named a channel that is not in the file — it has no channel now (%1).")
+                    .arg(e.ohneSteuersignal);
     text += fehlt;
     if (!text.isEmpty()) melde(this, QMessageBox::Information, titel, text.join(QLatin1Char('\n')));
     return true;

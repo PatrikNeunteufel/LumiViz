@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 
 namespace lumi::loop
 {
@@ -317,8 +318,39 @@ void EffektKette::richteEin(const ClipEffekte& effekte, int rate, double bpm)
             std::get<EchoEffekt>(m_glieder.emplace_back(EchoEffekt{})).richteEin(*echo, rate, bpm);
         else if (const auto* hall = std::get_if<ClipHall>(&baustein))
             std::get<HallEffekt>(m_glieder.emplace_back(HallEffekt{})).richteEin(*hall, rate);
+        else if (const auto* sidechain = std::get_if<ClipSidechain>(&baustein))
+            std::get<SidechainEffekt>(m_glieder.emplace_back(SidechainEffekt{})).richteEin(*sidechain, rate);
     }
     m_an = effekte.einerAn();
+}
+
+// --- Sidechain (Stufe 15l) ---
+
+void SidechainEffekt::richteEin(const ClipSidechain& werte, int rate)
+{
+    m_an = werte.an;
+    m_tiefe = static_cast<float>(std::log(10.0) / 20.0 * std::clamp(werte.tiefeDb, 0.0, kSidechainTiefeMaxDb));
+    // ein Tiefpass erster Ordnung mit der Zeitkonstante Attack bzw. Release
+    const auto beiwert = [rate](double ms) {
+        return rate > 0 ? static_cast<float>(1.0 - std::exp(-1000.0 / (ms * rate))) : 1.0f;
+    };
+    m_attack = beiwert(std::clamp(werte.attackMs, kSidechainAttackMinMs, kSidechainAttackMaxMs));
+    m_release = beiwert(std::clamp(werte.releaseMs, kSidechainReleaseMinMs, kSidechainReleaseMaxMs));
+    m_huelle = 0.0f;
+}
+
+void SidechainEffekt::rechne(float* stereo, int frames, const float* steuer)
+{
+    if (!m_an || steuer == nullptr) return;
+    for (int f = 0; f < frames; ++f)
+    {
+        const float spitze = std::max(std::abs(steuer[2 * f]), std::abs(steuer[2 * f + 1]));
+        m_huelle += (spitze > m_huelle ? m_attack : m_release) * (spitze - m_huelle);
+        if (m_huelle < kWinzig) m_huelle = 0.0f;
+        const float faktor = std::exp(-m_tiefe * std::min(m_huelle, 1.0f));
+        stereo[2 * f] *= faktor;
+        stereo[2 * f + 1] *= faktor;
+    }
 }
 
 void EchoEffekt::uebernimm(EchoEffekt& alt)
@@ -382,11 +414,21 @@ void EffektKette::leere()
         std::visit([](auto& effekt) { effekt.leere(); }, glied);
 }
 
-void EffektKette::rechne(float* stereo, int frames)
+void EffektKette::rechne(float* stereo, int frames, const float* const* steuer)
 {
     if (!m_an || frames <= 0) return;
-    for (Glied& glied : m_glieder)
-        std::visit([stereo, frames](auto& effekt) { effekt.rechne(stereo, frames); }, glied);
+    for (std::size_t i = 0; i < m_glieder.size(); ++i)
+    {
+        if (auto* sidechain = std::get_if<SidechainEffekt>(&m_glieder[i]))
+            sidechain->rechne(stereo, frames, steuer != nullptr ? steuer[i] : nullptr);
+        else
+            std::visit(
+                [stereo, frames](auto& effekt) {
+                    if constexpr (!std::is_same_v<std::decay_t<decltype(effekt)>, SidechainEffekt>)
+                        effekt.rechne(stereo, frames);
+                },
+                m_glieder[i]);
+    }
 }
 
 }  // namespace lumi::loop

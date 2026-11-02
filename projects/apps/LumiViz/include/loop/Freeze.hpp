@@ -56,6 +56,9 @@ inline constexpr int kKlangfassung = 5;
 
 /// Was `clipAbdruck` rechnet, ohne die Schluessel der Klaenge: der Clip allein auf Takt 0,
 /// ohne Tags und Namen (fuer Tests und zum Nachsehen). Leer = den Clip gibt es nicht.
+/// Bekommt der Clip ein Steuersignal (Stufe 15l, WV5 a), stehen die genannten Kanaele mit
+/// allen Clips darin, und der Clip bleibt an seinem Takt — wo er zu ihnen liegt, klingt;
+/// Namen und Kennungen werden fest (eigener Kanal 1, die genannten 2 …).
 [[nodiscard]] std::optional<Loop> abdruckFassung(const Loop& loop, ClipOrt ort);
 
 // --- die Dateien (Stufe 30e; Entscheide F5 a, FZ3 a) ---------------------------------

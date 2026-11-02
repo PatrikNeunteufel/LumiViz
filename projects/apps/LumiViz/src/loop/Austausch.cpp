@@ -125,6 +125,7 @@ std::optional<Loop> clipDatei(const Loop& loop, int kanal, int clip)
     teil.muster = {*muster};
     Kanal nur;
     nur.name = k.name;
+    nur.kennung = k.kennung;  // Stufe 15l: ein Verweis des Clips auf seinen Kanal bleibt einer
     nur.clips = {std::move(c)};
     teil.kanaele = {std::move(nur)};
     return teil;
@@ -318,8 +319,31 @@ Einsetzung setzeEin(Loop& ziel, Loop teil, AustauschArt art, int kanal, int takt
         for (LoopClip& c : k.clips)
             if (const auto it = neuerName.find(c.muster); it != neuerName.end()) c.muster = it->second;
 
+    // Stufe 15l (ST2 a): der Kanal der Datei bekommt im Ziel seine Kennung — eine neue oder die
+    // des Kanals, in den der Clip kommt; ein Baustein, der ihn nennt, folgt. Nennt einer einen
+    // Kanal ausserhalb der Datei, bleibt er ohne Steuersignal: die Kennung eines anderen Loops
+    // traefe hier einen beliebigen Kanal.
+    const int alt = teil.kanaele.empty() ? 0 : teil.kanaele[0].kennung;
+    const auto verweise = [&](int kennung) {
+        for (Kanal& k : teil.kanaele)
+            for (LoopClip& c : k.clips)
+                for (ClipBaustein& baustein : c.effekte.reihe)
+                    if (auto* sidechain = std::get_if<ClipSidechain>(&baustein); sidechain != nullptr && sidechain->kanal > 0)
+                    {
+                        if (sidechain->kanal == alt) sidechain->kanal = kennung;
+                        else
+                        {
+                            sidechain->kanal = 0;
+                            ++e.ohneSteuersignal;
+                        }
+                    }
+    };
+
     if (art == AustauschArt::Spur)
     {
+        const int neu = freieKennung(ziel);
+        verweise(neu);
+        teil.kanaele[0].kennung = neu;
         ziel.kanaele.push_back(teil.kanaele[0]);
         e.kanal = static_cast<int>(ziel.kanaele.size()) - 1;
         e.neuerKanal = true;
@@ -333,6 +357,11 @@ Einsetzung setzeEin(Loop& ziel, Loop teil, AustauschArt art, int kanal, int takt
     if (kanal >= 0 && kanal < static_cast<int>(ziel.kanaele.size()) &&
         hatPlatz(ziel, ziel.kanaele[static_cast<std::size_t>(kanal)], clip.startTakt, takte))
     {
+        if (art == AustauschArt::Clip)
+        {
+            verweise(ziel.kanaele[static_cast<std::size_t>(kanal)].kennung);
+            clip.effekte = teil.kanaele[0].clips[0].effekte;
+        }
         ziel.kanaele[static_cast<std::size_t>(kanal)].clips.push_back(std::move(clip));
         e.kanal = kanal;
     }
@@ -340,6 +369,12 @@ Einsetzung setzeEin(Loop& ziel, Loop teil, AustauschArt art, int kanal, int takt
     {
         Kanal neu;
         neu.name = art == AustauschArt::Clip ? teil.kanaele[0].name : teil.muster[0].name;
+        neu.kennung = freieKennung(ziel);
+        if (art == AustauschArt::Clip)
+        {
+            verweise(neu.kennung);
+            clip.effekte = teil.kanaele[0].clips[0].effekte;
+        }
         neu.clips = {std::move(clip)};
         ziel.kanaele.push_back(std::move(neu));
         e.kanal = static_cast<int>(ziel.kanaele.size()) - 1;

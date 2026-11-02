@@ -130,6 +130,9 @@ struct Einsetzung
     QStringList umbenannt;
     int kanal = -1;            ///< der Kanal, in dem es nun steht
     bool neuerKanal = false;   ///< ein Clip passte nicht an seine Stelle (oder eine Spur)
+    /// Bausteine, die einen Kanal ausserhalb der Datei als Steuersignal nannten und nun
+    /// keinen mehr nennen (Stufe 15l, ST2 a).
+    int ohneSteuersignal = 0;
 };
 
 /// Setzt den kleinen Loop einer Datei der Art `art` in `ziel` ein:
@@ -142,6 +145,9 @@ struct Einsetzung
 ///    nicht), in einem neuen Kanal am Ende, benannt nach dem Muster bzw. dem Kanal der Datei.
 ///    `.lvtrack`: der Kanal am Ende, die Clips an ihren Takten (PE3 b); `kanal` und `takt`
 ///    zaehlen nicht.
+/// 4. Steuersignale (Stufe 15l): der Kanal der Datei bekommt eine neue Kennung (oder die des
+///    Kanals, in den der Clip kommt), ein Baustein, der ihn nennt, folgt; nennt einer einen
+///    anderen Kanal, nennt er danach keinen (`ohneSteuersignal`).
 /// Danach ist `ziel` gerichtet. Ein `teil` ohne die Gestalt seiner Art aendert nichts (kanal −1).
 Einsetzung setzeEin(Loop& ziel, Loop teil, AustauschArt art, int kanal = -1, int takt = 0);
 

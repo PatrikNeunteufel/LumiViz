@@ -50,7 +50,10 @@ inline constexpr int kNachklangHoechstensMs = 30000;
 /// Lautstaerke 1, nur sein Muster — und ein Durchlauf, der fuer den laengsten Nachklang
 /// reicht (ein ausgeschalteter Kanal mit einem leeren Muster dahinter). Leer = den Clip
 /// oder sein Muster gibt es nicht. Seine `klangNamen(saiten)` sind die Klaenge, die
-/// `rechneClip` braucht.
+/// `rechneClip` braucht. Nennt ein wirksamer Baustein des Clips einen Kanal als
+/// Steuersignal (Stufe 15l, `steuerQuellen`), kommt dieser Kanal ausgeschaltet mit — mit
+/// allen Clips an ihrer Stelle und ihren Mustern, hinter dem eigenen, in der Folge der
+/// Kanaele: er steuert, klingt aber nicht.
 [[nodiscard]] std::optional<Loop> clipFassung(const Loop& loop, ClipOrt ort);
 
 /// Ein gerechneter Clip.

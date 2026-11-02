@@ -487,10 +487,35 @@ struct ClipFilter
     [[nodiscard]] bool operator==(const ClipFilter&) const = default;
 };
 
+/// Die Grenzen des Bausteins Sidechain (Stufe 15l, ST1 a), von Claude gesetzt.
+inline constexpr double kSidechainTiefeMaxDb = 48.0;
+inline constexpr double kSidechainAttackMinMs = 0.1;
+inline constexpr double kSidechainAttackMaxMs = 100.0;
+inline constexpr double kSidechainReleaseMinMs = 10.0;
+inline constexpr double kSidechainReleaseMaxMs = 2000.0;
+
+/// Sidechain (Stufe 15l, Entscheide Patrik WV5 a, ST1 a): der Pegel des Clips sinkt, wenn der
+/// genannte Kanal laut ist — der erste Baustein mit einem **Steuersignal**. Abgegriffen wird
+/// der Kanal hinter den Effekten seiner Clips, vor Fader und Schalter (ein ausgeschalteter
+/// Kanal steuert weiter). Die Huelle des Steuersignals e (Spitze beider Seiten, mit Attack
+/// und Release, hoechstens 1) senkt den Clip um `tiefeDb` · e dB. Ohne Steuersignal (kein
+/// Kanal, Kanal fehlt, Kreis — `steuerKanal`) laesst er den Ton, wie er ist.
+struct ClipSidechain
+{
+    bool an = false;
+    int kanal = 0;            ///< die Kennung des Kanals (`Kanal::kennung`); 0 = keiner
+    double tiefeDb = 12.0;    ///< 0 … `kSidechainTiefeMaxDb`
+    double attackMs = 5.0;    ///< `kSidechainAttackMinMs` … `kSidechainAttackMaxMs`
+    double releaseMs = 150.0; ///< `kSidechainReleaseMinMs` … `kSidechainReleaseMaxMs`
+
+    [[nodiscard]] bool operator==(const ClipSidechain&) const = default;
+};
+
 /// Ein Baustein in der Reihe eines Clips. Ausgeschaltet (`an`) steht er in
 /// der Reihe und wird uebersprungen. Die Folge der Arten ist die, in der bis
-/// Fassung 4 der `.lvloop` fest gerechnet wurde — mit dem Filter davor.
-using ClipBaustein = std::variant<ClipFilter, ClipVerzerrung, ClipEcho, ClipHall>;
+/// Fassung 4 der `.lvloop` fest gerechnet wurde — mit dem Filter davor; Sidechain
+/// (Stufe 15l) kam hinten dazu.
+using ClipBaustein = std::variant<ClipFilter, ClipVerzerrung, ClipEcho, ClipHall, ClipSidechain>;
 
 struct ClipEffekte
 {
@@ -597,6 +622,10 @@ struct Kanal
     /// 0 = unveraendert. Er wirkt nach den Effekten der Clips, wie an einem
     /// Mischpult. In der Datei `gain` (seit Fassung 11, immer geschrieben).
     double gainDb = 0.0;
+    /// Die Kennung (Stufe 15l, Entscheid Patrik ST2 a): eindeutig im Loop, ab 1; ein Baustein
+    /// mit Steuersignal nennt den Kanal so — Umbenennen und Verschieben aendern nichts. 0 =
+    /// noch keine: `Loop::richte` vergibt sie. In der Datei `id` (seit Fassung 17, immer).
+    int kennung = 0;
 
     /// `gainDb` als Faktor auf die Amplitude: 0 dB = genau 1, an der unteren Grenze 0.
     [[nodiscard]] double gainFaktor() const;
@@ -718,6 +747,29 @@ struct Loop
 /// Der Swing, mit dem `muster` spielt (Stufe 15a, RS1-1 a): der des Loops und der Offset
 /// des Musters, auf 0 … 1. Mit Offset 0 genau `loop.swing`.
 [[nodiscard]] double swingVon(const Loop& loop, const Muster& muster);
+
+// --- Steuersignal (Stufe 15l, Entscheide Patrik WV5 a, ST2 a) ---
+
+/// Die Kennung des Kanals, den `baustein` als Steuersignal nennt; 0 = keinen (auch jeder
+/// Baustein ohne Steuersignal).
+[[nodiscard]] int steuerKennung(const ClipBaustein& baustein);
+/// Die naechste freie Kennung: ueber jeder eines Kanals und jeder, die ein Baustein nennt
+/// (sonst schloesse ein neuer Kanal still an den Verweis auf einen geloeschten an).
+[[nodiscard]] int freieKennung(const Loop& loop);
+/// Der Index des Kanals mit dieser Kennung; -1 = keiner (auch bei Kennung 0).
+[[nodiscard]] int kanalMitKennung(const Loop& loop, int kennung);
+/// Der Kanal, dessen Steuersignal `baustein` in einem Clip des Kanals `kanal` bekommt: sein
+/// Index. -1 = keiner — der Baustein nennt keinen, die Kennung fehlt im Loop, oder es waere
+/// ein **Kreis**: der genannte Kanal ist `kanal` selbst oder haengt (auch ueber andere) an
+/// einem Steuersignal aus `kanal`. Fuer den Kreis zaehlt jeder Baustein, ob an oder aus —
+/// so kippt er nicht mit einem Schalter.
+[[nodiscard]] int steuerKanal(const Loop& loop, int kanal, const ClipBaustein& baustein);
+/// Ist der Baustein eingeschaltet?
+[[nodiscard]] bool bausteinAn(const ClipBaustein& baustein);
+/// Die Kanaele, deren Steuersignal `clip` im Kanal `kanal` braucht, auch mittelbar (die
+/// genannten Kanaele brauchen selbst eins), nach Index aufsteigend: je wirksamer Baustein
+/// (Effekte des Clips wirken, Baustein an, kein Kreis). Leer = keins.
+[[nodiscard]] std::vector<int> steuerQuellen(const Loop& loop, int kanal, const LoopClip& clip);
 
 /// Der Loop als JSON. Pfade von Sample-Dateien werden relativ zu
 /// `basisOrdner` abgelegt, wenn sie darunter liegen — sonst absolut.

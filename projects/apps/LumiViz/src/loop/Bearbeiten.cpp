@@ -124,6 +124,7 @@ std::optional<ClipOrt> neuerWaveClip(Loop& loop, int kanal, int startTakt, const
         // kein Platz: ein neuer Kanal am Ende, wie beim Import (§4o)
         Kanal neu;
         neu.name = basis.name;
+        neu.kennung = freieKennung(loop);  // Stufe 15l (ST2 a)
         loop.kanaele.push_back(std::move(neu));
         kanal = static_cast<int>(loop.kanaele.size()) - 1;
     }
@@ -671,6 +672,7 @@ int kanalHinzu(Loop& loop)
         return std::any_of(loop.kanaele.begin(), loop.kanaele.end(),
                            [&name](const Kanal& k) { return k.name == name; });
     });
+    kanal.kennung = freieKennung(loop);  // Stufe 15l (ST2 a)
     loop.kanaele.push_back(kanal);
     return static_cast<int>(loop.kanaele.size()) - 1;
 }

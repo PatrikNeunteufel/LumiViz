@@ -144,6 +144,27 @@ private:
     std::array<Zustand, 2> m_zustand{};
 };
 
+/// Sidechain (Stufe 15l, Entscheide Patrik WV5 a, ST1 a): senkt den Ton, wenn das
+/// Steuersignal laut ist. Die Huelle folgt der Spitze beider Seiten des Steuersignals
+/// (Attack beim Steigen, Release beim Fallen, Tiefpaesse erster Ordnung), hoechstens 1;
+/// der Ton wird um `tiefeDb` mal Huelle dB leiser. Ohne Steuersignal bleibt er, wie er ist.
+class SidechainEffekt
+{
+public:
+    void richteEin(const ClipSidechain& werte, int rate);
+    void leere() { m_huelle = 0.0f; }
+    /// `steuer`: der Block des genannten Kanals (Stereo, `2 * frames` Werte); nullptr = keins.
+    void rechne(float* stereo, int frames, const float* steuer);
+    void uebernimm(SidechainEffekt& alt) { m_huelle = alt.m_huelle; }
+
+private:
+    bool m_an = false;
+    float m_tiefe = 0.0f;   ///< ln(10) / 20 · `tiefeDb`: der Faktor ist exp(−m_tiefe · Huelle)
+    float m_attack = 1.0f;  ///< Beiwert beim Steigen
+    float m_release = 1.0f; ///< Beiwert beim Fallen
+    float m_huelle = 0.0f;
+};
+
 /// Was ein Clip braucht: die Bausteine seiner Reihe, von vorn nach hinten
 /// (seit Stufe 16b; davor fest Verzerrer, Echo, Hall). Ein ausgeschalteter
 /// Baustein steht in der Kette und wird uebersprungen.
@@ -156,8 +177,10 @@ public:
     /// Echo und Hall vergessen, was sie gehoert haben (nach einem weiten
     /// Sprung der Stelle, G1 b). Holt keinen Speicher.
     void leere();
-    /// Einen Block am Ort umrechnen (Stereo, `2 * frames` Werte).
-    void rechne(float* stereo, int frames);
+    /// Einen Block am Ort umrechnen (Stereo, `2 * frames` Werte). `steuer` (Stufe 15l): je
+    /// Baustein der Reihe der Block seines Steuersignals oder nullptr; ohne `steuer` hat
+    /// keiner eins.
+    void rechne(float* stereo, int frames, const float* const* steuer = nullptr);
     [[nodiscard]] bool an() const { return m_an; }
     /// Von der Kette desselben Clips aus dem Programm davor uebernehmen, was
     /// an Gedaechtnis passt: aendert jemand nur Mix, Feedback, Decay oder
@@ -170,7 +193,7 @@ public:
     void uebernimm(EffektKette& alt);
 
 private:
-    using Glied = std::variant<FilterEffekt, Verzerrer, EchoEffekt, HallEffekt>;
+    using Glied = std::variant<FilterEffekt, Verzerrer, EchoEffekt, HallEffekt, SidechainEffekt>;
     bool m_an = false;
     std::vector<Glied> m_glieder;  ///< je Baustein der Reihe eines, in ihrer Folge
 };

@@ -53,22 +53,31 @@ std::shared_ptr<const Programm> baueProgramm(const Loop& loop, int rate,
     programm->ablauf = plane(loop, rate, saiten, eingefroren);
     programm->klaenge = std::move(klaenge);
     const std::size_t busse = programm->ablauf.busse.size();
-    if (busse > 0)
+    const std::size_t abgriffe = programm->ablauf.abgriffe.size();
+    if (busse > 0 || abgriffe > 0)
     {
         // alles, was die Effekte an Speicher brauchen, entsteht hier — nicht
         // im Ton-Thread
+        const auto block = 2 * static_cast<std::size_t>(kEffektBlock);
         auto zustand = std::make_shared<EffektZustand>();
         zustand->ketten.resize(busse);
         zustand->nachklang.resize(busse);
         zustand->stille.assign(busse, kLangeStill);
-        zustand->puffer.assign(busse * 2 * static_cast<std::size_t>(kEffektBlock), 0.0f);
+        zustand->puffer.assign(busse * block, 0.0f);
         zustand->zeiger.resize(busse);
+        // Stufe 15l: die Bloecke der Abgriffe und je Baustein sein Steuersignal
+        zustand->abgriffPuffer.assign(abgriffe * block, 0.0f);
+        zustand->abgriffZeiger.resize(abgriffe);
+        for (std::size_t a = 0; a < abgriffe; ++a) zustand->abgriffZeiger[a] = zustand->abgriffPuffer.data() + a * block;
+        zustand->steuer.resize(busse);
         for (std::size_t b = 0; b < busse; ++b)
         {
-            const ClipEffekte& effekte = programm->ablauf.busse[b].effekte;
-            zustand->ketten[b].richteEin(effekte, rate, loop.bpm);
-            zustand->nachklang[b] = std::llround(nachklangSekunden(effekte, loop.bpm) * rate);
-            zustand->zeiger[b] = zustand->puffer.data() + b * 2 * static_cast<std::size_t>(kEffektBlock);
+            const Bus& bus = programm->ablauf.busse[b];
+            zustand->ketten[b].richteEin(bus.effekte, rate, loop.bpm);
+            zustand->nachklang[b] = std::llround(nachklangSekunden(bus.effekte, loop.bpm) * rate);
+            zustand->zeiger[b] = zustand->puffer.data() + b * block;
+            for (const int a : bus.steuer)
+                zustand->steuer[b].push_back(a >= 0 ? zustand->abgriffZeiger[static_cast<std::size_t>(a)] : nullptr);
         }
         programm->effekte = std::move(zustand);
     }
@@ -144,24 +153,45 @@ void Klangerzeuger::render(float* out, int frames)
         for (int ab = 0; ab < frames; ab += kEffektBlock)
         {
             const int n = std::min(kEffektBlock, frames - ab);
+            const auto werte = 2 * static_cast<std::ptrdiff_t>(n);
             float* const ziel = out + 2 * static_cast<std::ptrdiff_t>(ab);
-            rechne(p->ablauf, klaenge, von + ab, n, ziel, effekte->zeiger.data());
-            for (std::size_t b = 0; b < busse; ++b)
-            {
+            rechne(p->ablauf, klaenge, von + ab, n, ziel, effekte->zeiger.data(), effekte->abgriffZeiger.data());
+            // die Effekte eines Busses; nullptr = verklungen, nichts dazuzumischen
+            const auto rechneBus = [&](std::size_t b) -> const float* {
                 float* const block = effekte->zeiger[b];
-                const float* const ende = block + 2 * static_cast<std::ptrdiff_t>(n);
+                const std::vector<const float*>& steuer = effekte->steuer[b];
                 const bool ton =
-                    std::any_of(static_cast<const float*>(block), ende, [](float wert) { return wert != 0.0f; });
+                    std::any_of(block, block + werte, [](float wert) { return wert != 0.0f; });
                 if (ton)
                     effekte->stille[b] = 0;
-                else if (effekte->stille[b] > effekte->nachklang[b])
-                    continue;  // verklungen: nichts zu rechnen, nichts dazuzumischen
+                // mit Steuersignal nie verklungen: seine Huelle folgt dem Signal weiter (15l)
+                else if (effekte->stille[b] > effekte->nachklang[b] && steuer.empty())
+                    return nullptr;
                 else
                     effekte->stille[b] += n;
-                effekte->ketten[b].rechne(block, n);
+                effekte->ketten[b].rechne(block, n, steuer.empty() ? nullptr : steuer.data());
+                return block;
+            };
+            // Stufe 15l (WV5 a): zuerst die genannten Kanaele, in ihrer Folge — ihre Busse in den
+            // Abgriff, der Abgriff mal Fader und Loop in die Summe
+            for (std::size_t a = 0; a < p->ablauf.abgriffe.size(); ++a)
+            {
+                const Abgriff& abgriff = p->ablauf.abgriffe[a];
+                float* const summe = effekte->abgriffZeiger[a];
+                for (const int b : abgriff.busse)
+                    if (const float* block = rechneBus(static_cast<std::size_t>(b)))
+                        for (std::ptrdiff_t i = 0; i < werte; ++i) summe[i] += block[i];
+                if (abgriff.faktor != 0.0f)
+                    for (std::ptrdiff_t i = 0; i < werte; ++i) ziel[i] += summe[i] * abgriff.faktor;
+            }
+            for (std::size_t b = 0; b < busse; ++b)
+            {
+                if (p->ablauf.busse[b].abgriff >= 0) continue;  // schon im Abgriff
+                const float* block = rechneBus(b);
+                if (block == nullptr) continue;
                 // der Fader des Kanals nach den Effekten (Stufe 27e-1); bei 0 dB genau 1
                 const float fader = p->ablauf.busse[b].faktor;
-                for (std::ptrdiff_t i = 0; i < 2 * static_cast<std::ptrdiff_t>(n); ++i) ziel[i] += block[i] * fader;
+                for (std::ptrdiff_t i = 0; i < werte; ++i) ziel[i] += block[i] * fader;
             }
         }
     }

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.129.0
+> **Version:** 0.130.0
 > **Datum:** 2026-11-01 (Session 170)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -4141,6 +4141,18 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
   ein Baustein dort wäre eine zweite Ablage derselben Korrektur, und nach anderen Effekten (Hall, Verzerrung) misst
   die Tonhöhe am schlechtesten. Kippt, wenn Autotune ein Signal ziehen soll, das erst im Clip entsteht (etwa die
   Ausgabe der Talkbox) — dann ein Baustein mit der Talkbox-Stufe.
+- **ST1 a — der Prüfbaustein ist ein echter Baustein Sidechain (S171):** der Pegel des Clips sinkt, wenn der
+  genannte Kanal laut ist — Regler *Channel*, *Depth* (dB), *Attack*, *Release*, im Fenster *Clip effects*, in der
+  Datei `type: "sidechain"` mit `channel`, `depth`, `attack`, `release`; Tests über das Fenster, Bild, Handbuch §16,
+  Sichttest in 15m. Grund: er belegt den Weg an einem Baustein, wie ihn die Talkbox haben wird (Datei, Fenster,
+  Abdruck, Freeze), hörbar im Programm; eine Art nur für Tests wäre Prüfcode im Programm mit Sonderregeln in Datei,
+  Fenster und Austausch. Verworfen b (eine Art `ClipPruefung`, nie angeboten, nie geschrieben).
+- **ST2 a — der Kanal hat eine feste Kennung (S171):** jeder Kanal trägt `id` (ganze Zahl, eindeutig im Loop, immer
+  geschrieben, `.lvloop` **Fassung 17**); `richte` vergibt fehlende in der Reihenfolge der Kanäle. Der Baustein nennt
+  die Kennung; Umbenennen und Verschieben ändern nichts. Kommt ein Clip über `.lvclip`/`.lvtrack` in einen anderen
+  Loop und die Kennung fehlt dort, bleibt der Baustein ohne Steuersignal, mit Zeile im Bericht. Grund: nur hier
+  stimmt der Verweis von selbst — bei Name (b) oder Stelle (c) müsste jede Stelle, die Kanäle ändert, Verweise
+  nachziehen, und doppelte Namen blieben mehrdeutig. Verworfen b (Name), c (Stelle).
 
 ### Was festliegt (von Claude gesetzt, S168)
 
@@ -4180,7 +4192,7 @@ derselben Hülle; Q7 Spielweisen §4.3 F1 a–F5 a; Q8 Spielweisen WX1 a, WX2 a;
 | 15j | **Follow tempo** (B3, WV1-1 a): Bezugstempo, *Set to loop tempo*, Dehnen auf das Tempo des Loops, Marke ~; Tests mit Tempowechsel des Loops | erledigt 2026-11-01 (S170; eng unter Release-clang und Testing-MSVC) |
 | 15k-1 | **Aufnahme** (B5, WV10-1 a, WR1 a, SK15k-1 a; vor 15f gebaut): die Aufnahme an der Wiedergabe (Stelle in der Uhr, unabhängig von Wave-Clips), *Measure latency* je Paar aus Ein- und Ausgang; *Record wave clip...* bei laufendem Loop auf Taktgrenzen mit Einzählen, und *Record...* im Wave editor über das Fenster *Record sample*; Tests | erledigt 2026-11-01 (S169; eng 92 / 92 unter Release-clang und Testing-MSVC) |
 | 15k-2 | **Bounce** (B6, WV7 a, BC1 a): *Bounce to wave clip* mit Nachklang wie Freeze, Herkunft, *source changed*, *Bounce again*, *Revert to source*; Tests | erledigt 2026-11-01 (S170; eng unter Release-clang und Testing-MSVC) |
-| 15l | **Steuersignal** (B7, WV5 a): ein Baustein nennt einen Kanal, abgegriffen vor Fader und Schalter, genannte Kanäle zuerst, Kreis erkannt, Abdruck mit dem Kanal; ein Prüfbaustein im Test (die Talkbox ist eine eigene Stufe) | offen |
+| 15l | **Steuersignal** (B7, WV5 a): ein Baustein nennt einen Kanal, abgegriffen vor Fader und Schalter, genannte Kanäle zuerst, Kreis erkannt, Abdruck mit dem Kanal; ein Prüfbaustein im Test (die Talkbox ist eine eigene Stufe) | erledigt 2026-11-02 (S171; voller Lauf 1753 / 1753 unter Release-clang und Testing-MSVC) |
 | 15m | Abschluss: Benutzerhandbuch §16 und §17, Sichttest-Liste, Bereich und voller Lauf unter beiden Compilern | offen |
 
 **Wie 15b gebaut ist (S169):** `loop/WaveMuster.hpp` trägt `WaveAngaben` (am Muster als `Muster::wave`, bei den
@@ -4428,6 +4440,34 @@ Panel mit Menü, Rechnung, Sample im Wegwerf-Ordner, Undo, *source changed*, *Bo
   −60 dBFS bis 4,57 s — beide Grenzen 3 Takte. Verworfen b (Schnitt bei −60 dB nur für Bounce). Kippt, wenn lange
   Hallfahnen regelmäßig ganze Takte beinahe Stille anhängen.
 
+**Wie 15l gebaut ist (S171):** Modell (`Loop.hpp`): `Kanal::kennung` (ST2 a, ab 1; `richte` gibt einer fehlenden oder
+doppelten — die erste von zweien bleibt — die nächste freie, `freieKennung`: über jeder Kennung eines Kanals **und**
+jeder, die ein Baustein nennt, damit ein neuer Kanal nicht still an den Verweis auf einen gelöschten anschließt) und
+der fünfte Baustein `ClipSidechain` (ST1 a: `kanal` = Kennung, `tiefeDb` 0 … 48, `attackMs` 0,1 … 100, `releaseMs`
+10 … 2000; Vorgabe 12 dB, 5 ms, 150 ms). `steuerKanal` löst die Kennung auf und erkennt den **Kreis** über jeden
+Baustein, ob an oder aus (so kippt er nicht mit einem Schalter); `steuerQuellen` sammelt, was ein Clip mittelbar
+braucht. `richte` meldet „Sidechain in a loop: …“ und „Sidechain channel not found: …“; der Verweis bleibt stehen.
+Datei: `.lvloop` **Fassung 17** — `id` je Kanal, `type: "sidechain"` mit `channel`, `depth`, `attack`, `release`.
+Rechnen: `plane` legt je genanntem Kanal einen `Abgriff` an (ausgehend von den eingeschalteten Kanälen, auch
+mittelbar, in der Folge, in der sie zu rechnen sind); ein genannter Kanal wird auch ausgeschaltet geplant, seine
+Schläge tragen weder Fader noch Loop (`Abgriff::faktor` trägt beides, 0 = aus). Der Klangerzeuger rechnet je Block
+zuerst die Abgriffe (ihre Busse in den Abgriff, dann mal Faktor in die Summe), danach die übrigen Busse wie bisher;
+jeder Baustein bekommt den Block seines Abgriffs (`EffektKette::rechne(…, steuer)`). Ein Bus mit Steuersignal gilt nie
+als verklungen (seine Hülle folgt dem Signal weiter). Ohne wirksamen Sidechain rechnet alles Bit für Bit wie bis 15k
+(Loop Werte, Klangfassung unverändert). `SidechainEffekt`: Hülle der Spitze beider Seiten (Tiefpässe erster Ordnung,
+Attack beim Steigen, Release beim Fallen), höchstens 1; Faktor exp(−ln 10 / 20 · Tiefe · Hülle). Freeze: `clipFassung`
+nimmt die genannten Kanäle ausgeschaltet und ohne Fader mit, an ihrer Stelle; `abdruckFassung` lässt einen gesteuerten
+Clip an seinem Takt (wo er zu den genannten Kanälen liegt, klingt) und macht Namen und Kennungen fest (eigener Kanal 1, genannte 2 …).
+Austausch: `setzeEin` gibt dem Kanal der Datei eine neue Kennung (oder die des Kanals, in den der Clip kommt), ein
+Verweis darauf folgt; ein Verweis aus der Datei hinaus wird keiner (`Einsetzung::ohneSteuersignal`, Meldung in der
+Taktachse) — die Kennung eines anderen Loops träfe sonst einen beliebigen Kanal. Fenster *Clip effects*: *+ Add* →
+**Sidechain**, Seite mit **Channel** (None und jeder Kanal außer dem eigenen; eine fehlende Kennung bleibt sichtbar),
+**Depth**, **Attack**, **Release**, Hinweis bei Kreis oder fehlendem Kanal; der Kasten zeigt „Kick · −12 dB“. Von
+Claude gesetzt: die Grenzen und Vorgaben, die Formel der Hülle, ein Abgriff nach den Effekten der Clips (Insert vor dem
+Fader), *Play pattern* im Editor (`soloFassung`) spielt ohne Steuersignal. Tests: `test_LoopSteuersignal` (Kennung und
+Datei, Kreis, Klangerzeuger gegen die Hülle von Hand, Freeze und Abdruck, Austausch, Fenster; Bild mit
+`LUMIVIZ_SIDECHAIN_BILD`).
+
 **Vorgabe Patrik (S169) zu 15k:** die Aufnahme berücksichtigt einen **später folgenden Live-Loop-Modus**. Heute nimmt
 die Engine ohne Bezug zur Wiedergabe auf (`IAudioEngine::recordStart` … `recordStop`, Stufe 11b: ein Puffer, keine
 Stelle im Loop, keine Latenz). Ein Live-Loop-Modus braucht Aufnahmen, die zur laufenden Wiedergabe gehören.
@@ -4541,7 +4581,7 @@ in zwölf Prüfungen auf 15.
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
-| 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2, §4p) | in Arbeit seit 2026-10-31 (S168): 15a bis 15k-2 erledigt, nächster Schritt 15l |
+| 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2, §4p) | in Arbeit seit 2026-10-31 (S168): 15a bis 15l erledigt, nächster Schritt 15m |
 | 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
 | 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen freigegeben (B2 a); **17a gebaut** (das Fenster: `bearbeite`, Save und Save as..., die Rückfragen; ein Fall mit fünf Teilen in `test_LoopAufnahmeFenster.cpp`) ; **17b gebaut** (der Knopf Edit... im Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden; im Fall zur Sample-Schicht in `test_LoopInstrumentEditor.cpp`) ; **17c gemacht** (Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D, voller Lauf 1153 / 1153); **Stufe 17 fertig — im Programm ungesehen** |
 | 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; **21c gebaut** (S124: das Fenster Kits, `loop/KitFenster`; die Auswahl Sound als Bauteil `loop/KlangAuswahl`; Edit kits... im Drum-Editor; `LoopPanel::spieleSchlaege`; die zuletzt geöffneten Loops; `test_LoopKitFenster.cpp`, drei Fälle, `LUMIVIZ_KIT_FENSTER_BILD`; im Programm ungesehen) ; **21d gebaut** (S124, Entscheide D1 a bis D6 a: 37 Stereo-Samples aus DrumGizmo, drei gerechnete Besen, Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes, Brush Swing; vierzehn Kits) ; **21e gemacht** (S124: Icon `lumiviz_lvkit.ico` — Entscheid I2 a, Fassung A: Snare von der Seite mit gekreuzten Sticks, am Vorschaublatt aus drei gewählt; am Knopf Kit und in Import data; `register_file_icons.ps1` mit `.lvkit`; Benutzerhandbuch 1.163.0 §16 „Kits", §17; Liste `Sichttest_Kits.md` (lokal); voller Lauf 1215 / 1215, 0 Skips) — **Stufe 21 fertig**, im Programm ungesehen bis auf Patriks ersten Blick (K10 a) |
@@ -4644,6 +4684,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.130.0** (S171, 2026-11-02): §4p ST1 a (Prüfbaustein = echter Baustein Sidechain), ST2 a (Kennung je Kanal, Fassung 17); 15l gebaut („Wie 15l gebaut ist“).
 - **0.129.0** (S170, 2026-11-01): §4p BC1 a — WV7 a berichtigt: Nachklang beim Bounce wie Freeze und Export (bis unter −96 dB).
 - **0.128.0** (S170, 2026-11-01): §4p 15k-2 erledigt („Wie 15k-2 gebaut ist“): *Bounce to wave clip*, *Bounce again*, *Revert to source*, *source changed*.
 - **0.127.0** (S170, 2026-11-01): §4p 15j erledigt („Wie 15j gebaut ist“): *Follow tempo* dehnt auf das Tempo des Loops, `waveTempoFaktor`, `;tempo:` im Namen.

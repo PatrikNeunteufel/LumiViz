@@ -139,28 +139,53 @@ std::optional<Loop> abdruckFassung(const Loop& loop, ClipOrt ort)
 {
     const int nr = findeClip(loop, ort);
     if (nr < 0) return std::nullopt;
-    // die Stelle im Loop klingt nicht: der Clip allein auf Takt 0
     Loop kopie = loop;
     LoopClip clip = loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(nr)];
-    clip.startTakt = 0;
+    // die Stelle im Loop klingt nicht: der Clip allein auf Takt 0 — ausser er bekommt ein
+    // Steuersignal (Stufe 15l): dann klingt, wo er zu den genannten Kanaelen liegt
+    if (steuerQuellen(loop, ort.kanal, clip).empty()) clip.startTakt = 0;
     clip.frozen.clear();  // die Marke klingt nicht (30f) — sonst aenderte das Einfrieren den Abdruck
     kopie.kanaele[static_cast<std::size_t>(ort.kanal)].clips = {clip};
-    std::optional<Loop> fassung = clipFassung(kopie, ClipOrt{ort.kanal, 0});
-    if (!fassung || fassung->muster.size() != 2 || fassung->kanaele.size() != 2) return std::nullopt;
+    std::optional<Loop> fassung = clipFassung(kopie, ClipOrt{ort.kanal, clip.startTakt});
+    if (!fassung || fassung->muster.size() < 2 || fassung->kanaele.size() < 2) return std::nullopt;
 
-    // was nicht klingt, faellt weg oder wird fest
+    // was nicht klingt, faellt weg oder wird fest: der eigene Kanal mit dem Muster `clip`
+    // und Kennung 1, die genannten Kanaele (15l) mit `clip~1` … und Kennung 2 …, dahinter der
+    // Platz `~tail` ohne Kennung — Namen, Kennungen und Marken anderswo im Loop klingen nicht
     fassung->tags = {};
     fassung->limiter = true;
-    Muster& muster = fassung->muster[0];
-    muster.name = QLatin1String(kClipName);
-    muster.kit.clear();
-    Kanal& eigener = fassung->kanaele[0];
-    eigener.name.clear();
-    eigener.clips.front().muster = muster.name;
-    fassung->muster[1].name = QLatin1String(kPlatzName);
-    Kanal& platz = fassung->kanaele[1];
-    platz.name.clear();
-    platz.clips.front().muster = fassung->muster[1].name;
+    const QString platzMuster = fassung->kanaele.back().clips.front().muster;
+    std::map<QString, QString> musterNeu;
+    for (std::size_t i = 0; i < fassung->muster.size(); ++i)
+    {
+        Muster& muster = fassung->muster[i];
+        const QString neu = i == 0                         ? QString::fromLatin1(kClipName)
+                            : muster.name == platzMuster ? QString::fromLatin1(kPlatzName)
+                                                         : QStringLiteral("%1~%2").arg(QLatin1String(kClipName)).arg(i);
+        musterNeu[muster.name] = neu;
+        muster.name = neu;
+        muster.kit.clear();
+    }
+    std::map<int, int> kennungNeu;
+    for (std::size_t k = 0; k + 1 < fassung->kanaele.size(); ++k)
+        kennungNeu[fassung->kanaele[k].kennung] = static_cast<int>(k) + 1;
+    for (std::size_t k = 0; k < fassung->kanaele.size(); ++k)
+    {
+        Kanal& kanal = fassung->kanaele[k];
+        kanal.name.clear();
+        kanal.kennung = k + 1 < fassung->kanaele.size() ? static_cast<int>(k) + 1 : 0;
+        for (LoopClip& c : kanal.clips)
+        {
+            c.muster = musterNeu[c.muster];
+            c.frozen.clear();
+            for (ClipBaustein& baustein : c.effekte.reihe)
+                if (auto* sidechain = std::get_if<ClipSidechain>(&baustein))
+                {
+                    const auto treffer = kennungNeu.find(sidechain->kanal);
+                    sidechain->kanal = treffer != kennungNeu.end() ? treffer->second : 0;
+                }
+        }
+    }
     return fassung;
 }
 

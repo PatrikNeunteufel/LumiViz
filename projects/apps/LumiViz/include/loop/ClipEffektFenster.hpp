@@ -190,6 +190,9 @@ private:
     QComboBox* m_filterArt = nullptr;
     QComboBox* m_zeit = nullptr;
     QLabel* m_zeitMs = nullptr;
+    /// Sidechain (Stufe 15l): der Kanal (Daten = Kennung, 0 = None) und ob er ein Signal gibt
+    QComboBox* m_steuerKanal = nullptr;
+    QLabel* m_steuerHinweis = nullptr;
     QPushButton* m_kopieren = nullptr;
     QPushButton* m_einfuegen = nullptr;
     QPushButton* m_zurueck = nullptr;

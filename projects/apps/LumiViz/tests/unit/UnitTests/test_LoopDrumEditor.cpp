@@ -85,6 +85,7 @@ Loop probe()
                      true,
                      {{QStringLiteral("Grund"), 0, 1}, {QStringLiteral("Grund"), 4, 1}, {QStringLiteral("Fill"), 12, 1}}},
                     {QStringLiteral("Perc"), true, {{QStringLiteral("Grund"), 8, 1}}}};
+    loop.richte();  // seit Stufe 15l: die Kennungen der Kanaele
     return loop;
 }
 

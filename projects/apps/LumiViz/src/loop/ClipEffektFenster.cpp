@@ -119,8 +119,21 @@ QString fuege(const QString& trenner, std::initializer_list<std::pair<QString, b
     return einerGleich ? texte.join(trenner) : gemischt;
 }
 
+/// Der Kanal, den ein Sidechain nennt (Stufe 15l), wie die Zeile ihn zeigt.
+QString kanalText(const Loop& loop, int kennung)
+{
+    if (kennung <= 0) return ClipEffektFenster::tr("no channel");
+    const int kanal = kanalMitKennung(loop, kennung);
+    return kanal < 0 ? ClipEffektFenster::tr("channel missing") : loop.kanaele[static_cast<std::size_t>(kanal)].name;
+}
+
+QString dezibel(double db)
+{
+    return QStringLiteral("%1 dB").arg(db, 0, 'f', 0);
+}
+
 /// Der Baustein am Platz `platz` der gezeigten Reihe, mit Blick auf alle Reihen derselben Folge.
-Kurz kurz(const ClipBaustein& baustein, const std::vector<ClipEffekte>& alle, std::size_t platz)
+Kurz kurz(const ClipBaustein& baustein, const std::vector<ClipEffekte>& alle, std::size_t platz, const Loop& loop)
 {
     const QString punkt = QString::fromUtf8(" · ");
     // jedes Feld, in dem ein Clip abweicht, beim Namen seines Reglers — auch die, die der Kurzwert nicht zeigt (X5 a)
@@ -160,6 +173,18 @@ Kurz kurz(const ClipBaustein& baustein, const std::vector<ClipEffekte>& alle, st
         return {ClipEffektFenster::tr("Echo"), fuege(punkt, {{zeitName(echo->zeit), zeit}, {prozent(echo->mix), mix}}), echo->an,
                 anders};
     }
+    if (const auto* sidechain = std::get_if<ClipSidechain>(&baustein))
+    {
+        const bool kanal = ueberall(alle, platz, &ClipSidechain::kanal, *sidechain);
+        const bool tiefe = ueberall(alle, platz, &ClipSidechain::tiefeDb, *sidechain);
+        pruefe(*sidechain, {{kanal, QT_TR_NOOP("Channel")},
+                            {tiefe, QT_TR_NOOP("Depth")},
+                            {ueberall(alle, platz, &ClipSidechain::attackMs, *sidechain), QT_TR_NOOP("Attack")},
+                            {ueberall(alle, platz, &ClipSidechain::releaseMs, *sidechain), QT_TR_NOOP("Release")}});
+        return {ClipEffektFenster::tr("Sidechain"),
+                fuege(punkt, {{kanalText(loop, sidechain->kanal), kanal}, {dezibel(-sidechain->tiefeDb), tiefe}}), sidechain->an,
+                anders};
+    }
     const auto& hall = std::get<ClipHall>(baustein);
     const bool sekunden = ueberall(alle, platz, &ClipHall::sekunden, hall);
     const bool mix = ueberall(alle, platz, &ClipHall::mix, hall);
@@ -182,6 +207,8 @@ Kurz kurz(const ClipBaustein& baustein)
                 verzerrung->an};
     if (const auto* echo = std::get_if<ClipEcho>(&baustein))
         return {ClipEffektFenster::tr("Echo"), QString::fromUtf8("%1 · %2").arg(zeitName(echo->zeit), prozent(echo->mix)), echo->an};
+    if (const auto* sidechain = std::get_if<ClipSidechain>(&baustein))
+        return {ClipEffektFenster::tr("Sidechain"), dezibel(-sidechain->tiefeDb), sidechain->an};
     const auto& hall = std::get<ClipHall>(baustein);
     return {ClipEffektFenster::tr("Reverb"), QString::fromUtf8("%1 s · %2").arg(hall.sekunden, 0, 'f', 1).arg(prozent(hall.mix)),
             hall.an};
@@ -491,6 +518,45 @@ void ClipEffektFenster::setupUI()
         reglerFuer<ClipHall>(hall, tr("Mix"), QStringLiteral("fxReverbMix"), 0, 100, 100.0, &ClipHall::mix, prozent);
         hall->addStretch(1);
     }
+
+    // --- Sidechain (Stufe 15l; WV5 a, ST1 a): ein anderer Kanal senkt den Clip
+    {
+        QVBoxLayout* sidechain = neueSeite();
+        auto* zeile = new QHBoxLayout;
+        auto* schild = new QLabel(tr("Channel"), this);
+        schild->setMinimumWidth(72);
+        m_steuerKanal = new QComboBox(this);
+        m_steuerKanal->setObjectName(QStringLiteral("fxSidechainChannel"));
+        m_steuerKanal->setPlaceholderText(tr("mixed"));
+        m_steuerKanal->setToolTip(tr("The clip gets quieter while this channel is loud — taken after the effects of its "
+                                     "clips, before its fader and on/off (a channel that is off still controls)"));
+        zeile->addWidget(schild);
+        zeile->addWidget(m_steuerKanal, 1);
+        sidechain->addLayout(zeile);
+        m_steuerHinweis = new QLabel(this);
+        m_steuerHinweis->setObjectName(QStringLiteral("fxSidechainHint"));
+        m_steuerHinweis->setEnabled(false);
+        m_steuerHinweis->setWordWrap(true);
+        sidechain->addWidget(m_steuerHinweis);
+        connect(m_steuerKanal, &QComboBox::activated, this, [this](int platz) {
+            if (platz < 0) return;
+            const int kennung = m_steuerKanal->itemData(platz).toInt();
+            (void)aendere([this, kennung](ClipEffekte& e) {
+                if (ClipSidechain* werte = baustein<ClipSidechain>(e)) werte->kanal = kennung;
+            });
+        });
+        reglerFuer<ClipSidechain>(sidechain, tr("Depth"), QStringLiteral("fxSidechainDepth"), 0,
+                                  static_cast<int>(kSidechainTiefeMaxDb), 1.0, &ClipSidechain::tiefeDb,
+                                  [](double db) { return dezibel(-db); });
+        reglerFuer<ClipSidechain>(sidechain, tr("Attack"), QStringLiteral("fxSidechainAttack"),
+                                  static_cast<int>(std::lround(kSidechainAttackMinMs * 10)),
+                                  static_cast<int>(std::lround(kSidechainAttackMaxMs * 10)), 10.0, &ClipSidechain::attackMs,
+                                  [](double ms) { return QStringLiteral("%1 ms").arg(ms, 0, 'f', ms < 10.0 ? 1 : 0); });
+        reglerFuer<ClipSidechain>(sidechain, tr("Release"), QStringLiteral("fxSidechainRelease"),
+                                  static_cast<int>(kSidechainReleaseMinMs), static_cast<int>(kSidechainReleaseMaxMs), 1.0,
+                                  &ClipSidechain::releaseMs, [](double ms) { return QStringLiteral("%1 ms").arg(std::lround(ms)); });
+        sidechain->addStretch(1);
+    }
     aussen->addWidget(m_seiten, 1);
 
     auto* fuss = new QHBoxLayout;
@@ -660,7 +726,7 @@ void ClipEffektFenster::fuelle()
         {
             const ClipBaustein& baustein = gezeigt.reihe[static_cast<std::size_t>(i)];
             // der Kurzwert des gezeigten Clips; wo einer mit derselben Folge abweicht, steht „mixed“
-            const Kurz k = kurz(baustein, alle, static_cast<std::size_t>(i));
+            const Kurz k = kurz(baustein, alle, static_cast<std::size_t>(i), m_loop);
             // weicht irgendein Wert ab — auch einer, den der Kurzwert nicht zeigt —, sagt es der Kasten:
             // „≠“ davor, Bernstein, und der Tooltip nennt die Regler (Befund Patrik S119, X5 a)
             const bool weichtAb = !k.anders.isEmpty();
@@ -705,7 +771,7 @@ void ClipEffektFenster::fuelle()
         m_seiten->setCurrentIndex(kSeiteLeer);
         m_leerText->setText(
             leer        ? QString()
-            : zahl == 0 ? tr("No effects on this clip. + Add puts a Filter, Distortion, Echo or Reverb into the path.")
+            : zahl == 0 ? tr("No effects on this clip. + Add puts a Filter, Distortion, Echo, Reverb or Sidechain into the path.")
                         : tr("Click a block in the path to see its controls."));
     }
 
@@ -743,6 +809,35 @@ void ClipEffektFenster::fuelle()
         });
         const QSignalBlocker ruhe(m_filterArt);
         m_filterArt->setCurrentIndex(gleich ? m_filterArt->findData(static_cast<int>(erste)) : -1);
+    }
+    {
+        // Sidechain (15l): None und jeder Kanal ausser dem des gezeigten Clips, beim Namen
+        const ClipSidechain* sidechain = baustein<ClipSidechain>(gezeigt);
+        const int erste = sidechain != nullptr ? sidechain->kanal : 0;
+        const bool gleich = std::all_of(alle.begin(), alle.end(), [&](const ClipEffekte& e) {
+            const ClipSidechain* anderer = baustein<ClipSidechain>(e);
+            return anderer == nullptr || anderer->kanal == erste;
+        });
+        const int eigener = leer ? -1 : m_orte[static_cast<std::size_t>(m_zeigt)].kanal;
+        const QSignalBlocker ruhe(m_steuerKanal);
+        m_steuerKanal->clear();
+        m_steuerKanal->addItem(tr("None"), 0);
+        for (std::size_t k = 0; k < m_loop.kanaele.size(); ++k)
+            if (static_cast<int>(k) != eigener) m_steuerKanal->addItem(m_loop.kanaele[k].name, m_loop.kanaele[k].kennung);
+        // eine Kennung, die es nicht mehr gibt, bleibt sichtbar
+        if (erste > 0 && kanalMitKennung(m_loop, erste) < 0) m_steuerKanal->addItem(tr("(channel missing)"), erste);
+        m_steuerKanal->setCurrentIndex(gleich ? m_steuerKanal->findData(erste) : -1);
+        // ob der gezeigte Clip ein Signal bekommt — oder warum nicht
+        QString hinweis;
+        if (sidechain != nullptr && gleich && erste > 0 && eigener >= 0)
+        {
+            if (kanalMitKennung(m_loop, erste) < 0)
+                hinweis = tr("This channel is not in the loop any more — no signal.");
+            else if (steuerKanal(m_loop, eigener, ClipBaustein(*sidechain)) < 0)
+                hinweis = tr("No signal: that channel is itself controlled by this one (a loop).");
+        }
+        m_steuerHinweis->setText(hinweis);
+        m_steuerHinweis->setVisible(!hinweis.isEmpty());
     }
     m_fuellt = false;
 }
@@ -881,6 +976,7 @@ void ClipEffektFenster::zeigeAddMenue(QPoint unten)
     connect(menue.addAction(tr("Distortion")), &QAction::triggered, this, [this] { (void)neuerBaustein(ClipVerzerrung{}); });
     connect(menue.addAction(tr("Echo")), &QAction::triggered, this, [this] { (void)neuerBaustein(ClipEcho{}); });
     connect(menue.addAction(tr("Reverb")), &QAction::triggered, this, [this] { (void)neuerBaustein(ClipHall{}); });
+    connect(menue.addAction(tr("Sidechain")), &QAction::triggered, this, [this] { (void)neuerBaustein(ClipSidechain{}); });
     menue.exec(m_pfad->mapToGlobal(unten));
 }
 

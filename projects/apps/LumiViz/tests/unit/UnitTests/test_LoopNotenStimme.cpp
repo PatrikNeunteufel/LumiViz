@@ -85,7 +85,7 @@ TEST_CASE("Loop Noten 31d-9 Stimme und Versatz in der Datei (Fassung 14)")
     const Loop loop = instrumentLoop({Note{0, 4, 60}, mitVersatz(4, 2, 64, 0.25, -0.5, 2)},
                                      {QStringLiteral("Left hand"), QStringLiteral("Right hand")});
     const QJsonObject json = alsJson(loop);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 16);
+    CHECK(json.value(QStringLiteral("version")).toInt() == 17);
     const QJsonObject muster = json.value(QStringLiteral("patterns")).toArray().first().toObject();
     CHECK(muster.value(QStringLiteral("voices")).toArray() ==
           QJsonArray{QStringLiteral("Left hand"), QStringLiteral("Right hand")});

@@ -141,6 +141,18 @@ std::optional<Loop> clipFassung(const Loop& loop, ClipOrt ort)
     eigener.gainDb = 0.0;  // der Fader bleibt live (F3 a)
     eigener.clips = {clip};
     fassung.kanaele = {std::move(eigener)};
+    // Stufe 15l (WV5 a): die Kanaele, die seine Bausteine als Steuersignal nennen, ausgeschaltet
+    // dabei — sie steuern, klingen aber nicht; ihre Muster kommen mit
+    for (const int quelle : steuerQuellen(loop, ort.kanal, clip))
+    {
+        Kanal genannt = loop.kanaele[static_cast<std::size_t>(quelle)];
+        genannt.an = false;
+        genannt.gainDb = 0.0;  // abgegriffen vor dem Fader: er zaehlt nicht
+        for (const LoopClip& c : genannt.clips)
+            if (fassung.findeMuster(c.muster) == nullptr)
+                if (const Muster* m = loop.findeMuster(c.muster)) fassung.muster.push_back(*m);
+        fassung.kanaele.push_back(std::move(genannt));
+    }
     platzFuerNachklang(fassung, loop, clip.startTakt + loop.clipTakte(clip));
     return fassung;
 }

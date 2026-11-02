@@ -46,6 +46,47 @@ Stuecke ueberDieWiederholungen(const std::vector<SpurPunkt>& spur, double clipSc
     return stuecke;
 }
 
+/// Die Kanaele, deren Steuersignal die Bausteine im Kanal `kanal` bekommen (Stufe 15l): nur
+/// wirksame — der Clip nicht eingefroren (seine Effekte stecken in der Wellenform), seine
+/// Effekte wirken, der Baustein ist an —, ohne Kreis (`steuerKanal`).
+std::vector<int> genannteKanaele(const Loop& loop, std::size_t kanal, const Eingefroren& eingefroren)
+{
+    std::vector<int> ziele;
+    for (const LoopClip& clip : loop.kanaele[kanal].clips)
+    {
+        if (!clip.effekteWirken() || eingefroren.contains({static_cast<int>(kanal), clip.startTakt})) continue;
+        for (const ClipBaustein& baustein : clip.effekte.reihe)
+            if (bausteinAn(baustein))
+                if (const int ziel = steuerKanal(loop, static_cast<int>(kanal), baustein); ziel >= 0) ziele.push_back(ziel);
+    }
+    return ziele;
+}
+
+/// Die Abgriffe (Stufe 15l, WV5 a): ausgehend von den eingeschalteten Kanaelen jeder Kanal,
+/// den ein wirksamer Baustein nennt, auch mittelbar — je einer, jeder hinter denen, deren
+/// Signal er selbst braucht (ohne Kreis ist das immer moeglich). `abgriffVon` bekommt je
+/// Kanal den Index oder -1.
+std::vector<Abgriff> planeAbgriffe(const Loop& loop, const Eingefroren& eingefroren, std::vector<int>& abgriffVon)
+{
+    std::vector<Abgriff> abgriffe;
+    abgriffVon.assign(loop.kanaele.size(), -1);
+    std::vector<bool> besucht(loop.kanaele.size(), false);
+    const auto besuche = [&](const auto& selbst, std::size_t kanal) -> void {
+        for (const int ziel : genannteKanaele(loop, kanal, eingefroren))
+        {
+            const auto z = static_cast<std::size_t>(ziel);
+            if (besucht[z]) continue;
+            besucht[z] = true;
+            selbst(selbst, z);  // zuerst, was der genannte Kanal selbst braucht
+            abgriffVon[z] = static_cast<int>(abgriffe.size());
+            abgriffe.push_back(Abgriff{ziel, 0.0f, {}});
+        }
+    };
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+        if (loop.kanaele[k].an) besuche(besuche, k);
+    return abgriffe;
+}
+
 }  // namespace
 
 double Ausdruck::wert(std::int64_t frame) const
@@ -71,14 +112,24 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
     const int jeTakt = loop.schritteJeTakt();
     QHash<QString, int> klangVon;
     for (int i = 0; i < ablauf.klangNamen.size(); ++i) klangVon.insert(ablauf.klangNamen[i], i);
+    // Stufe 15l (WV5 a): die Kanaele, die ein Baustein als Steuersignal nennt
+    std::vector<int> abgriffVon;
+    ablauf.abgriffe = planeAbgriffe(loop, eingefroren, abgriffVon);
 
     for (std::size_t kanalNr = 0; kanalNr < loop.kanaele.size(); ++kanalNr)
     {
         const Kanal& kanal = loop.kanaele[kanalNr];
-        if (!kanal.an) continue;
+        // ein genannter Kanal klingt auch ausgeschaltet — nur als Steuersignal (vor dem Schalter)
+        const int abgriff = abgriffVon[kanalNr];
+        if (!kanal.an && abgriff < 0) continue;
         // der Fader (Stufe 27e-1) und die Lautstaerke des Loops (Stufe 30, WX5 a): ohne
-        // Effekte am Schlag, mit Effekten am Bus — nach den Effekten, wie an einem Mischpult
+        // Effekte am Schlag, mit Effekten am Bus — nach den Effekten, wie an einem Mischpult.
+        // In einem genannten Kanal traegt beides der Abgriff, nach dem Steuersignal (15l).
         const double fader = kanal.gainFaktor();
+        const auto ausgang = static_cast<float>(kanal.an ? fader * loop.laut : 0.0);
+        if (abgriff >= 0) ablauf.abgriffe[static_cast<std::size_t>(abgriff)].faktor = ausgang;
+        const double faderOhneBus = abgriff < 0 ? fader : 1.0;
+        const double loopOhneBus = abgriff < 0 ? loop.laut : 1.0;
         // je Kanal: (Muster, Spur) -> Stimme
         std::map<std::pair<const Muster*, std::size_t>, std::size_t> stimmeVon;
         // je Kanal: (Instrument-Muster, Ton) -> Stimme. Jeder Ton — Tonhoehe
@@ -103,8 +154,9 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                 stimme.schneidet = false;  // FV1 a
                 Schlag schlag;
                 schlag.frame = std::llround(static_cast<double>(clip.startTakt) * jeTakt * schrittFrames);
-                schlag.links = static_cast<float>(fader * loop.laut);
+                schlag.links = static_cast<float>(faderOhneBus * loopOhneBus);
                 schlag.rechts = schlag.links;
+                schlag.abgriff = abgriff;
                 stimme.schlaege.push_back(schlag);
                 ablauf.stimmen.push_back(std::move(stimme));
                 continue;
@@ -115,11 +167,22 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
             if (clip.effekteWirken())
             {
                 bus = static_cast<int>(ablauf.busse.size());
-                ablauf.busse.push_back(
-                    {static_cast<int>(kanalNr), clip.startTakt, clip.effekte, static_cast<float>(fader * loop.laut)});
+                Bus neu{static_cast<int>(kanalNr), clip.startTakt, clip.effekte,
+                        abgriff < 0 ? static_cast<float>(fader * loop.laut) : ausgang};
+                // Stufe 15l: je Baustein das Steuersignal, das er bekommt
+                neu.abgriff = abgriff;
+                for (const ClipBaustein& baustein : clip.effekte.reihe)
+                {
+                    const int ziel = bausteinAn(baustein) ? steuerKanal(loop, static_cast<int>(kanalNr), baustein) : -1;
+                    neu.steuer.push_back(ziel >= 0 ? abgriffVon[static_cast<std::size_t>(ziel)] : -1);
+                }
+                if (std::all_of(neu.steuer.begin(), neu.steuer.end(), [](int s) { return s < 0; })) neu.steuer.clear();
+                if (abgriff >= 0) ablauf.abgriffe[static_cast<std::size_t>(abgriff)].busse.push_back(bus);
+                ablauf.busse.push_back(std::move(neu));
             }
-            const double faderAmSchlag = bus < 0 ? fader : 1.0;
-            const double loopAmSchlag = bus < 0 ? loop.laut : 1.0;
+            const double faderAmSchlag = bus < 0 ? faderOhneBus : 1.0;
+            const double loopAmSchlag = bus < 0 ? loopOhneBus : 1.0;
+            const int abgriffAmSchlag = bus < 0 ? abgriff : -1;
             // Expression (Stufe 28c-1): die Spur des Musters und die Kurve am Clip — an einem
             // Drumkit nur die Kurve; ein Instrument mit Saiten traegt sie im Ton (28c-2b, SK12 a);
             // ein Wave-Muster (Stufe 15c) wie ein Instrument ohne Saiten
@@ -167,6 +230,7 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                     schlag.rechts = laut;
                     schlag.bus = bus;
                     schlag.ausdruck = ausdruck;
+                    schlag.abgriff = abgriffAmSchlag;
                     ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                 }
                 continue;
@@ -210,6 +274,7 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                             schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + muster->pan));
                             schlag.bus = bus;
                             schlag.ausdruck = ausdruck;
+                            schlag.abgriff = abgriffAmSchlag;
                             ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                         };
                         // ohne Saiten: so lange, wie die Pedale halten (Stufe 28b), mit Pitch und
@@ -256,6 +321,7 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                         schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + spur.pan));
                         schlag.bus = bus;
                         schlag.ausdruck = ausdruck;
+                        schlag.abgriff = abgriffAmSchlag;
                         ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                     }
                 }
@@ -267,13 +333,16 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
 }
 
 void rechne(const Ablauf& ablauf, const Klaenge& klaenge, std::int64_t von, int frames, float* aus,
-            float* const* busAus)
+            float* const* busAus, float* const* abgriffAus)
 {
     if (frames <= 0) return;
     std::fill(aus, aus + 2 * static_cast<std::ptrdiff_t>(frames), 0.0f);
     if (busAus != nullptr)
         for (std::size_t b = 0; b < ablauf.busse.size(); ++b)
             std::fill(busAus[b], busAus[b] + 2 * static_cast<std::ptrdiff_t>(frames), 0.0f);
+    if (abgriffAus != nullptr)
+        for (std::size_t a = 0; a < ablauf.abgriffe.size(); ++a)
+            std::fill(abgriffAus[a], abgriffAus[a] + 2 * static_cast<std::ptrdiff_t>(frames), 0.0f);
     const std::int64_t durchlauf = ablauf.durchlaufFrames;
     const std::int64_t bis = von + frames;
     if (durchlauf <= 0 || bis <= 0) return;
@@ -319,11 +388,25 @@ void rechne(const Ablauf& ablauf, const Klaenge& klaenge, std::int64_t von, int 
             const std::int64_t ende =
                 stimme.schneidet ? std::min(start + laenge, naechster + kSchnittFrames) : start + laenge;
             const Schlag& schlag = schlaege[static_cast<std::size_t>(g % anzahl)];
-            // auch die Schnitt-Blende eines Schlags bleibt in seinem Bus
-            float* const ziel = busAus != nullptr && schlag.bus >= 0 ? busAus[schlag.bus] : aus;
-            // ohne Busse geht ein Schlag mit Effekten unbearbeitet nach `aus` — dann mit dem Fader
-            const float fader =
-                busAus == nullptr && schlag.bus >= 0 ? ablauf.busse[static_cast<std::size_t>(schlag.bus)].faktor : 1.0f;
+            // auch die Schnitt-Blende eines Schlags bleibt in seinem Bus (oder Abgriff, 15l)
+            float* ziel = aus;
+            // ohne Busse geht ein Schlag mit Effekten unbearbeitet nach `aus` — dann mit dem Fader;
+            // ebenso ohne Abgriffe ein Schlag eines genannten Kanals
+            float fader = 1.0f;
+            if (schlag.bus >= 0)
+            {
+                if (busAus != nullptr)
+                    ziel = busAus[schlag.bus];
+                else
+                    fader = ablauf.busse[static_cast<std::size_t>(schlag.bus)].faktor;
+            }
+            else if (schlag.abgriff >= 0)
+            {
+                if (abgriffAus != nullptr)
+                    ziel = abgriffAus[schlag.abgriff];
+                else
+                    fader = ablauf.abgriffe[static_cast<std::size_t>(schlag.abgriff)].faktor;
+            }
             if (schlag.ausdruck < 0)
             {
                 for (std::int64_t f = std::max(ab, start); f < std::min(bis, ende); ++f)

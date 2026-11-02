@@ -75,8 +75,12 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // 16 (S169, Stufe 15b, Entscheide WV1 a bis WV9 a): die Art `wave` — ein Muster spielt eine
 // Tondatei, alle Felder immer geschrieben; ein aelteres Programm liesse das Muster mit
 // seinen Clips weg (unbekannte Art, mit Zeile im Bericht).
-// Geschrieben wird immer 16.
-constexpr int kVersion = 16;
+// 17 (S171, Stufe 15l, Entscheide WV5 a, ST1 a, ST2 a): je Kanal die Kennung `id` (immer
+// geschrieben) und der Baustein `sidechain`, der einen Kanal ueber die Kennung nennt — ein
+// aelteres Programm liesse den Baustein weg (unbekannt, mit Zeile im Bericht) und vergaesse
+// die Kennungen.
+// Geschrieben wird immer 17.
+constexpr int kVersion = 17;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -168,6 +172,7 @@ const QString kBausteinFilter = QStringLiteral("filter");
 const QString kBausteinVerzerrung = QStringLiteral("distortion");
 const QString kBausteinEcho = QStringLiteral("echo");
 const QString kBausteinHall = QStringLiteral("reverb");
+const QString kBausteinSidechain = QStringLiteral("sidechain");
 
 void richteBaustein(ClipFilter& f)
 {
@@ -201,6 +206,15 @@ void richteBaustein(ClipHall& h)
     h.sekunden = inGrenzen(h.sekunden, kHallSekMin, kHallSekMax, vorgabe.sekunden);
     h.daempfung = inGrenzen(h.daempfung, 0.0, 1.0, vorgabe.daempfung);
     h.mix = inGrenzen(h.mix, 0.0, 1.0, vorgabe.mix);
+}
+
+void richteBaustein(ClipSidechain& s)
+{
+    const ClipSidechain vorgabe;
+    s.kanal = std::max(0, s.kanal);
+    s.tiefeDb = inGrenzen(s.tiefeDb, 0.0, kSidechainTiefeMaxDb, vorgabe.tiefeDb);
+    s.attackMs = inGrenzen(s.attackMs, kSidechainAttackMinMs, kSidechainAttackMaxMs, vorgabe.attackMs);
+    s.releaseMs = inGrenzen(s.releaseMs, kSidechainReleaseMinMs, kSidechainReleaseMaxMs, vorgabe.releaseMs);
 }
 
 /// Die Reihe eines Clips: hoechstens `kBausteineMax` (K4 a — was dahinter
@@ -256,6 +270,18 @@ QJsonObject bausteinAlsJson(const ClipHall& h)
     v[QStringLiteral("decay")] = h.sekunden;
     v[QStringLiteral("damping")] = h.daempfung;
     v[QStringLiteral("mix")] = h.mix;
+    return v;
+}
+
+QJsonObject bausteinAlsJson(const ClipSidechain& s)
+{
+    QJsonObject v;
+    v[QStringLiteral("type")] = kBausteinSidechain;
+    v[QStringLiteral("on")] = s.an;
+    v[QStringLiteral("channel")] = s.kanal;
+    v[QStringLiteral("depth")] = s.tiefeDb;
+    v[QStringLiteral("attack")] = s.attackMs;
+    v[QStringLiteral("release")] = s.releaseMs;
     return v;
 }
 
@@ -323,6 +349,17 @@ ClipHall hallAusJson(const QJsonObject& v)
     return h;
 }
 
+ClipSidechain sidechainAusJson(const QJsonObject& v)
+{
+    ClipSidechain s;
+    s.an = v.value(QStringLiteral("on")).toBool(false);
+    s.kanal = v.value(QStringLiteral("channel")).toInt(0);
+    s.tiefeDb = v.value(QStringLiteral("depth")).toDouble(s.tiefeDb);
+    s.attackMs = v.value(QStringLiteral("attack")).toDouble(s.attackMs);
+    s.releaseMs = v.value(QStringLiteral("release")).toDouble(s.releaseMs);
+    return s;
+}
+
 /// Die Liste `path` (seit Fassung 5). Einen Baustein, den dieses Programm
 /// nicht kennt, laesst es weg — das steht im Bericht.
 ClipEffekte reiheAusJson(const QJsonArray& reihe, QStringList* bericht)
@@ -340,6 +377,8 @@ ClipEffekte reiheAusJson(const QJsonArray& reihe, QStringList* bericht)
             e.reihe.emplace_back(echoAusJson(v, bericht));
         else if (art == kBausteinHall)
             e.reihe.emplace_back(hallAusJson(v));
+        else if (art == kBausteinSidechain)  // seit Fassung 17
+            e.reihe.emplace_back(sidechainAusJson(v));
         else if (bericht != nullptr)
         {
             const QString zeile = QStringLiteral("Unknown effect '%1'").arg(art);
@@ -1144,6 +1183,106 @@ void Loop::richte(QStringList* bericht)
             frei = clip.startTakt + clipTakte(clip);
         }
     }
+
+    // Stufe 15l (ST2 a): eine fehlende oder doppelte Kennung bekommt die naechste freie
+    // (`freieKennung`); die erste von zweien gleichen bleibt
+    int naechste = freieKennung(*this);
+    QSet<int> vergeben;
+    for (Kanal& kanal : kanaele)
+    {
+        if (kanal.kennung <= 0 || vergeben.contains(kanal.kennung)) kanal.kennung = naechste++;
+        vergeben.insert(kanal.kennung);
+    }
+    // ein Verweis ins Leere oder im Kreis bleibt stehen und klingt ohne Steuersignal (WV5 a)
+    if (bericht == nullptr) return;
+    for (std::size_t k = 0; k < kanaele.size(); ++k)
+        for (const LoopClip& clip : kanaele[k].clips)
+            for (const ClipBaustein& baustein : clip.effekte.reihe)
+            {
+                const int kennung = steuerKennung(baustein);
+                if (kennung <= 0) continue;
+                const int ziel = kanalMitKennung(*this, kennung);
+                QString zeile;
+                if (ziel < 0)
+                    zeile = QStringLiteral("Sidechain channel not found: %1 (channel %2)").arg(kennung).arg(kanaele[k].name);
+                else if (steuerKanal(*this, static_cast<int>(k), baustein) < 0)
+                    zeile = QStringLiteral("Sidechain in a loop: %1 from %2")
+                                .arg(kanaele[k].name, kanaele[static_cast<std::size_t>(ziel)].name);
+                if (!zeile.isEmpty() && !bericht->contains(zeile)) bericht->append(zeile);
+            }
+}
+
+int steuerKennung(const ClipBaustein& baustein)
+{
+    const auto* sidechain = std::get_if<ClipSidechain>(&baustein);
+    return sidechain != nullptr ? sidechain->kanal : 0;
+}
+
+int freieKennung(const Loop& loop)
+{
+    int hoechste = 0;
+    for (const Kanal& kanal : loop.kanaele)
+    {
+        hoechste = std::max(hoechste, kanal.kennung);
+        for (const LoopClip& clip : kanal.clips)
+            for (const ClipBaustein& baustein : clip.effekte.reihe) hoechste = std::max(hoechste, steuerKennung(baustein));
+    }
+    return hoechste + 1;
+}
+
+bool bausteinAn(const ClipBaustein& baustein)
+{
+    return std::visit([](const auto& werte) { return werte.an; }, baustein);
+}
+
+std::vector<int> steuerQuellen(const Loop& loop, int kanal, const LoopClip& clip)
+{
+    std::vector<bool> drin(loop.kanaele.size(), false);
+    const auto nimm = [&](const auto& selbst, int k, const LoopClip& c) -> void {
+        if (!c.effekteWirken()) return;
+        for (const ClipBaustein& baustein : c.effekte.reihe)
+        {
+            if (!bausteinAn(baustein)) continue;
+            const int ziel = steuerKanal(loop, k, baustein);
+            if (ziel < 0 || drin[static_cast<std::size_t>(ziel)]) continue;
+            drin[static_cast<std::size_t>(ziel)] = true;
+            for (const LoopClip& weiter : loop.kanaele[static_cast<std::size_t>(ziel)].clips) selbst(selbst, ziel, weiter);
+        }
+    };
+    nimm(nimm, kanal, clip);
+    std::vector<int> quellen;
+    for (std::size_t k = 0; k < drin.size(); ++k)
+        if (drin[k]) quellen.push_back(static_cast<int>(k));
+    return quellen;
+}
+
+int kanalMitKennung(const Loop& loop, int kennung)
+{
+    if (kennung <= 0) return -1;
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+        if (loop.kanaele[k].kennung == kennung) return static_cast<int>(k);
+    return -1;
+}
+
+int steuerKanal(const Loop& loop, int kanal, const ClipBaustein& baustein)
+{
+    const int ziel = kanalMitKennung(loop, steuerKennung(baustein));
+    if (ziel < 0) return -1;
+    // ein Kreis: vom genannten Kanal fuehren Steuersignale (jeder Baustein, an oder aus) zurueck zu `kanal`
+    std::vector<bool> gesehen(loop.kanaele.size(), false);
+    std::vector<int> offen{ziel};
+    while (!offen.empty())
+    {
+        const int k = offen.back();
+        offen.pop_back();
+        if (k == kanal) return -1;
+        if (gesehen[static_cast<std::size_t>(k)]) continue;
+        gesehen[static_cast<std::size_t>(k)] = true;
+        for (const LoopClip& clip : loop.kanaele[static_cast<std::size_t>(k)].clips)
+            for (const ClipBaustein& b : clip.effekte.reihe)
+                if (const int weiter = kanalMitKennung(loop, steuerKennung(b)); weiter >= 0) offen.push_back(weiter);
+    }
+    return ziel;
 }
 
 QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
@@ -1288,6 +1427,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
         k[QStringLiteral("name")] = kanal.name;
         k[QStringLiteral("enabled")] = kanal.an;
         k[QStringLiteral("gain")] = kanal.gainDb;  // seit Fassung 11, immer geschrieben
+        k[QStringLiteral("id")] = kanal.kennung;   // seit Fassung 17, immer geschrieben
         QJsonArray clips;
         for (const LoopClip& clip : kanal.clips)
         {
@@ -1461,6 +1601,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
         kanal.an = k.value(QStringLiteral("enabled")).toBool(true);
         // seit Fassung 11; fehlt es: 0 dB
         kanal.gainDb = std::clamp(k.value(QStringLiteral("gain")).toDouble(0.0), kKanalGainMinDb, kKanalGainMaxDb);
+        kanal.kennung = k.value(QStringLiteral("id")).toInt(0);  // seit Fassung 17; fehlt es: `richte` vergibt
         for (const QJsonValue& cv : k.value(QStringLiteral("clips")).toArray())
         {
             const QJsonObject c = cv.toObject();

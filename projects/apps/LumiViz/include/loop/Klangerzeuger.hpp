@@ -50,6 +50,11 @@ struct EffektZustand
     std::vector<std::int64_t> stille;     ///< je Bus: so lange kam kein Ton mehr hinein
     std::vector<float> puffer;            ///< je Bus `2 * kEffektBlock` Werte
     std::vector<float*> zeiger;           ///< je Bus der Anfang seines Blocks
+    /// Stufe 15l: je Abgriff des Ablaufs `2 * kEffektBlock` Werte und der Anfang seines Blocks
+    std::vector<float> abgriffPuffer;
+    std::vector<float*> abgriffZeiger;
+    /// Je Bus und Baustein seiner Reihe der Block des Steuersignals oder nullptr; leer = keins
+    std::vector<std::vector<const float*>> steuer;
 };
 
 /// Ein uebersetzter Loop mit seinen Klaengen — unveraenderlich. Die Klaenge
@@ -58,7 +63,8 @@ struct Programm
 {
     Ablauf ablauf;
     std::shared_ptr<const Klaenge> klaenge;
-    /// nullptr, wenn kein Clip Effekte hat. Das Programm bleibt, wie es ist —
+    /// nullptr, wenn kein Clip Effekte hat und kein Kanal als Steuersignal klingt
+    /// (Stufe 15l). Das Programm bleibt, wie es ist —
     /// was sich hier aendert, ist nur, was die Effekte gehoert haben.
     std::shared_ptr<EffektZustand> effekte;
 };
