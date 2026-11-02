@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.313.0
-> **Datum:** 2026-11-01 (Sessions 164 bis 170)
+> **Version:** 1.314.0
+> **Datum:** 2026-11-02 (Sessions 164 bis 172)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2828,6 +2828,18 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Stereo-Breite, Tremolo, Kompressor — sie passen als weitere Bausteine in
   dieselbe Reihe (Variant, Fenster Clip effects, Signal path). Noch keine
   Vorlage.
+
+- 🟡 **Anbindung `InstrumentsCalculation` (IK2, Vorschlag Stufe 34)** — Steuerdokument
+  [audio/Instrumente_IC_Konzept.md](audio/Instrumente_IC_Konzept.md), Herleitungen
+  [modellierung/anbindung-ic/](modellierung/anbindung-ic/README.md). **S172:** Zielbild entschieden (Patrik): Z1 a
+  Reihenfolge Klasse 4 und 5, dann 1 am LumiViz-Kern, dann 10 und 2, Ketten und Clips später; Z2 a ungemessen
+  ausliefern nach SP1 a mit Hörproben und Kennzeichnung; Z3 a IC bleibt Werkstatt mit Cloud-Sitzungen; Z4 a Plugins in
+  beide Richtungen als spätere Stufen. M1 a: Messung in S172 — IC `rechnung/` unter Windows-clang: 29 Abdrücke bitgleich
+  mit MSVC (Plattform, nicht Compiler), Rechenzeit der ersten Klassen unter 2,5 % der Echtzeit. Grundlage der
+  Schnittstelle ist IC T2 a (Note, Kette, Passage, Clip mit der Spur im Namen). **Offen:** IK2-0 (Vorlage steht im
+  Konzept §5, Antwort S173), danach IK2-1 bis IK2-13 einzeln, Teilplan, Abschluss nach
+  `.claude/handover/plan_S172_anbindung_ic.md` §4. Bei IC offen: IC-A8, IC-A9 Schritt 2, IC-A10 Schritt 2 und 3,
+  IC-A11, IC-A12 (Vorlage hier als IK2-2); der Stand von IC Session 5 liegt dort uncommittet.
 
 ## 7. Backlog (bewusst nichts tun)
 
@@ -6331,6 +6343,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.314.0 | 2026-11-02 | Session 172 (Fable 5.1). §6 neu: Anbindung InstrumentsCalculation (IK2) — Zielbild Z1 a bis Z4 a, M1 a, Berichte und Messung unter `docs/modellierung/anbindung-ic/`, Konzept `Instrumente_IC_Konzept.md` 0.2.0; IK2-0 vorgelegt, Antwort in S173. Nichts gebaut. |
 | 1.313.0 | 2026-11-02 | Session 171. §6 Loop: 15m — Stufe 15 gebaut; Handbuch 1.206.0, Sichttest-Liste `Sichttest_WaveClips.md`; Bericht von Bounce jetzt in der Zeile des Panels. |
 | 1.312.0 | 2026-11-02 | Session 171. §6 Loop: 15l gebaut (Steuersignal, Baustein *Sidechain*, Kennung je Kanal, Fassung 17; ST1 a, ST2 a), nächster Schritt 15m; im Programm ungesehen. |
 | 1.311.0 | 2026-11-01 | Session 170. §6 Loop: 15k-2 gebaut (*Bounce*), nächster Schritt 15l; im Programm ungesehen. |
