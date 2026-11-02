@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.205.0
-> **Datum:** 2026-10-31
+> **Version:** 1.206.0
+> **Datum:** 2026-11-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -2735,6 +2735,7 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 |---|---|
 | Rechtsklick auf eine freie Stelle im Kanal → **New drumkit clip** | Ein leerer Clip über 4 Takte mit einer neuen Basis „Pattern N". Grau, wenn dort keine 4 Takte frei sind |
 | → **New instrument clip** | Dasselbe für ein Instrument: ein leerer Clip über 4 Takte, zunächst mit dem Piano |
+| → **New wave clip...** / **Record wave clip...** | NEU in 1.206.0. Ein Clip, der eine Tondatei spielt — aus einer Datei oder gleich aufgenommen; siehe „Tondateien im Loop: Wave-Clips“ |
 | Clip anklicken | Er ist markiert (Rand in der Markierfarbe); die Clip-Zeile nennt ihn |
 | **Ctrl+Klick** auf einen Clip | Nimmt ihn zu den markierten dazu — oder wieder heraus |
 | Auf freier Fläche einen **Rahmen** ziehen | Markiert jeden Clip, den der Rahmen berührt; mit Ctrl kommen sie zu den schon markierten dazu. **Ctrl+A** (oder Rechtsklick auf eine freie Stelle → **Select all clips**) markiert alle |
@@ -2748,7 +2749,8 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 | → **Export pattern...** / **Export clip...** | NEU in 1.204.0. Die Basis allein (`.lvpattern`) oder den Clip mit Wiederholungen, Effekten und Kurve (`.lvclip`) als Datei, um sie in einem anderen Loop wieder einzusetzen — siehe „Muster, Clips und Spuren als Dateien“. Bei mehreren markierten grau |
 | → **Rename base...** | Benennt die Basis um — für alle Clips, die sie spielen |
 | → **Delete** (auch Entf) | Entfernt den Clip, bei mehreren alle markierten. Spielt danach kein Clip mehr eine Basis, geht sie mit |
-| → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor |
+| → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor, bei einem Wave-Clip (NEU in 1.206.0) den Wave editor |
+| → **Bounce to wave clip** / **Bounce again** / **Revert to source** | NEU in 1.206.0. Einen Drum- oder Instrument-Clip in eine Tondatei rechnen und durch einen Wave-Clip ersetzen — und zurück; siehe „Bounce“ unter „Tondateien im Loop“ |
 | → **Make new base and edit** | Löst den Clip von seinen Kopien: er bekommt eine eigene Basis „<Name> 2" und der Editor öffnet sich dafür |
 | **Expression am Clip** | NEU in 1.197.0. Ein Verlauf der Stärke über den ganzen Clip mit allen Wiederholungen — etwa ein Crescendo über acht Takte —, malgenommen mit der Spur Expression des Musters. Ein Clip mit Kurve zeigt sie als Linie über sich; ohne Kurve zeichnet er nichts (volle Stärke) |
 | Am markierten Clip: Klick auf die gestrichelte Linie „Expression 1" oder auf die Kurve | Setzt einen Punkt, in Sechzehnteln eines Takts; mit **Alt** frei. Der markierte Clip zeigt dafür seine Punkte, ohne Kurve die gestrichelte Linie oben. An einem Clip, der nicht markiert ist, verschiebt ein Klick wie immer; die Kanten gehen vor |
@@ -2781,9 +2783,10 @@ der markierten lässt nur ihn markiert.
 
 ### Effekte am Clip
 
-Jeder Clip kann eigene Effekte tragen — **Filter**, **Distortion**, **Echo**
-und **Reverb**, jeden beliebig oft und in freier Reihenfolge, höchstens acht
-—, gleich ob er ein Drumkit oder ein Instrument spielt. Sie
+Jeder Clip kann eigene Effekte tragen — **Filter**, **Distortion**, **Echo**,
+**Reverb** und (NEU in 1.206.0) **Sidechain**, jeden beliebig oft und in freier
+Reihenfolge, höchstens acht —, gleich ob er ein Drumkit, ein Instrument oder
+eine Tondatei spielt. Sie
 gehören zum Clip, nicht zur Basis: zwei Clips derselben Basis können
 verschieden klingen, etwa nur der letzte vor einem Wechsel mit Hall. Ein Clip
 mit einem eingeschalteten Effekt trägt rechts die Marke **fx**. Jeder Clip hat
@@ -2801,13 +2804,14 @@ gerade markiert sind.
 | Kopf | Wie viele Clips, welche (Basis und Takt), rechts **Peak** — die Spitze der Summe beim Spielen, mit Effekten; über 1 steht sie rot |
 | **Effects on** | Der Schalter aller Effekte der markierten Clips. Aus: sie klingen trocken, die Reihe bleibt. Halb, wenn die Clips verschieden stehen — ein Klick schaltet alle an |
 | **Signal path** | Die Zeile zeigt den Weg des Tons durch den Clip, von links nach rechts: **Clip** (wie sein Muster ihn spielt), dann die Bausteine, der Knopf **+ Add**, zuletzt **Out** (mit der Spitze). Jeder Baustein trägt seinen wichtigsten Wert („1/8 dotted · 35 %“). **Ein Klick auf einen Baustein** zeigt darunter seinen Haken und seine Regler. Die Reihenfolge ist zu hören: eine Distortion hinter dem Echo verzerrt auch jede Wiederholung und hebt die leisen an, davor nur den Schlag |
-| **+ Add** | Holt **Filter**, **Distortion**, **Echo** oder **Reverb** hinter den gewählten Baustein, eingeschaltet. Bei acht steht „8 of 8“ |
+| **+ Add** | Holt **Filter**, **Distortion**, **Echo**, **Reverb** oder **Sidechain** hinter den gewählten Baustein, eingeschaltet. Bei acht steht „8 of 8“ |
 | **← Move**, **Move →**, **Remove** | Den gewählten Baustein einen Platz schieben oder entfernen. Dasselbe mit der Maus: einen Baustein in der Zeile **ziehen** |
 | Der Haken am Namen des Bausteins | An: der Baustein wirkt. Aus: er bleibt mit seinen Werten in der Zeile stehen (grau geschrieben) und wird übersprungen. Zeigt er „teils an", schaltet ein Klick alle an |
 | **Filter** — **Type**, **Cutoff**, **Resonance** | **Low-pass** lässt durch, was unter Cutoff liegt, **High-pass**, was darüber liegt, **Band-pass**, was darum herum liegt. **Cutoff** steht in Hertz (40 Hz bis 18 kHz) und gilt für den ganzen Clip, gleich welche Noten er spielt — anders als der Filter im Instrument, der mit jeder Note mitgeht. **Resonance** betont die Stelle an der Grenze |
 | **Distortion** — **Drive**, **Tone**, **Mix** | Verzerrt den Clip als Ganzes: Stärke, Klangfarbe (dunkel bis hell), Anteil. Ein Akkord wird dabei rauer als mit **Drive** im Instrument, das je Ton verzerrt |
 | **Echo** — **Time**, **Feedback**, **Damping**, **Mix** | Wiederholungen im Takt: **Time** ist ein Notenwert (1/16 bis 1/2) und folgt dem BPM des Loops, daneben stehen die Millisekunden. **Feedback** bestimmt, wie viele Wiederholungen nachkommen (bis 90 %), **Damping** macht jede dunkler |
 | **Reverb** — **Size**, **Decay**, **Damping**, **Mix** | Ein Raum: seine Größe, wie lange er nachklingt (0,2 bis 8 Sekunden), wie schnell die Höhen im Nachklang verschwinden |
+| **Sidechain** — **Channel**, **Depth**, **Attack**, **Release** | NEU in 1.206.0. Der Clip wird **leiser, solange ein anderer Kanal laut ist** — etwa ein Pad, das bei jedem Schlag der Bassdrum zurückweicht („Pumpen“). **Channel** wählt den Kanal (**None** = keiner; der eigene steht nicht in der Liste). Gehört wird der Kanal **hinter den Effekten seiner Clips, vor seinem Fader und Schalter**: ein Kanal, der aus ist, steuert weiter — so kann eine stumme Spur nur den Takt vorgeben. **Depth** (0 bis 48 dB) ist, um wie viel der Clip bei vollem Pegel des Kanals sinkt; **Attack** (0,1 bis 100 ms), wie schnell er sinkt, **Release** (10 bis 2000 ms), wie schnell er zurückkommt. Der Kasten zeigt Kanal und Tiefe („Kick · -12 dB“). Nennen zwei Kanäle einander (oder ein Kanal sich selbst), wirkt keiner, und unter **Channel** steht „No signal: that channel is itself controlled by this one (a loop).“; fehlt der Kanal, „This channel is not in the loop any more — no signal.“ Umbenennen oder Verschieben des Kanals ändert nichts |
 | **Mix** | Der Anteil des bearbeiteten Tons. Bei 0 % klingt der Clip unverändert, bei 100 % ist bei Echo und Reverb nur noch der Effekt zu hören |
 | **mixed** an einem Regler oder in einem Kasten | Die markierten Clips haben dort verschiedene Werte. Wer den Regler bewegt, setzt den Wert für alle |
 | **≠** in einem bernsteinfarben getönten Kasten | Die markierten Clips sind in diesem Baustein nicht gleich — in irgendeinem Wert, auch einem, den der Kasten nicht zeigt (beim Echo etwa Feedback oder Damping). Der Kasten ist dann bernsteinfarben getönt, und vor seinem Wert steht „≠“ — auch am gewählten Kasten, dessen Rand blau bleibt. Der Tooltip nennt die Regler: „Differs between the clips: Damping“ |
@@ -2837,6 +2841,13 @@ Gut zu wissen:
 - Ein Loop wird in einem neueren Dateiformat gespeichert, als ein älteres
   LumiViz es kennt. Ein LumiViz vor Session 118 liest ihn, spielt seine Clips
   aber ohne Effekte und meldet „File was written by a newer version".
+- **Sidechain** (NEU in 1.206.0): ein LumiViz vor Session 171 lässt den
+  Baustein weg und meldet „Unknown effect 'sidechain'“. **Play pattern** und
+  **Freeze**: das Muster allein spielt ohne Steuersignal; Freeze rechnet den
+  genannten Kanal mit — ändert sich dort etwas, gilt der eingefrorene Clip als
+  verändert, wie nach einer Änderung am Clip selbst. Wird ein Clip oder Kanal mit **Import clip...** oder **Import
+  track...** in einen anderen Loop gesetzt, verliert ein Sidechain, der einen
+  Kanal außerhalb der Datei nennt, seinen Kanal — die Meldung sagt es.
 
 Das Beispiel `asset\loop\effects_demo.lvloop` zeigt Distortion, Echo und Reverb.
 
@@ -3462,6 +3473,123 @@ Bei einem **Saiteninstrument** sind es **Griffbilder** — nur die zur Stimmung 
 | **sounds like: …**, **Use name** | Wie die gesetzten Töne klingen; Use name setzt Root, Type und Title danach. Ohne passende Art kein Vorschlag |
 | **Save**, **Cancel**, Ctrl+Z / Ctrl+Y | Spielt keine Saite (kein Ton), sagt ein Hinweis, warum nicht gespeichert wird |
 
+### Tondateien im Loop: Wave-Clips
+
+NEU in 1.206.0. Neben Drumkit und Instrument kann ein Clip eine **Tondatei** spielen — Gesang,
+eine Gitarre, eine fertige Aufnahme. Ein solcher Clip heißt **Wave-Clip**, seine Basis
+**Wave-Muster**. Er trägt Effekte und die Kurve Expression wie jeder Clip, wiederholt sich und
+lässt sich kopieren; die Datei selbst wird nie verändert — Ausschnitt, Lautstärke, Tempo und
+Tonhöhe stehen im Muster.
+
+**Anlegen** (Rechtsklick auf eine freie Stelle im Kanal; grau, wenn dort kein Takt frei ist):
+
+| Eintrag | Wirkung |
+|---|---|
+| **New wave clip...** | Wählt eine Datei (WAV, MP3, FLAC, OGG). Liegt sie nicht schon unter *My samples*, fragt LumiViz: „Where should … be kept?“ — **Copy the file to My samples (recommended)** (die Kopie geht mit einem Export mit und bleibt, wenn das Original wandert) oder **Use it where it is**; mit **Don't ask again** gilt die Wahl künftig (umzustellen in Settings → Panels). Die Basis heißt nach der Datei, der Clip ist so viele Takte lang, wie die Datei beim Tempo des Loops dauert, aufgerundet. Reicht der Platz nicht, kommt er in einen neuen Kanal |
+| **Record wave clip...** | Öffnet das Fenster **Record wave clip** und nimmt direkt in einen Wave-Clip auf — siehe unten |
+
+**Auf der Achse** zeigt ein Wave-Clip seine Wellenform, in jeder Wiederholung. Rechts stehen
+Marken: **~** (Follow tempo ist an), **♪** (die Spur Autotune hat Zielnoten), **source changed**
+(nach *Bounce*: das ursprüngliche Muster wurde seither geändert). **Edit base** oder ein
+Doppelklick öffnen den **Wave editor**.
+
+#### Der Wave editor
+
+Ein Fenster wie Drum- und Instrument-Editor; was du änderst, nimmt **Ctrl+Z** zurück. Von oben nach
+unten:
+
+| Zeile | Elemente |
+|---|---|
+| Kopf | **Base** mit „· used by n clips“, **Fit** (das ganze Muster in der Breite), **Bars** (1 bis 512 — jede Wiederholung beginnt den Ausschnitt neu), **Play pattern** (nur dieses Muster, im Kreis; dann **Stop**), **FX** (die Effekte des Clips beim Anspielen — derselbe Schalter wie in der Achse), **Peak** |
+| **File** | Name und Angaben der Datei („3.20 s · 44100 Hz · stereo“, sonst „not found“ oder „not read“). **Browse...** wählt eine andere Datei (mit derselben Frage wie oben). **Record...** nimmt neu auf (Fenster *Record wave clip*, unten; Start am ersten Clip des Musters, Länge das Muster) — die Aufnahme ersetzt die Datei. **Edit sample...** öffnet ein eigenes Sample im Fenster *Record sample* (nur für *My samples*, bis 30 s). **Gain** (−60 bis +24 dB), **Fade in** und **Fade out** (0 bis 10 000 ms) wirken am Anfang und Ende dessen, was zu hören ist |
+| Tempo | **Reference tempo**: in welchem Tempo die Datei gespielt wurde (beim Einfügen das des Loops). **Set to loop tempo** übernimmt das jetzige Tempo des Loops. **Follow tempo** (Vorgabe aus): dehnt die Datei vom Bezugstempo auf das Tempo des Loops, **ohne die Tonhöhe zu ändern**; daneben steht, wie viel schneller sie dann spielt („plays 1.25× as fast when on“). Aus spielt die Datei, wie sie aufgenommen ist. **Pitch method**: **General** für jedes Material, **Voice** für eine einzelne Stimme — sie behält die Klangfarbe (Formanten), wenn die Tonhöhe sich ändert |
+| Raster | Grau „Grid of the loop: …“ — eingestellt im Panel Loop. Ein Wave-Muster hat keinen Swing offset |
+| Fläche | Über einem Taktlineal (ein Klick: dort beginnt *Play pattern*) die Spuren **Expression** und **Pitch**, darunter die **Welle**, unten die Spur **Autotune** |
+| Autotune-Zeile | **Key** und Skala (**Chromatic**, **Major**, **Minor**), **Detect notes**, **Strength** (0 bis 100 %), **Speed** (0 bis 500 ms), **Selected section only**, **Use Voice** |
+
+**Die Welle:** hell ist der **Ausschnitt** der Datei, grau, was außerhalb liegt, schraffiert, was
+über das Muster hinausreicht — beides ist nicht zu hören. Die **Griffe** oben an den Kanten setzen
+Anfang und Ende des Ausschnitts (in Sekunden der Datei; der Ton bleibt dabei an seiner Stelle). In
+die Welle fassen und ziehen **verschiebt** sie in Schritten, mit **Shift** in Bruchteilen — auch vor
+den Anfang des Musters (ein Auftakt ist ab dem Musteranfang zu hören). Was über das Ende des
+Musters reicht, wird dort abgeblendet. **Ctrl+Mausrad** zoomt.
+
+**Expression und Pitch** wie im Instrument-Editor: ein Klick setzt einen Punkt (Expression auf dem
+Schritt, Pitch in ganzen Halbtönen; **Shift**: Hundertstel, **Alt**: frei), Ziehen verschiebt,
+Doppelklick löscht, Rechtsklick → **Clear lane**. Pitch zeigt ±12 Halbtöne.
+
+**Autotune** zieht die gesungene Tonhöhe auf **Zielnoten**. Sobald die Datei gemessen ist („Measuring
+pitch...“, je Datei einmal, gemerkt), zeigt die Spur gestrichelt die gesungene Tonhöhe und orange die
+korrigierte.
+
+- **Detect notes** schlägt Zielnoten vor: auf den Tönen der gewählten Tonart, aus dem, was gesungen
+  ist. Es ersetzt die Noten im Ausschnitt — mit **Selected section only** nur unter der gewählten.
+  Findet es durchgehend eine Stimme, steht „One voice found — Voice keeps its formants“, und
+  **Use Voice** stellt *Pitch method* auf *Voice*.
+- Von Hand: auf freier Fläche **ziehen** legt eine Note an; eine Note ziehen verschiebt sie in Zeit
+  und Halbtönen (**Shift**: in Cent), an der Kante ziehen kürzt sie, **Ctrl+Klick** teilt sie,
+  Doppelklick oder **Entf** löscht sie. Rechtsklick: **Split here**, **Join with next**, **Delete
+  note**, **Clear notes**.
+- **Strength** sagt, wie weit die Tonhöhe zur Zielnote gezogen wird, **Speed**, wie schnell sie
+  dort ankommt — 0 springt (der bekannte harte Autotune-Klang). Ist eine Note gewählt, gelten die
+  Werte für sie, sonst für neue Noten.
+- Ohne Zielnote klingt die Stimme, wie sie gesungen ist. Findet die Messung nichts Gesungenes —
+  etwa bei Beatbox oder Sprache —, steht „No sung pitch in this section — Autotune needs a single
+  sung voice (not beatbox or speech)“, und *Detect notes* ersetzt nichts.
+
+Die Rechnung läuft im Hintergrund wie bei den Tönen der Instrumente: während eine neue Fassung
+gerechnet wird, spielt die bisherige; beim ersten Öffnen steht „Preparing sounds… n / m“.
+
+#### Aufnehmen: Record wave clip
+
+Rechtsklick auf einen freien Takt → **Record wave clip...** (oder **Record...** im Wave editor).
+Das Fenster **Record wave clip**:
+
+| Element | Wirkung |
+|---|---|
+| **Input**, **Level** | Woher die Aufnahme kommt (gemerkt) und ihr Pegel. Darunter der Hinweis: ohne Kopfhörer hört das Mikrofon die Lautsprecher mit — dann **nichts** mitspielen lassen |
+| **Starts at bar** | Der Takt, an dem die Aufnahme liegt (der angeklickte) |
+| **Count-in** | **none**, **1 bar** (Vorgabe), **2 bars** |
+| **Length** | **until Stop** (Vorgabe — Stop beendet am Ende des Takts) oder eine feste Zahl Takte |
+| **Play while recording** | **Nothing — record right away** (Vorgabe): Record nimmt sofort auf wie ein Sample, nichts spielt; die Leuchte zählt still ein, die Aufnahme beginnt auf der Eins von *Starts at bar*. **Click only** und **Loop and click** (mit Kopfhörern): der Loop zählt ein, die Aufnahme sitzt genau im Takt, die Latenz wird abgezogen |
+| **Latency**, **Measure latency...** | Wie spät ein Ton ankommt, je Paar aus Ein- und Ausgang gemerkt. *Measure latency* spielt fünf Klicks und findet sie am Eingang wieder (etwa „Result: 38 ms (5 of 5 clicks found, spread 1 ms)“), **Use** übernimmt den Wert. Bei *Nothing* grau |
+| Leuchte und Streifen | Die Leuchte blinkt auf jedem Schlag, hell auf der Eins; der Streifen sagt, was gerade geschieht („counting in…“, „recording bar 3“, „ends at the end of the bar“) |
+| **● Record**, **Stop** | Bis 600 s |
+| Bild, **▶ Play**, **Repeat**, Griffe | Wie bei *Record sample*. Bei *Nothing* sind **Trim silence at both ends** (schneidet hier nur hinten, damit der Einsatz auf der Eins bleibt) und **Normalize level** zu haben |
+| **Keep take**, **Discard**, **Cancel** | *Keep take* legt die Aufnahme als eigenes Sample „Take n“ ab und setzt den Wave-Clip an *Starts at bar* (bei *Nothing* auf ganze Takte aufgerundet), mit Ctrl+Z zurückzunehmen; *Discard* verwirft sie für einen neuen Versuch |
+
+Nicht ausgeglichen ist bei *Nothing* die Verzögerung des Eingangs: die Leuchte zeigt den Stand der
+Aufnahme, um so viel liegt ein Einsatz im Take etwas spät.
+
+#### Bounce: einen Clip in eine Tondatei verwandeln
+
+Rechtsklick auf einen Drum- oder Instrument-Clip → **Bounce to wave clip** (hinter *Freeze clip*):
+LumiViz rechnet den Clip wie *Export audio...* — mit allen Wiederholungen, Effekten, der Kurve am
+Clip und dem Nachklang bis unter −96 dB, aber nicht über den Anfang des nächsten Clips im Kanal
+hinaus — und legt die Datei als eigenes Sample „<Muster> bounce“ ab. Der Clip wird **an seinem
+Ort** ersetzt: ein Wave-Clip mit einer Wiederholung, ohne Effekte und Kurve (beides ist
+eingerechnet), Bezugstempo = Tempo des Loops, *Follow tempo* aus. Das ursprüngliche Muster bleibt im
+Loop. Die Zeile des Panels zeigt etwa „Bouncing Keys, bar 1 … 40 %“.
+
+Der neue Clip merkt sich seine **Herkunft**. Ändert sich das ursprüngliche Muster, trägt er
+**source changed**; im Menü stehen dann:
+
+- **Bounce again** — rechnet neu, mit einer neuen Datei (Ctrl+Z holt die alte zurück);
+- **Revert to source** — setzt den ursprünglichen Clip mit Wiederholungen, Effekten und Kurve
+  zurück, mit dem **jetzigen** Stand des Musters.
+
+Ändert sich der Clip, während er gerechnet wird, ersetzt Bounce nichts; die Berichtzeile des Panels
+sagt „The clip changed while bouncing — nothing was replaced“.
+
+#### Was mit Wave-Clips mitgeht
+
+- **Export audio**, **Freeze**, der Loop im **Composer**: Wave-Clips klingen dort wie im Panel.
+- **Publish** und **Export...** der eigenen Daten nehmen die Tondateien als Samples mit (eigene
+  unter *My samples*). `.lvpattern`, `.lvclip` und `.lvtrack` nennen sie nur beim Namen, wie
+  Instrumente und Kits.
+- Ein LumiViz vor Session 169 kennt Wave-Muster nicht: es lässt sie mit ihren Clips weg und sagt
+  es im Bericht.
+
 ### Beispiele
 
 Unter `asset\loop` liegen Loops zum Laden über **Load** oder den Audio Browser:
@@ -3682,7 +3810,11 @@ nennt, in **eine Datei**: `<name>.<art>.lvdata`, etwa `titan.lvloop.lvdata`.
 `asset\loop\drums_demo.lvloop` und `asset\loop\instrument_demo.lvloop`
 zeigen alles in Gebrauch. Ein Klang heißt `kit:<Name>` für einen Klang des
 Kits oder ist der Pfad einer eigenen Datei — relativ, wenn sie unter dem
-Ordner der `.lvloop` liegt.
+Ordner der `.lvloop` liegt. NEU in 1.206.0: ein Wave-Muster steht als
+`kind: "wave"` mit der Tondatei unter `file` (genannt wie ein Sample), jeder
+Kanal trägt seine Kennung `id`, und ein Baustein `sidechain` nennt den Kanal
+über diese Kennung (`channel`) — wer von Hand einen Kanal kopiert, gibt der
+Kopie eine eigene `id` oder lässt sie weg (LumiViz vergibt dann eine).
 
 ---
 
@@ -3720,7 +3852,7 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![avs](bilder/handbuch/icons/avs.png) | `.avs` | AVS-Preset (Winamp) | Effect Browser |
 | ![milk](bilder/handbuch/icons/milkdrop.png) | `.milk`, `.milk2` | MilkDrop-Preset | Effect Browser |
 | ![mp3](bilder/handbuch/icons/audio_mp3.png) | `.mp3` | Musik | Audio Browser |
-| ![wav](bilder/handbuch/icons/audio_wav.png) | `.wav`, `.aiff` | Musik | Audio Browser |
+| ![wav](bilder/handbuch/icons/audio_wav.png) | `.wav`, `.aiff` | Musik — im Loop auch Sample oder Tondatei eines Wave-Clips (§16, „Tondateien im Loop: Wave-Clips“) | Audio Browser; Wave editor, Zeile **File** |
 | ![flac](bilder/handbuch/icons/audio_flac.png) | `.flac` u. ä. | Musik | Audio Browser |
 | ![ogg](bilder/handbuch/icons/audio_ogg.png) | `.ogg`, `.opus` | Musik | Audio Browser |
 | ![m4a](bilder/handbuch/icons/audio_m4a.png) | `.m4a`, `.aac` | Musik | Audio Browser |
@@ -3799,6 +3931,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.206.0 | 2026-11-02 | Session 171 (Stufe 15, Sessions 169–171). §16 neu „Tondateien im Loop: Wave-Clips“ — *New wave clip...*, *Record wave clip...* mit *Measure latency*, der Wave editor (Ausschnitt, Gain, Blenden, *Follow tempo*, *Pitch method*, Spuren Expression, Pitch und Autotune mit *Detect notes*), *Bounce to wave clip*, *Bounce again*, *Revert to source*; „Effekte am Clip“ mit dem Baustein **Sidechain**; „Eine Loop-Datei von Hand“ mit `wave`, `id`, `sidechain`. §17: `.wav` auch als Tondatei eines Wave-Clips. |
 | 1.205.0 | 2026-10-31 | Session 168. §16 Raster und Swing im Kopf des Panels Loop neben BPM (bisher im Drum-Editor); in Drum- und Instrument-Editor die Zeile „Grid of the loop“ mit **Swing offset** je Muster. |
 | 1.204.0 | 2026-10-31 | Session 167. §16 NEU „Muster, Clips und Spuren als Dateien“: `.lvpattern`, `.lvclip`, `.lvtrack` — Export und Import an der Taktachse, Umrechnung nach Schlägen, gleiche Namen, Publish; §17 die drei dazu und `.lvchords`, `.lvp` mit Icons. |
 | 1.203.0 | 2026-10-23 | Session 147. §17 Dateitypen: `.lvinstbodyplan` (Bauplan eines Instrumentkörpers) und `.lvinstbody` (gerechneter Körper) mit ihren Icons (Entscheid IC1 a). |

@@ -1600,6 +1600,7 @@ void LoopPanel::zeigeStand()
     QStringList zeilen = m_ladeBericht;
     zeilen << m_spieler.bericht();
     zeilen << m_freezeBericht;
+    zeilen << m_bounceBericht;  // 15k-2: was beim Bounce nicht ging (fehlte bis S171 in der Zeile)
     const QString text = zeilen.join(QLatin1Char('\n'));
     setzeText(m_bericht, text);
     m_bericht->setVisible(!text.isEmpty());

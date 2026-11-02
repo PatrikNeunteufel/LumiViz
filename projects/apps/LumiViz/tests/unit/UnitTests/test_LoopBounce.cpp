@@ -36,6 +36,7 @@
 #include <QApplication>
 #include <QContextMenuEvent>
 #include <QFileInfo>
+#include <QLabel>
 #include <QMenu>
 #include <QSettings>
 #include <QTemporaryDir>
@@ -329,6 +330,21 @@ TEST_SUITE("LoopBounce")
             CHECK(panel.loop().kanaele[0].clips[0].muster == QStringLiteral("Keys"));
             CHECK(panel.loop().kanaele[0].clips[0].wiederholungen == 2);
             CHECK(panel.loop().kanaele[0].clips[0].effekte.reihe.size() == 1);
+
+            // S171: aendert sich der Clip waehrend des Rechnens, ersetzt Bounce nichts — und die
+            // Berichtzeile des Panels sagt es (bis S171 stand es nur in `bounceBericht()`)
+            auto* bericht = panel.findChild<QLabel*>(QStringLiteral("loopReport"));
+            REQUIRE(bericht != nullptr);
+            fang.waehle = QStringLiteral("Bounce to wave clip");
+            rechts(achse, achse.clipRechteck(0, 0).center());
+            REQUIRE(panel.bouncet());
+            Loop waehrenddessen = panel.loop();
+            musterIn(waehrenddessen, QStringLiteral("Keys"))->noten[1].hoehe = 69;
+            panel.bearbeite(waehrenddessen, QStringLiteral("Edit notes"));
+            panel.warteAufBounce();
+            CHECK(panel.loop().kanaele[0].clips[0].muster == QStringLiteral("Keys"));
+            CHECK(panel.bounceBericht().contains(QStringLiteral("The clip changed while bouncing — nothing was replaced")));
+            CHECK(bericht->text().contains(QStringLiteral("The clip changed while bouncing — nothing was replaced")));
         }
         tonspeicher().leere();
         setzeEigenenSampleOrdnerFuerTests({});

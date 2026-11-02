@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.312.0
+> **Version:** 1.313.0
 > **Datum:** 2026-11-01 (Sessions 164 bis 170)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2628,9 +2628,9 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     ~~Icons für `.lvloop`, `.lvinst`, `.lvdata`~~ (seit S120); Wunsch an CMakeCraft: Daten-Ordner
     einer App als Angabe in `Solution.json`. Folge von D9 a: **eine unter
     `asset/` geänderte Datei sieht `LumiViz.exe` erst nach einem Bau**
-  - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — in Arbeit seit 2026-10-31 (S168): 15a bis 15l
-    erledigt (S169–S171), nächster Schritt 15m, Teilplan in
-    `Loop_Konzept.md` §4p. ⬜ **Im Programm ungesehen bzw. ungehört:** Wave editor (15d, Bilder
+  - 🟠 **15 Wave-Clips (Tonspuren wie Gesang) und Autotune** — gebaut 2026-11-02 (S171; voller Lauf 1753 / 1753
+    unter beiden Compilern), Plan in `Loop_Konzept.md` §4p. ⬜ **Sichttest:** `.claude/handover/Sichttest_WaveClips.md`
+    (W, E, T, A, R, B, S, X, Urteile U1–U4). **Im Programm ungesehen bzw. ungehört:** Wave editor (15d, Bilder
     `.claude/handover/wave_editor_15d.png`), Wave-Clips in der Taktachse (15e, `wave_achse_15e.png`), *Record wave
     clip* mit *Nothing — record right away*, Leuchte und stillem Einzählen (MH2 a, LD1 a), die Spur Pitch (15f), die
     Spur Autotune (15i, Bild `.claude/handover/wave_autotune_15i.png`; Hören mit eigener Aufnahme), *Follow tempo*
@@ -6331,6 +6331,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.313.0 | 2026-11-02 | Session 171. §6 Loop: 15m — Stufe 15 gebaut; Handbuch 1.206.0, Sichttest-Liste `Sichttest_WaveClips.md`; Bericht von Bounce jetzt in der Zeile des Panels. |
 | 1.312.0 | 2026-11-02 | Session 171. §6 Loop: 15l gebaut (Steuersignal, Baustein *Sidechain*, Kennung je Kanal, Fassung 17; ST1 a, ST2 a), nächster Schritt 15m; im Programm ungesehen. |
 | 1.311.0 | 2026-11-01 | Session 170. §6 Loop: 15k-2 gebaut (*Bounce*), nächster Schritt 15l; im Programm ungesehen. |
 | 1.310.0 | 2026-11-01 | Session 170. §6 Loop: 15j gebaut (*Follow tempo*), nächster Schritt 15k-2; im Programm ungesehen. §7 Idee: bessere Tonhöhenerkennung für Autotune. |
