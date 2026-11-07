@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.3.0
-> **Datum:** 2026-11-03 (Session 173)
+> **Version:** 0.4.0
+> **Datum:** 2026-11-07 (Session 174)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; nächster Schritt der Auftrag an CMakeCraft (§5a, CC1 a)
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a); nächster Schritt 34a
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -370,6 +370,27 @@ IC-Instrumenten hören will (dann der Host als eigene Stufe vor 34, die Biblioth
 4. Erster Einsatz STATIC mit Quellen in LumiViz (`LibraryCreate.cmake:138–170`) — kein neuer Bau in CMakeCraft, aber
    als Prüffall in die Abnahme.
 
+✅ **Erledigt S174: CMakeCraft v0.14.0** (`8b68d25`), Pin gewechselt, voller Lauf 1753 / 1753 unter beiden Compilern.
+Gebaut nach Auftrag und Nachtrag CC (Entscheide P1 a–P3 a in der CC-Sitzung): `compile_options` PRIVATE an
+`libraries[]` (E105 bei INTERFACE); Paket `{ "name", "library" }` mit `src/`, `include/`, `externals/<ext>/`, erzeugtem
+`CMakeLists.txt` (Sprachregeln `/permissive- /Zc:… NOMINMAX`, Ausnahmen/RTTI, `CXX_STANDARD`/`CXX_EXTENSIONS` wie in
+LumiViz — hier OFF über das Preset), übertragenen Defines lokaler Externals (`POCKETFFT_NO_MULTITHREADING`) mit
+Prüfsumme, `VERSION`, `SHA256SUMS` mit LF (E106 bei nicht Abbildbarem). Gegenprüfung mit einer Probe-Bibliothek: Schalter
+nur an der Probe, Bezieher mit einfachem CMake unter clang und cl gleicher Abdruck; der Befund CRLF in den erzeugten
+Dateien wurde vor dem Release behoben. **Für 34c:** privater Kopf muss in `Source.cmake` unter `_HEADERS` stehen, sonst
+fehlt er im Paket; `.gitattributes` `eol=lf` unter `projects/libs/` (LV-4); `std::sin`/`exp` aus UCRT/glibc können je
+Plattform im letzten Bit abweichen (Bezug je Plattform, IK2-5 a).
+
+**Abgelegt S174** als `auftrag/CMakeCraft_Auftrag_v0.14.0.md` im Sync (gelesen gegen CMakeCraft `2d0656f`). Befund zu
+Punkt 3: heute kann es CMakeCraft nicht — ein Paket kopiert nur Dateien (`Packages.cmake`: `headers_of`, `binary_of`,
+`output_dir_of`, `from`), ohne Quellenliste, CMake-Beschreibung oder Schalter; der Bezieher eines Archive External ist
+selbst CMakeCraft und linkt nichts. Der Auftrag verlangt deshalb ein **Quellpaket** einer Bibliothek: Quellen, Köpfe,
+erzeugtes einfaches `CMakeLists.txt` mit den `compile_options` wörtlich (Generator Expressions je Compiler), lokale
+Header-Externals (pocketfft) im Paket, `VERSION` der Bibliothek. Aus TP1 a abgeleitet und **neu** dazu: `SHA256SUMS` über
+jede Datei des Pakets, weil IC den entpackten Ordner prüft, nicht das Zip; in IC dafür `.gitattributes` `* -text` (sonst
+CRLF beim Checkout, wie bei pocketfft). Für 34c gemerkt: die Schalter gelten PRIVATE — gerechnet wird in `.cpp`-Dateien,
+nicht in Köpfen, sonst übersetzt der Bezieher die Rechnung mit seinen Schaltern.
+
 ## 6. Teilplan
 
 **Stufe 34 — Anbindung der Rechenkerne** (Entwurf S173, nach IK2-0 bis IK2-13; Nummern fest, Wachstum nur als
@@ -409,6 +430,7 @@ Cloud-Sitzungen für Kerne mehr gewollt sind.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.4.0 | 2026-11-07 | Session 174. §5a: Auftrag v0.14.0, Befund zu Punkt 3 (Pakete ohne CMake-Beschreibung), Quellpaket mit `SHA256SUMS` (neu, aus TP1 a abgeleitet), Merker PRIVATE für 34c; 34b erledigt (v0.14.0 veröffentlicht, Pin gewechselt, voller Lauf), Merker für 34c aus der Gegenprüfung. |
 | 0.3.0 | 2026-11-03 | Session 173. §5 IK2-0 a (drei Schichten) mit Nachprüfung CMakeCraft STATIC; IK2-1 c (Bibliotheken unter `projects/libs/`, IC bezieht sie als Paket); IK2-2 a (reichere Fassung je Baustein, Kern und Messung, Übernahme-Journal, nichts geht verloren); IK2-3 a (`Tonkern`, Frames); IK2-4 a (Fassung 21, Parametertafel); IK2-5 a (E1 a an den Bibliotheken, Bezüge je Plattform); IK2-6 a (4,6 %, Verhältnis zum Flügel als Kennzahl); IK2-7 a (Fundament zuerst, Stufe 32 geht in 34 auf, C/D); IK2-8 a (echte Namen, `synth_` nur bei Kollision); IK2-9 durch Z2 a; CC1 a und §5a (Aufträge an CMakeCraft); IK2-10 a (Bezug als Zahl der Tafel, LUFS, Körper, Stereo); IK2-11 a (gestimmte Werte als Daten mit Abdruck-Wächter); IK2-2-1 a (Korrektur: pocketfft aus IC, neuer und belegt); IK2-12 a (Quellenregister mit Wächter, Recherche bleibt in IC); IK2-13 a (eine Skizze für alle Kerne zuerst); §6 Teilplan Stufe 34 (34a–34l) und TP1 a (Paket als Fassung im IC-Repo). Wortlaut der Vorlage IK2-0 bleibt darunter. |
 | 0.2.0 | 2026-11-02 | Session 172. §4 um T2 a, Architektur, Plugins, Messung (M1 a) und Loop-Zahlen ergänzt; §5 M1 a und die Vorlage IK2-0 im Wortlaut (Antwort in S173). |
 | 0.1.0 | 2026-11-02 | Session 172. Angelegt: Ziel, Voraussetzungen (Patrik S171), Zielbild Z1 bis Z4 (Patrik S172, je a), Ausgangslage; Entscheide und Teilplan offen. |

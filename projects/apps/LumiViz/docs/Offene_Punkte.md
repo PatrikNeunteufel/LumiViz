@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.315.0
-> **Datum:** 2026-11-03 (Sessions 164 bis 173)
+> **Version:** 1.316.0
+> **Datum:** 2026-11-07 (Sessions 164 bis 174)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2835,8 +2835,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Z4 a; IK2-0 a bis IK2-13 a, IK2-2-1 a, CC1 a, TP1 a — Kern- und Mess-Bibliothek unter `projects/libs/` (IK2-1 c), eine
   abstrakte Ton-Schnittstelle `Tonkern` in Frames, `.lvinst` Fassung 21 mit Parametertafel, Übernahme-Journal, der
   Flügel als erster Kern bitgleich; die bisherige **Stufe 32 (Upright) geht in Stufe 34 auf** (IK2-7 a), der Rest von
-  Stufe 31 folgt auf der Bibliothek. Teilplan **34a–34l** im Konzept §6. **Nächster Schritt:** Auftrag an CMakeCraft
-  v0.14.0 nach §5a (CC1 a) im Sync `sync_LumiViz_CMakeCraft`, dann 34a (Skizze). Bei IC offen: IC-A8, IC-A9 Schritt 2,
+  Stufe 31 folgt auf der Bibliothek. Teilplan **34a–34l** im Konzept §6. **34b erledigt 2026-11-07 (S174, CMakeCraft
+  v0.14.0, Pin gewechselt, voller Lauf 1753 / 1753 unter beiden Compilern).** Nächster Schritt 34a (Skizze), dann 34c. Bei IC offen: IC-A8, IC-A9 Schritt 2,
   IC-A10 Schritt 2 und 3, IC-A11; der Stand von IC Session 5 liegt dort uncommittet.
 
 ## 7. Backlog (bewusst nichts tun)
@@ -6341,6 +6341,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.316.0 | 2026-11-07 | Session 174 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34b erledigt — CMakeCraft v0.14.0 (`compile_options` je Bibliothek, Quellpaket ohne CMakeCraft), Gegenprüfung mit Probe-Bibliothek, Pin gewechselt, voller Lauf 1753 / 1753 unter Release-clang und Testing-MSVC. |
 | 1.315.0 | 2026-11-03 | Session 173 (Opus 5.5). §6 Anbindung InstrumentsCalculation: Planung fertig — IK2-0 bis IK2-13, IK2-2-1 a, CC1 a, TP1 a, Teilplan Stufe 34 (34a–34l); Stufe 32 geht in Stufe 34 auf. Nichts gebaut. |
 | 1.314.0 | 2026-11-02 | Session 172 (Fable 5.1). §6 neu: Anbindung InstrumentsCalculation (IK2) — Zielbild Z1 a bis Z4 a, M1 a, Berichte und Messung unter `docs/modellierung/anbindung-ic/`, Konzept `Instrumente_IC_Konzept.md` 0.2.0; IK2-0 vorgelegt, Antwort in S173. Nichts gebaut. |
 | 1.313.0 | 2026-11-02 | Session 171. §6 Loop: 15m — Stufe 15 gebaut; Handbuch 1.206.0, Sichttest-Liste `Sichttest_WaveClips.md`; Bericht von Bounce jetzt in der Zeile des Panels. |

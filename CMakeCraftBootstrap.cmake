@@ -93,7 +93,10 @@ if(NOT EXISTS "${_craft_dir}/CMakeCraft.cmake")
             set(_craft_ok TRUE)
             break()
         endif()
-        message(STATUS "[Bootstrap]   ... fehlgeschlagen (${_craft_rc})")
+        # Die Meldung von git mit ausgeben: ohne sie laesst sich ein Fehlschlag,
+        # den ein Fallback danach ueberdeckt, nicht mehr klaeren.
+        string(STRIP "${_craft_err}" _craft_err_text)
+        message(STATUS "[Bootstrap]   ... fehlgeschlagen (${_craft_rc}): ${_craft_err_text}")
     endforeach()
 
     if(NOT _craft_ok)
