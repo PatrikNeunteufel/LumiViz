@@ -293,18 +293,11 @@ void richteTastatur(Tastatur& tastatur);
 /// So schnell trifft der Hammer bei voller Lautstaerke der Note, in m/s (KTH,
 /// forte, „about 5 m/s“; Stulov: „not greater than 5 m/s“).
 inline constexpr double kHammerTempoMax = 5.0;
-/// Der Abstand der Stufen in dB der Hammergeschwindigkeit — bis 31d ihn festlegt.
-inline constexpr double kAnschlagSchrittDb = 1.0;
-/// Die leiseste Stufe (−40 dB, 0,05 m/s); darunter wird nur der Pegel leiser.
-inline constexpr int kAnschlagStufeMin = -40;
 
-/// Die Stufe einer Note mit dieser Lautstaerke: round(20·lg laut / Schritt), auf
-/// `kAnschlagStufeMin` … 0. Lautstaerke 0 oder weniger: die leiseste.
-[[nodiscard]] int anschlagStufe(double laut);
-/// Die Hammergeschwindigkeit einer Stufe in m/s: vMax · 10^(stufe·Schritt/20).
+// Die Stufe selbst (`kern::anschlagStufe`, `kern::anschlagRest`, `kern::kAnschlagStufeMin`: −40 dB, 0,05 m/s) steht
+// seit S175 in InstrumentCore/Anschlag.hpp (KN2 a).
+
+/// Die Hammergeschwindigkeit einer Stufe in m/s: vMax · `kern::anschlagFaktor(stufe)`.
 [[nodiscard]] double hammerTempo(int stufe);
-/// Der Pegel, der den Unterschied zwischen Note und Stufe genau ausgleicht:
-/// laut / 10^(stufe·Schritt/20).
-[[nodiscard]] double anschlagRest(double laut, int stufe);
 
 }  // namespace lumi::loop

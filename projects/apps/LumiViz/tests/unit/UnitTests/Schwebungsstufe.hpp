@@ -179,12 +179,12 @@ inline std::vector<std::vector<lumi::messung::TonStruktur>> strukturenDesModells
     std::iota(reihe.begin(), reihe.end(), std::size_t{0});
     std::stable_sort(reihe.begin(), reihe.end(), [&](std::size_t a, std::size_t b) { return dauer[(a / je) % tasten.size()] > dauer[(b / je) % tasten.size()]; });
     std::vector<lumi::messung::TonHuellen> huellen(zahl);
-    parallelJe(static_cast<int>(zahl), poolThreads(), [&](int i) {
-        const std::size_t auftrag = reihe[static_cast<std::size_t>(i)];
+    parallelJe(zahl, [&](std::size_t i) {
+        const std::size_t auftrag = reihe[i];
         const std::size_t taste = (auftrag / je) % tasten.size();
         const std::size_t saite = auftrag / (je * tasten.size());
         huellen[auftrag] = messeEbene(instrumente[saite], tasten[taste], kSuchEbenen[auftrag % je], dauer[taste]).huellen;
-    });
+    }, poolThreads());
     std::vector<std::vector<lumi::messung::TonStruktur>> alle(saiten.size(), std::vector<lumi::messung::TonStruktur>(tasten.size()));
     for (std::size_t s = 0; s < saiten.size(); ++s)
         for (std::size_t t = 0; t < tasten.size(); ++t)

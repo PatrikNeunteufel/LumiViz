@@ -35,11 +35,11 @@ int stegpunktVon(const koerper::Koerper& koerper, int taste)
 }
 
 std::vector<double> bodenAntwort(const std::vector<koerper::ModeImKoerper>& moden, std::size_t stegpunkt,
-                                 std::size_t hoerort, int rate, double laengeS, const Fft& umsetzung)
+                                 std::size_t hoerort, int rate, double laengeS, const kern::Fft& umsetzung)
 {
     const auto frames = static_cast<std::size_t>(std::ceil(laengeS * rate));
     if (frames == 0) return {};
-    const std::size_t n = zweierpotenzAb(frames);
+    const std::size_t n = kern::zweierpotenzAb(frames);
     const std::vector<std::complex<double>> h = koerper::antwortSpektrum(moden, stegpunkt, hoerort, rate, n);
     std::vector<double> zeit(n);
     umsetzung.rueckwaerts(h, zeit);
@@ -47,11 +47,11 @@ std::vector<double> bodenAntwort(const std::vector<koerper::ModeImKoerper>& mode
     return zeit;
 }
 
-std::vector<double> schalldruck(std::span<const float> kraft, std::span<const double> antwort, const Fft& umsetzung)
+std::vector<double> schalldruck(std::span<const float> kraft, std::span<const double> antwort, const kern::Fft& umsetzung)
 {
     std::vector<double> f(kraft.size());
     for (std::size_t i = 0; i < kraft.size(); ++i) f[i] = static_cast<double>(kraft[i]) * kHammerKraftBezug;
-    return falte(umsetzung, f, antwort);
+    return kern::falte(umsetzung, f, antwort);
 }
 
 namespace
@@ -127,7 +127,7 @@ std::shared_ptr<const Klang> bodenAntwortFuer(const BodenImKlang& boden, int tas
     return klang;
 }
 
-void falteMitBoden(std::span<const float> kraft, const Klang& antwort, std::vector<float>& stereo, const Fft& umsetzung)
+void falteMitBoden(std::span<const float> kraft, const Klang& antwort, std::vector<float>& stereo, const kern::Fft& umsetzung)
 {
     const auto lang = static_cast<std::size_t>(antwort.frames());
     if (kraft.empty() || lang == 0)
@@ -136,7 +136,7 @@ void falteMitBoden(std::span<const float> kraft, const Klang& antwort, std::vect
         return;
     }
     const std::size_t laenge = kraft.size() + lang - 1;
-    const std::size_t n = zweierpotenzAb(laenge);
+    const std::size_t n = kern::zweierpotenzAb(laenge);
     // die Kraft einmal ins Spektrum, je Seite die Antwort (FT1 a)
     std::vector<double> zeit(n, 0.0);
     for (std::size_t i = 0; i < kraft.size(); ++i) zeit[i] = static_cast<double>(kraft[i]) * kHammerKraftBezug;

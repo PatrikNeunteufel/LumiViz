@@ -12,7 +12,7 @@
 #pragma once
 
 #include "InstrumentBody/Koerper.hpp"
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 #include "loop/Rechenkern.hpp"
 
 #include <QString>
@@ -35,12 +35,12 @@ namespace lumi::loop
 /// `laengeS` lang (AW1 a, AW2 a: `antwortLaengeS`, bis −60 dB). Gebildet im Spektrum auf der naechsten
 /// Zweierpotenz — sie ist mindestens so lang wie die Antwort, zurueck faltet sich nur, was unter −60 dB liegt.
 [[nodiscard]] std::vector<double> bodenAntwort(const std::vector<koerper::ModeImKoerper>& moden, std::size_t stegpunkt,
-                                               std::size_t hoerort, int rate, double laengeS, const Fft& umsetzung = fft());
+                                               std::size_t hoerort, int rate, double laengeS, const kern::Fft& umsetzung = kern::fft());
 
 /// Der Schalldruck in Pa: die Kraft eines Tons (in Einheiten von `kHammerKraftBezug` N) gefaltet mit
 /// der Antwort (Pa/N). Laenge Ton plus Antwort weniger eins (FT1 a).
 [[nodiscard]] std::vector<double> schalldruck(std::span<const float> kraft, std::span<const double> antwort,
-                                              const Fft& umsetzung = fft());
+                                              const kern::Fft& umsetzung = kern::fft());
 
 // --- im Klang (Schritt 3: AW1 a, FT1 a, PG1 a, SB1 a) -----------------------------------
 
@@ -69,6 +69,6 @@ struct BodenImKlang
 /// links und rechts, in Einheiten von `kSchalldruckBezug` (PG1 a), verschraenkt in `stereo`
 /// (2 × (Ton + Antwort − 1) Werte).
 void falteMitBoden(std::span<const float> kraft, const Klang& antwort, std::vector<float>& stereo,
-                   const Fft& umsetzung = fft());
+                   const kern::Fft& umsetzung = kern::fft());
 
 }  // namespace lumi::loop

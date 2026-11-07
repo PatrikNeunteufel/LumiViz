@@ -25,7 +25,7 @@
 #include "Zielsumme.hpp"
 
 #include "audio/WavDatei.hpp"
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 #include "loop/HammerSaite.hpp"
 
 #include <QDateTime>
@@ -189,7 +189,7 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Salamander gegen sich selbst (LUMIVIZ_SAL
         REQUIRE_MESSAGE(wav.has_value(), salamanderDatei(ordner, taste, e).string());
         std::array<KanalMessung, 2> jeKanal;
         TonHuellen h;
-        messungen.push_back(messeTon(wav->stereo, wav->rate, tastenFrequenz(taste.midi), lumi::loop::fft(), false, nullptr, &jeKanal,
+        messungen.push_back(messeTon(wav->stereo, wav->rate, tastenFrequenz(taste.midi), lumi::kern::fft(), false, nullptr, &jeKanal,
                                      e >= kKurvenEbeneAb ? &h : nullptr));
         einzeln.push_back(jeKanal);
         if (e >= kKurvenEbeneAb) huellen.push_back(std::move(h));

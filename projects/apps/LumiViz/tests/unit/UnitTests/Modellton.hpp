@@ -11,7 +11,7 @@
  * 1,5 s mehr (K5 a, mindestens 2 s), gemessen mit `messeTon` (Kanalmittel, `huellen`) und an der Struktur
  * (`modellGroessen`), verglichen mit `vergleiche` (`Zielsumme.hpp`). `werteAus` rechnet viele Auswertungen zugleich:
  * alle Toene aller Saiten auf einem Pool, die laengsten zuerst — jeder Ton rechnet fuer sich, das Ergebnis ist dasselbe
- * wie nacheinander. Hoechstens `kPoolHoechstens` Threads: der Prozessor steht an der Waermegrenze, mehr machen die
+ * wie nacheinander (`kern::parallelJe`, InstrumentCore). Hoechstens `kern::kPoolHoechstens` Threads: der Prozessor steht an der Waermegrenze, mehr machen die
  * Rechnung langsamer (S156, `LUMIVIZ_75_ZEIT`).
  ****************************************************************************************
  */
@@ -23,7 +23,8 @@
 #include "Strukturmessung.hpp"
 #include "Zielsumme.hpp"
 
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
+#include "InstrumentCore/Pool.hpp"
 #include "loop/HammerSaite.hpp"
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
@@ -43,25 +44,9 @@
 namespace modelltest
 {
 
-/// So viele Threads rechnen hoechstens (S156: am schnellsten, mehr werden langsamer — Waermegrenze).
-inline constexpr unsigned kPoolHoechstens = 11;
-
-inline unsigned poolThreads()
-{
-    return std::max(1u, std::min(kPoolHoechstens, std::thread::hardware_concurrency()));
-}
-
-/// `einer(i)` fuer i = 0 … zahl − 1 auf `threads` Threads; jede Aufgabe rechnet fuer sich.
-inline void parallelJe(int zahl, unsigned threads, const std::function<void(int)>& einer)
-{
-    std::atomic<int> naechste{0};
-    std::vector<std::thread> arbeiter;
-    for (unsigned a = 0; a < std::max(1u, threads); ++a)
-        arbeiter.emplace_back([&] {
-            for (int i = naechste++; i < zahl; i = naechste++) einer(i);
-        });
-    for (std::thread& t : arbeiter) t.join();
-}
+// Der Pool (`parallelJe`, `poolThreads`, hoechstens 11 Threads) steht seit S175 in InstrumentCore/Pool.hpp (KN2 a).
+using lumi::kern::parallelJe;
+using lumi::kern::poolThreads;
 
 /// Der Fluegel der Probe und der Suche mit der Saite `saite` (Boden `steinway_d`, ungedaempft ab 89 nach D1 a).
 inline lumi::loop::Instrument fluegelMit(const lumi::loop::HammerSaite& saite)
@@ -99,7 +84,7 @@ inline EbenenMessung messeEbene(const lumi::loop::Instrument& instrument, int mi
     a.anschlagStufe = stufeVonEbene(ebene);
     const lumi::loop::Klang klang = lumi::loop::rendereTon(instrument, a, kRate);
     EbenenMessung m;
-    m.messung = lumi::messung::messeTon(klang.daten, kRate, lumi::messung::tastenFrequenz(midi), lumi::loop::fft(), false, nullptr, nullptr,
+    m.messung = lumi::messung::messeTon(klang.daten, kRate, lumi::messung::tastenFrequenz(midi), lumi::kern::fft(), false, nullptr, nullptr,
                                         &m.huellen);
     return m;
 }
@@ -123,8 +108,8 @@ inline std::vector<lumi::messung::GroesseJeEbene> modellAn(const lumi::loop::Ham
     const lumi::loop::Instrument instrument = fluegelMit(saite);
     const int dauerMs = dauerMsAus(struktur);
     std::vector<EbenenMessung> ebenen(kSuchEbenen.size());
-    parallelJe(static_cast<int>(kSuchEbenen.size()), poolThreads(),
-               [&](int i) { ebenen[static_cast<std::size_t>(i)] = messeEbene(instrument, midi, kSuchEbenen[static_cast<std::size_t>(i)], dauerMs); });
+    parallelJe(kSuchEbenen.size(),
+               [&](std::size_t i) { ebenen[i] = messeEbene(instrument, midi, kSuchEbenen[i], dauerMs); }, poolThreads());
     return groessenAus(ebenen, struktur);
 }
 
@@ -157,12 +142,12 @@ inline std::vector<Auswertung> werteAus(const std::vector<lumi::loop::HammerSait
     std::iota(reihe.begin(), reihe.end(), std::size_t{0});
     std::stable_sort(reihe.begin(), reihe.end(), [&](std::size_t a, std::size_t b) { return dauer[(a / je) % tasten.size()] > dauer[(b / je) % tasten.size()]; });
     std::vector<EbenenMessung> messungen(zahl);
-    parallelJe(static_cast<int>(zahl), poolThreads(), [&](int i) {
-        const std::size_t auftrag = reihe[static_cast<std::size_t>(i)];
+    parallelJe(zahl, [&](std::size_t i) {
+        const std::size_t auftrag = reihe[i];
         const std::size_t taste = (auftrag / je) % tasten.size();
         const std::size_t saite = auftrag / (je * tasten.size());
         messungen[auftrag] = messeEbene(instrumente[saite], tasten[taste], kSuchEbenen[auftrag % je], dauer[taste]);
-    });
+    }, poolThreads());
 
     std::vector<Auswertung> alle(saiten.size());
     for (std::size_t s = 0; s < saiten.size(); ++s)

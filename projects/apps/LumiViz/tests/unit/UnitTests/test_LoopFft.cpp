@@ -1,7 +1,7 @@
 /**
  ****************************************************************************************
  * @file   test_LoopFft.cpp
- * @brief  Loop, Stufe 31c-7: die reelle FFT hinter `lumi::loop::Fft` und die Faltung
+ * @brief  Loop, Stufe 31c-7: die reelle FFT hinter `lumi::kern::Fft` und die Faltung
  *         (docs/audio/Spielweisen_Konzept.md §4.1, Entscheide Patrik S149/S150: FT1 a, FF1 a)
  *
  * @author Patrik Neunteufel
@@ -21,7 +21,7 @@
 
 #include <doctest.h>
 
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 
 #include <cmath>
 #include <complex>
@@ -29,7 +29,7 @@
 #include <numbers>
 #include <vector>
 
-using namespace lumi::loop;
+using namespace lumi::kern;
 
 namespace
 {

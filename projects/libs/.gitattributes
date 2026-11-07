@@ -1,0 +1,6 @@
+# projects/libs/ — Zeilenenden fest LF (LV-4, Sync LumiViz/CMakeCraft S174; Instrumente_IC_Konzept.md §5a, 34c)
+#
+# Ein Quellpaket von CMakeCraft (package_<name>) kopiert die Bytes aus dem Arbeitsbaum und schreibt SHA256SUMS
+# darueber; IC prueft den entpackten Ordner. Mit CRLF aus einem Windows-Checkout (core.autocrlf true) hiessen die
+# Pruefsummen auf jedem Rechner anders. Deshalb im Arbeitsbaum ueberall LF.
+* text=auto eol=lf

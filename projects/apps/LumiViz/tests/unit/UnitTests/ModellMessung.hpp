@@ -16,7 +16,7 @@
 #include "Fluegelmessung.hpp"
 
 #include "loop/Boden.hpp"
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
@@ -70,7 +70,7 @@ inline lumi::loop::Klang ton(const lumi::loop::Instrument& instrument, int midi,
 inline std::array<lumi::messung::KanalMessung, 2> messe(const lumi::loop::Instrument& instrument, int midi, int stufe)
 {
     const bool phantome = midi <= lumi::messung::kPhantomBis && stufe == 0;
-    return lumi::messung::messeTon(ton(instrument, midi, stufe).daten, kRate, lumi::messung::tastenFrequenz(midi), lumi::loop::fft(),
+    return lumi::messung::messeTon(ton(instrument, midi, stufe).daten, kRate, lumi::messung::tastenFrequenz(midi), lumi::kern::fft(),
                                    phantome);
 }
 
@@ -127,7 +127,7 @@ inline lumi::messung::TastenWerte modenWerte(const lumi::loop::HammerSaite& sait
     const double dauerS = midi <= 72 ? 12.0 : 8.0;
     const std::vector<double> ton = modenTon(saite, midi, stufe, dauerS, teiltoeneMax);
     const lumi::messung::KanalMessung m =
-        lumi::messung::messeKanal(ton, kRate, lumi::messung::tastenFrequenz(midi), lumi::loop::fft(), false);
+        lumi::messung::messeKanal(ton, kRate, lumi::messung::tastenFrequenz(midi), lumi::kern::fft(), false);
     const std::vector<std::array<lumi::messung::KanalMessung, 2>> ebenen(lumi::messung::kEbenen, {m, m});
     return lumi::messung::verdichte(midi, ebenen);
 }

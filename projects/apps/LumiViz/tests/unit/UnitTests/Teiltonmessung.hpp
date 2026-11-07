@@ -7,7 +7,7 @@
  *
  * @details
  * Ein Code fuer *Salamander* und fuer die gerechneten Toene (UF3 a). Reines C++ ohne Qt,
- * nur gegen die Schnittstelle `lumi::loop::Fft` (IK1). Jede Ausgleichsrechnung ist linear
+ * nur gegen die Schnittstelle `lumi::kern::Fft` (IK1). Jede Ausgleichsrechnung ist linear
  * (Kipppunkt von UF3 a: nichtlinear mit mehreren Parametern).
  *
  * Ablauf von `miss`:
@@ -58,7 +58,7 @@
 
 #pragma once
 
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -205,7 +205,7 @@ inline double db(double amplitude)
 class Spektrum
 {
 public:
-    Spektrum(const lumi::loop::Fft& fft, std::size_t fensterLaenge, std::size_t n)
+    Spektrum(const lumi::kern::Fft& fft, std::size_t fensterLaenge, std::size_t n)
         : m_fft(fft), m_fenster(blackmanHarris(fensterLaenge)), m_zeit(n), m_frei(n / 2 + 1), m_db(n / 2 + 1)
     {
         double summe = 0.0;
@@ -248,7 +248,7 @@ public:
     }
 
 private:
-    const lumi::loop::Fft& m_fft;
+    const lumi::kern::Fft& m_fft;
     std::vector<double> m_fenster;
     std::vector<double> m_zeit;
     std::vector<std::complex<double>> m_frei;
@@ -661,7 +661,7 @@ inline double median(std::vector<double> werte)
 }  // namespace detail
 
 /// Einen Ton messen. `nennFrequenz` ist die Tonhoehe der Taste (der erste Teilton liegt nahe).
-inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz, const lumi::loop::Fft& fft,
+inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz, const lumi::kern::Fft& fft,
                      const Einstellungen& einst = {})
 {
     Ergebnis e;
@@ -683,7 +683,7 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
     const auto langWunsch = static_cast<std::size_t>(std::max(1.0, 40.0 / nennFrequenz) * rate);
     const std::size_t langLaenge = std::min(verfuegbar, langWunsch);
     if (langLaenge < 1024) return e;
-    const std::size_t langN = 4 * lumi::loop::zweierpotenzAb(langLaenge);
+    const std::size_t langN = 4 * lumi::kern::zweierpotenzAb(langLaenge);
     detail::Spektrum lang(fft, langLaenge, langN);
     lang.rechne(ton, langVon);
     std::vector<double> alle(lang.bins());
@@ -763,7 +763,7 @@ inline Ergebnis miss(std::span<const double> ton, int rate, double nennFrequenz,
     // 3. Huellkurven
     const double fensterS = std::clamp(einst.fensterPerioden / e.f0, 0.02, 0.5);
     const auto fensterL = static_cast<std::size_t>(fensterS * rate);
-    const std::size_t kurzN = lumi::loop::zweierpotenzAb(fensterL);
+    const std::size_t kurzN = lumi::kern::zweierpotenzAb(fensterL);
     const double kurzBinHz = static_cast<double>(rate) / static_cast<double>(kurzN);
     const auto schritt = static_cast<std::size_t>(std::max(1.0, einst.schrittS * rate));
     const std::size_t rahmen = (ton.size() - einsatz) / schritt;
@@ -1085,14 +1085,14 @@ inline std::vector<double> terzMitten()
 /// Der Pegel je Terzband (`terzMitten`) ueber `dauerS` ab dem Einsatz: die Leistung des Spektrums
 /// (Hann) im Band, in dB — fuer die geglaettete Klangfarbe des Bodens (UF6 a). Nur Verhaeltnisse
 /// zaehlen; gleich gerechnet fuer Aufnahme und Modell.
-inline std::vector<double> terzPegel(std::span<const double> ton, int rate, double einsatzS, const lumi::loop::Fft& fft,
+inline std::vector<double> terzPegel(std::span<const double> ton, int rate, double einsatzS, const lumi::kern::Fft& fft,
                                      double dauerS = 1.0)
 {
     const auto von = static_cast<std::size_t>(einsatzS * rate);
     const std::size_t laenge = std::min(ton.size() > von ? ton.size() - von : 0, static_cast<std::size_t>(dauerS * rate));
     std::vector<double> pegel(terzMitten().size(), -300.0);
     if (laenge < 256) return pegel;
-    const std::size_t n = lumi::loop::zweierpotenzAb(laenge);
+    const std::size_t n = lumi::kern::zweierpotenzAb(laenge);
     std::vector<double> zeit(n, 0.0);
     for (std::size_t i = 0; i < laenge; ++i)
         zeit[i] = ton[von + i] * (0.5 - 0.5 * std::cos(2.0 * std::numbers::pi * static_cast<double>(i) / static_cast<double>(laenge - 1)));
@@ -1123,7 +1123,7 @@ struct Phantom
 /// Spektrum ueber bis zu `dauerS` ab 50 ms nach dem Einsatz (Blackman-Harris, zweimal aufgefuellt).
 /// Gezaehlt nur, wo beide Spitzen mindestens vier Bins des Fensters auseinander liegen und die
 /// Phantomspitze 10 dB ueber dem Median des Spektrums steht (`bridgeAngle`, Messplan Tabelle A).
-inline std::vector<Phantom> phantome(std::span<const double> ton, int rate, const Ergebnis& e, const lumi::loop::Fft& fft,
+inline std::vector<Phantom> phantome(std::span<const double> ton, int rate, const Ergebnis& e, const lumi::kern::Fft& fft,
                                      int bisN = 20, double dauerS = 4.0)
 {
     std::vector<Phantom> liste;
@@ -1132,7 +1132,7 @@ inline std::vector<Phantom> phantome(std::span<const double> ton, int rate, cons
     const std::size_t verfuegbar = ton.size() > static_cast<std::size_t>(von) ? ton.size() - static_cast<std::size_t>(von) : 0;
     const std::size_t laenge = std::min(verfuegbar, static_cast<std::size_t>(dauerS * rate));
     if (laenge < 4096) return liste;
-    const std::size_t n = 2 * lumi::loop::zweierpotenzAb(laenge);
+    const std::size_t n = 2 * lumi::kern::zweierpotenzAb(laenge);
     detail::Spektrum spektrum(fft, laenge, n);
     spektrum.rechne(ton, von);
     std::vector<double> alle(spektrum.bins());

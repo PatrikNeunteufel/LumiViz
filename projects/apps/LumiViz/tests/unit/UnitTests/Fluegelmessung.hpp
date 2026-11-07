@@ -156,7 +156,7 @@ inline std::array<double, 3> huellkurveZeiten(std::span<const double> ton, int r
 
 /// Einen Kanal messen. `mitPhantomen` nur, wo sie gebraucht werden (Bass, laut — es kostet ein
 /// langes Spektrum). `huellen` (wenn gegeben) bekommt Teilton 1 bis `kKurvenTeiltoene` mit Huellkurve und Boden.
-inline KanalMessung messeKanal(std::span<const double> ton, int rate, double nennFrequenz, const lumi::loop::Fft& fft,
+inline KanalMessung messeKanal(std::span<const double> ton, int rate, double nennFrequenz, const lumi::kern::Fft& fft,
                                bool mitPhantomen, std::vector<Teilton>* huellen = nullptr)
 {
     KanalMessung m;
@@ -284,7 +284,7 @@ inline const Teilton* teiltonK(const std::vector<Teilton>& v, int k)
 }
 
 inline std::array<KanalMessung, 2> messeTon(std::span<const float> stereo, int rate, double nennFrequenz,
-                                            const lumi::loop::Fft& fft, bool mitPhantomen, TonKurven* kurven = nullptr,
+                                            const lumi::kern::Fft& fft, bool mitPhantomen, TonKurven* kurven = nullptr,
                                             std::array<KanalMessung, 2>* einzeln = nullptr, TonHuellen* huellen = nullptr)
 {
     auto [links, rechts] = trenne(stereo);

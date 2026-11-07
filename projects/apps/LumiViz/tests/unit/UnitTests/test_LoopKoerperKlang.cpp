@@ -146,7 +146,7 @@ TEST_CASE("Loop Koerper 31c-8 Antwort schnell gegen exakt (AW3-1 a)")
         kp::Koerper koerper;
         REQUIRE(ladeKoerper(ordner.filePath(name), koerper));
         const std::vector<kp::ModeImKoerper> moden = alleModen(koerper);
-        const std::size_t n = zweierpotenzAb(static_cast<std::size_t>(std::ceil(kp::antwortLaengeS(moden) * rate)));
+        const std::size_t n = lumi::kern::zweierpotenzAb(static_cast<std::size_t>(std::ceil(kp::antwortLaengeS(moden) * rate)));
         double zeitExakt = 0.0, zeitSchnell = 0.0, schlimmster = 0.0;
         for (const int taste : {30, 80})
             for (std::size_t o = 0; o < 2; ++o)
@@ -439,7 +439,7 @@ void messeKoerper(const kp::Koerper& koerper)
             sekundenSeit(t0), " s");
     const double laengeS = kp::antwortLaengeS(moden);
     const auto frames = static_cast<std::size_t>(std::ceil(laengeS * rate));
-    MESSAGE("Antwort: ", laengeS, " s, ", frames, " Abtastwerte, FFT ", zweierpotenzAb(frames), "; als float ",
+    MESSAGE("Antwort: ", laengeS, " s, ", frames, " Abtastwerte, FFT ", lumi::kern::zweierpotenzAb(frames), "; als float ",
             frames * 4.0 / 1048576.0, " MB je Antwort, 88 x 2 Hoerorte ", 176.0 * frames * 4.0 / 1048576.0, " MB");
 
     // (1) Zeit je Antwort, ein Thread

@@ -5,7 +5,7 @@
  */
 #include "loop/HammerTon.hpp"
 
-#include "loop/Eigenzerlegung.hpp"
+#include "InstrumentCore/Eigenzerlegung.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -366,7 +366,7 @@ std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double del
     mitte /= n;
     const double hoeher = std::exp2(deltaCent / 1200.0);
     // Stelle 2j + a: Saite j, Eigenrichtung a; um die Mitte verschoben (wie `chorModen`)
-    KleineMatrix a(2 * n);
+    kern::KleineMatrix a(2 * n);
     std::vector<double> senk(static_cast<std::size_t>(2 * n));
     std::vector<double> waag(static_cast<std::size_t>(2 * n));
     for (int j = 0; j < n; ++j)
@@ -384,7 +384,7 @@ std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double del
         for (int s = 0; s < 2 * n; ++s)
             a(z, s) -= sigmaV * senk[static_cast<std::size_t>(z)] * senk[static_cast<std::size_t>(s)] +
                        sigmaH * waag[static_cast<std::size_t>(z)] * waag[static_cast<std::size_t>(s)];
-    const Eigenzerlegung zer = zerlegeKlein(a);
+    const kern::Eigenzerlegung zer = kern::zerlegeKlein(a);
     // der Hammer stoesst senkrecht mit F/N, am Steg zaehlt die Summe der senkrechten Anteile
     std::vector<EbenenMode> moden;
     double groesster = 0.0;

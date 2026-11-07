@@ -1,0 +1,5 @@
+# externals/pocketfft/ — Zeilenenden fest LF (LV-4, wie projects/libs/.gitattributes)
+#
+# pocketfft reist im Quellpaket von InstrumentCore mit (externals/pocketfft/ im Paket); die Pruefsumme im README
+# (518a95c5…) gilt der Datei mit LF.
+* text=auto eol=lf

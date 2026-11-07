@@ -33,6 +33,7 @@
 
 #include <doctest.h>
 
+#include "InstrumentCore/Anschlag.hpp"
 #include "loop/Aufnahme.hpp"  // schreibeWav
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
@@ -61,6 +62,7 @@
 #include <string>
 
 using namespace lumi::loop;
+using lumi::kern::anschlagRest;
 using namespace saitentest;
 
 namespace
@@ -522,7 +524,7 @@ TEST_CASE("Loop Hammer-Ton HU3-1 Stulov: Kontaktzeit je Taste und Helligkeit je 
             std::vector<float> mono;
             rechneHammerTon(h, anschlag(taste, stufe), mono, kSaitenRate);
             const std::vector<double> d(mono.begin(), mono.end());
-            const lumi::messung::KanalMessung m = lumi::messung::messeKanal(d, kSaitenRate, tonHz(taste), lumi::loop::fft(), false);
+            const lumi::messung::KanalMessung m = lumi::messung::messeKanal(d, kSaitenRate, tonHz(taste), lumi::kern::fft(), false);
             const lumi::messung::TeiltonKurz* t1 = m.erkannt ? m.teilton(1) : nullptr;
             if (t1 == nullptr) continue;
             for (int n = 2; n <= 8; ++n)

@@ -1,0 +1,432 @@
+/**
+ * @file Parametertafel.cpp
+ * @brief InstrumentCore: Tafel und Werte eines Kerns (IK2-4 a, IK2-9, IK2-11 a)
+ */
+#include "InstrumentCore/Parametertafel.hpp"
+
+#include "InstrumentCore/Pruefsumme.hpp"
+
+#include <algorithm>
+#include <bit>
+#include <cmath>
+#include <cstdio>
+#include <stdexcept>
+
+namespace lumi::kern
+{
+
+namespace
+{
+
+template <typename T>
+const T& lies(const Werte& werte, std::string_view name, const char* art)
+{
+    const Wert* w = werte.finde(name);
+    if (w == nullptr) throw std::out_of_range("value missing: " + std::string(name));
+    const T* t = std::get_if<T>(w);
+    if (t == nullptr) throw std::out_of_range("value " + std::string(name) + " is not a " + art);
+    return *t;
+}
+
+WertArt artVon(const Wert& w)
+{
+    switch (w.index())
+    {
+    case 0: return WertArt::Zahl;
+    case 1: return WertArt::Ganzzahl;
+    case 2: return WertArt::Schalter;
+    case 3: return WertArt::Wahl;
+    case 4: return WertArt::Kurve;
+    default: return WertArt::Liste;
+    }
+}
+
+const char* artName(WertArt art)
+{
+    switch (art)
+    {
+    case WertArt::Zahl: return "number";
+    case WertArt::Ganzzahl: return "integer";
+    case WertArt::Schalter: return "switch";
+    case WertArt::Wahl: return "choice";
+    case WertArt::Kurve: return "curve";
+    case WertArt::Liste: return "list";
+    }
+    return "?";
+}
+
+bool darstellungPasst(WertArt art, Darstellung d)
+{
+    switch (art)
+    {
+    case WertArt::Zahl: return d == Darstellung::Regler;
+    case WertArt::Ganzzahl: return d == Darstellung::Regler || d == Darstellung::Auswahl;
+    case WertArt::Schalter: return d == Darstellung::Haken;
+    case WertArt::Wahl: return d == Darstellung::Auswahl;
+    case WertArt::Kurve: return d == Darstellung::Kurve;
+    case WertArt::Liste: return d == Darstellung::Dialog;
+    }
+    return false;
+}
+
+std::string hexVon(double x)
+{
+    char text[24];
+    std::snprintf(text, sizeof text, "%016llx", static_cast<unsigned long long>(std::bit_cast<std::uint64_t>(x)));
+    return text;
+}
+
+void pruefeAngaben(const std::vector<ParameterAngabe>& angaben, const std::vector<std::string>* gruppen,
+                   const std::string& wo, int noteMin, int noteMax, std::vector<std::string>& fehler)
+{
+    for (std::size_t i = 0; i < angaben.size(); ++i)
+    {
+        const ParameterAngabe& a = angaben[i];
+        const std::string ort = wo + (a.name.empty() ? "#" + std::to_string(i) : a.name);
+        if (a.name.empty()) fehler.push_back(ort + ": name empty");
+        for (std::size_t j = 0; j < i; ++j)
+            if (angaben[j].name == a.name)
+            {
+                fehler.push_back(ort + ": name twice");
+                break;
+            }
+        if (gruppen != nullptr && std::find(gruppen->begin(), gruppen->end(), a.gruppe) == gruppen->end())
+            fehler.push_back(ort + ": group not listed: " + a.gruppe);
+        if (!darstellungPasst(a.art, a.darstellung)) fehler.push_back(ort + ": display does not fit the kind");
+        if (artVon(a.vorgabe) != a.art)
+        {
+            fehler.push_back(ort + std::string(": default is not a ") + artName(a.art));
+            continue;
+        }
+        const bool mitGrenzen = a.art == WertArt::Zahl || a.art == WertArt::Ganzzahl || a.art == WertArt::Kurve;
+        if (mitGrenzen && !(a.von <= a.bis)) fehler.push_back(ort + ": bounds reversed");
+        if (a.art == WertArt::Zahl)
+        {
+            const double v = std::get<double>(a.vorgabe);
+            if (!(v >= a.von && v <= a.bis)) fehler.push_back(ort + ": default outside bounds");
+        }
+        if (a.art == WertArt::Ganzzahl)
+        {
+            const auto v = static_cast<double>(std::get<std::int64_t>(a.vorgabe));
+            if (!(v >= a.von && v <= a.bis)) fehler.push_back(ort + ": default outside bounds");
+        }
+        if (a.art == WertArt::Wahl)
+        {
+            if (a.wahlen.empty()) fehler.push_back(ort + ": no choices");
+            const std::string& v = std::get<std::string>(a.vorgabe);
+            if (std::find(a.wahlen.begin(), a.wahlen.end(), v) == a.wahlen.end())
+                fehler.push_back(ort + ": default not among the choices");
+        }
+        if (a.art == WertArt::Kurve)
+        {
+            const Kurve& k = std::get<Kurve>(a.vorgabe);
+            if (k.punkte.empty() && !a.gestimmt) fehler.push_back(ort + ": default curve empty");
+            for (const NotenWert& p : k.punkte)
+            {
+                if (p.note < noteMin || p.note > noteMax) fehler.push_back(ort + ": default point outside the keys");
+                if (!(p.wert >= a.von && p.wert <= a.bis)) fehler.push_back(ort + ": default point outside bounds");
+            }
+            if (a.skala == Skala::Logarithmisch && !(a.von > 0.0)) fehler.push_back(ort + ": logarithmic needs bounds above 0");
+        }
+        if (a.art == WertArt::Liste)
+        {
+            if (a.felder.empty()) fehler.push_back(ort + ": list without fields");
+            if (a.eintraegeMin > a.eintraegeMax) fehler.push_back(ort + ": list bounds reversed");
+            const Liste& l = std::get<Liste>(a.vorgabe);
+            if (l.eintraege.size() < a.eintraegeMin || l.eintraege.size() > a.eintraegeMax)
+                fehler.push_back(ort + ": default list size outside bounds");
+            pruefeAngaben(a.felder, nullptr, ort + ".", noteMin, noteMax, fehler);
+        }
+        if (a.gestimmt && a.art != WertArt::Kurve) fehler.push_back(ort + ": a tuned value must be a curve");
+        if (!a.gestimmt && !a.abhaengigVon.empty()) fehler.push_back(ort + ": dependencies without tuning");
+    }
+}
+
+std::vector<std::string> richteAngaben(const std::vector<ParameterAngabe>& angaben, int noteMin, int noteMax, const std::string& wo,
+                                       Werte& werte)
+{
+    std::vector<std::string> fehler;
+    for (const auto& [name, wert] : werte.felder)
+    {
+        const bool bekannt = std::any_of(angaben.begin(), angaben.end(), [&](const ParameterAngabe& a) { return a.name == name; });
+        if (!bekannt) fehler.push_back(wo + name + ": unknown");
+    }
+    Werte gerichtet;
+    gerichtet.gestimmtAus = werte.gestimmtAus;
+    for (const ParameterAngabe& a : angaben)
+    {
+        const std::string ort = wo + a.name;
+        Wert* w = werte.finde(a.name);
+        if (w == nullptr)
+        {
+            fehler.push_back(ort + ": missing");
+            continue;
+        }
+        // ein Wert mit Fehler bleibt, wie er ist (gemeldet, nicht verworfen)
+        if (artVon(*w) != a.art)
+        {
+            fehler.push_back(ort + std::string(": is not a ") + artName(a.art));
+            gerichtet.felder.emplace_back(a.name, std::move(*w));
+            continue;
+        }
+        switch (a.art)
+        {
+        case WertArt::Zahl:
+        {
+            double& v = std::get<double>(*w);
+            if (!std::isfinite(v))
+                fehler.push_back(ort + ": not finite");
+            else
+                v = std::clamp(v, a.von, a.bis);
+            break;
+        }
+        case WertArt::Ganzzahl:
+        {
+            auto& v = std::get<std::int64_t>(*w);
+            v = std::clamp(v, static_cast<std::int64_t>(std::ceil(a.von)), static_cast<std::int64_t>(std::floor(a.bis)));
+            break;
+        }
+        case WertArt::Schalter: break;
+        case WertArt::Wahl:
+            if (std::find(a.wahlen.begin(), a.wahlen.end(), std::get<std::string>(*w)) == a.wahlen.end())
+                fehler.push_back(ort + ": unknown choice " + std::get<std::string>(*w));
+            break;
+        case WertArt::Kurve:
+        {
+            Kurve& k = std::get<Kurve>(*w);
+            if (a.gestimmt)
+            {
+                // eine gestimmte Kurve bekommt keinen Ersatz (IK2-11 a)
+                richteKurve(k, a.von, a.bis, Kurve{}, noteMin, noteMax);
+                if (k.punkte.empty()) fehler.push_back(ort + ": tuned value empty");
+            }
+            else
+                richteKurve(k, a.von, a.bis, std::get<Kurve>(a.vorgabe), noteMin, noteMax);
+            break;
+        }
+        case WertArt::Liste:
+        {
+            Liste& l = std::get<Liste>(*w);
+            if (l.eintraege.size() < a.eintraegeMin || l.eintraege.size() > a.eintraegeMax)
+                fehler.push_back(ort + ": " + std::to_string(l.eintraege.size()) + " entries, allowed " + std::to_string(a.eintraegeMin) +
+                                 " ... " + std::to_string(a.eintraegeMax));
+            for (std::size_t i = 0; i < l.eintraege.size(); ++i)
+            {
+                const std::vector<std::string> f = richteAngaben(a.felder, noteMin, noteMax, ort + "[" + std::to_string(i) + "].", l.eintraege[i]);
+                fehler.insert(fehler.end(), f.begin(), f.end());
+            }
+            break;
+        }
+        }
+        gerichtet.felder.emplace_back(a.name, std::move(*w));
+    }
+    werte = std::move(gerichtet);
+    return fehler;
+}
+
+}  // namespace
+
+bool Liste::operator==(const Liste& o) const
+{
+    return eintraege == o.eintraege;
+}
+
+const Wert* Werte::finde(std::string_view name) const
+{
+    for (const auto& [n, w] : felder)
+        if (n == name) return &w;
+    return nullptr;
+}
+
+Wert* Werte::finde(std::string_view name)
+{
+    for (auto& [n, w] : felder)
+        if (n == name) return &w;
+    return nullptr;
+}
+
+void Werte::setze(std::string name, Wert wert)
+{
+    if (Wert* w = finde(name))
+        *w = std::move(wert);
+    else
+        felder.emplace_back(std::move(name), std::move(wert));
+}
+
+double Werte::zahl(std::string_view name) const { return lies<double>(*this, name, "number"); }
+std::int64_t Werte::ganzzahl(std::string_view name) const { return lies<std::int64_t>(*this, name, "integer"); }
+bool Werte::schalter(std::string_view name) const { return lies<bool>(*this, name, "switch"); }
+const std::string& Werte::wahl(std::string_view name) const { return lies<std::string>(*this, name, "choice"); }
+const Kurve& Werte::kurve(std::string_view name) const { return lies<Kurve>(*this, name, "curve"); }
+const Liste& Werte::liste(std::string_view name) const { return lies<Liste>(*this, name, "list"); }
+
+std::string Werte::abdruckVon(std::string_view gestimmt) const
+{
+    for (const auto& [n, a] : gestimmtAus)
+        if (n == gestimmt) return a;
+    return {};
+}
+
+void Werte::merkeAbdruck(std::string gestimmt, std::string abdruck)
+{
+    for (auto& [n, a] : gestimmtAus)
+        if (n == gestimmt)
+        {
+            a = std::move(abdruck);
+            return;
+        }
+    gestimmtAus.emplace_back(std::move(gestimmt), std::move(abdruck));
+}
+
+Darstellung darstellungZu(WertArt art)
+{
+    switch (art)
+    {
+    case WertArt::Zahl:
+    case WertArt::Ganzzahl: return Darstellung::Regler;
+    case WertArt::Schalter: return Darstellung::Haken;
+    case WertArt::Wahl: return Darstellung::Auswahl;
+    case WertArt::Kurve: return Darstellung::Kurve;
+    case WertArt::Liste: return Darstellung::Dialog;
+    }
+    return Darstellung::Regler;
+}
+
+const ParameterAngabe* findeAngabe(const Parametertafel& tafel, std::string_view name)
+{
+    for (const ParameterAngabe& a : tafel.werte)
+        if (a.name == name) return &a;
+    return nullptr;
+}
+
+std::vector<std::string> pruefeTafel(const Parametertafel& tafel)
+{
+    std::vector<std::string> fehler;
+    if (tafel.kern.empty()) fehler.push_back("core name empty");
+    if (tafel.noteMin < kNoteMin || tafel.noteMax > kNoteMax || tafel.noteMin > tafel.noteMax) fehler.push_back("key range invalid");
+    for (std::size_t i = 0; i < tafel.gruppen.size(); ++i)
+        for (std::size_t j = 0; j < i; ++j)
+            if (tafel.gruppen[i] == tafel.gruppen[j]) fehler.push_back("group twice: " + tafel.gruppen[i]);
+    pruefeAngaben(tafel.werte, &tafel.gruppen, "", tafel.noteMin, tafel.noteMax, fehler);
+    for (const ParameterAngabe& a : tafel.werte)
+        for (const std::string& von : a.abhaengigVon)
+        {
+            const ParameterAngabe* b = findeAngabe(tafel, von);
+            if (b == nullptr)
+                fehler.push_back(a.name + ": dependency unknown: " + von);
+            else if (b->gestimmt)
+                fehler.push_back(a.name + ": dependency is tuned itself: " + von);
+        }
+    return fehler;
+}
+
+Werte vorgaben(const Parametertafel& tafel)
+{
+    Werte werte;
+    for (const ParameterAngabe& a : tafel.werte) werte.felder.emplace_back(a.name, a.vorgabe);
+    return werte;
+}
+
+std::vector<std::string> richteWerte(const Parametertafel& tafel, Werte& werte)
+{
+    return richteAngaben(tafel.werte, tafel.noteMin, tafel.noteMax, "", werte);
+}
+
+std::string wertAlsText(const Wert& wert)
+{
+    struct Schreiber
+    {
+        std::string operator()(double x) const { return "d" + hexVon(x); }
+        std::string operator()(std::int64_t x) const { return "i" + std::to_string(x); }
+        std::string operator()(bool x) const { return x ? "b1" : "b0"; }
+        std::string operator()(const std::string& x) const { return "s" + std::to_string(x.size()) + ":" + x; }
+        std::string operator()(const Kurve& k) const
+        {
+            std::string t = "k" + std::to_string(k.punkte.size());
+            for (const NotenWert& p : k.punkte) t += " " + std::to_string(p.note) + "=" + hexVon(p.wert);
+            t += " a" + std::to_string(k.abweichungen.size());
+            for (const NotenWert& p : k.abweichungen) t += " " + std::to_string(p.note) + "=" + hexVon(p.wert);
+            return t;
+        }
+        std::string operator()(const Liste& l) const
+        {
+            std::string t = "l" + std::to_string(l.eintraege.size()) + "[";
+            for (const Werte& e : l.eintraege)
+            {
+                t += "{";
+                for (const auto& [n, w] : e.felder) t += n + ":" + std::visit(*this, w) + ";";
+                t += "}";
+            }
+            return t + "]";
+        }
+    };
+    return std::visit(Schreiber{}, wert);
+}
+
+std::string eingabenAbdruck(const Parametertafel& tafel, const Werte& werte, std::string_view gestimmt)
+{
+    const ParameterAngabe* ziel = findeAngabe(tafel, gestimmt);
+    if (ziel == nullptr || !ziel->gestimmt) return {};
+    Sha256 sha;
+    sha.dazu("core " + tafel.kern + "\nfassung " + std::to_string(tafel.rechenFassung) + "\n");
+    for (const ParameterAngabe& a : tafel.werte)
+    {
+        if (a.gestimmt) continue;
+        if (!ziel->abhaengigVon.empty() &&
+            std::find(ziel->abhaengigVon.begin(), ziel->abhaengigVon.end(), a.name) == ziel->abhaengigVon.end())
+            continue;
+        const Wert* w = werte.finde(a.name);
+        sha.dazu(a.name + " " + (w != nullptr ? wertAlsText(*w) : std::string("-")) + "\n");
+    }
+    return sha.fertig();
+}
+
+std::vector<std::string> veralteteGestimmte(const Parametertafel& tafel, const Werte& werte)
+{
+    std::vector<std::string> alt;
+    for (const ParameterAngabe& a : tafel.werte)
+        if (a.gestimmt && werte.abdruckVon(a.name) != eingabenAbdruck(tafel, werte, a.name)) alt.push_back(a.name);
+    return alt;
+}
+
+bool ungemessen(const Parametertafel& tafel, const Werte& werte)
+{
+    for (const ParameterAngabe& a : tafel.werte)
+    {
+        if (!a.klangbestimmend) continue;
+        if (a.art == WertArt::Kurve)
+        {
+            const Wert* w = werte.finde(a.name);
+            const Kurve* k = w != nullptr ? std::get_if<Kurve>(w) : nullptr;
+            if (k == nullptr || k->belegkraft != Belegkraft::Gemessen) return true;
+        }
+        else if (a.belegkraft != Belegkraft::Gemessen)
+            return true;
+    }
+    return false;
+}
+
+std::string_view belegkraftName(Belegkraft belegkraft)
+{
+    switch (belegkraft)
+    {
+    case Belegkraft::Quelle: return "source";
+    case Belegkraft::Rechnung: return "computed";
+    case Belegkraft::Gemessen: return "measured";
+    case Belegkraft::Offen: return "open";
+    }
+    return "open";
+}
+
+bool belegkraftAusName(std::string_view name, Belegkraft& belegkraft)
+{
+    for (const Belegkraft b : {Belegkraft::Quelle, Belegkraft::Rechnung, Belegkraft::Gemessen, Belegkraft::Offen})
+        if (belegkraftName(b) == name)
+        {
+            belegkraft = b;
+            return true;
+        }
+    return false;
+}
+
+}  // namespace lumi::kern

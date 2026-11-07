@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.316.0
-> **Datum:** 2026-11-07 (Sessions 164 bis 174)
+> **Version:** 1.317.0
+> **Datum:** 2026-11-07 (Sessions 164 bis 175)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2836,7 +2836,10 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   abstrakte Ton-Schnittstelle `Tonkern` in Frames, `.lvinst` Fassung 21 mit Parametertafel, Übernahme-Journal, der
   Flügel als erster Kern bitgleich; die bisherige **Stufe 32 (Upright) geht in Stufe 34 auf** (IK2-7 a), der Rest von
   Stufe 31 folgt auf der Bibliothek. Teilplan **34a–34l** im Konzept §6. **34b erledigt 2026-11-07 (S174, CMakeCraft
-  v0.14.0, Pin gewechselt, voller Lauf 1753 / 1753 unter beiden Compilern).** **34a erledigt 2026-11-07 (S174, Skizze gebilligt, Konzept §6a CK1 a, CK2 a).** Nächster Schritt 34c. Bei IC offen: IC-A8, IC-A9 Schritt 2,
+  v0.14.0, Pin gewechselt, voller Lauf 1753 / 1753 unter beiden Compilern).** **34a erledigt 2026-11-07 (S174, Skizze gebilligt, Konzept §6a CK1 a, CK2 a).** **34c erledigt 2026-11-07 (S175,
+Bibliothek `InstrumentCore`, KN1 a, KN2 a; voller Lauf 1765 / 1765 unter beiden Compilern, Wächter unverändert,
+Übernahme-Journal J0–J11).** Nächster Schritt 34d. Bei IC offen (Auftrag in 34l): `/fp:contract-` streichen (cl kennt es
+nicht, J0); IC-A8, IC-A9 Schritt 2, IC-A8, IC-A9 Schritt 2,
   IC-A10 Schritt 2 und 3, IC-A11; der Stand von IC Session 5 liegt dort uncommittet.
 
 ## 7. Backlog (bewusst nichts tun)
@@ -6341,6 +6344,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.317.0 | 2026-11-07 | Session 175 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34c erledigt — Bibliothek `InstrumentCore` (KN1 a, KN2 a): Eigenzerlegung, Fft mit pocketfft `4d865cb`, Anschlagstufe aus der App umgezogen; Kurve, Modal, Pool, SHA-256 aus IC; Tonkern, Fabrik, Auskunft, Tonauftrag, Parametertafel neu; voller Lauf 1765 / 1765 unter Release-clang und Testing-MSVC; Befund `/fp:contract-` für IC. |
 | 1.316.0 | 2026-11-07 | Session 174 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34a erledigt — Skizze Creator und Editor für alle Kerne gebilligt (Konzept 0.5.0 §6a, CK1 a, CK2 a); 34b erledigt — CMakeCraft v0.14.0 (`compile_options` je Bibliothek, Quellpaket ohne CMakeCraft), Gegenprüfung mit Probe-Bibliothek, Pin gewechselt, voller Lauf 1753 / 1753 unter Release-clang und Testing-MSVC. |
 | 1.315.0 | 2026-11-03 | Session 173 (Opus 5.5). §6 Anbindung InstrumentsCalculation: Planung fertig — IK2-0 bis IK2-13, IK2-2-1 a, CC1 a, TP1 a, Teilplan Stufe 34 (34a–34l); Stufe 32 geht in Stufe 34 auf. Nichts gebaut. |
 | 1.314.0 | 2026-11-02 | Session 172 (Fable 5.1). §6 neu: Anbindung InstrumentsCalculation (IK2) — Zielbild Z1 a bis Z4 a, M1 a, Berichte und Messung unter `docs/modellierung/anbindung-ic/`, Konzept `Instrumente_IC_Konzept.md` 0.2.0; IK2-0 vorgelegt, Antwort in S173. Nichts gebaut. |

@@ -5,7 +5,7 @@
 
 #include "loop/PYin.hpp"
 
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 
 #include <algorithm>
 #include <array>
@@ -57,7 +57,7 @@ std::array<double, kSchwellen> schwellenGewichte(double mittel)
 /// ausserhalb von `mono` Stille). d(τ) = r(0) + r_τ(0) − 2 r(τ) (Gl. 3), r ueber die FFT.
 std::vector<double> normierteDifferenz(const std::vector<double>& mono, std::int64_t anfang, std::int64_t halb)
 {
-    const std::size_t laenge = zweierpotenzAb(static_cast<std::size_t>(2 * halb));
+    const std::size_t laenge = kern::zweierpotenzAb(static_cast<std::size_t>(2 * halb));
     std::vector<double> a(laenge, 0.0);
     std::vector<double> b(laenge, 0.0);
     const auto n = static_cast<std::int64_t>(mono.size());
@@ -70,11 +70,11 @@ std::vector<double> normierteDifferenz(const std::vector<double>& mono, std::int
     }
     std::vector<std::complex<double>> fa(laenge / 2 + 1);
     std::vector<std::complex<double>> fb(laenge / 2 + 1);
-    fft().vorwaerts(a, fa);
-    fft().vorwaerts(b, fb);
+    kern::fft().vorwaerts(a, fa);
+    kern::fft().vorwaerts(b, fb);
     for (std::size_t k = 0; k < fa.size(); ++k) fa[k] = std::conj(fa[k]) * fb[k];
     std::vector<double> r(laenge, 0.0);
-    fft().rueckwaerts(fa, r);  // r(τ) = Σ_j x_j x_{j+τ}, j < W (Gl. 2)
+    kern::fft().rueckwaerts(fa, r);  // r(τ) = Σ_j x_j x_{j+τ}, j < W (Gl. 2)
 
     // die Energie je Fenster der Laenge W ab τ: r_τ(0)
     std::vector<double> quadratSumme(static_cast<std::size_t>(2 * halb + 1), 0.0);

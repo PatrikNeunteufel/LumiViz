@@ -5,7 +5,7 @@
 
 #include "loop/Pedalplan.hpp"
 
-#include "loop/HammerSaite.hpp"  // anschlagStufe (Stufe 31b)
+#include "InstrumentCore/Anschlag.hpp"  // anschlagStufe (Stufe 31b, seit S175 in der Bibliothek)
 
 #include <algorithm>
 #include <cmath>
@@ -180,7 +180,7 @@ std::vector<TonPunkt> kurveImTon(const std::vector<SpurPunkt>& spur, double schr
 
 int stufeDerNote(const Note& note, bool hammer)
 {
-    return hammer ? anschlagStufe(note.laut) : 0;
+    return hammer ? kern::anschlagStufe(note.laut) : 0;
 }
 
 TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note, bool hammer)

@@ -5,7 +5,7 @@
 
 #include "loop/Rechenkern.hpp"
 
-#include "loop/HammerSaite.hpp"  // anschlagRest (Stufe 31b)
+#include "InstrumentCore/Anschlag.hpp"  // anschlagRest (Stufe 31b, seit S175 in der Bibliothek)
 #include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
 #include "loop/Stueckweise.hpp"
@@ -258,7 +258,7 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                                               (versetzt ? swingFrames : 0.0) + strumFrames +
                                               note.versatzAnfang * schrittFrames;
                         const double laut =
-                            (hammer ? anschlagRest(note.laut, stufeDerNote(note, true)) : note.laut) * lautMuster;
+                            (hammer ? kern::anschlagRest(note.laut, stufeDerNote(note, true)) : note.laut) * lautMuster;
                         const auto schlage = [&](const QString& name) {
                             const int klang = klangVon.value(name, -1);
                             const auto [ort, neu] = tonStimmeVon.try_emplace({muster, klang}, ablauf.stimmen.size());

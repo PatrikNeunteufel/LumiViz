@@ -221,9 +221,11 @@ Prüfsumme: `externals/Spectra/README.md`; der Lizenztext im Original: `external
 
 ### pocketfft — `externals/pocketfft/`
 
-Schnelle Fourier-Transformation für die Faltung je Ton mit der Antwort des Resonanzbodens (Stufe 31c-7; hinter
-`lumi::loop::Fft` in `src/loop/Fft.cpp`). Der Header `pocketfft_hdronly.h` liegt unverändert im Repository und wird
-**in die App gebunden**. Herkunft, Fassung (Zweig `cpp`, Commit `c90e55b`, 2026-06-30) und Prüfsumme:
+Schnelle Fourier-Transformation für die Faltung je Ton mit der Antwort des Resonanzbodens (Stufe 31c-7) und pYIN;
+hinter `lumi::kern::Fft` in der Bibliothek InstrumentCore (`projects/libs/InstrumentCore/src/Fft.cpp`, seit S175). Der
+Header `pocketfft_hdronly.h` liegt unverändert im Repository und wird **über InstrumentCore in die App gebunden**.
+Herkunft, Fassung (Zweig `cpp`, Commit `4d865cb`, 2026-10-18; der Kopf mit den Rechten ist gegen `c90e55b` unverändert)
+und Prüfsumme:
 `externals/pocketfft/README.md`; der Lizenztext im Original: `externals/pocketfft/LICENSE.md`.
 
 > <https://github.com/mreineck/pocketfft> — **BSD-3-Clause** — Copyright (C) 2010-2024 Max-Planck-Society,

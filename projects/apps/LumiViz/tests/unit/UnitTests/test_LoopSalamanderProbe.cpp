@@ -34,7 +34,7 @@
 
 #include "audio/WavDatei.hpp"
 #include "loop/Boden.hpp"
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 #include "loop/HammerSaite.hpp"
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
@@ -74,7 +74,7 @@ constexpr int kSucheHoechstens = 150;
 using modelltest::bensaBand;
 using modelltest::fluegelMit;
 using modelltest::KurvenFeld;
-using modelltest::parallelJe;
+using lumi::kern::parallelJe;
 
 /// Eine freie Groesse einer Taste mit ihren Grenzen (SQ2 a).
 struct Groesse
@@ -194,7 +194,8 @@ const unsigned kPoolThreads = std::max(1u, std::min(static_cast<unsigned>(kAuswe
 std::vector<TonKurven> jeEbene(const std::function<TonKurven(int)>& einer)
 {
     std::vector<TonKurven> kurven(static_cast<std::size_t>(kAuswertungEbenen));
-    parallelJe(kAuswertungEbenen, kPoolThreads, [&](int i) { kurven[static_cast<std::size_t>(i)] = einer(kKurvenEbeneAb + i); });
+    parallelJe(static_cast<std::size_t>(kAuswertungEbenen),
+               [&](std::size_t i) { kurven[i] = einer(kKurvenEbeneAb + static_cast<int>(i)); }, kPoolThreads);
     return kurven;
 }
 
@@ -207,7 +208,7 @@ TonKurven kurvenEbene(const lumi::loop::Instrument& instrument, int midi, int e,
     a.anschlagStufe = modelltest::stufeVonEbene(e);
     const lumi::loop::Klang klang = lumi::loop::rendereTon(instrument, a, modelltest::kRate);
     TonKurven k;
-    (void)messeTon(klang.daten, modelltest::kRate, tastenFrequenz(midi), lumi::loop::fft(), false, &k);
+    (void)messeTon(klang.daten, modelltest::kRate, tastenFrequenz(midi), lumi::kern::fft(), false, &k);
     return k;
 }
 
@@ -240,10 +241,9 @@ std::vector<Bewertung> bewerteToene(const std::vector<lumi::loop::HammerSaite>& 
     for (const lumi::loop::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
     const auto ebenen = static_cast<std::size_t>(kAuswertungEbenen);
     std::vector<TonKurven> kurven(saiten.size() * ebenen);
-    parallelJe(static_cast<int>(kurven.size()), kPoolThreads, [&](int i) {
-        const auto j = static_cast<std::size_t>(i);
+    parallelJe(kurven.size(), [&](std::size_t j) {
         kurven[j] = kurvenEbene(instrumente[j / ebenen], midi, kKurvenEbeneAb + static_cast<int>(j % ebenen), dauerMs);
-    });
+    }, kPoolThreads);
     std::vector<Bewertung> bewertungen;
     for (std::size_t q = 0; q < saiten.size(); ++q)
     {
@@ -256,7 +256,7 @@ std::vector<Bewertung> bewerteToene(const std::vector<lumi::loop::HammerSaite>& 
 /// Die Summe der Moden (Startpunkt nach K4 a): ohne Hammerkontakt, Laengskraft und Boden.
 Bewertung bewerteModen(const lumi::loop::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
 {
-    const lumi::loop::Fft& fft = lumi::loop::fft();
+    const lumi::kern::Fft& fft = lumi::kern::fft();
     return bewerte(midi,
                    jeEbene([&](int e) {
                        const std::vector<double> ton = modelltest::modenTon(saite, midi, modelltest::stufeVonEbene(e), dauerMs / 1000.0, 30);
@@ -580,7 +580,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
     if (!salamander.isEmpty())
     {
         const std::filesystem::path ordner = salamander.toStdU16String();
-        const lumi::loop::Fft& fft = lumi::loop::fft();
+        const lumi::kern::Fft& fft = lumi::kern::fft();
         const double schritt = Einstellungen{}.schrittS;
         for (const int midi : kProbeTasten)
         {
@@ -810,7 +810,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Zeit (LUMIVIZ_75_ZEIT)")
             const double ton = sekunden(t0);
             t0 = Uhr::now();
             TonKurven k;
-            (void)messeTon(klang.daten, modelltest::kRate, tastenFrequenz(midi), lumi::loop::fft(), false, &k);
+            (void)messeTon(klang.daten, modelltest::kRate, tastenFrequenz(midi), lumi::kern::fft(), false, &k);
             const double messung = sekunden(t0);
             std::vector<float> mono;
             t0 = Uhr::now();
@@ -837,8 +837,9 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Zeit (LUMIVIZ_75_ZEIT)")
     {
         if (threads > std::thread::hardware_concurrency()) continue;
         const auto t0 = Uhr::now();
-        parallelJe(kAuswertungen * ebenen, threads,
-                   [&](int i) { (void)kurvenEbene(instrument, midi, kKurvenEbeneAb + i % ebenen, dauerMs); });
+        parallelJe(static_cast<std::size_t>(kAuswertungen * ebenen),
+                   [&](std::size_t i) { (void)kurvenEbene(instrument, midi, kKurvenEbeneAb + static_cast<int>(i) % ebenen, dauerMs); },
+                   threads);
         const double s = sekunden(t0);
         schreibe("  " + std::to_string(threads) + " Threads: " + zahl(s, 2) + " s, " + zahl(s / kAuswertungen, 2) + " s je Auswertung");
     }

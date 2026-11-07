@@ -135,7 +135,7 @@ TEST_CASE("Loop Teiltonmessung HU2 Huellkurve vorwaerts: erste Stufe, Knick, gan
         // die langsame Mode haelt die Gerade der ersten 0,5 s flacher (bei −12 dB der schnellen liegt sie bei −20):
         // 2,5 s werden rund 2,6 s — darum 15 %
         const std::vector<Komponente> k = zweiModen(261.6, 3e-4, 6, 2.5, 36.0, -20.0, 1.5);
-        const Ergebnis e = miss(erzeuge(k, 12.0, 0.1, 1e-6), kRate, 261.6, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(k, 12.0, 0.1, 1e-6), kRate, 261.6, lumi::kern::fft());
         REQUIRE(e.erkannt);
         int knicke = 0;
         for (int n = 1; n <= 3; ++n)
@@ -161,7 +161,7 @@ TEST_CASE("Loop Teiltonmessung HU2 Huellkurve vorwaerts: erste Stufe, Knick, gan
     SUBCASE("eine Stufe 4 s: vorwaerts 4 s, kein Knick; der ganze Ton ab der Spitze bis -20/-30/-40 dB")
     {
         const std::vector<double> ton = erzeuge(saite(110.0, 1e-4, 12, 4.0), 6.0, 0.1, 1e-6);
-        const Ergebnis e = miss(ton, kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(ton, kRate, 110.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 6; ++n)
         {
@@ -176,7 +176,7 @@ TEST_CASE("Loop Teiltonmessung HU2 Huellkurve vorwaerts: erste Stufe, Knick, gan
         CHECK(z[0] == doctest::Approx(4.0 * 20.0 / 60.0).epsilon(0.1));
         CHECK(z[1] == doctest::Approx(4.0 * 30.0 / 60.0).epsilon(0.1));
         CHECK(z[2] == doctest::Approx(4.0 * 40.0 / 60.0).epsilon(0.1));
-        const KanalMessung m = messeKanal(ton, kRate, 110.0, lumi::loop::fft(), false);
+        const KanalMessung m = messeKanal(ton, kRate, 110.0, lumi::kern::fft(), false);
         REQUIRE(m.erkannt);
         CHECK(m.huelleS == z);
         REQUIRE(m.teilton(1) != nullptr);
@@ -205,7 +205,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 Einsatz, f0 und B")
         CAPTURE(fall.f0);
         const std::vector<Komponente> teile = saite(fall.f0, fall.b, fall.teiltoene, 10.0);
         const std::vector<double> ton = erzeuge(teile, 4.0, 0.2, 1e-6);
-        const Ergebnis e = miss(ton, kRate, fall.f0 * std::sqrt(1.0 + fall.b), lumi::loop::fft());
+        const Ergebnis e = miss(ton, kRate, fall.f0 * std::sqrt(1.0 + fall.b), lumi::kern::fft());
         REQUIRE(e.erkannt);
         MESSAGE("f0 " << fall.f0 << ": gemessen f0 " << e.f0 << ", B " << e.b << " ± " << e.bFehler << ", "
                       << e.teiltoene.size() << " Teiltoene, Einsatz " << e.einsatzS << " s");
@@ -231,7 +231,7 @@ TEST_CASE("Loop Teiltonmessung 31d-3 eine fremde Spitze neben einem schwachen Te
     std::vector<Komponente> k = saite(f0, b, 20, 10.0);
     k[1].amplitude *= 0.03;
     k.push_back({0.908 * teiltonFrequenz(f0, b, 2), 0.15, 10.0, 10.0});
-    const Ergebnis e = miss(erzeuge(k, 4.0, 0.1, 1e-6), kRate, f0 * std::sqrt(1.0 + b), lumi::loop::fft());
+    const Ergebnis e = miss(erzeuge(k, 4.0, 0.1, 1e-6), kRate, f0 * std::sqrt(1.0 + b), lumi::kern::fft());
     REQUIRE(e.erkannt);
     MESSAGE("B gemessen " << e.b << ", " << e.teiltoene.size() << " Teiltoene");
     CHECK(e.b == doctest::Approx(b).epsilon(0.01).scale(0.0));
@@ -244,7 +244,7 @@ TEST_CASE("Loop Teiltonmessung 31d-3 eine fremde Spitze neben einem schwachen Te
     std::vector<Komponente> r = saite(f0, b, 20, 10.0);
     r[0].amplitude *= 0.03;
     r.push_back({0.927 * teiltonFrequenz(f0, b, 1), 0.3, 10.0, 10.0});
-    const Ergebnis rechts = miss(erzeuge(r, 4.0, 0.1, 1e-6), kRate, f0 * std::sqrt(1.0 + b), lumi::loop::fft());
+    const Ergebnis rechts = miss(erzeuge(r, 4.0, 0.1, 1e-6), kRate, f0 * std::sqrt(1.0 + b), lumi::kern::fft());
     REQUIRE(rechts.erkannt);
     MESSAGE("mit Mode unter Teilton 1: B " << rechts.b << ", " << rechts.teiltoene.size() << " Teiltoene");
     CHECK(rechts.b == doctest::Approx(b).epsilon(0.01).scale(0.0));
@@ -261,7 +261,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
     SUBCASE("zwei Stufen: frueh 3 s, spaet 12 s, die spaete 30 dB leiser, Ausloeschungen am Uebergang")
     {
         const Ergebnis e = miss(erzeuge(zweiModen(110.0, 1e-4, 12, 3.0, 12.0, -30.0, 2.0), 8.0, 0.1, 1e-6), kRate, 110.0,
-                                lumi::loop::fft());
+                                lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 8; ++n)
         {
@@ -277,7 +277,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
     SUBCASE("kurze fruehe Stufe wie an Salamander: frueh 2 s, spaet 30 s, die spaete 35 dB leiser")
     {
         const std::vector<Komponente> k = zweiModen(261.6, 3e-4, 6, 2.0, 30.0, -35.0, 1.5);
-        const Ergebnis e = miss(erzeuge(k, 12.0, 0.1, 1e-6), kRate, 261.6, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(k, 12.0, 0.1, 1e-6), kRate, 261.6, lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 4; ++n)
         {
@@ -296,7 +296,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
         std::vector<Komponente> k = saite(110.0, 0.0, 6, 10.0);
         k[0].amplitude = 4e-5;
         k[0].t60Frueh = k[0].t60Spaet = 100.0;
-        const Ergebnis e = miss(erzeuge(k, 4.0, 0.1, 2e-5), kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(k, 4.0, 0.1, 2e-5), kRate, 110.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         if (const Teilton* t = e.teilton(1)) CHECK_FALSE(t->abklingen.erkannt);
         REQUIRE(e.teilton(2) != nullptr);
@@ -307,7 +307,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
         // die Einbrueche gehen bis zur volligen Ausloeschung — die Abklingzeit bleibt 4 s, keine zweite Stufe
         std::vector<Komponente> k = saite(220.0, 0.0, 8, 4.0);
         for (const Komponente& c : saite(220.0, 0.0, 8, 4.0)) k.push_back({c.frequenz + 0.5, c.amplitude, 4.0, 4.0});
-        const Ergebnis e = miss(erzeuge(k, 6.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(k, 6.0, 0.1, 1e-6), kRate, 220.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 6; ++n)
         {
@@ -321,7 +321,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
     }
     SUBCASE("eine Stufe: 4 s, kein Knick")
     {
-        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 12, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 12, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 8; ++n)
         {
@@ -349,7 +349,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 Schwebung")
     const double fb = f0 * std::exp2(2.0 / 1200.0);
     std::vector<Komponente> zwei = saite(fa, 0.0, 10, 20.0);
     for (const Komponente& c : saite(fb, 0.0, 10, 20.0)) zwei.push_back({c.frequenz, 0.5 * c.amplitude, 20.0, 20.0});
-    const Ergebnis e = miss(erzeuge(zwei, 6.0, 0.1, 1e-6), kRate, f0, lumi::loop::fft());
+    const Ergebnis e = miss(erzeuge(zwei, 6.0, 0.1, 1e-6), kRate, f0, lumi::kern::fft());
     REQUIRE(e.erkannt);
     for (int n = 1; n <= 8; ++n)
     {
@@ -361,7 +361,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 Schwebung")
         CHECK(t->schwebung.frequenz == doctest::Approx(n * (fb - fa)).epsilon(0.02).scale(0.0));
     }
 
-    const Ergebnis allein = miss(erzeuge(saite(f0, 0.0, 10, 20.0), 6.0, 0.1, 1e-6), kRate, f0, lumi::loop::fft());
+    const Ergebnis allein = miss(erzeuge(saite(f0, 0.0, 10, 20.0), 6.0, 0.1, 1e-6), kRate, f0, lumi::kern::fft());
     REQUIRE(allein.erkannt);
     for (int n = 1; n <= 8; ++n)
     {
@@ -380,7 +380,7 @@ TEST_CASE("Loop Teiltonmessung 31d-7 Tiefe der Einbrueche")
         CAPTURE(r);
         std::vector<Komponente> k = saite(220.0, 0.0, 8, 20.0);
         for (const Komponente& c : saite(220.0, 0.0, 8, 20.0)) k.push_back({c.frequenz + 0.5, r * c.amplitude, 20.0, 20.0});
-        const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-6), kRate, 220.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         const double wahr = 20.0 * std::log10((1.0 + r) / (1.0 - r));
         for (int n = 1; n <= 3; ++n)
@@ -415,8 +415,8 @@ TEST_CASE("Loop Teiltonmessung 31d-7 der Bereich endet 90 dB unter der Spitze")
     const std::vector<double> ton = erzeuge(k, 10.0, 0.1, 0.0);
     Einstellungen ohneGrenze;
     ohneGrenze.untergrenzeDb = 1000.0;
-    const Ergebnis vorher = miss(ton, kRate, 440.0, lumi::loop::fft(), ohneGrenze);
-    const Ergebnis e = miss(ton, kRate, 440.0, lumi::loop::fft());
+    const Ergebnis vorher = miss(ton, kRate, 440.0, lumi::kern::fft(), ohneGrenze);
+    const Ergebnis e = miss(ton, kRate, 440.0, lumi::kern::fft());
     REQUIRE(e.erkannt);
     for (int n = 1; n <= 3; ++n)
     {
@@ -440,7 +440,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 Helligkeit und highDecay")
 {
     SUBCASE("Pegel je Teilton zu Beginn: 1/k")
     {
-        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 20, 10.0), 3.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 20, 10.0), 3.0, 0.1, 1e-6), kRate, 110.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         const Teilton* erster = e.teilton(1);
         REQUIRE(erster != nullptr);
@@ -464,7 +464,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 Helligkeit und highDecay")
             const double r = static_cast<double>(i + 1);
             k[i].t60Frueh = k[i].t60Spaet = t60 / (1.0 + h * (r * r - 1.0));
         }
-        const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-7), kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-7), kRate, 110.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         REQUIRE(e.hochErkannt);
         MESSAGE("highDecay gemessen " << e.highDecay << " (σ = " << e.sigmaB1 << " + " << e.sigmaB3 << "·ω²)");
@@ -491,7 +491,7 @@ TEST_CASE("Loop Teiltonmessung 31d-2 das Rauschen begrenzt den Bereich")
 {
     // Teilton 1 bei −10,5 dB faellt mit 60 dB in 2 s; Rauschen ±1e-4: der Bereich endet, bevor die
     // Huellkurve im Rauschen liegt, und nach mindestens 40 dB
-    const Ergebnis e = miss(erzeuge(saite(110.0, 0.0, 6, 2.0), 5.0, 0.1, 1e-4), kRate, 110.0, lumi::loop::fft());
+    const Ergebnis e = miss(erzeuge(saite(110.0, 0.0, 6, 2.0), 5.0, 0.1, 1e-4), kRate, 110.0, lumi::kern::fft());
     REQUIRE(e.erkannt);
     const Teilton* t = e.teilton(1);
     REQUIRE(t != nullptr);
@@ -517,7 +517,7 @@ TEST_CASE("Loop Teiltonmessung 31d-3 Blende am Ende")
     MESSAGE("Blende ab 9 s: gemessen bis " << static_cast<double>(ende) / kRate << " s");
     CHECK(static_cast<double>(ende) / kRate > 7.5);
     CHECK(static_cast<double>(ende) / kRate < 9.0);
-    const Ergebnis e = miss(std::span<const double>(ton).first(ende), kRate, 220.0, lumi::loop::fft());
+    const Ergebnis e = miss(std::span<const double>(ton).first(ende), kRate, 220.0, lumi::kern::fft());
     REQUIRE(e.erkannt);
     for (int n = 1; n <= 6; ++n)
     {
@@ -532,7 +532,7 @@ TEST_CASE("Loop Teiltonmessung 31d-3 Blende am Ende")
 
 TEST_CASE("Loop Teiltonmessung 31d-3 Pegel, Direktschall, Terzbaender, Phantome")
 {
-    const lumi::loop::Fft& fft = lumi::loop::fft();
+    const lumi::kern::Fft& fft = lumi::kern::fft();
     SUBCASE("Pegel zu Beginn und Terzband eines Sinus")
     {
         const std::vector<double> ton = erzeuge({{1000.0, 0.5, 100.0, 100.0}}, 2.0, 0.1, 0.0);
@@ -630,7 +630,7 @@ TEST_CASE("Loop Teiltonmessung 31d-7 B Kurve nach Schroeder (7.5.1)")
     const double schritt = Einstellungen{}.schrittS;
     SUBCASE("eine Stufe: 4 s — eine Gerade mit −15 dB/s, Bereich wie die Abklingzeit")
     {
-        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 8, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 8, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 3; ++n)
         {
@@ -656,7 +656,7 @@ TEST_CASE("Loop Teiltonmessung 31d-7 B Kurve nach Schroeder (7.5.1)")
     SUBCASE("zwei Stufen: frueh 3 s, spaet 12 s, die spaete 30 dB leiser")
     {
         const Ergebnis e = miss(erzeuge(zweiModen(110.0, 1e-4, 12, 3.0, 12.0, -30.0, 2.0), 8.0, 0.1, 1e-6), kRate, 110.0,
-                                lumi::loop::fft());
+                                lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 3; ++n)
         {
@@ -681,7 +681,7 @@ TEST_CASE("Loop Teiltonmessung 31d-7 B Kurve nach Schroeder (7.5.1)")
     {
         // ein gemeinsames Ende (K6 a) kann hinter dem eigenen Bereich im Rauschen liegen — dort traegt der Abzug
         const std::vector<double> ton = erzeuge(saite(220.0, 0.0, 6, 3.0), 6.0, 0.1, 3e-4);
-        const Ergebnis e = miss(ton, kRate, 220.0, lumi::loop::fft());
+        const Ergebnis e = miss(ton, kRate, 220.0, lumi::kern::fft());
         REQUIRE(e.erkannt);
         for (int n = 1; n <= 2; ++n)
         {
@@ -715,7 +715,7 @@ TEST_CASE("Loop Teiltonmessung 31d-7 B Kurve nach Schroeder (7.5.1)")
     }
     SUBCASE("ein gemeinsames Ende hinter dem eigenen Bereich verlaengert die Kurve")
     {
-        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 8, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::loop::fft());
+        const Ergebnis e = miss(erzeuge(saite(110.0, 1e-4, 8, 4.0), 6.0, 0.1, 1e-6), kRate, 110.0, lumi::kern::fft());
         const Teilton* t = e.teilton(1);
         REQUIRE(t != nullptr);
         const Abklingkurve eigen = schroederKurve(*t, schritt, t->bereichVon, t->bereichBis);
@@ -732,8 +732,8 @@ TEST_CASE("Loop Teiltonmessung 31d-7 B Autokovarianz des Rests (7.5.1)")
     const double schritt = Einstellungen{}.schrittS;
     std::vector<Komponente> k = saite(220.0, 0.0, 6, 20.0);
     for (const Komponente& c : saite(220.0, 0.0, 6, 20.0)) k.push_back({c.frequenz + 1.0, 0.5 * c.amplitude, 20.0, 20.0});
-    const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
-    const Ergebnis allein = miss(erzeuge(saite(220.0, 0.0, 6, 20.0), 8.0, 0.1, 1e-6), kRate, 220.0, lumi::loop::fft());
+    const Ergebnis e = miss(erzeuge(k, 8.0, 0.1, 1e-6), kRate, 220.0, lumi::kern::fft());
+    const Ergebnis allein = miss(erzeuge(saite(220.0, 0.0, 6, 20.0), 8.0, 0.1, 1e-6), kRate, 220.0, lumi::kern::fft());
     REQUIRE(e.erkannt);
     REQUIRE(allein.erkannt);
     for (int n = 1; n <= 2; ++n)

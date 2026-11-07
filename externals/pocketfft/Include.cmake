@@ -1,8 +1,9 @@
 # externals/pocketfft/Include.cmake
 # ==================================
 # pocketfft (mreineck/pocketfft, Zweig cpp) — nur ein Header, als INTERFACE-Ziel aus
-# diesem Ordner (pocketfft_hdronly.h). Die FFT der Faltung je Ton in loop/Fft
-# (Spielweisen_Konzept.md FT1 a, FF1 a).
+# diesem Ordner (pocketfft_hdronly.h). Die FFT hinter lumi::kern::Fft in der
+# Bibliothek InstrumentCore (Spielweisen_Konzept.md FT1 a, FF1 a; seit S175
+# KN2 a dort, vorher loop/Fft der App). Reist im Quellpaket der Bibliothek mit.
 #
 # Diese Datei liegt IM PROJEKT, nicht in CMakeCraft: Solution.json nennt sie
 # ueber das Feld "include" des Externals (Muster externals/miniz, Entscheid
@@ -15,7 +16,7 @@
 # Erwartete Variablen (setzt der Orchestrator von CMakeCraft):
 #   EXTERNAL_NAME    - "pocketfft"
 #   EXTERNAL_ROOT    - Pfad zu externals/pocketfft
-#   EXECUTABLE_NAME  - das Ziel, an das gebunden wird
+#   EXECUTABLE_NAME  - das Ziel, an das gebunden wird (InstrumentCore)
 #
 # Herkunft, Fassung und Pruefsumme: README.md in diesem Ordner.
 # Kein include_guard(): die Datei wird je Ziel eingebunden.

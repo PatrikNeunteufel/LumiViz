@@ -1,14 +1,20 @@
 /**
  * @file Eigenzerlegung.cpp
- * @brief Loop: Eigenwerte und Eigenvektoren kleiner komplexer Matrizen (Stufe 31d-7, P6 a)
+ * @brief InstrumentCore: Eigenwerte und Eigenvektoren kleiner komplexer Matrizen (Stufe 31d-7, P6 a), dazu die
+ *        Erkennung entarteter Eigenwerte (IC Lehre L11)
+ *
+ * Uebernommen aus IC `rechnung/gemeinsam/Eigenzerlegung.cpp` (`bb7e6d6`), dort portiert aus LumiViz
+ * `src/loop/Eigenzerlegung.cpp` (S153); nur Namensraum und Include geaendert (Instrumente_IC_Konzept.md IK2-2 a, KN2 a;
+ * Uebernahme-Journal). Die Rechnung ist wortgleich zur LumiViz-Fassung; neu sind nur `kleinsterAbstand` und
+ * `entartet` (gemeldet, nicht behandelt: der Aufrufer vermeidet Entartung durch Grenzen, L11).
  */
-#include "loop/Eigenzerlegung.hpp"
+#include "InstrumentCore/Eigenzerlegung.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
 
-namespace lumi::loop
+namespace lumi::kern
 {
 
 namespace
@@ -270,6 +276,13 @@ Eigenzerlegung zerlegeKlein(const KleineMatrix& a)
         for (int i = 0; i < n; ++i) z.werte.push_back(a(i, i));
         z.rechts = einheit(n);
         z.links = einheit(n);
+        // L11: auch eine diagonale Matrix meldet zusammenfallende Werte (die Vektoren bleiben dann die Einheit)
+        const double groesseD = std::max(normF(a), std::numeric_limits<double>::min());
+        z.kleinsterAbstand = std::numeric_limits<double>::infinity();
+        for (int i = 0; i < n; ++i)
+            for (int j = i + 1; j < n; ++j)
+                z.kleinsterAbstand = std::min(z.kleinsterAbstand, std::abs(z.werte[static_cast<std::size_t>(i)] - z.werte[static_cast<std::size_t>(j)]) / groesseD);
+        z.entartet = z.kleinsterAbstand <= kEntartetAbstand;
         return z;
     }
     const double groesse = std::max(normF(a), std::numeric_limits<double>::min());
@@ -282,6 +295,7 @@ Eigenzerlegung zerlegeKlein(const KleineMatrix& a)
     // die Eigenvektoren des Dreiecks, rueckwaerts eingesetzt, dann zurueckgedreht
     const double klein = kEps * groesse;
     z.rechts = KleineMatrix(n);
+    z.kleinsterAbstand = std::numeric_limits<double>::infinity();
     for (int m = 0; m < n; ++m)
     {
         std::vector<Komplex> y(static_cast<std::size_t>(n), Komplex(0.0, 0.0));
@@ -302,7 +316,8 @@ Eigenzerlegung zerlegeKlein(const KleineMatrix& a)
         double abstand = std::numeric_limits<double>::infinity();
         for (int j = 0; j < n; ++j)
             if (j != m) abstand = std::min(abstand, std::abs(z.werte[static_cast<std::size_t>(j)] - z.werte[static_cast<std::size_t>(m)]));
-        if (abstand > 1e-8 * groesse)
+        z.kleinsterAbstand = std::min(z.kleinsterAbstand, abstand / groesse);
+        if (abstand > kEntartetAbstand * groesse)
         {
             KleineMatrix verschoben = a;
             for (int i = 0; i < n; ++i) verschoben(i, i) -= z.werte[static_cast<std::size_t>(m)];
@@ -312,10 +327,14 @@ Eigenzerlegung zerlegeKlein(const KleineMatrix& a)
             for (const Komplex& w : besser) endlich = endlich && std::isfinite(w.real()) && std::isfinite(w.imag());
             if (endlich) v = besser;
         }
+        else
+        {
+            z.entartet = true;
+        }
         for (int r = 0; r < n; ++r) z.rechts(r, m) = v[static_cast<std::size_t>(r)];
     }
     if (!invertiere(z.rechts, z.links, 1.0)) z.vollstaendig = false;
     return z;
 }
 
-}  // namespace lumi::loop
+}  // namespace lumi::kern

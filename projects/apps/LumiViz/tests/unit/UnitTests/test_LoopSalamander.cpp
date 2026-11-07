@@ -51,7 +51,7 @@
 #include "audio/WavDatei.hpp"
 #include "audio/WavFormat.hpp"
 #include "loop/Boden.hpp"
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 #include "loop/HammerSaite.hpp"
 #include "loop/HammerTon.hpp"
 #include "loop/Instrument.hpp"
@@ -509,7 +509,7 @@ TEST_CASE("Loop Salamander 31d-3 Messung (LUMIVIZ_SALAMANDER)")
             REQUIRE_MESSAGE(std::filesystem::exists(salamanderDatei(ordner, taste, e)), salamanderDatei(ordner, taste, e).string());
 
     const auto start = std::chrono::steady_clock::now();
-    const lumi::loop::Fft& fft = lumi::loop::fft();
+    const lumi::kern::Fft& fft = lumi::kern::fft();
     std::vector<std::vector<std::array<KanalMessung, 2>>> messungen(tasten.size());
     std::vector<std::vector<TonKurven>> kurven(tasten.size());  // 7.5.2: je Taste die Ebenen ab `kKurvenEbeneAb`
     std::vector<std::vector<std::array<KanalMessung, 2>>> einzeln(tasten.size());  // 7.5.7: jeder Kanal fuer sich
@@ -850,7 +850,7 @@ Ergebnis linksGemessen(std::span<const float> stereo, int rate, int midi)
     std::vector<double> summe(links.size());
     for (std::size_t i = 0; i < summe.size(); ++i) summe[i] = links[i] + rechts[i];
     links.resize(endeVorBlende(summe, rate));
-    return miss(links, rate, tastenFrequenz(midi), lumi::loop::fft());
+    return miss(links, rate, tastenFrequenz(midi), lumi::kern::fft());
 }
 
 struct BildKurve
@@ -1459,7 +1459,7 @@ TEST_CASE("Loop Salamander 31d-7 B Moden gegen Ton (LUMIVIZ_31D7_MODEN)")
             }
             const double dauerS = midi <= 72 ? 12.0 : 8.0;
             const std::vector<double> summe = modelltest::modenTon(saite, midi, kStufe, dauerS, 12);
-            const Ergebnis ausModen = miss(summe, modelltest::kRate, tastenFrequenz(midi), lumi::loop::fft());
+            const Ergebnis ausModen = miss(summe, modelltest::kRate, tastenFrequenz(midi), lumi::kern::fft());
             const lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
             const lumi::loop::Klang klang = modelltest::ton(instrument, midi, kStufe);
             const Ergebnis ausTon = linksGemessen(klang.daten, modelltest::kRate, midi);

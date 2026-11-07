@@ -41,7 +41,7 @@
 #include "audio/WavDatei.hpp"
 #include "loop/Aufnahme.hpp"  // schreibeWav
 #include "loop/Dehner.hpp"
-#include "loop/Fft.hpp"
+#include "InstrumentCore/Fft.hpp"
 #include "loop/PYin.hpp"
 #include "loop/Psola.hpp"
 
@@ -189,7 +189,7 @@ Spektrum spektrum(const std::vector<float>& d, std::int64_t von, std::int64_t la
         x[static_cast<std::size_t>(i)] = w * d[static_cast<std::size_t>(2 * j)];
     }
     std::vector<std::complex<double>> s(punkte / 2 + 1);
-    fft().vorwaerts(x, s);
+    lumi::kern::fft().vorwaerts(x, s);
     Spektrum sp;
     sp.binHz = static_cast<double>(kRate) / static_cast<double>(punkte);
     for (const auto& c : s) sp.leistung.push_back(std::norm(c));

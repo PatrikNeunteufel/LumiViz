@@ -1,7 +1,7 @@
 /**
  ****************************************************************************************
  * @file   test_LoopKleinEigen.cpp
- * @brief  Loop, Stufe 31d-7: der kleine komplexe Eigenloeser (`loop/Eigenzerlegung`) gegen
+ * @brief  Loop, Stufe 31d-7: der kleine komplexe Eigenloeser (`kern::zerlegeKlein`, InstrumentCore) gegen
  *         Eigen und gegen die Moden des Chors (docs/audio/Spielweisen_Konzept.md §4.1,
  *         Entscheide Patrik S153: P6 a, P8 a)
  *
@@ -21,7 +21,7 @@
 
 #include <doctest.h>
 
-#include "loop/Eigenzerlegung.hpp"
+#include "InstrumentCore/Eigenzerlegung.hpp"
 #include "loop/HammerTon.hpp"
 
 #include <Eigen/Dense>
@@ -34,6 +34,9 @@
 #include <vector>
 
 using namespace lumi::loop;
+using lumi::kern::Eigenzerlegung;
+using lumi::kern::KleineMatrix;
+using lumi::kern::zerlegeKlein;
 
 namespace
 {

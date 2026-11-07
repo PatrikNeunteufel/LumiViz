@@ -29,6 +29,7 @@
 
 #include <doctest.h>
 
+#include "InstrumentCore/Anschlag.hpp"
 #include "loop/HammerSaite.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
@@ -42,6 +43,9 @@
 #include <cmath>
 
 using namespace lumi::loop;
+using lumi::kern::anschlagRest;
+using lumi::kern::anschlagStufe;
+using lumi::kern::kAnschlagStufeMin;
 
 namespace
 {

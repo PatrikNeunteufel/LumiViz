@@ -6,15 +6,20 @@ Patrik S149, und FF1 a, Patrik S150).
 
 | | |
 |---|---|
-| Fassung | Zweig `cpp`, Commit `c90e55b3d529f8efa40ed01a20de22405f45fc65` vom 2026-06-30 („cosmetics“) |
-| Quelle | <https://github.com/mreineck/pocketfft/tree/c90e55b3d529f8efa40ed01a20de22405f45fc65> |
-| Geladen | 2026-10-24 (Freigabe Patrik, S150, FF1 a), einzeln über `raw.githubusercontent.com` |
-| `pocketfft_hdronly.h` | 120 735 Byte, SHA-256 `3e9a05318d8e3b1446bda1c4617e6a103cdd23599ae0a776a92a6e8800e92fdc`, Git-Blob `de6c8d6b42a8372e68b0f1837122c3eafdfba9f6` |
+| Fassung | Zweig `cpp`, Commit `4d865cba24359b05b37da4e75aee24498c3b78e7` vom 2026-10-18 („Add POCKETFFT_NO_EXCEPTIONS option for builds without exception handling“) |
+| Quelle | <https://github.com/mreineck/pocketfft/tree/4d865cba24359b05b37da4e75aee24498c3b78e7> |
+| Geladen | 2026-11-07 (S175, IK2-2-1 a, KN2 a): Zweig `cpp` geklont, die Datei aus dem Commit; dieselbe Fassung, die IC am 2026-10-29 geladen hat (IC `UEBERNAHME_LUMIVIZ.md` §3, dort ohne Commit) |
+| `pocketfft_hdronly.h` | 121 769 Byte, LF, SHA-256 `518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d`, Git-Blob `d28c28b589126574505a660b9c7f624775cf4367` |
 | `LICENSE.md` | 1 498 Byte, SHA-256 `a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056`, Git-Blob `c3a4c06a92d024e12ab76ce6b20eae815979552e` |
 | Lizenz | BSD-3-Clause (`LICENSE.md`; derselbe Text im Kopf des Headers) |
 | Braucht | nur die Standardbibliothek |
 
-Die Git-Blobs stimmen mit den Angaben der GitHub-Schnittstelle zu diesem Commit überein (geprüft beim Laden).
+Die Git-Blobs sind die des Klons im Commit oben (geprüft beim Laden).
+
+**Vorher** (S150 bis S174): Commit `c90e55b3d529f8efa40ed01a20de22405f45fc65` vom 2026-06-30 („cosmetics“), 120 735 Byte,
+SHA-256 `3e9a0531…8e92fdc`, Blob `de6c8d6b…`. Der Unterschied (91 Zeilen) betrifft nur die Fehlerbehandlung: 28 Stellen
+`throw` → `POCKETFFT_THROW`, dazu der Schalter `POCKETFFT_NO_EXCEPTIONS` (hier nicht gesetzt — `throw` wie vorher); die
+Rechnung ist unverändert. Übernahme und Wächter: `projects/apps/LumiViz/docs/modellierung/anbindung-ic/Uebernahme_Journal.md`.
 
 ## Was hier liegt
 
@@ -36,7 +41,7 @@ Nicht übernommen: `README.md` des Repositorys, `pocketfft_demo.cc`, `meson.buil
 
 ## Wie LumiViz es benutzt
 
-Nur in `src/loop/Fft.cpp`, hinter der Schnittstelle `lumi::loop::Fft` (`include/loop/Fft.hpp`): kein Typ von
-pocketfft geht nach außen; eine andere Umsetzung kommt in `fftUmsetzungen()` dazu (Memory „Externals austauschbar
-einbinden“). Gebraucht werden `r2c` und `c2r` (reell ↔ Spektrum) in `double`. Gebunden an den Kern der App
-(`LumiViz.Core`).
+Nur in `projects/libs/InstrumentCore/src/Fft.cpp`, hinter der Schnittstelle `lumi::kern::Fft`
+(`InstrumentCore/Fft.hpp`): kein Typ von pocketfft geht nach außen; eine andere Umsetzung kommt in `fftUmsetzungen()`
+dazu (Memory „Externals austauschbar einbinden“). Gebraucht werden `r2c` und `c2r` (reell ↔ Spektrum) in `double`.
+Gebunden PRIVATE an die Bibliothek `InstrumentCore` (seit S175, KN2 a; vorher an `LumiViz.Core`).

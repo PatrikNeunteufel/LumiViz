@@ -18,7 +18,7 @@
  * A = diag(iω_j − σ_s) − σ_b·J geben Schwebung und zweistufigen Ausklang.
  * Seit 31d-7 (P2 a) schwingt jede Saite in zwei Eigenrichtungen, um γ gegen die
  * Senkrechte gedreht und um δ verstimmt; der Steg nimmt senkrecht σ_V, waagrecht
- * σ_H (`ebenenModen`, zerlegt mit `loop/Eigenzerlegung`).
+ * σ_H (`ebenenModen`, zerlegt mit `kern::zerlegeKlein`, InstrumentCore).
  *
  * Derselbe Aufruf ergibt dieselben Werte. Kein Qt-Widget, keine Audio-Engine.
  */

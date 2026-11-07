@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.5.0
-> **Datum:** 2026-11-07 (Session 174)
+> **Version:** 0.6.0
+> **Datum:** 2026-11-07 (Session 175)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); nächster Schritt 34c
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); nächster Schritt 34d
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -413,6 +413,21 @@ wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teil
 | 34k | Klasse 2 je Note | Cembalo, Harfe, Gitarre, Laute, Oud; Korpus `korpusImpulsantwort`, Vergleich IC-Luftraum (IK2-10 a); Messung von `stimme` (Kipppunkt IK2-11 a) | wie 34g; Bericht Luftraum gegen Korpus |
 | 34l | Abschluss | Handbuch, Sichttest-Liste, Hörprobenliste für HörTest, Doku (Modul-Doku der Bibliotheken), Auftrag an IC als Datei (Paket beziehen nach TP1, Abdrücke je Plattform, Port entfernen) | Bereich und voller Lauf unter beiden Compilern |
 
+✅ **KN1 a** (Patrik S175, „Alle nach Empfehlung“): **Die Bibliothek Kern heißt `InstrumentCore`** (Ziel und Ordner
+`projects/libs/InstrumentCore`, Namensraum `lumi::kern`, Paket `instrumentcore`); die Bibliothek Messung (34e) heißt
+`InstrumentMeasure` mit `lumi::messung`. Grund: Muster der Schwester `InstrumentBody` (`lumi::koerper`). Verworfen: b
+(`LumiKern` — nur Beispiel im Auftrag, mischt Deutsch und Englisch im Zielnamen), c (`ToneCore` — Tafel und Auskunft gelten
+je Instrument). Kippt, wenn die Bibliothek Dinge außerhalb der Instrumente tragen soll (dann `AudioCore`).
+
+✅ **KN2 a** (Patrik S175): **34c verschiebt** — Eigenzerlegung, Fft mit pocketfft und `anschlagStufe` ziehen aus der App
+in `InstrumentCore`, App und Tests binden die Bibliothek, ihre Kopien entfallen; `parallelJe` der Tests wird das der
+Bibliothek; pocketfft wird die IC-Fassung. Danach Wächter `Loop Werte`, `Klangfassung`, Flügel-Bezug, `*31b-3 Rechenzeit*`
+dreimal und ein **voller Lauf unter beiden Compilern** (External geändert, UF17-1 a), alles im Übernahme-Journal. Neu dazu
+`Kurve`, `Modal`, SHA-256, `KettenNote`, `normiere`, `Tonkern`, Fabrik, Auskunft, Parametertafel; `Tastenkurve` weicht der
+`Kurve` erst in 34d (hängt an der Flügel-Datei). Grund: ändern sich Bits, hängt die Ursache an genau einer Übernahme
+(pocketfft und Grenze 32 in 34c, Flügel in 34d). Verworfen: b (daneben anlegen — zwei Fassungen je Baustein für einen
+Schritt, drei Ursachen in 34d zusammen). Kippt, wenn die Flügel-Suche (Plan A–D) wieder laufen soll, bevor 34c fertig ist.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -472,6 +487,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.6.0 | 2026-11-07 | Session 175. §6: KN1 a (Name `InstrumentCore`, `lumi::kern`; Messung `InstrumentMeasure`), KN2 a (34c verschiebt); 34c erledigt — Übernahme-Journal `modellierung/anbindung-ic/Uebernahme_Journal.md` J0–J11, voller Lauf 1765 / 1765 unter beiden Compilern, Wächter unverändert. |
 | 0.5.0 | 2026-11-07 | Session 174. §6a neu: Skizze Creator und Editor (34a) gebilligt — CK1 a (ein Creator für alle Kerne aus der Tafel), CK2 a (Kurven im Creator, Kipppunkt UF12 a greift nicht); was die Tafel dafür trägt. §6: TP1 als entschieden vermerkt. |
 | 0.4.0 | 2026-11-07 | Session 174. §5a: Auftrag v0.14.0, Befund zu Punkt 3 (Pakete ohne CMake-Beschreibung), Quellpaket mit `SHA256SUMS` (neu, aus TP1 a abgeleitet), Merker PRIVATE für 34c; 34b erledigt (v0.14.0 veröffentlicht, Pin gewechselt, voller Lauf), Merker für 34c aus der Gegenprüfung. |
 | 0.3.0 | 2026-11-03 | Session 173. §5 IK2-0 a (drei Schichten) mit Nachprüfung CMakeCraft STATIC; IK2-1 c (Bibliotheken unter `projects/libs/`, IC bezieht sie als Paket); IK2-2 a (reichere Fassung je Baustein, Kern und Messung, Übernahme-Journal, nichts geht verloren); IK2-3 a (`Tonkern`, Frames); IK2-4 a (Fassung 21, Parametertafel); IK2-5 a (E1 a an den Bibliotheken, Bezüge je Plattform); IK2-6 a (4,6 %, Verhältnis zum Flügel als Kennzahl); IK2-7 a (Fundament zuerst, Stufe 32 geht in 34 auf, C/D); IK2-8 a (echte Namen, `synth_` nur bei Kollision); IK2-9 durch Z2 a; CC1 a und §5a (Aufträge an CMakeCraft); IK2-10 a (Bezug als Zahl der Tafel, LUFS, Körper, Stereo); IK2-11 a (gestimmte Werte als Daten mit Abdruck-Wächter); IK2-2-1 a (Korrektur: pocketfft aus IC, neuer und belegt); IK2-12 a (Quellenregister mit Wächter, Recherche bleibt in IC); IK2-13 a (eine Skizze für alle Kerne zuerst); §6 Teilplan Stufe 34 (34a–34l) und TP1 a (Paket als Fassung im IC-Repo). Wortlaut der Vorlage IK2-0 bleibt darunter. |
