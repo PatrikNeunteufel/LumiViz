@@ -203,10 +203,26 @@
           "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-ffp-contract=off>",
           "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-fno-fast-math>"
         ]
+      },
+      {
+        "name": "InstrumentModels",
+        "//description": "Die Rechenkerne der Instrumentklassen ueber InstrumentCore (Instrumente_IC_Konzept.md BK1 a, Stufe 34d): je Klasse ein Unterordner und Namensraum (hammer/: der Fluegel, lumi::kern::hammer), dazu die Fabrik der eingebauten Kerne. STATIC mit denselben Schaltern nach E1 a (PRIVATE). Als Quellpaket nach IC (TP1 a, packages: instrumentmodels; bezieht instrumentcore)",
+        "skip": false,
+        "version": "0.1.0",
+        "type": "STATIC",
+        "path": "projects/libs/InstrumentModels/src",
+        "public_headers": "projects/libs/InstrumentModels/include",
+        "dependencies": [ "InstrumentCore" ],
+        "compile_options": [
+          "$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>",
+          "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-ffp-contract=off>",
+          "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-fno-fast-math>"
+        ]
       }
     ],
     "packages": [
-      { "name": "instrumentcore", "library": "InstrumentCore" }
+      { "name": "instrumentcore", "library": "InstrumentCore" },
+      { "name": "instrumentmodels", "library": "InstrumentModels" }
     ],
     "executables": [
       {
@@ -256,7 +272,7 @@
         "version": "0.12.0",
 
         "core": {
-          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore" ],
+          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore", "InstrumentModels" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz", "signalsmith-stretch" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
@@ -292,7 +308,7 @@
               "//timeout": "S73: von 30 auf 120 erhoeht. Die Suite braucht warm ~12 s, aber der ERSTE Lauf direkt nach einem Build ~30 s (frische Binaries, Virenscanner) — und schlug damit reproduzierbar an die alte Grenze. Der Wert soll Haenger fangen, nicht kalte Starts.",
               "timeout": 120,
               "labels": [ "unit", "core", "fast" ],
-              "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore" ],
+              "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore", "InstrumentModels" ],
               "//externals": "Composer-Naht N26 (S105): qt-ads fuer den Testfall mit echtem Dock (panel_zeigen in test_ComposerSichttestStart.cpp).",
               "externals": [ "Qt6", "qt-ads", "bass", "lua54", "CDT", "Eigen", "Spectra" ],
               "external_options": {

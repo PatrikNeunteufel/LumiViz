@@ -1,9 +1,13 @@
 /**
  * @file HammerTon.cpp
- * @brief Loop: ein Ton der Hammer-Saite (Stufe 31b; Herleitung des Chors in
+ * @brief InstrumentModels, Kern `hammerString`: ein Ton der Hammer-Saite (Stufe 31b; Herleitung des Chors in
  *        docs/audio/Spielweisen_Konzept.md §4.1 nach HT3 a)
+ *
+ * Bis S175 `src/loop/HammerTon.cpp` der App; seit 34d hier, mit den beiden Erweiterungen des IC-Ports
+ * (`klassen/01_hammer_saite/HammerTon.cpp`, `bb7e6d6`): `tempoFaktor` (Soft) und der Moderator in Reihe (Practice).
+ * Mit den Vorgaben (1, 0) rechnet der Ton Bit fuer Bit wie vorher (Uebernahme-Journal J12).
  */
-#include "loop/HammerTon.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 
 #include "InstrumentCore/Eigenzerlegung.hpp"
 
@@ -11,7 +15,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace lumi::loop
+namespace lumi::kern::hammer
 {
 
 namespace
@@ -70,8 +74,8 @@ struct Werte
 Werte werteAn(const HammerSaite& s, const HammerAnschlag& a)
 {
     const int t = std::clamp(a.taste, kTasteMin, kTasteMax);
-    const auto log = [t](const Tastenkurve& k) { return wertAn(k, t, KurvenSkala::Logarithmisch); };
-    const auto lin = [t](const Tastenkurve& k) { return wertAn(k, t, KurvenSkala::Linear); };
+    const auto log = [t](const Kurve& k) { return wertAn(k, t, Skala::Logarithmisch); };
+    const auto lin = [t](const Kurve& k) { return wertAn(k, t, Skala::Linear); };
     Werte w;
     w.b = log(s.inharmonizitaet);
     w.f0 = a.hz / std::sqrt(1.0 + w.b);  // der erste Teilton liegt auf der Tonhoehe
@@ -366,7 +370,7 @@ std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double del
     mitte /= n;
     const double hoeher = std::exp2(deltaCent / 1200.0);
     // Stelle 2j + a: Saite j, Eigenrichtung a; um die Mitte verschoben (wie `chorModen`)
-    kern::KleineMatrix a(2 * n);
+    KleineMatrix a(2 * n);
     std::vector<double> senk(static_cast<std::size_t>(2 * n));
     std::vector<double> waag(static_cast<std::size_t>(2 * n));
     for (int j = 0; j < n; ++j)
@@ -384,7 +388,7 @@ std::vector<EbenenMode> ebenenModen(const std::vector<double>& omega, double del
         for (int s = 0; s < 2 * n; ++s)
             a(z, s) -= sigmaV * senk[static_cast<std::size_t>(z)] * senk[static_cast<std::size_t>(s)] +
                        sigmaH * waag[static_cast<std::size_t>(z)] * waag[static_cast<std::size_t>(s)];
-    const kern::Eigenzerlegung zer = kern::zerlegeKlein(a);
+    const Eigenzerlegung zer = zerlegeKlein(a);
     // der Hammer stoesst senkrecht mit F/N, am Steg zaehlt die Summe der senkrechten Anteile
     std::vector<EbenenMode> moden;
     double groesster = 0.0;
@@ -496,7 +500,7 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
     Laengs laengs(w, moden, fs);
 
     // --- der Kontakt: Hammer und Saite, achtfach feiner ---
-    const double tempo = hammerTempo(anschlag.stufe);
+    const double tempo = hammerTempo(anschlag.stufe) * anschlag.tempoFaktor;
     double hammerY = 0.0;  // m, zur Saite hin positiv
     double hammerV = tempo;
     const auto kontaktMax = std::min<std::int64_t>(frames, std::llround(kKontaktMaxS * fs));
@@ -535,7 +539,25 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
         {
             double saiteY = 0.0;
             for (const Mode& m : moden) saiteY += m.abnahme * m.zustand.imag();
-            const double druck = (hammerY - saiteY) * 1000.0;  // mm
+            double druck = (hammerY - saiteY) * 1000.0;  // mm
+            if (anschlag.moderatorSteife > 0.0 && druck > 0.0)
+            {
+                // der Moderator in Reihe (aus IC, Klasse 1 Rest, Session 4): die Eindrueckung teilt sich so, dass
+                // beide Filze dieselbe Kraft tragen — Q_m·(δ − δ_H)^p_m = F_H(δ_H), F_H mit dem Gedaechtnis des
+                // vorigen Schritts; halbiert
+                double unten = 0.0, oben = druck;
+                for (int i = 0; i < 60; ++i)
+                {
+                    const double mitte = 0.5 * (unten + oben);
+                    const double fh = f0Hammer * (std::pow(mitte, w.p) - (w.tauS > 0.0 ? w.eps * gedaechtnis * kern / w.tauS : 0.0));
+                    const double fm = anschlag.moderatorSteife * std::pow(druck - mitte, anschlag.moderatorExponent);
+                    if (fh < fm)
+                        unten = mitte;
+                    else
+                        oben = mitte;
+                }
+                druck = 0.5 * (unten + oben);
+            }
             const double phi = druck > 0.0 ? std::pow(druck, w.p) : 0.0;
             gedaechtnis = gedaechtnis * kern + phi * w.tauS * (1.0 - kern);
             const double kraft = std::max(0.0, f0Hammer * (phi - (w.tauS > 0.0 ? w.eps * gedaechtnis / w.tauS : 0.0)));
@@ -612,4 +634,4 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
     }
 }
 
-}  // namespace lumi::loop
+}  // namespace lumi::kern::hammer

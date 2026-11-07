@@ -185,8 +185,8 @@ bool Tonauftrag::ausSpeicher(std::size_t einer, QString& schluessel, Geholt*& ge
                     {
                         if (!schicht.an) continue;
                         // Stufe 31c-7 (SB1 a): ein Koerper, den es nicht gibt — der Ton klingt ohne Boden
-                        const QString& koerper = schicht.hammerSaite.resonanzboden.koerper;
-                        if (istHammerSchicht(schicht) && !koerper.isEmpty() && !bodenVon(koerper))
+                        const QString& koerper = schicht.koerper;
+                        if (istKernSchicht(schicht) && !koerper.isEmpty() && !bodenVon(koerper))
                         {
                             const QString zeile = QStringLiteral("Body not found: %1").arg(koerper);
                             if (!geholt->zeilen.contains(zeile)) geholt->zeilen << zeile;

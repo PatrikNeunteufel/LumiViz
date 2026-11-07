@@ -411,7 +411,7 @@ TEST_SUITE("LoopInstrument")
             const std::int64_t ausklang = std::llround(std::max(5.0, laengsterAusklang) * kRate / 1000.0);
             // die Hammer-Saite (S157, 31d-8: grand_piano) rechnet ihre Laenge selbst — gehalten, dann der
             // Nachklang unter dem Daempfer und die Antwort des Bodens (geprueft in test_LoopHammerTon.cpp)
-            const bool hammer = istHammerSchicht(instrument.schichten[0]);
+            const bool hammer = istKernSchicht(instrument.schichten[0]);
             if (hammer)
                 CHECK(ton.frames() > 22050);
             else
@@ -437,7 +437,7 @@ TEST_SUITE("LoopInstrument")
             // (S123: Instrumente aus Formen, etwa Rings Choir und Atom Bell), oder die Hammer-Saite klingt
             // durch einen Koerper (Hoerorte links und rechts, 31c-7)
             const bool stereo = std::any_of(instrument.schichten.begin(), instrument.schichten.end(), [](const Schicht& s) {
-                return s.pan != 0.0 || s.stereoXY || (istHammerSchicht(s) && !s.hammerSaite.resonanzboden.koerper.isEmpty());
+                return s.pan != 0.0 || s.stereoXY || (istKernSchicht(s) && !s.koerper.isEmpty());
             });
             CHECK(beideGleich == !stereo);
             // der Klang endet bei null: kein Knacken am Ende

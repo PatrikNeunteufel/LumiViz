@@ -6,7 +6,7 @@
  *         S155/S157/S161: SQ2 a, ZF6 a, SP2 a, HU2 a (3), SG2 a, SG3 a)
  *
  * @details
- * Gesucht wird an den Stuetzpunkten (`Tastenkurve::punkte`), nicht an Abweichungen je Taste (SP2 a). Jede Kurve traegt
+ * Gesucht wird an den Stuetzpunkten (`lumi::kern::Kurve::punkte`), nicht an Abweichungen je Taste (SP2 a). Jede Kurve traegt
  * an jeder der 30 Tasten von *Salamander* einen Stuetzpunkt: frei an den Tasten, an denen sie wirkt (`detune`, `u leise`,
  * `u laut` nur im Chor ab zwei Saiten, `delta` nur bei einer Saite), fest mit dem Wert der Vorgabe an den uebrigen —
  * so bleibt die Kurve dort, wie die Vorgabe sie interpoliert (Lesart Claude S162: die Vorgabe an den gemessenen Tasten
@@ -29,7 +29,7 @@
 #include "Fluegelmessung.hpp"
 #include "Strukturmessung.hpp"
 
-#include "loop/HammerSaite.hpp"
+#include "FluegelSchicht.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -43,7 +43,7 @@
 namespace modelltest
 {
 
-using KurvenFeld = lumi::loop::Tastenkurve lumi::loop::HammerSaite::*;
+using KurvenFeld = lumi::kern::Kurve lumi::kern::hammer::HammerSaite::*;
 
 /// `highDecay` nach Bensa et al. 2003, Gl. 37a/b, mit dem Streuband b1 × 0,5…3, b2 × 0,5…1,5 (SQ2 a); die
 /// Wellenzahl π/L mit der Laenge aus der Vorgabe (Annahme: die Laengen des C6 fehlen).
@@ -71,9 +71,9 @@ struct SuchKurve
     std::vector<double> festWerte;
     std::string herkunft;
 
-    [[nodiscard]] lumi::loop::KurvenSkala skala() const
+    [[nodiscard]] lumi::kern::Skala skala() const
     {
-        return log ? lumi::loop::KurvenSkala::Logarithmisch : lumi::loop::KurvenSkala::Linear;
+        return log ? lumi::kern::Skala::Logarithmisch : lumi::kern::Skala::Linear;
     }
     [[nodiscard]] double koordinate(double wert) const { return log ? std::log(wert) : wert; }
     [[nodiscard]] double wert(double koordinate) const { return log ? std::exp(koordinate) : koordinate; }
@@ -84,7 +84,7 @@ struct SuchKurve
 /// Alle Kurven der Suche; die Parameter liegen Kurve fuer Kurve hintereinander, je Kurve in der Reihenfolge ihrer Tasten.
 struct Suchraum
 {
-    lumi::loop::HammerSaite basis;
+    lumi::kern::hammer::HammerSaite basis;
     std::vector<SuchKurve> kurven;
 
     [[nodiscard]] std::size_t zahl() const
@@ -143,15 +143,15 @@ inline double detuneObenCent(int taste)
 /// Grenzen und Start nach der Tabelle des Bauauftrags 7.5.9 §3.3 (SQ2 a, HU2 a (3), SG2 a, SG3 a), mit den Optionen
 /// `optionen` (s. Dateikopf). Mit `detuneFest` steht `detune` an allen Tasten fest: im Chor ab zwei Saiten mit dem Start
 /// nach SG3 a (in die Grenzen), sonst mit der Vorgabe.
-inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector<int>& tasten, const lumi::messung::Strukturen& strukturen,
+inline Suchraum suchraum(const lumi::kern::hammer::HammerSaite& basis, const std::vector<int>& tasten, const lumi::messung::Strukturen& strukturen,
                          const SuchOptionen& optionen = {})
 {
-    using lumi::loop::HammerSaite;
-    using lumi::loop::KurvenSkala;
+    using lumi::kern::hammer::HammerSaite;
+    using lumi::kern::Skala;
     Suchraum raum;
     raum.basis = basis;
-    const auto log = [&basis](KurvenFeld f, int t) { return lumi::loop::wertAn(basis.*f, t, KurvenSkala::Logarithmisch); };
-    const auto lin = [&basis](KurvenFeld f, int t) { return lumi::loop::wertAn(basis.*f, t, KurvenSkala::Linear); };
+    const auto log = [&basis](KurvenFeld f, int t) { return lumi::kern::wertAn(basis.*f, t, lumi::kern::Skala::Logarithmisch); };
+    const auto lin = [&basis](KurvenFeld f, int t) { return lumi::kern::wertAn(basis.*f, t, lumi::kern::Skala::Linear); };
     const auto schwebung = [&strukturen](int t) -> std::optional<double> {
         const auto it = strukturen.find(t);
         return it != strukturen.end() ? schwebungCentAn(it->second, t) : std::nullopt;
@@ -176,15 +176,15 @@ inline Suchraum suchraum(const lumi::loop::HammerSaite& basis, const std::vector
             else
             {
                 k.festTasten.push_back(t);
-                k.festWerte.push_back(lumi::loop::wertAn(basis.*feld, t, k.skala()));
+                k.festWerte.push_back(lumi::kern::wertAn(basis.*feld, t, k.skala()));
             }
         }
         raum.kurven.push_back(std::move(k));
     };
     using Grenzen = std::tuple<double, double, double>;
     const auto alle = [](int) { return true; };
-    const auto chor2 = [&basis](int t) { return lumi::loop::chorAn(basis, t) >= 2; };
-    const auto deltaOffen = [&basis, &optionen](int t) { return optionen.deltaImChor || lumi::loop::chorAn(basis, t) == 1; };
+    const auto chor2 = [&basis](int t) { return lumi::kern::hammer::chorAn(basis, t) >= 2; };
+    const auto deltaOffen = [&basis, &optionen](int t) { return optionen.deltaImChor || lumi::kern::hammer::chorAn(basis, t) == 1; };
     const auto deltaFrei = [&](int t) { return !optionen.deltaFest && deltaOffen(t); };
     const auto detuneFrei = [&](int t) { return !optionen.detuneFest && chor2(t); };
 
@@ -367,23 +367,23 @@ inline BesterJeTaste besterJeTaste(const std::vector<SuchLauf>& laeufe, const st
 
 /// Die Saite mit den Parametern `x` (Koordinaten; in die Grenzen geklemmt): je Kurve Stuetzpunkte an allen gemessenen
 /// Tasten, ohne Abweichungen; die spaete Stufe nie kuerzer als die fruehe (die Saite liest kuerzer als *Decay*).
-inline lumi::loop::HammerSaite saiteAus(const Suchraum& raum, const std::vector<double>& x)
+inline lumi::kern::hammer::HammerSaite saiteAus(const Suchraum& raum, const std::vector<double>& x)
 {
-    lumi::loop::HammerSaite saite = raum.basis;
+    lumi::kern::hammer::HammerSaite saite = raum.basis;
     const std::vector<double> xs = klemme(raum, x);
     std::size_t j = 0;
     for (const SuchKurve& k : raum.kurven)
     {
-        std::vector<lumi::loop::TastenWert> punkte;
+        std::vector<lumi::kern::NotenWert> punkte;
         for (std::size_t i = 0; i < k.tasten.size(); ++i, ++j) punkte.push_back({k.tasten[i], k.wert(xs[j])});
         for (std::size_t i = 0; i < k.festTasten.size(); ++i) punkte.push_back({k.festTasten[i], k.festWerte[i]});
-        std::sort(punkte.begin(), punkte.end(), [](const lumi::loop::TastenWert& a, const lumi::loop::TastenWert& b) { return a.taste < b.taste; });
-        lumi::loop::Tastenkurve& ziel = saite.*k.feld;
+        std::sort(punkte.begin(), punkte.end(), [](const lumi::kern::NotenWert& a, const lumi::kern::NotenWert& b) { return a.taste < b.taste; });
+        lumi::kern::Kurve& ziel = saite.*k.feld;
         ziel.punkte = std::move(punkte);
         ziel.abweichungen.clear();
     }
-    for (lumi::loop::TastenWert& p : saite.abklingSpaetS.punkte)
-        p.wert = std::max(p.wert, lumi::loop::wertAn(saite.abklingS, p.taste, lumi::loop::KurvenSkala::Logarithmisch));
+    for (lumi::kern::NotenWert& p : saite.abklingSpaetS.punkte)
+        p.wert = std::max(p.wert, lumi::kern::wertAn(saite.abklingS, p.taste, lumi::kern::Skala::Logarithmisch));
     return saite;
 }
 

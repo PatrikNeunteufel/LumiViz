@@ -6,7 +6,7 @@
  * Die Planung (`plane`, `Loop::klangNamen`, Freeze, Export, Composer) kennt keine
  * Instrumente; sie bekommt eine Auskunft herein. Seit Stufe 31b (HT5 a) traegt sie
  * alles, was die Namen der Toene bestimmt: die Saiten eines Saiteninstruments und
- * ob eine Hammer-Saite klingt (dann tragen die Toene die Anschlagstufe, HK2 a).
+ * ob die Toene die Anschlagstufe tragen (seit 34d aus der Auskunft des Kerns, HK2 a).
  * Wer Instrumente kennt, liefert sie (`instrumentAuskunft`, Instrument.hpp).
  *
  * Kein Qt-Widget, keine Audio-Engine.
@@ -27,13 +27,14 @@ struct InstrumentAuskunft
 {
     /// Die Saiten; leer = kein Saiteninstrument.
     Saitensatz saiten;
-    /// Klingt eine Hammer-Saite (eine eingeschaltete Schicht *Hammer* + *Modal*)?
-    bool hammer = false;
+    /// Tragen die Toene die Anschlagstufe im Namen (`:a<stufe>`, HK2 a)? Ja, wenn eine eingeschaltete Kern-Schicht
+    /// einen Kern traegt, dessen Auskunft es sagt (`kern::KernAuskunft::stufeImNamen`, 34d; bis dahin `hammer`).
+    bool stufeImNamen = false;
 
     InstrumentAuskunft() = default;
-    /// Eine Auskunft, die nur Saiten kennt — ohne Hammer.
-    InstrumentAuskunft(Saitensatz saitenDesInstruments, bool mitHammer = false)  // NOLINT(google-explicit-constructor)
-        : saiten(std::move(saitenDesInstruments)), hammer(mitHammer)
+    /// Eine Auskunft, die nur Saiten kennt — ohne Stufe im Namen.
+    InstrumentAuskunft(Saitensatz saitenDesInstruments, bool mitStufe = false)  // NOLINT(google-explicit-constructor)
+        : saiten(std::move(saitenDesInstruments)), stufeImNamen(mitStufe)
     {
     }
 

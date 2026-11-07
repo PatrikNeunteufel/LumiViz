@@ -30,7 +30,7 @@
 #include <doctest.h>
 
 #include "InstrumentCore/Anschlag.hpp"
-#include "loop/HammerSaite.hpp"
+#include "FluegelSchicht.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 
@@ -43,6 +43,7 @@
 #include <cmath>
 
 using namespace lumi::loop;
+using namespace lumi::kern::hammer;
 using lumi::kern::anschlagRest;
 using lumi::kern::anschlagStufe;
 using lumi::kern::kAnschlagStufeMin;
@@ -50,9 +51,9 @@ using lumi::kern::kAnschlagStufeMin;
 namespace
 {
 
-Tastenkurve kurve(std::initializer_list<TastenWert> punkte)
+lumi::kern::Kurve kurve(std::initializer_list<lumi::kern::NotenWert> punkte)
 {
-    Tastenkurve k;
+    lumi::kern::Kurve k;
     k.punkte.assign(punkte.begin(), punkte.end());
     return k;
 }
@@ -115,7 +116,7 @@ TEST_CASE("Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe")
     CHECK(ist.titel == soll.titel);
     CHECK(ist.art == QStringLiteral("keys"));
     REQUIRE(ist.schichten.size() == 1);
-    CHECK(istHammerSchicht(ist.schichten[0]));
+    CHECK(istKernSchicht(ist.schichten[0]));
     CHECK(ist.schichten[0].anregung == Anregung::Hammer);
     CHECK_MESSAGE(ist.schichten[0].hammerSaite == soll.schichten[0].hammerSaite,
                   "grand_piano.lvinst ist veraltet — LUMIVIZ_GRAND_PIANO_SCHREIBEN=1, dann instrument_katalog.py");
@@ -126,57 +127,57 @@ TEST_CASE("Loop Hammer-Saite 31a Kurve")
 {
     SUBCASE("Randwert, Abweichung, ohne Punkte")
     {
-        const Tastenkurve k = kurve({{40, 2.0}, {80, 4.0}});
-        CHECK(wertAn(k, 21, KurvenSkala::Linear) == doctest::Approx(2.0));
-        CHECK(wertAn(k, 108, KurvenSkala::Linear) == doctest::Approx(4.0));
-        CHECK(wertAn(k, 60, KurvenSkala::Linear) == doctest::Approx(3.0));  // zwei Punkte: die Gerade
-        Tastenkurve mit = k;
+        const lumi::kern::Kurve k = kurve({{40, 2.0}, {80, 4.0}});
+        CHECK(wertAn(k, 21, lumi::kern::Skala::Linear) == doctest::Approx(2.0));
+        CHECK(wertAn(k, 108, lumi::kern::Skala::Linear) == doctest::Approx(4.0));
+        CHECK(wertAn(k, 60, lumi::kern::Skala::Linear) == doctest::Approx(3.0));  // zwei Punkte: die Gerade
+        lumi::kern::Kurve mit = k;
         mit.abweichungen = {{60, 9.0}};
-        CHECK(wertAn(mit, 60, KurvenSkala::Linear) == doctest::Approx(9.0));
-        CHECK(wertAn(mit, 61, KurvenSkala::Linear) == doctest::Approx(3.05));
-        CHECK(wertAn(Tastenkurve{}, 60, KurvenSkala::Linear) == 0.0);
+        CHECK(wertAn(mit, 60, lumi::kern::Skala::Linear) == doctest::Approx(9.0));
+        CHECK(wertAn(mit, 61, lumi::kern::Skala::Linear) == doctest::Approx(3.05));
+        CHECK(wertAn(lumi::kern::Kurve{}, 60, lumi::kern::Skala::Linear) == 0.0);
     }
     SUBCASE("monoton kubisch: trifft die Punkte, schwingt nicht ueber")
     {
         // ein Sprung mit flachen Stuecken davor und danach — ein gewoehnlicher Spline
         // schwaenge hier ueber 1 und unter 0
-        const Tastenkurve k = kurve({{21, 0.0}, {40, 0.0}, {45, 1.0}, {108, 1.0}});
-        for (const TastenWert& p : k.punkte) CHECK(wertAn(k, p.taste, KurvenSkala::Linear) == doctest::Approx(p.wert));
+        const lumi::kern::Kurve k = kurve({{21, 0.0}, {40, 0.0}, {45, 1.0}, {108, 1.0}});
+        for (const lumi::kern::NotenWert& p : k.punkte) CHECK(wertAn(k, p.taste, lumi::kern::Skala::Linear) == doctest::Approx(p.wert));
         double vorher = -1.0;
         for (int t = 21; t <= 108; ++t)
         {
-            const double w = wertAn(k, t, KurvenSkala::Linear);
+            const double w = wertAn(k, t, lumi::kern::Skala::Linear);
             CHECK(w >= 0.0);
             CHECK(w <= 1.0);
             CHECK(w >= vorher - 1e-12);  // steigt nur
             vorher = w;
         }
         // glatt: zwischen 40 und 45 kein gerader Weg
-        CHECK(wertAn(k, 41, KurvenSkala::Linear) < 0.2);
-        CHECK(wertAn(k, 44, KurvenSkala::Linear) > 0.8);
+        CHECK(wertAn(k, 41, lumi::kern::Skala::Linear) < 0.2);
+        CHECK(wertAn(k, 44, lumi::kern::Skala::Linear) > 0.8);
     }
     SUBCASE("logarithmisch: eine Exponentialfunktion aus wenigen Punkten genau")
     {
         // eine Exponentialfunktion (wie Q0 bei Stulov) ist in ln eine Gerade — monoton kubisch gibt
         // sie genau wieder
         const auto exponentiell = [](int n) { return 183.0 * std::exp(0.045 * n); };
-        const Tastenkurve k = kurve({{21, exponentiell(1)}, {69, exponentiell(49)}, {108, exponentiell(88)}});
+        const lumi::kern::Kurve k = kurve({{21, exponentiell(1)}, {69, exponentiell(49)}, {108, exponentiell(88)}});
         for (int t = 21; t <= 108; t += 7)
-            CHECK(wertAn(k, t, KurvenSkala::Logarithmisch) == doctest::Approx(exponentiell(t - 20)).epsilon(1e-9));
+            CHECK(wertAn(k, t, lumi::kern::Skala::Logarithmisch) == doctest::Approx(exponentiell(t - 20)).epsilon(1e-9));
         // in den Werten selbst dagegen laege sie dazwischen zu hoch (gemessen: gut 6 %)
-        CHECK(wertAn(k, 45, KurvenSkala::Linear) > exponentiell(25) * 1.05);
+        CHECK(wertAn(k, 45, lumi::kern::Skala::Linear) > exponentiell(25) * 1.05);
     }
     SUBCASE("richten: sortiert, je Taste einmal, Grenzen, Ersatz")
     {
-        Tastenkurve k = kurve({{80, 5.0}, {10, 1.0}, {80, 7.0}, {60, std::nan("")}, {200, 50.0}});
+        lumi::kern::Kurve k = kurve({{80, 5.0}, {10, 1.0}, {80, 7.0}, {60, std::nan("")}, {200, 50.0}});
         richteKurve(k, 0.0, 10.0, kurve({{21, 3.0}}));
         REQUIRE(k.punkte.size() == 3);
-        CHECK(k.punkte[0] == TastenWert{21, 1.0});
-        CHECK(k.punkte[1] == TastenWert{80, 5.0});  // der erste an 80 bleibt
-        CHECK(k.punkte[2] == TastenWert{108, 10.0});
-        Tastenkurve leer;
+        CHECK(k.punkte[0] == lumi::kern::NotenWert{21, 1.0});
+        CHECK(k.punkte[1] == lumi::kern::NotenWert{80, 5.0});  // der erste an 80 bleibt
+        CHECK(k.punkte[2] == lumi::kern::NotenWert{108, 10.0});
+        lumi::kern::Kurve leer;
         richteKurve(leer, 0.0, 10.0, kurve({{21, 3.0}}));
-        CHECK(leer.punkte == std::vector<TastenWert>{{21, 3.0}});
+        CHECK(leer.punkte == std::vector<lumi::kern::NotenWert>{{21, 3.0}});
     }
 }
 
@@ -209,21 +210,21 @@ TEST_CASE("Loop Hammer-Saite 31a Vorgaben")
     const HammerSaite& v = hammerSaiteVorgabe();
     for (const int taste : {21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99, 105, 108})
     {
-        CHECK(wertAn(v.hammerMasseG, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerMasseG(taste - 20)));
-        CHECK(wertAn(v.hammerExponent, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerExponent(taste - 20)));
-        CHECK(wertAn(v.hammerSteife, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerSteife(taste - 20)));
-        CHECK(wertAn(v.hammerHysterese, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerHysterese(taste - 20)));
-        CHECK(wertAn(v.hammerRelaxationUs, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerRelaxationUs(taste - 20)));
+        CHECK(wertAn(v.hammerMasseG, taste, lumi::kern::Skala::Linear) == doctest::Approx(stulovHammerMasseG(taste - 20)));
+        CHECK(wertAn(v.hammerExponent, taste, lumi::kern::Skala::Linear) == doctest::Approx(stulovHammerExponent(taste - 20)));
+        CHECK(wertAn(v.hammerSteife, taste, lumi::kern::Skala::Logarithmisch) == doctest::Approx(stulovHammerSteife(taste - 20)));
+        CHECK(wertAn(v.hammerHysterese, taste, lumi::kern::Skala::Linear) == doctest::Approx(stulovHammerHysterese(taste - 20)));
+        CHECK(wertAn(v.hammerRelaxationUs, taste, lumi::kern::Skala::Logarithmisch) == doctest::Approx(stulovHammerRelaxationUs(taste - 20)));
     }
     // zwischen den Stuetzpunkten: p genau (eine Gerade), Q0 genau (eine Gerade in ln), Masse, ε und τ nah (Parabeln), B nah
     for (int taste = 21; taste <= 108; ++taste)
     {
-        CHECK(wertAn(v.hammerMasseG, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerMasseG(taste - 20)).epsilon(0.01));
-        CHECK(wertAn(v.hammerExponent, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerExponent(taste - 20)).epsilon(0.001));
-        CHECK(wertAn(v.hammerSteife, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerSteife(taste - 20)).epsilon(0.005));
-        CHECK(wertAn(v.hammerHysterese, taste, KurvenSkala::Linear) == doctest::Approx(stulovHammerHysterese(taste - 20)).epsilon(0.01));
-        CHECK(wertAn(v.hammerRelaxationUs, taste, KurvenSkala::Logarithmisch) == doctest::Approx(stulovHammerRelaxationUs(taste - 20)).epsilon(0.02));
-        CHECK(wertAn(v.inharmonizitaet, taste, KurvenSkala::Logarithmisch) ==
+        CHECK(wertAn(v.hammerMasseG, taste, lumi::kern::Skala::Linear) == doctest::Approx(stulovHammerMasseG(taste - 20)).epsilon(0.01));
+        CHECK(wertAn(v.hammerExponent, taste, lumi::kern::Skala::Linear) == doctest::Approx(stulovHammerExponent(taste - 20)).epsilon(0.001));
+        CHECK(wertAn(v.hammerSteife, taste, lumi::kern::Skala::Logarithmisch) == doctest::Approx(stulovHammerSteife(taste - 20)).epsilon(0.005));
+        CHECK(wertAn(v.hammerHysterese, taste, lumi::kern::Skala::Linear) == doctest::Approx(stulovHammerHysterese(taste - 20)).epsilon(0.01));
+        CHECK(wertAn(v.hammerRelaxationUs, taste, lumi::kern::Skala::Logarithmisch) == doctest::Approx(stulovHammerRelaxationUs(taste - 20)).epsilon(0.02));
+        CHECK(wertAn(v.inharmonizitaet, taste, lumi::kern::Skala::Logarithmisch) ==
               doctest::Approx(rigaudB(taste, kRigaudBassSteigung, kRigaudBassAchse)).epsilon(0.1));
     }
     // die Saiten an Tasten, die keine Stuetzpunkte sind, gegen RT-0425 Anhang A (L, d, ρ, T0):
@@ -239,13 +240,13 @@ TEST_CASE("Loop Hammer-Saite 31a Vorgaben")
     {
         CAPTURE(z.taste);
         const double flaeche = 3.141592653589793 * std::pow(z.dMm * 1e-3, 2) / 4.0;
-        CHECK(wertAn(v.saitenLaengeM, z.taste, KurvenSkala::Logarithmisch) == doctest::Approx(z.laenge).epsilon(0.02));
-        CHECK(wertAn(v.saitenMasseGm, z.taste, KurvenSkala::Logarithmisch) ==
+        CHECK(wertAn(v.saitenLaengeM, z.taste, lumi::kern::Skala::Logarithmisch) == doctest::Approx(z.laenge).epsilon(0.02));
+        CHECK(wertAn(v.saitenMasseGm, z.taste, lumi::kern::Skala::Logarithmisch) ==
               doctest::Approx(z.rho * flaeche * 1e3).epsilon(0.02));
-        CHECK(wertAn(v.laengsVerhaeltnis, z.taste, KurvenSkala::Linear) ==
+        CHECK(wertAn(v.laengsVerhaeltnis, z.taste, lumi::kern::Skala::Linear) ==
               doctest::Approx(std::sqrt(2.02e11 * flaeche / z.t0)).epsilon(0.02));
     }
-    CHECK(wertAn(v.anschlagStelle, 60, KurvenSkala::Linear) == doctest::Approx(0.12));
+    CHECK(wertAn(v.anschlagStelle, 60, lumi::kern::Skala::Linear) == doctest::Approx(0.12));
     // der Chor (vorlaeufig): eine, zwei, drei Saiten
     CHECK(chorAn(v, 21) == 1);
     CHECK(chorAn(v, 30) == 1);
@@ -366,7 +367,7 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         json[QStringLiteral("layers")] = schichten;
         Instrument gelesen;
         REQUIRE(ausJson(json, gelesen));
-        CHECK(istHammerSchicht(gelesen.schichten[0]));
+        CHECK(istKernSchicht(gelesen.schichten[0]));
         CHECK(gelesen.schichten[0].anregung == Anregung::Hammer);
         CHECK(gelesen.schichten[0].hammerSaite == hammerSaiteVorgabe());
     }
@@ -503,8 +504,8 @@ TEST_CASE("Loop Hammer-Saite 31a Anschlag")
 TEST_CASE("Loop Hammer-Saite 31a keine gegriffene Saite, klingt seit 31b")
 {
     const Instrument instrument = fluegel();
-    CHECK(hatHammer(instrument));
-    CHECK(istHammerSchicht(instrument.schichten[0]));
+    CHECK(stufeImNamen(instrument));
+    CHECK(istKernSchicht(instrument.schichten[0]));
     CHECK_FALSE(istSaitenSchicht(instrument.schichten[0]));  // keine gegriffene Saite
     CHECK_FALSE(folgtDerSaite(instrument.schichten[0]));
     const Klang klang = rendereTon(instrument, 60, 300.0, 48000);
@@ -512,5 +513,5 @@ TEST_CASE("Loop Hammer-Saite 31a keine gegriffene Saite, klingt seit 31b")
     CHECK(std::any_of(klang.daten.begin(), klang.daten.end(), [](float w) { return w != 0.0f; }));
     Instrument aus = instrument;
     aus.schichten[0].an = false;
-    CHECK_FALSE(hatHammer(aus));
+    CHECK_FALSE(stufeImNamen(aus));
 }

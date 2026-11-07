@@ -35,12 +35,13 @@
 
 #include "InstrumentCore/Anschlag.hpp"
 #include "loop/Aufnahme.hpp"  // schreibeWav
-#include "loop/HammerTon.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Pedalplan.hpp"
 #include "loop/Rechenkern.hpp"
 
+#include "FluegelSchicht.hpp"
 #include "Fluegelmessung.hpp"  // messeKanal (HU3-1: Helligkeit je Staerke wie an Salamander)
 #include "SaitenMessung.hpp"  // betrag, spitze, cent, db, teilton
 
@@ -62,6 +63,7 @@
 #include <string>
 
 using namespace lumi::loop;
+using namespace lumi::kern::hammer;
 using lumi::kern::anschlagRest;
 using namespace saitentest;
 
@@ -71,10 +73,7 @@ namespace
 Instrument fluegel()
 {
     Instrument instrument;
-    Schicht& s = instrument.schichten[0];
-    s.schwingung = Schwingung::Saite;
-    s.saitenModell = SaitenModell::Modal;
-    s.anregung = Anregung::Hammer;
+    instrument.schichten[0] = fluegeltest::fluegelSchicht();
     instrument.tastatur = Tastatur{};
     return instrument;
 }
@@ -149,7 +148,7 @@ TEST_CASE("Loop Hammer-Ton 31b Teiltoene nach B")
     const double hz = tonHz(taste);
     const Klang klang = ton(instrument, taste, 3000.0, -30);
     REQUIRE(klang.frames() > kSaitenRate);
-    const double b = wertAn(instrument.schichten[0].hammerSaite.inharmonizitaet, taste, KurvenSkala::Logarithmisch);
+    const double b = wertAn(fluegeltest::saiteVon(instrument.schichten[0]).inharmonizitaet, taste, lumi::kern::Skala::Logarithmisch);
     const double f0 = hz / std::sqrt(1.0 + b);
     // der erste Teilton auf der Tonhoehe
     CHECK(std::abs(cent(spitze(klang, hz, 20.0, 0.2, 1.5), hz)) <= 0.75);
@@ -188,7 +187,7 @@ TEST_CASE("Loop Hammer-Ton 31b Abklingen: eine Saite mit Decay, drei zweistufig"
     {
         const int taste = 28;
         const double hz = tonHz(taste);
-        const double t60 = wertAn(instrument.schichten[0].hammerSaite.abklingS, taste, KurvenSkala::Logarithmisch);
+        const double t60 = wertAn(fluegeltest::saiteVon(instrument.schichten[0]).abklingS, taste, lumi::kern::Skala::Logarithmisch);
         const Klang klang = ton(instrument, taste, 4000.0);
         const double fall = pegel(klang, hz, 0.5) - pegel(klang, hz, 3.5);
         MESSAGE("E1: " << fall << " dB in 3 s, soll " << 60.0 * 3.0 / t60);
@@ -198,8 +197,9 @@ TEST_CASE("Loop Hammer-Ton 31b Abklingen: eine Saite mit Decay, drei zweistufig"
     {
         const int taste = 60;
         const double hz = tonHz(taste);
-        HammerSaite& h = instrument.schichten[0].hammerSaite;
+        HammerSaite h = fluegeltest::saiteVon(instrument.schichten[0]);
         h.verstimmungCent = {{{21, 2.0}, {108, 2.0}}, {}};
+        fluegeltest::setzeSaite(instrument.schichten[0], h);
         const Klang klang = ton(instrument, taste, 8000.0);
         const double frueh = (pegel(klang, hz, 0.2) - pegel(klang, hz, 1.2)) / 1.0;
         const double spaet = (pegel(klang, hz, 5.0) - pegel(klang, hz, 7.0)) / 2.0;
@@ -207,6 +207,7 @@ TEST_CASE("Loop Hammer-Ton 31b Abklingen: eine Saite mit Decay, drei zweistufig"
         CHECK(spaet < 0.7 * frueh);
         // ohne Verstimmung bleibt es eine Stufe
         h.verstimmungCent = {{{21, 0.0}, {108, 0.0}}, {}};
+        fluegeltest::setzeSaite(instrument.schichten[0], h);
         const Klang rein = ton(instrument, taste, 8000.0);
         const double reinFrueh = pegel(rein, hz, 0.2) - pegel(rein, hz, 1.2);
         const double reinSpaet = (pegel(rein, hz, 5.0) - pegel(rein, hz, 7.0)) / 2.0;
@@ -234,13 +235,13 @@ TEST_CASE("Loop Hammer-Ton 31b Daempfer und undampedFrom")
         const double frei = pegel(klang, tonHz(taste), 0.1) - pegel(klang, tonHz(taste), 0.7);
         // dieselbe Taste mit Daempfer
         Instrument alle = instrument;
-        alle.tastatur->ungedaempftAb = kTasteMax + 1;
+        fluegeltest::setzeUngedaempftAb(alle.schichten[0], kTasteMax + 1);
         const Klang gedaempft = ton(alle, taste, 300.0);
         const double mit = pegel(gedaempft, tonHz(taste), 0.1) - pegel(gedaempft, tonHz(taste), 0.7);
         MESSAGE("C7 ohne Daempfer: " << frei << " dB, mit: " << mit << " dB in 0,6 s");
         CHECK(frei < mit - 30.0);
         // ohne Daempfer faellt sie mit der ersten Stufe (Decay) — nicht schneller
-        const double t60 = wertAn(instrument.schichten[0].hammerSaite.abklingS, taste, KurvenSkala::Logarithmisch);
+        const double t60 = wertAn(fluegeltest::saiteVon(instrument.schichten[0]).abklingS, taste, lumi::kern::Skala::Logarithmisch);
         CHECK(frei < 60.0 * 0.6 / t60 * 1.15);
     }
 }
@@ -286,7 +287,7 @@ TEST_CASE("Loop Hammer-Ton 31b Anschlag gegen Chabassier, Joly & Chaigne 2013, T
         double adr;
     };
     const Instrument instrument = fluegel();
-    const HammerSaite& h = instrument.schichten[0].hammerSaite;
+    const HammerSaite h = fluegeltest::saiteVon(instrument.schichten[0]);
     for (const Zeile& z : {Zeile{27, 1.48, 0.5, 0.568}, Zeile{27, 1.48, 3.0, 3.59}, Zeile{36, 0.9502, 1.5, 2.01},
                            Zeile{53, 1.0525, 0.5, 0.337}, Zeile{53, 1.0525, 3.0, 2.10}, Zeile{73, 0.921, 4.5, 2.64},
                            Zeile{91, 0.794, 1.5, 0.443}})
@@ -322,14 +323,14 @@ TEST_CASE("Loop Hammer-Ton 31b-2 Laengsschwingung: Phantomteiltoene wachsen mit 
     Instrument normal = fluegel();
     const int taste = 28;
     const double hz = tonHz(taste);
-    const HammerSaite& h = normal.schichten[0].hammerSaite;
-    const double b = wertAn(h.inharmonizitaet, taste, KurvenSkala::Logarithmisch);
+    const HammerSaite h = fluegeltest::saiteVon(normal.schichten[0]);
+    const double b = wertAn(h.inharmonizitaet, taste, lumi::kern::Skala::Logarithmisch);
     const double f0 = hz / std::sqrt(1.0 + b);
     const auto fk = [&](int k) { return k * f0 * std::sqrt(1.0 + b * k * k); };
     const double phantom = fk(10) + fk(11);
     REQUIRE(fk(21) - phantom > 15.0);
     Instrument steif = normal;
-    const double r = wertAn(h.laengsVerhaeltnis, taste, KurvenSkala::Linear);
+    const double r = wertAn(h.laengsVerhaeltnis, taste, lumi::kern::Skala::Linear);
     steif.schichten[0].hammerSaite.laengsVerhaeltnis = {{{21, 3.0 * r}, {108, 3.0 * r}}, {}};  // ES neunmal
     const Klang a = ton(normal, taste, 2000.0);
     const Klang s = ton(steif, taste, 2000.0);
@@ -482,7 +483,7 @@ TEST_CASE("Loop Hammer-Ton HU3-1 Stulov: Kontaktzeit je Taste und Helligkeit je 
     // 0,97 / 1,65 / 1,92; C6: 1,17 / 0,73 / 2,18 / 1,48 / 1,53 / 1,81 / 2,55 fuer n = 2 ... 8). Mit RT-0425 lag das
     // Modell an C6 bei 0,3 fuer alle n (Befund S159: der Hammer wurde mit der Staerke kaum heller).
     const Instrument instrument = fluegel();
-    const HammerSaite& h = instrument.schichten[0].hammerSaite;
+    const HammerSaite h = fluegeltest::saiteVon(instrument.schichten[0]);
     const auto anschlag = [](int taste, int stufe) {
         HammerAnschlag a;
         a.taste = taste;
@@ -778,7 +779,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Bezug: dieselben Toene wie vor dem Umbau")
         REQUIRE(gefunden != bezug.end());
         const BezugWert& soll = gefunden->second;
         CHECK(wert.frames == soll.frames);
-        if (chorAn(instrument.schichten[0].hammerSaite, t.taste) == 1)
+        if (chorAn(fluegeltest::saiteVon(instrument.schichten[0]), t.taste) == 1)
         {
             // eine Saite ohne zweite Ebene: Bit fuer Bit (P5 a, P6 a)
             CHECK(wert.pruefsumme == soll.pruefsumme);
@@ -798,7 +799,7 @@ namespace
 {
 
 /// Eine Kurve, die ueberall denselben Wert hat.
-Tastenkurve ueberall(double wert)
+lumi::kern::Kurve ueberall(double wert)
 {
     return {{{kTasteMin, wert}, {kTasteMax, wert}}, {}};
 }
@@ -937,7 +938,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Phantome in der zweiten Stufe aus beiden Ebenen
     HammerSaite& h = instrument.schichten[0].hammerSaite;
     const int taste = 28;
     const double hz = tonHz(taste);
-    const double b = wertAn(h.inharmonizitaet, taste, KurvenSkala::Logarithmisch);
+    const double b = wertAn(h.inharmonizitaet, taste, lumi::kern::Skala::Logarithmisch);
     const double f0 = hz / std::sqrt(1.0 + b);
     const auto fk = [&](int k) { return k * f0 * std::sqrt(1.0 + b * k * k); };
     h.stegWinkelGrad = ueberall(10.0);  // die Laengskraft deutlich ueber dem Leck der Fenster
@@ -993,8 +994,8 @@ TEST_CASE("Loop Hammer-Ton 31d-7 das waagrechte Verhaeltnis: wie gerechnet, nie 
     h.polarisationCent = ueberall(3.0);
     // die langsamste Mode des Grundtons, wie der Ton sie rechnet (P3-1 a)
     const auto gerechnet = [&](double verhaeltnis) {
-        const double frueh = wertAn(h.abklingS, taste, KurvenSkala::Logarithmisch);
-        const double spaet = std::max(frueh, wertAn(h.abklingSpaetS, taste, KurvenSkala::Logarithmisch));
+        const double frueh = wertAn(h.abklingS, taste, lumi::kern::Skala::Logarithmisch);
+        const double spaet = std::max(frueh, wertAn(h.abklingSpaetS, taste, lumi::kern::Skala::Logarithmisch));
         const double sigmaFrueh = std::log(1000.0) / frueh;
         const double sigmaSpaet = std::log(1000.0) / spaet;
         const double sigmaV = sigmaFrueh - sigmaSpaet;

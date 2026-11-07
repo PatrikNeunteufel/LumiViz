@@ -52,8 +52,8 @@
 #include "Zielsumme.hpp"
 
 #include "InstrumentBody/Statistik.hpp"
-#include "loop/HammerSaite.hpp"
-#include "loop/HammerTon.hpp"
+#include "FluegelSchicht.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 
 #include <QDateTime>
 #include <QString>
@@ -115,7 +115,7 @@ modelltest::SuchAufgabe aufgabe(const std::vector<int>& tasten, const modelltest
     a.tasten = tasten;
     a.strukturen = *strukturen;
     a.ziele = *ziele;
-    a.raum = modelltest::suchraum(lumi::loop::hammerSaiteVorgabe(), tasten, a.strukturen, optionen);
+    a.raum = modelltest::suchraum(lumi::kern::hammer::hammerSaiteVorgabe(), tasten, a.strukturen, optionen);
     return a;
 }
 
@@ -1003,7 +1003,7 @@ TEST_CASE("Loop Salamander 7.5.12 Suchraum: delta an allen Tasten frei, detune f
     const std::vector<int> tasten = modelltest::salamanderMidi();
     const modelltest::SuchAufgabe alt = aufgabe(tasten);
     const modelltest::SuchAufgabe neu = aufgabe(tasten, modelltest::suchOptionen7512());
-    const lumi::loop::HammerSaite& vorgabe = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite& vorgabe = lumi::kern::hammer::hammerSaiteVorgabe();
 
     // die Vorgabe {} ist der Raum von 7.5.9 (im Einzelnen prueft ihn „7.5.9 Ziel: Kurven der Suche“)
     CHECK(alt.raum.zahl() == 5 * 30 + 3 * 26 + 4);
@@ -1033,7 +1033,7 @@ TEST_CASE("Loop Salamander 7.5.12 Suchraum: delta an allen Tasten frei, detune f
         if (frei != detuneAlt.tasten.end())
             CHECK(detune.festWerte[i] == detuneAlt.start[static_cast<std::size_t>(frei - detuneAlt.tasten.begin())]);  // Start nach SG3 a
         else
-            CHECK(detune.festWerte[i] == lumi::loop::wertAn(vorgabe.verstimmungCent, t, lumi::loop::KurvenSkala::Linear));
+            CHECK(detune.festWerte[i] == lumi::kern::wertAn(vorgabe.verstimmungCent, t, lumi::kern::Skala::Linear));
     }
     // die uebrigen Kurven gleich
     for (std::size_t k = 0; k < alt.raum.kurven.size(); ++k)
@@ -1050,7 +1050,7 @@ TEST_CASE("Loop Salamander 7.5.12 Suchraum: delta an allen Tasten frei, detune f
         CHECK(a.festWerte == n.festWerte);
     }
     // die Saite aus Startpunkt 1 traegt detune am Start nach SG3 a
-    CHECK(lumi::loop::wertAn(modelltest::saiteAus(neu.raum, modelltest::startpunkt(neu.raum, 1)).verstimmungCent, 60, lumi::loop::KurvenSkala::Linear) ==
+    CHECK(lumi::kern::wertAn(modelltest::saiteAus(neu.raum, modelltest::startpunkt(neu.raum, 1)).verstimmungCent, 60, lumi::kern::Skala::Linear) ==
           doctest::Approx(*modelltest::festWert(neu.raum, "detune", 60)));
     // die A4-Wege (S165): δ fest mit dem Start, δ startet unten, der Start von detune setzbar, die Zeile der Optionen
     {
@@ -1153,16 +1153,16 @@ TEST_CASE("Loop Salamander 7.5.12 Suchraum: keine Entartung an 84 mit delta 0,01
     // dazu −σ_V·s·sᵀ − σ_H·w·wᵀ am Steg. ‖a‖_F ist hier aus den Eigenwerten geschaetzt (√Σ|λ − i·Mitte|², fuer eine
     // nahezu normale Matrix gleich, sonst eine untere Grenze — der Faktor also eher zu gross).
     const double relativDelta = std::exp2(0.01 / 1200.0) - 1.0;
-    lumi::loop::HammerAnschlag anschlag;
+    lumi::kern::hammer::HammerAnschlag anschlag;
     anschlag.taste = 84;
     anschlag.hz = tastenFrequenz(84);
-    const lumi::loop::HammerSaite saite = modelltest::saiteAus(a.raum, punkt(0.01, 1.0));
+    const lumi::kern::hammer::HammerSaite saite = modelltest::saiteAus(a.raum, punkt(0.01, 1.0));
     double kleinsterFaktor = std::numeric_limits<double>::infinity();
-    for (const lumi::loop::TeiltonModen& t : lumi::loop::hammerTeiltonModen(saite, anschlag))
+    for (const lumi::kern::hammer::TeiltonModen& t : lumi::kern::hammer::hammerTeiltonModen(saite, anschlag))
     {
         if (t.teilton > 3 || t.moden.size() < 2) continue;
         double mitte = 0.0;
-        for (const lumi::loop::EbenenMode& m : t.moden) mitte += m.lambda.imag();
+        for (const lumi::kern::hammer::EbenenMode& m : t.moden) mitte += m.lambda.imag();
         mitte /= static_cast<double>(t.moden.size());
         double norm = 0.0;
         double abstand = std::numeric_limits<double>::infinity();
@@ -1494,7 +1494,7 @@ TonSucheBloecke sucheJeTaste(const modelltest::SuchAufgabe& a, const LmStartBloe
     const LmResiduenBloecke amTon = [&](const std::vector<std::vector<double>>& punkte, const std::vector<std::size_t>& welche) {
         std::vector<int> tasten;
         for (const std::size_t b : welche) tasten.push_back(a.tasten[b]);
-        std::vector<lumi::loop::HammerSaite> saiten;
+        std::vector<lumi::kern::hammer::HammerSaite> saiten;
         for (const std::vector<double>& p : punkte) saiten.push_back(modelltest::saiteAus(a.raum, p));
         const std::vector<modelltest::Auswertung> aus = modelltest::werteAus(saiten, tasten, a.strukturen, a.ziele);
         std::vector<std::vector<double>> rs;
@@ -2064,7 +2064,7 @@ TEST_CASE("Loop Salamander 7.5.12 Schwebung am Ergebnis (LUMIVIZ_75_G_AM)")
         modelltest::DetuneTaste d;
         d.taste = t;
         const auto z = a.strukturen.find(t);
-        d.gesetzt = lumi::loop::chorAn(a.raum.basis, t) >= 2 && z != a.strukturen.end() && modelltest::schwebtImZiel(z->second);
+        d.gesetzt = lumi::kern::hammer::chorAn(a.raum.basis, t) >= 2 && z != a.strukturen.end() && modelltest::schwebtImZiel(z->second);
         if (z != a.strukturen.end()) d.zielHz = modelltest::schwebungsHz(z->second);
         liste.push_back(d);
     }
@@ -2112,7 +2112,7 @@ TEST_CASE("Loop Salamander 7.5.12 Probe (LUMIVIZ_75_PROBE12)")
     // die Nullprobe der Vorgabe an denselben Tasten
     double sekunden = 0.0;
     const std::vector<modelltest::Auswertung> null =
-        modelltest::werteAus({lumi::loop::hammerSaiteVorgabe()}, tasten, a.strukturen, a.ziele, &sekunden);
+        modelltest::werteAus({lumi::kern::hammer::hammerSaiteVorgabe()}, tasten, a.strukturen, a.ziele, &sekunden);
     const HoerZahlen zVorgabe = hoerZahlen(h, null.front().tasten);
     const HoerZahlen zBester = hoerZahlen(h, bester);
 

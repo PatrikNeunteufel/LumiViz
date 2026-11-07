@@ -35,7 +35,7 @@
 
 #include "InstrumentBody/Antwort.hpp"
 #include "loop/Boden.hpp"
-#include "loop/HammerTon.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Aufnahme.hpp"  // schreibeWav
 #include "loop/Kit.hpp"
@@ -57,6 +57,7 @@
 #include <vector>
 
 using namespace lumi::loop;
+using namespace lumi::kern::hammer;
 namespace kp = lumi::koerper;
 
 namespace

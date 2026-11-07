@@ -928,7 +928,7 @@ QStringList Loop::klangNamen(const InstrumentVon& saiten, const Eingefroren& ein
                     ton.instrument = m.instrument;
                     ton.hoehe = note.hoehe;
                     ton.dauerMs = notenMs(note);
-                    ton.anschlagStufe = stufeDerNote(note, auskunft.hammer);
+                    ton.anschlagStufe = stufeDerNote(note, auskunft.stufeImNamen);
                     nimm(tonKlang(ton));
                 }
                 continue;
@@ -940,7 +940,7 @@ QStringList Loop::klangNamen(const InstrumentVon& saiten, const Eingefroren& ein
                     if (clip.muster != m.name || istEingefroren(k, clip)) continue;
                     for (int r = 0; r < clip.wiederholungen; ++r)
                         for (std::size_t i = 0; i < m.noten.size(); ++i)
-                            nimm(tonKlang(tonImClip(*this, m, clip.wiederholungen, r, i, auskunft.hammer)));
+                            nimm(tonKlang(tonImClip(*this, m, clip.wiederholungen, r, i, auskunft.stufeImNamen)));
                 }
             continue;
         }

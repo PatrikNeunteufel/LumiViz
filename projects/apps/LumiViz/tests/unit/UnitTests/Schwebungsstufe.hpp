@@ -26,7 +26,7 @@
 #include "Suche.hpp"
 #include "Suchkurven.hpp"
 
-#include "loop/HammerSaite.hpp"
+#include "FluegelSchicht.hpp"
 
 #include <algorithm>
 #include <array>
@@ -161,12 +161,12 @@ inline std::vector<Minimum1D> minimiere1D(const std::vector<double>& unten, cons
 
 /// Je Saite und Taste die Struktur des Modells (Teiltoene 1–3), gemessen wie das Ziel: `strukturAus` je Ebene der
 /// Suche am Kanalmittel, `verdichteStruktur` ueber die Ebenen. Alle Toene auf einem Pool, die laengsten zuerst.
-inline std::vector<std::vector<lumi::messung::TonStruktur>> strukturenDesModells(const std::vector<lumi::loop::HammerSaite>& saiten,
+inline std::vector<std::vector<lumi::messung::TonStruktur>> strukturenDesModells(const std::vector<lumi::kern::hammer::HammerSaite>& saiten,
                                                                                  const std::vector<int>& tasten,
                                                                                  const lumi::messung::Strukturen& strukturen)
 {
     std::vector<lumi::loop::Instrument> instrumente;
-    for (const lumi::loop::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
+    for (const lumi::kern::hammer::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
     std::vector<int> dauer;
     for (const int m : tasten)
     {
@@ -265,7 +265,7 @@ inline std::array<double, lumi::messung::kKurvenTeiltoene> schwebungsHz(const lu
 }
 
 /// Die Saite zu `x` im Raum `raum` mit `detune` an den Tasten `tasten` auf `werte` gesetzt.
-inline lumi::loop::HammerSaite saiteMitDetune(Suchraum raum, const std::vector<double>& x, const std::vector<int>& tasten, const std::vector<double>& werte)
+inline lumi::kern::hammer::HammerSaite saiteMitDetune(Suchraum raum, const std::vector<double>& x, const std::vector<int>& tasten, const std::vector<double>& werte)
 {
     for (std::size_t i = 0; i < tasten.size(); ++i) setzeFest(raum, "detune", tasten[i], werte[i]);
     return saiteAus(raum, x);
@@ -289,7 +289,7 @@ inline DetuneStufe stufeDetune(const SuchAufgabe& a, const std::vector<double>& 
         d.nachher = d.vorher;
         const auto z = a.strukturen.find(t);
         if (z != a.strukturen.end()) d.zielHz = schwebungsHz(z->second);
-        if (lumi::loop::chorAn(a.raum.basis, t) < 2) d.grund = "eine Saite";
+        if (lumi::kern::hammer::chorAn(a.raum.basis, t) < 2) d.grund = "eine Saite";
         else if (z == a.strukturen.end() || !schwebtImZiel(z->second)) d.grund = "keine Schwebung im Ziel";
         else if (!festWert(a.raum, "detune", t)) d.grund = "detune nicht fest";
         else
@@ -309,7 +309,7 @@ inline DetuneStufe stufeDetune(const SuchAufgabe& a, const std::vector<double>& 
         std::vector<lumi::messung::TonStruktur> amStart;
         bool startOffen = true;
         const Ziel1DSpalten g = [&](const std::vector<std::vector<double>>& spalten) {
-            std::vector<lumi::loop::HammerSaite> saiten;
+            std::vector<lumi::kern::hammer::HammerSaite> saiten;
             if (startOffen) saiten.push_back(saiteMitDetune(a.raum, x, gesetzt, start));
             for (const std::vector<double>& s : spalten) saiten.push_back(saiteMitDetune(a.raum, x, gesetzt, s));
             const auto m = strukturenDesModells(saiten, gesetzt, a.strukturen);
@@ -478,7 +478,7 @@ inline DetuneStufe stufeDetuneDelta(const SuchAufgabe& a, const std::vector<doub
         d.deltaNachher = d.deltaVorher;
         const auto z = a.strukturen.find(t);
         if (z != a.strukturen.end()) d.zielHz = schwebungsHz(z->second);
-        if (lumi::loop::chorAn(a.raum.basis, t) < 2) d.grund = "eine Saite";
+        if (lumi::kern::hammer::chorAn(a.raum.basis, t) < 2) d.grund = "eine Saite";
         else if (z == a.strukturen.end() || !schwebtImZiel(z->second)) d.grund = "keine Schwebung im Ziel";
         else if (!festWert(a.raum, "detune", t) || !festWert(a.raum, "delta", t)) d.grund = "detune oder delta nicht fest";
         else
@@ -511,7 +511,7 @@ inline DetuneStufe stufeDetuneDelta(const SuchAufgabe& a, const std::vector<doub
     };
     // je Spalte ein Paar (detune, δ) je Taste; zurueck g je Spalte und Taste
     const auto werte = [&](const std::vector<std::vector<double>>& detune, const std::vector<std::vector<double>>& delta) {
-        std::vector<lumi::loop::HammerSaite> saiten;
+        std::vector<lumi::kern::hammer::HammerSaite> saiten;
         for (std::size_t s = 0; s < detune.size(); ++s) saiten.push_back(saite(detune[s], delta[s]));
         const auto m = strukturenDesModells(saiten, gesetzt, a.strukturen);
         ++st.aufrufe;

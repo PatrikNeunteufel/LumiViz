@@ -2,7 +2,7 @@
 
 #include "InstrumentBody/Antwort.hpp"
 #include "InstrumentBody/Statistik.hpp"
-#include "loop/HammerTon.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"  // kHammerKraftBezug, kSchalldruckBezug
 #include "loop/Koerper.hpp"
 #include "loop/KoerperBauplan.hpp"
 #include "loop/Tonspeicher.hpp"
@@ -50,7 +50,7 @@ std::vector<double> bodenAntwort(const std::vector<koerper::ModeImKoerper>& mode
 std::vector<double> schalldruck(std::span<const float> kraft, std::span<const double> antwort, const kern::Fft& umsetzung)
 {
     std::vector<double> f(kraft.size());
-    for (std::size_t i = 0; i < kraft.size(); ++i) f[i] = static_cast<double>(kraft[i]) * kHammerKraftBezug;
+    for (std::size_t i = 0; i < kraft.size(); ++i) f[i] = static_cast<double>(kraft[i]) * kern::hammer::kHammerKraftBezug;
     return kern::falte(umsetzung, f, antwort);
 }
 
@@ -139,7 +139,7 @@ void falteMitBoden(std::span<const float> kraft, const Klang& antwort, std::vect
     const std::size_t n = kern::zweierpotenzAb(laenge);
     // die Kraft einmal ins Spektrum, je Seite die Antwort (FT1 a)
     std::vector<double> zeit(n, 0.0);
-    for (std::size_t i = 0; i < kraft.size(); ++i) zeit[i] = static_cast<double>(kraft[i]) * kHammerKraftBezug;
+    for (std::size_t i = 0; i < kraft.size(); ++i) zeit[i] = static_cast<double>(kraft[i]) * kern::hammer::kHammerKraftBezug;
     std::vector<std::complex<double>> f(n / 2 + 1), h(n / 2 + 1);
     umsetzung.vorwaerts(zeit, f);
     stereo.assign(2 * laenge, 0.0f);
@@ -150,7 +150,7 @@ void falteMitBoden(std::span<const float> kraft, const Klang& antwort, std::vect
         umsetzung.vorwaerts(zeit, h);
         for (std::size_t k = 0; k < h.size(); ++k) h[k] *= f[k];
         umsetzung.rueckwaerts(h, zeit);
-        for (std::size_t i = 0; i < laenge; ++i) stereo[2 * i + seite] = static_cast<float>(zeit[i] / kSchalldruckBezug);
+        for (std::size_t i = 0; i < laenge; ++i) stereo[2 * i + seite] = static_cast<float>(zeit[i] / kern::hammer::kSchalldruckBezug);
     }
 }
 

@@ -25,8 +25,8 @@
 
 #include "InstrumentCore/Fft.hpp"
 #include "InstrumentCore/Pool.hpp"
-#include "loop/HammerSaite.hpp"
-#include "loop/HammerTon.hpp"
+#include "FluegelSchicht.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 
@@ -49,10 +49,10 @@ using lumi::kern::parallelJe;
 using lumi::kern::poolThreads;
 
 /// Der Fluegel der Probe und der Suche mit der Saite `saite` (Boden `steinway_d`, ungedaempft ab 89 nach D1 a).
-inline lumi::loop::Instrument fluegelMit(const lumi::loop::HammerSaite& saite)
+inline lumi::loop::Instrument fluegelMit(const lumi::kern::hammer::HammerSaite& saite)
 {
     lumi::loop::Instrument instrument = fluegel(QStringLiteral("lib:steinway_d"), &saite);
-    instrument.tastatur->ungedaempftAb = 89;  // D1 a
+    fluegeltest::setzeUngedaempftAb(instrument.schichten[0], 89);  // D1 a
     return instrument;
 }
 
@@ -103,7 +103,7 @@ inline std::vector<lumi::messung::GroesseJeEbene> groessenAus(const std::vector<
 }
 
 /// Die Groessen des Modells mit der Saite `saite` an einer Taste (drei Ebenen auf dem Pool).
-inline std::vector<lumi::messung::GroesseJeEbene> modellAn(const lumi::loop::HammerSaite& saite, int midi, const lumi::messung::TonStruktur& struktur)
+inline std::vector<lumi::messung::GroesseJeEbene> modellAn(const lumi::kern::hammer::HammerSaite& saite, int midi, const lumi::messung::TonStruktur& struktur)
 {
     const lumi::loop::Instrument instrument = fluegelMit(saite);
     const int dauerMs = dauerMsAus(struktur);
@@ -122,12 +122,12 @@ struct Auswertung
 
 /// Viele Auswertungen zugleich: je Saite alle `tasten` an den Ebenen der Suche, alle Toene auf einem Pool (die laengsten
 /// zuerst). `sekunden` (wenn gegeben) bekommt die Rechenzeit des ganzen Aufrufs.
-inline std::vector<Auswertung> werteAus(const std::vector<lumi::loop::HammerSaite>& saiten, const std::vector<int>& tasten,
+inline std::vector<Auswertung> werteAus(const std::vector<lumi::kern::hammer::HammerSaite>& saiten, const std::vector<int>& tasten,
                                         const lumi::messung::Strukturen& strukturen, const lumi::messung::Ziele& ziele, double* sekunden = nullptr)
 {
     const auto start = std::chrono::steady_clock::now();
     std::vector<lumi::loop::Instrument> instrumente;
-    for (const lumi::loop::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
+    for (const lumi::kern::hammer::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
     const auto strukturAn = [&strukturen](int midi) {
         const auto it = strukturen.find(midi);
         return it != strukturen.end() ? it->second : lumi::messung::TonStruktur{};

@@ -428,6 +428,41 @@ dreimal und ein **voller Lauf unter beiden Compilern** (External geändert, UF17
 (pocketfft und Grenze 32 in 34c, Flügel in 34d). Verworfen: b (daneben anlegen — zwei Fassungen je Baustein für einen
 Schritt, drei Ursachen in 34d zusammen). Kippt, wenn die Flügel-Suche (Plan A–D) wieder laufen soll, bevor 34c fertig ist.
 
+✅ **FU1 a** (Patrik S175, „Alle nach Empfehlung“): **Der Resonanzboden ist ein Feld der Schicht, nicht der Tafel** —
+`"body": "lib:steinway_d"` (leer = ohne) an jeder Kern-Schicht, deren Körper die App rechnet (Flügel jetzt, Klasse 2 mit
+`korpusImpulsantwort` in 34k); `coreParams` des Flügels trägt die 22 Kurven (IK2-4 a „23 Werte“ berichtigt: 22 und der
+Körper an der Schicht). Grund: CK1 a zeichnet *Body* als eigenen Kasten im Signalweg; den Körper faltet die App, der Kern
+liest ihn nie. Verworfen: b (Wert der Tafel mit einer Art *Verweis* — die Datenschicht ohne Qt hinge an App-Dateien, IC sähe
+den Körper nie). Kippt, wenn ein Kern seinen Körper selbst rechnet (IC-Luftraum, 34k): der gehört in seine Tafel.
+
+✅ **FU2 a** (Patrik S175): **Was die Rechnung bestimmt, kommt in die Tafel; der Block `keyboard` bleibt für die
+Planung.** Gruppe *Pedals* der Tafel: `undampedFrom` (Ganzzahl, 89), `softFactor` (1), `moderatorStiffness` (2),
+`moderatorExponent` (2). Getreten wird über Spuren, die der Kern in seiner Auskunft nennt: `soft`, `practice` (Stufe 0/1 am
+Beginn der Note); Sustain und Sostenuto bleiben in der Planung (`halten`). `keyboard` am Instrument trägt Umfang,
+Pedalplätze und `bassSustainBis` (dazu `PedalArt::BassSustain` aus IC). Spuren Soft/Practice in Loops und Editor kommen mit
+31g; in 34d prüfen Tests sie am Kern. Grund: IK2-4 a — ein Kern bekommt alles aus seiner Tafel (Fabrik, Abdruck, Hülle ohne
+Wissen über Klaviere); vom Block ging nur `undampedFrom` in die Rechnung (`Instrument.cpp:2922`). Verworfen: b (alles im
+Block, der Adapter bekäme die Tastatur dazu — ein Klavier-Sonderweg je Fabrik, der Abdruck sähe die Dämpfer nicht). Kippt,
+wenn die Planung `undampedFrom` selbst braucht (Sostenuto je Taste, 31f): sie liest es aus der Tafel.
+
+✅ **FU3 a** (Patrik S175): **Der Creator zeigt die Kern-Schicht schon in 34d** (IK2-13 a „bis dahin“): Kasten *Core* (Titel,
+Tastenumfang), Marke *Unmeasured* aus `ungemessen`, *Body* nach FU1 a, die Werte der Tafel nur zum Ansehen in ihren Gruppen
+(Kurve als Zeile mit Belegkraft); ein Fall über den Creator mit Bild `LUMIVIZ_CREATOR_CORE_BILD` prüft „Save as“ Bit für
+Bit. Die Bearbeitung bleibt 31g. Verworfen: b (keine Ansicht bis 31g — der mitgelieferte Flügel bliebe im Creator
+unlesbar, der Hörtest der IC-Instrumente braucht dieselbe Ansicht). Kippt, wenn der Creator vor 31g nicht für
+Kern-Instrumente geöffnet werden soll.
+
+✅ **BK1 a** (Patrik S175, Rückfrage während 34d): **Zwei Bibliotheken für das Rechnen — `InstrumentCore` ohne einen
+Kern, darüber `InstrumentModels` mit allen Kernen.** `InstrumentCore` bleibt der allgemeine Teil (Tonkern, Fabrik, Auskunft,
+Tafel, Tonauftrag, Fft, Eigenzerlegung, Modal, Kurve, Pool, SHA-256, Anschlagstufe); `InstrumentModels`
+(`projects/libs/InstrumentModels`, Unterordner und Namensraum je Klasse, etwa `hammer/` und `lumi::kern::hammer`; Paket
+`instrumentmodels`) trägt die Kerne und `kerne()`. Richtung: App → (Messung →) Models → Core. Ergänzt IK2-2 a („Kern“ =
+Core + Models) und KN1 a. Grund: die Schnittstelle kennt keinen Kern; IC baut neue Kerne gegen das Core-Paket allein
+(TP1 a); geschichtet wie IC (`ic_gemeinsam` → `ic_klassen`); die Kerne teilen Bausteine in einer Bibliothek. Verworfen: b (je
+Klasse eine Bibliothek — bis zu zwölf gleiche Schalterblöcke und Pakete, geteilte Bausteine über Grenzen), c (alles in
+`InstrumentCore` — die Schnittstelle hinge am Flügel). Kippt auf c, wenn IC nie gegen die Schnittstelle allein bauen soll;
+auf b, wenn ein Instrument einzeln ausgeliefert werden soll und keine Bausteine mehr teilt.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 

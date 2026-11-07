@@ -9,8 +9,10 @@
  * `Tonkern` gehoert zu einem Instrument, ist danach unveraenderlich und darf von mehreren Threads zugleich rechnen; die
  * App haelt ihn als `std::shared_ptr<const Tonkern>` und merkt ihn unter dem Abdruck des Instruments.
  *
- * Je Klasse haelt ein Adapter ihr `Spiel` und ruft ihr `rechne<X>Ton` (34d ff.). Die Fabrik der eingebauten Kerne ist
- * `kerne()`; in 34c traegt sie noch keinen (der Fluegel kommt in 34d), die Tests bauen eigene Fabriken.
+ * Die Kerne selbst stehen nicht hier, sondern in der Bibliothek `InstrumentModels` (BK1 a): je Klasse ein Adapter, der
+ * ihr `Spiel` haelt und ihr `rechne<X>Ton` ruft (der Fluegel: `InstrumentModels/hammer/HammerKern.hpp`), dazu die Fabrik
+ * der eingebauten Kerne (`InstrumentModels/Kerne.hpp`). Diese Bibliothek kennt keinen Kern; die Tests bauen auch eigene
+ * Fabriken.
  *
  * Reines C++ ohne Qt.
  */
@@ -111,9 +113,6 @@ public:
 private:
     std::vector<KernTyp> m_typen;
 };
-
-/// Die eingebauten Kerne (34c: keiner; 34d: `hammerString`).
-[[nodiscard]] const Fabrik& kerne();
 
 /// Diese Spitze hat der Ton an der Bezugsnote bei Stufe 0 (IC `normiere`; der Pegel stimmt LumiViz nach LUFS).
 inline constexpr double kNormSpitze = 0.5;

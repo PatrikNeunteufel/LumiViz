@@ -34,7 +34,7 @@
 #include "ModellMessung.hpp"
 #include "NelderMead.hpp"
 
-#include "loop/HammerSaite.hpp"
+#include "FluegelSchicht.hpp"
 #include "loop/Tonspeicher.hpp"
 
 #include <QString>
@@ -108,12 +108,12 @@ std::optional<double> phantomAbstand(const TastenWerte& s, const TastenWerte& m)
 }
 
 /// Stuetzpunkte aus den Tasten mit Ziel; `rest` haengt Punkte ausserhalb an (nach Taste sortiert).
-lumi::loop::Tastenkurve kurveAus(const std::vector<int>& tasten, const Parameter& p, const std::vector<lumi::loop::TastenWert>& rest = {})
+lumi::kern::Kurve kurveAus(const std::vector<int>& tasten, const Parameter& p, const std::vector<lumi::kern::NotenWert>& rest = {})
 {
-    lumi::loop::Tastenkurve k;
+    lumi::kern::Kurve k;
     for (std::size_t i = 0; i < tasten.size(); ++i)
         if (p.ziel[i]) k.punkte.push_back({tasten[i], p.wert[i]});
-    for (const lumi::loop::TastenWert& w : rest) k.punkte.push_back(w);
+    for (const lumi::kern::NotenWert& w : rest) k.punkte.push_back(w);
     std::sort(k.punkte.begin(), k.punkte.end(), [](const auto& a, const auto& b) { return a.taste < b.taste; });
     return k;
 }
@@ -151,7 +151,7 @@ double stossBerichtigt(double u, const Wert& modell, double zielDb)
     return std::clamp(neu, 0.01, 1.0);
 }
 
-std::string punkteText(const lumi::loop::Tastenkurve& k)
+std::string punkteText(const lumi::kern::Kurve& k)
 {
     std::ostringstream s;
     s << std::setprecision(4) << '{';
@@ -181,9 +181,9 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
     lumi::loop::tonspeicher().leere();
     std::vector<int> tasten;
     for (const TastenWerte& w : s) tasten.push_back(w.midi);
-    const lumi::loop::HammerSaite& v = lumi::loop::hammerSaiteVorgabe();
-    const auto hatPunkt = [](const lumi::loop::Tastenkurve& k, int taste) {
-        return std::any_of(k.punkte.begin(), k.punkte.end(), [taste](const lumi::loop::TastenWert& p) { return p.taste == taste; });
+    const lumi::kern::hammer::HammerSaite& v = lumi::kern::hammer::hammerSaiteVorgabe();
+    const auto hatPunkt = [](const lumi::kern::Kurve& k, int taste) {
+        return std::any_of(k.punkte.begin(), k.punkte.end(), [taste](const lumi::kern::NotenWert& p) { return p.taste == taste; });
     };
     const std::vector<TastenWerte> m =
         modelltest::verdichteAlle(tasten, modelltest::messeTasten(modelltest::fluegel(QStringLiteral("lib:steinway_d")), tasten));
@@ -208,7 +208,7 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
             CHECK(mo.b.wert == doctest::Approx(z.b.wert).epsilon(0.05).scale(0.0));
             ++geprueft;
         }
-        if (z.midi <= kWinkelBis && hatPunkt(v.stegWinkelGrad, z.midi) && lumi::loop::chorAn(v, z.midi) == 1)
+        if (z.midi <= kWinkelBis && hatPunkt(v.stegWinkelGrad, z.midi) && lumi::kern::hammer::chorAn(v, z.midi) == 1)
         {
             const std::optional<double> abstand = phantomAbstand(z, mo);
             REQUIRE(abstand.has_value());
@@ -257,12 +257,12 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
     Parameter delta = neu("polarisationCent", false);         // P4 a
     Parameter stossLeise = neu("stossLeise", false);          // US1 a, US2 a
     Parameter stossLaut = neu("stossLaut", false);
-    const lumi::loop::HammerSaite vorgabe = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite vorgabe = lumi::kern::hammer::hammerSaiteVorgabe();
     // Ziele und Startwerte (S2 a, US1 a, US3 a, RB1-1 a)
     for (std::size_t i = 0; i < n; ++i)
     {
         const TastenWerte& w = s[i];
-        const int chor = lumi::loop::chorAn(vorgabe, w.midi);
+        const int chor = lumi::kern::hammer::chorAn(vorgabe, w.midi);
         // SM3 a: Start an der fruehen Stufe von Teilton 1, sonst am Ausgleich (der Ausgleich bleibt Pruefgroesse am Ton)
         if (w.t60Frueh.anzahl > 0 && w.t60Frueh.wert > 0.0)
         {
@@ -317,13 +317,13 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
         }
     }
     const auto saiteAus = [&]() {
-        lumi::loop::HammerSaite saite = vorgabe;
+        lumi::kern::hammer::HammerSaite saite = vorgabe;
         saite.abklingS = kurveAus(tasten, decay);
         saite.abklingHoch = kurveAus(tasten, hoch);
         saite.abklingSpaetS = kurveAus(tasten, spaet);
         saite.verstimmungCent = kurveAus(tasten, cent);
-        std::vector<lumi::loop::TastenWert> rigaud;
-        for (const lumi::loop::TastenWert& p : vorgabe.inharmonizitaet.punkte)
+        std::vector<lumi::kern::NotenWert> rigaud;
+        for (const lumi::kern::NotenWert& p : vorgabe.inharmonizitaet.punkte)
             if (p.taste > kBBis) rigaud.push_back(p);
         saite.inharmonizitaet = kurveAus(tasten, b, rigaud);
         const auto letzterWert = [&](const Parameter& p, double sonst) {
@@ -332,12 +332,12 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
                 if (p.ziel[i]) l = p.wert[i];
             return l;
         };
-        saite.stegWinkelGrad = kurveAus(tasten, winkel, {{lumi::loop::kTasteMax, letzterWert(winkel, 2.0)}});
-        saite.polarisationWinkelGrad = kurveAus(tasten, gamma, {{lumi::loop::kTasteMax, letzterWert(gamma, 0.0)}});
-        saite.polarisationCent = kurveAus(tasten, delta, {{lumi::loop::kTasteMax, letzterWert(delta, 0.0)}});
+        saite.stegWinkelGrad = kurveAus(tasten, winkel, {{lumi::kern::hammer::kTasteMax, letzterWert(winkel, 2.0)}});
+        saite.polarisationWinkelGrad = kurveAus(tasten, gamma, {{lumi::kern::hammer::kTasteMax, letzterWert(gamma, 0.0)}});
+        saite.polarisationCent = kurveAus(tasten, delta, {{lumi::kern::hammer::kTasteMax, letzterWert(delta, 0.0)}});
         saite.stossLeise = kurveAus(tasten, stossLeise);
         saite.stossLaut = kurveAus(tasten, stossLaut);
-        lumi::loop::richteHammerSaite(saite);
+        lumi::kern::hammer::richteHammerSaite(saite);
         return saite;
     };
 
@@ -350,7 +350,7 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
         std::string grenzen;  ///< Parameter, die an ihrer Grenze liegen
     };
     // die freien Groessen einer Taste: decay, highDecay, lateDecay (log), Verstimmung oder δ (linear)
-    const auto stufe1 = [&](std::size_t i, const lumi::loop::HammerSaite& basis, double startFaktor) {
+    const auto stufe1 = [&](std::size_t i, const lumi::kern::hammer::HammerSaite& basis, double startFaktor) {
         const TastenWerte& z = s[i];
         const int midi = tasten[i];
         Parameter& verstimmung = cent.ziel[i] ? cent : delta;
@@ -376,11 +376,11 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
             }
         }
         const auto saiteMit = [&](const std::vector<double>& x) {
-            lumi::loop::HammerSaite saite = basis;
+            lumi::kern::hammer::HammerSaite saite = basis;
             for (std::size_t j = 0; j < frei.size(); ++j)
             {
                 const double v = frei[j]->logarithmisch ? std::exp(x[j]) : x[j];
-                lumi::loop::Tastenkurve* k = frei[j] == &decay ? &saite.abklingS
+                lumi::kern::Kurve* k = frei[j] == &decay ? &saite.abklingS
                                              : frei[j] == &hoch ? &saite.abklingHoch
                                              : frei[j] == &spaet ? &saite.abklingSpaetS
                                              : frei[j] == &cent ? &saite.verstimmungCent
@@ -441,7 +441,7 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
     // je Teilton 1–3 Salamander | Summe der Moden | Ton
     if (qEnvironmentVariableIsSet("LUMIVIZ_31D7_PROBE2"))
     {
-        const lumi::loop::HammerSaite basis = saiteAus();
+        const lumi::kern::hammer::HammerSaite basis = saiteAus();
         std::ostringstream probe;
         probe << std::fixed << std::setprecision(2)
               << "Zweite Probe (SM3 a): je Taste x (ln decay, ln highDecay, ln lateDecay, Cent) und Rest fuer zwei Startpunkte; "
@@ -458,7 +458,7 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
             for (const double v : zweiter.x) probe << ' ' << v;
             probe << " — an der Grenze:" << erster.grenzen << " /" << zweiter.grenzen << '\n';
             uebernehme(i, erster);
-            lumi::loop::HammerSaite saite = basis;
+            lumi::kern::hammer::HammerSaite saite = basis;
             const Parameter& verstimmung = cent.ziel[i] ? cent : delta;
             if (decay.ziel[i]) saite.abklingS.abweichungen = {{midi, decay.wert[i]}};
             if (hoch.ziel[i]) saite.abklingHoch.abweichungen = {{midi, hoch.wert[i]}};
@@ -469,7 +469,7 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
                   << " s, Verstimmung " << verstimmung.wert[i] << " Cent\n";
             const TastenWerte ausModen = modelltest::modenWerte(saite, midi, -10);
             lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
-            instrument.tastatur->ungedaempftAb = 89;
+            fluegeltest::setzeUngedaempftAb(instrument.schichten[0], 89);
             const TastenWerte ausTon = modelltest::verdichteAlle({midi}, modelltest::messeTasten(instrument, {midi})).front();
             const TastenWerte& z = s[i];
             const auto stufe = [](const Wert& frueh, const Wert& spaet, const Wert& anteil) {
@@ -497,7 +497,7 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
     for (int wechsel = 1; wechsel <= 3; ++wechsel)
     {
         // Stufe 1 auf acht Threads ueber die Tasten
-        const lumi::loop::HammerSaite basis = saiteAus();
+        const lumi::kern::hammer::HammerSaite basis = saiteAus();
         std::vector<Ergebnis1> ergebnisse(n);
         std::atomic<std::size_t> naechste{0};
         std::vector<std::thread> arbeiter;
@@ -545,9 +545,9 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
         for (int r = 1; r <= kRunden; ++r)
         {
             ++runde;
-            const lumi::loop::HammerSaite saite = saiteAus();
+            const lumi::kern::hammer::HammerSaite saite = saiteAus();
             lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
-            instrument.tastatur->ungedaempftAb = 89;  // D1 a
+            fluegeltest::setzeUngedaempftAb(instrument.schichten[0], 89);  // D1 a
             m = modelltest::verdichteAlle(tasten, modelltest::messeTasten(instrument, tasten));
 
             std::ostringstream tabelle;
@@ -640,7 +640,7 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
         for (std::size_t i = 0; i < n; ++i)
             if (p->ziel[i] && !p->trifft[i]) vermerkt << ' ' << p->name << '@' << tasten[i];
 
-    const lumi::loop::HammerSaite saite = saiteAus();
+    const lumi::kern::hammer::HammerSaite saite = saiteAus();
     std::ostringstream punkte;
     punkte << "// gemessen an Salamander (Yamaha C5), gesetzt durch das Modell hindurch (31d-7 B: SZ3 a, SM1 a, SM2 a — Stufe 1 am "
               "Modell der Moden, Stufe 2 am Ton), "

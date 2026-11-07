@@ -52,8 +52,8 @@
 #include "audio/WavFormat.hpp"
 #include "loop/Boden.hpp"
 #include "InstrumentCore/Fft.hpp"
-#include "loop/HammerSaite.hpp"
-#include "loop/HammerTon.hpp"
+#include "FluegelSchicht.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Tonspeicher.hpp"
@@ -977,9 +977,9 @@ TEST_CASE("Loop Salamander 31d-7 Bilder der Huellkurven (LUMIVIZ_31D7_BILD)")
         std::vector<BildKurve> kurven{{QStringLiteral("Salamander v%1").arg(kEbene), Qt::black, linksGemessen(wav->stereo, wav->rate, midi)}};
         for (const Einstellung& e : einstellungen)
         {
-            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
-            saite.polarisationWinkelGrad = {{{lumi::loop::kTasteMin, e.gammaGrad}, {lumi::loop::kTasteMax, e.gammaGrad}}, {}};
-            saite.polarisationCent = {{{lumi::loop::kTasteMin, e.deltaCent}, {lumi::loop::kTasteMax, e.deltaCent}}, {}};
+            lumi::kern::hammer::HammerSaite saite = lumi::kern::hammer::hammerSaiteVorgabe();
+            saite.polarisationWinkelGrad = {{{lumi::kern::hammer::kTasteMin, e.gammaGrad}, {lumi::kern::hammer::kTasteMax, e.gammaGrad}}, {}};
+            saite.polarisationCent = {{{lumi::kern::hammer::kTasteMin, e.deltaCent}, {lumi::kern::hammer::kTasteMax, e.deltaCent}}, {}};
             const lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
             const lumi::loop::Klang klang = modelltest::ton(instrument, midi, modelltest::stufeVonEbene(kEbene));
             kurven.push_back({e.name, e.farbe, linksGemessen(klang.daten, modelltest::kRate, midi)});
@@ -1073,14 +1073,14 @@ TEST_CASE("Loop Salamander 31d-7 was die Tiefe im Chor bestimmt (LUMIVIZ_31D7_TI
         std::array<std::vector<BildKurve>, 2> bilder{std::vector<BildKurve>{sal}, std::vector<BildKurve>{sal}};
         for (const Fall& f : faelle)
         {
-            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
+            lumi::kern::hammer::HammerSaite saite = lumi::kern::hammer::hammerSaiteVorgabe();
             const auto ueberall = [](double wert) {
-                return lumi::loop::Tastenkurve{{{lumi::loop::kTasteMin, wert}, {lumi::loop::kTasteMax, wert}}, {}};
+                return lumi::kern::Kurve{{{lumi::kern::hammer::kTasteMin, wert}, {lumi::kern::hammer::kTasteMax, wert}}, {}};
             };
             saite.polarisationWinkelGrad = ueberall(f.gammaGrad);
             saite.polarisationCent = ueberall(f.deltaCent);
-            for (lumi::loop::TastenWert& p : saite.verstimmungCent.punkte) p.wert *= f.verstimmungFaktor;
-            for (lumi::loop::TastenWert& p : saite.abklingSpaetS.punkte) p.wert *= f.spaetFaktor;
+            for (lumi::kern::NotenWert& p : saite.verstimmungCent.punkte) p.wert *= f.verstimmungFaktor;
+            for (lumi::kern::NotenWert& p : saite.abklingSpaetS.punkte) p.wert *= f.spaetFaktor;
             saite.stossLeise = ueberall(f.stoss);
             saite.stossLaut = ueberall(f.stoss);
             const lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
@@ -1140,9 +1140,9 @@ TEST_CASE("Loop Salamander 31d-7 Raster aus Stoss und γ (LUMIVIZ_31D7_RASTER)")
     for (const double u : {0.0, 0.2, 0.4, 0.6})
         for (const double gammaGrad : {0.0, 10.0, 20.0})
         {
-            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
+            lumi::kern::hammer::HammerSaite saite = lumi::kern::hammer::hammerSaiteVorgabe();
             const auto ueberall = [](double wert) {
-                return lumi::loop::Tastenkurve{{{lumi::loop::kTasteMin, wert}, {lumi::loop::kTasteMax, wert}}, {}};
+                return lumi::kern::Kurve{{{lumi::kern::hammer::kTasteMin, wert}, {lumi::kern::hammer::kTasteMax, wert}}, {}};
             };
             saite.polarisationWinkelGrad = ueberall(gammaGrad);
             saite.polarisationCent = ueberall(gammaGrad > 0.0 ? 2.0 : 0.0);
@@ -1241,15 +1241,15 @@ TEST_CASE("Loop Salamander 31d-7 B die zweite Stufe im Diskant (LUMIVIZ_31D7_DIS
         zeile(kurven.front().name, kurven.front().messung);
         for (const Fall& f : faelle)
         {
-            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
+            lumi::kern::hammer::HammerSaite saite = lumi::kern::hammer::hammerSaiteVorgabe();
             const auto ueberall = [](double wert) {
-                return lumi::loop::Tastenkurve{{{lumi::loop::kTasteMin, wert}, {lumi::loop::kTasteMax, wert}}, {}};
+                return lumi::kern::Kurve{{{lumi::kern::hammer::kTasteMin, wert}, {lumi::kern::hammer::kTasteMax, wert}}, {}};
             };
             saite.stossLeise = ueberall(f.stoss);
             saite.stossLaut = ueberall(f.stoss);
             if (f.spaetWieSalamander) saite.abklingSpaetS.abweichungen = {{midi, sw->t60Spaet.wert}};
             if (f.fruehWieSalamander) saite.abklingS.abweichungen = {{midi, sw->t60Frueh.wert}};
-            const double cent = lumi::loop::wertAn(saite.verstimmungCent, midi, lumi::loop::KurvenSkala::Linear);
+            const double cent = lumi::kern::wertAn(saite.verstimmungCent, midi, lumi::kern::Skala::Linear);
             saite.verstimmungCent.abweichungen = {{midi, f.verstimmungWieSchwebung ? sw->schwebungCent.wert : cent * f.verstimmungFaktor}};
             bericht << "    (" << f.name.toStdString() << ": Verstimmung " << saite.verstimmungCent.abweichungen.front().wert << " Cent)\n";
             const lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &saite);
@@ -1290,18 +1290,18 @@ TEST_CASE("Loop Salamander 31d-7 B Blindanteil am Steg aus dem Koerper (LUMIVIZ_
     const std::optional<SalamanderWerte> gelesen = liesWerte(kWerteDatei);
     REQUIRE(gelesen.has_value());
     const std::vector<TastenWerte> salamander = tastenWerteAus(*gelesen);
-    const lumi::loop::HammerSaite& vorgabe = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite& vorgabe = lumi::kern::hammer::hammerSaiteVorgabe();
 
     constexpr int kTeiltoene = 6;
     std::map<int, std::array<std::complex<double>, kTeiltoene>> y;      // je Taste
     std::map<int, std::array<std::complex<double>, kTeiltoene>> terz;   // Mittel von Y ueber das Terzband um den Teilton
     double hoechsteMode = 0.0;
     for (const lumi::koerper::ModeImKoerper& m : boden->moden) hoechsteMode = std::max(hoechsteMode, m.frequenzHz);
-    for (int midi = lumi::loop::kTasteMin; midi <= lumi::loop::kTasteMax; ++midi)
+    for (int midi = lumi::kern::hammer::kTasteMin; midi <= lumi::kern::hammer::kTasteMax; ++midi)
     {
         const int stegpunkt = lumi::loop::stegpunktVon(boden->koerper, midi);
         if (stegpunkt < 0) continue;
-        const double b = lumi::loop::wertAn(vorgabe.inharmonizitaet, midi, lumi::loop::KurvenSkala::Logarithmisch);
+        const double b = lumi::kern::wertAn(vorgabe.inharmonizitaet, midi, lumi::kern::Skala::Logarithmisch);
         const double f0 = tastenFrequenz(midi) / std::sqrt(1.0 + b);
         std::array<std::complex<double>, kTeiltoene> werte{};
         std::array<std::complex<double>, kTeiltoene> band{};
@@ -1445,11 +1445,11 @@ TEST_CASE("Loop Salamander 31d-7 B Moden gegen Ton (LUMIVIZ_31D7_MODEN)")
         REQUIRE(sw != salamander.end());
         for (const bool nahe : {false, true})
         {
-            lumi::loop::HammerSaite saite = lumi::loop::hammerSaiteVorgabe();
+            lumi::kern::hammer::HammerSaite saite = lumi::kern::hammer::hammerSaiteVorgabe();
             if (nahe)
             {
                 const auto ueberall = [](double wert) {
-                    return lumi::loop::Tastenkurve{{{lumi::loop::kTasteMin, wert}, {lumi::loop::kTasteMax, wert}}, {}};
+                    return lumi::kern::Kurve{{{lumi::kern::hammer::kTasteMin, wert}, {lumi::kern::hammer::kTasteMax, wert}}, {}};
                 };
                 saite.stossLeise = ueberall(0.25);
                 saite.stossLaut = ueberall(0.25);

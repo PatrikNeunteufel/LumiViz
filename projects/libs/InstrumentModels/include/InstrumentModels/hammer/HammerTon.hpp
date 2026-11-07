@@ -1,8 +1,11 @@
 /**
  * @file HammerTon.hpp
- * @brief Loop: ein Ton der Hammer-Saite — modale Saite, Filzhammer, Chor mit
- *        gekoppelten Moden, Daempfer (docs/audio/Spielweisen_Konzept.md §4.1,
- *        Stufe 31b; Entscheide Patrik S145/S146: HS1 a, HT1 a bis HT3 a)
+ * @brief InstrumentModels, Kern `hammerString`: ein Ton der Hammer-Saite — modale Saite, Filzhammer, Chor mit
+ *        gekoppelten Moden, Daempfer (docs/audio/Spielweisen_Konzept.md §4.1, Stufe 31b; Entscheide Patrik
+ *        S145/S146: HS1 a, HT1 a bis HT3 a; seit S175 hier, Instrumente_IC_Konzept.md 34d)
+ *
+ * Aufgerufen von der App nur ueber den Adapter `HammerKern` (Tonkern); Tests und Messungen rufen
+ * `rechneHammerTon` auch direkt.
  *
  * Nach Bank, Zambon & Fontana 2010: je Teilton k der Saite ein gedaempfter
  * Resonator, angestossen mit b0 = 2/(Lµ) an der Anschlagstelle, abgenommen als
@@ -18,19 +21,19 @@
  * A = diag(iω_j − σ_s) − σ_b·J geben Schwebung und zweistufigen Ausklang.
  * Seit 31d-7 (P2 a) schwingt jede Saite in zwei Eigenrichtungen, um γ gegen die
  * Senkrechte gedreht und um δ verstimmt; der Steg nimmt senkrecht σ_V, waagrecht
- * σ_H (`ebenenModen`, zerlegt mit `kern::zerlegeKlein`, InstrumentCore).
+ * σ_H (`ebenenModen`, zerlegt mit `zerlegeKlein`).
  *
- * Derselbe Aufruf ergibt dieselben Werte. Kein Qt-Widget, keine Audio-Engine.
+ * Derselbe Aufruf ergibt dieselben Werte. Reines C++ ohne Qt.
  */
 #pragma once
 
-#include "loop/HammerSaite.hpp"
+#include "InstrumentModels/hammer/HammerSaite.hpp"
 
 #include <complex>
 #include <cstdint>
 #include <vector>
 
-namespace lumi::loop
+namespace lumi::kern::hammer
 {
 
 /// So viel feiner rechnet der Kontakt mit dem Hammer.
@@ -49,6 +52,12 @@ struct HammerAnschlag
     std::int64_t halten = 1; ///< so viele Abtastwerte bis zum Loslassen
     bool gedaempft = true;   ///< hat die Taste einen Daempfer (`undampedFrom`)?
     int rate = 48000;
+    // --- aus IC (Klasse 1 Rest, IC Session 4; IK2-2 a): mit den Vorgaben rechnet der Ton Bit fuer Bit wie ohne ---
+    /// Pedal *Soft* getreten: die Hammergeschwindigkeit mal `softFactor` der Tafel (1 = wie ohne).
+    double tempoFaktor = 1.0;
+    /// Pedal *Practice* getreten: der Filz des Moderators in Reihe, Q_m in N/mm^p_m (0 = ohne).
+    double moderatorSteife = 0.0;
+    double moderatorExponent = 2.0;
 };
 
 /// Eine Mode des Chors an einem Teilton (fuer Tests und Messungen): der Eigenwert
@@ -137,4 +146,4 @@ inline constexpr double kHammerKraftBezug = 200.0;
 /// Spitze; so liegt er bei −6 dBFS.
 inline constexpr double kSchalldruckBezug = 97.3;
 
-}  // namespace lumi::loop
+}  // namespace lumi::kern::hammer

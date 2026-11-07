@@ -539,8 +539,7 @@ TEST_CASE("InstrumentCore 34c Parametertafel: gestimmte Werte und ungemessen")
 
 TEST_CASE("InstrumentCore 34c Fabrik und normiere")
 {
-    CHECK(kerne().namen().empty());  // 34c: noch kein eingebauter Kern
-
+    // die eingebauten Kerne stehen in InstrumentModels (BK1 a, test_InstrumentModels.cpp)
     Fabrik fabrik;
     CHECK(fabrik.registriere(pruefTyp()).empty());
     CHECK_FALSE(fabrik.registriere(pruefTyp()).empty());  // doppelt

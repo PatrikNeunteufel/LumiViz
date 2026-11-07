@@ -45,7 +45,7 @@
 #include "audio/Lautheit.hpp"
 #include "audio/WavDatei.hpp"
 #include "audio/WavFormat.hpp"
-#include "loop/HammerSaite.hpp"
+#include "FluegelSchicht.hpp"
 #include "loop/Tonspeicher.hpp"
 
 #include <QFile>
@@ -75,12 +75,12 @@ constexpr double kZielLufs = -23.0;
 constexpr int kRate = modelltest::kRate;
 
 /// Die Vorgabe vor 31d-4 (Stand 339d40a2): die Groessen, die 31d-4 gesetzt hat, wie sie vorher waren.
-lumi::loop::HammerSaite vorgabeVor31d()
+lumi::kern::hammer::HammerSaite vorgabeVor31d()
 {
-    lumi::loop::HammerSaite s = lumi::loop::hammerSaiteVorgabe();
+    lumi::kern::hammer::HammerSaite s = lumi::kern::hammer::hammerSaiteVorgabe();
     s.inharmonizitaet.punkte.clear();
     for (const int m : {21, 33, 45, 57, 69, 81, 93, 105, 108})
-        s.inharmonizitaet.punkte.push_back({m, lumi::loop::rigaudB(m, lumi::loop::kRigaudBassSteigung, lumi::loop::kRigaudBassAchse)});
+        s.inharmonizitaet.punkte.push_back({m, lumi::kern::hammer::rigaudB(m, lumi::kern::hammer::kRigaudBassSteigung, lumi::kern::hammer::kRigaudBassAchse)});
     s.stegWinkelGrad = {{{21, 2.0}, {108, 2.0}}, {}};
     s.abklingS = {{{21, 25.0}, {33, 20.0}, {45, 15.0}, {57, 10.0}, {69, 6.0}, {81, 3.0}, {93, 1.5}, {105, 0.7}, {108, 0.5}}, {}};
     s.abklingSpaetS = {{{21, 75.0}, {33, 60.0}, {45, 45.0}, {57, 30.0}, {69, 18.0}, {81, 9.0}, {93, 4.5}, {105, 2.1}, {108, 1.5}}, {}};
@@ -209,7 +209,7 @@ std::size_t framesVorBlende(const std::vector<float>& stereo)
 }
 
 /// Eine Kurve, an jeder Taste derselbe Wert.
-lumi::loop::Tastenkurve ueberall(double wert)
+lumi::kern::Kurve ueberall(double wert)
 {
     return {{{21, wert}, {108, wert}}, {}};
 }
@@ -233,13 +233,13 @@ std::string zahl(double wert, int stellen)
 }
 
 /// Der Stoss an einer Stufe wie im Rechenkern (`HammerTon.cpp`, US2 a): leise und laut an ihren Stufen, dazwischen linear.
-double stossBei(const lumi::loop::HammerSaite& s, int midi, int stufe)
+double stossBei(const lumi::kern::hammer::HammerSaite& s, int midi, int stufe)
 {
-    const double zwischen = std::clamp(static_cast<double>(stufe - lumi::loop::kStossStufeLeise) /
-                                           (lumi::loop::kStossStufeLaut - lumi::loop::kStossStufeLeise),
+    const double zwischen = std::clamp(static_cast<double>(stufe - lumi::kern::hammer::kStossStufeLeise) /
+                                           (lumi::kern::hammer::kStossStufeLaut - lumi::kern::hammer::kStossStufeLeise),
                                        0.0, 1.0);
-    const double leise = std::clamp(lumi::loop::wertAn(s.stossLeise, midi, lumi::loop::KurvenSkala::Linear), 0.0, 1.0);
-    const double laut = std::clamp(lumi::loop::wertAn(s.stossLaut, midi, lumi::loop::KurvenSkala::Linear), 0.0, 1.0);
+    const double leise = std::clamp(lumi::kern::wertAn(s.stossLeise, midi, lumi::kern::Skala::Linear), 0.0, 1.0);
+    const double laut = std::clamp(lumi::kern::wertAn(s.stossLaut, midi, lumi::kern::Skala::Linear), 0.0, 1.0);
     return leise + zwischen * (laut - leise);
 }
 
@@ -299,9 +299,9 @@ TEST_CASE("Loop Salamander 31d-5 Hoerproben (LUMIVIZ_31D_WAV)")
     REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
     lumi::loop::tonspeicher().leere();
 
-    const lumi::loop::HammerSaite vorSaite = vorgabeVor31d();
+    const lumi::kern::hammer::HammerSaite vorSaite = vorgabeVor31d();
     lumi::loop::Instrument vor = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &vorSaite);
-    vor.tastatur->ungedaempftAb = 91;  // die Vorgabe vor D1 a
+    fluegeltest::setzeUngedaempftAb(vor.schichten[0], 91);  // die Vorgabe vor D1 a
     const lumi::loop::Instrument nach = modelltest::fluegel(QStringLiteral("lib:steinway_d"));
     const auto liesEbene = [&](int midi, int ebene) { return ::liesEbene(salamander, midi, ebene); };
 
@@ -411,7 +411,7 @@ TEST_CASE("Loop Salamander 31d-8 Hoerproben u, gamma, delta (LUMIVIZ_31D8_WAV)")
     REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
     lumi::loop::tonspeicher().leere();
 
-    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite basis = lumi::kern::hammer::hammerSaiteVorgabe();
     const lumi::loop::Instrument vorgabe = modelltest::fluegel(QStringLiteral("lib:steinway_d"));
     enum class Groesse
     {
@@ -461,7 +461,7 @@ TEST_CASE("Loop Salamander 31d-8 Hoerproben u, gamma, delta (LUMIVIZ_31D8_WAV)")
         teile.push_back(std::move(sal));
         for (const double w : p.werte)
         {
-            lumi::loop::HammerSaite saite = basis;
+            lumi::kern::hammer::HammerSaite saite = basis;
             if (p.groesse == Groesse::Stoss)
             {
                 saite.stossLeise = ueberall(w);
@@ -547,39 +547,39 @@ TEST_CASE("Loop Salamander HU1 Diagnose (LUMIVIZ_HU1_WAV)")
                                          lumi::audio::WavTiefe::Gleitkomma32)
                     .geschrieben);
     };
-    const lumi::loop::HammerSaite vorgabe = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite vorgabe = lumi::kern::hammer::hammerSaiteVorgabe();
     constexpr int kStufe = -12;
     std::ostringstream liste;
     liste << std::fixed << std::setprecision(3) << "HU1 a: je Taste k<midi>_<fassung>.wav (Ton wie im Programm, Stereo, Pa in Einheiten von "
-          << lumi::loop::kSchalldruckBezug << " Pa), k<midi>_<fassung>_kraft.wav (Kraft am Steg ohne Boden, in Einheiten von "
-          << lumi::loop::kHammerKraftBezug << " N, beide Kanaele gleich), k<midi>_boden.wav (Antwort des Bodens, Pa/N). Stufe " << kStufe
+          << lumi::kern::hammer::kSchalldruckBezug << " Pa), k<midi>_<fassung>_kraft.wav (Kraft am Steg ohne Boden, in Einheiten von "
+          << lumi::kern::hammer::kHammerKraftBezug << " N, beide Kanaele gleich), k<midi>_boden.wav (Antwort des Bodens, Pa/N). Stufe " << kStufe
           << ".\n";
     for (const int midi : {21, 36, 60, 84, 108})
     {
         CAPTURE(midi);
         const double haltenS = midi <= 36 ? 18.0 : midi <= 60 ? 12.0 : midi <= 84 ? 6.0 : 3.0;
         const auto frames = static_cast<std::size_t>(haltenS * kRate);
-        const double decayVorgabe = lumi::loop::wertAn(vorgabe.abklingS, midi, lumi::loop::KurvenSkala::Logarithmisch);
+        const double decayVorgabe = lumi::kern::wertAn(vorgabe.abklingS, midi, lumi::kern::Skala::Logarithmisch);
         const double spaetS = spaetVon(midi, 7.0 * decayVorgabe);
         const double hochSal = hochVon(midi, 0.0);
-        const auto ueberallWert = [](double wert) { return lumi::loop::Tastenkurve{{{21, wert}, {108, wert}}, {}}; };
-        std::vector<std::pair<std::string, lumi::loop::HammerSaite>> fassungen;
+        const auto ueberallWert = [](double wert) { return lumi::kern::Kurve{{{21, wert}, {108, wert}}, {}}; };
+        std::vector<std::pair<std::string, lumi::kern::hammer::HammerSaite>> fassungen;
         fassungen.emplace_back("vorgabe", vorgabe);
         fassungen.emplace_back("vor31d", vorgabeVor31d());
-        lumi::loop::HammerSaite spaet = vorgabe;
+        lumi::kern::hammer::HammerSaite spaet = vorgabe;
         spaet.abklingSpaetS.abweichungen = {{midi, spaetS}};
         fassungen.emplace_back("spaet_sal", spaet);
-        lumi::loop::HammerSaite stoss = spaet;
+        lumi::kern::hammer::HammerSaite stoss = spaet;
         stoss.stossLeise = ueberallWert(0.25);
         stoss.stossLaut = ueberallWert(0.25);
         fassungen.emplace_back("spaet_sal_u25", stoss);
-        lumi::loop::HammerSaite pol = spaet;
+        lumi::kern::hammer::HammerSaite pol = spaet;
         pol.polarisationWinkelGrad = ueberallWert(10.0);
         pol.polarisationCent = ueberallWert(3.0);
         fassungen.emplace_back("spaet_sal_pol", pol);
         if (hochSal > 0.0)
         {
-            lumi::loop::HammerSaite hoch = spaet;
+            lumi::kern::hammer::HammerSaite hoch = spaet;
             hoch.abklingHoch.abweichungen = {{midi, hochSal}};
             fassungen.emplace_back("spaet_sal_hoch", hoch);
         }
@@ -588,23 +588,23 @@ TEST_CASE("Loop Salamander HU1 Diagnose (LUMIVIZ_HU1_WAV)")
         REQUIRE(antwort);
         schreibe("k" + std::to_string(midi) + "_boden.wav", antwort->daten);
         liste << "MIDI " << midi << ": gehalten " << haltenS << " s; Vorgabe decay " << decayVorgabe << " s, lateDecay "
-              << lumi::loop::wertAn(vorgabe.abklingSpaetS, midi, lumi::loop::KurvenSkala::Logarithmisch) << " s, highDecay "
-              << lumi::loop::wertAn(vorgabe.abklingHoch, midi, lumi::loop::KurvenSkala::Logarithmisch) << ", detune "
-              << lumi::loop::wertAn(vorgabe.verstimmungCent, midi, lumi::loop::KurvenSkala::Linear) << " Cent, Saiten "
-              << lumi::loop::chorAn(vorgabe, midi) << "; Salamander lateDecay " << spaetS << " s, highDecay " << hochSal
+              << lumi::kern::wertAn(vorgabe.abklingSpaetS, midi, lumi::kern::Skala::Logarithmisch) << " s, highDecay "
+              << lumi::kern::wertAn(vorgabe.abklingHoch, midi, lumi::kern::Skala::Logarithmisch) << ", detune "
+              << lumi::kern::wertAn(vorgabe.verstimmungCent, midi, lumi::kern::Skala::Linear) << " Cent, Saiten "
+              << lumi::kern::hammer::chorAn(vorgabe, midi) << "; Salamander lateDecay " << spaetS << " s, highDecay " << hochSal
               << "; Antwort des Bodens " << antwort->frames() << " Frames\n";
         for (const auto& [name, saite] : fassungen)
         {
             // die Kraft am Steg (ohne Boden)
-            lumi::loop::HammerAnschlag a;
+            lumi::kern::hammer::HammerAnschlag a;
             a.taste = midi;
             a.hz = tastenFrequenz(midi);
             a.stufe = kStufe;
             a.halten = static_cast<std::int64_t>(frames);
-            a.gedaempft = midi < lumi::loop::kUngedaempftAbVorgabe;
+            a.gedaempft = midi < lumi::kern::hammer::kUngedaempftAbVorgabe;
             a.rate = kRate;
             std::vector<float> mono;
-            lumi::loop::rechneHammerTon(saite, a, mono, static_cast<std::int64_t>(frames));
+            lumi::kern::hammer::rechneHammerTon(saite, a, mono, static_cast<std::int64_t>(frames));
             std::vector<float> kraft(2 * mono.size());
             for (std::size_t i = 0; i < mono.size(); ++i) kraft[2 * i] = kraft[2 * i + 1] = mono[i];
             schreibe("k" + std::to_string(midi) + "_" + name + "_kraft.wav", kraft);
@@ -660,7 +660,7 @@ TEST_CASE("Loop Salamander PV1 Hoerproben Vorgabe und Suche (LUMIVIZ_PV1_WAV)")
     REQUIRE(ziele.has_value());
     REQUIRE_MESSAGE(schwellen.werte.has_value(), schwellen.fehler);
     const std::vector<int> suchTasten{33, 48, 60, 66, 81, 84};  // die Tasten der Probe (ZF8 a), wie im Lauf
-    modelltest::Suchraum raum = modelltest::suchraum(lumi::loop::hammerSaiteVorgabe(), suchTasten, *strukturen, *optionen);
+    modelltest::Suchraum raum = modelltest::suchraum(lumi::kern::hammer::hammerSaiteVorgabe(), suchTasten, *strukturen, *optionen);
     (void)modelltest::setzeDetuneAus(ergebnis, raum);
     (void)modelltest::setzeFestAus(ergebnis, raum, "delta");
     REQUIRE(x.size() == raum.zahl());
@@ -669,8 +669,8 @@ TEST_CASE("Loop Salamander PV1 Hoerproben Vorgabe und Suche (LUMIVIZ_PV1_WAV)")
     const std::string text = gelesen.str();
     REQUIRE_MESSAGE(text.find(modelltest::kurvenText(raum, x)) != std::string::npos, "die Kurven weichen vom Abschnitt Kurven der Datei ab");
 
-    const lumi::loop::HammerSaite& vorgabeSaite = lumi::loop::hammerSaiteVorgabe();
-    const lumi::loop::HammerSaite sucheSaite = modelltest::saiteAus(raum, x);
+    const lumi::kern::hammer::HammerSaite& vorgabeSaite = lumi::kern::hammer::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite sucheSaite = modelltest::saiteAus(raum, x);
     const lumi::loop::Instrument vorgabe = modelltest::fluegelMit(vorgabeSaite);
     const lumi::loop::Instrument suche = modelltest::fluegelMit(sucheSaite);
 
@@ -715,11 +715,11 @@ TEST_CASE("Loop Salamander PV1 Hoerproben Vorgabe und Suche (LUMIVIZ_PV1_WAV)")
         CHECK(s.summe == doctest::Approx(summeAusDatei(text, t.midi)).epsilon(2e-4));
         REQUIRE(v.groessen.size() == s.groessen.size());
 
-        liste << "\n== " << t.name << " (MIDI " << t.midi << ", " << lumi::loop::chorAn(vorgabeSaite, t.midi) << " Saiten) ==\n"
+        liste << "\n== " << t.name << " (MIDI " << t.midi << ", " << lumi::kern::hammer::chorAn(vorgabeSaite, t.midi) << " Saiten) ==\n"
               << "Kurven an der Taste, Vorgabe -> Suche:";
         for (const modelltest::SuchKurve& k : raum.kurven)
-            liste << ' ' << k.name << ' ' << zahl(lumi::loop::wertAn(vorgabeSaite.*k.feld, t.midi, k.skala()), 3) << " -> "
-                  << zahl(lumi::loop::wertAn(sucheSaite.*k.feld, t.midi, k.skala()), 3) << ';';
+            liste << ' ' << k.name << ' ' << zahl(lumi::kern::wertAn(vorgabeSaite.*k.feld, t.midi, k.skala()), 3) << " -> "
+                  << zahl(lumi::kern::wertAn(sucheSaite.*k.feld, t.midi, k.skala()), 3) << ';';
         liste << "\nSumme r^2 Vorgabe " << zahl(v.summe, 1) << ", Suche " << zahl(s.summe, 1) << '\n';
         for (const char* gehoer : {"Laenge", "Nachklang", "Schwebung", "sonst"})
         {

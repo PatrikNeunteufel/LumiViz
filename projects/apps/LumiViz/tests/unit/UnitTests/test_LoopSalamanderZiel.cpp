@@ -26,7 +26,7 @@
 
 #include "audio/WavDatei.hpp"
 #include "InstrumentCore/Fft.hpp"
-#include "loop/HammerSaite.hpp"
+#include "FluegelSchicht.hpp"
 
 #include <QDateTime>
 #include <QString>
@@ -225,11 +225,11 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Salamander gegen sich selbst (LUMIVIZ_SAL
 
 TEST_CASE("Loop Salamander 7.5.9 Ziel: Kurven der Suche")
 {
-    using lumi::loop::HammerSaite;
-    using lumi::loop::KurvenSkala;
+    using lumi::kern::hammer::HammerSaite;
+    using lumi::kern::Skala;
     const std::optional<Strukturen> strukturen = liesStruktur(kStrukturDatei);
     REQUIRE(strukturen.has_value());
-    const HammerSaite& vorgabe = lumi::loop::hammerSaiteVorgabe();
+    const HammerSaite& vorgabe = lumi::kern::hammer::hammerSaiteVorgabe();
     const std::vector<int> tasten = modelltest::salamanderMidi();
     REQUIRE(tasten.size() == 30);
     const modelltest::Suchraum raum = modelltest::suchraum(vorgabe, tasten, *strukturen);
@@ -266,7 +266,7 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Kurven der Suche")
     // Grenzen und Start nach der Tabelle: decay Faktor 3 um die Vorgabe, gamma 0–45 mit Start 30, u Start 0,25 (die
     // Vorgabe ist 0), detune bis 6 Cent (ab 90 bis 7,5), h 0–1 mit Start 0
     const modelltest::SuchKurve& decay = finde("decay");
-    const double d60 = lumi::loop::wertAn(vorgabe.abklingS, 60, KurvenSkala::Logarithmisch);
+    const double d60 = lumi::kern::wertAn(vorgabe.abklingS, 60, lumi::kern::Skala::Logarithmisch);
     CHECK(decay.start[index(decay, 60)] == doctest::Approx(d60));
     CHECK(decay.unten[index(decay, 60)] == doctest::Approx(d60 / 3.0));
     CHECK(decay.oben[index(decay, 60)] == doctest::Approx(3.0 * d60));
@@ -284,7 +284,7 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Kurven der Suche")
     CHECK(finde("h").start[0] == doctest::Approx(0.0));
     CHECK(finde("delta").tasten.back() == 30);
     const modelltest::SuchKurve& hoch = finde("highDecay");
-    const auto [hu, ho] = modelltest::bensaBand(60, lumi::loop::wertAn(vorgabe.saitenLaengeM, 60, KurvenSkala::Logarithmisch));
+    const auto [hu, ho] = modelltest::bensaBand(60, lumi::kern::wertAn(vorgabe.saitenLaengeM, 60, lumi::kern::Skala::Logarithmisch));
     CHECK(hoch.unten[index(hoch, 60)] == doctest::Approx(hu));
     CHECK(hoch.oben[index(hoch, 60)] == doctest::Approx(ho));
 
@@ -300,7 +300,7 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Kurven der Suche")
         const double median = cent[cent.size() / 2];
         CHECK(detune.start[index(detune, 60)] == doctest::Approx(std::clamp(median, 0.0, 6.0)));
         MESSAGE("detune an 60: Start " << detune.start[index(detune, 60)] << " Cent aus " << cent.size() << " Teiltoenen, Vorgabe "
-                                       << lumi::loop::wertAn(vorgabe.verstimmungCent, 60, KurvenSkala::Linear));
+                                       << lumi::kern::wertAn(vorgabe.verstimmungCent, 60, lumi::kern::Skala::Linear));
     }
 
     // Startpunkt 2: log × 1,6, linear + 0,25 des Bereichs, in den Grenzen
@@ -324,19 +324,19 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Kurven der Suche")
     for (const modelltest::SuchKurve& k : raum.kurven)
     {
         CAPTURE(k.name);
-        const lumi::loop::Tastenkurve& kurve = saite.*k.feld;
+        const lumi::kern::Kurve& kurve = saite.*k.feld;
         CHECK(kurve.abweichungen.empty());
         CHECK(kurve.punkte.size() == 30);
         for (std::size_t i = 0; i < k.tasten.size(); ++i)
             if (k.feld != &HammerSaite::abklingSpaetS)
-                CHECK(lumi::loop::wertAn(kurve, k.tasten[i], k.skala()) == doctest::Approx(k.start[i]).epsilon(1e-9));
+                CHECK(lumi::kern::wertAn(kurve, k.tasten[i], k.skala()) == doctest::Approx(k.start[i]).epsilon(1e-9));
         for (std::size_t i = 0; i < k.festTasten.size(); ++i)
-            CHECK(lumi::loop::wertAn(kurve, k.festTasten[i], k.skala()) == doctest::Approx(k.festWerte[i]).epsilon(1e-9));
+            CHECK(lumi::kern::wertAn(kurve, k.festTasten[i], k.skala()) == doctest::Approx(k.festWerte[i]).epsilon(1e-9));
     }
     for (const int t : tasten)
-        CHECK(lumi::loop::wertAn(saite.abklingSpaetS, t, KurvenSkala::Logarithmisch) >=
-              lumi::loop::wertAn(saite.abklingS, t, KurvenSkala::Logarithmisch) * (1.0 - 1e-12));
-    CHECK(lumi::loop::wertAn(saite.polarisationCent, 33, KurvenSkala::Linear) == doctest::Approx(0.0).epsilon(1e-12));
+        CHECK(lumi::kern::wertAn(saite.abklingSpaetS, t, lumi::kern::Skala::Logarithmisch) >=
+              lumi::kern::wertAn(saite.abklingS, t, lumi::kern::Skala::Logarithmisch) * (1.0 - 1e-12));
+    CHECK(lumi::kern::wertAn(saite.polarisationCent, 33, lumi::kern::Skala::Linear) == doctest::Approx(0.0).epsilon(1e-12));
 
     // ein Stuetzpunkt wirkt an den gemessenen Tasten nur auf seine Taste (die Grundlage der Jacobi-Matrix je Kurve, 7.5.10)
     std::vector<double> x = x1;
@@ -345,8 +345,8 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Kurven der Suche")
     for (const int t : tasten)
     {
         CAPTURE(t);
-        const double a = lumi::loop::wertAn(anders.abklingS, t, KurvenSkala::Logarithmisch);
-        const double b = lumi::loop::wertAn(saite.abklingS, t, KurvenSkala::Logarithmisch);
+        const double a = lumi::kern::wertAn(anders.abklingS, t, lumi::kern::Skala::Logarithmisch);
+        const double b = lumi::kern::wertAn(saite.abklingS, t, lumi::kern::Skala::Logarithmisch);
         if (t == 60) CHECK(a == doctest::Approx(b * std::exp(0.1)));
         else CHECK(a == doctest::Approx(b).epsilon(1e-12));
     }
@@ -359,7 +359,7 @@ TEST_CASE("Loop Salamander 7.5.9 Ziel: Modellton an Taste 60")
     REQUIRE(strukturen.has_value());
     REQUIRE(ziele.has_value());
     const auto start = std::chrono::steady_clock::now();
-    const std::vector<GroesseJeEbene> groessen = modelltest::modellAn(lumi::loop::hammerSaiteVorgabe(), 60, strukturen->at(60));
+    const std::vector<GroesseJeEbene> groessen = modelltest::modellAn(lumi::kern::hammer::hammerSaiteVorgabe(), 60, strukturen->at(60));
     const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
 
     // 18 Groessen, jede mit drei Ebenen; jede Groesse des Ziels ist da oder als fehlend benannt
@@ -393,10 +393,10 @@ TEST_CASE("Loop Salamander 7.5.9 Nullprobe (LUMIVIZ_75_NULLPROBE)")
     REQUIRE(strukturen.has_value());
     REQUIRE(ziele.has_value());
 
-    const lumi::loop::HammerSaite& vorgabe = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite& vorgabe = lumi::kern::hammer::hammerSaiteVorgabe();
     const std::vector<int> tasten = modelltest::salamanderMidi();
     const modelltest::Suchraum raum = modelltest::suchraum(vorgabe, tasten, *strukturen);
-    const std::vector<lumi::loop::HammerSaite> saiten{vorgabe, modelltest::saiteAus(raum, modelltest::startpunkt(raum, 1)),
+    const std::vector<lumi::kern::hammer::HammerSaite> saiten{vorgabe, modelltest::saiteAus(raum, modelltest::startpunkt(raum, 1)),
                                                       modelltest::saiteAus(raum, modelltest::startpunkt(raum, 2))};
     const char* const titel[] = {"Vorgabe (baueVorgabe, ohne Aenderung)", "Startpunkt 1 (gamma 30, detune an der Schwebung, u 0,25)",
                                  "Startpunkt 2 (log x 1,6, linear + 0,25 des Bereichs)"};

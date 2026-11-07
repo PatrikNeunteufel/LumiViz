@@ -6,7 +6,11 @@
 #include "loop/Instrument.hpp"
 
 #include "loop/Boden.hpp"      // der Resonanzboden im Klang (Stufe 31c-7)
-#include "loop/HammerTon.hpp"  // die Hammer-Saite (Stufe 31b)
+#include "loop/KernDatei.hpp"  // coreParams einer Kern-Schicht (Stufe 34d)
+
+#include "InstrumentModels/Kerne.hpp"  // die eingebauten Kerne (BK1 a)
+
+#include "InstrumentCore/Pruefsumme.hpp"  // der Abdruck der Werte eines Kerns (tonkernFuer)
 #include "loop/Kit.hpp"
 #include "loop/Saitenplan.hpp"  // kAbdaempfenMs (Stufe 23b)
 #include "loop/Sample.hpp"
@@ -2071,12 +2075,13 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
                                                    {QStringLiteral("slideTime"), schicht.gleitMsJeHalbton},
                                                    {QStringLiteral("legatoLevel"), schicht.legatoLaut}};
     }
-    if (istHammerSchicht(schicht))
+    if (istKernSchicht(schicht))
     {
-        // seit Fassung 16 (Stufe 31a, HA1 a, HA2 a): die Hammer-Saite und ihre Kurven
-        o[QStringLiteral("stringModel")] = QStringLiteral("modal");
-        o[QStringLiteral("excitation")] = QStringLiteral("hammer");
-        o[QStringLiteral("hammerString")] = hammerSaiteAlsJson(schicht.hammerSaite);
+        // seit Fassung 21 (Stufe 34d, IK2-4 a, FU1 a): der Kern, seine Werte nach der Tafel und der Koerper, immer
+        o[QStringLiteral("core")] = schicht.kernName;
+        if (const kern::KernTyp* typ = kern::kerne().typ(schicht.kernName.toStdString()))
+            o[QStringLiteral("coreParams")] = werteAlsJson(typ->tafel, schicht.kernWerte);
+        o[QStringLiteral("body")] = schicht.koerper;
     }
     // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
     if (!schicht.farbe.isEmpty()) o[QStringLiteral("color")] = schicht.farbe;
@@ -2084,8 +2089,9 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
 }
 
 /// Eine Schicht lesen: aus einem Eintrag von `layers` — oder aus der Wurzel
-/// einer Datei der Fassung 1, die dieselben Felder flach traegt.
-Schicht schichtAusJson(const QJsonObject& wurzel)
+/// einer Datei der Fassung 1, die dieselben Felder flach traegt. Was an einer
+/// Kern-Schicht nicht stimmt, kommt nach `fehler` (34d).
+Schicht schichtAusJson(const QJsonObject& wurzel, std::vector<std::string>* fehler)
 {
     const Schicht vorgabe;
     Schicht neu;
@@ -2142,16 +2148,18 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.rueckwaerts = wurzel.value(QStringLiteral("shapeReverse")).toBool(false);
     // seit Fassung 10 (Stufe 23c); fehlt `stringModel` oder ist es unbekannt: Classic
     const QString modell = wurzel.value(QStringLiteral("stringModel")).toString();
+    // `modal` (Fassung 16–20) ist seit Fassung 21 der Kern `hammerString` und wird nicht mehr gelesen (Classic)
     neu.saitenModell = modell == QLatin1String("extendedKS")  ? SaitenModell::ErweiterterKs
                        : modell == QLatin1String("waveguide") ? SaitenModell::Wellenleiter
-                       : modell == QLatin1String("modal")     ? SaitenModell::Modal  // seit Fassung 16
                                                               : SaitenModell::Klassisch;
-    // seit Fassung 16 (HA2 a); fehlt `excitation` oder ist es unbekannt: Pluck
-    neu.anregung = wurzel.value(QStringLiteral("excitation")).toString() == QLatin1String("hammer") ? Anregung::Hammer
-                                                                                                  : Anregung::Zupfen;
-    // seit Fassung 16: die Kurven der Hammer-Saite; fehlt der Block, gelten die Vorgaben
-    if (const QJsonValue hammer = wurzel.value(QStringLiteral("hammerString")); hammer.isObject())
-        neu.hammerSaite = hammerSaiteAusJson(hammer.toObject());
+    // seit Fassung 21 (Stufe 34d, IK2-4 a, FU1 a): eine Kern-Schicht — der Kern, seine Werte nach der Tafel, der Koerper
+    neu.kernName = wurzel.value(QStringLiteral("core")).toString();
+    if (!neu.kernName.isEmpty())
+    {
+        if (const kern::KernTyp* typ = kern::kerne().typ(neu.kernName.toStdString()))
+            neu.kernWerte = werteAusJson(typ->tafel, wurzel.value(QStringLiteral("coreParams")).toObject());
+        neu.koerper = wurzel.value(QStringLiteral("body")).toString();
+    }
     // Stufe 23d: die Tonabnehmer; fehlen sie, gelten die Vorgaben
     const auto abnehmer = [&](const char* schluessel, const Abnehmer& vorgabeAbnehmer) {
         const QJsonObject o = wurzel.value(QLatin1String(schluessel)).toObject();
@@ -2237,30 +2245,57 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
         neu.reihe.emplace_back(SchichtHuelle{});
     }
     richteReihe(neu.reihe);
-    richteSchicht(neu);
+    richteSchicht(neu, fehler);
     return neu;
 }
 
 }  // namespace
 
-void richteSchicht(Schicht& schicht)
+void richteSchicht(Schicht& schicht, std::vector<std::string>* fehler)
 {
-    if (schicht.anregung != Anregung::Hammer) schicht.anregung = Anregung::Zupfen;
-    if (schicht.saitenModell < SaitenModell::Klassisch || schicht.saitenModell > SaitenModell::Modal)
+    if (schicht.saitenModell < SaitenModell::Klassisch || schicht.saitenModell > SaitenModell::Wellenleiter)
         schicht.saitenModell = SaitenModell::Klassisch;
-    // HA2 a: Hammer gibt es nur mit Modal, Modal nur mit Hammer
-    if (schicht.anregung == Anregung::Hammer || schicht.saitenModell == SaitenModell::Modal)
+    if (!istKernSchicht(schicht)) return;
+    schicht.koerper = schicht.koerper.trimmed();
+    const kern::KernTyp* typ = kern::kerne().typ(schicht.kernName.toStdString());
+    if (typ == nullptr)
     {
-        schicht.anregung = Anregung::Hammer;
-        schicht.saitenModell = SaitenModell::Modal;
+        if (fehler != nullptr) fehler->push_back("unknown core: " + schicht.kernName.toStdString());
+        return;
     }
-    richteHammerSaite(schicht.hammerSaite);
+    // die Werte nach der Tafel (IK2-4 a): Grenzen, Reihenfolge; was fehlt oder nicht passt, wird gemeldet, nicht ersetzt
+    const std::vector<std::string> f = kern::richteWerte(typ->tafel, schicht.kernWerte);
+    if (fehler != nullptr) fehler->insert(fehler->end(), f.begin(), f.end());
 }
 
-bool hatHammer(const Instrument& instrument)
+bool stufeImNamen(const Instrument& instrument)
 {
-    return std::any_of(instrument.schichten.begin(), instrument.schichten.end(),
-                       [](const Schicht& s) { return s.an && istHammerSchicht(s); });
+    return std::any_of(instrument.schichten.begin(), instrument.schichten.end(), [](const Schicht& s) {
+        if (!s.an || !istKernSchicht(s)) return false;
+        const kern::KernTyp* typ = kern::kerne().typ(s.kernName.toStdString());
+        return typ != nullptr && typ->auskunft.stufeImNamen;
+    });
+}
+
+std::shared_ptr<const kern::Tonkern> tonkernFuer(const Schicht& schicht)
+{
+    if (!istKernSchicht(schicht)) return nullptr;
+    // gemerkt unter dem Abdruck von Kern und Werten (IK2-3 a); die Vorbereitung rechnet je Abdruck einmal
+    kern::Sha256 sha;
+    sha.dazu(schicht.kernName.toStdString() + "\n");
+    for (const auto& [name, wert] : schicht.kernWerte.felder) sha.dazu(name + " " + kern::wertAlsText(wert) + "\n");
+    const std::string abdruck = sha.fertig();
+    static std::mutex schutz;
+    static std::map<std::string, std::shared_ptr<const kern::Tonkern>> gemerkt;
+    {
+        const std::lock_guard<std::mutex> sperre(schutz);
+        if (const auto ort = gemerkt.find(abdruck); ort != gemerkt.end()) return ort->second;
+    }
+    std::shared_ptr<const kern::Tonkern> neu = kern::kerne().erzeuge(schicht.kernName.toStdString(), schicht.kernWerte);
+    const std::lock_guard<std::mutex> sperre(schutz);
+    // eine Suche (31d) rechnet tausende Saiten nacheinander — der Speicher bleibt klein
+    if (gemerkt.size() >= 256) gemerkt.clear();
+    return gemerkt.emplace(abdruck, std::move(neu)).first->second;
 }
 
 void richteReihe(std::vector<SchichtBaustein>& reihe)
@@ -2370,10 +2405,12 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
     }
     neu.beschreibung = wurzel.value(QStringLiteral("description")).toString().trimmed();
     neu.schichten.clear();
+    // was an einer Kern-Schicht nicht stimmt (34d): die Datei gilt als nicht lesbar — kein stiller Ersatz (IK2-11 a)
+    std::vector<std::string> fehler;
     if (fassung < 2)
     {
         // Fassung 1 ist flach: eine Schicht, `level` ist ihre Lautstaerke
-        neu.schichten.push_back(schichtAusJson(wurzel));
+        neu.schichten.push_back(schichtAusJson(wurzel, &fehler));
     }
     else
     {
@@ -2382,9 +2419,10 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
         for (const QJsonValue& schicht : wurzel.value(QStringLiteral("layers")).toArray())
         {
             if (neu.schichten.size() >= static_cast<std::size_t>(kSchichtenMax)) break;
-            neu.schichten.push_back(schichtAusJson(schicht.toObject()));
+            neu.schichten.push_back(schichtAusJson(schicht.toObject(), &fehler));
         }
     }
+    if (!fehler.empty()) return false;
     if (neu.schichten.empty()) neu.schichten.push_back(Schicht{});
     // seit Fassung 10; fehlt der Block, ist es kein Saiteninstrument
     const QJsonObject saiten = wurzel.value(QStringLiteral("strings")).toObject();
@@ -2904,27 +2942,23 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
         const int ton = hoehe + std::clamp(schicht.versatzHalbtoene, -24, 24);
         const double hz = tonHz(ton);
         Huelle huelle = huelleFuer(schicht, std::max(1.0, dauerMs - einsatzMs), rate);
-        // Stufe 31b: die Hammer-Saite klingt nach dem Loslassen so lange, wie Daempfer und
-        // Saite es wollen — nicht nach Release
-        HammerAnschlag hammer;
-        // Stufe 31c-7 (AW1 a, FT1 a): mit Resonanzboden klingt die Kraft durch seine Antwort —
-        // der Ton wird um ihre Laenge laenger
+        // Stufe 34d (IK2-3 a): eine Kern-Schicht rechnet ihren Ton im Kern — eine Note mit Stufe,
+        // gehalten bis zum Ende der Huelle; sie klingt danach so lange, wie der Kern es sagt
+        // (die Hammer-Saite: Daempfer und Saite, nicht Release)
+        const std::shared_ptr<const kern::Tonkern> tonkern = tonkernFuer(schicht);
+        kern::Tonauftrag auftrag;
+        // Stufe 31c-7 (AW1 a, FT1 a): mit Koerper klingt der Ton durch seine Antwort — er wird
+        // um ihre Laenge laenger
         std::shared_ptr<const Klang> bodenKlang;
         std::int64_t nachBoden = 0;
-        if (istHammerSchicht(schicht))
+        if (tonkern)
         {
-            hammer.taste = ton;
-            hammer.hz = hz;
-            hammer.stufe = angabe != nullptr ? angabe->anschlagStufe : 0;
-            hammer.halten = huelle.ende;
-            hammer.rate = rate;
-            const Tastatur tastatur = instrument.tastatur.value_or(Tastatur{});
-            hammer.gedaempft = ton < tastatur.ungedaempftAb;
-            if (!schicht.hammerSaite.resonanzboden.koerper.isEmpty())
-                if (const std::shared_ptr<const BodenImKlang> boden = bodenVon(schicht.hammerSaite.resonanzboden.koerper))
+            auftrag = kern::einzelnote(ton, hz, angabe != nullptr ? angabe->anschlagStufe : 0, huelle.ende, 0, rate);
+            if (!schicht.koerper.isEmpty())
+                if (const std::shared_ptr<const BodenImKlang> boden = bodenVon(schicht.koerper))
                     bodenKlang = bodenAntwortFuer(*boden, ton, rate);
             if (bodenKlang) nachBoden = std::max<std::int64_t>(0, bodenKlang->frames() - 1);
-            huelle.aus = hammerNachklang(schicht.hammerSaite, hammer, hoechstens) + nachBoden;
+            huelle.aus = tonkern->nachklang(auftrag, hoechstens) + nachBoden;
         }
         huelle.aus = std::min<std::int64_t>(huelle.aus, hoechstens - einsatz - 1);
         if (einsatz + huelle.ende + huelle.aus > hoechstens)
@@ -2990,13 +3024,14 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
                 hand->setzeSpuren(rate, angabe->tonhoehe, unten, oben, angabe->vibrato, hz, einsatzVibrato);
             }
             const Handweg* weg = hand ? &*hand : nullptr;
-            if (istHammerSchicht(schicht))
+            if (tonkern)
             {
-                // Stufe 31b: die Hammer-Saite (loop/HammerTon) — ohne Boden die Kraft am Steg auf
-                // beiden Seiten gleich, mit Boden (31c-7) gefaltet mit seiner Antwort je Hoerort
-                hammer.halten = huelle.ende;
+                // Stufe 34d: der Kern (der Fluegel: `kern::hammer::HammerKern`) — ohne Koerper der Ton auf
+                // beiden Seiten gleich, mit Koerper (31c-7) gefaltet mit seiner Antwort je Hoerort
+                auftrag.noten.front().ende = huelle.ende;
+                auftrag.frames = std::max<std::int64_t>(1, frames - nachBoden);
                 std::vector<float> mono;
-                rechneHammerTon(schicht.hammerSaite, hammer, mono, std::max<std::int64_t>(1, frames - nachBoden));
+                tonkern->rechne(auftrag, mono);
                 if (bodenKlang)
                 {
                     std::vector<float> stereo;
@@ -3029,7 +3064,9 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             }
         }
         // der Klang endet bei null — auch wenn hinter der Envelope ein Filter nachschwingt
-        if (schicht.schwingung != Schwingung::Saite && filterHinterHuelle(schicht)) blendeAus(eine, rate);
+        // (die Saite und eine Kern-Schicht enden von selbst; bis 34d war der Fluegel eine Saite)
+        if (!istKernSchicht(schicht) && schicht.schwingung != Schwingung::Saite && filterHinterHuelle(schicht))
+            blendeAus(eine, rate);
         // Pan (Stufe 18): das Gesetz von Spur und Muster. In der Mitte bleibt jeder Wert,
         // wie er ist — alte Instrumente rechnen Bit fuer Bit wie vorher.
         if (const double pan = std::clamp(schicht.pan, -1.0, 1.0); pan != 0.0)
@@ -3174,7 +3211,7 @@ Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate)
 
 InstrumentAuskunft auskunftVon(const Instrument& instrument)
 {
-    return InstrumentAuskunft(instrument.saiten, hatHammer(instrument));
+    return InstrumentAuskunft(instrument.saiten, stufeImNamen(instrument));
 }
 
 InstrumentVon instrumentAuskunft()

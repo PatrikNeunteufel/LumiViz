@@ -35,8 +35,8 @@
 #include "audio/WavDatei.hpp"
 #include "loop/Boden.hpp"
 #include "InstrumentCore/Fft.hpp"
-#include "loop/HammerSaite.hpp"
-#include "loop/HammerTon.hpp"
+#include "FluegelSchicht.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Tonspeicher.hpp"
@@ -88,14 +88,14 @@ struct Groesse
     std::string herkunft;
 };
 
-std::vector<Groesse> groessenAn(int midi, const TastenWerte& z, const lumi::loop::HammerSaite& v)
+std::vector<Groesse> groessenAn(int midi, const TastenWerte& z, const lumi::kern::hammer::HammerSaite& v)
 {
-    using lumi::loop::HammerSaite;
+    using lumi::kern::hammer::HammerSaite;
     std::vector<Groesse> g;
-    const int chor = lumi::loop::chorAn(v, midi);
+    const int chor = lumi::kern::hammer::chorAn(v, midi);
     const double d0 = z.t60Frueh.anzahl > 0 && z.t60Frueh.wert > 0.0 ? z.t60Frueh.wert : z.t60Ausgleich.wert;
     g.push_back({"decay", &HammerSaite::abklingS, true, d0 / 3.0, 3.0 * d0, d0, "ohne Quelle, Faktor 3"});
-    const auto [hu, ho] = bensaBand(midi, lumi::loop::wertAn(v.saitenLaengeM, midi, lumi::loop::KurvenSkala::Logarithmisch));
+    const auto [hu, ho] = bensaBand(midi, lumi::kern::wertAn(v.saitenLaengeM, midi, lumi::kern::Skala::Logarithmisch));
     const double h0 = std::clamp(z.highDecay.anzahl > 0 && z.highDecay.wert > 0.0 ? z.highDecay.wert : std::sqrt(hu * ho), hu, ho);
     g.push_back({"highDecay", &HammerSaite::abklingHoch, true, hu, ho, h0, "Bensa 2003"});
     const double s0 = z.zweiStufenAnteil.wert >= 0.5 && z.t60Spaet.wert > 0.0 ? std::max(z.t60Spaet.wert, d0) : 3.0 * d0;
@@ -127,20 +127,20 @@ double koordinate(const Groesse& g, double wert)
     return g.log ? std::log(wert) : wert;
 }
 
-lumi::loop::HammerSaite saiteMit(const lumi::loop::HammerSaite& basis, int midi, const std::vector<Groesse>& groessen,
+lumi::kern::hammer::HammerSaite saiteMit(const lumi::kern::hammer::HammerSaite& basis, int midi, const std::vector<Groesse>& groessen,
                                  const std::vector<double>& x)
 {
-    lumi::loop::HammerSaite saite = basis;
+    lumi::kern::hammer::HammerSaite saite = basis;
     double decay = 0.0;
     for (std::size_t j = 0; j < groessen.size(); ++j)
     {
         const double v = wertAus(groessen[j], x[j]);
         (saite.*groessen[j].feld).abweichungen = {{midi, v}};
-        if (groessen[j].feld == &lumi::loop::HammerSaite::abklingS) decay = v;
+        if (groessen[j].feld == &lumi::kern::hammer::HammerSaite::abklingS) decay = v;
     }
     // die spaete Stufe ist nie kuerzer als die fruehe (HammerSaite: kuerzer gilt als Decay)
     for (std::size_t j = 0; j < groessen.size(); ++j)
-        if (groessen[j].feld == &lumi::loop::HammerSaite::abklingSpaetS && saite.abklingSpaetS.abweichungen[0].wert < decay)
+        if (groessen[j].feld == &lumi::kern::hammer::HammerSaite::abklingSpaetS && saite.abklingSpaetS.abweichungen[0].wert < decay)
             saite.abklingSpaetS.abweichungen[0].wert = decay;
     return saite;
 }
@@ -222,23 +222,23 @@ int dauerAn(int midi, const KurvenBezug& bezug)
 }
 
 /// Die Kurven des gerechneten Tons wie im Programm (K4 a), gehalten `dauerMs`, je Ebene v6–v16.
-std::vector<TonKurven> kurvenTon(const lumi::loop::HammerSaite& saite, int midi, int dauerMs)
+std::vector<TonKurven> kurvenTon(const lumi::kern::hammer::HammerSaite& saite, int midi, int dauerMs)
 {
     const lumi::loop::Instrument instrument = fluegelMit(saite);
     return jeEbene([&](int e) { return kurvenEbene(instrument, midi, e, dauerMs); });
 }
 
-Bewertung bewerteTon(const lumi::loop::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
+Bewertung bewerteTon(const lumi::kern::hammer::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
 {
     return bewerte(midi, kurvenTon(saite, midi, dauerMs), bezug);
 }
 
 /// Viele Auswertungen am Ton zugleich (S156): die Ebenen aller Saiten auf einem Pool — jeder Ton rechnet fuer sich,
 /// die Bewertungen sind dieselben wie mit `bewerteTon` nacheinander.
-std::vector<Bewertung> bewerteToene(const std::vector<lumi::loop::HammerSaite>& saiten, int midi, int dauerMs, const KurvenBezug& bezug)
+std::vector<Bewertung> bewerteToene(const std::vector<lumi::kern::hammer::HammerSaite>& saiten, int midi, int dauerMs, const KurvenBezug& bezug)
 {
     std::vector<lumi::loop::Instrument> instrumente;
-    for (const lumi::loop::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
+    for (const lumi::kern::hammer::HammerSaite& s : saiten) instrumente.push_back(fluegelMit(s));
     const auto ebenen = static_cast<std::size_t>(kAuswertungEbenen);
     std::vector<TonKurven> kurven(saiten.size() * ebenen);
     parallelJe(kurven.size(), [&](std::size_t j) {
@@ -254,7 +254,7 @@ std::vector<Bewertung> bewerteToene(const std::vector<lumi::loop::HammerSaite>& 
 }
 
 /// Die Summe der Moden (Startpunkt nach K4 a): ohne Hammerkontakt, Laengskraft und Boden.
-Bewertung bewerteModen(const lumi::loop::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
+Bewertung bewerteModen(const lumi::kern::hammer::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
 {
     const lumi::kern::Fft& fft = lumi::kern::fft();
     return bewerte(midi,
@@ -300,7 +300,7 @@ std::string zahl(double v, int stellen = 3)
 
 /// Je Kurve eine Zeile: Ebene/Teilton, Abklingen, Schwebung, Gewicht, ob sie gilt, verglichene Punkte, Anfang und Ende
 /// (Punkte zu 50 ms) — Modell und Salamander mit ihrem eigenen ersten und letzten Punkt.
-std::string kurvenZeilen(const lumi::loop::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
+std::string kurvenZeilen(const lumi::kern::hammer::HammerSaite& saite, int midi, int dauerMs, const KurvenBezug& bezug)
 {
     std::ostringstream z;
     const std::vector<TonKurven> k = kurvenTon(saite, midi, dauerMs);
@@ -344,7 +344,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Spruenge (LUMIVIZ_75_SPRUNG)")
     REQUIRE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")));
     lumi::loop::tonspeicher().leere();
     const std::vector<TastenWerte> alle = tastenWerteAus(*gelesen);
-    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite basis = lumi::kern::hammer::hammerSaiteVorgabe();
     std::ofstream datei(ziel / "spruenge75.txt", std::ios::binary);
 
     struct Sprung
@@ -371,7 +371,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Spruenge (LUMIVIZ_75_SPRUNG)")
             std::vector<double> x = x0;
             const double a = koordinate(g, g.unten), b = koordinate(g, g.oben);
             x[j] = a + (b - a) * p / (kSchnittPunkte - 1);
-            const lumi::loop::HammerSaite saite = saiteMit(basis, s.midi, groessen, x);
+            const lumi::kern::hammer::HammerSaite saite = saiteMit(basis, s.midi, groessen, x);
             const Bewertung bw = bewerteTon(saite, s.midi, dauerMs, *bezug);
             datei << "MIDI " << s.midi << ' ' << g.name << ' ' << zahl(wertAus(g, x[j])) << ": Abklingen " << zahl(bw.abklingen, 2) << ", Schwebung "
                   << zahl(bw.schwebung, 2) << ", " << bw.kurven << " Kurven gelten\n"
@@ -400,7 +400,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
     REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
     lumi::loop::tonspeicher().leere();
     const std::vector<TastenWerte> alle = tastenWerteAus(*gelesen);
-    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite basis = lumi::kern::hammer::hammerSaiteVorgabe();
 
     std::ostringstream bericht;
     std::ofstream datei(ziel / (nurZeit ? "probe75_zeit.txt" : "probe75.txt"), std::ios::binary);
@@ -429,7 +429,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
         t.groessen = groessenAn(midi, t.z, basis);
         t.dauerMs = dauerAn(midi, *bezug);
         std::ostringstream g;
-        g << "MIDI " << midi << " (Chor " << lumi::loop::chorAn(basis, midi) << ", gehalten " << t.dauerMs << " ms):";
+        g << "MIDI " << midi << " (Chor " << lumi::kern::hammer::chorAn(basis, midi) << ", gehalten " << t.dauerMs << " ms):";
         for (const Groesse& gr : t.groessen)
             g << ' ' << gr.name << ' ' << zahl(gr.start) << " [" << zahl(gr.unten) << ", " << zahl(gr.oben) << "] (" << gr.herkunft << ");";
         schreibe(g.str());
@@ -489,7 +489,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
             x[j] = a + (b - a) * p / (kSchnittPunkte - 1);
             return x;
         };
-        std::vector<lumi::loop::HammerSaite> schnittSaiten;
+        std::vector<lumi::kern::hammer::HammerSaite> schnittSaiten;
         for (std::size_t j = 0; j < d; ++j)
             for (int p = 0; p < kSchnittPunkte; ++p) schnittSaiten.push_back(saiteMit(basis, t.midi, t.groessen, punkt(j, p)));
         const std::vector<Bewertung> schnittWerte = bewerteToene(schnittSaiten, t.midi, t.dauerMs, *bezug);
@@ -562,7 +562,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe 7.5.4 (LUMIVIZ_75_PROBE)")
         schreibe(z3.str() + (gleich ? "\n     eindeutig" : "\n     NICHT eindeutig"));
 
         // (8) Moden gegen Ton am Moden-Start, voller Abstand; (K6-1 a) Anteil der letzten 20 %
-        const lumi::loop::HammerSaite saiteA = saiteMit(basis, t.midi, t.groessen, startA);
+        const lumi::kern::hammer::HammerSaite saiteA = saiteMit(basis, t.midi, t.groessen, startA);
         const Bewertung mo = bewerteModen(saiteA, t.midi, t.dauerMs, *bezug);
         const Bewertung to = bewerteTon(saiteMit(basis, t.midi, t.groessen, a.x), t.midi, t.dauerMs, *bezug);
         const Bewertung toStart = bewerteTon(saiteA, t.midi, t.dauerMs, *bezug);
@@ -719,14 +719,14 @@ TEST_CASE("Loop Salamander Probe S156 Pool wie nacheinander")
     REQUIRE_MESSAGE(bezug.has_value(), "werte/salamander_kurven.txt nicht gefunden — aus dem Projekt-Root starten");
     REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
     lumi::loop::tonspeicher().leere();
-    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite basis = lumi::kern::hammer::hammerSaiteVorgabe();
     for (const int midi : {48, 84})
     {
         CAPTURE(midi);
         constexpr int kDauerMs = 2500;
-        lumi::loop::HammerSaite anders = basis;
+        lumi::kern::hammer::HammerSaite anders = basis;
         anders.verstimmungCent.abweichungen = {{midi, 3.0}};
-        const std::vector<lumi::loop::HammerSaite> saiten{basis, anders};
+        const std::vector<lumi::kern::hammer::HammerSaite> saiten{basis, anders};
         const std::vector<Bewertung> pool = bewerteToene(saiten, midi, kDauerMs, *bezug);
         REQUIRE(pool.size() == saiten.size());
         for (std::size_t q = 0; q < saiten.size(); ++q)
@@ -762,10 +762,10 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Zeit (LUMIVIZ_75_ZEIT)")
     REQUIRE_MESSAGE(bezug.has_value(), "werte/salamander_kurven.txt nicht gefunden — aus dem Projekt-Root starten");
     REQUIRE_MESSAGE(lumi::loop::bodenVon(QStringLiteral("lib:steinway_d")), "steinway_d nicht gefunden — aus dem Projekt-Root starten");
     lumi::loop::tonspeicher().leere();
-    const lumi::loop::HammerSaite basis = lumi::loop::hammerSaiteVorgabe();
+    const lumi::kern::hammer::HammerSaite basis = lumi::kern::hammer::hammerSaiteVorgabe();
     lumi::loop::Instrument instrument = modelltest::fluegel(QStringLiteral("lib:steinway_d"), &basis);
-    instrument.tastatur->ungedaempftAb = 89;  // D1 a
-    const lumi::loop::HammerSaite& saite = instrument.schichten[0].hammerSaite;
+    fluegeltest::setzeUngedaempftAb(instrument.schichten[0], 89);  // D1 a
+    const lumi::kern::hammer::HammerSaite saite = fluegeltest::saiteVon(instrument.schichten[0]);
 
     std::ofstream datei(ziel / "zeit75.txt", std::ios::binary);
     std::ostringstream bericht;
@@ -790,7 +790,7 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Zeit (LUMIVIZ_75_ZEIT)")
         angabe.anschlagStufe = modelltest::stufeVonEbene(kEbene);
         (void)lumi::loop::rendereTon(instrument, angabe, modelltest::kRate);  // die Antwort des Bodens liegt danach bereit
 
-        lumi::loop::HammerAnschlag hammer;
+        lumi::kern::hammer::HammerAnschlag hammer;
         hammer.taste = midi;
         hammer.hz = tastenFrequenz(midi);
         hammer.stufe = angabe.anschlagStufe;
@@ -798,10 +798,10 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Zeit (LUMIVIZ_75_ZEIT)")
         hammer.gedaempft = midi < 89;
         const auto frames = static_cast<std::int64_t>(std::llround(dauerMs / 1000.0 * modelltest::kRate));
         hammer.halten = frames;
-        lumi::loop::HammerSaite ohneLaengs = saite;
+        lumi::kern::hammer::HammerSaite ohneLaengs = saite;
         ohneLaengs.stegWinkelGrad.abweichungen = {{midi, 0.0}};
         std::size_t moden = 0;
-        for (const lumi::loop::TeiltonModen& t : lumi::loop::hammerTeiltonModen(saite, hammer)) moden += t.moden.size();
+        for (const lumi::kern::hammer::TeiltonModen& t : lumi::kern::hammer::hammerTeiltonModen(saite, hammer)) moden += t.moden.size();
 
         for (int d = 1; d <= kDurchgaenge; ++d)
         {
@@ -814,10 +814,10 @@ TEST_CASE("Loop Salamander 31d-7 B Probe Zeit (LUMIVIZ_75_ZEIT)")
             const double messung = sekunden(t0);
             std::vector<float> mono;
             t0 = Uhr::now();
-            lumi::loop::rechneHammerTon(saite, hammer, mono, frames);
+            lumi::kern::hammer::rechneHammerTon(saite, hammer, mono, frames);
             const double mitLaengs = sekunden(t0);
             t0 = Uhr::now();
-            lumi::loop::rechneHammerTon(ohneLaengs, hammer, mono, frames);
+            lumi::kern::hammer::rechneHammerTon(ohneLaengs, hammer, mono, frames);
             const double ohne = sekunden(t0);
             schreibe("  MIDI " + std::to_string(midi) + " (" + std::to_string(dauerMs) + " ms, " + std::to_string(moden) + " Moden) Durchgang " +
                      std::to_string(d) + ": Ton " + zahl(ton, 3) + " s = Hammer-Saite " + zahl(mitLaengs, 3) + " (davon Laengskraft " +

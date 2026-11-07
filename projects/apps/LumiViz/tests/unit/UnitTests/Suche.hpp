@@ -24,7 +24,7 @@
 #include "Suchkurven.hpp"
 #include "Zielsumme.hpp"
 
-#include "loop/HammerSaite.hpp"
+#include "FluegelSchicht.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -114,7 +114,7 @@ struct Bewertet
 /// Viele Punkte auf einem Pool ausgewertet (`werteAus`).
 inline std::vector<Bewertet> bewerte(const SuchAufgabe& a, const std::vector<std::vector<double>>& punkte, double* sekunden = nullptr)
 {
-    std::vector<lumi::loop::HammerSaite> saiten;
+    std::vector<lumi::kern::hammer::HammerSaite> saiten;
     for (const std::vector<double>& x : punkte) saiten.push_back(saiteAus(a.raum, x));
     const std::vector<Auswertung> aus = werteAus(saiten, a.tasten, a.strukturen, a.ziele, sekunden);
     std::vector<Bewertet> b;
@@ -125,7 +125,7 @@ inline std::vector<Bewertet> bewerte(const SuchAufgabe& a, const std::vector<std
 /// Der Name des Feldes in `HammerSaite` (fuer die Kurven im Format von `baueVorgabe()`).
 inline const char* feldName(KurvenFeld f)
 {
-    using lumi::loop::HammerSaite;
+    using lumi::kern::hammer::HammerSaite;
     if (f == &HammerSaite::abklingS) return "abklingS";
     if (f == &HammerSaite::abklingSpaetS) return "abklingSpaetS";
     if (f == &HammerSaite::abklingHoch) return "abklingHoch";
@@ -141,13 +141,13 @@ inline const char* feldName(KurvenFeld f)
 /// Die Kurven der Saite zu `x` im Format von `baueVorgabe()` (direkt einsetzbar), vier gueltige Stellen.
 inline std::string kurvenText(const Suchraum& raum, const std::vector<double>& x)
 {
-    const lumi::loop::HammerSaite saite = saiteAus(raum, x);
+    const lumi::kern::hammer::HammerSaite saite = saiteAus(raum, x);
     std::ostringstream s;
     s << std::setprecision(4);
     for (const SuchKurve& k : raum.kurven)
     {
         s << "    // " << k.name << " (" << k.herkunft << ")\n    s." << feldName(k.feld) << " = kurveAusPunkten({";
-        const lumi::loop::Tastenkurve& kurve = saite.*k.feld;
+        const lumi::kern::Kurve& kurve = saite.*k.feld;
         for (std::size_t i = 0; i < kurve.punkte.size(); ++i) s << (i ? ", " : "") << '{' << kurve.punkte[i].taste << ", " << kurve.punkte[i].wert << '}';
         s << "});\n";
     }

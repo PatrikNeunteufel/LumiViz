@@ -51,13 +51,6 @@ std::shared_ptr<const Tonkern> Fabrik::erzeuge(std::string_view name, Werte wert
     return t->erzeuge(werte);
 }
 
-const Fabrik& kerne()
-{
-    // 34c: noch kein eingebauter Kern; 34d nimmt hier den Fluegel auf (`hammerString`)
-    static const Fabrik eingebaut;
-    return eingebaut;
-}
-
 double normiere(const Fabrik& fabrik, std::string_view kern, Werte werte, std::string_view bezugName, const Tonauftrag& probe,
                 int runden, std::vector<std::string>* fehler)
 {

@@ -240,7 +240,7 @@ Ablauf plane(const Loop& loop, int rate, const InstrumentVon& saiten, const Eing
                 if (muster->stumm) continue;
                 const double lautMuster = muster->laut * loopAmSchlag * faderAmSchlag;
                 // Stufe 31b (HK2 a): an einer Hammer-Saite traegt der Ton die Stufe, der Rest ist Pegel
-                const bool hammer = saiten && saiten(muster->instrument).hammer;
+                const bool hammer = saiten && saiten(muster->instrument).stufeImNamen;
                 for (int runde = 0; runde < clip.wiederholungen; ++runde)
                 {
                     const std::int64_t schrittDavor =

@@ -14,10 +14,11 @@
 #pragma once
 
 #include "Fluegelmessung.hpp"
+#include "FluegelSchicht.hpp"
 
 #include "loop/Boden.hpp"
 #include "InstrumentCore/Fft.hpp"
-#include "loop/HammerTon.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 
@@ -41,18 +42,14 @@ inline int stufeVonEbene(int e)
     return -30 + 2 * (e - 1);
 }
 
-/// Der Fluegel des Modells: Hammer-Saite (Modal), Tastatur wie die Vorgabe, Boden `koerper`
+/// Der Fluegel des Modells: eine Kern-Schicht `hammerString` (34d), Tastatur wie die Vorgabe, Koerper `koerper`
 /// (`lib:<name>`); `saite` ersetzt die Hammer-Saite, wenn gegeben.
-inline lumi::loop::Instrument fluegel(const QString& koerper, const lumi::loop::HammerSaite* saite = nullptr)
+inline lumi::loop::Instrument fluegel(const QString& koerper, const lumi::kern::hammer::HammerSaite* saite = nullptr)
 {
     lumi::loop::Instrument instrument;
-    lumi::loop::Schicht& s = instrument.schichten[0];
-    s.schwingung = lumi::loop::Schwingung::Saite;
-    s.saitenModell = lumi::loop::SaitenModell::Modal;
-    s.anregung = lumi::loop::Anregung::Hammer;
+    instrument.schichten[0] =
+        fluegeltest::fluegelSchicht(saite != nullptr ? *saite : lumi::kern::hammer::hammerSaiteVorgabe(), koerper);
     instrument.tastatur = lumi::loop::Tastatur{};
-    if (saite != nullptr) s.hammerSaite = *saite;
-    s.hammerSaite.resonanzboden.koerper = koerper;
     return instrument;
 }
 
@@ -93,19 +90,19 @@ inline std::vector<std::vector<std::array<lumi::messung::KanalMessung, 2>>> mess
 
 /// Die Summe der Moden als Ton (SZ3 a): je Teilton bis `teiltoeneMax` die Antwort am Steg auf einen Stoss,
 /// Σ Im(g·e^(λt)) / k — ohne Hammerkontakt, Laengskraft und Boden; in float gerundet wie der Ton.
-inline std::vector<double> modenTon(const lumi::loop::HammerSaite& saite, int midi, int stufe, double dauerS, int teiltoeneMax)
+inline std::vector<double> modenTon(const lumi::kern::hammer::HammerSaite& saite, int midi, int stufe, double dauerS, int teiltoeneMax)
 {
-    lumi::loop::HammerAnschlag a;
+    lumi::kern::hammer::HammerAnschlag a;
     a.taste = midi;
     a.hz = lumi::messung::tastenFrequenz(midi);
     a.stufe = stufe;
     a.rate = kRate;
     std::vector<double> ton(static_cast<std::size_t>(dauerS * kRate), 0.0);
     const double dt = 1.0 / kRate;
-    for (const lumi::loop::TeiltonModen& t : lumi::loop::hammerTeiltonModen(saite, a))
+    for (const lumi::kern::hammer::TeiltonModen& t : lumi::kern::hammer::hammerTeiltonModen(saite, a))
     {
         if (t.teilton > teiltoeneMax) break;
-        for (const lumi::loop::EbenenMode& m : t.moden)
+        for (const lumi::kern::hammer::EbenenMode& m : t.moden)
         {
             std::complex<double> z = m.anteil / static_cast<double>(t.teilton);
             const std::complex<double> schritt = std::exp(m.lambda * dt);
@@ -122,7 +119,7 @@ inline std::vector<double> modenTon(const lumi::loop::HammerSaite& saite, int mi
 
 /// Die Summe der Moden gemessen und verdichtet wie eine Taste von Salamander: die eine Messung steht fuer alle 16
 /// Ebenen (die Moden haengen an der Stufe nur ueber den Stoss — in Stufe 1 fest, SM1 a).
-inline lumi::messung::TastenWerte modenWerte(const lumi::loop::HammerSaite& saite, int midi, int stufe, int teiltoeneMax = 30)
+inline lumi::messung::TastenWerte modenWerte(const lumi::kern::hammer::HammerSaite& saite, int midi, int stufe, int teiltoeneMax = 30)
 {
     const double dauerS = midi <= 72 ? 12.0 : 8.0;
     const std::vector<double> ton = modenTon(saite, midi, stufe, dauerS, teiltoeneMax);

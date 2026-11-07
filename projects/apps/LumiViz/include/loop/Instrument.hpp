@@ -20,8 +20,10 @@
 #pragma once
 
 #include "loop/Bausteine.hpp"
-#include "loop/HammerSaite.hpp"
 #include "loop/Rechenkern.hpp"
+#include "loop/Tastatur.hpp"
+
+#include "InstrumentCore/Tonkern.hpp"  // Kern-Schicht (34d): Werte, Tonkern
 #include "loop/Auskunft.hpp"  // InstrumentVon (HT5 a); bringt Saiten.hpp mit
 
 #include <QColor>
@@ -30,7 +32,9 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <memory>
 #include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -67,18 +71,8 @@ enum class SaitenModell : int
     /// Waveguide (Stufe 23d, S-K1 a): die Saite als zwei gegenlaeufige Wellen
     /// zwischen Sattel und Steg — man kann sie an jeder Stelle abnehmen.
     Wellenleiter = 2,
-    /// Modal (Stufe 31a, HS1 a): die Saite als Summe gedaempfter Resonatoren nach
-    /// Bank, Zambon & Fontana 2010 — nur mit der Anregung *Hammer* (HA2 a).
-    Modal = 3,
-};
-
-/// Excitation (Stufe 31a, HA2 a): wie die Saite angeregt wird. *Pluck* ist jede
-/// Saite bis Stufe 30; *Hammer* gibt es nur mit dem Verfahren *Modal* — und
-/// *Modal* nur mit *Hammer*. Andere Paare richtet das Programm (`richteSchicht`).
-enum class Anregung : int
-{
-    Zupfen = 0,  ///< Pluck
-    Hammer = 1,
+    // Modal (Hammer + Modal, Stufe 31a bis S174) ist seit Stufe 34d der Kern `hammerString` einer Kern-Schicht
+    // (`Schicht::kernName`, InstrumentModels/hammer/HammerKern.hpp).
 };
 
 /// Die Bauart eines Tonabnehmers (Stufe 23d, S-K5 a).
@@ -423,12 +417,17 @@ struct Schicht
     /// Untergrenze aus einer verdichteten Aufnahme (Saiten_Konzept S-L11 a).
     double legatoLaut = kLegatoLautVorgabe;
 
-    // --- nur Saite *Hammer* + *Modal* (Stufe 31a, HA1 a, HA2 a) ---
-    /// Excitation: eine Datei bis Fassung 15 (und ohne das Feld) ist *Pluck*.
-    Anregung anregung = Anregung::Zupfen;
-    /// Die Groessen des Fluegels als Kurven ueber die Tastatur; bei einer
-    /// anderen Schicht ungenutzt (und nicht in der Datei).
-    HammerSaite hammerSaite = hammerSaiteVorgabe();
+    // --- nur eine Kern-Schicht (Stufe 34d, IK2-3 a, IK2-4 a, FU1 a) ---
+    /// Der Kern der Bibliothek InstrumentCore (`core`, ein Name aus `kern::kerne()`); leer = keine Kern-Schicht.
+    /// Eine Kern-Schicht rechnet ihren Ton ganz im Kern — Schwingung, Envelope und die Saitenfelder gelten fuer sie
+    /// nicht.
+    QString kernName;
+    /// Die Werte des Kerns nach seiner Tafel (`coreParams`), gerichtet (`richteSchicht`).
+    kern::Werte kernWerte;
+    /// Der Koerper, durch den die App den Ton faltet (FU1 a, `body`): `lib:<name>` =
+    /// `asset/loop/instrument_bodies/<name>.lvinstbody`; leer = ohne. Fehlt die Datei, klingt der Ton ohne Koerper
+    /// und der Tonauftrag meldet „Body not found“.
+    QString koerper;
 
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 
@@ -448,22 +447,22 @@ struct Schicht
     SchichtDrive& holeDrive();
 };
 
+/// Ist die Schicht eine Kern-Schicht (Stufe 34d) — rechnet ein Kern der Bibliothek ihren Ton?
+[[nodiscard]] inline bool istKernSchicht(const Schicht& schicht)
+{
+    return !schicht.kernName.isEmpty();
+}
 /// Ist die Schicht eine Saite, die die Spielweisen kennt (*Extended KS*, *Waveguide*)?
-/// Die Hammer-Saite nicht: sie ist eine Taste, keine gegriffene Saite (HA2 a).
+/// Eine Kern-Schicht nicht (der Fluegel ist eine Taste, keine gegriffene Saite, HA2 a).
 [[nodiscard]] inline bool istSaitenSchicht(const Schicht& schicht)
 {
-    return schicht.schwingung == Schwingung::Saite &&
+    return !istKernSchicht(schicht) && schicht.schwingung == Schwingung::Saite &&
            (schicht.saitenModell == SaitenModell::ErweiterterKs || schicht.saitenModell == SaitenModell::Wellenleiter);
 }
-/// Ist die Schicht eine Hammer-Saite (*Hammer* + *Modal*, Stufe 31a)?
-[[nodiscard]] inline bool istHammerSchicht(const Schicht& schicht)
-{
-    return schicht.schwingung == Schwingung::Saite && schicht.saitenModell == SaitenModell::Modal;
-}
-/// Eine Schicht in ihre Grenzen, soweit es die Hammer-Saite betrifft: nur die Paare
-/// *Pluck* mit Classic, Extended KS, Waveguide und *Hammer* mit *Modal* (HA2 a) —
-/// *Hammer* zieht *Modal* nach sich und umgekehrt; die Kurven in ihre Grenzen.
-void richteSchicht(Schicht& schicht);
+/// Eine Schicht in ihre Grenzen, soweit es Saite und Kern betrifft: das Verfahren der Saite unter den bekannten; an
+/// einer Kern-Schicht die Werte nach der Tafel (`kern::richteWerte`) und der Koerper ohne Leerraum. Was `richteWerte`
+/// meldet, steht danach in `fehler` (wenn gegeben); ein unbekannter Kern meldet „unknown core“.
+void richteSchicht(Schicht& schicht, std::vector<std::string>* fehler = nullptr);
 /// Folgt die Schicht in einer Kette und beim Bend der Saite (S-L12 a)? Die Saite selbst
 /// immer, jede andere nach *In a legato*.
 [[nodiscard]] inline bool folgtDerSaite(const Schicht& schicht)
@@ -538,17 +537,22 @@ struct Instrument
     /// (`istSaiteninstrument()` = false) ist das Instrument wie bis Stufe 22.
     /// Die Schichten bleiben der Klang.
     Saitensatz saiten;
-    /// Keyboard (seit Fassung 16, Stufe 31a, HA2 a, HA4 a): Umfang, Daempfer und
-    /// Pedale einer Tastatur — neben den Saiten, die den gegriffenen bleiben.
+    /// Keyboard (seit Fassung 16, Stufe 31a, HA2 a, HA4 a): Umfang und Pedale einer Tastatur — neben den Saiten, die
+    /// den gegriffenen bleiben; die Daempfer stehen seit Fassung 21 in der Tafel des Kerns (FU2 a).
     /// Leer = keine Tastatur (wie bis Stufe 30).
     std::optional<Tastatur> tastatur;
 
     [[nodiscard]] bool operator==(const Instrument&) const = default;
 };
 
-/// Traegt das Instrument eine eingeschaltete Hammer-Saite? Dann tragen seine Toene
-/// die Stufe der Anschlagstaerke im Namen (`:a<stufe>`, HK2 a).
-[[nodiscard]] bool hatHammer(const Instrument& instrument);
+/// Traegt das Instrument eine eingeschaltete Kern-Schicht, deren Kern die Anschlagstufe im Namen fuehrt
+/// (`kern::KernAuskunft::stufeImNamen`; bis 34d „hat eine Hammer-Saite“)? Dann tragen seine Toene die Stufe der
+/// Anschlagstaerke im Namen (`:a<stufe>`, HK2 a).
+[[nodiscard]] bool stufeImNamen(const Instrument& instrument);
+
+/// Der Kern einer Kern-Schicht, vorbereitet fuer ihre Werte — einmal je Kern und Werte gerechnet und gemerkt (IK2-3 a:
+/// unter dem Abdruck der Werte). `nullptr` fuer eine andere Schicht oder einen unbekannten Kern.
+[[nodiscard]] std::shared_ptr<const kern::Tonkern> tonkernFuer(const Schicht& schicht);
 
 // --- die Datei `.lvinst` (Entscheide Patrik S110, I2 b und I3 a; S111, F1 a) --
 // Ein Instrument ist eine Datei, abgelegt wie die Klaenge des Kits: die
@@ -634,10 +638,17 @@ struct Instrument
 // Fassung 20 (S159, HU3-1 c): `hammerString` traegt die Hysterese des Filzes nach Stulov — `hammerHysteresis`
 // (ε, 0 … 0,999) und `hammerRelaxation` (τ in µs), je eine Kurve, immer geschrieben; eine aeltere Datei bekommt
 // fuer sie die Vorgabe (Stulov Gl. 9). Ein aelteres Programm rechnete den Hammer als Feder F = Q0·u^p.
-// Geschrieben wird Fassung 20.
+// Fassung 21 (S175, Stufe 34d, IK2-4 a, FU1 a, FU2 a): eine Kern-Schicht traegt `core` (Name des Kerns, etwa
+// `hammerString`), `coreParams` (die Werte nach seiner Tafel, `loop/KernDatei.hpp`; Kurven mit `evidence` und
+// `source`, alle Werte immer) und `body` (der Koerper, `lib:<name>`, leer = ohne; immer). `excitation` gibt es nur noch
+// als `pluck`, `stringModel` `modal` und der Block `hammerString` fallen weg und werden **nicht mehr gelesen** — eine
+// Schicht der Fassung 16–20 mit `hammerString` liest sich als Saite *Classic* (keine Legacy-Ruecksicht, `grand_piano`
+// ist neu geschrieben). `keyboard` traegt `range`, `pedals` und `bassSustainBelow`; `undampedFrom` steht in der Tafel
+// (wird im Block ueberlesen). Ein aelteres Programm kennte keinen Kern.
+// Geschrieben wird Fassung 21.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 20;
+inline constexpr int kInstrumentFassung = 21;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).
@@ -779,7 +790,7 @@ inline constexpr double kTonMaxSekunden = 30.0;
 [[nodiscard]] Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate);
 
 /// Die Auskunft fuer die Planung (Entscheide S-A1 a, HT5 a): die Saiten eines
-/// Instruments beim Namen und ob eine Hammer-Saite klingt (`hatHammer`), ueber
+/// Instruments beim Namen und ob seine Toene die Anschlagstufe im Namen tragen (`stufeImNamen`), ueber
 /// `holeInstrument` — je Name einmal gelesen und gemerkt, solange die Auskunft
 /// lebt. Ein Instrument, das sich nicht findet, hat weder Saiten noch Hammer.
 [[nodiscard]] InstrumentVon instrumentAuskunft();

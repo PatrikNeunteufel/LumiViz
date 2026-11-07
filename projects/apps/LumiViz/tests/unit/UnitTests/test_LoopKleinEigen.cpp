@@ -22,7 +22,7 @@
 #include <doctest.h>
 
 #include "InstrumentCore/Eigenzerlegung.hpp"
-#include "loop/HammerTon.hpp"
+#include "InstrumentModels/hammer/HammerTon.hpp"
 
 #include <Eigen/Dense>
 
@@ -34,6 +34,7 @@
 #include <vector>
 
 using namespace lumi::loop;
+using namespace lumi::kern::hammer;
 using lumi::kern::Eigenzerlegung;
 using lumi::kern::KleineMatrix;
 using lumi::kern::zerlegeKlein;
