@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.107.0
+> **Version:** 0.108.0
 > **Datum:** 2026-10-30 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -4972,7 +4972,9 @@ trägt (SF6 a). Bedienung auffindbar (Zeiger, Griffe, Hinweise; Bilder aus den T
 Bearbeiten angelegt; die Herkunft zeigt, was gesetzt und was geraten ist. Verworfen: b (Grobregler — zweite Form
 derselben Größen neben der Datei), c (Hörort wählbar — die App rechnete, was nach BM5 a nur das Werkzeug rechnet).
 Kippt: zeigt die Skizze, dass ein Kurveneditor für ein Dutzend Größen im Creator unübersichtlich wird, kommen die
-Kurven in ein eigenes Fenster *Keyboard curves*, aus dem Creator geöffnet.
+Kurven in ein eigenes Fenster *Keyboard curves*, aus dem Creator geöffnet. **Nachtrag S174:** die Skizze ist mit
+der Anbindung `InstrumentsCalculation` für alle Kerne gezeichnet und gebilligt (`Instrumente_IC_Konzept.md` §6a,
+CK1 a); der Kipppunkt greift nicht, die Kurven bleiben im Creator (CK2 a).
 
 ✅ **UF13 a** (Patrik S151, Frage 13; „b evtl. später“): **Stufe 31 liefert keinen Editor für Körper.** Der Creator
 wählt aus den mitgelieferten (UF12 a); ein Editor für Baupläne und eigene Körper (`user:`) wird mit
@@ -6007,6 +6009,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.108.0 | 2026-11-07 | Session 174 (Opus 5.5). UF12 a: Nachtrag — die Skizze von Creator und Editor ist mit der Anbindung `InstrumentsCalculation` für alle Kerne gebilligt (`Instrumente_IC_Konzept.md` §6a, CK1 a); der Kipppunkt (Fenster *Keyboard curves*) greift nicht (CK2 a). |
 | 0.107.0 | 2026-10-30 | Session 166 (Opus 5.5). 31d-8 · 8.5 nach PV1 a: Hörproben an 33, 60, 84 je bei p, mf, ff (*Salamander*, Vorgabe, Suche „ohne A4“), Werkzeug `LUMIVIZ_PV1_WAV`, Ablage `.claude\handover\hoerproben_pv1\`; Befund γ an A1 der Suche außerhalb SQ2 a; Hörurteil S166 zu 01/02, auf Patriks Wunsch der blinde Paarvergleich `tools/hoertest/`. |
 | 0.106.0 | 2026-10-30 | Session 164 (Opus 5.5). 7.5.13 B1: Hörschwellen recherchiert (Bericht `docs/modellierung/hammer-saite/recherche/2026-10-30_S164_hoerschwellen.md`, kein Klavier-Hörversuch gefunden, tragende Stellen nachgelesen); HW1 a (Zahlen: Zeiten nach Tolonen & Järveläinen 2000 Satz 1, Knick 0,5 dB, Schwebungstiefe nach Ewert 2002), HW2 a (getroffen und eindeutig bei max(τ, S)), HW3 a (Bestehen der Probe 7.5.12), HW4 a (systematisch nach Vorzeichentest mit Holm, Auslöser C1); Bauauftrag 7.5.12 (`.claude/handover/auftrag_7.5.12.md`). Nach dem Bau in S165 (7.5.12 gebaut, A4-Wege an sechs Tasten, Glätte überall 0 von 6): PV1 a — Probe 7.5.12 verfehlt, ZZ1 a, kein Lauf über Nacht, Hörproben an 33, 60, 84 als Vorschlag für das Gehör; HW4 a berichtigt (`t60_spaet_3` 1 von 14 zu lang). |
 | 0.105.0 | 2026-10-29 | Session 163 (Fable 5.1). Probe 7.5.11: Vorfragen (c) bestätigt (Wanderer unter der Marquardt-Skalierung), (a) γ und h im Chor exakt wirkungslos, bei h = 1 Rauschen der entarteten Eigenzerlegung, mit δ im Chor frei 53 statt 44 Treffer an sechs Tasten, (b) Start 2 nicht wieder aufnehmen — die Kopplung über das gemeinsame λ ist der Hebel (bester Stand je Taste 9086 / 204); Probe verfehlt an (2) Glätte (`detune` wellig) und (3); zehn Wege aufgelistet; V2 a (Plan A–D als zweiter, vorläufig letzter Anlauf), Teilplan 7.5.12–7.5.14; Werkzeuge `LUMIVIZ_75_SCHNITT`, `LUMIVIZ_75_TASTE`, `LUMIVIZ_75_DELTA_CHOR`. |

@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.4.0
+> **Version:** 0.5.0
 > **Datum:** 2026-11-07 (Session 174)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a); nächster Schritt 34a
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); nächster Schritt 34c
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -396,7 +396,7 @@ nicht in Köpfen, sonst übersetzt der Bezieher die Rechnung mit seinen Schalter
 **Stufe 34 — Anbindung der Rechenkerne** (Entwurf S173, nach IK2-0 bis IK2-13; Nummern fest, Wachstum nur als
 Entscheid). Prüfung je Teilschritt nach MT1 a (eng unter Release-clang, beide gebaut); **voller Lauf** nach UF17-1 a bei
 34d, 34e und 34l (Rechenkern, Dateifassung, geteilte Dienste). Rechenzeit von Hand nach RZ1-1 a, wo ein Kern berührt
-wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teilschritt wartet darauf. **TP1 offen.**
+wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teilschritt wartet darauf. TP1 a entschieden (unten).
 
 | Nr. | Teilschritt | Inhalt | Prüfung, fertig wenn |
 |---|---|---|---|
@@ -426,10 +426,53 @@ Cloud-Sitzung auf ein zweites privates Repo ungeprüft), c (Kern-Arbeit nur loka
 gegen Z3 a). Kippt auf b, wenn eine Cloud-Probe zeigt, dass eine Sitzung das LumiViz-Repo lesen kann; auf c, wenn keine
 Cloud-Sitzungen für Kerne mehr gewollt sind.
 
+## 6a. Skizze Creator und Editor (34a, gebilligt S174)
+
+✅ **CK1 a** (Patrik S174, „Alle nach Empfehlung“): **die Skizze gilt** — ein Creator für alle Kerne, alles aus der
+Parametertafel, kein Code je Klasse (IK2-13 a, IK2-4 a). Gezeichnet mit dem Zeichenwerkzeug, umschaltbar zwischen
+Flügel, Vibraphon (Klasse 4), Snare (5), Akkordeon (10) und Gitarre (2); Werte und Gruppen aus den IC-Spielen
+(`StabSpiel`, `TrommelSpiel`, `ZungenSpiel`, `ZupfSpiel`, `HammerSaite`/`Tastatur`) und `modell.md` §2.
+✅ **CK2 a** (Patrik S174): **die Kurven bleiben im Creator** — der Kipppunkt von UF12 a (Fenster *Keyboard curves*)
+greift nicht: die 22 Kurven des Flügels sind schmale Zeilen in ihren Gruppen, bearbeitet wird eine nach der anderen in
+einem Editor; ein Vergleich zweier Kurven geht im Creator (zweite Kurve blass mitgezeichnet). Kippt, wenn Patrik beim
+Stimmen regelmäßig mehrere Kurven nebeneinander braucht.
+
+**Creator, Kern-Schicht** (Kopf, Schichten links, Anspielen wie heute):
+
+1. **Signalweg:** *Core* (Name des Instruments) statt *Source*, kein *Envelope* (der Kern rechnet den ganzen Ton);
+   *Body* nur, wo der Körper außerhalb des Kerns liegt (Flügel: LumiViz-Boden, Wahl aus den mitgelieferten oder „ohne“,
+   UF13 a; Klasse 2: `korpusImpulsantwort`, IK2-10 a); danach *+ Add* und *Level* wie bei jeder Schicht.
+2. **Marke *Unmeasured*** neben *Type*, solange der Kern das Kennzeichen „ungemessen“ trägt (Z2 a, IK2-9).
+3. **Kasten *Core* gewählt:** Kopf „Core · <Instrument>“ mit Name des Kerns und Tastenumfang; darunter die **Gruppen
+   der Tafel**, einklappbar, in der Reihenfolge der Tafel. Darstellung je Art: Zahl → Regler mit Einheit, Wahl → Liste,
+   Schalter (Ausstattung) → Haken, Liste von Objekten (Chöre, Felle, Stegmoden) → Zeile mit Kurzform und *Edit...*
+   (kleiner Dialog), **Kurve je Note → Zeile mit kleiner Form und Marke der Belegkraft**.
+4. **Belegkraft** in vier Marken nach IC `Kurve.hpp`: *Measured* (Gemessen), *Source* (Quelle), *Computed* (Rechnung),
+   *Open* (Offen); die Herkunft als Text unter dem Kurveneditor.
+5. **Kurveneditor** rechts (eine Kurve, die gewählte): über den Tastenumfang des Kerns, Stützpunkte ziehen,
+   Doppelklick fügt einen hinzu, Rechtsklick auf eine Taste gibt ihr einen eigenen Wert (HA1 a, als Marke sichtbar),
+   *Reset curve*. Ein Kern ohne Kurven (Klasse 5) zeigt dort „one sound for the whole instrument“.
+6. **Gestimmte Werte** (IK2-11 a): passen sie nicht mehr zu geänderten Werten, steht über den Gruppen ein Hinweis mit
+   dem Namen der Größe und *Retune*; nach dem Stimmen „Tuned values fit“.
+7. **Anspielen:** Tastatur „Click a key to hear it“ und darunter die Stufe *Play at* pp −40 … ff 0 dB (Anschlagstufe
+   `:a<stufe>`).
+
+**Instrument-Editor:** unter den Noten die **Spuren, die der Kern in seiner Auskunft nennt** (IK2-3 a) — Kurven
+(Expression, Pitch, Motor, Balg, Bend, Vibrato), Stufen (Sustain, Sostenuto, Una corda, Dämpferpedal, Wirbel) und
+Marken je Note (Schlag der Trommel, gestrichen, *Let ring*); beim Flügel nach der Wahl der Pedale (UF12 a, SF6 a).
+Bedienung auffindbar (Zeiger, Griffe, Hinweise; Bilder aus den Tests).
+
+**Was die Parametertafel dafür trägt** (für 34c, IK2-4 a ergänzt): je Wert **Gruppe** (Name), **Reihenfolge**
+(Gruppe und Wert), **Darstellung** (Regler, Liste, Haken, Kurve, Liste mit Dialog), dazu Einheit, Grenzen, Vorgabe,
+Skala der Kurve (lin/log) und Belegkraft/Herkunft; je Kern Tastenumfang, Kennzeichen und die Liste der gestimmten Werte
+mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen (etwa `Stab.hpp` *Partner*, *Schlaegel*,
+*Daempfer*, *Motor*, *Abnahme*, *Bogen*).
+
 ## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.5.0 | 2026-11-07 | Session 174. §6a neu: Skizze Creator und Editor (34a) gebilligt — CK1 a (ein Creator für alle Kerne aus der Tafel), CK2 a (Kurven im Creator, Kipppunkt UF12 a greift nicht); was die Tafel dafür trägt. §6: TP1 als entschieden vermerkt. |
 | 0.4.0 | 2026-11-07 | Session 174. §5a: Auftrag v0.14.0, Befund zu Punkt 3 (Pakete ohne CMake-Beschreibung), Quellpaket mit `SHA256SUMS` (neu, aus TP1 a abgeleitet), Merker PRIVATE für 34c; 34b erledigt (v0.14.0 veröffentlicht, Pin gewechselt, voller Lauf), Merker für 34c aus der Gegenprüfung. |
 | 0.3.0 | 2026-11-03 | Session 173. §5 IK2-0 a (drei Schichten) mit Nachprüfung CMakeCraft STATIC; IK2-1 c (Bibliotheken unter `projects/libs/`, IC bezieht sie als Paket); IK2-2 a (reichere Fassung je Baustein, Kern und Messung, Übernahme-Journal, nichts geht verloren); IK2-3 a (`Tonkern`, Frames); IK2-4 a (Fassung 21, Parametertafel); IK2-5 a (E1 a an den Bibliotheken, Bezüge je Plattform); IK2-6 a (4,6 %, Verhältnis zum Flügel als Kennzahl); IK2-7 a (Fundament zuerst, Stufe 32 geht in 34 auf, C/D); IK2-8 a (echte Namen, `synth_` nur bei Kollision); IK2-9 durch Z2 a; CC1 a und §5a (Aufträge an CMakeCraft); IK2-10 a (Bezug als Zahl der Tafel, LUFS, Körper, Stereo); IK2-11 a (gestimmte Werte als Daten mit Abdruck-Wächter); IK2-2-1 a (Korrektur: pocketfft aus IC, neuer und belegt); IK2-12 a (Quellenregister mit Wächter, Recherche bleibt in IC); IK2-13 a (eine Skizze für alle Kerne zuerst); §6 Teilplan Stufe 34 (34a–34l) und TP1 a (Paket als Fassung im IC-Repo). Wortlaut der Vorlage IK2-0 bleibt darunter. |
 | 0.2.0 | 2026-11-02 | Session 172. §4 um T2 a, Architektur, Plugins, Messung (M1 a) und Loop-Zahlen ergänzt; §5 M1 a und die Vorlage IK2-0 im Wortlaut (Antwort in S173). |
