@@ -1,9 +1,9 @@
 # InstrumentCore — die Bibliothek der Rechenkerne
 
-> **Version:** 0.1.0
+> **Version:** 0.1.1
 > **Datum:** 2026-11-07
 > **Typ:** CppModuleDoc
-> **Status:** gebaut (Stufe 34c)
+> **Status:** gebaut (Stufe 34c); die Kerne in `InstrumentModels` (34d, BK1 a)
 > **Modul:** InstrumentCore (STATIC, `projects/libs/InstrumentCore`)
 > **Namespace:** `lumi::kern`
 > **Abhängigkeiten:** Standardbibliothek, pocketfft (`externals/pocketfft`, PRIVATE); kein Qt, kein `windows.h`
@@ -22,7 +22,8 @@ Die Bausteine kommen je aus der reicheren Fassung von IC oder LumiViz; jede Übe
 
 ## 2. Bau
 
-- `Solution.json`: STATIC, `compile_options` nach E1 a (IK2-5 a) — MSVC `/fp:precise /fp:contract-`, clang/gcc
+- `Solution.json`: STATIC, `compile_options` nach E1 a (IK2-5 a) — MSVC `/fp:precise` (ohne `/fp:contract`: keine
+  automatische FMA; `/fp:contract-` gibt es nicht, Journal J0), clang/gcc
   `-ffp-contract=off -fno-fast-math`, **PRIVATE**. Deshalb wird in den `.cpp`-Dateien gerechnet, nicht in den Köpfen:
   was ein Kopf rechnet, übersetzt der Bezieher mit seinen Schaltern.
 - `src/Source.cmake` nennt jede Quelle und jeden Kopf (private Köpfe gehören dorthin, sonst fehlen sie im Paket).
@@ -33,11 +34,11 @@ Die Bausteine kommen je aus der reicheren Fassung von IC oder LumiViz; jede Übe
 
 | Kopf | Inhalt |
 |---|---|
-| `Tonkern.hpp` | `Tonkern` (`nachklang`, `rechne` → Mono `float`, auf Wunsch innere Größen), `KernTyp` (Tafel, Auskunft, `erzeuge`), `KernAuskunft` (Rechenweg Note/Kette/Clip, Stufe im Namen, Spuren, innere Größen, Vorbereitung teuer), `Fabrik` (je Name; `erzeuge` richtet die Werte und baut), `kerne()` (die eingebauten — in 34c keiner), `normiere` (Bezug des Ausgangs, IK2-10 a) |
+| `Tonkern.hpp` | `Tonkern` (`nachklang`, `rechne` → Mono `float`, auf Wunsch innere Größen), `KernTyp` (Tafel, Auskunft, `erzeuge`), `KernAuskunft` (Rechenweg Note/Kette/Clip, Stufe im Namen, Spuren, innere Größen, Vorbereitung teuer), `Fabrik` (je Name; `erzeuge` richtet die Werte und baut; die eingebauten Kerne kennt `kerne()` in `InstrumentModels`, BK1 a), `normiere` (Bezug des Ausgangs, IK2-10 a) |
 | `Tonauftrag.hpp` | `Frames`, `KettenNote {beginn, ende, note, hz, gleitet}`, `Spur` mit `SpurPunkt`, feste Namen `spur::kExpression`/`kPitch`/`kVibrato`, `Tonauftrag {rate, noten, stufe, frames, spuren}`, `spurWert`, `einzelnote`, `pruefeAuftrag` |
 | `Parametertafel.hpp` | `Wert` (Zahl, Ganzzahl, Schalter, Wahl, Kurve, Liste), `Werte`, `ParameterAngabe` (Gruppe, Art, Darstellung, Einheit, Grenzen, Skala, Wahlen, Felder einer Liste, Vorgabe, Belegkraft, Herkunft, klangbestimmend, gestimmt mit Abhängigkeiten), `Parametertafel` (Kern, Titel, Fassung der Rechnung, Tastenumfang, Gruppen, Werte); `pruefeTafel`, `vorgaben`, `richteWerte`, `eingabenAbdruck`, `veralteteGestimmte`, `ungemessen`, `wertAlsText`, `belegkraftName` |
 | `Anschlag.hpp` | `anschlagStufe`, `anschlagFaktor`, `anschlagRest`, `kAnschlagStufeMin` (−40), `kAnschlagSchrittDb` (1) |
-| `Kurve.hpp` | `Kurve` über den Tonumfang (Stützpunkte, Abweichungen, Belegkraft, Herkunft), `wertAn` (monoton kubisch, Bit für Bit wie `Tastenkurve`), `richteKurve` mit Umfang, `kurveAusPunkten`, `kurveKonstant`, `kurveAlsText` |
+| `Kurve.hpp` | `Kurve` über den Tonumfang (Stützpunkte, Abweichungen, Belegkraft, Herkunft), `wertAn` (monoton kubisch; bis 34d Bit für Bit gegen `Tastenkurve` der App geprüft, seither rechnet der Flügel selbst damit), `richteKurve` mit Umfang, `kurveAusPunkten`, `kurveKonstant`, `kurveAlsText` |
 | `Modal.hpp` | Moden als komplexe Pole, `ModalBank` mit Impulsinvarianz, `impulsantwort`, `nachklangFrames`, gekoppeltes Paar, `Stossanreger`/`stosse` |
 | `Eigenzerlegung.hpp` | `KleineMatrix` bis 32 × 32, `zerlegeKlein` (Hessenberg, QR nach Wilkinson, Nachschärfen, links als Inverse), `kleinsterAbstand`, `entartet` |
 | `Fft.hpp` | `Fft` (`vorwaerts`, `rueckwaerts`), `fftUmsetzungen()`, `fft()` (pocketfft `4d865cb`), `direkteDft()` (Prüfumsetzung, O(n²)), `zweierpotenzAb`, `falte` |
@@ -57,7 +58,7 @@ näher, meldet die Zerlegung `entartet` (L11) — die Vektoren des Paars sind da
 ## 4. Tests
 
 - `tests/unit/UnitTests/test_InstrumentCore.cpp` — `*InstrumentCore*`: Fft gegen die direkte DFT, Eigenzerlegung
-  (Entartung, 20 × 20), Anschlagstufe, SHA-256 (FIPS 180-2 B.1/B.2), Pool, Kurve gegen `Tastenkurve` Bit für Bit,
+  (Entartung, 20 × 20), Anschlagstufe, SHA-256 (FIPS 180-2 B.1/B.2), Pool, Kurve (Grenzen, Ersatz),
   Modal gegen die geschlossene Impulsantwort, Tonauftrag, Parametertafel (Prüfung, Richten, gestimmte Werte,
   ungemessen), Fabrik und `normiere` an einem Prüfkern.
 - `test_LoopFft.cpp` (jede Umsetzung aus `fftUmsetzungen()`), `test_LoopKleinEigen.cpp` (gegen Eigen).
@@ -67,4 +68,5 @@ näher, meldet die Zerlegung `entartet` (L11) — die Vektoren des Paars sind da
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.1.1 | 2026-11-07 | Session 176. Nach 34d: `kerne()` in `InstrumentModels` (BK1 a); MSVC-Schalter ohne `/fp:contract-` (J0); der Test gegen `Tastenkurve` entfällt (der Typ ist weg, die Gleichheit belegt der Flügel-Bezug). |
 | 0.1.0 | 2026-11-07 | Session 175. Angelegt (34c, KN1 a, KN2 a); §3.1 aus `include/loop/Eigenzerlegung.md` der App (0.1.0, S153). |

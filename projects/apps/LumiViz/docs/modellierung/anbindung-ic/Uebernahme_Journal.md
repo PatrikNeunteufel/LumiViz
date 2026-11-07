@@ -1,11 +1,11 @@
 # Übernahme-Journal — Bausteine aus IC und LumiViz in die Bibliotheken
 
-> **Version:** 0.1.0
-> **Datum:** 2026-11-07 (Session 175)
+> **Version:** 0.2.0
+> **Datum:** 2026-11-07 (Sessions 175, 176)
 > **Typ:** Journal (Instrumente_IC_Konzept.md IK2-2 a: „jede Übernahme steht in `Uebernahme_Journal.md`“)
 > **Status:** wird je Teilschritt fortgeschrieben
-> **Bezug:** [../../audio/Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md) §5 (IK2-2 a, IK2-2-1 a), §6 (34c),
-> KN1 a, KN2 a
+> **Bezug:** [../../audio/Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md) §5 (IK2-2 a, IK2-2-1 a), §6 (34c,
+> 34d), KN1 a, KN2 a, FU1 a–FU3 a, BK1 a
 > **Sprache:** Deutsch
 
 ---
@@ -83,8 +83,51 @@ Ausdrücke mehr zu FMA zusammen; E1 a („keine automatische FMA“) gilt also s
 **Nicht geprüft:** das Paket unter Linux (kommt mit dem ersten Bau in IC; `parallelJe` braucht dort Threads —
 glibc ≥ 2.34 hat sie in der libc, das erzeugte `CMakeLists.txt` linkt `Threads::Threads` nicht).
 
-## 2. Changelog
+## 2. Stufe 34d — der Flügel als Kern `hammerString` (S175, S176)
+
+Ziel nach BK1 a: `projects/libs/InstrumentModels` (STATIC, je Klasse Unterordner und Namensraum, `hammer/` mit
+`lumi::kern::hammer`; Paket `instrumentmodels`), Schalter nach E1 a PRIVATE wie `InstrumentCore`. Dazu FU1 a (Körper an
+der Schicht), FU2 a (Dämpfer und Pedale in der Tafel), FU3 a (der Creator zeigt die Kern-Schicht). Quellen: LumiViz
+`master` `ed6a8d99` (Stand nach 34c), IC `bb7e6d6`.
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J12 | HammerTon | LumiViz `src/loop/HammerTon.cpp`/`include/loop/HammerTon.hpp` (`ed6a8d99`); IC `rechnung/klassen/01_hammer_saite/HammerTon.cpp` (`bb7e6d6`, aus LumiViz portiert) | `InstrumentModels/hammer/HammerTon.hpp`, `src/hammer/HammerTon.cpp` | die **IC-Fassung**: gegen LumiViz dazu `HammerAnschlag::tempoFaktor` (Soft: so viel langsamer trifft der Hammer) und der Moderator in Reihe (Practice: die Eindrückung teilt sich, bis beide Filze dieselbe Kraft tragen, 60 Halbierungen). Diff gegen IC 24 Zeilen, nur Include, Namensraum, `Tastenkurve`/`KurvenSkala` → `Kurve`/`Skala` | mit den Vorgaben (`tempoFaktor` 1, Moderator 0) rechnet der Ton dieselben Ausdrücke in derselben Reihenfolge → erwartet bitgleich, belegt durch J17. Die Moden rechnet `HammerTon` weiter selbst (J6: `Modal` bleibt bis 34g ohne Nutzer) |
+| J13 | HammerSaite, Kurven, Vorgaben | LumiViz `src/loop/HammerSaite.cpp`/`include/loop/HammerSaite.hpp` (`ed6a8d99`) | `InstrumentModels/hammer/HammerSaite.hpp`, `src/hammer/HammerSaite.cpp` | die Zahlen der Vorgaben wortgleich (Stulov, RT-0425, Rigaud, die Messungen an *Salamander*); `kurvenAngaben()` als die eine Liste der 22 Kurven mit Name, Titel, **Gruppe**, Einheit, Skala, Grenzen | **geändert:** `Tastenkurve` → `kern::Kurve` (J5; der Typ der App entfällt, der Vergleich in `test_InstrumentCore` mit ihm); **neu** Belegkraft und Herkunft je Kurve (IK2-4 a) — aus gemessenen und belegten Teilen gilt die schwächere (B: gemessen bis E2, darüber Rigaud → *Quelle*); **weg** die Qt-JSON-Funktionen (die Datei liest und schreibt die App allgemein nach der Tafel, `loop/KernDatei`), `Resonanzboden` (FU1 a: `Schicht::koerper`), `Tastatur` (FU2 a: `loop/Tastatur` für die Planung, `undampedFrom` in die Tafel) |
+| J14 | Kern und Tafel des Flügels | neu nach IK2-3 a, IK2-4 a, FU2 a; die Pedalwerte aus IC `klassen/01_hammer_saite/HammerSaite.hpp` `Tastatur` (Klasse 1 Rest) | `InstrumentModels/hammer/HammerKern.hpp`, `src/hammer/HammerKern.cpp` | Tafel: die 22 Kurven, Gruppe *Pedals* mit `undampedFrom` (Ganzzahl 89, *Quelle*: SFZ von *Salamander*), `softFactor` (1), `moderatorStiffness` (2), `moderatorExponent` (2) — die drei *Offen* wie in IC; Auskunft Rechenweg *Note*, Stufe im Namen, Spuren `soft`/`practice`, innere Größe `contact`; `HammerKern` hält Spiel und Pedale, rechnet die erste Note | Entscheidungen im Bau: getreten heißt Spurwert ≥ 0,5 am Beginn der Note; ohne Note bleibt der Ton still; `rechenFassung` 1 |
+| J15 | `kerne()` | in 34c in `InstrumentCore/Tonkern.hpp` (ohne Kern) | `InstrumentModels/Kerne.hpp`, `src/Kerne.cpp` | die Fabrik der eingebauten Kerne, heute `hammerString` | **verschoben** nach BK1 a: `InstrumentCore` kennt keinen Kern |
+| J16 | Anbindung in der App | `ed6a8d99` | `loop/Instrument` (Fassung 21: `core`, `coreParams`, `body`), `loop/KernDatei`, `loop/Tastatur`, `tonkernFuer` (gemerkt unter dem SHA-256-Abdruck von Kern und Werten, höchstens 256), `rendereTon` über `Tonkern`, `stufeImNamen` statt `InstrumentAuskunft::hammer` | ein fehlender Wert oder ein unbekannter Kern macht die Datei unlesbar (IK2-11 a, kein stiller Ersatz); `grand_piano.lvinst` in Fassung 21, die Werte der Datei unverändert (verglichen mit der Fassung 20: Kurven, Körper, `undampedFrom`, alle übrigen Felder) | **weg:** `SaitenModell::Modal`, `Anregung`; `stringModel` `modal` (Fassung 16–20) wird nicht mehr gelesen — eine solche Schicht wird eine Saite Classic (unveröffentlicht, keine Rückwärtspflege) |
+| J17 | Flügel-Bezug | `werte/hammer_bezug_clang.txt`, `hammer_bezug_msvc.txt` (untereinander gleich); der Stand vor 34c (`a7e2bbf0`, in S175 unter clang geschrieben) | `werte/hammer_bezug_windows.txt` (IK2-5 a: je Plattform) | der Stand vor 34c; **jeder** der neun Töne Bit für Bit | die alten Dateien waren im Chor älter als 34c: **7 von 9** Tönen trugen andere Prüfsummen (S175 notierte 6; C2 mit zwei Saiten mitgezählt), der Test verglich dort nur den Pegel mit 0,01 dB. Die Toleranz im Chor entfällt. Die Saite des Bezugs bleibt `hammer_bezug_saite.json` im Format bis Fassung 20, gelesen über `kurvenAngaben()` (wird nicht mehr geschrieben) |
+| J18 | Creator | neu nach FU3 a, §6a (CK1 a, CK2 a) | `loop/KernAnsicht`, `loop/InstrumentCreator` | Zeile *Core*, *Body*, *Level*; die Tafel zum Ansehen in ihren Gruppen (Kurve als kleine Form mit kleinstem und größtem Wert, Marke der Belegkraft, Herkunft im Tooltip), *Unmeasured* neben *Type* | Entscheidungen im Bau: *+ Add* grau (der Kern liest die Reihe nicht); kein Code je Kern — alles aus der Tafel |
+
+**Wächter 34d** (S176), alles nach J12–J18 zugleich:
+
+- `*Loop Werte*` **unverändert** (`loop_werte.txt` ohne Änderung) — die mitgelieferten Loops, auch `grand_piano_demo` und
+  `nocturne_demo`, rechnen Bit für Bit wie vorher.
+- `klangfassung.txt` neu (nur Abdrücke): 379 von 380 Einträgen mit neuem Abdruck der Eingaben (Fassung 21), **kein Wert
+  anders**; danach 380 Einträge verglichen, 0 anders.
+- Flügel-Bezug `hammer_bezug_windows.txt`: alle neun Töne Bit für Bit unter Release-clang **und** Testing-MSVC — E1 a
+  macht beide gleich (IK2-5 a belegt).
+- **Voller Lauf** Release-clang 1769 / 1770 (11:42 min; rot nur das Literal `kInstrumentFassung == 20` in
+  `test_LoopInstrument`, auf 21 gestellt, danach die Datei 18 / 18); **Testing-MSVC 1770 / 1770, 0 Skips** (11:13 min).
+- **Quellpaket** `package_instrumentmodels` → `out/package/instrumentmodels-v0.1.0.zip`: Quellen, Köpfe, `VERSION`, die
+  Schalter wörtlich im `CMakeLists.txt`, das Ziel `InstrumentCore` verlangt; `sha256sum -c SHA256SUMS` grün, jede Datei LF.
+- **Rechenzeit** `*31b-3 Rechenzeit*` (RZ1-1 a), Release-clang, Taste 40 (gehalten 500 / 4000 ms). Drei Läufe allein nach
+  einer Taktprobe mit einem Drosselschub: 4,16 / 4,36, 4,96 / 5,41, 5,51 / 5,69 % — Taste 60 stieg dabei mit (2,0 → 3,2 %),
+  also die Wärme. Deshalb gegen den Stand **vor** 34d (`ed6a8d99`, per `git archive` im Scratchpad gebaut)
+  **abwechselnd**:
+
+  | Runde | Bezug 34c | 34d | zusammen 34c / 34d |
+  |---|---|---|---|
+  | 1 | 4,08 / 7,49 % | 5,42 / 5,04 % | 750 / 723 ms |
+  | 2 | 4,48 / 4,68 % | 4,31 / 4,23 % | 627 / 612 ms |
+  | 3 | 4,31 / 4,40 % | 4,18 / 3,99 % | 567 / 537 ms |
+
+  **Ergebnis:** in jeder Runde gleich oder schneller als vorher; in der ruhigsten unter 4,6 %.
+
+## 3. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.2.0 | 2026-11-07 | Session 176. §2 neu: 34d (J12–J18, Wächter). |
 | 0.1.0 | 2026-11-07 | Session 175. Angelegt mit 34c (J1–J11). |

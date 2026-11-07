@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.6.0
-> **Datum:** 2026-11-07 (Session 175)
+> **Version:** 0.7.0
+> **Datum:** 2026-11-07 (Session 176)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); nächster Schritt 34d
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); nächster Schritt 34e
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -141,7 +141,8 @@ Flügel-Suche liefert ihre Modell-Funktion; Lautheit und WAV = LumiViz (`audio/L
 `parallelJe` und SHA-256 aus IC in den Kern; `Modal` aus IC in den Kern, HammerTon bleibt wortgleich; `KettenNote`,
 `normiere`, `stufeAus`/`anschlagStufe` je einmal; IC-`Json` und IC-`Koerper` (Luftraum) bleiben in IC. Die IC-Kerne geben
 ihre Messgrößen an die Messschicht ab statt Messcode einzubinden (Form in IK2-3). **Bitgleich:** alles, was LumiViz heute
-rechnet — Wächter `Loop Werte`, `Klangfassung`, `hammer_bezug_<compiler>.txt` (neu mit Prüfsumme).
+rechnet — Wächter `Loop Werte`, `Klangfassung`, `hammer_bezug_<compiler>.txt` (neu mit Prüfsumme; seit 34d
+`hammer_bezug_windows.txt` nach IK2-5 a).
 **Übernahme-Journal (Patrik S173):** „etwas kann ja eine reichere Fassung haben, aber falsch sein“ — jede Übernahme steht
 in `docs/modellierung/anbindung-ic/Uebernahme_Journal.md`: je Baustein Quelle (Repo, Commit, Datei), Ziel, was
 übernommen und was verworfen wurde, warum, Ergebnis der Wächter vorher/nachher. So lässt sich eine falsche Übernahme
@@ -402,8 +403,8 @@ wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teil
 |---|---|---|---|
 | 34a | Skizze | Creator und Editor für Flügel und Kerne Z1 (IK2-13 a), Zeichenwerkzeug | gebilligt, als Beschreibung in diesem Konzept |
 | 34b | CMakeCraft | Auftrag v0.14.0 nach §5a (CC1 a), Sync, Release, Pin | CC-Abnahme; LumiViz konfiguriert mit neuem Pin unter beiden Compilern |
-| 34c | Bibliothek Kern | `projects/libs/<Kern>` STATIC (Name im Schritt): Eigenzerlegung (IC), Fft + pocketfft (IK2-2-1 a, Commit gepinnt), `Kurve`, `Modal`, `parallelJe`, SHA-256, `KettenNote`/`normiere`/Stufe je einmal; `Tonkern`, Fabrik, Auskunft, Parametertafel nach 34a (IK2-3 a, IK2-4 a); E1 a an der Bibliothek (IK2-5 a); Übernahme-Journal angelegt | Tests ohne Qt gegen die Schnittstellen; Journal je Baustein |
-| 34d | Flügel umziehen | HammerTon/HammerSaite in den Kern, Köpfe getrennt (Daten ohne Qt, Datei mit Qt), IC-Felder mit neutralen Vorgaben, Adapter; `.lvinst` Fassung 21 (`core`, `coreParams`), `grand_piano.lvinst` neu, Verteilung über `Tonkern`, `InstrumentAuskunft::hammer` ersetzt | **bitgleich:** `Loop Werte` gleich, `klangfassung.txt` neu (nur Abdrücke), `hammer_bezug_windows.txt` mit Prüfsumme; `*31b-3 Rechenzeit*` dreimal; voller Lauf beide Compiler |
+| 34c | Bibliothek Kern | `projects/libs/InstrumentCore` STATIC (KN1 a; ohne einen Kern, BK1 a): Eigenzerlegung (IC), Fft + pocketfft (IK2-2-1 a, Commit gepinnt), `Kurve`, `Modal`, `parallelJe`, SHA-256, `KettenNote`/`normiere`/Stufe je einmal; `Tonkern`, Fabrik, Auskunft, Parametertafel nach 34a (IK2-3 a, IK2-4 a); E1 a an der Bibliothek (IK2-5 a); Übernahme-Journal angelegt | Tests ohne Qt gegen die Schnittstellen; Journal je Baustein |
+| 34d | Flügel umziehen | HammerTon/HammerSaite als Kern `hammerString` in `projects/libs/InstrumentModels` (BK1 a, `lumi::kern::hammer`, `kerne()`), Köpfe getrennt (Daten ohne Qt, Datei mit Qt), IC-Felder mit neutralen Vorgaben, Adapter; Körper an der Schicht (FU1 a), Pedale in der Tafel (FU2 a), der Creator zeigt die Kern-Schicht (FU3 a); `.lvinst` Fassung 21 (`core`, `coreParams`), `grand_piano.lvinst` neu, Verteilung über `Tonkern`, `InstrumentAuskunft::hammer` ersetzt | **bitgleich:** `Loop Werte` gleich, `klangfassung.txt` neu (nur Abdrücke), `hammer_bezug_windows.txt` mit Prüfsumme; `*31b-3 Rechenzeit*` dreimal; voller Lauf beide Compiler |
 | 34e | Bibliothek Messung | Messkette (LumiViz-Stand) + IC-`Bausteine`, `setzen` mit LM je Block, `Lautheit`, `WavFormat`; Flügel-Suche liefert ihre Modell-Funktion (IK2-2 a) | `salamander_*.txt` unverändert, Salamander-Fälle gleich; voller Lauf |
 | 34f | Werkzeuge und Wächter | `normiere` als Werkzeug + Wächter (IK2-10 a), `InstrumentTuneTool` + Abdruck-Wächter (IK2-11 a), Quellenregister + Wächter + Skript für `CREDITS.md` (IK2-12 a), `.gitignore`-Regeln | Wächter rot bei absichtlich veralteter Zahl/Stimmung/ND-Quelle, sonst grün |
 | 34g | Klasse 4 | Adapter, Vorgaben als `.lvinst` (Namen nach IK2-8 a), `synth_marimba`/`synth_vibraphone` mit Skript für die Loops, Pegel, Kennzeichnung „ungemessen“, `<name>_demo`, Hörproben-Liste | `Loop Werte` nur Namen geändert; Rechenzeit ≤ 4,6 %; Kennzahl Verhältnis zum Flügel im Bericht |
@@ -522,6 +523,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.7.0 | 2026-11-07 | Session 176. 34d erledigt — der Flügel als Kern `hammerString` in `InstrumentModels`, `.lvinst` Fassung 21, Creator nach FU3 a; Journal J12–J18; Flügel-Bezug `hammer_bezug_windows.txt` Bit für Bit unter beiden Compilern, `Loop Werte` unverändert, Rechenzeit wie 34c, voller Lauf 1770 / 1770. §6: Zeilen 34c/34d nach BK1 a; §5 IK2-2 a Verweis auf den Bezug je Plattform. |
 | 0.6.0 | 2026-11-07 | Session 175. §6: KN1 a (Name `InstrumentCore`, `lumi::kern`; Messung `InstrumentMeasure`), KN2 a (34c verschiebt); 34c erledigt — Übernahme-Journal `modellierung/anbindung-ic/Uebernahme_Journal.md` J0–J11, voller Lauf 1765 / 1765 unter beiden Compilern, Wächter unverändert. |
 | 0.5.0 | 2026-11-07 | Session 174. §6a neu: Skizze Creator und Editor (34a) gebilligt — CK1 a (ein Creator für alle Kerne aus der Tafel), CK2 a (Kurven im Creator, Kipppunkt UF12 a greift nicht); was die Tafel dafür trägt. §6: TP1 als entschieden vermerkt. |
 | 0.4.0 | 2026-11-07 | Session 174. §5a: Auftrag v0.14.0, Befund zu Punkt 3 (Pakete ohne CMake-Beschreibung), Quellpaket mit `SHA256SUMS` (neu, aus TP1 a abgeleitet), Merker PRIVATE für 34c; 34b erledigt (v0.14.0 veröffentlicht, Pin gewechselt, voller Lauf), Merker für 34c aus der Gegenprüfung. |
