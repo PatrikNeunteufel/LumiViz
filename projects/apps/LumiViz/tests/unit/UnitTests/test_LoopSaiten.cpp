@@ -603,7 +603,7 @@ TEST_CASE("Loop Saiten 23b: ein mitgelieferter Loop ohne Saiteninstrument plant 
         REQUIRE(ladeLoop(pfad, loop));
         bool spieltHammer = false;
         for (const Muster& m : loop.muster)
-            if (m.art == MusterArt::Instrument && saiten(m.instrument).hammer) spieltHammer = true;
+            if (m.art == MusterArt::Instrument && saiten(m.instrument).stufeImNamen) spieltHammer = true;
         if (spieltHammer)
         {
             ++mitHammer;

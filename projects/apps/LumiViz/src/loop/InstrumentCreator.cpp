@@ -9,6 +9,7 @@
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/FormFenster.hpp"
+#include "loop/KernAnsicht.hpp"  // eine Kern-Schicht ansehen (34d, FU3 a)
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/Pegel.hpp"  // Match level (27f)
 #include "UI/widgets/Bedienhilfe.hpp"  // fuehreDialogAus: die Rueckfrage in Tests abfragbar
@@ -607,6 +608,13 @@ void InstrumentCreator::setupUI()
     m_beschreibung->setMaxLength(200);
     angaben->addWidget(new QLabel(tr("Type"), this));
     angaben->addWidget(m_art);
+    // Stufe 34d (FU3 a, Z2 a): die Marke Unmeasured, solange eine Kern-Schicht ungemessen ist
+    m_ungemessen = new QLabel(tr("Unmeasured"), this);
+    m_ungemessen->setObjectName(QStringLiteral("creatorUnmeasured"));
+    m_ungemessen->setToolTip(tr("A core of this instrument carries values that have not been measured on a recording yet"));
+    m_ungemessen->setStyleSheet(QStringLiteral("QLabel { border: 1px solid palette(mid); border-radius: 3px; padding: 0 4px; }"));
+    m_ungemessen->setVisible(false);
+    angaben->addWidget(m_ungemessen);
     angaben->addWidget(new QLabel(tr("Genres"), this));
     angaben->addWidget(m_genres);
     angaben->addWidget(new QLabel(tr("Description"), this));
@@ -767,10 +775,14 @@ void InstrumentCreator::setupUI()
     }
     connect(m_pfad, &SignalWeg::gewaehltGeaendert, this, [this](int platz) {
         const int letzter = static_cast<int>(m_pfad->kaesten().size()) - 1;
-        waehleStelle(platz <= 0 ? kStelleSource : platz >= letzter ? kStelleLevel : platz - 1);
+        // eine Kern-Schicht (34d): Core, Body, Level
+        const int mitte = istKernSchicht(schicht()) ? kStelleKoerper : platz - 1;
+        waehleStelle(platz <= 0 ? kStelleSource : platz >= letzter ? kStelleLevel : mitte);
     });
-    // die Plaetze der Zeile zaehlen Source mit: der erste Baustein steht dort auf Platz 1
-    connect(m_pfad, &SignalWeg::verschoben, this, [this](int von, int nach) { (void)verschiebeBaustein(von - 1, nach - 1); });
+    // die Plaetze der Zeile zaehlen Source mit: der erste Baustein steht dort auf Platz 1; eine Kern-Schicht hat keine
+    connect(m_pfad, &SignalWeg::verschoben, this, [this](int von, int nach) {
+        if (!istKernSchicht(schicht())) (void)verschiebeBaustein(von - 1, nach - 1);
+    });
     connect(m_pfad, &SignalWeg::addVerlangt, this, &InstrumentCreator::zeigeAddMenue);
     connect(m_bausteinVor, &QPushButton::clicked, this, [this] { (void)schiebeBaustein(-1); });
     connect(m_bausteinZurueck, &QPushButton::clicked, this, [this] { (void)schiebeBaustein(1); });
@@ -1470,6 +1482,11 @@ void InstrumentCreator::setupUI()
         m_rollen->viewport()->setAutoFillBackground(false);
         inhalt->setAutoFillBackground(false);
         mitte->addWidget(m_rollen, 1);
+        // Stufe 34d (FU3 a): eine Kern-Schicht zeigt bei Core und Body die Ansicht statt der Regler
+        m_kernAnsicht = new KernAnsicht(this);
+        m_kernAnsicht->setzeMarkeHier(false);  // Unmeasured steht neben Type (§6a 2)
+        m_kernAnsicht->setVisible(false);
+        mitte->addWidget(m_kernAnsicht, 1);
         koerper->addLayout(mitte, 5);
         // das Mausrad rollt das Feld — es verstellt keinen Regler und keine Auswahl, ueber die
         // der Zeiger gerade faehrt (`eventFilter`)
@@ -2112,9 +2129,11 @@ void InstrumentCreator::zeigeListe()
         QListWidgetItem* eintrag = m_liste->item(platz);
         // „~“ (S-L13 a): die Schicht folgt in einem Legato der Saite
         const bool folgt = m_instrument.saiten.istSaiteninstrument() && folgtDerSaite(s);
+        // eine Kern-Schicht (34d) nennt ihren Kern: „1 Hammer string · Core Grand piano“
+        const QString was = istKernSchicht(s) ? tr("Core %1").arg(KernAnsicht::kernTitel(s))
+                                              : m_welle->itemText(m_welle->findData(static_cast<int>(s.schwingung)));
         eintrag->setText(tr("%1 · %2%3\nLevel %4 % · %5%6 st")
-                             .arg(schichtTitel(s, platz), m_welle->itemText(m_welle->findData(static_cast<int>(s.schwingung))),
-                                  folgt ? QStringLiteral(" ~") : QString())
+                             .arg(schichtTitel(s, platz), was, folgt ? QStringLiteral(" ~") : QString())
                              .arg(gerundet(s.laut * 100.0))
                              .arg(s.versatzHalbtoene > 0 ? QStringLiteral("+") : QString())
                              .arg(s.versatzHalbtoene));
@@ -2312,8 +2331,10 @@ void InstrumentCreator::zeigeAlles()
     m_gewaehlt = std::clamp(m_gewaehlt, 0, static_cast<int>(m_instrument.schichten.size()) - 1);
     const Schicht& gewaehlte = schicht();
     // eine andere Schicht beginnt bei Source; einen Baustein, den es nicht mehr gibt, auch
-    if (m_gewaehlt != m_stelleFuer || m_stelle >= static_cast<int>(gewaehlte.reihe.size()) ||
-        (m_stelle < 0 && m_stelle != kStelleLevel))
+    // eine Kern-Schicht (34d) hat Core, Body, Level — keine Bausteine
+    const bool kern = istKernSchicht(gewaehlte);
+    if (m_gewaehlt != m_stelleFuer || m_stelle >= static_cast<int>(gewaehlte.reihe.size()) || (kern && m_stelle >= 0) ||
+        (m_stelle < 0 && m_stelle != kStelleLevel && !(kern && m_stelle == kStelleKoerper)))
         m_stelle = kStelleSource;
     m_stelleFuer = m_gewaehlt;
     {
@@ -2556,6 +2577,15 @@ void InstrumentCreator::zeigeAlles()
     }
     zeigeWeg();
     klappeGruppen();
+    // --- eine Kern-Schicht (34d, FU3 a): Core und Body zeigen die Ansicht, Level die Regler wie jede Schicht
+    const bool ansicht = kern && m_stelle != kStelleLevel;
+    m_rollen->setVisible(!ansicht);
+    m_kernAnsicht->setVisible(ansicht);
+    m_stellenTitel->setVisible(!ansicht);  // die Ansicht traegt ihren eigenen Kopf („Core · Grand piano“)
+    if (ansicht)
+        m_kernAnsicht->zeige(gewaehlte, m_stelle == kStelleKoerper ? KernAnsicht::Teil::Koerper : KernAnsicht::Teil::Kern);
+    m_ungemessen->setVisible(std::any_of(m_instrument.schichten.begin(), m_instrument.schichten.end(),
+                                         [](const Schicht& s) { return KernAnsicht::ungemessen(s); }));
     zeigeBilder();
 }
 
@@ -2725,6 +2755,9 @@ SchichtDrive* InstrumentCreator::gewaehlterDrive(Schicht& schicht) const
 const InstrumentCreator::Abschnitt& InstrumentCreator::gewaehlterAbschnitt() const
 {
     if (m_stelle == kStelleLevel) return m_zeilenLevel;
+    // eine Kern-Schicht (34d): Core und Body haben keine Regler im Gitter, sie zeigt die Ansicht
+    static const Abschnitt kKeiner{};
+    if (istKernSchicht(schicht())) return kKeiner;
     const std::vector<SchichtBaustein>& reihe = schicht().reihe;
     if (m_stelle < 0 || m_stelle >= static_cast<int>(reihe.size())) return m_zeilenSource;
     const SchichtBaustein& baustein = reihe[static_cast<std::size_t>(m_stelle)];
@@ -2736,7 +2769,9 @@ const InstrumentCreator::Abschnitt& InstrumentCreator::gewaehlterAbschnitt() con
 void InstrumentCreator::waehleStelle(int stelle)
 {
     const int zahl = static_cast<int>(schicht().reihe.size());
-    const int neu = stelle == kStelleLevel || (stelle >= 0 && stelle < zahl) ? stelle : kStelleSource;
+    const bool kern = istKernSchicht(schicht());
+    const bool gibtEs = stelle == kStelleLevel || (kern ? stelle == kStelleKoerper : stelle >= 0 && stelle < zahl);
+    const int neu = gibtEs ? stelle : kStelleSource;
     if (neu == m_stelle) return;
     m_stelle = neu;
     zeigeAlles();
@@ -2746,6 +2781,7 @@ bool InstrumentCreator::fuegeEin(const SchichtBaustein& baustein)
 {
     const int zahl = static_cast<int>(schicht().reihe.size());
     if (zahl >= kBausteineMax) return false;
+    if (istKernSchicht(schicht())) return false;  // der Kern rechnet den ganzen Ton (34d): keine Bausteine
     // hinter dem gewaehlten: bei Source vorn, bei Level hinten
     const int platz = m_stelle == kStelleLevel ? zahl : m_stelle < 0 ? 0 : std::min(m_stelle + 1, zahl);
     m_stelle = platz;  // vor dem Aendern: die Anzeige soll schon den neuen zeigen
@@ -2767,7 +2803,7 @@ bool InstrumentCreator::fuegeDriveEin()
 bool InstrumentCreator::verschiebeBaustein(int von, int nach)
 {
     const int zahl = static_cast<int>(schicht().reihe.size());
-    if (von < 0 || von >= zahl || nach < 0 || nach >= zahl) return false;
+    if (von < 0 || von >= zahl || nach < 0 || nach >= zahl || istKernSchicht(schicht())) return false;
     m_stelle = nach;
     if (von == nach)
     {
@@ -2818,6 +2854,33 @@ void InstrumentCreator::zeigeAddMenue(QPoint unten)
 void InstrumentCreator::zeigeWeg()
 {
     const Schicht& s = schicht();
+    // der Kasten nennt Pan nur neben der Mitte: „80 % · Pan L 20"
+    const auto pegelText = [&s] {
+        QString pegel = QStringLiteral("%1 %").arg(gerundet(s.laut * 100.0));
+        if (gerundet(s.pan * 100.0) != 0) pegel += tr(" · Pan %1").arg(panText(s.pan));
+        return pegel;
+    };
+    QString titel = tr("Signal path — Layer %1").arg(m_gewaehlt + 1);
+    if (!s.name.isEmpty()) titel += QStringLiteral(" \"%1\"").arg(s.name);
+    m_wegTitel->setText(titel);
+    if (istKernSchicht(s))
+    {
+        // Stufe 34d (FU3 a, §6a 1): Core statt Source, kein Envelope (der Kern rechnet den ganzen Ton), Body (FU1 a),
+        // Level; + Add bleibt grau — eine Kern-Schicht traegt keine Bausteine
+        std::vector<WegKasten> kaesten;
+        kaesten.push_back(WegKasten{tr("Core"), KernAnsicht::kernTitel(s), false, false,
+                                    tr("The core computes the whole tone of this layer — its values, view only")});
+        kaesten.push_back(WegKasten{tr("Body"), s.koerper.isEmpty() ? tr("none") : s.koerper.section(QLatin1Char(':'), -1),
+                                    false, s.koerper.isEmpty(), tr("The resonance body the force of the core sounds through")});
+        kaesten.push_back(WegKasten{tr("Level"), pegelText(), false, false, tr("The level and the pan of this layer")});
+        const int gewaehlt = m_stelle == kStelleLevel ? 2 : m_stelle == kStelleKoerper ? 1 : 0;
+        m_pfad->setKaesten(std::move(kaesten), gewaehlt, false, tr("+ Add"));
+        m_stellenTitel->setText(m_pfad->kaesten()[static_cast<std::size_t>(gewaehlt)].titel);
+        m_bausteinVor->setVisible(false);
+        m_bausteinZurueck->setVisible(false);
+        m_bausteinWeg->setVisible(false);
+        return;
+    }
     const bool saite = s.schwingung == Schwingung::Saite;
     const int zahl = static_cast<int>(s.reihe.size());
     std::vector<WegKasten> kaesten;
@@ -2853,18 +2916,11 @@ void InstrumentCreator::zeigeWeg()
             kaesten.push_back(WegKasten{tr("Envelope"), tr("Decay %1 ms").arg(gerundet(s.abfallMs)), true, false,
                                         tr("Where the envelope shapes the tone — every layer has exactly one. Drag it to move it")});
     }
-    // der Kasten nennt Pan nur neben der Mitte: „80 % · Pan L 20"
-    QString pegel = QStringLiteral("%1 %").arg(gerundet(s.laut * 100.0));
-    if (gerundet(s.pan * 100.0) != 0) pegel += tr(" · Pan %1").arg(panText(s.pan));
-    kaesten.push_back(WegKasten{tr("Level"), pegel, false, false, tr("The level and the pan of this layer")});
+    kaesten.push_back(WegKasten{tr("Level"), pegelText(), false, false, tr("The level and the pan of this layer")});
     const bool voll = zahl >= kBausteineMax;
     const int gewaehlt = m_stelle == kStelleLevel ? zahl + 1 : m_stelle < 0 ? 0 : m_stelle + 1;
     m_pfad->setKaesten(std::move(kaesten), gewaehlt, !voll,
                       voll ? tr("%1 of %1").arg(kBausteineMax) : tr("+ Add"));
-
-    QString titel = tr("Signal path — Layer %1").arg(m_gewaehlt + 1);
-    if (!s.name.isEmpty()) titel += QStringLiteral(" \"%1\"").arg(s.name);
-    m_wegTitel->setText(titel);
 
     // --- ueber den Reglern: wie der gewaehlte Kasten heisst, und was sich mit ihm tun laesst
     const bool baustein = m_stelle >= 0;

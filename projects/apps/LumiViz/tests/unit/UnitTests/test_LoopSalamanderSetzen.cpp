@@ -114,7 +114,7 @@ lumi::kern::Kurve kurveAus(const std::vector<int>& tasten, const Parameter& p, c
     for (std::size_t i = 0; i < tasten.size(); ++i)
         if (p.ziel[i]) k.punkte.push_back({tasten[i], p.wert[i]});
     for (const lumi::kern::NotenWert& w : rest) k.punkte.push_back(w);
-    std::sort(k.punkte.begin(), k.punkte.end(), [](const auto& a, const auto& b) { return a.taste < b.taste; });
+    std::sort(k.punkte.begin(), k.punkte.end(), [](const auto& a, const auto& b) { return a.note < b.note; });
     return k;
 }
 
@@ -155,7 +155,7 @@ std::string punkteText(const lumi::kern::Kurve& k)
 {
     std::ostringstream s;
     s << std::setprecision(4) << '{';
-    for (std::size_t i = 0; i < k.punkte.size(); ++i) s << (i ? ", " : "") << '{' << k.punkte[i].taste << ", " << k.punkte[i].wert << '}';
+    for (std::size_t i = 0; i < k.punkte.size(); ++i) s << (i ? ", " : "") << '{' << k.punkte[i].note << ", " << k.punkte[i].wert << '}';
     s << '}';
     return s.str();
 }
@@ -183,7 +183,7 @@ TEST_CASE("Loop Salamander 31d-4 das Modell trifft die gesetzten Kurven (UF5 a)"
     for (const TastenWerte& w : s) tasten.push_back(w.midi);
     const lumi::kern::hammer::HammerSaite& v = lumi::kern::hammer::hammerSaiteVorgabe();
     const auto hatPunkt = [](const lumi::kern::Kurve& k, int taste) {
-        return std::any_of(k.punkte.begin(), k.punkte.end(), [taste](const lumi::kern::NotenWert& p) { return p.taste == taste; });
+        return std::any_of(k.punkte.begin(), k.punkte.end(), [taste](const lumi::kern::NotenWert& p) { return p.note == taste; });
     };
     const std::vector<TastenWerte> m =
         modelltest::verdichteAlle(tasten, modelltest::messeTasten(modelltest::fluegel(QStringLiteral("lib:steinway_d")), tasten));
@@ -324,7 +324,7 @@ TEST_CASE("Loop Salamander 31d-4 Setzen (LUMIVIZ_31D4_SETZEN)")
         saite.verstimmungCent = kurveAus(tasten, cent);
         std::vector<lumi::kern::NotenWert> rigaud;
         for (const lumi::kern::NotenWert& p : vorgabe.inharmonizitaet.punkte)
-            if (p.taste > kBBis) rigaud.push_back(p);
+            if (p.note > kBBis) rigaud.push_back(p);
         saite.inharmonizitaet = kurveAus(tasten, b, rigaud);
         const auto letzterWert = [&](const Parameter& p, double sonst) {
             double l = sonst;

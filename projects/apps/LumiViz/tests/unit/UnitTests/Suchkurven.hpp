@@ -377,13 +377,13 @@ inline lumi::kern::hammer::HammerSaite saiteAus(const Suchraum& raum, const std:
         std::vector<lumi::kern::NotenWert> punkte;
         for (std::size_t i = 0; i < k.tasten.size(); ++i, ++j) punkte.push_back({k.tasten[i], k.wert(xs[j])});
         for (std::size_t i = 0; i < k.festTasten.size(); ++i) punkte.push_back({k.festTasten[i], k.festWerte[i]});
-        std::sort(punkte.begin(), punkte.end(), [](const lumi::kern::NotenWert& a, const lumi::kern::NotenWert& b) { return a.taste < b.taste; });
+        std::sort(punkte.begin(), punkte.end(), [](const lumi::kern::NotenWert& a, const lumi::kern::NotenWert& b) { return a.note < b.note; });
         lumi::kern::Kurve& ziel = saite.*k.feld;
         ziel.punkte = std::move(punkte);
         ziel.abweichungen.clear();
     }
     for (lumi::kern::NotenWert& p : saite.abklingSpaetS.punkte)
-        p.wert = std::max(p.wert, lumi::kern::wertAn(saite.abklingS, p.taste, lumi::kern::Skala::Logarithmisch));
+        p.wert = std::max(p.wert, lumi::kern::wertAn(saite.abklingS, p.note, lumi::kern::Skala::Logarithmisch));
     return saite;
 }
 

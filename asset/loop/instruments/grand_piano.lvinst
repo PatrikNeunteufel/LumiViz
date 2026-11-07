@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 20,
+    "version": 21,
     "title": "Grand Piano",
     "category": "keys",
     "genres": ["Classical"],
@@ -9,12 +9,11 @@
     "layers": [
         {
             "attack": 5,
-            "damping": 0.996,
-            "decay": 200,
-            "detune": 0,
-            "excitation": "hammer",
-            "hammerString": {
+            "body": "lib:steinway_d",
+            "core": "hammerString",
+            "coreParams": {
                 "bridgeAngle": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 1.02],
@@ -27,16 +26,20 @@
                         [42, 3.532],
                         [45, 4.432],
                         [108, 4.432]
-                    ]
+                    ],
+                    "source": "to A2 measured at Salamander at the phantom partials (31d-4, S2 a); above the last value held (open)"
                 },
                 "damper": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 0.8],
                         [90, 0.2]
-                    ]
+                    ],
+                    "source": "provisional (31a)"
                 },
                 "decay": {
+                    "evidence": "measured",
                     "overrides": [],
                     "points": [
                         [21, 15.99],
@@ -67,9 +70,11 @@
                         [96, 0.5089],
                         [99, 1.507],
                         [102, 1.837]
-                    ]
+                    ],
+                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4"
                 },
                 "detune": {
+                    "evidence": "measured",
                     "overrides": [],
                     "points": [
                         [33, 3.014],
@@ -92,9 +97,11 @@
                         [90, 1.635],
                         [99, 0.5929],
                         [102, 1.479]
-                    ]
+                    ],
+                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4"
                 },
                 "hammerExponent": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [21, 3.7150000000000003],
@@ -113,9 +120,11 @@
                         [99, 4.885],
                         [105, 4.975],
                         [108, 5.02]
-                    ]
+                    ],
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
                 },
                 "hammerHysteresis": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [21, 0.989312],
@@ -134,9 +143,11 @@
                         [99, 0.4401919999999999],
                         [105, 0.3536],
                         [108, 0.307928]
-                    ]
+                    ],
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
                 },
                 "hammerMass": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [21, 11.0001],
@@ -155,9 +166,11 @@
                         [99, 5.8521],
                         [105, 5.5065],
                         [108, 5.3364]
-                    ]
+                    ],
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
                 },
                 "hammerRelaxation": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [21, 2.7000900000000003],
@@ -176,9 +189,11 @@
                         [99, 1.7016900000000001],
                         [105, 1.6702500000000002],
                         [108, 1.6569600000000002]
-                    ]
+                    ],
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
                 },
                 "hammerStiffness": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [21, 191.4230983632952],
@@ -197,9 +212,11 @@
                         [99, 6402.7710540879225],
                         [105, 8387.40246703902],
                         [108, 9599.690648685126]
-                    ]
+                    ],
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
                 },
                 "highDecay": {
+                    "evidence": "measured",
                     "overrides": [],
                     "points": [
                         [21, 0.9791],
@@ -229,16 +246,20 @@
                         [93, 0.02882],
                         [99, 0.02764],
                         [102, 0.01849]
-                    ]
+                    ],
+                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4"
                 },
                 "horizontalRatio": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 0],
                         [108, 0]
-                    ]
+                    ],
+                    "source": "provisional: 0 until UF8 b (P3-1 a)"
                 },
                 "inharmonicity": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [21, 0.0002177],
@@ -255,9 +276,11 @@
                         [93, 0.006553839259864621],
                         [105, 0.01990225470146041],
                         [108, 0.026274639696044665]
-                    ]
+                    ],
+                    "source": "to E2 measured at Salamander through the model (31d-4, S2 a); above Rigaud, David & Daudet 2011, eq. 5"
                 },
                 "lateDecay": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 47.96],
@@ -288,9 +311,11 @@
                         [96, 1.527],
                         [99, 4.522],
                         [102, 5.512]
-                    ]
+                    ],
+                    "source": "provisional: three times Decay (HT3 a)"
                 },
                 "longitudinalRatio": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [24, 14.21],
@@ -299,47 +324,59 @@
                         [55, 14.98],
                         [81, 13.59],
                         [107, 12.2]
-                    ]
+                    ],
+                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)"
                 },
+                "moderatorExponent": 2,
+                "moderatorStiffness": 2,
                 "polarizationAngle": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 0],
                         [108, 0]
-                    ]
+                    ],
+                    "source": "provisional: no second plane (31d-7 A)"
                 },
                 "polarizationDetune": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 0],
                         [108, 0]
-                    ]
+                    ],
+                    "source": "provisional: no second plane (31d-7 A)"
                 },
-                "soundboard": {
-                    "body": "lib:steinway_d"
-                },
+                "softFactor": 1,
                 "strikePosition": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [21, 0.12],
                         [108, 0.12]
-                    ]
+                    ],
+                    "source": "RT-0425 appendix A: x_H/L between 0.113 and 0.127, nearly everywhere 0.120"
                 },
                 "strikeUnevennessLoud": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 0],
                         [108, 0]
-                    ]
+                    ],
+                    "source": "provisional: even strike (US4 a)"
                 },
                 "strikeUnevennessSoft": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 0],
                         [108, 0]
-                    ]
+                    ],
+                    "source": "provisional: even strike (US4 a)"
                 },
                 "stringLength": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [24, 2.007],
@@ -353,9 +390,11 @@
                         [52, 1.013],
                         [74, 0.308],
                         [107, 0.052]
-                    ]
+                    ],
+                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)"
                 },
                 "stringMass": {
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
                         [24, 99.41],
@@ -370,9 +409,11 @@
                         [82, 4.972],
                         [94, 4.392],
                         [107, 3.404]
-                    ]
+                    ],
+                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)"
                 },
                 "strings": {
+                    "evidence": "open",
                     "overrides": [],
                     "points": [
                         [21, 1],
@@ -381,9 +422,14 @@
                         [48, 2],
                         [49, 3],
                         [108, 3]
-                    ]
-                }
+                    ],
+                    "source": "default of the grand piano (one string to F#1, two to C3, then three)"
+                },
+                "undampedFrom": 89
             },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
             "harmonics": [],
             "inALegato": "ownNote",
             "level": 1,
@@ -400,7 +446,6 @@
             "pitchTime": 100,
             "release": 150,
             "startOffset": 0,
-            "stringModel": "modal",
             "sustain": 0.7,
             "transpose": 0,
             "vibratoDelay": 0,
@@ -411,12 +456,12 @@
         }
     ],
     "keyboard": {
+        "bassSustainBelow": 60,
         "pedals": {
             "left": "unaCorda",
             "middle": "sostenuto",
             "right": "sustain"
         },
-        "range": [21, 108],
-        "undampedFrom": 89
+        "range": [21, 108]
     }
 }

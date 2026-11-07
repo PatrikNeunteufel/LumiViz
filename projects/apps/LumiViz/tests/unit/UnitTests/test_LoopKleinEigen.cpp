@@ -33,7 +33,6 @@
 #include <random>
 #include <vector>
 
-using namespace lumi::loop;
 using namespace lumi::kern::hammer;
 using lumi::kern::Eigenzerlegung;
 using lumi::kern::KleineMatrix;

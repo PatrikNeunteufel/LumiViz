@@ -19,8 +19,10 @@
  *   ohne Ueberschwingen, die logarithmische Skala, Richten.
  * - Die Vorgaben: Hammer und Saiten nach Chabassier & Durufle RT-0425 (HT1 a, HT2 a), B nach
  *   Rigaud Gl. 5, der Chor.
- * - Die Datei: Fassung 20 (seit S159: die Hysterese des Hammers nach Stulov, HU3-1 c; S154: der Stoss je Saite, US4 a; S153: die zweite Ebene, P7 a; S150: `soundboard.body`, Fassung 16 lesbar), `excitation`, `stringModel` `modal`, `hammerString`,
- *   `keyboard`; nur die Paare aus HA2 a; die Tastatur in ihren Grenzen.
+ * - Die Datei: Fassung 21 (34d, IK2-4 a, FU1 a, FU2 a): `core` `hammerString`, `coreParams` nach der Tafel
+ *   (jede Kurve mit `evidence` und `source`, `undampedFrom` in der Tafel), `body` an der Schicht, `keyboard`
+ *   ohne `undampedFrom`; ein fehlender Wert oder ein unbekannter Kern macht die Datei unlesbar (IK2-11 a);
+ *   Fassung 20 (`modal`) gilt nicht mehr als Fluegel; die Tastatur in ihren Grenzen.
  * - Die Anschlagstaerke (HK2 a): Stufen, Hammergeschwindigkeit, Rest, `:a<stufe>`.
  * - Die Hammer-Saite ist keine gegriffene Saite; seit 31b klingt sie (gemessen in
  *   test_LoopHammerTon.cpp).
@@ -58,15 +60,12 @@ lumi::kern::Kurve kurve(std::initializer_list<lumi::kern::NotenWert> punkte)
     return k;
 }
 
-/// Ein Instrument mit einer Hammer-Saite und einer Tastatur.
+/// Ein Instrument mit einer Kern-Schicht des Fluegels und einer Tastatur.
 Instrument fluegel()
 {
     Instrument instrument;
     instrument.titel = QStringLiteral("Test grand");
-    Schicht& s = instrument.schichten[0];
-    s.schwingung = Schwingung::Saite;
-    s.saitenModell = SaitenModell::Modal;
-    s.anregung = Anregung::Hammer;
+    instrument.schichten[0] = fluegeltest::fluegelSchicht();
     instrument.tastatur = Tastatur{};
     return instrument;
 }
@@ -78,16 +77,31 @@ Instrument zurueck(const Instrument& instrument)
     return gelesen;
 }
 
+/// Die erste Schicht einer Datei und ihr `coreParams`.
+QJsonObject ersteSchicht(const QJsonObject& json)
+{
+    return json.value(QStringLiteral("layers")).toArray().first().toObject();
+}
+
+/// Die erste Schicht in der Datei ersetzen.
+void setzeErsteSchicht(QJsonObject& json, const QJsonObject& schicht)
+{
+    QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+    schichten[0] = schicht;
+    json[QStringLiteral("layers")] = schichten;
+}
+
 /// Das mitgelieferte `grand_piano` (31d-8, SP1 a): die Vorgabe der Hammer-Saite mit dem Boden des
 /// Steinway D und der Tastatur der Vorgabe — wie es das Programm schreibt.
 Instrument grandPiano()
 {
     Instrument instrument = fluegel();
     instrument.titel = QStringLiteral("Grand Piano");
-    Schicht& s = instrument.schichten[0];
-    s.name = QStringLiteral("Hammer string");
-    s.hammerSaite = hammerSaiteVorgabe();
-    s.hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
+    instrument.schichten[0] = fluegeltest::fluegelSchicht(hammerSaiteVorgabe(), QStringLiteral("lib:steinway_d"));
+    instrument.schichten[0].name = QStringLiteral("Hammer string");
+    // wie in der Datei bis Fassung 20 (`waveform` `string`); eine Kern-Schicht rechnet ueber `Tonkern`, die Schwingung
+    // aendert daran nichts
+    instrument.schichten[0].schwingung = Schwingung::Saite;
     return instrument;
 }
 
@@ -112,14 +126,17 @@ TEST_CASE("Loop Hammer-Saite 31d-8 grand_piano traegt die Vorgabe")
     QFile datei(kGrandPianoDatei);
     REQUIRE_MESSAGE(datei.open(QIODevice::ReadOnly), "grand_piano.lvinst nicht gefunden — aus dem Projekt-Root starten");
     Instrument ist;
-    REQUIRE(ausJson(QJsonDocument::fromJson(datei.readAll()).object(), ist));
+    REQUIRE_MESSAGE(ausJson(QJsonDocument::fromJson(datei.readAll()).object(), ist),
+                    "grand_piano.lvinst nicht lesbar (Fassung 21?) — LUMIVIZ_GRAND_PIANO_SCHREIBEN=1, dann instrument_katalog.py");
     CHECK(ist.titel == soll.titel);
     CHECK(ist.art == QStringLiteral("keys"));
     REQUIRE(ist.schichten.size() == 1);
-    CHECK(istKernSchicht(ist.schichten[0]));
-    CHECK(ist.schichten[0].anregung == Anregung::Hammer);
-    CHECK_MESSAGE(ist.schichten[0].hammerSaite == soll.schichten[0].hammerSaite,
+    REQUIRE(istKernSchicht(ist.schichten[0]));
+    CHECK(ist.schichten[0].kernName == QStringLiteral("hammerString"));
+    CHECK(ist.schichten[0].koerper == QStringLiteral("lib:steinway_d"));
+    CHECK_MESSAGE(fluegeltest::saiteVon(ist.schichten[0]) == fluegeltest::saiteVon(soll.schichten[0]),
                   "grand_piano.lvinst ist veraltet — LUMIVIZ_GRAND_PIANO_SCHREIBEN=1, dann instrument_katalog.py");
+    CHECK(fluegeltest::pedaleVon(ist.schichten[0]) == fluegeltest::pedaleVon(soll.schichten[0]));
     CHECK_MESSAGE(ist.tastatur == soll.tastatur, "Tastatur fehlt oder weicht ab — instrument_katalog.ergaenze traegt `keyboard`?");
 }
 
@@ -142,7 +159,7 @@ TEST_CASE("Loop Hammer-Saite 31a Kurve")
         // ein Sprung mit flachen Stuecken davor und danach — ein gewoehnlicher Spline
         // schwaenge hier ueber 1 und unter 0
         const lumi::kern::Kurve k = kurve({{21, 0.0}, {40, 0.0}, {45, 1.0}, {108, 1.0}});
-        for (const lumi::kern::NotenWert& p : k.punkte) CHECK(wertAn(k, p.taste, lumi::kern::Skala::Linear) == doctest::Approx(p.wert));
+        for (const lumi::kern::NotenWert& p : k.punkte) CHECK(wertAn(k, p.note, lumi::kern::Skala::Linear) == doctest::Approx(p.wert));
         double vorher = -1.0;
         for (int t = 21; t <= 108; ++t)
         {
@@ -170,13 +187,13 @@ TEST_CASE("Loop Hammer-Saite 31a Kurve")
     SUBCASE("richten: sortiert, je Taste einmal, Grenzen, Ersatz")
     {
         lumi::kern::Kurve k = kurve({{80, 5.0}, {10, 1.0}, {80, 7.0}, {60, std::nan("")}, {200, 50.0}});
-        richteKurve(k, 0.0, 10.0, kurve({{21, 3.0}}));
+        richteKurve(k, 0.0, 10.0, kurve({{21, 3.0}}), kTasteMin, kTasteMax);  // der Umfang des Fluegels, nicht MIDI
         REQUIRE(k.punkte.size() == 3);
         CHECK(k.punkte[0] == lumi::kern::NotenWert{21, 1.0});
         CHECK(k.punkte[1] == lumi::kern::NotenWert{80, 5.0});  // der erste an 80 bleibt
         CHECK(k.punkte[2] == lumi::kern::NotenWert{108, 10.0});
         lumi::kern::Kurve leer;
-        richteKurve(leer, 0.0, 10.0, kurve({{21, 3.0}}));
+        richteKurve(leer, 0.0, 10.0, kurve({{21, 3.0}}), kTasteMin, kTasteMax);
         CHECK(leer.punkte == std::vector<lumi::kern::NotenWert>{{21, 3.0}});
     }
 }
@@ -254,75 +271,105 @@ TEST_CASE("Loop Hammer-Saite 31a Vorgaben")
     CHECK(chorAn(v, 48) == 2);
     CHECK(chorAn(v, 49) == 3);
     CHECK(chorAn(v, 108) == 3);
-    // eine neue Schicht traegt die Vorgaben schon
-    CHECK(Schicht{}.hammerSaite == v);
+    // eine neue Kern-Schicht des Fluegels traegt die Vorgaben schon
+    CHECK(fluegeltest::saiteVon(fluegeltest::fluegelSchicht()) == v);
 }
 
-TEST_CASE("Loop Hammer-Saite 31a Datei")
+TEST_CASE("Loop Hammer-Saite 34d Datei")
 {
-    SUBCASE("die Hammer-Saite und die Tastatur hin und zurueck, immer geschrieben")
+    SUBCASE("Kern, Werte nach der Tafel, Koerper und Tastatur hin und zurueck, immer geschrieben")
     {
         Instrument instrument = fluegel();
-        HammerSaite& h = instrument.schichten[0].hammerSaite;
+        HammerSaite h = fluegeltest::saiteVon(instrument.schichten[0]);
         h.verstimmungCent.abweichungen = {{60, 3.5}};
         h.chor = kurve({{21, 2.0}, {108, 3.0}});
-        h.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
         h.stossLeise = kurve({{21, 0.1}, {108, 0.4}});  // hin und zurueck nicht die Vorgabe
         h.stossLaut = kurve({{21, 0.3}, {108, 0.2}});
-        instrument.tastatur->ungedaempftAb = 89;
+        fluegeltest::setzeSaite(instrument.schichten[0], h);
+        fluegeltest::setzeUngedaempftAb(instrument.schichten[0], 80);
+        instrument.schichten[0].koerper = QStringLiteral("lib:steinway_d");
         instrument.tastatur->links = PedalArt::Leise;
         instrument.tastatur->mitte = PedalArt::Moderator;
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 20);  // seit S159: die Hysterese des Hammers (HU3-1 c); S154: der Stoss je Saite (US4 a); S153: die zweite Ebene (P7 a); S150: soundboard.body
-        const QJsonObject schicht = json.value(QStringLiteral("layers")).toArray().first().toObject();
-        CHECK(schicht.value(QStringLiteral("stringModel")).toString() == QStringLiteral("modal"));
-        CHECK(schicht.value(QStringLiteral("excitation")).toString() == QStringLiteral("hammer"));
-        const QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
-        for (const char* feld : {"inharmonicity", "decay", "lateDecay", "highDecay", "strings", "detune", "hammerMass", "hammerStiffness",
-                                 "hammerExponent", "hammerHysteresis", "hammerRelaxation", "strikePosition", "damper", "stringLength", "stringMass",
-                                 "longitudinalRatio", "bridgeAngle", "polarizationAngle", "polarizationDetune",
-                                 "horizontalRatio", "strikeUnevennessSoft", "strikeUnevennessLoud"})
+        CHECK(json.value(QStringLiteral("version")).toInt() == 21);  // seit 34d: der Kern (IK2-4 a, FU1 a, FU2 a)
+        const QJsonObject schicht = ersteSchicht(json);
+        CHECK(schicht.value(QStringLiteral("core")).toString() == QStringLiteral("hammerString"));
+        CHECK(schicht.value(QStringLiteral("body")).toString() == QStringLiteral("lib:steinway_d"));
+        for (const char* weg : {"hammerString", "stringModel", "excitation", "pluckPosition"})
         {
-            CAPTURE(feld);
-            const QJsonObject k = hammer.value(QLatin1String(feld)).toObject();
+            CAPTURE(weg);
+            CHECK_FALSE(schicht.contains(QLatin1String(weg)));  // bis Fassung 20, oder nur an der gezupften Saite
+        }
+        // jeder Wert der Tafel, in ihrer Reihenfolge; jede Kurve mit Belegkraft und Herkunft
+        const QJsonObject werte = schicht.value(QStringLiteral("coreParams")).toObject();
+        const lumi::kern::Parametertafel& tafel = kernTyp().tafel;
+        CHECK(werte.size() == static_cast<qsizetype>(tafel.werte.size()));
+        for (const lumi::kern::ParameterAngabe& a : tafel.werte)
+        {
+            CAPTURE(a.name);
+            const QJsonValue w = werte.value(QString::fromStdString(a.name));
+            REQUIRE_FALSE(w.isUndefined());
+            if (a.art != lumi::kern::WertArt::Kurve) continue;
+            const QJsonObject k = w.toObject();
             CHECK(k.value(QStringLiteral("points")).isArray());
             CHECK(k.value(QStringLiteral("overrides")).isArray());  // auch leer
+            CHECK(k.value(QStringLiteral("evidence")).isString());
+            CHECK(k.value(QStringLiteral("source")).isString());
         }
-        // seit Fassung 17 (SB1 a): nur der Verweis auf den Koerper, `amount` gibt es nicht mehr
-        const QJsonObject boden = hammer.value(QStringLiteral("soundboard")).toObject();
-        CHECK(boden.value(QStringLiteral("body")).toString() == QStringLiteral("lib:steinway_d"));
-        CHECK_FALSE(boden.contains(QStringLiteral("amount")));
-        CHECK_FALSE(schicht.contains(QStringLiteral("pluckPosition")));  // nur was die Hammer-Saite traegt
+        CHECK(werte.value(QStringLiteral("undampedFrom")).toInt() == 80);  // seit FU2 a in der Tafel
         const QJsonObject tastatur = json.value(QStringLiteral("keyboard")).toObject();
         CHECK(tastatur.value(QStringLiteral("range")).toArray() == QJsonArray{21, 108});
-        CHECK(tastatur.value(QStringLiteral("undampedFrom")).toInt() == 89);
+        CHECK_FALSE(tastatur.contains(QStringLiteral("undampedFrom")));
         const QJsonObject pedale = tastatur.value(QStringLiteral("pedals")).toObject();
         CHECK(pedale.value(QStringLiteral("left")).toString() == QStringLiteral("soft"));
         CHECK(pedale.value(QStringLiteral("middle")).toString() == QStringLiteral("practice"));
         CHECK(pedale.value(QStringLiteral("right")).toString() == QStringLiteral("sustain"));
 
         const Instrument gelesen = zurueck(instrument);
-        CHECK(gelesen.schichten[0].hammerSaite == instrument.schichten[0].hammerSaite);
+        CHECK(fluegeltest::saiteVon(gelesen.schichten[0]) == h);
+        CHECK(fluegeltest::pedaleVon(gelesen.schichten[0]).ungedaempftAb == 80);
+        CHECK(gelesen.schichten[0].koerper == QStringLiteral("lib:steinway_d"));
         CHECK(gelesen.tastatur == instrument.tastatur);
         CHECK(gelesen == instrument);
     }
-    SUBCASE("Fassung 16 bleibt lesbar: amount wird ueberlesen, ohne Boden")
+    SUBCASE("ein fehlender Wert macht die Datei unlesbar — kein stiller Ersatz (IK2-11 a)")
     {
-        Instrument instrument = fluegel();
-        QJsonObject json = alsJson(instrument);
-        json[QStringLiteral("version")] = 16;
-        QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
-        QJsonObject schicht = schichten.first().toObject();
-        QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
-        hammer[QStringLiteral("soundboard")] = QJsonObject{{QStringLiteral("amount"), 0.4}};
-        schicht[QStringLiteral("hammerString")] = hammer;
-        schichten[0] = schicht;
-        json[QStringLiteral("layers")] = schichten;
+        QJsonObject json = alsJson(fluegel());
+        QJsonObject schicht = ersteSchicht(json);
+        QJsonObject werte = schicht.value(QStringLiteral("coreParams")).toObject();
+        werte.remove(QStringLiteral("strikeUnevennessLoud"));
+        schicht[QStringLiteral("coreParams")] = werte;
+        setzeErsteSchicht(json, schicht);
+        Instrument gelesen;
+        CHECK_FALSE(ausJson(json, gelesen));
+    }
+    SUBCASE("ein Kern, den dieses Programm nicht kennt, ebenso")
+    {
+        QJsonObject json = alsJson(fluegel());
+        QJsonObject schicht = ersteSchicht(json);
+        schicht[QStringLiteral("core")] = QStringLiteral("gibtEsNicht");
+        setzeErsteSchicht(json, schicht);
+        Instrument gelesen;
+        CHECK_FALSE(ausJson(json, gelesen));
+    }
+    SUBCASE("Fassung 20 mit `modal` und `hammerString` liest dieses Programm nicht mehr als Fluegel")
+    {
+        // seit 34d ist der Fluegel der Kern `hammerString` (keine Rueckwaerts-Pflege, das Programm ist unveroeffentlicht);
+        // eine alte Schicht wird eine Saite Classic, die mitgelieferten Dateien stehen in Fassung 21
+        QJsonObject json = alsJson(fluegel());
+        json[QStringLiteral("version")] = 20;
+        QJsonObject schicht = ersteSchicht(json);
+        schicht.remove(QStringLiteral("core"));
+        schicht.remove(QStringLiteral("coreParams"));
+        schicht[QStringLiteral("stringModel")] = QStringLiteral("modal");
+        schicht[QStringLiteral("excitation")] = QStringLiteral("hammer");
+        schicht[QStringLiteral("hammerString")] = QJsonObject{};
+        setzeErsteSchicht(json, schicht);
         Instrument gelesen;
         REQUIRE(ausJson(json, gelesen));
-        CHECK(gelesen.schichten[0].hammerSaite.resonanzboden.koerper.isEmpty());
-        CHECK(gelesen.schichten[0].hammerSaite == instrument.schichten[0].hammerSaite);
+        CHECK_FALSE(istKernSchicht(gelesen.schichten[0]));
+        CHECK(gelesen.schichten[0].saitenModell == SaitenModell::Klassisch);
     }
     SUBCASE("eine gezupfte Saite schreibt Pluck, ein Instrument ohne Tastatur keinen Block")
     {
@@ -330,116 +377,55 @@ TEST_CASE("Loop Hammer-Saite 31a Datei")
         instrument.schichten[0].schwingung = Schwingung::Saite;
         instrument.schichten[0].saitenModell = SaitenModell::Wellenleiter;
         const QJsonObject json = alsJson(instrument);
-        const QJsonObject schicht = json.value(QStringLiteral("layers")).toArray().first().toObject();
+        const QJsonObject schicht = ersteSchicht(json);
         CHECK(schicht.value(QStringLiteral("excitation")).toString() == QStringLiteral("pluck"));
-        CHECK_FALSE(schicht.contains(QStringLiteral("hammerString")));
+        CHECK_FALSE(schicht.contains(QStringLiteral("core")));
+        CHECK_FALSE(schicht.contains(QStringLiteral("coreParams")));
         CHECK_FALSE(json.contains(QStringLiteral("keyboard")));
         const Instrument gelesen = zurueck(instrument);
-        CHECK(gelesen.schichten[0].anregung == Anregung::Zupfen);
+        CHECK_FALSE(istKernSchicht(gelesen.schichten[0]));
         CHECK(gelesen.schichten[0].saitenModell == SaitenModell::Wellenleiter);
         CHECK_FALSE(gelesen.tastatur.has_value());
         // Classic schreibt weiter nur `damping`, wie bis Fassung 15
         Instrument klassisch;
         klassisch.schichten[0].schwingung = Schwingung::Saite;
-        const QJsonObject k = alsJson(klassisch).value(QStringLiteral("layers")).toArray().first().toObject();
+        const QJsonObject k = ersteSchicht(alsJson(klassisch));
         CHECK_FALSE(k.contains(QStringLiteral("excitation")));
-    }
-    SUBCASE("nur die Paare aus HA2 a")
-    {
-        Schicht s;
-        s.schwingung = Schwingung::Saite;
-        s.saitenModell = SaitenModell::Wellenleiter;
-        s.anregung = Anregung::Hammer;  // Hammer mit Waveguide gibt es nicht
-        richteSchicht(s);
-        CHECK(s.saitenModell == SaitenModell::Modal);
-        Schicht t;
-        t.schwingung = Schwingung::Saite;
-        t.saitenModell = SaitenModell::Modal;  // Modal mit Pluck gibt es nicht
-        richteSchicht(t);
-        CHECK(t.anregung == Anregung::Hammer);
-        // aus der Datei ebenso
-        QJsonObject json = alsJson(fluegel());
-        QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
-        QJsonObject schicht = schichten.first().toObject();
-        schicht.remove(QStringLiteral("excitation"));
-        schicht.remove(QStringLiteral("hammerString"));  // fehlt: die Vorgaben
-        schichten[0] = schicht;
-        json[QStringLiteral("layers")] = schichten;
-        Instrument gelesen;
-        REQUIRE(ausJson(json, gelesen));
-        CHECK(istKernSchicht(gelesen.schichten[0]));
-        CHECK(gelesen.schichten[0].anregung == Anregung::Hammer);
-        CHECK(gelesen.schichten[0].hammerSaite == hammerSaiteVorgabe());
     }
     SUBCASE("die Tastatur in ihren Grenzen")
     {
         QJsonObject o = tastaturAlsJson(Tastatur{});
         o[QStringLiteral("range")] = QJsonArray{40, 30};  // hoechste unter tiefster
-        o[QStringLiteral("undampedFrom")] = 200;
+        o[QStringLiteral("undampedFrom")] = 70;           // aus Fassung 20: wird ueberlesen
+        o[QStringLiteral("bassSustainBelow")] = 200;
         o[QStringLiteral("pedals")] = QJsonObject{{QStringLiteral("left"), QStringLiteral("sustain")},
                                                   {QStringLiteral("middle"), QStringLiteral("wurst")}};
         const Tastatur t = tastaturAusJson(o);
         CHECK(t.tiefste == 40);
         CHECK(t.hoechste == 40);
-        CHECK(t.ungedaempftAb == 41);                  // jede Taste hat einen Daempfer
+        CHECK(t.bassSustainBis == 41);                 // bis hoechste + 1
         CHECK(t.links == PedalArt::Keins);             // Sustain gehoert nach rechts
         CHECK(t.mitte == PedalArt::Keins);             // unbekannt
         CHECK(t.rechts == PedalArt::Sustain);          // fehlt: die Vorgabe
+        CHECK_FALSE(tastaturAlsJson(t).contains(QStringLiteral("undampedFrom")));
         for (const PedalArt art : {PedalArt::UnaCorda, PedalArt::Leise})
             CHECK(pedalErlaubt(PedalPlatz::Links, art));
         CHECK_FALSE(pedalErlaubt(PedalPlatz::Mitte, PedalArt::UnaCorda));
         CHECK(pedalErlaubt(PedalPlatz::Rechts, PedalArt::Keins));
     }
-    SUBCASE("Fassung 17 ohne die zweite Ebene: die Vorgabe; die Grenzen (P7 a)")
+    SUBCASE("die zweite Ebene und der Stoss je Saite in ihren Grenzen (P7 a, US4 a)")
     {
-        Instrument instrument = fluegel();
-        QJsonObject json = alsJson(instrument);
-        json[QStringLiteral("version")] = 17;
-        QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
-        QJsonObject schicht = schichten.first().toObject();
-        QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
-        for (const char* feld : {"polarizationAngle", "polarizationDetune", "horizontalRatio"}) hammer.remove(QLatin1String(feld));
-        schicht[QStringLiteral("hammerString")] = hammer;
-        schichten[0] = schicht;
-        json[QStringLiteral("layers")] = schichten;
-        Instrument gelesen;
-        REQUIRE(ausJson(json, gelesen));
-        const HammerSaite& g = gelesen.schichten[0].hammerSaite;
-        CHECK(g.polarisationWinkelGrad == hammerSaiteVorgabe().polarisationWinkelGrad);
-        CHECK(g.polarisationCent == hammerSaiteVorgabe().polarisationCent);
-        CHECK(g.waagrechtVerhaeltnis == hammerSaiteVorgabe().waagrechtVerhaeltnis);
-        // ausserhalb der Grenzen: γ 0 … 90°, δ 0 … 20 Cent, h 0 … 1
+        // ausserhalb der Grenzen: γ 0 … 90°, δ 0 … 20 Cent, h 0 … 1, u 0 … 1
         HammerSaite s = hammerSaiteVorgabe();
         s.polarisationWinkelGrad = kurve({{21, -5.0}, {108, 120.0}});
         s.polarisationCent = kurve({{21, -1.0}, {108, 30.0}});
         s.waagrechtVerhaeltnis = kurve({{21, -0.5}, {108, 2.0}});
+        s.stossLeise = kurve({{21, -0.2}, {108, 1.5}});
+        s.stossLaut = kurve({{21, 2.0}, {108, -1.0}});
         richteHammerSaite(s);
         CHECK(s.polarisationWinkelGrad == kurve({{21, 0.0}, {108, 90.0}}));
         CHECK(s.polarisationCent == kurve({{21, 0.0}, {108, 20.0}}));
         CHECK(s.waagrechtVerhaeltnis == kurve({{21, 0.0}, {108, 1.0}}));
-    }
-    SUBCASE("Fassung 18 ohne den Stoss je Saite: die Vorgabe; die Grenzen (US4 a)")
-    {
-        Instrument instrument = fluegel();
-        QJsonObject json = alsJson(instrument);
-        json[QStringLiteral("version")] = 18;
-        QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
-        QJsonObject schicht = schichten.first().toObject();
-        QJsonObject hammer = schicht.value(QStringLiteral("hammerString")).toObject();
-        for (const char* feld : {"strikeUnevennessSoft", "strikeUnevennessLoud"}) hammer.remove(QLatin1String(feld));
-        schicht[QStringLiteral("hammerString")] = hammer;
-        schichten[0] = schicht;
-        json[QStringLiteral("layers")] = schichten;
-        Instrument gelesen;
-        REQUIRE(ausJson(json, gelesen));
-        const HammerSaite& g = gelesen.schichten[0].hammerSaite;
-        CHECK(g.stossLeise == hammerSaiteVorgabe().stossLeise);
-        CHECK(g.stossLaut == hammerSaiteVorgabe().stossLaut);
-        // ausserhalb der Grenzen: u 0 … 1
-        HammerSaite s = hammerSaiteVorgabe();
-        s.stossLeise = kurve({{21, -0.2}, {108, 1.5}});
-        s.stossLaut = kurve({{21, 2.0}, {108, -1.0}});
-        richteHammerSaite(s);
         CHECK(s.stossLeise == kurve({{21, 0.0}, {108, 1.0}}));
         CHECK(s.stossLaut == kurve({{21, 1.0}, {108, 0.0}}));
     }

@@ -148,7 +148,7 @@ inline std::string kurvenText(const Suchraum& raum, const std::vector<double>& x
     {
         s << "    // " << k.name << " (" << k.herkunft << ")\n    s." << feldName(k.feld) << " = kurveAusPunkten({";
         const lumi::kern::Kurve& kurve = saite.*k.feld;
-        for (std::size_t i = 0; i < kurve.punkte.size(); ++i) s << (i ? ", " : "") << '{' << kurve.punkte[i].taste << ", " << kurve.punkte[i].wert << '}';
+        for (std::size_t i = 0; i < kurve.punkte.size(); ++i) s << (i ? ", " : "") << '{' << kurve.punkte[i].note << ", " << kurve.punkte[i].wert << '}';
         s << "});\n";
     }
     return s.str();

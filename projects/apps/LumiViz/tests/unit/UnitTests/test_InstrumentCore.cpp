@@ -13,7 +13,7 @@
  * - Fft: pocketfft gegen die direkte DFT (Pruefumsetzung aus IC), Name der Fassung.
  * - Eigenzerlegung: die IC-Fassung meldet Entartung und rechnet bis 32 × 32.
  * - Anschlagstufe, SHA-256 (Pruefwerte aus FIPS 180-2 Anhang B), Pool (jede Aufgabe einmal, Ausnahme).
- * - Kurve: Bit fuer Bit wie `Tastenkurve` des Fluegels (34d stuetzt sich darauf), Grenzen, Abweichung.
+ * - Kurve: Grenzen, Ersatz, Abweichung (bis 34d auch Bit fuer Bit gegen `Tastenkurve` der App).
  * - Modal: eine Mode gegen die geschlossene Impulsantwort, Nachklang.
  * - Tonauftrag: Spurwerte, Pruefung.
  * - Parametertafel: Pruefung der Tafel, Vorgaben, Richten mit Fehlern, Abdruck der gestimmten Werte, ungemessen.
@@ -34,7 +34,6 @@
 #include "InstrumentCore/Tonauftrag.hpp"
 #include "InstrumentCore/Tonkern.hpp"
 
-#include "loop/HammerSaite.hpp"  // Tastenkurve: der Vergleich Bit fuer Bit
 
 #include <algorithm>
 #include <atomic>
@@ -327,36 +326,10 @@ TEST_CASE("InstrumentCore 34c Pool")
     CHECK(fertig.load() == 39);
 }
 
-TEST_CASE("InstrumentCore 34c Kurve wie Tastenkurve, Bit fuer Bit")
+TEST_CASE("InstrumentCore 34c Kurve: Grenzen und Ersatz")
 {
-    Zufall z{34};
-    for (int fall = 0; fall < 40; ++fall)
-    {
-        CAPTURE(fall);
-        const int zahl = 1 + fall % 7;
-        Kurve k;
-        lumi::loop::Tastenkurve t;
-        for (int i = 0; i < zahl; ++i)
-        {
-            const int taste = 21 + static_cast<int>((z() + 1.0) * 43.5);
-            const double wert = 0.01 + (z() + 1.0) * 5.0;
-            k.punkte.push_back({taste, wert});
-            t.punkte.push_back({taste, wert});
-        }
-        if (fall % 3 == 0)
-        {
-            k.abweichungen.push_back({60, 7.5});
-            t.abweichungen.push_back({60, 7.5});
-        }
-        richteKurve(k, 0.001, 100.0, Kurve{}, 21, 108);
-        lumi::loop::richteKurve(t, 0.001, 100.0, lumi::loop::Tastenkurve{});
-        for (int taste = 15; taste <= 115; ++taste)
-        {
-            CAPTURE(taste);
-            CHECK(wertAn(k, taste, Skala::Linear) == lumi::loop::wertAn(t, taste, lumi::loop::KurvenSkala::Linear));
-            CHECK(wertAn(k, taste, Skala::Logarithmisch) == lumi::loop::wertAn(t, taste, lumi::loop::KurvenSkala::Logarithmisch));
-        }
-    }
+    // bis 34d lief hier ein Vergleich Bit fuer Bit gegen `Tastenkurve` der App; seit 34d rechnet der Fluegel mit
+    // `Kurve` selbst, die Gleichheit belegt der Bezug der Hammer-Toene (test_LoopHammerTon, alle Toene Bit fuer Bit)
     // Grenzen und Ersatz
     Kurve leer;
     richteKurve(leer, 0.0, 1.0, kurveKonstant(0.5, Belegkraft::Quelle, "Ersatz"), 36, 96);

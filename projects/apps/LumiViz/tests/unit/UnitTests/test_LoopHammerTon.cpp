@@ -22,9 +22,9 @@
  * `LUMIVIZ_31B_WAV=<Ordner>` legt Hoerproben ab (Patrik hoert sie gesammelt spaeter).
  *
  * Der Bezug (31d-7, P8 a): einige Toene, gerechnet mit der Hammer-Saite aus
- * `werte/hammer_bezug_saite.json` (Stand vor 31d-7, unabhaengig von der Vorgabe), gegen ihre
- * Pruefsummen in `werte/hammer_bezug_<compiler>.txt` — neu mit `LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1`
- * (die Saite wird dabei nur geschrieben, wenn sie fehlt).
+ * `werte/hammer_bezug_saite.json` (Stand vor 31d-7, unabhaengig von der Vorgabe; Format bis Fassung 20,
+ * wird nicht mehr geschrieben), gegen ihre Pruefsummen in `werte/hammer_bezug_<plattform>.txt` (IK2-5 a),
+ * jeder Ton Bit fuer Bit — neu mit `LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1`.
  *
  * 31d-7 B (US5 a): der Stoss je Saite — die Moden, im Chor flachere Einbrueche, bei einer Saite unveraendert,
  * leise und laut an ihren Stufen.
@@ -37,6 +37,7 @@
 #include "loop/Aufnahme.hpp"  // schreibeWav
 #include "InstrumentModels/hammer/HammerTon.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/KernDatei.hpp"  // kurveAusJson: die Saite des Bezugs im Format bis Fassung 20
 #include "loop/Loop.hpp"
 #include "loop/Pedalplan.hpp"
 #include "loop/Rechenkern.hpp"
@@ -85,6 +86,14 @@ Klang ton(const Instrument& instrument, int hoehe, double dauerMs, int stufe = 0
     angabe.dauerMs = static_cast<int>(dauerMs);
     angabe.anschlagStufe = stufe;
     return rendereTon(instrument, angabe, kSaitenRate);
+}
+
+/// Ein Ton des Fluegels mit dieser Saite (die Pedalwerte der Vorgabe).
+Klang tonMit(const HammerSaite& saite, int hoehe, double dauerMs, int stufe = 0)
+{
+    Instrument instrument = fluegel();
+    fluegeltest::setzeSaite(instrument.schichten[0], saite);
+    return ton(instrument, hoehe, dauerMs, stufe);
 }
 
 /// Der Pegel des Grundtons im Fenster ab `vonS` (0,2 s lang), in dB.
@@ -331,7 +340,9 @@ TEST_CASE("Loop Hammer-Ton 31b-2 Laengsschwingung: Phantomteiltoene wachsen mit 
     REQUIRE(fk(21) - phantom > 15.0);
     Instrument steif = normal;
     const double r = wertAn(h.laengsVerhaeltnis, taste, lumi::kern::Skala::Linear);
-    steif.schichten[0].hammerSaite.laengsVerhaeltnis = {{{21, 3.0 * r}, {108, 3.0 * r}}, {}};  // ES neunmal
+    HammerSaite hs = h;
+    hs.laengsVerhaeltnis = {{{21, 3.0 * r}, {108, 3.0 * r}}, {}};  // ES neunmal
+    fluegeltest::setzeSaite(steif.schichten[0], hs);
     const Klang a = ton(normal, taste, 2000.0);
     const Klang s = ton(steif, taste, 2000.0);
     const double pa = db(betrag(a, phantom, 0.05, 0.5));
@@ -436,9 +447,9 @@ TEST_CASE("Loop Hammer-Ton 31b-3 Planung: die Stufe im Namen, der Rest als Pegel
     SUBCASE("die Auskunft eines echten Instruments")
     {
         Instrument instrument = fluegel();
-        CHECK(auskunftVon(instrument).hammer);
+        CHECK(auskunftVon(instrument).stufeImNamen);
         instrument.schichten[0].an = false;
-        CHECK_FALSE(auskunftVon(instrument).hammer);
+        CHECK_FALSE(auskunftVon(instrument).stufeImNamen);
     }
 }
 
@@ -623,11 +634,6 @@ constexpr BezugTon kBezugToene[] = {{21, 0, 800},   {27, -12, 800}, {36, -12, 80
 
 /// So breit ist ein Fenster des Pegelverlaufs, der mit der Pruefsumme abgelegt wird.
 constexpr double kBezugFensterS = 0.5;
-/// So weit darf der Pegelverlauf eines Tons im Chor neben dem Bezug liegen (P8 a). Nach dem Wechsel
-/// auf `zerlegeKlein` (31d-7 A Punkt 3) lagen alle Fenster hoechstens 5·10⁻⁷ dB daneben (so genau
-/// schreibt die Datei); mit der Laengskraft je Saite statt Y/N (Punkt 4, P5 a) bis 0,0037 dB.
-constexpr double kBezugChorToleranzDb = 0.01;
-
 struct BezugWert
 {
     std::int64_t frames = 0;
@@ -640,12 +646,13 @@ std::string bezugName(const BezugTon& t)
     return "m" + std::to_string(t.taste) + ":a" + std::to_string(t.stufe) + ":d" + std::to_string(t.dauerMs);
 }
 
-const char* bezugCompiler()
+/// Die Plattform des Bezugs (IK2-5 a): unter E1 a rechnen clang und MSVC gleich, Linux weicht im letzten Bit ab.
+const char* bezugPlattform()
 {
-#if defined(__clang__)
-    return "clang";
-#elif defined(_MSC_VER)
-    return "msvc";
+#if defined(_WIN32)
+    return "windows";
+#elif defined(__linux__)
+    return "linux";
 #else
     return "andere";
 #endif
@@ -685,11 +692,18 @@ BezugWert bezugWert(const Klang& klang)
     return wert;
 }
 
-/// Das Instrument des Bezugs: Hammer-Saite und Tastatur aus der Datei (gerichtet wie beim Laden).
+/// Das Instrument des Bezugs: Hammer-Saite und Tastatur aus der Datei im Format bis Fassung 20 (`hammerString` mit den
+/// Kurven, `keyboard` mit `undampedFrom`) — die Datei haelt den Stand fest, an dem der Bezug haengt, und wird nicht
+/// mehr geschrieben (34d). Was sie nicht kennt, ist abgeschaltet (zweite Ebene, ungleicher Stoss, Hysterese).
 Instrument bezugInstrument(const QJsonObject& o)
 {
-    Instrument instrument = fluegel();
-    HammerSaite saite = hammerSaiteAusJson(o.value(QStringLiteral("hammerString")).toObject());
+    const QJsonObject kurven = o.value(QStringLiteral("hammerString")).toObject();
+    HammerSaite saite = hammerSaiteVorgabe();
+    for (const KurvenAngabe& a : kurvenAngaben())
+    {
+        const QString name = QString::fromUtf8(a.name.data(), static_cast<qsizetype>(a.name.size()));
+        if (kurven.contains(name)) saite.*a.feld = kurveAusJson(kurven.value(name));
+    }
     richteHammerSaite(saite);
     // ohne zweite Ebene, gleich was die Vorgabe spaeter setzt (31d-7: die Datei kennt sie nicht)
     saite.polarisationWinkelGrad = {{{21, 0.0}, {108, 0.0}}, {}};
@@ -702,8 +716,11 @@ Instrument bezugInstrument(const QJsonObject& o)
     // wie vor S159 als Feder F = Q0·u^p
     saite.hammerHysterese = {{{21, 0.0}, {108, 0.0}}, {}};
     saite.hammerRelaxationUs = {{{21, 1.0}, {108, 1.0}}, {}};
-    instrument.schichten[0].hammerSaite = saite;
-    instrument.tastatur = tastaturAusJson(o.value(QStringLiteral("keyboard")).toObject());
+    Instrument instrument = fluegel();
+    const QJsonObject tastatur = o.value(QStringLiteral("keyboard")).toObject();
+    instrument.tastatur = tastaturAusJson(tastatur);
+    fluegeltest::setzeSaite(instrument.schichten[0], saite);
+    fluegeltest::setzeUngedaempftAb(instrument.schichten[0], tastatur.value(QStringLiteral("undampedFrom")).toInt(kUngedaempftAbVorgabe));
     return instrument;
 }
 
@@ -711,23 +728,14 @@ Instrument bezugInstrument(const QJsonObject& o)
 
 TEST_CASE("Loop Hammer-Ton 31d-7 Bezug: dieselben Toene wie vor dem Umbau")
 {
+    // IK2-5 a: ein Bezug je Plattform — clang und MSVC rechnen unter E1 a Bit fuer Bit gleich; seit 34d jeder Ton Bit
+    // fuer Bit (bis 34c im Chor nur der Pegelverlauf mit Toleranz, die Pruefsummen dort waren aelter als 34c)
     const QString saitePfad = werteDatei(QStringLiteral("hammer_bezug_saite.json"));
-    const QString wertePfad = werteDatei(QStringLiteral("hammer_bezug_%1.txt").arg(QLatin1String(bezugCompiler())));
+    const QString wertePfad = werteDatei(QStringLiteral("hammer_bezug_%1.txt").arg(QLatin1String(bezugPlattform())));
     const bool schreiben = qEnvironmentVariableIntValue("LUMIVIZ_HAMMER_BEZUG_SCHREIBEN") == 1;
 
-    if (schreiben && !QFileInfo::exists(saitePfad))
-    {
-        // die Saite nur einmal: sie haelt den Stand fest, an dem der Bezug haengt
-        const QJsonObject o{{QStringLiteral("hammerString"), hammerSaiteAlsJson(hammerSaiteVorgabe())},
-                            {QStringLiteral("keyboard"), tastaturAlsJson(Tastatur{})}};
-        QFile datei(saitePfad);
-        REQUIRE(datei.open(QIODevice::WriteOnly));
-        datei.write(QJsonDocument(o).toJson(QJsonDocument::Indented));
-        MESSAGE("Saite des Bezugs geschrieben: " << saitePfad.toStdString());
-    }
     QFile saiteDatei(saitePfad);
-    if (!saiteDatei.open(QIODevice::ReadOnly))
-        FAIL("werte/hammer_bezug_saite.json fehlt - mit LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1 schreiben");
+    if (!saiteDatei.open(QIODevice::ReadOnly)) FAIL("werte/hammer_bezug_saite.json fehlt");
     const Instrument instrument = bezugInstrument(QJsonDocument::fromJson(saiteDatei.readAll()).object());
 
     std::map<std::string, BezugWert> werte;
@@ -737,7 +745,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Bezug: dieselben Toene wie vor dem Umbau")
     {
         std::ofstream aus(wertePfad.toStdString(), std::ios::binary);
         REQUIRE(aus.good());
-        aus << "# Bezug der Hammer-Toene (31d-7, P8 a) unter " << bezugCompiler()
+        aus << "# Bezug der Hammer-Toene (31d-7, P8 a; je Plattform, IK2-5 a) unter " << std::string(bezugPlattform())
             << " - geschrieben von test_LoopHammerTon.cpp (LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1)\n"
             << "# Ton\tFrames\tPruefsumme\tdB je " << kBezugFensterS << " s\n";
         aus.precision(6);
@@ -754,7 +762,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Bezug: dieselben Toene wie vor dem Umbau")
 
     std::ifstream ein(wertePfad.toStdString(), std::ios::binary);
     if (!ein.good())
-        FAIL("werte/hammer_bezug_" << bezugCompiler() << ".txt fehlt - mit LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1 schreiben");
+        FAIL("werte/hammer_bezug_" << std::string(bezugPlattform()) << ".txt fehlt - mit LUMIVIZ_HAMMER_BEZUG_SCHREIBEN=1 schreiben");
     std::map<std::string, BezugWert> bezug;
     std::string zeile;
     while (std::getline(ein, zeile))
@@ -779,19 +787,15 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Bezug: dieselben Toene wie vor dem Umbau")
         REQUIRE(gefunden != bezug.end());
         const BezugWert& soll = gefunden->second;
         CHECK(wert.frames == soll.frames);
-        if (chorAn(fluegeltest::saiteVon(instrument.schichten[0]), t.taste) == 1)
+        CHECK(wert.pruefsumme == soll.pruefsumme);
+        if (wert.pruefsumme != soll.pruefsumme && wert.fensterDb.size() == soll.fensterDb.size())
         {
-            // eine Saite ohne zweite Ebene: Bit fuer Bit (P5 a, P6 a)
-            CHECK(wert.pruefsumme == soll.pruefsumme);
-            continue;
+            // nur zur Deutung: wie weit der Pegelverlauf daneben liegt
+            double groesste = 0.0;
+            for (std::size_t i = 0; i < soll.fensterDb.size(); ++i)
+                if (soll.fensterDb[i] > -120.0) groesste = std::max(groesste, std::abs(wert.fensterDb[i] - soll.fensterDb[i]));
+            MESSAGE(name << ": hoechstens " << groesste << " dB neben dem Bezug (Fenster ueber −120 dB)");
         }
-        // im Chor zerlegt der neue Loeser (P6 a): der Pegelverlauf mit Toleranz
-        double groesste = 0.0;
-        REQUIRE(wert.fensterDb.size() == soll.fensterDb.size());
-        for (std::size_t i = 0; i < soll.fensterDb.size(); ++i)
-            if (soll.fensterDb[i] > -120.0) groesste = std::max(groesste, std::abs(wert.fensterDb[i] - soll.fensterDb[i]));
-        MESSAGE(name << ": hoechstens " << groesste << " dB neben dem Bezug (Fenster ueber −120 dB)");
-        CHECK(groesste < kBezugChorToleranzDb);
     }
 }
 
@@ -889,15 +893,14 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Moden in zwei Ebenen")
 TEST_CASE("Loop Hammer-Ton 31d-7 eine Saite: zwei Stufen nur mit γ und δ")
 {
     // C4 mit einer Saite: keine Schwebung im Chor im Weg; δ = 3 Cent schwebt mit 0,45 Hz
-    Instrument instrument = fluegel();
-    HammerSaite& h = instrument.schichten[0].hammerSaite;
+    HammerSaite h = fluegeltest::saiteVon(fluegel().schichten[0]);
     h.chor = ueberall(1.0);
     const int taste = 60;
     const double hz = tonHz(taste);
     const auto stufen = [&](double gammaGrad, double deltaCent) {
         h.polarisationWinkelGrad = ueberall(gammaGrad);
         h.polarisationCent = ueberall(deltaCent);
-        const Klang klang = ton(instrument, taste, 10000.0);
+        const Klang klang = tonMit(h, taste, 10000.0);
         return std::pair{fallJeS(klang, hz, 0.2, 1.5), fallJeS(klang, hz, 5.0, 9.0)};
     };
     const auto [frueh0, spaet0] = stufen(0.0, 0.0);
@@ -913,17 +916,16 @@ TEST_CASE("Loop Hammer-Ton 31d-7 eine Saite: zwei Stufen nur mit γ und δ")
 TEST_CASE("Loop Hammer-Ton 31d-7 die zweite Ebene fuellt die Einbrueche")
 {
     // C4 mit drei Saiten: in einer Ebene loeschen sich die Moden an den Einbruechen fast aus (31d-6)
-    Instrument instrument = fluegel();
-    HammerSaite& h = instrument.schichten[0].hammerSaite;
+    HammerSaite h = fluegeltest::saiteVon(fluegel().schichten[0]);
     const int taste = 60;
     const double hz = tonHz(taste);
     // gemessen S153 (31d-7 A): in einer Ebene 30,7 dB; mit γ = 20°, δ = 2 Cent 9,6 dB (Salamander 10–20 dB);
     // δ = 0,5 Cent fuellt kaum (21,7 dB); γ = 45° vertieft sie (55,6 dB) — beide Richtungen koppeln dann
     // gleich und loeschen sich wie zwei gleiche Saiten aus
-    const double ohne = tiefsterEinbruch(ton(instrument, taste, 8000.0), hz, 0.5, 7.5);
+    const double ohne = tiefsterEinbruch(tonMit(h, taste, 8000.0), hz, 0.5, 7.5);
     h.polarisationWinkelGrad = ueberall(20.0);
     h.polarisationCent = ueberall(2.0);
-    const double mit = tiefsterEinbruch(ton(instrument, taste, 8000.0), hz, 0.5, 7.5);
+    const double mit = tiefsterEinbruch(tonMit(h, taste, 8000.0), hz, 0.5, 7.5);
     MESSAGE("C4, drei Saiten: tiefster Einbruch in einer Ebene " << ohne << " dB, mit γ = 20°, δ = 2 Cent " << mit << " dB");
     CHECK(mit < ohne - 10.0);
 }
@@ -934,8 +936,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Phantome in der zweiten Stufe aus beiden Ebenen
     // schwach gekoppelte Richtung: quer kommt am Steg nur ihr senkrechter Anteil c an, die Spannung kommt
     // aus beiden Ebenen (P5 a). Das Verhaeltnis Phantom / (Teilton 10 · Teilton 11) waechst von frueh
     // nach spaet um rund 1/c² — mit γ = 0 bleibt es.
-    Instrument instrument = fluegel();
-    HammerSaite& h = instrument.schichten[0].hammerSaite;
+    HammerSaite h = fluegeltest::saiteVon(fluegel().schichten[0]);
     const int taste = 28;
     const double hz = tonHz(taste);
     const double b = wertAn(h.inharmonizitaet, taste, lumi::kern::Skala::Logarithmisch);
@@ -945,7 +946,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 Phantome in der zweiten Stufe aus beiden Ebenen
     h.polarisationCent = ueberall(10.0);
     const auto wachsen = [&](double gammaGrad) {
         h.polarisationWinkelGrad = ueberall(gammaGrad);
-        const Klang klang = ton(instrument, taste, 11000.0);
+        const Klang klang = tonMit(h, taste, 11000.0);
         // die Spitzen im Fenster gesucht: die zweite Richtung liegt um δ hoeher (bei f10 + f11 rund 5 Hz)
         const auto pegelBei = [&](double hzUngefaehr, double vonS) {
             return db(betrag(klang, spitze(klang, hzUngefaehr, 20.0, vonS, 1.0), vonS, 1.0));
@@ -967,8 +968,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 das waagrechte Verhaeltnis: wie gerechnet, nie 
     // P3-1 a: σ_H = h·σ_V, der innere Verlust bleibt σ_s = σ_spät. (Befund S153 zu P3 a: mit
     // σ_s = (1 − h)·σ_spät fiel σ_s bei einer Saite ganz heraus, im Chor klangen die Gegenlagen langsamer
     // als *Late decay*.)
-    Instrument instrument = fluegel();
-    HammerSaite& h = instrument.schichten[0].hammerSaite;
+    HammerSaite h = fluegeltest::saiteVon(fluegel().schichten[0]);
     const int taste = 60;
     const double hz = tonHz(taste);
     SUBCASE("im Chor: mit und ohne h klingt nichts langsamer als σ_spät")
@@ -1007,7 +1007,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 das waagrechte Verhaeltnis: wie gerechnet, nie 
     };
     const auto gemessen = [&](double verhaeltnis) {
         h.waagrechtVerhaeltnis = ueberall(verhaeltnis);
-        return fallJeS(ton(instrument, taste, 14000.0), hz, 7.0, 13.0);
+        return fallJeS(tonMit(h, taste, 14000.0), hz, 7.0, 13.0);
     };
     const double ohne = gemessen(0.0);
     const double mit = gemessen(0.5);
@@ -1040,26 +1040,25 @@ TEST_CASE("Loop Hammer-Ton 31d-7 B Stoss je Saite: die Moden")
 TEST_CASE("Loop Hammer-Ton 31d-7 B Stoss je Saite: am Ton")
 {
     // US5 a 3: im Chor flachere Einbrueche; bei einer Saite aendert u nichts; leise und laut an ihren Stufen
-    Instrument instrument = fluegel();
-    HammerSaite& h = instrument.schichten[0].hammerSaite;
+    HammerSaite h = fluegeltest::saiteVon(fluegel().schichten[0]);
     const int taste = 60;
     const double hz = tonHz(taste);
     SUBCASE("C4, drei Saiten: der ungleiche Stoss fuellt die Einbrueche")
     {
-        const double gleich = tiefsterEinbruch(ton(instrument, taste, 8000.0), hz, 0.5, 7.5);
+        const double gleich = tiefsterEinbruch(tonMit(h, taste, 8000.0), hz, 0.5, 7.5);
         h.stossLeise = ueberall(0.25);
         h.stossLaut = ueberall(0.25);
-        const double ungleich = tiefsterEinbruch(ton(instrument, taste, 8000.0), hz, 0.5, 7.5);
+        const double ungleich = tiefsterEinbruch(tonMit(h, taste, 8000.0), hz, 0.5, 7.5);
         MESSAGE("C4, drei Saiten: tiefster Einbruch bei gleichem Stoss " << gleich << " dB, mit u = 0,25 " << ungleich << " dB");
         CHECK(ungleich < gleich - 10.0);
     }
     SUBCASE("eine Saite: u aendert nichts, Bit fuer Bit")
     {
         h.chor = ueberall(1.0);
-        const Klang ohne = ton(instrument, taste, 3000.0);
+        const Klang ohne = tonMit(h, taste, 3000.0);
         h.stossLeise = ueberall(0.5);
         h.stossLaut = ueberall(0.7);
-        const Klang mit = ton(instrument, taste, 3000.0);
+        const Klang mit = tonMit(h, taste, 3000.0);
         REQUIRE(ohne.daten.size() == mit.daten.size());
         CHECK(std::memcmp(ohne.daten.data(), mit.daten.data(), ohne.daten.size() * sizeof(float)) == 0);
     }
@@ -1068,7 +1067,7 @@ TEST_CASE("Loop Hammer-Ton 31d-7 B Stoss je Saite: am Ton")
         const auto mitU = [&](double leise, double laut, int stufe) {
             h.stossLeise = ueberall(leise);
             h.stossLaut = ueberall(laut);
-            return ton(instrument, taste, 1500.0, stufe);
+            return tonMit(h, taste, 1500.0, stufe);
         };
         const auto gleich = [](const Klang& a, const Klang& b) {
             REQUIRE(a.daten.size() == b.daten.size());

@@ -42,6 +42,7 @@
 #include "loop/Koerper.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Tonspeicher.hpp"
+#include "FluegelSchicht.hpp"
 #include "PappTon.hpp"
 
 #include <QDir>
@@ -216,13 +217,10 @@ TEST_CASE("Loop Koerper 31c-7 Ton durch den Boden (AW1 a, FT1 a, PG1 a)")
 {
     tonspeicher().leere();  // die Antwort liegt im Tonspeicher des ganzen Programms
     Instrument ohne;
-    Schicht& s = ohne.schichten[0];
-    s.schwingung = Schwingung::Saite;
-    s.saitenModell = SaitenModell::Modal;
-    s.anregung = Anregung::Hammer;
+    ohne.schichten[0] = fluegeltest::fluegelSchicht();
     ohne.tastatur = Tastatur{};
     Instrument mit = ohne;
-    mit.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:steinway_d");
+    mit.schichten[0].koerper = QStringLiteral("lib:steinway_d");
     const int rate = 48000;
     const std::shared_ptr<const BodenImKlang> boden = bodenVon(QStringLiteral("lib:steinway_d"));
     REQUIRE_MESSAGE(boden, "steinway_d.lvinstbody nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
@@ -264,7 +262,7 @@ TEST_CASE("Loop Koerper 31c-7 Ton durch den Boden (AW1 a, FT1 a, PG1 a)")
     CHECK(c.daten == b.daten);
     // einen Koerper, den es nicht gibt, hat der Ton nicht: er klingt wie ohne Boden
     Instrument falsch = ohne;
-    falsch.schichten[0].hammerSaite.resonanzboden.koerper = QStringLiteral("lib:gibt_es_nicht");
+    falsch.schichten[0].koerper = QStringLiteral("lib:gibt_es_nicht");
     CHECK(bodenVon(QStringLiteral("lib:gibt_es_nicht")) == nullptr);
     CHECK(rendereTon(falsch, 60, 500.0, rate).daten == a.daten);
     tonspeicher().leere();
@@ -277,11 +275,7 @@ TEST_CASE("Loop Koerper 31c-7 Body not found (SB1 a)")
     QTemporaryDir tmp;
     REQUIRE(tmp.isValid());
     Instrument instrument;
-    Schicht& s = instrument.schichten[0];
-    s.schwingung = Schwingung::Saite;
-    s.saitenModell = SaitenModell::Modal;
-    s.anregung = Anregung::Hammer;
-    s.hammerSaite.resonanzboden.koerper = QStringLiteral("lib:gibt_es_nicht");
+    instrument.schichten[0] = fluegeltest::fluegelSchicht(hammerSaiteVorgabe(), QStringLiteral("lib:gibt_es_nicht"));
     instrument.tastatur = Tastatur{};
     const QString pfad = tmp.filePath(QStringLiteral("fluegel.lvinst"));
     REQUIRE(speichereInstrument(instrument, pfad));
@@ -336,14 +330,11 @@ TEST_CASE("Loop Koerper 31c Hoerproben (LUMIVIZ_31C_WAV)")
 
     // Familie Steinway: durch das Instrument wie im Programm
     Instrument ohne;
-    Schicht& s = ohne.schichten[0];
-    s.schwingung = Schwingung::Saite;
-    s.saitenModell = SaitenModell::Modal;
-    s.anregung = Anregung::Hammer;
+    ohne.schichten[0] = fluegeltest::fluegelSchicht();
     ohne.tastatur = Tastatur{};
     const auto mitKoerper = [&](const char* verweis) {
         Instrument i = ohne;
-        i.schichten[0].hammerSaite.resonanzboden.koerper = QLatin1String(verweis);
+        i.schichten[0].koerper = QLatin1String(verweis);
         REQUIRE_MESSAGE(bodenVon(QLatin1String(verweis)), verweis, " nicht gefunden — die Test-Exe aus dem Projekt-Root starten");
         return i;
     };
@@ -371,7 +362,7 @@ TEST_CASE("Loop Koerper 31c Hoerproben (LUMIVIZ_31C_WAV)")
     // Familie MAESSTRO: die Kraft der Hammer-Saite (wie `rendereTon`: gehalten 1,2 s, Daempfer unter
     // `ungedaempftAb`), gefaltet mit der Antwort des Koerpers je Hoerort
     const QString testdaten = QStringLiteral("projects/apps/LumiViz/tests/unit/UnitTests/koerper/");
-    const Tastatur tastatur{};
+    const int ungedaempftAb = kUngedaempftAbVorgabe;
     for (const auto& [teil, satz] : {std::pair{QStringLiteral("mf"), mf}, std::pair{QStringLiteral("c4_pp_mf_ff"), c4}})
         for (const char* datei : {"maesstro_rp", "maesstro_mp1", "maesstro_mp2", "maesstro_mp3"})
         {
@@ -390,7 +381,7 @@ TEST_CASE("Loop Koerper 31c Hoerproben (LUMIVIZ_31C_WAV)")
                      a.hz = tonHz(hoehe);
                      a.stufe = stufe;
                      a.halten = static_cast<std::int64_t>(1.2 * rate);
-                     a.gedaempft = hoehe < tastatur.ungedaempftAb;
+                     a.gedaempft = hoehe < ungedaempftAb;
                      a.rate = rate;
                      std::vector<float> kraft;
                      rechneHammerTon(hammerSaiteVorgabe(), a, kraft, a.halten + hammerNachklang(hammerSaiteVorgabe(), a, std::int64_t{30} * rate));
@@ -453,7 +444,7 @@ void messeKoerper(const kp::Koerper& koerper)
 
     // (2) Ton, Faltung und Schalldruck je Taste bei der hoechsten Anschlagstufe (0), eine Sekunde gehalten
     const HammerSaite& saite = hammerSaiteVorgabe();
-    const Tastatur tastatur{};
+    const int ungedaempftAb = kUngedaempftAbVorgabe;
     struct Ergebnis
     {
         int taste = 0;
@@ -469,7 +460,7 @@ void messeKoerper(const kp::Koerper& koerper)
         a.hz = tonHz(taste);
         a.stufe = 0;
         a.halten = rate;
-        a.gedaempft = taste < tastatur.ungedaempftAb;
+        a.gedaempft = taste < ungedaempftAb;
         a.rate = rate;
         auto t = std::chrono::steady_clock::now();
         const std::int64_t frames = a.halten + hammerNachklang(saite, a, std::int64_t{30} * rate);

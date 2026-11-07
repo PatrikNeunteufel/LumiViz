@@ -92,6 +92,7 @@ namespace lumi::loop
 
 class AufnahmeFenster;
 class FormFenster;
+class KernAnsicht;
 class SaitenBild;
 class SaitenZeile;
 class SignalWeg;
@@ -460,6 +461,9 @@ public:
     /// Level oder der Platz eines Bausteins in `schicht().reihe` (ab 0).
     static constexpr int kStelleSource = -1;
     static constexpr int kStelleLevel = -2;
+    /// Eine Kern-Schicht (Stufe 34d, FU3 a): ihre Zeile heisst Core, Body, Level — Source ist dort *Core*, dies
+    /// *Body* (der Koerper an der Schicht, FU1 a). Bausteine hat sie nicht: der Kern rechnet den ganzen Ton.
+    static constexpr int kStelleKoerper = -3;
     [[nodiscard]] int stelle() const { return m_stelle; }
     /// Einen Kasten waehlen; was es nicht gibt, waehlt Source.
     void waehleStelle(int stelle);
@@ -479,6 +483,8 @@ public:
     bool entferneBaustein();
     /// Die Zeile selbst (fuer Tests).
     [[nodiscard]] SignalWeg* signalWeg() const { return m_pfad; }
+    /// Die Ansicht einer Kern-Schicht unter der Zeile (Kasten Core oder Body; FU3 a, nur zum Ansehen).
+    [[nodiscard]] KernAnsicht* kernAnsicht() const { return m_kernAnsicht; }
 
     // --- Tuning (Stufe 23e) --------------------------------------------------------
     /// Die Zeile Tuning unter Type / Genres / Description: die Saiten des
@@ -704,6 +710,8 @@ private:
     int m_stelle = kStelleSource;
     int m_stelleFuer = 0;  ///< fuer diese Schicht gilt `m_stelle`; eine andere beginnt bei Source
     SignalWeg* m_pfad = nullptr;
+    KernAnsicht* m_kernAnsicht = nullptr;  ///< statt der Regler, wenn eine Kern-Schicht Core oder Body zeigt (FU3 a)
+    QLabel* m_ungemessen = nullptr;        ///< die Marke *Unmeasured* neben Type (Z2 a, IK2-9)
     QLabel* m_wegTitel = nullptr;      ///< „Signal path — Layer 1 "Body"“
     QLabel* m_stellenTitel = nullptr;  ///< der Name des gewaehlten Kastens ueber seinen Reglern
     QPushButton* m_bausteinVor = nullptr;

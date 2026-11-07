@@ -24,7 +24,9 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentEditor.hpp"
+#include "loop/KernAnsicht.hpp"
 #include "loop/Loop.hpp"
+#include "InstrumentModels/Kerne.hpp"
 #include "loop/Sample.hpp"
 #include "loop/SignalWeg.hpp"
 
@@ -37,6 +39,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
@@ -1904,6 +1908,139 @@ TEST_SUITE("LoopInstrumentEditor")
             QCoreApplication::processEvents();
             QFileInfo info(ziel);
             CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_8.") + info.suffix())));
+        }
+    }
+
+    TEST_CASE("Instrument-Creator 34d: eine Kern-Schicht — Core, Body, Level, die Tafel zum Ansehen, Save as Bit fuer Bit")
+    {
+        // FU3 a (Patrik S175), Skizze §6a (CK1 a): der mitgelieferte Fluegel im Creator. Ohne gezeigtes Fenster.
+        // `LUMIVIZ_CREATOR_CORE_BILD=<datei.png>` legt zwei Bilder ab: Core gewaehlt und (mit `_body`) Body.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        const Instrument* gefunden = findeInstrument(QStringLiteral("grand_piano"));
+        REQUIRE_MESSAGE(gefunden != nullptr, "grand_piano nicht gefunden — aus dem Projekt-Root starten");
+        const Instrument fluegel = *gefunden;
+        REQUIRE(fluegel.schichten.size() == 1);
+        REQUIRE(istKernSchicht(fluegel.schichten[0]));
+        const lumi::kern::Parametertafel& tafel = lumi::kern::kerne().typ("hammerString")->tafel;
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        creator.oeffne(fluegel);
+        SignalWeg* weg = creator.signalWeg();
+        REQUIRE(weg != nullptr);
+        weg->resize(1400, 40);
+        QStringList namen;
+        for (const WegKasten& einer : weg->kaesten()) namen << einer.titel;
+
+        // --- die Zeile: Core statt Source, Body, Level; kein Envelope, + Add grau
+        CHECK(namen == QStringList{QStringLiteral("Core"), QStringLiteral("Body"), QStringLiteral("Level")});
+        CHECK(weg->kaesten()[0].wert == QStringLiteral("Grand piano"));
+        CHECK(weg->kaesten()[1].wert == QStringLiteral("steinway_d"));
+        CHECK_FALSE(weg->addMoeglich());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
+        CHECK_FALSE(creator.fuegeFilterEin());
+        CHECK_FALSE(creator.fuegeDriveEin());
+        CHECK_FALSE(creator.verschiebeBaustein(0, 0));
+        auto* liste = creator.findChild<QListWidget*>(QStringLiteral("creatorLayers"));
+        REQUIRE(liste != nullptr);
+        CHECK(liste->item(0)->text().contains(QStringLiteral("Core Grand piano")));
+        auto* marke = creator.findChild<QLabel*>(QStringLiteral("creatorUnmeasured"));
+        REQUIRE(marke != nullptr);
+        CHECK_FALSE(marke->isHidden());  // die Pedale sind offen, die Kurven aus Quellen: ungemessen (Z2 a)
+
+        // --- Core: der Kopf, die Gruppen der Tafel, je Wert eine Zeile mit Belegkraft
+        KernAnsicht* ansicht = creator.kernAnsicht();
+        REQUIRE(ansicht != nullptr);
+        auto* regler = creator.findChild<QScrollArea*>(QStringLiteral("creatorLayerScroll"));
+        REQUIRE(regler != nullptr);
+        CHECK_FALSE(ansicht->isHidden());
+        CHECK(regler->isHidden());
+        CHECK(ansicht->kopf() == QStringLiteral("Core · Grand piano"));
+        CHECK_FALSE(ansicht->markeUngemessen());  // sie steht einmal, neben Type (§6a 2)
+        auto* stellenTitel = creator.findChild<QLabel*>(QStringLiteral("creatorBlockTitle"));
+        REQUIRE(stellenTitel != nullptr);
+        CHECK(stellenTitel->isHidden());  // die Ansicht traegt ihren eigenen Kopf
+        auto* steife = ansicht->findChild<QLabel*>(QStringLiteral("creatorCoreValue_hammerStiffness"));
+        REQUIRE(steife != nullptr);
+        CHECK(steife->text().contains(QStringLiteral("9600")));  // gerundet, nicht 9599.69
+        QStringList gruppen;
+        for (const std::string& g : tafel.gruppen) gruppen << QString::fromStdString(g);
+        CHECK(ansicht->gruppen() == gruppen);
+        CHECK(ansicht->zeilen().size() == static_cast<qsizetype>(tafel.werte.size()));
+        CHECK(ansicht->zeilen().contains(QStringLiteral("Pedals / Undamped from: F6 (89) [Source]")));
+        // eine Kurve als kleine Form: je Taste der Wert, wie der Kern ihn liest
+        auto* abklingen = ansicht->findChild<KernKurvenBild*>(QStringLiteral("creatorCoreCurve_decay"));
+        REQUIRE(abklingen != nullptr);
+        const lumi::kern::Kurve& decay = fluegel.schichten[0].kernWerte.kurve("decay");
+        REQUIRE(abklingen->werte().size() == static_cast<std::size_t>(tafel.noteMax - tafel.noteMin + 1));
+        for (int note = tafel.noteMin; note <= tafel.noteMax; ++note)
+            CHECK(abklingen->werte()[static_cast<std::size_t>(note - tafel.noteMin)] ==
+                  lumi::kern::wertAn(decay, note, lumi::kern::Skala::Logarithmisch));
+        auto* beleg = ansicht->findChild<QLabel*>(QStringLiteral("creatorCoreEvidence_decay"));
+        REQUIRE(beleg != nullptr);
+        CHECK(beleg->text() == KernAnsicht::belegkraftTitel(decay.belegkraft));
+        CHECK_FALSE(beleg->toolTip().isEmpty());  // die Herkunft
+        // einklappen: die Zeilen bleiben gezaehlt, ihre Widgets sind weg
+        ansicht->setzeGruppeZu(QStringLiteral("Hammer"), true);
+        CHECK(ansicht->gruppeZu(QStringLiteral("Hammer")));
+        CHECK(ansicht->findChild<QLabel*>(QStringLiteral("creatorCoreValue_hammerMass")) == nullptr);
+        CHECK(ansicht->findChild<QLabel*>(QStringLiteral("creatorCoreValue_decay")) != nullptr);
+        ansicht->setzeGruppeZu(QStringLiteral("Hammer"), false);
+        CHECK(ansicht->findChild<QLabel*>(QStringLiteral("creatorCoreValue_hammerMass")) != nullptr);
+
+        // --- Body: ein Klick auf den Kasten; Level zeigt die Regler wie jede Schicht
+        klick(*weg, weg->kastenRect(1).center());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleKoerper);
+        CHECK(ansicht->kopf() == QStringLiteral("Body"));
+        CHECK(ansicht->zeilen() == QStringList{QStringLiteral("Body: lib:steinway_d")});
+        klick(*weg, weg->kastenRect(2).center());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleLevel);
+        CHECK(ansicht->isHidden());
+        CHECK_FALSE(regler->isHidden());
+        klick(*weg, weg->kastenRect(0).center());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
+        CHECK_FALSE(creator.geaendert());  // ansehen aendert nichts
+
+        // --- Save as: die Kopie traegt Kern, Werte und Koerper Bit fuer Bit, und klingt gleich
+        REQUIRE(creator.speichereAlsEigenes(QStringLiteral("Mein Fluegel")));
+        QFile kopie(creator.datei());
+        REQUIRE(kopie.open(QIODevice::ReadOnly));
+        const QJsonObject kopieJson = QJsonDocument::fromJson(kopie.readAll()).object();
+        QFile vorlage(QStringLiteral("asset/loop/instruments/grand_piano.lvinst"));
+        REQUIRE(vorlage.open(QIODevice::ReadOnly));
+        const QJsonObject vorlageJson = QJsonDocument::fromJson(vorlage.readAll()).object();
+        CHECK(kopieJson.value(QStringLiteral("layers")) == vorlageJson.value(QStringLiteral("layers")));
+        CHECK(kopieJson.value(QStringLiteral("keyboard")) == vorlageJson.value(QStringLiteral("keyboard")));
+        Instrument gelesen;
+        REQUIRE(ladeInstrument(creator.datei(), gelesen));
+        CHECK(gelesen.schichten == fluegel.schichten);
+        CHECK(gelesen.tastatur == fluegel.tastatur);
+        CHECK(gelesen.laut == fluegel.laut);
+        CHECK(rendereTon(gelesen, 60, 300.0, 48000).daten == rendereTon(fluegel, 60, 300.0, 48000).daten);
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_CREATOR_CORE_BILD"); !ziel.isEmpty())
+        {
+            InstrumentCreator gezeigt;
+            gezeigt.oeffne(fluegel);
+            gezeigt.resize(1500, 900);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
+            QCoreApplication::processEvents();
+            CHECK(gezeigt.grab().save(ziel));
+            gezeigt.waehleStelle(InstrumentCreator::kStelleKoerper);
+            QCoreApplication::processEvents();
+            QFileInfo info(ziel);
+            CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_body.") + info.suffix())));
         }
     }
 
