@@ -48,8 +48,12 @@ Namen die IC-Instrumente brauchen, heißen `synth_marimba`, `synth_vibraphone`, 
 - Die Fälle aus IC `test_stab.cpp` (Moden 1 : 4 : 10 und 1 : 3 : 9, Rucz: T60 0,7 s mit Rohr, +15 dB, Kontakt 0,6 ms,
   Konvergenz des Kontakts, die Tine nach Falaize & Hélie, Motor, Dämpferleiste, Klirren des Tonabnehmers, Helligkeit mit
   der Stärke, Grenzen, gestrichen auf ±10 Cent) und B6 „Modalfit am Modell“ aus IC `test_messung.cpp`.
-- Hörproben: `LUMIVIZ_34G_WAV=<Ordner>` (`test_LoopStab`) legt je Instrument drei Lagen bei pp, mf, ff ab und die
-  blinden Vergleiche IC gegen Synth (`hoertest.json` für `tools/hoertest/hoertest.py`).
+- Hörproben: die Liste `hoertest/listen/stab_34g` für HörTest_Helper (geschrieben von `test_LoopStab` mit
+  `LUMIVIZ_34G_WAV`): je Instrument drei Lagen bei a-30 / a-12 / a0 und 9 blinde Paare IC gegen Synth, alle auf
+  −27,2 LUFS (der höchste Pegel ohne Spitze über −1 dBFS).
+- **Befunde beim Hören vorab** (wie in der IC-Liste der Klasse): fünf Töne bei a-30 in der Höhe sind still (unter
+  −70 LUFS — Xylophon und Celesta G7, Glockenspiel A6, Tine B6, Reed G6; der Anschlag ist dort zu schwach); bei der Kalimba
+  sind die Stärken nach dem Angleichen gleich (das Zupfen ist linear, die Stärke ändert nur den Pegel).
 
 ## Rechenzeit (IK2-6 a)
 

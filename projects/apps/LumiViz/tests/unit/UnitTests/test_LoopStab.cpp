@@ -18,11 +18,14 @@
  *   den Bezug), die Tastatur nach dem Umfang; die Fenster des Vibraphons gleich denen aus IC (`werte/stab_ic.txt`) und
  *   der Ton aus den Werten der Datei Bit fuer Bit gleich dem IC-Abdruck. Ob die gestimmten Werte und der Bezug zu den
  *   Werten passen, pruefen `*Instrument Stimmen*` (Abdruck) und der Bezug dort.
+ * - **Hoerproben** fuer HoerTest_Helper: `LUMIVIZ_34G_WAV=hoertest/listen/stab_34g` schreibt dort `liste.json`,
+ *   `klaenge/` und `klaenge.sha256` (Konzept des Helpers §11, §12).
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
+#include "AudioCore/Lautheit.hpp"
 #include "InstrumentCore/Pruefsumme.hpp"
 #include "InstrumentModels/Kerne.hpp"
 #include "InstrumentModels/stab/StabKern.hpp"
@@ -37,10 +40,13 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <span>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -198,20 +204,29 @@ TEST_CASE("Loop Stab 34g die mitgelieferten Stabspiele tragen ihre Vorlage")
     CHECK(geprueft == 9);
 }
 
-TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — je Instrument drei Lagen und drei Staerken, IC gegen Synth")
+TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_Helper: je Instrument drei Lagen und drei Staerken, IC gegen Synth")
 {
-    // Werkzeug (Teilplan 34g-6): legt die Hoerproben der neun Stabspiele und die blinden Vergleiche mit den
-    // Nachbildungen (synth_marimba, synth_vibraphone, synth_kalimba) ab; ohne die Variable meldet er das und prueft
-    // nichts. Gerechnet wie im Programm (rendereTon aus der Datei, mit Pegel), 2 s gehalten.
+    // Werkzeug (Teilplan 34g-6): schreibt die Liste der Stabspiele im Format von HoerTest_Helper (dessen Konzept §11,
+    // §12, Schema 1; Muster der IC-Liste `hoertest/listen/04_platte_stab`) in den Ordner der Variable — gedacht
+    // `hoertest/listen/stab_34g`: `liste.json`, `klaenge/` (gitignored, HT8 a) und `klaenge.sha256`. Gerechnet wie im
+    // Programm (rendereTon aus der Datei), 2 s gehalten, jeder Klang auf einen gemeinsamen Pegel (hoechstens −23 LUFS, ohne Spitze ueber
+    // 0,89; BS.1770-4, `AudioCore/Lautheit`;
+    // die Lautheit vorher steht als Messwert `lufs_vorher`). Ohne die Variable meldet er das und prueft nichts. Pruefen:
+    // `Hoertest.exe --liste-pruefen <ordner>/liste.json`.
     const QString ordner = qEnvironmentVariable("LUMIVIZ_34G_WAV");
     if (ordner.isEmpty())
     {
         MESSAGE("LUMIVIZ_34G_WAV nicht gesetzt — keine Hoerproben");
         return;
     }
-    REQUIRE(QDir().mkpath(ordner));
+    const QDir dir(ordner);
+    REQUIRE(QDir().mkpath(dir.filePath(QStringLiteral("klaenge"))));
     constexpr int kRate = 48000;
     constexpr int kHaltenMs = 2000;
+    // der gemeinsame Pegel: hoechstens −23 LUFS (wie pv1), so tief, dass keine Spitze ueber 0,89 kommt (−1 dBFS; kurze
+    // Anschlaege haben eine grosse Spitze je Lautheit — IC waehlte deshalb −29,4)
+    constexpr double kZielHoechstens = -23.0;
+    constexpr double kSpitzeHoechstens = 0.89;
     const auto lies = [](const QString& name) {
         QFile f(QStringLiteral("asset/loop/instruments/") + name + QStringLiteral(".lvinst"));
         Instrument i;
@@ -225,27 +240,53 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — je Instrument drei Lag
         const char* name;
         int stufe;
     };
-    const Staerke staerken[] = {{"pp", -30}, {"mf", -12}, {"ff", 0}};
-    QJsonArray klaenge, paare;
-    const auto ablegen = [&](const Instrument& inst, int hoehe, const Staerke& st, const QString& fassung) {
+    const Staerke staerken[] = {{"a-30", -30}, {"a-12", -12}, {"a0", 0}};
+    QJsonArray klaenge, messwerte, punkte;
+    QStringList summen;
+    QStringList ids;
+    QStringList stille;
+    struct Gerechnet
+    {
+        QString datei;
+        std::vector<float> daten;
+        double lufs;  ///< vorher; −300 = still
+        float spitze;
+    };
+    std::vector<Gerechnet> gerechnet;
+    const auto ablegen = [&](const Instrument& inst, const QString& instrument, int hoehe, const Staerke& st, const QString& fassung) {
+        const QString id = inst.name + QStringLiteral("_") + QString::number(hoehe) + QStringLiteral("_") + QString::fromLatin1(st.name);
+        if (ids.contains(id)) return id;  // derselbe Klang aus der Reihe der Lagen und aus einem Vergleich
+        ids << id;
         TonAngabe t;
         t.instrument = inst.name;
         t.hoehe = hoehe;
         t.dauerMs = kHaltenMs;
         t.anschlagStufe = st.stufe;
-        const Klang k = rendereTon(inst, t, kRate);
-        const QString id = inst.name + QStringLiteral("_") + QString::number(hoehe) + QStringLiteral("_") + QString::fromLatin1(st.name);
-        REQUIRE(schreibeWav(QDir(ordner).filePath(id + QStringLiteral(".wav")), k.daten, kRate));
+        Klang k = rendereTon(inst, t, kRate);
+        const lumi::audio::Lautheit vorher = lumi::audio::messeLautheit(k.daten, kRate);
+        // still (unter dem absoluten Gate, −70 LUFS): bleibt, wie er ist, mit −300 wie in der IC-Liste — ein Befund der
+        // ungemessenen Vorgaben (in der Hoehe bei kleiner Staerke zu schwacher Anschlag; IC hat 10 von 108 still)
+        if (vorher.stille) stille << id;
+        const QString datei = QStringLiteral("klaenge/") + id + QStringLiteral(".wav");
+        float spitze = 0.0f;
+        for (const float x : k.daten) spitze = std::max(spitze, std::abs(x));
+        gerechnet.push_back(Gerechnet{datei, std::move(k.daten), vorher.stille ? -300.0 : vorher.lufs, spitze});
+        const QJsonObject achsen{{QStringLiteral("instrument"), instrument},
+                                 {QStringLiteral("taste"), hoehe},
+                                 {QStringLiteral("ton"), tonName(hoehe)},
+                                 {QStringLiteral("staerke"), QString::fromLatin1(st.name)}};
         klaenge.append(QJsonObject{{QStringLiteral("id"), id},
-                                   {QStringLiteral("datei"), id + QStringLiteral(".wav")},
-                                   {QStringLiteral("taste"), hoehe},
-                                   {QStringLiteral("name"), inst.titel},
-                                   {QStringLiteral("staerke"), QString::fromLatin1(st.name)},
+                                   {QStringLiteral("datei"), datei},
                                    {QStringLiteral("fassung"), fassung},
-                                   {QStringLiteral("sekunden"), kHaltenMs / 1000.0}});
+                                   {QStringLiteral("achsen"), achsen}});
+        messwerte.append(QJsonObject{{QStringLiteral("achsen"), achsen},
+                                     {QStringLiteral("fassung"), fassung},
+                                     {QStringLiteral("werte"), QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("lufs_vorher")},
+                                                                                      {QStringLiteral("wert"), vorher.stille ? -300.0 : std::round(vorher.lufs * 100.0) / 100.0},
+                                                                                      {QStringLiteral("einheit"), QStringLiteral("LUFS")}}}}});
         return id;
     };
-    int zahl = 0;
+    const auto punktId = [&] { return QStringLiteral("p%1").arg(punkte.size() + 1, 3, 10, QLatin1Char('0')); };
     for (const stab::Vorlage& v : stab::vorlagen())
     {
         if (!v.ausgeliefert) continue;
@@ -254,11 +295,16 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — je Instrument drei Lag
         for (const int hoehe : lagen)
             for (const Staerke& st : staerken)
             {
-                (void)ablegen(inst, hoehe, st, QStringLiteral("IC"));
-                ++zahl;
+                const QString id = ablegen(inst, inst.titel, hoehe, st, QStringLiteral("ic"));
+                punkte.append(QJsonObject{{QStringLiteral("id"), punktId()},
+                                          {QStringLiteral("art"), QStringLiteral("einzel")},
+                                          {QStringLiteral("klang"), id},
+                                          {QStringLiteral("frage"), QStringLiteral("Klingt es nach %1 (ungemessen)? Farbe ueber die Staerke glaubhaft?").arg(inst.titel)},
+                                          {QStringLiteral("pole"), QJsonArray{QStringLiteral("nein"), QStringLiteral("ja")}}});
             }
     }
     // blind: das Modell aus IC gegen die Nachbildung gleichen Namens (IK2-8 a: nach dem Hoeren entscheidet Patrik)
+    int paare = 0;
     for (const char* name : {"marimba", "vibraphone", "kalimba"})
     {
         const Instrument ic = lies(QString::fromLatin1(name));
@@ -266,31 +312,73 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — je Instrument drei Lag
         const stab::StabSpiel s = stab::spielAus(ic.schichten[0].kernWerte);
         for (const int hoehe : {s.noteMin + 12, (s.noteMin + s.noteMax) / 2, s.noteMax - 12})
         {
-            const QString a = ablegen(ic, hoehe, staerken[1], QStringLiteral("IC"));
-            const QString b = ablegen(synth, hoehe, staerken[1], QStringLiteral("Synth"));
-            paare.append(QJsonObject{{QStringLiteral("id"), a + QStringLiteral("_gegen_synth")},
-                                     {QStringLiteral("a"), a},
-                                     {QStringLiteral("b"), b},
-                                     {QStringLiteral("kontrolle"), false}});
+            const QString a = ablegen(ic, ic.titel, hoehe, staerken[1], QStringLiteral("ic"));
+            const QString b = ablegen(synth, ic.titel, hoehe, staerken[1], QStringLiteral("synth"));
+            punkte.append(QJsonObject{{QStringLiteral("id"), punktId()},
+                                      {QStringLiteral("art"), QStringLiteral("paar")},
+                                      {QStringLiteral("klaenge"), QJsonArray{a, b}},
+                                      {QStringLiteral("vorzug"), QStringLiteral("Welcher klingt mehr nach %1?").arg(ic.titel)}});
+            ++paare;
         }
     }
-    const auto frage = [](const char* id, const char* text, const char* links, const char* rechts) {
-        return QJsonObject{{QStringLiteral("id"), QString::fromUtf8(id)},
-                           {QStringLiteral("text"), QString::fromUtf8(text)},
-                           {QStringLiteral("links"), QString::fromUtf8(links)},
-                           {QStringLiteral("rechts"), QString::fromUtf8(rechts)}};
-    };
-    QFile test(QDir(ordner).filePath(QStringLiteral("hoertest.json")));
-    REQUIRE(test.open(QIODevice::WriteOnly | QIODevice::Truncate));
-    test.write(QJsonDocument(QJsonObject{{QStringLiteral("titel"), QStringLiteral("34g: Stabspiele aus IC, gegen die Nachbildungen")},
-                                         {QStringLiteral("fragen"),
-                                          QJsonArray{frage("gesamt", "Klingt wie das echte Instrument", "gar nicht", "ganz"),
-                                                     frage("anschlag", "Anschlag: Schlägel, Hammer, Zupfen", "weich", "hart"),
-                                                     frage("farbe", "Klangfarbe", "dumpf", "hell, farbig"),
-                                                     frage("laenge", "Länge: wie lange man den Ton hört", "kurz", "lang")}},
-                                         {QStringLiteral("klaenge"), klaenge},
-                                         {QStringLiteral("vergleiche"), paare}})
-                   .toJson());
-    MESSAGE(zahl << " Hoerproben der Stabspiele und " << paare.size() << " Vergleiche gegen Synth unter " << ordner.toStdString());
-    CHECK(paare.size() == 9);
+    // der gemeinsame Pegel, dann jeder Klang darauf — nachgeregelt, weil das absolute Gate (−70 LUFS) die integrierte
+    // Lautheit sehr leiser Klaenge vom Massstab abhaengen laesst; stille bleiben, wie sie sind
+    double ziel = kZielHoechstens;
+    for (const Gerechnet& g : gerechnet)
+        if (g.lufs > -299.0 && g.spitze > 0.0f) ziel = std::min(ziel, g.lufs + 20.0 * std::log10(kSpitzeHoechstens / g.spitze));
+    ziel = std::floor(ziel * 10.0) / 10.0;
+    for (Gerechnet& g : gerechnet)
+    {
+        if (g.lufs > -299.0)
+        {
+            double ist = g.lufs;
+            for (int runde = 0; runde < 8 && std::abs(ist - ziel) > 0.05; ++runde)
+            {
+                const double faktor = std::pow(10.0, (ziel - ist) / 20.0);
+                for (float& x : g.daten) x = static_cast<float>(x * faktor);
+                ist = lumi::audio::messeLautheit(g.daten, kRate).lufs;
+            }
+            CHECK_MESSAGE(std::abs(ist - ziel) <= 0.05, g.datei.toStdString() << ": " << ist << " statt " << ziel << " LUFS");
+        }
+        float spitze = 0.0f;
+        for (const float x : g.daten) spitze = std::max(spitze, std::abs(x));
+        CHECK_MESSAGE(spitze < 1.0f, g.datei.toStdString() << ": Spitze " << spitze);
+        REQUIRE(schreibeWav(dir.filePath(g.datei), g.daten, kRate));
+        QFile geschrieben(dir.filePath(g.datei));
+        REQUIRE(geschrieben.open(QIODevice::ReadOnly));
+        const QByteArray bytes = geschrieben.readAll();
+        summen << QString::fromStdString(kern::sha256(std::span<const std::uint8_t>(reinterpret_cast<const std::uint8_t*>(bytes.constData()),
+                                                                                     static_cast<std::size_t>(bytes.size())))) +
+                      QStringLiteral("  ") + g.datei;
+    }
+    const QJsonObject liste{
+        {QStringLiteral("schema"), 1},
+        {QStringLiteral("titel"), QStringLiteral("LumiViz 34g: die Stabspiele des Kerns bar, gegen die Nachbildungen")},
+        {QStringLiteral("ziel"), QStringLiteral("Erstes Hoeren der neun Stabspiele aus IC (ungemessen, Z2 a) und welches den Namen behaelt, IC oder "
+                                                "Synth (IK2-8 a)")},
+        {QStringLiteral("katalog"), QJsonValue::Null},
+        {QStringLiteral("kontrolle"), QStringLiteral("moderat")},
+        {QStringLiteral("pegel"), QJsonObject{{QStringLiteral("lufs"), ziel}, {QStringLiteral("toleranz_lu"), 1}}},
+        {QStringLiteral("dauer_s"), QJsonValue::Null},
+        {QStringLiteral("gruppe_nach"), QJsonArray{QStringLiteral("instrument")}},
+        {QStringLiteral("fassungen"),
+         QJsonObject{{QStringLiteral("ic"), QStringLiteral("die Vorgabe des Kerns bar aus InstrumentsCalculation (LumiViz Stufe 34g), ungemessen")},
+                     {QStringLiteral("synth"), QStringLiteral("die Nachbildung aus Schichten (synth_<name>)")}}},
+        {QStringLiteral("klaenge"), klaenge},
+        {QStringLiteral("messwerte"), messwerte},
+        {QStringLiteral("punkte"), punkte}};
+    QFile aus(dir.filePath(QStringLiteral("liste.json")));
+    REQUIRE(aus.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    REQUIRE(aus.write(QJsonDocument(liste).toJson(QJsonDocument::Indented)) > 0);
+    aus.close();
+    QFile summenDatei(dir.filePath(QStringLiteral("klaenge.sha256")));
+    REQUIRE(summenDatei.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    QByteArray text = "# Abdruck jedes Klangs (SHA-256 der WAV-Datei). Geschrieben mit: LUMIVIZ_34G_WAV=<dieser Ordner> LumiViz.UnitTests "
+                      "--test-case=\"Loop Stab 34g Hoerproben*\"\n";
+    for (const QString& z : summen) text += z.toUtf8() + '\n';
+    REQUIRE(summenDatei.write(text) > 0);
+    MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare IC gegen Synth) unter " << ordner.toStdString());
+    MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, ungeaendert): " << stille.join(QStringLiteral(", ")).toStdString());
+    CHECK(paare == 9);
+    CHECK(klaenge.size() == 81 + 9 + 6);  // die mittleren Noten der Paare sind schon in der Reihe der Lagen
 }

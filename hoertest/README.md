@@ -16,6 +16,7 @@ HT1 a bis HT9 a, S166).
 
 | Liste | Inhalt | Antworten |
 |---|---|---|
+| `stab_34g` | die neun Stabspiele des Kerns `bar` (Stufe 34g, S178): je Instrument drei Lagen bei a-30 / a-12 / a0 (81 Einzelpunkte mit Frage), dazu 9 blinde Paare IC gegen `synth_marimba` / `synth_vibraphone` / `synth_kalimba` (IK2-8 a); alle auf −27,2 LUFS, 5 pp-Klänge in der Höhe still (Befund der ungemessenen Vorgaben, wie in IC). Format des Helpers (§12), geschrieben mit `LUMIVIZ_34G_WAV=hoertest/listen/stab_34g LumiViz.UnitTests --test-case="Loop Stab 34g Hoerproben*"`, geprüft mit `Hoertest.exe --liste-pruefen` | — |
 | `pv1` | Flügel nach PV1 a: A1, C4, C6 je p / mf / ff, *Salamander* / Vorgabe / Suche „ohne A4“, 27 Paare und 3 Kontrollen (`Spielweisen_Konzept.md` §4.1 „8.5 Hörproben (S166)“) | 4 von 30 (2026-10-30, Patrik), mit dem Behelf `tools/hoertest/` |
 
 Die Liste `pv1` steht noch im Format des Behelfs (`hoertest_behelf.json`, Antworten `antworten_behelf.jsonl`). Mit

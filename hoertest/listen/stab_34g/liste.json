@@ -1,0 +1,3508 @@
+{
+    "dauer_s": null,
+    "fassungen": {
+        "ic": "die Vorgabe des Kerns bar aus InstrumentsCalculation (LumiViz Stufe 34g), ungemessen",
+        "synth": "die Nachbildung aus Schichten (synth_<name>)"
+    },
+    "gruppe_nach": [
+        "instrument"
+    ],
+    "katalog": null,
+    "klaenge": [
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-30",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/marimba_41_a-30.wav",
+            "fassung": "ic",
+            "id": "marimba_41_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/marimba_41_a-12.wav",
+            "fassung": "ic",
+            "id": "marimba_41_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a0",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/marimba_41_a0.wav",
+            "fassung": "ic",
+            "id": "marimba_41_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-30",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "datei": "klaenge/marimba_66_a-30.wav",
+            "fassung": "ic",
+            "id": "marimba_66_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "datei": "klaenge/marimba_66_a-12.wav",
+            "fassung": "ic",
+            "id": "marimba_66_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a0",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "datei": "klaenge/marimba_66_a0.wav",
+            "fassung": "ic",
+            "id": "marimba_66_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-30",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/marimba_91_a-30.wav",
+            "fassung": "ic",
+            "id": "marimba_91_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/marimba_91_a-12.wav",
+            "fassung": "ic",
+            "id": "marimba_91_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a0",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/marimba_91_a0.wav",
+            "fassung": "ic",
+            "id": "marimba_91_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-30",
+                "taste": 70,
+                "ton": "A#4"
+            },
+            "datei": "klaenge/xylophone_70_a-30.wav",
+            "fassung": "ic",
+            "id": "xylophone_70_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-12",
+                "taste": 70,
+                "ton": "A#4"
+            },
+            "datei": "klaenge/xylophone_70_a-12.wav",
+            "fassung": "ic",
+            "id": "xylophone_70_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a0",
+                "taste": 70,
+                "ton": "A#4"
+            },
+            "datei": "klaenge/xylophone_70_a0.wav",
+            "fassung": "ic",
+            "id": "xylophone_70_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-30",
+                "taste": 86,
+                "ton": "D6"
+            },
+            "datei": "klaenge/xylophone_86_a-30.wav",
+            "fassung": "ic",
+            "id": "xylophone_86_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-12",
+                "taste": 86,
+                "ton": "D6"
+            },
+            "datei": "klaenge/xylophone_86_a-12.wav",
+            "fassung": "ic",
+            "id": "xylophone_86_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a0",
+                "taste": 86,
+                "ton": "D6"
+            },
+            "datei": "klaenge/xylophone_86_a0.wav",
+            "fassung": "ic",
+            "id": "xylophone_86_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/xylophone_103_a-30.wav",
+            "fassung": "ic",
+            "id": "xylophone_103_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/xylophone_103_a-12.wav",
+            "fassung": "ic",
+            "id": "xylophone_103_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/xylophone_103_a0.wav",
+            "fassung": "ic",
+            "id": "xylophone_103_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-30",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/vibraphone_53_a-30.wav",
+            "fassung": "ic",
+            "id": "vibraphone_53_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/vibraphone_53_a-12.wav",
+            "fassung": "ic",
+            "id": "vibraphone_53_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a0",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/vibraphone_53_a0.wav",
+            "fassung": "ic",
+            "id": "vibraphone_53_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-30",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/vibraphone_68_a-30.wav",
+            "fassung": "ic",
+            "id": "vibraphone_68_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/vibraphone_68_a-12.wav",
+            "fassung": "ic",
+            "id": "vibraphone_68_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/vibraphone_68_a0.wav",
+            "fassung": "ic",
+            "id": "vibraphone_68_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-30",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/vibraphone_84_a-30.wav",
+            "fassung": "ic",
+            "id": "vibraphone_84_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/vibraphone_84_a-12.wav",
+            "fassung": "ic",
+            "id": "vibraphone_84_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/vibraphone_84_a0.wav",
+            "fassung": "ic",
+            "id": "vibraphone_84_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-30",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/glockenspiel_84_a-30.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_84_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/glockenspiel_84_a-12.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_84_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/glockenspiel_84_a0.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_84_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-30",
+                "taste": 93,
+                "ton": "A6"
+            },
+            "datei": "klaenge/glockenspiel_93_a-30.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_93_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-12",
+                "taste": 93,
+                "ton": "A6"
+            },
+            "datei": "klaenge/glockenspiel_93_a-12.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_93_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a0",
+                "taste": 93,
+                "ton": "A6"
+            },
+            "datei": "klaenge/glockenspiel_93_a0.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_93_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/glockenspiel_103_a-30.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_103_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/glockenspiel_103_a-12.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_103_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/glockenspiel_103_a0.wav",
+            "fassung": "ic",
+            "id": "glockenspiel_103_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-30",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/tubular_bells_53_a-30.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_53_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-12",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/tubular_bells_53_a-12.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_53_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a0",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/tubular_bells_53_a0.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_53_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-30",
+                "taste": 56,
+                "ton": "G#3"
+            },
+            "datei": "klaenge/tubular_bells_56_a-30.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_56_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-12",
+                "taste": 56,
+                "ton": "G#3"
+            },
+            "datei": "klaenge/tubular_bells_56_a-12.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_56_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a0",
+                "taste": 56,
+                "ton": "G#3"
+            },
+            "datei": "klaenge/tubular_bells_56_a0.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_56_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-30",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/tubular_bells_60_a-30.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_60_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/tubular_bells_60_a-12.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_60_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a0",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/tubular_bells_60_a0.wav",
+            "fassung": "ic",
+            "id": "tubular_bells_60_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-30",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/celesta_65_a-30.wav",
+            "fassung": "ic",
+            "id": "celesta_65_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-12",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/celesta_65_a-12.wav",
+            "fassung": "ic",
+            "id": "celesta_65_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a0",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/celesta_65_a0.wav",
+            "fassung": "ic",
+            "id": "celesta_65_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-30",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/celesta_84_a-30.wav",
+            "fassung": "ic",
+            "id": "celesta_84_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/celesta_84_a-12.wav",
+            "fassung": "ic",
+            "id": "celesta_84_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/celesta_84_a0.wav",
+            "fassung": "ic",
+            "id": "celesta_84_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/celesta_103_a-30.wav",
+            "fassung": "ic",
+            "id": "celesta_103_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/celesta_103_a-12.wav",
+            "fassung": "ic",
+            "id": "celesta_103_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/celesta_103_a0.wav",
+            "fassung": "ic",
+            "id": "celesta_103_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-30",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/kalimba_55_a-30.wav",
+            "fassung": "ic",
+            "id": "kalimba_55_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/kalimba_55_a-12.wav",
+            "fassung": "ic",
+            "id": "kalimba_55_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/kalimba_55_a0.wav",
+            "fassung": "ic",
+            "id": "kalimba_55_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-30",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/kalimba_68_a-30.wav",
+            "fassung": "ic",
+            "id": "kalimba_68_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/kalimba_68_a-12.wav",
+            "fassung": "ic",
+            "id": "kalimba_68_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/kalimba_68_a0.wav",
+            "fassung": "ic",
+            "id": "kalimba_68_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-30",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "datei": "klaenge/kalimba_81_a-30.wav",
+            "fassung": "ic",
+            "id": "kalimba_81_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "datei": "klaenge/kalimba_81_a-12.wav",
+            "fassung": "ic",
+            "id": "kalimba_81_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a0",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "datei": "klaenge/kalimba_81_a0.wav",
+            "fassung": "ic",
+            "id": "kalimba_81_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-30",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/tine_electric_piano_33_a-30.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_33_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/tine_electric_piano_33_a-12.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_33_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a0",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/tine_electric_piano_33_a0.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_33_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/tine_electric_piano_64_a-30.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_64_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/tine_electric_piano_64_a-12.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_64_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/tine_electric_piano_64_a0.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_64_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-30",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "datei": "klaenge/tine_electric_piano_95_a-30.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_95_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-12",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "datei": "klaenge/tine_electric_piano_95_a-12.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_95_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a0",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "datei": "klaenge/tine_electric_piano_95_a0.wav",
+            "fassung": "ic",
+            "id": "tine_electric_piano_95_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-30",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/reed_electric_piano_38_a-30.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_38_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-12",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/reed_electric_piano_38_a-12.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_38_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a0",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/reed_electric_piano_38_a0.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_38_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/reed_electric_piano_64_a-30.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_64_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/reed_electric_piano_64_a-12.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_64_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/reed_electric_piano_64_a0.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_64_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-30",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/reed_electric_piano_91_a-30.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_91_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-12",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/reed_electric_piano_91_a-12.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_91_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a0",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/reed_electric_piano_91_a0.wav",
+            "fassung": "ic",
+            "id": "reed_electric_piano_91_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/marimba_48_a-12.wav",
+            "fassung": "ic",
+            "id": "marimba_48_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/synth_marimba_48_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_marimba_48_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "datei": "klaenge/synth_marimba_66_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_marimba_66_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/marimba_84_a-12.wav",
+            "fassung": "ic",
+            "id": "marimba_84_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/synth_marimba_84_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_marimba_84_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/vibraphone_60_a-12.wav",
+            "fassung": "ic",
+            "id": "vibraphone_60_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/synth_vibraphone_60_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_vibraphone_60_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/synth_vibraphone_68_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_vibraphone_68_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 77,
+                "ton": "F5"
+            },
+            "datei": "klaenge/vibraphone_77_a-12.wav",
+            "fassung": "ic",
+            "id": "vibraphone_77_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 77,
+                "ton": "F5"
+            },
+            "datei": "klaenge/synth_vibraphone_77_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_vibraphone_77_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "datei": "klaenge/kalimba_62_a-12.wav",
+            "fassung": "ic",
+            "id": "kalimba_62_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "datei": "klaenge/synth_kalimba_62_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_kalimba_62_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/synth_kalimba_68_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_kalimba_68_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "datei": "klaenge/kalimba_74_a-12.wav",
+            "fassung": "ic",
+            "id": "kalimba_74_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "datei": "klaenge/synth_kalimba_74_a-12.wav",
+            "fassung": "synth",
+            "id": "synth_kalimba_74_a-12"
+        }
+    ],
+    "kontrolle": "moderat",
+    "messwerte": [
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-30",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -59.32
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -41.42
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a0",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -28.68
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-30",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -49.98
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.82
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a0",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.76
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-30",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -55.36
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.76
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a0",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -10.77
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-30",
+                "taste": 70,
+                "ton": "A#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -48.45
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-12",
+                "taste": 70,
+                "ton": "A#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.73
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a0",
+                "taste": 70,
+                "ton": "A#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.75
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-30",
+                "taste": 86,
+                "ton": "D6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -48.64
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-12",
+                "taste": 86,
+                "ton": "D6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.34
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a0",
+                "taste": 86,
+                "ton": "D6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -12.16
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -300
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -46.05
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Xylophone",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -21.16
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-30",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -54.08
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -39.17
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a0",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.23
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-30",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -49.85
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.64
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.66
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-30",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -47.07
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.19
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -12.42
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-30",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -53.36
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.5
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -21.3
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-30",
+                "taste": 93,
+                "ton": "A6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -300
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-12",
+                "taste": 93,
+                "ton": "A6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.15
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a0",
+                "taste": 93,
+                "ton": "A6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.17
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -68.68
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -41.93
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Glockenspiel",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.69
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-30",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -56.11
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-12",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.36
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a0",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.42
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-30",
+                "taste": 56,
+                "ton": "G#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -55.98
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-12",
+                "taste": 56,
+                "ton": "G#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.09
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a0",
+                "taste": 56,
+                "ton": "G#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -22.82
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-30",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -55.87
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -35.83
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tubular bells",
+                "staerke": "a0",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -22.42
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-30",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -52.18
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-12",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.79
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a0",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.18
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-30",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -66.99
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.18
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -17.81
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -300
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.86
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Celesta",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -6.42
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-30",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -68.82
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -55.85
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -44.59
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-30",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -60.38
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -43.12
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.12
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-30",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -47.84
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -29.84
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a0",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-30",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -50.18
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a0",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -22.81
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -50.53
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.55
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.91
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-30",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -300
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a-12",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -43.69
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tine electric piano",
+                "staerke": "a0",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.25
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-30",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -52.01
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-12",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.9
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a0",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": 0.65
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -68.41
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -37.3
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.14
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-30",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -300
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a-12",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -65.6
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Reed electric piano",
+                "staerke": "a0",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.07
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -38.31
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.72
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 66,
+                "ton": "F#4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.9
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.2
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Marimba",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -17.84
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.15
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -21.08
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.88
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 77,
+                "ton": "F5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -29.06
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Vibraphone",
+                "staerke": "a-12",
+                "taste": 77,
+                "ton": "F5"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.6
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -49.3
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.73
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.58
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -37.02
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Kalimba",
+                "staerke": "a-12",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.41
+                }
+            ]
+        }
+    ],
+    "pegel": {
+        "lufs": -27.2,
+        "toleranz_lu": 1
+    },
+    "punkte": [
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p001",
+            "klang": "marimba_41_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p002",
+            "klang": "marimba_41_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p003",
+            "klang": "marimba_41_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p004",
+            "klang": "marimba_66_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p005",
+            "klang": "marimba_66_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p006",
+            "klang": "marimba_66_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p007",
+            "klang": "marimba_91_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p008",
+            "klang": "marimba_91_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p009",
+            "klang": "marimba_91_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p010",
+            "klang": "xylophone_70_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p011",
+            "klang": "xylophone_70_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p012",
+            "klang": "xylophone_70_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p013",
+            "klang": "xylophone_86_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p014",
+            "klang": "xylophone_86_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p015",
+            "klang": "xylophone_86_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p016",
+            "klang": "xylophone_103_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p017",
+            "klang": "xylophone_103_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p018",
+            "klang": "xylophone_103_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p019",
+            "klang": "vibraphone_53_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p020",
+            "klang": "vibraphone_53_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p021",
+            "klang": "vibraphone_53_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p022",
+            "klang": "vibraphone_68_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p023",
+            "klang": "vibraphone_68_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p024",
+            "klang": "vibraphone_68_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p025",
+            "klang": "vibraphone_84_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p026",
+            "klang": "vibraphone_84_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Vibraphone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p027",
+            "klang": "vibraphone_84_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p028",
+            "klang": "glockenspiel_84_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p029",
+            "klang": "glockenspiel_84_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p030",
+            "klang": "glockenspiel_84_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p031",
+            "klang": "glockenspiel_93_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p032",
+            "klang": "glockenspiel_93_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p033",
+            "klang": "glockenspiel_93_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p034",
+            "klang": "glockenspiel_103_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p035",
+            "klang": "glockenspiel_103_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p036",
+            "klang": "glockenspiel_103_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p037",
+            "klang": "tubular_bells_53_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p038",
+            "klang": "tubular_bells_53_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p039",
+            "klang": "tubular_bells_53_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p040",
+            "klang": "tubular_bells_56_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p041",
+            "klang": "tubular_bells_56_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p042",
+            "klang": "tubular_bells_56_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p043",
+            "klang": "tubular_bells_60_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p044",
+            "klang": "tubular_bells_60_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tubular bells (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p045",
+            "klang": "tubular_bells_60_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p046",
+            "klang": "celesta_65_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p047",
+            "klang": "celesta_65_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p048",
+            "klang": "celesta_65_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p049",
+            "klang": "celesta_84_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p050",
+            "klang": "celesta_84_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p051",
+            "klang": "celesta_84_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p052",
+            "klang": "celesta_103_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p053",
+            "klang": "celesta_103_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p054",
+            "klang": "celesta_103_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p055",
+            "klang": "kalimba_55_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p056",
+            "klang": "kalimba_55_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p057",
+            "klang": "kalimba_55_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p058",
+            "klang": "kalimba_68_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p059",
+            "klang": "kalimba_68_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p060",
+            "klang": "kalimba_68_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p061",
+            "klang": "kalimba_81_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p062",
+            "klang": "kalimba_81_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p063",
+            "klang": "kalimba_81_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p064",
+            "klang": "tine_electric_piano_33_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p065",
+            "klang": "tine_electric_piano_33_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p066",
+            "klang": "tine_electric_piano_33_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p067",
+            "klang": "tine_electric_piano_64_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p068",
+            "klang": "tine_electric_piano_64_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p069",
+            "klang": "tine_electric_piano_64_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p070",
+            "klang": "tine_electric_piano_95_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p071",
+            "klang": "tine_electric_piano_95_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p072",
+            "klang": "tine_electric_piano_95_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p073",
+            "klang": "reed_electric_piano_38_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p074",
+            "klang": "reed_electric_piano_38_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p075",
+            "klang": "reed_electric_piano_38_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p076",
+            "klang": "reed_electric_piano_64_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p077",
+            "klang": "reed_electric_piano_64_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p078",
+            "klang": "reed_electric_piano_64_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p079",
+            "klang": "reed_electric_piano_91_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p080",
+            "klang": "reed_electric_piano_91_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p081",
+            "klang": "reed_electric_piano_91_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "paar",
+            "id": "p082",
+            "klaenge": [
+                "marimba_48_a-12",
+                "synth_marimba_48_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Marimba?"
+        },
+        {
+            "art": "paar",
+            "id": "p083",
+            "klaenge": [
+                "marimba_66_a-12",
+                "synth_marimba_66_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Marimba?"
+        },
+        {
+            "art": "paar",
+            "id": "p084",
+            "klaenge": [
+                "marimba_84_a-12",
+                "synth_marimba_84_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Marimba?"
+        },
+        {
+            "art": "paar",
+            "id": "p085",
+            "klaenge": [
+                "vibraphone_60_a-12",
+                "synth_vibraphone_60_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Vibraphone?"
+        },
+        {
+            "art": "paar",
+            "id": "p086",
+            "klaenge": [
+                "vibraphone_68_a-12",
+                "synth_vibraphone_68_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Vibraphone?"
+        },
+        {
+            "art": "paar",
+            "id": "p087",
+            "klaenge": [
+                "vibraphone_77_a-12",
+                "synth_vibraphone_77_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Vibraphone?"
+        },
+        {
+            "art": "paar",
+            "id": "p088",
+            "klaenge": [
+                "kalimba_62_a-12",
+                "synth_kalimba_62_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Kalimba?"
+        },
+        {
+            "art": "paar",
+            "id": "p089",
+            "klaenge": [
+                "kalimba_68_a-12",
+                "synth_kalimba_68_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Kalimba?"
+        },
+        {
+            "art": "paar",
+            "id": "p090",
+            "klaenge": [
+                "kalimba_74_a-12",
+                "synth_kalimba_74_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach Kalimba?"
+        }
+    ],
+    "schema": 1,
+    "titel": "LumiViz 34g: die Stabspiele des Kerns bar, gegen die Nachbildungen",
+    "ziel": "Erstes Hoeren der neun Stabspiele aus IC (ungemessen, Z2 a) und welches den Namen behaelt, IC oder Synth (IK2-8 a)"
+}

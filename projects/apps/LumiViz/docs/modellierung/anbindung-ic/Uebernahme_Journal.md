@@ -267,6 +267,8 @@ uncommittete Änderung).
   Plattform). Pakete `instrumentcore-v0.3.0`, `instrumentmodels-v0.2.0`, `instrumentmeasure-v0.3.0`: Summen gut, jede Datei
   LF, Modul-Doku darin; `instrumentmeasure` verlangt `InstrumentModels` vor sich.
 - **Voller Lauf** (Core geändert, UF17-1 a) 1815 / 1815, 0 Skips unter Release-clang (9:15 min) und Testing-MSVC (9:01 min).
+- Hörproben `hoertest/listen/stab_34g` im Format von HörTest_Helper: `Hoertest.exe --liste-pruefen` „Liste gültig“, 96
+  Klänge auf −27,2 LUFS; Hinweise: 5 Töne still (wie IC: 10 von 108), Kalimba gleich über die Stärken (linear).
 
 ## 6. Changelog
 
