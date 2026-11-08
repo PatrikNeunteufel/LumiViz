@@ -61,9 +61,15 @@ struct Vorlage
     std::string name;
     std::string titel;
     TrommelSpiel spiel;
+    /// QM1 a: die Quellen der Werte ohne Kurve, die nicht die eigene Vorgabe (`lumiviz`) sind; die Tafel traegt die der
+    /// ersten Vorlage
+    QuellenJeWert quellen;
 };
 /// Die sieben Vorlagen in der Reihenfolge der IC-Vorgaben (Tom, Pauke, Bassdrum, Snare, Tabla, Conga, Bongo).
 [[nodiscard]] const std::vector<Vorlage>& vorlagen();
+/// Die Werte einer Vorlage mit ihren Quellen (QM1 a): `werteAus(spiel)`, dazu je Wert ohne Kurve die Quellen der
+/// Vorlage, sonst `lumiviz`.
+[[nodiscard]] Werte werteVon(const Vorlage& vorlage);
 
 /// Eine Trommel hinter `Tonkern` (bereitet ihre Moden beim Bau, `bereite`).
 class TrommelKern final : public Tonkern

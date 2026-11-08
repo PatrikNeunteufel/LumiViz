@@ -142,8 +142,9 @@ void pruefeAngaben(const std::vector<ParameterAngabe>& angaben, const std::vecto
     }
 }
 
+/// `mitQuellen`: die Werte eines Instruments (QM1 a); an den Eintraegen einer Liste fallen Quellen weg.
 std::vector<std::string> richteAngaben(const std::vector<ParameterAngabe>& angaben, int noteMin, int noteMax, const std::string& wo,
-                                       Werte& werte)
+                                       Werte& werte, bool mitQuellen)
 {
     std::vector<std::string> fehler;
     for (const auto& [name, wert] : werte.felder)
@@ -155,6 +156,12 @@ std::vector<std::string> richteAngaben(const std::vector<ParameterAngabe>& angab
     gerichtet.gestimmtAus = werte.gestimmtAus;
     for (const ParameterAngabe& a : angaben)
     {
+        if (mitQuellen && a.art != WertArt::Kurve)
+        {
+            // QM1 a: die Quellen des Werts; fehlen sie, die der Angabe
+            const std::vector<std::string>* q = werte.quellenVon(a.name);
+            gerichtet.quellen.emplace_back(a.name, q != nullptr ? *q : a.quellen);
+        }
         const std::string ort = wo + a.name;
         Wert* w = werte.finde(a.name);
         if (w == nullptr)
@@ -212,7 +219,8 @@ std::vector<std::string> richteAngaben(const std::vector<ParameterAngabe>& angab
                                  " ... " + std::to_string(a.eintraegeMax));
             for (std::size_t i = 0; i < l.eintraege.size(); ++i)
             {
-                const std::vector<std::string> f = richteAngaben(a.felder, noteMin, noteMax, ort + "[" + std::to_string(i) + "].", l.eintraege[i]);
+                const std::vector<std::string> f =
+                    richteAngaben(a.felder, noteMin, noteMax, ort + "[" + std::to_string(i) + "].", l.eintraege[i], false);
                 fehler.insert(fehler.end(), f.begin(), f.end());
             }
             break;
@@ -276,6 +284,29 @@ void Werte::merkeAbdruck(std::string gestimmt, std::string abdruck)
             return;
         }
     gestimmtAus.emplace_back(std::move(gestimmt), std::move(abdruck));
+}
+
+const std::vector<std::string>* Werte::quellenVon(std::string_view name) const
+{
+    for (const auto& [n, q] : quellen)
+        if (n == name) return &q;
+    return nullptr;
+}
+
+void Werte::setzeQuellen(std::string name, std::vector<std::string> schluessel)
+{
+    for (auto& [n, q] : quellen)
+        if (n == name)
+        {
+            q = std::move(schluessel);
+            return;
+        }
+    quellen.emplace_back(std::move(name), std::move(schluessel));
+}
+
+bool Werte::operator==(const Werte& o) const
+{
+    return felder == o.felder && gestimmtAus == o.gestimmtAus;  // QM1 a: die Quellen zaehlen nicht
 }
 
 Darstellung darstellungZu(WertArt art)
@@ -373,7 +404,11 @@ std::pair<int, int> tastenumfang(const Parametertafel& tafel, const Werte& werte
 Werte vorgaben(const Parametertafel& tafel)
 {
     Werte werte;
-    for (const ParameterAngabe& a : tafel.werte) werte.felder.emplace_back(a.name, a.vorgabe);
+    for (const ParameterAngabe& a : tafel.werte)
+    {
+        werte.felder.emplace_back(a.name, a.vorgabe);
+        if (a.art != WertArt::Kurve) werte.quellen.emplace_back(a.name, a.quellen);  // QM1 a
+    }
     return werte;
 }
 
@@ -391,7 +426,7 @@ std::vector<std::string> richteWerte(const Parametertafel& tafel, Werte& werte)
             fehler.push_back(tafel.umfangVon + ", " + tafel.umfangBis + ": key range reversed");
     }
     const auto [noteMin, noteMax] = tastenumfang(tafel, werte);
-    std::vector<std::string> f = richteAngaben(tafel.werte, noteMin, noteMax, "", werte);
+    std::vector<std::string> f = richteAngaben(tafel.werte, noteMin, noteMax, "", werte, true);
     fehler.insert(fehler.end(), f.begin(), f.end());
     return fehler;
 }

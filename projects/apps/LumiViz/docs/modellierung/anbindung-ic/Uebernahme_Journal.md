@@ -1,7 +1,7 @@
 # Übernahme-Journal — Bausteine aus IC und LumiViz in die Bibliotheken
 
-> **Version:** 0.6.0
-> **Datum:** 2026-11-08 (Sessions 175–179)
+> **Version:** 0.7.0
+> **Datum:** 2026-11-08 (Sessions 175–180)
 > **Typ:** Journal (Instrumente_IC_Konzept.md IK2-2 a: „jede Übernahme steht in `Uebernahme_Journal.md`“)
 > **Status:** wird je Teilschritt fortgeschrieben
 > **Bezug:** [../../audio/Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md) §5 (IK2-2 a, IK2-2-1 a), §6 (34c,
@@ -305,10 +305,24 @@ Teilplan 34h-1 bis 34h-7 im Konzept §6 (TM1 a–TM4 a). Quellen: LumiViz `maste
   (J47, QM1). Dabei gefunden: auch Celesta und Wurlitzer rechnen den Filzhammer nach Stulov, `CREDITS.md` nennt ihn nur bei
   `grand_piano` (dieselbe Lücke seit 34g).
 
+## 6a. QM1 a — Quellen am Wert (S180)
+
+| Nr. | Was | Entscheid | Wo | IC | Abweichung / Befund |
+|---|---|---|---|---|---|
+| J50 | Quellen je Wert ohne Kurve | QM1 a, WZ1 a | `InstrumentCore/Parametertafel` (`QuellenJeWert`, `Werte::quellen`, `quellenVon`, `setzeQuellen`, `Werte::operator==` ohne Quellen; `vorgaben` mit den Quellen der Angaben; `richteWerte` ordnet nach der Tafel und füllt fehlende aus der Angabe), `loop/KernDatei` (`quellenAlsJson`/`quellenAusJson`), `loop/Instrument` (**`.lvinst` Fassung 23**, `coreSources` neben `coreParams`, immer geschrieben, auch leer) | — (neu in LumiViz) | **gewählt:** nur an den Werten eines Instruments, nicht an den Einträgen einer Liste — eine Liste (die Felle, die festen Verhältnisse) trägt ihre Quellen als Ganzes; Quellen zu Kurven und unbekannten Namen fallen beim Richten weg. Nicht im Vergleich und nicht im Abdruck gestimmter Werte (wie die Herkunft einer Kurve): kein gestimmter Wert veraltet. Eine Datei bis Fassung 22 bekommt die Quellen der Tafel. Fassungs-Literale: 2 Stellen (`test_LoopHammerSaite`, `test_LoopInstrument`); `*Klangfassung*` neu geschrieben (nur die Abdrücke, die Werte aller 433 Zeilen gleich) |
+| J51 | Quellen je Vorlage | QM1 a | `InstrumentModels/trommel/TrommelKern` (`quellenDerTrommel`), `stab/StabKern` (`quellenDesStabs`), je `Vorlage::quellen` und `werteVon`; die Tafel trägt die der ersten Vorlage (Tom, Marimba) | `Vorgaben.cpp` beider Klassen (gelesen) | Nur, was die Werte des Instruments trägt, gegen `Vorgaben.cpp`, `Trommel.hpp`, `Membran.hpp` geprüft. **Trommel:** Felle d1, d3 (und σ ohne eigene Angabe) Avanzini & Marogna bei allen, dazu Pauke Packer, Snare Bilbao et al., Tabla Sathej & Adhikari; Gleiten Marogna et al. und Avanzini & Marogna bei allen; der Stock (Tom, Snare) Dahl und Wagner, v ff 8 m/s Dahl; Pauke Schlägel Bilbao et al., v ff Torin et al., Kessel Packer; Bassdrum, Conga, Bongo nur Felle und Gleiten. `miura2023` ist nicht mehr benutzt (Prellen 1, nicht aus Miura). **Befund:** die tafelweite Herkunft der Schlägel sagte, auch Filz, Finger und Hand seien an der Kontaktzeit gesetzt — IC `Vorgaben.cpp` setzt nur den Stock so, die anderen „offen“; der Text ist berichtigt. **Stab:** Schlägel Rucz an den sechs Stäben mit `ruczSchlaegel`, Stulov an Celesta und Reed electric piano (fünf Werte), Sønderbo am Tine electric piano (Hunt–Crossley, v bis 4 m/s), Tonabnehmer 1 mm Falaize & Hélie; Ziel des Partners Rucz an den Rohren und der Celesta (übertragen); feste Verhältnisse der Steelpan Thomas et al. Der Flügel aus der Tafel (`undampedFrom` Salamander). |
+| J52 | Die mitgelieferten Dateien, ohne neu zu stimmen | QM1 a | `test_InstrumentQuellen.cpp` (`LUMIVIZ_KERN_QUELLEN_SCHREIBEN=1`: liest die JSON, setzt nur `coreSources` und die Fassung), `instrument_katalog.py`, `make_instrument_credits.py` (liest `coreSources`) | — | Der Diff der 17 Kern-Dateien: je `"version": 22 → 23` und der Block `coreSources`, sonst nichts (17 von 17 gelöschten Zeilen sind die Fassung). `CREDITS.md`: 19 Quellen benutzt, neu Avanzini & Marogna, Bilbao et al., Dahl, Marogna et al., Packer, Sathej & Adhikari, Torin et al., Wagner; Stulov jetzt auch bei Celesta und Reed electric piano (die Lücke seit 34g). **Merker:** `instrument_katalog.py` nicht mit `python -I` starten — der isolierte Modus nimmt den Ordner des Skripts aus dem Suchpfad (`instrument_pegel` fehlt dann). |
+
+**Wächter QM1 a** (S180): `*Instrument Quellen*` — jeder Wert der Tafel steht in `coreSources` mit mindestens einer
+Quelle aus dem Register, keine aus einer Quelle, die nichts ausliefern lässt; die Quellen jeder Kern-Datei sind die
+ihrer Vorlage (`werteVon`, der Flügel `vorgaben`); Richten, Vergleich und Datei an der Pauke; die Fälle der Probe mit
+ND-Quelle, unbekanntem Schlüssel, leerer und fehlender Angabe.
+
 ## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.7.0 | 2026-11-08 | Session 180. §6a neu: QM1 a (J50–J52, Wächter). |
 | 0.6.0 | 2026-11-08 | Session 179. §6 neu: 34h (J42 ff.). |
 | 0.5.0 | 2026-11-08 | Session 178. §5 neu: 34g (J31–J41, Wächter). |
 | 0.4.0 | 2026-11-08 | Session 177. §4 neu: 34f (J27–J30, Wächter). |

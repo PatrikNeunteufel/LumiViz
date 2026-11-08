@@ -52,12 +52,19 @@ struct Liste
 /// Ein Wert: Zahl, Ganzzahl, Schalter, Wahl (Name), Kurve je Note, Liste.
 using Wert = std::variant<double, std::int64_t, bool, std::string, Kurve, Liste>;
 
+/// Je Name eines Werts die Schluessel seiner Quellen im Register (`asset/loop/instrument_quellen.json`, QM1 a).
+using QuellenJeWert = std::vector<std::pair<std::string, std::vector<std::string>>>;
+
 /// Die Werte eines Instruments (oder eines Eintrags einer Liste), in der Reihenfolge, in der sie gesetzt wurden.
 struct Werte
 {
     std::vector<std::pair<std::string, Wert>> felder;
     /// je gestimmtem Wert der Abdruck der Eingaben, aus denen er gestimmt wurde (IK2-11 a)
     std::vector<std::pair<std::string, std::string>> gestimmtAus;
+    /// QM1 a (34h, S180): die Quellen je Wert, der keine Kurve ist (Zahl, Ganzzahl, Schalter, Wahl, Liste als Ganzes) —
+    /// eine Kurve traegt ihre eigenen (`Kurve::quellen`). Nur an den Werten eines Instruments, nicht an den Eintraegen
+    /// einer Liste. Zaehlt nicht zum Vergleich und nicht zum Abdruck (wie die Herkunft einer Kurve).
+    QuellenJeWert quellen;
 
     [[nodiscard]] const Wert* finde(std::string_view name) const;
     [[nodiscard]] Wert* finde(std::string_view name);
@@ -76,9 +83,14 @@ struct Werte
     [[nodiscard]] std::string abdruckVon(std::string_view gestimmt) const;
     void merkeAbdruck(std::string gestimmt, std::string abdruck);
 
+    /// die Quellen eines Werts, `nullptr` = keine genannt
+    [[nodiscard]] const std::vector<std::string>* quellenVon(std::string_view name) const;
+    /// setzt oder ersetzt
+    void setzeQuellen(std::string name, std::vector<std::string> schluessel);
+
     /// gleich heisst: dieselben Namen mit denselben Werten in derselben Reihenfolge und dieselben Abdruecke (die
-    /// Herkunft einer Kurve zaehlt nicht, `Kurve::operator==`)
-    [[nodiscard]] bool operator==(const Werte&) const = default;
+    /// Quellen zaehlen nicht, wie die Herkunft einer Kurve, `Kurve::operator==`)
+    [[nodiscard]] bool operator==(const Werte& o) const;
 };
 
 /// Was fuer ein Wert.
@@ -182,13 +194,15 @@ struct Parametertafel
 /// liegen ausserhalb (KS1 a).
 [[nodiscard]] std::vector<std::string> pruefeTafel(const Parametertafel& tafel);
 
-/// Die Werte der Vorgaben (jede Angabe in der Reihenfolge der Tafel).
+/// Die Werte der Vorgaben (jede Angabe in der Reihenfolge der Tafel), mit den Quellen der Angaben (QM1 a).
 [[nodiscard]] Werte vorgaben(const Parametertafel& tafel);
 
 /// Die Werte in die Tafel richten: in die Reihenfolge der Tafel, Zahlen und Ganzzahlen auf die Grenzen, Kurven mit
 /// `richteKurve` auf Grenzen und Tastenumfang des Instruments (`tastenumfang`, KS1 a; eine leere bekommt die Vorgabe —
 /// ausser einer gestimmten; ein verkehrter Umfang ist ein Fehler, gerichtet wird dann auf den der Tafel), Listen je
-/// Eintrag nach den Feldern. Zurueck kommt, was nicht stimmt: ein Wert fehlt, ist unbekannt oder von anderer Art,
+/// Eintrag nach den Feldern. Die Quellen (QM1 a) in die Reihenfolge der Tafel, je Wert ohne Kurve; fehlen sie zu einem
+/// Wert, die der Angabe (`ParameterAngabe::quellen`); Quellen zu Kurven, zu unbekannten Namen und an Eintraegen einer
+/// Liste fallen weg. Zurueck kommt, was nicht stimmt: ein Wert fehlt, ist unbekannt oder von anderer Art,
 /// eine Wahl ist unbekannt, eine Liste hat zu wenige oder zu viele Eintraege, ein gestimmter Wert ist leer. Leer =
 /// gut. Ein fehlender Wert wird nicht ersetzt.
 [[nodiscard]] std::vector<std::string> richteWerte(const Parametertafel& tafel, Werte& werte);

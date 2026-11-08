@@ -65,9 +65,15 @@ struct Vorlage
     std::string titel;
     StabSpiel spiel;
     bool ausgeliefert = true;
+    /// QM1 a: die Quellen der Werte ohne Kurve, die nicht die eigene Vorgabe (`lumiviz`) sind (die Kurven tragen ihre in
+    /// `spiel`); die Tafel traegt die der ersten Vorlage
+    QuellenJeWert quellen;
 };
 /// Die zehn Vorlagen in der Reihenfolge von IC `alleStabSpiele` (die Steeldrum nicht ausgeliefert, KS4 a).
 [[nodiscard]] const std::vector<Vorlage>& vorlagen();
+/// Die Werte einer Vorlage mit ihren Quellen (QM1 a): `werteAus(spiel)`, dazu je Wert ohne Kurve die Quellen der
+/// Vorlage, sonst `lumiviz`.
+[[nodiscard]] Werte werteVon(const Vorlage& vorlage);
 
 /// Ein Stabspiel hinter `Tonkern`.
 class StabKern final : public Tonkern

@@ -85,7 +85,7 @@ Instrument instrumentVon(const stab::Vorlage& v)
     Schicht s;
     s.name = QString::fromStdString(v.titel);
     s.kernName = QString::fromUtf8(stab::kKernName.data(), static_cast<qsizetype>(stab::kKernName.size()));
-    s.kernWerte = stab::werteAus(v.spiel);
+    s.kernWerte = stab::werteVon(v);  // mit den Quellen der Vorlage (QM1 a)
     // gerichtet, wie das Programm schreibt (eine leere Kurve bekommt die Vorgabe der Tafel im Umfang des Instruments);
     // die gestimmten sind noch leer — das meldet das Richten, sie stimmt danach das Werkzeug
     std::vector<std::string> fehler;

@@ -648,10 +648,13 @@ struct Instrument
 // Fassung 22 (S177, Stufe 34f-1, WZ1 a): jede Kurve in `coreParams` traegt `sources` — die Schluessel ihrer Quellen im
 // Register `asset/loop/instrument_quellen.json`, immer geschrieben (auch leer); der Waechter der Quellen prueft sie.
 // Ein aelteres Programm ueberliest sie.
-// Geschrieben wird Fassung 22.
+// Fassung 23 (S180, QM1 a): eine Kern-Schicht traegt neben `coreParams` den Block `coreSources` — je Wert ohne Kurve
+// (Zahl, Ganzzahl, Schalter, Wahl, Liste als Ganzes) die Schluessel seiner Quellen, immer geschrieben (auch leer);
+// eine aeltere Datei bekommt die Quellen der Tafel. Ein aelteres Programm ueberliest sie.
+// Geschrieben wird Fassung 23.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 22;
+inline constexpr int kInstrumentFassung = 23;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

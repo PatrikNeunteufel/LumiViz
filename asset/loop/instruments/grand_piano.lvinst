@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 22,
+    "version": 23,
     "title": "Grand Piano",
     "category": "keys",
     "genres": ["Classical"],
@@ -448,6 +448,12 @@
                     "sources": ["lumiviz"]
                 },
                 "undampedFrom": 89
+            },
+            "coreSources": {
+                "moderatorExponent": ["lumiviz"],
+                "moderatorStiffness": ["lumiviz"],
+                "softFactor": ["lumiviz"],
+                "undampedFrom": ["salamander"]
             },
             "damping": 0.996,
             "decay": 200,

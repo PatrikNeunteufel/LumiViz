@@ -202,38 +202,85 @@ ParameterAngabe gestimmteAngabe(std::string_view name, std::string_view titel, s
     return a;
 }
 
-/// Herkunft und Quellen der Zahlen (der Vorgabe der Tafel, der Marimba; WZ1 a gilt tafelweit fuer Zahlen).
+/// Belegkraft und Herkunft der Zahlen (der Vorgabe der Tafel, der Marimba; der Text nennt die anderen Instrumente mit);
+/// die Quellen stehen je Vorlage (QM1 a, `quellenDesStabs` unten), die Tafel traegt die der ersten Vorlage.
 void belege(ParameterAngabe& a)
 {
-    const auto setze = [&](Belegkraft b, std::string h, std::vector<std::string> q) {
+    const auto setze = [&](Belegkraft b, std::string h) {
         a.belegkraft = b;
         a.herkunft = std::move(h);
-        a.quellen = std::move(q);
     };
     const std::string& n = a.name;
     if (n == kNameNoteMin || n == kNameNoteMax)
-        setze(Belegkraft::Quelle, "the range of each instrument as in IC Vorgaben.cpp (Iowa MIS, CCRMA, Freesound pages — report only; facts, no data used)",
-              {"lumiviz"});
+        setze(Belegkraft::Quelle, "the range of each instrument as in IC Vorgaben.cpp (Iowa MIS, CCRMA, Freesound pages — report only; facts, no data used)");
     else if (n == kPartnerZielDb)
-        setze(Belegkraft::Quelle, "\"by as much as 15 dB\" (Rucz & Ulveczki 2021 p. 7, xylophone); celesta: transferred (open)", {"rucz2021"});
+        setze(Belegkraft::Quelle, "\"by as much as 15 dB\" (Rucz & Ulveczki 2021 p. 7, xylophone); celesta: transferred (open)");
     else if (n == kPartnerZielNote)
-        setze(Belegkraft::Rechnung, "the key the target holds at: F4 as in Rucz (tube instruments), C6 for the celesta box (IC)", {"rucz2021"});
+        setze(Belegkraft::Rechnung, "the key the target holds at: F4 as in Rucz (tube instruments), C6 for the celesta box (IC)");
     else if (n.rfind("mallet", 0) == 0)
         setze(Belegkraft::Quelle, "default (marimba): mallet 25 g, K = 5e7 N/m^1.5, Hertz p = 1.5 (Rucz & Ulveczki 2021 Tab. 1 p. 5); "
-                                  "celesta and reed piano: Stulov 2009 eq. 9; tine piano: Hunt–Crossley after Soenderbo 2024 Tab. 3.2",
-              {"rucz2021"});
+                                  "celesta and reed piano: Stulov 2009 eq. 9; tine piano: Hunt–Crossley after Soenderbo 2024 Tab. 3.2");
     else if (n == kBogenAb)
-        setze(Belegkraft::Rechnung, "IC test of the upper register from E-flat 4 (63); the low register is IC class C (KS3 a)", {"lumiviz"});
+        setze(Belegkraft::Rechnung, "IC test of the upper register from E-flat 4 (63); the low register is IC class C (KS3 a)");
     else if (n.rfind("bow", 0) == 0)
-        setze(Belegkraft::Offen, "transferred from class 3 (Galluzzo friction, Chudy bow speed — report only), open", {"lumiviz"});
+        setze(Belegkraft::Offen, "transferred from class 3 (Galluzzo friction, Chudy bow speed — report only), open");
     else if (n == "quadraticCoupling")
-        setze(Belegkraft::Offen, "0 until a measurement (IC T8 a; steelpan, Deluxe)", {"lumiviz"});
+        setze(Belegkraft::Offen, "0 until a measurement (IC T8 a; steelpan, Deluxe)");
     else
-        setze(Belegkraft::Offen, "IC Vorgaben.cpp for each instrument (switch, choice or setting; open)", {"lumiviz"});
+        setze(Belegkraft::Offen, "IC Vorgaben.cpp for each instrument (switch, choice or setting; open)");
 }
 
-Parametertafel baueTafel(const StabSpiel& vorgabe)
+/// QM1 a: die Quellen eines Werts ohne Kurve in einer Vorlage, sonst die eigene Vorgabe.
+std::vector<std::string> quellenIn(const Vorlage& v, std::string_view name)
 {
+    for (const auto& [n, q] : v.quellen)
+        if (n == name) return q;
+    return {"lumiviz"};
+}
+
+/// QM1 a (S180): die Quellen der Werte ohne Kurve je Stabspiel nach `Vorgaben.cpp` (die Kurven setzt `mitQuellen` dort).
+/// - Schlaegel: Rucz & Ulveczki (Masse, Steife, Exponent nach Hertz) an den Staeben mit `ruczSchlaegel`; Celesta und
+///   Reed electric piano der Filzhammer nach Stulov & Kartofelev 2009 Gl. 9 (Masse, Steife, Exponent, Hysterese,
+///   Relaxation); Tine electric piano Hunt–Crossley nach Sønderbo 2024 Tab. 3.2 (Masse, Steife, Exponent, Schalter,
+///   Daempfung) und v bis 4 m/s; die Kalimba wird gezupft (ohne Schlaegel).
+/// - Ziel des Partners: „by as much as 15 dB“ (Rucz) mit Rohr (Marimba, Xylophon, Vibraphon) und am Kasten der Celesta
+///   (uebertragen); die Taste F4 wie Rucz an den Rohren, C6 der Celesta ist IC.
+/// - Tonabnehmer des Tine electric piano: 1 mm Abstand nach Falaize & Hélie 2015.
+/// - Feste Verhaeltnisse der Steelpan: Thomas, Monteil & Touzé 2014.
+QuellenJeWert quellenDesStabs(std::string_view name)
+{
+    QuellenJeWert q;
+    const auto dazu = [&](std::string_view wert, std::vector<std::string> schluessel) { q.emplace_back(std::string(wert), std::move(schluessel)); };
+    const auto alle = [&](std::initializer_list<std::string_view> werte, const std::vector<std::string>& schluessel) {
+        for (const std::string_view w : werte) dazu(w, schluessel);
+    };
+    const bool rohr = name == "marimba" || name == "xylophone" || name == "vibraphone";
+    if (rohr || name == "glockenspiel" || name == "tubular_bells" || name == "steelpan")
+        alle({"malletMass", "malletStiffness", "malletExponent"}, {"rucz2021"});
+    if (rohr)
+    {
+        dazu(kPartnerZielDb, {"rucz2021"});
+        dazu(kPartnerZielNote, {"rucz2021"});
+    }
+    if (name == "celesta")
+    {
+        alle({"malletMass", "malletStiffness", "malletExponent", "malletHysteresis", "malletRelaxation"}, {"stulov2009"});
+        dazu(kPartnerZielDb, {"rucz2021"});
+    }
+    if (name == "reed_electric_piano")
+        alle({"malletMass", "malletStiffness", "malletExponent", "malletHysteresis", "malletRelaxation"}, {"stulov2009"});
+    if (name == "tine_electric_piano")
+    {
+        alle({"malletMass", "malletStiffness", "malletExponent", "malletHuntCrossley", "malletDampingHc", "velocityMax"}, {"soenderbo2024"});
+        dazu("pickupDistance", {"falaize2015"});
+    }
+    if (name == "steelpan") dazu(kFesteVerhaeltnisse, {"thomas2014"});
+    return q;
+}
+
+Parametertafel baueTafel(const Vorlage& vorlage)
+{
+    const StabSpiel& vorgabe = vorlage.spiel;
     Parametertafel t;
     t.kern = std::string(kKernName);
     t.titel = "Bar and plate";
@@ -252,6 +299,7 @@ Parametertafel baueTafel(const StabSpiel& vorgabe)
                 ParameterAngabe a = f.angabe;
                 a.vorgabe = f.lies(vorgabe);
                 belege(a);
+                a.quellen = quellenIn(vorlage, a.name);
                 a.klangbestimmend = a.name != kNameNoteMin && a.name != kNameNoteMax && a.name != kPartnerZielNote;
                 t.werte.push_back(std::move(a));
             }
@@ -275,6 +323,7 @@ Parametertafel baueTafel(const StabSpiel& vorgabe)
             l.eintraegeMax = static_cast<std::size_t>(kBiegeModenMax);
             l.vorgabe = *v.finde(kFesteVerhaeltnisse);
             l.herkunft = "empty = the curves; the steelpan's tone field (Thomas, Monteil & Touze 2014, report only)";
+            l.quellen = quellenIn(vorlage, l.name);
             t.werte.push_back(std::move(l));
         }
         if (gruppe == "Partner")
@@ -316,26 +365,38 @@ bool getreten(const Tonauftrag& auftrag, std::string_view spurName, Frames begin
 
 const std::vector<Vorlage>& vorlagen()
 {
-    static const std::vector<Vorlage> v = {
-        {"marimba", "Marimba", baueVorgabeMarimba(), true},
-        {"xylophone", "Xylophone", baueVorgabeXylophon(), true},
-        {"vibraphone", "Vibraphone", baueVorgabeVibraphon(), true},
-        {"glockenspiel", "Glockenspiel", baueVorgabeGlockenspiel(), true},
-        {"tubular_bells", "Tubular bells", baueVorgabeRoehrenglocken(), true},
-        {"celesta", "Celesta", baueVorgabeCelesta(), true},
-        {"kalimba", "Kalimba", baueVorgabeKalimba(), true},
-        {"tine_electric_piano", "Tine electric piano", baueVorgabeRhodes(), true},
-        {"reed_electric_piano", "Reed electric piano", baueVorgabeWurlitzer(), true},
-        {"steelpan", "Steelpan", baueVorgabeSteeldrum(), false},
-    };
+    static const std::vector<Vorlage> v = [] {
+        std::vector<Vorlage> l = {
+            {"marimba", "Marimba", baueVorgabeMarimba(), true, {}},
+            {"xylophone", "Xylophone", baueVorgabeXylophon(), true, {}},
+            {"vibraphone", "Vibraphone", baueVorgabeVibraphon(), true, {}},
+            {"glockenspiel", "Glockenspiel", baueVorgabeGlockenspiel(), true, {}},
+            {"tubular_bells", "Tubular bells", baueVorgabeRoehrenglocken(), true, {}},
+            {"celesta", "Celesta", baueVorgabeCelesta(), true, {}},
+            {"kalimba", "Kalimba", baueVorgabeKalimba(), true, {}},
+            {"tine_electric_piano", "Tine electric piano", baueVorgabeRhodes(), true, {}},
+            {"reed_electric_piano", "Reed electric piano", baueVorgabeWurlitzer(), true, {}},
+            {"steelpan", "Steelpan", baueVorgabeSteeldrum(), false, {}},
+        };
+        for (Vorlage& x : l) x.quellen = quellenDesStabs(x.name);
+        return l;
+    }();
     return v;
+}
+
+Werte werteVon(const Vorlage& vorlage)
+{
+    Werte w = werteAus(vorlage.spiel);
+    for (const ParameterAngabe& a : kernTyp().tafel.werte)
+        if (a.art != WertArt::Kurve) w.setzeQuellen(a.name, quellenIn(vorlage, a.name));
+    return w;
 }
 
 const KernTyp& kernTyp()
 {
     static const KernTyp typ = [] {
         KernTyp t;
-        t.tafel = baueTafel(vorlagen().front().spiel);
+        t.tafel = baueTafel(vorlagen().front());
         t.auskunft.rechenweg = Rechenweg::Note;
         t.auskunft.stufeImNamen = true;
         t.auskunft.spuren = {std::string(spur::kExpression), std::string(kSpurMotor), std::string(kSpurGestrichen), std::string(kSpurSchlaegelOrt),

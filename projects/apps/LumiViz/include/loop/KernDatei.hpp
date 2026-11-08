@@ -12,8 +12,13 @@
  * Alle Werte werden immer geschrieben, in der Reihenfolge der Tafel. Die Abdruecke gestimmter Werte stehen daneben
  * unter `tuned` (`{"<name>": "<sha256>"}`), nur wenn es welche gibt.
  *
+ * Seit Fassung 23 (QM1 a, S180) steht neben `coreParams` der Block `coreSources`: je Wert ohne Kurve die Schluessel
+ * seiner Quellen im Register (`{"<name>": ["<schluessel>", …]}`), immer geschrieben, in der Reihenfolge der Tafel, auch
+ * leer; eine Kurve traegt ihre in `sources`.
+ *
  * Gelesen wird ungerichtet: was die Datei nicht als die Art der Tafel traegt, fehlt danach — `richteWerte` meldet es.
- * Ein Name, den die Tafel nicht kennt, wird mitgelesen und von `richteWerte` gemeldet.
+ * Ein Name, den die Tafel nicht kennt, wird mitgelesen und von `richteWerte` gemeldet. Fehlt `coreSources` (bis
+ * Fassung 22) oder ein Name darin, setzt `richteWerte` die Quellen der Angabe.
  *
  * Kein Qt-Widget, keine Audio-Engine.
  */
@@ -35,5 +40,10 @@ namespace lumi::loop
 [[nodiscard]] QJsonObject werteAlsJson(const kern::Parametertafel& tafel, const kern::Werte& werte);
 /// `coreParams` nach der Tafel lesen (ungerichtet, danach `kern::richteWerte`).
 [[nodiscard]] kern::Werte werteAusJson(const kern::Parametertafel& tafel, const QJsonObject& o);
+
+/// QM1 a: die Quellen der Werte ohne Kurve als `coreSources` (jeder Wert der Tafel, auch ohne Quellen: `[]`).
+[[nodiscard]] QJsonObject quellenAlsJson(const kern::Parametertafel& tafel, const kern::Werte& werte);
+/// `coreSources` in die Werte lesen (je Name der Tafel ohne Kurve, der in `o` steht; ungerichtet).
+void quellenAusJson(const kern::Parametertafel& tafel, const QJsonObject& o, kern::Werte& werte);
 
 }  // namespace lumi::loop

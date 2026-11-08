@@ -61,7 +61,7 @@ Instrumente gehören nicht hierher: sie liegen im Benutzerordner der App unter
 `instruments` und heißen im Loop `user:<name>` (Entscheid P2 a).
 
 **Quellen der Werte (S177, Stufe 34f, IK2-12 a, WZ1 a, WZ2 a):** jede Kurve einer
-Kern-Schicht nennt in `sources` die Schlüssel ihrer Quellen (`.lvinst` Fassung 22);
+Kern-Schicht nennt in `sources` die Schlüssel ihrer Quellen (`.lvinst` seit Fassung 22);
 das Register ist **`instrument_quellen.json`** (Schlüssel, Nennung, Lizenz, ob die
 Nennung Pflicht ist, ob Werte daraus ausgeliefert werden dürfen; die Einträge aus
 InstrumentsCalculation `UEBERNAHME_LUMIVIZ.md` §3 und die des Flügels; `lumiviz` für
@@ -71,6 +71,16 @@ eigene Vorgaben). Es geht nicht mit. Die Nennungen schreibt
 `*Instrument Quellen*` wird rot, wenn ein Wert eine Quelle nennt, die nicht im
 Register steht oder aus der nichts ausgeliefert werden darf (etwa CC BY-ND), oder
 wenn eine Pflichtquelle in `CREDITS.md` fehlt.
+
+Seit S180 (QM1 a, `.lvinst` Fassung 23) tragen auch die Werte ohne Kurve ihre Quellen,
+im Block `coreSources` neben `coreParams` (je Name die Schlüssel, immer geschrieben).
+Die Quellen je mitgeliefertem Instrument stehen im Code bei den Vorlagen
+(`InstrumentModels`, `quellenDerTrommel`, `quellenDesStabs`; der Flügel aus der Tafel).
+Ändern sie sich, ohne dass ein Wert sich ändert — **ohne neu zu stimmen**:
+
+    LUMIVIZ_KERN_QUELLEN_SCHREIBEN=1 LumiViz.UnitTests --test-case="*Instrument Quellen QM1 a: die Kern*"
+    python asset/loop/instrument_katalog.py
+    python asset/loop/make_instrument_credits.py
 
 **Gestimmte Werte und Bezug (S177, Stufe 34f, IK2-10 a, IK2-11 a):** ein Kern kann
 Kurven tragen, die ein Werkzeug aus anderen Werten rechnet (gestimmt, mit dem Abdruck

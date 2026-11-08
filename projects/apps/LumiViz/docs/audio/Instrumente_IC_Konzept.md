@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.11.0
-> **Datum:** 2026-11-08 (Session 179)
+> **Version:** 0.12.0
+> **Datum:** 2026-11-08 (Session 180)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h in Arbeit (S179, TM1 a–TM4 a, QM1 a; gebaut bis auf QM1 a)
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -652,6 +652,11 @@ Stab mit Celesta/Wurlitzer nach Stulov und Rhodes nach Sønderbo, Flügel); `.lv
 ohne Kurve aus dem Code, `InstrumentTuneTool --credits` — die Herkunft halb in der Datei, halb im Code; ein abgeleitetes
 eigenes Instrument wüsste nicht, woher seine Zahlen kommen), c (tafelweit — 40 falsche Angaben in einer ausgelieferten
 Datei). Kippt auf b, wenn eigene Instrumente ihre Herkunft nicht tragen sollen.
+**Gebaut S180** (Journal J50–J52): `Werte::quellen` (nicht im Vergleich, nicht im Abdruck; nur an den Werten eines
+Instruments, eine Liste trägt sie als Ganzes), `coreSources` in Fassung 23, die Quellen je Vorlage in `InstrumentModels`
+(`quellenDerTrommel`, `quellenDesStabs`, `werteVon`; die Tafel trägt die der ersten Vorlage), die 17 Kern-Dateien ohne
+neu zu stimmen (`LUMIVIZ_KERN_QUELLEN_SCHREIBEN=1`), `CREDITS.md` mit 19 Quellen; InstrumentCore 0.4.0, InstrumentModels
+0.4.0; voller Lauf 1837 / 1837 unter Release-clang und Testing-MSVC.
 
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
@@ -712,6 +717,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.12.0 | 2026-11-08 | Session 180. §6: QM1 a gebaut, 34h erledigt. |
 | 0.11.0 | 2026-11-08 | Session 179. §6: Teilplan 34h (34h-1 bis 34h-7), TM1 a (Geschwindigkeit nach der Stufe in dB), TM2 a (Spielweisen als Spuren, feste Werte je Kit-Rolle und Drum-Spur), TM3 a (Kit nur Klasse 5), TM4 a (Namen, `synth_conga`). |
 | 0.10.0 | 2026-11-08 | Session 178. §6: Teilplan 34g (34g-1 bis 34g-7), KS1 a (Umfang als Wert des Instruments), KS2 a (`partnerAbstrahl` gestimmt, gestimmte Werte in Reihenfolge), KS3 a (Bogen am Vibraphon ganz), KS4 a (Namen, `synth_kalimba`, Steeldrum nicht ausgeliefert); 34g erledigt — Journal J31–J41, elf Abdrücke Bit für Bit wie IC, Rechenzeit höchstens 2,17 % (0,70 × Flügel). Abweichung: die Dateien schreibt ein Test mit dem Schreiber des Programms (Muster `grand_piano`), nicht `InstrumentTuneTool --create`. |
 | 0.9.0 | 2026-11-08 | Session 177. §6: Teilplan 34f, WZ1 a (Quellen am Wert, `.lvinst` Fassung 22), WZ2 a (Register `instrument_quellen.json`); 34f erledigt — Journal J27–J30. |

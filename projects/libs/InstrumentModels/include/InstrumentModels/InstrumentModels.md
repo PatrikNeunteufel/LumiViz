@@ -1,6 +1,6 @@
 # InstrumentModels — die Rechenkerne der Instrumentklassen
 
-> **Version:** 0.3.0
+> **Version:** 0.4.0
 > **Datum:** 2026-11-08
 > **Typ:** CppModuleDoc
 > **Status:** gebaut (Stufe 34d: der Flügel; 34g: Klasse 4, der Kern `bar`; 34h: Klasse 5, der Kern `membrane`)
@@ -40,11 +40,11 @@ dieser einen Bibliothek. Jede Übernahme steht im
 | `Kerne.hpp` | `kerne()`: die Fabrik der eingebauten Kerne — `hammerString` (34d), `bar` (34g), `membrane` (34h); die übrigen Klassen aus IC folgen |
 | `gemeinsam/Membran.hpp` | 34h, aus IC: die Moden kreisrunder Felle mit Luftlast (Rayleigh) und Kessel als Luftfeder, zwei Felle gekoppelt (`Fell`, `FellMode`, `Kessel`, `fellModen`, `formAn`, `besselNull`); der Löser `zerlegeSymmetrisch` aus dem Core |
 | `trommel/Trommel.hpp` | 34h, aus IC: das Spiel `TrommelSpiel` (Felle mit `Belag` als Werte, Kessel, Schlägel, Gleiten, Teppich, Rauschen, Wirbel), `TrommelAnschlag` (mit `tempo` von außen und der Spur `pitch`), `TrommelMessung`, `bereite`, `rechneTrommelTon`, `trommelNachklang`, `belagFunktion`, die sieben Vorgaben (`baueVorgabe…`) |
-| `trommel/TrommelKern.hpp` | der Kern: `kKernName` `"membrane"`, `kernTyp()` (Tafel mit dem Umfang je Instrument, Bezug in zwei Runden), die Spuren `stroke`, `roll`, `snaresOff`, `pitch`, `werteAus`/`spielAus`, `schlagAus`, `anschlagAus`, `vorlagen()` (die sieben mit Namen nach TM4 a), `TrommelKern` |
+| `trommel/TrommelKern.hpp` | der Kern: `kKernName` `"membrane"`, `kernTyp()` (Tafel mit dem Umfang je Instrument, Bezug in zwei Runden), die Spuren `stroke`, `roll`, `snaresOff`, `pitch`, `werteAus`/`spielAus`, `schlagAus`, `anschlagAus`, `vorlagen()` (die sieben mit Namen nach TM4 a, je mit den Quellen der Werte ohne Kurve, QM1 a), `werteVon` (die Werte einer Vorlage mit ihren Quellen; die Tafel trägt die der ersten Vorlage), `TrommelKern` |
 | `gemeinsam/Balken.hpp` | 34g, aus IC: Biegemoden eines Balkens aus finiten Elementen (Euler–Bernoulli, Lager frei, gelenkig, eingespannt), `formAn`, `freiFreiVerhaeltnisse`, `kragBetaL`; der Löser `zerlegeSymmetrisch` aus dem Core |
 | `gemeinsam/Reibung.hpp` | 34g, aus IC: die Reibung Bogen–Schwinger nach Galluzzo mit Haften und Hysterese (der Bogen am Stab, später Klasse 3) |
 | `stab/Stab.hpp` | 34g, aus IC: das Spiel `StabSpiel` (Kurven über den Umfang des Instruments), `StabAnschlag`, `StabMessung` (mit dem gehaltenen Teil für den Stimmer), `stabModen`, `stabNachklang`, `rechneStabTon`, `richteStabSpiel`, die zehn Vorgaben (`baueVorgabe…`, `alleStabSpiele`) |
-| `stab/StabKern.hpp` | der Kern: `kKernName` `"bar"`, `kernTyp()` (Tafel mit dem Umfang je Instrument, Auskunft, `erzeuge`), die Spuren `motor`, `bowed`, `malletOffset`, `damperPressure`, die gestimmten Werte `partnerGain` und `bowForce*`, `werteAus`/`spielAus`, `anschlagAus`, `vorlagen()` (die zehn mit Namen nach KS4 a), `StabKern` |
+| `stab/StabKern.hpp` | der Kern: `kKernName` `"bar"`, `kernTyp()` (Tafel mit dem Umfang je Instrument, Auskunft, `erzeuge`), die Spuren `motor`, `bowed`, `malletOffset`, `damperPressure`, die gestimmten Werte `partnerGain` und `bowForce*`, `werteAus`/`spielAus`, `anschlagAus`, `vorlagen()` (die zehn mit Namen nach KS4 a, je mit den Quellen der Werte ohne Kurve, QM1 a), `werteVon` (die Werte einer Vorlage mit ihren Quellen; die Tafel trägt die der ersten Vorlage), `StabKern` |
 | `hammer/HammerSaite.hpp` | das Spiel des Flügels: `HammerSaite` (22 Kurven über A0–C8), `kurvenAngaben()` (die eine Liste: Feld, Name in `coreParams`, Titel, Gruppe, Einheit, Skala, Grenzen), `richteHammerSaite`, `hammerSaiteVorgabe` (jede Kurve mit Belegkraft und Herkunft), `chorAn`, die Formeln nach RT-0425, Stulov & Kartofelev 2009 und Rigaud |
 | `hammer/HammerTon.hpp` | der Ton: `HammerAnschlag` (Taste, Hz, Stufe, Halten, Dämpfer, Rate, `tempoFaktor`, Moderator), `rechneHammerTon`, `hammerNachklang`, `hammerTempo`, Moden des Chors (`chorModen`, `ebenenModen`, `stossJeSaite`, `hammerTeiltonModen`), `kHammerKraftBezug`, `kSchalldruckBezug` |
 | `hammer/HammerKern.hpp` | der Kern: `kKernName` `"hammerString"`, `kernTyp()` (Tafel, Auskunft, `erzeuge`), `Pedalwerte` (Gruppe *Pedals*, FU2 a), `werteAus`/`saiteAus`/`pedalwerteAus` (Spiel ↔ Werte), `anschlagAus`, `HammerKern` |
@@ -118,6 +118,7 @@ dieser einen Bibliothek. Jede Übernahme steht im
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.4.0 | 2026-11-08 | Session 180. QM1 a: `Vorlage::quellen` und `werteVon` in `membrane` und `bar` — die Quellen je Instrument für die Werte ohne Kurve (Trommel je 2–5 der 9 Quellen; Celesta und Reed electric piano Stulov, Tine electric piano Sønderbo und Falaize & Hélie); die Tafel trägt die der ersten Vorlage; die Herkunft der Schlägel der Membran sagt jetzt, dass nur der Stock an der Kontaktzeit gesetzt ist (wie IC `Vorgaben.cpp`) (Journal J50, J51). |
 | 0.3.0 | 2026-11-08 | Session 179. 34h (TM1 a–TM4 a): Klasse 5 als Kern `membrane` (Trommel, Vorgaben, Adapter), geteilter Baustein `gemeinsam/Membran` (Journal J42–J46). |
 | 0.2.0 | 2026-11-08 | Session 178. 34g (KS1 a–KS4 a): Klasse 4 als Kern `bar` (Stab, Vorgaben, Adapter), geteilte Bausteine `gemeinsam/Balken` und `gemeinsam/Reibung`; der Flügel meldet `koerperAnDerSchicht` (Journal J31–J40). |
 | 0.1.0 | 2026-11-07 | Session 176. Angelegt mit 34d (BK1 a, FU1 a, FU2 a): der Flügel als Kern `hammerString`. |

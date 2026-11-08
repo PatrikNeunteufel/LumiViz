@@ -2,7 +2,8 @@
 Stufe 34f-2, S177).
 
 Liest das Register `instrument_quellen.json` und jede mitgelieferte `instruments/*.lvinst`: welche Schluessel die
-Kurven einer Kern-Schicht in `sources` nennen. Ab der Marke schreibt es die Nennung jeder benutzten Quelle mit
+Kurven einer Kern-Schicht in `sources` nennen und die Werte ohne Kurve in `coreSources` (seit Fassung 23, QM1 a,
+S180). Ab der Marke schreibt es die Nennung jeder benutzten Quelle mit
 Pflicht zur Nennung, dazu die benutzten ohne Pflicht; was vor der Marke steht, bleibt (von Hand). Bricht ab, wenn ein
 Schluessel nicht im Register steht oder aus einer Quelle stammt, deren Werte nicht ausgeliefert werden duerfen — wie
 der Waechter `*Instrument Quellen*` in den Unit-Tests.
@@ -10,8 +11,8 @@ der Waechter `*Instrument Quellen*` in den Unit-Tests.
 Aufruf (vom Ordner `asset/loop` aus oder mit Pfad): python make_instrument_credits.py [--pruefe]
 `--pruefe` schreibt nichts und meldet nur, ob die Datei so stimmt (Rueckgabe 1, wenn nicht).
 
-Nicht sichtbar fuer dieses Skript sind Quellen der Vorgaben, die keine Kurve sind (`ParameterAngabe::quellen` in der
-Tafel eines Kerns); der Waechter in C++ sieht sie und meldet, wenn eine davon Pflicht ist und hier fehlte.
+Ob jeder Wert der Tafel in `coreSources` steht, prueft der Waechter in C++ (er kennt die Tafel); dieses Skript
+nennt, was die Dateien nennen.
 """
 import json
 import sys
@@ -40,10 +41,11 @@ def benutzte(register):
         for schicht in daten.get("layers", []):
             if "core" not in schicht:
                 continue
-            for name, wert in sorted(schicht.get("coreParams", {}).items()):
-                if not isinstance(wert, dict) or "points" not in wert:
-                    continue
-                quellen = wert.get("sources", [])
+            # die Kurven tragen `sources`, die Werte ohne Kurve stehen in `coreSources` (QM1 a)
+            jeWert = [(name, wert.get("sources", [])) for name, wert in schicht.get("coreParams", {}).items()
+                      if isinstance(wert, dict) and "points" in wert]
+            jeWert += list(schicht.get("coreSources", {}).items())
+            for name, quellen in sorted(jeWert):
                 if not quellen:
                     fehler.append(f"{datei.stem}: {name} nennt keine Quelle")
                 for key in quellen:

@@ -187,55 +187,101 @@ const std::vector<Feld<TrommelSpiel>>& felder()
     return f;
 }
 
-/// Herkunft und Quellen der Vorgaben (tafelweit, WZ1 a; je Instrument stehen sie in `Vorgaben.cpp`).
+/// Belegkraft und Herkunft der Vorgaben (tafelweit, der Text nennt alle Instrumente); die Quellen stehen je Vorlage
+/// (QM1 a, `quellenDer…` unten), die Tafel traegt die der ersten Vorlage.
 void belege(ParameterAngabe& a)
 {
-    const auto setze = [&](Belegkraft b, std::string h, std::vector<std::string> q) {
+    const auto setze = [&](Belegkraft b, std::string h) {
         a.belegkraft = b;
         a.herkunft = std::move(h);
-        a.quellen = std::move(q);
     };
     const std::string& n = a.name;
     if (n == kNameNoteMin || n == kNameNoteMax)
-        setze(Belegkraft::Offen, "the key of the role in a General MIDI kit (low tom 45, bass drum 36, snare 38); timpani 25 inch C3–G3 (open)",
-              {"lumiviz"});
+        setze(Belegkraft::Offen, "the key of the role in a General MIDI kit (low tom 45, bass drum 36, snare 38); timpani 25 inch C3–G3 (open)");
     else if (n == "tunable")
-        setze(Belegkraft::Offen, "timpani: the key sets the tension, mode (1,1) on the key (IC F-5 a); air load not solved again (open)", {"lumiviz"});
+        setze(Belegkraft::Offen, "timpani: the key sets the tension, mode (1,1) on the key (IC F-5 a); air load not solved again (open)");
     else if (n == kFelle)
         setze(Belegkraft::Offen,
               "tom R 0.165 m, T 2000/1800 N/m, d1 1.25, d3 5e-4 (Avanzini & Marogna 2010 p. 898 — report only); timpani a 0.32 m, "
               "T 5360 N/m, 0.262 kg/m² (Packer 1993 — numbers only, report); snare 3325 N/m, 0.26 kg/m² (Bilbao, Torin & Chatziioannou — "
               "report only); tabla inlay (Sathej & Adhikari 2008 — report only, the reading of sigma squared open); sizes otherwise from "
-              "retailers, tensions open",
-              {"avanzini2010", "packer1993", "bilbao2014", "sathej2008"});
+              "retailers, tensions open");
     else if (n == "modesUpTo")
-        setze(Belegkraft::Rechnung, "the modes up to this frequency per instrument (IC Vorgaben.cpp), above it the statistical part", {"lumiviz"});
+        setze(Belegkraft::Rechnung, "the modes up to this frequency per instrument (IC Vorgaben.cpp), above it the statistical part");
     else if (n == "shellVolume")
         setze(Belegkraft::Offen, "pi·R²·depth (depths open); timpani as half ellipsoid with L/a = 1.2 (Packer 1993 p. 48 — numbers only); "
-                                 "conga and bongo open (0)",
-              {"packer1993", "lumiviz"});
+                                 "conga and bongo open (0)");
     else if (n == "strikePosition")
-        setze(Belegkraft::Offen, "timpani a quarter of the radius from the rim (report only); otherwise open", {"lumiviz"});
+        setze(Belegkraft::Offen, "timpani a quarter of the radius from the rim (report only); otherwise open");
     else if (n.rfind("mallet", 0) == 0)
         setze(Belegkraft::Offen,
-              "timpani mallet 0.028 kg, K = 1.6e8, alpha 2.54 (Bilbao, Torin & Chatziioannou — report only); stick, felt, finger, hand "
-              "set at the contact time 5–8 ms mf (Dahl 2011) and 3–6 ms (Wagner 2006), open",
-              {"bilbao2014", "dahl2011", "wagner2006"});
+              "timpani mallet 0.028 kg, K = 1.6e8, alpha 2.54 (Bilbao, Torin & Chatziioannou — report only); the stick of tom and snare "
+              "set at the contact time 5–8 ms mf (Dahl 2011) and 3–6 ms (Wagner 2006); felt, finger, hand open");
     else if (n == "velocityMax")
-        setze(Belegkraft::Offen, "ff speed: stick 8 m/s (Dahl 2011: an accent about twice the speed), timpani 5 m/s (Torin et al. — report only)",
-              {"dahl2011", "torin2014"});
+        setze(Belegkraft::Offen, "ff speed: stick 8 m/s (Dahl 2011: an accent about twice the speed), timpani 5 m/s (Torin et al. — report only)");
     else if (n == "glideStiffness" || n == "poisson")
         setze(Belegkraft::Offen, "pitch glide after Marogna, Avanzini & Bank 2010 eq. 20 (source); E 3.5 GPa, h 0.2 mm, nu 0.2 "
-                                 "(Avanzini & Marogna 2010 p. 898 — report only)",
-              {"marogna2010", "avanzini2010"});
+                                 "(Avanzini & Marogna 2010 p. 898 — report only)");
     else if (n == "bounces")
-        setze(Belegkraft::Offen, "1 (snare buzz 4–9 after Miura 2023 — report only)", {"miura2023"});
+        setze(Belegkraft::Offen, "1 (snare buzz 4–9 after Miura 2023 — report only, not used)");
     else
-        setze(Belegkraft::Offen, "IC Vorgaben.cpp (switch or setting; open)", {"lumiviz"});
+        setze(Belegkraft::Offen, "IC Vorgaben.cpp (switch or setting; open)");
 }
 
-Parametertafel baueTafel(const TrommelSpiel& vorgabe)
+/// QM1 a: die Quellen eines Werts ohne Kurve in einer Vorlage, sonst die eigene Vorgabe.
+std::vector<std::string> quellenIn(const Vorlage& v, std::string_view name)
 {
+    for (const auto& [n, q] : v.quellen)
+        if (n == name) return q;
+    return {"lumiviz"};
+}
+
+/// QM1 a (S180): die Quellen je Trommel nach `Vorgaben.cpp` und `Trommel.hpp`/`Membran.hpp` — nur, was die Werte dieses
+/// Instruments traegt (je Trommel 2–5 der 9 Quellen); alles andere ist die eigene Vorgabe.
+/// - Felle: d1, d3 und (ohne eigene Angabe) σ 0,27 nach Avanzini & Marogna bei allen; Pauke Packer, Snare Bilbao et al.,
+///   Tabla der Belag nach Sathej & Adhikari.
+/// - Gleiten (E·h, ν): Marogna et al. Gl. 20 mit den Zahlen von Avanzini & Marogna, bei allen (die Vorgabe der Struktur).
+/// - Stock (Tom, Snare): an die Kontaktzeit nach Dahl und Wagner gesetzt; der Paukenschlaegel nach Bilbao et al.
+/// - Geschwindigkeit ff: Stock 8 m/s nach Dahl (Tom, Snare), Pauke 5 m/s nach Torin et al.
+/// - Kessel: die Pauke nach Packer (L/a = 1,2).
+QuellenJeWert quellenDerTrommel(std::string_view name)
+{
+    const std::vector<std::string> gleiten = {"marogna2010", "avanzini2010"};
+    const std::vector<std::string> stock = {"dahl2011", "wagner2006"};
+    QuellenJeWert q = {{"glideStiffness", gleiten}, {"poisson", gleiten}};
+    const auto dazu = [&](std::string_view wert, std::vector<std::string> schluessel) { q.emplace_back(std::string(wert), std::move(schluessel)); };
+    const auto schlaegel = [&](const std::vector<std::string>& schluessel) {
+        for (const std::string_view w : {"malletMass", "malletStiffness", "malletExponent"}) dazu(w, schluessel);
+    };
+    if (name == "low_tom")
+    {
+        dazu(kFelle, {"avanzini2010"});
+        schlaegel(stock);
+        dazu("velocityMax", {"dahl2011"});
+    }
+    else if (name == "timpani")
+    {
+        dazu(kFelle, {"packer1993", "avanzini2010"});
+        dazu("shellVolume", {"packer1993"});
+        schlaegel({"bilbao2014"});
+        dazu("velocityMax", {"torin2014"});
+    }
+    else if (name == "snare_drum")
+    {
+        dazu(kFelle, {"bilbao2014", "avanzini2010"});
+        schlaegel(stock);
+        dazu("velocityMax", {"dahl2011"});
+    }
+    else if (name == "tabla")
+        dazu(kFelle, {"sathej2008", "avanzini2010"});
+    else  // bass_drum, conga, bongo: Felle mit d1, d3 (Bassdrum auch σ) nach Avanzini & Marogna
+        dazu(kFelle, {"avanzini2010"});
+    return q;
+}
+
+Parametertafel baueTafel(const Vorlage& vorlage)
+{
+    const TrommelSpiel& vorgabe = vorlage.spiel;
     Parametertafel t;
     t.kern = std::string(kKernName);
     t.titel = "Membrane";
@@ -261,6 +307,7 @@ Parametertafel baueTafel(const TrommelSpiel& vorgabe)
             l.eintraegeMax = 2;
             l.vorgabe = *v.finde(kFelle);
             belege(l);
+            l.quellen = quellenIn(vorlage, l.name);
             t.werte.push_back(std::move(l));
         }
         for (const Feld<TrommelSpiel>& f : felder())
@@ -269,6 +316,7 @@ Parametertafel baueTafel(const TrommelSpiel& vorgabe)
                 ParameterAngabe a = f.angabe;
                 a.vorgabe = f.lies(vorgabe);
                 belege(a);
+                a.quellen = quellenIn(vorlage, a.name);
                 a.klangbestimmend = a.name != kNameNoteMin && a.name != kNameNoteMax;
                 t.werte.push_back(std::move(a));
             }
@@ -294,20 +342,32 @@ bool getreten(const Tonauftrag& auftrag, std::string_view spurName, Frames begin
 
 const std::vector<Vorlage>& vorlagen()
 {
-    static const std::vector<Vorlage> v = {
-        {"low_tom", "Low tom", baueVorgabeTom()},       {"timpani", "Timpani", baueVorgabePauke()},
-        {"bass_drum", "Bass drum", baueVorgabeBassdrum()}, {"snare_drum", "Snare drum", baueVorgabeSnare()},
-        {"tabla", "Tabla", baueVorgabeTabla()},          {"conga", "Conga", baueVorgabeConga()},
-        {"bongo", "Bongo", baueVorgabeBongo()},
-    };
+    static const std::vector<Vorlage> v = [] {
+        std::vector<Vorlage> l = {
+            {"low_tom", "Low tom", baueVorgabeTom(), {}},       {"timpani", "Timpani", baueVorgabePauke(), {}},
+            {"bass_drum", "Bass drum", baueVorgabeBassdrum(), {}}, {"snare_drum", "Snare drum", baueVorgabeSnare(), {}},
+            {"tabla", "Tabla", baueVorgabeTabla(), {}},          {"conga", "Conga", baueVorgabeConga(), {}},
+            {"bongo", "Bongo", baueVorgabeBongo(), {}},
+        };
+        for (Vorlage& x : l) x.quellen = quellenDerTrommel(x.name);
+        return l;
+    }();
     return v;
+}
+
+Werte werteVon(const Vorlage& vorlage)
+{
+    Werte w = werteAus(vorlage.spiel);
+    for (const ParameterAngabe& a : kernTyp().tafel.werte)
+        if (a.art != WertArt::Kurve) w.setzeQuellen(a.name, quellenIn(vorlage, a.name));
+    return w;
 }
 
 const KernTyp& kernTyp()
 {
     static const KernTyp typ = [] {
         KernTyp t;
-        t.tafel = baueTafel(vorlagen().front().spiel);
+        t.tafel = baueTafel(vorlagen().front());
         t.auskunft.rechenweg = Rechenweg::Note;
         t.auskunft.stufeImNamen = true;
         t.auskunft.spuren = {std::string(kSpurSchlag), std::string(kSpurWirbel), std::string(kSpurOhneTeppich), std::string(spur::kPitch)};

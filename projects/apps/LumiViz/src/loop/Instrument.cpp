@@ -2080,7 +2080,11 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         // seit Fassung 21 (Stufe 34d, IK2-4 a, FU1 a): der Kern, seine Werte nach der Tafel und der Koerper, immer
         o[QStringLiteral("core")] = schicht.kernName;
         if (const kern::KernTyp* typ = kern::kerne().typ(schicht.kernName.toStdString()))
+        {
             o[QStringLiteral("coreParams")] = werteAlsJson(typ->tafel, schicht.kernWerte);
+            // seit Fassung 23 (QM1 a): die Quellen je Wert ohne Kurve, immer
+            o[QStringLiteral("coreSources")] = quellenAlsJson(typ->tafel, schicht.kernWerte);
+        }
         o[QStringLiteral("body")] = schicht.koerper;
     }
     // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
@@ -2157,7 +2161,11 @@ Schicht schichtAusJson(const QJsonObject& wurzel, std::vector<std::string>* fehl
     if (!neu.kernName.isEmpty())
     {
         if (const kern::KernTyp* typ = kern::kerne().typ(neu.kernName.toStdString()))
+        {
             neu.kernWerte = werteAusJson(typ->tafel, wurzel.value(QStringLiteral("coreParams")).toObject());
+            // seit Fassung 23 (QM1 a); fehlen sie, setzt `richteWerte` die der Tafel
+            quellenAusJson(typ->tafel, wurzel.value(QStringLiteral("coreSources")).toObject(), neu.kernWerte);
+        }
         neu.koerper = wurzel.value(QStringLiteral("body")).toString();
     }
     // Stufe 23d: die Tonabnehmer; fehlen sie, gelten die Vorgaben

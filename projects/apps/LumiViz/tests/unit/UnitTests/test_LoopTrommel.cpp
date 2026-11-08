@@ -86,7 +86,7 @@ Instrument instrumentVon(const trommel::Vorlage& v)
     Schicht s;
     s.name = QString::fromStdString(v.titel);
     s.kernName = QString::fromUtf8(trommel::kKernName.data(), static_cast<qsizetype>(trommel::kKernName.size()));
-    s.kernWerte = trommel::werteAus(v.spiel);
+    s.kernWerte = trommel::werteVon(v);  // mit den Quellen der Vorlage (QM1 a)
     std::vector<std::string> fehler;
     richteSchicht(s, &fehler);
     i.schichten[0] = s;

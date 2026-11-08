@@ -144,11 +144,18 @@ kern::Werte angabenAusJson(const std::vector<kern::ParameterAngabe>& angaben, co
 }
 
 /// WZ1 a: die Schluessel der Quellen, immer geschrieben (auch leer)
-QJsonArray quellenAlsJson(const std::vector<std::string>& quellen)
+QJsonArray schluesselAlsJson(const std::vector<std::string>& quellen)
 {
     QJsonArray a;
     for (const std::string& q : quellen) a.append(QString::fromStdString(q));
     return a;
+}
+
+std::vector<std::string> schluesselAusJson(const QJsonValue& v)
+{
+    std::vector<std::string> quellen;
+    for (const QJsonValue& q : v.toArray()) quellen.push_back(q.toString().toStdString());
+    return quellen;
 }
 
 }  // namespace
@@ -159,7 +166,7 @@ QJsonObject kurveAlsJson(const kern::Kurve& kurve)
                        {QStringLiteral("overrides"), paareAlsJson(kurve.abweichungen)},
                        {QStringLiteral("evidence"), text(kern::belegkraftName(kurve.belegkraft))},
                        {QStringLiteral("source"), QString::fromStdString(kurve.herkunft)},
-                       {QStringLiteral("sources"), quellenAlsJson(kurve.quellen)}};
+                       {QStringLiteral("sources"), schluesselAlsJson(kurve.quellen)}};
 }
 
 kern::Kurve kurveAusJson(const QJsonValue& wert)
@@ -171,8 +178,30 @@ kern::Kurve kurveAusJson(const QJsonValue& wert)
     kurve.belegkraft = kern::Belegkraft::Offen;
     (void)kern::belegkraftAusName(o.value(QStringLiteral("evidence")).toString().toStdString(), kurve.belegkraft);
     kurve.herkunft = o.value(QStringLiteral("source")).toString().toStdString();
-    for (const QJsonValue& q : o.value(QStringLiteral("sources")).toArray()) kurve.quellen.push_back(q.toString().toStdString());
+    kurve.quellen = schluesselAusJson(o.value(QStringLiteral("sources")));
     return kurve;
+}
+
+QJsonObject quellenAlsJson(const kern::Parametertafel& tafel, const kern::Werte& werte)
+{
+    QJsonObject o;
+    for (const kern::ParameterAngabe& a : tafel.werte)
+    {
+        if (a.art == kern::WertArt::Kurve) continue;
+        const std::vector<std::string>* q = werte.quellenVon(a.name);
+        o[QString::fromStdString(a.name)] = schluesselAlsJson(q != nullptr ? *q : std::vector<std::string>{});
+    }
+    return o;
+}
+
+void quellenAusJson(const kern::Parametertafel& tafel, const QJsonObject& o, kern::Werte& werte)
+{
+    for (const kern::ParameterAngabe& a : tafel.werte)
+    {
+        if (a.art == kern::WertArt::Kurve) continue;
+        const QString name = QString::fromStdString(a.name);
+        if (o.contains(name)) werte.setzeQuellen(a.name, schluesselAusJson(o.value(name)));
+    }
 }
 
 QJsonObject werteAlsJson(const kern::Parametertafel& tafel, const kern::Werte& werte)
