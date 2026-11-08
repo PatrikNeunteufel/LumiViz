@@ -2044,6 +2044,92 @@ TEST_SUITE("LoopInstrumentEditor")
         }
     }
 
+    TEST_CASE("Instrument-Creator 34g: das Vibraphon (Kern bar) — Core und Level ohne Body, Wahl und Haken, Umfang C3 bis F6, Save as")
+    {
+        // KS1 a (der Umfang des Instruments), CK1 a (Body nur, wo der Koerper ausserhalb des Kerns liegt — der Stab rechnet
+        // seinen Partner selbst, IK2-10 a). `LUMIVIZ_CREATOR_CORE_BILD=<datei.png>` legt dazu ein Bild mit `_bar` ab.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        const Instrument* gefunden = findeInstrument(QStringLiteral("vibraphone"));
+        REQUIRE_MESSAGE(gefunden != nullptr, "vibraphone nicht gefunden — aus dem Projekt-Root starten");
+        const Instrument vib = *gefunden;
+        REQUIRE(istKernSchicht(vib.schichten[0]));
+        CHECK(vib.schichten[0].kernName == QStringLiteral("bar"));
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        creator.oeffne(vib);
+        SignalWeg* weg = creator.signalWeg();
+        REQUIRE(weg != nullptr);
+        weg->resize(1400, 40);
+        QStringList namen;
+        for (const WegKasten& einer : weg->kaesten()) namen << einer.titel;
+        CHECK(namen == QStringList{QStringLiteral("Core"), QStringLiteral("Level")});
+        auto* marke = creator.findChild<QLabel*>(QStringLiteral("creatorUnmeasured"));
+        REQUIRE(marke != nullptr);
+        CHECK_FALSE(marke->isHidden());  // Z2 a: ungemessen
+        // Level ist der zweite Kasten; Body gibt es nicht
+        klick(*weg, weg->kastenRect(1).center());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleLevel);
+        creator.waehleStelle(InstrumentCreator::kStelleKoerper);  // gibt es nicht: zurueck auf Source
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
+        klick(*weg, weg->kastenRect(1).center());
+        klick(*weg, weg->kastenRect(0).center());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
+
+        // die Tafel: Gruppen, Wahl, Haken, Ganzzahl mit Taste, Kurven ueber den Umfang des Instruments
+        KernAnsicht* ansicht = creator.kernAnsicht();
+        REQUIRE(ansicht != nullptr);
+        const lumi::kern::Parametertafel& tafel = lumi::kern::kerne().typ("bar")->tafel;
+        QStringList gruppen;
+        for (const std::string& g : tafel.gruppen) gruppen << QString::fromStdString(g);
+        CHECK(ansicht->gruppen() == gruppen);
+        CHECK(ansicht->zeilen().size() == static_cast<qsizetype>(tafel.werte.size()));
+        CHECK(ansicht->zeilen().contains(QStringLiteral("Partner / Partner: closedTube [Open]")));
+        CHECK(ansicht->zeilen().contains(QStringLiteral("Motor / Motor: on [Open]")));
+        CHECK(ansicht->zeilen().contains(QStringLiteral("Bow / Bowed from key: D#4 (63) [Computed]")));
+        auto* t60 = ansicht->findChild<KernKurvenBild*>(QStringLiteral("creatorCoreCurve_t60"));
+        REQUIRE(t60 != nullptr);
+        CHECK(t60->werte().size() == static_cast<std::size_t>(89 - 48 + 1));
+        CHECK_FALSE(creator.geaendert());
+
+        // Save as: Bit fuer Bit, klingt gleich
+        REQUIRE(creator.speichereAlsEigenes(QStringLiteral("Mein Vibraphon")));
+        QFile kopie(creator.datei());
+        REQUIRE(kopie.open(QIODevice::ReadOnly));
+        const QJsonObject kopieJson = QJsonDocument::fromJson(kopie.readAll()).object();
+        QFile vorlage(QStringLiteral("asset/loop/instruments/vibraphone.lvinst"));
+        REQUIRE(vorlage.open(QIODevice::ReadOnly));
+        const QJsonObject vorlageJson = QJsonDocument::fromJson(vorlage.readAll()).object();
+        CHECK(kopieJson.value(QStringLiteral("layers")) == vorlageJson.value(QStringLiteral("layers")));
+        CHECK(kopieJson.value(QStringLiteral("keyboard")) == vorlageJson.value(QStringLiteral("keyboard")));
+        Instrument gelesen;
+        REQUIRE(ladeInstrument(creator.datei(), gelesen));
+        CHECK(gelesen.schichten == vib.schichten);
+        CHECK(rendereTon(gelesen, 69, 300.0, 48000).daten == rendereTon(vib, 69, 300.0, 48000).daten);
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_CREATOR_CORE_BILD"); !ziel.isEmpty())
+        {
+            InstrumentCreator gezeigt;
+            gezeigt.oeffne(vib);
+            gezeigt.resize(1500, 900);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();
+            QCoreApplication::processEvents();
+            QFileInfo info(ziel);
+            CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_bar.") + info.suffix())));
+        }
+    }
+
     TEST_CASE("Instrument-Editor: Edit instrument oeffnet den Creator — gespeichert nennt die Basis seine Datei")
     {
         int argc = 1;

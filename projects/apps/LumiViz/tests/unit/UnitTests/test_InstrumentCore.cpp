@@ -558,6 +558,151 @@ TEST_CASE("InstrumentCore 34c Parametertafel: gestimmte Werte und ungemessen")
     CHECK(wertAlsText(1.0) == "d3ff0000000000000");
 }
 
+namespace
+{
+
+ParameterAngabe tasteAngabe(std::string name, std::int64_t vorgabe)
+{
+    ParameterAngabe a;
+    a.name = std::move(name);
+    a.titel = a.name;
+    a.gruppe = "Keys";
+    a.art = WertArt::Ganzzahl;
+    a.darstellung = Darstellung::Regler;
+    a.einheit = "MIDI";
+    a.von = kNoteMin;
+    a.bis = kNoteMax;
+    a.vorgabe = vorgabe;
+    a.klangbestimmend = false;
+    return a;
+}
+
+/// Eine Tafel fuer viele Instrumente (KS1 a): moeglich 21–108, das Instrument traegt seinen Umfang.
+Parametertafel vieleTafel()
+{
+    Parametertafel t;
+    t.kern = "testMany";
+    t.titel = "Test many";
+    t.noteMin = kNoteMin;
+    t.noteMax = kNoteMax;
+    t.gruppen = {"Keys", "Tone"};
+    t.werte.push_back(tasteAngabe("noteMin", 48));
+    t.werte.push_back(tasteAngabe("noteMax", 72));
+    ParameterAngabe k;
+    k.name = "weight";
+    k.titel = k.name;
+    k.gruppe = "Tone";
+    k.art = WertArt::Kurve;
+    k.darstellung = Darstellung::Kurve;
+    k.von = 0.1;
+    k.bis = 10.0;
+    k.vorgabe = kurveAusPunkten({{48, 1.0}, {72, 2.0}}, Belegkraft::Quelle, "test");
+    t.werte.push_back(k);
+    t.umfangVon = "noteMin";
+    t.umfangBis = "noteMax";
+    return t;
+}
+
+}  // namespace
+
+TEST_CASE("InstrumentCore 34g Tastenumfang je Instrument (KS1 a)")
+{
+    const Parametertafel t = vieleTafel();
+    CHECK(pruefeTafel(t).empty());
+    // ohne Namen gilt der Umfang der Tafel (der Fluegel bleibt, wie er ist)
+    CHECK(tastenumfang(pruefTafel(), vorgaben(pruefTafel())) == std::pair<int, int>{36, 96});
+    CHECK(tastenumfang(t, Werte{}) == std::pair<int, int>{kNoteMin, kNoteMax});
+
+    Werte w = vorgaben(t);
+    CHECK(tastenumfang(t, w) == std::pair<int, int>{48, 72});
+    // die Kurven richten sich nach dem Umfang des Instruments
+    w.setze("noteMin", std::int64_t{60});
+    w.setze("weight", kurveAusPunkten({{40, 1.0}, {100, 3.0}}, Belegkraft::Quelle, "test"));
+    CHECK(richteWerte(t, w).empty());
+    const Kurve& k = w.kurve("weight");
+    REQUIRE(k.punkte.size() == 2);
+    CHECK(k.punkte.front().note == 60);
+    CHECK(k.punkte.back().note == 72);
+    // eine leere Kurve bekommt die Vorgabe der Tafel — im Umfang des Instruments, mit Herkunft und Quellen (34g); ein
+    // zweites Richten aendert nichts
+    Werte leer = w;
+    Kurve ohne;
+    leer.setze("weight", ohne);
+    REQUIRE(richteWerte(t, leer).empty());
+    CHECK(leer.kurve("weight").punkte == std::vector<NotenWert>{{60, 1.0}, {72, 2.0}});
+    CHECK(leer.kurve("weight").herkunft == "test");
+    const Werte einmal = leer;
+    CHECK(richteWerte(t, leer).empty());
+    CHECK(leer == einmal);
+    // die Probe des Bezugs an der Mitte des Instruments
+    const Tonauftrag p = bezugsProbe(t, w);
+    REQUIRE(p.noten.size() == 1);
+    CHECK(p.noten.front().note == 66);
+    CHECK(bezugsProbe(t).noten.front().note == (kNoteMin + kNoteMax) / 2);
+    // ausserhalb der Tafel geklemmt; verkehrt: Fehler, gerichtet auf den der Tafel
+    w.setze("noteMax", std::int64_t{200});
+    CHECK(tastenumfang(t, w) == std::pair<int, int>{60, kNoteMax});
+    w.setze("noteMin", std::int64_t{80});
+    w.setze("noteMax", std::int64_t{70});
+    CHECK(tastenumfang(t, w) == std::pair<int, int>{kNoteMin, kNoteMax});
+    const std::vector<std::string> f = richteWerte(t, w);
+    REQUIRE(f.size() == 1);
+    CHECK(f.front().find("reversed") != std::string::npos);
+
+    // die Tafel prueft die Namen
+    Parametertafel einer = t;
+    einer.umfangBis.clear();
+    CHECK_FALSE(pruefeTafel(einer).empty());
+    Parametertafel keineGanzzahl = t;
+    keineGanzzahl.umfangVon = "weight";
+    CHECK_FALSE(pruefeTafel(keineGanzzahl).empty());
+    Parametertafel verkehrt = t;
+    verkehrt.werte[0].vorgabe = std::int64_t{80};
+    CHECK_FALSE(pruefeTafel(verkehrt).empty());
+    Parametertafel aussen = t;
+    aussen.noteMin = 50;
+    CHECK_FALSE(pruefeTafel(aussen).empty());
+}
+
+TEST_CASE("InstrumentCore 34g gestimmte Werte in Reihenfolge (KS2 a)")
+{
+    Parametertafel t = pruefTafel();
+    t.bezugWert = "outputReference";
+    // ein zweiter gestimmter Wert nach `lengthTuned`, ohne genannte Abhaengigkeiten: er haengt an allem davor
+    ParameterAngabe zweit = t.werte[5];
+    REQUIRE(zweit.name == "lengthTuned");
+    zweit.name = "windowTuned";
+    zweit.abhaengigVon.clear();
+    t.werte.insert(t.werte.begin() + 6, zweit);
+    CHECK(pruefeTafel(t).empty());
+
+    Werte w = vorgaben(t);
+    const std::string a1 = eingabenAbdruck(t, w, "lengthTuned");
+    const std::string b1 = eingabenAbdruck(t, w, "windowTuned");
+    // aendert sich der fruehere gestimmte Wert, veraltet der spaetere mit — der fruehere nicht durch den spaeteren
+    w.setze("lengthTuned", kurveKonstant(1.5, Belegkraft::Rechnung, "tuned", 36, 96));
+    CHECK(eingabenAbdruck(t, w, "lengthTuned") == a1);
+    CHECK(eingabenAbdruck(t, w, "windowTuned") != b1);
+    const std::string b2 = eingabenAbdruck(t, w, "windowTuned");
+    w.setze("windowTuned", kurveKonstant(0.7, Belegkraft::Rechnung, "tuned", 36, 96));
+    CHECK(eingabenAbdruck(t, w, "lengthTuned") == a1);
+    CHECK(eingabenAbdruck(t, w, "windowTuned") == b2);
+    // der Bezug zaehlt weiter nicht
+    w.setze("outputReference", 3.0);
+    CHECK(eingabenAbdruck(t, w, "windowTuned") == b2);
+
+    // eine Abhaengigkeit auf einen gestimmten Wert nur, wenn er davor steht
+    Parametertafel genannt = t;
+    genannt.werte[6].abhaengigVon = {"lengthTuned", "t60"};
+    CHECK(pruefeTafel(genannt).empty());
+    Parametertafel spaeter = t;
+    spaeter.werte[5].abhaengigVon = {"windowTuned"};
+    CHECK_FALSE(pruefeTafel(spaeter).empty());
+    Parametertafel selbst = t;
+    selbst.werte[5].abhaengigVon = {"lengthTuned"};
+    CHECK_FALSE(pruefeTafel(selbst).empty());
+}
+
 TEST_CASE("InstrumentCore 34c Fabrik und normiere")
 {
     // die eingebauten Kerne stehen in InstrumentModels (BK1 a, test_InstrumentModels.cpp)

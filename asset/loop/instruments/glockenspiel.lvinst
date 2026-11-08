@@ -1,0 +1,327 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 22,
+    "title": "Glockenspiel",
+    "category": "percussion",
+    "genres": ["Ambient"],
+    "description": "A uniform steel bar per key (free-free 1 : 2.757 : 5.404) struck by a mallet, without resonator; unmeasured.",
+    "level": 0.6842,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": false,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": false,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 1.2],
+                        [108, 1.2]
+                    ],
+                    "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
+                    "sources": ["rucz2021"]
+                },
+                "damper": "none",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 0.2],
+                        [108, 0.2]
+                    ],
+                    "source": "ohne Daempfer",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "offen: CCRMA „All but the lowest transverse mode die out quickly“ (nur Bericht) → κ = 1",
+                    "sources": ["ccrma"]
+                },
+                "excitation": "strike",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "der Stab klingt auf seiner ersten Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.025,
+                "malletRelaxation": 0,
+                "malletStiffness": 1581.1388300841897,
+                "mass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 0.05],
+                        [108, 0.05]
+                    ],
+                    "source": "offen: 50 g (Einschaetzung, kleiner Stahlstab); M4",
+                    "sources": ["lumiviz"]
+                },
+                "motor": false,
+                "noteMax": 108,
+                "noteMin": 79,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: auf der Laengsachse (dann ohne Torsion); M1",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 49378.26953125,
+                "oversampling": 64,
+                "partner": "none",
+                "partnerDamping": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [79, 0.0088],
+                        [108, 0.0088]
+                    ],
+                    "source": "ξ_a,1 = 8,8e-3, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1); ueber den Umfang offen (M5)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no acoustic partner",
+                    "sources": ["lumiviz"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 65,
+                "partnerRatio": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [79, 1.0008600917431194],
+                        [108, 1.0008600917431194]
+                    ],
+                    "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
+                    "sources": ["rucz2021"]
+                },
+                "pickup": "acoustic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0,
+                "pickupPosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 0.5],
+                        [108, 0.5]
+                    ],
+                    "source": "akustisch — ohne Bedeutung",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: alle Moden gleich gewichtet (Ausgang ist q̈, die Hoehen schon ∝ ω²); M3",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 2.7565],
+                        [108, 2.7565]
+                    ],
+                    "source": "gleichfoermiger Stahlstab ohne Unterschnitt: frei–frei 1 : 2,757 : 5,404 (Rechnung, Balken)",
+                    "sources": ["lumiviz"]
+                },
+                "ratio3": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [79, 5.4039],
+                        [108, 5.4039]
+                    ],
+                    "source": "gleichfoermiger Stahlstab ohne Unterschnitt: frei–frei 1 : 2,757 : 5,404 (Rechnung, Balken)",
+                    "sources": ["lumiviz"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 0.5],
+                        [108, 0.5]
+                    ],
+                    "source": "offen: Mitte (messplan M3: „Mitte üblich“, Einschaetzung); Spur Schlaegel-Ort (T3b a)",
+                    "sources": ["lumiviz"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 14.023165799949878],
+                        [93, 6.246610217722395],
+                        [108, 2.6263760697849943]
+                    ],
+                    "source": "offen: ξ = 1e-4 (Stahl, Einschaetzung); M2 an Iowa „Bells“",
+                    "sources": ["lumiviz"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 3],
+                        [108, 3]
+                    ],
+                    "source": "offen, Platzhalter ohne Wirkung bei Versatz 0 (La Favre misst die erste Torsion — nur Bericht, ohne Zahl); zu setzen am Modalfit (M1)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [79, 5.456484747062209],
+                        [93, 2.430587633355018],
+                        [108, 1.0219362139241221]
+                    ],
+                    "source": "offen: wie die erste Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "9dfcdefb51ebe6a55970e3aa93835aa97b37539d2af357859d87a064aeb04488",
+                    "bowForceHighMf": "653c1d939cf3232cbe5551a017c6fa63cb97ca1e34d1278324013d716ff082e4",
+                    "bowForceHighPp": "0628b8e0f61b2b03a04a02b3c10f1a1c7912ece79d5fad038bcfd38573b40960",
+                    "bowForceLowFf": "a5b80f21a935c6b83f7b5f5126166aed484dba83570551e00a657fda1ddb461d",
+                    "bowForceLowMf": "f4d7a29cb08e487a35a29804a61696690e0eed8d77b4314687c44ada0f548473",
+                    "bowForceLowPp": "e261e71c94cfedb6aebf14a59c4485b27144f044c8a03809a95db404ba7e6887",
+                    "partnerGain": "173f77e287701e154bd090fb21b413cffff2e9b0769597a9c242cc60f7c4eb40"
+                },
+                "velocityMax": 5
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Glockenspiel",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 79,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "none"
+        },
+        "range": [79, 108]
+    }
+}

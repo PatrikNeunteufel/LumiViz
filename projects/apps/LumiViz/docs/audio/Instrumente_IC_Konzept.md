@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.9.0
-> **Datum:** 2026-11-08 (Session 177)
+> **Version:** 0.10.0
+> **Datum:** 2026-11-08 (Session 178)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); nächster Schritt 34g
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); nächster Schritt 34h
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -543,6 +543,59 @@ das Feld nicht führen kann (es bezieht `Kurve` aus dem Core-Paket).
 C++-Wächter bräuchte eine erzeugte Kopie), c (`.tsv` — keine Listen, keine Tabulatoren in Nennungen). Kippt, wenn die
 App das Register zeigen soll (dann in `Asset.cmake`, Format bleibt).
 
+**Teilplan 34g** (S178, Zuschnitt nach IK2-7 a, IK2-8 a, IK2-11 a, KS1 a–KS4 a; Nummern fest). Gefunden: IC Einteilung A
+nennt neun Instrumente der Klasse 4 (die Steeldrum ist Deluxe); IC führt je Instrument einen Abdruck des Tons unter Windows
+(`rechnung/werte/abdruck_msvc.txt`, `stab_<Name>_mitte_a-12` und `stab_Vibraphon_gestrichen_m72_mf`; Windows-clang ist
+bitgleich mit MSVC, S172) — der Beleg des Umzugs; `Modal` und `zerlegeSymmetrisch` liegen im Core, `Balken` und `Reibung`
+nicht; Celesta und Wurlitzer nehmen den Filzhammer aus `hammer::stulovHammer…` (in `InstrumentModels/hammer` vorhanden);
+`rechneStabTon` ruft für den Bogen `messung::tonhoehe` (IC `Stab.cpp:489`) — das Messen zieht nach IK2-2 a in den Stimmer;
+`partnerAbstrahl` wird beim Bau der Vorgabe durch das Modell gesucht (IC `Vorgaben.cpp:124–148`); `kalimba` kollidiert
+zusätzlich, und `make_examples.py`/`make_genres.py` schreiben die heutigen `marimba`, `vibraphone`, `kalimba` selbst.
+
+| Nr. | Inhalt | fertig, wenn |
+|---|---|---|
+| 34g-1 | `InstrumentModels/gemeinsam/Balken` (IC, nutzt `zerlegeSymmetrisch` des Core) und `gemeinsam/Reibung` (KS3 a); Fälle aus IC `test_gemeinsam` | die übernommenen Fälle grün mit den IC-Grenzen |
+| 34g-2 | Core nach KS1 a (Umfang aus den Werten) und KS2 a (gestimmte Werte in Reihenfolge der Tafel), `InstrumentCore` 0.3.0 | Flügel unberührt: `Loop Werte`, `Klangfassung`, Flügel-Bezug gleich; Fälle zu Tafel und Abdruck |
+| 34g-3 | Kern `bar` unter `InstrumentModels/stab/` (`lumi::kern::stab`): Tafel mit den Gruppen aus IC `Stab.hpp`, Werte ↔ Spiel, Adapter Rechenweg Note (Dämpfer ab `halten` wie beim Flügel; Spuren `motor`, `bowed`, `malletOffset`, `damperPressure` — im Loop erst mit 31g; ohne Spur `motor` kein Motor), `stufeAus` → `kern::anschlagStufe`; die zehn Vorgaben in `stab/Vorgaben.cpp` mit Quellen-Schlüsseln (Steeldrum eingeschlossen) | je Instrument der Ton Bit für Bit gleich IC `abdruck_msvc.txt` (11 Abdrücke); die Fälle aus IC `test_stab` grün |
+| 34g-4 | Stimmer `bar` in `InstrumentMeasure/Stimmen`: `partnerAbstrahl` (KS2 a), Bogenfenster (KS3 a, Tonhöhe dort gemessen); `InstrumentTuneTool --create <kern> <vorgabe> <datei>` | Fenster Bit für Bit gleich IC `Stimmung.inc`, `partnerAbstrahl` gleich der IC-Vorgabe; Wächter Stimmung und Bezug grün, rot bei absichtlich veralteten Werten (Schreibweg erstmals an einem stimmenden Kern, J30) |
+| 34g-5 | die neun `.lvinst` (`--create`, `--reference`, Kopf aus `instrument_katalog.py`), Register und `CREDITS.md`, `synth_…` in den Generatoren und Skript für die Loops (erst in einer Kopie, vergleichen), Pegel `--messung` und `--loops`, Zahlen je Art in den Tests | `Loop Werte` nur Namen geändert und neue Zeilen; `Klangfassung` nachgeführt; Quellen-Wächter grün |
+| 34g-6 | `bars_demo.lvloop`; Hörproben `LUMIVIZ_34G_WAV=<Ordner>` (je Instrument tief/mitte/hoch bei pp/mf/ff, Synth gegen IC, `hoertest.json`); Fall `*34g Rechenzeit*` (Anteil und Verhältnis zum Flügel); IC-Fall B6 „Modalfit am Modell“ in `test_InstrumentMeasure`; Creator-Fall mit dem Vibraphon (Auswahl, Haken, Umfang aus den Werten; Bild) | Rechenzeit ≤ 4,6 % am schwersten Ton (RZ1-1 a, dreimal allein); Kennzahl im Bericht |
+| 34g-7 | Modul-Doku, Journal J31 ff., Konzept, Bericht der Klasse `docs/modellierung/platte-stab/` (Rechenzeit, Kennzahl, Datum, Maschine), Pakete `instrumentcore` 0.3.0, `instrumentmodels` 0.2.0 | **voller Lauf** unter beiden Compilern (Core geändert, neue Instrumente; UF17-1 a) |
+
+Abgeleitet (Muster 34d/34f, `vorgabeHammerSaite`): die Vorgaben bleiben als Herleitung im Code und als Vorgabe der Tafel;
+die Datei schreibt einmal das Werkzeug, ein Wächter vergleicht mitgelieferte Datei und Vorgabe.
+
+✅ **KS1 a** (Patrik S178, „alles a“): **Der Tastenumfang ist ein Wert des Instruments.** Die Tafel nennt zwei
+Ganzzahl-Werte `noteMin`/`noteMax` (Gruppe *Keys*; Felder `umfangVon`/`umfangBis` wie `bezugWert`); `richteWerte` richtet
+die Kurven auf diesen Umfang, `bezugsProbe` nimmt seine Mitte, die Kern-Ansicht zeigt ihn; die Tafel trägt den möglichen
+Umfang (21–108); ein Kern ohne die Namen (Flügel) bleibt wie heute. Grund: nur so bleibt der Ton Bit für Bit gleich IC
+(IC normiert an der Mitte des Instruments) und ein Kern ein Verfahren. Verworfen: b (Kern-Typ je Instrument — neun gleiche
+Tafeln, Umfang eigener Instrumente fest), c (weitester Umfang in der Tafel — der Bezug wiche für 9 von 9 ab). Kippt, wenn
+kein Kern außer `bar` je Instrument einen Umfang braucht (Klasse 10 braucht ihn).
+
+✅ **KS2 a** (Patrik S178): **`partnerAbstrahl` ist ein gestimmter Wert**, das Ziel steht in der Tafel (`partnerGainDb` 15,
+Quelle Rucz & Ulveczki 2021 S. 7; `partnerGainNote` 65 bzw. 84 bei der Celesta). Ein gestimmter Wert darf von gestimmten
+Werten abhängen, die vor ihm in der Tafel stehen; gestimmt wird in dieser Reihenfolge, der Abdruck enthält die vorgelagerten
+(die Bogenfenster veralten mit dem Partner). Grund: die belegte Größe ist die dB-Zahl, nicht das Gewicht; IK2-11 a „kein
+stiller Ersatz“. Verworfen: b (Gewicht einmal gerechnet — nach einer Änderung still falsch), c (gestimmt, aber die Fenster
+ohne die Abhängigkeit). Kippt, wenn das Stimmen gemessen deutlich über einer Sekunde je Instrument liegt (dann wann, nicht
+wie).
+
+✅ **KS3 a** (Patrik S178): **Der Bogen am Vibraphon zieht ganz um** — `Reibung` nach `InstrumentModels/gemeinsam`, die
+Fenster als gestimmte Werte (Stimmer in `InstrumentMeasure`, Tonhöhe dort gemessen), gespielt über die Spur `bowed` (0/1 am
+Beginn der Note), gestrichen ab `bowedFrom` (Ganzzahl, 63, Herkunft: IC-Test der oberen Lage), darunter der Anschlag.
+Prüfung: Fenster gleich `Stimmung.inc`, Ton gleich `stab_Vibraphon_gestrichen_m72_mf`, ±10 Cent wie in IC, Rechenzeit
+gestrichen ≤ 4,6 %. Grund: ein vollständiger, in IC belegter Satz; IK2-7 a schließt nur die tiefe Lage aus. Verworfen: b
+(Bogen mit Klasse 3 — 10 von 11 Abdrücken, später alles zweimal anfassen). Kippt, wenn die Rechenzeit gestrichen über
+4,6 % liegt.
+
+✅ **KS4 a** (Patrik S178): **Namen** — Kern `bar`; `marimba`, `xylophone`, `vibraphone`, `glockenspiel`, `tubular_bells`,
+`celesta`, `kalimba`, `tine_electric_piano` (Rhodes), `reed_electric_piano` (Wurlitzer); umbenannt `marimba` →
+`synth_marimba`, `vibraphone` → `synth_vibraphone`, `kalimba` → `synth_kalimba` (Loops `bells_demo`, `dnb`, `hiphop`,
+`lofi`, `trap`, `waltz`, die Generatoren, Katalog, Pegel); die Steeldrum umgezogen, nicht ausgeliefert (Deluxe, nicht in
+A). Verworfen: b (`electric_piano`/`reed_piano` — zu allgemein neben CP-70 und Clavinet in 34i), c (Steeldrum als
+`steelpan` — Tonfelder sind Platzhalter, IC `Vorgaben.cpp:412`). Kippt, wenn Patrik die Steeldrum trotzdem hören will.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -602,6 +655,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.10.0 | 2026-11-08 | Session 178. §6: Teilplan 34g (34g-1 bis 34g-7), KS1 a (Umfang als Wert des Instruments), KS2 a (`partnerAbstrahl` gestimmt, gestimmte Werte in Reihenfolge), KS3 a (Bogen am Vibraphon ganz), KS4 a (Namen, `synth_kalimba`, Steeldrum nicht ausgeliefert); 34g erledigt — Journal J31–J41, elf Abdrücke Bit für Bit wie IC, Rechenzeit höchstens 2,17 % (0,70 × Flügel). Abweichung: die Dateien schreibt ein Test mit dem Schreiber des Programms (Muster `grand_piano`), nicht `InstrumentTuneTool --create`. |
 | 0.9.0 | 2026-11-08 | Session 177. §6: Teilplan 34f, WZ1 a (Quellen am Wert, `.lvinst` Fassung 22), WZ2 a (Register `instrument_quellen.json`); 34f erledigt — Journal J27–J30. |
 | 0.8.0 | 2026-11-08 | Session 177. §6: Teilplan 34e (34e-1 bis 34e-5), ME1 a (`AudioCore`), ME2 a (`zerlegeSymmetrisch` in den Core), ME3 a (`setzen` mit Beobachter und Startzustand, die Flügel-Suche darüber), ME4 a (Endregel aus IC in beiden LM); 34e erledigt — Journal J19–J26, `salamander_*.txt` unverändert, voller Lauf 1789 / 1789 unter beiden Compilern. |
 | 0.7.0 | 2026-11-07 | Session 176. 34d erledigt — der Flügel als Kern `hammerString` in `InstrumentModels`, `.lvinst` Fassung 21, Creator nach FU3 a; Journal J12–J18; Flügel-Bezug `hammer_bezug_windows.txt` Bit für Bit unter beiden Compilern, `Loop Werte` unverändert, Rechenzeit wie 34c, voller Lauf 1770 / 1770. §6: Zeilen 34c/34d nach BK1 a; §5 IK2-2 a Verweis auf den Bezug je Plattform. |

@@ -79,7 +79,8 @@ struct Kurve
 [[nodiscard]] double wertAn(const Kurve& kurve, int note, Skala skala);
 
 /// Eine Kurve in ihre Grenzen: Noten auf `noteMin` … `noteMax`, nach Note sortiert, je Note der erste Eintrag,
-/// Werte auf `von` … `bis` (nicht endliche fallen weg). Fehlen alle Stuetzpunkte, gilt `ersatz`.
+/// Werte auf `von` … `bis` (nicht endliche fallen weg). Fehlen alle Stuetzpunkte, gilt `ersatz` mit seiner Belegkraft,
+/// Herkunft und seinen Quellen, ebenso gerichtet (34g: eine Tafel fuer viele Instrumente, KS1 a).
 void richteKurve(Kurve& kurve, double von, double bis, const Kurve& ersatz, int noteMin = kNoteMin, int noteMax = kNoteMax);
 
 /// Eine Kurve aus Punkten mit Herkunft.

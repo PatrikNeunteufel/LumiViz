@@ -9,6 +9,7 @@
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/FormFenster.hpp"
+#include "InstrumentModels/Kerne.hpp"  // die Auskunft des Kerns: Koerper an der Schicht (34g)
 #include "loop/KernAnsicht.hpp"  // eine Kern-Schicht ansehen (34d, FU3 a)
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/Pegel.hpp"  // Match level (27f)
@@ -71,6 +72,15 @@ const char* const kLetzterOrdner = "loop/lastInstrumentDir";
 const char* const kLetzterSampleOrdner = "loop/lastSampleDir";
 const char* const kLetzterFormOrdner = "loop/lastShapeDir";
 const char* const kGruppeZu = "loop/creatorFolded/";  ///< dahinter der Schluessel der Gruppe
+
+/// Eine Kern-Schicht mit dem Koerper an der Schicht (FU1 a; der Fluegel)? Sonst rechnet der Kern ihn selbst, und die
+/// Zeile hat keinen Kasten *Body* (CK1 a, §6a 1; 34g).
+bool mitKoerper(const Schicht& s)
+{
+    if (!istKernSchicht(s)) return false;
+    const kern::KernTyp* typ = kern::kerne().typ(s.kernName.toStdString());
+    return typ != nullptr && typ->auskunft.koerperAnDerSchicht;
+}
 
 /// Wird die Stellung der Gruppen gelesen und gemerkt? (Tests schalten es ab.)
 bool& gruppenMerken()
@@ -775,8 +785,8 @@ void InstrumentCreator::setupUI()
     }
     connect(m_pfad, &SignalWeg::gewaehltGeaendert, this, [this](int platz) {
         const int letzter = static_cast<int>(m_pfad->kaesten().size()) - 1;
-        // eine Kern-Schicht (34d): Core, Body, Level
-        const int mitte = istKernSchicht(schicht()) ? kStelleKoerper : platz - 1;
+        // eine Kern-Schicht (34d): Core, Body, Level — ohne Body, wo der Kern ihn selbst rechnet (34g)
+        const int mitte = istKernSchicht(schicht()) ? (mitKoerper(schicht()) ? kStelleKoerper : kStelleLevel) : platz - 1;
         waehleStelle(platz <= 0 ? kStelleSource : platz >= letzter ? kStelleLevel : mitte);
     });
     // die Plaetze der Zeile zaehlen Source mit: der erste Baustein steht dort auf Platz 1; eine Kern-Schicht hat keine
@@ -2334,7 +2344,7 @@ void InstrumentCreator::zeigeAlles()
     // eine Kern-Schicht (34d) hat Core, Body, Level — keine Bausteine
     const bool kern = istKernSchicht(gewaehlte);
     if (m_gewaehlt != m_stelleFuer || m_stelle >= static_cast<int>(gewaehlte.reihe.size()) || (kern && m_stelle >= 0) ||
-        (m_stelle < 0 && m_stelle != kStelleLevel && !(kern && m_stelle == kStelleKoerper)))
+        (m_stelle < 0 && m_stelle != kStelleLevel && !(mitKoerper(gewaehlte) && m_stelle == kStelleKoerper)))
         m_stelle = kStelleSource;
     m_stelleFuer = m_gewaehlt;
     {
@@ -2770,7 +2780,7 @@ void InstrumentCreator::waehleStelle(int stelle)
 {
     const int zahl = static_cast<int>(schicht().reihe.size());
     const bool kern = istKernSchicht(schicht());
-    const bool gibtEs = stelle == kStelleLevel || (kern ? stelle == kStelleKoerper : stelle >= 0 && stelle < zahl);
+    const bool gibtEs = stelle == kStelleLevel || (kern ? stelle == kStelleKoerper && mitKoerper(schicht()) : stelle >= 0 && stelle < zahl);
     const int neu = gibtEs ? stelle : kStelleSource;
     if (neu == m_stelle) return;
     m_stelle = neu;
@@ -2870,10 +2880,13 @@ void InstrumentCreator::zeigeWeg()
         std::vector<WegKasten> kaesten;
         kaesten.push_back(WegKasten{tr("Core"), KernAnsicht::kernTitel(s), false, false,
                                     tr("The core computes the whole tone of this layer — its values, view only")});
-        kaesten.push_back(WegKasten{tr("Body"), s.koerper.isEmpty() ? tr("none") : s.koerper.section(QLatin1Char(':'), -1),
-                                    false, s.koerper.isEmpty(), tr("The resonance body the force of the core sounds through")});
+        // Body nur, wo der Koerper ausserhalb des Kerns liegt (CK1 a; 34g: die Klassen 4 und 5 rechnen ihn selbst)
+        const bool koerper = mitKoerper(s);
+        if (koerper)
+            kaesten.push_back(WegKasten{tr("Body"), s.koerper.isEmpty() ? tr("none") : s.koerper.section(QLatin1Char(':'), -1),
+                                        false, s.koerper.isEmpty(), tr("The resonance body the force of the core sounds through")});
         kaesten.push_back(WegKasten{tr("Level"), pegelText(), false, false, tr("The level and the pan of this layer")});
-        const int gewaehlt = m_stelle == kStelleLevel ? 2 : m_stelle == kStelleKoerper ? 1 : 0;
+        const int gewaehlt = m_stelle == kStelleLevel ? (koerper ? 2 : 1) : m_stelle == kStelleKoerper && koerper ? 1 : 0;
         m_pfad->setKaesten(std::move(kaesten), gewaehlt, false, tr("+ Add"));
         m_stellenTitel->setText(m_pfad->kaesten()[static_cast<std::size_t>(gewaehlt)].titel);
         m_bausteinVor->setVisible(false);

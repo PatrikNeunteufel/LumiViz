@@ -15,7 +15,11 @@
  *
  * **Gestimmte Werte** (IK2-11 a) sind Kurven mit Belegkraft *Rechnung*; zu jedem merken die Werte den Abdruck der
  * Eingaben, aus denen er gestimmt wurde (`gestimmtAus`). `veralteteGestimmte` vergleicht ihn mit dem heutigen, ohne
- * zu rechnen.
+ * zu rechnen. Ein gestimmter Wert darf von gestimmten Werten abhaengen, die vor ihm in der Tafel stehen (KS2 a, 34g-2:
+ * die Fenster des Bogens haengen am gestimmten Pegel des Resonators); gestimmt wird in der Reihenfolge der Tafel.
+ *
+ * **Tastenumfang** (KS1 a, 34g-2): ein Kern kann vielen Instrumenten dienen; nennt die Tafel `umfangVon`/`umfangBis`,
+ * traegt jedes Instrument seinen Umfang als zwei Ganzzahl-Werte (`tastenumfang`).
  *
  * **Ungemessen** (IK2-9, Folgerung S173): ein Instrument ist ungemessen, solange ein klangbestimmender Wert keine
  * Belegkraft *Gemessen* traegt (`ungemessen`) — nicht von Hand gesetzt.
@@ -131,7 +135,8 @@ struct ParameterAngabe
     bool klangbestimmend = true;
     /// gestimmt (IK2-11 a): eine Kurve, die ein Werkzeug aus anderen Werten rechnet
     bool gestimmt = false;
-    /// woraus ein gestimmter Wert gestimmt wird (Namen der Tafel); leer = aus allen nicht gestimmten
+    /// woraus ein gestimmter Wert gestimmt wird (Namen der Tafel); leer = aus allen nicht gestimmten und den gestimmten,
+    /// die vor ihm in der Tafel stehen (KS2 a: gestimmt wird in der Reihenfolge der Tafel)
     std::vector<std::string> abhaengigVon;
 };
 
@@ -155,21 +160,34 @@ struct Parametertafel
     std::string bezugWert;
     /// so oft rechnet `normiere` (zwei, wenn Teile des Klangs am Bezug haengen, wie die Rauschanteile der Membran)
     int bezugRunden = 1;
+    /// der Tastenumfang je Instrument (KS1 a, 34g-2): die Namen zweier Ganzzahl-Werte der Tafel, die den Umfang des
+    /// Instruments tragen (ein Kern, viele Instrumente: Marimba 36–96, Glockenspiel 79–108). Leer, wenn der Umfang der
+    /// Tafel gilt (Fluegel); sonst sind `noteMin`/`noteMax` der moegliche Umfang, und die Kurven, die Probe des Bezugs
+    /// und die Ansicht im Creator folgen dem des Instruments (`tastenumfang`).
+    std::string umfangVon;
+    std::string umfangBis;
 };
+
+/// Der Tastenumfang eines Instruments (KS1 a): aus den Werten `umfangVon`/`umfangBis`, auf den Umfang der Tafel
+/// geklemmt; der der Tafel, wenn sie keine Namen nennt, ein Wert fehlt oder der Umfang verkehrt ist.
+[[nodiscard]] std::pair<int, int> tastenumfang(const Parametertafel& tafel, const Werte& werte);
 
 /// Die Angabe mit diesem Namen, oder `nullptr`.
 [[nodiscard]] const ParameterAngabe* findeAngabe(const Parametertafel& tafel, std::string_view name);
 
 /// Was an einer Tafel nicht stimmt (leer = gut): Name leer oder doppelt, Gruppe nicht gelistet, Vorgabe von anderer
 /// Art, Grenzen verkehrt, Vorgabe ausserhalb, Wahl nicht unter den Wahlen, Darstellung passt nicht zur Art, ein
-/// gestimmter Wert ist keine Kurve, eine Abhaengigkeit fehlt oder ist selbst gestimmt, Tastenumfang verkehrt.
+/// gestimmter Wert ist keine Kurve, eine Abhaengigkeit fehlt oder ist ein gestimmter Wert, der nicht vor ihm steht
+/// (KS2 a), Tastenumfang verkehrt, die Namen des Umfangs je Instrument sind keine Ganzzahlen der Tafel oder ihre Vorgaben
+/// liegen ausserhalb (KS1 a).
 [[nodiscard]] std::vector<std::string> pruefeTafel(const Parametertafel& tafel);
 
 /// Die Werte der Vorgaben (jede Angabe in der Reihenfolge der Tafel).
 [[nodiscard]] Werte vorgaben(const Parametertafel& tafel);
 
 /// Die Werte in die Tafel richten: in die Reihenfolge der Tafel, Zahlen und Ganzzahlen auf die Grenzen, Kurven mit
-/// `richteKurve` auf Grenzen und Tastenumfang (eine leere bekommt die Vorgabe — ausser einer gestimmten), Listen je
+/// `richteKurve` auf Grenzen und Tastenumfang des Instruments (`tastenumfang`, KS1 a; eine leere bekommt die Vorgabe —
+/// ausser einer gestimmten; ein verkehrter Umfang ist ein Fehler, gerichtet wird dann auf den der Tafel), Listen je
 /// Eintrag nach den Feldern. Zurueck kommt, was nicht stimmt: ein Wert fehlt, ist unbekannt oder von anderer Art,
 /// eine Wahl ist unbekannt, eine Liste hat zu wenige oder zu viele Eintraege, ein gestimmter Wert ist leer. Leer =
 /// gut. Ein fehlender Wert wird nicht ersetzt.
@@ -179,8 +197,9 @@ struct Parametertafel
 [[nodiscard]] std::string wertAlsText(const Wert& wert);
 
 /// Der Abdruck der Eingaben eines gestimmten Werts (IK2-11 a): SHA-256 ueber Kern, Fassung der Rechnung und die Werte,
-/// aus denen er gestimmt wird (`abhaengigVon`, sonst alle nicht gestimmten ausser dem Bezug `bezugWert`). Leer, wenn `gestimmt` kein gestimmter
-/// Wert der Tafel ist.
+/// aus denen er gestimmt wird (`abhaengigVon`, sonst alle nicht gestimmten ausser dem Bezug `bezugWert` und die gestimmten
+/// vor ihm, KS2 a — aendert sich ein vorgelagerter gestimmter Wert, veraltet er mit). Leer, wenn `gestimmt` kein
+/// gestimmter Wert der Tafel ist.
 [[nodiscard]] std::string eingabenAbdruck(const Parametertafel& tafel, const Werte& werte, std::string_view gestimmt);
 
 /// Die gestimmten Werte, deren gemerkter Abdruck nicht zum heutigen passt (oder fehlt), in der Reihenfolge der Tafel.

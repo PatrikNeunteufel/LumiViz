@@ -4,6 +4,8 @@
  */
 #include "InstrumentMeasure/Stimmen.hpp"
 
+#include "InstrumentMeasure/StabStimmen.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -12,7 +14,8 @@ namespace lumi::messung
 
 const std::vector<Stimmer>& stimmer()
 {
-    static const std::vector<Stimmer> liste;  // die Klassen bringen ihre mit (34j, 34k)
+    // die Klassen bringen ihre mit: Klasse 4 in 34g (KS2 a, KS3 a), Klasse 10 in 34j, Klasse 2 in 34k
+    static const std::vector<Stimmer> liste{stabStimmer()};
     return liste;
 }
 
@@ -36,7 +39,20 @@ StimmBericht stimmeUndNormiere(const kern::Fabrik& fabrik, const std::vector<Sti
     std::vector<std::string> zuStimmen;
     for (const kern::ParameterAngabe& a : tafel.werte)
         if (a.gestimmt) zuStimmen.push_back(a.name);
-    if (!alle) zuStimmen = kern::veralteteGestimmte(tafel, werte);
+    if (!alle)
+    {
+        // KS2 a: wird ein gestimmter Wert neu gestimmt, auch jeder spaetere, der von ihm abhaengt (in Reihenfolge)
+        const std::vector<std::string> alt = kern::veralteteGestimmte(tafel, werte);
+        zuStimmen.clear();
+        for (const kern::ParameterAngabe& a : tafel.werte)
+        {
+            if (!a.gestimmt) continue;
+            bool mit = std::find(alt.begin(), alt.end(), a.name) != alt.end();
+            for (const std::string& vorher : zuStimmen)
+                if (a.abhaengigVon.empty() || std::find(a.abhaengigVon.begin(), a.abhaengigVon.end(), vorher) != a.abhaengigVon.end()) mit = true;
+            if (mit) zuStimmen.push_back(a.name);
+        }
+    }
     if (!zuStimmen.empty())
     {
         const Stimmer* s = stimmerFuer(liste, kern);
@@ -45,7 +61,7 @@ StimmBericht stimmeUndNormiere(const kern::Fabrik& fabrik, const std::vector<Sti
             b.fehler.push_back("no tuner for core: " + std::string(kern));
             return b;
         }
-        const GestimmteWerte neu = s->stimme(fabrik, werte);
+        const GestimmteWerte neu = s->stimme(fabrik, werte, zuStimmen);
         for (const std::string& name : zuStimmen)
         {
             const auto it = std::find_if(neu.begin(), neu.end(), [&](const auto& p) { return p.first == name; });
@@ -57,7 +73,8 @@ StimmBericht stimmeUndNormiere(const kern::Fabrik& fabrik, const std::vector<Sti
             werte.setze(name, it->second);
             b.gestimmt.push_back(name);
         }
-        // die Abdruecke erst, wenn alle gesetzt sind: einer haengt nicht an den anderen (sie sind gestimmt)
+        // die Abdruecke erst, wenn alle gesetzt sind: ein spaeterer haengt an den neuen Kurven der frueheren (KS2 a; der
+        // Stimmer rechnet die Kette selbst in der Reihenfolge der Tafel)
         for (const std::string& name : b.gestimmt) werte.merkeAbdruck(name, kern::eingabenAbdruck(tafel, werte, name));
     }
     if (!tafel.bezugWert.empty())

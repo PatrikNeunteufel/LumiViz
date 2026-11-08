@@ -1,9 +1,9 @@
 # InstrumentCore — die Bibliothek der Rechenkerne
 
-> **Version:** 0.1.3
+> **Version:** 0.2.0
 > **Datum:** 2026-11-08
 > **Typ:** CppModuleDoc
-> **Status:** gebaut (Stufe 34c); die Kerne in `InstrumentModels` (34d, BK1 a)
+> **Status:** gebaut (Stufe 34c; 34g: Umfang je Instrument, gestimmte Werte in Reihenfolge); die Kerne in `InstrumentModels` (34d, BK1 a)
 > **Modul:** InstrumentCore (STATIC, `projects/libs/InstrumentCore`)
 > **Namespace:** `lumi::kern`
 > **Abhängigkeiten:** Standardbibliothek, pocketfft (`externals/pocketfft`, PRIVATE); kein Qt, kein `windows.h`
@@ -34,11 +34,11 @@ Die Bausteine kommen je aus der reicheren Fassung von IC oder LumiViz; jede Übe
 
 | Kopf | Inhalt |
 |---|---|
-| `Tonkern.hpp` | `Tonkern` (`nachklang`, `rechne` → Mono `float`, auf Wunsch innere Größen), `KernTyp` (Tafel, Auskunft, `erzeuge`), `KernAuskunft` (Rechenweg Note/Kette/Clip, Stufe im Namen, Spuren, innere Größen, Vorbereitung teuer), `Fabrik` (je Name; `erzeuge` richtet die Werte und baut; die eingebauten Kerne kennt `kerne()` in `InstrumentModels`, BK1 a), `normiere` (Bezug des Ausgangs, IK2-10 a); `bezugsProbe` (mittlere Note, Stufe 0, 1 s) und `normiereNachTafel` (34f-3, IK2-10 a) |
+| `Tonkern.hpp` | `Tonkern` (`nachklang`, `rechne` → Mono `float`, auf Wunsch innere Größen), `KernTyp` (Tafel, Auskunft, `erzeuge`), `KernAuskunft` (Rechenweg Note/Kette/Clip, Stufe im Namen, Spuren, innere Größen, Vorbereitung teuer, seit 34g `koerperAnDerSchicht`: der Körper liegt an der Schicht, nicht im Kern — CK1 a), `Fabrik` (je Name; `erzeuge` richtet die Werte und baut; die eingebauten Kerne kennt `kerne()` in `InstrumentModels`, BK1 a), `normiere` (Bezug des Ausgangs, IK2-10 a); `bezugsProbe` (mittlere Note des Instruments, Stufe 0, 1 s; seit 34g mit den Werten, KS1 a) und `normiereNachTafel` (34f-3, IK2-10 a) |
 | `Tonauftrag.hpp` | `Frames`, `KettenNote {beginn, ende, note, hz, gleitet}`, `Spur` mit `SpurPunkt`, feste Namen `spur::kExpression`/`kPitch`/`kVibrato`, `Tonauftrag {rate, noten, stufe, frames, spuren}`, `spurWert`, `einzelnote`, `pruefeAuftrag` |
-| `Parametertafel.hpp` | `Wert` (Zahl, Ganzzahl, Schalter, Wahl, Kurve, Liste), `Werte`, `ParameterAngabe` (Gruppe, Art, Darstellung, Einheit, Grenzen, Skala, Wahlen, Felder einer Liste, Vorgabe, Belegkraft, Herkunft, klangbestimmend, gestimmt mit Abhängigkeiten), `Parametertafel` (Kern, Titel, Fassung der Rechnung, Tastenumfang, Gruppen, Werte); `pruefeTafel`, `vorgaben`, `richteWerte`, `eingabenAbdruck`, `veralteteGestimmte`, `ungemessen`, `wertAlsText`, `belegkraftName`; an der Tafel `bezugWert`/`bezugRunden` (der Bezug zählt nicht zum Abdruck gestimmter Werte), an der Angabe `quellen` (34f, WZ1 a) |
+| `Parametertafel.hpp` | `Wert` (Zahl, Ganzzahl, Schalter, Wahl, Kurve, Liste), `Werte`, `ParameterAngabe` (Gruppe, Art, Darstellung, Einheit, Grenzen, Skala, Wahlen, Felder einer Liste, Vorgabe, Belegkraft, Herkunft, klangbestimmend, gestimmt mit Abhängigkeiten), `Parametertafel` (Kern, Titel, Fassung der Rechnung, Tastenumfang, Gruppen, Werte); `pruefeTafel`, `vorgaben`, `richteWerte`, `eingabenAbdruck`, `veralteteGestimmte`, `ungemessen`, `wertAlsText`, `belegkraftName`; an der Tafel `bezugWert`/`bezugRunden` (der Bezug zählt nicht zum Abdruck gestimmter Werte), an der Angabe `quellen` (34f, WZ1 a); seit 34g `umfangVon`/`umfangBis` und `tastenumfang` (ein Kern, viele Instrumente: der Umfang ist ein Wert des Instruments, KS1 a) und gestimmte Werte in der Reihenfolge der Tafel (ein späterer darf an einem früheren hängen, sein Abdruck enthält ihn — KS2 a) |
 | `Anschlag.hpp` | `anschlagStufe`, `anschlagFaktor`, `anschlagRest`, `kAnschlagStufeMin` (−40), `kAnschlagSchrittDb` (1) |
-| `Kurve.hpp` | `Kurve` über den Tonumfang (Stützpunkte, Abweichungen, Belegkraft, Herkunft), `wertAn` (monoton kubisch; bis 34d Bit für Bit gegen `Tastenkurve` der App geprüft, seither rechnet der Flügel selbst damit), `richteKurve` mit Umfang, `kurveAusPunkten`, `kurveKonstant`, `kurveAlsText`; `quellen`: die Schlüssel des Registers `asset/loop/instrument_quellen.json` (34f-1, WZ1 a; zählen nicht zum Klang) |
+| `Kurve.hpp` | `Kurve` über den Tonumfang (Stützpunkte, Abweichungen, Belegkraft, Herkunft), `wertAn` (monoton kubisch; bis 34d Bit für Bit gegen `Tastenkurve` der App geprüft, seither rechnet der Flügel selbst damit), `richteKurve` mit Umfang (seit 34g wird auch der Ersatz einer leeren Kurve gerichtet und trägt seine Quellen mit — Abweichung von IC), `kurveAusPunkten`, `kurveKonstant`, `kurveAlsText`; `quellen`: die Schlüssel des Registers `asset/loop/instrument_quellen.json` (34f-1, WZ1 a; zählen nicht zum Klang) |
 | `Modal.hpp` | Moden als komplexe Pole, `ModalBank` mit Impulsinvarianz, `impulsantwort`, `nachklangFrames`, gekoppeltes Paar, `Stossanreger`/`stosse` |
 | `Eigenzerlegung.hpp` | `KleineMatrix` bis 32 × 32, `zerlegeKlein` (Hessenberg, QR nach Wilkinson, Nachschärfen, links als Inverse), `kleinsterAbstand`, `entartet`; `zerlegeSymmetrisch` für reelle symmetrische Matrizen beliebiger Größe (Jacobi, aus IC `Balken`, ME2 a — Balken, Membran, ESPRIT) |
 | `Fft.hpp` | `Fft` (`vorwaerts`, `rueckwaerts`), `fftUmsetzungen()`, `fft()` (pocketfft `4d865cb`), `direkteDft()` (Prüfumsetzung, O(n²)), `zweierpotenzAb`, `falte` |
@@ -68,6 +68,7 @@ näher, meldet die Zerlegung `entartet` (L11) — die Vektoren des Paars sind da
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.2.0 | 2026-11-08 | Session 178 (Bibliothek 0.3.0). 34g: der Umfang je Instrument (KS1 a: `umfangVon`/`umfangBis`, `tastenumfang`, `bezugsProbe(tafel, werte)`), gestimmte Werte in Reihenfolge (KS2 a), `KernAuskunft::koerperAnDerSchicht` (CK1 a), `richteKurve` richtet den Ersatz und trägt seine Quellen mit (Journal J33, J34, J40). |
 | 0.1.3 | 2026-11-08 | Session 177. 34f (WZ1 a, IK2-10 a): `quellen` an Kurve und Angabe, der Bezug in der Tafel, `bezugsProbe`, `normiereNachTafel` (Journal J28, J30). |
 | 0.1.2 | 2026-11-08 | Session 177. 34e-3 (ME2 a): `zerlegeSymmetrisch` aus IC `gemeinsam/Balken` (Journal J23). |
 | 0.1.1 | 2026-11-07 | Session 176. Nach 34d: `kerne()` in `InstrumentModels` (BK1 a); MSVC-Schalter ohne `/fp:contract-` (J0); der Test gegen `Tastenkurve` entfällt (der Typ ist weg, die Gleichheit belegt der Flügel-Bezug). |

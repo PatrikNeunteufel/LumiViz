@@ -97,10 +97,10 @@ KATALOG = {
     "sax": ("wind", "A lightly driven square with vibrato and a breathy saw."),
     # --- Percussion
     "bell": ("percussion", "A long sine strike with detuned partials a twelfth and two octaves above."),
-    "kalimba": ("percussion", "A short sine tine with a knock and a detuned ring two octaves above."),
-    "marimba": ("percussion", "A short sine bar with a mallet click two octaves above."),
+    "synth_kalimba": ("percussion", "A short sine tine with a knock and a detuned ring two octaves above."),
+    "synth_marimba": ("percussion", "A short sine bar with a mallet click two octaves above."),
     "steel_drum": ("percussion", "A sine with strong overtones, a detuned ring an octave above and a short hit."),
-    "vibraphone": ("percussion", "A long sine bar with slow vibrato and a short strike."),
+    "synth_vibraphone": ("percussion", "A long sine bar with slow vibrato and a short strike."),
     "clave": ("percussion", "A recorded stroke of claves (ESMUC, CC0); on C6 it sounds as recorded, other notes shift its pitch."),
     "conga": ("percussion", "A short sine skin with a damped string slap; the note sets the pitch of the hit."),
     "cowbell": ("percussion", "A recorded cowbell (TamTam Drum Kits, OLPC); on A5 it sounds as recorded, other notes shift its pitch."),
@@ -159,6 +159,26 @@ KATALOG = {
     "shape_smiley_keys": ("keys", "One layer per contour of the smiley: face on the note, eyes and mouth above it."),
     "shape_atom_bell": ("percussion", "The core and the three orbits of the atom as four layers, a bell with partials an octave, a twelfth and two octaves up."),
     "shape_cat": ("unusual", "The cat shape sliding up into the note, bright at first, with late vibrato: a meow."),
+    # --- S178 (34g, KS4 a): der Kern `bar` (Klasse 4 aus InstrumentsCalculation), geschrieben vom Programm
+    # (test_LoopStab.cpp, LUMIVIZ_STAB_INSTRUMENTE_SCHREIBEN=1), gestimmt von InstrumentTuneTool --all --reference
+    "marimba": ("percussion", "A modal bar per key (undercut 1 : 4 : 10, rosewood values after Rucz & Ulveczki 2021) struck by a "
+                              "mallet, with a closed tube resonator coupled to the first mode; unmeasured."),
+    "xylophone": ("percussion", "A modal bar per key (1 : 3 : 9, the Orff xylophone of Rucz & Ulveczki 2021) struck by a hard "
+                                "mallet, with a closed tube resonator; unmeasured."),
+    "vibraphone": ("percussion", "A modal aluminium bar per key (1 : 4) with a tube resonator whose lids a motor turns (track "
+                                 "motor), a damper bar, and a bow at the end of the bar from E-flat 4 (track bowed); unmeasured."),
+    "glockenspiel": ("percussion", "A uniform steel bar per key (free-free 1 : 2.757 : 5.404) struck by a mallet, without "
+                                   "resonator; unmeasured."),
+    "tubular_bells": ("percussion", "A brass tube per key (free-free bending modes), heard an octave below mode 4, struck at the "
+                                    "top, with a damper pedal; unmeasured."),
+    "celesta": ("keys", "A steel bar per key over a wooden box tuned to the fundamental, struck by a felt hammer (Stulov 2009) "
+                        "and damped when the key is released; unmeasured."),
+    "kalimba": ("percussion", "A clamped tine per key plucked at its tip (mode ratios after Chapman 2006), without box; "
+                              "unmeasured."),
+    "tine_electric_piano": ("keys", "A clamped steel tine per key (after Falaize & Helie 2015) with a tone bar, struck by a "
+                                    "neoprene hammer (Hunt-Crossley, Soenderbo 2024), heard through a magnetic pickup; unmeasured."),
+    "reed_electric_piano": ("keys", "A clamped steel reed per key struck by a felt hammer (Stulov 2009), heard through an "
+                                    "electrostatic pickup; unmeasured."),
 }
 
 _KOPF = ("format", "version", "title", "category", "genres", "description", "level", "layers")

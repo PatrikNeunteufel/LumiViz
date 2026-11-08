@@ -94,8 +94,8 @@ INSTRUMENTE = {
                 filterEnvelope=3, vibratoRate=5.5, vibratoDepth=14, vibratoDelay=250),
         schicht("Breath", "saw", attack=50, decay=200, sustain=0.7, release=110, filterCutoff=5, level=0.35,
                 vibratoRate=5.5, vibratoDepth=14, vibratoDelay=250)),
-    "vibraphone": instrument(
-        "Vibraphone", 0.8,
+    "synth_vibraphone": instrument(
+        "Synth Vibraphone", 0.8,
         schicht("Bar", "sine", harmonics=[0, 0, 0.18], attack=1, decay=1400, sustain=0.05, release=600,
                 vibratoRate=4.5, vibratoDepth=5, vibratoDelay=0),
         schicht("Strike", "sine", transpose=24, attack=1, decay=60, sustain=0, release=40, level=0.2)),
@@ -364,7 +364,7 @@ def hiphop():
                             ("Hi-Hat", "kit:hat_closed", 0.5, 0.2, "x.o.x.o.x.o.x.oo")])
     bass = b.noten("Bass", "upright_bass", b.takte(akk, lambda t, a: [(0, 4, a[0] - 24, 1.0), (7, 1, a[0] - 24, 0.7), (10, 3, a[2] - 24, 0.8), (14, 2, a[1] - 24, 0.7)]), 1.0)
     keys = b.noten("Keys", "tine_piano", b.takte(akk, lambda t, a: schlag((0,), 6, a, 0.7) + schlag((10,), 4, a[1:], 0.6)), 0.7, -0.2)
-    vibes = b.noten("Vibes", "vibraphone", [(4, 4, 81, 0.8), (10, 6, 77, 0.7), (22, 2, 74, 0.7), (24, 8, 79, 0.8), (36, 4, 83, 0.8), (42, 6, 79, 0.7), (52, 4, 76, 0.8), (58, 6, 73, 0.7)], 0.7, 0.25)
+    vibes = b.noten("Vibes", "synth_vibraphone", [(4, 4, 81, 0.8), (10, 6, 77, 0.7), (22, 2, 74, 0.7), (24, 8, 79, 0.8), (36, 4, 83, 0.8), (42, 6, 79, 0.7), (52, 4, 76, 0.8), (58, 6, 73, 0.7)], 0.7, 0.25)
     b.kanal("Drums", (beat, 0, 4))
     b.kanal("Bass", (bass, 0, 4))
     b.kanal("Keys", (keys, 0, 4))
@@ -381,7 +381,7 @@ def trap():
                             ("Open Hat", "kit:hat_open", 0.35, 0.25, ["..............x.", "................"] * 2)])
     bass = b.noten("808", "bass_808", b.takte(grund, lambda t, g: [(0, 6, g - 12, 1.0), (6, 4, g - 12, 0.9), (10, 6, g - 12 if t % 2 == 0 else g - 5, 0.9)]), 1.0)
     glocke = b.noten("Bells", "bell", b.takte(grund, lambda t, g: lauf((0, 3, 6, 8, 11, 14), 2, (g + 36, g + 39, g + 43, g + 36, g + 44, g + 43), 0.7)), 0.5, 0.25)
-    kalimba = b.noten("Keys", "kalimba", b.takte(grund, lambda t, g: lauf((0, 2, 4, 6, 8, 10, 12, 14), 2, (g + 24, g + 31, g + 27, g + 31), 0.6)), 0.5, -0.3)
+    kalimba = b.noten("Keys", "synth_kalimba", b.takte(grund, lambda t, g: lauf((0, 2, 4, 6, 8, 10, 12, 14), 2, (g + 24, g + 31, g + 27, g + 31), 0.6)), 0.5, -0.3)
     geist = b.noten("Pad", "ghost", [(0, 30, 65, 0.7), (32, 30, 61, 0.7)], 0.6)
     b.kanal("Drums", (beat, 4, 3))
     b.kanal("808", (bass, 4, 3))
@@ -400,7 +400,7 @@ def dnb():
     bass = b.noten("Reese", "reese_bass", b.takte(akk, lambda t, a: [(0, 6, a[0] - 24, 1.0), (6, 4, a[0] - 24, 0.8), (10, 3, a[0] - 21, 0.9), (13, 3, a[0] - 26, 0.9)]), 0.9)
     pad = b.noten("Pad", "warm_pad", b.takte(akk, lambda t, a: [(0, 16, a[1], 0.6), (0, 16, a[2], 0.6)]), 0.6, -0.2)
     keys = b.noten("Keys", "tine_piano", b.takte(akk, lambda t, a: schlag((3, 10), 3, (a[0] + 12, a[1] + 12, a[2] + 12), 0.7)), 0.6, 0.3)
-    glocke = b.noten("Lead", "vibraphone", [(0, 8, 76, 0.8), (8, 8, 72, 0.7), (16, 12, 69, 0.8), (32, 8, 77, 0.8), (40, 8, 72, 0.7), (48, 8, 71, 0.8), (56, 8, 76, 0.8)], 0.6, 0.15)
+    glocke = b.noten("Lead", "synth_vibraphone", [(0, 8, 76, 0.8), (8, 8, 72, 0.7), (16, 12, 69, 0.8), (32, 8, 77, 0.8), (40, 8, 72, 0.7), (48, 8, 71, 0.8), (56, 8, 76, 0.8)], 0.6, 0.15)
     b.kanal("Drums", (beat, 4, 3))
     b.kanal("Bass", (bass, 4, 3))
     b.kanal("Pad", (pad, 0, 4))
@@ -485,7 +485,7 @@ def waltz():
                                ("Snare", "kit:snare", 0.3, 0.0, ["............"] * 3 + ["........-.o."])])
     bass = b.noten("Bass", "upright_bass", b.takte(akk, lambda t, a: [(0, 4, a[0] - 24, 0.9), (8, 4, a[2] - 24, 0.6)] if t % 2 else [(0, 8, a[0] - 24, 0.9)]), 1.0)
     gitarre = b.noten("Guitar", "nylon_guitar", b.takte(akk, lambda t, a: schlag((4, 8), 3, a, 0.7)), 0.7, 0.3)
-    vibes = b.noten("Vibes", "vibraphone", [(0, 8, 76, 0.8), (8, 4, 79, 0.7), (12, 12, 81, 0.8), (24, 4, 77, 0.8), (28, 4, 76, 0.7), (32, 4, 74, 0.7), (36, 12, 71, 0.8)], 0.7, -0.2)
+    vibes = b.noten("Vibes", "synth_vibraphone", [(0, 8, 76, 0.8), (8, 4, 79, 0.7), (12, 12, 81, 0.8), (24, 4, 77, 0.8), (28, 4, 76, 0.7), (32, 4, 74, 0.7), (36, 12, 71, 0.8)], 0.7, -0.2)
     floete = b.noten("Flute", "flute", [(0, 12, 84, 0.7), (12, 8, 81, 0.7), (20, 4, 79, 0.6), (24, 12, 77, 0.7), (36, 8, 79, 0.7), (44, 4, 83, 0.6)], 0.6, 0.1)
     b.kanal("Drums", (beat, 0, 4))
     b.kanal("Bass", (bass, 0, 4))
@@ -502,8 +502,8 @@ def lofi():
                             ("Hi-Hat", "kit:hat_closed", 0.4, 0.2, "o.-.o.-.o.-.o.--")])
     bass = b.noten("Bass", "round_bass", b.takte(akk, lambda t, a: [(0, 6, a[0] - 24, 0.9), (6, 2, a[0] - 24, 0.6), (10, 4, a[2] - 24, 0.7)]), 1.0)
     keys = b.noten("Keys", "tine_piano", b.takte(akk, lambda t, a: schlag((0,), 7, a, 0.7) + schlag((10,), 5, a[1:], 0.55)), 0.7, -0.2)
-    vibes = b.noten("Vibes", "vibraphone", [(2, 4, 76, 0.7), (8, 6, 72, 0.7), (20, 2, 74, 0.6), (22, 8, 71, 0.7), (34, 4, 72, 0.7), (40, 6, 69, 0.7), (52, 2, 71, 0.6), (54, 8, 67, 0.7)], 0.7, 0.25)
-    kalimba = b.noten("Kalimba", "kalimba", b.takte(akk, lambda t, a: [(14, 2, a[3] + 12, 0.6)] if t % 2 == 0 else [(12, 2, a[2] + 12, 0.6), (14, 2, a[3] + 12, 0.5)]), 0.5, 0.4)
+    vibes = b.noten("Vibes", "synth_vibraphone", [(2, 4, 76, 0.7), (8, 6, 72, 0.7), (20, 2, 74, 0.6), (22, 8, 71, 0.7), (34, 4, 72, 0.7), (40, 6, 69, 0.7), (52, 2, 71, 0.6), (54, 8, 67, 0.7)], 0.7, 0.25)
+    kalimba = b.noten("Kalimba", "synth_kalimba", b.takte(akk, lambda t, a: [(14, 2, a[3] + 12, 0.6)] if t % 2 == 0 else [(12, 2, a[2] + 12, 0.6), (14, 2, a[3] + 12, 0.5)]), 0.5, 0.4)
     b.kanal("Drums", (beat, 4, 3))
     b.kanal("Bass", (bass, 4, 3))
     b.kanal("Keys", (keys, 0, 4))

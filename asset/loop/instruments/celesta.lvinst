@@ -1,0 +1,327 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 22,
+    "title": "Celesta",
+    "category": "keys",
+    "genres": ["Ambient"],
+    "description": "A steel bar per key over a wooden box tuned to the fundamental, struck by a felt hammer (Stulov 2009) and damped when the key is released; unmeasured.",
+    "level": 1.4618,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": false,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": false,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 1.2],
+                        [108, 1.2]
+                    ],
+                    "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
+                    "sources": ["rucz2021"]
+                },
+                "damper": "single",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0.2],
+                        [108, 0.2]
+                    ],
+                    "source": "offen: wie der Daempfer des Fluegels im Diskant (Vorbild 0,2 s)",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: fester Verlustfaktor; Rucz S. 7: hoehere Teiltoene „significantly greater“ — erwartet κ > 0; zu setzen an Iowa (M2)",
+                    "sources": ["rucz2021"]
+                },
+                "excitation": "strike",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "der Stab klingt auf seiner ersten Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 4.720000000000001,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0.5824879999999999,
+                "malletMass": 0.0065044,
+                "malletRelaxation": 1.7761600000000002e-06,
+                "malletStiffness": 3902.9429606509234,
+                "mass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0.03],
+                        [108, 0.03]
+                    ],
+                    "source": "offen: 30 g (Einschaetzung)",
+                    "sources": ["lumiviz"]
+                },
+                "motor": false,
+                "noteMax": 108,
+                "noteMin": 60,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: auf der Laengsachse (dann ohne Torsion); M1",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 429102.75,
+                "oversampling": 16,
+                "partner": "singleMode",
+                "partnerDamping": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0.0088],
+                        [108, 0.0088]
+                    ],
+                    "source": "offen: wie das Rohr bei Rucz",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [60, 39.11473843879243],
+                        [108, 39.11473843879243]
+                    ],
+                    "source": "tuned through the model: +15 dB with the partner at key 84 (\"by as much as 15 dB\", Rucz & Ulveczki 2021 p. 7)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 84,
+                "partnerRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 1],
+                        [108, 1]
+                    ],
+                    "source": "offen: der Kasten auf den Grundton gestimmt (Entwurf §4: „wie Kalimba oder Rohr“)",
+                    "sources": ["lumiviz"]
+                },
+                "pickup": "acoustic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0,
+                "pickupPosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0.5],
+                        [108, 0.5]
+                    ],
+                    "source": "akustisch — ohne Bedeutung",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: alle Moden gleich gewichtet (Ausgang ist q̈, die Hoehen schon ∝ ω²); M3",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 2.7565],
+                        [108, 2.7565]
+                    ],
+                    "source": "offen: gleichfoermiger Stahlstab (keine Fachquelle)",
+                    "sources": ["lumiviz"]
+                },
+                "ratio3": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 5.4039],
+                        [108, 5.4039]
+                    ],
+                    "source": "offen: gleichfoermiger Stahlstab (keine Fachquelle)",
+                    "sources": ["lumiviz"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 0.5],
+                        [108, 0.5]
+                    ],
+                    "source": "offen: Mitte (messplan M3: „Mitte üblich“, Einschaetzung); Spur Schlaegel-Ort (T3b a)",
+                    "sources": ["lumiviz"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 42.02201711655991],
+                        [84, 10.505504279139977],
+                        [108, 2.6263760697849943]
+                    ],
+                    "source": "offen: ξ = 1e-4 (Stahl, Einschaetzung)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 3],
+                        [108, 3]
+                    ],
+                    "source": "offen, Platzhalter ohne Wirkung bei Versatz 0 (La Favre misst die erste Torsion — nur Bericht, ohne Zahl); zu setzen am Modalfit (M1)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [60, 16.350979422785954],
+                        [84, 4.087744855696489],
+                        [108, 1.0219362139241221]
+                    ],
+                    "source": "offen: wie die erste Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "39852e9c6e30bc6282dc2a27fd758b47f2cdaab0fa4523bc95ef4c7743be79c5",
+                    "bowForceHighMf": "f6d4b6c79efd25c1af3d9be908e83c4c9547ed15a8d103f6aa493ec780083009",
+                    "bowForceHighPp": "7fd26ff2d296885de986346617aac481153f876b70d5bd0169b289440c1c9a71",
+                    "bowForceLowFf": "8ae24290886ecb01fc5b20e42171c2bcff6bf9e0bff6b09b046b0368d898cb06",
+                    "bowForceLowMf": "63f25ecaf58fcc97d267c4fe06068d4b433f26658be97a4e54dfc55f97b2a5a8",
+                    "bowForceLowPp": "3dc1d5ca9c195f5224ac62eb34fddc13c5cd8638094437a41ee377ef68a91082",
+                    "partnerGain": "4a508b19440806c486facca77425618953d6042f8da34b5745bab4e67d6632c0"
+                },
+                "velocityMax": 5
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Celesta",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 60,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "sustain"
+        },
+        "range": [60, 108]
+    }
+}

@@ -107,6 +107,7 @@ const KernTyp& kernTyp()
         t.auskunft.spuren = {std::string(kSpurSoft), std::string(kSpurPractice)};
         t.auskunft.innere = {"contact"};
         t.auskunft.vorbereitungTeuer = false;
+        t.auskunft.koerperAnDerSchicht = true;  // FU1 a: der Resonanzboden an der Schicht, die App faltet ihn
         t.erzeuge = [](const Werte& w) -> std::shared_ptr<const Tonkern> {
             return std::make_shared<const HammerKern>(saiteAus(w), pedalwerteAus(w));
         };

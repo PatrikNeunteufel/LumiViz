@@ -314,16 +314,60 @@ std::vector<std::string> pruefeTafel(const Parametertafel& tafel)
         if (b == nullptr || b->art != WertArt::Zahl || b->gestimmt) fehler.push_back("reference is not a number of the table: " + tafel.bezugWert);
         if (tafel.bezugRunden < 1) fehler.push_back("reference rounds below 1");
     }
-    for (const ParameterAngabe& a : tafel.werte)
+    // KS1 a: der Umfang je Instrument — beide Namen oder keiner, je eine Ganzzahl, Vorgaben im Umfang der Tafel
+    if (tafel.umfangVon.empty() != tafel.umfangBis.empty())
+        fehler.push_back("key range of the instrument needs both names");
+    else if (!tafel.umfangVon.empty())
+    {
+        std::int64_t umfang[2] = {0, 0};
+        bool gut = true;
+        for (int i = 0; i < 2; ++i)
+        {
+            const std::string& name = i == 0 ? tafel.umfangVon : tafel.umfangBis;
+            const ParameterAngabe* b = findeAngabe(tafel, name);
+            if (b == nullptr || b->art != WertArt::Ganzzahl || b->gestimmt || !std::holds_alternative<std::int64_t>(b->vorgabe))
+            {
+                fehler.push_back("key range of the instrument is not an integer of the table: " + name);
+                gut = false;
+                continue;
+            }
+            umfang[i] = std::get<std::int64_t>(b->vorgabe);
+            if (umfang[i] < tafel.noteMin || umfang[i] > tafel.noteMax)
+            {
+                fehler.push_back("key range of the instrument outside the keys: " + name);
+                gut = false;
+            }
+        }
+        if (gut && umfang[0] > umfang[1]) fehler.push_back("key range of the instrument reversed");
+    }
+    // KS2 a: eine Abhaengigkeit ist ein nicht gestimmter Wert oder ein gestimmter, der vor dem Wert steht
+    for (std::size_t i = 0; i < tafel.werte.size(); ++i)
+    {
+        const ParameterAngabe& a = tafel.werte[i];
         for (const std::string& von : a.abhaengigVon)
         {
-            const ParameterAngabe* b = findeAngabe(tafel, von);
-            if (b == nullptr)
+            const auto it = std::find_if(tafel.werte.begin(), tafel.werte.end(), [&](const ParameterAngabe& b) { return b.name == von; });
+            if (it == tafel.werte.end())
                 fehler.push_back(a.name + ": dependency unknown: " + von);
-            else if (b->gestimmt)
-                fehler.push_back(a.name + ": dependency is tuned itself: " + von);
+            else if (it->gestimmt && static_cast<std::size_t>(it - tafel.werte.begin()) >= i)
+                fehler.push_back(a.name + ": dependency is tuned and not before it: " + von);
         }
+    }
     return fehler;
+}
+
+std::pair<int, int> tastenumfang(const Parametertafel& tafel, const Werte& werte)
+{
+    const std::pair<int, int> ganz{tafel.noteMin, tafel.noteMax};
+    if (tafel.umfangVon.empty() || tafel.umfangBis.empty()) return ganz;
+    const Wert* von = werte.finde(tafel.umfangVon);
+    const Wert* bis = werte.finde(tafel.umfangBis);
+    if (von == nullptr || bis == nullptr || !std::holds_alternative<std::int64_t>(*von) || !std::holds_alternative<std::int64_t>(*bis)) return ganz;
+    const auto klemme = [&](std::int64_t n) { return static_cast<int>(std::clamp<std::int64_t>(n, tafel.noteMin, tafel.noteMax)); };
+    const int a = klemme(std::get<std::int64_t>(*von));
+    const int b = klemme(std::get<std::int64_t>(*bis));
+    if (a > b) return ganz;
+    return {a, b};
 }
 
 Werte vorgaben(const Parametertafel& tafel)
@@ -335,7 +379,21 @@ Werte vorgaben(const Parametertafel& tafel)
 
 std::vector<std::string> richteWerte(const Parametertafel& tafel, Werte& werte)
 {
-    return richteAngaben(tafel.werte, tafel.noteMin, tafel.noteMax, "", werte);
+    // KS1 a: die Kurven richten sich nach dem Umfang des Instruments; ist er verkehrt, ein Fehler und der der Tafel
+    std::vector<std::string> fehler;
+    if (!tafel.umfangVon.empty() && !tafel.umfangBis.empty())
+    {
+        const Wert* von = werte.finde(tafel.umfangVon);
+        const Wert* bis = werte.finde(tafel.umfangBis);
+        if (von != nullptr && bis != nullptr && std::holds_alternative<std::int64_t>(*von) && std::holds_alternative<std::int64_t>(*bis) &&
+            std::clamp<std::int64_t>(std::get<std::int64_t>(*von), tafel.noteMin, tafel.noteMax) >
+                std::clamp<std::int64_t>(std::get<std::int64_t>(*bis), tafel.noteMin, tafel.noteMax))
+            fehler.push_back(tafel.umfangVon + ", " + tafel.umfangBis + ": key range reversed");
+    }
+    const auto [noteMin, noteMax] = tastenumfang(tafel, werte);
+    std::vector<std::string> f = richteAngaben(tafel.werte, noteMin, noteMax, "", werte);
+    fehler.insert(fehler.end(), f.begin(), f.end());
+    return fehler;
 }
 
 std::string wertAlsText(const Wert& wert)
@@ -375,9 +433,11 @@ std::string eingabenAbdruck(const Parametertafel& tafel, const Werte& werte, std
     if (ziel == nullptr || !ziel->gestimmt) return {};
     Sha256 sha;
     sha.dazu("core " + tafel.kern + "\nfassung " + std::to_string(tafel.rechenFassung) + "\n");
+    bool vorDemZiel = true;  // KS2 a: gestimmte Werte zaehlen, wenn sie vor dem Ziel stehen
     for (const ParameterAngabe& a : tafel.werte)
     {
-        if (a.gestimmt) continue;
+        if (&a == ziel) vorDemZiel = false;
+        if (a.gestimmt && !vorDemZiel) continue;
         if (ziel->abhaengigVon.empty() && a.name == tafel.bezugWert) continue;  // 34f-3: der Bezug haengt am Gestimmten
         if (!ziel->abhaengigVon.empty() &&
             std::find(ziel->abhaengigVon.begin(), ziel->abhaengigVon.end(), a.name) == ziel->abhaengigVon.end())

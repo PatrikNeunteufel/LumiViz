@@ -18,6 +18,7 @@
 
 #include <doctest.h>
 
+#include "InstrumentModels/stab/StabKern.hpp"
 #include "LoopOhneEngine.hpp"
 #include "PappTon.hpp"
 #include "loop/Bearbeiten.hpp"
@@ -38,9 +39,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <cstring>
 #include <map>
+#include <numbers>
 #include <vector>
 
 using namespace lumi::loop;
@@ -345,19 +348,20 @@ TEST_SUITE("LoopInstrument")
         // (Wunsch Patrik S111), sechs gerechnete Drums (Stufe 11f, S117); S123: elf aus Formen,
         // dreizehn aus mitgelieferten Samples, elf Drums mehr (sechs gerechnet, fuenf aus Samples)
         // und drei Besen (S124, Stufe 21d)
-        REQUIRE(alle.size() == 108);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
+        // S178 (34g, KS4 a): neun aus dem Kern `bar`; die Nachbildungen marimba, vibraphone, kalimba heissen synth_<name>
+        REQUIRE(alle.size() == 117);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
-        CHECK(alle.back().titel == QStringLiteral("Wind Voices"));
+        CHECK(alle.back().titel == QStringLiteral("Xylophone"));
         for (const char* name : {"bass", "guitar", "lead", "organ", "piano", "strings", "violin", "acid_bass",
                                  "chord_stab", "house_organ", "house_piano", "pluck", "sub_bass", "warm_pad",
                                  "bell", "tine_piano", "brass", "flute", "super_saw", "fifth_pad", "overdrive_guitar",
-                                 "kalimba", "marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
+                                 "synth_kalimba", "synth_marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
                                  "growl_bass", "reverse_swell",
                                  "trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
                                  "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
-                                 "nylon_guitar", "sax", "vibraphone", "steel_drum", "cowbell", "conga", "clave",
+                                 "nylon_guitar", "sax", "synth_vibraphone", "steel_drum", "cowbell", "conga", "clave",
                                  "drum_kick", "drum_tom", "drum_snare", "drum_clap", "drum_hat_closed", "drum_hat_open",
                                  "shape_heart_pad", "shape_rings_choir", "shape_infinity_drone", "shape_gear_bass",
                                  "shape_moon_bass", "shape_star_lead", "shape_bolt_pluck", "shape_flower_flute",
@@ -367,7 +371,8 @@ TEST_SUITE("LoopInstrument")
                                  "wind_voices", "drum_kick_808", "drum_tom_low", "drum_tom_high", "drum_shaker",
                                  "drum_ride", "drum_crash", "drum_kick_punch", "drum_snare_fat", "drum_clap_stack",
                                  "drum_hat_shake", "drum_beatbox_kick", "drum_brush_tap", "drum_brush_slap",
-                                 "drum_brush_sweep", "grand_piano"})
+                                 "drum_brush_sweep", "grand_piano", "marimba", "xylophone", "vibraphone", "glockenspiel",
+                                 "tubular_bells", "celesta", "kalimba", "tine_electric_piano", "reed_electric_piano"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -445,7 +450,39 @@ TEST_SUITE("LoopInstrument")
             // die Tonhoehe: 440 Hz sind 100,2 Abtastwerte je Schwingung — mit Vibrato schwankt
             // sie um so viele Cent, wie das Instrument angibt (die Sirene: 100)
             const double schwankung = std::exp2(std::max(vibrato, 20.0) / 1200.0);
-            if (!schlag)
+            // S178 (34g): die Stabspiele des Kerns `bar` sind unharmonisch (Glockenspiel und Celesta 1 : 2,76 : 5,40), die
+            // Roehrenglocken klingen eine Oktave unter Mode 4 (IC) — die Periode passt dort nicht; geprueft wird am Ton,
+            // dass die erste Mode liegt, wo der Kern sie hinlegt (f_1 = f_Note · fundamentalRatio), eine Oktave tiefer halb so hoch
+            const bool stabspiel = istKernSchicht(instrument.schichten[0]) && instrument.schichten[0].kernName == QStringLiteral("bar");
+            if (stabspiel)
+            {
+                const lumi::kern::stab::StabSpiel spiel = lumi::kern::stab::spielAus(instrument.schichten[0].kernWerte);
+                const auto ersteMode = [&](const Klang& k, int note) {
+                    const double f1 = 440.0 * std::exp2((note - 69) / 12.0) *
+                                      lumi::kern::wertAn(spiel.grundJeNote, std::clamp(note, spiel.noteMin, spiel.noteMax), lumi::kern::Skala::Linear);
+                    double besteF = f1, besterBetrag = -1.0;
+                    const std::size_t ab = 2400, n = 16384;
+                    for (double f = 0.95 * f1; f <= 1.05 * f1; f *= 1.0005)
+                    {
+                        std::complex<double> s(0.0, 0.0);
+                        for (std::size_t i = 0; i < n && 2 * (ab + i) < k.daten.size(); ++i)
+                        {
+                            const double w = 0.5 - 0.5 * std::cos(2.0 * std::numbers::pi * static_cast<double>(i) / static_cast<double>(n));
+                            s += w * k.daten[2 * (ab + i)] * std::polar(1.0, -2.0 * std::numbers::pi * f * static_cast<double>(ab + i) / kRate);
+                        }
+                        if (std::abs(s) > besterBetrag)
+                        {
+                            besterBetrag = std::abs(s);
+                            besteF = f;
+                        }
+                    }
+                    return 1200.0 * std::log2(besteF / f1);
+                };
+                CHECK(std::abs(ersteMode(ton, 69)) < 15.0);
+                CHECK(std::abs(ersteMode(rendereTon(instrument, 57, 500.0, kRate), 57)) < 15.0);
+            }
+            if (!schlag && !(stabspiel && (instrument.name == QStringLiteral("glockenspiel") || instrument.name == QStringLiteral("celesta") ||
+                                           instrument.name == QStringLiteral("tubular_bells"))))
             {
                 const int p = periode(ton, 6000, 4000, 80, 125);
                 CHECK(p >= std::floor(100.2 / schwankung) - 1);
@@ -646,13 +683,13 @@ TEST_SUITE("LoopInstrument")
         }
         // nach dem Titel zugeordnet (asset/loop/instrument_katalog.py) — wer eines dazulegt, stellt die Zahl nach
         // (S123: aus Formen, aus Samples und elf Drums dazu)
-        CHECK(jeArt[QStringLiteral("keys")] == 10);  // S157: grand_piano; S133: clavinet_old
+        CHECK(jeArt[QStringLiteral("keys")] == 13);  // S178 (34g): celesta, tine/reed_electric_piano; S157: grand_piano; S133: clavinet_old
         CHECK(jeArt[QStringLiteral("bass")] == 15);  // S133: slap_bass_old, upright_bass_old, finger_bass
         CHECK(jeArt[QStringLiteral("lead")] == 7);
         CHECK(jeArt[QStringLiteral("pads")] == 9);
         CHECK(jeArt[QStringLiteral("plucked")] == 22);  // S133: fuenf Gitarren *_old, fuenf neue
         CHECK(jeArt[QStringLiteral("wind")] == 7);
-        CHECK(jeArt[QStringLiteral("percussion")] == 10);
+        CHECK(jeArt[QStringLiteral("percussion")] == 16);  // S178 (34g): sechs Stabspiele des Kerns bar
         CHECK(jeArt[QStringLiteral("drums")] == 20);  // Stufe 11f, S123, drei Besen S124
         CHECK(jeArt[QStringLiteral("unusual")] == 8);
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Violin steht in keinem (Guitar bis S136,
@@ -723,7 +760,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 108);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 117);  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {
@@ -1212,7 +1249,7 @@ TEST_SUITE("LoopInstrument")
         }
         // jedes der sechzehn Instrumente aus Schichten kommt in einem der Beispiele vor
         for (const char* name : {"bell", "tine_piano", "brass", "flute", "super_saw", "fifth_pad", "overdrive_guitar",
-                                 "kalimba", "marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
+                                 "synth_kalimba", "synth_marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
                                  "growl_bass", "reverse_swell"})
         {
             CAPTURE(name);
@@ -1271,7 +1308,7 @@ TEST_SUITE("LoopInstrument")
         // jedes der neunzehn Instrumente aus `make_genres.py` kommt in einem der Beispiele vor
         for (const char* name : {"trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
                                  "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
-                                 "nylon_guitar", "sax", "vibraphone", "steel_drum", "cowbell", "conga", "clave"})
+                                 "nylon_guitar", "sax", "synth_vibraphone", "steel_drum", "cowbell", "conga", "clave"})
         {
             CAPTURE(name);
             CHECK(gespielt.contains(QLatin1String(name)));

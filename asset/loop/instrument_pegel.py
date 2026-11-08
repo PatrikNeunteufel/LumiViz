@@ -59,6 +59,7 @@ PEGEL = {
     "brass": (0.7, 0.6164),
     "broken_radio": (0.45, 0.3341),
     "cascade": (0.6, 0.5748),
+    "celesta": (1.4618, 1.4618),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "chord_stab": (1.0, 2.5293),
     "clave": (0.49, 1.012),
     "clavinet": (0.705, 1.1452),
@@ -74,6 +75,7 @@ PEGEL = {
     "finger_bass": (1.0, 1.1852),
     "flute": (0.8, 0.5298),
     "ghost": (0.7, 0.4897),
+    "glockenspiel": (0.6842, 0.6842),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "grand_piano": (4.2418, 4.2418),  # S160 (HU4-1 a, Boden mit c = 4,5): -13,833 LUFS bei 4,0355 -> 4,2418; die Loops sind fuer den Bezug geschrieben, darum alt = neu (S159: 4,1788 -> 4,0355)
     "growl_bass": (0.55, 0.3081),
     "guitar": (1.0, 2.0941),
@@ -84,10 +86,10 @@ PEGEL = {
     "house_piano": (1.0, 1.2222),
     "hum_pad": (0.85, 0.5331),
     "jazz_guitar": (0.51, 1.3465),
-    "kalimba": (0.8, 0.9013),
+    "kalimba": (0.7627, 0.7627),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "koto": (0.8, 0.5774),
     "lead": (1.0, 0.7343),
-    "marimba": (0.85, 1.0858),
+    "marimba": (0.5296, 0.5296),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "muted_guitar": (1.0, 4.5798),
     "muted_guitar_old": (0.8, 2.7136),
     "nylon_guitar": (0.638, 2.1107),
@@ -99,6 +101,7 @@ PEGEL = {
     "piezo_guitar": (0.505, 1.2388),
     "pizzicato_violin": (1.0, 5.559),
     "pluck": (1.0, 2.2722),
+    "reed_electric_piano": (1.9335, 1.9335),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "reese_bass": (0.6, 0.5013),
     "reverse_swell": (0.7, 0.6194),
     "rolling_bass": (0.7, 0.9255),
@@ -123,19 +126,25 @@ PEGEL = {
     "strings": (1.0, 0.9377),
     "sub_bass": (1.0, 0.4745),
     "super_saw": (0.5, 0.3773),
+    "synth_kalimba": (0.8, 0.9013),
+    "synth_marimba": (0.85, 1.0858),
+    "synth_vibraphone": (0.8, 0.6336),
     "thumb_piano": (0.8, 0.3443),
+    "tine_electric_piano": (1.0763, 1.0763),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "tine_piano": (0.75, 0.4932),
     "trance_lead": (0.5, 0.4769),
     "trance_pluck": (0.75, 1.8557),
+    "tubular_bells": (0.7476, 0.7476),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "ukulele": (0.878, 2.8112),
     "upright_bass": (0.954, 0.9867),
     "upright_bass_old": (0.85, 0.9781),
-    "vibraphone": (0.8, 0.6336),
+    "vibraphone": (0.6094, 0.6094),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "violin": (1.0, 0.7915),
     "vocal_chop": (0.9, 1.1367),
     "vocal_lead": (0.85, 0.5367),
     "warm_pad": (1.0, 1.3063),
     "wind_voices": (0.8, 0.526),
+    "xylophone": (1.3981, 1.3981),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
 }
 # --- Ende PEGEL ---
 

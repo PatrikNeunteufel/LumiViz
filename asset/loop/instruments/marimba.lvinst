@@ -1,55 +1,327 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 22,
     "title": "Marimba",
     "category": "percussion",
     "genres": ["Ambient"],
-    "description": "A short sine bar with a mallet click two octaves above.",
-    "level": 1.0858,
+    "description": "A modal bar per key (undercut 1 : 4 : 10, rosewood values after Rucz & Ulveczki 2021) struck by a mallet, with a closed tube resonator coupled to the first mode; unmeasured.",
+    "level": 0.5296,
     "layers": [
         {
-            "name": "Bar",
-            "on": true,
-            "level": 1.0,
-            "transpose": 0,
-            "startOffset": 0,
-            "drive": 0,
-            "waveform": "sine",
-            "harmonics": [0, 0, 0.3],
-            "voices": 1,
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": false,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 1],
+                        [96, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 1],
+                        [96, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 1],
+                        [96, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 1],
+                        [96, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 1],
+                        [96, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 1],
+                        [96, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": false,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 1.2],
+                        [96, 1.2]
+                    ],
+                    "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
+                    "sources": ["rucz2021"]
+                },
+                "damper": "none",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 0.2],
+                        [96, 0.2]
+                    ],
+                    "source": "ohne Daempfer",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 0],
+                        [96, 0]
+                    ],
+                    "source": "offen: fester Verlustfaktor; Rucz S. 7: hoehere Teiltoene „significantly greater“ — erwartet κ > 0; zu setzen an Iowa (M2)",
+                    "sources": ["rucz2021"]
+                },
+                "excitation": "strike",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 1],
+                        [96, 1]
+                    ],
+                    "source": "der Stab klingt auf seiner ersten Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.025,
+                "malletRelaxation": 0,
+                "malletStiffness": 1581.1388300841897,
+                "mass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 0.0967],
+                        [96, 0.0967]
+                    ],
+                    "source": "96,7 g aus Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1) (F4); ueber den Umfang offen (M4)",
+                    "sources": ["rucz2021"]
+                },
+                "motor": false,
+                "noteMax": 96,
+                "noteMin": 36,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 0],
+                        [96, 0]
+                    ],
+                    "source": "offen: auf der Laengsachse (dann ohne Torsion); M1",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 100415.984375,
+                "oversampling": 64,
+                "partner": "closedTube",
+                "partnerDamping": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [36, 0.0088],
+                        [96, 0.0088]
+                    ],
+                    "source": "ξ_a,1 = 8,8e-3, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1); ueber den Umfang offen (M5)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [36, 22.922494730946685],
+                        [96, 22.922494730946685]
+                    ],
+                    "source": "tuned through the model: +15 dB with the partner at key 65 (\"by as much as 15 dB\", Rucz & Ulveczki 2021 p. 7)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 65,
+                "partnerRatio": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [36, 1.0008600917431194],
+                        [96, 1.0008600917431194]
+                    ],
+                    "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
+                    "sources": ["rucz2021"]
+                },
+                "pickup": "acoustic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0,
+                "pickupPosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 0.5],
+                        [96, 0.5]
+                    ],
+                    "source": "akustisch — ohne Bedeutung",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 0],
+                        [96, 0]
+                    ],
+                    "source": "offen: alle Moden gleich gewichtet (Ausgang ist q̈, die Hoehen schon ∝ ω²); M3",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [36, 4],
+                        [96, 4]
+                    ],
+                    "source": "Unterschnitt „1 : 4 : 10“, Rucz & Ulveczki 2021 S. 1 (nachgelesen); CCRMA nennt 9,2 (nur Bericht)",
+                    "sources": ["rucz2021", "ccrma"]
+                },
+                "ratio3": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [36, 10],
+                        [96, 10]
+                    ],
+                    "source": "Unterschnitt „1 : 4 : 10“, Rucz & Ulveczki 2021 S. 1 (nachgelesen); CCRMA nennt 9,2 (nur Bericht)",
+                    "sources": ["rucz2021", "ccrma"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 0.5],
+                        [96, 0.5]
+                    ],
+                    "source": "offen: Mitte (messplan M3: „Mitte üblich“, Einschaetzung); Spur Schlaegel-Ort (T3b a)",
+                    "sources": ["lumiviz"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 65.40391769114382],
+                        [66, 11.56188842889365],
+                        [96, 2.0438724278482443]
+                    ],
+                    "source": "ξ_1 = 2,57e-4 aus Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1) (F4, Palisander); ueber den Umfang offen: fester ξ (T60 ∝ 1/f); zu setzen an Iowa (M2)",
+                    "sources": ["rucz2021"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 3],
+                        [96, 3]
+                    ],
+                    "source": "offen, Platzhalter ohne Wirkung bei Versatz 0 (La Favre misst die erste Torsion — nur Bericht, ohne Zahl); zu setzen am Modalfit (M1)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [36, 65.40391769114382],
+                        [66, 11.56188842889365],
+                        [96, 2.0438724278482443]
+                    ],
+                    "source": "offen: wie die erste Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "e36edc85ad6a539eb2c43f9a4114f6a39ede1e76dd172655bdbbbfe51201d53b",
+                    "bowForceHighMf": "0b2253b8d08bddea03f5220faeaffc1bbc264a1e00d74bc583f08a323dd44ba4",
+                    "bowForceHighPp": "84bd11773925c33553ee4473b0494bd48d9bc4466b71cb18fe570511c9d9721a",
+                    "bowForceLowFf": "0ca7229205fceeac3767e3a5924a2ae800c1721049ef75d2161423e71bd60e68",
+                    "bowForceLowMf": "8dcafb0b6403d7b8b0ebd8a9d606bdc679257e135b0418326bcdc320a7b50ac3",
+                    "bowForceLowPp": "292916b2e38cb3ac0e1eef50ec59b3c4199e2d76d8898ce354e193b93455d5ca",
+                    "partnerGain": "e095a3abd55be2467b355ce56955963c412b46b055e7151ea39e715b1513273b"
+                },
+                "velocityMax": 5
+            },
+            "damping": 0.996,
+            "decay": 200,
             "detune": 0,
-            "attack": 1,
-            "decay": 380,
-            "sustain": 0,
-            "release": 200,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
-            "vibratoRate": 0,
-            "vibratoDepth": 0,
-            "vibratoDelay": 0,
-            "damping": 0.996
-        },
-        {
-            "name": "Mallet",
-            "on": true,
-            "level": 0.25,
-            "transpose": 24,
-            "startOffset": 0,
-            "drive": 0,
-            "waveform": "triangle",
             "harmonics": [],
-            "voices": 1,
-            "detune": 0,
-            "attack": 1,
-            "decay": 40,
-            "sustain": 0,
-            "release": 30,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
-            "vibratoRate": 0,
-            "vibratoDepth": 0,
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Marimba",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
             "vibratoDelay": 0,
-            "damping": 0.996
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
         }
-    ]
+    ],
+    "keyboard": {
+        "bassSustainBelow": 36,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "none"
+        },
+        "range": [36, 96]
+    }
 }

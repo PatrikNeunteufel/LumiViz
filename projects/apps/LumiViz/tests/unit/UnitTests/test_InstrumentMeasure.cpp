@@ -26,6 +26,7 @@
 #include "InstrumentMeasure/Samples.hpp"
 #include "InstrumentMeasure/Strukturmessung.hpp"
 #include "InstrumentMeasure/Teiltonmessung.hpp"
+#include "InstrumentModels/stab/Stab.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -138,6 +139,40 @@ TEST_CASE("InstrumentMeasure 34e B6 Modalfit: drei Moden ohne Reihe mit Rauschen
         CHECK(m[static_cast<std::size_t>(k)].hz == doctest::Approx(f[k]).epsilon(1e-4));
         CHECK(kLn1000 / m[static_cast<std::size_t>(k)].sigma == doctest::Approx(t60[k]).epsilon(0.03));
         CHECK(std::abs(dB(m[static_cast<std::size_t>(k)].amplitude / a[k])) < 0.5);
+    }
+}
+
+TEST_CASE("InstrumentMeasure 34g B6 Modalfit am Modell: die Moden eines gerechneten Xylophontons wiederfinden (1 : 3 : 9)")
+{
+    // aus IC `rechnung/messung/test_messung.cpp:119-149` (`bb7e6d6`, J41) — in 34e zurueckgestellt (er braucht den Stab)
+    namespace stab = lumi::kern::stab;
+    const stab::StabSpiel s = stab::baueVorgabeXylophon();
+    stab::StabAnschlag an;
+    an.note = 72;
+    an.hz = 523.25;
+    an.stufe = -12;
+    stab::StabSpiel ohneRohr = s;
+    ohneRohr.partner = stab::PartnerArt::Keiner;
+    std::vector<float> ton;
+    stab::rechneStabTon(ohneRohr, an, ton, 48000);
+    std::vector<double> x(ton.begin() + 480, ton.end());
+    const stab::StabModen soll = stab::stabModen(ohneRohr, an);
+    const std::vector<ModalfitMode> m = modalfit(x, 48000, 0, 12000, 8, 160);
+    // die erste und dritte Mode des Modells mit ihren T60 (die zweite bekommt in der Mitte nichts)
+    for (int k = 0; k < 3; k += 2)
+    {
+        double beste = 1e9;
+        const ModalfitMode* treffer = nullptr;
+        for (const ModalfitMode& mm : m)
+            if (std::abs(mm.hz - soll.stab[static_cast<std::size_t>(k)].hz) < beste)
+            {
+                beste = std::abs(mm.hz - soll.stab[static_cast<std::size_t>(k)].hz);
+                treffer = &mm;
+            }
+        REQUIRE(treffer != nullptr);
+        CAPTURE(k);
+        CHECK(treffer->hz == doctest::Approx(soll.stab[static_cast<std::size_t>(k)].hz).epsilon(1e-3));
+        CHECK(kLn1000 / treffer->sigma == doctest::Approx(soll.stab[static_cast<std::size_t>(k)].t60S).epsilon(0.03));
     }
 }
 

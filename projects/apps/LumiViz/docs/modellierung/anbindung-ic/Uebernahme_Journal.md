@@ -225,10 +225,54 @@ Teilplan 34f-1 bis 34f-5 im Konzept §6 (WZ1 a, WZ2 a). Quellen: LumiViz `master
 - Pakete `instrumentcore-v0.2.0` (mit `quellen`, Bezug) und `instrumentmeasure-v0.2.0` (mit `Stimmen`) neu: `sha256sum -c`
   grün, jede Datei LF.
 
-## 5. Changelog
+## 5. Stufe 34g — Klasse 4, der Kern `bar` (S178)
+
+Teilplan 34g-1 bis 34g-7 im Konzept §6 (KS1 a–KS4 a). Quellen: LumiViz `master` `88e3951c` (nach 34f), IC `bb7e6d6`
+(die Dateien der Klasse 4, `gemeinsam/Balken`, `gemeinsam/Reibung` und `werte/abdruck_msvc.txt` sind dort ohne
+uncommittete Änderung).
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J31 | Balken | IC `rechnung/gemeinsam/Balken.hpp`, `.cpp` (`bb7e6d6`) | `InstrumentModels/gemeinsam/Balken` (`lumi::kern`) | `biegeModen`, `formAn`, `freiFreiVerhaeltnisse`, `kragBetaL` wortgleich; der IC-Fall „Balken: frei–frei …“ mit den IC-Grenzen in `test_InstrumentModelsStab` | **ohne** `zerlegeSymmetrisch` (seit 34e im Core, J23 — der Balken ruft ihn von dort) |
+| J32 | Reibung | IC `rechnung/gemeinsam/Reibung.hpp`, `.cpp` (`bb7e6d6`) | `InstrumentModels/gemeinsam/Reibung` (KS3 a) | `reibwertGalluzzo`, `reibung` wortgleich | IC hat keinen Fall für die Reibung allein (geprüft über den Bogen); **neu** ein Fall: Galluzzo an den Rändern, Haften mit Hysterese, Gleitpunkt als Lösung von x − d + (F_B/z)·μ(x) = 0 (Halbierung rund 3e-11 genau, Newton 1e-13) |
+| J33 | Tastenumfang je Instrument (KS1 a) | — (neu in LumiViz; IC trägt den Umfang im Spiel, `StabSpiel::noteMin`) | `Parametertafel::umfangVon`/`umfangBis`, `tastenumfang`, `richteWerte`, `bezugsProbe(tafel, werte)`, `normiereNachTafel`, `loop/KernAnsicht` | — | **Befund und Korrektur:** `richteKurve` setzte bei einer leeren Kurve den Ersatz erst nach dem Klemmen ein — mit einem Umfang je Tafel unauffällig, mit KS1 a nicht idempotent (Kalimba: die Partnerkurven der Marimba bei 36 und 96, beim zweiten Richten auf 50 und 86). Jetzt wird der Ersatz ebenso gerichtet und trägt seine **Quellen** mit (fehlten seit 34f, WZ1 a). Abweichung von IC (dort deckt der Umfang einer Klasse ihre Vorgaben); der Flügel bleibt Bit für Bit (Vorgaben im Umfang der Tafel) |
+| J34 | Gestimmte Werte in Reihenfolge (KS2 a) | IK2-11 a | `pruefeTafel`, `eingabenAbdruck` (die gestimmten vor dem Ziel zählen mit), `messung::stimmeUndNormiere` (ein späterer wird mit dem früheren neu gestimmt), `Stimmer::stimme(fabrik, werte, namen)` | — | **geändert:** der Stimmer bekommt die Namen der zu stimmenden Werte — ein früherer gestimmter Wert, der nicht dabei ist, gilt, wie er in den Werten steht (ein von Hand geänderter Pegel trägt die Fenster) |
+| J35 | Der Ton eines Stabspiels | IC `rechnung/klassen/04_platte_stab/Stab.hpp`, `Stab.cpp` (`bb7e6d6`) | `InstrumentModels/stab/Stab` (`lumi::kern::stab`), übernommen mit einem Skript (Anker je genau einmal) | `stabModen`, `stabNachklang`, `rechneStabTon` (Stab, Torsion, Partner, Motor, Dämpfer, Tonabnehmer, quadratische Kopplung, Bogen) wortgleich | **geändert:** kein Messcode im Kern (IK2-2 a) — IC maß beim gestrichenen Ton die Tonhöhe mit YIN (`Stab.cpp:489`), hier gibt der Kern den gehaltenen Teil ab (`StabMessung::gehalten`), gemessen wird im Stimmer (`stabSpielHz`, dieselbe Rechnung); `stufeAus` entfällt (`kern::anschlagStufe`); `stimmeBogen` zieht in die Messung (J38); `kennzeichen` entfällt (IK2-9). **Neu am Spiel** (der Ton liest sie nicht): `partnerZielDb`/`partnerZielNote` (KS2 a), `bogenAb` (KS3 a) |
+| J36 | Die zehn Vorgaben | IC `rechnung/klassen/04_platte_stab/Vorgaben.cpp` (`bb7e6d6`) | `InstrumentModels/stab/Vorgaben.cpp`, mit einem Skript | jede Zahl, Kurve und Herkunft wortgleich, die Grenzen (`richteStabSpiel`) | **geändert:** `setzePartnerAbstrahl(s, note, 15)` wird das Ziel des Stimmers (`partnerZielNote` 65, Celesta 84); `normiere` → `normiereNachTafel`; `Stimmung.inc` und `__has_include` entfallen (IK2-11 a); die Quellen je Kurve (WZ1 a) aus einer Tafel von Namen in der IC-Herkunft (Rucz, Chapman, Falaize, Soenderbo, Pfeifle, Thomas/Monteil, CCRMA), sonst `lumiviz` — **nicht** La Favre (Torsion „ohne Zahl“), das Patent (Dämpfer „unklar“) und Iowa (nur Ziel einer Messung): die Werte dort sind Einschätzungen. Die Herkunftstexte bleiben deutsch wie in IC (im Creator im Tooltip). Der Wurlitzer erbt in IC die konstanten Kurven des Rhodes mit Punkten bei 28 und 100 — gerichtet auf 33 … 96, Werte und Ton gleich |
+| J37 | Adapter und Tafel `bar` | IK2-3 a, IK2-4 a | `InstrumentModels/stab/StabKern` | Gruppen nach den Abschnitten von `StabSpiel` (Keys, Bar, Partner, Mallet, Damper, Motor, Pickup, Bow, Output), die Grenzen aus `richteStabSpiel`, 57 Werte; Spuren `expression`, `motor`, `bowed`, `malletOffset`, `damperPressure`; innere Größe `contact` | **gewählt:** der Pegel des Partners unten 1e-6 statt 0 (logarithmisch; der Rhodes trug 0 — er wirkt dort nicht, der Tonabnehmer ist magnetisch, der Stimmer schreibt 1 ohne Wirkung); der Dämpfer greift am Ende der Note (wie der Flügel; Sustain in der Planung); ohne Spur `motor` kein Motor, die Phase der Klappen beginnt bei 0 (gleiche Noten bleiben gleiche Töne); `nachklang` nach dem Ende der Note, unter einem Dämpfer höchstens seine Abklingzeit. Die L11-Regel (κ/κ_c nicht in 0,95 … 1,05) bleibt in `spielAus` |
+| J38 | Der Stimmer `bar` | IC `Vorgaben.cpp` `setzePartnerAbstrahl`, `Stab.cpp` `stimmeBogen` (`bb7e6d6`) | `InstrumentMeasure/StabStimmen` (`stabStimmer`, `stabPartnerPegel`, `stabBogenFenster`, `stabSpielHz`); `InstrumentMeasure` hängt seither an `InstrumentModels` (BK1 a) | beide Rechnungen wortgleich; der Pegel mit dem Bezug 1, die Fenster mit dem Bezug nach `normiere` — wie in IC | Instrumente ohne akustischen Partner bzw. ohne Bogen bekommen 1 mit Herkunft „without effect“ (ein gestimmter Wert fehlt nie, IK2-11 a). **Ergebnis:** die Fenster des Vibraphons Bit für Bit gleich `Stimmung.inc` (unter Windows gerechnet; in IC von `ic_stimme_stab` erzeugt), 137 s auf 11 Threads |
+| J39 | Die mitgelieferten Dateien | KS4 a, Muster `grand_piano` | `asset/loop/instruments/{marimba, xylophone, vibraphone, glockenspiel, tubular_bells, celesta, kalimba, tine_electric_piano, reed_electric_piano}.lvinst`, `test_LoopStab.cpp` (`LUMIVIZ_STAB_INSTRUMENTE_SCHREIBEN=1`), `InstrumentTuneTool --all --reference`, `instrument_katalog.py` | — | **Abweichung vom Teilplan:** statt `InstrumentTuneTool --create` schreibt ein Test die Dateien mit dem Schreiber des Programms (`alsJson`, gerichtet) wie bei `grand_piano` — das Werkzeug kennt den Schreiber der App nicht; es stimmt danach (sein Schreibweg damit erstmals an einem stimmenden Kern geprüft, J30). Die Nachbildungen heißen `synth_marimba`, `synth_vibraphone`, `synth_kalimba` (Skript, zuerst in einer Kopie: 3 Dateien, 7 Verweise in 6 Loops, Generatoren, Katalog, Pegel, README). **Pegel:** `--messung` hätte 26 bestehende Instrumente in der vierten Stelle neu gerundet — eingetragen sind nur die neun (alt = neu), die Nachbildungen messen unverändert −13,40 LUFS. Register: `rucz2021`, `chapman2006`, `falaize2015`, `soenderbo2024`, `pfeifle2017`, `thomas2014`, `ccrma` aus IC `quellen.md` (nur belegte Angaben, Lizenzen nicht geprüft) |
+| J40 | Creator: Body nur am Flügel (CK1 a) | Skizze §6a 1 | `KernAuskunft::koerperAnDerSchicht` (Core), `InstrumentCreator` | — | **Befund:** seit 34d zeigte der Creator bei jeder Kern-Schicht *Body* (grau „none“); die gebilligte Skizze verlangt ihn nur, wo der Körper außerhalb des Kerns liegt — der Stab rechnet seinen Partner selbst (IK2-10 a). Jetzt Core, Level beim Stab; Core, Body, Level beim Flügel |
+| J41 | B6 Modalfit am Modell | IC `rechnung/messung/test_messung.cpp:119–149` (`bb7e6d6`) | `test_InstrumentMeasure` | der Fall mit dem Xylophon ohne Rohr, denselben Grenzen | in 34e zurückgestellt (J21), weil er den Stab braucht |
+
+**Wächter 34g** (S178):
+
+- **Bit für Bit wie IC:** die 11 Abdrücke aus IC `werte/abdruck_msvc.txt` (je Instrument die mittlere Note bei Stufe −12,
+  das Vibraphon mit Motor, und das Vibraphon gestrichen an 72) aus den gestimmten und normierten Werten — im Kern-Fall und
+  aus den mitgelieferten Dateien (`test_LoopStab`); die Fenster des Bogens am Modell gestimmt gleich `Stimmung.inc`
+  (`LUMIVIZ_34G_STIMMEN=1`, 156 s, und vom Werkzeug beim Schreiben). Die IC-Fälle aus `test_stab.cpp` grün, das Vibraphon
+  gestrichen 18 von 18 auf ±10 Cent (IC verlangt 90 %).
+- `loop_werte.txt`: 380 Einträge gleich (9 unter neuem Namen), 28 neu (die neun Stabspiele, `bars_demo`) — nur geänderte
+  Zeilen (Steckbrief). Ein neuer Schreiblauf hätte 8 Loops ohne Stabspiel in der letzten Stelle geändert (`effects_demo`
+  8,7e-4 relativ, im Tausendstel des Wächters): die Datei ist von S161, die Abweichung älter als 34g — `klangfassung.txt`
+  (zuletzt in S177 geschrieben) zeigt für dieselben Loops dieselben Zahlen. `klangfassung.txt`: 381 Werte gleich, neue
+  Abdrücke nur bei den drei umbenannten und den sechs Loops mit ihnen, 28 neu.
+- Flügel-Bezug, `*Loop Werte*`, `*Klangfassung*` nach dem Core-Umbau (34g-2) gleich.
+- **Rechenzeit** (Release-clang, nach der Taktprobe — die feste Last 0,25 s, Spanne 1,02 —, je dreimal allein; der erste
+  Lauf nach einer gedrosselten Probe verworfen): schwerster Ton das Vibraphon mit Motor an C3, **2,07–2,17 %** der Echtzeit,
+  **0,67–0,70 × Flügel-Kern** (A0, 4 s gehalten, 3,0–3,2 %); gestrichen an E♭4 0,60–0,62 %; alle übrigen unter 0,28 %.
+  `*31b-3 Rechenzeit*` im Bass 2,76–2,93 %. Grenze 4,6 % (IK2-6 a) eingehalten. IC (S172, Windows-clang): Vibraphon 2,21 %.
+- Pegel: die neun auf −13,4 LUFS gesetzt (gemessen −19,1 … −7,9 LUFS bei Volume 1); `*Loop Pegel 27c*` grün.
+- Eng 200 / 200 unter Release-clang und Testing-MSVC (auch die Abdrücke unter MSVC Bit für Bit — die Bits hängen an der
+  Plattform). Pakete `instrumentcore-v0.3.0`, `instrumentmodels-v0.2.0`, `instrumentmeasure-v0.3.0`: Summen gut, jede Datei
+  LF, Modul-Doku darin; `instrumentmeasure` verlangt `InstrumentModels` vor sich.
+- **Voller Lauf** (Core geändert, UF17-1 a) 1815 / 1815, 0 Skips unter Release-clang (9:15 min) und Testing-MSVC (9:01 min).
+
+## 6. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.5.0 | 2026-11-08 | Session 178. §5 neu: 34g (J31–J41, Wächter). |
 | 0.4.0 | 2026-11-08 | Session 177. §4 neu: 34f (J27–J30, Wächter). |
 | 0.3.0 | 2026-11-08 | Session 177. §3 neu: 34e (J19–J26, Wächter je Teilschritt, Abschluss mit vollem Lauf unter beiden Compilern). |
 | 0.2.0 | 2026-11-07 | Session 176. §2 neu: 34d (J12–J18, Wächter). |

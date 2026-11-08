@@ -1,12 +1,13 @@
 # InstrumentMeasure — Messkette und Setzen
 
-> **Version:** 0.2.0
+> **Version:** 0.3.0
 > **Datum:** 2026-11-08
 > **Typ:** CppModuleDoc
-> **Status:** gebaut (Stufe 34e)
+> **Status:** gebaut (Stufe 34e; 34f Stimmen; 34g der Stimmer der Klasse 4)
 > **Modul:** InstrumentMeasure (STATIC, `projects/libs/InstrumentMeasure`)
 > **Namespace:** `lumi::messung`, das Setzen in `lumi::messung::setzen`
-> **Abhängigkeiten:** InstrumentCore, AudioCore (PUBLIC), Standardbibliothek; kein Qt, kein `windows.h`
+> **Abhängigkeiten:** InstrumentCore, InstrumentModels (seit 34g: der Stimmer rechnet den Stab unmittelbar — Richtung
+> BK1 a), AudioCore (PUBLIC), Standardbibliothek; kein Qt, kein `windows.h`
 > **Zielgruppe:** Entwickler
 > **Sprache:** Deutsch
 
@@ -47,7 +48,8 @@ Setzen sein `Modell` (ME3 a). Jede Übernahme steht im
 | `NelderMead.hpp` | Nelder–Mead (Werkzeug) |
 | `Bausteine.hpp` | aus IC: B1 Teiltonverfolgung, B2 Tonhöhe (YIN), B3 Vibrato, B4 Rest, B5 Einschwingen, B6 Modalfit (ESPRIT), B7 Bänder über der Zeit, B8 Gleiten; `amplitudenBei` (Messung an der Struktur des Bezugs, L4) |
 | `Samples.hpp` | aus IC, allgemein: die Wurzel lokaler Aufnahmen aus einer Umgebungsvariable (Name vom Aufrufer), `SHA256SUMS` lesen, Dateien prüfen |
-| `Stimmen.hpp` | 34f-3 (IK2-10 a, IK2-11 a): `Stimmer` je Kern, `stimmer()` (die eingebauten; heute leer, die Klassen bringen ihre mit), `stimmeUndNormiere` (die veralteten gestimmten Werte neu, Abdrücke merken, Bezug über `normiereNachTafel`), `veralteteWerte` (ohne Rechnen), `bezugVeraltet`; das Programm `InstrumentTuneTool` schreibt die Datei |
+| `StabStimmen.hpp` | 34g (KS2 a, KS3 a), aus IC: der Stimmer des Kerns `bar` — `stabPartnerPegel` (IC `setzePartnerAbstrahl`), `stabBogenFenster` (IC `stimmeBogen`), `stabSpielHz` (die Tonhöhe des gestrichenen Tons, YIN; in IC im Kern gemessen) |
+| `Stimmen.hpp` | 34f-3 (IK2-10 a, IK2-11 a): `Stimmer` je Kern (seit 34g mit den Namen der zu stimmenden Werte, in Reihenfolge — KS2 a), `stimmer()` (die eingebauten; seit 34g `bar`), `stimmeUndNormiere` (die veralteten gestimmten Werte neu, Abdrücke merken, Bezug über `normiereNachTafel`), `veralteteWerte` (ohne Rechnen), `bezugVeraltet`; das Programm `InstrumentTuneTool` schreibt die Datei |
 | `Setzen.hpp` | aus IC: `setzen::setze` (Gruppen, Messgrößen, `Modell`; L7–L18), `schnitt`, `welligkeit`, `glaette`, `setzeMehrfach`, `eindeutig`, `probe`, `alsTasten`; innen das LM je Block; Schritt und Ende je Parameter, Beobachter je Iteration und Startzustand (ME3 a) |
 
 ### 3.1 Das Setzen
@@ -64,10 +66,11 @@ Das Ergebnis ist ein Vorschlag (L18).
 - `test_Teiltonmessung.cpp`, `test_Kurvenabstand.cpp`, die Salamander-Fälle (`test_LoopSalamander*.cpp`) — die
   Messkette; **Wächter:** `LUMIVIZ_SALAMANDER=<Ordner>` misst die Aufnahme neu, `salamander_*.txt` ohne Diff.
 - `test_InstrumentMeasure.cpp` — `*InstrumentMeasure 34e*`: die Bausteine B1–B8, `amplitudenBei`, Zielformat, Samples
-  (Fälle aus IC `test_messung.cpp`, mit deren Grenzen; „Modalfit am Modell“ kommt mit 34g).
+  (Fälle aus IC `test_messung.cpp`, mit deren Grenzen); seit 34g auch „B6 Modalfit am Modell“ am Xylophon.
 - `test_InstrumentMeasureSetzen.cpp` — `*InstrumentMeasure 34e Setzen*`: die zehn Fälle aus IC `test_setzen.cpp`.
 - `test_InstrumentStimmen.cpp` — `*Instrument Stimmen*`: am Prüfkern `testTuned` Stimmen, Abdruck, Bezug, rot bei veralteter
-  Stimmung und verstelltem Bezug; der Wächter über die mitgelieferten `.lvinst` (heute ohne Fall).
+  Stimmung und verstelltem Bezug; die Reihenfolge gestimmter Werte (34g, KS2 a); der Wächter über die mitgelieferten
+  `.lvinst` (seit 34g neun Stabspiele mit gestimmten Werten und Bezug). Der Stimmer `bar` selbst: `test_InstrumentModelsStab.cpp`.
 - `test_LoopSalamanderSuche.cpp` — LM einfach und je Block (7.5.10, 7.5.12); die Flügel-Suche über `setzen`
   (`LUMIVIZ_75_SUCHE2`, mit `…_ITERATIONEN` für eine kurze Probe).
 
@@ -75,5 +78,6 @@ Das Ergebnis ist ein Vorschlag (L18).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.3.0 | 2026-11-08 | Session 178. 34g: `StabStimmen` (der Stimmer `bar`, KS2 a, KS3 a), `Stimmer` mit den Namen der zu stimmenden Werte und Ketten in Reihenfolge (KS2 a), Abhängigkeit von `InstrumentModels`; B6 am Modell (Journal J34, J38, J41). |
 | 0.2.0 | 2026-11-08 | Session 177. 34f-3: `Stimmen` (IK2-10 a, IK2-11 a). |
 | 0.1.0 | 2026-11-08 | Session 177. Angelegt mit 34e (KN1 a, IK2-2 a, ME1 a–ME4 a). |

@@ -51,7 +51,8 @@ double spitze(const std::vector<float>& ton)
 
 TEST_CASE("InstrumentModels 34d kerne() kennt den Fluegel")
 {
-    CHECK(kerne().namen() == std::vector<std::string>{std::string(kKernName)});
+    // seit 34g dazu der Kern `bar` (Klasse 4, test_InstrumentModelsStab.cpp)
+    CHECK(kerne().namen() == std::vector<std::string>{std::string(kKernName), "bar"});
     const KernTyp* typ = kerne().typ(kKernName);
     REQUIRE(typ != nullptr);
     CHECK(pruefeTafel(typ->tafel).empty());

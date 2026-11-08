@@ -1,77 +1,325 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 22,
     "title": "Kalimba",
     "category": "percussion",
-    "genres": ["Ambient", "Lo-Fi", "Trap"],
-    "description": "A short sine tine with a knock and a detuned ring two octaves above.",
-    "level": 0.9013,
+    "genres": ["Ambient"],
+    "description": "A clamped tine per key plucked at its tip (mode ratios after Chapman 2006), without box; unmeasured.",
+    "level": 0.7627,
     "layers": [
         {
-            "name": "Tine",
-            "on": true,
-            "level": 1.0,
-            "transpose": 0,
-            "startOffset": 0,
-            "drive": 0,
-            "waveform": "sine",
-            "harmonics": [0, 0, 0.2, 0, 0.1],
-            "voices": 1,
-            "detune": 0,
-            "attack": 1,
-            "decay": 450,
-            "sustain": 0,
-            "release": 250,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
-            "vibratoRate": 0,
-            "vibratoDepth": 0,
-            "vibratoDelay": 0,
-            "damping": 0.996
-        },
-        {
-            "name": "Knock",
-            "on": true,
-            "level": 0.4,
-            "transpose": 12,
-            "startOffset": 0,
-            "drive": 0,
-            "waveform": "string",
-            "harmonics": [],
-            "voices": 1,
-            "detune": 0,
-            "attack": 1,
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": false,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": true,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 1.2],
+                        [86, 1.2]
+                    ],
+                    "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
+                    "sources": ["rucz2021"]
+                },
+                "damper": "none",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 0.2],
+                        [86, 0.2]
+                    ],
+                    "source": "ohne Daempfer",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 0],
+                        [86, 0]
+                    ],
+                    "source": "offen",
+                    "sources": ["lumiviz"]
+                },
+                "excitation": "pluck",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "die Zunge klingt auf ihrer ersten Mode",
+                    "sources": ["lumiviz"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.025,
+                "malletRelaxation": 0,
+                "malletStiffness": 1,
+                "mass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 0.003],
+                        [86, 0.003]
+                    ],
+                    "source": "offen: 3 g (Federstahl 5 cm, Einschaetzung)",
+                    "sources": ["lumiviz"]
+                },
+                "motor": false,
+                "noteMax": 86,
+                "noteMin": 50,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 0],
+                        [86, 0]
+                    ],
+                    "source": "auf der Achse",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 32681.10546875,
+                "oversampling": 64,
+                "partner": "none",
+                "partnerDamping": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [50, 0.0088],
+                        [86, 0.0088]
+                    ],
+                    "source": "ξ_a,1 = 8,8e-3, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1); ueber den Umfang offen (M5)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "without effect: no acoustic partner",
+                    "sources": ["lumiviz"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 65,
+                "partnerRatio": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [50, 1.0008600917431194],
+                        [86, 1.0008600917431194]
+                    ],
+                    "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
+                    "sources": ["rucz2021"]
+                },
+                "pickup": "acoustic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0,
+                "pickupPosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "akustisch",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 0],
+                        [86, 0]
+                    ],
+                    "source": "offen",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 5.86],
+                        [62, 5.3]
+                    ],
+                    "source": "Chapman 2006, Tab. 1 S. 27: D3 5,86, D4 5,30 (nur Bericht, Wortlaut im Bericht)",
+                    "sources": ["chapman2006"]
+                },
+                "ratio3": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 16.408],
+                        [62, 14.839999999999998]
+                    ],
+                    "source": "offen: Abstand des Kragbalkens (β3/β2)² = (7,855/4,694)² = 2,80 (Rechnung)",
+                    "sources": ["lumiviz"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 1],
+                        [86, 1]
+                    ],
+                    "source": "an der freien Spitze gezupft",
+                    "sources": ["lumiviz"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 2],
+                        [86, 2]
+                    ],
+                    "source": "offen: 2 s (Chapman: „two exponentially damped sinusoids“ ohne Zahl)",
+                    "sources": ["chapman2006"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 0],
+                        [86, 0]
+                    ],
+                    "source": "ohne Torsion",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [50, 2],
+                        [86, 2]
+                    ],
+                    "source": "offen: 2 s (Chapman: „two exponentially damped sinusoids“ ohne Zahl)",
+                    "sources": ["chapman2006"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "fccbff517f6cb1df78c5f5ba6412d168918ea9a6d8daada523d7d02f590cfd42",
+                    "bowForceHighMf": "8313fca5b32a711977a3b46b07623620e694d3058957103bd0d8dca7a448f76e",
+                    "bowForceHighPp": "8ec3a3ea56f7fe0d317b5e82eda673b54905430b1d0a8936a53ecabd9b90adb0",
+                    "bowForceLowFf": "aec834ece8cffcdd46c6eec939f174b8f08ce57fd159ea414fbc3af3e7e30cc9",
+                    "bowForceLowMf": "5793fc8d5c9a79832be801899d3de0d34c3e440a809c7ea6037794f3a230e32f",
+                    "bowForceLowPp": "fefa24869a5d0b2a5142647f0c355c58f74a94c7205443defd36f5a38b85befb",
+                    "partnerGain": "d3b0641bbbab394af957a61415e317fbc0bda93d08e08305898511c25b031b82"
+                },
+                "velocityMax": 1
+            },
+            "damping": 0.996,
             "decay": 200,
-            "sustain": 0.7,
-            "release": 30,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
-            "vibratoRate": 0,
-            "vibratoDepth": 0,
-            "vibratoDelay": 0,
-            "damping": 0.93
-        },
-        {
-            "name": "Ring",
-            "on": true,
-            "level": 0.2,
-            "transpose": 24,
-            "startOffset": 0,
-            "drive": 0,
-            "waveform": "sine",
+            "detune": 0,
             "harmonics": [],
-            "voices": 2,
-            "detune": 20,
-            "attack": 1,
-            "decay": 150,
-            "sustain": 0,
-            "release": 100,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
-            "vibratoRate": 0,
-            "vibratoDepth": 0,
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Kalimba",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
             "vibratoDelay": 0,
-            "damping": 0.996
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
         }
-    ]
+    ],
+    "keyboard": {
+        "bassSustainBelow": 50,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "none"
+        },
+        "range": [50, 86]
+    }
 }

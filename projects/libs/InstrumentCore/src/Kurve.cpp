@@ -123,6 +123,10 @@ void richteKurve(Kurve& kurve, double von, double bis, const Kurve& ersatz, int 
         kurve.punkte = ersatz.punkte;
         kurve.belegkraft = ersatz.belegkraft;
         kurve.herkunft = ersatz.herkunft;
+        kurve.quellen = ersatz.quellen;  // 34g: die Quellen gehen mit der Herkunft (WZ1 a)
+        // 34g (KS1 a): der Ersatz in denselben Umfang — eine Tafel fuer viele Instrumente hat Vorgaben ueber den
+        // Umfang eines Instruments hinaus (Abweichung von IC, dort deckte der Umfang einer Klasse ihre Vorgaben)
+        richtePaare(kurve.punkte, von, bis, noteMin, noteMax);
     }
 }
 

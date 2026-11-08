@@ -249,6 +249,62 @@
       "creditRequired": true,
       "shippable": true,
       "note": "IC: nicht geladen (Stand 2026-10-26, der Verlag lieferte eine Bot-Seite)"
+    },
+    {
+      "key": "rucz2021",
+      "credit": "Rucz, Ulveczki, A Coupled 3D Finite Element Model of the Sound Production by Mallet Percussion Instruments, ICSV27 (IIAV), 2021",
+      "license": "not checked (no notice seen, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34g (S178), aus IC klassen/Klasse 4 - Platte und Stab/quellen.md: Tab. 1 S. 5 und S. 7 in IC Session 1 selbst gelesen (Titel und Autoren aus dem Bericht); uebernommen werden Zahlen (Stab, Resonator, Schlaegel, +15 dB), nicht der Text — Lizenz nicht geprueft"
+    },
+    {
+      "key": "chapman2006",
+      "credit": "Chapman, Investigating the sound of an African thumb piano (kalimba), Canadian Acoustics 34(3), 26-27, 2006",
+      "license": "not checked (no notice seen, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34g, aus IC quellen.md (Angabe aus dem Bericht): Tab. 1 S. 27, die Verhaeltnisse der Kalimba D3/D4 — an der Quelle nicht geprueft"
+    },
+    {
+      "key": "falaize2015",
+      "credit": "Falaize, Helie, Rhodes-like instrument, passive method, DAFx-15; journal version JSV 390 (2017) 289-309",
+      "license": "not checked (no notice seen, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34g, aus IC quellen.md (Bericht): die Tine (r = 2 mm, 7,83 cm, 440 Hz), die Lage des Hammers, der Abstand des Tonabnehmers — an der Quelle nicht geprueft; der Titel steht in IC nur beschrieben"
+    },
+    {
+      "key": "soenderbo2024",
+      "credit": "Soenderbo, Real-time physical model of the Rhodes Electric Piano, master's thesis, Aalborg University, 2024",
+      "license": "not checked: title page \"The content of this report is freely available\", \"publication (with reference) may only be pursued due to agreement with the author\" (report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34g, aus IC quellen.md: \"Verweis; Werte zitierbar\" (IC) — die Daempfung der Tine (Tab. 3.1) und der Neopren-Hammer (Tab. 3.2); die Klausel zur Veroeffentlichung prueft Patrik"
+    },
+    {
+      "key": "pfeifle2017",
+      "credit": "Pfeifle, Real-Time Physical Model of a Wurlitzer and Rhodes Electric Piano, DAFx-17, Edinburgh, 2017",
+      "license": "not checked (no notice seen, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34g, aus IC quellen.md (Bericht): nur Begruendungen offener Werte (Stimmfeder, Loetzinn, Tonebar gekoppelt) — keine Zahl uebernommen"
+    },
+    {
+      "key": "thomas2014",
+      "credit": "Thomas, Monteil, Touze, Complicated dynamics exhibited by thin shells displaying numerous internal resonances: application to the steelpan, ENOC 2014, Vienna",
+      "license": "not checked (no notice seen, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34g, aus IC quellen.md (Bericht): das Tonfeld der Steeldrum 1:2:2:4:4:6:8 — die Steeldrum geht nicht mit (KS4 a)"
+    },
+    {
+      "key": "ccrma",
+      "credit": "Scavone (CCRMA, Stanford University), pages on marimba, xylophone, vibraphone, glockenspiel, tubular bells, ccrma.stanford.edu",
+      "license": "\"(c)1998-2003 CCRMA, Stanford University. All Rights Reserved.\" (report only) - facts used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34g, aus IC quellen.md (Bericht): Verhaeltnis 1:4 des Vibraphons, Umfang des Glockenspiels, Schlagton der Roehrenglocken, Anschlag am Rand — Tatsachen, kein Text; die Rechtslage prueft Patrik"
     }
   ]
 }

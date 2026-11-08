@@ -1,55 +1,395 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 22,
     "title": "Vibraphone",
     "category": "percussion",
-    "genres": ["Drum and Bass", "Hip-Hop", "Jazz Waltz", "Lo-Fi"],
-    "description": "A long sine bar with slow vibrato and a short strike.",
-    "level": 0.6336,
+    "genres": ["Ambient"],
+    "description": "A modal aluminium bar per key (1 : 4) with a tube resonator whose lids a motor turns (track motor), a damper bar, and a bow at the end of the bar from E-flat 4 (track bowed); unmeasured.",
+    "level": 0.6094,
     "layers": [
         {
-            "name": "Bar",
-            "on": true,
-            "level": 1.0,
-            "transpose": 0,
-            "startOffset": 0,
-            "drive": 0,
-            "waveform": "sine",
-            "harmonics": [0, 0, 0.18],
-            "voices": 1,
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": true,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 4.30538964609902],
+                        [51, 5.120000000000003],
+                        [54, 5.120000000000003],
+                        [57, 7.24077343935025],
+                        [63, 7.24077343935025],
+                        [66, 7.24077343935025],
+                        [72, 8.61077929219804],
+                        [78, 14.4815468787005],
+                        [84, 40.96000000000002],
+                        [87, 28.963093757401],
+                        [89, 34.44311716879216]
+                    ],
+                    "source": "window of the bow force at the model (tuner): starts (+20 dB), +-15 cent at f_1, sticking 5-98 %",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.6400000000000003],
+                        [51, 0.6979249489057653],
+                        [54, 0.7610925536017419],
+                        [57, 0.9870149282610826],
+                        [60, 0.9870149282610826],
+                        [63, 1.076347411524755],
+                        [66, 1.3958498978115306],
+                        [69, 1.8101933598375626],
+                        [72, 2.15269482304951],
+                        [75, 2.5600000000000014],
+                        [78, 3.3199092599065865],
+                        [81, 4.30538964609902],
+                        [84, 4.695060701207919],
+                        [87, 12.17748085762787],
+                        [89, 15.792238852177322]
+                    ],
+                    "source": "window of the bow force at the model (tuner): starts (+20 dB), +-15 cent at f_1, sticking 5-98 %",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.24675373206527065],
+                        [51, 0.2690868528811888],
+                        [54, 0.29344129382549494],
+                        [57, 0.38054627680087094],
+                        [63, 0.45254833995939064],
+                        [66, 0.6400000000000003],
+                        [69, 0.7610925536017419],
+                        [72, 1.076347411524755],
+                        [75, 1.2800000000000007],
+                        [78, 1.6599546299532932],
+                        [81, 1.9740298565221652],
+                        [84, 2.3475303506039595],
+                        [87, 6.088740428813935],
+                        [89, 6.639818519813173]
+                    ],
+                    "source": "window of the bow force at the model (tuner): starts (+20 dB), +-15 cent at f_1, sticking 5-98 %",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 3.9480597130443305],
+                        [51, 4.695060701207919],
+                        [54, 5.120000000000003],
+                        [57, 7.24077343935025],
+                        [63, 6.639818519813173],
+                        [66, 7.24077343935025],
+                        [72, 8.61077929219804],
+                        [78, 12.17748085762787],
+                        [84, 37.56048560966335],
+                        [87, 24.35496171525574],
+                        [89, 28.963093757401]
+                    ],
+                    "source": "window of the bow force at the model (tuner): starts (+20 dB), +-15 cent at f_1, sticking 5-98 %",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.5868825876509899],
+                        [51, 0.6979249489057653],
+                        [54, 0.7610925536017419],
+                        [57, 0.9870149282610826],
+                        [60, 0.9870149282610826],
+                        [63, 0.9050966799187813],
+                        [66, 1.076347411524755],
+                        [69, 1.6599546299532932],
+                        [72, 1.9740298565221652],
+                        [75, 2.3475303506039595],
+                        [78, 2.791699795623061],
+                        [81, 3.3199092599065865],
+                        [84, 3.3199092599065865],
+                        [87, 3.9480597130443305],
+                        [89, 5.583399591246122]
+                    ],
+                    "source": "window of the bow force at the model (tuner): starts (+20 dB), +-15 cent at f_1, sticking 5-98 %",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.22627416997969532],
+                        [51, 0.2690868528811888],
+                        [54, 0.2690868528811888],
+                        [57, 0.34896247445288264],
+                        [63, 0.38054627680087094],
+                        [66, 0.4149886574883233],
+                        [69, 0.6400000000000003],
+                        [72, 0.6979249489057653],
+                        [75, 0.9050966799187813],
+                        [78, 0.9870149282610826],
+                        [81, 1.1737651753019798],
+                        [84, 1.2800000000000007],
+                        [87, 1.5221851072034838],
+                        [89, 1.9740298565221652]
+                    ],
+                    "source": "window of the bow force at the model (tuner): starts (+20 dB), +-15 cent at f_1, sticking 5-98 %",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": false,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 1.2],
+                        [89, 1.2]
+                    ],
+                    "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
+                    "sources": ["rucz2021"]
+                },
+                "damper": "bar",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.3],
+                        [89, 0.3]
+                    ],
+                    "source": "offen: Filzleiste (Patent: „halbe Amplitude in 1,5 s“ — nur Bericht, unklar ob gedaempft); M7 an Iowa „Dampen“",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0],
+                        [89, 0]
+                    ],
+                    "source": "offen: fester Verlustfaktor; Rucz S. 7: hoehere Teiltoene „significantly greater“ — erwartet κ > 0; zu setzen an Iowa (M2)",
+                    "sources": ["rucz2021"]
+                },
+                "excitation": "strike",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [89, 1]
+                    ],
+                    "source": "der Stab klingt auf seiner ersten Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.025,
+                "malletRelaxation": 0,
+                "malletStiffness": 1581.1388300841897,
+                "mass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.0967],
+                        [89, 0.0967]
+                    ],
+                    "source": "offen: wie der Palisanderstab bei Rucz (keine Masse eines Vibraphonstabs mit Quelle)",
+                    "sources": ["rucz2021"]
+                },
+                "motor": true,
+                "noteMax": 89,
+                "noteMin": 48,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0],
+                        [89, 0]
+                    ],
+                    "source": "offen: auf der Laengsachse (dann ohne Torsion); M1",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 191150.9375,
+                "oversampling": 64,
+                "partner": "closedTube",
+                "partnerDamping": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.0088],
+                        [89, 0.0088]
+                    ],
+                    "source": "ξ_a aus Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1) uebertragen (dort Xylophon); M5",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 36.85707695471845],
+                        [89, 36.85707695471845]
+                    ],
+                    "source": "tuned through the model: +15 dB with the partner at key 65 (\"by as much as 15 dB\", Rucz & Ulveczki 2021 p. 7)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 65,
+                "partnerRatio": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [48, 1.0008600917431194],
+                        [89, 1.0008600917431194]
+                    ],
+                    "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
+                    "sources": ["rucz2021"]
+                },
+                "pickup": "acoustic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0,
+                "pickupPosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.5],
+                        [89, 0.5]
+                    ],
+                    "source": "akustisch — ohne Bedeutung",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0],
+                        [89, 0]
+                    ],
+                    "source": "offen: alle Moden gleich gewichtet (Ausgang ist q̈, die Hoehen schon ∝ ω²); M3",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [48, 4],
+                        [89, 4]
+                    ],
+                    "source": "1 : 4 (CCRMA, nur Bericht)",
+                    "sources": ["ccrma"]
+                },
+                "ratio3": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 7.841683294032288],
+                        [89, 7.841683294032288]
+                    ],
+                    "source": "offen: ueber der zweiten Mode der Abstand des gleichfoermigen Balkens (4·5,404/2,757)",
+                    "sources": ["lumiviz"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.5],
+                        [89, 0.5]
+                    ],
+                    "source": "offen: Mitte (messplan M3: „Mitte üblich“, Einschaetzung); Spur Schlaegel-Ort (T3b a)",
+                    "sources": ["lumiviz"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 84.04403423311982],
+                        [68, 26.472211962098243],
+                        [89, 7.870235703796842]
+                    ],
+                    "source": "offen: ξ = 1e-4 (Aluminium daempft schwaecher als Palisander mit 2,57e-4, Einschaetzung); M2 an Iowa „Sustain“",
+                    "sources": ["lumiviz"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 3],
+                        [89, 3]
+                    ],
+                    "source": "offen, Platzhalter ohne Wirkung bei Versatz 0 (La Favre misst die erste Torsion — nur Bericht, ohne Zahl); zu setzen am Modalfit (M1)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 32.70195884557191],
+                        [68, 10.300471580582974],
+                        [89, 3.0623485228781493]
+                    ],
+                    "source": "offen: wie die erste Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "5cc2826d36483713bd97999d62a427dfe75939040c9e908c59258b948706b7aa",
+                    "bowForceHighMf": "5fdc7ca2064bd01e913895692742ef1dd626afdebed332d44a67b5f67fa27344",
+                    "bowForceHighPp": "38abea1012899869f60ba1b9fd72a16ef45fa8339f8da8033b98deb55621c31c",
+                    "bowForceLowFf": "f8c090f17924609a4cbdeb09ef2edd2e1da2eb009c9f99e0082f0b2129a81c99",
+                    "bowForceLowMf": "a75629919866eda64ffda6c223c4884f29b6e4edf689870c3fc7c67eb4cd6b88",
+                    "bowForceLowPp": "9bd1aaa33446c13a908f97aede9daf56f965ac588b632abb800348a011365496",
+                    "partnerGain": "837e92afb094cdfe573225ca597186c9faef214954cce5c522a4830497b6dc98"
+                },
+                "velocityMax": 5
+            },
+            "damping": 0.996,
+            "decay": 200,
             "detune": 0,
-            "attack": 1,
-            "decay": 1400,
-            "sustain": 0.05,
-            "release": 600,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
-            "vibratoRate": 4.5,
-            "vibratoDepth": 5,
-            "vibratoDelay": 0,
-            "damping": 0.996
-        },
-        {
-            "name": "Strike",
-            "on": true,
-            "level": 0.2,
-            "transpose": 24,
-            "startOffset": 0,
-            "drive": 0,
-            "waveform": "sine",
             "harmonics": [],
-            "voices": 1,
-            "detune": 0,
-            "attack": 1,
-            "decay": 60,
-            "sustain": 0,
-            "release": 40,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
-            "vibratoRate": 0,
-            "vibratoDepth": 0,
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Vibraphone",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
             "vibratoDelay": 0,
-            "damping": 0.996
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
         }
-    ]
+    ],
+    "keyboard": {
+        "bassSustainBelow": 48,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "sustain"
+        },
+        "range": [48, 89]
+    }
 }

@@ -7,7 +7,7 @@
  * Note einer Zunge (IC `ic_stimme_zunge`). Sie sind Daten in der `.lvinst` mit Belegkraft *Rechnung* und dem Abdruck der
  * Eingaben, aus denen sie gestimmt wurden (`kern::eingabenAbdruck`). Gestimmt wird hier, in der Messung, weil das
  * Stimmen am gerechneten Ton misst (YIN, B2); ein Kern liefert dazu seinen `Stimmer`. Die eingebauten (`stimmer()`)
- * kommen mit ihren Klassen (34j: Klasse 10, 34k: Klasse 2) — bis dahin ist die Liste leer.
+ * kommen mit ihren Klassen (34g: Klasse 4, 34j: Klasse 10, 34k: Klasse 2).
  *
  * **Der Bezug** (`Parametertafel::bezugWert`) ist eine Zahl der Tafel, die `kern::normiereNachTafel` neu rechnet: an
  * der mittleren Note bei Stufe 0 hat der Ton die Spitze 0,5. Er wird nach dem Stimmen gesetzt (er haengt an den
@@ -33,14 +33,16 @@ namespace lumi::messung
 /// Die gestimmten Werte, die ein Stimmer rechnet: je Name die neue Kurve.
 using GestimmteWerte = std::vector<std::pair<std::string, kern::Kurve>>;
 
-/// Wie ein Kern seine gestimmten Werte rechnet: aus den Werten (nach der Tafel gerichtet) die gestimmten Kurven.
+/// Wie ein Kern seine gestimmten Werte rechnet: aus den Werten (nach der Tafel gerichtet) die gestimmten Kurven mit den
+/// Namen `namen`, in der Reihenfolge der Tafel (KS2 a) — ein gestimmter Wert davor, der nicht in `namen` steht, gilt, wie
+/// er in `werte` steht; einer in `namen` wird zuerst neu gestimmt, und die spaeteren nehmen ihn.
 struct Stimmer
 {
     std::string kern;
-    std::function<GestimmteWerte(const kern::Fabrik& fabrik, const kern::Werte& werte)> stimme;
+    std::function<GestimmteWerte(const kern::Fabrik& fabrik, const kern::Werte& werte, const std::vector<std::string>& namen)> stimme;
 };
 
-/// Die eingebauten Stimmer (heute keiner; IK2-11 a: Klasse 10 in 34j, Klasse 2 in 34k).
+/// Die eingebauten Stimmer (IK2-11 a: Klasse 4 `bar` seit 34g, `StabStimmen.hpp`; Klasse 10 in 34j, Klasse 2 in 34k).
 [[nodiscard]] const std::vector<Stimmer>& stimmer();
 
 /// Der Stimmer eines Kerns in `liste`, oder `nullptr`.
@@ -56,7 +58,8 @@ struct StimmBericht
     [[nodiscard]] bool geaendert() const { return !gestimmt.empty() || (mitBezug && bezug != bezugVorher); }
 };
 
-/// Stimmt die gestimmten Werte von `werte` (nur die veralteten, mit `alle` jeden), merkt ihre Abdruecke und setzt
+/// Stimmt die gestimmten Werte von `werte` (die veralteten und die spaeteren, die von einem davon abhaengen — KS2 a;
+/// mit `alle` jeden), merkt ihre Abdruecke und setzt
 /// danach — mit `bezug` — den Bezug neu. Fehlt einem Kern mit gestimmten Werten sein Stimmer, steht das in `fehler`.
 [[nodiscard]] StimmBericht stimmeUndNormiere(const kern::Fabrik& fabrik, const std::vector<Stimmer>& liste, std::string_view kern,
                                              kern::Werte& werte, bool alle, bool bezug);

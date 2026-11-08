@@ -31,6 +31,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <numbers>
@@ -125,7 +126,7 @@ KernTyp pruefTyp()
 /// Der Stimmer des Pruefkerns: die Tonhoehe je Note gleichstufig, um t60 Cent hoeher (damit sie an t60 haengt).
 Stimmer pruefStimmer(int* aufrufe = nullptr)
 {
-    return Stimmer{"testTuned", [aufrufe](const Fabrik&, const Werte& w) {
+    return Stimmer{"testTuned", [aufrufe](const Fabrik&, const Werte& w, const std::vector<std::string>&) {
                        if (aufrufe != nullptr) ++*aufrufe;
                        Kurve k;
                        k.belegkraft = Belegkraft::Rechnung;
@@ -223,6 +224,65 @@ TEST_CASE("Instrument Stimmen 34f: der Waechter wird rot bei veralteter Stimmung
     const lumi::messung::StimmBericht b = lumi::messung::stimmeUndNormiere(fabrik, {}, "testTuned", ohne, false, true);
     CHECK_FALSE(b.fehler.empty());
     CHECK(b.gestimmt.empty());
+}
+
+TEST_CASE("Instrument Stimmen 34g: gestimmte Werte in Reihenfolge — der spaetere wird mit dem frueheren neu gestimmt (KS2 a)")
+{
+    // der Pruefkern mit einem zweiten gestimmten Wert nach `pitch`, der an ihm haengt
+    KernTyp t = pruefTyp();
+    ParameterAngabe fenster = t.tafel.werte[2];
+    REQUIRE(fenster.name == "pitch");
+    fenster.name = "pitchWindow";
+    fenster.abhaengigVon = {"pitch"};
+    t.tafel.werte.push_back(fenster);
+    REQUIRE(pruefeTafel(t.tafel).empty());
+    Fabrik fabrik;
+    REQUIRE(fabrik.registriere(t).empty());
+    int aufrufe = 0;
+    const Stimmer s{"testTuned", [&aufrufe](const Fabrik&, const Werte& w, const std::vector<std::string>& namen) {
+                        ++aufrufe;
+                        // der Stimmer rechnet die Kette selbst: erst `pitch` (oder der, der in den Werten steht), daraus
+                        // das Fenster
+                        const bool pitchNeu = std::find(namen.begin(), namen.end(), "pitch") != namen.end();
+                        Kurve p;
+                        p.belegkraft = Belegkraft::Rechnung;
+                        if (pitchNeu)
+                            for (int n = 48; n <= 72; n += 12) p.punkte.push_back({n, 440.0 * std::exp2((n - 69 + w.zahl("t60") / 100.0) / 12.0)});
+                        else
+                            p = w.kurve("pitch");
+                        Kurve f;
+                        f.belegkraft = Belegkraft::Rechnung;
+                        for (const NotenWert& q : p.punkte) f.punkte.push_back({q.note, 1.01 * q.wert});
+                        GestimmteWerte g;
+                        if (pitchNeu) g.emplace_back("pitch", p);
+                        g.emplace_back("pitchWindow", f);
+                        return g;
+                    }};
+    Werte w = anfang();
+    w.setze("pitchWindow", Kurve{});
+    const lumi::messung::StimmBericht erst = lumi::messung::stimmeUndNormiere(fabrik, {s}, "testTuned", w, false, false);
+    CHECK(erst.fehler.empty());
+    CHECK(erst.gestimmt == std::vector<std::string>{"pitch", "pitchWindow"});
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", w).empty());
+
+    // nur `pitch` veraltet (sein Abdruck passt nicht mehr): das Fenster wird mitgestimmt
+    w.merkeAbdruck("pitch", "falsch");
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", w) == std::vector<std::string>{"pitch"});
+    const lumi::messung::StimmBericht zweit = lumi::messung::stimmeUndNormiere(fabrik, {s}, "testTuned", w, false, false);
+    CHECK(zweit.gestimmt == std::vector<std::string>{"pitch", "pitchWindow"});
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", w).empty());
+
+    // aendert sich `pitch` von Hand, veraltet das Fenster (es haengt an ihm), `pitch` selbst nicht
+    Kurve hand = w.kurve("pitch");
+    hand.punkte.front().wert *= 1.001;
+    w.setze("pitch", hand);
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", w) == std::vector<std::string>{"pitchWindow"});
+    const lumi::messung::StimmBericht dritt = lumi::messung::stimmeUndNormiere(fabrik, {s}, "testTuned", w, false, false);
+    CHECK(dritt.gestimmt == std::vector<std::string>{"pitchWindow"});
+    CHECK(aufrufe == 3);
+    // das Fenster folgt dem Wert von Hand
+    CHECK(w.kurve("pitchWindow").punkte.front().wert == doctest::Approx(1.01 * hand.punkte.front().wert).epsilon(1e-15));
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", w).empty());
 }
 
 TEST_CASE("Instrument Stimmen 34f: der Waechter ueber die mitgelieferten Instrumente")

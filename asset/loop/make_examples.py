@@ -86,13 +86,13 @@ INSTRUMENTE = {
         schicht("String", "string", damping=0.997, attack=2, release=120, drive=0.75),
         schicht("Fifth", "string", transpose=7, damping=0.996, attack=2, release=120, drive=0.75, level=0.5),
         schicht("Octave", "string", transpose=12, startOffset=10, damping=0.996, attack=2, release=120, drive=0.6, level=0.35)),
-    "kalimba": instrument(
-        "Kalimba", 0.8,
+    "synth_kalimba": instrument(
+        "Synth Kalimba", 0.8,
         schicht("Tine", "sine", harmonics=[0, 0, 0.2, 0, 0.1], attack=1, decay=450, sustain=0, release=250),
         schicht("Knock", "string", transpose=12, damping=0.93, attack=1, release=30, level=0.4),
         schicht("Ring", "sine", transpose=24, voices=2, detune=20, attack=1, decay=150, sustain=0, release=100, level=0.2)),
-    "marimba": instrument(
-        "Marimba", 0.85,
+    "synth_marimba": instrument(
+        "Synth Marimba", 0.85,
         schicht("Bar", "sine", harmonics=[0, 0, 0.3], attack=1, decay=380, sustain=0, release=200),
         schicht("Mallet", "triangle", transpose=24, attack=1, decay=40, sustain=0, release=30, level=0.25)),
     # --- sieben ungewoehnliche
@@ -212,8 +212,8 @@ def bells_demo():
                             ("Tom", "kit:tom", 0.5, -0.2, {12: 0.8, (3, 14): 0.6}),
                             ("Kick", "kit:kick", 0.7, 0.0, {0: 1.0, 10: 0.6})])
     return loop("Bell garden", "Ambient", 92, 0.3,
-                [beat, muster("Pad", "fifth_pad", pad, 0.6, -0.1), muster("Kalimba", "kalimba", kalimba, 0.8, 0.3),
-                 muster("Marimba", "marimba", marimba, 0.8, -0.3), muster("Bells", "bell", bell, 0.8, 0.1),
+                [beat, muster("Pad", "fifth_pad", pad, 0.6, -0.1), muster("Kalimba", "synth_kalimba", kalimba, 0.8, 0.3),
+                 muster("Marimba", "synth_marimba", marimba, 0.8, -0.3), muster("Bells", "bell", bell, 0.8, 0.1),
                  muster("Sub", "sub_bass", bass, 0.8)],
                 [("Drums", [("Shaker", 8, 2)]), ("Pad", [("Pad", 0, 4)]), ("Kalimba", [("Kalimba", 0, 4)]),
                  ("Marimba", [("Marimba", 4, 3)]), ("Bells", [("Bells", 8, 2)]), ("Bass", [("Sub", 4, 3)])])

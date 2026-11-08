@@ -120,7 +120,7 @@
             "name": "Vibes",
             "kind": "instrument",
             "bars": 4,
-            "instrument": "vibraphone",
+            "instrument": "synth_vibraphone",
             "volume": 0.8838,
             "pan": 0.25,
             "mute": false,

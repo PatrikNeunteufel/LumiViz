@@ -1,0 +1,327 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 22,
+    "title": "Tubular bells",
+    "category": "percussion",
+    "genres": ["Ambient"],
+    "description": "A brass tube per key (free-free bending modes), heard an octave below mode 4, struck at the top, with a damper pedal; unmeasured.",
+    "level": 0.7476,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": false,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": false,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 1.2],
+                        [65, 1.2]
+                    ],
+                    "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
+                    "sources": ["rucz2021"]
+                },
+                "damper": "bar",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.5],
+                        [65, 0.5]
+                    ],
+                    "source": "offen: Pedal-Daempfer (Einschaetzung)",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0],
+                        [65, 0]
+                    ],
+                    "source": "offen: fester Verlustfaktor; Rucz S. 7: hoehere Teiltoene „significantly greater“ — erwartet κ > 0; zu setzen an Iowa (M2)",
+                    "sources": ["rucz2021"]
+                },
+                "excitation": "strike",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.22389019541194577],
+                        [65, 0.22389019541194577]
+                    ],
+                    "source": "gehoert wird eine Oktave unter Mode 4 (CCRMA, nur Bericht): f_1 = 2·f_Note/(f_4/f_1), f_4/f_1 = 8,933 (Rechnung)",
+                    "sources": ["ccrma"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.025,
+                "malletRelaxation": 0,
+                "malletStiffness": 1581.1388300841897,
+                "mass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "offen: 1 kg (Einschaetzung, Messingrohr um 1,5 m)",
+                    "sources": ["lumiviz"]
+                },
+                "motor": false,
+                "noteMax": 65,
+                "noteMin": 48,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0],
+                        [65, 0]
+                    ],
+                    "source": "offen: auf der Laengsachse (dann ohne Torsion); M1",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 11110.6015625,
+                "oversampling": 64,
+                "partner": "none",
+                "partnerDamping": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.0088],
+                        [65, 0.0088]
+                    ],
+                    "source": "ξ_a,1 = 8,8e-3, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1); ueber den Umfang offen (M5)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 1],
+                        [65, 1]
+                    ],
+                    "source": "without effect: no acoustic partner",
+                    "sources": ["lumiviz"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 65,
+                "partnerRatio": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [48, 1.0008600917431194],
+                        [65, 1.0008600917431194]
+                    ],
+                    "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
+                    "sources": ["rucz2021"]
+                },
+                "pickup": "acoustic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0,
+                "pickupPosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.5],
+                        [65, 0.5]
+                    ],
+                    "source": "akustisch — ohne Bedeutung",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0],
+                        [65, 0]
+                    ],
+                    "source": "offen: alle Moden gleich gewichtet (Ausgang ist q̈, die Hoehen schon ∝ ω²); M3",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 2.7565],
+                        [65, 2.7565]
+                    ],
+                    "source": "frei–freies Rohr (Biegung wie ein Balken): 1 : 2,757 : 5,404 (Rechnung)",
+                    "sources": ["lumiviz"]
+                },
+                "ratio3": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [48, 5.4039],
+                        [65, 5.4039]
+                    ],
+                    "source": "frei–freies Rohr (Biegung wie ein Balken): 1 : 2,757 : 5,404 (Rechnung)",
+                    "sources": ["lumiviz"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 0.02],
+                        [65, 0.02]
+                    ],
+                    "source": "offen: am oberen Rand (Stopfen, CCRMA nur Bericht)",
+                    "sources": ["ccrma"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 168.08806846623963],
+                        [56, 105.88884784839297],
+                        [65, 62.96188563037474]
+                    ],
+                    "source": "offen: ξ = 5e-5 (Messingrohr klingt lang, Einschaetzung); M2",
+                    "sources": ["lumiviz"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 3],
+                        [65, 3]
+                    ],
+                    "source": "offen, Platzhalter ohne Wirkung bei Versatz 0 (La Favre misst die erste Torsion — nur Bericht, ohne Zahl); zu setzen am Modalfit (M1)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [48, 32.70195884557191],
+                        [56, 20.600943161165947],
+                        [65, 12.249394091512597]
+                    ],
+                    "source": "offen: wie die erste Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "1eacd5b29c64cc7a7eeb27cdc101180bceeb33f640572f913e304ed68988af10",
+                    "bowForceHighMf": "3523ac6e40e6d1c926455b8e7c56a618fc8db5d07558a7313118e1f56b069d2f",
+                    "bowForceHighPp": "68b3f0c57636bfd4ffe5b58112a7d5bfca387b0b3aa339e81d28fd5b51b5f044",
+                    "bowForceLowFf": "eba41d4febdb73ca27ba9379523894f2cb9c163fb893b393eb8947c59e602a76",
+                    "bowForceLowMf": "979cec0d9ad4332b176b9ed27270dd38f569ee8f1cae08f4494d6e25a1af7678",
+                    "bowForceLowPp": "b3d4258e6debf8f2e31f2df0157647e9077e312675c7ed45a91b7cff41fffb1c",
+                    "partnerGain": "a2aa317e175834016ab4e8dfa71524ca80e16148b892b5ab6c1f8a0155f05dc2"
+                },
+                "velocityMax": 5
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Tubular bells",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 48,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "sustain"
+        },
+        "range": [48, 65]
+    }
+}

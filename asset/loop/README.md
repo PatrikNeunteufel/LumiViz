@@ -81,9 +81,9 @@ ihrer Eingaben unter `tuned`), und einen Bezug des Ausgangs. Neu rechnet sie
 
 (`--all` stimmt jeden gestimmten Wert, `--check` schreibt nichts und meldet). Der
 Unit-Test `*Instrument Stimmen*` wird rot, wenn ein Abdruck nicht mehr zu den
-Eingaben passt oder der Bezug vom neu gerechneten abweicht. Heute trägt kein
-mitgeliefertes Instrument gestimmte Werte oder einen Bezug — die Klassen aus
-InstrumentsCalculation bringen sie ab Stufe 34g.
+Eingaben passt oder der Bezug vom neu gerechneten abweicht. Seit S178 (Stufe 34g)
+tragen die neun Stabspiele des Kerns `bar` beides (der Pegel des Partners, die
+Fenster des Bogens, der Bezug) — Abschnitt „S178, Stufe 34g“ unten.
 
 **Pegel (S139, Stufe 27c):** jedes mitgelieferte Instrument außer den Drums misst mit der
 Standardprobe gleich laut (−13,4 LUFS, Loop_Konzept §4n). Das `level` dafür steht in
@@ -132,8 +132,8 @@ Patrik: weitere Instrumente, auch ganz ungewöhnliche) — erzeugt mit
 | `super_saw.lvinst` | Super Saw | Wide, Tight, Top | neun Sägen: dreimal drei, verschieden weit verstimmt, eine Gruppe eine Oktave höher |
 | `fifth_pad.lvinst` | Fifth Pad | Root, Fifth, Low | Fläche aus Sägen, die Quinte setzt 120 ms später ein, darunter ein Sinus eine Oktave tiefer |
 | `overdrive_guitar.lvinst` | Overdrive Guitar | String, Fifth, Octave | drei gezupfte Saiten — Grundton, Quinte, Oktave — durch den Verzerrer: jede Note ist ein Power-Chord |
-| `kalimba.lvinst` | Kalimba | Tine, Knock, Ring | kurzer Sinus, eine sehr kurze Saite als Anschlag, ein Schimmer zwei Oktaven höher |
-| `marimba.lvinst` | Marimba | Bar, Mallet | Sinus mit dem vierten Teilton, dazu ein Dreieck von 40 ms als Schlägel |
+| `synth_kalimba.lvinst` | Synth Kalimba | Tine, Knock, Ring | kurzer Sinus, eine sehr kurze Saite als Anschlag, ein Schimmer zwei Oktaven höher |
+| `synth_marimba.lvinst` | Synth Marimba | Bar, Mallet | Sinus mit dem vierten Teilton, dazu ein Dreieck von 40 ms als Schlägel |
 
 Sieben davon sind **ungewöhnlich**:
 
@@ -167,7 +167,7 @@ eingestellt, nicht nach Gehör:
 | `upright_bass.lvinst` | Upright Bass | String, Wood | Saite und ein Sinus, der mitschwingt |
 | `nylon_guitar.lvinst` | Nylon Guitar | String, Warmth | Saite und ein gefiltertes Dreieck |
 | `sax.lvinst` | Sax | Reed, Breath | leicht verzerrtes Rechteck und eine Säge, gefiltert, mit spätem Vibrato |
-| `vibraphone.lvinst` | Vibraphone | Bar, Strike | Sinus mit dem vierten Teilton, klingt lange aus, leichtes Vibrato |
+| `synth_vibraphone.lvinst` | Synth Vibraphone | Bar, Strike | Sinus mit dem vierten Teilton, klingt lange aus, leichtes Vibrato |
 | `steel_drum.lvinst` | Steel Drum | Pan, Ring, Hit | Sinus mit Oktave und viertem Teilton, eine Schwebung darüber |
 | `cowbell.lvinst` | Cowbell | Low, High | zwei kurze Rechtecke im Abstand einer Quinte — Schlagwerk: die Tonhöhe der Note ist die des Schlags |
 | `conga.lvinst` | Conga | Skin, Slap | kurzer Sinus und eine sehr kurze Saite — Schlagwerk |
@@ -522,3 +522,36 @@ Artikulation am Flügel), die Tempo-Angaben (bis zur Tempo-Spur).
 
 Pegel: der Fader des Kanals hebt um `NOCTURNE_GAIN_DB` (9.5); `instrument_pegel.py
 --loops` lässt Fassung 14 unberührt.
+
+## S178, Stufe 34g: die Stabspiele aus InstrumentsCalculation (Kern `bar`)
+
+### instruments/ — neun Instrumente der Klasse 4
+
+`marimba`, `xylophone`, `vibraphone`, `glockenspiel`, `tubular_bells`, `celesta`,
+`kalimba`, `tine_electric_piano`, `reed_electric_piano` — eine Kern-Schicht `bar`
+mit den Vorgaben aus IC (Herkunft und Quellen je Wert, alle ungemessen; Übersicht
+in `docs/modellierung/platte-stab/README.md`). Die Steeldrum der Klasse geht nicht
+mit (KS4 a). Die bisherigen Nachbildungen heißen **`synth_marimba`,
+`synth_vibraphone`, `synth_kalimba`** (Titel „Synth …“, IK2-8 a); die
+mitgelieferten Loops spielen sie unverändert weiter.
+
+Geschrieben vom Programm, dann gestimmt und auf den Bezug gesetzt (die Fenster des
+Vibraphon-Bogens rechnen rund 2½ Minuten):
+
+    LUMIVIZ_STAB_INSTRUMENTE_SCHREIBEN=1 LumiViz.UnitTests --test-case="Loop Stab 34g*"
+    InstrumentTuneTool.exe asset\loop\instruments\<name>.lvinst --all --reference   (je Datei)
+    python asset/loop/instrument_katalog.py
+    python asset/loop/make_instrument_credits.py
+
+Der Pegel steht in `instrument_pegel.py` (alt = neu: `bars_demo` ist für den Bezug
+geschrieben). Ein neuer `--messung`-Lauf rundet jeden gemessenen Pegel neu — für ein
+neues Instrument nur dessen Zeile übernehmen.
+
+### bars_demo.lvloop
+
+`make_stab_loops.py`, danach `instrument_pegel.py --loops` und
+`instrument_katalog.py`. Acht Takte, 96 bpm, zweimal C – Am – F – G: die ersten vier
+die Stabspiele mit Schlägel (Marimba, Vibraphon, Xylophon, Glockenspiel,
+Röhrenglocken), die letzten vier Celesta, Kalimba und die beiden elektrischen
+Klaviere; keine Spuren (Motor, Bogen und Pedale kommen mit 31g in den Editor). Selbst
+gesetzt.

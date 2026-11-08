@@ -120,13 +120,13 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     CHECK(zeilen.last() == QStringLiteral("[My files]"));
     // (S123: aus Formen, aus Samples und Drums dazu — wer Instrumente dazulegt, stellt die Zahlen nach,
     // wie in test_LoopInstrument)
-    CHECK(fenster.unter(QStringLiteral("Keys")).size() == 10);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): die alten als <name>_old
+    CHECK(fenster.unter(QStringLiteral("Keys")).size() == 13);  // S178 (34g): drei aus dem Kern bar; S157 (31d-8): grand_piano; S133 (Stufe 23g): die alten als <name>_old
     CHECK(fenster.unter(QStringLiteral("Bass")).size() == 15);
     CHECK(fenster.unter(QStringLiteral("Lead")).size() == 7);
     CHECK(fenster.unter(QStringLiteral("Pads and strings")).size() == 9);
     CHECK(fenster.unter(QStringLiteral("Plucked")).size() == 22);
     CHECK(fenster.unter(QStringLiteral("Wind")).size() == 7);
-    CHECK(fenster.unter(QStringLiteral("Percussion")).size() == 10);
+    CHECK(fenster.unter(QStringLiteral("Percussion")).size() == 16);  // S178 (34g): sechs aus dem Kern bar
     CHECK(fenster.unter(QStringLiteral("Drums")).size() == 20);  // Stufe 11f, S123, drei Besen S124
     CHECK(fenster.unter(QStringLiteral("Unusual")).size() == 8);
     CHECK(fenster.unter(QStringLiteral("My files")).isEmpty());

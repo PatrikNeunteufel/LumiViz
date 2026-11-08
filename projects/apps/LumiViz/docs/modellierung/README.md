@@ -33,4 +33,5 @@ modellierung/<klasse>/
 | [hammer-saite](hammer-saite/README.md) | Flügel, Klavier (Stufe 31/32) | Modell 31b gebaut; Resonanzboden in Recherche |
 | [koerper](koerper/README.md) | gemeinsame Grundlage für Körper aller Instrumente (KB1 a) | Recherche, Entscheid KB1 a |
 | [gezupfte-saite](gezupfte-saite/README.md) | Gitarre, Bass, Ukulele, Violine (gezupft) | Recherchen S132–S136 abgelegt (aus Saiten_Konzept §6–§6c und `.claude/handover/`) |
+| [platte-stab](platte-stab/README.md) | Marimba, Xylophon, Vibraphon, Glockenspiel, Röhrenglocken, Celesta, Kalimba, zwei elektrische Klaviere (Klasse 4, Kern `bar`) | S178: aus IC übernommen (34g), Bit für Bit wie IC, ungemessen |
 | [anbindung-ic](anbindung-ic/README.md) | Anbindung der Rechenkerne aus `InstrumentsCalculation` (alle Klassen; kein Klassenordner) | S172: Architektur-Vergleich, Plugin-Recherche (CLAP/VST3), Messung unter Windows-clang; Entscheide in `audio/Instrumente_IC_Konzept.md` |

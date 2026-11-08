@@ -1,0 +1,327 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 22,
+    "title": "Xylophone",
+    "category": "percussion",
+    "genres": ["Ambient"],
+    "description": "A modal bar per key (1 : 3 : 9, the Orff xylophone of Rucz & Ulveczki 2021) struck by a hard mallet, with a closed tube resonator; unmeasured.",
+    "level": 1.3981,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": false,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 1],
+                        [108, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": false,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 1.2],
+                        [108, 1.2]
+                    ],
+                    "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
+                    "sources": ["rucz2021"]
+                },
+                "damper": "none",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 0.2],
+                        [108, 0.2]
+                    ],
+                    "source": "ohne Daempfer",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: fester Verlustfaktor; Rucz S. 7: hoehere Teiltoene „significantly greater“ — erwartet κ > 0; zu setzen an Iowa (M2)",
+                    "sources": ["rucz2021"]
+                },
+                "excitation": "strike",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 1],
+                        [108, 1]
+                    ],
+                    "source": "der Stab klingt auf seiner ersten Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.025,
+                "malletRelaxation": 0,
+                "malletStiffness": 1581.1388300841897,
+                "mass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 0.0967],
+                        [108, 0.0967]
+                    ],
+                    "source": "96,7 g aus Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1) (F4); ueber den Umfang offen (M4)",
+                    "sources": ["rucz2021"]
+                },
+                "motor": false,
+                "noteMax": 108,
+                "noteMin": 65,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: auf der Laengsachse (dann ohne Torsion); M1",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 286229.875,
+                "oversampling": 64,
+                "partner": "closedTube",
+                "partnerDamping": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [65, 0.0088],
+                        [108, 0.0088]
+                    ],
+                    "source": "ξ_a,1 = 8,8e-3, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1); ueber den Umfang offen (M5)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [65, 23.8432285938345],
+                        [108, 23.8432285938345]
+                    ],
+                    "source": "tuned through the model: +15 dB with the partner at key 65 (\"by as much as 15 dB\", Rucz & Ulveczki 2021 p. 7)",
+                    "sources": ["rucz2021"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 65,
+                "partnerRatio": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [65, 1.0008600917431194],
+                        [108, 1.0008600917431194]
+                    ],
+                    "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
+                    "sources": ["rucz2021"]
+                },
+                "pickup": "acoustic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0,
+                "pickupPosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 0.5],
+                        [108, 0.5]
+                    ],
+                    "source": "akustisch — ohne Bedeutung",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 0],
+                        [108, 0]
+                    ],
+                    "source": "offen: alle Moden gleich gewichtet (Ausgang ist q̈, die Hoehen schon ∝ ω²); M3",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [65, 3],
+                        [108, 3]
+                    ],
+                    "source": "„1 : 3 : 9“, Rucz & Ulveczki 2021 S. 1 (nachgelesen)",
+                    "sources": ["rucz2021"]
+                },
+                "ratio3": {
+                    "evidence": "source",
+                    "overrides": [],
+                    "points": [
+                        [65, 9],
+                        [108, 9]
+                    ],
+                    "source": "„1 : 3 : 9“, Rucz & Ulveczki 2021 S. 1 (nachgelesen)",
+                    "sources": ["rucz2021"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 0.5],
+                        [108, 0.5]
+                    ],
+                    "source": "offen: Mitte (messplan M3: „Mitte üblich“, Einschaetzung); Spur Schlaegel-Ort (T3b a)",
+                    "sources": ["lumiviz"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 12.249394091512597],
+                        [86, 3.6417666520247676],
+                        [108, 1.0219362139241221]
+                    ],
+                    "source": "ξ_1 = 2,57e-4 aus Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1) (F4, Palisander); ueber den Umfang offen: fester ξ (T60 ∝ 1/f); zu setzen an Iowa (M2)",
+                    "sources": ["rucz2021"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 3],
+                        [108, 3]
+                    ],
+                    "source": "offen, Platzhalter ohne Wirkung bei Versatz 0 (La Favre misst die erste Torsion — nur Bericht, ohne Zahl); zu setzen am Modalfit (M1)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [65, 12.249394091512597],
+                        [86, 3.6417666520247676],
+                        [108, 1.0219362139241221]
+                    ],
+                    "source": "offen: wie die erste Biegemode",
+                    "sources": ["lumiviz"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "dc6b8fd61fdf74040160b2554288bb80dfedf0a39c8101fe99f9e3cdc029e465",
+                    "bowForceHighMf": "9ed536645c88946265448849c63c22841fbfae2d8f4411d0a645bcb5fbc35def",
+                    "bowForceHighPp": "a0aef5a4175cc1263babfcbbc3afd0d744bc1dc6f17ef3213f75592eada18c7f",
+                    "bowForceLowFf": "5d1c6f54e1bbfc29edecdd308ff8bb544dd9e1a3b0f6ec00456251bb07ddad7d",
+                    "bowForceLowMf": "09c94b1e3fc33d1b9ca9f351243c763c90714b0ea789e82cdbe599ada0ea1b9e",
+                    "bowForceLowPp": "761c0150bd539f4d5723d1fac02510ff42183bcccda925068a7a557c6844a612",
+                    "partnerGain": "0d3fc8a2c3a113bd622d96b77222046a3b9c8dfab84b3e30719ec6170d5e6682"
+                },
+                "velocityMax": 5
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Xylophone",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 65,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "none"
+        },
+        "range": [65, 108]
+    }
+}

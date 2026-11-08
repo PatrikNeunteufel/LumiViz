@@ -277,7 +277,9 @@ void KernAnsicht::baue()
     }
 
     m_kopf->setText(tr("Core · %1").arg(qs(tafel.titel)));
-    m_unterzeile->setText(tr("Core %1 · keys %2 to %3").arg(qs(tafel.kern), tastenText(tafel.noteMin), tastenText(tafel.noteMax)));
+    // KS1 a: der Umfang des Instruments, wo der Kern vielen dient (sonst der der Tafel)
+    const auto [noteMin, noteMax] = kern::tastenumfang(tafel, s.kernWerte);
+    m_unterzeile->setText(tr("Core %1 · keys %2 to %3").arg(qs(tafel.kern), tastenText(noteMin), tastenText(noteMax)));
 
     int zeile = 0;
     for (const std::string& gruppeStd : tafel.gruppen)
@@ -315,11 +317,11 @@ void KernAnsicht::baue()
                     herkunft = qs(k->herkunft);
                     double klein = 0.0;
                     double gross = 0.0;
-                    for (int note = tafel.noteMin; note <= tafel.noteMax; ++note)
+                    for (int note = noteMin; note <= noteMax; ++note)
                     {
                         const double v = kern::wertAn(*k, note, a.skala);
-                        klein = note == tafel.noteMin ? v : std::min(klein, v);
-                        gross = note == tafel.noteMin ? v : std::max(gross, v);
+                        klein = note == noteMin ? v : std::min(klein, v);
+                        gross = note == noteMin ? v : std::max(gross, v);
                     }
                     text = klein == gross ? mitEinheit(zahlText(klein), a.einheit)
                                           : mitEinheit(QStringLiteral("%1 … %2").arg(zahlText(klein), zahlText(gross)), a.einheit);
@@ -328,7 +330,7 @@ void KernAnsicht::baue()
                     {
                         bild = new KernKurvenBild(m_inhalt);
                         bild->setObjectName(QStringLiteral("creatorCoreCurve_") + qs(a.name));
-                        bild->setze(*k, a.skala, tafel.noteMin, tafel.noteMax);
+                        bild->setze(*k, a.skala, noteMin, noteMax);
                     }
                 }
                 else if (const auto* d = std::get_if<double>(w))

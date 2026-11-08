@@ -1,0 +1,328 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 22,
+    "title": "Tine electric piano",
+    "category": "keys",
+    "genres": ["Ambient"],
+    "description": "A clamped steel tine per key (after Falaize & Helie 2015) with a tone bar, struck by a neoprene hammer (Hunt-Crossley, Soenderbo 2024), heard through a magnetic pickup; unmeasured.",
+    "level": 1.0763,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "bar",
+            "coreParams": {
+                "bow": false,
+                "bowAttack": 0.05,
+                "bowForceHighFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceHighPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowFf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowMf": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowForceLowPp": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "without effect: no bow",
+                    "sources": ["lumiviz"]
+                },
+                "bowPosition": 0,
+                "bowStaticFriction": 1.2,
+                "bowVelocityFf": 0.4,
+                "bowVelocityPp": 0.08,
+                "bowedFrom": 63,
+                "cantilever": true,
+                "closedOpening": 0,
+                "couplingPerCritical": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 1.2],
+                        [100, 1.2]
+                    ],
+                    "source": "offen: wie der Resonator",
+                    "sources": ["lumiviz"]
+                },
+                "damper": "single",
+                "damperT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 0.15],
+                        [100, 0.15]
+                    ],
+                    "source": "offen: Filzdaempfer (Einschaetzung)",
+                    "sources": ["lumiviz"]
+                },
+                "dampingExponent": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 0],
+                        [100, 0]
+                    ],
+                    "source": "σ1·β² ∝ f: fester ξ (Rechnung aus Soenderbo)",
+                    "sources": ["soenderbo2024"]
+                },
+                "excitation": "strike",
+                "fixedRatios": [],
+                "fundamentalRatio": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "die Tine klingt auf ihrer ersten Mode",
+                    "sources": ["lumiviz"]
+                },
+                "malletDampingHc": 0.0006,
+                "malletExponent": 2.8,
+                "malletHuntCrossley": true,
+                "malletHysteresis": 0,
+                "malletMass": 0.011,
+                "malletRelaxation": 0,
+                "malletStiffness": 597.1607558302466,
+                "mass": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 0.024919131649980667],
+                        [64, 0.008810243485490823],
+                        [100, 0.0031148914562475834]
+                    ],
+                    "source": "ρ·π·r²·l mit den Werten von Falaize & Hélie (nur Bericht), l je Note (Rechnung)",
+                    "sources": ["falaize2015"]
+                },
+                "motor": false,
+                "noteMax": 100,
+                "noteMin": 28,
+                "offAxis": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 0],
+                        [100, 0]
+                    ],
+                    "source": "auf der Achse",
+                    "sources": ["lumiviz"]
+                },
+                "outputReference": 4391655,
+                "oversampling": 32,
+                "partner": "singleMode",
+                "partnerDamping": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 0.001],
+                        [100, 0.001]
+                    ],
+                    "source": "offen: ξ = 1e-3 (Einschaetzung, Messingleiste)",
+                    "sources": ["lumiviz"]
+                },
+                "partnerGain": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "without effect: no acoustic partner",
+                    "sources": ["lumiviz"]
+                },
+                "partnerGainDb": 15,
+                "partnerGainNote": 65,
+                "partnerRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "offen: Tonebar auf den Grundton gestimmt (Pfeifle 2017: gekoppelt, nur Bericht)",
+                    "sources": ["pfeifle2017"]
+                },
+                "pickup": "magnetic",
+                "pickupDistance": 0.001,
+                "pickupOffset": 0.0005,
+                "pickupPosition": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [28, 1],
+                        [100, 1]
+                    ],
+                    "source": "an der Spitze der Tine",
+                    "sources": ["lumiviz"]
+                },
+                "quadraticCoupling": 0,
+                "radiationExponent": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 0],
+                        [100, 0]
+                    ],
+                    "source": "ohne Bedeutung (Tonabnehmer)",
+                    "sources": ["lumiviz"]
+                },
+                "ratio2": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 6.266893025770663],
+                        [100, 6.266893025770663]
+                    ],
+                    "source": "offen: Kragbalken (β2/β1)² = 6,267 (Rechnung); die Stimmfeder senkt es (Pfeifle 2017, nur Bericht)",
+                    "sources": ["pfeifle2017"]
+                },
+                "ratio3": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 17.547481936808445],
+                        [100, 17.547481936808445]
+                    ],
+                    "source": "offen: Kragbalken (β3/β1)² = 17,55 (Rechnung)",
+                    "sources": ["lumiviz"]
+                },
+                "spinUp": 0.5,
+                "strikePosition": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 0.3001277139208174],
+                        [100, 0.3001277139208174]
+                    ],
+                    "source": "Falaize & Hélie 2015 S. 5: Hammer bei z_h = 2,35 cm von 7,83 cm (nur Bericht)",
+                    "sources": ["falaize2015"]
+                },
+                "t60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 25.715629320998893],
+                        [64, 3.2155010756309133],
+                        [100, 0.401954006242547]
+                    ],
+                    "source": "Soenderbo 2024 Tab. 3.1 (nur Bericht): σ = 1e-4 + 0,005·(1,8751/l)², l nach Falaize & Hélie (Rechnung)",
+                    "sources": ["falaize2015", "soenderbo2024"]
+                },
+                "torsionRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 0],
+                        [100, 0]
+                    ],
+                    "source": "ohne Torsion (runde Tine)",
+                    "sources": ["lumiviz"]
+                },
+                "torsionT60": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [28, 25.715629320998893],
+                        [64, 3.2155010756309133],
+                        [100, 0.401954006242547]
+                    ],
+                    "source": "Soenderbo 2024 Tab. 3.1 (nur Bericht): σ = 1e-4 + 0,005·(1,8751/l)², l nach Falaize & Hélie (Rechnung)",
+                    "sources": ["falaize2015", "soenderbo2024"]
+                },
+                "tuned": {
+                    "bowForceHighFf": "2ce44c6e4422616bd23734cb56d520ebdc090d0b1b42e3c7f52541952d64088b",
+                    "bowForceHighMf": "2e35093d2ae96b58572988d3f431abeb1dd140df26154bd50ea5bd60bffdf6a8",
+                    "bowForceHighPp": "be4c5b676e3402c4cf143b9d8807893b0554b9bde86129778e51964c7131001d",
+                    "bowForceLowFf": "aab525126739c222abe64656f9fde249d9e6844963d1cb84568bb6666b4c786c",
+                    "bowForceLowMf": "a39fd6dac0f235f3bacab59bec1c7ef72698dc579a2910eb417e6fadba34028a",
+                    "bowForceLowPp": "fb34c9c39d461eb8199644ff755c090623878de2cf4a36656b9a7b7813d37d57",
+                    "partnerGain": "2c17271994dccc1ef2430eeb023b9736f0ce4f8890846fc54e01ed83b908a92b"
+                },
+                "velocityMax": 4
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Tine electric piano",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 28,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "sustain"
+        },
+        "range": [28, 100]
+    }
+}

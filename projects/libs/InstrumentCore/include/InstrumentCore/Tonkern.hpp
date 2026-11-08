@@ -50,6 +50,10 @@ struct KernAuskunft
     std::vector<std::string> innere;
     /// die Vorbereitung (`erzeuge`) dauert spuerbar (Moden rechnen, stimmen) — die App rechnet sie im Hintergrund
     bool vorbereitungTeuer = false;
+    /// der Koerper liegt ausserhalb des Kerns, an der Schicht (FU1 a: die App faltet ihn — der Fluegel; Klasse 2 mit
+    /// `korpusImpulsantwort`); sonst rechnet der Kern ihn selbst (Klassen 4 und 5, IK2-10 a) und der Creator zeigt
+    /// keinen Kasten *Body* (CK1 a, §6a 1; 34g)
+    bool koerperAnDerSchicht = false;
 
     [[nodiscard]] bool operator==(const KernAuskunft&) const = default;
 };
@@ -127,8 +131,10 @@ inline constexpr double kNormSpitze = 0.5;
 /// Die Probe des Bezugs (IC `normiere`: „Ton an der Mitte bei Stufe 0“, J10): die mittlere Note des Tastenumfangs
 /// (abgerundet), gleichstufig zu A4 = 440 Hz, Stufe 0, eine Sekunde gehalten und gerechnet bei 48 kHz.
 [[nodiscard]] Tonauftrag bezugsProbe(const Parametertafel& tafel);
+/// Dasselbe an der Mitte des Umfangs des Instruments (`tastenumfang`, KS1 a; IC normiert an der Mitte des Instruments).
+[[nodiscard]] Tonauftrag bezugsProbe(const Parametertafel& tafel, const Werte& werte);
 
-/// Der Bezug nach der Tafel des Kerns (`bezugWert`, `bezugRunden`, `bezugsProbe`). 0 und `fehler`, wenn der Kern
+/// Der Bezug nach der Tafel des Kerns (`bezugWert`, `bezugRunden`, `bezugsProbe` mit den Werten). 0 und `fehler`, wenn der Kern
 /// unbekannt ist oder keinen Bezug traegt.
 [[nodiscard]] double normiereNachTafel(const Fabrik& fabrik, std::string_view kern, const Werte& werte, std::vector<std::string>* fehler = nullptr);
 

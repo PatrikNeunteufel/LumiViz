@@ -138,7 +138,7 @@
             "name": "Lead",
             "kind": "instrument",
             "bars": 4,
-            "instrument": "vibraphone",
+            "instrument": "synth_vibraphone",
             "volume": 0.7576,
             "pan": 0.15,
             "mute": false,
