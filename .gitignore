@@ -469,6 +469,15 @@ docs/**/*.zip
 asset/free_Tabs/**
 # fremde Arbeiten (PDFs) zur Modellierung: nur lokal, je Klasse unter quellen/ (S146)
 /projects/apps/LumiViz/docs/modellierung/**/quellen/
+# Audio und Messdaten zur Modellierung liegen unter ...\cmake\samples\ (IC A-1 a; IK2-12 a, S177 34f-5); hier nur
+# die Begleitdateien je Datensatz (HERKUNFT.md, SHA256SUMS, LADELISTE.tsv) — Sicherung gegen ein Hineinkopieren
+/projects/apps/LumiViz/docs/modellierung/**/aufnahmen/**
+/projects/apps/LumiViz/docs/modellierung/**/daten/**
+!/projects/apps/LumiViz/docs/modellierung/**/aufnahmen/**/
+!/projects/apps/LumiViz/docs/modellierung/**/daten/**/
+!/projects/apps/LumiViz/docs/modellierung/**/HERKUNFT.md
+!/projects/apps/LumiViz/docs/modellierung/**/SHA256SUMS
+!/projects/apps/LumiViz/docs/modellierung/**/LADELISTE.tsv
 # Eingang für Downloads aus Patriks Browser (S155): wird nach quellen/ einsortiert, nie versioniert
 /dld/
 # Hoertests (HT8 a, S166): Klaenge und Hoerbeispiele schreibt das Werkzeug des Tests neu; Listen, Antworten,

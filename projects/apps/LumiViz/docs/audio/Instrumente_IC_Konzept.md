@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.8.0
+> **Version:** 0.9.0
 > **Datum:** 2026-11-08 (Session 177)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); nächster Schritt 34f
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); nächster Schritt 34g
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -517,6 +517,32 @@ Zahlen (Rest 0,107 / 0,307 wie in IC) — mit der alten LumiViz-Regel 0,502 / 0,
 Kippt, wenn sich am Flügel zeigt, dass diese Schritte systematisch Rauschen der Messung fangen (`eindeutig` über die
 Startpunkte schlechter; erst in einem langen Lauf der Suche zu sehen).
 
+**Teilplan 34f** (S177, Zuschnitt nach IK2-10 a bis IK2-12 a, WZ1 a, WZ2 a; Nummern fest). Gefunden: `normiere`,
+`eingabenAbdruck`, `veralteteGestimmte`, `merkeAbdruck` stehen im Core (34c, J10); der einzige Kern (Flügel) hat weder
+Bezug noch gestimmte Werte — die Wächter prüfen bis 34g/34j an einem Prüfkern; die Herkunft der Flügel-Werte ist heute
+freier Text ohne Schlüssel; `loop/KernDatei` hängt nur an der Tafel und Qt-JSON.
+
+| Nr. | Inhalt | fertig, wenn |
+|---|---|---|
+| 34f-1 | Feld `quellen` an `Kurve` und `ParameterAngabe` (WZ1 a), `.lvinst` **Fassung 22** (`sources`, immer geschrieben); Register `asset/loop/instrument_quellen.json` (WZ2 a) aus IC §3 und den Quellen des Flügels; die Vorgaben des Flügels nennen ihre Schlüssel; `grand_piano.lvinst` neu, `klangfassung.txt` neu (nur Abdrücke) | `Loop Werte` gleich, Flügel-Bezug gleich, jeder Wert des Flügels mit Schlüssel |
+| 34f-2 | Wächter Register (kein Wert aus „nicht ausliefern“, jeder Schlüssel bekannt); Skript schreibt `asset/loop/instruments/CREDITS.md` bis zur Marke | grün; rot bei eingesetzter ND-Quelle und unbekanntem Schlüssel |
+| 34f-3 | `messung::stimmer()` (je Kern die Funktion der gestimmten Werte; heute leer), `InstrumentTuneTool <datei.lvinst> [--bezug]` unter `projects/exec/` (kompiliert `loop/KernDatei` wie `InstrumentBodyTool` die Körper-Dateien) | am Prüfkern geschrieben, danach nichts veraltet |
+| 34f-4 | Wächter Stimmung (Abdruck, ohne Rechnen) und Bezug (gegen `normiere`) über die mitgelieferten `.lvinst` | rot am Prüfkern mit veralteter Stimmung bzw. Bezug, sonst grün (heute ohne Fall: meldet das) |
+| 34f-5 | `.gitignore` nach IC §2 (`aufnahmen/`, `daten/`, nur Begleitdateien; `git check-ignore -v`), README-Befehl, Journal J27 ff., Modul-Doku | Bereich unter beiden Compilern; **voller Lauf** (neue Dateifassung, UF17-1 a) |
+
+✅ **WZ1 a** (Patrik S177): **Ein Wert trägt seine Quellen als eigenes Feld** — `Kurve::quellen` und
+`ParameterAngabe::quellen` (Schlüssel des Registers), in der Datei `"sources": [ … ]` neben dem Text `source`, immer
+geschrieben; `.lvinst` Fassung 22. Grund: ein Schlüssel, auf den ein Wächter die Lizenzpflicht stützt, gehört in ein
+Feld, nicht in Prosa (Tippfehler oder eine zweite Quelle im Satz ließen ND/NC still durch); B nennt zwei Quellen.
+Verworfen: b (Schlüssel vorn im Text, `[rt0425] …` — Fassung bliebe, Abdrücke änderten sich trotzdem). Kippt, wenn IC
+das Feld nicht führen kann (es bezieht `Kurve` aus dem Core-Paket).
+
+✅ **WZ2 a** (Patrik S177): **Register `asset/loop/instrument_quellen.json`** — Liste von
+`{ "key", "credit", "license", "creditRequired", "shippable", "note" }`; Qt liest es im Wächter, Python im Skript für
+`CREDITS.md`; nicht in `asset/Asset.cmake` (wird nicht ausgeliefert). Verworfen: b (`.py` wie Katalog und Pegel — der
+C++-Wächter bräuchte eine erzeugte Kopie), c (`.tsv` — keine Listen, keine Tabulatoren in Nennungen). Kippt, wenn die
+App das Register zeigen soll (dann in `Asset.cmake`, Format bleibt).
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -576,6 +602,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.9.0 | 2026-11-08 | Session 177. §6: Teilplan 34f, WZ1 a (Quellen am Wert, `.lvinst` Fassung 22), WZ2 a (Register `instrument_quellen.json`); 34f erledigt — Journal J27–J30. |
 | 0.8.0 | 2026-11-08 | Session 177. §6: Teilplan 34e (34e-1 bis 34e-5), ME1 a (`AudioCore`), ME2 a (`zerlegeSymmetrisch` in den Core), ME3 a (`setzen` mit Beobachter und Startzustand, die Flügel-Suche darüber), ME4 a (Endregel aus IC in beiden LM); 34e erledigt — Journal J19–J26, `salamander_*.txt` unverändert, voller Lauf 1789 / 1789 unter beiden Compilern. |
 | 0.7.0 | 2026-11-07 | Session 176. 34d erledigt — der Flügel als Kern `hammerString` in `InstrumentModels`, `.lvinst` Fassung 21, Creator nach FU3 a; Journal J12–J18; Flügel-Bezug `hammer_bezug_windows.txt` Bit für Bit unter beiden Compilern, `Loop Werte` unverändert, Rechenzeit wie 34c, voller Lauf 1770 / 1770. §6: Zeilen 34c/34d nach BK1 a; §5 IK2-2 a Verweis auf den Bezug je Plattform. |
 | 0.6.0 | 2026-11-07 | Session 175. §6: KN1 a (Name `InstrumentCore`, `lumi::kern`; Messung `InstrumentMeasure`), KN2 a (34c verschiebt); 34c erledigt — Übernahme-Journal `modellierung/anbindung-ic/Uebernahme_Journal.md` J0–J11, voller Lauf 1765 / 1765 unter beiden Compilern, Wächter unverändert. |

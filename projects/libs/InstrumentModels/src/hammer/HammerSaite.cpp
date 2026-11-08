@@ -118,6 +118,17 @@ HammerSaite baueVorgabe()
     // vorlaeufig gleicher Stoss (US4 a): der Ton rechnet wie vorher, bis 31d-7 B den Stoss setzt (US1 a)
     s.stossLeise = kurveAusPunkten({{21, 0.0}, {108, 0.0}}, Belegkraft::Offen, "provisional: even strike (US4 a)");
     s.stossLaut = kurveAusPunkten({{21, 0.0}, {108, 0.0}}, Belegkraft::Offen, "provisional: even strike (US4 a)");
+    // WZ1 a (S177): die Schluessel der Quellen je Kurve (Register `asset/loop/instrument_quellen.json`); `lumiviz` = eine
+    // eigene Vorgabe oder Annahme ohne fremde Quelle
+    const std::vector<std::string> salamander{"salamander"}, rtQ{"rt0425"}, stulovQ{"stulov2009"}, eigen{"lumiviz"};
+    s.inharmonizitaet.quellen = {"salamander", "rigaud2011"};
+    for (Kurve* k : {&s.hammerMasseG, &s.hammerExponent, &s.hammerSteife, &s.hammerHysterese, &s.hammerRelaxationUs}) k->quellen = stulovQ;
+    for (Kurve* k : {&s.saitenLaengeM, &s.saitenMasseGm, &s.laengsVerhaeltnis, &s.anschlagStelle}) k->quellen = rtQ;
+    s.stegWinkelGrad.quellen = {"salamander", "lumiviz"};
+    for (Kurve* k : {&s.abklingS, &s.abklingHoch, &s.verstimmungCent}) k->quellen = salamander;
+    for (Kurve* k : {&s.abklingSpaetS, &s.chor, &s.daempferS, &s.polarisationWinkelGrad, &s.polarisationCent, &s.waagrechtVerhaeltnis,
+                     &s.stossLeise, &s.stossLaut})
+        k->quellen = eigen;
     return s;
 }
 

@@ -416,6 +416,16 @@ Quelle geprüft (`asset/loop/chords/make_chords.py`). Der Lizenztext steht in
 Griffbilder unter `drop_d/`, `bass/`, `violin/` und die Voicings unter
 `voicings/` sind von LumiViz gerechnet.
 
+## Werte der mitgelieferten Instrumente — `asset/loop/instruments/`
+
+Die Instrumente sind eigene Arbeit; manche ihrer Werte stammen aus Veröffentlichungen oder sind an fremden Aufnahmen
+gemessen (beim Flügel an *Salamander Grand Piano V3*, Alexander Holm, CC BY 3.0). Ausgeliefert werden nur Werte, keine
+Aufnahmen. Jeder Wert nennt seine Quellen in der Datei (`sources`); die Nennungen stehen in
+**`asset/loop/instruments/CREDITS.md`** — diese Datei geht mit neben die Exe. Geschrieben wird sie von
+`asset/loop/make_instrument_credits.py` aus dem Register `asset/loop/instrument_quellen.json` (Entscheide Patrik S173
+IK2-12 a, S177 WZ1 a, WZ2 a); ein Unit-Test prüft, dass kein Wert aus einer Quelle stammt, deren Werte nicht
+ausgeliefert werden dürfen (etwa CC BY-ND, CC BY-NC).
+
 ## Nicht enthaltene Inhalte
 
 Bewusst **nicht** in diesem Repository, weil die Rechte bei Dritten liegen oder

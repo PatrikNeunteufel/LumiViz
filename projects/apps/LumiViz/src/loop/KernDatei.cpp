@@ -143,6 +143,14 @@ kern::Werte angabenAusJson(const std::vector<kern::ParameterAngabe>& angaben, co
     return werte;
 }
 
+/// WZ1 a: die Schluessel der Quellen, immer geschrieben (auch leer)
+QJsonArray quellenAlsJson(const std::vector<std::string>& quellen)
+{
+    QJsonArray a;
+    for (const std::string& q : quellen) a.append(QString::fromStdString(q));
+    return a;
+}
+
 }  // namespace
 
 QJsonObject kurveAlsJson(const kern::Kurve& kurve)
@@ -150,7 +158,8 @@ QJsonObject kurveAlsJson(const kern::Kurve& kurve)
     return QJsonObject{{QStringLiteral("points"), paareAlsJson(kurve.punkte)},
                        {QStringLiteral("overrides"), paareAlsJson(kurve.abweichungen)},
                        {QStringLiteral("evidence"), text(kern::belegkraftName(kurve.belegkraft))},
-                       {QStringLiteral("source"), QString::fromStdString(kurve.herkunft)}};
+                       {QStringLiteral("source"), QString::fromStdString(kurve.herkunft)},
+                       {QStringLiteral("sources"), quellenAlsJson(kurve.quellen)}};
 }
 
 kern::Kurve kurveAusJson(const QJsonValue& wert)
@@ -162,6 +171,7 @@ kern::Kurve kurveAusJson(const QJsonValue& wert)
     kurve.belegkraft = kern::Belegkraft::Offen;
     (void)kern::belegkraftAusName(o.value(QStringLiteral("evidence")).toString().toStdString(), kurve.belegkraft);
     kurve.herkunft = o.value(QStringLiteral("source")).toString().toStdString();
+    for (const QJsonValue& q : o.value(QStringLiteral("sources")).toArray()) kurve.quellen.push_back(q.toString().toStdString());
     return kurve;
 }
 

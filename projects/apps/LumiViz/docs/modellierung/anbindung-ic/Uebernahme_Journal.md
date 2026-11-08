@@ -198,10 +198,38 @@ J23); Testing-MSVC gebaut.
   `AudioCore`.
 - Rechenzeit `*31b-3*` nicht gemessen: 34e berührt keinen Kern (RZ1-1 a gilt, wo ein Kern berührt wird).
 
-## 4. Changelog
+## 4. Stufe 34f — Werkzeuge und Wächter (S177)
+
+Teilplan 34f-1 bis 34f-5 im Konzept §6 (WZ1 a, WZ2 a). Quellen: LumiViz `master` `c27af4b0` (nach 34e), IC `bb7e6d6`.
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J27 | Quellenregister | IC `UEBERNAHME_LUMIVIZ.md` §3 (24 Zeilen der Tabelle, dazu die zwei „nicht geladen“: Brauchler 2023, Abdallah 2026); die Herkunftstexte der Flügel-Vorgaben (`InstrumentModels/src/hammer/HammerSaite.cpp`) | `asset/loop/instrument_quellen.json` (WZ2 a, 31 Einträge) | je Eintrag Nennung, Lizenz und Pflicht wie in IC; „nichts ausliefern“ → `shippable: false` (Weinzierl NC, TU-Note ND, beide Iowa bis zur schriftlichen Bestätigung) | **neu:** `salamander` (CC BY 3.0, belegt im README des Archivs „Licence: CC-by … /by/3.0/“, „Author: Alexander Holm“), `rt0425` (Titel belegt im Repo: „Physical parameters for piano modeling“, hal-00688679), `stulov2009`, `rigaud2011` (nur Autoren, Jahr, Gleichung — ein Titel steht im Repo nicht; **Lizenz der drei Veröffentlichungen nicht geprüft**, übernommen werden Zahlen und Formeln), `lumiviz` (eigene Vorgabe). `credit`/`license` englisch (sie stehen in der englischen `CREDITS.md`), `note` deutsch |
+| J28 | Quellen am Wert (WZ1 a) | IK2-12 a | `Kurve::quellen`, `ParameterAngabe::quellen` (InstrumentCore), `sources` in `loop/KernDatei`, `.lvinst` **Fassung 22** | die Vorgaben des Flügels nennen ihre Schlüssel (B: `salamander`, `rigaud2011`; Winkel am Steg: `salamander`, `lumiviz`; Hammer: `stulov2009`; Saite und Anschlagstelle: `rt0425`; T60, hohe Dämpfung, Verstimmung: `salamander`; die vorläufigen und der Chor: `lumiviz`; Pedale: `undampedFrom` `salamander`, die drei offenen `lumiviz`) | die Quellen zählen wie die Herkunft nicht zum Klang (`Kurve::operator==`); `grand_piano.lvinst` neu (Programm, dann Kopf aus dem Katalog) — Diff nur Fassung und `sources` |
+| J29 | `CREDITS.md` der Instrumente, Wächter | IK2-12 a (Muster `make_samples.py` bis zur Marke) | `asset/loop/make_instrument_credits.py`, `asset/loop/instruments/CREDITS.md` (in `Asset.cmake`, in `THIRD_PARTY_NOTICES.md`), `test_InstrumentQuellen.cpp` | das Skript liest die `sources` der Kurven; der Wächter dazu die Quellen der Vorgaben aus der Tafel | das Skript sieht die Quellen der Vorgaben, die keine Kurve sind, nicht (sie stehen in der Tafel, nicht in der Datei) — der Wächter in C++ sieht sie und meldet eine fehlende Pflichtquelle; heute deckt `salamander` aus den Kurven sie ab |
+| J30 | Stimmen und Bezug als Werkzeug | IC `werkzeuge/stimme_*.cpp` (schreiben `Stimmung.inc`), IC `normiere` je Klasse (J10) | `Parametertafel::bezugWert`/`bezugRunden`, `kern::bezugsProbe`, `kern::normiereNachTafel` (InstrumentCore 0.2.0); `messung::Stimmer`, `stimmer()` (leer), `stimmeUndNormiere`, `veralteteWerte`, `bezugVeraltet` (`InstrumentMeasure/Stimmen`); `projects/exec/InstrumentTuneTool` | die Probe des Bezugs wie IC: mittlere Note, Stufe 0 (1 s bei 48 kHz); die gestimmten Werte als Daten mit Abdruck (IK2-11 a) | **geändert:** der Bezug zählt nicht zum Abdruck gestimmter Werte (er wird nach dem Stimmen gesetzt und hängt an ihnen — sonst wäre jede Stimmung nach dem Normieren veraltet); das Werkzeug schreibt mit Qt, die Form setzt danach `instrument_katalog.py`. Die Stimm-Funktionen der IC-Klassen kommen mit ihren Klassen (34j, 34k) — bis dahin prüft ein Prüfkern (`testTuned`), der Schreibweg des Werkzeugs ist erst mit einem stimmenden Kern zu prüfen |
+
+**Wächter 34f** (S177):
+
+- `grand_piano.lvinst` Fassung 22: Diff nur `version` und je Kurve `sources` (45 + / 23 −). `klangfassung.txt` neu: 379 von
+  383 Zeilen mit neuem Abdruck der Eingaben, **kein Wert anders** (dieselbe Spalte wie in 34d).
+- `*Klangfassung*,*Loop Werte*,*Hammer*,*InstrumentCore*,*InstrumentModels*,*Instrument*` 142 / 142 unter Release-clang;
+  `loop_werte.txt` und Flügel-Bezug unverändert.
+- `*Instrument Quellen*` (3 Fälle): grün; rot an ND-Quelle, unbekanntem Schlüssel, fehlender Quelle, unbekanntem Kern.
+  `*Instrument Stimmen*` (4 Fälle): grün am Prüfkern; rot bei geänderter Eingabe der Stimmung und bei verstelltem
+  Bezug; über die mitgelieferten: 1 Kern-Schicht, 0 mit gestimmten Werten, 0 mit Bezug.
+- `InstrumentTuneTool` auf einer Kopie von `grand_piano.lvinst`: `--check` „up to date“, `--reference` „nothing to do“.
+- `.gitignore`: `git check-ignore -v` — Begleitdateien unter `daten/`/`aufnahmen/` nicht ignoriert (Ausnahmen), eine
+  `.wav` dort ignoriert, `aufnahmen.md` nicht betroffen.
+- **Voller Lauf** (neue Dateifassung, UF17-1 a) 1796 / 1796, 0 Skips unter Release-clang (650 s) und Testing-MSVC (587 s).
+- Pakete `instrumentcore-v0.2.0` (mit `quellen`, Bezug) und `instrumentmeasure-v0.2.0` (mit `Stimmen`) neu: `sha256sum -c`
+  grün, jede Datei LF.
+
+## 5. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.4.0 | 2026-11-08 | Session 177. §4 neu: 34f (J27–J30, Wächter). |
 | 0.3.0 | 2026-11-08 | Session 177. §3 neu: 34e (J19–J26, Wächter je Teilschritt, Abschluss mit vollem Lauf unter beiden Compilern). |
 | 0.2.0 | 2026-11-07 | Session 176. §2 neu: 34d (J12–J18, Wächter). |
 | 0.1.0 | 2026-11-07 | Session 175. Angelegt mit 34c (J1–J11). |

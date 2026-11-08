@@ -161,6 +161,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_Kurvenabstand.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentMeasure.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentMeasureSetzen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentQuellen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentStimmen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamander.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamanderStruktur.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSalamanderSetzen.cpp"

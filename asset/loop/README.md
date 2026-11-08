@@ -60,6 +60,31 @@ es dort ein und ruft `python asset/loop/instrument_katalog.py`;
 Instrumente gehören nicht hierher: sie liegen im Benutzerordner der App unter
 `instruments` und heißen im Loop `user:<name>` (Entscheid P2 a).
 
+**Quellen der Werte (S177, Stufe 34f, IK2-12 a, WZ1 a, WZ2 a):** jede Kurve einer
+Kern-Schicht nennt in `sources` die Schlüssel ihrer Quellen (`.lvinst` Fassung 22);
+das Register ist **`instrument_quellen.json`** (Schlüssel, Nennung, Lizenz, ob die
+Nennung Pflicht ist, ob Werte daraus ausgeliefert werden dürfen; die Einträge aus
+InstrumentsCalculation `UEBERNAHME_LUMIVIZ.md` §3 und die des Flügels; `lumiviz` für
+eigene Vorgaben). Es geht nicht mit. Die Nennungen schreibt
+`python asset/loop/make_instrument_credits.py` ab der Marke in
+**`instruments/CREDITS.md`** (die geht mit); `--pruefe` meldet nur. Der Unit-Test
+`*Instrument Quellen*` wird rot, wenn ein Wert eine Quelle nennt, die nicht im
+Register steht oder aus der nichts ausgeliefert werden darf (etwa CC BY-ND), oder
+wenn eine Pflichtquelle in `CREDITS.md` fehlt.
+
+**Gestimmte Werte und Bezug (S177, Stufe 34f, IK2-10 a, IK2-11 a):** ein Kern kann
+Kurven tragen, die ein Werkzeug aus anderen Werten rechnet (gestimmt, mit dem Abdruck
+ihrer Eingaben unter `tuned`), und einen Bezug des Ausgangs. Neu rechnet sie
+
+    out\build\windows-ninja-release-clang\exec\InstrumentTuneTool\bin\Release\InstrumentTuneTool.exe asset\loop\instruments\<name>.lvinst --reference
+    python asset/loop/instrument_katalog.py
+
+(`--all` stimmt jeden gestimmten Wert, `--check` schreibt nichts und meldet). Der
+Unit-Test `*Instrument Stimmen*` wird rot, wenn ein Abdruck nicht mehr zu den
+Eingaben passt oder der Bezug vom neu gerechneten abweicht. Heute trägt kein
+mitgeliefertes Instrument gestimmte Werte oder einen Bezug — die Klassen aus
+InstrumentsCalculation bringen sie ab Stufe 34g.
+
 **Pegel (S139, Stufe 27c):** jedes mitgelieferte Instrument außer den Drums misst mit der
 Standardprobe gleich laut (−13,4 LUFS, Loop_Konzept §4n). Das `level` dafür steht in
 **`instrument_pegel.py`** (`PEGEL`, je Instrument alt und neu); `instrument_katalog.ergaenze`

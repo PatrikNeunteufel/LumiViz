@@ -645,10 +645,13 @@ struct Instrument
 // Schicht der Fassung 16–20 mit `hammerString` liest sich als Saite *Classic* (keine Legacy-Ruecksicht, `grand_piano`
 // ist neu geschrieben). `keyboard` traegt `range`, `pedals` und `bassSustainBelow`; `undampedFrom` steht in der Tafel
 // (wird im Block ueberlesen). Ein aelteres Programm kennte keinen Kern.
-// Geschrieben wird Fassung 21.
+// Fassung 22 (S177, Stufe 34f-1, WZ1 a): jede Kurve in `coreParams` traegt `sources` — die Schluessel ihrer Quellen im
+// Register `asset/loop/instrument_quellen.json`, immer geschrieben (auch leer); der Waechter der Quellen prueft sie.
+// Ein aelteres Programm ueberliest sie.
+// Geschrieben wird Fassung 22.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 21;
+inline constexpr int kInstrumentFassung = 22;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

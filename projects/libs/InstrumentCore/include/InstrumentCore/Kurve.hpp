@@ -66,6 +66,9 @@ struct Kurve
     Belegkraft belegkraft = Belegkraft::Offen;
     /// woher die Werte kommen: Quelle mit Seite, Rechnung, oder Grund der Vorgabe
     std::string herkunft;
+    /// die Schluessel der Quellen im Register (`asset/loop/instrument_quellen.json`, WZ1 a, IK2-12 a); zaehlen wie die
+    /// Herkunft nicht zum Klang
+    std::vector<std::string> quellen;
 
     /// gleich heisst: dieselben Werte (die Herkunft zaehlt nicht zum Klang)
     [[nodiscard]] bool operator==(const Kurve& o) const { return punkte == o.punkte && abweichungen == o.abweichungen; }

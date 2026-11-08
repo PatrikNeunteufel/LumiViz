@@ -237,7 +237,7 @@
         "name": "InstrumentMeasure",
         "//description": "Die Qt-freie Messkette und das Setzen ueber InstrumentCore (Instrumente_IC_Konzept.md KN1 a, IK2-2 a, Stufe 34e): Teiltonmessung, Fluegel- und Strukturmessung, Kurvenabstand, Zielsumme, Hoerschwellen, Probe, Levenberg-Marquardt, Nelder-Mead; dazu ab 34e-3 die Bausteine aus IC, ab 34e-4 setzen. STATIC mit denselben Schaltern nach E1 a (PRIVATE). Als Quellpaket nach IC (TP1 a, packages: instrumentmeasure; bezieht instrumentcore)",
         "skip": false,
-        "version": "0.1.0",
+        "version": "0.2.0",
         "type": "STATIC",
         "path": "projects/libs/InstrumentMeasure/src",
         "public_headers": "projects/libs/InstrumentMeasure/include",
@@ -290,6 +290,16 @@
         "path": "projects/exec/InstrumentBodyTool/src",
         "dependencies": [ "BasicLogger", "InstrumentBody" ],
         "externals": [ "Qt6", "CDT", "Eigen", "Spectra" ],
+        "platforms": [ "windows", "linux", "macos" ]
+      },
+      {
+        "name": "InstrumentTuneTool",
+        "description": "Stimmt die gestimmten Werte einer .lvinst und setzt ihren Bezug (Instrumente_IC_Konzept.md IK2-10 a, IK2-11 a; Stufe 34f-3, S177). Kompiliert die Dateischicht der Kern-Werte aus loop/ der App direkt (Executables laufen VOR dem App-Container)",
+        "skip": false,
+        "type": "CONSOLE",
+        "path": "projects/exec/InstrumentTuneTool/src",
+        "dependencies": [ "InstrumentCore", "InstrumentModels", "AudioCore", "InstrumentMeasure" ],
+        "externals": [ "Qt6" ],
         "platforms": [ "windows", "linux", "macos" ]
       }
     ],

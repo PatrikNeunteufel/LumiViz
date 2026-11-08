@@ -34,6 +34,7 @@ ParameterAngabe zahl(std::string_view name, std::string_view titel, std::string_
     a.vorgabe = vorgabe;
     a.belegkraft = belegkraft;
     a.herkunft = std::string(herkunft);
+    a.quellen = {"lumiviz"};  // WZ1 a: die drei Pedalwerte sind offen wie in IC — eigene Vorgabe
     return a;
 }
 
@@ -62,6 +63,7 @@ Parametertafel baueTafel()
         a.vorgabe = v.*k.feld;
         a.belegkraft = (v.*k.feld).belegkraft;
         a.herkunft = (v.*k.feld).herkunft;
+        a.quellen = (v.*k.feld).quellen;
         t.werte.push_back(std::move(a));
     }
     ParameterAngabe ungedaempft;
@@ -76,6 +78,7 @@ Parametertafel baueTafel()
     ungedaempft.vorgabe = std::int64_t{kUngedaempftAbVorgabe};
     ungedaempft.belegkraft = Belegkraft::Quelle;
     ungedaempft.herkunft = "Salamander SFZ (Holm): notes without dampers from lokey=89 (D1 a)";
+    ungedaempft.quellen = {"salamander"};
     t.werte.push_back(std::move(ungedaempft));
     t.werte.push_back(zahl(kSoft, "Soft factor", "", 0.1, 1.0, 1.0, Belegkraft::Offen,
                            "open: \"nearly negligible\" (forum, report only); 1 = as without (IC K1 F-4-1 a)"));

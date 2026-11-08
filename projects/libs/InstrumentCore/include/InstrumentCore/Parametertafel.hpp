@@ -125,6 +125,8 @@ struct ParameterAngabe
     /// Beleg der Vorgabe (eine Kurve traegt ihren eigenen; hier der fuer Zahl, Wahl, Schalter, Liste)
     Belegkraft belegkraft = Belegkraft::Offen;
     std::string herkunft;
+    /// die Schluessel der Quellen der Vorgabe im Register (WZ1 a; eine Kurve traegt ihre eigenen)
+    std::vector<std::string> quellen;
     /// zaehlt fuer „ungemessen“ (eine Ausstattung oder ein Bezug wie `ausgangBezug` nicht)
     bool klangbestimmend = true;
     /// gestimmt (IK2-11 a): eine Kurve, die ein Werkzeug aus anderen Werten rechnet
@@ -147,6 +149,12 @@ struct Parametertafel
     std::vector<std::string> gruppen;
     /// die Werte in ihrer Reihenfolge
     std::vector<ParameterAngabe> werte;
+    /// der Bezug des Ausgangs (IK2-10 a, 34f-3): der Name des Werts (Zahl), den `normiere` setzt — leer, wenn der Kern
+    /// keinen traegt (der Fluegel rechnet in `kHammerKraftBezug`). Er zaehlt nicht zum Abdruck gestimmter Werte: er wird
+    /// nach dem Stimmen gesetzt und haengt an ihnen
+    std::string bezugWert;
+    /// so oft rechnet `normiere` (zwei, wenn Teile des Klangs am Bezug haengen, wie die Rauschanteile der Membran)
+    int bezugRunden = 1;
 };
 
 /// Die Angabe mit diesem Namen, oder `nullptr`.
@@ -171,7 +179,7 @@ struct Parametertafel
 [[nodiscard]] std::string wertAlsText(const Wert& wert);
 
 /// Der Abdruck der Eingaben eines gestimmten Werts (IK2-11 a): SHA-256 ueber Kern, Fassung der Rechnung und die Werte,
-/// aus denen er gestimmt wird (`abhaengigVon`, sonst alle nicht gestimmten). Leer, wenn `gestimmt` kein gestimmter
+/// aus denen er gestimmt wird (`abhaengigVon`, sonst alle nicht gestimmten ausser dem Bezug `bezugWert`). Leer, wenn `gestimmt` kein gestimmter
 /// Wert der Tafel ist.
 [[nodiscard]] std::string eingabenAbdruck(const Parametertafel& tafel, const Werte& werte, std::string_view gestimmt);
 

@@ -77,4 +77,23 @@ double normiere(const Fabrik& fabrik, std::string_view kern, Werte werte, std::s
     return bezug;
 }
 
+Tonauftrag bezugsProbe(const Parametertafel& tafel)
+{
+    constexpr double kRate = 48000.0;
+    const int note = (tafel.noteMin + tafel.noteMax) / 2;
+    const double hz = 440.0 * std::exp2((note - 69) / 12.0);
+    return einzelnote(note, hz, 0, static_cast<Frames>(kRate), static_cast<Frames>(kRate), kRate);
+}
+
+double normiereNachTafel(const Fabrik& fabrik, std::string_view kern, const Werte& werte, std::vector<std::string>* fehler)
+{
+    const KernTyp* t = fabrik.typ(kern);
+    if (t == nullptr || t->tafel.bezugWert.empty())
+    {
+        if (fehler != nullptr) fehler->push_back(t == nullptr ? "unknown core: " + std::string(kern) : "core has no reference: " + std::string(kern));
+        return 0.0;
+    }
+    return normiere(fabrik, kern, werte, t->tafel.bezugWert, bezugsProbe(t->tafel), t->tafel.bezugRunden, fehler);
+}
+
 }  // namespace lumi::kern

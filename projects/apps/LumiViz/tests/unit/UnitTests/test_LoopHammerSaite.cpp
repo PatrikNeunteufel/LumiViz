@@ -292,7 +292,7 @@ TEST_CASE("Loop Hammer-Saite 34d Datei")
         instrument.tastatur->mitte = PedalArt::Moderator;
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 21);  // seit 34d: der Kern (IK2-4 a, FU1 a, FU2 a)
+        CHECK(json.value(QStringLiteral("version")).toInt() == 22);  // seit 34f-1: Quellen je Kurve (WZ1 a); seit 34d: der Kern (IK2-4 a, FU1 a, FU2 a)
         const QJsonObject schicht = ersteSchicht(json);
         CHECK(schicht.value(QStringLiteral("core")).toString() == QStringLiteral("hammerString"));
         CHECK(schicht.value(QStringLiteral("body")).toString() == QStringLiteral("lib:steinway_d"));

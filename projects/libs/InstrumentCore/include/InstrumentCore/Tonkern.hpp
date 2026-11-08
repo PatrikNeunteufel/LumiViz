@@ -124,4 +124,12 @@ inline constexpr double kNormSpitze = 0.5;
 [[nodiscard]] double normiere(const Fabrik& fabrik, std::string_view kern, Werte werte, std::string_view bezugName,
                               const Tonauftrag& probe, int runden = 1, std::vector<std::string>* fehler = nullptr);
 
+/// Die Probe des Bezugs (IC `normiere`: „Ton an der Mitte bei Stufe 0“, J10): die mittlere Note des Tastenumfangs
+/// (abgerundet), gleichstufig zu A4 = 440 Hz, Stufe 0, eine Sekunde gehalten und gerechnet bei 48 kHz.
+[[nodiscard]] Tonauftrag bezugsProbe(const Parametertafel& tafel);
+
+/// Der Bezug nach der Tafel des Kerns (`bezugWert`, `bezugRunden`, `bezugsProbe`). 0 und `fehler`, wenn der Kern
+/// unbekannt ist oder keinen Bezug traegt.
+[[nodiscard]] double normiereNachTafel(const Fabrik& fabrik, std::string_view kern, const Werte& werte, std::vector<std::string>* fehler = nullptr);
+
 }  // namespace lumi::kern

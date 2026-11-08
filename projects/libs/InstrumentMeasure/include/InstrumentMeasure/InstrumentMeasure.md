@@ -1,6 +1,6 @@
 # InstrumentMeasure — Messkette und Setzen
 
-> **Version:** 0.1.0
+> **Version:** 0.2.0
 > **Datum:** 2026-11-08
 > **Typ:** CppModuleDoc
 > **Status:** gebaut (Stufe 34e)
@@ -47,6 +47,7 @@ Setzen sein `Modell` (ME3 a). Jede Übernahme steht im
 | `NelderMead.hpp` | Nelder–Mead (Werkzeug) |
 | `Bausteine.hpp` | aus IC: B1 Teiltonverfolgung, B2 Tonhöhe (YIN), B3 Vibrato, B4 Rest, B5 Einschwingen, B6 Modalfit (ESPRIT), B7 Bänder über der Zeit, B8 Gleiten; `amplitudenBei` (Messung an der Struktur des Bezugs, L4) |
 | `Samples.hpp` | aus IC, allgemein: die Wurzel lokaler Aufnahmen aus einer Umgebungsvariable (Name vom Aufrufer), `SHA256SUMS` lesen, Dateien prüfen |
+| `Stimmen.hpp` | 34f-3 (IK2-10 a, IK2-11 a): `Stimmer` je Kern, `stimmer()` (die eingebauten; heute leer, die Klassen bringen ihre mit), `stimmeUndNormiere` (die veralteten gestimmten Werte neu, Abdrücke merken, Bezug über `normiereNachTafel`), `veralteteWerte` (ohne Rechnen), `bezugVeraltet`; das Programm `InstrumentTuneTool` schreibt die Datei |
 | `Setzen.hpp` | aus IC: `setzen::setze` (Gruppen, Messgrößen, `Modell`; L7–L18), `schnitt`, `welligkeit`, `glaette`, `setzeMehrfach`, `eindeutig`, `probe`, `alsTasten`; innen das LM je Block; Schritt und Ende je Parameter, Beobachter je Iteration und Startzustand (ME3 a) |
 
 ### 3.1 Das Setzen
@@ -65,6 +66,8 @@ Das Ergebnis ist ein Vorschlag (L18).
 - `test_InstrumentMeasure.cpp` — `*InstrumentMeasure 34e*`: die Bausteine B1–B8, `amplitudenBei`, Zielformat, Samples
   (Fälle aus IC `test_messung.cpp`, mit deren Grenzen; „Modalfit am Modell“ kommt mit 34g).
 - `test_InstrumentMeasureSetzen.cpp` — `*InstrumentMeasure 34e Setzen*`: die zehn Fälle aus IC `test_setzen.cpp`.
+- `test_InstrumentStimmen.cpp` — `*Instrument Stimmen*`: am Prüfkern `testTuned` Stimmen, Abdruck, Bezug, rot bei veralteter
+  Stimmung und verstelltem Bezug; der Wächter über die mitgelieferten `.lvinst` (heute ohne Fall).
 - `test_LoopSalamanderSuche.cpp` — LM einfach und je Block (7.5.10, 7.5.12); die Flügel-Suche über `setzen`
   (`LUMIVIZ_75_SUCHE2`, mit `…_ITERATIONEN` für eine kurze Probe).
 
@@ -72,4 +75,5 @@ Das Ergebnis ist ein Vorschlag (L18).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.2.0 | 2026-11-08 | Session 177. 34f-3: `Stimmen` (IK2-10 a, IK2-11 a). |
 | 0.1.0 | 2026-11-08 | Session 177. Angelegt mit 34e (KN1 a, IK2-2 a, ME1 a–ME4 a). |

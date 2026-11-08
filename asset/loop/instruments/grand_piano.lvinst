@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 21,
+    "version": 22,
     "title": "Grand Piano",
     "category": "keys",
     "genres": ["Classical"],
@@ -27,7 +27,8 @@
                         [45, 4.432],
                         [108, 4.432]
                     ],
-                    "source": "to A2 measured at Salamander at the phantom partials (31d-4, S2 a); above the last value held (open)"
+                    "source": "to A2 measured at Salamander at the phantom partials (31d-4, S2 a); above the last value held (open)",
+                    "sources": ["salamander", "lumiviz"]
                 },
                 "damper": {
                     "evidence": "open",
@@ -36,7 +37,8 @@
                         [21, 0.8],
                         [90, 0.2]
                     ],
-                    "source": "provisional (31a)"
+                    "source": "provisional (31a)",
+                    "sources": ["lumiviz"]
                 },
                 "decay": {
                     "evidence": "measured",
@@ -71,7 +73,8 @@
                         [99, 1.507],
                         [102, 1.837]
                     ],
-                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4"
+                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4",
+                    "sources": ["salamander"]
                 },
                 "detune": {
                     "evidence": "measured",
@@ -98,7 +101,8 @@
                         [99, 0.5929],
                         [102, 1.479]
                     ],
-                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4"
+                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4",
+                    "sources": ["salamander"]
                 },
                 "hammerExponent": {
                     "evidence": "source",
@@ -121,7 +125,8 @@
                         [105, 4.975],
                         [108, 5.02]
                     ],
-                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)",
+                    "sources": ["stulov2009"]
                 },
                 "hammerHysteresis": {
                     "evidence": "source",
@@ -144,7 +149,8 @@
                         [105, 0.3536],
                         [108, 0.307928]
                     ],
-                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)",
+                    "sources": ["stulov2009"]
                 },
                 "hammerMass": {
                     "evidence": "source",
@@ -167,7 +173,8 @@
                         [105, 5.5065],
                         [108, 5.3364]
                     ],
-                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)",
+                    "sources": ["stulov2009"]
                 },
                 "hammerRelaxation": {
                     "evidence": "source",
@@ -190,7 +197,8 @@
                         [105, 1.6702500000000002],
                         [108, 1.6569600000000002]
                     ],
-                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)",
+                    "sources": ["stulov2009"]
                 },
                 "hammerStiffness": {
                     "evidence": "source",
@@ -213,7 +221,8 @@
                         [105, 8387.40246703902],
                         [108, 9599.690648685126]
                     ],
-                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)"
+                    "source": "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)",
+                    "sources": ["stulov2009"]
                 },
                 "highDecay": {
                     "evidence": "measured",
@@ -247,7 +256,8 @@
                         [99, 0.02764],
                         [102, 0.01849]
                     ],
-                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4"
+                    "source": "measured at Salamander (Yamaha C5) through the model, 31d-4",
+                    "sources": ["salamander"]
                 },
                 "horizontalRatio": {
                     "evidence": "open",
@@ -256,7 +266,8 @@
                         [21, 0],
                         [108, 0]
                     ],
-                    "source": "provisional: 0 until UF8 b (P3-1 a)"
+                    "source": "provisional: 0 until UF8 b (P3-1 a)",
+                    "sources": ["lumiviz"]
                 },
                 "inharmonicity": {
                     "evidence": "source",
@@ -277,7 +288,8 @@
                         [105, 0.01990225470146041],
                         [108, 0.026274639696044665]
                     ],
-                    "source": "to E2 measured at Salamander through the model (31d-4, S2 a); above Rigaud, David & Daudet 2011, eq. 5"
+                    "source": "to E2 measured at Salamander through the model (31d-4, S2 a); above Rigaud, David & Daudet 2011, eq. 5",
+                    "sources": ["salamander", "rigaud2011"]
                 },
                 "lateDecay": {
                     "evidence": "open",
@@ -312,7 +324,8 @@
                         [99, 4.522],
                         [102, 5.512]
                     ],
-                    "source": "provisional: three times Decay (HT3 a)"
+                    "source": "provisional: three times Decay (HT3 a)",
+                    "sources": ["lumiviz"]
                 },
                 "longitudinalRatio": {
                     "evidence": "source",
@@ -325,7 +338,8 @@
                         [81, 13.59],
                         [107, 12.2]
                     ],
-                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)"
+                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)",
+                    "sources": ["rt0425"]
                 },
                 "moderatorExponent": 2,
                 "moderatorStiffness": 2,
@@ -336,7 +350,8 @@
                         [21, 0],
                         [108, 0]
                     ],
-                    "source": "provisional: no second plane (31d-7 A)"
+                    "source": "provisional: no second plane (31d-7 A)",
+                    "sources": ["lumiviz"]
                 },
                 "polarizationDetune": {
                     "evidence": "open",
@@ -345,7 +360,8 @@
                         [21, 0],
                         [108, 0]
                     ],
-                    "source": "provisional: no second plane (31d-7 A)"
+                    "source": "provisional: no second plane (31d-7 A)",
+                    "sources": ["lumiviz"]
                 },
                 "softFactor": 1,
                 "strikePosition": {
@@ -355,7 +371,8 @@
                         [21, 0.12],
                         [108, 0.12]
                     ],
-                    "source": "RT-0425 appendix A: x_H/L between 0.113 and 0.127, nearly everywhere 0.120"
+                    "source": "RT-0425 appendix A: x_H/L between 0.113 and 0.127, nearly everywhere 0.120",
+                    "sources": ["rt0425"]
                 },
                 "strikeUnevennessLoud": {
                     "evidence": "open",
@@ -364,7 +381,8 @@
                         [21, 0],
                         [108, 0]
                     ],
-                    "source": "provisional: even strike (US4 a)"
+                    "source": "provisional: even strike (US4 a)",
+                    "sources": ["lumiviz"]
                 },
                 "strikeUnevennessSoft": {
                     "evidence": "open",
@@ -373,7 +391,8 @@
                         [21, 0],
                         [108, 0]
                     ],
-                    "source": "provisional: even strike (US4 a)"
+                    "source": "provisional: even strike (US4 a)",
+                    "sources": ["lumiviz"]
                 },
                 "stringLength": {
                     "evidence": "source",
@@ -391,7 +410,8 @@
                         [74, 0.308],
                         [107, 0.052]
                     ],
-                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)"
+                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)",
+                    "sources": ["rt0425"]
                 },
                 "stringMass": {
                     "evidence": "source",
@@ -410,7 +430,8 @@
                         [94, 4.392],
                         [107, 3.404]
                     ],
-                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)"
+                    "source": "Chabassier & Durufle, INRIA RT-0425 (2012), appendix A (HT1 a)",
+                    "sources": ["rt0425"]
                 },
                 "strings": {
                     "evidence": "open",
@@ -423,7 +444,8 @@
                         [49, 3],
                         [108, 3]
                     ],
-                    "source": "default of the grand piano (one string to F#1, two to C3, then three)"
+                    "source": "default of the grand piano (one string to F#1, two to C3, then three)",
+                    "sources": ["lumiviz"]
                 },
                 "undampedFrom": 89
             },

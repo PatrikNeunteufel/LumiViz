@@ -1,0 +1,254 @@
+{
+  "//": "Quellenregister der Instrumente (Instrumente_IC_Konzept.md IK2-12 a, WZ1 a, WZ2 a; Stufe 34f-1, S177). Je Quelle: key (der Schluessel, den ein Wert in `sources` nennt), credit (die Nennung), license, creditRequired (muss in CREDITS.md stehen, sobald Werte daraus mitgeliefert werden), shippable (duerfen Werte daraus mitgeliefert werden), note. Die Eintraege bis `pocketfft` und `brauchler2023`/`abdallah2026` aus InstrumentsCalculation UEBERNAHME_LUMIVIZ.md §3 (bb7e6d6, IC Session 5) mit deren Lizenzangaben; der Waechter `*Instrument Quellen*` prueft jede mitgelieferte .lvinst gegen dieses Register, `make_credits.py` schreibt daraus asset/loop/instruments/CREDITS.md. Wird nicht ausgeliefert (nicht in asset/Asset.cmake).",
+  "version": 1,
+  "sources": [
+    {
+      "key": "lumiviz",
+      "credit": "LumiViz (own default or assumption)",
+      "license": "own work",
+      "creditRequired": false,
+      "shippable": true,
+      "note": "fuer Werte ohne fremde Quelle: vorlaeufige Vorgaben, Annahmen, gerechnete Werte aus eigenen Werkzeugen"
+    },
+    {
+      "key": "salamander",
+      "credit": "Salamander Grand Piano V3 (Yamaha C5) by Alexander Holm, CC BY 3.0 (creativecommons.org/licenses/by/3.0/); used for measurement",
+      "license": "CC BY 3.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "gemessen durch das Modell hindurch (31d-4); mitgeliefert werden nur Werte, keine Aufnahme. Lizenz: README im Archiv „Licence: CC-by … /by/3.0/“, „Author: Alexander Holm“ (E:\\samples\\Salamander\\README.md)"
+    },
+    {
+      "key": "rt0425",
+      "credit": "J. Chabassier, M. Duruflé, Physical parameters for piano modeling, INRIA RT-0425 (2012), hal-00688679",
+      "license": "not checked (values from tables)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "Zahlen aus Anhang A (Saitenlaenge, -masse, Laengsverhaeltnis, Anschlagstelle); uebernommen werden Messwerte, nicht der Text — die Lizenz des Berichts ist nicht geprueft"
+    },
+    {
+      "key": "stulov2009",
+      "credit": "A. Stulov, D. Kartofelev (2009), eq. 9 (hammer felt, after Stulov 2005)",
+      "license": "not checked (formulas and values)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "die Formeln des Hammers je Taste (HU3-1 c); uebernommen werden Formeln und Zahlen, nicht der Text — Lizenz nicht geprueft"
+    },
+    {
+      "key": "rigaud2011",
+      "credit": "Rigaud, David & Daudet (2011), eq. 5",
+      "license": "not checked (formula)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "Inharmonizitaet B oberhalb E2 (UF5 a); Formel und Zahlen, nicht der Text — Lizenz nicht geprueft"
+    },
+    {
+      "key": "mores2021-doku",
+      "credit": "R. Mores, Archive of guitar bridge mobility measurements — method, comments, list of guitars (Zenodo 10.5281/zenodo.4604576)",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Doku des Mores-Archivs, nur Verweis in quellen.md; ausgeliefert wird nichts davon"
+    },
+    {
+      "key": "weinzierl2017",
+      "credit": "S. Weinzierl et al. (2017), TU Berlin database, DepositOnce 19858",
+      "license": "CC BY-NC-SA 4.0 (documentation); dataset: In Copyright",
+      "creditRequired": true,
+      "shippable": false,
+      "note": "IC: nichts ausliefern (NC; F-D1 offen)"
+    },
+    {
+      "key": "chadefaux2013",
+      "credit": "D. Chadefaux et al., harpsichord plectrum, SMAC 2013",
+      "license": "CC BY 3.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Kiel am Cembalo; nennen, falls Kielwerte in einer mitgelieferten Datei stehen"
+    },
+    {
+      "key": "bader2025",
+      "credit": "R. Bader, N. Plath, F. Kontopidis (2025), Dulcken harpsichord soundboard, arXiv:2511.09037",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: nennen im CREDITS.md des Korpus-Ordners, falls ein Cembaloboden nach diesen Werten ausgeliefert wird"
+    },
+    {
+      "key": "russo2022",
+      "credit": "R. Russo, M. Ducceschi, S. Bilbao, modal bowed string, DAFx20in22",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Bogen-Saite modal"
+    },
+    {
+      "key": "maestre2013",
+      "credit": "E. Maestre, G. Scavone, J. O. Smith, bridge admittance of the violin family, SMAC 2013",
+      "license": "CC BY 3.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Stegadmittanz (Verfahren)"
+    },
+    {
+      "key": "k18-upright",
+      "credit": "K18 Upright Piano by Rudi Fiasco, archive.org/details/K18UprightPiano, CC BY 4.0; used for measurement",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Pflicht, sobald ein daran gesetztes Upright ausgeliefert wird"
+    },
+    {
+      "key": "vcsl-hammer",
+      "credit": "Versilian Community Sample Library (VCSL), Upright Knight, Yamaha",
+      "license": "CC0 1.0",
+      "creditRequired": false,
+      "shippable": true,
+      "note": "IC: Gegenpruefung Upright; Herkunft in CREDITS.md, falls etwas daraus ausgeliefert wird"
+    },
+    {
+      "key": "mores2021",
+      "credit": "Robert Mores, Archive … bridge mobility, Zenodo 10.5281/zenodo.4604576, CC BY 4.0; modal parameters fitted by LumiViz",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Pflicht, sobald ein gefitteter Korpus ausgeliefert wird (Klasse 2 F-2 a)"
+    },
+    {
+      "key": "vcsl-zupf",
+      "credit": "Versilian Community Sample Library (VCSL), harps, harpsichords",
+      "license": "CC0 1.0",
+      "creditRequired": false,
+      "shippable": true,
+      "note": "IC: Bezugsaufnahmen; Herkunft in CREDITS.md, falls etwas daraus ausgeliefert wird"
+    },
+    {
+      "key": "iowa-mis-gitarre",
+      "credit": "University of Iowa Electronic Music Studios, Musical Instrument Samples (guitar)",
+      "license": "no standard license: \"may be downloaded and used for any projects, without restrictions\" (MIS.html)",
+      "creditRequired": true,
+      "shippable": false,
+      "note": "IC: vor jeder Auslieferung schriftliche Bestaetigung von Iowa einholen — bis dahin nicht ausliefern"
+    },
+    {
+      "key": "iowa-mis-streicher",
+      "credit": "University of Iowa Electronic Music Studios, Musical Instrument Samples (strings 2012)",
+      "license": "no standard license: \"without restrictions\" (MIS.html)",
+      "creditRequired": true,
+      "shippable": false,
+      "note": "IC: wie die Iowa-Gitarre — vor jeder Auslieferung schriftliche Bestaetigung"
+    },
+    {
+      "key": "tinysol",
+      "credit": "Cella, Ghisi, Lostanlen, Lévy, Fineberg, Maresz, TinySOL, Zenodo 3685367",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Ircam-Einzeltoene Streicher"
+    },
+    {
+      "key": "tu-note-violine",
+      "credit": "TU-Note Violin Sample Library",
+      "license": "CC BY-ND 4.0",
+      "creditRequired": true,
+      "shippable": false,
+      "note": "IC: nichts ausliefern (ND) — nur messen"
+    },
+    {
+      "key": "vsco2-streicher",
+      "credit": "VSCO 2 Community Edition (strings)",
+      "license": "CC0 1.0",
+      "creditRequired": false,
+      "shippable": true,
+      "note": "IC: Herkunft in CREDITS.md, falls etwas daraus ausgeliefert wird"
+    },
+    {
+      "key": "cnsm2026",
+      "credit": "Pauget Ballesteros, CNSM Dataset, Zenodo 18696786",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Pflicht, sobald ein Violinkorpus nach diesen Werten ausgeliefert wird"
+    },
+    {
+      "key": "lampis2024",
+      "credit": "Lampis, bowing force on cello G strings, Zenodo 13374477",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Pflicht, sobald Reibwerte daraus ausgeliefert werden"
+    },
+    {
+      "key": "gabrielli2013",
+      "credit": "Gabrielli, Välimäki, Penttinen, Squartini, Bilbao, EURASIP JASP 2013:103, CC BY 2.0",
+      "license": "CC BY 2.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Clavinet (Tonabnehmer, Verstaerker)"
+    },
+    {
+      "key": "soares2025",
+      "credit": "Soares, Cochelin, Fréour, Vergez, Arimoto, Acta Acustica 9, 68 (2025), CC BY 4.0; bore simplified",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Bohrung der Trompete; Pflicht, sobald die Trompete ausgeliefert wird"
+    },
+    {
+      "key": "petiot2025",
+      "credit": "Petiot, Fréour, Arimoto (2025), trumpet mouthpipe, Forum Acusticum",
+      "license": "CC BY 4.0 (HAL); footnote p. 1: CC BY 3.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: nur Verweis — keine Werte daraus gebaut"
+    },
+    {
+      "key": "petersen2020",
+      "credit": "Petersen, Colinot, Kergomard, Guillemain, Acta Acustica 4, 13 (2020), CC BY 4.0",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Kegel des Altsaxophons; Pflicht, sobald das Altsaxophon ausgeliefert wird"
+    },
+    {
+      "key": "ukshini2025",
+      "credit": "Ukshini, Dirckx, Acoustics 7, 15 (2025), CC BY",
+      "license": "CC BY",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: Laenge des Altsaxophons, mit Petersen zusammen"
+    },
+    {
+      "key": "doctest",
+      "credit": "doctest 2.4.11, Copyright (c) 2016-2023 Viktor Kirilov, MIT",
+      "license": "MIT",
+      "creditRequired": false,
+      "shippable": true,
+      "note": "IC: nur Tests; Lizenztext beilegen, wenn die Tests mitgehen — die Anwendung enthaelt es nicht"
+    },
+    {
+      "key": "pocketfft",
+      "credit": "pocketfft (Zweig cpp), Copyright (C) 2010-2018 Max-Planck-Society, BSD-3-Clause",
+      "license": "BSD-3-Clause",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC und LumiViz: Lizenz in den Hinweisen der Anwendung (kein Wert eines Instruments)"
+    },
+    {
+      "key": "brauchler2023",
+      "credit": "Brauchler et al., Sci. Rep. (2023)",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: nicht geladen (Stand 2026-10-26, der Verlag lieferte eine Bot-Seite)"
+    },
+    {
+      "key": "abdallah2026",
+      "credit": "Abdallah et al., Meccanica (2026)",
+      "license": "CC BY 4.0",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "IC: nicht geladen (Stand 2026-10-26, der Verlag lieferte eine Bot-Seite)"
+    }
+  ]
+}

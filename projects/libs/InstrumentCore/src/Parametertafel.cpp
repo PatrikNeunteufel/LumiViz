@@ -308,6 +308,12 @@ std::vector<std::string> pruefeTafel(const Parametertafel& tafel)
         for (std::size_t j = 0; j < i; ++j)
             if (tafel.gruppen[i] == tafel.gruppen[j]) fehler.push_back("group twice: " + tafel.gruppen[i]);
     pruefeAngaben(tafel.werte, &tafel.gruppen, "", tafel.noteMin, tafel.noteMax, fehler);
+    if (!tafel.bezugWert.empty())
+    {
+        const ParameterAngabe* b = findeAngabe(tafel, tafel.bezugWert);
+        if (b == nullptr || b->art != WertArt::Zahl || b->gestimmt) fehler.push_back("reference is not a number of the table: " + tafel.bezugWert);
+        if (tafel.bezugRunden < 1) fehler.push_back("reference rounds below 1");
+    }
     for (const ParameterAngabe& a : tafel.werte)
         for (const std::string& von : a.abhaengigVon)
         {
@@ -372,6 +378,7 @@ std::string eingabenAbdruck(const Parametertafel& tafel, const Werte& werte, std
     for (const ParameterAngabe& a : tafel.werte)
     {
         if (a.gestimmt) continue;
+        if (ziel->abhaengigVon.empty() && a.name == tafel.bezugWert) continue;  // 34f-3: der Bezug haengt am Gestimmten
         if (!ziel->abhaengigVon.empty() &&
             std::find(ziel->abhaengigVon.begin(), ziel->abhaengigVon.end(), a.name) == ziel->abhaengigVon.end())
             continue;
