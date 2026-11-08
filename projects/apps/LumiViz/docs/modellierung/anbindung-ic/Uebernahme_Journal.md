@@ -165,10 +165,43 @@ Release-clang; `loop_werte.txt` und `werte/` unverändert; App und Tests gebaut 
 **Wächter 34e-3** (S177): `*InstrumentMeasure*,*InstrumentCore*` 21 / 21 unter Release-clang (8 neu aus IC, 1 neu für
 J23); Testing-MSVC gebaut.
 
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J24 | `setzen` | IC `rechnung/setzen/Setzen.hpp`, `.cpp`, `test_setzen.cpp` (`bb7e6d6`; nur in IC) | `InstrumentMeasure/Setzen.hpp`, `src/Setzen.cpp` (`lumi::messung::setzen`), `test_InstrumentMeasureSetzen.cpp` | der Rahmen wortgleich: normierter Raum u, L9 (wirkungslos vorab fest), L11 (verrauscht), L12 (wellig zuerst eindimensional), L16 (Träger), Protokoll je Iteration, `schnitt`, `welligkeit`, `glaette`, `setzeMehrfach`, `eindeutig`, `probe`, `alsTasten`, Hörschwellen; die zehn IC-Fälle mit ihren Grenzen | **ersetzt:** das eigene LM je Gruppe (IC `Setzen.cpp:325–424`) durch `levenbergMarquardtJeBlock` (eine Gruppe = ein Block, die k-te freie Spalte jeder Gruppe = eine Gruppe der finiten Differenz) — damit **A3** in `setzen` (`wirkungMindestens` 0,1). **Neu (ME3 a):** `Parameter::schritt`/`ende` (im Raum u, 0 = Einstellung), `Einstellung::beobachter` (`Iteration` mit `GruppenSchritt` je Gruppe), `Einstellung::start` (Wiederaufnahme durch den Aufrufer, geht vor dem Protokoll), im Bericht `ohneWirkung` und `lambda`. **Geändert:** die Enden heißen wie im LM je Block („Schritte klein“, „kein besserer Schritt“, „Iterationen“); im Protokoll eine Spalte `iterationen`, Enden ohne Leerzeichen (`_`), „Iterationen“ gilt beim Lesen nicht als Ende; Iterationen je Gruppe zählen die aktiven (IC: die Nummer der letzten Annahme) |
+| J25 | Endregel des LM (ME4 a) | IC `setzen/Setzen.cpp:382–404` (ein kleiner Schritt wird ausgewertet) gegen LumiViz `LevenbergMarquardt.cpp` (7.5.10: endet ohne Auswertung) | `levenbergMarquardt`, `levenbergMarquardtJeBlock` | die IC-Regel in beiden LM: der kleine Schritt wird ausgewertet und genommen, wenn er Σ r² senkt; danach „Schritte klein“ | **Befund:** mit der LumiViz-Regel endete der IC-Fall „findet die Werte“ bei Rest 0,502 statt 0,107 (fast ganz in der verrauschten Spalte, r = −0,708; mit und ohne A3 gleich), „ohne L12“ bei 0,905 statt 0,307 — die Prüfung „mehr als das Doppelte“ fiel. Mit der IC-Regel genau die IC-Zahlen (im IC-Bau `out-clang` nachgefahren) |
+| J26 | Flügel-Suche über `setzen` (ME3 a) | LumiViz `test_LoopSalamanderSuche.cpp` `sucheJeTaste` (`2076a29f`) | dieselbe Funktion, innen `setzen::setze` | je Taste eine Gruppe, ihre Stützpunkte die Parameter (Grenzen, Skala aus `SuchKurve`), Schritt und Ende = 1 % der Größe in u umgerechnet, die Ziele mit der wirksamen Toleranz wie `vergleiche` (UG1 a) — die Residuen sind dieselben Zahlen; nach außen dieselben Dateien, `LmStartBloecke`, `LmErgebnisBloecke` | das `Modell` rechnet ohne eigenen Pool (`werteAus(…, threads)` neu; `parallelJe` verschachtelt sich nicht); die Summen je Taste merkt es unter einer Sperre; neu der Schalter `LUMIVIZ_75_SUCHE2_ITERATIONEN` für die Probe |
+
+**Wächter 34e-4** (S177):
+
+- **Probe vorher/nachher** (Release-clang, `LUMIVIZ_75_SUCHE2` mit Tasten 33 und 60, Startpunkt 1, zwei Iterationen; vorher
+  auf `2076a29f` + Schalter, nachher mit J24, J26, vor J25 — die Probe endet über die Iterationen, J25 wirkt dort nicht):
+
+  | | Rest Iteration 1 | Rest Iteration 2 | getroffen | Auswertungen | Dauer |
+  |---|---|---|---|---|---|
+  | vorher (LM je Block direkt) | 3365,7 → 2032,1 | 1111,8 | 6, 7 / 32 | 42 | 181 s |
+  | nachher (über `setzen`) | 3365,7 → 2032,1 | 1111,9 | 6, 7 / 32 | 96 | 255 s |
+
+  **Derselbe Weg, nicht Bit für Bit.** Ursache: `setzen` rechnet im normierten Raum u statt in ln x — das LM mit
+  Marquardt-Skalierung ist gegen die Umskalierung unveränderlich, die Rundung nicht: nach Iteration 1 ≈ 1e-10 relativ,
+  in Iteration 2 (λ = 1e-5) bis 1,7e-4 relativ (`stossLeise` an 33), Rest der Taste 33 752,420 → 752,425. Die
+  Auswertungen mehr sind L9/L11 vor dem Lauf (zwei Jacobi-Matrizen aller Gruppen) und die Jacobi-Matrix für den Bericht
+  am Ende; über 20 Iterationen an 30 Tasten grob 10 % (geschätzt, nicht gemessen).
+- `*InstrumentMeasure*,*InstrumentCore*,*7.5.10 Suche*,*7.5.11*,*7.5.12*,*Salamander*` 88 / 88 unter Release-clang (mit J25).
+
+**Wächter 34e-5** (S177, Abschluss von 34e):
+
+- **Voller Lauf** 1789 / 1789, 0 Skips unter Release-clang (640 s) und Testing-MSVC (613 s); `werte/` unverändert
+  (`loop_werte.txt`, `klangfassung.txt`, Flügel-Bezug, `salamander_*.txt`).
+- **Quellpakete** `audiocore-v0.1.0`, `instrumentcore-v0.2.0` (neu wegen `zerlegeSymmetrisch`), `instrumentmodels-v0.1.0`,
+  `instrumentmeasure-v0.1.0` unter `out/package/`: `sha256sum -c SHA256SUMS` grün, jede Datei LF, Modul-Doku darin, die
+  Schalter nach E1 a im erzeugten `CMakeLists.txt`; `instrumentmeasure` verlangt die Ziele `InstrumentCore` und
+  `AudioCore`.
+- Rechenzeit `*31b-3*` nicht gemessen: 34e berührt keinen Kern (RZ1-1 a gilt, wo ein Kern berührt wird).
+
 ## 4. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.3.0 | 2026-11-08 | Session 177. §3 neu: 34e (J19 ff., Wächter je Teilschritt). |
+| 0.3.0 | 2026-11-08 | Session 177. §3 neu: 34e (J19–J26, Wächter je Teilschritt, Abschluss mit vollem Lauf unter beiden Compilern). |
 | 0.2.0 | 2026-11-07 | Session 176. §2 neu: 34d (J12–J18, Wächter). |
 | 0.1.0 | 2026-11-07 | Session 175. Angelegt mit 34c (J1–J11). |

@@ -1,7 +1,7 @@
 # InstrumentCore — die Bibliothek der Rechenkerne
 
-> **Version:** 0.1.1
-> **Datum:** 2026-11-07
+> **Version:** 0.1.2
+> **Datum:** 2026-11-08
 > **Typ:** CppModuleDoc
 > **Status:** gebaut (Stufe 34c); die Kerne in `InstrumentModels` (34d, BK1 a)
 > **Modul:** InstrumentCore (STATIC, `projects/libs/InstrumentCore`)
@@ -40,7 +40,7 @@ Die Bausteine kommen je aus der reicheren Fassung von IC oder LumiViz; jede Übe
 | `Anschlag.hpp` | `anschlagStufe`, `anschlagFaktor`, `anschlagRest`, `kAnschlagStufeMin` (−40), `kAnschlagSchrittDb` (1) |
 | `Kurve.hpp` | `Kurve` über den Tonumfang (Stützpunkte, Abweichungen, Belegkraft, Herkunft), `wertAn` (monoton kubisch; bis 34d Bit für Bit gegen `Tastenkurve` der App geprüft, seither rechnet der Flügel selbst damit), `richteKurve` mit Umfang, `kurveAusPunkten`, `kurveKonstant`, `kurveAlsText` |
 | `Modal.hpp` | Moden als komplexe Pole, `ModalBank` mit Impulsinvarianz, `impulsantwort`, `nachklangFrames`, gekoppeltes Paar, `Stossanreger`/`stosse` |
-| `Eigenzerlegung.hpp` | `KleineMatrix` bis 32 × 32, `zerlegeKlein` (Hessenberg, QR nach Wilkinson, Nachschärfen, links als Inverse), `kleinsterAbstand`, `entartet` |
+| `Eigenzerlegung.hpp` | `KleineMatrix` bis 32 × 32, `zerlegeKlein` (Hessenberg, QR nach Wilkinson, Nachschärfen, links als Inverse), `kleinsterAbstand`, `entartet`; `zerlegeSymmetrisch` für reelle symmetrische Matrizen beliebiger Größe (Jacobi, aus IC `Balken`, ME2 a — Balken, Membran, ESPRIT) |
 | `Fft.hpp` | `Fft` (`vorwaerts`, `rueckwaerts`), `fftUmsetzungen()`, `fft()` (pocketfft `4d865cb`), `direkteDft()` (Prüfumsetzung, O(n²)), `zweierpotenzAb`, `falte` |
 | `Pool.hpp` | `parallelJe` (höchstens 11 Threads, Ausnahme beim Rufer), `poolThreads` |
 | `Pruefsumme.hpp` | `Sha256`, `sha256`, `abdruck` (floats Little-Endian) |
@@ -68,5 +68,6 @@ näher, meldet die Zerlegung `entartet` (L11) — die Vektoren des Paars sind da
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.1.2 | 2026-11-08 | Session 177. 34e-3 (ME2 a): `zerlegeSymmetrisch` aus IC `gemeinsam/Balken` (Journal J23). |
 | 0.1.1 | 2026-11-07 | Session 176. Nach 34d: `kerne()` in `InstrumentModels` (BK1 a); MSVC-Schalter ohne `/fp:contract-` (J0); der Test gegen `Tastenkurve` entfällt (der Typ ist weg, die Gleichheit belegt der Flügel-Bezug). |
 | 0.1.0 | 2026-11-07 | Session 175. Angelegt (34c, KN1 a, KN2 a); §3.1 aus `include/loop/Eigenzerlegung.md` der App (0.1.0, S153). |

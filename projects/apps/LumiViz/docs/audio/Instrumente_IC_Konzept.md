@@ -4,7 +4,7 @@
 > **Datum:** 2026-11-08 (Session 177)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e in Arbeit seit 2026-11-08 (S177, Teilplan 34e-1 bis 34e-5, ME1 a, ME2 a)
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); nächster Schritt 34f
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -495,7 +495,27 @@ Zielgrößen gleich (wortgleicher Umzug). Kippt, wenn beide nie außerhalb von I
 `InstrumentCore/Eigenzerlegung`** (aus IC `gemeinsam/Balken.hpp:28–34`), mit eigenem Test und Journal; der Balken nutzt
 ihn in 34g von dort. Grund: Schichtung nach BK1 a — ein allgemeiner Löser in den allgemeinen Teil, ein Balken-Modell zu
 den Kernen. Verworfen: b (ganzer `Balken.hpp` in den Core — FEM einer Klasse in der Schnittstelle), c (Kopie in der
-Messung — zwei Fassungen, gegen „je einmal“). Kippt, wenn der Löser mit dem Cholesky-Schritt des Balkens verflochten ist.
+Messung — zwei Fassungen, gegen „je einmal“). Kippt, wenn der Löser mit dem Cholesky-Schritt des Balkens verflochten ist
+(geprüft in 34e-3: nicht verflochten).
+
+✅ **ME3 a** (Patrik S177): **`setzen` bekommt einen Beobachter je Iteration und einen Startzustand für die
+Wiederaufnahme** (wie das LM je Block); das IC-Protokoll bleibt als eigene Möglichkeit. Die Flügel-Suche ruft `setzen`
+mit ihrem `Modell` und schreibt ihre Dateien weiter im Beobachter — Formate, Wiederaufnahme (`liesLetzteIteration`) und
+`Probe` bleiben. Dazu nimmt `setzen` Schritt und Ende je Parameter (die Wege sind unter der Marquardt-Skalierung gleich,
+nicht Bit für Bit), und das Flügel-`Modell` rechnet ohne eigenen Pool (`parallelJe` verschachtelt sich nicht: bis
+11 × 3 Threads). Grund: ein Setzen mit einem LM (IK2-2 a), ohne Verlust der gemessenen Läufe S162–S165. Verworfen: b
+(Protokoll und Bericht von `setzen` auch für den Flügel — die Läufe S162–S165 nicht mehr aufnehm- und prüfbar), c (die
+Flügel-Suche beim LM je Block direkt — bitgleich, aber der Flügel bliebe ohne L9, L12, L16, Mehrfachstart und Probe aus
+IC). Kippt auf b, wenn alte Läufe nicht mehr aufgenommen werden sollen; auf c, wenn die Flügel-Suche bald wieder läuft
+und Bitgleichheit mit S165 vorgeht.
+
+✅ **ME4 a** (Patrik S177): **Beide LM werten auch den letzten kleinen Schritt aus** und nehmen ihn, wenn er Σ r² senkt;
+danach Ende „Schritte klein“ (Regel aus IC `setzen`; „Ende, wenn jeder Schritt unter `LmRaum::ende` liegt“ bleibt
+wahr). Grund: nie schlechter, höchstens eine Auswertung je Block mehr; die übernommenen IC-Fälle gelten mit ihren
+Zahlen (Rest 0,107 / 0,307 wie in IC) — mit der alten LumiViz-Regel 0,502 / 0,905, der Fall „ohne L12“ rot. Verworfen: b
+(alte Regel, den IC-Fall auf den Rest der `schwebung` umschreiben — eine geflickte Prüfung für die übernommene Regel).
+Kippt, wenn sich am Flügel zeigt, dass diese Schritte systematisch Rauschen der Messung fangen (`eindeutig` über die
+Startpunkte schlechter; erst in einem langen Lauf der Suche zu sehen).
 
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
@@ -556,7 +576,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.8.0 | 2026-11-08 | Session 177. §6: Teilplan 34e (34e-1 bis 34e-5), ME1 a (`AudioCore`), ME2 a (`zerlegeSymmetrisch` in den Core). |
+| 0.8.0 | 2026-11-08 | Session 177. §6: Teilplan 34e (34e-1 bis 34e-5), ME1 a (`AudioCore`), ME2 a (`zerlegeSymmetrisch` in den Core), ME3 a (`setzen` mit Beobachter und Startzustand, die Flügel-Suche darüber), ME4 a (Endregel aus IC in beiden LM); 34e erledigt — Journal J19–J26, `salamander_*.txt` unverändert, voller Lauf 1789 / 1789 unter beiden Compilern. |
 | 0.7.0 | 2026-11-07 | Session 176. 34d erledigt — der Flügel als Kern `hammerString` in `InstrumentModels`, `.lvinst` Fassung 21, Creator nach FU3 a; Journal J12–J18; Flügel-Bezug `hammer_bezug_windows.txt` Bit für Bit unter beiden Compilern, `Loop Werte` unverändert, Rechenzeit wie 34c, voller Lauf 1770 / 1770. §6: Zeilen 34c/34d nach BK1 a; §5 IK2-2 a Verweis auf den Bezug je Plattform. |
 | 0.6.0 | 2026-11-07 | Session 175. §6: KN1 a (Name `InstrumentCore`, `lumi::kern`; Messung `InstrumentMeasure`), KN2 a (34c verschiebt); 34c erledigt — Übernahme-Journal `modellierung/anbindung-ic/Uebernahme_Journal.md` J0–J11, voller Lauf 1765 / 1765 unter beiden Compilern, Wächter unverändert. |
 | 0.5.0 | 2026-11-07 | Session 174. §6a neu: Skizze Creator und Editor (34a) gebilligt — CK1 a (ein Creator für alle Kerne aus der Tafel), CK2 a (Kurven im Creator, Kipppunkt UF12 a greift nicht); was die Tafel dafür trägt. §6: TP1 als entschieden vermerkt. |

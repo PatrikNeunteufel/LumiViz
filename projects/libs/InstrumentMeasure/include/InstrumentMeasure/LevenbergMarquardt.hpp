@@ -9,7 +9,8 @@
  * Jacobi-Matrix J am Punkt x einmal gebildet; der Schritt loest (JᵀJ + λ·diag(JᵀJ))·δ = −Jᵀr (Marquardt-Skalierung,
  * Gauss mit Spaltenpivot). Ein Schritt mit kleinerem Rest Σr² wird genommen und λ durch `lambdaFaktor` geteilt, ein
  * schlechterer verworfen und λ mit ihm malgenommen (bis `versucheHoechstens` Versuche je Iteration). Die Grenzen
- * wirken durch Abschneiden nach dem Schritt. Ende, wenn jeder Schritt unter `LmRaum::ende` liegt (der Auftrag 7.5.10:
+ * wirken durch Abschneiden nach dem Schritt. Ende, wenn jeder Schritt unter `LmRaum::ende` liegt — seit ME4 a (S177, wie
+ * IC `setzen`) wird auch dieser letzte kleine Schritt ausgewertet und genommen, wenn er den Rest senkt (der Auftrag 7.5.10:
  * 1 % der Groesse — log 0,01, linear 1 % des Bereichs), wenn kein Versuch den Rest senkt, oder nach
  * `iterationenHoechstens`. Die Jacobi-Matrix je Gruppe (`jacobiJeGruppe`) lenkt alle Parameter einer Gruppe zugleich
  * aus — gueltig, wenn jeder Parameter der Gruppe nur auf seine eigenen Zeilen wirkt (Lesart Claude S161: ein

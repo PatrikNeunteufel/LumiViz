@@ -45,6 +45,7 @@
 #include "Modellton.hpp"
 #include "InstrumentMeasure/NelderMead.hpp"
 #include "InstrumentMeasure/Probe.hpp"
+#include "InstrumentMeasure/Setzen.hpp"
 #include "Schwebungsstufe.hpp"
 #include "InstrumentMeasure/Strukturmessung.hpp"
 #include "Suche.hpp"
@@ -60,6 +61,7 @@
 #include <QtGlobal>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <complex>
@@ -70,6 +72,7 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <numbers>
 #include <numeric>
 #include <optional>
@@ -1482,70 +1485,167 @@ using TonBeobachterBloecke = std::function<void(const LmIterationBloecke&, const
 TonSucheBloecke sucheJeTaste(const modelltest::SuchAufgabe& a, const LmStartBloecke& start, const LmEinstellungen& einst,
                              const TonBeobachterBloecke& beobachter = {})
 {
+    // 34e-4 (ME3 a): die Suche laeuft ueber `setzen` (InstrumentMeasure) — je Taste eine Gruppe, ihre Parameter die
+    // Stuetzpunkte der Taste; innen dasselbe LM je Block (A2/A3). Schritt und Ende je Parameter sind die der Suche
+    // (`lmRaum`: 1 % der Groesse), in den normierten Raum von `setzen` umgerechnet; die Ziele mit der wirksamen Toleranz
+    // wie `vergleiche` (UG1 a) — die Residuen sind dieselben Zahlen. Nach aussen bleibt alles, wie es war: dieselben
+    // Dateien je Iteration, dieselbe Wiederaufnahme (`LmStartBloecke`), dasselbe Ergebnis (`LmErgebnisBloecke`).
     TonSucheBloecke s;
     const auto anfang = std::chrono::steady_clock::now();
     auto letzte = anfang;
     const LmRaum raum = modelltest::lmRaum(a.raum);
-    const auto gruppen = modelltest::gruppenJeKurve(a.raum);
     std::vector<LmBlock> bloecke;
     for (const int t : a.tasten) bloecke.push_back({modelltest::parameterDerTaste(a.raum, t)});
-    // je Taste die Summen der ausgewerteten Punkte, nach den Werten ihrer Parameter
-    std::vector<std::map<std::vector<double>, TastenSumme>> gemerkt(bloecke.size());
-    const LmResiduenBloecke amTon = [&](const std::vector<std::vector<double>>& punkte, const std::vector<std::size_t>& welche) {
-        std::vector<int> tasten;
-        for (const std::size_t b : welche) tasten.push_back(a.tasten[b]);
-        std::vector<lumi::kern::hammer::HammerSaite> saiten;
-        for (const std::vector<double>& p : punkte) saiten.push_back(modelltest::saiteAus(a.raum, p));
-        const std::vector<modelltest::Auswertung> aus = modelltest::werteAus(saiten, tasten, a.strukturen, a.ziele);
-        std::vector<std::vector<double>> rs;
-        for (std::size_t p = 0; p < punkte.size(); ++p)
-            for (std::size_t k = 0; k < welche.size(); ++k)
-            {
-                rs.push_back(residuen({aus[p].tasten[k]}));
-                gemerkt[welche[k]][teil(punkte[p], bloecke[welche[k]].parameter)] = aus[p].tasten[k];
-            }
-        s.auswertungen += static_cast<int>(punkte.size() * welche.size());
-        return rs;
+    const std::size_t nb = bloecke.size();
+    // je Parameter (Index in x) seine Kurve und Stelle
+    std::vector<std::pair<const modelltest::SuchKurve*, std::size_t>> wo;
+    for (const modelltest::SuchKurve& k : a.raum.kurven)
+        for (std::size_t i = 0; i < k.tasten.size(); ++i) wo.push_back({&k, i});
+    const std::vector<double> x0 = klemmeIn(raum, start.x);
+    std::vector<setzen::Gruppe> gruppen;
+    for (std::size_t b = 0; b < nb; ++b)
+    {
+        setzen::Gruppe g;
+        g.name = std::to_string(a.tasten[b]);
+        for (const std::size_t j : bloecke[b].parameter)
+        {
+            const auto& [k, i] = wo[j];
+            setzen::Parameter p;
+            p.name = k->name + " " + std::to_string(k->tasten[i]);
+            p.wert = k->wert(x0[j]);
+            p.unten = k->unten[i];
+            p.oben = k->oben[i];
+            p.skala = k->log ? setzen::Skala::Log : setzen::Skala::Linear;
+            p.schritt = p.ende = raum.ende[j] / (raum.oben[j] - raum.unten[j]);
+            g.parameter.push_back(std::move(p));
+        }
+        if (const auto z = a.ziele.find(a.tasten[b]); z != a.ziele.end())
+            for (const auto& [name, ziel] : z->second)
+                g.ziele.push_back({name, ziel.ziel.wert, std::max(ziel.toleranz.wert(), untergrenze(ziel.skala, ziel.ziel.wert)), ziel.skala});
+        gruppen.push_back(std::move(g));
+    }
+    const auto xAus = [&](std::vector<double> x, std::size_t b, const std::vector<double>& werte) {
+        for (std::size_t q = 0; q < werte.size(); ++q)
+        {
+            const std::size_t j = bloecke[b].parameter[q];
+            x[j] = wo[j].first->koordinate(werte[q]);
+        }
+        return x;
     };
-    const auto summenAm = [&](const std::vector<double>& x) {
-        std::vector<TastenSumme> t;
-        for (std::size_t b = 0; b < bloecke.size(); ++b) t.push_back(gemerkt[b].at(teil(x, bloecke[b].parameter)));
-        return t;
+    // je Taste die Summen der ausgewerteten Punkte, nach den Werten ihrer Parameter (das Modell laeuft auf dem Pool von
+    // `setzen` — daher die Sperre)
+    std::mutex sperre;
+    std::vector<std::map<std::vector<double>, TastenSumme>> gemerkt(nb);
+    std::atomic<int> auswertungen{0};
+    const setzen::Modell amTon = [&](std::size_t b, const std::vector<double>& werte) {
+        const std::vector<modelltest::Auswertung> aus =
+            modelltest::werteAus({modelltest::saiteAus(a.raum, xAus(x0, b, werte))}, {a.tasten[b]}, a.strukturen, a.ziele, nullptr, 1);
+        const TastenSumme& t = aus.front().tasten.front();
+        std::vector<double> m;
+        for (const Abweichung& g : t.groessen) m.push_back(g.fehlt ? std::numeric_limits<double>::quiet_NaN() : g.modell);
+        {
+            const std::lock_guard<std::mutex> l(sperre);
+            gemerkt[b][werte] = t;
+        }
+        ++auswertungen;
+        return m;
     };
     LmErgebnisBloecke stand;
-    stand.bloecke.resize(bloecke.size());
-    for (std::size_t b = 0; b < bloecke.size(); ++b)
+    stand.bloecke.resize(nb);
+    for (std::size_t b = 0; b < nb; ++b)
     {
         stand.bloecke[b].lambda = start.lambda.empty() ? einst.lambdaStart : start.lambda[b];
         stand.bloecke[b].iterationen = start.iteration.empty() ? 0 : start.iteration[b];
         stand.bloecke[b].ende = start.ende.empty() ? std::string() : start.ende[b];
     }
+    stand.x = x0;
+    stand.iterationen = start.nummer;
+    std::vector<std::vector<double>> werteJetzt(nb);
+    for (std::size_t b = 0; b < nb; ++b)
+        for (const setzen::Parameter& p : gruppen[b].parameter) werteJetzt[b].push_back(p.wert);
     std::vector<double> diagonale(a.raum.zahl(), 0.0);
-    const LmBeobachterBloecke jeIteration = [&](const LmIterationBloecke& it) {
-        const std::vector<TastenSumme> tasten = summenAm(it.x);
-        for (std::size_t b = 0; b < bloecke.size(); ++b)
+
+    setzen::Einstellung e;
+    e.iterationenHoechstens = einst.iterationenHoechstens;
+    e.versucheHoechstens = einst.versucheHoechstens;
+    e.lambdaStart = einst.lambdaStart;
+    e.lambdaFaktor = einst.lambdaFaktor;
+    e.wirkungMindestens = einst.wirkungMindestens;
+    e.wiederaufnahme = false;
+    e.start = setzen::Start{start.nummer, start.lambda, start.iteration, start.ende};
+    e.beobachter = [&](const setzen::Iteration& it) {
+        LmIterationBloecke li;
+        li.nummer = it.nummer;
+        li.auswertungen = it.auswertungen;
+        li.bloecke.resize(nb);
+        std::vector<TastenSumme> tasten;
+        for (std::size_t b = 0; b < nb; ++b)
         {
+            const setzen::GruppenSchritt& gs = it.gruppen[b];
+            werteJetzt[b] = gs.werte;
+            stand.x = xAus(stand.x, b, gs.werte);
+            LmBlockSchritt& sb = li.bloecke[b];
+            sb.aktiv = gs.aktiv;
+            sb.angenommen = gs.angenommen;
+            sb.restVorher = gs.restVorher;
+            sb.rest = gs.rest;
+            sb.lambdaVorher = gs.lambdaVorher;
+            sb.lambda = gs.lambda;
+            sb.versuche = gs.versuche;
+            sb.verworfen = gs.verworfen;
+            sb.ende = gs.ende;
+            if (gs.aktiv)
+            {
+                // die Diagonale in der Koordinate der Suche: im normierten Raum ist sie um den Bereich² groesser
+                for (std::size_t q = 0; q < bloecke[b].parameter.size(); ++q)
+                {
+                    const std::size_t j = bloecke[b].parameter[q];
+                    const double bereich = raum.oben[j] - raum.unten[j];
+                    sb.diagonale.push_back(gs.diagonale[q] / (bereich * bereich));
+                }
+                for (const std::size_t q : gs.ohneWirkung) sb.ohneWirkung.push_back(bloecke[b].parameter[q]);
+            }
+            {
+                const std::lock_guard<std::mutex> l(sperre);
+                tasten.push_back(gemerkt[b].at(gs.werte));
+            }
             LmBlockStand& st = stand.bloecke[b];
             st.rest = tasten[b].summe;
-            if (!it.bloecke[b].aktiv) continue;
-            st.lambda = it.bloecke[b].lambda;
-            st.ende = it.bloecke[b].ende;
-            st.ohneWirkung = it.bloecke[b].ohneWirkung;
+            if (!gs.aktiv) continue;
+            st.lambda = gs.lambda;
+            st.ende = gs.ende;
+            st.ohneWirkung = sb.ohneWirkung;
+            st.diagonale = sb.diagonale;
             ++st.iterationen;
         }
-        stand.x = it.x;
+        li.x = stand.x;
         stand.iterationen = it.nummer;
-        modelltest::diagonaleAusBloecken(bloecke, it, diagonale);
-        if (beobachter) beobachter(it, stand, tasten, diagonale, sekundenSeit(letzte));
+        modelltest::diagonaleAusBloecken(bloecke, li, diagonale);
+        if (beobachter) beobachter(li, stand, tasten, diagonale, sekundenSeit(letzte));
         letzte = std::chrono::steady_clock::now();
-        for (std::size_t b = 0; b < bloecke.size(); ++b)
-        {
-            const std::vector<double> jetzt = teil(it.x, bloecke[b].parameter);
-            for (auto i = gemerkt[b].begin(); i != gemerkt[b].end();) i = i->first == jetzt ? std::next(i) : gemerkt[b].erase(i);
-        }
+        const std::lock_guard<std::mutex> l(sperre);
+        for (std::size_t b = 0; b < nb; ++b)
+            for (auto i = gemerkt[b].begin(); i != gemerkt[b].end();) i = i->first == werteJetzt[b] ? std::next(i) : gemerkt[b].erase(i);
     };
-    s.ergebnis = levenbergMarquardtJeBlock(amTon, bloecke, gruppen, raum.ende, start, raum, einst, jeIteration);
-    s.tasten = summenAm(s.ergebnis.x);
+    const setzen::Bericht bericht = setzen::setze(gruppen, amTon, e);
+
+    s.ergebnis.x = stand.x;
+    s.ergebnis.bloecke.resize(nb);
+    for (std::size_t b = 0; b < nb; ++b)
+    {
+        const setzen::GruppenBericht& g = bericht.gruppen[b];
+        s.ergebnis.x = xAus(s.ergebnis.x, b, g.werte);
+        LmBlockStand& st = s.ergebnis.bloecke[b];
+        st = stand.bloecke[b];
+        st.rest = g.rest;
+        st.lambda = g.lambda;
+        st.ende = g.ende;
+        s.tasten.push_back(gemerkt[b].at(g.werte));
+    }
+    s.ergebnis.iterationen = stand.iterationen;
+    s.ergebnis.auswertungen = auswertungen.load();
+    s.ergebnis.anGrenze = anGrenzeIn(raum, s.ergebnis.x);
+    s.auswertungen = auswertungen.load();
     s.sekunden = sekundenSeit(anfang);
     return s;
 }
@@ -1691,7 +1791,9 @@ TEST_CASE("Loop Salamander 7.5.12 Suche je Taste (LUMIVIZ_75_SUCHE2)")
         std::ofstream aus(ordner / "fortschritt.txt", std::ios::binary | std::ios::app);
         aus << QDateTime::currentDateTime().toString(Qt::ISODate).toStdString() << '\t' << zeile << '\n';
     };
-    const LmEinstellungen einst;
+    LmEinstellungen einst;
+    // 34e-4: LUMIVIZ_75_SUCHE2_ITERATIONEN=<n> begrenzt die Iterationen (die Probe vorher/nachher am Umzug auf `setzen`)
+    if (const QString n = qEnvironmentVariable("LUMIVIZ_75_SUCHE2_ITERATIONEN"); !n.isEmpty()) einst.iterationenHoechstens = n.toInt();
 
     // die Dauer ansagen: eine Auswertung aller Tasten gemessen; je Iteration die Gruppen und rund zwei Versuche, hoechstens
     // 20 Iterationen; A4 rund 28 Auswertungen (Raster mit Start 16, Goldener Schnitt 2 + 8, Mitte, Bericht)

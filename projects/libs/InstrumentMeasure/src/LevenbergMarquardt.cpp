@@ -159,11 +159,8 @@ LmErgebnis levenbergMarquardt(const LmResiduen& residuen, const LmJacobi& jacobi
             double anteil = 0.0;
             for (std::size_t k = 0; k < xn.size(); ++k) anteil = std::max(anteil, std::abs(xn[k] - e.x[k]) / raum.ende[k]);
             it.schrittAnteil = anteil;
-            if (anteil < 1.0)
-            {
-                klein = true;
-                break;
-            }
+            // ME4 a (S177, wie IC setzen): auch der kleine Schritt wird ausgewertet — senkt er, wird er genommen; danach Ende
+            if (anteil < 1.0) klein = true;
             std::vector<double> rn = residuen(xn);
             ++e.auswertungen;
             ++it.versuche;
@@ -179,6 +176,7 @@ LmErgebnis levenbergMarquardt(const LmResiduen& residuen, const LmJacobi& jacobi
                 break;
             }
             ++it.verworfen;
+            if (klein) break;
             e.lambda *= einst.lambdaFaktor;
         }
         if (klein) e.ende = "Schritte klein";
@@ -383,13 +381,8 @@ LmErgebnisBloecke levenbergMarquardtJeBlock(const LmResiduenBloecke& residuen, c
                     anteil = std::max(anteil, std::abs(xv[j] - e.x[j]) / raum.ende[j]);
                 }
                 s.schrittAnteil = anteil;
-                if (anteil < 1.0)
-                {
-                    klein[b] = true;
-                    entschieden[b] = true;
-                    for (const std::size_t j : bloecke[b].parameter) xv[j] = e.x[j];
-                    continue;
-                }
+                // ME4 a (S177, wie IC setzen): auch der kleine Schritt wird ausgewertet — senkt er, wird er genommen; danach Ende
+                if (anteil < 1.0) klein[b] = true;
                 versuch.push_back(b);
             }
             if (versuch.empty()) break;
@@ -414,6 +407,11 @@ LmErgebnisBloecke levenbergMarquardtJeBlock(const LmResiduenBloecke& residuen, c
                     continue;
                 }
                 ++s.verworfen;
+                if (klein[b])
+                {
+                    entschieden[b] = true;
+                    continue;
+                }
                 st.lambda *= einst.lambdaFaktor;
             }
         }

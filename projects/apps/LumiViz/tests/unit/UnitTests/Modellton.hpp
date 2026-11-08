@@ -121,9 +121,12 @@ struct Auswertung
 };
 
 /// Viele Auswertungen zugleich: je Saite alle `tasten` an den Ebenen der Suche, alle Toene auf einem Pool (die laengsten
-/// zuerst). `sekunden` (wenn gegeben) bekommt die Rechenzeit des ganzen Aufrufs.
+/// zuerst). `sekunden` (wenn gegeben) bekommt die Rechenzeit des ganzen Aufrufs. `threads` 0 = `poolThreads()`; 1 rechnet
+/// auf dem rufenden Thread — so, wenn der Aufruf selbst schon auf einem Pool laeuft (`setzen`, ME3 a: `parallelJe`
+/// verschachtelt sich nicht).
 inline std::vector<Auswertung> werteAus(const std::vector<lumi::kern::hammer::HammerSaite>& saiten, const std::vector<int>& tasten,
-                                        const lumi::messung::Strukturen& strukturen, const lumi::messung::Ziele& ziele, double* sekunden = nullptr)
+                                        const lumi::messung::Strukturen& strukturen, const lumi::messung::Ziele& ziele, double* sekunden = nullptr,
+                                        unsigned threads = 0)
 {
     const auto start = std::chrono::steady_clock::now();
     std::vector<lumi::loop::Instrument> instrumente;
@@ -147,7 +150,7 @@ inline std::vector<Auswertung> werteAus(const std::vector<lumi::kern::hammer::Ha
         const std::size_t taste = (auftrag / je) % tasten.size();
         const std::size_t saite = auftrag / (je * tasten.size());
         messungen[auftrag] = messeEbene(instrumente[saite], tasten[taste], kSuchEbenen[auftrag % je], dauer[taste]);
-    }, poolThreads());
+    }, threads == 0 ? poolThreads() : threads);
 
     std::vector<Auswertung> alle(saiten.size());
     for (std::size_t s = 0; s < saiten.size(); ++s)

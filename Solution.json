@@ -193,7 +193,7 @@
         "name": "InstrumentCore",
         "//description": "Die Qt-freie Bibliothek der Rechenkerne (Instrumente_IC_Konzept.md KN1 a, Stufe 34c): Tonkern, Fabrik, Auskunft, Parametertafel, Tonauftrag; Eigenzerlegung, Fft mit pocketfft, Kurve, Modal, Pool, SHA-256, Anschlagstufe. STATIC mit den Schaltern nach E1 a (IK2-5 a, PRIVATE: gerechnet wird in den .cpp-Dateien; MSVC kontrahiert unter /fp:precise seit VS 2022 17.0 nicht mehr, nur mit /fp:contract — ein /fp:contract- wie in IC kennt cl nicht, D9002). Als Quellpaket nach IC (TP1 a, packages: instrumentcore)",
         "skip": false,
-        "version": "0.1.0",
+        "version": "0.2.0",
         "type": "STATIC",
         "path": "projects/libs/InstrumentCore/src",
         "public_headers": "projects/libs/InstrumentCore/include",
