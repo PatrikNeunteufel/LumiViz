@@ -24,7 +24,7 @@
 
 #include <doctest.h>
 
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 
 #include <algorithm>
 #include <chrono>

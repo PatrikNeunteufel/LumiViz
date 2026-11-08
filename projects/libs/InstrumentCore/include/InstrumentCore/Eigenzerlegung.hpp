@@ -20,6 +20,12 @@
  *
  * Gegen Eigen geprueft (`test_LoopKleinEigen`); in IC dazu gegen geschlossene 2 × 2-Faelle und A·v = λv.
  * Kein Qt, kein `windows.h` (IK1). Derselbe Aufruf ergibt dieselben Werte.
+ *
+ * Dazu `zerlegeSymmetrisch` fuer reelle symmetrische Matrizen beliebiger Groesse: zyklische Jacobi-Drehungen, bis die
+ * Nebendiagonale unter 10⁻¹⁴ der Diagonale liegt (in der Summe der Quadrate 10⁻²⁸), hoechstens 100 Runden — langsam,
+ * aber genau und deterministisch, bis rund 300 Zeilen. Uebernommen aus IC `rechnung/gemeinsam/Balken.hpp`/`.cpp`
+ * (`bb7e6d6`) wortgleich (Instrumente_IC_Konzept.md ME2 a, Journal J23); dort tragen ihn der Balken (Klassen 4, 10),
+ * die Membran (Klasse 5) und ESPRIT in der Messung (B6).
  */
 #pragma once
 
@@ -77,5 +83,15 @@ inline constexpr double kEntartetAbstand = 1e-8;
 
 /// Die Eigenzerlegung von `a` (1 … `kKleineMatrixMax`). Eine leere Matrix gibt eine leere Zerlegung.
 [[nodiscard]] Eigenzerlegung zerlegeKlein(const KleineMatrix& a);
+
+/// Die Eigenzerlegung einer reellen symmetrischen Matrix (n × n, zeilenweise): Werte aufsteigend, Spalte j von
+/// `vektoren` (zeilenweise n × n) gehoert zu `werte[j]`, euklidisch auf 1.
+struct SymmetrischeZerlegung
+{
+    std::vector<double> werte;
+    std::vector<double> vektoren;
+    bool vollstaendig = true;
+};
+[[nodiscard]] SymmetrischeZerlegung zerlegeSymmetrisch(int n, std::vector<double> a);
 
 }  // namespace lumi::kern

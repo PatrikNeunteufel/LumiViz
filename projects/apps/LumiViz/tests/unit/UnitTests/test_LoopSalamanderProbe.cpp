@@ -25,11 +25,11 @@
 
 #include <doctest.h>
 
-#include "Fluegelmessung.hpp"
-#include "Kurvenabstand.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
+#include "InstrumentMeasure/Kurvenabstand.hpp"
 #include "ModellMessung.hpp"
 #include "Modellton.hpp"
-#include "NelderMead.hpp"
+#include "InstrumentMeasure/NelderMead.hpp"
 #include "Suchkurven.hpp"
 
 #include "audio/WavDatei.hpp"

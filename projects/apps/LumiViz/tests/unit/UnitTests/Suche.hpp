@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include "LevenbergMarquardt.hpp"
+#include "InstrumentMeasure/LevenbergMarquardt.hpp"
 #include "Modellton.hpp"
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 #include "Suchkurven.hpp"
-#include "Zielsumme.hpp"
+#include "InstrumentMeasure/Zielsumme.hpp"
 
 #include "FluegelSchicht.hpp"
 

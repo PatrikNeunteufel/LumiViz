@@ -29,7 +29,7 @@
 #include <doctest.h>
 
 #include "LoopOhneEngine.hpp"
-#include "audio/Lautheit.hpp"
+#include "AudioCore/Lautheit.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"

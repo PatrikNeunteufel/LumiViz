@@ -42,14 +42,14 @@
 
 #include <doctest.h>
 
-#include "Fluegelmessung.hpp"
-#include "Kurvenabstand.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
+#include "InstrumentMeasure/Kurvenabstand.hpp"
 #include "ModellMessung.hpp"
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 
 #include "InstrumentBody/Mobilitaet.hpp"
 #include "audio/WavDatei.hpp"
-#include "audio/WavFormat.hpp"
+#include "AudioCore/WavFormat.hpp"
 #include "loop/Boden.hpp"
 #include "InstrumentCore/Fft.hpp"
 #include "FluegelSchicht.hpp"

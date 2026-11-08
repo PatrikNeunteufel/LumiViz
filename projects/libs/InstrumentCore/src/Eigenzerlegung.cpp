@@ -337,4 +337,85 @@ Eigenzerlegung zerlegeKlein(const KleineMatrix& a)
     return z;
 }
 
+namespace
+{
+
+double& bei(std::vector<double>& a, int n, int z, int s)
+{
+    return a[static_cast<std::size_t>(z) * static_cast<std::size_t>(n) + static_cast<std::size_t>(s)];
+}
+
+double beiC(const std::vector<double>& a, int n, int z, int s)
+{
+    return a[static_cast<std::size_t>(z) * static_cast<std::size_t>(n) + static_cast<std::size_t>(s)];
+}
+
+}  // namespace
+
+SymmetrischeZerlegung zerlegeSymmetrisch(int n, std::vector<double> a)
+{
+    SymmetrischeZerlegung z;
+    std::vector<double> v(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0.0);
+    for (int i = 0; i < n; ++i) bei(v, n, i, i) = 1.0;
+    double diag = 0.0;
+    for (int i = 0; i < n; ++i) diag += beiC(a, n, i, i) * beiC(a, n, i, i);
+    z.vollstaendig = false;
+    for (int runde = 0; runde < 100; ++runde)
+    {
+        double neben = 0.0;
+        for (int p = 0; p < n; ++p)
+            for (int q = p + 1; q < n; ++q) neben += beiC(a, n, p, q) * beiC(a, n, p, q);
+        if (neben <= 1e-28 * std::max(diag, 1e-300))
+        {
+            z.vollstaendig = true;
+            break;
+        }
+        for (int p = 0; p < n; ++p)
+            for (int q = p + 1; q < n; ++q)
+            {
+                const double apq = beiC(a, n, p, q);
+                if (apq == 0.0) continue;
+                const double app = beiC(a, n, p, p);
+                const double aqq = beiC(a, n, q, q);
+                const double theta = (aqq - app) / (2.0 * apq);
+                const double t = (theta >= 0.0 ? 1.0 : -1.0) / (std::abs(theta) + std::sqrt(theta * theta + 1.0));
+                const double c = 1.0 / std::sqrt(t * t + 1.0);
+                const double s = t * c;
+                for (int k = 0; k < n; ++k)
+                {
+                    const double akp = beiC(a, n, k, p);
+                    const double akq = beiC(a, n, k, q);
+                    bei(a, n, k, p) = c * akp - s * akq;
+                    bei(a, n, k, q) = s * akp + c * akq;
+                }
+                for (int k = 0; k < n; ++k)
+                {
+                    const double apk = beiC(a, n, p, k);
+                    const double aqk = beiC(a, n, q, k);
+                    bei(a, n, p, k) = c * apk - s * aqk;
+                    bei(a, n, q, k) = s * apk + c * aqk;
+                }
+                for (int k = 0; k < n; ++k)
+                {
+                    const double vkp = beiC(v, n, k, p);
+                    const double vkq = beiC(v, n, k, q);
+                    bei(v, n, k, p) = c * vkp - s * vkq;
+                    bei(v, n, k, q) = s * vkp + c * vkq;
+                }
+            }
+    }
+    std::vector<int> ordnung(static_cast<std::size_t>(n));
+    for (int i = 0; i < n; ++i) ordnung[static_cast<std::size_t>(i)] = i;
+    std::stable_sort(ordnung.begin(), ordnung.end(), [&](int x, int y) { return beiC(a, n, x, x) < beiC(a, n, y, y); });
+    z.werte.resize(static_cast<std::size_t>(n));
+    z.vektoren.assign(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0.0);
+    for (int j = 0; j < n; ++j)
+    {
+        const int o = ordnung[static_cast<std::size_t>(j)];
+        z.werte[static_cast<std::size_t>(j)] = beiC(a, n, o, o);
+        for (int i = 0; i < n; ++i) bei(z.vektoren, n, i, j) = beiC(v, n, i, o);
+    }
+    return z;
+}
+
 }  // namespace lumi::kern

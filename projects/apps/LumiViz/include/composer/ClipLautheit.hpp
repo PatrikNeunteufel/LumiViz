@@ -12,7 +12,7 @@
  */
 #pragma once
 
-#include "audio/Lautheit.hpp"
+#include "AudioCore/Lautheit.hpp"
 
 #include <QString>
 

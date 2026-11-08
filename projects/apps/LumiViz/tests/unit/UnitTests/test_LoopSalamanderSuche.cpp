@@ -39,17 +39,17 @@
 
 #include <doctest.h>
 
-#include "Fluegelmessung.hpp"
-#include "Hoerschwellen.hpp"
-#include "LevenbergMarquardt.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
+#include "InstrumentMeasure/Hoerschwellen.hpp"
+#include "InstrumentMeasure/LevenbergMarquardt.hpp"
 #include "Modellton.hpp"
-#include "NelderMead.hpp"
-#include "Probe7512.hpp"
+#include "InstrumentMeasure/NelderMead.hpp"
+#include "InstrumentMeasure/Probe.hpp"
 #include "Schwebungsstufe.hpp"
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 #include "Suche.hpp"
 #include "Suchkurven.hpp"
-#include "Zielsumme.hpp"
+#include "InstrumentMeasure/Zielsumme.hpp"
 
 #include "InstrumentBody/Statistik.hpp"
 #include "FluegelSchicht.hpp"

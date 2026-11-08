@@ -13,7 +13,7 @@
 #pragma once
 
 #include "composer/Komposition.hpp"
-#include "audio/Lautheit.hpp"
+#include "AudioCore/Lautheit.hpp"
 
 #include <QString>
 

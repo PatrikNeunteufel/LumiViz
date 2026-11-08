@@ -30,9 +30,9 @@
 
 #include <doctest.h>
 
-#include "Fluegelmessung.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
 #include "ModellMessung.hpp"
-#include "NelderMead.hpp"
+#include "InstrumentMeasure/NelderMead.hpp"
 
 #include "FluegelSchicht.hpp"
 #include "loop/Tonspeicher.hpp"

@@ -43,7 +43,7 @@
 #include "loop/Rechenkern.hpp"
 
 #include "FluegelSchicht.hpp"
-#include "Fluegelmessung.hpp"  // messeKanal (HU3-1: Helligkeit je Staerke wie an Salamander)
+#include "InstrumentMeasure/Fluegelmessung.hpp"  // messeKanal (HU3-1: Helligkeit je Staerke wie an Salamander)
 #include "SaitenMessung.hpp"  // betrag, spitze, cent, db, teilton
 
 #include <QDir>

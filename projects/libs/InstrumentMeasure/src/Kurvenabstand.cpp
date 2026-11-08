@@ -1,65 +1,18 @@
 /**
- ****************************************************************************************
- * @file   Kurvenabstand.hpp
- * @brief  Stufe 31d-7 B, 7.5.3: der Abstand der Kurven eines Teiltons zwischen Modell und
- *         *Salamander* (docs/audio/Spielweisen_Konzept.md §4.1; Entscheide Patrik S154/S155:
- *         SM4 a, K2 a, K3 a, K5 a, K6 a, K6-1 a)
- *
- * @details
- * Reines C++ ohne Qt (IK1). Beide Seiten liegen als `TeiltonKurven` vor (`Fluegelmessung.hpp`):
- * die Kurve nach Schroeder bis zum Ende des eigenen Bereichs und die Autokovarianz des Rests.
- *
- * - *Gemeinsamer Bereich* (K5 a, K6 a): vom spaeteren ersten Punkt bis zum frueheren Ende beider
- *   Kurven. Die Kurve, die laenger reicht, wird auf das gemeinsame Ende gekuerzt — aus L allein:
- *   10^(L/10) ist das Restintegral bezogen auf den Anfang, also I(t) − I(T) fuer das kuerzere T.
- *   Beide neu auf den gemeinsamen ersten Punkt bezogen.
- * - *Verglichen* bis 1 s vor dem gemeinsamen Ende (K6-1 a).
- * - *Anteil Abklingen* (K3 a (1)): RMS der Differenz in dB ueber die verglichenen Punkte.
- * - *Anteil Schwebung* (K3 a (2)): Wurzel aus der RMS-Differenz der Autokovarianzen ueber die
- *   gemeinsamen Verzoegerungen, in dB.
- * - *Gewicht* (K3 a): der Fall der Kurve von *Salamander* ueber die verglichenen Punkte durch 60 dB,
- *   hoechstens 1 — die Datei traegt den Boden nicht; der Fall bis 1 s vor dem Ende eines Bereichs, der
- *   10 dB ueber dem Boden endet, steht fuer den Bereich ueber dem Boden (festgelegt im Bau, S155).
- * - *Fehlt dem Modell die Kurve* (RV1 a): sie zaehlt als sofort bis zur Untergrenze (−100 dB) gefallen.
- * - *Je Taste* (K2 a): d² = Abklingen² + Schwebung² je Kurve (1 : 1), gewichtet gemittelt ueber
- *   Ebenen und Teiltoene, die Wurzel daraus.
- ****************************************************************************************
+ * @file   Kurvenabstand.cpp
+ * @brief  Die Rechnung zu `InstrumentMeasure/Kurvenabstand.hpp` (Herleitung dort). Wortgleich aus dem Kopf der
+ *         Unit-Tests gezogen (Instrumente_IC_Konzept.md, Teilplan 34e-1): in der .cpp, damit die Schalter nach
+ *         E1 a (PRIVATE) gelten.
  */
-
-#pragma once
-
-#include "Fluegelmessung.hpp"
-
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
-#include <optional>
-#include <vector>
+#include "InstrumentMeasure/Kurvenabstand.hpp"
 
 namespace lumi::messung
 {
 
-/// Der Abstand einer Kurve.
-struct KurvenAbstand
-{
-    bool gilt = false;
-    double abklingenDb = 0.0;  ///< K3 a (1)
-    double schwebungDb = 0.0;  ///< K3 a (2)
-    double gewicht = 0.0;
-    std::size_t punkte = 0;    ///< verglichene Punkte der Kurve nach Schroeder
-    double anteilEnde = 0.0;   ///< Anteil der letzten 20 % der Punkte an der Summe der Quadrate (Kipppunkt K6-1 a)
-    std::size_t vonPunkt = 0;  ///< absolut (Punkt · Raster = Zeit nach dem Einsatz)
-    std::size_t endePunkt = 0; ///< gemeinsames Ende, absolut
-};
-
-/// So tief reicht eine neu bezogene Kurve hoechstens (`detail::neuBezogen`: 10^(−10)), in dB unter ihrem Anfang.
-inline constexpr double kKurveUntergrenzeDb = 100.0;
-
 namespace detail
 {
 
-/// L einer Kurve auf [von, ende) (absolute Punkte) neu bezogen: gekuerzt auf `ende`, 0 dB bei `von`.
-inline std::vector<double> neuBezogen(const Abklingkurve& k, std::size_t von, std::size_t ende)
+std::vector<double> neuBezogen(const Abklingkurve& k, std::size_t von, std::size_t ende)
 {
     std::vector<double> l;
     const std::size_t eigenesEnde = k.ersterPunkt + k.db.size();
@@ -73,12 +26,9 @@ inline std::vector<double> neuBezogen(const Abklingkurve& k, std::size_t von, st
     for (std::size_t p = von; p < ende; ++p) l.push_back(10.0 * std::log10(std::max((energie(p) - rest) / bezug, 1e-10)));
     return l;
 }
-
 }  // namespace detail
 
-/// Der Abstand einer Kurve des Modells `m` zur Kurve von *Salamander* `s` (K3 a, K6 a, K6-1 a). Beide auf dem Raster
-/// nach K5 a. `randS` wie K6-1 a.
-inline KurvenAbstand kurvenAbstand(const TeiltonKurven& m, const TeiltonKurven& s, double randS = 1.0)
+KurvenAbstand kurvenAbstand(const TeiltonKurven& m, const TeiltonKurven& s, double randS)
 {
     KurvenAbstand a;
     if (!s.erkannt || s.kurve.db.empty()) return a;
@@ -140,9 +90,7 @@ inline KurvenAbstand kurvenAbstand(const TeiltonKurven& m, const TeiltonKurven& 
     return a;
 }
 
-/// Der Abstand einer Taste: d² = Abklingen² + Schwebung² je Kurve, gewichtet gemittelt, die Wurzel (K2 a, K3 a).
-/// Kurven, die nicht gelten, zaehlen nicht; ohne geltende Kurve kein Wert.
-inline std::optional<double> tastenAbstand(const std::vector<KurvenAbstand>& kurven)
+std::optional<double> tastenAbstand(const std::vector<KurvenAbstand>& kurven)
 {
     double summe = 0.0;
     double gewichte = 0.0;

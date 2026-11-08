@@ -17,12 +17,12 @@
 
 #include <doctest.h>
 
-#include "Fluegelmessung.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
 #include "ModellMessung.hpp"
 #include "Modellton.hpp"
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 #include "Suchkurven.hpp"
-#include "Zielsumme.hpp"
+#include "InstrumentMeasure/Zielsumme.hpp"
 
 #include "audio/WavDatei.hpp"
 #include "InstrumentCore/Fft.hpp"

@@ -21,7 +21,7 @@
 
 #include <doctest.h>
 
-#include "Kurvenabstand.hpp"
+#include "InstrumentMeasure/Kurvenabstand.hpp"
 
 #include <cmath>
 #include <complex>

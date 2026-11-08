@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "Fluegelmessung.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
 #include "ModellMessung.hpp"
-#include "Strukturmessung.hpp"
-#include "Zielsumme.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
+#include "InstrumentMeasure/Zielsumme.hpp"
 
 #include "InstrumentCore/Fft.hpp"
 #include "InstrumentCore/Pool.hpp"

@@ -3,7 +3,8 @@
  * @brief Lautheit nach EBU R128 / ITU-R BS.1770 und Spitze eines
  *        Stereo-Signals (Composer_Konzept §9g, Entscheid Patrik S126, L2 a;
  *        seit S139 unter `audio/` fuer Composer und Loop, Loop_Konzept §4n,
- *        Stufe 27a)
+ *        Stufe 27a; seit S177 in der Bibliothek `AudioCore`, Instrumente_IC_Konzept.md
+ *        ME1 a)
  *
  * Ohne Engine und ohne Qt: der Baustein bekommt Samples (Stereo,
  * verschraenkt, Fliesskomma) und rechnet. Welcher Ausschnitt gemessen wird,

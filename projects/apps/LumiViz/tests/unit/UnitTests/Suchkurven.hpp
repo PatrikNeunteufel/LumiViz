@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "Fluegelmessung.hpp"
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 
 #include "FluegelSchicht.hpp"
 

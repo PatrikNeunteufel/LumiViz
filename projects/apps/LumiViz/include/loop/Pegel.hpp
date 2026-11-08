@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "audio/Lautheit.hpp"
+#include "AudioCore/Lautheit.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"

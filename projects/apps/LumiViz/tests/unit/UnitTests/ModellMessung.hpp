@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "Fluegelmessung.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
 #include "FluegelSchicht.hpp"
 
 #include "loop/Boden.hpp"

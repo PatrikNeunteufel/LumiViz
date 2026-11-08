@@ -15,7 +15,7 @@
  * den Prueftoenen aus EBU Tech 3341 (test_ComposerLautheit.cpp).
  */
 
-#include "audio/Lautheit.hpp"
+#include "AudioCore/Lautheit.hpp"
 
 #include <algorithm>
 #include <cmath>

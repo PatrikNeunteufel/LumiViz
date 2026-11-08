@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.7.0
-> **Datum:** 2026-11-07 (Session 176)
+> **Version:** 0.8.0
+> **Datum:** 2026-11-08 (Session 177)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); nächster Schritt 34e
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e in Arbeit seit 2026-11-08 (S177, Teilplan 34e-1 bis 34e-5, ME1 a, ME2 a)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -464,6 +464,39 @@ Klasse eine Bibliothek — bis zu zwölf gleiche Schalterblöcke und Pakete, get
 `InstrumentCore` — die Schnittstelle hinge am Flügel). Kippt auf c, wenn IC nie gegen die Schnittstelle allein bauen soll;
 auf b, wenn ein Instrument einzeln ausgeliefert werden soll und keine Bausteine mehr teilt.
 
+**Teilplan 34e** (S177, Zuschnitt nach IK2-2 a, KN1 a, ME1 a, ME2 a; Nummern fest). `InstrumentMeasure` (`lumi::messung`,
+STATIC, E1 a, Paket `instrumentmeasure`) hängt in 34e nur an `InstrumentCore` und `AudioCore`. Gefunden: die Messkette
+liegt als Köpfe ohne Qt unter `tests/unit/UnitTests/` (schon `lumi::messung`); IC führt sie als Port mit geänderten
+Namen und Pfaden, nur das LM ist in LumiViz neuer (`levenbergMarquardtJeBlock`, 7.5.12); `Bausteine`, `setzen` und
+`Samples` gibt es nur in IC; `setzen` trägt ein eigenes LM je Gruppe (L8, L9) ohne A3.
+
+| Nr. | Inhalt | fertig, wenn |
+|---|---|---|
+| 34e-1 | Bibliothek anlegen; die LumiViz-Messkette (`Teiltonmessung`, `Fluegelmessung`, `Strukturmessung`, `Kurvenabstand`, `Zielsumme`, `Hoerschwellen`, `Probe7512` → `Probe` wie IC, `LevenbergMarquardt`, `NelderMead`) zieht um, geteilt in `.hpp`/`.cpp` (Schalter PRIVATE); die Kopien in `UnitTests/` entfallen | `LUMIVIZ_SALAMANDER` misst neu, `salamander_*.txt` ohne Diff; `*Teiltonmessung*`, `*Salamander*`, `*Kurvenabstand*` gleich |
+| 34e-2 | `AudioCore` nach ME1 a mit `Lautheit`, `WavFormat` (`lumi::audio`) | `*Lautheit*`, `*Pegel*`, `*Wav*`, Composer-Lautheit grün; `Loop Werte` gleich |
+| 34e-3 | IC-`Bausteine` B1–B8, `amplitudenBei`, von `Samples` der allgemeine Teil (Name der Umgebungsvariable vom Aufrufer); `zerlegeSymmetrisch` nach ME2 a; Fälle aus IC `test_messung.cpp` (der Fall „Modalfit am Modell“ braucht den Stab: 34g) | die übernommenen Fälle grün mit den Grenzen aus IC |
+| 34e-4 | `setzen` = IC-Rahmen (L9, L11, L12, L16, `setzeMehrfach`, `probe`, `glaette`), innen das LM je Block aus LumiViz (A2, A3, Differenz je Parameter); das IC-LM entfällt; die Flügel-Suche (`Suche.hpp`) liefert ihr `setzen::Modell` | IC `test_setzen` und die LM-Fälle aus `test_LoopSalamanderSuche` grün; Probe vorher/nachher an zwei Tasten, zwei Iterationen — gleich oder Ursache im Journal |
+| 34e-5 | Pakete `audiocore`, `instrumentmeasure` (`sha256sum -c`, LF), Modul-Doku, Journal J19 ff., Konzept, Steckbrief | voller Lauf unter Release-clang und Testing-MSVC |
+
+In den Tests bleiben, was `loop/Instrument` oder Qt braucht: `FluegelSchicht`, `ModellMessung`, `Modellton`,
+`Suchkurven`, `Suche`, `Schwebungsstufe`, dazu `SaitenMessung`. Nicht in 34e: das Stimmen (IK2-11 a, 34f/34k); pYIN
+bleibt in der App (HMM für Gesang 55–880 Hz, B2 misst Instrumente 25–4 000 Hz mit wählbarem Bereich — zwei Aufgaben).
+Die IC-Kerne rufen heute `messung::tonhoehe`/`einschwingen` selbst (fünf Klassen); nach IK2-2 a geben sie ihre
+Messgrößen ab — Thema ab 34g.
+
+✅ **ME1 a** (Patrik S177): **`Lautheit` und `WavFormat` kommen in eine eigene Bibliothek `AudioCore`**
+(`projects/libs/AudioCore`, STATIC, E1 a, Paket `audiocore`, Namensraum `lumi::audio` bleibt); `InstrumentMeasure` und
+die App hängen daran, die App nicht an `InstrumentMeasure`. Grund: der Composer misst Songs (`Abgleich`,
+`ClipLautheit`), `WavFormat` trägt Export, Freeze und Aufnahme — allgemeines Audio, der Kipppunkt von KN1 a. Verworfen:
+b (in `InstrumentMeasure`, `lumi::messung` — der Composer hinge an einer Instrument-Bibliothek; spart nur ein Paket). Alle
+Zielgrößen gleich (wortgleicher Umzug). Kippt, wenn beide nie außerhalb von Instrumenten gebraucht würden.
+
+✅ **ME2 a** (Patrik S177): **`zerlegeSymmetrisch` zieht wortgleich als allgemeiner Löser in
+`InstrumentCore/Eigenzerlegung`** (aus IC `gemeinsam/Balken.hpp:28–34`), mit eigenem Test und Journal; der Balken nutzt
+ihn in 34g von dort. Grund: Schichtung nach BK1 a — ein allgemeiner Löser in den allgemeinen Teil, ein Balken-Modell zu
+den Kernen. Verworfen: b (ganzer `Balken.hpp` in den Core — FEM einer Klasse in der Schnittstelle), c (Kopie in der
+Messung — zwei Fassungen, gegen „je einmal“). Kippt, wenn der Löser mit dem Cholesky-Schritt des Balkens verflochten ist.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -523,6 +556,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.8.0 | 2026-11-08 | Session 177. §6: Teilplan 34e (34e-1 bis 34e-5), ME1 a (`AudioCore`), ME2 a (`zerlegeSymmetrisch` in den Core). |
 | 0.7.0 | 2026-11-07 | Session 176. 34d erledigt — der Flügel als Kern `hammerString` in `InstrumentModels`, `.lvinst` Fassung 21, Creator nach FU3 a; Journal J12–J18; Flügel-Bezug `hammer_bezug_windows.txt` Bit für Bit unter beiden Compilern, `Loop Werte` unverändert, Rechenzeit wie 34c, voller Lauf 1770 / 1770. §6: Zeilen 34c/34d nach BK1 a; §5 IK2-2 a Verweis auf den Bezug je Plattform. |
 | 0.6.0 | 2026-11-07 | Session 175. §6: KN1 a (Name `InstrumentCore`, `lumi::kern`; Messung `InstrumentMeasure`), KN2 a (34c verschiebt); 34c erledigt — Übernahme-Journal `modellierung/anbindung-ic/Uebernahme_Journal.md` J0–J11, voller Lauf 1765 / 1765 unter beiden Compilern, Wächter unverändert. |
 | 0.5.0 | 2026-11-07 | Session 174. §6a neu: Skizze Creator und Editor (34a) gebilligt — CK1 a (ein Creator für alle Kerne aus der Tafel), CK2 a (Kurven im Creator, Kipppunkt UF12 a greift nicht); was die Tafel dafür trägt. §6: TP1 als entschieden vermerkt. |

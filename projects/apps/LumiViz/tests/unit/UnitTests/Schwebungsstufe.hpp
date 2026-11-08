@@ -22,7 +22,7 @@
 #pragma once
 
 #include "Modellton.hpp"
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 #include "Suche.hpp"
 #include "Suchkurven.hpp"
 

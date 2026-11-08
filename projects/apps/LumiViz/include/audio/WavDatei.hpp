@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include "audio/WavFormat.hpp"
+#include "AudioCore/WavFormat.hpp"
 
 #include <QString>
 

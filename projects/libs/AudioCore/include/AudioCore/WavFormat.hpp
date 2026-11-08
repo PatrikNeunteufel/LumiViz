@@ -1,7 +1,8 @@
 /**
  * @file WavFormat.hpp
  * @brief Eine WAV-Datei lesen, ohne Qt (docs/audio/Spielweisen_Konzept.md §4.1, Stufe 31d-2;
- *        Entscheide Patrik S152: WL1 a, nach IK1)
+ *        Entscheide Patrik S152: WL1 a, nach IK1; seit S177 in der Bibliothek `AudioCore`,
+ *        Instrumente_IC_Konzept.md ME1 a)
  *
  * Der eine Code, der das Format zerlegt: RIFF/WAVE mit `fmt ` und `data`, PCM 16 und 24 Bit,
  * IEEE float 32 Bit, Mono oder Stereo, auch `WAVE_FORMAT_EXTENSIBLE` mit denselben Arten.

@@ -268,6 +268,54 @@ TEST_CASE("InstrumentCore 34c Eigenzerlegung meldet Entartung, bis 32")
     CHECK(rest < 1e-10 * groesse);
 }
 
+TEST_CASE("InstrumentCore 34e zerlegeSymmetrisch: Tridiagonale gegen die geschlossene Loesung, A·v = λv, orthonormal")
+{
+    // ME2 a: der Jacobi-Loeser aus IC `gemeinsam/Balken`. Die Matrix mit 2 auf der Diagonale und 1 daneben hat die
+    // Eigenwerte 2 + 2·cos(kπ/(n + 1)), k = 1 … n, und die Vektoren sin(i·kπ/(n + 1)).
+    for (const int n : {1, 2, 8, 40})
+    {
+        CAPTURE(n);
+        std::vector<double> a(static_cast<std::size_t>(n * n), 0.0);
+        const auto bei = [&](std::vector<double>& m, int z, int s) -> double& { return m[static_cast<std::size_t>(z * n + s)]; };
+        for (int i = 0; i < n; ++i)
+        {
+            bei(a, i, i) = 2.0;
+            if (i + 1 < n) bei(a, i, i + 1) = bei(a, i + 1, i) = 1.0;
+        }
+        const lumi::kern::SymmetrischeZerlegung z = lumi::kern::zerlegeSymmetrisch(n, a);
+        REQUIRE(z.vollstaendig);
+        REQUIRE(z.werte.size() == static_cast<std::size_t>(n));
+        std::vector<double> soll;
+        for (int k = 1; k <= n; ++k) soll.push_back(2.0 + 2.0 * std::cos(k * std::numbers::pi / (n + 1)));
+        std::sort(soll.begin(), soll.end());
+        double rest = 0.0, ortho = 0.0;
+        for (int j = 0; j < n; ++j)
+        {
+            CHECK(z.werte[static_cast<std::size_t>(j)] == doctest::Approx(soll[static_cast<std::size_t>(j)]).epsilon(1e-12));
+            if (j > 0) CHECK(z.werte[static_cast<std::size_t>(j)] >= z.werte[static_cast<std::size_t>(j - 1)]);
+            for (int i = 0; i < n; ++i)
+            {
+                double av = 0.0;
+                for (int k = 0; k < n; ++k) av += bei(a, i, k) * z.vektoren[static_cast<std::size_t>(k * n + j)];
+                rest = std::max(rest, std::abs(av - z.werte[static_cast<std::size_t>(j)] * z.vektoren[static_cast<std::size_t>(i * n + j)]));
+            }
+            for (int m = 0; m < n; ++m)
+            {
+                double s = 0.0;
+                for (int i = 0; i < n; ++i) s += z.vektoren[static_cast<std::size_t>(i * n + j)] * z.vektoren[static_cast<std::size_t>(i * n + m)];
+                ortho = std::max(ortho, std::abs(s - (j == m ? 1.0 : 0.0)));
+            }
+        }
+        CHECK(rest < 1e-12);
+        CHECK(ortho < 1e-12);
+    }
+    // eine schon diagonale Matrix bleibt, wie sie ist (nur sortiert)
+    const lumi::kern::SymmetrischeZerlegung d = lumi::kern::zerlegeSymmetrisch(3, {3.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0});
+    REQUIRE(d.vollstaendig);
+    CHECK(d.werte == std::vector<double>{1.0, 2.0, 3.0});
+    CHECK(d.vektoren == std::vector<double>{0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0});
+}
+
 TEST_CASE("InstrumentCore 34c Anschlagstufe")
 {
     CHECK(anschlagStufe(1.0) == 0);

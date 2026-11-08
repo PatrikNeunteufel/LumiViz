@@ -30,8 +30,8 @@
 
 #include <doctest.h>
 
-#include "Fluegelmessung.hpp"  // HU2 a: `huellkurveZeiten`, `messeKanal` (schliesst Teiltonmessung.hpp ein)
-#include "Teiltonmessung.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"  // HU2 a: `huellkurveZeiten`, `messeKanal` (schliesst Teiltonmessung.hpp ein)
+#include "InstrumentMeasure/Teiltonmessung.hpp"
 
 #include <algorithm>
 #include <array>

@@ -3,7 +3,7 @@
  * @brief Eine WAV-Datei lesen, ohne Qt (Stufe 31d-2, WL1 a)
  */
 
-#include "audio/WavFormat.hpp"
+#include "AudioCore/WavFormat.hpp"
 
 #include <algorithm>
 #include <cstdint>

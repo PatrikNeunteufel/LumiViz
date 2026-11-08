@@ -218,11 +218,42 @@
           "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-ffp-contract=off>",
           "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-fno-fast-math>"
         ]
+      },
+      {
+        "name": "AudioCore",
+        "//description": "Allgemeines Audio ohne Qt (Instrumente_IC_Konzept.md ME1 a, Stufe 34e-2): Lautheit nach EBU R128 / ITU-R BS.1770 und das WAV-Format, Namensraum lumi::audio. Die App (Composer, Loop, Export, Freeze, Aufnahme) und InstrumentMeasure haengen daran. STATIC mit den Schaltern nach E1 a (PRIVATE). Als Quellpaket nach IC (TP1 a, packages: audiocore)",
+        "skip": false,
+        "version": "0.1.0",
+        "type": "STATIC",
+        "path": "projects/libs/AudioCore/src",
+        "public_headers": "projects/libs/AudioCore/include",
+        "compile_options": [
+          "$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>",
+          "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-ffp-contract=off>",
+          "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-fno-fast-math>"
+        ]
+      },
+      {
+        "name": "InstrumentMeasure",
+        "//description": "Die Qt-freie Messkette und das Setzen ueber InstrumentCore (Instrumente_IC_Konzept.md KN1 a, IK2-2 a, Stufe 34e): Teiltonmessung, Fluegel- und Strukturmessung, Kurvenabstand, Zielsumme, Hoerschwellen, Probe, Levenberg-Marquardt, Nelder-Mead; dazu ab 34e-3 die Bausteine aus IC, ab 34e-4 setzen. STATIC mit denselben Schaltern nach E1 a (PRIVATE). Als Quellpaket nach IC (TP1 a, packages: instrumentmeasure; bezieht instrumentcore)",
+        "skip": false,
+        "version": "0.1.0",
+        "type": "STATIC",
+        "path": "projects/libs/InstrumentMeasure/src",
+        "public_headers": "projects/libs/InstrumentMeasure/include",
+        "dependencies": [ "InstrumentCore", "AudioCore" ],
+        "compile_options": [
+          "$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>",
+          "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-ffp-contract=off>",
+          "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-fno-fast-math>"
+        ]
       }
     ],
     "packages": [
       { "name": "instrumentcore", "library": "InstrumentCore" },
-      { "name": "instrumentmodels", "library": "InstrumentModels" }
+      { "name": "instrumentmodels", "library": "InstrumentModels" },
+      { "name": "audiocore", "library": "AudioCore" },
+      { "name": "instrumentmeasure", "library": "InstrumentMeasure" }
     ],
     "executables": [
       {
@@ -272,7 +303,7 @@
         "version": "0.12.0",
 
         "core": {
-          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore", "InstrumentModels" ],
+          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore", "InstrumentModels", "AudioCore" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz", "signalsmith-stretch" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
@@ -308,7 +339,7 @@
               "//timeout": "S73: von 30 auf 120 erhoeht. Die Suite braucht warm ~12 s, aber der ERSTE Lauf direkt nach einem Build ~30 s (frische Binaries, Virenscanner) — und schlug damit reproduzierbar an die alte Grenze. Der Wert soll Haenger fangen, nicht kalte Starts.",
               "timeout": 120,
               "labels": [ "unit", "core", "fast" ],
-              "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore", "InstrumentModels" ],
+              "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler", "InstrumentBody", "InstrumentCore", "InstrumentModels", "InstrumentMeasure", "AudioCore" ],
               "//externals": "Composer-Naht N26 (S105): qt-ads fuer den Testfall mit echtem Dock (panel_zeigen in test_ComposerSichttestStart.cpp).",
               "externals": [ "Qt6", "qt-ads", "bass", "lua54", "CDT", "Eigen", "Spectra" ],
               "external_options": {

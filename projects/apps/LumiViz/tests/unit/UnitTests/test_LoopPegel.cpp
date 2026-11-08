@@ -25,7 +25,7 @@
 #include <doctest.h>
 
 #include "LoopOhneEngine.hpp"
-#include "audio/Lautheit.hpp"
+#include "AudioCore/Lautheit.hpp"
 #include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"

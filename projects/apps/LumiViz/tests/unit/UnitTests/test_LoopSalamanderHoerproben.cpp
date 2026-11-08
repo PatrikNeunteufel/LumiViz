@@ -33,18 +33,18 @@
 
 #include <doctest.h>
 
-#include "Fluegelmessung.hpp"
-#include "Hoerschwellen.hpp"
+#include "InstrumentMeasure/Fluegelmessung.hpp"
+#include "InstrumentMeasure/Hoerschwellen.hpp"
 #include "ModellMessung.hpp"
 #include "Modellton.hpp"
-#include "Strukturmessung.hpp"
+#include "InstrumentMeasure/Strukturmessung.hpp"
 #include "Suche.hpp"
 #include "Suchkurven.hpp"
-#include "Zielsumme.hpp"
+#include "InstrumentMeasure/Zielsumme.hpp"
 
-#include "audio/Lautheit.hpp"
+#include "AudioCore/Lautheit.hpp"
 #include "audio/WavDatei.hpp"
-#include "audio/WavFormat.hpp"
+#include "AudioCore/WavFormat.hpp"
 #include "FluegelSchicht.hpp"
 #include "loop/Tonspeicher.hpp"
 

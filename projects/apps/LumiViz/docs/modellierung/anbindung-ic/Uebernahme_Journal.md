@@ -1,7 +1,7 @@
 # Übernahme-Journal — Bausteine aus IC und LumiViz in die Bibliotheken
 
-> **Version:** 0.2.0
-> **Datum:** 2026-11-07 (Sessions 175, 176)
+> **Version:** 0.3.0
+> **Datum:** 2026-11-08 (Sessions 175–177)
 > **Typ:** Journal (Instrumente_IC_Konzept.md IK2-2 a: „jede Übernahme steht in `Uebernahme_Journal.md`“)
 > **Status:** wird je Teilschritt fortgeschrieben
 > **Bezug:** [../../audio/Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md) §5 (IK2-2 a, IK2-2-1 a), §6 (34c,
@@ -125,9 +125,50 @@ der Schicht), FU2 a (Dämpfer und Pedale in der Tafel), FU3 a (der Creator zeigt
 
   **Ergebnis:** in jeder Runde gleich oder schneller als vorher; in der ruhigsten unter 4,6 %.
 
-## 3. Changelog
+## 3. Stufe 34e — Bibliothek `InstrumentMeasure` (S177)
+
+Ziel nach KN1 a, IK2-2 a: `projects/libs/InstrumentMeasure` (STATIC, `lumi::messung`, Paket `instrumentmeasure`), in 34e
+nur über `InstrumentCore` (und ab 34e-2 `AudioCore`, ME1 a), Schalter nach E1 a PRIVATE wie die Schwestern. Teilplan
+34e-1 bis 34e-5 im Konzept §6. Quellen: LumiViz `master` `b54b2cd9` (Stand nach 34d), IC `bb7e6d6` (Arbeitsbaum mit IC
+Session 5).
+
+**Befund vor dem Umzug (S177):** IC `rechnung/messung/` führt die LumiViz-Messkette als Port (aus `vorbild-lumiviz`,
+LumiViz `d1c06309`, IC Session 4; `Hoerschwellen`, `Probe` aus `3fa95944`, IC Session 5). Diff gegen LumiViz je Datei:
+nur Namensraum (`ic::messung`), `ic::Fft`, Pfade, Herkunftsvermerk — außer **`LevenbergMarquardt`** (IC 345 Zeilen,
+LumiViz 653: `levenbergMarquardtJeBlock`, `lmSchritt` mit Maske, 7.5.12 A2/A3, gibt es nur in LumiViz). Die
+LumiViz-Fassung ist damit überall die reichere oder gleiche; übernommen wird sie, der IC-Port entfällt mit 34l.
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J19 | Messkette | LumiViz `tests/unit/UnitTests/` `Teiltonmessung.hpp`, `Fluegelmessung.hpp`, `Strukturmessung.hpp`, `Kurvenabstand.hpp`, `Zielsumme.hpp`, `Hoerschwellen.hpp`, `Probe7512.hpp`, `LevenbergMarquardt.hpp`, `NelderMead.hpp` (`b54b2cd9`) | `InstrumentMeasure/<Name>.hpp`, `src/<Name>.cpp` | jede Funktion wortgleich; der Namensraum `lumi::messung` war schon gesetzt | **geteilt:** 98 freie Funktionen und die Methoden von `detail::Spektrum` und `detail::Geraden` in die `.cpp` (E1 a wirkt nur dort; Werkzeug im Scratchpad, Vorgabewerte bleiben im Kopf), kleine Zugriffe (`teilton(k)`, `fuer`, `Matrix`) bleiben im Kopf; **umbenannt** `Probe7512` → `Probe` (Name aus IC: die Probe gilt für jede Klasse); die Kopien in den Tests entfallen |
+
+**Wächter 34e-1** (S177):
+
+- `LUMIVIZ_SALAMANDER` (Aufnahme von `E:\samples\Salamander\…`) misst neu in 31 s und schreibt `salamander_c5.txt`,
+  `salamander_kurven.txt`, `salamander_struktur.txt`, `salamander_ziel.txt` — **alle vier ohne Diff** gegen Git (Release-clang).
+- `*Teiltonmessung*,*Salamander*,*Kurvenabstand*` 73 / 73 unter Release-clang (113 s); Testing-MSVC gebaut.
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J20 | Lautheit, WAV-Format | LumiViz `include/audio/Lautheit.hpp`, `src/audio/Lautheit.cpp`, `include/audio/WavFormat.hpp`, `src/audio/WavFormat.cpp` (`b54b2cd9`); IC `gemeinsam/Werkzeug` (`schreibeWav`, `leseWav`, `lufsNaeherung`, `lautheit`) | `projects/libs/AudioCore` (ME1 a), `AudioCore/Lautheit.hpp`, `AudioCore/WavFormat.hpp`, Namensraum `lumi::audio` wie bisher | die LumiViz-Fassung wortgleich (Lautheit gegen EBU Tech 3341 belegt, `test_ComposerLautheit`); in der App und den Tests nur die Include-Pfade | **verworfen:** die IC-Fassung — `lufsNaeherung` ohne Gating (nach IC selbst nur für Hörproben), `lautheit` nach BS.1770-4 nur Mono und ohne Momentary/Short-term, die Koeffizienten „aus dem Gedächtnis, offen“ (IC `Werkzeug.hpp:11`); das Lesen von WAV (IC `leseWav`: 16/24 Bit PCM, 32-bit float) deckt `liesWavBytes`/`liesWavDatei` ab. **Offen:** IC `schreibeWav` (32-bit float, ohne Qt) hat in `AudioCore` kein Gegenstück — LumiViz schreibt über `audio/WavDatei` mit Qt (32/24/16 Bit mit Dither); bis 34l bleibt das Schreiben für IC dort. IC bezieht `audiocore` mit 34l |
+
+**Wächter 34e-2** (S177): `*Lautheit*,*Pegel*,*Wav*,*Loop Werte*,*Begrenzer*,*Abgleich*` 105 / 105 und
+`test_ComposerLautheit`, `test_ComposerClipLautheit`, `test_WavDatei`, `test_LoopExport`, `test_LoopFreeze` 30 / 30 unter
+Release-clang; `loop_werte.txt` und `werte/` unverändert; App und Tests gebaut unter Release-clang und Testing-MSVC.
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J21 | Bausteine B1–B8, `amplitudenBei` | IC `rechnung/messung/Bausteine.hpp`, `.cpp` (`bb7e6d6`; nur in IC) | `InstrumentMeasure/Bausteine.hpp`, `src/Bausteine.cpp` | die Rechnung wortgleich: B1 Verfolgung (McAulay–Quatieri), B2 YIN, B3 Vibrato, B4 Rest (SMS), B5 Einschwingen, B6 Modalfit (ESPRIT), B7 Bänder, B8 Gleiten; die Fälle aus IC `messung/test_messung.cpp` mit denselben Signalen und Grenzen in `test_InstrumentMeasure` | **geändert:** Namensraum `lumi::messung`, Fft-Typ `lumi::kern::Fft` im Kopf, in der `.cpp` `using`-Erklärungen für die Namen aus `lumi::kern` (der Rumpf bleibt wortgleich), Include von `gemeinsam/Balken.hpp` entfällt (J23). **Nicht übernommen:** der Fall „B6 Modalfit am Modell“ (rechnet einen Xylophonton mit dem Kern der Klasse 4 — kommt mit 34g). Die IC-Kerne rufen `tonhoehe`/`einschwingen` heute selbst auf (fünf Klassen) — nach IK2-2 a geben sie die Messgrößen ab, Thema ab 34g |
+| J22 | Samples | IC `rechnung/messung/Samples.hpp`, `.cpp` (`bb7e6d6`) | `InstrumentMeasure/Samples.hpp`, `src/Samples.cpp` | `liesSummen`, `sha256Datei`, `pruefeDatei` wortgleich (SHA-256 aus `InstrumentCore/Pruefsumme`, J8) | **geändert:** der Name der Umgebungsvariable kommt vom Aufrufer (`samplesWurzelAus(variable, wert, meldung)`, `samplesWurzel(variable, meldung)`) statt fest `IC_SAMPLES`; Meldungen nennen die Variable. Im Testfall statt einer WAV aus `schreibeWav` eine Datei mit festen Bytes (der Inhalt ist für die Summe gleichgültig; `schreibeWav` hat kein Gegenstück, J20) |
+| J23 | `zerlegeSymmetrisch` | IC `rechnung/gemeinsam/Balken.hpp:28–34`, `Balken.cpp:63–127` (`bb7e6d6`) | `InstrumentCore/Eigenzerlegung.hpp`, `src/Eigenzerlegung.cpp` (ME2 a) | wortgleich, mit den Hilfen `bei`/`beiC` (anonymer Namensraum) | Kipppunkt von ME2 a geprüft: der Löser ist eigenständig, Cholesky steht in `biegeModen`, nicht im Löser. Nutzer in IC: Balken (4, 10), Membran (5), ESPRIT (B6). Neu ein Fall in `test_InstrumentCore` gegen die geschlossene Lösung der Tridiagonalen (n = 1, 2, 8, 40: Werte auf 10⁻¹², A·v = λv, orthonormal) und eine diagonale Matrix; ein Bit-Vergleich gegen einen IC-Lauf fehlt (IC hat keinen Fall für den Löser allein) |
+
+**Wächter 34e-3** (S177): `*InstrumentMeasure*,*InstrumentCore*` 21 / 21 unter Release-clang (8 neu aus IC, 1 neu für
+J23); Testing-MSVC gebaut.
+
+## 4. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.3.0 | 2026-11-08 | Session 177. §3 neu: 34e (J19 ff., Wächter je Teilschritt). |
 | 0.2.0 | 2026-11-07 | Session 176. §2 neu: 34d (J12–J18, Wächter). |
 | 0.1.0 | 2026-11-07 | Session 175. Angelegt mit 34c (J1–J11). |
