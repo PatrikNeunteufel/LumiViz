@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.319.0
-> **Datum:** 2026-11-08 (Sessions 164 bis 177)
+> **Version:** 1.320.0
+> **Datum:** 2026-11-08 (Sessions 164 bis 178)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2830,7 +2830,7 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Vorlage.
 
 - 🟡 **Anbindung `InstrumentsCalculation` — Stufe 34** — Steuerdokument
-  [audio/Instrumente_IC_Konzept.md](audio/Instrumente_IC_Konzept.md) 0.9.0, Herleitungen
+  [audio/Instrumente_IC_Konzept.md](audio/Instrumente_IC_Konzept.md) 0.10.0, Herleitungen
   [modellierung/anbindung-ic/](modellierung/anbindung-ic/README.md). **Planung fertig (S172, S173):** Zielbild Z1 a bis
   Z4 a; IK2-0 a bis IK2-13 a, IK2-2-1 a, CC1 a, TP1 a — Kern- und Mess-Bibliothek unter `projects/libs/` (IK2-1 c), eine
   abstrakte Ton-Schnittstelle `Tonkern` in Frames, `.lvinst` Fassung 21 mit Parametertafel, Übernahme-Journal, der
@@ -2843,10 +2843,17 @@ Bibliothek `InstrumentCore`, KN1 a, KN2 a; voller Lauf 1765 / 1765 unter beiden 
 Journal J12–J18).** **34e erledigt 2026-11-08 (S177, `InstrumentMeasure` und `AudioCore`, ME1 a–ME4 a; voller Lauf 1789 /
 1789 unter beiden Compilern, Journal J19–J26).** **34f erledigt 2026-11-08 (S177, Quellen am Wert und `.lvinst` Fassung 22,
 Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a; voller Lauf 1796 / 1796 unter beiden Compilern, Journal J27–J30).**
-Nächster Schritt **34g** (Klasse 4). Offen aus 34e/34f: ein WAV-Schreiber ohne Qt in `AudioCore` (IC `schreibeWav`, J20);
-der Fall „Modalfit am Modell“ (34g); der Schreibweg von `InstrumentTuneTool` erst mit einem stimmenden Kern prüfbar (34j);
-**die Lizenz von RT-0425, Stulov & Kartofelev 2009 und Rigaud et al. 2011 ist nicht geprüft** (im Register „not checked“ —
-Urteil Patrik). Bei IC offen (Auftrag in 34l): `/fp:contract-` streichen
+**34g erledigt 2026-11-08 (S178, Klasse 4 als Kern `bar`, neun Stabspiele, KS1 a–KS4 a; elf Abdrücke Bit für Bit wie
+IC, Rechenzeit höchstens 2,17 %; voller Lauf 1815 / 1815 unter beiden Compilern, Journal J31–J41,
+[Bericht](modellierung/platte-stab/README.md)).** Nächster Schritt **34h** (Klasse 5, Membran). Offen aus 34e–34g: ein
+WAV-Schreiber ohne Qt in `AudioCore` (IC `schreibeWav`, J20); **der Hörtest der Liste `hoertest/listen/stab_34g`**
+(Patrik, HörTest_Helper; danach je Kollision, ob IC oder Synth den Namen behält, IK2-8 a); **die Lizenzen der Quellen sind
+nicht geprüft** (im Register „not checked“: RT-0425, Stulov & Kartofelev 2009, Rigaud et al. 2011, dazu seit 34g Rucz &
+Ulveczki 2021, Chapman 2006, Falaize & Hélie, Sønderbo 2024 — mit der Klausel „publication … only due to agreement with the
+author“ —, Pfeifle 2017, Thomas et al. 2014, CCRMA; Urteil Patrik). Befunde an den ungemessenen Vorgaben der Klasse 4 (wie in
+IC): fünf Töne bei a-30 in der Höhe still (zu schwacher Anschlag), die Kalimba über die Stärke nur lauter (lineares Zupfen) —
+Thema der Messung. Die Herkunftstexte der Stab-Kurven sind deutsch wie in IC (im englischen Creator im Tooltip). Die Spuren
+`motor`, `bowed`, `malletOffset`, `damperPressure` sind am Kern geprüft, im Loop erst mit 31g. Bei IC offen (Auftrag in 34l): `/fp:contract-` streichen
 (cl kennt es nicht, J0), Bezüge je Plattform benennen; IC-A8, IC-A9 Schritt 2, IC-A10 Schritt 2 und 3, IC-A11; der Stand von
 IC Session 5 liegt dort uncommittet.
 
@@ -6352,6 +6359,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.320.0 | 2026-11-08 | Session 178 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34g erledigt — Klasse 4 als Kern `bar` (KS1 a Umfang je Instrument, KS2 a gestimmte Werte in Reihenfolge, KS3 a Bogen, KS4 a Namen), neun Stabspiele, `synth_marimba`/`synth_vibraphone`/`synth_kalimba`, Hörliste `stab_34g` für HörTest_Helper, voller Lauf 1815 / 1815; offen: Hörtest, Lizenzen der neuen Quellen, Befunde der Vorgaben; nächster Schritt 34h. |
 | 1.319.0 | 2026-11-08 | Session 177 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34e erledigt — `InstrumentMeasure` (Messkette, IC-Bausteine, `setzen` mit dem LM je Block; ME3 a, ME4 a), `AudioCore` (ME1 a), `zerlegeSymmetrisch` im Core (ME2 a), voller Lauf 1789 / 1789; 34f erledigt — Quellen am Wert (WZ1 a, Fassung 22), Register und `instruments/CREDITS.md` (WZ2 a), Wächter, `InstrumentTuneTool`, voller Lauf 1796 / 1796; nächster Schritt 34g. |
 | 1.318.0 | 2026-11-07 | Session 176 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34d erledigt — der Flügel als Kern `hammerString` in `InstrumentModels` (BK1 a), `.lvinst` Fassung 21, Creator zeigt die Kern-Schicht (FU3 a), `hammer_bezug_windows.txt` alle Töne Bit für Bit unter beiden Compilern, `Loop Werte` gleich, voller Lauf 1770 / 1770; nächster Schritt 34e; doppelte IC-Aufzählung bereinigt. |
 | 1.317.0 | 2026-11-07 | Session 175 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34c erledigt — Bibliothek `InstrumentCore` (KN1 a, KN2 a): Eigenzerlegung, Fft mit pocketfft `4d865cb`, Anschlagstufe aus der App umgezogen; Kurve, Modal, Pool, SHA-256 aus IC; Tonkern, Fabrik, Auskunft, Tonauftrag, Parametertafel neu; voller Lauf 1765 / 1765 unter Release-clang und Testing-MSVC; Befund `/fp:contract-` für IC; 34d in Arbeit (FU1 a–FU3 a, BK1 a). |
