@@ -1,0 +1,28 @@
+# Bezuege der Klasse 5 aus InstrumentsCalculation (bb7e6d6), gerechnet 34h-2 (S179) mit
+# docs/modellierung/anbindung-ic/abdruck_trommel.cpp unter MSVC (/MD) — nicht von Hand aendern
+# abdruck <name> <sha256>: 24000 Frames bei 48 kHz (Wirbel 48000); mf = staerke 0,5, ff = staerke 1
+# bezug <name> <hex der 64 Bit> <Zahl>: ausgangBezug nach IC normiere (zwei Runden)
+abdruck trommel_Tom_mf e92ee6a3fb2285606d0ea14eac998dba7d4a36009717bb529e387dfd9fb20bca
+abdruck trommel_Pauke_m52_mf 4e6e3e164274116b5e998dcf08848eefeae5576356f1f8c8ab3073387cba5911
+abdruck trommel_Tom_ff 3f4b9d737b918e75a5d8fc8409a5103d7de1ff4415ce42741c9b10f0beba313a
+abdruck trommel_Pauke_ff 69069e5e2e22e4d1175e39ccc2be296f1295af7762972a56ab88d7c498564aaa
+abdruck trommel_Bassdrum_ff accf90a2371123463659bbf4494dc7dc9ca7792a4dcdd0ac2e6e1334356ec4aa
+abdruck trommel_Snare_ff b8d4fd7671918550a1b372b9be60ced1f52c65f4ca29b36610de606177a38899
+abdruck trommel_Tabla_ff 983b4a757a0286f6239ba5f5ad123c64f06b9fc70c3cc3353ce02b09817f0641
+abdruck trommel_Conga_ff 30ba040e6d3d9d15ed4120e1b1a3a7144f843c6685447fa31be7ae2b095bc5b8
+abdruck trommel_Bongo_ff df8c356c4219f53cb867475d876efdf2128d54a3b63cc1e190df494d2beebd2c
+abdruck trommel_Snare_mitte_ff 9e25dbaf94881affa25945f504a2b48ebc2e6e0faa9e835dd039e5937538c4e5
+abdruck trommel_Snare_rand_ff ca41a6c0735136386ea685a3b7bce8b769d0efdb26b9adc655124752fbd2a45d
+abdruck trommel_Snare_randschlag_ff 929414200784b656a2e74e195f9acc80f1d32bd7fecbb61652d8cd36a017b2e0
+abdruck trommel_Snare_reifen_ff 0ac8cd995ec0a5e63251a1bf62e444ed973d96e473f9ed82c94b975797a903d6
+abdruck trommel_Snare_gedaempft_ff 65451f7d2242e90c96c1babcb73ae9888560527cf4e36960cd6da8112a0631ab
+abdruck trommel_Snare_ohneTeppich_ff 687f52f4662f80f234520c3f58067ac81e64bcbba1817bb5a785a195bbf56986
+abdruck trommel_Snare_wirbel_ff aee474a0b023e988d94fecc6a02aa7452aab808a85ca22cebe3c6fd63a7921f9
+bezug Tom 407ae1de40000000 430.11676025390625
+bezug Pauke 4069cb89e6347600 206.360583403075
+bezug Bassdrum 406a17c980000000 208.74334716796875
+bezug Snare 4080351940000000 518.6373291015625
+bezug Tabla 406561574a9ea8a0 171.04190569866205
+bezug Conga 40835f5f20000000 619.92144775390625
+bezug Bongo 407c850b00000000 456.315185546875
+# Probe 1 s gleich 0,5 s: ja, alle sieben

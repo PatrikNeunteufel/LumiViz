@@ -114,7 +114,7 @@ TEST_SUITE("LoopWaveMuster")
         const Loop loop = loopMit(vollesWave(datei));
 
         const QJsonObject json = alsJson(loop, ordner.path());
-        CHECK(json.value(QStringLiteral("version")).toInt() == 17);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 18);
         const QJsonArray muster = json.value(QStringLiteral("patterns")).toArray();
         REQUIRE(muster.size() == 1);
         const QJsonObject o = muster[0].toObject();
@@ -298,7 +298,7 @@ TEST_SUITE("LoopWaveMuster")
         const QJsonObject huelle = o.value(QStringLiteral("origin")).toObject();
         CHECK(huelle.value(QStringLiteral("format")).toString() == QStringLiteral("lumiviz-clip"));
         CHECK(huelle.value(QStringLiteral("version")).toInt() == kAustauschFassung);
-        CHECK(huelle.value(QStringLiteral("loop")).toObject().value(QStringLiteral("version")).toInt() == 17);
+        CHECK(huelle.value(QStringLiteral("loop")).toObject().value(QStringLiteral("version")).toInt() == 18);
 
         // die Datei gibt es nicht — das meldet der Bericht; was in der Herkunft fehlt, nicht
         const QString fehlt = QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(QStringLiteral("/x.wav")));

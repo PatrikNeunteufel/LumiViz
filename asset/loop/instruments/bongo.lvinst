@@ -1,0 +1,91 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 22,
+    "title": "Bongo",
+    "category": "percussion",
+    "genres": [],
+    "description": "A 7-inch head on an open shell, struck by the hand; unmeasured.",
+    "level": 4.5714,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "membrane",
+            "coreParams": {
+                "bounces": 1,
+                "clickLevel": 0.3,
+                "glideStiffness": 700000,
+                "heads": [
+                    {
+                        "damping1": 1.25,
+                        "damping3": 0.0005,
+                        "density": 0.4,
+                        "inlay": false,
+                        "inlayEdge": 0.5,
+                        "inlaySigma": 1,
+                        "inlayWidth": 0.1,
+                        "innerAir": 0.5,
+                        "radiating": true,
+                        "radius": 0.089,
+                        "tension": 3000
+                    }
+                ],
+                "highLevel": 0.02,
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.15,
+                "malletRelaxation": 0,
+                "malletStiffness": 6,
+                "modesUpTo": 4000,
+                "noteMax": 60,
+                "noteMin": 60,
+                "outputReference": 456.315185546875,
+                "poisson": 0.2,
+                "rollRate": 14,
+                "shellVolume": 0,
+                "snares": false,
+                "snaresLevel": 0,
+                "strikePosition": 0.8,
+                "tunable": false,
+                "velocityMax": 4
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Bongo",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 60,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "none"
+        },
+        "range": [60, 60]
+    }
+}

@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Hand drums",
     "description": "Djembe, conga, darbuka, claves, tambourine and shaker; kick and snare are the low and the bright stroke.",
     "roles": [
@@ -22,6 +22,7 @@
             "instrument": "drum_shaker",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.575,
             "pan": 0.2
         },

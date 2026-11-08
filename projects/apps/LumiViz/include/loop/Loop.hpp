@@ -76,6 +76,23 @@ inline constexpr int kSpurDauerMs = 250;
 inline constexpr int kSpurDauerMinMs = 1;
 inline constexpr int kSpurDauerMaxMs = 30000;
 
+/// Ein fester Wert einer Spur des Kerns (Stufe 34h-5, TM2 a): die Spielweise, mit der eine Drum-Spur oder eine
+/// Kit-Rolle ihr Instrument spielt — `stroke` 4 (Cross-Stick), `roll` 1, `snaresOff` 1 (InstrumentModels/trommel/
+/// TrommelKern.hpp). Am Beginn jedes Schlags gesetzt; ein Kern liest nur die Spuren, die er kennt, eine Schicht ohne
+/// Kern keine. Werte je Schritt kommen mit 31g.
+struct KernSpurWert
+{
+    QString name;
+    double wert = 0.0;
+
+    [[nodiscard]] bool operator==(const KernSpurWert&) const = default;
+};
+/// Nach Namen geordnet, jeder Name einmal (der letzte gilt), Namen nur aus Buchstaben — so traegt sie der Name des Tons.
+[[nodiscard]] std::vector<KernSpurWert> richteKernSpuren(std::vector<KernSpurWert> werte);
+/// In der Datei (`.lvloop`, `.lvkit`): `coreTracks` als Objekt Name → Zahl, immer geschrieben, wo ein Instrument spielt.
+[[nodiscard]] QJsonObject kernSpurenAlsJson(const std::vector<KernSpurWert>& werte);
+[[nodiscard]] std::vector<KernSpurWert> kernSpurenAusJson(const QJsonObject& objekt);
+
 /// Eine Spur eines Drumkits: ein Klang mit Lautstaerke und Panorama.
 /// Seit Fassung 4 (Stufe 11c, Entscheid K1 a) hat sie drei Arten von Klang: einen
 /// aus dem Kit, ein eigenes Sample — oder ein Instrument, das bei jedem
@@ -100,6 +117,9 @@ struct Spur
     /// „kick", „tom 2", „perc 1" … Leer = noch keine; ein Kitwechsel raet sie dann.
     /// In der Datei das freiwillige Feld `role` (keine neue Fassung).
     QString rolle;
+    /// Seit Fassung 18 (Stufe 34h-5, TM2 a): die festen Werte der Spuren des Kerns, mit denen das Instrument jeden Schlag
+    /// spielt (`richteKernSpuren`); leer = keine. In der Datei `coreTracks`, neben `instrument` immer geschrieben.
+    std::vector<KernSpurWert> kernSpuren;
 
     Spur() = default;
     /// Eine Spur mit einem Klang — wie sie bis Fassung 3 ganz beschrieben war.
@@ -307,6 +327,9 @@ struct TonAngabe
     /// Die Stufe der Hammergeschwindigkeit (`anschlagStufe`, HammerSaite.hpp), ≤ 0;
     /// 0 = volle Staerke — und jeder Ton eines Instruments ohne Hammer.
     int anschlagStufe = 0;
+    // --- seit Stufe 34h-5 (TM2 a): die Spielweise einer Kern-Schicht ---
+    /// Feste Werte der Spuren des Kerns am Beginn des Tons (geordnet, `richteKernSpuren`); leer = keine.
+    std::vector<KernSpurWert> kernSpuren{};
 
     [[nodiscard]] bool operator==(const TonAngabe&) const = default;
 };
@@ -317,7 +340,8 @@ struct TonAngabe
 /// `:q<ms>=<cent>,…` bei der Spur Pitch und `:w<ms>=<cent>,…` bei der Spur Vibrato,
 /// (seit Stufe 28c-2b) `:x<ms>=<tausendstel>,…` bei der Spur Expression und
 /// `:y<ms>=<tausendstel>,…` bei der Kurve am Clip, (seit Stufe 25c) `:p1` nur die
-/// Saite, `:p2` ohne die Saite, (seit Stufe 31a, HK2 a) `:a<stufe>` bei einer
+/// Saite, `:p2` ohne die Saite, (seit Stufe 34h-5, TM2 a) `:k<name>=<wert>,…` bei
+/// festen Werten der Spuren des Kerns, (seit Stufe 31a, HK2 a) `:a<stufe>` bei einer
 /// Anschlagstufe unter 0, zuletzt `:e<ms>` bei einem Ende — ohne alles derselbe
 /// Name wie bis Stufe 22.
 [[nodiscard]] QString tonKlang(const TonAngabe& ton);

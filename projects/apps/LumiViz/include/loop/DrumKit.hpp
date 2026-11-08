@@ -72,6 +72,9 @@ struct KitKlang
     int dauerMs = kSpurDauerMs;   ///< Length des Instruments
     double laut = 1.0;            ///< 0…1
     double pan = 0.0;             ///< -1…1
+    /// Seit Fassung 2 (Stufe 34h-5, TM2 a): die Spielweise des Instruments (`Spur::kernSpuren`) — die Rolle *rim* ist die
+    /// Snare mit `stroke` 4. In der Datei `coreTracks`, neben `instrument` immer geschrieben.
+    std::vector<KernSpurWert> kernSpuren;
 
     [[nodiscard]] bool operator==(const KitKlang&) const = default;
 };
@@ -90,7 +93,7 @@ struct DrumKit
     [[nodiscard]] bool operator==(const DrumKit&) const = default;
 };
 
-inline constexpr int kKitFassung = 1;
+inline constexpr int kKitFassung = 2;  // seit Stufe 34h-5 (TM2 a): `coreTracks` je Rolle mit Instrument
 inline constexpr const char* kKitDateiEndung = ".lvkit";
 
 /// Als JSON; ein Pfad unter `basisOrdner` steht relativ (wie in der `.lvloop`).

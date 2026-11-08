@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "909 House",
     "description": "909-style kick and snare, a 707 clap and open hat, ride and tambourine.",
     "roles": [
@@ -28,6 +28,7 @@
             "instrument": "drum_hat_closed",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.793,
             "pan": 0.2
         },
@@ -43,6 +44,7 @@
             "instrument": "drum_ride",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.506,
             "pan": 0.25
         },
@@ -52,6 +54,7 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.43,
             "pan": -0.15
         },

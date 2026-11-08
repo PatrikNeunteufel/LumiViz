@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Rock'n'Roll",
     "description": "An acoustic kit (DRSKit, DrumGizmo), played medium: cross-stick, three toms, ride and crash.",
     "roles": [

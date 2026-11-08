@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "808",
     "description": "A long 808-style kick, 808 snare and hat, computed toms and crash.",
     "roles": [
@@ -10,6 +10,7 @@
             "instrument": "drum_kick_808",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.307,
             "pan": 0.0
         },
@@ -25,6 +26,7 @@
             "instrument": "drum_clap",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.633,
             "pan": 0.0
         },
@@ -40,6 +42,7 @@
             "instrument": "drum_hat_open",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.63,
             "pan": 0.2
         },
@@ -49,6 +52,7 @@
             "instrument": "drum_tom_low",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.724,
             "pan": -0.25
         },
@@ -58,6 +62,7 @@
             "instrument": "drum_tom_high",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.797,
             "pan": 0.25
         },
@@ -67,6 +72,7 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.419,
             "pan": -0.15
         }

@@ -3,7 +3,8 @@
 # CMake Architecture V2 - LumiViz
 # ==============================================================================
 # Bausteine, die mehrere Kerne teilen (Stufe 34g-1): der Balken aus finiten
-# Elementen (Klassen 4, 10) und die Reibung Bogen–Schwinger (Klassen 4, 3).
+# Elementen (Klassen 4, 10) und die Reibung Bogen–Schwinger (Klassen 4, 3);
+# seit 34h-1 die Moden kreisrunder Felle (Klasse 5).
 # Namensraum lumi::kern.
 # ==============================================================================
 
@@ -14,10 +15,12 @@ dbg(DBG_OFTEN
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Balken.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Reibung.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Membran.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/gemeinsam/Balken.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/gemeinsam/Reibung.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/gemeinsam/Membran.hpp"
 )
 set(_local_templates
     # (templates - *.t; *.tpp)

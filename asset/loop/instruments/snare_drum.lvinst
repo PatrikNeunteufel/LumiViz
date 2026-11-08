@@ -1,0 +1,104 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 22,
+    "title": "Snare drum",
+    "category": "drums",
+    "genres": [],
+    "description": "A 14-inch batter and a thin resonant head over a shallow shell, with snares as noise keyed by the resonant head; strokes, roll and snares off as tracks; unmeasured.",
+    "level": 4.9619,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "membrane",
+            "coreParams": {
+                "bounces": 1,
+                "clickLevel": 0.3,
+                "glideStiffness": 700000,
+                "heads": [
+                    {
+                        "damping1": 1.25,
+                        "damping3": 0.0005,
+                        "density": 0.26,
+                        "inlay": false,
+                        "inlayEdge": 0.5,
+                        "inlaySigma": 1,
+                        "inlayWidth": 0.1,
+                        "innerAir": 1,
+                        "radiating": true,
+                        "radius": 0.178,
+                        "tension": 3325
+                    },
+                    {
+                        "damping1": 1.25,
+                        "damping3": 0.0005,
+                        "density": 0.12,
+                        "inlay": false,
+                        "inlayEdge": 0.5,
+                        "inlaySigma": 1,
+                        "inlayWidth": 0.1,
+                        "innerAir": 1,
+                        "radiating": true,
+                        "radius": 0.178,
+                        "tension": 2500
+                    }
+                ],
+                "highLevel": 0.02,
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.05,
+                "malletRelaxation": 0,
+                "malletStiffness": 60,
+                "modesUpTo": 4000,
+                "noteMax": 38,
+                "noteMin": 38,
+                "outputReference": 518.6373291015625,
+                "poisson": 0.2,
+                "rollRate": 14,
+                "shellVolume": 0.01393535102908746,
+                "snares": true,
+                "snaresLevel": 0.3,
+                "strikePosition": 0.3,
+                "tunable": false,
+                "velocityMax": 8
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Snare drum",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 38,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "none"
+        },
+        "range": [38, 38]
+    }
+}

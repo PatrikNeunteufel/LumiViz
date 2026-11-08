@@ -55,7 +55,9 @@ PEGEL = {
     "angel_harp": (0.75, 0.5827),
     "bass": (1.0, 1.4082),
     "bass_808": (0.8, 0.5325),
+    "bass_drum": (4.0235, 4.0235),  # S179 (34h): neu, Kit-Trommel auf dem Bezug wie jedes Kern-Instrument (alt = neu)
     "bell": (0.7, 0.5021),
+    "bongo": (4.5714, 4.5714),  # S179 (34h): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "brass": (0.7, 0.6164),
     "broken_radio": (0.45, 0.3341),
     "cascade": (0.6, 0.5748),
@@ -66,7 +68,7 @@ PEGEL = {
     "clavinet_old": (0.6, 0.9427),
     "clean_guitar": (0.398, 1.387),
     "clean_guitar_old": (0.7, 2.2392),
-    "conga": (0.85, 1.5773),
+    "conga": (5.3549, 5.3549),  # S179 (34h): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "cowbell": (0.64, 1.0833),
     "drop_d_guitar": (0.795, 0.4987),
     "dulcimer": (0.9, 1.0063),
@@ -89,6 +91,7 @@ PEGEL = {
     "kalimba": (0.7627, 0.7627),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "koto": (0.8, 0.5774),
     "lead": (1.0, 0.7343),
+    "low_tom": (4.5087, 4.5087),  # S179 (34h): neu, Kit-Trommel auf dem Bezug wie jedes Kern-Instrument (alt = neu)
     "marimba": (0.5296, 0.5296),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "muted_guitar": (1.0, 4.5798),
     "muted_guitar_old": (0.8, 2.7136),
@@ -122,14 +125,18 @@ PEGEL = {
     "siren": (0.5, 0.3268),
     "slap_bass": (0.938, 0.9635),
     "slap_bass_old": (0.75, 0.8127),
+    "snare_drum": (4.9619, 4.9619),  # S179 (34h): neu, Kit-Trommel auf dem Bezug wie jedes Kern-Instrument (alt = neu)
     "steel_drum": (0.7, 0.8557),
     "strings": (1.0, 0.9377),
     "sub_bass": (1.0, 0.4745),
     "super_saw": (0.5, 0.3773),
+    "synth_conga": (0.85, 1.5773),
     "synth_kalimba": (0.8, 0.9013),
     "synth_marimba": (0.85, 1.0858),
     "synth_vibraphone": (0.8, 0.6336),
+    "tabla": (4.0425, 4.0425),  # S179 (34h): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "thumb_piano": (0.8, 0.3443),
+    "timpani": (2.0289, 2.0289),  # S179 (34h): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "tine_electric_piano": (1.0763, 1.0763),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "tine_piano": (0.75, 0.4932),
     "trance_lead": (0.5, 0.4769),
@@ -211,7 +218,9 @@ def ziehe_nach(daten):
         if m.get("kind") == "instrument" and m.get("instrument") in faktor:
             noetig[m["name"]] = m.get("volume", 1.0) * faktor[m["instrument"]]
         for spur in m.get("tracks", []):
-            if spur.get("instrument") in faktor:
+            # S179 (34h): eine Drum-Spur mit einem Instrument auf dem Bezug (alt = neu, die Kit-Trommeln des Kerns
+            # membrane) braucht nichts; nachziehen kann das Skript eine Drum-Spur nicht
+            if spur.get("instrument") in faktor and faktor[spur["instrument"]] != 1.0:
                 raise SystemExit(f"Drum-Spur mit Instrument {spur['instrument']}: nicht vorgesehen")
     fader_von = {}
     mit_fader = 0

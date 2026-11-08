@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Lo-fi",
     "description": "A deep kick, 808 snare, rim shot and finger snap, with tambourine.",
     "roles": [
@@ -40,6 +40,7 @@
             "instrument": "drum_hat_open",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.638,
             "pan": 0.2
         },

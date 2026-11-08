@@ -265,7 +265,7 @@ TEST_SUITE("Loop Kits")
         loop.muster.push_back(m);
         loop.richte();
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 17);  // role und kit brauchen keine neue Fassung; 7 seit E1 a, 8 seit S132, 9 seit S134, 10 seit S136, 11 seit S139, 12 seit S140, 13 seit S144
+        CHECK(json.value(QStringLiteral("version")).toInt() == 18);  // role und kit brauchen keine neue Fassung; 7 seit E1 a, 8 seit S132, 9 seit S134, 10 seit S136, 11 seit S139, 12 seit S140, 13 seit S144
         const QJsonObject muster = json.value(QStringLiteral("patterns")).toArray().at(0).toObject();
         CHECK(muster.value(QStringLiteral("kit")).toString() == QStringLiteral("808"));
         const QJsonArray spuren = muster.value(QStringLiteral("tracks")).toArray();
@@ -285,21 +285,32 @@ TEST_SUITE("Loop Kits")
         CHECK(gelesen.muster[0].kit == QDir::cleanPath(loop.muster[0].kit));
     }
 
-    TEST_CASE("Loop Kits: die mitgelieferten — vierzehn, jeder Klang da, jede Rolle gueltig (K6 a, K6b a, K6c a)")
+    TEST_CASE("Loop Kits: die mitgelieferten — fuenfzehn, jeder Klang da, jede Rolle gueltig (K6 a, K6b a, K6c a, TM3 a)")
     {
         const KitApp app;
         REQUIRE_FALSE(mitgelieferterKitOrdner().isEmpty());
         const std::vector<DrumKit>& alle = mitgelieferteKits();
         // wer ein Kit dazulegt, traegt es in asset/loop/kits/make_kits.py ein und stellt die Zahl nach
-        REQUIRE(alle.size() == 14);
+        // (S179, 34h-6, TM3 a: modelled_drums aus dem Kern membrane)
+        REQUIRE(alle.size() == 15);
         QStringList namen;
         for (const DrumKit& kit : alle) namen << kit.name;
         namen.sort();
         CHECK(namen == QStringList{QStringLiteral("808"), QStringLiteral("909_house"), QStringLiteral("beatbox"),
                                    QStringLiteral("classic"), QStringLiteral("electro"), QStringLiteral("hand_drums"),
                                    QStringLiteral("hardrock"), QStringLiteral("heavy_metal"), QStringLiteral("jazz_brushes"),
-                                   QStringLiteral("lo_fi"), QStringLiteral("reggae"), QStringLiteral("reggaeton"),
-                                   QStringLiteral("rock_n_roll"), QStringLiteral("strange")});
+                                   QStringLiteral("lo_fi"), QStringLiteral("modelled_drums"), QStringLiteral("reggae"),
+                                   QStringLiteral("reggaeton"), QStringLiteral("rock_n_roll"), QStringLiteral("strange")});
+        // TM2 a, TM3 a: die Rolle rim der Modelled drums ist die Snare mit Cross-Stick, snare 2 mit Randschlag
+        const auto modelliert = std::find_if(alle.begin(), alle.end(), [](const DrumKit& k) { return k.name == QStringLiteral("modelled_drums"); });
+        REQUIRE(modelliert != alle.end());
+        const KitKlang* rim = modelliert->fuer({QStringLiteral("rim"), 1});
+        REQUIRE(rim != nullptr);
+        CHECK(rim->instrument == QStringLiteral("snare_drum"));
+        CHECK(rim->kernSpuren == std::vector<KernSpurWert>{{QStringLiteral("stroke"), 4.0}});
+        const KitKlang* randschlag = modelliert->fuer({QStringLiteral("snare"), 2});
+        REQUIRE(randschlag != nullptr);
+        CHECK(randschlag->kernSpuren == std::vector<KernSpurWert>{{QStringLiteral("stroke"), 3.0}});
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         for (const DrumKit& kit : alle)
@@ -437,14 +448,35 @@ TEST_SUITE("Loop Kits")
         for (const DrumKit& kit : mitgelieferteKits())
             for (const KitKlang& klang : kit.klaenge)
             {
-                const QString was = klang.instrument.isEmpty() ? klang.klang : klang.instrument;
+                // S179 (34h-5, TM2 a): eine Rolle mit Spielweise ist ein eigener Klang — `snare_drum:kstroke=4` wie in
+                // make_kits.py (der Zusatz `:k` des Tonnamens)
+                QString was = klang.instrument.isEmpty() ? klang.klang : klang.instrument;
+                if (!klang.instrument.isEmpty() && !klang.kernSpuren.empty())
+                {
+                    TonAngabe t;
+                    t.instrument = QStringLiteral("x");
+                    t.hoehe = 1;
+                    t.dauerMs = 1;
+                    t.kernSpuren = klang.kernSpuren;
+                    was += tonKlang(t).mid(tonKlang(t).indexOf(QStringLiteral(":k")));
+                }
                 Klang ton;
                 if (!klang.instrument.isEmpty())
                 {
                     const Instrument* instrument = findeInstrument(klang.instrument);
                     REQUIRE(instrument != nullptr);
                     looptest::merkeSamplesOhneEngine(*instrument);
-                    ton = rendereTon(*instrument, klang.hoehe, klang.dauerMs, kRate);
+                    if (klang.kernSpuren.empty())
+                        ton = rendereTon(*instrument, klang.hoehe, klang.dauerMs, kRate);
+                    else
+                    {
+                        TonAngabe t;
+                        t.instrument = klang.instrument;
+                        t.hoehe = klang.hoehe;
+                        t.dauerMs = klang.dauerMs;
+                        t.kernSpuren = klang.kernSpuren;
+                        ton = rendereTon(*instrument, t, kRate);
+                    }
                 }
                 else
                     ton = looptest::liesWav(looptest::mitgelieferteWav(klang.klang));

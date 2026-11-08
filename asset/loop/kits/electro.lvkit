@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Electro",
     "description": "Layered drums: punch kick, fat snare, clap stack and hat shake.",
     "roles": [
@@ -10,6 +10,7 @@
             "instrument": "drum_kick_punch",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.802,
             "pan": 0.0
         },
@@ -19,6 +20,7 @@
             "instrument": "drum_snare_fat",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.808,
             "pan": 0.0
         },
@@ -28,6 +30,7 @@
             "instrument": "drum_clap_stack",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.872,
             "pan": 0.0
         },
@@ -37,6 +40,7 @@
             "instrument": "drum_hat_shake",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 1.0,
             "pan": 0.2
         },
@@ -46,6 +50,7 @@
             "instrument": "drum_hat_open",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.646,
             "pan": 0.2
         },
@@ -55,6 +60,7 @@
             "instrument": "drum_tom_low",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.743,
             "pan": -0.25
         },
@@ -64,6 +70,7 @@
             "instrument": "drum_tom_high",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.818,
             "pan": 0.25
         },
@@ -73,6 +80,7 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.43,
             "pan": -0.15
         }

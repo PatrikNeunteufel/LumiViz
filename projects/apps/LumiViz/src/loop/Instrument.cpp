@@ -2954,6 +2954,11 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
         if (tonkern)
         {
             auftrag = kern::einzelnote(ton, hz, angabe != nullptr ? angabe->anschlagStufe : 0, huelle.ende, 0, rate);
+            // Stufe 34h-5 (TM2 a): die festen Werte der Spuren des Kerns am Beginn des Tons (Spielweise einer Drum-Spur
+            // oder Kit-Rolle) — vor dem Nachklang, ein Wirbel verlaengert ihn
+            if (angabe != nullptr)
+                for (const KernSpurWert& w : angabe->kernSpuren)
+                    auftrag.spuren.push_back(kern::Spur{w.name.toStdString(), {kern::SpurPunkt{0, w.wert}}});
             if (!schicht.koerper.isEmpty())
                 if (const std::shared_ptr<const BodenImKlang> boden = bodenVon(schicht.koerper))
                     bodenKlang = bodenAntwortFuer(*boden, ton, rate);

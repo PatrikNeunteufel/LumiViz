@@ -1,0 +1,1444 @@
+{
+    "dauer_s": null,
+    "fassungen": {
+        "ic": "die Vorgabe des Kerns membrane aus InstrumentsCalculation (LumiViz Stufe 34h), ungemessen",
+        "synth": "die Nachbildung aus Schichten (synth_conga)"
+    },
+    "gruppe_nach": [
+        "instrument"
+    ],
+    "katalog": null,
+    "klaenge": [
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "staerke": "a-18",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "datei": "klaenge/low_tom_45_a-18.wav",
+            "fassung": "ic",
+            "id": "low_tom_45_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "staerke": "a-9",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "datei": "klaenge/low_tom_45_a-9.wav",
+            "fassung": "ic",
+            "id": "low_tom_45_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "staerke": "a0",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "datei": "klaenge/low_tom_45_a0.wav",
+            "fassung": "ic",
+            "id": "low_tom_45_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-18",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/timpani_48_a-18.wav",
+            "fassung": "ic",
+            "id": "timpani_48_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-9",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/timpani_48_a-9.wav",
+            "fassung": "ic",
+            "id": "timpani_48_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a0",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/timpani_48_a0.wav",
+            "fassung": "ic",
+            "id": "timpani_48_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-18",
+                "taste": 51,
+                "ton": "D#3"
+            },
+            "datei": "klaenge/timpani_51_a-18.wav",
+            "fassung": "ic",
+            "id": "timpani_51_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-9",
+                "taste": 51,
+                "ton": "D#3"
+            },
+            "datei": "klaenge/timpani_51_a-9.wav",
+            "fassung": "ic",
+            "id": "timpani_51_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a0",
+                "taste": 51,
+                "ton": "D#3"
+            },
+            "datei": "klaenge/timpani_51_a0.wav",
+            "fassung": "ic",
+            "id": "timpani_51_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-18",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/timpani_55_a-18.wav",
+            "fassung": "ic",
+            "id": "timpani_55_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-9",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/timpani_55_a-9.wav",
+            "fassung": "ic",
+            "id": "timpani_55_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/timpani_55_a0.wav",
+            "fassung": "ic",
+            "id": "timpani_55_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Bass drum",
+                "staerke": "a-18",
+                "taste": 36,
+                "ton": "C2"
+            },
+            "datei": "klaenge/bass_drum_36_a-18.wav",
+            "fassung": "ic",
+            "id": "bass_drum_36_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Bass drum",
+                "staerke": "a-9",
+                "taste": 36,
+                "ton": "C2"
+            },
+            "datei": "klaenge/bass_drum_36_a-9.wav",
+            "fassung": "ic",
+            "id": "bass_drum_36_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Bass drum",
+                "staerke": "a0",
+                "taste": 36,
+                "ton": "C2"
+            },
+            "datei": "klaenge/bass_drum_36_a0.wav",
+            "fassung": "ic",
+            "id": "bass_drum_36_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "staerke": "a-18",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-18.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "staerke": "a0",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a0.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Tabla",
+                "staerke": "a-18",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "datei": "klaenge/tabla_62_a-18.wav",
+            "fassung": "ic",
+            "id": "tabla_62_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Tabla",
+                "staerke": "a-9",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "datei": "klaenge/tabla_62_a-9.wav",
+            "fassung": "ic",
+            "id": "tabla_62_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Tabla",
+                "staerke": "a0",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "datei": "klaenge/tabla_62_a0.wav",
+            "fassung": "ic",
+            "id": "tabla_62_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-18",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "datei": "klaenge/conga_63_a-18.wav",
+            "fassung": "ic",
+            "id": "conga_63_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "datei": "klaenge/conga_63_a-9.wav",
+            "fassung": "ic",
+            "id": "conga_63_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a0",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "datei": "klaenge/conga_63_a0.wav",
+            "fassung": "ic",
+            "id": "conga_63_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Bongo",
+                "staerke": "a-18",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/bongo_60_a-18.wav",
+            "fassung": "ic",
+            "id": "bongo_60_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Bongo",
+                "staerke": "a-9",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/bongo_60_a-9.wav",
+            "fassung": "ic",
+            "id": "bongo_60_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Bongo",
+                "staerke": "a0",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/bongo_60_a0.wav",
+            "fassung": "ic",
+            "id": "bongo_60_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "center",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9_center.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9_center"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "edge",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9_edge.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9_edge"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "rimshot",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9_rimshot.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9_rimshot"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "crossstick",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9_crossstick.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9_crossstick"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "muted",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9_muted.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9_muted"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "roll",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9_roll.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9_roll"
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "snaresoff",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "datei": "klaenge/snare_drum_38_a-9_snaresoff.wav",
+            "fassung": "ic",
+            "id": "snare_drum_38_a-9_snaresoff"
+        },
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "spielweise": "muted",
+                "staerke": "a-9",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "datei": "klaenge/low_tom_45_a-9_muted.wav",
+            "fassung": "ic",
+            "id": "low_tom_45_a-9_muted"
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/synth_conga_60_a-9.wav",
+            "fassung": "synth",
+            "id": "synth_conga_60_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "datei": "klaenge/synth_conga_63_a-9.wav",
+            "fassung": "synth",
+            "id": "synth_conga_63_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 67,
+                "ton": "G4"
+            },
+            "datei": "klaenge/synth_conga_67_a-9.wav",
+            "fassung": "synth",
+            "id": "synth_conga_67_a-9"
+        }
+    ],
+    "kontrolle": "moderat",
+    "messwerte": [
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "staerke": "a-18",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -34.95
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "staerke": "a-9",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.5
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "staerke": "a0",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -17.92
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-18",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -40.24
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-9",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.16
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a0",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -22.14
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-18",
+                "taste": 51,
+                "ton": "D#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -39.79
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-9",
+                "taste": 51,
+                "ton": "D#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.13
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a0",
+                "taste": 51,
+                "ton": "D#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.81
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-18",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -39.87
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a-9",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.19
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Timpani",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.3
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Bass drum",
+                "staerke": "a-18",
+                "taste": 36,
+                "ton": "C2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -42.17
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Bass drum",
+                "staerke": "a-9",
+                "taste": 36,
+                "ton": "C2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -29.25
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Bass drum",
+                "staerke": "a0",
+                "taste": 36,
+                "ton": "C2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.21
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "staerke": "a-18",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.02
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.53
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "staerke": "a0",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.33
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tabla",
+                "staerke": "a-18",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.9
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tabla",
+                "staerke": "a-9",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -29.63
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Tabla",
+                "staerke": "a0",
+                "taste": 62,
+                "ton": "D4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -21.86
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-18",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.31
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.32
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a0",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.52
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Bongo",
+                "staerke": "a-18",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.41
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Bongo",
+                "staerke": "a-9",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.34
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Bongo",
+                "staerke": "a0",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.51
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "center",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.87
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "edge",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -34.39
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "rimshot",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -34.1
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "crossstick",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -37.98
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "muted",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.43
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "roll",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.07
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Snare drum",
+                "spielweise": "snaresoff",
+                "staerke": "a-9",
+                "taste": 38,
+                "ton": "D2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.7
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Low tom",
+                "spielweise": "muted",
+                "staerke": "a-9",
+                "taste": 45,
+                "ton": "A2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.5
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -14.89
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -14.97
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Conga",
+                "staerke": "a-9",
+                "taste": 67,
+                "ton": "G4"
+            },
+            "fassung": "synth",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -14.86
+                }
+            ]
+        }
+    ],
+    "pegel": {
+        "lufs": -30.9,
+        "toleranz_lu": 1
+    },
+    "punkte": [
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Low tom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p001",
+            "klang": "low_tom_45_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Low tom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p002",
+            "klang": "low_tom_45_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Low tom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p003",
+            "klang": "low_tom_45_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p004",
+            "klang": "timpani_48_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p005",
+            "klang": "timpani_48_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p006",
+            "klang": "timpani_48_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p007",
+            "klang": "timpani_51_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p008",
+            "klang": "timpani_51_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p009",
+            "klang": "timpani_51_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p010",
+            "klang": "timpani_55_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p011",
+            "klang": "timpani_55_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Timpani (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p012",
+            "klang": "timpani_55_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Bass drum (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p013",
+            "klang": "bass_drum_36_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Bass drum (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p014",
+            "klang": "bass_drum_36_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Bass drum (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p015",
+            "klang": "bass_drum_36_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Snare drum (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p016",
+            "klang": "snare_drum_38_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Snare drum (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p017",
+            "klang": "snare_drum_38_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Snare drum (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p018",
+            "klang": "snare_drum_38_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tabla (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p019",
+            "klang": "tabla_62_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tabla (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p020",
+            "klang": "tabla_62_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Tabla (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p021",
+            "klang": "tabla_62_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Conga (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p022",
+            "klang": "conga_63_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Conga (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p023",
+            "klang": "conga_63_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Conga (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p024",
+            "klang": "conga_63_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Bongo (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p025",
+            "klang": "bongo_60_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Bongo (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p026",
+            "klang": "bongo_60_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Bongo (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p027",
+            "klang": "bongo_60_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt die Snare in der Mitte geschlagen glaubhaft?",
+            "id": "p028",
+            "klang": "snare_drum_38_a-9_center",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt die Snare nahe am Rand glaubhaft?",
+            "id": "p029",
+            "klang": "snare_drum_38_a-9_edge",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt die Snare als Randschlag (Rimshot) glaubhaft?",
+            "id": "p030",
+            "klang": "snare_drum_38_a-9_rimshot",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt die Snare als Cross-Stick glaubhaft?",
+            "id": "p031",
+            "klang": "snare_drum_38_a-9_crossstick",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt die Snare gedaempft (Hand auf dem Fell) glaubhaft?",
+            "id": "p032",
+            "klang": "snare_drum_38_a-9_muted",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt die Snare als Wirbel glaubhaft?",
+            "id": "p033",
+            "klang": "snare_drum_38_a-9_roll",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt die Snare ohne Teppich glaubhaft?",
+            "id": "p034",
+            "klang": "snare_drum_38_a-9_snaresoff",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt der Tom gedaempft glaubhaft?",
+            "id": "p035",
+            "klang": "low_tom_45_a-9_muted",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "paar",
+            "id": "p036",
+            "klaenge": [
+                "conga_63_a-9",
+                "synth_conga_60_a-9"
+            ],
+            "vorzug": "Welcher klingt mehr nach einer Conga?"
+        },
+        {
+            "art": "paar",
+            "id": "p037",
+            "klaenge": [
+                "conga_63_a-9",
+                "synth_conga_63_a-9"
+            ],
+            "vorzug": "Welcher klingt mehr nach einer Conga?"
+        },
+        {
+            "art": "paar",
+            "id": "p038",
+            "klaenge": [
+                "conga_63_a-9",
+                "synth_conga_67_a-9"
+            ],
+            "vorzug": "Welcher klingt mehr nach einer Conga?"
+        }
+    ],
+    "schema": 1,
+    "titel": "LumiViz 34h: die Trommeln des Kerns membrane, Spielweisen, gegen die Nachbildung der Conga",
+    "ziel": "Erstes Hoeren der sieben Trommeln aus IC (ungemessen, Z2 a), ihrer Spielweisen (TM2 a) und welche Conga den Namen behaelt, IC oder Synth (IK2-8 a)"
+}

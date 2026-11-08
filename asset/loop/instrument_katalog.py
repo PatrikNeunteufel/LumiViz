@@ -102,7 +102,7 @@ KATALOG = {
     "steel_drum": ("percussion", "A sine with strong overtones, a detuned ring an octave above and a short hit."),
     "synth_vibraphone": ("percussion", "A long sine bar with slow vibrato and a short strike."),
     "clave": ("percussion", "A recorded stroke of claves (ESMUC, CC0); on C6 it sounds as recorded, other notes shift its pitch."),
-    "conga": ("percussion", "A short sine skin with a damped string slap; the note sets the pitch of the hit."),
+    "synth_conga": ("percussion", "A short sine skin with a damped string slap; the note sets the pitch of the hit."),
     "cowbell": ("percussion", "A recorded cowbell (TamTam Drum Kits, OLPC); on A5 it sounds as recorded, other notes shift its pitch."),
     # --- Drums (S117, Stufe 11f: `make_drums.py`; alle fuer die Note C2 gebaut)
     "drum_kick": ("drums", "A driven sine that drops almost two octaves, with a short noise click. Built for the note C2."),
@@ -179,6 +179,20 @@ KATALOG = {
                                     "neoprene hammer (Hunt-Crossley, Soenderbo 2024), heard through a magnetic pickup; unmeasured."),
     "reed_electric_piano": ("keys", "A clamped steel reed per key struck by a felt hammer (Stulov 2009), heard through an "
                                     "electrostatic pickup; unmeasured."),
+    # --- S179 (34h, TM4 a): der Kern `membrane` (Klasse 5 aus InstrumentsCalculation), geschrieben vom Programm
+    # (test_LoopTrommel.cpp, LUMIVIZ_TROMMEL_INSTRUMENTE_SCHREIBEN=1), normiert von InstrumentTuneTool --reference;
+    # die Kit-Trommeln sind Drums (Pegel ueber die Kits), die anderen Schlagwerk (Pegel hier)
+    "low_tom": ("drums", "Two 13-inch heads over a shared shell, their modes with air load, struck by a stick; one sound for "
+                         "the role (A2); unmeasured."),
+    "bass_drum": ("drums", "Two 22-inch heads over a deep shell, struck near the edge by a felt beater; unmeasured."),
+    "snare_drum": ("drums", "A 14-inch batter and a thin resonant head over a shallow shell, with snares as noise keyed by the "
+                            "resonant head; strokes, roll and snares off as tracks; unmeasured."),
+    "timpani": ("percussion", "A 25-inch kettledrum (Packer 1993) with air load; the key sets the tension, mode (1,1) on the key, "
+                              "C3 to G3, and the pitch track bends it; unmeasured."),
+    "tabla": ("percussion", "A small head with the loaded centre of the dayan, which makes its modes harmonic (Sathej & "
+                            "Adhikari 2008), struck by a finger; unmeasured."),
+    "conga": ("percussion", "A head on an open shell, struck by the hand; unmeasured."),
+    "bongo": ("percussion", "A 7-inch head on an open shell, struck by the hand; unmeasured."),
 }
 
 _KOPF = ("format", "version", "title", "category", "genres", "description", "level", "layers")

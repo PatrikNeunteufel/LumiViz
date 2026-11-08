@@ -305,6 +305,78 @@
       "creditRequired": true,
       "shippable": true,
       "note": "34g, aus IC quellen.md (Bericht): Verhaeltnis 1:4 des Vibraphons, Umfang des Glockenspiels, Schlagton der Roehrenglocken, Anschlag am Rand — Tatsachen, kein Text; die Rechtslage prueft Patrik"
+    },
+    {
+      "key": "avanzini2010",
+      "credit": "Avanzini, Marogna, A Modular Physically Based Approach to the Sound Synthesis of Membrane Percussion Instruments, IEEE Transactions on Audio, Speech, and Language Processing 18(4), 891-902 (2010)",
+      "license": "\"(c) 2010 IEEE\" (report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md (Bericht): R 16-20 cm, sigma 0,27 kg/m2, E 3,5 GPa, h 0,2 mm, nu 0,2, d1 1,25, d3 5e-4 (S. 898) — Felle des Toms, Daempfung und Gleiten; Lizenz nicht geprueft"
+    },
+    {
+      "key": "marogna2010",
+      "credit": "Marogna, Avanzini, Bank, Energy Based Synthesis of Tension Modulation in Membranes, Proc. DAFx-10, Graz (2010)",
+      "license": "no notice seen (IC session 1)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md (Quelle, PDF-S. 1): das Tonhoehengleiten Gl. 20 (Formel, keine Zahl)"
+    },
+    {
+      "key": "bilbao2014",
+      "credit": "Bilbao, Torin, Chatziioannou, Numerical Modeling of Collisions in Musical Instruments, arXiv:1405.2589",
+      "license": "arXiv non-exclusive distribution licence 1.0 (arxiv.org/licenses/nonexclusive-distrib/1.0, checked by IC) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md und Recherche (PDF-S. 14-16): Schlaegel 0,028 kg, K = 1,6e8, alpha 2,54; Membran 0,26 kg/m2, Tm 3325 N/m — Pauke und Snare; in IC Vorgaben.cpp als 'nur Bericht' gefuehrt"
+    },
+    {
+      "key": "torin2014",
+      "credit": "Torin, Hamilton, Bilbao, An Energy Conserving Finite Difference Scheme for the Simulation of Collisions in Snare Drums, Proc. DAFx-14, Erlangen (2014)",
+      "license": "\"(c) Torin, A., Hamilton, B., & Bilbao, S. (2014)\" (report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md (Bericht): Anfangsgeschwindigkeit des Schlaegels 5 m/s — ff der Pauke; Lizenz nicht geprueft"
+    },
+    {
+      "key": "packer1993",
+      "credit": "Packer, Acoustics of the orchestral kettledrum, MSc thesis, Durham University (1993)",
+      "license": "\"No quotation from it should be published without his prior written consent\" (report only) - numbers only, no wording",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md (Bericht): a 0,32 m, T 5360 N/m, sigma 0,262 kg/m2, L/a 1,2 (S. 48, 73) — die Pauke; nur Zahlen, kein Wortlaut (IC)"
+    },
+    {
+      "key": "wagner2006",
+      "credit": "Wagner, Analysis of Drumbeats - Interaction between Drummer, Drumstick and Instrument, MSc thesis, KTH (2006)",
+      "license": "no notice found (IC session 1)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, Nennung aus IC quellen.md (Fundort PDF-S. 30); die Zahlen aus IC Vorgaben.cpp und test_trommel.cpp: Kontaktzeit 3-6 ms, Kraft 3 bis ueber 100 N, das (0,1)-Paar der Snare 188 -> 240/366 Hz (dort 'nur Bericht') — Pruefgroessen"
+    },
+    {
+      "key": "dahl2011",
+      "credit": "Dahl, Striking movements: A survey of motion analysis of percussionists, Acoustical Science and Technology 32(5), 168-173 (2011)",
+      "license": "\"You may not further distribute the material\" (VBN cover page, report only) - facts used, not distributed",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md (Quelle, Preprint PDF-S. 2, 5): Kontaktzeit 5-8 ms bei mf, ein Akzent mit etwa doppelter Geschwindigkeit — Stock und ff; nicht nach quellen/ (IC)"
+    },
+    {
+      "key": "sathej2008",
+      "credit": "Sathej, Adhikari, The eigenspectra of Indian musical drums, arXiv:0809.1320 (JASA 2009)",
+      "license": "arXiv non-exclusive distribution licence 1.0 (checked by IC) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md (Quelle, arXiv-Seite) und Vorgaben.cpp (Bericht): das Profil des Belags der Tabla (sigma 2,57, k 0,492, xi 0,091); die Deutung von sigma^2 offen"
+    },
+    {
+      "key": "miura2023",
+      "credit": "Miura, Analysis of Roll Performance on Snare Drum Using Motion Capture System, Forum Acusticum 2023, DOI 10.61782/fa.2023.1235",
+      "license": "CC BY 3.0 (report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34h, aus IC quellen.md (Quelle, PDF-S. 4): Aufschlaege je Schlag beim Snare-Buzz 4-9 — nur Bericht, die Vorgabe ist 1"
     }
   ]
 }

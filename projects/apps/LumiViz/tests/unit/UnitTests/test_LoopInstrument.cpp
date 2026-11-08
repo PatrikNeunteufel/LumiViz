@@ -349,7 +349,8 @@ TEST_SUITE("LoopInstrument")
         // dreizehn aus mitgelieferten Samples, elf Drums mehr (sechs gerechnet, fuenf aus Samples)
         // und drei Besen (S124, Stufe 21d)
         // S178 (34g, KS4 a): neun aus dem Kern `bar`; die Nachbildungen marimba, vibraphone, kalimba heissen synth_<name>
-        REQUIRE(alle.size() == 117);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
+        // S179 (34h, TM4 a): sieben aus dem Kern `membrane`; die Nachbildung conga heisst synth_conga
+        REQUIRE(alle.size() == 124);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
@@ -361,7 +362,7 @@ TEST_SUITE("LoopInstrument")
                                  "growl_bass", "reverse_swell",
                                  "trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
                                  "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
-                                 "nylon_guitar", "sax", "synth_vibraphone", "steel_drum", "cowbell", "conga", "clave",
+                                 "nylon_guitar", "sax", "synth_vibraphone", "steel_drum", "cowbell", "synth_conga", "clave",
                                  "drum_kick", "drum_tom", "drum_snare", "drum_clap", "drum_hat_closed", "drum_hat_open",
                                  "shape_heart_pad", "shape_rings_choir", "shape_infinity_drone", "shape_gear_bass",
                                  "shape_moon_bass", "shape_star_lead", "shape_bolt_pluck", "shape_flower_flute",
@@ -372,7 +373,8 @@ TEST_SUITE("LoopInstrument")
                                  "drum_ride", "drum_crash", "drum_kick_punch", "drum_snare_fat", "drum_clap_stack",
                                  "drum_hat_shake", "drum_beatbox_kick", "drum_brush_tap", "drum_brush_slap",
                                  "drum_brush_sweep", "grand_piano", "marimba", "xylophone", "vibraphone", "glockenspiel",
-                                 "tubular_bells", "celesta", "kalimba", "tine_electric_piano", "reed_electric_piano"})
+                                 "tubular_bells", "celesta", "kalimba", "tine_electric_piano", "reed_electric_piano",
+                                 "low_tom", "timpani", "bass_drum", "snare_drum", "tabla", "conga", "bongo", "synth_conga"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -428,7 +430,10 @@ TEST_SUITE("LoopInstrument")
             // Seit Stufe 27c steht das Volume der Instrumente auf dem Bezug (LL2 a; die Lautheit haelt
             // test_LoopPegel.cpp fest), der Schutz vor Uebersteuern sitzt am Ausgang (LL7 a) — eine
             // Spitze ueber 0,75 ist dort kein Fehler mehr. Die Drums bleiben bis Stufe 27d, wie sie sind.
-            const bool drum = instrument.art == QLatin1String("drums");
+            // S179 (34h-6): die Kit-Trommeln des Kerns `membrane` stehen wie jedes Kern-Instrument auf dem Bezug (Spitze um
+            // 2 bei ff); leiser macht sie das Volume ihres Kits (modelled_drums: Bassdrum 0,42) — die Grenze gilt ihnen nicht
+            const bool drum = instrument.art == QLatin1String("drums") &&
+                              !(istKernSchicht(instrument.schichten[0]) && instrument.schichten[0].kernName == QStringLiteral("membrane"));
             if (drum) CHECK(groesster <= 0.75f);
             bool endlich = true;
             bool beideGleich = true;
@@ -481,8 +486,13 @@ TEST_SUITE("LoopInstrument")
                 CHECK(std::abs(ersteMode(ton, 69)) < 15.0);
                 CHECK(std::abs(ersteMode(rendereTon(instrument, 57, 500.0, kRate), 57)) < 15.0);
             }
-            if (!schlag && !(stabspiel && (instrument.name == QStringLiteral("glockenspiel") || instrument.name == QStringLiteral("celesta") ||
-                                           instrument.name == QStringLiteral("tubular_bells"))))
+            // S179 (34h): die Trommeln des Kerns `membrane` spielen einen Ton fuer die ganze Rolle (die Note waehlt nichts) —
+            // die Pauke legt ihre (1,1) auf die Note in ihrem Umfang C3–G3; beides prueft test_InstrumentModelsMembran am Kern
+            // (A4 und A3 liegen ausserhalb, die Periode passt dort nicht)
+            const bool trommel = istKernSchicht(instrument.schichten[0]) && instrument.schichten[0].kernName == QStringLiteral("membrane");
+            if (!schlag && !trommel &&
+                !(stabspiel && (instrument.name == QStringLiteral("glockenspiel") || instrument.name == QStringLiteral("celesta") ||
+                                instrument.name == QStringLiteral("tubular_bells"))))
             {
                 const int p = periode(ton, 6000, 4000, 80, 125);
                 CHECK(p >= std::floor(100.2 / schwankung) - 1);
@@ -689,13 +699,14 @@ TEST_SUITE("LoopInstrument")
         CHECK(jeArt[QStringLiteral("pads")] == 9);
         CHECK(jeArt[QStringLiteral("plucked")] == 22);  // S133: fuenf Gitarren *_old, fuenf neue
         CHECK(jeArt[QStringLiteral("wind")] == 7);
-        CHECK(jeArt[QStringLiteral("percussion")] == 16);  // S178 (34g): sechs Stabspiele des Kerns bar
-        CHECK(jeArt[QStringLiteral("drums")] == 20);  // Stufe 11f, S123, drei Besen S124
+        CHECK(jeArt[QStringLiteral("percussion")] == 20);  // S179 (34h): timpani, tabla, conga, bongo; S178 (34g): sechs Stabspiele
+        CHECK(jeArt[QStringLiteral("drums")] == 23);  // S179 (34h): low_tom, bass_drum, snare_drum; Stufe 11f, S123, drei Besen S124
         CHECK(jeArt[QStringLiteral("unusual")] == 8);
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Violin steht in keinem (Guitar bis S136,
         // seither in strum_demo), die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine
         // Drum-Spuren), Flower Flute (S123) auch nicht
-        CHECK(ohneGenre == 29);  // seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie)
+        CHECK(ohneGenre == 34);  // seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie); S179 (34h): die
+                                 // fuenf Trommeln ausser timpani und tabla (membrane_demo spielt die beiden als Instrument)
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         // seit S138 (26h) spielt die Guitar auch in tabs_demo (Blues)
         CHECK(findeInstrument(QStringLiteral("guitar"))->genres == QStringList{QStringLiteral("Blues"), QStringLiteral("Folk")});
@@ -760,7 +771,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 117);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 124);  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {
@@ -1308,7 +1319,7 @@ TEST_SUITE("LoopInstrument")
         // jedes der neunzehn Instrumente aus `make_genres.py` kommt in einem der Beispiele vor
         for (const char* name : {"trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
                                  "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
-                                 "nylon_guitar", "sax", "synth_vibraphone", "steel_drum", "cowbell", "conga", "clave"})
+                                 "nylon_guitar", "sax", "synth_vibraphone", "steel_drum", "cowbell", "synth_conga", "clave"})
         {
             CAPTURE(name);
             CHECK(gespielt.contains(QLatin1String(name)));

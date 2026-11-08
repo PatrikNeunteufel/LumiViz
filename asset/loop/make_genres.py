@@ -106,8 +106,8 @@ INSTRUMENTE = {
         schicht("Hit", "triangle", transpose=24, attack=1, decay=30, sustain=0, release=20, level=0.2)),
     # Schlagwerk als Instrument: die Tonhoehe der Note ist die Tonhoehe des Schlags
     # (Cowbell und Clave waren bis S128 hier gerechnet — Entscheid Patrik C2 a)
-    "conga": instrument(
-        "Conga", 0.85,
+    "synth_conga": instrument(
+        "Synth Conga", 0.85,
         schicht("Skin", "sine", harmonics=[0.15], attack=1, decay=150, sustain=0, release=60),
         schicht("Slap", "string", transpose=12, damping=0.94, attack=1, release=30, level=0.35)),
 }
@@ -542,7 +542,7 @@ def afrobeat():
                             ("Hi-Hat", "kit:hat_closed", 0.45, 0.25, "x-x-x-x-x-x-x-x-"),
                             ("Open Hat", "kit:hat_open", 0.35, 0.25, "......x.......x.")])
     glocke = b.noten("Bell", "cowbell", b.takte(grund, lambda t, g: lauf((0, 2, 4, 5, 7, 9, 11, 12, 14), 1, (81, 81, 84), 0.7, (0, 5, 12))), 0.5, 0.35)
-    conga = b.noten("Congas", "conga", b.takte(grund, lambda t, g: lauf((2, 3, 6, 8, 10, 11, 14, 15), 1, (60, 60, 65, 57, 60, 60, 65, 65), 0.75, (6, 14))), 0.7, -0.35)
+    conga = b.noten("Congas", "synth_conga", b.takte(grund, lambda t, g: lauf((2, 3, 6, 8, 10, 11, 14, 15), 1, (60, 60, 65, 57, 60, 60, 65, 65), 0.75, (6, 14))), 0.7, -0.35)
     bass = b.noten("Bass", "round_bass", b.takte(grund, lambda t, g: [(0, 2, g - 12, 1.0), (3, 2, g - 12, 0.8), (6, 2, g - 5, 0.8), (8, 2, g - 2, 0.9), (11, 2, g - 5, 0.8), (14, 2, g - 9, 0.8)]), 1.0)
     gitarre = b.noten("Guitar", "clean_guitar", b.takte(grund, lambda t, g: lauf((0, 2, 3, 5, 6, 8, 10, 11, 13, 14), 1, (g + 24, g + 27, g + 24, g + 31, g + 29, g + 27), 0.7)), 0.6, 0.2)
     orgel = b.noten("Organ", "organ", b.takte(grund, lambda t, g: schlag((2, 10), 2, (g + 12, g + 15 if g == 45 else g + 16, g + 19), 0.6)), 0.4, -0.2)

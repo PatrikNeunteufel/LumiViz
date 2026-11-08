@@ -1,11 +1,11 @@
 # InstrumentModels — die Rechenkerne der Instrumentklassen
 
-> **Version:** 0.2.0
+> **Version:** 0.3.0
 > **Datum:** 2026-11-08
 > **Typ:** CppModuleDoc
-> **Status:** gebaut (Stufe 34d: der Flügel; 34g: Klasse 4, der Kern `bar`)
+> **Status:** gebaut (Stufe 34d: der Flügel; 34g: Klasse 4, der Kern `bar`; 34h: Klasse 5, der Kern `membrane`)
 > **Modul:** InstrumentModels (STATIC, `projects/libs/InstrumentModels`)
-> **Namespace:** `lumi::kern` (Fabrik, geteilte Bausteine), je Klasse `lumi::kern::<klasse>` (`lumi::kern::hammer`, `lumi::kern::stab`)
+> **Namespace:** `lumi::kern` (Fabrik, geteilte Bausteine), je Klasse `lumi::kern::<klasse>` (`lumi::kern::hammer`, `lumi::kern::stab`, `lumi::kern::trommel`)
 > **Abhängigkeiten:** InstrumentCore (PUBLIC), Standardbibliothek; kein Qt, kein `windows.h`
 > **Zielgruppe:** Entwickler
 > **Sprache:** Deutsch
@@ -37,7 +37,10 @@ dieser einen Bibliothek. Jede Übernahme steht im
 
 | Kopf | Inhalt |
 |---|---|
-| `Kerne.hpp` | `kerne()`: die Fabrik der eingebauten Kerne — `hammerString` (34d), `bar` (34g); die übrigen Klassen aus IC folgen |
+| `Kerne.hpp` | `kerne()`: die Fabrik der eingebauten Kerne — `hammerString` (34d), `bar` (34g), `membrane` (34h); die übrigen Klassen aus IC folgen |
+| `gemeinsam/Membran.hpp` | 34h, aus IC: die Moden kreisrunder Felle mit Luftlast (Rayleigh) und Kessel als Luftfeder, zwei Felle gekoppelt (`Fell`, `FellMode`, `Kessel`, `fellModen`, `formAn`, `besselNull`); der Löser `zerlegeSymmetrisch` aus dem Core |
+| `trommel/Trommel.hpp` | 34h, aus IC: das Spiel `TrommelSpiel` (Felle mit `Belag` als Werte, Kessel, Schlägel, Gleiten, Teppich, Rauschen, Wirbel), `TrommelAnschlag` (mit `tempo` von außen und der Spur `pitch`), `TrommelMessung`, `bereite`, `rechneTrommelTon`, `trommelNachklang`, `belagFunktion`, die sieben Vorgaben (`baueVorgabe…`) |
+| `trommel/TrommelKern.hpp` | der Kern: `kKernName` `"membrane"`, `kernTyp()` (Tafel mit dem Umfang je Instrument, Bezug in zwei Runden), die Spuren `stroke`, `roll`, `snaresOff`, `pitch`, `werteAus`/`spielAus`, `schlagAus`, `anschlagAus`, `vorlagen()` (die sieben mit Namen nach TM4 a), `TrommelKern` |
 | `gemeinsam/Balken.hpp` | 34g, aus IC: Biegemoden eines Balkens aus finiten Elementen (Euler–Bernoulli, Lager frei, gelenkig, eingespannt), `formAn`, `freiFreiVerhaeltnisse`, `kragBetaL`; der Löser `zerlegeSymmetrisch` aus dem Core |
 | `gemeinsam/Reibung.hpp` | 34g, aus IC: die Reibung Bogen–Schwinger nach Galluzzo mit Haften und Hysterese (der Bogen am Stab, später Klasse 3) |
 | `stab/Stab.hpp` | 34g, aus IC: das Spiel `StabSpiel` (Kurven über den Umfang des Instruments), `StabAnschlag`, `StabMessung` (mit dem gehaltenen Teil für den Stimmer), `stabModen`, `stabNachklang`, `rechneStabTon`, `richteStabSpiel`, die zehn Vorgaben (`baueVorgabe…`, `alleStabSpiele`) |
@@ -75,6 +78,23 @@ dieser einen Bibliothek. Jede Übernahme steht im
   `bowedFrom` (63). Die Rechnung Bit für Bit wie IC (die elf Abdrücke aus IC `werte/abdruck_msvc.txt`, Windows).
 - Übersicht der Instrumente, Rechenzeit und Kennzahl: `apps/LumiViz/docs/modellierung/platte-stab/README.md`.
 
+### 3.3 Die Trommeln — Kern `membrane` (34h)
+
+- **Ein Kern, sieben Trommeln:** Tom, Pauke, Bassdrum, Snare, Tabla, Conga, Bongo (Dateinamen nach TM4 a); eine feste
+  Trommel hat eine Note (die Rolle im Kit), die Pauke den Umfang C3–G3 und `tunable` (die Note wählt die Spannung, (1,1)
+  auf der Note). Gruppen *Keys*, *Heads* (Liste, ein oder zwei Felle, je mit Belag als Werte), *Shell*, *Stroke*,
+  *Glide*, *Snares*, *Noise*, *Roll*, *Output*. Keine Kurven, keine gestimmten Werte; der Bezug in zwei Runden (die
+  Rauschanteile hängen am Bezug, IK2-10 a).
+- **Adapter** (TM1 a): die Geschwindigkeit des Kopfes folgt der Stufe in dB wie bei Hammer und Stab, tempoFf ·
+  10^(Stufe/20) — `tempoPp` aus IC steht nicht in der Tafel. **Spielweisen** (TM2 a) als Spuren am Beginn der Note:
+  `stroke` 0–5 (normal, Mitte, Rand, Randschlag, Reifen/Cross-Stick, gedämpft), `roll` (Wirbel über die Länge der Note),
+  `snaresOff`; `pitch` ist das Pedal der Pauke. Feste Werte je Kit-Rolle und Drum-Spur trägt die App (`coreTracks`).
+- **Vorbereitung:** die Moden je Instrument beim Bau des Kerns (`bereite`, 0,05–0,3 s; `vorbereitungTeuer`); die Vorgaben
+  sind Daten. **Nachklang:** neu (IC kennt keinen) — die langsamste Mode bis −60 dB nach den Schlägen.
+- Die Rechnung Bit für Bit wie IC (`werte/trommel_ic.txt`: zwei IC-Abdrücke, sieben ff-Töne, sieben Spielweisen der
+  Snare, sieben Bezüge — gerechnet mit den IC-Quellen unter MSVC, `docs/modellierung/anbindung-ic/abdruck_trommel.cpp`).
+- Übersicht, Rechenzeit und Kennzahl: `apps/LumiViz/docs/modellierung/membran/README.md`.
+
 ## 4. Tests
 
 - `tests/unit/UnitTests/test_InstrumentModels.cpp` — `*InstrumentModels*`: `kerne()` kennt den Flügel (Tafel), Werte ↔
@@ -84,6 +104,11 @@ dieser einen Bibliothek. Jede Übernahme steht im
   Rechenzeit (meldet Zahlen); das volle Stimmen der Bogenfenster am Modell mit `LUMIVIZ_34G_STIMMEN=1` (rund 150 s).
 - `test_LoopStab.cpp` — die mitgelieferten Dateien (schreiben mit `LUMIVIZ_STAB_INSTRUMENTE_SCHREIBEN=1`, Wächter,
   Hörproben `LUMIVIZ_34G_WAV`).
+- `test_InstrumentModelsMembran.cpp` — `*34h*`: die Membran (Bessel-Verhältnisse, Nullstellen, Form), die Tafel
+  `membrane`, Bezug und Abdrücke Bit für Bit wie IC, die Fälle aus IC `test_trommel.cpp`, der Adapter (Stufe, Spuren,
+  Nachklang, innere Größen).
+- `test_LoopTrommel.cpp` — die mitgelieferten Dateien (schreiben mit `LUMIVIZ_TROMMEL_INSTRUMENTE_SCHREIBEN=1`, Wächter),
+  die Spielweise an Drum-Spur und Kit-Rolle, die Hörliste `LUMIVIZ_34H_WAV`, die Rechenzeit (meldet Zahlen).
 - `test_LoopHammerSaite.cpp` (Kurven, Vorgaben, Datei Fassung 21), `test_LoopHammerTon.cpp` (am gerechneten Ton
   gemessen; Bezug je Plattform Bit für Bit, Rechenzeit `*31b-3*`), `test_LoopKleinEigen.cpp`.
 - Wächter der Bits: `*Loop Werte*`, `*Klangfassung*`, Flügel-Bezug; im Creator `test_LoopInstrumentEditor`
@@ -93,5 +118,6 @@ dieser einen Bibliothek. Jede Übernahme steht im
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.3.0 | 2026-11-08 | Session 179. 34h (TM1 a–TM4 a): Klasse 5 als Kern `membrane` (Trommel, Vorgaben, Adapter), geteilter Baustein `gemeinsam/Membran` (Journal J42–J46). |
 | 0.2.0 | 2026-11-08 | Session 178. 34g (KS1 a–KS4 a): Klasse 4 als Kern `bar` (Stab, Vorgaben, Adapter), geteilte Bausteine `gemeinsam/Balken` und `gemeinsam/Reibung`; der Flügel meldet `koerperAnDerSchicht` (Journal J31–J40). |
 | 0.1.0 | 2026-11-07 | Session 176. Angelegt mit 34d (BK1 a, FU1 a, FU2 a): der Flügel als Kern `hammerString`. |

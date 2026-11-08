@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.320.0
-> **Datum:** 2026-11-08 (Sessions 164 bis 178)
+> **Version:** 1.321.0
+> **Datum:** 2026-11-08 (Sessions 164 bis 179)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2845,7 +2845,12 @@ Journal J12–J18).** **34e erledigt 2026-11-08 (S177, `InstrumentMeasure` und `
 Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a; voller Lauf 1796 / 1796 unter beiden Compilern, Journal J27–J30).**
 **34g erledigt 2026-11-08 (S178, Klasse 4 als Kern `bar`, neun Stabspiele, KS1 a–KS4 a; elf Abdrücke Bit für Bit wie
 IC, Rechenzeit höchstens 2,17 %; voller Lauf 1815 / 1815 unter beiden Compilern, Journal J31–J41,
-[Bericht](modellierung/platte-stab/README.md)).** Nächster Schritt **34h** (Klasse 5, Membran). Offen aus 34e–34g: ein
+[Bericht](modellierung/platte-stab/README.md)).** **34h in Arbeit seit 2026-11-08 (S179; Kern `membrane`, sieben
+Trommeln, Spielweise, Kit `modelled_drums` gebaut, voller Lauf 1834 / 1835 — offen nur QM1 a, Quellen am Wert für alle
+Werte, `.lvinst` Fassung 23; [Bericht](modellierung/membran/README.md)).** Nächster Schritt **QM1 a**, danach **34i**. Offen
+aus 34h: der Hörtest `hoertest/listen/membran_34h` (danach `conga` IC oder Synth, IK2-8 a); die Lizenzen der neun neuen
+Quellen (Register, „report only“); Befunde: der Cross-Stick 15 dB unter der Snare, der Teppich folgt der Stärke nicht (IC,
+offen). Offen aus 34e–34g: ein
 WAV-Schreiber ohne Qt in `AudioCore` (IC `schreibeWav`, J20); **der Hörtest der Liste `hoertest/listen/stab_34g`**
 (Patrik, HörTest_Helper; danach je Kollision, ob IC oder Synth den Namen behält, IK2-8 a); **die Lizenzen der Quellen sind
 nicht geprüft** (im Register „not checked“: RT-0425, Stulov & Kartofelev 2009, Rigaud et al. 2011, dazu seit 34g Rucz &
@@ -6359,6 +6364,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.321.0 | 2026-11-08 | Session 179 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34h gebaut bis auf QM1 a — Klasse 5 als Kern `membrane` (TM1 a Stärke in dB, TM2 a Spielweise an Kit-Rolle und Drum-Spur, TM3 a Kit nur Klasse 5, TM4 a Namen), sieben Trommeln, `synth_conga`, Kit `modelled_drums`, Hörliste `membran_34h`, voller Lauf 1834 / 1835; QM1 a entschieden; nächster Schritt QM1 a, dann 34i. |
 | 1.320.0 | 2026-11-08 | Session 178 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34g erledigt — Klasse 4 als Kern `bar` (KS1 a Umfang je Instrument, KS2 a gestimmte Werte in Reihenfolge, KS3 a Bogen, KS4 a Namen), neun Stabspiele, `synth_marimba`/`synth_vibraphone`/`synth_kalimba`, Hörliste `stab_34g` für HörTest_Helper, voller Lauf 1815 / 1815; offen: Hörtest, Lizenzen der neuen Quellen, Befunde der Vorgaben; nächster Schritt 34h. |
 | 1.319.0 | 2026-11-08 | Session 177 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34e erledigt — `InstrumentMeasure` (Messkette, IC-Bausteine, `setzen` mit dem LM je Block; ME3 a, ME4 a), `AudioCore` (ME1 a), `zerlegeSymmetrisch` im Core (ME2 a), voller Lauf 1789 / 1789; 34f erledigt — Quellen am Wert (WZ1 a, Fassung 22), Register und `instruments/CREDITS.md` (WZ2 a), Wächter, `InstrumentTuneTool`, voller Lauf 1796 / 1796; nächster Schritt 34g. |
 | 1.318.0 | 2026-11-07 | Session 176 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34d erledigt — der Flügel als Kern `hammerString` in `InstrumentModels` (BK1 a), `.lvinst` Fassung 21, Creator zeigt die Kern-Schicht (FU3 a), `hammer_bezug_windows.txt` alle Töne Bit für Bit unter beiden Compilern, `Loop Werte` gleich, voller Lauf 1770 / 1770; nächster Schritt 34e; doppelte IC-Aufzählung bereinigt. |

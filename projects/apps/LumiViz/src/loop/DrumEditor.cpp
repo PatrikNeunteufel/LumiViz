@@ -1643,6 +1643,7 @@ void DrumEditor::setzeKlang(int spur, const QString& klang)
         s.klang = klang;
         // die Spur spielt wieder einen Klang: kein Instrument, Note und Length auf der Vorgabe
         s.instrument.clear();
+        s.kernSpuren.clear();
         s.hoehe = Spur().hoehe;
         s.dauerMs = kSpurDauerMs;
     });
@@ -1713,6 +1714,8 @@ void DrumEditor::setzeSpurInstrument(int spur, const QString& nennung)
     if (nennung.isEmpty()) return;
     const bool geaendert = aendereSpur(spur, tr("Change sound"), [&nennung](Spur& s) {
         const bool erstes = s.instrument.isEmpty();
+        // Stufe 34h-5: die Spielweise gehoert zum Instrument — ein anderes faengt ohne sie an
+        if (s.instrument != nennung) s.kernSpuren.clear();
         s.instrument = nennung;
         if (!erstes) return;  // ein anderes Instrument: Note und Length bleiben
         // K2 a: die Note nach der Art des Instruments, Length 250 ms

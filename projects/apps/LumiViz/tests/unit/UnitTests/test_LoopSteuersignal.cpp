@@ -153,7 +153,7 @@ TEST_CASE("Loop Steuersignal 15l: Kennung je Kanal, Datei Fassung 17, der Bauste
     SUBCASE("die Datei: id je Kanal, sidechain mit allen Feldern, wieder gelesen gleich")
     {
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 17);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 18);
         const QJsonArray kanaele = json.value(QStringLiteral("channels")).toArray();
         CHECK(kanaele[0].toObject().value(QStringLiteral("id")).toInt() == 1);
         CHECK(kanaele[1].toObject().value(QStringLiteral("id")).toInt() == 2);

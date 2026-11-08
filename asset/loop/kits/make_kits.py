@@ -7,7 +7,10 @@ Dateiname ist der Name im Loop: `808.lvkit` ist das Kit `808`. Kein Zufall: zwei
 ergeben dieselben Dateien.
 
 Je Rolle ein Klang: `kit:` (das gerechnete Kit), `lib:` (die Samples unter `../samples`)
-oder ein Instrument der Art Drums (`drum_*`, auf C2 gebaut; Note 36, Length 250).
+oder ein Instrument der Art Drums (`drum_*`, auf C2 gebaut; Note 36, Length 250). Seit Fassung 2
+(S179, Stufe 34h-5, TM2 a) traegt eine Instrument-Rolle immer `coreTracks`, die Spielweise ihres
+Kerns — geschrieben als `snare_drum:kstroke=4` wie der Zusatz `:k` im Namen eines Tons; unter
+demselben Namen steht sie in `PEGEL`.
 
 **Volume** ist gemessen, nicht gehoert — seit Stufe 27d (S139, Entscheide Patrik LL4 a, LL9 a,
 LL10 a, LL11 a; docs/audio/Loop_Konzept.md §4n) nach EBU R128: die **Kick** jedes Kits kommt
@@ -53,6 +56,9 @@ ABSTAND_DB = {
 
 # --- PEGEL: geschrieben von --messung; Klang: (Schlag M max, Probe S max), bei Volume 1 ---
 PEGEL = {
+    "bass_drum": (-13.4, -14.37),
+    "bongo": (-16.5, -17.47),
+    "conga": (-16.51, -17.48),
     "drum_beatbox_kick": (-20.4, -21.37),
     "drum_brush_slap": (-14.89, -15.86),
     "drum_brush_sweep": (-16.71, -17.61),
@@ -136,12 +142,18 @@ PEGEL = {
     "lib:tambourine": (-16.75, -17.72),
     "lib:voice_female_gliss": (-5.42, -6.35),
     "lib:voice_male_hey": (-11.3, -12.27),
+    "low_tom": (-13.4, -14.36),
     "shape_atom_bell": (-15.56, -16.16),
     "shape_cat": (-14.24, -15.09),
+    "snare_drum": (-13.4, -14.37),
+    "snare_drum:kstroke=3": (-21.57, -22.53),
+    "snare_drum:kstroke=4": (-28.68, -29.65),
+    "tabla": (-16.21, -17.17),
 }
 # --- Ende PEGEL ---
 
 GEKAPPT = []  # (Kit, Rolle, fehlt in dB) — am Ende genannt
+UNGEMESSEN = []  # Kits mit einem Klang ohne Messung — am Ende genannt
 
 PAN = {"hat": 0.2, "open hat": 0.2, "ride": 0.25, "crash": -0.15}
 PAN_NUMMERIERT = {"tom": (-0.25, 0.25, 0.0, 0.1), "perc": (0.3, -0.3, 0.15, -0.15)}
@@ -157,16 +169,30 @@ def ist_stereo(klang):
     return klang.startswith(("lib:drs_", "lib:crocell_"))
 
 
+def instrument_und_spielweise(klang):
+    """`snare_drum:kstroke=4` -> ("snare_drum", {"stroke": 4}) — wie der Zusatz `:k` im Namen eines Tons (Stufe 34h-5)."""
+    if ":k" not in klang:
+        return klang, {}
+    name, werte = klang.split(":k", 1)
+    spielweise = {}
+    for teil in werte.split(","):
+        schluessel, wert = teil.split("=")
+        spielweise[schluessel] = float(wert) if "." in wert else int(wert)
+    return name, dict(sorted(spielweise.items()))
+
+
 def eintrag(rolle, klang, volume):
     art = art_von(rolle)
     r = {"role": rolle}
     if klang.startswith(("kit:", "lib:")):
         r["sound"] = klang
     else:  # ein Instrument der Art Drums
+        instrument, spielweise = instrument_und_spielweise(klang)
         r["sound"] = ""
-        r["instrument"] = klang
+        r["instrument"] = instrument
         r["note"] = 36
         r["length"] = 250
+        r["coreTracks"] = spielweise  # seit Fassung 2 (Stufe 34h-5, TM2 a), immer geschrieben
     r["volume"] = round(volume, 3)
     if art in PAN_NUMMERIERT:
         nummer = int(rolle.split(" ")[-1])
@@ -180,6 +206,9 @@ def volumes(name, rollen):
     """Je Rolle das Volume (s. oben): die Kick auf den Anker, die anderen auf die Kick plus Abstand."""
     if DRUM_ANKER_LUFS is None or not PEGEL:
         return {rolle: 0.8 for rolle, _ in rollen}  # noch nicht gemessen
+    if any(klang not in PEGEL for _, klang in rollen):
+        UNGEMESSEN.append(name)  # ein neues Kit (S179): vorlaeufig 0,8, bis seine Klaenge gemessen sind
+        return {rolle: 0.8 for rolle, _ in rollen}
     kick = dict(rollen)["kick"]
     kick_volume = min(1.0, 10 ** ((DRUM_ANKER_LUFS - PEGEL[kick][1]) / 20))
     if kick_volume >= 1.0 and PEGEL[kick][1] < DRUM_ANKER_LUFS:
@@ -200,7 +229,7 @@ def volumes(name, rollen):
 
 def kit(name, titel, beschreibung, rollen):
     vol = volumes(name, rollen)
-    return {"format": "lumiviz-kit", "version": 1, "title": titel, "description": beschreibung,
+    return {"format": "lumiviz-kit", "version": 2, "title": titel, "description": beschreibung,
             "roles": [eintrag(rolle, klang, vol[rolle]) for rolle, klang in rollen]}
 
 
@@ -257,6 +286,14 @@ def baue_kits():
         "jazz_brushes": kit("jazz_brushes", "Jazz Brushes", "Computed brushes on the snare (tap, slap, sweep) with a soft acoustic kick, hi-hat foot and ride (DRSKit).", [
             ("kick", "lib:drs_kick_soft"), ("snare", "drum_brush_tap"), ("snare 2", "drum_brush_slap"),
             ("hat", "lib:drs_hat_foot"), ("ride", "lib:drs_ride_soft"), ("perc 1", "drum_brush_sweep")]),
+        # --- S179, Stufe 34h-6 (TM3 a): nur die Klasse 5 (Kern `membrane`, ungemessen); Hats und Becken kommen mit Klasse 6
+        # in dieses Kit — bis dahin behaelt eine Spur sie beim Kitwechsel (K2 a). Die Rolle rim ist die Snare mit
+        # Cross-Stick, snare 2 die Snare mit Randschlag (Spielweise als `coreTracks`, TM2 a)
+        "modelled_drums": kit("modelled_drums", "Modelled drums",
+                              "Drums computed from their heads, shell and stick (class 5, unmeasured): bass drum, snare with "
+                              "cross-stick and rimshot, low tom, conga, bongo and tabla. Hats and cymbals stay as they are.", [
+            ("kick", "bass_drum"), ("snare", "snare_drum"), ("rim", "snare_drum:kstroke=4"), ("snare 2", "snare_drum:kstroke=3"),
+            ("tom 1", "low_tom"), ("perc 1", "conga"), ("perc 2", "bongo"), ("perc 3", "tabla")]),
     }
 
 
@@ -319,6 +356,8 @@ def main():
     for name, rolle, fehlt_db in GEKAPPT:
         print(f"  gekappt: {name}, {rolle} — fehlen {fehlt_db:.1f} dB")
     print(len(GEKAPPT), "Rollen gekappt")
+    if UNGEMESSEN:
+        print("vorlaeufig 0,8 (Klaenge ohne Messung):", ", ".join(UNGEMESSEN))
 
 
 if __name__ == "__main__":

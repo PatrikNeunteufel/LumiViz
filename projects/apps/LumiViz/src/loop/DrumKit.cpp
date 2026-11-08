@@ -236,6 +236,7 @@ QJsonObject alsJson(const DrumKit& kit, const QString& basisOrdner)
                 istInstrumentDatei(klang.instrument) ? pfadFuerDatei(klang.instrument, basisOrdner) : klang.instrument;
             r[QStringLiteral("note")] = klang.hoehe;
             r[QStringLiteral("length")] = klang.dauerMs;
+            r[QStringLiteral("coreTracks")] = kernSpurenAlsJson(klang.kernSpuren);  // seit Fassung 2, immer geschrieben
         }
         r[QStringLiteral("volume")] = klang.laut;
         r[QStringLiteral("pan")] = klang.pan;
@@ -273,6 +274,7 @@ bool ausJson(const QJsonObject& wurzel, DrumKit& kit, const QString& basisOrdner
         if (istInstrumentDatei(klang.instrument)) klang.instrument = pfadAusDatei(klang.instrument, basisOrdner);
         klang.hoehe = std::clamp(r.value(QStringLiteral("note")).toInt(klang.hoehe), 0, 127);
         klang.dauerMs = std::clamp(r.value(QStringLiteral("length")).toInt(klang.dauerMs), kSpurDauerMinMs, kSpurDauerMaxMs);
+        if (!klang.instrument.isEmpty()) klang.kernSpuren = kernSpurenAusJson(r.value(QStringLiteral("coreTracks")).toObject());
         klang.laut = inGrenzen(r.value(QStringLiteral("volume")).toDouble(1.0), 0.0, 1.0, 1.0);
         klang.pan = inGrenzen(r.value(QStringLiteral("pan")).toDouble(0.0), -1.0, 1.0, 0.0);
         neu.klaenge.push_back(std::move(klang));
@@ -388,6 +390,7 @@ KitWechsel wendeKitAn(Muster& muster, const DrumKit& kit)
         }
         if (!klang->klang.isEmpty()) spur.klang = klang->klang;  // neben einem Instrument bleibt der alte stehen, wenn das Kit keinen nennt
         spur.instrument = klang->instrument;
+        spur.kernSpuren = klang->kernSpuren;  // Stufe 34h-5: die Spielweise wandert mit (ohne Instrument leer)
         if (!klang->instrument.isEmpty())
         {
             spur.hoehe = klang->hoehe;
@@ -410,6 +413,7 @@ Spur spurAusKitKlang(const KitKlang& klang)
     spur.rolle = klang.rolle;
     spur.klang = klang.klang;
     spur.instrument = klang.instrument;
+    spur.kernSpuren = klang.kernSpuren;
     if (!klang.instrument.isEmpty())
     {
         spur.hoehe = klang.hoehe;
@@ -488,7 +492,7 @@ bool weichtAb(const Muster& muster, const DrumKit& kit)
         if (klang == nullptr) continue;
         if (spur.instrument != klang->instrument) return true;
         if (klang->instrument.isEmpty() ? spur.klang != klang->klang
-                                         : (spur.hoehe != klang->hoehe || spur.dauerMs != klang->dauerMs))
+                                         : (spur.hoehe != klang->hoehe || spur.dauerMs != klang->dauerMs || spur.kernSpuren != klang->kernSpuren))
             return true;
         if (std::abs(spur.laut - klang->laut) > 1e-9 || std::abs(spur.pan - klang->pan) > 1e-9) return true;
     }
@@ -516,6 +520,7 @@ DrumKit kitAusMuster(const Muster& muster, const QString& titel)
         {
             klang.hoehe = spur.hoehe;
             klang.dauerMs = spur.dauerMs;
+            klang.kernSpuren = spur.kernSpuren;
         }
         klang.laut = spur.laut;
         klang.pan = spur.pan;

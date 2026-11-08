@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Heavy Metal",
     "description": "A metal band's kit (CrocellKit, DrumGizmo): double pedal, four toms, three crashes, china and splash.",
     "roles": [

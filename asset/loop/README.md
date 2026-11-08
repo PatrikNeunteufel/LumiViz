@@ -170,7 +170,7 @@ eingestellt, nicht nach Gehör:
 | `synth_vibraphone.lvinst` | Synth Vibraphone | Bar, Strike | Sinus mit dem vierten Teilton, klingt lange aus, leichtes Vibrato |
 | `steel_drum.lvinst` | Steel Drum | Pan, Ring, Hit | Sinus mit Oktave und viertem Teilton, eine Schwebung darüber |
 | `cowbell.lvinst` | Cowbell | Low, High | zwei kurze Rechtecke im Abstand einer Quinte — Schlagwerk: die Tonhöhe der Note ist die des Schlags |
-| `conga.lvinst` | Conga | Skin, Slap | kurzer Sinus und eine sehr kurze Saite — Schlagwerk |
+| `synth_conga.lvinst` | Synth Conga | Skin, Slap | kurzer Sinus und eine sehr kurze Saite — Schlagwerk |
 | `clave.lvinst` | Clave | Wood, Tick | Sinus von 45 ms — Schlagwerk |
 
 Ein eigenes Instrument ist eine solche Datei an beliebigem Ort; ein Muster

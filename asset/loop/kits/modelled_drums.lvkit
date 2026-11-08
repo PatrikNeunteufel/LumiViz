@@ -1,0 +1,92 @@
+{
+    "format": "lumiviz-kit",
+    "version": 2,
+    "title": "Modelled drums",
+    "description": "Drums computed from their heads, shell and stick (class 5, unmeasured): bass drum, snare with cross-stick and rimshot, low tom, conga, bongo and tabla. Hats and cymbals stay as they are.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "",
+            "instrument": "bass_drum",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {},
+            "volume": 0.421,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "",
+            "instrument": "snare_drum",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {},
+            "volume": 0.472,
+            "pan": 0.0
+        },
+        {
+            "role": "rim",
+            "sound": "",
+            "instrument": "snare_drum",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {
+                "stroke": 4
+            },
+            "volume": 1.0,
+            "pan": 0.0
+        },
+        {
+            "role": "snare 2",
+            "sound": "",
+            "instrument": "snare_drum",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {
+                "stroke": 3
+            },
+            "volume": 1.0,
+            "pan": 0.0
+        },
+        {
+            "role": "tom 1",
+            "sound": "",
+            "instrument": "low_tom",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {},
+            "volume": 0.637,
+            "pan": -0.25
+        },
+        {
+            "role": "perc 1",
+            "sound": "",
+            "instrument": "conga",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {},
+            "volume": 0.638,
+            "pan": 0.3
+        },
+        {
+            "role": "perc 2",
+            "sound": "",
+            "instrument": "bongo",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {},
+            "volume": 0.637,
+            "pan": -0.3
+        },
+        {
+            "role": "perc 3",
+            "sound": "",
+            "instrument": "tabla",
+            "note": 36,
+            "length": 250,
+            "coreTracks": {},
+            "volume": 0.616,
+            "pan": 0.15
+        }
+    ]
+}

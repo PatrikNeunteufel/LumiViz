@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Hardrock",
     "description": "The same acoustic kit (DRSKit, DrumGizmo), hit hard, with two crashes.",
     "roles": [

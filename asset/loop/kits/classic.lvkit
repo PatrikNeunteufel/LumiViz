@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Classic",
     "description": "The six computed sounds of the original kit.",
     "roles": [

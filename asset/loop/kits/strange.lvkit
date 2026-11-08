@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-kit",
-    "version": 1,
+    "version": 2,
     "title": "Strange",
     "description": "Beatbox, snaps, a gliding voice, a cat and a bell made of shapes.",
     "roles": [
@@ -10,6 +10,7 @@
             "instrument": "drum_beatbox_kick",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.942,
             "pan": 0.0
         },
@@ -31,6 +32,7 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
+            "coreTracks": {},
             "volume": 0.326,
             "pan": 0.2
         },
@@ -40,6 +42,7 @@
             "instrument": "shape_cat",
             "note": 64,
             "length": 400,
+            "coreTracks": {},
             "volume": 0.491,
             "pan": 0.3
         },
@@ -61,6 +64,7 @@
             "instrument": "shape_atom_bell",
             "note": 48,
             "length": 400,
+            "coreTracks": {},
             "volume": 0.817,
             "pan": -0.25
         }

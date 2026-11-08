@@ -2227,6 +2227,73 @@ TEST_SUITE("LoopInstrumentEditor")
         }
     }
 
+    TEST_CASE("Instrument-Creator 34h-6: die Snare des Kerns membrane — Core und Level, ungemessen, die Felle als Liste, Save as")
+    {
+        // wie der Fall mit dem Vibraphon (34g): ein Kern ohne Kurven (ein Ton fuer das ganze Instrument, §6a 5), der Koerper
+        // im Kern (kein Body, IK2-10 a), die Felle als Liste („2 entries“, bearbeitet mit 31g). `LUMIVIZ_CREATOR_CORE_BILD`
+        // legt dazu ein Bild mit `_membrane` ab.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        const Instrument* gefunden = findeInstrument(QStringLiteral("snare_drum"));
+        REQUIRE_MESSAGE(gefunden != nullptr, "snare_drum nicht gefunden — aus dem Projekt-Root starten");
+        const Instrument snare = *gefunden;
+        REQUIRE(istKernSchicht(snare.schichten[0]));
+        CHECK(snare.schichten[0].kernName == QStringLiteral("membrane"));
+
+        InstrumentCreator creator;
+        creator.oeffne(snare);
+        SignalWeg* weg = creator.signalWeg();
+        REQUIRE(weg != nullptr);
+        weg->resize(1400, 40);
+        QStringList namen;
+        for (const WegKasten& einer : weg->kaesten()) namen << einer.titel;
+        CHECK(namen == QStringList{QStringLiteral("Core"), QStringLiteral("Level")});
+        auto* marke = creator.findChild<QLabel*>(QStringLiteral("creatorUnmeasured"));
+        REQUIRE(marke != nullptr);
+        CHECK_FALSE(marke->isHidden());
+
+        KernAnsicht* ansicht = creator.kernAnsicht();
+        REQUIRE(ansicht != nullptr);
+        const lumi::kern::Parametertafel& tafel = lumi::kern::kerne().typ("membrane")->tafel;
+        QStringList gruppen;
+        for (const std::string& g : tafel.gruppen) gruppen << QString::fromStdString(g);
+        CHECK(ansicht->gruppen() == gruppen);
+        CHECK(ansicht->zeilen().size() == static_cast<qsizetype>(tafel.werte.size()));
+        CHECK(ansicht->zeilen().contains(QStringLiteral("Heads / Heads: 2 entries [Open]")));
+        CHECK(ansicht->zeilen().contains(QStringLiteral("Snares / Snares: on [Open]")));
+        CHECK(ansicht->zeilen().contains(QStringLiteral("Keys / Lowest key: D2 (38) [Open]")));
+        CHECK(ansicht->findChildren<KernKurvenBild*>().isEmpty());  // keine Kurven
+        CHECK_FALSE(creator.geaendert());
+
+        REQUIRE(creator.speichereAlsEigenes(QStringLiteral("Meine Snare")));
+        Instrument gelesen;
+        REQUIRE(ladeInstrument(creator.datei(), gelesen));
+        CHECK(gelesen.schichten == snare.schichten);
+        CHECK(rendereTon(gelesen, 38, 250.0, 48000).daten == rendereTon(snare, 38, 250.0, 48000).daten);
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_CREATOR_CORE_BILD"); !ziel.isEmpty())
+        {
+            InstrumentCreator gezeigt;
+            gezeigt.oeffne(snare);
+            gezeigt.resize(1500, 900);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();
+            QCoreApplication::processEvents();
+            QFileInfo info(ziel);
+            CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_membrane.") + info.suffix())));
+        }
+    }
+
     TEST_CASE("Instrument-Creator: eine Shape-Schicht — Form und Contour, die Regler, das Bild Shape as it plays")
     {
         // Stufe 19e (S121), Skizze Shape_Konzept §6. `LUMIVIZ_INSTRUMENT_SHAPE_BILD=<datei.png>` legt ein Bild ab.

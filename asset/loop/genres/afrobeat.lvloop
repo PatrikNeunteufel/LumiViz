@@ -104,7 +104,7 @@
             "name": "Congas",
             "kind": "instrument",
             "bars": 4,
-            "instrument": "conga",
+            "instrument": "synth_conga",
             "volume": 0.3772,
             "pan": -0.35,
             "mute": false,

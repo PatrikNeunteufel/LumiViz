@@ -80,7 +80,7 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // aelteres Programm liesse den Baustein weg (unbekannt, mit Zeile im Bericht) und vergaesse
 // die Kennungen.
 // Geschrieben wird immer 17.
-constexpr int kVersion = 17;
+constexpr int kVersion = 18;  // seit Stufe 34h-5 (TM2 a): `coreTracks` an einer Drum-Spur mit Instrument
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -547,9 +547,49 @@ bool istEigenerKlang(const QString& klang)
     return istEigenesSample(klang);
 }
 
+std::vector<KernSpurWert> richteKernSpuren(std::vector<KernSpurWert> werte)
+{
+    std::vector<KernSpurWert> aus;
+    for (KernSpurWert& w : werte)
+    {
+        w.name = w.name.trimmed();
+        if (w.name.isEmpty() || !std::isfinite(w.wert)) continue;
+        if (!std::all_of(w.name.begin(), w.name.end(), [](QChar c) { return c.isLetter() && c.unicode() < 128; })) continue;
+        const auto da = std::find_if(aus.begin(), aus.end(), [&w](const KernSpurWert& x) { return x.name == w.name; });
+        if (da != aus.end())
+            da->wert = w.wert;  // der letzte gilt
+        else
+            aus.push_back(std::move(w));
+    }
+    std::sort(aus.begin(), aus.end(), [](const KernSpurWert& a, const KernSpurWert& b) { return a.name < b.name; });
+    return aus;
+}
+
+QJsonObject kernSpurenAlsJson(const std::vector<KernSpurWert>& werte)
+{
+    QJsonObject o;
+    for (const KernSpurWert& w : richteKernSpuren(werte)) o[w.name] = w.wert;
+    return o;
+}
+
+std::vector<KernSpurWert> kernSpurenAusJson(const QJsonObject& objekt)
+{
+    std::vector<KernSpurWert> werte;
+    for (auto it = objekt.begin(); it != objekt.end(); ++it)
+        if (it.value().isDouble()) werte.push_back(KernSpurWert{it.key(), it.value().toDouble()});
+    return richteKernSpuren(std::move(werte));
+}
+
 QString Spur::spielt() const
 {
-    return instrument.isEmpty() ? klang : tonKlang(instrument, hoehe, dauerMs);
+    if (instrument.isEmpty()) return klang;
+    if (kernSpuren.empty()) return tonKlang(instrument, hoehe, dauerMs);  // derselbe Name wie bis Stufe 34h
+    TonAngabe ton;
+    ton.instrument = instrument;
+    ton.hoehe = hoehe;
+    ton.dauerMs = dauerMs;
+    ton.kernSpuren = kernSpuren;
+    return tonKlang(ton);
 }
 
 bool istTon(const QString& klang)
@@ -606,6 +646,13 @@ QString tonKlang(const TonAngabe& ton)
     if (!ton.ausdruckMuster.empty()) name += QStringLiteral(":x") + verlaufText(ton.ausdruckMuster, &PegelPunkt::tausendstel);
     if (!ton.ausdruckClip.empty()) name += QStringLiteral(":y") + verlaufText(ton.ausdruckClip, &PegelPunkt::tausendstel);
     if (ton.teil != TonTeil::Alle) name += QStringLiteral(":p%1").arg(static_cast<int>(ton.teil));  // seit Stufe 25c
+    // seit Stufe 34h-5 (TM2 a): die festen Werte der Spuren des Kerns, geordnet
+    if (const std::vector<KernSpurWert> werte = richteKernSpuren(ton.kernSpuren); !werte.empty())
+    {
+        QStringList teile;
+        for (const KernSpurWert& w : werte) teile << w.name + QLatin1Char('=') + QString::number(w.wert, 'g', 12);
+        name += QStringLiteral(":k") + teile.join(QLatin1Char(','));
+    }
     if (ton.anschlagStufe < 0) name += QStringLiteral(":a%1").arg(ton.anschlagStufe);  // seit Stufe 31a (HK2 a)
     if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
     return name;
@@ -670,6 +717,21 @@ bool zerlegePunkte(QStringView text, std::vector<Punkt>& punkte)
     return !punkte.empty();
 }
 
+/// `:kroll=1,stroke=4` — je Wert der Name (Buchstaben) und die Zahl (Stufe 34h-5).
+bool zerlegeKernSpuren(QStringView text, std::vector<KernSpurWert>& werte)
+{
+    for (const QStringView teil : text.split(QLatin1Char(',')))
+    {
+        const qsizetype gleich = teil.indexOf(QLatin1Char('='));
+        if (gleich <= 0) return false;
+        bool ok = false;
+        const double wert = teil.mid(gleich + 1).toDouble(&ok);
+        if (!ok) return false;
+        werte.push_back(KernSpurWert{teil.left(gleich).toString(), wert});
+    }
+    return !werte.empty();
+}
+
 /// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: die Zusaetze
 /// `:e<ms>`, `:s<n>` (seit Stufe 23b), `:h<n>`, `:u`, `:m`, `:t` (seit Stufe
 /// 24b), `:v…`, `:b…` (seit Stufe 25b), `:q…`, `:w…` (seit Stufe 28c-1b), `:x…`, `:y…` (seit Stufe 28c-2b),
@@ -678,7 +740,7 @@ bool zerlegePunkte(QStringView text, std::vector<Punkt>& punkte)
 bool zerlegeTonRest(QString rest, TonAngabe& ton)
 {
     TonAngabe zusatz;
-    for (int runde = 0; runde < 14; ++runde)
+    for (int runde = 0; runde < 15; ++runde)
     {
         const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
         if (vor < 0 || vor + 2 > rest.size()) break;
@@ -716,6 +778,12 @@ bool zerlegeTonRest(QString rest, TonAngabe& ton)
         else if (stueck.front() == QLatin1Char('y') && stueck.size() > 1 && stueck[1].isDigit())
         {
             if (!zerlegePunkte(stueck.mid(1), zusatz.ausdruckClip)) return false;
+        }
+        else if (stueck.front() == QLatin1Char('k') && stueck.size() > 1 && stueck[1].isLetter())
+        {
+            // seit Stufe 34h-5 (TM2 a): feste Werte der Spuren des Kerns
+            if (!zerlegeKernSpuren(stueck.mid(1), zusatz.kernSpuren)) return false;
+            zusatz.kernSpuren = richteKernSpuren(std::move(zusatz.kernSpuren));
         }
         else if (stueck.front() == QLatin1Char('a') && stueck.size() > 2 && stueck[1] == QLatin1Char('-'))
         {
@@ -1399,6 +1467,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
                     istInstrumentDatei(spur.instrument) ? fuerDatei(spur.instrument, basisOrdner) : spur.instrument;
                 s[QStringLiteral("note")] = spur.hoehe;
                 s[QStringLiteral("length")] = spur.dauerMs;
+                s[QStringLiteral("coreTracks")] = kernSpurenAlsJson(spur.kernSpuren);  // seit Fassung 18, immer geschrieben
             }
             // seit S123 (Entscheid K1 a): freiwillig, ein aelteres Programm liest es nicht
             if (!spur.rolle.isEmpty()) s[QStringLiteral("role")] = spur.rolle;
@@ -1564,6 +1633,8 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             if (istInstrumentDatei(spur.instrument)) spur.instrument = ausDatei(spur.instrument, basisOrdner);
             spur.hoehe = std::clamp(s.value(QStringLiteral("note")).toInt(spur.hoehe), 0, 127);
             spur.dauerMs = std::clamp(s.value(QStringLiteral("length")).toInt(spur.dauerMs), kSpurDauerMinMs, kSpurDauerMaxMs);
+            // seit Fassung 18 (Stufe 34h-5): die Spielweise des Instruments; davor gibt es keine
+            if (!spur.instrument.isEmpty()) spur.kernSpuren = kernSpurenAusJson(s.value(QStringLiteral("coreTracks")).toObject());
             // seit S123: die Rolle im Kit, so wie sie dasteht (geprueft wird sie beim Kitwechsel, DrumKit.hpp)
             spur.rolle = s.value(QStringLiteral("role")).toString().trimmed().toLower();
             if (bericht != nullptr)

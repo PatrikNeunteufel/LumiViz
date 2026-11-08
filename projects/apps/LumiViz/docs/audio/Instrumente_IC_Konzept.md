@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.10.0
-> **Datum:** 2026-11-08 (Session 178)
+> **Version:** 0.11.0
+> **Datum:** 2026-11-08 (Session 179)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); nächster Schritt 34h
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h in Arbeit (S179, TM1 a–TM4 a, QM1 a; gebaut bis auf QM1 a)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -596,6 +596,63 @@ gestrichen ≤ 4,6 %. Grund: ein vollständiger, in IC belegter Satz; IK2-7 a sc
 A). Verworfen: b (`electric_piano`/`reed_piano` — zu allgemein neben CP-70 und Clavinet in 34i), c (Steeldrum als
 `steelpan` — Tonfelder sind Platzhalter, IC `Vorgaben.cpp:412`). Kippt, wenn Patrik die Steeldrum trotzdem hören will.
 
+**Teilplan 34h** (S179, Zuschnitt nach IK2-8 a, IK2-10 a, TM1 a–TM4 a; Nummern fest). Gefunden: IC `gemeinsam/Membran` und
+`klassen/05_membran/` mit sieben Vorgaben (Tom, Pauke, Bassdrum, Snare, Tabla, Conga, Bongo); IC führt nur zwei Abdrücke
+(`trommel_Tom_mf`, `trommel_Pauke_m52_mf`) — ein Programm gegen die IC-Quellen unter Windows-clang (S179) rechnet die
+übrigen ohne Änderung am IC-Repo; der Belag der Tabla ist in IC eine Funktion (`std::function`) und wird drei Zahlen
+(σ 2,57, k 0,492, ξ 0,091); gemessen (clang -O2, S179): die sieben Vorgaben mit `normiere` 1,4 s, Rechenzeit ff höchstens
+3,73 % (Bassdrum); `conga` kollidiert (`genres/afrobeat`; `flute_tropics` spielt das Sample `lib:conga_high`); eine Kit-Rolle kennt keine Spielweise;
+IC normiert mit 0,5 s, LumiViz mit 1 s (die Spitze liegt am Anfang — 34h-3 prüft den Bezug).
+
+| Nr. | Inhalt | fertig, wenn |
+|---|---|---|
+| 34h-1 | `InstrumentModels/gemeinsam/Membran` per Skript aus IC (Anker je genau einmal), nutzt `zerlegeSymmetrisch` des Core; Fälle aus IC `test_trommel` (Bessel-Verhältnisse, Pauke gegen Packer, Paar zweier Felle, Tabla harmonisch) | die übernommenen Fälle grün mit den IC-Grenzen |
+| 34h-2 | Bezug aus IC: das Programm als Beleg unter `docs/modellierung/anbindung-ic/` mit Baubefehl; `werte/trommel_ic.txt` (sieben Abdrücke, die Spielweisen der Snare, die sieben Bezüge) | Tom und Pauke gleich IC `abdruck_msvc.txt` |
+| 34h-3 | Kern `membrane` unter `InstrumentModels/trommel/` (`lumi::kern::trommel`): `Trommel.cpp`, `Vorgaben.cpp` per Skript; Tafel (Gruppen *Keys* mit Umfang nach KS1 a und *Tunable*, *Heads* als Liste mit Belag als Werte, *Shell*, *Stroke*, *Glide*, *Snares*, *Noise*, *Roll*, *Output*), Bezug mit zwei Runden (IK2-10 a); Adapter nach TM1 a und TM2 a; neu `nachklang` aus den T60 der Moden (IC kennt keinen); abgeleitet: das Glissando der Pauke folgt der Spur `pitch` (die IC-Rampe ist der Fall mit zwei Punkten, kein Abdruck enthält ihn) | alle Abdrücke aus 34h-2 Bit für Bit unter Release-clang und Testing-MSVC; die IC-Fälle aus `test_trommel` grün |
+| 34h-4 | die sieben `.lvinst` (Schreiber des Programms wie 34g, Bezug über `InstrumentTuneTool --reference`; keine gestimmten Werte), Katalog, Register und `CREDITS.md`, `conga` → `synth_conga` (Skript zuerst in einer Kopie), Pegel nur neue Zeilen, `loop_werte.txt` nur geänderte Zeilen | `Loop Werte` nur Namen geändert und neue Zeilen; `Klangfassung` nachgeführt; Quellen-Wächter grün |
+| 34h-5 | feste Spurwerte je Kit-Rolle und Drum-Spur (TM2 a): `.lvkit` Fassung 2, `.lvloop` Fassung 18, der Tonname trägt sie, der Kitwechsel nimmt sie mit | Fälle zu Datei, Kitwechsel und Ton; Datensicherung und Publish grün |
+| 34h-6 | Kit `modelled_drums` (TM3 a) über `make_kits.py` (Pegel nur neue Zeilen), `membrane_demo.lvloop`, Hörliste `hoertest/listen/membran_34h` (Stufe −18/−9/0, Spielweisen, `synth_conga` gegen `conga`), Fall `*34h Rechenzeit*` (Bassdrum), Creator-Fall mit der Snare | Rechenzeit ≤ 4,6 % dreimal allein (RZ1-1 a); `--liste-pruefen` gültig |
+| 34h-7 | Modul-Doku, Journal J42 ff., Konzept, Bericht `docs/modellierung/membran/README.md`, Pakete | **voller Lauf** unter beiden Compilern (Dateifassungen, neue Instrumente; UF17-1 a) |
+
+✅ **TM1 a** (Patrik S179, „alle a“): **Die Geschwindigkeit folgt der Stufe in dB wie bei Hammer und Stab** —
+`tempo = tempoFf · anschlagFaktor(stufe)`, `tempoPp` fällt aus der Tafel; die IC-Abdrücke prüft der Test über den
+direkten Aufruf mit `staerke`, der Adapter gegen denselben Aufruf mit der Geschwindigkeit. Gemessen (RMS 1 s, Stufe −20
+gegen 0): a −20,0 bis −23,9 dB, Umfang −40 … 0 30,9–49,8 dB; die IC-Abbildung −9,1 bis −11,3 dB, Umfang 18,2–23,9 dB.
+Grund: die Stufe ist die Lautstärke der Note in dB — eine Note bei −20 dB wird rund 20 dB leiser wie jedes Instrument.
+Befund dabei: die Snare wird unter etwa −20 kaum leiser (−40 gegen −30: 3 dB, Schwerpunkt 5,4–5,9 kHz), weil IC das
+Rauschen des Teppichs durch die Geschwindigkeit teilt (`Trommel.cpp:194`, offen) — er bleibt wie in IC und steht im
+Bericht. Verworfen: b (IC-Abbildung `staerke = 1 + stufe/40` — Trommeln zusammengedrückt gegen alle anderen), c (wie a,
+nicht leiser als pp — 22 gleiche Töne unter verschiedenen Namen). Kippt auf c, wenn Patrik die Snare unter −20 hören will,
+bevor der Teppich gemessen ist.
+
+✅ **TM2 a** (Patrik S179): **Spielweisen als Spuren des Kerns, feste Werte je Kit-Rolle und Drum-Spur** — der Kern liest
+`stroke` (0 normal, 1 Mitte, 2 Rand, 3 Randschlag, 4 Reifen, 5 gedämpft; am Beginn der Note), `roll` (0/1, Wirbel über
+die Länge der Note), `snaresOff` (0/1) und `pitch` (Pauke); Kit-Rolle und Drum-Spur tragen feste Werte dafür (`.lvkit`
+Fassung 2, `.lvloop` Fassung 18), der Tonname trägt sie, der Kitwechsel nimmt sie mit; die Rolle *rim* ist `snare_drum`
+mit `stroke` 4 (Cross-Stick, wie `lib:rim`, `lib:drs_rim`). Werte je Schritt bleiben bei 31g. Grund: das Rollenmodell
+der Kits führt *rim* schon als „Snare, so gespielt“. Verworfen: b (Spuren nur im Kern wie 34g, Kit ohne Spielweisen — das
+Lieferstück unvollständig), c (Spielweise als Wert des Instruments — drei Dateien mit denselben Werten). Kippt auf b,
+wenn 31g Spurwerte je Rolle anders lösen soll.
+
+✅ **TM3 a** (Patrik S179): **Das Kit führt nur Klasse 5** — kick Bassdrum, snare Snare, rim Snare Cross-Stick, snare 2
+Snare Randschlag, tom 1 Tom, perc 1 Conga, perc 2 Bongo, perc 3 Tabla; ein Kitwechsel lässt Hats, Ride und Crash einer Spur
+stehen (K2 a), mit Klasse 6 kommen die Becken in dieses Kit. Verworfen: b (Becken aus DRSKit — ändern sich mit Klasse 6
+in Klang und Datei). Kippt, wenn Patrik das Kit vor Klasse 6 allein spielen will.
+
+✅ **TM4 a** (Patrik S179): **Namen** — Kern `membrane`; `low_tom`, `timpani`, `bass_drum`, `snare_drum`, `tabla`, `conga`,
+`bongo`; `conga` → `synth_conga` (Titel „Synth Conga“); Kit `modelled_drums` („Modelled drums“). Grund: `low_tom` hält, wenn
+weitere Größen kommen (GM). Verworfen: b (`tom` — mehrdeutig mit dem zweiten Tom). Kippt, wenn es bei einem Tom bleibt.
+
+✅ **QM1 a** (Patrik S179): **Quellen am Wert für alle Werte, in der Datei** — `Werte` trägt auch zu Zahlen, Ganzzahlen,
+Schaltern, Wahlen und Listen die Quellen (eine Kurve weiter ihre eigenen); die Vorgaben setzen sie je Instrument (Trommel,
+Stab mit Celesta/Wurlitzer nach Stulov und Rhodes nach Sønderbo, Flügel); `.lvinst` **Fassung 23** mit `coreSources`
+(Name → Schlüssel, immer geschrieben); `make_instrument_credits.py` liest sie, der Wächter prüft je Instrument. Grund: WZ1 a
+— die Datei trägt ihre Herkunft; tafelweit stünde in `CREDITS.md` an 40 von 63 Stellen „benutzt in“, wo es nicht stimmt
+(je Trommel sind 2–5 der 9 Quellen benutzt), und seit 34g fehlt Stulov bei Celesta und Wurlitzer. Verworfen: b (Quellen
+ohne Kurve aus dem Code, `InstrumentTuneTool --credits` — die Herkunft halb in der Datei, halb im Code; ein abgeleitetes
+eigenes Instrument wüsste nicht, woher seine Zahlen kommen), c (tafelweit — 40 falsche Angaben in einer ausgelieferten
+Datei). Kippt auf b, wenn eigene Instrumente ihre Herkunft nicht tragen sollen.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -655,6 +712,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.11.0 | 2026-11-08 | Session 179. §6: Teilplan 34h (34h-1 bis 34h-7), TM1 a (Geschwindigkeit nach der Stufe in dB), TM2 a (Spielweisen als Spuren, feste Werte je Kit-Rolle und Drum-Spur), TM3 a (Kit nur Klasse 5), TM4 a (Namen, `synth_conga`). |
 | 0.10.0 | 2026-11-08 | Session 178. §6: Teilplan 34g (34g-1 bis 34g-7), KS1 a (Umfang als Wert des Instruments), KS2 a (`partnerAbstrahl` gestimmt, gestimmte Werte in Reihenfolge), KS3 a (Bogen am Vibraphon ganz), KS4 a (Namen, `synth_kalimba`, Steeldrum nicht ausgeliefert); 34g erledigt — Journal J31–J41, elf Abdrücke Bit für Bit wie IC, Rechenzeit höchstens 2,17 % (0,70 × Flügel). Abweichung: die Dateien schreibt ein Test mit dem Schreiber des Programms (Muster `grand_piano`), nicht `InstrumentTuneTool --create`. |
 | 0.9.0 | 2026-11-08 | Session 177. §6: Teilplan 34f, WZ1 a (Quellen am Wert, `.lvinst` Fassung 22), WZ2 a (Register `instrument_quellen.json`); 34f erledigt — Journal J27–J30. |
 | 0.8.0 | 2026-11-08 | Session 177. §6: Teilplan 34e (34e-1 bis 34e-5), ME1 a (`AudioCore`), ME2 a (`zerlegeSymmetrisch` in den Core), ME3 a (`setzen` mit Beobachter und Startzustand, die Flügel-Suche darüber), ME4 a (Endregel aus IC in beiden LM); 34e erledigt — Journal J19–J26, `salamander_*.txt` unverändert, voller Lauf 1789 / 1789 unter beiden Compilern. |

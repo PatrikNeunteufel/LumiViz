@@ -658,6 +658,7 @@ bool KitFenster::setzeKlang(int zeile, const QString& klang)
         k.klang = klang;
         // die Rolle spielt wieder einen Klang: kein Instrument, Note und Length auf der Vorgabe
         k.instrument.clear();
+        k.kernSpuren.clear();
         k.hoehe = KitKlang().hoehe;
         k.dauerMs = kSpurDauerMs;
     });
@@ -668,6 +669,8 @@ bool KitFenster::setzeInstrument(int zeile, const QString& nennung)
     if (nennung.isEmpty()) return false;
     return aendereZeile(zeile, [&nennung](KitKlang& k) {
         const bool erstes = k.instrument.isEmpty();
+        // Stufe 34h-5: die Spielweise gehoert zum Instrument — ein anderes faengt ohne sie an
+        if (k.instrument != nennung) k.kernSpuren.clear();
         k.instrument = nennung;
         if (!erstes) return;  // ein anderes Instrument: Note und Length bleiben
         Instrument instrument;
@@ -771,6 +774,7 @@ Spur KitFenster::alsSpur(const KitKlang& klang)
     spur.instrument = klang.instrument;
     spur.hoehe = klang.hoehe;
     spur.dauerMs = klang.dauerMs;
+    spur.kernSpuren = klang.kernSpuren;
     spur.laut = klang.laut;
     spur.pan = klang.pan;
     return spur;
