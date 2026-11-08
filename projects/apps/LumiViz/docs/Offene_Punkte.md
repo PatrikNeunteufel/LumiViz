@@ -2848,7 +2848,9 @@ IC, Rechenzeit höchstens 2,17 %; voller Lauf 1815 / 1815 unter beiden Compilern
 [Bericht](modellierung/platte-stab/README.md)).** **34h erledigt 2026-11-08 (S179 Kern `membrane`, sieben Trommeln,
 Spielweise, Kit `modelled_drums`; S180 QM1 a, Quellen am Wert für alle Werte, `.lvinst` Fassung 23, `CREDITS.md` mit 19
 Quellen; voller Lauf 1837 / 1837 unter beiden Compilern, Journal J42–J52, [Bericht](modellierung/membran/README.md)).**
-Nächster Schritt **34i** (Klasse 1 ohne Flügel). Offen aus 34h: der Hörtest `hoertest/listen/membran_34h` (danach `conga` IC oder Synth, IK2-8 a); die Lizenzen der neun neuen
+Nächster Schritt **34i** (Klasse 1 ohne Flügel); davor **die Rechenzeit für QM1 a nachholen** (RZ-S180 a: dreimal
+`*31b-3 Rechenzeit*` allein, sobald die Taktprobe unter Spanne 1,15 liegt — in S180 drosselte der Rechner durchgehend,
+Spanne 2,7–12,7). Offen aus 34h: der Hörtest `hoertest/listen/membran_34h` (danach `conga` IC oder Synth, IK2-8 a); die Lizenzen der neun neuen
 Quellen (Register, „report only“); Befunde: der Cross-Stick 15 dB unter der Snare, der Teppich folgt der Stärke nicht (IC,
 offen). Offen aus 34e–34g: ein
 WAV-Schreiber ohne Qt in `AudioCore` (IC `schreibeWav`, J20); **der Hörtest der Liste `hoertest/listen/stab_34g`**
