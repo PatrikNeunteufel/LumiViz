@@ -3,7 +3,8 @@
  * @brief InstrumentModels, Kern `hammerString`: der Fluegel als erster Kern hinter `Tonkern` — Tafel, Werte ↔ Spiel,
  *        Adapter (Instrumente_IC_Konzept.md 34d, IK2-3 a, IK2-4 a, FU1 a, FU2 a)
  *
- * Die Tafel traegt die 22 Kurven aus `kurvenAngaben()` (Gruppen *String*, *Choir*, *Decay*, *Hammer*, *Damper*) und
+ * Die Tafel traegt den Umfang je Instrument (Gruppe *Keys*, `noteMin`/`noteMax`, KL4 a — die Kurven reichen ueber die
+ * ganze Tafel A0–C8, KL4-1 a), die 22 Kurven aus `kurvenAngaben()` (Gruppen *String*, *Choir*, *Decay*, *Hammer*, *Damper*) und
  * die Gruppe *Pedals* (FU2 a): `undampedFrom`, `softFactor`, `moderatorStiffness`, `moderatorExponent`. Der
  * Resonanzboden steht nicht in der Tafel, sondern an der Schicht (FU1 a) — die App faltet ihn.
  *
@@ -20,7 +21,10 @@
 #include "InstrumentCore/Tonkern.hpp"
 
 #include <cstdint>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace lumi::kern::hammer
 {
@@ -53,12 +57,35 @@ struct Pedalwerte
 /// Die Art des Kerns: Tafel, Auskunft und `erzeuge`.
 [[nodiscard]] const KernTyp& kernTyp();
 
-/// Die Werte einer Hammer-Saite (alle Kurven, dazu die Pedalwerte) in der Reihenfolge der Tafel.
-[[nodiscard]] Werte werteAus(const HammerSaite& saite, const Pedalwerte& pedale = {});
+/// Die Werte einer Hammer-Saite (der Umfang `noteMin`/`noteMax` nach KL4 a, alle Kurven, dazu die Pedalwerte) in der
+/// Reihenfolge der Tafel.
+[[nodiscard]] Werte werteAus(const HammerSaite& saite, const Pedalwerte& pedale = {},
+                             std::pair<int, int> umfang = {kTasteMin, kTasteMax});
 /// Die Hammer-Saite aus gerichteten Werten (`richteWerte` ohne Fehler); fehlt eine Kurve, bleibt sie leer.
 [[nodiscard]] HammerSaite saiteAus(const Werte& werte);
 /// Die Pedalwerte aus gerichteten Werten; fehlt einer, gilt die Vorgabe.
 [[nodiscard]] Pedalwerte pedalwerteAus(const Werte& werte);
+
+/// Eine Vorlage: ein mitgeliefertes Instrument des Kerns neben dem Fluegel (34i, KL2 a) — Name der Datei, Titel, Saite
+/// und Pedalwerte, ob es ausgeliefert wird. Der Fluegel selbst ist die Tafel (`hammerSaiteVorgabe`), keine Vorlage.
+struct Vorlage
+{
+    std::string name;
+    std::string titel;
+    HammerSaite saite;
+    Pedalwerte pedale;
+    /// der Tastenumfang des Instruments (KL4 a), tiefste und hoechste Taste
+    std::pair<int, int> umfang{kTasteMin, kTasteMax};
+    bool ausgeliefert = true;
+    /// QM1 a: die Quellen der Werte ohne Kurve, die nicht die eigene Vorgabe (`lumiviz`) sind (die Kurven tragen ihre
+    /// in `saite`)
+    QuellenJeWert quellen;
+};
+/// Die Vorlagen aus IC `VorgabenRest.cpp` in dessen Reihenfolge: Upright, Honky-tonk, CP-70 (34i-1).
+[[nodiscard]] const std::vector<Vorlage>& vorlagen();
+/// Die Werte einer Vorlage mit ihren Quellen (QM1 a): `werteAus(saite, pedale)`, dazu je Wert ohne Kurve die Quellen
+/// der Vorlage, sonst `lumiviz`.
+[[nodiscard]] Werte werteVon(const Vorlage& vorlage);
 
 /// Der Anschlag fuer die erste Note eines Auftrags: Taste, Tonhoehe, Stufe, Haltezeit (Ende − Beginn), Daempfer nach
 /// `ungedaempftAb`, Rate; Soft und Practice aus den Spuren am Beginn der Note.

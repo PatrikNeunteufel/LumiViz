@@ -1,0 +1,259 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 24,
+    "title": "Clavinet modal",
+    "category": "keys",
+    "genres": ["Jazz"],
+    "description": "A string per key struck and held by a tangent, three semitones lower when released (Gabrielli et al. 2013), heard through two magnetic pickups and the shelves of the amplifier; modal, next to the waveguide clavinet until the listening test; unmeasured.",
+    "level": 0.5258,
+    "layers": [
+        {
+            "attack": 5,
+            "body": "",
+            "core": "struckString",
+            "coreParams": {
+                "amplifier": true,
+                "damper": false,
+                "damperDecay": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.3],
+                        [88, 0.3]
+                    ],
+                    "source": "ohne Bedeutung (das Garn daempft)",
+                    "sources": ["lumiviz"]
+                },
+                "decay": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 10],
+                        [88, 10]
+                    ],
+                    "source": "offen: T60 „20 s or more“ (Gabrielli, nur Bericht) — 10 s",
+                    "sources": ["gabrielli2013"]
+                },
+                "detune": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [29, 0],
+                        [88, 0]
+                    ],
+                    "source": "eine Saite",
+                    "sources": ["lumiviz"]
+                },
+                "excitation": "tangent",
+                "highDecay": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.3],
+                        [88, 0.3]
+                    ],
+                    "source": "offen",
+                    "sources": ["lumiviz"]
+                },
+                "horizontalRatio": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0],
+                        [88, 0]
+                    ],
+                    "source": "offen",
+                    "sources": ["lumiviz"]
+                },
+                "inharmonicity": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.0001],
+                        [88, 0.0001]
+                    ],
+                    "source": "offen: B je Taste bei Gabrielli et al. 2013 Tab. 1 (nur Bericht, Werte nicht im Repo)",
+                    "sources": ["lumiviz"]
+                },
+                "keyPressureLimit": 0,
+                "lateDecay": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 10],
+                        [88, 10]
+                    ],
+                    "source": "offen: T60 „20 s or more“ (Gabrielli, nur Bericht) — 10 s",
+                    "sources": ["gabrielli2013"]
+                },
+                "malletDampingHc": 0,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": false,
+                "malletHysteresis": 0,
+                "malletMass": 0.025,
+                "malletRelaxation": 0,
+                "malletStiffness": 1,
+                "middleBridgeCoupling": 0.5,
+                "middleBridgeSplit": 0,
+                "noteMax": 88,
+                "noteMin": 29,
+                "outputReference": 14.262412071228027,
+                "oversampling": 32,
+                "pickup": "magnetic",
+                "pickupPositions": [
+                    {
+                        "position": 0.1
+                    },
+                    {
+                        "position": 0.3
+                    }
+                ],
+                "polarizationAngle": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0],
+                        [88, 0]
+                    ],
+                    "source": "offen: ohne zweite Ebene",
+                    "sources": ["lumiviz"]
+                },
+                "polarizationDetune": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.01],
+                        [88, 0.01]
+                    ],
+                    "source": "Untergrenze (L11)",
+                    "sources": ["lumiviz"]
+                },
+                "sliderDecay": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.3],
+                        [88, 0.3]
+                    ],
+                    "source": "offen: Daempferschieber in Stellung 1 (Einschaetzung)",
+                    "sources": ["lumiviz"]
+                },
+                "strikePosition": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [29, 0],
+                        [88, 0]
+                    ],
+                    "source": "die Tangente trifft das Ende des klingenden Teils",
+                    "sources": ["lumiviz"]
+                },
+                "stringLength": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.5],
+                        [88, 0.5]
+                    ],
+                    "source": "offen: 0,5 m (wirkt nur auf den Massstab des Ausgangs)",
+                    "sources": ["lumiviz"]
+                },
+                "stringMass": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 1],
+                        [88, 1]
+                    ],
+                    "source": "offen (wirkt nur auf den Massstab)",
+                    "sources": ["lumiviz"]
+                },
+                "strings": {
+                    "evidence": "computed",
+                    "overrides": [],
+                    "points": [
+                        [29, 1],
+                        [88, 1]
+                    ],
+                    "source": "eine Saite je Taste",
+                    "sources": ["lumiviz"]
+                },
+                "sympathetic": false,
+                "sympatheticCoupling": 0.5,
+                "tangentTravel": 1,
+                "velocityMax": 4,
+                "wholePerSpeaking": 1.189207115002721,
+                "yarnDecay": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.15],
+                        [88, 0.15]
+                    ],
+                    "source": "offen: die Garnwicklung daempft die ganze Saite (Einschaetzung)",
+                    "sources": ["lumiviz"]
+                }
+            },
+            "coreSources": {
+                "amplifier": ["gabrielli2013"],
+                "damper": ["lumiviz"],
+                "excitation": ["lumiviz"],
+                "keyPressureLimit": ["lumiviz"],
+                "malletDampingHc": ["lumiviz"],
+                "malletExponent": ["lumiviz"],
+                "malletHuntCrossley": ["lumiviz"],
+                "malletHysteresis": ["lumiviz"],
+                "malletMass": ["lumiviz"],
+                "malletRelaxation": ["lumiviz"],
+                "malletStiffness": ["lumiviz"],
+                "middleBridgeCoupling": ["lumiviz"],
+                "middleBridgeSplit": ["lumiviz"],
+                "noteMax": ["lumiviz"],
+                "noteMin": ["lumiviz"],
+                "outputReference": ["lumiviz"],
+                "oversampling": ["lumiviz"],
+                "pickup": ["lumiviz"],
+                "pickupPositions": ["remaggi2012"],
+                "sympathetic": ["lumiviz"],
+                "sympatheticCoupling": ["lumiviz"],
+                "tangentTravel": ["lumiviz"],
+                "velocityMax": ["gabrielli2013"],
+                "wholePerSpeaking": ["gabrielli2013"]
+            },
+            "damping": 0.996,
+            "decay": 200,
+            "detune": 0,
+            "harmonics": [],
+            "inALegato": "ownNote",
+            "level": 1,
+            "name": "Clavinet modal",
+            "on": true,
+            "pan": 0,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "pitchRange": 2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "release": 150,
+            "startOffset": 0,
+            "sustain": 0.7,
+            "transpose": 0,
+            "vibratoDelay": 0,
+            "vibratoDepth": 0,
+            "vibratoRate": 0,
+            "voices": 1,
+            "waveform": "sine"
+        }
+    ],
+    "keyboard": {
+        "bassSustainBelow": 60,
+        "pedals": {
+            "left": "none",
+            "middle": "none",
+            "right": "none"
+        }
+    }
+}

@@ -1,0 +1,1811 @@
+{
+    "dauer_s": null,
+    "fassungen": {
+        "grand": "der Fluegel grand_piano (gemessen an Salamander, mit Boden)",
+        "ic": "die Vorgabe aus InstrumentsCalculation (LumiViz Stufe 34i), ungemessen",
+        "mitte": "Clavinet modal, nur der mittlere Tonabnehmer",
+        "practice": "das Upright mit dem Moderator (Spur practice)",
+        "steg": "Clavinet modal, nur der Tonabnehmer am Steg",
+        "waveguide": "das heutige Clavinet (Waveguide-Saite mit zwei Tonabnehmern)"
+    },
+    "gruppe_nach": [
+        "instrument"
+    ],
+    "katalog": null,
+    "klaenge": [
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-30",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "datei": "klaenge/upright_piano_26_a-30.wav",
+            "fassung": "ic",
+            "id": "upright_piano_26_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "datei": "klaenge/upright_piano_26_a-12.wav",
+            "fassung": "ic",
+            "id": "upright_piano_26_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a0",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "datei": "klaenge/upright_piano_26_a0.wav",
+            "fassung": "ic",
+            "id": "upright_piano_26_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/upright_piano_64_a-30.wav",
+            "fassung": "ic",
+            "id": "upright_piano_64_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/upright_piano_64_a-12.wav",
+            "fassung": "ic",
+            "id": "upright_piano_64_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/upright_piano_64_a0.wav",
+            "fassung": "ic",
+            "id": "upright_piano_64_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/upright_piano_103_a-30.wav",
+            "fassung": "ic",
+            "id": "upright_piano_103_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/upright_piano_103_a-12.wav",
+            "fassung": "ic",
+            "id": "upright_piano_103_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/upright_piano_103_a0.wav",
+            "fassung": "ic",
+            "id": "upright_piano_103_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "datei": "klaenge/honky_tonk_piano_26_a-30.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_26_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "datei": "klaenge/honky_tonk_piano_26_a-12.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_26_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "datei": "klaenge/honky_tonk_piano_26_a0.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_26_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/honky_tonk_piano_64_a-30.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_64_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/honky_tonk_piano_64_a-12.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_64_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/honky_tonk_piano_64_a0.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_64_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/honky_tonk_piano_103_a-30.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_103_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/honky_tonk_piano_103_a-12.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_103_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "datei": "klaenge/honky_tonk_piano_103_a0.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_103_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-30",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/electric_grand_piano_33_a-30.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_33_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/electric_grand_piano_33_a-12.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_33_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a0",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/electric_grand_piano_33_a0.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_33_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/electric_grand_piano_64_a-30.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_64_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/electric_grand_piano_64_a-12.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_64_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/electric_grand_piano_64_a0.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_64_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-30",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "datei": "klaenge/electric_grand_piano_95_a-30.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_95_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-12",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "datei": "klaenge/electric_grand_piano_95_a-12.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_95_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a0",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "datei": "klaenge/electric_grand_piano_95_a0.wav",
+            "fassung": "ic",
+            "id": "electric_grand_piano_95_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-30",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "datei": "klaenge/clavinet_modal_34_a-30.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_34_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "datei": "klaenge/clavinet_modal_34_a-12.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_34_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a0",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "datei": "klaenge/clavinet_modal_34_a0.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_34_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-30",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "datei": "klaenge/clavinet_modal_58_a-30.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_58_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "datei": "klaenge/clavinet_modal_58_a-12.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_58_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a0",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "datei": "klaenge/clavinet_modal_58_a0.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_58_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-30",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/clavinet_modal_83_a-30.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_83_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/clavinet_modal_83_a-12.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_83_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a0",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/clavinet_modal_83_a0.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_83_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/clavinet_41_a-12.wav",
+            "fassung": "waveguide",
+            "id": "clavinet_41_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/clavinet_modal_41_a-12.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_41_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "datei": "klaenge/clavinet_58_a-12.wav",
+            "fassung": "waveguide",
+            "id": "clavinet_58_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 76,
+                "ton": "E5"
+            },
+            "datei": "klaenge/clavinet_76_a-12.wav",
+            "fassung": "waveguide",
+            "id": "clavinet_76_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 76,
+                "ton": "E5"
+            },
+            "datei": "klaenge/clavinet_modal_76_a-12.wav",
+            "fassung": "ic",
+            "id": "clavinet_modal_76_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/grand_piano_33_a-12.wav",
+            "fassung": "grand",
+            "id": "grand_piano_33_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "datei": "klaenge/upright_piano_33_a-12.wav",
+            "fassung": "ic",
+            "id": "upright_piano_33_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/grand_piano_60_a-12.wav",
+            "fassung": "grand",
+            "id": "grand_piano_60_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/upright_piano_60_a-12.wav",
+            "fassung": "ic",
+            "id": "upright_piano_60_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/grand_piano_84_a-12.wav",
+            "fassung": "grand",
+            "id": "grand_piano_84_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/upright_piano_84_a-12.wav",
+            "fassung": "ic",
+            "id": "upright_piano_84_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/upright_piano_60_a-12_practice.wav",
+            "fassung": "practice",
+            "id": "upright_piano_60_a-12_practice"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/clavinet_modal_41_a-12_mitte.wav",
+            "fassung": "mitte",
+            "id": "clavinet_modal_41_a-12_mitte"
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/clavinet_modal_41_a-12_steg.wav",
+            "fassung": "steg",
+            "id": "clavinet_modal_41_a-12_steg"
+        }
+    ],
+    "kontrolle": "moderat",
+    "messwerte": [
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-30",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -50.11
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.28
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a0",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.25
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -55.22
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -33.23
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -21.02
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -62.7
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -44.59
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -27.64
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -48.31
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -28.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 26,
+                "ton": "D1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.46
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -59.15
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -36.12
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.07
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -60.91
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -42.09
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 103,
+                "ton": "G7"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.78
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-30",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -51.65
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.56
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a0",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.07
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -54.73
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -33.4
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.63
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-30",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -58.79
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a-12",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -37.85
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Electric grand piano",
+                "staerke": "a0",
+                "taste": 95,
+                "ton": "B6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.93
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-30",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -50.92
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -41.33
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a0",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -39.6
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-30",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -49.78
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.44
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a0",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.37
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-30",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.04
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -28.74
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a0",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -15.4
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "waveguide",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.25
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -37.78
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "fassung": "waveguide",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.35
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 76,
+                "ton": "E5"
+            },
+            "fassung": "waveguide",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet",
+                "staerke": "a-12",
+                "taste": 76,
+                "ton": "E5"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -28.18
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "grand",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 33,
+                "ton": "A1"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.7
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "grand",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -34.64
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.82
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "grand",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -33.61
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Piano",
+                "staerke": "a-12",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -37.65
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Upright piano",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "practice",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -56.2
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "mitte",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -40.84
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Clavinet modal",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "steg",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -40.34
+                }
+            ]
+        }
+    ],
+    "pegel": {
+        "lufs": -35.3,
+        "toleranz_lu": 1
+    },
+    "punkte": [
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p001",
+            "klang": "upright_piano_26_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p002",
+            "klang": "upright_piano_26_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p003",
+            "klang": "upright_piano_26_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p004",
+            "klang": "upright_piano_64_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p005",
+            "klang": "upright_piano_64_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p006",
+            "klang": "upright_piano_64_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p007",
+            "klang": "upright_piano_103_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p008",
+            "klang": "upright_piano_103_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p009",
+            "klang": "upright_piano_103_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p010",
+            "klang": "honky_tonk_piano_26_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p011",
+            "klang": "honky_tonk_piano_26_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p012",
+            "klang": "honky_tonk_piano_26_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p013",
+            "klang": "honky_tonk_piano_64_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p014",
+            "klang": "honky_tonk_piano_64_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p015",
+            "klang": "honky_tonk_piano_64_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p016",
+            "klang": "honky_tonk_piano_103_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p017",
+            "klang": "honky_tonk_piano_103_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p018",
+            "klang": "honky_tonk_piano_103_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p019",
+            "klang": "electric_grand_piano_33_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p020",
+            "klang": "electric_grand_piano_33_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p021",
+            "klang": "electric_grand_piano_33_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p022",
+            "klang": "electric_grand_piano_64_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p023",
+            "klang": "electric_grand_piano_64_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p024",
+            "klang": "electric_grand_piano_64_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p025",
+            "klang": "electric_grand_piano_95_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p026",
+            "klang": "electric_grand_piano_95_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p027",
+            "klang": "electric_grand_piano_95_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p028",
+            "klang": "clavinet_modal_34_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p029",
+            "klang": "clavinet_modal_34_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p030",
+            "klang": "clavinet_modal_34_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p031",
+            "klang": "clavinet_modal_58_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p032",
+            "klang": "clavinet_modal_58_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p033",
+            "klang": "clavinet_modal_58_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p034",
+            "klang": "clavinet_modal_83_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p035",
+            "klang": "clavinet_modal_83_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Clavinet modal (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p036",
+            "klang": "clavinet_modal_83_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "paar",
+            "id": "p037",
+            "klaenge": [
+                "clavinet_modal_41_a-12",
+                "clavinet_41_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Clavinet?"
+        },
+        {
+            "art": "paar",
+            "id": "p038",
+            "klaenge": [
+                "clavinet_modal_58_a-12",
+                "clavinet_58_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Clavinet?"
+        },
+        {
+            "art": "paar",
+            "id": "p039",
+            "klaenge": [
+                "clavinet_modal_76_a-12",
+                "clavinet_76_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Clavinet?"
+        },
+        {
+            "art": "paar",
+            "id": "p040",
+            "klaenge": [
+                "upright_piano_33_a-12",
+                "grand_piano_33_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Upright (Klavier) als nach einem Fluegel?"
+        },
+        {
+            "art": "paar",
+            "id": "p041",
+            "klaenge": [
+                "upright_piano_60_a-12",
+                "grand_piano_60_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Upright (Klavier) als nach einem Fluegel?"
+        },
+        {
+            "art": "paar",
+            "id": "p042",
+            "klaenge": [
+                "upright_piano_84_a-12",
+                "grand_piano_84_a-12"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Upright (Klavier) als nach einem Fluegel?"
+        },
+        {
+            "art": "paar",
+            "id": "p043",
+            "klaenge": [
+                "upright_piano_60_a-12",
+                "upright_piano_60_a-12_practice"
+            ],
+            "vorzug": "Welcher klingt nach dem Moderator (Practice: gedaempft, dunkler)?"
+        },
+        {
+            "art": "paar",
+            "id": "p044",
+            "klaenge": [
+                "clavinet_modal_41_a-12_steg",
+                "clavinet_modal_41_a-12_mitte"
+            ],
+            "vorzug": "Welcher klingt heller (Tonabnehmer am Steg)?"
+        }
+    ],
+    "schema": 1,
+    "titel": "LumiViz 34i: Klasse 1 ohne Fluegel — Upright, Honky-tonk, CP-70, Clavinet",
+    "ziel": "Erstes Hoeren der vier Instrumente aus IC (ungemessen, Z2 a); welches Clavinet den Namen behaelt (IK2-8 a); ob das Upright sich vom Fluegel abhebt"
+}

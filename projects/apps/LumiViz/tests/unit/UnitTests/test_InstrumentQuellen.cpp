@@ -26,6 +26,7 @@
 #include <doctest.h>
 
 #include "InstrumentModels/Kerne.hpp"
+#include "InstrumentModels/hammer/HammerKern.hpp"
 #include "InstrumentModels/stab/StabKern.hpp"
 #include "InstrumentModels/trommel/TrommelKern.hpp"
 #include "loop/Instrument.hpp"
@@ -274,6 +275,9 @@ lumi::kern::Werte sollVon(const std::string& kern, const std::string& name)
     if (kern == kn::stab::kKernName)
         for (const kn::stab::Vorlage& v : kn::stab::vorlagen())
             if (v.name == name) return kn::stab::werteVon(v);
+    if (kern == kn::hammer::kKernName)
+        for (const kn::hammer::Vorlage& v : kn::hammer::vorlagen())
+            if (v.name == name) return kn::hammer::werteVon(v);
     return kn::vorgaben(kn::kerne().typ(kern)->tafel);
 }
 
@@ -303,14 +307,31 @@ TEST_CASE("Instrument Quellen QM1 a: die Kern-Dateien tragen die Quellen ihrer V
             const kn::KernTyp* typ = kn::kerne().typ(kern);
             REQUIRE(typ != nullptr);
             const kn::Werte soll = sollVon(kern, name);
-            // ohne neu zu stimmen: nur der Block `coreSources` (die Werte, Abdruecke und der Bezug bleiben, wie sie sind)
-            if (schreiben) s[QStringLiteral("coreSources")] = lumi::loop::quellenAlsJson(typ->tafel, soll);
+            // ohne neu zu stimmen: nur der Block `coreSources` (die Werte, Abdruecke und der Bezug bleiben, wie sie sind);
+            // seit KL4 a (Fassung 24) dazu Werte, die der Datei fehlen, aus der Vorlage (am Fluegel `noteMin`/`noteMax`)
+            if (schreiben)
+            {
+                s[QStringLiteral("coreSources")] = lumi::loop::quellenAlsJson(typ->tafel, soll);
+                QJsonObject werte = s.value(QStringLiteral("coreParams")).toObject();
+                const QJsonObject vorlage = lumi::loop::werteAlsJson(typ->tafel, soll);
+                for (auto it = vorlage.begin(); it != vorlage.end(); ++it)
+                    if (!werte.contains(it.key())) werte[it.key()] = it.value();
+                s[QStringLiteral("coreParams")] = werte;
+            }
             schichten[i] = s;
             CHECK_MESSAGE(s.value(QStringLiteral("coreSources")).toObject() == lumi::loop::quellenAlsJson(typ->tafel, soll),
                           "veraltet — LUMIVIZ_KERN_QUELLEN_SCHREIBEN=1, dann instrument_katalog.py und make_instrument_credits.py");
         }
         if (!kernDatei) continue;
         ++mitKern;
+        // KL4 a (Fassung 24): kein Umfang im Block `keyboard`
+        if (schreiben && o.contains(QStringLiteral("keyboard")))
+        {
+            QJsonObject tastatur = o.value(QStringLiteral("keyboard")).toObject();
+            tastatur.remove(QStringLiteral("range"));
+            o[QStringLiteral("keyboard")] = tastatur;
+        }
+        CHECK_FALSE(o.value(QStringLiteral("keyboard")).toObject().contains(QStringLiteral("range")));
         if (schreiben)
         {
             o[QStringLiteral("layers")] = schichten;
@@ -338,7 +359,7 @@ TEST_CASE("Instrument Quellen QM1 a: die Kern-Dateien tragen die Quellen ihrer V
             }
         }
     }
-    CHECK(mitKern == 17);  // S180: grand_piano, neun Stabspiele (34g), sieben Trommeln (34h)
+    CHECK(mitKern == 21);  // S181: dazu upright_piano, honky_tonk_piano, electric_grand_piano, clavinet_modal (34i); S180: grand_piano, neun Stabspiele (34g), sieben Trommeln (34h)
 }
 
 TEST_CASE("Instrument Quellen QM1 a: Quellen am Wert — richten, vergleichen, Datei")

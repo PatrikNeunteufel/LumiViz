@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace lumi::kern::hammer
 {
@@ -14,6 +16,8 @@ namespace lumi::kern::hammer
 namespace
 {
 
+constexpr std::string_view kNameNoteMin = "noteMin";
+constexpr std::string_view kNameNoteMax = "noteMax";
 constexpr std::string_view kUngedaempft = "undampedFrom";
 constexpr std::string_view kSoft = "softFactor";
 constexpr std::string_view kModeratorSteife = "moderatorStiffness";
@@ -42,11 +46,34 @@ Parametertafel baueTafel()
 {
     Parametertafel t;
     t.kern = std::string(kKernName);
-    t.titel = "Grand piano";
+    t.titel = "Hammer string";  // TT1 a (S181): das Verfahren, nicht ein Instrument (Upright, Honky-tonk, CP-70 auf demselben Kern)
     t.rechenFassung = 1;
     t.noteMin = kTasteMin;
     t.noteMax = kTasteMax;
-    t.gruppen = {"String", "Choir", "Decay", "Hammer", "Damper", "Pedals"};
+    t.gruppen = {"Keys", "String", "Choir", "Decay", "Hammer", "Damper", "Pedals"};
+    // KL4 a (S181): der Umfang je Instrument als zwei Ganzzahlen wie beim Kern `bar` (KS1 a) — der CP-70 hat 73 Tasten
+    t.umfangVon = std::string(kNameNoteMin);
+    t.umfangBis = std::string(kNameNoteMax);
+    for (const auto& [name, titel, vorgabe] : {std::tuple{kNameNoteMin, "Lowest key", kTasteMin}, std::tuple{kNameNoteMax, "Highest key", kTasteMax}})
+    {
+        ParameterAngabe a;
+        a.name = std::string(name);
+        a.titel = titel;
+        a.gruppe = "Keys";
+        a.art = WertArt::Ganzzahl;
+        a.darstellung = Darstellung::Regler;
+        a.einheit = "MIDI";
+        a.von = kTasteMin;
+        a.bis = kTasteMax;
+        a.vorgabe = std::int64_t{vorgabe};
+        // tafelweit (der Text nennt alle Instrumente); die Quellen je Instrument am Wert (QM1 a): der Fluegel Salamander
+        a.belegkraft = Belegkraft::Offen;
+        a.herkunft = "grand piano 88 keys A0-C8 (Salamander: Yamaha C5, sampled A0 to C8); upright and honky-tonk A0-C8 (open); "
+                     "CP-70 73 keys E1-E7 (IC, open)";
+        a.quellen = {"salamander"};
+        a.klangbestimmend = false;
+        t.werte.push_back(std::move(a));
+    }
     const HammerSaite& v = hammerSaiteVorgabe();
     for (const KurvenAngabe& k : kurvenAngaben())
     {
@@ -116,9 +143,41 @@ const KernTyp& kernTyp()
     return typ;
 }
 
-Werte werteAus(const HammerSaite& saite, const Pedalwerte& pedale)
+const std::vector<Vorlage>& vorlagen()
+{
+    // die Pedalwerte wie IC `Tastatur` (Vorgabe fuer alle drei); `undampedFrom` vom Fluegel uebernommen (Salamander)
+    static const std::vector<Vorlage> v = [] {
+        // der Umfang: Upright und Honky-tonk wie IC `tastaturUpright` (Vorgabe A0–C8, eigene Annahme), der CP-70 nach IC
+        // `tastaturCp70` 73 Tasten E1–E7 (offen, ohne genannte Quelle)
+        const QuellenJeWert vomFluegel = {{std::string(kUngedaempft), {"salamander"}}};
+        return std::vector<Vorlage>{
+            {"upright_piano", "Upright piano", baueVorgabeUpright(), Pedalwerte{}, {kTasteMin, kTasteMax}, true, vomFluegel},
+            {"honky_tonk_piano", "Honky-tonk piano", baueVorgabeHonkytonk(), Pedalwerte{}, {kTasteMin, kTasteMax}, true, vomFluegel},
+            {"electric_grand_piano", "Electric grand piano", baueVorgabeCp70(), Pedalwerte{}, {28, 100}, true, vomFluegel},
+        };
+    }();
+    return v;
+}
+
+Werte werteVon(const Vorlage& vorlage)
+{
+    Werte w = werteAus(vorlage.saite, vorlage.pedale, vorlage.umfang);
+    for (const ParameterAngabe& a : kernTyp().tafel.werte)
+    {
+        if (a.art == WertArt::Kurve) continue;
+        std::vector<std::string> q{"lumiviz"};
+        for (const auto& [n, s] : vorlage.quellen)
+            if (n == a.name) q = s;
+        w.setzeQuellen(a.name, q);
+    }
+    return w;
+}
+
+Werte werteAus(const HammerSaite& saite, const Pedalwerte& pedale, std::pair<int, int> umfang)
 {
     Werte w;
+    w.felder.emplace_back(std::string(kNameNoteMin), std::int64_t{umfang.first});
+    w.felder.emplace_back(std::string(kNameNoteMax), std::int64_t{umfang.second});
     for (const KurvenAngabe& k : kurvenAngaben()) w.felder.emplace_back(std::string(k.name), saite.*k.feld);
     w.felder.emplace_back(std::string(kUngedaempft), std::int64_t{pedale.ungedaempftAb});
     w.felder.emplace_back(std::string(kSoft), pedale.softFaktor);

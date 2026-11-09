@@ -53,14 +53,16 @@ TEST_CASE("InstrumentModels 34d kerne() kennt den Fluegel")
 {
     // seit 34g dazu der Kern `bar` (Klasse 4, test_InstrumentModelsStab.cpp), seit 34h `membrane` (Klasse 5,
     // test_InstrumentModelsMembran.cpp)
-    CHECK(kerne().namen() == std::vector<std::string>{std::string(kKernName), "bar", "membrane"});
+    CHECK(kerne().namen() == std::vector<std::string>{std::string(kKernName), "bar", "membrane", "struckString"});  // 34i: struckString
     const KernTyp* typ = kerne().typ(kKernName);
     REQUIRE(typ != nullptr);
     CHECK(pruefeTafel(typ->tafel).empty());
     CHECK(typ->tafel.noteMin == kTasteMin);
     CHECK(typ->tafel.noteMax == kTasteMax);
-    CHECK(typ->tafel.werte.size() == kurvenAngaben().size() + 4);
-    CHECK(typ->tafel.gruppen == std::vector<std::string>{"String", "Choir", "Decay", "Hammer", "Damper", "Pedals"});
+    CHECK(typ->tafel.werte.size() == kurvenAngaben().size() + 6);  // seit KL4 a dazu noteMin, noteMax
+    CHECK(typ->tafel.gruppen == std::vector<std::string>{"Keys", "String", "Choir", "Decay", "Hammer", "Damper", "Pedals"});
+    CHECK(typ->tafel.umfangVon == "noteMin");  // KL4 a
+    CHECK(typ->tafel.umfangBis == "noteMax");
     CHECK(typ->auskunft.rechenweg == Rechenweg::Note);
     CHECK(typ->auskunft.stufeImNamen);
     CHECK(typ->auskunft.spuren == std::vector<std::string>{std::string(kSpurSoft), std::string(kSpurPractice)});

@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 23,
+    "version": 24,
     "title": "Xylophone",
     "category": "percussion",
     "genres": ["Ambient"],
@@ -356,7 +356,6 @@
             "left": "none",
             "middle": "none",
             "right": "none"
-        },
-        "range": [65, 108]
+        }
     }
 }

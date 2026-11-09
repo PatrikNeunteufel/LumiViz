@@ -651,10 +651,13 @@ struct Instrument
 // Fassung 23 (S180, QM1 a): eine Kern-Schicht traegt neben `coreParams` den Block `coreSources` — je Wert ohne Kurve
 // (Zahl, Ganzzahl, Schalter, Wahl, Liste als Ganzes) die Schluessel seiner Quellen, immer geschrieben (auch leer);
 // eine aeltere Datei bekommt die Quellen der Tafel. Ein aelteres Programm ueberliest sie.
-// Geschrieben wird Fassung 23.
+// Fassung 24 (S181, KL4 a): der Block `keyboard` traegt keinen Umfang `range` mehr — den traegt die Tafel des Kerns
+// (`noteMin`/`noteMax`, auch am Fluegel); ein `range` einer aelteren Datei wird ueberlesen, einer Kern-Datei des
+// Fluegels bis Fassung 23 fehlen die zwei Werte (unlesbar, IK2-11 a: kein stiller Ersatz).
+// Geschrieben wird Fassung 24.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 23;
+inline constexpr int kInstrumentFassung = 24;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

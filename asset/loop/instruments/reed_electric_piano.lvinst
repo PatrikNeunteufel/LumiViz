@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 23,
+    "version": 24,
     "title": "Reed electric piano",
     "category": "keys",
     "genres": ["Ambient"],
@@ -85,8 +85,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 1.2],
-                        [96, 1.2]
+                        [28, 1.2],
+                        [100, 1.2]
                     ],
                     "source": "offen: wie der Resonator",
                     "sources": ["lumiviz"]
@@ -96,8 +96,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 0.15],
-                        [96, 0.15]
+                        [28, 0.15],
+                        [100, 0.15]
                     ],
                     "source": "offen: Filzdaempfer (Einschaetzung)",
                     "sources": ["lumiviz"]
@@ -106,8 +106,8 @@
                     "evidence": "computed",
                     "overrides": [],
                     "points": [
-                        [33, 0],
-                        [96, 0]
+                        [28, 0],
+                        [100, 0]
                     ],
                     "source": "σ1·β² ∝ f: fester ξ (Rechnung aus Soenderbo)",
                     "sources": ["soenderbo2024"]
@@ -118,8 +118,8 @@
                     "evidence": "computed",
                     "overrides": [],
                     "points": [
-                        [33, 1],
-                        [96, 1]
+                        [28, 1],
+                        [100, 1]
                     ],
                     "source": "die Tine klingt auf ihrer ersten Mode",
                     "sources": ["lumiviz"]
@@ -148,8 +148,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 0],
-                        [96, 0]
+                        [28, 0],
+                        [100, 0]
                     ],
                     "source": "auf der Achse",
                     "sources": ["lumiviz"]
@@ -161,8 +161,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 0.001],
-                        [96, 0.001]
+                        [28, 0.001],
+                        [100, 0.001]
                     ],
                     "source": "offen: ξ = 1e-3 (Einschaetzung, Messingleiste)",
                     "sources": ["lumiviz"]
@@ -183,8 +183,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 1],
-                        [96, 1]
+                        [28, 1],
+                        [100, 1]
                     ],
                     "source": "offen: Tonebar auf den Grundton gestimmt (Pfeifle 2017: gekoppelt, nur Bericht)",
                     "sources": ["pfeifle2017"]
@@ -196,8 +196,8 @@
                     "evidence": "computed",
                     "overrides": [],
                     "points": [
-                        [33, 1],
-                        [96, 1]
+                        [28, 1],
+                        [100, 1]
                     ],
                     "source": "an der Spitze der Tine",
                     "sources": ["lumiviz"]
@@ -207,8 +207,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 0],
-                        [96, 0]
+                        [28, 0],
+                        [100, 0]
                     ],
                     "source": "ohne Bedeutung (Tonabnehmer)",
                     "sources": ["lumiviz"]
@@ -217,8 +217,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 6.266893025770663],
-                        [96, 6.266893025770663]
+                        [28, 6.266893025770663],
+                        [100, 6.266893025770663]
                     ],
                     "source": "offen: Kragbalken 6,267 (Rechnung); das Loetzinn an der Spitze senkt es (Pfeifle 2017, nur Bericht)",
                     "sources": ["pfeifle2017"]
@@ -227,8 +227,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 17.547481936808445],
-                        [96, 17.547481936808445]
+                        [28, 17.547481936808445],
+                        [100, 17.547481936808445]
                     ],
                     "source": "offen: Kragbalken (β3/β1)² = 17,55 (Rechnung)",
                     "sources": ["lumiviz"]
@@ -259,8 +259,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 0],
-                        [96, 0]
+                        [28, 0],
+                        [100, 0]
                     ],
                     "source": "ohne Torsion (runde Tine)",
                     "sources": ["lumiviz"]
@@ -269,21 +269,21 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 25.715629320998893],
+                        [28, 25.715629320998893],
                         [64, 3.2155010756309133],
-                        [96, 0.401954006242547]
+                        [100, 0.401954006242547]
                     ],
                     "source": "Soenderbo 2024 Tab. 3.1 (nur Bericht): σ = 1e-4 + 0,005·(1,8751/l)², l nach Falaize & Hélie (Rechnung)",
                     "sources": ["falaize2015", "soenderbo2024"]
                 },
                 "tuned": {
-                    "bowForceHighFf": "e138f2c76c050564922c06523e0a70efdcfb9cee220cc891239f74f2b20f9a1d",
-                    "bowForceHighMf": "910f38f7d27eabc8b43480f06350c39324d1bd5b6c5d203a7bb773bc115fb375",
-                    "bowForceHighPp": "2aeaac369aca37ec8c801e7aa21b5f88bde080a9f2701df3340662cf2a680e35",
-                    "bowForceLowFf": "3032d31e161a3fedb89da08163875e40cde77f0570f638052bdb5c916d137b34",
-                    "bowForceLowMf": "33ba26966f6222d32c4d29762b124d775802486e6f42dc774a965bde34fbaf0a",
-                    "bowForceLowPp": "dbef0314c51eac7612019da9b181c092550e39d0cbc1b6e0818c4198dc1761cb",
-                    "partnerGain": "9aa0d81979e7362f07a993d3884bc6f9d5bc7f42d9e9055324cebaeac6f501c5"
+                    "bowForceHighFf": "9ffa4d4c1bafd977714a6f46dfddafaee439232e43bf89a065ae1e43856955d0",
+                    "bowForceHighMf": "9531895682266b98a2939db3a0bd532c397dce4434d877e1d1a6c17029a4cd11",
+                    "bowForceHighPp": "b76a74c21a68217b12c711a9031ce06c030a4c4d78bee17b23b24086af0f2394",
+                    "bowForceLowFf": "cd192b61942ec6e389ea7e5311eb61ea81deaee1fa1a27ce366243fa4a35afdf",
+                    "bowForceLowMf": "4639f0ab016197eb318ffa4e9217353d9f4a9847e03442321d18d0c12985df87",
+                    "bowForceLowPp": "d276e1d391dfa544a49efdbcfa9f1fb283bbcad01eb43e6a8b33d103b0f2e859",
+                    "partnerGain": "a2fb186824b8d6c6495f9187a35d169a3077728b27f4068c8f235f856b681bec"
                 },
                 "velocityMax": 1.5
             },
@@ -356,7 +356,6 @@
             "left": "none",
             "middle": "none",
             "right": "sustain"
-        },
-        "range": [33, 96]
+        }
     }
 }

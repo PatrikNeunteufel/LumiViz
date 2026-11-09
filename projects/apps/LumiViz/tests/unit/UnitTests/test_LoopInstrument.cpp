@@ -350,7 +350,7 @@ TEST_SUITE("LoopInstrument")
         // und drei Besen (S124, Stufe 21d)
         // S178 (34g, KS4 a): neun aus dem Kern `bar`; die Nachbildungen marimba, vibraphone, kalimba heissen synth_<name>
         // S179 (34h, TM4 a): sieben aus dem Kern `membrane`; die Nachbildung conga heisst synth_conga
-        REQUIRE(alle.size() == 124);  // S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
+        REQUIRE(alle.size() == 128);  // S181 (34i): upright_piano, honky_tonk_piano, electric_grand_piano, clavinet_modal; S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
@@ -693,7 +693,7 @@ TEST_SUITE("LoopInstrument")
         }
         // nach dem Titel zugeordnet (asset/loop/instrument_katalog.py) — wer eines dazulegt, stellt die Zahl nach
         // (S123: aus Formen, aus Samples und elf Drums dazu)
-        CHECK(jeArt[QStringLiteral("keys")] == 13);  // S178 (34g): celesta, tine/reed_electric_piano; S157: grand_piano; S133: clavinet_old
+        CHECK(jeArt[QStringLiteral("keys")] == 17);  // S181 (34i): vier aus Klasse 1; S178 (34g): celesta, tine/reed_electric_piano; S157: grand_piano; S133: clavinet_old
         CHECK(jeArt[QStringLiteral("bass")] == 15);  // S133: slap_bass_old, upright_bass_old, finger_bass
         CHECK(jeArt[QStringLiteral("lead")] == 7);
         CHECK(jeArt[QStringLiteral("pads")] == 9);
@@ -705,7 +705,7 @@ TEST_SUITE("LoopInstrument")
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Violin steht in keinem (Guitar bis S136,
         // seither in strum_demo), die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine
         // Drum-Spuren), Flower Flute (S123) auch nicht
-        CHECK(ohneGenre == 34);  // seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie); S179 (34h): die
+        CHECK(ohneGenre == 34);  // S181 (34i): die vier aus Klasse 1 spielt keys_demo (Jazz); seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie); S179 (34h): die
                                  // fuenf Trommeln ausser timpani und tabla (membrane_demo spielt die beiden als Instrument)
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         // seit S138 (26h) spielt die Guitar auch in tabs_demo (Blues)
@@ -771,7 +771,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 124);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 128);  // S181 (34i): vier aus Klasse 1;  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {
@@ -889,7 +889,7 @@ TEST_SUITE("LoopInstrument")
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 23);  // seit S180: die Quellen je Wert ohne Kurve, `coreSources` (23, QM1 a, test_InstrumentQuellen.cpp); seit S177: die Quellen je Kurve, `sources` (22, Stufe 34f-1, WZ1 a); seit S176: der Kern einer Schicht, `core`, `coreParams`, `body` (21, Stufe 34d, IK2-4 a, test_LoopHammerSaite.cpp); seit S159: die Hysterese des Hammers nach Stulov (20, HU3-1 c, test_LoopHammerSaite.cpp); seit S154: der Stoss je Saite der Hammer-Saite (19, Stufe 31d-7 B, US4 a, test_LoopHammerSaite.cpp); seit S153: die zweite Schwingungsebene der Hammer-Saite (18, Stufe 31d-7, P7 a, test_LoopHammerSaite.cpp); seit S150: der Koerper am Resonanzboden (17, Stufe 31c-7, SB1 a, test_LoopHammerSaite.cpp); seit S146: die Hammer-Saite und die Tastatur (16, Stufe 31a, test_LoopHammerSaite.cpp); seit S140: der Vibratohebel am Saitensatz (15, Stufe 28c-2a, test_LoopSaiteSpuren.cpp), Pitch range je Schicht (14, Stufe 28c-1b, test_LoopVibratoPitch.cpp); seit S139: level ueber 1 (13, Stufe 27c); seit S136: Fretless, Slide time, Legato level (12, Stufe 25c); S134: Strum am Instrument und Playing an der Saite (11, Stufe 24a, test_LoopSpielweise.cpp); S132: die Saiten des Instruments (10, Stufe 23a, test_LoopSaiten.cpp); S121: die Schwingung Shape (9, Stufe 19c, test_ShapeTon.cpp); S120: Pan je Schicht und acht Schichten (8, Stufe 18); S118: die Reihe `path` je Schicht (7, test_LoopBausteine.cpp); S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
+        CHECK(kInstrumentFassung == 24);  // seit S181: der Umfang in der Tafel des Kerns, kein `range` im Block `keyboard` (24, KL4 a, test_InstrumentModelsKlasse1.cpp); seit S180: die Quellen je Wert ohne Kurve, `coreSources` (23, QM1 a, test_InstrumentQuellen.cpp); seit S177: die Quellen je Kurve, `sources` (22, Stufe 34f-1, WZ1 a); seit S176: der Kern einer Schicht, `core`, `coreParams`, `body` (21, Stufe 34d, IK2-4 a, test_LoopHammerSaite.cpp); seit S159: die Hysterese des Hammers nach Stulov (20, HU3-1 c, test_LoopHammerSaite.cpp); seit S154: der Stoss je Saite der Hammer-Saite (19, Stufe 31d-7 B, US4 a, test_LoopHammerSaite.cpp); seit S153: die zweite Schwingungsebene der Hammer-Saite (18, Stufe 31d-7, P7 a, test_LoopHammerSaite.cpp); seit S150: der Koerper am Resonanzboden (17, Stufe 31c-7, SB1 a, test_LoopHammerSaite.cpp); seit S146: die Hammer-Saite und die Tastatur (16, Stufe 31a, test_LoopHammerSaite.cpp); seit S140: der Vibratohebel am Saitensatz (15, Stufe 28c-2a, test_LoopSaiteSpuren.cpp), Pitch range je Schicht (14, Stufe 28c-1b, test_LoopVibratoPitch.cpp); seit S139: level ueber 1 (13, Stufe 27c); seit S136: Fretless, Slide time, Legato level (12, Stufe 25c); S134: Strum am Instrument und Playing an der Saite (11, Stufe 24a, test_LoopSpielweise.cpp); S132: die Saiten des Instruments (10, Stufe 23a, test_LoopSaiten.cpp); S121: die Schwingung Shape (9, Stufe 19c, test_ShapeTon.cpp); S120: Pan je Schicht und acht Schichten (8, Stufe 18); S118: die Reihe `path` je Schicht (7, test_LoopBausteine.cpp); S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);

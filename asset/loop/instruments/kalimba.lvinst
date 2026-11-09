@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 23,
+    "version": 24,
     "title": "Kalimba",
     "category": "percussion",
     "genres": ["Ambient"],
@@ -85,8 +85,8 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [50, 1.2],
-                        [86, 1.2]
+                        [36, 1.2],
+                        [96, 1.2]
                     ],
                     "source": "offen: ueber der kritischen Kopplung (Rucz: T60 des Grundtons 0,7 s = Mittel der Daempfungen, das verlangt κ ≥ κ_c); 1,2 meidet die Entartung bei 1 (L11) und haelt die Schwebung unter 2 Hz; M5",
                     "sources": ["rucz2021"]
@@ -161,8 +161,8 @@
                     "evidence": "source",
                     "overrides": [],
                     "points": [
-                        [50, 0.0088],
-                        [86, 0.0088]
+                        [36, 0.0088],
+                        [96, 0.0088]
                     ],
                     "source": "ξ_a,1 = 8,8e-3, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1); ueber den Umfang offen (M5)",
                     "sources": ["rucz2021"]
@@ -183,8 +183,8 @@
                     "evidence": "source",
                     "overrides": [],
                     "points": [
-                        [50, 1.0008600917431194],
-                        [86, 1.0008600917431194]
+                        [36, 1.0008600917431194],
+                        [96, 1.0008600917431194]
                     ],
                     "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
                     "sources": ["rucz2021"]
@@ -275,13 +275,13 @@
                     "sources": ["chapman2006"]
                 },
                 "tuned": {
-                    "bowForceHighFf": "fccbff517f6cb1df78c5f5ba6412d168918ea9a6d8daada523d7d02f590cfd42",
-                    "bowForceHighMf": "8313fca5b32a711977a3b46b07623620e694d3058957103bd0d8dca7a448f76e",
-                    "bowForceHighPp": "8ec3a3ea56f7fe0d317b5e82eda673b54905430b1d0a8936a53ecabd9b90adb0",
-                    "bowForceLowFf": "aec834ece8cffcdd46c6eec939f174b8f08ce57fd159ea414fbc3af3e7e30cc9",
-                    "bowForceLowMf": "5793fc8d5c9a79832be801899d3de0d34c3e440a809c7ea6037794f3a230e32f",
-                    "bowForceLowPp": "fefa24869a5d0b2a5142647f0c355c58f74a94c7205443defd36f5a38b85befb",
-                    "partnerGain": "d3b0641bbbab394af957a61415e317fbc0bda93d08e08305898511c25b031b82"
+                    "bowForceHighFf": "1d476c838e6cc1a537dda7bc4327da1ae5dfe601a101f9ea301713351d308928",
+                    "bowForceHighMf": "263a492fe1fb68dbda2197bdac31374f396b1ee13bbeb6b65cd31296aad2d0db",
+                    "bowForceHighPp": "f3dbef2274bde91e23e7d4e2518663b7042ea65650b3ea765ac44e549c14fc01",
+                    "bowForceLowFf": "abcc9cf91fd82fbb0c4e453737ff6c02202af14be6e0ba233f140e2878f82300",
+                    "bowForceLowMf": "c07e78c0eff20d600485acec311eca96de7b490d5f34fe6ba4c27c3c28d5c5de",
+                    "bowForceLowPp": "e684b8e87e27def148acc7a7fd66eb49d5d3d87abc3b02519faf30a048cfa24f",
+                    "partnerGain": "1d606c47f2fd4bea944efdf37efaca70735dbc3fb66014dc58e08a956653beec"
                 },
                 "velocityMax": 1
             },
@@ -354,7 +354,6 @@
             "left": "none",
             "middle": "none",
             "right": "none"
-        },
-        "range": [50, 86]
+        }
     }
 }

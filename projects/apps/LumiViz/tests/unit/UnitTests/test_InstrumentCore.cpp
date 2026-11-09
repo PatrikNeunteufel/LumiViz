@@ -615,21 +615,25 @@ TEST_CASE("InstrumentCore 34g Tastenumfang je Instrument (KS1 a)")
 
     Werte w = vorgaben(t);
     CHECK(tastenumfang(t, w) == std::pair<int, int>{48, 72});
-    // die Kurven richten sich nach dem Umfang des Instruments
+    // KL4-1 a (S181): die Kurven richten sich nur nach dem Umfang der Tafel — der Umfang des Instruments verschiebt
+    // keine Stuetzpunkte, ein Wert in ihm bleibt Bit fuer Bit der der ungerichteten Kurve
     w.setze("noteMin", std::int64_t{60});
-    w.setze("weight", kurveAusPunkten({{40, 1.0}, {100, 3.0}}, Belegkraft::Quelle, "test"));
+    const Kurve breit = kurveAusPunkten({{40, 1.0}, {50, 1.5}, {100, 3.0}}, Belegkraft::Quelle, "test");
+    w.setze("weight", breit);
     CHECK(richteWerte(t, w).empty());
     const Kurve& k = w.kurve("weight");
-    REQUIRE(k.punkte.size() == 2);
-    CHECK(k.punkte.front().note == 60);
-    CHECK(k.punkte.back().note == 72);
-    // eine leere Kurve bekommt die Vorgabe der Tafel — im Umfang des Instruments, mit Herkunft und Quellen (34g); ein
-    // zweites Richten aendert nichts
+    CHECK(k.punkte == breit.punkte);
+    for (int n = 60; n <= 72; ++n) CHECK(wertAn(k, n, Skala::Linear) == wertAn(breit, n, Skala::Linear));
+    // nur ausserhalb der Tafel geklemmt
+    w.setze("weight", kurveAusPunkten({{-5, 1.0}, {200, 3.0}}, Belegkraft::Quelle, "test"));
+    CHECK(richteWerte(t, w).empty());
+    CHECK(w.kurve("weight").punkte == std::vector<NotenWert>{{kNoteMin, 1.0}, {kNoteMax, 3.0}});
+    // eine leere Kurve bekommt die Vorgabe der Tafel, mit Herkunft und Quellen (34g); ein zweites Richten aendert nichts
     Werte leer = w;
     Kurve ohne;
     leer.setze("weight", ohne);
     REQUIRE(richteWerte(t, leer).empty());
-    CHECK(leer.kurve("weight").punkte == std::vector<NotenWert>{{60, 1.0}, {72, 2.0}});
+    CHECK(leer.kurve("weight").punkte == std::vector<NotenWert>{{48, 1.0}, {72, 2.0}});
     CHECK(leer.kurve("weight").herkunft == "test");
     const Werte einmal = leer;
     CHECK(richteWerte(t, leer).empty());

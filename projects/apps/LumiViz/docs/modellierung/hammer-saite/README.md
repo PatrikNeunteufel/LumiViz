@@ -10,6 +10,8 @@ HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Ans
 - [modell.md](modell.md) — das gebaute Modell (Stand 31b): Saite, Hammer, Chor (Herleitung), Längsschwingung,
   Dämpfer, Anschlagstufe, Größen und ihre Herkunft.
 - [messplan.md](messplan.md) — wie Messungen das Modell absichern sollen.
+- [klasse1_ohne_fluegel.md](klasse1_ohne_fluegel.md) — Stufe 34i (S181): Upright, Honky-tonk, CP-70 auf dem Kern des
+  Flügels, das Clavinet auf `struckString`; Prüfung, Befunde, Rechenzeit (ausgesetzt), offen (Körper des Upright).
 - [proben/](proben/README.md) — Berichte der Proben und Gegenproben je Lauf (PB1 a, ab S155: Probe 7.5.4, Zeit je
   Phase, Sprünge je Kurve).
 
@@ -27,6 +29,7 @@ HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Ans
 | [recherche/2026-10-23_S146_resonanzboden_numerik.md](recherche/2026-10-23_S146_resonanzboden_numerik.md) | Boden: Moden numerisch vorab (FEM, MAESSTRO, Trévisan) |
 | [recherche/2026-10-23_S146_resonanzboden_syntheseverfahren.md](recherche/2026-10-23_S146_resonanzboden_syntheseverfahren.md) | Boden: Verfahren der Synthese und ihre Kosten (Faltung, parallele Filter, Pianoteq) |
 | [recherche/2026-10-23_S147_rt0425_netzdatei.md](recherche/2026-10-23_S147_rt0425_netzdatei.md) | Netzdatei zu RT-0425 (Steinway D): nicht erreichbar, Reichweite der Suche |
+| [recherche/2026-11-09_S181_upright_boden_bauplan.md](recherche/2026-11-09_S181_upright_boden_bauplan.md) | Upright-Boden mit Maßen für einen Bauplan (34i, KL3-1 a): kein frei lesbarer, vollständiger Satz; Xiao et al. 2026 (Rippen), Nakamura 1993 (Hüllmaße); Trévisan 2016/2017 und Chaigne 2010 (P131) auf HAL nur von Hand erreichbar |
 | siehe auch `../koerper/recherche/` | gemeinsame Grundlage für Körper, offene Messdaten |
 
 ## Notizen

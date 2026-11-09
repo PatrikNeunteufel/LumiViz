@@ -2591,7 +2591,7 @@ void InstrumentCreator::zeigeAlles()
     const bool ansicht = kern && m_stelle != kStelleLevel;
     m_rollen->setVisible(!ansicht);
     m_kernAnsicht->setVisible(ansicht);
-    m_stellenTitel->setVisible(!ansicht);  // die Ansicht traegt ihren eigenen Kopf („Core · Grand piano“)
+    m_stellenTitel->setVisible(!ansicht);  // die Ansicht traegt ihren eigenen Kopf („Core · Hammer string“)
     if (ansicht)
         m_kernAnsicht->zeige(gewaehlte, m_stelle == kStelleKoerper ? KernAnsicht::Teil::Koerper : KernAnsicht::Teil::Kern);
     m_ungemessen->setVisible(std::any_of(m_instrument.schichten.begin(), m_instrument.schichten.end(),

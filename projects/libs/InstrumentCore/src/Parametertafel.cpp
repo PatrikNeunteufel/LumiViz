@@ -425,8 +425,9 @@ std::vector<std::string> richteWerte(const Parametertafel& tafel, Werte& werte)
                 std::clamp<std::int64_t>(std::get<std::int64_t>(*bis), tafel.noteMin, tafel.noteMax))
             fehler.push_back(tafel.umfangVon + ", " + tafel.umfangBis + ": key range reversed");
     }
-    const auto [noteMin, noteMax] = tastenumfang(tafel, werte);
-    std::vector<std::string> f = richteAngaben(tafel.werte, noteMin, noteMax, "", werte, true);
+    // KL4-1 a (S181): die Kurven nur auf den Umfang der Tafel — der Umfang des Instruments verschiebt keine Stuetzpunkte
+    // (sonst aenderte ein kleinerer Umfang den Klang der Tasten darin), er begrenzt Spiel, Bezugsprobe und Ansicht
+    std::vector<std::string> f = richteAngaben(tafel.werte, tafel.noteMin, tafel.noteMax, "", werte, true);
     fehler.insert(fehler.end(), f.begin(), f.end());
     return fehler;
 }

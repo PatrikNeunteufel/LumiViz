@@ -61,5 +61,6 @@ unset(_local_includes)
 # geteilte Bausteine, dann je Klasse ein Unterordner
 include("${CMAKE_CURRENT_LIST_DIR}/gemeinsam/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/hammer/Source.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/saite/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/stab/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/trommel/Source.cmake")

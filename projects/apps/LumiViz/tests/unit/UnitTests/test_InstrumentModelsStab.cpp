@@ -301,7 +301,7 @@ TEST_CASE("InstrumentModels 34g Kern bar: Tafel, Fabrik, Vorlagen, Werte hin und
     const std::vector<std::string> fehler = pruefeTafel(t.tafel);
     CHECK_MESSAGE(fehler.empty(), (fehler.empty() ? std::string() : fehler.front()));
     REQUIRE(kerne().typ(kKernName) != nullptr);
-    CHECK(kerne().namen() == std::vector<std::string>{"hammerString", "bar", "membrane"});
+    CHECK(kerne().namen() == std::vector<std::string>{"hammerString", "bar", "membrane", "struckString"});  // 34i: struckString
     CHECK(t.tafel.bezugWert == kBezug);
     CHECK(t.tafel.umfangVon == "noteMin");
     CHECK(t.auskunft.rechenweg == Rechenweg::Note);
@@ -326,8 +326,8 @@ TEST_CASE("InstrumentModels 34g Kern bar: Tafel, Fabrik, Vorlagen, Werte hin und
     {
         CAPTURE(v.name);
         // hin und zurueck Bit fuer Bit (Werte → Spiel → Werte), an gerichteten Werten: der Wurlitzer erbt die
-        // konstanten Kurven des Rhodes mit Punkten bei 28 und 100, gerichtet stehen sie auf seinem Umfang 33 … 96
-        // (die Werte gleich, der Ton auch — der Abdruck im naechsten Fall)
+        // konstanten Kurven des Rhodes mit Punkten bei 28 und 100 — sie bleiben dort, auch ausserhalb seines Umfangs
+        // 33 … 96 (KL4-1 a: der Umfang des Instruments verschiebt keine Stuetzpunkte)
         const Werte w = werteAus(v.spiel);
         Werte gerichtet = fertigeWerte(v.name);
         gerichtet.gestimmtAus.clear();

@@ -377,6 +377,46 @@
       "creditRequired": true,
       "shippable": true,
       "note": "34h, aus IC quellen.md (Quelle, PDF-S. 4): Aufschlaege je Schlag beim Snare-Buzz 4-9 — nur Bericht, die Vorgabe ist 1"
+    },
+    {
+      "key": "yamaha-u1",
+      "credit": "Yamaha U1 upright piano, length of bass string 1: 46.8 in (search summary; the manufacturer page was not read)",
+      "license": "not checked (search summary only, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34i (S181), aus IC klassen/Klasse 1 - Hammer-Saite/recherche/2026-10-26_upright_honkytonk_cimbalom.md: „Laenge der Basssaite Nr. 1 46,8″ [nur Zusammenfassung; die Herstellerseite gab 403]“ — die Laenge des Upright ist die des Fluegels, gekappt auf 1,189 m (IC F-7 a: offen, zu setzen an K18)"
+    },
+    {
+      "key": "ptg-honkytonk",
+      "credit": "G. Sykes, \"Winifred Atwell's piano formula for tuning honky tonk\", forum thread, my.ptg.org, 12-05-2022",
+      "license": "not checked (forum post, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34i (S181), aus IC recherche/2026-10-26_upright_honkytonk_cimbalom.md §3 (Wortlaut im Bericht): „L string to 439 and right string to 441“, „We only detuned the plain wire strings“ — uebernommen die Zahl (±1 Hz bei A4 = 7,87 Cent), nicht der Text"
+    },
+    {
+      "key": "smem-cp70",
+      "credit": "smem (Fribourg), object page Yamaha CP 70B",
+      "license": "not checked (no author and no copyright notice seen, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34i (S181), aus IC recherche/2026-10-26_cp70_clavinet.md (Wortlaut im Bericht): „For the bass, one string is strung on each of the first 15 keys“, sonst zwei — der Chor des CP-70 (eine Saite bis MIDI 42)"
+    },
+    {
+      "key": "modartt-cp80",
+      "credit": "Modartt, CP-80 page",
+      "license": "\"Copyright © 2006-2026 MODARTT\" (report only) - number used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34i (S181), aus IC recherche/2026-10-26_cp70_clavinet.md (Wortlaut im Bericht): „single strings from the lowest note up to F#1 (midi number 42), and double strings for the other notes“"
+    },
+    {
+      "key": "remaggi2012",
+      "credit": "Remaggi, Gabrielli, de Paiva, Vaelimaeki, Squartini, A pickup model for the Clavinet, Proc. DAFx-12, York 2012",
+      "license": "not checked (no notice seen, report only)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34i (S181), aus IC klassen/Klasse 1 - Hammer-Saite/quellen.md (Bericht): die Lagen der Tonabnehmer (4 cm bzw. 6,5-18,5 cm vom Ende), auf 0,5 m als 0,10 und 0,30 der klingenden Laenge (offen)"
     }
   ]
 }

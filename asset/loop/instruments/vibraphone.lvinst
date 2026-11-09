@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 23,
+    "version": 24,
     "title": "Vibraphone",
     "category": "percussion",
     "genres": ["Ambient"],
@@ -424,7 +424,6 @@
             "left": "none",
             "middle": "none",
             "right": "sustain"
-        },
-        "range": [48, 89]
+        }
     }
 }

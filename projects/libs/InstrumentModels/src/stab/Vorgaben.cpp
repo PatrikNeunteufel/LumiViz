@@ -409,7 +409,9 @@ std::vector<StabSpiel> alleStabSpiele()
 
 void richteStabSpiel(StabSpiel& s, const StabSpiel& v)
 {
-    const auto r = [&](Kurve& k, double von, double bis, const Kurve& e) { richteKurve(k, von, bis, e, s.noteMin, s.noteMax); };
+    // KL4-1 a (S181): auf den Umfang der Tafel, nicht den des Instruments (IC richtet auf `s.noteMin`/`s.noteMax`;
+    // die Abdruecke aus IC bleiben Bit fuer Bit, weil keine Vorgabe dort einen Stuetzpunkt im Klang verschiebt)
+    const auto r = [&](Kurve& k, double von, double bis, const Kurve& e) { richteKurve(k, von, bis, e, kStabUmfangMin, kStabUmfangMax); };
     r(s.grundJeNote, 0.05, 2.0, v.grundJeNote);
     r(s.verhaeltnis2, 1.5, 20.0, v.verhaeltnis2);
     r(s.verhaeltnis3, 2.0, 60.0, v.verhaeltnis3);

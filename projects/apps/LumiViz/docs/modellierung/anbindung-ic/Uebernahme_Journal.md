@@ -1,7 +1,7 @@
 # Übernahme-Journal — Bausteine aus IC und LumiViz in die Bibliotheken
 
-> **Version:** 0.7.0
-> **Datum:** 2026-11-08 (Sessions 175–180)
+> **Version:** 0.8.0
+> **Datum:** 2026-11-09 (Sessions 175–181)
 > **Typ:** Journal (Instrumente_IC_Konzept.md IK2-2 a: „jede Übernahme steht in `Uebernahme_Journal.md`“)
 > **Status:** wird je Teilschritt fortgeschrieben
 > **Bezug:** [../../audio/Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md) §5 (IK2-2 a, IK2-2-1 a), §6 (34c,
@@ -318,10 +318,40 @@ Quelle aus dem Register, keine aus einer Quelle, die nichts ausliefern lässt; d
 ihrer Vorlage (`werteVon`, der Flügel `vorgaben`); Richten, Vergleich und Datei an der Pauke; die Fälle der Probe mit
 ND-Quelle, unbekanntem Schlüssel, leerer und fehlender Angabe.
 
+## 6b. Stufe 34i — Klasse 1 ohne Flügel (S181)
+
+Teilplan 34i-1 bis 34i-7 im Konzept §6 (KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a). Quellen: LumiViz `master` `63b94e5f` (nach
+S180), IC `bb7e6d6` (`klassen/01_hammer_saite/` und `werte/abdruck_msvc.txt` ohne uncommittete Änderung). Bezug der
+Abdrücke: `tests/unit/UnitTests/werte/klasse1_ic.txt` (zwölf aus `abdruck_msvc.txt`: fünf `hammer_vorgabe_m*`, sechs
+`klasse1_*_m60_a-12`, `saite_Hackbrett_clip_C4_G4`) — kein Beleg-Programm nötig, IC führt sie alle.
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J53 | Beleg der Flügel-Vorgabe | IC `test_hammer_ton.cpp` (Anschlag Stufe −12, 0,5 s, Nachklang bis 4 s) | `test_InstrumentModelsKlasse1.cpp` | — | **Befund:** unsere `hammerSaiteVorgabe` gibt die fünf IC-Abdrücke `hammer_vorgabe_m{21,40,60,84,100}_a-12_d500` Bit für Bit — die Vorgabe des Flügels ist in beiden Repos dieselbe (S172 sah nur Unterschiede in Kommentaren). Damit sind die IC-Vorgaben der Klasse 1 übertragbar |
+| J54 | Upright, Honky-tonk, CP-70 | IC `klassen/01_hammer_saite/VorgabenRest.cpp` (`bb7e6d6`) | `InstrumentModels/hammer/Vorgaben.cpp`, `HammerSaite.hpp` (`baueVorgabeUpright/Honkytonk/Cp70`), `HammerKern` (`Vorlage`, `vorlagen()`, `werteVon`) | die Rechnungen wortgleich (Länge gekappt auf 1,189 m, µ und B mal (L_F/L_U)², ±1 Hz ab MIDI 41, eine Saite bis 42) | **geändert:** `tastaturUpright`/`tastaturCp70` stehen nicht im Kern — Pedalplätze und `bassSustainBelow` in der Datei, Pedalwerte und Umfang in der Tafel (FU2 a, KL4 a); **neu** die Quellen je Kurve: vom Flügel Übernommenes behält seine (die Zahlen stammen daher), Gerechnetes nennt dazu `yamaha-u1`, die Verstimmung `ptg-honkytonk`, der Chor des CP-70 `smem-cp70`, `modartt-cp80`; die Anschlagstelle 1/8 `lumiviz` (das Patent ist im IC-Bericht nicht genannt). Die drei IC-Abdrücke `klasse1_{Upright,Honkytonk,CP70}` Bit für Bit, direkt und über den Kern; die IC-Fälle zu Mensur, Practice/Soft, ±1 Hz und Chor grün |
+| J55 | Umfang und Richten der Kurven | KL4 a, KL4-1 a | `InstrumentCore/Parametertafel.cpp` (`richteWerte` auf den Umfang der Tafel), `stab/Vorgaben.cpp` (`richteStabSpiel`, `kStabUmfangMin/Max`), `saite/Saite.cpp` (`richteSaitenSpiel`), `hammer/HammerKern` (Gruppe *Keys*, `noteMin`/`noteMax`, `werteAus(…, umfang)`), `loop/Tastatur` ohne `range`, **`.lvinst` Fassung 24** | — | **Befund:** `richtePaare` schob jeden Stützpunkt außerhalb des Umfangs auf den Rand — am CP-70 (28–100) wichen danach B an 22 von 73 Tasten bis 95 %, die Länge an 55, der Dämpfer an 62 Tasten ab, der Ton an Taste 60 um −36 dB (Messfall `LUMIVIZ_34I_KLEMMEN=1`). Gerichtet nur auf die Tafel: alle Abdrücke von `bar` (11), `membrane` (23) und Flügel Bit für Bit; `kalimba` und `reed_electric_piano` neu geschrieben und gestimmt — anders nur die Lage konstanter Kurven (28/100 statt 33/96) und die Eingangs-Abdrücke, die gestimmten Werte und der Bezug gleich. Die 17 Kern-Dateien auf Fassung 24 (`LUMIVIZ_KERN_QUELLEN_SCHREIBEN=1` ergänzt fehlende Werte aus der Vorlage und nimmt `keyboard.range` heraus); `grand_piano` mit `noteMin`/`noteMax` 21/108. Fassungs-Literale: 2 Stellen. `klangfassung.txt` zweimal neu (nur Abdrücke) |
+| J56 | Der Kern `struckString` | IC `klassen/01_hammer_saite/Saite.hpp`, `Saite.cpp`, `SaitenVorgaben.cpp` (`bb7e6d6`) | `InstrumentModels/saite/` (`lumi::kern::saite`): `Saite`, `Vorgaben.cpp`, `SaiteKern`; Skript `port_saite.py` (Anker je genau einmal) | Tangente, Schlägel, Mittelsteg, Mitschwingen, `rechneSaitenClip`, die drei Vorgaben wortgleich | **geändert:** Includes, Namensraum, `richteSaitenSpiel` auf den Umfang der Tafel (KL4-1 a); `normiere` → `kern::normiereNachTafel` (eine Runde) — **Befund:** die Probe von LumiViz (1 s) gibt dieselben Bits wie IC `normiere` (0,5 s) bei allen drei. **Neu:** `mitQuellen` je Instrument ausdrücklich (nicht nach Namen im Text: das B des Clavinets nennt Gabrielli, der Wert ist offen); Tafel mit zehn Gruppen, die Tonabnehmer als Liste (höchstens zwei), Spuren `damperSlider`, `keyPressure`, `pickupSelection` am Beginn der Note; Mitschwingen nur je Clip (Rechenweg Clip mit 31e/34k). Ausgeliefert nur `clavinet_modal` (KL1 a, KL2 a); die Hackbrett-Vorlage heißt `hammered_dulcimer` (`dulcimer` ist ein LumiViz-Instrument). Die vier IC-Abdrücke (drei Töne, der Clip) Bit für Bit; die IC-Fälle zu Clavinet und Hackbrett grün |
+| J57 | Die mitgelieferten Dateien | KL2 a, Muster 34g/34h | `asset/loop/instruments/{upright_piano, honky_tonk_piano, electric_grand_piano, clavinet_modal}.lvinst`, `test_LoopKlasse1.cpp` (`LUMIVIZ_KLASSE1_INSTRUMENTE_SCHREIBEN=1`), `InstrumentTuneTool --reference` (nur das Clavinet; der Flügel-Kern hat keinen Bezug), `instrument_katalog.py` | — | Tastatur nach IC (Upright/Honky-tonk Soft, Practice, Sustain; CP-70 nur Sustain; Clavinet ohne). Der Ton aus der Datei Bit für Bit wie IC, der Bezug des Clavinets gleich IC `normiere`. Register +5 (nur belegte Angaben aus den IC-Berichten). **Pegel** nur die vier neuen Zeilen: 1,8787 / 2,3097 / 2,5073 / 0,5258 (gemessen −18,88 / −20,67 / −21,38 / −7,82 LUFS bei Level 1, alt = neu). `loop_werte.txt` / `klangfassung.txt`: 13 Zeilen neu (zwölf Töne, `keys_demo`), die 8 Loops im Tausendstel bleiben; 443 Einträge verglichen, 0 anders. `CREDITS.md` 25 Quellen |
+| J58 | Demo, Hörliste, Creator | 34i-6 | `asset/loop/make_klasse1_loops.py` → `keys_demo.lvloop` (Jazz, zuerst in einer Kopie), `test_LoopKlasse1.cpp` (`LUMIVIZ_34I_WAV=hoertest/listen/klasse1_34i`), Fall „Instrument-Creator 34i-6“ | — | Hörliste 50 Klänge, 44 Punkte (8 Paare: Clavinet modal gegen Waveguide, Upright gegen Flügel, Practice, Tonabnehmer), gemeinsamer Pegel −35,3 LUFS, `--liste-pruefen` gültig. **Befund:** an Taste 103 bei a-30 ist das Honky-tonk vor dem Angleichen genau 1,79 dB (der Pegelunterschied) vom Upright entfernt — die Verstimmung wirkt dort nicht, ab a-12 schon (vermutlich trifft der Hammer leise über `stossLeise` eine Saite; ungeprüft). TT1 a: die Tafel des Flügel-Kerns heißt „Hammer string“ |
+| J59 | Körper des Upright | KL3 a → KL3-1 a | — | — | **Befund:** Chaigne, Cotté & Viggiano 2013 geben den P131 nur teilweise mit Zahlen; Steglinie, Bassteg, Stegpunkte je Taste nur als Bild oder gar nicht (ebenso Boutillon & Ege 2013, Ege et al. 2013). Ausgeliefert ohne Boden; Recherche nach einem Bauplan mit Maßen (Bericht unter `modellierung/hammer-saite/`) |
+
+**Wächter 34i** (S181):
+
+- **Bit für Bit wie IC:** die zwölf Abdrücke aus `werte/klasse1_ic.txt` im Kern (`test_InstrumentModelsKlasse1`) und aus
+  den mitgelieferten Dateien (`test_LoopKlasse1`), unter Release-clang und Testing-MSVC; alle Abdrücke von `bar`,
+  `membrane` und Flügel nach KL4-1 a unverändert.
+- **Voller Lauf** (neue Dateifassung, neuer Kern; UF17-1 a): **Release-clang 1850 / 1850 (556 s)** mit einem Skip — der
+  Messfall `LUMIVIZ_34I_KLEMMEN` trug `doctest::skip`, danach auf „meldet nur Zahlen“ umgestellt und `*34i*` 14 / 14 grün;
+  **Testing-MSVC 1851 / 1851, 0 Skips (681 s)**.
+- Bereich `*Instrument*,*Loop Stab*,*Loop Trommel*,*Hammer*,*Klangfassung*,*Loop Werte*,*Kit*,*Fluegel*,*34i*,*Pegel*,
+  *Palette*,*Klasse1*` 330 / 330; Creator, Quellen, 34i 95 / 95 nach TT1 a.
+- **Rechenzeit ausgesetzt** bis zum Tausch der Kühlung (Patrik S181).
+
 ## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.8.0 | 2026-11-09 | Session 181. §6b neu: 34i (J53–J59, Wächter). |
 | 0.7.0 | 2026-11-08 | Session 180. §6a neu: QM1 a (J50–J52, Wächter). |
 | 0.6.0 | 2026-11-08 | Session 179. §6 neu: 34h (J42 ff.). |
 | 0.5.0 | 2026-11-08 | Session 178. §5 neu: 34g (J31–J41, Wächter). |

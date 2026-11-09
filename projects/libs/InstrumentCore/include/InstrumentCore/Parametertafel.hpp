@@ -174,8 +174,9 @@ struct Parametertafel
     int bezugRunden = 1;
     /// der Tastenumfang je Instrument (KS1 a, 34g-2): die Namen zweier Ganzzahl-Werte der Tafel, die den Umfang des
     /// Instruments tragen (ein Kern, viele Instrumente: Marimba 36–96, Glockenspiel 79–108). Leer, wenn der Umfang der
-    /// Tafel gilt (Fluegel); sonst sind `noteMin`/`noteMax` der moegliche Umfang, und die Kurven, die Probe des Bezugs
-    /// und die Ansicht im Creator folgen dem des Instruments (`tastenumfang`).
+    /// Tafel gilt; sonst sind `noteMin`/`noteMax` der moegliche Umfang, und das Spiel, die Probe des Bezugs und die
+    /// Ansicht im Creator folgen dem des Instruments (`tastenumfang`). Die Kurven richten sich nur nach dem der Tafel
+    /// (KL4-1 a): ein kleinerer Umfang aendert keinen Klang darin.
     std::string umfangVon;
     std::string umfangBis;
 };
@@ -198,8 +199,8 @@ struct Parametertafel
 [[nodiscard]] Werte vorgaben(const Parametertafel& tafel);
 
 /// Die Werte in die Tafel richten: in die Reihenfolge der Tafel, Zahlen und Ganzzahlen auf die Grenzen, Kurven mit
-/// `richteKurve` auf Grenzen und Tastenumfang des Instruments (`tastenumfang`, KS1 a; eine leere bekommt die Vorgabe —
-/// ausser einer gestimmten; ein verkehrter Umfang ist ein Fehler, gerichtet wird dann auf den der Tafel), Listen je
+/// `richteKurve` auf Grenzen und den Tastenumfang der Tafel (KL4-1 a: der Umfang des Instruments verschiebt keine
+/// Stuetzpunkte; eine leere bekommt die Vorgabe — ausser einer gestimmten; ein verkehrter Umfang ist ein Fehler), Listen je
 /// Eintrag nach den Feldern. Die Quellen (QM1 a) in die Reihenfolge der Tafel, je Wert ohne Kurve; fehlen sie zu einem
 /// Wert, die der Angabe (`ParameterAngabe::quellen`); Quellen zu Kurven, zu unbekannten Namen und an Eintraegen einer
 /// Liste fallen weg. Zurueck kommt, was nicht stimmt: ein Wert fehlt, ist unbekannt oder von anderer Art,

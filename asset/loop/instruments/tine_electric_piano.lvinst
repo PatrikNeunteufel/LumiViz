@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 23,
+    "version": 24,
     "title": "Tine electric piano",
     "category": "keys",
     "genres": ["Ambient"],
@@ -357,7 +357,6 @@
             "left": "none",
             "middle": "none",
             "right": "sustain"
-        },
-        "range": [28, 100]
+        }
     }
 }

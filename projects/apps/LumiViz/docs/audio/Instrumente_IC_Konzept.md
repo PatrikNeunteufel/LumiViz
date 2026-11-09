@@ -1,10 +1,10 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.12.0
-> **Datum:** 2026-11-08 (Session 180)
+> **Version:** 0.13.0
+> **Datum:** 2026-11-09 (Session 181)
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23)
+> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -658,6 +658,83 @@ Instruments, eine Liste trägt sie als Ganzes), `coreSources` in Fassung 23, die
 neu zu stimmen (`LUMIVIZ_KERN_QUELLEN_SCHREIBEN=1`), `CREDITS.md` mit 19 Quellen; InstrumentCore 0.4.0, InstrumentModels
 0.4.0; voller Lauf 1837 / 1837 unter Release-clang und Testing-MSVC.
 
+**Teilplan 34i** (S181, Zuschnitt nach IK2-8 a, IK2-10 a, KS1 a, FU1 a, KL1 a–KL4 a; Nummern fest). Gefunden: Upright,
+Honky-tonk und CP-70 sind in IC Vorgaben auf dem Flügel-Kern (`klassen/01_hammer_saite/VorgabenRest.cpp`, aufgebaut auf
+IC `hammerSaiteVorgabe()`); das Clavinet rechnet auf einem zweiten Kern (`Saite.hpp/.cpp`, `SaitenVorgaben.cpp`: Tangente
+nach Gabrielli et al. 2013, Tonabnehmer, Verstärker-Shelves, Dämpferschieber, Tastendruck mit Grenze 0), der auch
+Hackbrett und Cimbalom trägt (Schlägel, Mittelsteg 3 : 2, Mitschwingen je Clip; Deluxe); die Bezüge stehen alle in IC
+`abdruck_msvc.txt` (`klasse1_*_m60_a-12` sechs, `saite_Hackbrett_clip_C4_G4`, `hammer_vorgabe_m*_a-12_d500` fünf) — kein
+Beleg-Programm wie in 34h; ob die LumiViz-Vorgabe des Flügels gleich der IC-Vorgabe ist, belegen erst die fünf
+`hammer_vorgabe`-Abdrücke (34i-1); IC rechnet Upright, Honky-tonk, Hackbrett, Cimbalom ohne Boden (Stegkraft), der CP-70
+fachlich richtig ohne (Piezo); Rechenzeit in IC (S172): CP-70 2,09 %, Upright 1,88 %, Clavinet 0,64 %. **Die Messung der
+Rechenzeit ist ausgesetzt, bis die Kühlung des Rechners erneuert ist (Patrik S181)** — die Fälle werden gebaut, die
+Zahlen nachgeholt.
+
+| Nr. | Inhalt | fertig, wenn |
+|---|---|---|
+| 34i-1 | Beleg: die LumiViz-Vorgabe `hammerSaiteVorgabe` gegen die fünf IC-Abdrücke `hammer_vorgabe_m{21,40,60,84,100}_a-12_d500`; dann `baueVorgabeUpright/Honkytonk/Cp70` per Skript nach `InstrumentModels/hammer/` (Anker je genau einmal), Quellen je Vorlage (QM1 a), Pedalwerte aus IC `Tastatur` | 5 + 3 Abdrücke Bit für Bit unter Release-clang und Testing-MSVC; die IC-Fälle Upright, Honky-tonk, CP-70 aus `test_hammer_rest` grün. **Haltepunkt:** weicht die Flügel-Vorgabe ab, Ursache als Vorlage |
+| 34i-2 | Umfang in der Tafel des Flügel-Kerns nach KL4 a | Flügel-Bezug, `Loop Werte`, Klang von `grand_piano` und den Glasflügeln Bit für Bit; `klangfassung.txt` nur in der Spalte des Abdrucks; CP-70 auf 28–100 gleich dem IC-Abdruck |
+| 34i-3 | Kern `struckString` nach KL1 a unter `InstrumentModels/saite/` (`lumi::kern::saite`), `Saite` und `SaitenVorgaben` per Skript; Tafel (*Keys*, *String*, *Decay*, *Course*, *Excitation*, *Tangent*, *Damper*, *Pickups*, *Amp*, *Output*), Bezug über `normiere` (IK2-10 a), Adapter Rechenweg Note mit Spuren `damperSlider` (0 … 1) und `keyPressure` (Grenze 0), Wahl der Tonabnehmer als Ganzzahl | Clavinet, Hackbrett, Cimbalom und der Clip Bit für Bit unter beiden Compilern; die IC-Fälle zum Clavinet und Hackbrett grün |
+| 34i-4 | die vier `.lvinst` nach KL2 a (Schreiber des Programms, Bezug über `InstrumentTuneTool --reference`), Katalog, Register und `CREDITS.md`, Pegel und `loop_werte.txt` nur neue Zeilen, `klangfassung.txt` nachgeführt; keine Umbenennung (kein Name kollidiert) | `Loop Werte` nur neue Zeilen; Quellen-Wächter grün |
+| 34i-5 | ~~Körper `pleyel_p131` nach KL3 a~~ — entfällt nach KL3-1 a bis zu einem belegten Bauplan (Recherche) | — |
+| 34i-6 | `keys_demo.lvloop`; Hörliste `hoertest/listen/klasse1_34i` (je Instrument tief/mitte/hoch bei −18/−9/0, Soft und Practice am Upright, `clavinet_modal` gegen `clavinet`, Upright gegen `grand_piano`); Creator-Fall mit dem Upright (Pedale, Umfang; Bild); Fall `*34i Rechenzeit*` | `--liste-pruefen` gültig; Rechenzeit ≤ 4,6 % (RZ1-1 a) nach dem Tausch der Kühlung nachgeholt |
+| 34i-7 | Modul-Doku, Journal J53 ff., Konzept, Bericht der Klasse unter `docs/modellierung/hammer-saite/`, Paket `instrumentmodels` 0.5.0 | **voller Lauf** unter beiden Compilern (neuer Kern, neue Instrumente; UF17-1 a) |
+
+✅ **KL1 a** (Patrik S181, „a“ auf KL1–KL4): **Der ganze IC-Kern `Saite` zieht als Kern `struckString` um**
+(`InstrumentModels/saite/`, `lumi::kern::saite`) — Tangente, Schlägel, Mittelsteg und `rechneSaitenClip`; ausgeliefert nur
+das Clavinet, Hackbrett und Cimbalom als Vorgaben ohne Datei (wie die Steeldrum, KS4 a); der Adapter für Mitschwingen je
+Clip mit dem Rechenweg Clip (31e/34k). Grund: alle drei Abdrücke und der Clip sofort Bit für Bit belegt, der Kern in einer
+Fassung, IC kann den Port ganz streichen (34l); der Name nennt das Verfahren (angeschlagene Saite), nicht ein Instrument.
+Verworfen: b (nur die Tangente als `tangentString` — der Kern später ein zweites Mal geöffnet, ohne Beleg aus der ersten
+Übernahme). Kippt auf b, wenn Hackbrett und Cimbalom nie ausgeliefert werden sollen.
+
+✅ **KL2 a** (Patrik S181): **Namen** — `upright_piano`, `honky_tonk_piano`, `electric_grand_piano` (CP-70, ohne Marke),
+`clavinet_modal` (IC); das heutige `clavinet` bleibt bis nach den Hörproben (IK2-8 a): ist das Modell besser, wird es
+`clavinet` und das heutige `clavinet_waveguide` (Skript für die Loops); Demo `keys_demo`. Verworfen: b (sofort
+umbenennen — nimmt das Hörurteil vorweg). Kippt bei einem anderen Wunschnamen.
+
+✅ **KL3 a** (Patrik S181): **Upright und Honky-tonk bekommen einen eigenen Körper `pleyel_p131`** — Bauplan nach Chaigne,
+Cotté & Viggiano 2013 (Maße, Rippen, Holz, Steglinie aus dem Paper abgelesen, nicht geschätzt), gerechnet mit
+`InstrumentBodyTool` wie der Steinway; Voraussetzung: Patrik beschafft das Paper nach `quellen/`; bis dahin `body` leer.
+Der CP-70 bleibt ohne Körper (Piezo misst die Stegkraft). Die Abdrücke hängen nicht daran (FU1 a: die App faltet den
+Körper an der Schicht). Grund: nur so trägt der Upright den Boden seines Instruments. Verworfen: b (leer wie IC — ein
+Klang ohne Abstrahlung neben `grand_piano` mit Boden), c (`lib:steinway_d` — ein Flügelboden unter einer Mensur von
+1,19 m). Kippt auf b, wenn das Paper nicht zu bekommen ist oder die Steglinie auch dort nur als Bild ohne Maße vorliegt.
+
+✅ **KL3-1 a** (Patrik S181, Kipppunkt von KL3 a erreicht): **Upright und Honky-tonk gehen ohne Boden mit** (Ausgang
+Stegkraft wie IC, `body` leer); der Körper bleibt offen mit benannter Lücke, dazu eine Recherche nach einem Upright-Bauplan
+mit Maßen; gebaut wird er, sobald ein belegter Satz da ist. Befund (34i-5): Chaigne, Cotté & Viggiano 2013 geben mit
+Zahlen Fläche 1,365 × 0,96 m (S. 2461), Platte 9 mm und zehn Rippen 2,1 × 2,5 cm (S. 2457), Rippenabstände (Tab. III),
+Faser 131°, Balken 2 × 3,5 cm, Diskantsteg Buche 39 × 28 mm (S. 2458), Holz Tab. I, η 1,5 % (S. 2459); die Stege nur als
+Bild ohne Achsen (Abb. 5 die vereinfachte Platte, Abb. 9 Foto, Abb. 10 Netz), die Stegpunkte je Taste und der Bassteg
+fehlen; ebenso nur Fotos bei Boutillon & Ege 2013 (Atlas) und Ege, Boutillon & Rébillat 2013. Grund: der Körper färbt
+jede Taste über ihren Stegpunkt — geraten wäre gerade dieser Teil, und eine falsche Färbung je Taste ist im Hörtest
+nicht von einer richtigen zu unterscheiden. Verworfen: b (aus Abb. 5 abgelesen, Stegpunkte als Annahme — ein geflickter
+Satz). Kippt auf b (als „gedachtes Instrument“ gekennzeichnet), wenn die Recherche ergebnislos bleibt und der Hörtest das
+Upright ohne Boden als unbrauchbar zeigt. Die Teilschritt-Zeile 34i-5 entfällt damit bis zum Fund.
+
+✅ **KL4 a** (Patrik S181): **Der Flügel-Kern bekommt den Umfang in der Tafel** — `noteMin`/`noteMax` in der Gruppe *Keys*
+wie `bar` (KS1 a); die Flügel-Dateien tragen 21/108; für Kern-Instrumente liest die Planung den Umfang aus der Tafel,
+`keyboard.range` fällt dort weg (der Block behält Pedale und `bassSustainBelow`). Grund: ein Ort für den Umfang aller Kerne
+(der Kipppunkt von KS1 a ist mit dem CP-70 eingetreten). Verworfen: b (nur `keyboard.range` wie IC `Tastatur` — zwei Orte
+für denselben Wert). Kippt auf b, wenn das Richten der Kurven auf 28–100 den CP-70-Abdruck aus IC verändert.
+
+✅ **KL4-1 a** (Patrik S181, nach dem Befund in 34i-2): **Kurven werden nur auf den Umfang der Tafel gerichtet; der Umfang
+des Instruments verschiebt keine Stützpunkte**, er begrenzt Spiel, Bezugsprobe und Ansicht (KS1 a berichtigt,
+InstrumentCore 0.5.0). Befund: `richtePaare` schob jeden Stützpunkt außerhalb auf den Rand — am CP-70 (28–100) wichen
+danach B an 22 von 73 Tasten bis 95 %, die Länge an 55, der Dämpfer an 62 Tasten ab, der Ton an Taste 60 um −36 dB
+(Differenz gegen den Ton); gerichtet nur auf die Tafel blieben alle Abdrücke von `bar`, `membrane` und Flügel Bit für Bit
+(S181 nachgerechnet), anders nur die Lage konstanter Kurven in `kalimba` und `reed_electric_piano` (Werte gleich; neu
+geschrieben). Verworfen: b (Umfang nur in `keyboard.range` — der Mangel bliebe für jedes Instrument mit eigenem Umfang,
+zwei Orte), c (die Kurven des CP-70 auf 28–100 abtasten — `exp(log(x))` nicht sicher bitgleich, 73 Punkte je Kurve).
+Kippt, wenn das Neuschreiben andere gestimmte Werte ergibt.
+
+✅ **TT1 a** (Patrik S181, nach dem Bild des Creators in 34i-6): **Die Tafel des Kerns `hammerString` heißt „Hammer
+string“** (bis S181 „Grand piano“) — der Titel nennt das Verfahren wie bei den anderen Kernen („Bar and plate“,
+„Membrane“, „Struck string“); Upright, Honky-tonk und CP-70 zeigen im Creator nicht mehr „Core · Grand piano“. Der Titel
+steht nicht im Abdruck der Werte (`Klangfassung` unverändert). Verworfen: b (lassen). Kippt, wenn der Kern im Creator als
+Flügel benannt sein soll.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -717,6 +794,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.13.0 | 2026-11-09 | Session 181. §6: Teilplan 34i (34i-1 bis 34i-7), KL1 a (Kern `struckString` ganz, nur das Clavinet ausgeliefert), KL2 a (Namen, `clavinet_modal` bis zu den Hörproben), KL3 a (Körper `pleyel_p131` für Upright und Honky-tonk), KL4 a (Umfang in der Tafel des Flügel-Kerns); Rechenzeit ausgesetzt bis zum Tausch der Kühlung. Dazu im Bau: KL4-1 a (Kurven nur auf den Umfang der Tafel gerichtet), TT1 a (Tafel „Hammer string“), KL3-1 a (Upright ohne Boden, Recherche; 34i-5 entfällt bis zum Fund); 34i-1 bis 34i-4 und 34i-6 gebaut (Journal J53–J59, Bericht `modellierung/hammer-saite/klasse1_ohne_fluegel.md`). |
 | 0.12.0 | 2026-11-08 | Session 180. §6: QM1 a gebaut, 34h erledigt. |
 | 0.11.0 | 2026-11-08 | Session 179. §6: Teilplan 34h (34h-1 bis 34h-7), TM1 a (Geschwindigkeit nach der Stufe in dB), TM2 a (Spielweisen als Spuren, feste Werte je Kit-Rolle und Drum-Spur), TM3 a (Kit nur Klasse 5), TM4 a (Namen, `synth_conga`). |
 | 0.10.0 | 2026-11-08 | Session 178. §6: Teilplan 34g (34g-1 bis 34g-7), KS1 a (Umfang als Wert des Instruments), KS2 a (`partnerAbstrahl` gestimmt, gestimmte Werte in Reihenfolge), KS3 a (Bogen am Vibraphon ganz), KS4 a (Namen, `synth_kalimba`, Steeldrum nicht ausgeliefert); 34g erledigt — Journal J31–J41, elf Abdrücke Bit für Bit wie IC, Rechenzeit höchstens 2,17 % (0,70 × Flügel). Abweichung: die Dateien schreibt ein Test mit dem Schreiber des Programms (Muster `grand_piano`), nicht `InstrumentTuneTool --create`. |

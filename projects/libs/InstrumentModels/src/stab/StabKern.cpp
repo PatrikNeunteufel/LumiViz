@@ -17,8 +17,8 @@ namespace lumi::kern::stab
 namespace
 {
 
-constexpr int kUmfangMin = 21;   // A0
-constexpr int kUmfangMax = 108;  // C8
+constexpr int kUmfangMin = kStabUmfangMin;  // A0
+constexpr int kUmfangMax = kStabUmfangMax;  // C8
 
 constexpr std::string_view kNameNoteMin = "noteMin";
 constexpr std::string_view kNameNoteMax = "noteMax";

@@ -63,12 +63,10 @@ QString dateiVon(const stab::Vorlage& v)
     return QStringLiteral("asset/loop/instruments/") + QString::fromStdString(v.name) + QStringLiteral(".lvinst");
 }
 
-/// Ein Pedal rechts (Sustain) nur fuer Instrumente mit Daempfer; der Umfang des Instruments.
+/// Ein Pedal rechts (Sustain) nur fuer Instrumente mit Daempfer (den Umfang traegt seit KL4 a die Tafel).
 Tastatur tastaturVon(const stab::StabSpiel& s)
 {
     Tastatur t;
-    t.tiefste = s.noteMin;
-    t.hoechste = s.noteMax;
     t.links = PedalArt::Keins;
     t.mitte = PedalArt::Keins;
     t.rechts = s.daempfer != stab::DaempferArt::Keiner ? PedalArt::Sustain : PedalArt::Keins;

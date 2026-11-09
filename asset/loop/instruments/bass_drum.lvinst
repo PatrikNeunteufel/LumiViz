@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 23,
+    "version": 24,
     "title": "Bass drum",
     "category": "drums",
     "genres": [],
@@ -124,7 +124,6 @@
             "left": "none",
             "middle": "none",
             "right": "none"
-        },
-        "range": [36, 36]
+        }
     }
 }

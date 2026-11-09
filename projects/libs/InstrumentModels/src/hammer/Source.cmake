@@ -14,6 +14,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/HammerKern.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/HammerSaite.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/HammerTon.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Vorgaben.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/hammer/HammerKern.hpp"

@@ -97,6 +97,11 @@ enum class Anregung
     Zupfen,  ///< Kalimba: die Zunge wird an der Stelle ausgelenkt und losgelassen
 };
 
+/// Der moegliche Umfang aller Stabspiele (die Tafel des Kerns `bar`, KS1 a): A0 … C8. Auf ihn richten sich die Kurven
+/// (KL4-1 a); der Umfang eines Instruments (`noteMin`/`noteMax`) verschiebt keine Stuetzpunkte.
+inline constexpr int kStabUmfangMin = 21;
+inline constexpr int kStabUmfangMax = 108;
+
 /// Die Groessen eines Stabspiels als Kurven ueber den Tonumfang (MIDI); Skala je Groesse beim Feld.
 struct StabSpiel
 {

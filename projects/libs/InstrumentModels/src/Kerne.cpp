@@ -5,6 +5,7 @@
 #include "InstrumentModels/Kerne.hpp"
 
 #include "InstrumentModels/hammer/HammerKern.hpp"
+#include "InstrumentModels/saite/SaiteKern.hpp"
 #include "InstrumentModels/stab/StabKern.hpp"
 #include "InstrumentModels/trommel/TrommelKern.hpp"
 
@@ -25,6 +26,8 @@ const Fabrik& kerne()
         assert(fehlerStab.empty());
         [[maybe_unused]] const std::vector<std::string> fehlerTrommel = f.registriere(trommel::kernTyp());  // 34h: Klasse 5
         assert(fehlerTrommel.empty());
+        [[maybe_unused]] const std::vector<std::string> fehlerSaite = f.registriere(saite::kernTyp());  // 34i: Klasse 1 Rest
+        assert(fehlerSaite.empty());
         return f;
     }();
     return eingebaut;

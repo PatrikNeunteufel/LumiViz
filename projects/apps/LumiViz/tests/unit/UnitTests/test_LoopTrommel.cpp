@@ -64,12 +64,10 @@ QString dateiVon(const trommel::Vorlage& v)
     return QStringLiteral("asset/loop/instruments/") + QString::fromStdString(v.name) + QStringLiteral(".lvinst");
 }
 
-/// Der Umfang des Instruments ohne Pedale (eine Trommel hat keinen Daempfer).
+/// Ohne Pedale (eine Trommel hat keinen Daempfer; den Umfang traegt seit KL4 a die Tafel).
 Tastatur tastaturVon(const trommel::TrommelSpiel& s)
 {
     Tastatur t;
-    t.tiefste = s.note;
-    t.hoechste = s.noteMax;
     t.links = PedalArt::Keins;
     t.mitte = PedalArt::Keins;
     t.rechts = PedalArt::Keins;

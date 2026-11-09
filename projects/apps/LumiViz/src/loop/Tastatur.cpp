@@ -49,9 +49,7 @@ PedalArt pedalAusName(const QString& name)
 
 void richteTastatur(Tastatur& t)
 {
-    t.tiefste = std::clamp(t.tiefste, kTastaturMin, kTastaturMax);
-    t.hoechste = std::clamp(t.hoechste, t.tiefste, kTastaturMax);
-    t.bassSustainBis = std::clamp(t.bassSustainBis, t.tiefste, t.hoechste + 1);
+    t.bassSustainBis = std::clamp(t.bassSustainBis, kTastaturMin, kTastaturMax + 1);
     if (!pedalErlaubt(PedalPlatz::Links, t.links)) t.links = PedalArt::Keins;
     if (!pedalErlaubt(PedalPlatz::Mitte, t.mitte)) t.mitte = PedalArt::Keins;
     if (!pedalErlaubt(PedalPlatz::Rechts, t.rechts)) t.rechts = PedalArt::Keins;
@@ -59,8 +57,8 @@ void richteTastatur(Tastatur& t)
 
 QJsonObject tastaturAlsJson(const Tastatur& t)
 {
-    return QJsonObject{{QStringLiteral("range"), QJsonArray{t.tiefste, t.hoechste}},
-                       {QStringLiteral("pedals"), QJsonObject{{QStringLiteral("left"), pedalName(t.links)},
+    // KL4 a (Fassung 24): ohne `range` — den Umfang traegt die Tafel des Kerns
+    return QJsonObject{{QStringLiteral("pedals"), QJsonObject{{QStringLiteral("left"), pedalName(t.links)},
                                                               {QStringLiteral("middle"), pedalName(t.mitte)},
                                                               {QStringLiteral("right"), pedalName(t.rechts)}}},
                        // seit Fassung 21 (FU2 a, aus IC F-2 a), immer geschrieben
@@ -70,12 +68,6 @@ QJsonObject tastaturAlsJson(const Tastatur& t)
 Tastatur tastaturAusJson(const QJsonObject& o)
 {
     Tastatur t;
-    const QJsonArray umfang = o.value(QStringLiteral("range")).toArray();
-    if (umfang.size() == 2)
-    {
-        t.tiefste = umfang[0].toInt(t.tiefste);
-        t.hoechste = umfang[1].toInt(t.hoechste);
-    }
     t.bassSustainBis = o.value(QStringLiteral("bassSustainBelow")).toInt(t.bassSustainBis);
     const QJsonObject pedale = o.value(QStringLiteral("pedals")).toObject();
     // fehlt der Eintrag eines Platzes, gilt die Vorgabe; ein unbekannter heisst keins

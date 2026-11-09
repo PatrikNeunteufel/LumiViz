@@ -179,6 +179,18 @@ KATALOG = {
                                     "neoprene hammer (Hunt-Crossley, Soenderbo 2024), heard through a magnetic pickup; unmeasured."),
     "reed_electric_piano": ("keys", "A clamped steel reed per key struck by a felt hammer (Stulov 2009), heard through an "
                                     "electrostatic pickup; unmeasured."),
+    # --- S181 (34i, KL2 a): Klasse 1 ohne Fluegel aus InstrumentsCalculation, geschrieben vom Programm
+    # (test_LoopKlasse1.cpp, LUMIVIZ_KLASSE1_INSTRUMENTE_SCHREIBEN=1); das Clavinet normiert von InstrumentTuneTool --reference
+    "upright_piano": ("keys", "The hammer-string of the grand piano with the bass strings cut to the length of an upright "
+                              "(Yamaha U1, report only), heavier strings at the same tension and a larger inharmonicity; soft "
+                              "and practice pedals; unmeasured."),
+    "honky_tonk_piano": ("keys", "The upright piano with the outer strings of each plain-wire course tuned 1 Hz apart from "
+                                 "the middle one at A4 (a tuner's recipe, report only); unmeasured."),
+    "electric_grand_piano": ("keys", "The hammer-string grand without soundboard: one string per key up to F#1, two above "
+                                     "(report only), 73 keys E1 to E7, heard at the bridge; unmeasured."),
+    "clavinet_modal": ("keys", "A string per key struck and held by a tangent, three semitones lower when released (Gabrielli "
+                               "et al. 2013), heard through two magnetic pickups and the shelves of the amplifier; modal, next "
+                               "to the waveguide clavinet until the listening test; unmeasured."),
     # --- S179 (34h, TM4 a): der Kern `membrane` (Klasse 5 aus InstrumentsCalculation), geschrieben vom Programm
     # (test_LoopTrommel.cpp, LUMIVIZ_TROMMEL_INSTRUMENTE_SCHREIBEN=1), normiert von InstrumentTuneTool --reference;
     # die Kit-Trommeln sind Drums (Pegel ueber die Kits), die anderen Schlagwerk (Pegel hier)

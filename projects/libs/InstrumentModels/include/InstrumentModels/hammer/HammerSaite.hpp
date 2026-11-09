@@ -124,6 +124,19 @@ struct KurvenAngabe
 /// Jede Kurve in ihre Grenzen (`kurvenAngaben()`); eine leere bekommt die Vorgabe.
 void richteHammerSaite(HammerSaite& saite);
 
+// --- die uebrigen Instrumente der Klasse 1 auf diesem Kern (34i-1, aus IC `VorgabenRest.cpp`) -----------------------
+
+/// Upright (`upright_piano`, KL2 a): der Fluegel mit gekappten Basslaengen (Yamaha U1, 46,8″ — nur Bericht), bei
+/// gleicher Spannung schwereren Saiten und groesserem B (B ∝ 1/L², Einschaetzung im Bericht); der Boden an der Schicht
+/// (KL3 a). Ungemessen bis K18.
+[[nodiscard]] HammerSaite baueVorgabeUpright();
+/// Honky-tonk (`honky_tonk_piano`): das Upright mit ±1 Hz bei A4 zwischen den aeusseren Saiten des Chors ab MIDI 41
+/// (Stimmerpraxis, nur Bericht). Ungemessen.
+[[nodiscard]] HammerSaite baueVorgabeHonkytonk();
+/// CP-70 (`electric_grand_piano`): der Fluegel mit einer Saite bis MIDI 42, darueber zwei (smem, Modartt — nur
+/// Bericht); 73 Tasten E1–E7, kein Boden (der Piezo misst die Stegkraft). Ohne freie Aufnahme ungemessen (IC F-6 b).
+[[nodiscard]] HammerSaite baueVorgabeCp70();
+
 /// Chabassier & Durufle, RT-0425, Gl. 2–4 — die Groessen des Hammers an Taste i (1 … 88, i = MIDI − 20): Masse in g,
 /// Exponent p, Steife K_H in N·m⁻ᵖ und umgerechnet Q0 = K_H·10⁻³ᵖ in N/mm^p (HT2 a).
 [[nodiscard]] double rtHammerMasseG(int i);

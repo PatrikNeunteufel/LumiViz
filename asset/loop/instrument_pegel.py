@@ -65,6 +65,7 @@ PEGEL = {
     "chord_stab": (1.0, 2.5293),
     "clave": (0.49, 1.012),
     "clavinet": (0.705, 1.1452),
+    "clavinet_modal": (0.5258, 0.5258),  # S181 (34i): neu, -7.817 LUFS bei 1.0 -> 0.5258 (alt = neu, die Loops fuer den Bezug geschrieben)
     "clavinet_old": (0.6, 0.9427),
     "clean_guitar": (0.398, 1.387),
     "clean_guitar_old": (0.7, 2.2392),
@@ -72,6 +73,7 @@ PEGEL = {
     "cowbell": (0.64, 1.0833),
     "drop_d_guitar": (0.795, 0.4987),
     "dulcimer": (0.9, 1.0063),
+    "electric_grand_piano": (2.5073, 2.5073),  # S181 (34i): neu, -21.384 LUFS bei 1.0 -> 2.5073 (alt = neu, die Loops fuer den Bezug geschrieben)
     "female_choir": (0.8, 0.5392),
     "fifth_pad": (0.55, 0.5772),
     "finger_bass": (1.0, 1.1852),
@@ -83,6 +85,7 @@ PEGEL = {
     "guitar": (1.0, 2.0941),
     "guitar_old": (1.0, 2.2333),
     "harp": (0.85, 0.6098),
+    "honky_tonk_piano": (2.3097, 2.3097),  # S181 (34i): neu, -20.671 LUFS bei 1.0 -> 2.3097 (alt = neu, die Loops fuer den Bezug geschrieben)
     "hoover": (0.45, 0.346),
     "house_organ": (1.0, 0.802),
     "house_piano": (1.0, 1.2222),
@@ -145,6 +148,7 @@ PEGEL = {
     "ukulele": (0.878, 2.8112),
     "upright_bass": (0.954, 0.9867),
     "upright_bass_old": (0.85, 0.9781),
+    "upright_piano": (1.8787, 1.8787),  # S181 (34i): neu, -18.877 LUFS bei 1.0 -> 1.8787 (alt = neu, die Loops fuer den Bezug geschrieben)
     "vibraphone": (0.6094, 0.6094),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "violin": (1.0, 0.7915),
     "vocal_chop": (0.9, 1.1367),

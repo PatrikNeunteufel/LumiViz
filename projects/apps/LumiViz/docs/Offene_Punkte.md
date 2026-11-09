@@ -2848,9 +2848,21 @@ IC, Rechenzeit höchstens 2,17 %; voller Lauf 1815 / 1815 unter beiden Compilern
 [Bericht](modellierung/platte-stab/README.md)).** **34h erledigt 2026-11-08 (S179 Kern `membrane`, sieben Trommeln,
 Spielweise, Kit `modelled_drums`; S180 QM1 a, Quellen am Wert für alle Werte, `.lvinst` Fassung 23, `CREDITS.md` mit 19
 Quellen; voller Lauf 1837 / 1837 unter beiden Compilern, Journal J42–J52, [Bericht](modellierung/membran/README.md)).**
-Nächster Schritt **34i** (Klasse 1 ohne Flügel); davor **die Rechenzeit für QM1 a nachholen** (RZ-S180 a: dreimal
-`*31b-3 Rechenzeit*` allein, sobald die Taktprobe unter Spanne 1,15 liegt — in S180 drosselte der Rechner durchgehend,
-Spanne 2,7–12,7). Offen aus 34h: der Hörtest `hoertest/listen/membran_34h` (danach `conga` IC oder Synth, IK2-8 a); die Lizenzen der neun neuen
+**34i erledigt 2026-11-09 (S181, Klasse 1 ohne Flügel: Upright, Honky-tonk, CP-70, Kern `struckString`; 34i-5 entfällt
+nach KL3-1 a; voller Lauf 1851 / 1851 unter Testing-MSVC, Journal J53–J59,
+[Bericht](modellierung/hammer-saite/klasse1_ohne_fluegel.md)).** Nächster Schritt **34j** (Klasse 10). Offen aus 34i:
+**der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
+— bei Chaigne et al. 2013 und den übrigen lokalen Upright-Quellen nur als Bild oder gar nicht; Recherche S181
+`modellierung/hammer-saite/recherche/2026-11-09_S181_upright_boden_bauplan.md`: kein frei lesbarer, vollständiger Satz;
+nächster Schritt die HAL-Volltexte zum P131 von Hand öffnen — Trévisan 2016 tel-01451727, Trévisan et al. 2017
+hal-01456083, 2015 hal-01217078, Chaigne 2010 hal-00538347 (HAL sperrt automatische Abrufe); gebaut wird er mit einem
+belegten Satz); der Hörtest
+`hoertest/listen/klasse1_34i` (danach `clavinet` modal oder Waveguide, IK2-8 a); die Lizenzen der fünf neuen Quellen
+(`yamaha-u1`, `ptg-honkytonk`, `smem-cp70`, `modartt-cp80`, `remaggi2012`, „report only“); Befund: das Honky-tonk klingt bei
+a-30 an Taste 103 wie das Upright (die Verstimmung wirkt erst ab a-12; vermutlich trifft der Hammer leise eine Saite —
+ungeprüft). **Die Rechenzeit ist ausgesetzt, bis die Kühlung des Rechners erneuert ist** (Patrik S181): RZ-S180 a für QM1 a
+und die Fälle der Stufe 34i werden danach gesammelt nachgeholt (dreimal `*31b-3 Rechenzeit*` allein nach der Taktprobe,
+Spanne unter 1,15). Offen aus 34h: der Hörtest `hoertest/listen/membran_34h` (danach `conga` IC oder Synth, IK2-8 a); die Lizenzen der neun neuen
 Quellen (Register, „report only“); Befunde: der Cross-Stick 15 dB unter der Snare, der Teppich folgt der Stärke nicht (IC,
 offen). Offen aus 34e–34g: ein
 WAV-Schreiber ohne Qt in `AudioCore` (IC `schreibeWav`, J20); **der Hörtest der Liste `hoertest/listen/stab_34g`**

@@ -1,11 +1,13 @@
 /**
  * @file Tastatur.hpp
- * @brief Loop: der Block *Keyboard* eines Instruments — Umfang, Pedale auf ihren Plaetzen, Grenze von *Bass sustain*
- *        (docs/audio/Spielweisen_Konzept.md §4.1, HA2 a, HA4 a; Instrumente_IC_Konzept.md FU2 a)
+ * @brief Loop: der Block *Keyboard* eines Instruments — Pedale auf ihren Plaetzen, Grenze von *Bass sustain*
+ *        (docs/audio/Spielweisen_Konzept.md §4.1, HA2 a, HA4 a; Instrumente_IC_Konzept.md FU2 a, KL4 a)
  *
  * Bis S175 stand das mit der Hammer-Saite in `loop/HammerSaite.hpp`. Seit 34d (FU2 a) traegt der Block nur, was die
  * Planung und der Editor brauchen; was die Rechnung eines Kerns bestimmt (`undampedFrom`, Soft, Moderator), steht in
  * seiner Tafel (`InstrumentModels/hammer/HammerKern.hpp`). *Bass sustain* und seine Grenze kommen aus IC (Klasse 1 F-2 a).
+ * Den Umfang (`range` bis Fassung 23) traegt seit Fassung 24 die Tafel des Kerns (`noteMin`/`noteMax`, KL4 a); ein
+ * `range` in einer aelteren Datei wird ueberlesen.
  *
  * Kein Qt-Widget, keine Audio-Engine.
  */
@@ -52,8 +54,6 @@ enum class PedalPlatz : int
 /// Die Ausstattung einer Tastatur (HA4 a). Die Vorgaben sind die des Fluegels.
 struct Tastatur
 {
-    int tiefste = kTastaturMin;   ///< `range`: die tiefste Taste
-    int hoechste = kTastaturMax;  ///< die hoechste
     PedalArt links = PedalArt::UnaCorda;
     PedalArt mitte = PedalArt::Sostenuto;
     PedalArt rechts = PedalArt::Sustain;
@@ -63,12 +63,12 @@ struct Tastatur
     [[nodiscard]] bool operator==(const Tastatur&) const = default;
 };
 
-/// In die Grenzen: der Umfang innerhalb `kTastaturMin` … `kTastaturMax` (tiefste nicht ueber hoechste),
-/// `bassSustainBis` im Umfang bis hoechste + 1, ein Pedal, das auf seinem Platz nicht erlaubt ist, wird keins.
+/// In die Grenzen: `bassSustainBis` in `kTastaturMin` … `kTastaturMax` + 1, ein Pedal, das auf seinem Platz nicht
+/// erlaubt ist, wird keins.
 void richteTastatur(Tastatur& tastatur);
-/// Der Block `keyboard`: `{"range": [tiefste, hoechste], "pedals": {"left": …, "middle": …, "right": …},
-/// "bassSustainBelow": …}` — und zurueck (gerichtet). Ein `undampedFrom` aus Fassung 20 wird ueberlesen (es steht seit
-/// Fassung 21 in der Tafel des Kerns).
+/// Der Block `keyboard`: `{"pedals": {"left": …, "middle": …, "right": …}, "bassSustainBelow": …}` — und zurueck
+/// (gerichtet). Ein `undampedFrom` aus Fassung 20 und ein `range` bis Fassung 23 werden ueberlesen (sie stehen in der
+/// Tafel des Kerns).
 [[nodiscard]] QJsonObject tastaturAlsJson(const Tastatur& tastatur);
 [[nodiscard]] Tastatur tastaturAusJson(const QJsonObject& o);
 

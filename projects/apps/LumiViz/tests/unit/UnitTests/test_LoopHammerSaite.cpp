@@ -292,7 +292,7 @@ TEST_CASE("Loop Hammer-Saite 34d Datei")
         instrument.tastatur->mitte = PedalArt::Moderator;
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 23);  // seit QM1 a: Quellen je Wert `coreSources`; seit 34f-1: Quellen je Kurve (WZ1 a); seit 34d: der Kern (IK2-4 a, FU1 a, FU2 a)
+        CHECK(json.value(QStringLiteral("version")).toInt() == 24);  // seit KL4 a: kein `range` im Block `keyboard`; seit QM1 a: Quellen je Wert `coreSources`; seit 34f-1: Quellen je Kurve (WZ1 a); seit 34d: der Kern (IK2-4 a, FU1 a, FU2 a)
         const QJsonObject schicht = ersteSchicht(json);
         CHECK(schicht.value(QStringLiteral("core")).toString() == QStringLiteral("hammerString"));
         CHECK(schicht.value(QStringLiteral("body")).toString() == QStringLiteral("lib:steinway_d"));
@@ -319,7 +319,9 @@ TEST_CASE("Loop Hammer-Saite 34d Datei")
         }
         CHECK(werte.value(QStringLiteral("undampedFrom")).toInt() == 80);  // seit FU2 a in der Tafel
         const QJsonObject tastatur = json.value(QStringLiteral("keyboard")).toObject();
-        CHECK(tastatur.value(QStringLiteral("range")).toArray() == QJsonArray{21, 108});
+        CHECK_FALSE(tastatur.contains(QStringLiteral("range")));  // seit KL4 a in der Tafel (noteMin, noteMax)
+        CHECK(werte.value(QStringLiteral("noteMin")).toInt() == 21);
+        CHECK(werte.value(QStringLiteral("noteMax")).toInt() == 108);
         CHECK_FALSE(tastatur.contains(QStringLiteral("undampedFrom")));
         const QJsonObject pedale = tastatur.value(QStringLiteral("pedals")).toObject();
         CHECK(pedale.value(QStringLiteral("left")).toString() == QStringLiteral("soft"));
@@ -395,15 +397,14 @@ TEST_CASE("Loop Hammer-Saite 34d Datei")
     SUBCASE("die Tastatur in ihren Grenzen")
     {
         QJsonObject o = tastaturAlsJson(Tastatur{});
-        o[QStringLiteral("range")] = QJsonArray{40, 30};  // hoechste unter tiefster
+        o[QStringLiteral("range")] = QJsonArray{40, 30};  // bis Fassung 23: wird ueberlesen (KL4 a, der Umfang in der Tafel)
         o[QStringLiteral("undampedFrom")] = 70;           // aus Fassung 20: wird ueberlesen
         o[QStringLiteral("bassSustainBelow")] = 200;
         o[QStringLiteral("pedals")] = QJsonObject{{QStringLiteral("left"), QStringLiteral("sustain")},
                                                   {QStringLiteral("middle"), QStringLiteral("wurst")}};
         const Tastatur t = tastaturAusJson(o);
-        CHECK(t.tiefste == 40);
-        CHECK(t.hoechste == 40);
-        CHECK(t.bassSustainBis == 41);                 // bis hoechste + 1
+        CHECK(t.bassSustainBis == kTastaturMax + 1);   // bis zur hoechsten Taste + 1
+        CHECK_FALSE(tastaturAlsJson(t).contains(QStringLiteral("range")));
         CHECK(t.links == PedalArt::Keins);             // Sustain gehoert nach rechts
         CHECK(t.mitte == PedalArt::Keins);             // unbekannt
         CHECK(t.rechts == PedalArt::Sustain);          // fehlt: die Vorgabe

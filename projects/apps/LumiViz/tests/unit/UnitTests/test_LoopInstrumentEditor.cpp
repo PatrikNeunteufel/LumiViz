@@ -61,6 +61,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <tuple>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -1944,7 +1945,7 @@ TEST_SUITE("LoopInstrumentEditor")
 
         // --- die Zeile: Core statt Source, Body, Level; kein Envelope, + Add grau
         CHECK(namen == QStringList{QStringLiteral("Core"), QStringLiteral("Body"), QStringLiteral("Level")});
-        CHECK(weg->kaesten()[0].wert == QStringLiteral("Grand piano"));
+        CHECK(weg->kaesten()[0].wert == QStringLiteral("Hammer string"));
         CHECK(weg->kaesten()[1].wert == QStringLiteral("steinway_d"));
         CHECK_FALSE(weg->addMoeglich());
         CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
@@ -1953,7 +1954,7 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK_FALSE(creator.verschiebeBaustein(0, 0));
         auto* liste = creator.findChild<QListWidget*>(QStringLiteral("creatorLayers"));
         REQUIRE(liste != nullptr);
-        CHECK(liste->item(0)->text().contains(QStringLiteral("Core Grand piano")));
+        CHECK(liste->item(0)->text().contains(QStringLiteral("Core Hammer string")));
         auto* marke = creator.findChild<QLabel*>(QStringLiteral("creatorUnmeasured"));
         REQUIRE(marke != nullptr);
         CHECK_FALSE(marke->isHidden());  // die Pedale sind offen, die Kurven aus Quellen: ungemessen (Z2 a)
@@ -1965,7 +1966,7 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(regler != nullptr);
         CHECK_FALSE(ansicht->isHidden());
         CHECK(regler->isHidden());
-        CHECK(ansicht->kopf() == QStringLiteral("Core · Grand piano"));
+        CHECK(ansicht->kopf() == QStringLiteral("Core · Hammer string"));
         CHECK_FALSE(ansicht->markeUngemessen());  // sie steht einmal, neben Type (§6a 2)
         auto* stellenTitel = creator.findChild<QLabel*>(QStringLiteral("creatorBlockTitle"));
         REQUIRE(stellenTitel != nullptr);
@@ -2127,6 +2128,85 @@ TEST_SUITE("LoopInstrumentEditor")
             QCoreApplication::processEvents();
             QFileInfo info(ziel);
             CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_bar.") + info.suffix())));
+        }
+    }
+
+    TEST_CASE("Instrument-Creator 34i-6: Upright und CP-70 (Kern hammerString) — Core, Body, Level, Umfang aus der Tafel, Save as")
+    {
+        // KL4 a: der Umfang in der Tafel (Gruppe Keys), die Kurven der Ansicht ueber den Umfang des Instruments; KL4-1 a:
+        // gespeichert Bit fuer Bit. `LUMIVIZ_CREATOR_CORE_BILD=<datei.png>` legt dazu ein Bild mit `_upright` ab.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        const lumi::kern::Parametertafel& tafel = lumi::kern::kerne().typ("hammerString")->tafel;
+        for (const auto& [name, tiefste, zahl] : {std::tuple{QStringLiteral("upright_piano"), QStringLiteral("Keys / Lowest key: A0 (21) [Open]"), 88},
+                                                  std::tuple{QStringLiteral("electric_grand_piano"), QStringLiteral("Keys / Lowest key: E1 (28) [Open]"), 73}})
+        {
+            const std::string fall = name.toStdString();
+            CAPTURE(fall);
+            const Instrument* gefunden = findeInstrument(name);
+            REQUIRE_MESSAGE(gefunden != nullptr, "nicht gefunden — aus dem Projekt-Root starten");
+            const Instrument inst = *gefunden;
+            REQUIRE(istKernSchicht(inst.schichten[0]));
+            CHECK(inst.schichten[0].kernName == QStringLiteral("hammerString"));
+
+            InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+            creator.oeffne(inst);
+            SignalWeg* weg = creator.signalWeg();
+            REQUIRE(weg != nullptr);
+            weg->resize(1400, 40);
+            QStringList namen;
+            for (const WegKasten& einer : weg->kaesten()) namen << einer.titel;
+            CHECK(namen == QStringList{QStringLiteral("Core"), QStringLiteral("Body"), QStringLiteral("Level")});
+            auto* marke = creator.findChild<QLabel*>(QStringLiteral("creatorUnmeasured"));
+            REQUIRE(marke != nullptr);
+            CHECK_FALSE(marke->isHidden());  // Z2 a: ungemessen
+
+            KernAnsicht* ansicht = creator.kernAnsicht();
+            REQUIRE(ansicht != nullptr);
+            QStringList gruppen;
+            for (const std::string& g : tafel.gruppen) gruppen << QString::fromStdString(g);
+            CHECK(ansicht->gruppen() == gruppen);
+            CHECK(ansicht->zeilen().contains(tiefste));
+            auto* b = ansicht->findChild<KernKurvenBild*>(QStringLiteral("creatorCoreCurve_inharmonicity"));
+            REQUIRE(b != nullptr);
+            CHECK(b->werte().size() == static_cast<std::size_t>(zahl));
+            CHECK_FALSE(creator.geaendert());
+
+            REQUIRE(creator.speichereAlsEigenes(QStringLiteral("Mein ") + inst.titel));
+            QFile kopie(creator.datei());
+            REQUIRE(kopie.open(QIODevice::ReadOnly));
+            const QJsonObject kopieJson = QJsonDocument::fromJson(kopie.readAll()).object();
+            QFile vorlage(QStringLiteral("asset/loop/instruments/") + name + QStringLiteral(".lvinst"));
+            REQUIRE(vorlage.open(QIODevice::ReadOnly));
+            const QJsonObject vorlageJson = QJsonDocument::fromJson(vorlage.readAll()).object();
+            CHECK(kopieJson.value(QStringLiteral("layers")) == vorlageJson.value(QStringLiteral("layers")));
+            CHECK(kopieJson.value(QStringLiteral("keyboard")) == vorlageJson.value(QStringLiteral("keyboard")));
+            Instrument gelesen;
+            REQUIRE(ladeInstrument(creator.datei(), gelesen));
+            CHECK(gelesen.schichten == inst.schichten);
+            CHECK(rendereTon(gelesen, 60, 300.0, 48000).daten == rendereTon(inst, 60, 300.0, 48000).daten);
+
+            if (const QString ziel = qEnvironmentVariable("LUMIVIZ_CREATOR_CORE_BILD"); !ziel.isEmpty() && name == QStringLiteral("upright_piano"))
+            {
+                InstrumentCreator gezeigt;
+                gezeigt.oeffne(inst);
+                gezeigt.resize(1500, 900);
+                gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+                gezeigt.show();
+                QCoreApplication::processEvents();
+                QFileInfo info(ziel);
+                CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_upright.") + info.suffix())));
+            }
         }
     }
 
