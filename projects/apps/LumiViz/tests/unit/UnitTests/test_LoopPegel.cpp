@@ -30,6 +30,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentPalette.hpp"
+#include "loop/Pedalplan.hpp"
 #include "loop/Pegel.hpp"
 #include "UI/widgets/Bedienhilfe.hpp"
 
@@ -45,12 +46,16 @@
 #include <QThread>
 #include <QTreeWidget>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QRegularExpression>
 #include <QTextStream>
 
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <set>
 #include <vector>
 
 using namespace lumi::loop;
@@ -177,6 +182,80 @@ TEST_SUITE("LoopPegel")
         }
         MESSAGE(geprueft << " Instrumente auf dem Bezug, davon " << ueberEins << " mit Volume ueber 1");
         CHECK(geprueft > 80);
+    }
+
+    // S182 (LP3 a): die Standardprobe misst in einer Lage — ein Gefaelle ueber die Tastatur sieht 27c nicht
+    // (docs/modellierung/anbindung-ic/2026-11-09_S182_pegel_ueber_den_umfang.md). Je Instrument mit Kern alle 3
+    // Halbtoene ueber den Umfang ein Ton (Staerke 0,7, 500 ms), gemessen als Schlag (Momentary-Maximum): die Spanne
+    // hoechstens 15 LU. Die bekannten Ausnahmen stehen mit ihrer heutigen Spanne unten; jede muss noch noetig sein —
+    // haelt ein Instrument die Grenze von selbst ein, ist der Fall rot, bis die Ausnahme entfernt ist.
+    TEST_CASE("Loop Pegel LP3 a: die Lautheit ueber den Umfang — Spanne hoechstens 15 LU je Instrument mit Kern")
+    {
+        const PegelApp app;
+        constexpr double kGrenzeLu = 15.0;
+        // Ursache bekannt (Bauwerte fest ueber den Umfang): Wurlitzer, Kalimba, Clavinet; Einbruch ganz oben, Ursache
+        // noch nicht geprueft: Glockenspiel (Taste 103), Xylophon (Taste 107)
+        const std::map<QString, QString> ausnahmen = {
+            {QStringLiteral("reed_electric_piano"), QStringLiteral("Masse der Zunge und Hammer fest")},
+            {QStringLiteral("kalimba"), QStringLiteral("feste Auslenkung, Ausgabe Beschleunigung")},
+            {QStringLiteral("clavinet_modal"), QStringLiteral("Saitenlaenge und -masse fest (vermutet)")},
+            {QStringLiteral("glockenspiel"), QStringLiteral("Einbruch an Taste 103, offen")},
+            {QStringLiteral("xylophone"), QStringLiteral("Einbruch an Taste 107, offen")},
+        };
+        int geprueft = 0;
+        std::set<QString> gesehen;
+        for (const Instrument& instrument : instrumente())
+        {
+            if (!istKernSchicht(instrument.schichten[0])) continue;
+            QFile datei(looptest::repoWurzel().filePath(QStringLiteral("asset/loop/instruments/") + instrument.name + QStringLiteral(".lvinst")));
+            REQUIRE_MESSAGE(datei.open(QIODevice::ReadOnly), instrument.name.toStdString());
+            const QJsonObject werte = QJsonDocument::fromJson(datei.readAll())
+                                          .object()
+                                          .value(QStringLiteral("layers"))
+                                          .toArray()
+                                          .at(0)
+                                          .toObject()
+                                          .value(QStringLiteral("coreParams"))
+                                          .toObject();
+            const auto ganz = [&](const char* name) {
+                const QJsonValue v = werte.value(QLatin1String(name));
+                return static_cast<int>(std::lround(v.isObject() ? v.toObject().value(QStringLiteral("value")).toDouble() : v.toDouble()));
+            };
+            const int von = ganz("noteMin");
+            const int bis = ganz("noteMax");
+            if (bis - von < 3) continue;  // eine Trommel mit einer Tonhoehe
+            CAPTURE(instrument.name.toStdString());
+            Note note;
+            note.laut = 0.7;
+            double tiefst = 1e9, hoechst = -1e9;
+            int tiefAn = von, hochAn = von;
+            for (int h = von; h <= bis; h += 3)
+            {
+                TonAngabe t;
+                t.instrument = instrument.name;
+                t.hoehe = h;
+                t.dauerMs = 500;
+                note.hoehe = h;
+                t.anschlagStufe = stufeDerNote(note, true);
+                const double l = messeSchlag(rendereTon(instrument, t, kRate), kRate).momentanMaxLufs;
+                if (l < tiefst) tiefst = l, tiefAn = h;
+                if (l > hoechst) hoechst = l, hochAn = h;
+            }
+            const double spanne = hoechst - tiefst;
+            MESSAGE(instrument.name.toStdString() << ": Spanne " << spanne << " LU (" << tiefst << " an " << tiefAn << ", " << hoechst
+                                                  << " an " << hochAn << ")");
+            if (const auto a = ausnahmen.find(instrument.name); a != ausnahmen.end())
+            {
+                CHECK_MESSAGE(spanne > kGrenzeLu, "Ausnahme nicht mehr noetig: " << a->second.toStdString());
+                gesehen.insert(instrument.name);
+            }
+            else
+                CHECK(spanne <= kGrenzeLu);
+            ++geprueft;
+        }
+        CHECK(gesehen.size() == ausnahmen.size());
+        MESSAGE(geprueft << " Instrumente mit Kern ueber den Umfang gemessen");
+        CHECK(geprueft >= 14);
     }
 
     TEST_CASE("Loop Pegel: Messung aller mitgelieferten Instrumente und Kits (meldet nur Zahlen)")
