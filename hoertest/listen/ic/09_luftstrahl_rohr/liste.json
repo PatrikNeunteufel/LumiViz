@@ -1,0 +1,910 @@
+{
+  "schema": 1,
+  "titel": "Klasse 09_luftstrahl_rohr: Hoerproben der Vorgaben (L5)",
+  "ziel": "Erstes Hoeren der Vorgaben je Instrument (AUFTRAG_BAU §4 Punkt 4, L5) — ungemessen, ohne Bezug",
+  "katalog": null,
+  "kontrolle": "moderat",
+  "pegel": {
+    "lufs": -23,
+    "toleranz_lu": 1
+  },
+  "dauer_s": null,
+  "gruppe_nach": ["instrument"],
+  "fassungen": {
+    "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
+  },
+  "klaenge": [{
+      "id": "Blockfloete_Dis5_e0",
+      "datei": "klaenge/Blockfloete_Dis5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Dis5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Blockfloete_Dis5_e50",
+      "datei": "klaenge/Blockfloete_Dis5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Dis5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Blockfloete_Dis5_e100",
+      "datei": "klaenge/Blockfloete_Dis5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Dis5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Blockfloete_C6_e0",
+      "datei": "klaenge/Blockfloete_C6_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Blockfloete_C6_e50",
+      "datei": "klaenge/Blockfloete_C6_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Blockfloete_C6_e100",
+      "datei": "klaenge/Blockfloete_C6_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Blockfloete_Gis6_e0",
+      "datei": "klaenge/Blockfloete_Gis6_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Gis6",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Blockfloete_Gis6_e50",
+      "datei": "klaenge/Blockfloete_Gis6_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Gis6",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Blockfloete_Gis6_e100",
+      "datei": "klaenge/Blockfloete_Gis6_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Gis6",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Blockfloete_C6_vibrato",
+      "datei": "klaenge/Blockfloete_C6_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Blockfloete_C6_ohne_schneidenton",
+      "datei": "klaenge/Blockfloete_C6_ohne_schneidenton.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "spielweise": "ohne_schneidenton"
+      }
+    }, {
+      "id": "Labialpfeife_Dis2_e0",
+      "datei": "klaenge/Labialpfeife_Dis2_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Dis2",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Labialpfeife_Dis2_e50",
+      "datei": "klaenge/Labialpfeife_Dis2_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Dis2",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Labialpfeife_Dis2_e100",
+      "datei": "klaenge/Labialpfeife_Dis2_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Dis2",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Labialpfeife_Fis4_e0",
+      "datei": "klaenge/Labialpfeife_Fis4_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Labialpfeife_Fis4_e50",
+      "datei": "klaenge/Labialpfeife_Fis4_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Labialpfeife_Fis4_e100",
+      "datei": "klaenge/Labialpfeife_Fis4_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Labialpfeife_Gis6_e0",
+      "datei": "klaenge/Labialpfeife_Gis6_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Gis6",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Labialpfeife_Gis6_e50",
+      "datei": "klaenge/Labialpfeife_Gis6_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Gis6",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Labialpfeife_Gis6_e100",
+      "datei": "klaenge/Labialpfeife_Gis6_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Gis6",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Labialpfeife_Fis4_tremulant",
+      "datei": "klaenge/Labialpfeife_Fis4_tremulant.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "spielweise": "tremulant"
+      }
+    }, {
+      "id": "Labialpfeife_Fis4_ohne_schneidenton",
+      "datei": "klaenge/Labialpfeife_Fis4_ohne_schneidenton.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "spielweise": "ohne_schneidenton"
+      }
+    }, {
+      "id": "Shakuhachi_F4_e0",
+      "datei": "klaenge/Shakuhachi_F4_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "F4",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Shakuhachi_F4_e50",
+      "datei": "klaenge/Shakuhachi_F4_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "F4",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Shakuhachi_F4_e100",
+      "datei": "klaenge/Shakuhachi_F4_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "F4",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Shakuhachi_D5_e0",
+      "datei": "klaenge/Shakuhachi_D5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Shakuhachi_D5_e50",
+      "datei": "klaenge/Shakuhachi_D5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Shakuhachi_D5_e100",
+      "datei": "klaenge/Shakuhachi_D5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Shakuhachi_Ais5_e0",
+      "datei": "klaenge/Shakuhachi_Ais5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "Ais5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Shakuhachi_Ais5_e50",
+      "datei": "klaenge/Shakuhachi_Ais5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "Ais5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Shakuhachi_Ais5_e100",
+      "datei": "klaenge/Shakuhachi_Ais5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "Ais5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Shakuhachi_D5_vibrato",
+      "datei": "klaenge/Shakuhachi_D5_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Shakuhachi_D5_ohne_schneidenton",
+      "datei": "klaenge/Shakuhachi_D5_ohne_schneidenton.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "spielweise": "ohne_schneidenton"
+      }
+    }],
+  "messwerte": [{
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Dis5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -31.469999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Dis5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -29.91,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Dis5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -28.800000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.989999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.359999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Gis6",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.25,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Gis6",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -19.18,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "Gis6",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.890000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.120000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Blockfloete",
+        "ton": "C6",
+        "spielweise": "ohne_schneidenton"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.260000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Dis2",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.960000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Dis2",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -7.4299999999999997,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Dis2",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -1.5900000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -31.109999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -15.91,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -10.69,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Gis6",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -20,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Gis6",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -1.49,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Gis6",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": 4.4900000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "spielweise": "tremulant"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -14.35,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Labialpfeife",
+        "ton": "Fis4",
+        "spielweise": "ohne_schneidenton"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -14.41,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "F4",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -42.170000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "F4",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -40.729999999999997,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "F4",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -38.219999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.1999999999999993,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.1999999999999993,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.1999999999999993,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "Ais5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -5.6100000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "Ais5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -5.6100000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "Ais5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -5.6100000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.0399999999999991,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Shakuhachi",
+        "ton": "D5",
+        "spielweise": "ohne_schneidenton"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.0099999999999998,
+          "einheit": "LUFS"
+        }]
+    }],
+  "punkte": [{
+      "id": "p001",
+      "art": "einzel",
+      "klang": "Blockfloete_Dis5_e0",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p002",
+      "art": "einzel",
+      "klang": "Blockfloete_Dis5_e50",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p003",
+      "art": "einzel",
+      "klang": "Blockfloete_Dis5_e100",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p004",
+      "art": "einzel",
+      "klang": "Blockfloete_C6_e0",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p005",
+      "art": "einzel",
+      "klang": "Blockfloete_C6_e50",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p006",
+      "art": "einzel",
+      "klang": "Blockfloete_C6_e100",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p007",
+      "art": "einzel",
+      "klang": "Blockfloete_Gis6_e0",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p008",
+      "art": "einzel",
+      "klang": "Blockfloete_Gis6_e50",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p009",
+      "art": "einzel",
+      "klang": "Blockfloete_Gis6_e100",
+      "frage": "Klingt es nach Blockfloete (ungemessen)? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p010",
+      "art": "einzel",
+      "klang": "Blockfloete_C6_vibrato",
+      "frage": "Vibrato ueber den Druck: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p011",
+      "art": "einzel",
+      "klang": "Blockfloete_C6_ohne_schneidenton",
+      "frage": "Ohne Schneidenton im Einschwingen (Vergleich mit e60): fehlt etwas?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p012",
+      "art": "einzel",
+      "klang": "Labialpfeife_Dis2_e0",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p013",
+      "art": "einzel",
+      "klang": "Labialpfeife_Dis2_e50",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p014",
+      "art": "einzel",
+      "klang": "Labialpfeife_Dis2_e100",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p015",
+      "art": "einzel",
+      "klang": "Labialpfeife_Fis4_e0",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p016",
+      "art": "einzel",
+      "klang": "Labialpfeife_Fis4_e50",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p017",
+      "art": "einzel",
+      "klang": "Labialpfeife_Fis4_e100",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p018",
+      "art": "einzel",
+      "klang": "Labialpfeife_Gis6_e0",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p019",
+      "art": "einzel",
+      "klang": "Labialpfeife_Gis6_e50",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p020",
+      "art": "einzel",
+      "klang": "Labialpfeife_Gis6_e100",
+      "frage": "Klingt es nach Labialpfeife (ungemessen (VAO/Palo zum Setzen, BY-SA, lokal))? Schweller (e) und Einschwingen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p021",
+      "art": "einzel",
+      "klang": "Labialpfeife_Fis4_tremulant",
+      "frage": "Tremulant: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p022",
+      "art": "einzel",
+      "klang": "Labialpfeife_Fis4_ohne_schneidenton",
+      "frage": "Ohne Schneidenton im Einschwingen (Vergleich mit e60): fehlt etwas?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p023",
+      "art": "einzel",
+      "klang": "Shakuhachi_F4_e0",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p024",
+      "art": "einzel",
+      "klang": "Shakuhachi_F4_e50",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p025",
+      "art": "einzel",
+      "klang": "Shakuhachi_F4_e100",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p026",
+      "art": "einzel",
+      "klang": "Shakuhachi_D5_e0",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p027",
+      "art": "einzel",
+      "klang": "Shakuhachi_D5_e50",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p028",
+      "art": "einzel",
+      "klang": "Shakuhachi_D5_e100",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p029",
+      "art": "einzel",
+      "klang": "Shakuhachi_Ais5_e0",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p030",
+      "art": "einzel",
+      "klang": "Shakuhachi_Ais5_e50",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p031",
+      "art": "einzel",
+      "klang": "Shakuhachi_Ais5_e100",
+      "frage": "Klingt es nach Shakuhachi (ungemessen (ein freier Ton))? Anblasen und Rauschen glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p032",
+      "art": "einzel",
+      "klang": "Shakuhachi_D5_vibrato",
+      "frage": "Vibrato ueber den Druck: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p033",
+      "art": "einzel",
+      "klang": "Shakuhachi_D5_ohne_schneidenton",
+      "frage": "Ohne Schneidenton im Einschwingen (Vergleich mit e60): fehlt etwas?",
+      "pole": ["nein", "ja"]
+    }]
+}

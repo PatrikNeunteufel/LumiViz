@@ -11,7 +11,60 @@
 
 *Stand 2026-11-09.*
 
-**Gesamt:** 1 Dateien, 1.2 KB.
+**Gesamt:** 1811 Dateien, 2.7 GB.
+
+### Hörproben
+
+| Liste | Klänge | Größe | Zustand |
+|---|---|---|---|
+| `_werkzeug/Hoertest` | 0 | 63.6 MB | Werkzeug |
+| `IC/01_hammer_saite` | 70 | 32.9 MB | offen |
+| `IC/02_zupf_saite` | 56 | 25.6 MB | offen |
+| `IC/03_bogen_saite` | 76 | 25.9 MB | offen |
+| `IC/04_platte_stab` | 108 | 60.6 MB | offen |
+| `IC/05_membran` | 53 | 19.4 MB | offen |
+| `IC/06_becken_gong` | 44 | 18.1 MB | offen |
+| `IC/07_lippe_rohr` | 39 | 10.8 MB | offen |
+| `IC/08_rohrblatt_rohr` | 56 | 15.4 MB | offen |
+| `IC/09_luftstrahl_rohr` | 33 | 8.8 MB | offen |
+| `IC/10_zunge` | 49 | 13.6 MB | offen |
+| `IC/11_tonrad` | 8 | 4.4 MB | offen |
+| `LumiViz/hoerproben_11d` | 5 | 2.2 MB | offen |
+| `LumiViz/hoerproben_11e` | 6 | 2.4 MB | offen |
+| `LumiViz/hoerproben_11f` | 12 | 2.7 MB | offen |
+| `LumiViz/hoerproben_15h` | 202 | 135.0 MB | offen |
+| `LumiViz/hoerproben_16e` | 14 | 3.5 MB | offen |
+| `LumiViz/hoerproben_19c` | 36 | 9.0 MB | offen |
+| `LumiViz/hoerproben_21d` | 21 | 49.7 MB | offen |
+| `LumiViz/hoerproben_23c` | 8 | 6.7 MB | offen |
+| `LumiViz/hoerproben_23d` | 6 | 5.0 MB | offen |
+| `LumiViz/hoerproben_23d_s133` | 6 | 5.0 MB | offen |
+| `LumiViz/hoerproben_23g` | 16 | 87.1 MB | offen |
+| `LumiViz/hoerproben_24b` | 48 | 308.3 MB | offen |
+| `LumiViz/hoerproben_24c` | 72 | 314.9 MB | offen |
+| `LumiViz/hoerproben_24f` | 4 | 13.1 MB | offen |
+| `LumiViz/hoerproben_25c_ketten` | 6 | 17.8 MB | offen |
+| `LumiViz/hoerproben_25c_lagrange` | 68 | 93.5 MB | offen |
+| `LumiViz/hoerproben_31b` | 5 | 9.9 MB | offen |
+| `LumiViz/hoerproben_31c` | 4 | 8.9 MB | offen |
+| `LumiViz/hoerproben_31c9` | 16 | 45.0 MB | offen |
+| `LumiViz/hoerproben_31d` | 9 | 111.8 MB | offen |
+| `LumiViz/hoerproben_31d8` | 10 | 205.7 MB | offen |
+| `LumiViz/hoerproben_34g` | 96 | 47.1 MB | offen |
+| `LumiViz/hoerproben_drumkit` | 32 | 3.7 MB | offen |
+| `LumiViz/hoerproben_korpus` | 6 | 5.0 MB | offen |
+| `LumiViz/hoerproben_proben` | 6 | 17.8 MB | offen |
+| `LumiViz/hoerproben_pv1` | 36 | 267.2 MB | offen |
+| `LumiViz/hoerproben_s123` | 102 | 233.8 MB | offen |
+| `LumiViz/hoerproben_s128` | 12 | 39.4 MB | offen |
+| `LumiViz/hoerproben_s130` | 5 | 10.1 MB | offen |
+| `LumiViz/hoerproben_s_g3` | 6 | 31.0 MB | offen |
+| `LumiViz/hoerproben_saiten_loops` | 9 | 66.4 MB | offen |
+| `LumiViz/klasse1_34i` | 50 | 29.2 MB | offen |
+| `LumiViz/membran_34h` | 38 | 18.7 MB | offen |
+| `LumiViz/salamander_31d3` | 15 | 88.8 MB | offen |
+| `LumiViz/salamander_31d6` | 15 | 93.3 MB | offen |
+| `LumiViz/stab_34g` | 96 | 47.1 MB | offen |
 <!-- SYSTEM:ENDE -->
 
 <!-- WECHSEL:ANFANG -->
