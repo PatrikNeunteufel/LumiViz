@@ -44,3 +44,7 @@ Chabassier, Duruflé & Joly 2015 (Teil 2); Chaigne, Chabassier & Duruflé 2015 (
 (1212.3068, 1210.5688, 1210.5109); Boutillon, Ege & Paulello 2012; Chaigne, Cotté & Viggiano 2013; Corradi et al. 2017
 (Preprint); Plath 2019 (Diss.); Elie, Cotté & Boutillon 2022 (MAESSTRO).
 Noch nicht hier: die *Salamander*-Sammlung (CC BY 3.0, rund 1,3 GB) — Download mit Freigabe (HT7 a).
+
+## Aus InstrumentsCalculation (S182)
+
+- [ic/](ic/) — die Vorarbeiten aus IC zu Klasse 1 (Modellentwurf, Messplan, offene Fragen; dazu der Bericht zu Moden und Waveguides der Saite, Klassen 1–3) (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.

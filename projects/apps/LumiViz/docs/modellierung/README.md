@@ -37,4 +37,15 @@ modellierung/<klasse>/
 | [koerper](koerper/README.md) | gemeinsame Grundlage für Körper aller Instrumente (KB1 a) | Recherche, Entscheid KB1 a |
 | [gezupfte-saite](gezupfte-saite/README.md) | Gitarre, Bass, Ukulele, Violine (gezupft) | Recherchen S132–S136 abgelegt (aus Saiten_Konzept §6–§6c und `.claude/handover/`) |
 | [platte-stab](platte-stab/README.md) | Marimba, Xylophon, Vibraphon, Glockenspiel, Röhrenglocken, Celesta, Kalimba, zwei elektrische Klaviere (Klasse 4, Kern `bar`) | S178: aus IC übernommen (34g), Bit für Bit wie IC, ungemessen |
+| [membran](membran/README.md) | Trommeln, Pauke, Tabla, Conga, Bongo (Klasse 5, Kern `membrane`) | S179: aus IC übernommen (34h) |
+| [bogen-saite](bogen-saite/README.md) | Bogen-Saite (Klasse 3) | S182: Vorarbeiten aus IC unter `ic/`, ohne Stufe, kein Kern |
+| [becken-gong](becken-gong/README.md) | Becken und Gong (Klasse 6) | S182: Vorarbeiten aus IC unter `ic/`, ohne Stufe, kein Kern |
+| [lippe-rohr](lippe-rohr/README.md) | Lippe und Rohr (Klasse 7) | S182: Vorarbeiten aus IC unter `ic/`, ohne Stufe, kein Kern |
+| [rohrblatt-rohr](rohrblatt-rohr/README.md) | Rohrblatt und Rohr (Klasse 8) | S182: Vorarbeiten aus IC unter `ic/`, ohne Stufe, kein Kern |
+| [luftstrahl-rohr](luftstrahl-rohr/README.md) | Luftstrahl und Rohr (Klasse 9) | S182: Vorarbeiten aus IC unter `ic/`, ohne Stufe, kein Kern |
+| [zunge](zunge/README.md) | Durchschlagende Zunge (Klasse 10) | S182: Vorarbeiten aus IC unter `ic/`, Stufe 34j, kein Kern |
+| [tonrad](tonrad/README.md) | Tonrad (Klasse 11) | S182: Vorarbeiten aus IC unter `ic/`, ohne Stufe, kein Kern |
+| [rohr](rohr/README.md) | gemeinsames Rohrmodell der Klassen 7, 8, 9 | S182: aus IC `gemeinsam/` |
+| [messung](messung/README.md) | Messkette und Hörschwellen für alle Klassen | S182: aus IC `gemeinsam/` |
+| [gemeinsam](gemeinsam/README.md) | was zu keiner Klasse gehört (Klasse 0) | S182: aus IC `gemeinsam/` |
 | [anbindung-ic](anbindung-ic/README.md) | Anbindung der Rechenkerne aus `InstrumentsCalculation` (alle Klassen; kein Klassenordner) | S172: Architektur-Vergleich, Plugin-Recherche (CLAP/VST3), Messung unter Windows-clang; Entscheide in `audio/Instrumente_IC_Konzept.md` |

@@ -21,3 +21,7 @@ Die Ausarbeitung des Formats (`modell.md`) und je Instrument, woher die Moden ko
 Bank 2007 (ICMC, parallele Filter); Bank 2020 (DSc, Filter mit logarithmischer Auflösung); Rau, Smith & Abel 2023
 (Modale Parameter, FA2023); Ducceschi, Russo & Webb 2026 (DAFx26, 65 Gitarren, CC BY 4.0); Zou & Crocker 2009
 (abgestrahlte Leistung von Rechteckplatten).
+
+## Aus InstrumentsCalculation (S182)
+
+- [ic/](ic/) — die Vorarbeiten aus IC zu Körper und Abstrahlung (IC `gemeinsam/koerper.md`) (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.

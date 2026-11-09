@@ -78,3 +78,7 @@ Die Grenze von 4,6 % hält jedes Instrument ein. IC maß in S172 unter Windows-c
 - Die Lizenzen der Arbeiten im Register (`asset/loop/instrument_quellen.json`: „not checked“); die Klausel zur
   Veröffentlichung bei Sønderbo 2024.
 - Die Spuren `motor`, `bowed`, `malletOffset`, `damperPressure` sind am Kern geprüft; im Loop spielbar mit 31g (Editor).
+
+## Aus InstrumentsCalculation (S182)
+
+- [ic/](ic/) — die Vorarbeiten aus IC zu Klasse 4 (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.

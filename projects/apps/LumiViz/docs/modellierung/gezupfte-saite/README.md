@@ -23,3 +23,7 @@ hakwright.co.uk, deshalb seit S146 nicht mehr versioniert (vorher unter `docs/au
 
 ## Noch offen
 Der Gitarrenkorpus nach KB1 a auf die gemeinsame Grundlage (`../koerper/`).
+
+## Aus InstrumentsCalculation (S182)
+
+- [ic/](ic/) — die Vorarbeiten aus IC zu Klasse 2 (Cembalo, Harfe, Gitarre, Laute, Oud; Stufe 34k) (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.

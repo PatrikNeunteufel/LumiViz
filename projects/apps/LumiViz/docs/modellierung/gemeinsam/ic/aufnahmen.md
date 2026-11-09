@@ -1,0 +1,26 @@
+# Aufnahmen und Messdaten — Klasse 0 (Gemeinsam)
+
+> **Stand:** 2026-10-26, IC Session 1. Datensätze, die mehrere Klassen betreffen (Körper, Rohr, Abstrahlung,
+> reflexionsarme Aufnahmen). Aufnahmen einer einzelnen Klasse stehen in deren `aufnahmen.md`.
+> **Nichts heruntergeladen.** **Kennzeichnung:** nachgelesen (von dieser Sitzung am Ort gelesen) · nur Bericht
+> (Agentenbericht unter `recherche/`) · Behauptung einer Drittseite (als solche markiert).
+
+| Datensatz | Lizenz am Ort (Wortlaut, Ort, Abruf) | Inhalt | Größe | Eignung | Übernahme nach LumiViz | Belegkraft |
+|---|---|---|---|---|---|---|
+| **Mores**, „Archive for the acoustical documentation of classical Spanish guitars, flamenco guitars and romantic guitars“, Zenodo 4604576 (DOI 10.5281/zenodo.4604576), Robert Mores, 2021-03-15 | `cc-by-4.0` — Feld `license` der Zenodo-API, 2026-10-26; `access_right` `open` | 65 Gitarren: Hammer an drei Stellen des Stegs, zwei Beschleunigungsaufnehmer am Steg (Bass, Diskant), drei Mikrofone 10 cm über der Decke; **48 kHz**, je Stelle 1 s (1 Hz Auflösung), sechs Kanäle, nicht normiert (Method S. 2–4); `qualified_selected_impulses.mat` (32 729 680 B), Maßliste, Datenblätter, zwei MATLAB-Skripte, Fotos | gesamt rund 1,1 GB (nur Bericht), Messdaten 32,7 MB | Körper Gitarre aus Messung (Mobilität am Steg in zwei Richtungen, Nahfeld 12–36 ms reflexionsfrei); Prüfstein für einen gerechneten Körper. **Keine Einzeltöne.** g62 zweifelhaft, g07/g30 ohne Auswertung (Comments) | frei mit Namensnennung (CC BY 4.0) | nachgelesen (API, Method, Comments, Maßliste) |
+| **CNSM Dataset**, Zenodo 18696785, Pauget Ballesteros, Hugo, 2026-02-19 | `cc-by-4.0` — Zenodo-API, 2026-10-26; `access_right` `open` | eine Datei `dataset.zip`; laut Paper (arXiv 2605.18305): Stegmobilität (Hammer PCB 086E80, Laser-Vibrometer), Bewegungserfassung, Audio; drei Violinen | 654 025 212 B | Körper Violine aus Messung; Audio vielleicht für Klasse 3 | frei mit Namensnennung (CC BY 4.0) | Lizenz und Datei nachgelesen; Inhalt nur Bericht, ungeprüft |
+| **TU Berlin**, „A Database of Anechoic Microphone Array Measurements of Musical Instruments“, DOI 10.14279/depositonce-19858 (Handle 11303/21058), Fassung 3 vom 2024-02-12, ausgegeben 2017-04-10 | **Drei Angaben:** Datensatz `dc.rights.uri` „http://rightsstatements.org/vocab/InC/1.0/“ („In Copyright“; DSpace-API, 2026-10-26); Dokumentation Fassung 3 (2024-02-02), S. 2: „The database is provided under a Creative Commons BY-NC-SA licence“ mit Verweis auf …/by-nc-sa/4.0 (nachgelesen, `quellen/`); Paper arXiv 2307.02110: CC BY-SA 4.0 (nur Bericht) | 3305 Einzeltöne von 41 Instrumenten, reflexionsarm, 32-Kanal-Kugelarray, **44,1 kHz**, als SOFA mit Note und Stärke je Ton (Dokumentation S. 2, nachgelesen); frühere Fassung 5861.2 mit WAV, Tonleitern und besonderen Tönen („still freely available“, S. 2; ihre Rechte nicht eindeutig gelesen) je Instrument als ZIP — u. a. Violine, Viola, Cello, Kontrabass (modern/historisch), Gitarre, Doppelpedalharfe, Pauke, Pedalpauke, Trompete, Horn, Posaunen, Tuba, Oboe, Klarinette, Fagott, Saxophone, Querflöte; Richtcharakteristiken (SOFA, OpenDAFF, GLL), `3_Audio_Features.csv`, `0_Documentation.pdf` (1,06 MB) | je Instrument 0,3–2,9 GB; Richtcharakteristiken 0,5–43 MB | **Einzeltöne ohne Raum** für 2, 3, 5, 7, 8, 9 (Stufen und Töne ungeprüft); Abstrahlung kleiner Körper | **nein, bis geklärt** — nach der Dokumentation nur nicht kommerziell und mit Weitergabe unter gleicher Lizenz; siehe [offene-fragen.md](offene-fragen.md) F-D1 | Seite, Dateiliste, Rechtefelder, Dokumentation nachgelesen |
+| **UNSW Music Acoustics** (Wolfe, Smith u. a.), Eingangsimpedanzen | keine Lizenzangabe; Fußzeile „© 1997-2006 Music Acoustics UNSW“ (nur Bericht) | Excel-Dateien: Querflöte, Klarinette, Sopran- und Tenorsaxophon, Posaune | klein | Prüfstein für das Rohrmodell | **nein** ohne Anfrage (Urheberrecht) | nur Bericht |
+| **Rau, Smith & Abel** (CCRMA, FA2023) | keine Lizenz auf der Seite (nur Bericht, LumiViz S146) | 850 Messungen: Gitarren, Violinfamilie, Mandoline, Deckenhölzer | ZIP 2,05 GB | Körper aus Messung | **nein** ohne Anfrage | nur Bericht |
+| **Salamander Grand Piano V3** (Yamaha C5) | „Attribution 3.0“, licenseurl „http://creativecommons.org/licenses/by/3.0/“ (archive.org, nachgelesen in LumiViz S141 — nicht in dieser Sitzung) | Flügel, 16 Stufen | 1,3 GB | Vorbild; in LumiViz in Gebrauch | in LumiViz bereits geklärt | aus LumiViz übernommen |
+
+**Nicht gefunden** (Reichweite in den Berichten unter `recherche/`): freie Messdaten für Körper von Cello, Viola,
+Kontrabass, Harfe, Cembalo, Pauke, Trommeln; freie Bohrungsprofile von Blasinstrumenten; freie Raumimpulsantworten mit
+am Ort geprüfter Lizenz (OpenAIR nicht erreichbar).
+
+**Freigaben** (Patrik, 2026-10-26): `Method.pdf`, `Comments.pdf`, `List_of_guitars_physical_measures.pdf` (Mores) und
+`0_Documentation.pdf` (TU Berlin) nach `gemeinsam/quellen/`. Alle vier liegen dort (siehe
+[quellen.md](quellen.md)); die drei Dateien von Mores hat Patrik selbst geladen, weil Zenodo Abrufe von hier sperrte
+(HTTP 403 „unusual traffic“).
+CNSM (654 MB) und die Aufnahmen der TU Berlin nur nach Rückfrage und **nicht** in dieses Repo; die .mat von Mores
+(33 MB) nach Rückfrage — ob ins Repo, entscheidet Patrik.

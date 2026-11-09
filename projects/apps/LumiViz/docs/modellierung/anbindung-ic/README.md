@@ -12,3 +12,7 @@
 | [2026-11-02_S172_recherche_plugins_clap_vst3.md](2026-11-02_S172_recherche_plugins_clap_vst3.md) | VST3-SDK 3.8.1 (MIT) und CLAP 1.2.10 (MIT): Lizenzen, Hosting-Klassen, Marke „VST“, Offline/Prefetch, Host-Mindestbedarf, freie Host-Bausteine, Einfrieren in DAWs, eigene Instrumente als Plug-in | Bericht eines Agenten (WebFetch/curl, kein Browser); Reichweite je Angabe im Bericht (Wortlaut gegen Zusammenfassung); Steinberg-Hilfe gesperrt |
 | [2026-11-02_S172_messung_clang_windows.md](2026-11-02_S172_messung_clang_windows.md) | `rechnung/` unter Windows-clang 20.1.7 gebaut und gemessen (M1 a): 29 Abdrücke bitgleich mit MSVC, 13 mit Linux; Rechenzeit je Instrument in drei Läufen nach Taktprobe | selbst gemessen in S172 |
 | [Uebernahme_Journal.md](Uebernahme_Journal.md) | Je Baustein der Bibliotheken: Quelle (Repo, Commit, Datei), Ziel, übernommen/verworfen und warum, Wächter vorher/nachher (IK2-2 a); seit 34c (S175) | fortgeschrieben je Teilschritt, Läufe selbst gefahren |
+
+## Aus InstrumentsCalculation (S182)
+
+- [ic/](ic/) — die Vorarbeiten aus IC zu Auftrag, Stand, Schnittstelle, Lehren, Prüfungen und Journal von IC sowie die Übergabe des Hörtests (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.

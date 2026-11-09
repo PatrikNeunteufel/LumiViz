@@ -95,3 +95,7 @@ Mitte, 2 s Ton, das Beste aus drei Läufen.
 
 Grenze 4,6 % (IK2-6 a) eingehalten; `*31b-3 Rechenzeit*` im Bass 2,61–2,67 %. Die Moden eines Instruments rechnet der Kern
 beim Bau (alle sieben mit Bezug 1,4 s).
+
+## Aus InstrumentsCalculation (S182)
+
+- [ic/](ic/) — die Vorarbeiten aus IC zu Klasse 5 (dazu die Berichte zu Aufnahmen und Spielweisen des Schlagwerks, Klassen 5–6) (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.
