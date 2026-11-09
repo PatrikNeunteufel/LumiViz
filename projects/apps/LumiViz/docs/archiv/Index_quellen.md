@@ -10,7 +10,7 @@
 
 *Stand 2026-11-09.*
 
-**Gesamt:** 123 Dateien, 314.7 MB.
+**Gesamt:** 127 Dateien, 331.5 MB.
 
 ### .
 
@@ -72,6 +72,7 @@
 - `Jarvelainen_2003_PerceptionAttributesStringInstrumentSounds_Diss_HUT_Report68_aaltodoc.pdf` (517.6 KB)
 - `Jirasek_Pelousek_2024_PetrofMistral_Akustika.pdf` (6.7 MB)
 - `Karatsovis_2011_PhD_Southampton_eprint333304.pdf` (2.4 MB)
+- `Kipness_ClavinetFAQ_v1-6_clavinet-com.pdf` (249.3 KB)
 - `Klein_AmengualGari_Arend_Robinson_2021_RoomDivergencePilotDetectionThresholds_FacebookResearch.pdf` (981.0 KB)
 - `Klouche_2014_MicrotonalConcertGrand_DAGA.pdf` (330.6 KB)
 - `Kubo_Aoshima_1994_AnalyzingMethodsToneDecay_SICE.pdf` (1.3 MB)
@@ -152,6 +153,12 @@
 - `Simon-and-Garfunkel-The-Sound-of-Silence.pdf` (959.3 KB)
 - `The-Eagles-Hotel-California.pdf` (563.7 KB)
 - `Van-Halen-Aint-Talking-Bout-Love.pdf` (809.7 KB)
+
+### platte-stab
+
+- `Chapman_2006_InvestigatingSoundKalimba_CanadianAcoustics34-3.pdf` (160.7 KB)
+- `Pfeifle_2017_RealTimePhysicalModelWurlitzerRhodes_DAFx17_paper_79.pdf` (1.1 MB)
+- `Wurlitzer_Service_Manual_Series_200_200A_OS153.pdf` (15.3 MB)
 
 ### rohr
 
