@@ -17,7 +17,7 @@
 Die Berichte der Agenten aus S132/S133 (Korpus, Saitenverfahren) sind nicht abgelegt worden; ihr Befund steht in der
 Datei zu S132.
 
-## Quellen (nur lokal, `quellen/`)
+## Quellen (nur lokal, `…\cmake\quellen\gezupfte-saite\`, seit S182; Index `../../archiv/Index_quellen.md`)
 Wright 1996, *The Acoustics and Psychoacoustics of the Guitar* (Diss. Cardiff) — „All rights reserved“ auf
 hakwright.co.uk, deshalb seit S146 nicht mehr versioniert (vorher unter `docs/audio/quellen/`).
 

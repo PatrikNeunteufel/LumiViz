@@ -17,7 +17,7 @@ S-K10 a) als gekoppelte Schwinger.
 ## Noch offen
 Die Ausarbeitung des Formats (`modell.md`) und je Instrument, woher die Moden kommen — nach den Entscheiden zu 31c.
 
-## Quellen (nur lokal, `quellen/`)
+## Quellen (nur lokal, `…\cmake\quellen\koerper\`, seit S182; Index `../../archiv/Index_quellen.md`)
 Bank 2007 (ICMC, parallele Filter); Bank 2020 (DSc, Filter mit logarithmischer Auflösung); Rau, Smith & Abel 2023
 (Modale Parameter, FA2023); Ducceschi, Russo & Webb 2026 (DAFx26, 65 Gitarren, CC BY 4.0); Zou & Crocker 2009
 (abgestrahlte Leistung von Rechteckplatten).

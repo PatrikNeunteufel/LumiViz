@@ -14,16 +14,19 @@ modellierung/<klasse>/
   messplan.md      wie Messungen das Modell absichern sollen (auch als Forschungsauftrag zu vergeben)
   recherche/       Berichte von Recherchen, je Datei eine — Datum_Session_Thema.md, unverändert übernommen,
                    mit Kopf: Auftrag, Kennzeichnung, was selbst nachgelesen ist, wohin es eingeflossen ist
-  quellen/         fremde Arbeiten als PDF — nur lokal, nicht versioniert (.gitignore), Dateiname
-                   Autoren_Jahr_Titel_Ort.pdf
+  (kein quellen/)  fremde Arbeiten liegen seit S182 außerhalb des Repos (siehe Regeln)
 ```
 
 ## Regeln
 
 - **Belegkraft kennzeichnen:** ein Bericht eines Agenten ist kein Beleg; was davon in ein Konzept geht, wird dort
   als „nachgelesen“ (selbst im Volltext geprüft) oder „nur Bericht“ geführt (globale Regel *Netzabrufe*).
-- **Fremde PDFs nicht versionieren** — auch nicht, wenn sie frei abrufbar sind; die Lizenz steht in der Recherche.
-  Eigene Ausarbeitungen und Berichte (mit kurzen Zitaten) werden versioniert.
+- **Fremde PDFs nicht ins Repo** — auch nicht, wenn sie frei abrufbar sind; die Lizenz steht in der Recherche.
+  Ablage seit S182 (Auflösung von IC, U1) unter `…\cmake\quellen\<thema>\`, Thema wie der Ordner hier, Dateiname
+  Autoren_Jahr_Titel_Ort.pdf; archiviert auf der Wechselplatte, Index `../archiv/Index_quellen.md`. **Ein Pfad
+  `quellen/<datei>` oder `../quellen/<datei>` in einem älteren Bericht meint diese Ablage** (die Berichte bleiben
+  unverändert; woher jede Datei kam: `…\cmake\quellen\UMZUG_S182.tsv`). Eigene Ausarbeitungen und Berichte
+  (mit kurzen Zitaten) werden versioniert.
 - **Eine Aussage an einer Stelle:** Entscheide im Konzept, Herleitungen und Modell hier, je mit Verweis.
 
 ## Klassen

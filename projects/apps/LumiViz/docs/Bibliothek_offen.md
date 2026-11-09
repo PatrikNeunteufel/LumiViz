@@ -7,8 +7,8 @@
 > **Prüfstand der Angaben:** Titel, Zeitschrift, Band, Seiten und DOI der Zeitschriftenartikel aus der Crossref-API
 > (`api.crossref.org`, abgerufen S155, 2026-10-26); die Verlagsseiten (Links) folgen aus der DOI. Gelesen ist keiner
 > dieser Artikel. Was ohne DOI dasteht, stammt aus den Agentenberichten und ist am Katalog zu prüfen.
-> Ablage nach dem Beschaffen: Quellen zur Modellierung unter `modellierung/<klasse>/quellen/` (gitignored), Eingang über
-> `LumiViz\dld\` (gitignored).
+> Ablage nach dem Beschaffen: Quellen zur Modellierung unter `…\cmake\quellen\<thema>\` (außerhalb des Repos, seit
+> S182; Index `archiv/Index_quellen.md`).
 
 ## Wie prüfen
 

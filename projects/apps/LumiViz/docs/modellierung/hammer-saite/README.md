@@ -36,7 +36,7 @@ HS1 a/HS2 a (modal, Teilschritte 31a–31h), HA1 a–HA4 a (Kurven, Schicht, Ans
 - `welcher komponist ist ideal für ein Flügel tet.txt` — Patriks Notiz, Quelle des Wunsches BL (Angaben zu
   Lizenzen ungeprüft).
 
-## Quellen (nur lokal, `quellen/`)
+## Quellen (nur lokal, `…\cmake\quellen\hammer-saite\`, seit S182; Index `../../archiv/Index_quellen.md`)
 Bank, Zambon & Fontana 2010 (TASLP); Bank 2000 (MSc), 2006 (PhD); Stulov & Kartofelev 2009; Rigaud, David & Daudet
 2011; Chabassier, Joly & Chaigne 2013 (JASA, Fassung der Autoren); Chabassier & Duruflé 2012 (RT-0425);
 Chabassier, Duruflé & Joly 2015 (Teil 2); Chaigne, Chabassier & Duruflé 2015 (Vienna Talk); Zambon, Lehtonen & Bank

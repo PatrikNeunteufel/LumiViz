@@ -481,7 +481,7 @@ Versatz im Akkord.
 - ✅ **S-K9 a** (Patrik S132, bearbeitet S133): gezielte Suche nach V und A_h
   — in Wrights Thesis am Seitenbild (Quelle seit S146 nur lokal, nicht versioniert —
   „All rights reserved“ auf hakwright.co.uk:
-  `../modellierung/gezupfte-saite/quellen/Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf`,
+  `…\cmake\quellen\gezupfte-saite\Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf` (seit S182),
   von hakwright.co.uk). **Befund:** wörtlich nur für den Satz TOP26, S. 138:
   „A_h = 5.7 × 10⁻³ m² and V = 14 × 10⁻³ m³“ (Schalllochdurchmesser daraus
   85 mm, in Hubers Bereich). Für BR2 auch im Bild nicht (S. 96: „The area of
