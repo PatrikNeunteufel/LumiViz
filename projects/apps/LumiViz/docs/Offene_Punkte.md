@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.322.0
-> **Datum:** 2026-11-08 (Sessions 164 bis 180)
+> **Version:** 1.323.0
+> **Datum:** 2026-11-09 (Sessions 164 bis 181)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2850,13 +2850,15 @@ Spielweise, Kit `modelled_drums`; S180 QM1 a, Quellen am Wert für alle Werte, `
 Quellen; voller Lauf 1837 / 1837 unter beiden Compilern, Journal J42–J52, [Bericht](modellierung/membran/README.md)).**
 **34i erledigt 2026-11-09 (S181, Klasse 1 ohne Flügel: Upright, Honky-tonk, CP-70, Kern `struckString`; 34i-5 entfällt
 nach KL3-1 a; voller Lauf 1851 / 1851 unter Testing-MSVC, Journal J53–J59,
-[Bericht](modellierung/hammer-saite/klasse1_ohne_fluegel.md)).** Nächster Schritt **34j** (Klasse 10). Offen aus 34i:
+[Bericht](modellierung/hammer-saite/klasse1_ohne_fluegel.md)).** **Nächster Schritt (Wunsch Patrik S181): Loops mit den
+neuen IC-Instrumenten** in einem neuen Unterordner `asset/loop/IC_Instruments/` — Beispiele, die die Instrumente aus 34g,
+34h und 34i mit möglichst vielen Nuancen spielen (Zuschnitt zuerst vorlegen); danach **34j** (Klasse 10). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
 — bei Chaigne et al. 2013 und den übrigen lokalen Upright-Quellen nur als Bild oder gar nicht; Recherche S181
 `modellierung/hammer-saite/recherche/2026-11-09_S181_upright_boden_bauplan.md`: kein frei lesbarer, vollständiger Satz;
-nächster Schritt die HAL-Volltexte zum P131 von Hand öffnen — Trévisan 2016 tel-01451727, Trévisan et al. 2017
-hal-01456083, 2015 hal-01217078, Chaigne 2010 hal-00538347 (HAL sperrt automatische Abrufe); gebaut wird er mit einem
-belegten Satz); der Hörtest
+die HAL-Volltexte zum P131 hat Patrik am Ende von S181 unter `modellierung/hammer-saite/quellen/` abgelegt — Trévisan
+2016 tel-01451727, Trévisan et al. 2017 hal-01456083, 2015 hal-01217078, Chaigne 2010 hal-00538347; **nächster Schritt:
+auf einen belegten Bauplan prüfen**; gebaut wird er mit einem belegten Satz); der Hörtest
 `hoertest/listen/klasse1_34i` (danach `clavinet` modal oder Waveguide, IK2-8 a); die Lizenzen der fünf neuen Quellen
 (`yamaha-u1`, `ptg-honkytonk`, `smem-cp70`, `modartt-cp80`, `remaggi2012`, „report only“); Befund: das Honky-tonk klingt bei
 a-30 an Taste 103 wie das Upright (die Verstimmung wirkt erst ab a-12; vermutlich trifft der Hammer leise eine Saite —
@@ -6378,6 +6380,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.323.0 | 2026-11-09 | Session 181 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34i erledigt — Upright, Honky-tonk, CP-70 auf `hammerString`, Kern `struckString` mit `clavinet_modal`, `.lvinst` Fassung 24, KL1 a–KL4 a, KL4-1 a (Kurven nur auf den Umfang der Tafel), KL3-1 a (Upright ohne Boden, HAL-Quellen abgelegt), TT1 a; Rechenzeit ausgesetzt bis zum Tausch der Kühlung; nächster Schritt Loops `IC_Instruments` (Wunsch Patrik), danach 34j. |
 | 1.322.0 | 2026-11-08 | Session 180 (Opus 5.5). §6 Anbindung InstrumentsCalculation: QM1 a gebaut, 34h erledigt — Quellen am Wert (`Werte::quellen`, `.lvinst` Fassung 23 `coreSources`), Quellen je Vorlage für Trommel und Stab, `CREDITS.md` mit 19 Quellen; nächster Schritt 34i. |
 | 1.321.0 | 2026-11-08 | Session 179 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34h gebaut bis auf QM1 a — Klasse 5 als Kern `membrane` (TM1 a Stärke in dB, TM2 a Spielweise an Kit-Rolle und Drum-Spur, TM3 a Kit nur Klasse 5, TM4 a Namen), sieben Trommeln, `synth_conga`, Kit `modelled_drums`, Hörliste `membran_34h`, voller Lauf 1834 / 1835; QM1 a entschieden; nächster Schritt QM1 a, dann 34i. |
 | 1.320.0 | 2026-11-08 | Session 178 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34g erledigt — Klasse 4 als Kern `bar` (KS1 a Umfang je Instrument, KS2 a gestimmte Werte in Reihenfolge, KS3 a Bogen, KS4 a Namen), neun Stabspiele, `synth_marimba`/`synth_vibraphone`/`synth_kalimba`, Hörliste `stab_34g` für HörTest_Helper, voller Lauf 1815 / 1815; offen: Hörtest, Lizenzen der neuen Quellen, Befunde der Vorgaben; nächster Schritt 34h. |
