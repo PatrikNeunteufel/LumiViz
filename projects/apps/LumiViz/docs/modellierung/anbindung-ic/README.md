@@ -3,8 +3,10 @@
 > **Seit:** Session 172 (2026-11-02). **Zweck:** Herleitungen zur Anbindung der Rechenkerne aus
 > `…\cmake\InstrumentsCalculation` (`rechnung/`) an LumiViz. Die **Entscheide** (IK2-0 bis IK2-13) stehen im Konzept
 > [docs/audio/Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md); hier steht, woraus sie entstanden sind.
-> Kein Klassenordner im Sinne der [README der Modellierung](../README.md) — die Klassen selbst liegen in IC unter
-> `klassen/Klasse n - Name/`.
+> Kein Klassenordner im Sinne der [README der Modellierung](../README.md). **Seit S182 ist IC aufgelöst** (LP2 b): die
+> Vorarbeiten der Klassen liegen unter `../<klasse>/ic/`, Auftrag, Stand und Journal von IC unter [ic/](ic/), der Code
+> als Vorlage unter `harvest/instruments-calculation/`; der Umzug steht in
+> [Aufloesung_IC_Plan.md](Aufloesung_IC_Plan.md).
 
 | Datei | Inhalt | Belegkraft |
 |---|---|---|

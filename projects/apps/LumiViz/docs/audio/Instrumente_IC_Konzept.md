@@ -1,7 +1,12 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.13.0
-> **Datum:** 2026-11-09 (Session 181)
+> **Version:** 0.14.0
+> **Datum:** 2026-11-09 (Session 182)
+> **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
+> gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
+> der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
+> [../modellierung/anbindung-ic/Aufloesung_IC_Plan.md](../modellierung/anbindung-ic/Aufloesung_IC_Plan.md)). Wo dieses
+> Konzept von IC als Werkstatt, von Paketen für IC oder von einer Cloud-Sitzung spricht, ist das Geschichte.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
 > (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`)
@@ -9,7 +14,8 @@
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
 > [VST3_Konzept.md](VST3_Konzept.md) (Entwurf S123, nichts entschieden) · IC `BERICHT_BAU.md`, `STAND.md`,
-> `SCHNITTSTELLE.md`, `UEBERNAHME_LUMIVIZ.md`, Prüfung `pruefungen/LV-2026-10-30-erster-baudurchgang.md`
+> `SCHNITTSTELLE.md`, `UEBERNAHME_LUMIVIZ.md`, Prüfung `pruefungen/LV-2026-10-30-erster-baudurchgang.md` (seit S182
+> unter [../modellierung/anbindung-ic/ic/](../modellierung/anbindung-ic/ic/))
 > (IC-A1 bis A18) · Plan der Sitzung `.claude/handover/plan_S172_anbindung_ic.md` (lokal) ·
 > Berichte unter [../modellierung/anbindung-ic/](../modellierung/anbindung-ic/)
 > **Sprache:** Deutsch
@@ -410,9 +416,9 @@ wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teil
 | 34g | Klasse 4 | Adapter, Vorgaben als `.lvinst` (Namen nach IK2-8 a), `synth_marimba`/`synth_vibraphone` mit Skript für die Loops, Pegel, Kennzeichnung „ungemessen“, `<name>_demo`, Hörproben-Liste | `Loop Werte` nur Namen geändert; Rechenzeit ≤ 4,6 %; Kennzahl Verhältnis zum Flügel im Bericht |
 | 34h | Klasse 5 | Trommeln, neues Kit, Demo, Pegel, Liste | wie 34g |
 | 34i | Klasse 1 ohne Flügel | Upright, Honky-tonk, elektrischer Flügel (CP-70), Clavinet (Name nach den Hörproben, IK2-8 a); ehemals Stufe 32 | wie 34g |
-| 34j | Klasse 10 | Akkordeon, Harmonium, Melodica, Mundharmonika; Stimmung über `InstrumentTuneTool` | wie 34g; Wächter der Stimmung |
-| 34k | Klasse 2 je Note | Cembalo, Harfe, Gitarre, Laute, Oud; Korpus `korpusImpulsantwort`, Vergleich IC-Luftraum (IK2-10 a); Messung von `stimme` (Kipppunkt IK2-11 a) | wie 34g; Bericht Luftraum gegen Korpus |
-| 34l | Abschluss | Handbuch, Sichttest-Liste, Hörprobenliste für HörTest, Doku (Modul-Doku der Bibliotheken), Auftrag an IC als Datei (Paket beziehen nach TP1, Abdrücke je Plattform, Port entfernen) | Bereich und voller Lauf unter beiden Compilern |
+| 34j | Klasse 10 | Akkordeon, Harmonium, Melodica, Mundharmonika; Stimmung über `InstrumentTuneTool`; Vorlage `harvest/instruments-calculation/rechnung/klassen/10_zunge/` (S182) | wie 34g; Wächter der Stimmung |
+| 34k | Klasse 2 je Note | Cembalo, Harfe, Gitarre, Laute, Oud; Vorlage `harvest/instruments-calculation/rechnung/klassen/02_zupf_saite/` (S182); Korpus `korpusImpulsantwort`, Vergleich IC-Luftraum (IK2-10 a); Messung von `stimme` (Kipppunkt IK2-11 a) | wie 34g; Bericht Luftraum gegen Korpus |
+| 34l | Abschluss | Handbuch, Sichttest-Liste, Hörprobenliste für HörTest, Doku (Modul-Doku der Bibliotheken); ~~Auftrag an IC als Datei~~ entfällt (IC aufgelöst S182, LP2 b); den Teil der übernommenen Klassen in `harvest/instruments-calculation/` löschen | Bereich und voller Lauf unter beiden Compilern |
 
 ✅ **KN1 a** (Patrik S175, „Alle nach Empfehlung“): **Die Bibliothek Kern heißt `InstrumentCore`** (Ziel und Ordner
 `projects/libs/InstrumentCore`, Namensraum `lumi::kern`, Paket `instrumentcore`); die Bibliothek Messung (34e) heißt
@@ -738,7 +744,7 @@ Flügel benannt sein soll.
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
-✅ **TP1 a** (Patrik S173): **Paket als Fassung im IC-Repo.** LumiViz baut je Fassung der Bibliotheken
+*(Überholt S182, LP2 b: IC ist aufgelöst, es gibt kein Paket für IC.)* ✅ **TP1 a** (Patrik S173): **Paket als Fassung im IC-Repo.** LumiViz baut je Fassung der Bibliotheken
 `package_<name>` (Quellen, CMake-Beschreibung, Schalter nach E1 a, SHA-256; §5a Punkte 2 und 3); Patrik legt es unter
 `rechnung/externals/<name>/<version>/` ins IC-Repo und committet es, wie IC heute pocketfft und doctest führt; das
 IC-CMake bindet es ein, die Cloud sieht es im eigenen Repo. Geändert wird es in IC nie, ein Test dort prüft die
@@ -794,6 +800,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.14.0 | 2026-11-09 | Session 182. IC aufgelöst (LP2 b): Vermerk im Kopf, Bezug auf die Ablage der IC-Doku, 34j/34k mit Vorlage unter `harvest/`, 34l ohne Auftrag an IC, TP1 a als überholt markiert; Plan des Umzugs `../modellierung/anbindung-ic/Aufloesung_IC_Plan.md` (U0–U7). |
 | 0.13.0 | 2026-11-09 | Session 181. §6: Teilplan 34i (34i-1 bis 34i-7), KL1 a (Kern `struckString` ganz, nur das Clavinet ausgeliefert), KL2 a (Namen, `clavinet_modal` bis zu den Hörproben), KL3 a (Körper `pleyel_p131` für Upright und Honky-tonk), KL4 a (Umfang in der Tafel des Flügel-Kerns); Rechenzeit ausgesetzt bis zum Tausch der Kühlung. Dazu im Bau: KL4-1 a (Kurven nur auf den Umfang der Tafel gerichtet), TT1 a (Tafel „Hammer string“), KL3-1 a (Upright ohne Boden, Recherche; 34i-5 entfällt bis zum Fund); 34i-1 bis 34i-4 und 34i-6 gebaut (Journal J53–J59, Bericht `modellierung/hammer-saite/klasse1_ohne_fluegel.md`). |
 | 0.12.0 | 2026-11-08 | Session 180. §6: QM1 a gebaut, 34h erledigt. |
 | 0.11.0 | 2026-11-08 | Session 179. §6: Teilplan 34h (34h-1 bis 34h-7), TM1 a (Geschwindigkeit nach der Stufe in dB), TM2 a (Spielweisen als Spuren, feste Werte je Kit-Rolle und Drum-Spur), TM3 a (Kit nur Klasse 5), TM4 a (Namen, `synth_conga`). |
