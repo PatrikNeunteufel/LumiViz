@@ -1,9 +1,23 @@
-# Index: Samples und Messdaten
+# Index: Samples, Messdaten und Hörproben
 
-> Erzeugt von `tools/archiv_index.py` am 2026-11-09 aus `E:\samples`.
-> Ablage: `…\Visuals_Project\cmake\samples`, archiviert auf der Wechselplatte (`<Laufwerk>:\samples`, der
-> Buchstabe kann wechseln). **Vor Gebrauch Patrik bitten, sie verfügbar zu machen.** Neu schreiben, solange sie
-> eingesteckt ist. Lizenz und Herkunft je Quelle stehen in deren `HERKUNFT.md`; hier nur die Zeilen dazu.
+> Ablage `…\Visuals_Project\cmake\samples`, aus Platzmangel archiviert auf der Wechselplatte
+> (`<Laufwerk>:\samples`, der Buchstabe kann wechseln). **Vor Gebrauch Patrik bitten, sie verfügbar zu
+> machen.** Lizenz und Herkunft je Quelle stehen in deren `HERKUNFT.md`; hier nur die Zeilen dazu. Hörproben
+> bleiben auf der Systemplatte, bis ihr Test abgeschlossen ist (`abgeschlossen.pass`). Erzeugt von
+> `tools/archiv_index.py`.
+
+<!-- SYSTEM:ANFANG -->
+## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\samples`
+
+*Stand 2026-11-09.*
+
+**Gesamt:** 1 Dateien, 1.2 KB.
+<!-- SYSTEM:ENDE -->
+
+<!-- WECHSEL:ANFANG -->
+## Wechselplatte: `E:\samples`
+
+*Stand 2026-11-09.*
 
 **Gesamt:** 44757 Dateien, 24.3 GB.
 
@@ -29,21 +43,21 @@
 | `Salamander` | 647 | 1.8 GB | .wav 641, .py 2, .sfz 2, .md 1, (ohne) 1 |
 | `Salamander_download` | 1 | 1.3 GB | .bz2 1 |
 
-## ChordsDb
+### ChordsDb
 
 - *(keine HERKUNFT.md/README — Herkunft nicht vermerkt)*
 - Unterordner: `0.5.1` (4)
 
-## CommonsClave
+### CommonsClave
 
 - *(keine HERKUNFT.md/README — Herkunft nicht vermerkt)*
 
-## DrumGizmo
+### DrumGizmo
 
 - *(keine HERKUNFT.md/README — Herkunft nicht vermerkt)*
 - Unterordner: `CrocellKit` (50), `DRSKit` (68)
 
-## Gesang/Vocadito_Zenodo5578807
+### Gesang/Vocadito_Zenodo5578807
 
 - HERKUNFT.md: Herkunft — vocadito (einstimmiger Gesang mit beschrifteter Tonhöhe)
 - Quelle:** Zenodo, Datensatz 5578807 (veröffentlicht 2021-10-11), DOI 10.5281/zenodo.5578807, „vocadito: A dataset
@@ -53,7 +67,7 @@
 - Beschreibung laut Zenodo:** 40 kurze Ausschnitte einstimmigen Gesangs, 7 Sprachen, Sänger verschieden geschult,
 - Unterordner: `Annotations` (161), `Audio` (40)
 
-## Klasse 1 - Hammer-Saite/K18_Upright_Piano
+### Klasse 1 - Hammer-Saite/K18_Upright_Piano
 
 - HERKUNFT.md: Herkunft — K18 Upright Piano (Rudi Fiasco)
 - Quelle:** archive.org, `archive.org/details/K18UprightPiano`, Datei `K18-Upright-Piano.tar.xz` (424 364 716 B,
@@ -61,7 +75,7 @@
 - .sfz patch by Rudi Fiasco“ (nachgelesen 2026-10-26); `readme.txt` im Archiv: „Licence: CC BY 4.0“ — Namensnennung nötig.
 - Unterordner: `K18` (212)
 
-## Klasse 1 - Hammer-Saite/VCSL
+### Klasse 1 - Hammer-Saite/VCSL
 
 - HERKUNFT.md: Herkunft — VCSL, Upright Piano (Knight, Yamaha)
 - Quelle:** Versilian Community Sample Library (VCSL), github.com/sgossner/VCSL, Zweig `master`; einzeln über
@@ -70,13 +84,13 @@
 - `…/Upright Piano, Yamaha` (143, 248,1 MB), dazu `LICENSE`, `README.md`. Pfade wie im Original.
 - Unterordner: `Chordophones` (288)
 
-## Klasse 2 - Gezupfte Saite/Iowa_MIS_Guitar_mono2496
+### Klasse 2 - Gezupfte Saite/Iowa_MIS_Guitar_mono2496
 
 - HERKUNFT.md: Herkunft — Iowa MIS, Gitarre (Nylon), mono 24 bit/96 kHz
 - Quelle:** University of Iowa Electronic Music Studios, Musical Instrument Samples (MIS), Seite
 - Lizenz:** keine Standardlizenz. Wortlaut auf `MIS.html` (nachgelesen 2026-10-26): „may be downloaded and used for
 
-## Klasse 2 - Gezupfte Saite/Mores_2021_Zenodo4604577
+### Klasse 2 - Gezupfte Saite/Mores_2021_Zenodo4604577
 
 - HERKUNFT.md: Herkunft — Mores, Archiv der Stegmobilität klassischer Gitarren
 - Quelle:** Mores, Robert: „Archive for the acoustical documentation of classical Spanish guitars, flamenco guitars and
@@ -85,7 +99,7 @@
 - Lizenz:** Zenodo-API `license: {'id': 'cc-by-4.0'}` (nachgelesen 2026-10-26) — Namensnennung nötig.
 - `List_of_guitars_physical_measures.pdf`, die seit IC Session 1 unter [gemeinsam/quellen/](../../../../gemeinsam/quellen/)
 
-## Klasse 2 - Gezupfte Saite/VCSL
+### Klasse 2 - Gezupfte Saite/VCSL
 
 - HERKUNFT.md: Herkunft — VCSL, Harfen und Cembali
 - Quelle:** Versilian Community Sample Library (VCSL), Versilian Studios LLC, github.com/sgossner/VCSL, Zweig `master`;
@@ -94,7 +108,7 @@
 - 122), dazu `LICENSE` und `README.md` der Quelle. Pfade wie im Original.
 - Unterordner: `Chordophones` (564)
 
-## Klasse 3 - Bogen-Saite/CNSM_Zenodo18696786
+### Klasse 3 - Bogen-Saite/CNSM_Zenodo18696786
 
 - HERKUNFT.md: Herkunft — CNSM Dataset (drei Violinen: Stegadmittanz, Bewegung, Audio)
 - Quelle:** Zenodo, Datensatz 18696786 (Version 1.0.0, 2026-02-19; der in [aufnahmen.md](../../aufnahmen.md) genannte
@@ -104,7 +118,7 @@
 - Beschreibung:** Der Zenodo-Eintrag hat **keine** Beschreibung (Feld fehlt, nachgelesen 2026-10-27); was folgt, ist
 - Unterordner: `admittances` (22), `mocap` (203), `recordings` (237)
 
-## Klasse 3 - Bogen-Saite/Iowa_MIS_Strings2012_stereo2496
+### Klasse 3 - Bogen-Saite/Iowa_MIS_Strings2012_stereo2496
 
 - HERKUNFT.md: Herkunft — Iowa MIS 2012, Streicher (Violine, Viola, Cello, Kontrabass), stereo „2496“
 - Quelle:** University of Iowa Electronic Music Studios, Musical Instrument Samples (MIS), Seiten
@@ -114,7 +128,7 @@
 - Die Dateien liegen **nicht im Repo**, sondern lokal unter `…\cmake\samples\Klasse 3 - Bogen-Saite\Iowa_MIS_Strings2012_stereo2496\` (auch für LumiViz erreichbar
 - Unterordner: `Bass` (78), `Cello` (48), `Viola` (66), `Violin` (72)
 
-## Klasse 3 - Bogen-Saite/Lampis_Zenodo13374477
+### Klasse 3 - Bogen-Saite/Lampis_Zenodo13374477
 
 - HERKUNFT.md: Herkunft — Lampis, Stegkraft beim Anstreichen von Cello-G-Saiten (mdw Wien)
 - Quelle:** Zenodo, Datensatz 13374477 (2024-08-26), DOI 10.5281/zenodo.13374477, „Bridge force waveforms obtained by
@@ -124,7 +138,7 @@
 - Die Dateien liegen **nicht im Repo**, sondern lokal unter `…\cmake\samples\Klasse 3 - Bogen-Saite\Lampis_Zenodo13374477\` (auch für LumiViz erreichbar). Im Repo
 - Unterordner: `model_A_1` (5735), `model_A_2` (5921), `model_B_1` (3950), `model_B_2` (5913), `model_C_2` (5918), `model_D_1` (3944), `model_D_2` (5914)
 
-## Klasse 3 - Bogen-Saite/TinySOL_Strings
+### Klasse 3 - Bogen-Saite/TinySOL_Strings
 
 - HERKUNFT.md: Herkunft — TinySOL, nur Streicher
 - Quelle:** Zenodo, Datensatz 3685367, DOI 10.5281/zenodo.3685367, „TinySOL: an audio dataset of isolated musical
@@ -134,7 +148,7 @@
 - Aufnahme (Zenodo-Beschreibung):** „originally recorded at Ircam in Paris (France) between 1996 and 1999, as part of
 - Unterordner: `Contrabass` (309), `Viola` (309), `Violin` (284), `Violoncello` (291)
 
-## Klasse 3 - Bogen-Saite/TU-Note_Violin
+### Klasse 3 - Bogen-Saite/TU-Note_Violin
 
 - HERKUNFT.md: Herkunft — TU-Note Violin Sample Library (TU Berlin)
 - Quelle:** DepositOnce (TU Berlin), Handle 11303/7527, DOI 10.14279/depositonce-6747, „TU-Note Violin Sample
@@ -143,7 +157,7 @@
 - Die Dateien liegen **nicht im Repo**, sondern lokal unter `…\cmake\samples\Klasse 3 - Bogen-Saite\TU-Note_Violin\` (auch für LumiViz erreichbar). Im Repo bleibe
 - Unterordner: `File_Lists` (3), `Segments` (692), `WAV` (1384)
 
-## Klasse 3 - Bogen-Saite/VSCO-2-CE_Strings
+### Klasse 3 - Bogen-Saite/VSCO-2-CE_Strings
 
 - HERKUNFT.md: Herkunft — VSCO 2 CE, Streicher (ohne Harfe)
 - Quelle:** GitHub `sgossner/VSCO-2-CE`, Commit `440300901dfe9275fd84e0b7763af1f8443ae62e` (Stand `master` am
@@ -153,16 +167,16 @@
 - Prüfsummen:** `SHA256SUMS`; `LADELISTE.tsv` nennt je Datei die raw-URL am obigen Commit.
 - Unterordner: `Cello Section` (156), `Solo Contrabass` (152), `Solo Violin` (161), `Viola Section` (144), `Violin Section` (131)
 
-## loops
+### loops
 
 - *(keine HERKUNFT.md/README — Herkunft nicht vermerkt)*
 - Unterordner: `JacobJoaquin16` (176), `JacobJoaquin22` (176), `JacobJoaquin44` (176)
 
-## OLPC
+### OLPC
 
 - *(keine HERKUNFT.md/README — Herkunft nicht vermerkt)*
 
-## Salamander
+### Salamander
 
 - README.md: Salamander Grand Piano V3 — Messbezug für LumiViz Stufe 31d
 - Lizenz:** Creative Commons Attribution 3.0 — `http://creativecommons.org/licenses/by/3.0/`
@@ -170,7 +184,7 @@
 - Wer Werte daraus übernimmt, nennt die Herkunft „gemessen an Salamander (Yamaha C5), Alexander Holm, CC BY 3.0“.
 - Unterordner: `pruefung` (2), `SalamanderGrandPianoV3_48khz24bit` (644)
 
-## Salamander_download
+### Salamander_download
 
 - *(keine HERKUNFT.md/README — Herkunft nicht vermerkt)*
-
+<!-- WECHSEL:ENDE -->

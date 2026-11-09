@@ -3,7 +3,10 @@
 > **Version:** 0.1.0 · **Datum:** 2026-11-09 (Session 182)
 > **Anlass:** Entscheid Patrik LP2 b (S182): IC wird aufgelöst, LumiViz ist die einzige Quelle für Rechenkerne,
 > Vorgaben, Recherche, Messpläne und Quellen (vermerkt in beiden `CLAUDE.md`).
-> **Status:** Entwurf — Bestand aufgenommen, Ziele vorgeschlagen; **ausgeführt ist nichts**, offen sind AU1–AU3
+> **Status:** Entwurf — U0 erledigt (`4409088`); entschieden AU1 a (Doku je Klasse unter `<klasse>/ic/`), AU2 a (Code
+> nach `harvest/`), AU3 (Hörproben nach `cmake\samples\Hoerproben\`), AU3-1 a (Liste bleibt versioniert im Repo, Kopie
+> mit den Klängen am Hörort, Wächter auf Gleichheit), AU1-1 a (gemeinsame IC-Dokumente nach Thema); **alle Ziele
+> entschieden**, Ausführung U1–U7 steht aus
 > **Bezug:** [Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md) §6 (Stufe 34) ·
 > [Uebernahme_Journal.md](Uebernahme_Journal.md) · Index der Ablagen [../../archiv/](../../archiv/)
 
@@ -52,17 +55,26 @@ Fremde Dokumente außerhalb von IC, die dieselbe Regel trifft (in LumiViz, durch
 
 | Quelle | Ziel | Bemerkung |
 |---|---|---|
-| IC `klassen/Klasse N …/*.md`, `recherche/` | `docs/modellierung/<klasse>/ic/` (AU1 a) | Ordner der Klassen wie heute (`hammer-saite`, `gezupfte-saite`, `platte-stab`, `membran`), neu `bogen-saite`, `becken-gong`, `lippe-rohr`, `rohrblatt-rohr`, `luftstrahl-rohr`, `zunge`, `tonrad` |
+| IC `klassen/Klasse N …/*.md`, `recherche/` | `docs/modellierung/<klasse>/ic/` (**AU1 a, Patrik S182**) | Ordner der Klassen wie heute (`hammer-saite`, `gezupfte-saite`, `platte-stab`, `membran`), neu `bogen-saite`, `becken-gong`, `lippe-rohr`, `rohrblatt-rohr`, `luftstrahl-rohr`, `zunge`, `tonrad` |
 | IC `klassen/*/aufnahmen/`, `daten/` (Begleitdateien) | `docs/modellierung/<klasse>/aufnahmen/<Quelle>/` | die Daten liegen schon unter `cmake\samples\Klasse N …\<Quelle>` (E:); abgleichen: `Iowa_MIS_Strings2012_mono2496` steht in IC, fehlt im Archiv |
 | IC `klassen/*/quellen/`, `gemeinsam/quellen/`, `dld/` | `…\cmake\quellen\<klasse>\` bzw. `…\quellen\gemeinsam\` | fremde Dokumente |
-| IC `gemeinsam/*.md`, `gemeinsam/recherche/` | `docs/modellierung/gemeinsam/` | Messkette, Hörschwellen, Körper, Rohr, Lehren |
+| IC `gemeinsam/koerper.md`, `recherche/…_koerper_abstrahlung.md` | `docs/modellierung/koerper/ic/` (**AU1-1 a, Patrik S182**) | Ordner gibt es schon (KB1 a) |
+| IC `gemeinsam/rohr.md`, `recherche/…_rohr_verfahren.md`, `…_moden_und_waveguides_rohr.md`, `…_aufnahmen_blaeser.md` | neuer Themenordner `docs/modellierung/rohr/` (AU1-1 a) | Klassen 7–9; deren README verweisen darauf |
+| IC `gemeinsam/messkette.md`, `hoerschwellen.md`, `recherche/…_messkette_verfahren.md` | neuer Themenordner `docs/modellierung/messung/` (AU1-1 a) | alle Klassen; Bibliothek `InstrumentMeasure` |
+| IC `recherche/…_aufnahmen_schlagwerk.md`, `…_spielweisen_schlagwerk.md` | `docs/modellierung/membran/ic/recherche/` (AU1-1 a) | Klassen 5–6; `becken-gong` verweist darauf |
+| IC `recherche/…_moden_und_waveguides_saite.md` | `docs/modellierung/hammer-saite/ic/recherche/` (AU1-1 a) | Klassen 1–3; `gezupfte-saite`, `bogen-saite` verweisen darauf |
+| IC `gemeinsam/lehren-pruefung.md`, `recherche/…_pruefung_lehren_k*.md` (3) | `docs/modellierung/anbindung-ic/ic/` (AU1-1 a) | gehört zum Bau in IC |
+| IC `gemeinsam/README.md`, `aufnahmen.md`, `quellen.md`, `offene-fragen.md` | `docs/modellierung/gemeinsam/` (AU1-1 a) | Klasse 0 selbst |
 | IC Wurzel (11 Dateien), `pruefungen/`, `.claude/journal/` | `docs/modellierung/anbindung-ic/ic/` | als Geschichte; `STAND.md` und `AUFTRAG_BAU.md` mit Vermerk „aufgelöst S182“ |
-| IC `rechnung/` (Quellen, `werte/`) | `harvest/instruments-calculation/rechnung/` (AU2 a) | Vorlage für 34j, 34k und spätere Klassen; nicht gebaut; je übernommene Klasse wird der Teil dort entfernt |
+| IC `rechnung/` (Quellen, `werte/`) | `harvest/instruments-calculation/rechnung/` (**AU2 a, Patrik S182**) | Vorlage für 34j, 34k und spätere Klassen; nicht gebaut; je übernommene Klasse wird der Teil dort entfernt |
 | IC `hoertest/listen/*/liste.json`, `klaenge.sha256` | `hoertest/listen/ic/<klasse>/` | Listen für HörTest_Helper |
-| IC `hoertest/listen/*/klaenge/*.wav` | `…\cmake\samples\IC_Hoerproben\<klasse>\` (AU3 a) | gerechnet, 237 MB |
+| IC `hoertest/listen/<klasse>/` ganz (`liste.json`, `klaenge.sha256`, `klaenge/*.wav`) | `…\cmake\samples\Hoerproben\IC\<klasse>\` (**AU3, Patrik S182**) | gerechnet, 237 MB, die einzige Fassung; Liste und Klänge bleiben beisammen (Konzept §11/§12: Pfade relativ zur `liste.json`) |
+| LumiViz `hoertest/listen/<liste>/klaenge/` (stab_34g, membran_34h, klasse1_34i; 96 MB) | `…\samples\Hoerproben\LumiViz\<liste>\` mit Kopie von `liste.json` und `klaenge.sha256` (AU3) | **AU3-1 a:** `liste.json` und `klaenge.sha256` bleiben versioniert unter `hoertest/listen/<liste>/` (IC: `hoertest/listen/ic/<klasse>/`), Antworten unter `hoertest/ergebnisse/`; die schreibenden Fälle legen beide Kopien an, ein Wächter prüft sie auf Gleichheit (meldet nur, wenn die Ablage fehlt) |
+| LumiViz `.claude/handover/hoerproben_*` (rund 35 Ordner, 2,6 GB, aus der Zeit vor HörTest_Helper, teils mit `hoertest.json` des Behelfs) | `…\samples\Hoerproben\LumiViz\<ordner>\` unverändert | dazu einzeln prüfen: `salamander_31d*`, `nocturne_31d9`, `lautheit_s139`, `stil_tabs`, `titanium` (gemischt, teils fremde Aufnahmen) |
+| HörTest_Helper `out/build/windows-ninja-release-clang/exec/Hoertest/bin/Release/` | `…\samples\Hoerproben\_werkzeug\Hoertest\` | ausführbare Fassung mit Qt-DLLs; Commit von HörTest_Helper in einer `FASSUNG.txt` |
 | LumiViz `docs/modellierung/*/quellen/` | `…\cmake\quellen\<klasse>\` | Links in den Berichten anpassen (`quellen/<datei>` → Name und Index) |
 | LumiViz `dld/` | `…\cmake\quellen\noten\` (IMSLP) bzw. `…\quellen\<thema>\` (Paper) | |
-| LumiViz `asset/free_Tabs/` | `…\cmake\quellen\noten\tabs\` | `.gitignore`-Zeile danach entfernen |
+| LumiViz `asset/free_Tabs/` | `…\cmake\quellen\noten\tabs\` | `.gitignore`-Zeile bleibt als Schutz |
 
 ## 4 Entfällt
 
@@ -77,16 +89,25 @@ Fremde Dokumente außerhalb von IC, die dieselbe Regel trifft (in LumiViz, durch
 
 | Schritt | Inhalt | Prüfung |
 |---|---|---|
-| U1 | Fremde Dokumente: alle PDF aus §2 nach `cmake\quellen\…` kopieren; Index neu (`tools/archiv_index.py`); dann die Kopien in **LumiViz** löschen (nicht in Git) — in IC nichts löschen | Zahl und SHA-256 je Datei gleich; Index nennt jede Datei |
+| U0 | Patrik committet den offenen Stand von IC: Session 5 (2026-10-30/31: Hörschwellen, Probe, Glätte, Hörlisten, Prüfbericht S166) ist nie committet, dazu der Prüfbericht S172 (2026-11-02) und der Vermerk der Auflösung (S182) — 27 geänderte, 24 neue Dateien; letzter Commit `bb7e6d6` (2026-10-30) — **erledigt 2026-11-09 (`4409088`, mit dem Abschluss IC Session 6 und der Übergabe `UEBERGABE_LUMIVIZ_HOERTEST.md`)** | `git status` in IC leer; erst danach umziehen, damit die Quelle jedes Umzugs ein Commit ist |
+| U1 | Fremde Dokumente: alle PDF aus §2 nach `cmake\quellen\…` kopieren; Index neu (`tools/archiv_index.py`); dann die Kopien in **LumiViz** löschen (nicht in Git) — in IC nichts löschen — **erledigt 2026-11-09** (`tools/quellen_umzug_s182.py`): 127 Quellen, 122 Dateien angekommen (5 Doppel aus IC `dld/`), Liste `cmake\quellen\UMZUG_S182.tsv` (sha256, Ziel, Quelle — Grundlage für U2); 101 Dateien in LumiViz gelöscht, `dld/`, `asset/free_Tabs/`, `modellierung/*/quellen/` leer und entfernt; die `.gitignore`-Zeilen bleiben als Schutz | Zahl und SHA-256 je Datei gleich; Index nennt jede Datei — 122 Dateien im Index |
 | U2 | Links in den Berichten unter `docs/modellierung/` von `quellen/<datei>` auf „`cmake\quellen\<klasse>\<datei>` (Index)“ | keine Links ins Leere (Prüfskript) |
 | U3 | IC-Doku (Klassen, gemeinsam, Wurzel, Prüfungen, Journal) nach §3 kopieren, Links richten, Vermerke | Zahl der Dateien; jeder relative Link aufgelöst |
 | U4 | Begleitdateien der Aufnahmen; Abgleich mit dem Archiv (fehlendes `mono2496` klären) | SHA256SUMS am Archiv geprüft, sobald eingesteckt |
 | U5 | `rechnung/` nach `harvest/instruments-calculation/` (ohne Bau, ohne externals); README dort: was übernommen ist, was nicht | Dateizahl; kein `Source.cmake` zeigt hinein |
-| U6 | Hörlisten nach `hoertest/listen/ic/`, WAVs nach `cmake\samples\IC_Hoerproben\` | `Hoertest.exe --liste-pruefen` je Liste |
+| U6 | Hörproben nach `cmake\samples\Hoerproben\` (AU3): IC je Klasse, LumiViz-Listen, `.claude/handover/hoerproben_*`, `_werkzeug\Hoertest`; ein abgeschlossener Test bekommt eine Datei `abgeschlossen.pass` (Datum, Ergebnis im Repo, Commit) — erst dann darf sein Ordner auf die Wechselplatte | `Hoertest.exe --liste-pruefen` je Liste am neuen Ort; SHA-256 je Datei; Index nennt jede Liste mit Zustand |
 | U7 | Konzept §6 nachziehen: 34l ohne „Auftrag an IC“; Steckbrief, Memory; Patrik archiviert IC (Git) | — |
 
-U1 und U2 lassen sich sofort ausführen; U3–U6 brauchen AU1–AU3.
+Alle Ziele sind entschieden (S182); U1–U7 können der Reihe nach ausgeführt werden, je Schritt mit seiner Prüfung.
 
 ## 6 Offene Entscheide
 
-Siehe die Vorlage im Gespräch S182 (AU1 Ablage der IC-Doku, AU2 Ablage des IC-Codes, AU3 die gerechneten Hörproben).
+Siehe die Vorlage im Gespräch S182 (AU1 Ablage der IC-Doku, AU2 Ablage des IC-Codes, AU3 die gerechneten Hörproben —
+AU3 neu gefasst nach der Übergabe von IC, s. §3).
+
+## 7 Hörtest aus IC
+
+Übergabe: IC `UEBERGABE_LUMIVIZ_HOERTEST.md` (IC Session 6, 2026-11-09; im Sync `IC-20261109-1529-…`). LV übernimmt die
+11 Listen und die offenen Punkte: Befund HT 1 (gleiche Abdrücke bei verschiedener Stärke), Befund HT 2 (Klänge abseits
+des Pegels; IC misst unter 0,4 s ohne Gate, HT gar nicht), IC-3 (Bezüge auf 48 kHz), L5 (592 Klänge ungehört),
+Alphorn A2 (NaN). Die Reihenfolge der Übergabe (§4 dort: erst die Listen richtig, dann hören) gilt als Vorschlag für U6.
