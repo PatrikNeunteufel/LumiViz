@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Honky-tonk piano",
     "category": "keys",
-    "genres": ["Jazz"],
+    "genres": ["Fusion", "Jazz"],
     "description": "The upright piano with the outer strings of each plain-wire course tuned 1 Hz apart from the middle one at A4 (a tuner's recipe, report only); unmeasured.",
     "level": 2.3097,
     "layers": [

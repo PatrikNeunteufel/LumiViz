@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Reed electric piano",
     "category": "keys",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A clamped steel reed per key struck by a felt hammer (Stulov 2009), heard through an electrostatic pickup; unmeasured.",
     "level": 1.9335,
     "layers": [

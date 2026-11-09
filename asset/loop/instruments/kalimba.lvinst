@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Kalimba",
     "category": "percussion",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A clamped tine per key plucked at its tip (mode ratios after Chapman 2006), without box; unmeasured.",
     "level": 0.7627,
     "layers": [

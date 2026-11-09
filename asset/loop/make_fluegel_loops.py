@@ -4,7 +4,7 @@ docs/audio/Spielweisen_Konzept.md §4.1, Teilplan 31d-8, Schritt 8.4).
     python asset/loop/make_fluegel_loops.py
     python asset/loop/instrument_pegel.py --loops
 
-Schreibt `asset/loop/grand_piano_demo.lvloop`: acht Takte, 72 bpm, linke Hand gebrochene
+Schreibt `asset/loop/modelled_instruments/grand_piano_demo.lvloop` (seit S182 dort, IL3 a): acht Takte, 72 bpm, linke Hand gebrochene
 Akkorde (Grundton, Quinte, Terz eine Oktave hoeher, Oktave als Achtel; C, Am, F, G, C, Am, G,
 im letzten Takt C gehalten), rechte Hand eine Melodie aus Vierteln und Halben. Keine Spuren,
 kein Pedal (Mitschwingen kommt mit 31e). Selbst gesetzt, kein fremdes Werk.
@@ -18,7 +18,7 @@ jeden anderen) und `instrument_katalog.py` (das Genre des Loops wird das Genre v
 `grand_piano`). 31d-9 und 31h-3 bauen dieses Skript fuer die Chopin-Loops aus (CH1 a, CH2 a).
 Kein Zufall: zwei Laeufe ergeben dieselbe Datei.
 
-Schreibt dazu `asset/loop/nocturne_demo.lvloop` (31d-9, S158): die Nocturne Op. 9 Nr. 2 ganz, aus den Daten in
+Schreibt dazu `asset/loop/modelled_instruments/full/nocturne_demo.lvloop` (31d-9, S158; seit S182 unter full/): die Nocturne Op. 9 Nr. 2 ganz, aus den Daten in
 `nocturne_op9_2.py` — ein Muster *Piano* mit beiden Haenden (HD1 a), Stimmen *Right hand* / *Left hand* nach System
 (N5 a), Pedal-Spur Sustain nach *Ped.* und ✱ (N3 a), Staerke nach der Tafel mit Gabeln (N2 a, DY1 a), festes Tempo
 ♪ = 132 (N4 a), Auftakt vorn (N7 a), Kadenz und Schlussfermate nach N8 a; Fassung 14, immer alle Felder. Was die
@@ -216,12 +216,15 @@ def nocturne_demo():
     }
 
 
-LOOPS = {"grand_piano_demo": grand_piano_demo, "nocturne_demo": nocturne_demo}
+# S182 (IL3 a): die Loops des Fluegels liegen bei den Instrumenten mit Kern, ganze Stuecke unter full/
+LOOPS = {"modelled_instruments/grand_piano_demo": grand_piano_demo, "modelled_instruments/full/nocturne_demo": nocturne_demo}
 
 
 def main():
     for name, bau in LOOPS.items():
-        (HIER / (name + ".lvloop")).write_text(als_text(bau()), encoding="utf-8", newline="\n")
+        ziel = HIER / (name + ".lvloop")
+        ziel.parent.mkdir(parents=True, exist_ok=True)
+        ziel.write_text(als_text(bau()), encoding="utf-8", newline="\n")
     print(len(LOOPS), "Loop(s) des Fluegels")
 
 

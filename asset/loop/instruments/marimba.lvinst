@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Marimba",
     "category": "percussion",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A modal bar per key (undercut 1 : 4 : 10, rosewood values after Rucz & Ulveczki 2021) struck by a mallet, with a closed tube resonator coupled to the first mode; unmeasured.",
     "level": 0.5296,
     "layers": [

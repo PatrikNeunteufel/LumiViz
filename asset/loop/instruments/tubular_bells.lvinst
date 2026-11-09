@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Tubular bells",
     "category": "percussion",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A brass tube per key (free-free bending modes), heard an octave below mode 4, struck at the top, with a damper pedal; unmeasured.",
     "level": 0.7476,
     "layers": [

@@ -5,7 +5,7 @@
     python asset/loop/instrument_pegel.py --loops
     python asset/loop/instrument_katalog.py
 
-Schreibt `asset/loop/membrane_demo.lvloop`: acht Takte, 100 bpm. Ein Drum-Muster mit dem Kit `modelled_drums` (TM3 a):
+Schreibt `asset/loop/modelled_instruments/membrane_demo.lvloop` (seit S182 dort, IL3 a): acht Takte, 100 bpm. Ein Drum-Muster mit dem Kit `modelled_drums` (TM3 a):
 Bassdrum, Snare, Cross-Stick (*rim*), Randschlag (*snare 2*), Low tom, Conga, Bongo — dazu ein Wirbel der Snare als
 eigene Spur (`coreTracks` roll 1 ueber 750 ms; die Spielweise einer Spur, TM2 a). Die Pauke spielt C3 und G3 als
 Instrument (ihr Umfang C3–G3), die Tabla als Instrument mit wechselnder Staerke (TM1 a: die Stufe ist die Lautstaerke in
@@ -101,7 +101,7 @@ def membrane_demo():
 
 
 def main():
-    (HIER / "membrane_demo.lvloop").write_text(als_text(membrane_demo()), encoding="utf-8", newline="\n")
+    (HIER / "modelled_instruments" / "membrane_demo.lvloop").write_text(als_text(membrane_demo()), encoding="utf-8", newline="\n")
     print("1 Loop der Trommeln")
 
 

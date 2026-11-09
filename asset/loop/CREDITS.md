@@ -4,7 +4,7 @@ Die Loops unter `loop/` sind eigene Werke, bis auf die Übertragungen gemeinfrei
 Kompositionen. Für diese gilt: Die Komposition ist gemeinfrei, die Übertragung in
 das Loop-Format ist eigene Arbeit; genannt wird die Ausgabe, aus der übertragen wurde.
 
-## nocturne_demo.lvloop
+## modelled_instruments/full/nocturne_demo.lvloop
 
 - **Werk:** Frédéric Chopin, Nocturne Es-Dur Op. 9 Nr. 2 (1830–1832). Gemeinfrei.
 - **Vorlage:** *Friedrich Chopin's Werke*, Band IV (Nocturnes), herausgegeben von

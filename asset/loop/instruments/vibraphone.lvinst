@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Vibraphone",
     "category": "percussion",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A modal aluminium bar per key (1 : 4) with a tube resonator whose lids a motor turns (track motor), a damper bar, and a bow at the end of the bar from E-flat 4 (track bowed); unmeasured.",
     "level": 0.6094,
     "layers": [

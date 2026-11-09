@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Glockenspiel",
     "category": "percussion",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A uniform steel bar per key (free-free 1 : 2.757 : 5.404) struck by a mallet, without resonator; unmeasured.",
     "level": 0.6842,
     "layers": [

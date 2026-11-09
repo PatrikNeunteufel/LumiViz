@@ -1,7 +1,7 @@
 """Nocturne Op. 9 Nr. 2 (Chopin) als Daten — von Hand uebertragen aus der Gesamtausgabe Breitkopf & Haertel 1880
 (Bargiel, *Friedrich Chopin's Werke* Band IV, Plate C. IV. 2; IMSLP #113996), Takt fuer Takt mit Zoom an jeder
 unsicheren Stelle, gegen die Erstausgabe Kistner 1833 (Plate 995; IMSLP #86550) geprueft (31d-9, 9.4, TR1 a,
-S157–S158). Beide Ausgaben gemeinfrei. `make_fluegel_loops.py` macht daraus `nocturne_demo.lvloop`.
+S157–S158). Beide Ausgaben gemeinfrei. `make_fluegel_loops.py` macht daraus `modelled_instruments/full/nocturne_demo.lvloop` (seit S182 unter full/).
 
 Einheiten: Schritte zu je einer Zweiunddreissigstel; ein 12/8-Takt hat 48 Schritte (Achtel = 4).
 Je Takt: `rh`, `lh` = Liste (Anfang, Dauer, [Tonnamen klingend, mit Vorzeichen], optional ">" fuer einen Akzent);

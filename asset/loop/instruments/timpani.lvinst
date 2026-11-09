@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Timpani",
     "category": "percussion",
-    "genres": ["World"],
+    "genres": ["Fusion", "World"],
     "description": "A 25-inch kettledrum (Packer 1993) with air load; the key sets the tension, mode (1,1) on the key, C3 to G3, and the pitch track bends it; unmeasured.",
     "level": 2.0289,
     "layers": [

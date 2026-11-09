@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Tine electric piano",
     "category": "keys",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A clamped steel tine per key (after Falaize & Helie 2015) with a tone bar, struck by a neoprene hammer (Hunt-Crossley, Soenderbo 2024), heard through a magnetic pickup; unmeasured.",
     "level": 1.0763,
     "layers": [

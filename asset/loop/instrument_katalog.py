@@ -14,7 +14,8 @@ zwei Laeufe ergeben dieselben Dateien.
   woraus das Instrument gebaut ist, nicht wie es klingt — abgehoert hat es
   niemand.
 - **Genres** werden gezaehlt, nicht getippt: ein Instrument traegt das Genre
-  jedes mitgelieferten Loops (`*_demo.lvloop`, `genres/*.lvloop`), in dem es
+  jedes mitgelieferten Loops (`*_demo.lvloop`, `genres/*.lvloop`,
+  `modelled_instruments/*.lvloop`, `modelled_instruments/full/*.lvloop`), in dem es
   steht. Steht es in keinem, traegt es keins.
 
 `make_examples.py` und `make_genres.py` rufen `ergaenze` vor dem Schreiben,
@@ -213,7 +214,11 @@ _KOPF = ("format", "version", "title", "category", "genres", "description", "lev
 def genres_aus_loops():
     """Name eines Instruments -> sortierte Liste der Genres der Loops, in denen es steht."""
     je_instrument = {}
-    dateien = sorted(HIER.glob("*_demo.lvloop")) + sorted((HIER / "genres").glob("*.lvloop"))
+    # S182: auch die Loops der Instrumente mit Kern (modelled_instruments/, ganze Stuecke unter full/) — die Loops der
+    # Nuancen tragen kein Genre und zaehlen deshalb nicht
+    dateien = (sorted(HIER.glob("*_demo.lvloop")) + sorted((HIER / "genres").glob("*.lvloop"))
+               + sorted((HIER / "modelled_instruments").glob("*.lvloop"))
+               + sorted((HIER / "modelled_instruments" / "full").glob("*.lvloop")))
     for datei in dateien:
         daten = json.loads(datei.read_text(encoding="utf-8"))
         genre = daten.get("tags", {}).get("genre", "").strip()

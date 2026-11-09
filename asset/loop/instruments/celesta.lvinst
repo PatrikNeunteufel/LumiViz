@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Celesta",
     "category": "keys",
-    "genres": ["Ambient"],
+    "genres": ["Ambient", "Fusion"],
     "description": "A steel bar per key over a wooden box tuned to the fundamental, struck by a felt hammer (Stulov 2009) and damped when the key is released; unmeasured.",
     "level": 1.4618,
     "layers": [

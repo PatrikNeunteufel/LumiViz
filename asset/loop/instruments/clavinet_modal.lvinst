@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Clavinet modal",
     "category": "keys",
-    "genres": ["Jazz"],
+    "genres": ["Fusion", "Jazz"],
     "description": "A string per key struck and held by a tangent, three semitones lower when released (Gabrielli et al. 2013), heard through two magnetic pickups and the shelves of the amplifier; modal, next to the waveguide clavinet until the listening test; unmeasured.",
     "level": 0.5258,
     "layers": [

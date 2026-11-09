@@ -453,7 +453,7 @@ Pegel gemessen wie die anderen (`instrument_pegel.py`, Level 4,1788, rund
 +12,4 dB). Gerechnet und an *Salamander* (Yamaha C5, CC BY 3.0) gemessen,
 nichts davon mitgeliefert: an fremden Rechten hängt nur die Messung.
 
-### grand_piano_demo.lvloop
+### modelled_instruments/grand_piano_demo.lvloop (bis S181 im Ordner `loop/`)
 
 Klassik, 72 BPM, acht Takte, selbst gesetzt: linke Hand gebrochene Akkorde
 (C, Am, F, G, C, Am, G, zum Schluss C gehalten), rechte Hand eine Melodie aus
@@ -464,7 +464,7 @@ Vierteln und Halben — beide Hände in **einem** Muster *Piano*, ein Kanal, Pan
 
 ## S158, Stufe 31d-9: Nocturne Op. 9 Nr. 2
 
-### nocturne_demo.lvloop
+### modelled_instruments/full/nocturne_demo.lvloop (bis S181 im Ordner `loop/`)
 
 Frédéric Chopin, Nocturne Es-Dur Op. 9 Nr. 2, ganz: Auftakt und 34 Takte, 12/8,
 ♪ = 132 (die Metronomangabe der Ausgabe), 3:38. Von Hand übertragen aus der
@@ -557,7 +557,7 @@ Der Pegel steht in `instrument_pegel.py` (alt = neu: `bars_demo` ist für den Be
 geschrieben). Ein neuer `--messung`-Lauf rundet jeden gemessenen Pegel neu — für ein
 neues Instrument nur dessen Zeile übernehmen.
 
-### bars_demo.lvloop
+### modelled_instruments/bars_demo.lvloop (bis S181 im Ordner `loop/`)
 
 `make_stab_loops.py`, danach `instrument_pegel.py --loops` und
 `instrument_katalog.py`. Acht Takte, 96 bpm, zweimal C – Am – F – G: die ersten vier
@@ -565,3 +565,28 @@ die Stabspiele mit Schlägel (Marimba, Vibraphon, Xylophon, Glockenspiel,
 Röhrenglocken), die letzten vier Celesta, Kalimba und die beiden elektrischen
 Klaviere; keine Spuren (Motor, Bogen und Pedale kommen mit 31g in den Editor). Selbst
 gesetzt.
+
+## S182: modelled_instruments/ — die Loops der Instrumente mit Kern (IL1 a–IL3 a)
+
+Ein eigener Ordner für alles, was die Instrumente mit Kern spielt (der Flügel, die Stabspiele aus 34g, die
+Trommeln aus 34h, die Tasten aus 34i). Dorthin umgezogen sind `grand_piano_demo`, `bars_demo`, `membrane_demo`,
+`keys_demo` und — als ganzes Stück — `full/nocturne_demo`; ihre Skripte schreiben sie jetzt dort.
+
+    python asset/loop/make_modelled_loops.py
+    python asset/loop/instrument_pegel.py --loops
+    python asset/loop/instrument_katalog.py
+
+`make_modelled_loops.py` schreibt **je Instrument einen Loop der Nuancen** `<instrument>.lvloop` (21 Stück, 90 bpm,
+gleicher Aufbau): Muster *Notes* mit Lage, Stärke, Länge, Pedal und Expression je Takt (Trommeln mit einer
+Tonhöhe statt dessen *Strength*), dann Muster *Techniques* mit den Spielweisen des Kerns als Drum-Spuren mit festem
+`coreTracks` (IL2 a) — je Spur ein Schlag auf einen halben Takt, die erste ohne Spielweise. Dazu das Ensemble
+`modelled_ensemble.lvloop` (acht Takte, 100 bpm, Genre *Fusion*). Die Loops der Nuancen tragen kein Genre.
+
+Welche Spielweise ein Instrument zeigt, steht in `SPIELWEISEN`; der Fall `*Modelled loops*` (`test_LoopModelled.cpp`)
+misst je Spur, dass sie den Ton hörbar ändert. Nicht dabei, weil die Werte aus IC sie heute abschalten: una corda an
+den drei Hammer-Klavieren (`softFactor` 1), Bogen am Glockenspiel, Schlägelstelle an der Kalimba, Tastendruck am
+Clavinet (`keyPressureLimit` 0).
+
+Neue Zeilen in `werte/loop_werte.txt` und `werte/klangfassung.txt`: nur die der neuen Loops; die Schlüssel der
+umgezogenen tragen den Pfad (`loop:modelled_instruments/…`). Ganze Stücke, die später unter `full/` dazukommen
+können: `projects/apps/LumiViz/docs/audio/Ganze_Stuecke_Kandidaten.md`.

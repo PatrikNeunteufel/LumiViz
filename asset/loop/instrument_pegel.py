@@ -211,7 +211,10 @@ def messung(tsv):
 
 
 def mitgelieferte_loops(wurzel):
-    return sorted({p for muster in ("genres/*.lvloop", "vergleich/*.lvloop", "*_demo.lvloop") for p in wurzel.glob(muster)})
+    # dieselben Muster wie `lumi_asset(loop …)` in asset/Asset.cmake (S182: modelled_instruments/, …/full/)
+    muster = ("genres/*.lvloop", "vergleich/*.lvloop", "modelled_instruments/*.lvloop", "modelled_instruments/full/*.lvloop",
+              "*_demo.lvloop")
+    return sorted({p for m in muster for p in wurzel.glob(m)})
 
 
 def ziehe_nach(daten):

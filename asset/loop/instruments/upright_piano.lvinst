@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Upright piano",
     "category": "keys",
-    "genres": ["Jazz"],
+    "genres": ["Fusion", "Jazz"],
     "description": "The hammer-string of the grand piano with the bass strings cut to the length of an upright (Yamaha U1, report only), heavier strings at the same tension and a larger inharmonicity; soft and practice pedals; unmeasured.",
     "level": 1.8787,
     "layers": [

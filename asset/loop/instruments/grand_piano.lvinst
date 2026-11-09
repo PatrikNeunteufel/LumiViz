@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Grand Piano",
     "category": "keys",
-    "genres": ["Classical"],
+    "genres": ["Classical", "Fusion"],
     "description": "A modal hammer-string grand piano: three strings per key with two decay stages, through the Steinway D soundboard; decay, brightness and detuning measured against the Salamander Yamaha C5.",
     "level": 4.2418,
     "layers": [

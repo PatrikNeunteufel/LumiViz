@@ -5,7 +5,7 @@
     python asset/loop/instrument_pegel.py --loops
     python asset/loop/instrument_katalog.py
 
-Schreibt `asset/loop/bars_demo.lvloop`: acht Takte, 96 bpm, zweimal C – Am – F – G. Die ersten vier Takte die
+Schreibt `asset/loop/modelled_instruments/bars_demo.lvloop` (seit S182 dort, IL3 a): acht Takte, 96 bpm, zweimal C – Am – F – G. Die ersten vier Takte die
 Stabspiele mit Schlaegel (Marimba gebrochen, Vibraphon in Akkorden, Xylophon und Glockenspiel mit der Melodie, die
 Roehrenglocken auf der Eins von Takt 1 und 3), die letzten vier die mit Tastatur oder Zunge (Celesta mit der Melodie,
 Kalimba gebrochen, die beiden elektrischen Klaviere in Akkorden und im Bass). Keine Spuren (Motor, Bogen und Pedale
@@ -73,7 +73,7 @@ def bars_demo():
 
 
 def main():
-    (HIER / "bars_demo.lvloop").write_text(als_text(bars_demo()), encoding="utf-8", newline="\n")
+    (HIER / "modelled_instruments" / "bars_demo.lvloop").write_text(als_text(bars_demo()), encoding="utf-8", newline="\n")
     print("1 Loop der Stabspiele")
 
 

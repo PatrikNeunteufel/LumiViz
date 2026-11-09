@@ -5,7 +5,7 @@ IK2-8 a: „je Klasse ein Beispiel <name>_demo“, KL2 a: `keys_demo`).
     python asset/loop/instrument_pegel.py --loops
     python asset/loop/instrument_katalog.py
 
-Schreibt `asset/loop/keys_demo.lvloop`: acht Takte, 104 bpm, zweimal F – Dm – Bb – C mit leichtem Swing. Die ersten
+Schreibt `asset/loop/modelled_instruments/keys_demo.lvloop` (seit S182 dort, IL3 a): acht Takte, 104 bpm, zweimal F – Dm – Bb – C mit leichtem Swing. Die ersten
 vier Takte die Klaviere mit Hammer (das Upright in Akkorden und Bass, das Honky-tonk mit der Melodie eine Oktave hoeher),
 die letzten vier die elektrischen (der CP-70 in Akkorden, das Clavinet modal mit einem Riff in Sechzehnteln). Keine
 Spuren (Pedale, Daempferschieber und Tonabnehmer kommen mit 31g in den Editor). Je Instrument ein Kanal, Pan nach Lage.
@@ -64,7 +64,7 @@ def keys_demo():
 
 
 def main():
-    (HIER / "keys_demo.lvloop").write_text(als_text(keys_demo()), encoding="utf-8", newline="\n")
+    (HIER / "modelled_instruments" / "keys_demo.lvloop").write_text(als_text(keys_demo()), encoding="utf-8", newline="\n")
     print("1 Loop der Klasse 1")
 
 

@@ -1,0 +1,132 @@
+{
+    "format": "lumiviz-loop",
+    "version": 11,
+    "bpm": 90,
+    "beatsPerBar": 4,
+    "stepsPerBeat": 4,
+    "swing": 0.0,
+    "volume": 0.3,
+    "tags": {
+        "title": "Upright piano nuances",
+        "artist": "LumiViz",
+        "genre": ""
+    },
+    "patterns": [
+        {
+            "name": "Notes",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "upright_piano",
+            "volume": 0.7,
+            "pan": 0.0,
+            "mute": false,
+            "notes": [
+                [0, 2, 21, 0.7],
+                [2, 2, 33, 0.7],
+                [4, 2, 45, 0.7],
+                [6, 2, 57, 0.7],
+                [8, 2, 71, 0.7],
+                [10, 2, 83, 0.7],
+                [12, 2, 96, 0.7],
+                [14, 2, 108, 0.7],
+                [16, 2, 64, 0.12],
+                [18, 2, 64, 0.25],
+                [20, 2, 64, 0.38],
+                [22, 2, 64, 0.5],
+                [24, 2, 64, 0.62],
+                [26, 2, 64, 0.75],
+                [28, 2, 64, 0.88],
+                [30, 2, 64, 1.0],
+                [32, 1, 64, 0.7],
+                [34, 2, 64, 0.7],
+                [36, 4, 64, 0.7],
+                [40, 8, 64, 0.7],
+                [48, 1, 64, 0.7],
+                [50, 1, 67, 0.7],
+                [52, 1, 71, 0.7],
+                [54, 1, 76, 0.7],
+                [56, 8, 64, 0.8],
+                [56, 8, 67, 0.8],
+                [56, 8, 71, 0.8]
+            ],
+            "lanes": {
+                "sustain": [
+                    [48.25, 1.0],
+                    [55.75, 0.0]
+                ],
+                "sostenuto": [],
+                "expression": [
+                    [0, 1.0],
+                    [55.5, 1.0],
+                    [56, 0.2],
+                    [60, 1.0],
+                    [63, 0.4]
+                ],
+                "vibrato": [],
+                "pitch": [],
+                "switches": {}
+            }
+        },
+        {
+            "name": "Techniques",
+            "kind": "drumkit",
+            "bars": 1,
+            "tracks": [
+                {
+                    "name": "Normal",
+                    "sound": "",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "upright_piano",
+                    "note": 64,
+                    "length": 1000,
+                    "coreTracks": {}
+                },
+                {
+                    "name": "Practice pedal",
+                    "sound": "",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "upright_piano",
+                    "note": 64,
+                    "length": 1000,
+                    "coreTracks": {
+                        "practice": 1
+                    }
+                }
+            ],
+            "rows": [
+                [0.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, 0]
+            ]
+        }
+    ],
+    "channels": [
+        {
+            "name": "Notes",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Notes",
+                    "start": 0,
+                    "repeat": 1
+                }
+            ],
+            "gain": 0.0
+        },
+        {
+            "name": "Techniques",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Techniques",
+                    "start": 4,
+                    "repeat": 1
+                }
+            ],
+            "gain": 0.0
+        }
+    ]
+}
