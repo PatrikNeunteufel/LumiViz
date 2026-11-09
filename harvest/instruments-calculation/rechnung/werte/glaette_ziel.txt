@@ -1,0 +1,36 @@
+# Glaette des Ziels am Modell (IC-A4, messkette.md §3b) — ic_glaette_ziel
+# fest: Amplitude bei der festen Frequenz des Ziels alle 10 ms (Hann 20 ms, Toleranz 0,5 dB); suche: Rate und Tiefe der AM (amRate) (Toleranz 2 % / 0,5 dB)
+# Spalten: Klasse | Mechanismus | Parameter (wahr; Bereich) | Messart | Groessen | davon wellig (> 1 Minimum, 41 Punkte) | Minima hoechstens | Σ r²: Minima, groesster/mittlerer Schritt, glatt nach ZF8 a (2)
+4 Platte und Stab | Vibraphon F4, Motor | drehzahl (U/s) (4; 1–10) | fest | 261 | 253 | 19 | 5, 1.51e+05/1.94e+04, NICHT glatt
+4 Platte und Stab | Vibraphon F4, Motor | drehzahl (U/s) (4; 1–10) | suche | 2 | 1 | 2 | 1, 1.15e+03/518, glatt | Ziel: Rate 8 Hz, Tiefe 23.3054 dB
+    Schnitt (Wert: Rate/Tiefe): 1: 2/30.9 1.64: 3.29/27.4 2.29: 4.57/25.4 2.93: 5.86/24.2 3.57: 7.14/23.6 4.21: 8.43/23.2 4.86: 9.71/23 5.5: 11/23 6.14: 12.3/23 6.79: 13.6/23.2 7.43: 14.9/23.4 8.07: 16.1/23.6 8.71: 17.4/23.9 9.36: 18.7/24.2 10: 20/24.4
+5 Membran | Tom, Fell gegen Kessel | Kesselvolumen (Faktor auf die Vorgabe) (1; 0.5–2) | fest | 131 | 106 | 7 | 1, 773/236, NICHT glatt
+5 Membran | Tom, Fell gegen Kessel | Kesselvolumen (Faktor auf die Vorgabe) (1; 0.5–2) | suche | 2 | 0 | 1 | 1, 1.92/0.521, NICHT glatt | Ziel: Rate 9.07 Hz, Tiefe 2.20075 dB
+    Schnitt (Wert: Rate/Tiefe): 0.5: 9.07/3.34 0.552: 9.07/3.11 0.61: 9.07/2.87 0.673: 9.07/2.66 0.743: 9.07/2.5 0.82: 9.07/2.37 0.906: 9.07/2.28 1: 9.07/2.2 1.1: 9.07/2.13 1.22: 9.07/2.04 1.35: 9.07/1.94 1.49: 9.07/1.83 1.64: 9.07/1.71 1.81: 9.07/1.59 2: 9.07/1.48
+10 Durchschlagende Zunge | Akkordeon A4, Musette | Schwebung an A4 (Hz) (2; 0.5–8) | fest | 231 | 231 | 19 | 6, 2.76e+04/1.09e+04, NICHT glatt
+10 Durchschlagende Zunge | Akkordeon A4, Musette | Schwebung an A4 (Hz) (2; 0.5–8) | suche | 2 | 1 | 7 | 1, 3.8e+03/1.71e+03, glatt | Ziel: Rate 2 Hz, Tiefe 15.7252 dB
+    Schnitt (Wert: Rate/Tiefe): 0.5: 0.53/11.7 1.04: 1.03/15.7 1.57: 1.57/15.8 2.11: 2.11/15.7 2.64: 2.64/15.8 3.18: 3.18/15.8 3.71: 3.71/15.8 4.25: 4.25/15.9 4.79: 4.79/16 5.32: 5.32/16 5.86: 5.86/16.1 6.39: 6.39/16.1 6.93: 6.93/16.2 7.46: 7.47/16.3 8: 8/16.3
+11 Tonrad | Orgel A4, Rotary langsam, Trommel | Trommel langsam (U/min) (40; 20–120) | fest | 751 | 746 | 19 | 5, 3.44e+04/6.95e+03, NICHT glatt
+11 Tonrad | Orgel A4, Rotary langsam, Trommel | Trommel langsam (U/min) (40; 20–120) | suche | 2 | 2 | 11 | 1, 1.52e+03/666, glatt | Ziel: Rate 0.7 Hz, Tiefe 7.1211 dB
+    Schnitt (Wert: Rate/Tiefe): 20: 0.33/6.04 27.1: 0.45/6.16 34.3: 0.57/6.27 41.4: 0.71/6.88 48.6: 0.81/7.77 55.7: 0.9/6.86 62.9: 1.05/6.17 70: 1.17/6.01 77.1: 1.29/6.09 84.3: 1.4/6.02 91.4: 1.53/6.77 98.6: 1.65/5.56 106: 1.76/6.36 113: 1.88/6.18 120: 2/6.14
+11 Tonrad | Orgel A6, Rotary langsam, Horn | Horn langsam (U/min) (48; 20–120) | fest | 751 | 751 | 20 | 4, 2.91e+05/6.6e+04, NICHT glatt
+11 Tonrad | Orgel A6, Rotary langsam, Horn | Horn langsam (U/min) (48; 20–120) | suche | 2 | 1 | 13 | 1, 1.19e+03/472, glatt | Ziel: Rate 0.8 Hz, Tiefe 14.4146 dB
+    Schnitt (Wert: Rate/Tiefe): 20: 0.33/14.2 27.1: 0.45/16.4 34.3: 0.56/13.3 41.4: 0.7/18.7 48.6: 0.81/14.6 55.7: 0.93/17.4 62.9: 1.04/17.5 70: 1.17/15.7 77.1: 1.28/15.1 84.3: 1.4/16 91.4: 1.53/15.5 98.6: 1.64/15.5 106: 1.76/16.2 113: 1.88/14.1 120: 2/20
+1 Hammer-Saite | Hackbrett C4, Chor | Verstimmung (Cent) (0.3; 0.05–4) | fest | 261 | 106 | 3 | 2, 9.39e+04/1.83e+04, NICHT glatt
+1 Hammer-Saite | Hackbrett C4, Chor | Verstimmung (Cent) (0.3; 0.05–4) | suche | 2 | 2 | 2 | 2, 1.47e+07/1.05e+06, NICHT glatt | Ziel: Rate 0.3 Hz, Tiefe 0.119577 dB
+    Schnitt (Wert: Rate/Tiefe): 0.05: 23.3/0.00722 0.0684: 0.3/0.00586 0.0935: 0.3/0.011 0.128: 0.3/0.0208 0.175: 0.3/0.0393 0.239: 0.3/0.0746 0.327: 0.3/0.143 0.447: 0.3/0.283 0.612: 0.3/0.59 0.836: 0.3/1.4 1.14: 0.3/5.34 1.56: 0.52/11.1 2.14: 0.52/22.8 2.92: 0.56/17.5 4: 0.51/18.3
+2 Gezupfte Saite | Laute A3, Doppelchor | Verstimmung (Cent) (4; 0.5–20) | fest | 261 | 246 | 10 | 4, 1.04e+05/3.85e+04, NICHT glatt
+2 Gezupfte Saite | Laute A3, Doppelchor | Verstimmung (Cent) (4; 0.5–20) | suche | 2 | 2 | 7 | 2, 1.64e+04/2.43e+03, NICHT glatt | Ziel: Rate 0.55 Hz, Tiefe 15.5552 dB
+    Schnitt (Wert: Rate/Tiefe): 0.5: 0.3/0.768 0.651: 0.3/0.97 0.847: 0.3/1.39 1.1: 0.3/2.48 1.43: 0.3/9.45 1.87: 0.53/11.6 2.43: 0.52/22.2 3.16: 0.55/19.7 4.12: 0.53/15.9 5.36: 0.62/17.4 6.97: 0.87/17 9.07: 1.14/17.1 11.8: 1.49/16.9 15.4: 1.94/16.7 20: 2.53/16.6
+3 Bogen-Saite | Violine E5, Vibrato der Spieler | Vibrato-Rate (Hz) (5.5; 3–8) | fest | 231 | 231 | 17 | 6, 2.98e+05/2.01e+05, NICHT glatt
+3 Bogen-Saite | Violine E5, Vibrato der Spieler | Vibrato-Rate (Hz) (5.5; 3–8) | suche | 2 | 1 | 13 | 1, 138/73.8, glatt | Ziel: Rate 5.5 Hz, Tiefe 25.9696 dB
+    Schnitt (Wert: Rate/Tiefe): 3: 3/25.7 3.36: 3.36/25.6 3.71: 3.71/25.7 4.07: 4.07/25.7 4.43: 4.43/25.7 4.79: 4.79/25.7 5.14: 5.14/25.8 5.5: 5.5/26 5.86: 5.86/25.9 6.21: 6.21/25.7 6.57: 6.57/26 6.93: 6.93/25.9 7.29: 7.29/26 7.64: 7.64/26.1 8: 8/26.1
+7 Lippe und Rohr | Posaune B3, Vibrato der Spieler | Vibrato-Rate (Hz) (5; 3–8) | fest | 231 | 231 | 19 | 4, 32.9/6.04, NICHT glatt
+7 Lippe und Rohr | Posaune B3, Vibrato der Spieler | Vibrato-Rate (Hz) (5; 3–8) | suche | 2 | 0 | 1 | 1, 207/97.4, glatt | Ziel: Rate 5 Hz, Tiefe 5.40356 dB
+    Schnitt (Wert: Rate/Tiefe): 3: 3/6.1 3.36: 3.36/5.95 3.71: 3.71/5.81 4.07: 4.07/5.69 4.43: 4.43/5.57 4.79: 4.79/5.46 5.14: 5.14/5.36 5.5: 5.5/5.28 5.86: 5.86/5.19 6.21: 6.21/5.12 6.57: 6.57/5.05 6.93: 6.93/4.99 7.29: 7.29/4.94 7.64: 7.64/4.88 8: 8/4.84
+8 Rohrblatt und Rohr | Klarinette C4, Vibrato der Spieler | Vibrato-Rate (Hz) (5; 3–8) | fest | 231 | 231 | 19 | 4, 17.9/3.41, NICHT glatt
+8 Rohrblatt und Rohr | Klarinette C4, Vibrato der Spieler | Vibrato-Rate (Hz) (5; 3–8) | suche | 2 | 1 | 12 | 2, 380/118, NICHT glatt | Ziel: Rate 4.99 Hz, Tiefe 0.150118 dB
+    Schnitt (Wert: Rate/Tiefe): 3: 3.03/0.166 3.36: 3.37/0.138 3.71: 3.72/0.147 4.07: 4.03/0.155 4.43: 4.47/0.141 4.79: 4.76/0.149 5.14: 5.18/0.129 5.5: 5.47/0.132 5.86: 5.86/0.131 6.21: 6.21/0.118 6.57: 6.59/0.133 6.93: 6.92/0.0986 7.29: 7.28/0.119 7.64: 7.61/0.105 8: 8.01/0.102
+9 Luftstrahl und Rohr | Blockfloete D5, Vibrato der Spieler | Vibrato-Rate (Hz) (5; 3–8) | fest | 231 | 231 | 19 | 4, 11.6/2.2, NICHT glatt
+9 Luftstrahl und Rohr | Blockfloete D5, Vibrato der Spieler | Vibrato-Rate (Hz) (5; 3–8) | suche | 2 | 1 | 9 | 1, 203/92.6, glatt | Ziel: Rate 5 Hz, Tiefe 2.33984 dB
+    Schnitt (Wert: Rate/Tiefe): 3: 3/2.34 3.36: 3.36/2.36 3.71: 3.71/2.36 4.07: 4.07/2.36 4.43: 4.43/2.35 4.79: 4.79/2.37 5.14: 5.14/2.36 5.5: 5.5/2.34 5.86: 5.86/2.39 6.21: 6.22/2.35 6.57: 6.57/2.35 6.93: 6.93/2.36 7.29: 7.28/2.37 7.64: 7.64/2.36 8: 8/2.37
