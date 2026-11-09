@@ -193,12 +193,15 @@ TEST_SUITE("LoopPegel")
     {
         const PegelApp app;
         constexpr double kGrenzeLu = 15.0;
-        // Ursache bekannt (Bauwerte fest ueber den Umfang): Wurlitzer, Kalimba, Clavinet; Einbruch ganz oben, Ursache
-        // noch nicht geprueft: Glockenspiel (Taste 103), Xylophon (Taste 107)
+        // Einbruch ganz oben, Ursache noch nicht geprueft: Glockenspiel (Taste 103), Xylophon (Taste 107). Wurlitzer, Kalimba
+        // und Clavinet waren bis S182 Ausnahmen (Bauwerte fest ueber den Umfang) — seit S183 (LP2 b: WU1 a, WU2 a, KA1 a, CL1 a)
+        // je Taste hergeleitet; Wurlitzer und Kalimba laufen unter der Grenze mit, das Clavinet bleibt Ausnahme (CL2 a): der
+        // Diskant steigt ∝ f aus festem Tangentenweg und Geschwindigkeit am Tonabnehmer, Saitenlaengen und Abstaende der
+        // Tonabnehmer je Taste sind ohne Quelle (Herleitung docs/modellierung/anbindung-ic/2026-11-09_S183_vorgaben_je_taste.md §6)
         const std::map<QString, QString> ausnahmen = {
-            {QStringLiteral("reed_electric_piano"), QStringLiteral("Masse der Zunge und Hammer fest")},
-            {QStringLiteral("kalimba"), QStringLiteral("feste Auslenkung, Ausgabe Beschleunigung")},
-            {QStringLiteral("clavinet_modal"), QStringLiteral("Saitenlaenge und -masse fest (vermutet)")},
+            {QStringLiteral("clavinet_modal"),
+             QStringLiteral("Diskant ∝ f aus festem Tangentenweg und Geschwindigkeit am Tonabnehmer; Saitenlaengen und Tonabnehmer-Abstaende je Taste "
+                            "ohne Quelle (CL2 a, S183)")},
             {QStringLiteral("glockenspiel"), QStringLiteral("Einbruch an Taste 103, offen")},
             {QStringLiteral("xylophone"), QStringLiteral("Einbruch an Taste 107, offen")},
         };

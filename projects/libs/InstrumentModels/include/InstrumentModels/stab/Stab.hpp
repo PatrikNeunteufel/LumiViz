@@ -47,6 +47,13 @@
  * Notenende nicht; halbes Pedal als Andruck nach SK6 a) oder *Einzeldaempfer* (Celesta, Rhodes, Wurlitzer: wie die
  * Hammer-Saite, das Notenende dampft). Der Aufrufer gibt den Takt, ab dem gedaempft wird, und den Andruck.
  *
+ * **S183 (LP2 b — Lautheit ueber den Umfang, Herleitung `docs/modellierung/anbindung-ic/2026-11-09_S183_vorgaben_je_taste.md`):**
+ * die Vorgaben von Wurlitzer und Kalimba je Taste statt fest (WU1 a: Masse der Zunge aus Laenge, Breite, Dicke und Lot;
+ * KA1 a: Laenge und Masse der Zunge aus Chapman 2006), dazu zwei Aenderungen am Kern: das Zupfen gibt eine **Kraft**
+ * (`zupfKraftN`) statt eines Wegs, und zwei Abnahmen — **Schlitz** (der Tonabnehmer des Wurlitzer als Ausschnitt der Platte,
+ * der grosse Wege saettigt) und **Steg** (die Kraft an der Einspannung: das Brett der Kalimba strahlt). Rechenfassung 2
+ * der Tafel; die IC-Abdruecke von Kalimba und Wurlitzer sind mit Begruendung neu (Journal J60 ff.).
+ *
  * Reines C++ ohne Qt, deterministisch.
  */
 #pragma once
@@ -88,13 +95,22 @@ enum class Abnahme
 {
     Akustisch,        ///< Σ g_n·q̈_n plus Partner
     Magnetisch,       ///< Rhodes: dΦ(y)/dt, Φ ∝ 1/√((y − y0)² + d²) (Polmodell — offen)
-    Elektrostatisch,  ///< Wurlitzer: u0·dC(y)/dt, C ∝ 1/(d − y) (Plattenkondensator — offen)
+    Elektrostatisch,  ///< Plattenkondensator: u0·dC(y)/dt, C ∝ 1/(d − y) — bis S183 der Wurlitzer; klemmt bei grossem Weg (offen)
+    Schlitz,          ///< Wurlitzer (WU1 a, S183): die Zunge schwingt durch einen Ausschnitt der geladenen Platte (Pfeifle 2017
+                      ///< Fig. 2, „vibrate freely between the symmetric cutouts“); C(y) ∝ 1/(1 + ((y − y0)/T)²) mit T =
+                      ///< `abnehmerAbstandM` (Breite der Glocke, die Plattendicke) und y0 = `abnehmerVersatzM` (Arbeitspunkt —
+                      ///< das Service Manual stimmt zu laute Toene, indem es das Plattenende 1/32″ … 1/16″ aufbiegt). Grosse
+                      ///< Wege geben je Durchgang einen Puls fester Flaeche: die Grundwelle saettigt, der Bass wird reich an
+                      ///< Obertoenen, nicht lauter
+    Steg,             ///< Kalimba (KA1 a, S183): die Kraft an der Einspannung, m·Σ g_n·q̈_n plus Partner — das Brett strahlt,
+                      ///< nicht die Zunge
 };
 
 enum class Anregung
 {
     Stoss,   ///< Schlaegel, Hammer
-    Zupfen,  ///< Kalimba: die Zunge wird an der Stelle ausgelenkt und losgelassen
+    Zupfen,  ///< Kalimba: die Zunge wird mit der Kraft `zupfKraftN` an der Stelle ausgelenkt und losgelassen (KA1 a, S183:
+             ///< Kraft, nicht Weg — der Daumen gibt eine Kraft, der Weg folgt aus der Steife der Zunge)
 };
 
 /// Der moegliche Umfang aller Stabspiele (die Tafel des Kerns `bar`, KS1 a): A0 … C8. Auf ihn richten sich die Kurven
@@ -146,7 +162,8 @@ struct StabSpiel
     Stossanreger schlaegel;
     Kurve anschlagStelle;       ///< x_s/L (linear)
     Kurve querVersatz;          ///< e/b, der Versatz von der Laengsachse (linear)
-    double tempoMax = 5.0;      ///< m/s bei Stufe 0
+    double tempoMax = 5.0;      ///< m/s bei Stufe 0 (Stoss)
+    double zupfKraftN = 3.0;    ///< N bei Stufe 0 (Zupfen, KA1 a): q_n(0) = F·φ_n/(m·ω_n²), der Weg δ = F/k folgt aus der Steife
     int ueberabtastung = 64;
     /// --- Daempfer --- (Entscheid nach FRAGEN_KONSOLIDIERT T3b a)
     DaempferArt daempfer = DaempferArt::Keiner;
@@ -158,8 +175,8 @@ struct StabSpiel
     /// --- Abnahme ---
     Abnahme abnahme = Abnahme::Akustisch;
     Kurve abnehmerStelle;       ///< x/L am Abnehmer (Spitze der Zunge: 1)
-    double abnehmerAbstandM = 1e-3;
-    double abnehmerVersatzM = 0.0;
+    double abnehmerAbstandM = 1e-3;  ///< d: Abstand (magnetisch, elektrostatisch) bzw. Breite T der Glocke (Schlitz)
+    double abnehmerVersatzM = 0.0;   ///< y0: Versatz der Ruhelage (magnetisch) bzw. Arbeitspunkt (Schlitz)
     double ausgangBezug = 1.0;  ///< der Ausgang, der als 1 ausgegeben wird
     /// --- geometrische Nichtlinearitaet (Steeldrum, Deluxe): quadratische Kopplung der Moden im Verhaeltnis 1 : 2
     /// (Thomas, Monteil & Touzé 2014, S. 2: „quadratischen Termen für 1:2:2 und 1:2:4“ — nur Bericht): Potential

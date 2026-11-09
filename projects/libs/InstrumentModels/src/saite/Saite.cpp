@@ -23,6 +23,8 @@ constexpr int kTeiltoeneMax = 200;
 constexpr double kAusblendenS = 0.005;
 /// Zwei Teiltoene beider Abschnitte koppeln am Steg, wenn sie auf 0,5 % gleich liegen (Schwelle, gesetzt — L4).
 constexpr double kStegFenster = 0.005;
+/// Stahl (Lehrbuch): μ = ρ·π·d²/4 aus dem Durchmesser (CL1 a, S183).
+constexpr double kStahlDichte = 7850.0;
 
 double lin(const Kurve& k, int n)
 {
@@ -62,6 +64,7 @@ struct Werte
 {
     double f0 = 0.0, b = 0.0, sigma1 = 0.0, spaetJeFrueh = 1.0, hoch = 0.0, cent = 0.0, gamma = 0.0, delta = 0.0, h = 0.0;
     double laenge = 1.0, mu = 0.001, t0 = 100.0, stelle = 0.1;
+    double dMm = 1.0;  ///< Durchmesser in mm — das Gewicht des magnetischen Tonabnehmers ist d² (CL1 a)
     int chor = 1;
 };
 
@@ -84,7 +87,8 @@ Werte werteAn(const SaitenSpiel& s, const SaitenAnschlag& a)
     w.delta = lin(s.polarisationCent, n);
     w.h = std::clamp(lin(s.waagrechtVerhaeltnis, n), 0.0, 1.0);
     w.laenge = logw(s.laengeM, n);
-    w.mu = logw(s.masseGm, n) * 1e-3;
+    w.dMm = logw(s.durchmesserMm, n);
+    w.mu = kStahlDichte * kPi * (w.dMm * 1e-3) * (w.dMm * 1e-3) / 4.0;  // CL1 a (S183): aus dem Durchmesser
     w.t0 = 4.0 * w.laenge * w.laenge * w.f0 * w.f0 * w.mu;
     w.stelle = std::clamp(lin(s.anschlagStelle, n), 0.0, 1.0);
     return w;
@@ -126,7 +130,8 @@ std::vector<SMode> abschnitt(const Werte& w, double f0, double laenge, double st
                 double summe = 0.0;
                 for (std::size_t i = 0; i < abnehmer.size(); ++i)  // x vom Steg aus
                     summe += (i < gewichte.size() ? gewichte[i] : 1.0) * std::sin(k * kPi * (1.0 - abnehmer[i]));
-                m.m.aus = e.lambda * e.anteil * summe;  // Geschwindigkeit an den Tonabnehmern
+                // Geschwindigkeit an den Tonabnehmern, gewichtet mit d² (CL1 a, S183: der Tonabnehmer sieht das Volumen der Saite)
+                m.m.aus = e.lambda * e.anteil * summe * (w.dMm * w.dMm);
             }
             else
                 m.m.aus = Komplex(k * kPi * t0 / laenge, 0.0);  // Kraft am Steg (Bank 2010 Gl. 16)
@@ -505,7 +510,7 @@ void richteSaitenSpiel(SaitenSpiel& s, const SaitenSpiel& v)
 {
     const auto r = [&](Kurve& k, double von, double bis, const Kurve& e) { richteKurve(k, von, bis, e, kSaitenUmfangMin, kSaitenUmfangMax); };  // KL4-1 a: der Umfang der Tafel
     r(s.laengeM, 0.02, 8.0, v.laengeM);
-    r(s.masseGm, 0.01, 500.0, v.masseGm);
+    r(s.durchmesserMm, 0.05, 5.0, v.durchmesserMm);
     r(s.inharmonizitaet, 1e-7, 0.1, v.inharmonizitaet);
     r(s.t60S, 0.01, 120.0, v.t60S);
     r(s.t60SpaetS, 0.01, 120.0, v.t60SpaetS);

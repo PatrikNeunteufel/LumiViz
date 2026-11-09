@@ -167,6 +167,7 @@ const std::vector<Feld>& felder()
                          }});
         v.push_back(schlaegelZahl("malletDampingHc", "Hunt–Crossley damping", "s/mm", 0.0, 1.0, &Stossanreger::lambdaHc));
         v.push_back(zahl("velocityMax", "Speed at full strength", "Mallet", "m/s", 0.01, 20.0, &StabSpiel::tempoMax));
+        v.push_back(zahl("pluckForce", "Pluck force at full strength", "Mallet", "N", 1e-3, 100.0, &StabSpiel::zupfKraftN));  // KA1 a (S183)
         v.push_back(ganzzahl("oversampling", "Oversampling of the contact", "Mallet", "", 1, 256, &StabSpiel::ueberabtastung));
         v.push_back(wahl<DaempferArt>("damper", "Damper", "Damper",
                                       {{"none", DaempferArt::Keiner}, {"bar", DaempferArt::Leiste}, {"single", DaempferArt::Einzeln}},
@@ -175,7 +176,11 @@ const std::vector<Feld>& felder()
         v.push_back(zahl("closedOpening", "Opening when closed", "Motor", "", 0.0, 1.0, &StabSpiel::restOeffnung));
         v.push_back(zahl("spinUp", "Spin-up time", "Motor", "s", 0.01, 10.0, &StabSpiel::hochlaufS));
         v.push_back(wahl<Abnahme>("pickup", "Pickup", "Pickup",
-                                  {{"acoustic", Abnahme::Akustisch}, {"magnetic", Abnahme::Magnetisch}, {"electrostatic", Abnahme::Elektrostatisch}},
+                                  {{"acoustic", Abnahme::Akustisch},
+                                   {"magnetic", Abnahme::Magnetisch},
+                                   {"electrostatic", Abnahme::Elektrostatisch},
+                                   {"slot", Abnahme::Schlitz},    // WU1 a (S183): der Wurlitzer
+                                   {"bridge", Abnahme::Steg}},    // KA1 a (S183): die Kalimba
                                   &StabSpiel::abnahme));
         v.push_back(zahl("pickupDistance", "Pickup distance", "Pickup", "m", 1e-5, 0.1, &StabSpiel::abnehmerAbstandM));
         v.push_back(zahl("pickupOffset", "Pickup offset", "Pickup", "m", -0.1, 0.1, &StabSpiel::abnehmerVersatzM));
@@ -219,7 +224,15 @@ void belege(ParameterAngabe& a)
         setze(Belegkraft::Rechnung, "the key the target holds at: F4 as in Rucz (tube instruments), C6 for the celesta box (IC)");
     else if (n.rfind("mallet", 0) == 0)
         setze(Belegkraft::Quelle, "default (marimba): mallet 25 g, K = 5e7 N/m^1.5, Hertz p = 1.5 (Rucz & Ulveczki 2021 Tab. 1 p. 5); "
-                                  "celesta and reed piano: Stulov 2009 eq. 9; tine piano: Hunt–Crossley after Soenderbo 2024 Tab. 3.2");
+                                  "celesta: Stulov 2009 eq. 9; tine piano: Hunt–Crossley after Soenderbo 2024 Tab. 3.2; reed piano: small hard "
+                                  "maple-and-felt hammer, Hunt–Crossley 3 g, p 1.5, 300 N/mm^1.5 (estimate, S183 WU2 a, open until M8)");
+    else if (n == "pluckForce")
+        setze(Belegkraft::Offen, "kalimba: 3 N at full strength, the thumb's force (open; S183 KA1 a) — the displacement follows from the "
+                                 "tine's stiffness, so the force at the mount is even over the range");
+    else if (n == "pickupDistance" || n == "pickupOffset")
+        setze(Belegkraft::Offen, "tine piano: 1 mm after Falaize & Helie 2015 (report only), offset 0.5 mm voicing (open); reed piano slot: "
+                                 "bell width 1 mm (plate thickness, open) and working point 0.5 mm — the 200/200A service manual voices loud "
+                                 "notes by bending the pickup end 1/32-1/16 in (S183 WU1 a)");
     else if (n == kBogenAb)
         setze(Belegkraft::Rechnung, "IC test of the upper register from E-flat 4 (63); the low register is IC class C (KS3 a)");
     else if (n.rfind("bow", 0) == 0)
@@ -239,10 +252,11 @@ std::vector<std::string> quellenIn(const Vorlage& v, std::string_view name)
 }
 
 /// QM1 a (S180): die Quellen der Werte ohne Kurve je Stabspiel nach `Vorgaben.cpp` (die Kurven setzt `mitQuellen` dort).
-/// - Schlaegel: Rucz & Ulveczki (Masse, Steife, Exponent nach Hertz) an den Staeben mit `ruczSchlaegel`; Celesta und
-///   Reed electric piano der Filzhammer nach Stulov & Kartofelev 2009 Gl. 9 (Masse, Steife, Exponent, Hysterese,
-///   Relaxation); Tine electric piano Hunt–Crossley nach Sønderbo 2024 Tab. 3.2 (Masse, Steife, Exponent, Schalter,
-///   Daempfung) und v bis 4 m/s; die Kalimba wird gezupft (ohne Schlaegel).
+/// - Schlaegel: Rucz & Ulveczki (Masse, Steife, Exponent nach Hertz) an den Staeben mit `ruczSchlaegel`; Celesta der
+///   Filzhammer nach Stulov & Kartofelev 2009 Gl. 9 (Masse, Steife, Exponent, Hysterese, Relaxation); Tine electric piano
+///   Hunt–Crossley nach Sønderbo 2024 Tab. 3.2 (Masse, Steife, Exponent, Schalter, Daempfung) und v bis 4 m/s; Reed electric
+///   piano seit S183 (WU2 a) ein kleiner harter Hammer als Einschaetzung (`lumiviz`); die Kalimba wird gezupft (Kraft
+///   `pluckForce`, KA1 a, `lumiviz`).
 /// - Ziel des Partners: „by as much as 15 dB“ (Rucz) mit Rohr (Marimba, Xylophon, Vibraphon) und am Kasten der Celesta
 ///   (uebertragen); die Taste F4 wie Rucz an den Rohren, C6 der Celesta ist IC.
 /// - Tonabnehmer des Tine electric piano: 1 mm Abstand nach Falaize & Hélie 2015.
@@ -268,7 +282,12 @@ QuellenJeWert quellenDesStabs(std::string_view name)
         dazu(kPartnerZielDb, {"rucz2021"});
     }
     if (name == "reed_electric_piano")
-        alle({"malletMass", "malletStiffness", "malletExponent", "malletHysteresis", "malletRelaxation"}, {"stulov2009"});
+    {
+        // WU2 a (S183): der Hammer ist eine Einschaetzung zum Bauteil (Manual: Ahorn mit Filz), nicht mehr Stulov — `lumiviz`
+        // WU1 a (S183): der Schlitz nach Pfeifle 2017 Fig. 2, der Arbeitspunkt nach dem Service Manual (Plattenende aufbiegen)
+        dazu("pickupDistance", {"pfeifle2017", "wurlitzer-manual-200"});
+        dazu("pickupOffset", {"wurlitzer-manual-200"});
+    }
     if (name == "tine_electric_piano")
     {
         alle({"malletMass", "malletStiffness", "malletExponent", "malletHuntCrossley", "malletDampingHc", "velocityMax"}, {"soenderbo2024"});
@@ -284,7 +303,7 @@ Parametertafel baueTafel(const Vorlage& vorlage)
     Parametertafel t;
     t.kern = std::string(kKernName);
     t.titel = "Bar and plate";
-    t.rechenFassung = 1;
+    t.rechenFassung = 2;  // S183 (LP2 b): Zupfen mit Kraft, Abnahmen Schlitz und Steg — die Eingaben-Abdruecke aendern sich
     t.noteMin = kUmfangMin;
     t.noteMax = kUmfangMax;
     t.gruppen = {"Keys", "Bar", "Partner", "Mallet", "Damper", "Motor", "Pickup", "Bow", "Output"};

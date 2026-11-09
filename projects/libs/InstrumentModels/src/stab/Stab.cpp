@@ -241,7 +241,8 @@ void rechneStabTon(const StabSpiel& s, const StabAnschlag& a, std::vector<float>
     const double dt = 1.0 / fs;
     const StabModen sm = stabModen(s, a);
     const double masse = logw(s.masseKg, note);
-    const bool akustisch = s.abnahme == Abnahme::Akustisch;
+    // Steg (KA1 a): dieselbe Summe der Beschleunigungen, am Ende mal der Masse — die Kraft an der Einspannung
+    const bool akustisch = s.abnahme == Abnahme::Akustisch || s.abnahme == Abnahme::Steg;
 
     std::vector<Mode> moden;
     for (const StabMode& m : sm.stab)
@@ -276,18 +277,23 @@ void rechneStabTon(const StabSpiel& s, const StabAnschlag& a, std::vector<float>
     }
     else
     {
-        // Zupfen: die Zunge statisch an der Stelle ausgelenkt (Auslenkung δ = `tempoMax` mm bei Stufe 0), dann frei:
-        // q_n(0) = F·φ_n/(m·ω_n²), q̇_n(0) = 0 → z = i·q(0) (Im(i·q·e^(λt)) = q·e^(−σt)·cos ωt)
-        double nachgiebig = 0.0;
-        for (const Mode& m : bank.moden())
+        // Zupfen (KA1 a, S183): die Zunge statisch mit der Kraft F = `zupfKraftN` bei Stufe 0 an der Stelle ausgelenkt, dann
+        // frei: q_n(0) = F·φ_n/(m·ω_n²), q̇_n(0) = 0 → z = i·q(0) (Im(i·q·e^(λt)) = q·e^(−σt)·cos ωt). Der Weg δ = F/k folgt
+        // aus der Steife der Zunge (bis S182 war δ = 1 mm an jeder Zunge fest — dann wuchs der Ausgang mit ω², 37 LU ueber
+        // drei Oktaven; die Kraft am Steg ist bei fester Kraft ueber den Umfang eben)
+        const double kraft = s.zupfKraftN * std::pow(10.0, std::clamp(a.stufe, -40, 0) / 20.0);
+        double delta = 0.0;
+        for (Mode& m : bank.moden())
         {
-            const double w2 = std::norm(m.lambda);
-            nachgiebig += m.abnahme * m.abnahme / (masse * w2);
+            const double q0 = kraft * m.abnahme / (masse * std::norm(m.lambda));
+            m.zustand = Komplex(0.0, q0);
+            delta += m.abnahme * q0;
         }
-        const double delta = s.tempoMax * 1e-3 * std::pow(10.0, std::clamp(a.stufe, -40, 0) / 20.0);
-        const double kraft = nachgiebig > 0.0 ? delta / nachgiebig : 0.0;
-        for (Mode& m : bank.moden()) m.zustand = Komplex(0.0, kraft * m.abnahme / (masse * std::norm(m.lambda)));
-        if (messung != nullptr) messung->kraftSpitzeN = kraft;
+        if (messung != nullptr)
+        {
+            messung->kraftSpitzeN = kraft;
+            messung->auslenkungSpitzeM = std::abs(delta);
+        }
     }
 
     // --- frei: Takt fuer Takt (Partner, Motor, Daempfer, Tonabnehmer) ---
@@ -320,6 +326,9 @@ void rechneStabTon(const StabSpiel& s, const StabAnschlag& a, std::vector<float>
     const auto tonabnehmer = [&](double y) {
         if (s.abnahme == Abnahme::Magnetisch) return 1.0 / std::sqrt((y - y0) * (y - y0) + d * d);
         if (s.abnahme == Abnahme::Elektrostatisch) return 1.0 / (d - std::min(y, 0.9 * d));
+        // Schlitz (WU1 a): die Kapazitaet zwischen Zungen- und Schlitzkante als Glocke ueber der Plattenebene, Breite T = d,
+        // Arbeitspunkt y0 — ohne Grenze: ein grosser Weg laeuft aus der Glocke heraus (Saettigung), er klemmt nicht
+        if (s.abnahme == Abnahme::Schlitz) return 1.0 / (1.0 + ((y - y0) / d) * ((y - y0) / d));
         return 0.0;
     };
     double vorige = tonabnehmer(0.0);
@@ -471,6 +480,10 @@ void rechneStabTon(const StabSpiel& s, const StabAnschlag& a, std::vector<float>
         }
         summe[static_cast<std::size_t>(i)] += aus;
     }
+    // Steg (KA1 a): die Kraft an der Einspannung — die Formen sind auf die modale Masse m normiert, die Summe der
+    // Beschleunigungen mal m ist die Traegheitskraft, die das Brett treibt
+    if (s.abnahme == Abnahme::Steg)
+        for (double& x : summe) x *= masse;
     if (gestrichen && messung != nullptr)
     {
         messung->haftAnteil = messZahl > 0 ? static_cast<double>(haftZahl) / static_cast<double>(messZahl) : 0.0;

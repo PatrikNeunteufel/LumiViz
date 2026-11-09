@@ -347,10 +347,33 @@ Abdrücke: `tests/unit/UnitTests/werte/klasse1_ic.txt` (zwölf aus `abdruck_msvc
   *Palette*,*Klasse1*` 330 / 330; Creator, Quellen, 34i 95 / 95 nach TT1 a.
 - **Rechenzeit ausgesetzt** bis zum Tausch der Kühlung (Patrik S181).
 
+## 6c. LP2 b — Vorgaben je Taste: Wurlitzer, Kalimba, Clavinet (S183)
+
+Anlass: Befund S182 (`2026-11-09_S182_pegel_ueber_den_umfang.md`) — Gefälle der Lautheit über den Umfang aus Bauwerten, die über
+die Tasten fest waren. Herleitung mit Quellen und Proben: `2026-11-09_S183_vorgaben_je_taste.md`. Entscheide Patrik 2026-11-09:
+**WU1 a, WU2 a** (Wurlitzer), **KA1 a** (Kalimba), **CL1 a, CL2 a** (Clavinet). Neue Quellen unter `…\cmake\quellen\platte-stab\`
+(Pfeifle 2017, Chapman 2006, Service Manual 200/200A) und `…\hammer-saite\` (Clavinet-FAQ); Register +7 (Händler, Forum, Manual,
+cmuse — alle *nur Bericht*). Erster Fall der Regel aus S182: **die IC-Abdrücke sind Beleg der Übernahme, kein Maßstab** — drei
+Abdrücke mit Vermerk neu, die übrigen (Hackbrett, Cimbalom, alle anderen Stabspiele) Bit für Bit.
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J60 | Wurlitzer: Zunge je Taste, Hammer, Tonabnehmer | Länge je Nummer (DocWurly, Paleophone), Breite/Dicke je Gruppe (Vintage Vibe), Stahl und Hammer (Service Manual S. 2), Grundmode und Ausschnitt der Platte (Pfeifle 2017 S. DAFX-18/21) | `stab/Vorgaben.cpp` (`wurlitzerMasseKg`, `wurlitzerMasse`, `baueVorgabeWurlitzer`), `Stab.hpp`/`Stab.cpp` (`Abnahme::Schlitz`), `StabKern.cpp` (`slot`) | — | **neu statt IC:** Masse der Zunge je Taste aus Länge, Breite, Dicke und dem Lot aus f₀ (3,2 g A1 … 0,2 g C7; IC 2 g fest); Hammer klein und hart (Hunt–Crossley 3 g, p 1,5, 300 N/mm^1,5 — Einschätzung, offen bis M8; IC Stulov an C4, WU1 a zunächst n = 100: der Diskant blieb 14–21 dB unter der Mitte); Tonabnehmer als **Schlitz** C(y) ∝ 1/(1 + ((y − y₀)/T)²), T 1,5 mm, y₀ 0,75 mm (IC Plattenkondensator d = 3 mm klemmte den Bass bei Spitze 1,0). Abdruck `stab_Wurlitzer_mitte_a-12` neu. Spanne LP3 a 34,3 → **10,8 LU**; Helligkeit über die Stärke bleibt (Taste 45 ×3,2, 64 ×1,9, 84 ×1,1) |
+| J61 | Kalimba: Zunge je Taste, Zupfen mit Kraft, Kraft am Steg | Chapman 2006 Tab. 1 (gelesen; a·√f₀ = 89–94 cm·√Hz), Federstahl 1,2 × 5 mm (cmuse, nur Bericht) | `Stab.hpp`/`Stab.cpp` (`zupfKraftN`, `Abnahme::Steg`), `StabKern.cpp` (`pluckForce`, `bridge`), `stab/Vorgaben.cpp` (`kalimbaMasse`), `InstrumentMeasure/StabStimmen.cpp` | — | **neu statt IC:** Zupfen gibt eine Kraft (3 N bei Stufe 0, offen), der Weg folgt aus der Steife (IC δ = 1 mm fest → Ausgang ∝ ω²); Ausgang die Kraft an der Einspannung (m·Σ q̈, das Brett strahlt; IC Beschleunigung der Zunge); Masse je Taste 3,6 g (D3) … 1,3 g (D6) (IC 3 g fest). **Befund:** die Stützen von `ratio2` lagen eine Oktave zu tief — Chapmans „D3“ ist 293,7 Hz = MIDI 62 (IC 50/62, jetzt 62/74). Abdruck `stab_Kalimba_mitte_a-12` neu. Spanne 37,4 → **1,4 LU** |
+| J62 | Clavinet: Durchmesser je Taste, Tonabnehmer ∝ d² | Stärken je Taste (Vintage Vibe, Electric Keys — nur Bericht), „the first 23 strings wound“ (Gabrielli 2013 S. 3), Dipolmoment ∝ Volumen (Horton & Moore 2009) | `Saite.hpp`/`Saite.cpp` (`durchmesserMm`, μ = ρπd²/4, `aus·d²`), `SaiteKern.cpp` (`stringDiameter` statt `stringMass`), `saite/Vorgaben.cpp` | Hackbrett und Cimbalom: 2r aus Peterson 2005 — **Bit für Bit wie IC** | **neu statt IC:** die Saite trägt ihren Durchmesser, der magnetische Tonabnehmer wiegt mit d² (IC Masse 1 g/m fest „nur Maßstab“); Umspinnung als Stahl gerechnet (Material ohne Quelle, offen). Abdruck `klasse1_Clavinet_m60_a-12` neu. Spanne 22,0 → **18,8 LU**: Bass eben, Senke an den .011″-Saiten, Diskant ∝ f aus festem Tangentenweg — **Ausnahme bleibt (CL2 a)** mit diesem Grund; offen Saitenlängen und Abstände der Tonabnehmer je Taste |
+| J63 | Tafeln, Dateien, Register, Pegel | — | `rechenFassung` 2 (`bar`, `struckString`); `LUMIVIZ_STAB_INSTRUMENTE_SCHREIBEN=1`, `LUMIVIZ_KLASSE1_INSTRUMENTE_SCHREIBEN=1`, `InstrumentTuneTool --all --reference` (9) bzw. `--reference` (1), `instrument_katalog.py`, `make_instrument_credits.py` | — | 10 Dateien neu; die sieben unveränderten Stabspiele tragen nur `pluckForce` 3 dazu und neue Abdrücke der gestimmten Werte (die Fassung steht im Eingaben-Abdruck), ihre gestimmten Werte und der Ton Bit für Bit. Pegel der drei: kalimba 0,7627 → 2,5457, reed 1,9335 → 0,6153, clavinet 0,5258 → 0,0951 (`alt` bleibt — die Loops sind mit dem alten Level gemischt, LV1). **Befund:** `instrument_pegel.py --messung --wurzel <Kopie>` schreibt Skript und Dateien trotzdem im Repo (alle Werte neu gerundet, Kommentare weg) — aus HEAD wiederhergestellt, drei Zeilen von Hand, dann `instrument_katalog.py` |
+| J64 | Wächter | — | `test_LoopPegel.cpp` (LP3 a: Wurlitzer und Kalimba laufen mit, Clavinet Ausnahme mit Grund CL2 a), `werte/stab_ic.txt`, `werte/klasse1_ic.txt` (Vermerk S183), `loop_werte.txt`, `klangfassung.txt` neu | — | siehe unten |
+
+**Wächter LP2 b** (S183): Release-clang `*Loop Stab*,*Loop Klasse1*,*Instrument Quellen*,*Instrument Stimmen*,*InstrumentModels 34g*,
+*InstrumentModels 34i*,*Modelled loops*` 39 / 39; `Loop Pegel LP3 a` grün (15 Instrumente über den Umfang); Testing-MSVC siehe
+Report S183. Kein voller Lauf (UF17-1 a: Rechenkern geändert — der volle Lauf folgt mit dem Abschluss der Stufe oder auf Anforderung;
+Rechenzeit ausgesetzt bis zum Tausch der Kühlung).
+
 ## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.9.0 | 2026-11-09 | Session 183. §6c neu: LP2 b (J60–J64, Wächter). |
 | 0.8.0 | 2026-11-09 | Session 181. §6b neu: 34i (J53–J59, Wächter). |
 | 0.7.0 | 2026-11-08 | Session 180. §6a neu: QM1 a (J50–J52, Wächter). |
 | 0.6.0 | 2026-11-08 | Session 179. §6 neu: 34h (J42 ff.). |

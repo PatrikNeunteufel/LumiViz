@@ -62,6 +62,9 @@ void mitQuellen(Kurve& k)
         {"Rucz", "rucz2021"},           {"Chapman", "chapman2006"},       {"Falaize", "falaize2015"},
         {"Soenderbo", "soenderbo2024"}, {"Pfeifle", "pfeifle2017"},       {"Thomas, Monteil", "thomas2014"},
         {"CCRMA", "ccrma"},
+        // S183 (LP2 b): die Zungen je Taste aus Haendler- und Forenberichten und dem Service Manual (alle nur Bericht)
+        {"Vintage Vibe", "vintagevibe-wurlitzer-reeds"}, {"DocWurly", "epforum-wurlitzer-reeds"}, {"Paleophone", "paleophone-wurlitzer-reeds"},
+        {"Service Manual", "wurlitzer-manual-200"},     {"cmuse", "cmuse-kalimba"},
     };
     // nicht in der Tafel: La Favre (Torsion „ohne Zahl“) und das Patent (Daempfer „unklar“) — die Werte dort sind
     // Einschaetzungen, nicht aus der Quelle; ebenso Iowa (nur als Ziel einer spaeteren Messung genannt)
@@ -109,6 +112,72 @@ Stossanreger ruczSchlaegel()
     a.q0 = kRuczSchlaegelK * std::pow(1e-3, 1.5);  // N/m^1,5 → N/mm^1,5
     a.p = 1.5;
     return a;
+}
+
+// --- S183 (LP2 b): die Zungen von Wurlitzer und Kalimba je Taste — Herleitung mit Quellen und Proben in
+// `docs/modellierung/anbindung-ic/2026-11-09_S183_vorgaben_je_taste.md` ---------------------------------------------
+
+constexpr double kStahlE = 200e9;     // Pa, Federstahl (Lehrbuch)
+constexpr double kStahlRho = 7850.0;  // kg/m³
+constexpr double kZoll = 0.0254;
+/// Modale Masse der ersten Mode des Kragbalkens je Gesamtmasse bei Form 1 an der Spitze — so normiert der Kern seine Formen.
+constexpr double kKragModalAnteil = 0.2427;
+/// f₁ = 0,1615·t/L²·√(E/ρ) des gleichfoermigen Kragbalkens ((β₁L)²/(2π·√12), β₁L = 1,8751).
+constexpr double kKragFrequenzFaktor = 0.1615;
+
+/// Die Zunge des Wurlitzer Nr. n = MIDI − 32 (WU1 a): Gesamtlaenge 3″ − n/20″ bis #20 (2″), ab #21 je 1/44″ weniger bis
+/// #64 (1″) — DocWurly (EP-Forum 2017) und Paleophone gleichlautend (nur Bericht); Breite je Gruppe .155/.129/.120/.110/.097″
+/// (Vintage Vibe, Case Study 200A, nur Bericht); Dicke der Zunge .020″ bis #20, .026″ ab #21 (Vintage Vibe 200A-Text, nur
+/// Bericht; das EP-Forum misst am 140B .024–.026″ bis #42 und .022″ darueber); Stahl „Swedish Sandvik“ (Service Manual S. 2).
+/// Einspannung c aus Zunge #64 ohne Lot (Annahme); Steife an der Spitze k = E·w·t³/(4·L_frei³); das Lot aus f₀:
+/// m_Lot = k/(2πf₀)² − 0,2427·m_Zunge, nicht unter 0 (die Zunge klingt in der Grundmode, Pfeifle 2017 S. DAFX-21); die Masse,
+/// die der Kern als gleichfoermigen Stab erwartet: m = m_Zunge + m_Lot/0,2427 — 3,2 g (A1) … 0,2 g (C7), heute 2 g fest.
+double wurlitzerMasseKg(int n)
+{
+    const auto gesamt = [](int k) { return (k <= 20 ? 3.0 - k / 20.0 : 2.0 - (k - 20) / 44.0) * kZoll; };
+    const auto breite = [](int k) { return (k <= 14 ? 0.155 : k <= 20 ? 0.129 : k <= 42 ? 0.120 : k <= 50 ? 0.110 : 0.097) * kZoll; };
+    const auto dicke = [](int k) { return (k <= 20 ? 0.020 : 0.026) * kZoll; };
+    const double wurzel = std::sqrt(kStahlE / kStahlRho);
+    const double lFrei64 = std::sqrt(kKragFrequenzFaktor * dicke(64) * wurzel / hzVon(96));
+    const double c = gesamt(64) - lFrei64;
+    const double l = gesamt(n) - c;
+    const double w = breite(n);
+    const double t = dicke(n);
+    const double k = kStahlE * w * t * t * t / (4.0 * l * l * l);
+    const double mZunge = kStahlRho * w * t * l;
+    const double omega = 2.0 * kPi * hzVon(32 + n);
+    const double mLot = std::max(0.0, k / (omega * omega) - kKragModalAnteil * mZunge);
+    return mZunge + mLot / kKragModalAnteil;
+}
+
+Kurve wurlitzerMasse()
+{
+    Kurve k;
+    for (const int n : {1, 7, 14, 15, 20, 21, 27, 33, 39, 42, 43, 50, 51, 57, 64}) k.punkte.push_back({32 + n, wurlitzerMasseKg(n)});
+    k.belegkraft = Belegkraft::Offen;
+    k.herkunft = "Rechnung je Zunge (wurlitzerMasseKg) aus Laenge (DocWurly, Paleophone), Breite und Dicke (Vintage Vibe 200A) — nur "
+                 "Bericht — und dem Lot aus f0 (Grundmode nach Pfeifle 2017; Stahl nach dem Service Manual): 3,2 g (A1) … 0,2 g (C7); "
+                 "S183 WU1 a, Herleitung 2026-11-09_S183_vorgaben_je_taste.md §2";
+    return k;
+}
+
+/// Die Zunge der Kalimba (KA1 a): freie Laenge a(f) = A/√f mit A = 91,8 cm·√Hz aus Chapman 2006 Tab. 1 S. 27 (a·√f₀ = 89 … 94
+/// fuer die fuenf Zungen D3 … D4, nachgelesen S183; Kragbalken f ∝ 1/a²), Federstahl 1,2 × 5 mm („around 1.2 millimeters is
+/// typical“, cmuse, nur Bericht — am gleichfoermigen Kragbalken auf 10–20 % an Chapmans f₀, den Rest nimmt der Abschnitt
+/// hinter dem Steg): m = ρ·w·t·a — 3,6 g (D3) … 1,3 g (D6), heute 3 g fest.
+constexpr double kChapmanAWurzelF = 0.918;  // m·√Hz
+constexpr double kKalimbaDickeM = 1.2e-3;
+constexpr double kKalimbaBreiteM = 5.0e-3;
+
+Kurve kalimbaMasse(const StabSpiel& s)
+{
+    Kurve k;
+    for (const int n : {s.noteMin, 62, 74, s.noteMax})
+        k.punkte.push_back({n, kStahlRho * kKalimbaBreiteM * kKalimbaDickeM * kChapmanAWurzelF / std::sqrt(hzVon(n))});
+    k.belegkraft = Belegkraft::Offen;
+    k.herkunft = "Rechnung: m = ρ·w·t·a mit a(f) = 91,8 cm·√Hz/√f aus Chapman 2006 Tab. 1 (nachgelesen S183), Federstahl 1,2 × 5 mm "
+                 "(cmuse, nur Bericht): 3,6 g (D3) … 1,3 g (D6); S183 KA1 a, Herleitung 2026-11-09_S183_vorgaben_je_taste.md §3";
+    return k;
 }
 
 /// Gemeinsame Vorgaben eines Stabs aus Holz mit Unterschnitt (Marimba, Xylophon).
@@ -268,21 +337,26 @@ StabSpiel baueVorgabeKalimba()
     s.kragbalken = true;
     s.anregung = Anregung::Zupfen;
     s.grundJeNote = konst(1.0, Belegkraft::Rechnung, "die Zunge klingt auf ihrer ersten Mode", s);
-    s.verhaeltnis2 = kurveAusPunkten({{50, 5.86}, {62, 5.30}}, Belegkraft::Offen,
-                                     "Chapman 2006, Tab. 1 S. 27: D3 5,86, D4 5,30 (nur Bericht, Wortlaut im Bericht)");
-    s.verhaeltnis3 = kurveAusPunkten({{50, 5.86 * 2.8}, {62, 5.30 * 2.8}}, Belegkraft::Offen,
+    // Chapmans Notennamen sind Klaviernoten: sein „D3“ ist 293,7 Hz = MIDI 62, „D4“ 587,3 Hz = MIDI 74 (bis S182 an 50/62)
+    s.verhaeltnis2 = kurveAusPunkten({{62, 5.86}, {74, 5.30}}, Belegkraft::Quelle,
+                                     "Chapman 2006, Tab. 1 S. 27: D3 (293,7 Hz) 5,86, D4 (587,3 Hz) 5,30 (nachgelesen S183)");
+    s.verhaeltnis3 = kurveAusPunkten({{62, 5.86 * 2.8}, {74, 5.30 * 2.8}}, Belegkraft::Offen,
                                      "offen: Abstand des Kragbalkens (β3/β2)² = (7,855/4,694)² = 2,80 (Rechnung)");
     s.t60S = konst(2.0, Belegkraft::Offen, "offen: 2 s (Chapman: „two exponentially damped sinusoids“ ohne Zahl)", s);
     s.daempfungExponent = konst(0.0, Belegkraft::Offen, "offen", s);
-    s.masseKg = konst(0.003, Belegkraft::Offen, "offen: 3 g (Federstahl 5 cm, Einschaetzung)", s);
+    s.masseKg = kalimbaMasse(s);  // KA1 a (S183): je Taste aus Chapmans Laengen, statt 3 g fest
     s.torsionVerhaeltnis = konst(0.0, Belegkraft::Offen, "ohne Torsion", s);
     s.torsionT60S = s.t60S;
     s.abstrahlExponent = konst(0.0, Belegkraft::Offen, "offen", s);
     s.anschlagStelle = konst(1.0, Belegkraft::Offen, "an der freien Spitze gezupft", s);
     s.querVersatz = konst(0.0, Belegkraft::Offen, "auf der Achse", s);
-    s.tempoMax = 1.0;  // mm Auslenkung bei Stufe 0
+    s.tempoMax = 5.0;     // ohne Bedeutung beim Zupfen (KA1 a: die Kraft)
+    s.zupfKraftN = 3.0;   // offen: ein kraeftiger Daumen (Einschaetzung); der Bezug kuerzt den Betrag heraus, es zaehlt die Form δ ∝ a³
     s.daempferT60S = konst(0.2, Belegkraft::Offen, "ohne Daempfer", s);
-    s.abnehmerStelle = konst(1.0, Belegkraft::Offen, "akustisch", s);
+    s.abnehmerStelle = konst(1.0, Belegkraft::Rechnung, "ohne Bedeutung: die Kraft an der Einspannung (KA1 a)", s);
+    // KA1 a (S183): das Brett strahlt, getrieben von der Kraft an der Einspannung — nicht die Beschleunigung der Zunge; bei
+    // fester Zupfkraft ist diese Kraft ueber den Umfang eben (Probe S183: 1,3 LU statt 37,4)
+    s.abnahme = Abnahme::Steg;
     s.partner = PartnerArt::Keiner;  // Kasten offen (Masse und Volumen ohne Quelle): Vorgabe die Brett-Kalimba
     mitQuellen(s);  // der Bezug: kern::normiereNachTafel (IK2-10 a)
     return s;
@@ -362,25 +436,34 @@ StabSpiel baueVorgabeWurlitzer()
     s.name = "Wurlitzer";
     s.noteMin = 33;  // 64 Tasten A1–C7 (offen)
     s.noteMax = 96;
-    s.verhaeltnis2.herkunft = "offen: Kragbalken 6,267 (Rechnung); das Loetzinn an der Spitze senkt es (Pfeifle 2017, nur Bericht)";
+    s.verhaeltnis2.herkunft = "offen: Kragbalken 6,267 (Rechnung); das Lot an der Spitze hebt das Verhaeltnis (Pfeifle 2017: Zunge mit Lot, "
+                              "ohne Zahl)";
     s.t60S = t60BeiXi(5e-4, s, Belegkraft::Offen, "offen: ξ = 5e-4 (Einschaetzung)");
-    s.masseKg = konst(0.002, Belegkraft::Offen, "offen: 2 g (Einschaetzung, Stahlzunge)", s);
+    s.masseKg = wurlitzerMasse();  // WU1 a (S183): je Zunge aus den Massen, statt 2 g fest
     s.partner = PartnerArt::Keiner;
-    // Filzhammer (Pfeifle: Ahornsperrholz mit Filz, nur Bericht) — Stulov wie der Fluegel an C4 (uebertragen)
+    // Hammer (WU2 a, S183): dreilagiger Ahorn mit duennem Filz (Service Manual S. 2), klein und hart — ohne Mass und Steife mit
+    // Quelle, Einschaetzung zum Bauteil nach Hunt–Crossley: 3 g, Hertz-Exponent 1,5, 300 N/mm^1,5, Daempfung 0,3 ms/mm (offen bis
+    // M8). Bis S182 der Fluegelhammer an C4 (Stulov, 8,3 g, p 4,3), in WU1 a der am Fluegel-Diskant (n = 100, 4,7 g, p 5,2): beide
+    // zu schwer und zu weich fuer eine Zunge von 0,2 … 3 g — der Diskant blieb 14 … 21 dB unter der Mitte (Probe S183: 3 g geht,
+    // 4 g nicht; ein Filz mit p = 5,2 gibt der leichten Zunge kaum Impuls)
     s.schlaegel = Stossanreger{};
-    s.schlaegel.masseKg = hammer::stulovHammerMasseG(40) * 1e-3;
-    s.schlaegel.q0 = hammer::stulovHammerSteife(40);
-    s.schlaegel.p = hammer::stulovHammerExponent(40);
-    s.schlaegel.eps = hammer::stulovHammerHysterese(40);
-    s.schlaegel.tauS = hammer::stulovHammerRelaxationUs(40) * 1e-6;
+    s.schlaegel.masseKg = 0.003;
+    s.schlaegel.q0 = 300.0;
+    s.schlaegel.p = 1.5;
+    s.schlaegel.huntCrossley = true;
+    s.schlaegel.lambdaHc = 0.3e-3;  // s/mm
     s.ueberabtastung = 16;
-    // offen: so, dass die Zunge bei ff unter dem Abstand des Tonabnehmers bleibt (mit 5 m/s waeren es 8 mm — sie
-    // schluege an; Einschaetzung, zu setzen an einer Aufnahme M8)
+    // offen (Einschaetzung, zu setzen an einer Aufnahme M8): Blow distance 1 5/64″ (Service Manual S. 17), die Zunge laeuft im
+    // Bass 5 … 8 mm weit — der Schlitz saettigt das, er klemmt nicht (WU1 a)
     s.tempoMax = 1.5;
     s.anschlagStelle = konst(0.3, Belegkraft::Offen, "offen", s);
-    s.abnahme = Abnahme::Elektrostatisch;
-    s.abnehmerAbstandM = 3e-3;  // offen (Einschaetzung)
-    s.abnehmerVersatzM = 0.0;
+    // WU1 a, WU2 a (S183): der Tonabnehmer ist ein Ausschnitt der geladenen Platte (Pfeifle 2017 Fig. 2): Breite der Glocke
+    // T = 1,5 mm (Plattendicke, Einschaetzung), Arbeitspunkt y0 = 0,5·T (das Service Manual S. 43 biegt bei zu lauten Toenen das
+    // Plattenende 1/32″ … 1/16″ auf); Probe S183 mit dem Hammer oben: Spanne 10,8 LU ueber den Umfang statt 34 mit dem
+    // Plattenkondensator (T verschiebt den Pegel, kaum die Spanne: 1 mm 11,9, 2 mm 11,0)
+    s.abnahme = Abnahme::Schlitz;
+    s.abnehmerAbstandM = 1.5e-3;
+    s.abnehmerVersatzM = 0.75e-3;
     // IC-Kennzeichen "ungemessen" (IK2-9: folgt hier aus der Herkunft)
     mitQuellen(s);  // der Bezug: kern::normiereNachTafel (IK2-10 a)
     return s;
@@ -436,6 +519,7 @@ void richteStabSpiel(StabSpiel& s, const StabSpiel& v)
     s.restOeffnung = std::clamp(s.restOeffnung, 0.0, 1.0);
     s.hochlaufS = std::clamp(s.hochlaufS, 0.01, 10.0);
     s.tempoMax = std::clamp(s.tempoMax, 0.01, 20.0);
+    s.zupfKraftN = std::clamp(s.zupfKraftN, 1e-3, 100.0);
     s.ueberabtastung = std::clamp(s.ueberabtastung, 1, 256);
     s.quadratischeKopplung = std::clamp(s.quadratischeKopplung, 0.0, 10.0);
 }

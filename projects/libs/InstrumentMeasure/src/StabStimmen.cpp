@@ -60,7 +60,7 @@ bool enthaelt(const std::vector<std::string>& namen, std::string_view name)
 
 Kurve stabPartnerPegel(const StabSpiel& spiel)
 {
-    if (spiel.partner == PartnerArt::Keiner || spiel.abnahme != Abnahme::Akustisch)
+    if (spiel.partner == PartnerArt::Keiner || (spiel.abnahme != Abnahme::Akustisch && spiel.abnahme != Abnahme::Steg))
         return konstant(1.0, "without effect: no acoustic partner", {"lumiviz"}, spiel);
     // IC setzePartnerAbstrahl (vor normiere: Bezug 1)
     StabSpiel s = spiel;

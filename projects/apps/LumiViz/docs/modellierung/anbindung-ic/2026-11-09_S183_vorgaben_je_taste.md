@@ -2,7 +2,9 @@
 
 > **Datum:** 2026-11-09 (Session 183, Fable) · **Anlass:** Befund S182 (`2026-11-09_S182_pegel_ueber_den_umfang.md`):
 > Gefälle der Lautheit über den Umfang aus Bauwerten, die über die Tasten fest sind · **Auftrag:** LP2 b — die Vorgaben je
-> Taste mit Quellen herleiten · **Stand:** Herleitung und Proben fertig, Entscheide WZ1, KA1, CL1 bei Patrik.
+> Taste mit Quellen herleiten · **Stand:** gebaut nach den Entscheiden WU1 a, WU2 a, KA1 a, CL1 a, CL2 a (Patrik
+> 2026-11-09), §6; Journal J60–J64. (Im Gespräch hießen die Wurlitzer-Entscheide WZ1/WZ2 — umbenannt, weil WZ1 a/WZ2 a seit 34f
+> vergeben sind.)
 > **Proben:** Skripte `herleitung.py`, `schlitz_abschaetzung.py` im Scratchpad der Sitzung (nicht im Repo, wie S182);
 > Messgröße das Momentary-Maximum je Ton (lautester 400-ms-Block, K-bewertet), Töne alle 3 Halbtöne, Stärke 0,7 (wie LP3 a).
 
@@ -143,3 +145,51 @@ Steg-Tonabnehmers (4 cm fest) und damit den Kammfilter je Taste — ohne Harfe n
 Alle drei brauchen danach: `kRechenFassung` des Kerns hoch, IC-Abdrücke (`werte/stab_ic.txt`, `klasse1_ic.txt`) mit
 Begründung neu (Journal), `instrument_pegel.py --messung` für die drei Instrumente und `--loops`, `loop_werte.txt`,
 `klangfassung.txt`, dann die drei Ausnahmen in `Loop Pegel LP3 a` entfernen.
+
+## 6 Nach dem Bau (Entscheide WU1 a, KA1 a, CL1 a, Patrik 2026-11-09)
+
+Gebaut: Kern `bar` mit `zupfKraftN` (Tafel `pluckForce`), Abnahmen `Schlitz` (`slot`) und `Steg` (`bridge`), Rechenfassung 2;
+Kern `struckString` mit `durchmesserMm` (`stringDiameter`) statt `masseGm`, Tonabnehmer ∝ d², Rechenfassung 2; die Vorgaben
+wie oben (`wurlitzerMasseKg` rechnet die Zunge im Code, `kalimbaMasse` aus Chapman, Clavinet-Stärken als Kurve mit Stufen).
+Hackbrett und Cimbalom bleiben Bit für Bit (ihr Durchmesser ist 2r aus Peterson). Wächter `Loop Pegel LP3 a` (Momentary-Maximum,
+500-ms-Töne, Stärke 0,7) mit dem gebauten Kern:
+
+| Instrument | heute | S183 wie entschieden | Bemerkung |
+|---|---|---|---|
+| kalimba | 37,4 LU | **1,4 LU** (−29,1 an 50 … −27,7 an 86) | fertig |
+| reed_electric_piano | 34,3 LU | **20,8 LU** (−7,0 an 72, −27,9 an 96) | der Diskant fällt mit dem Stulov-Hammer n = 100 ab — der in WU1 a genannte Kipppunkt |
+| clavinet_modal | 22,0 LU | **18,8 LU** (−14,0 an 53, +4,8 an 86) | Bass eben, Senke an den .011″-Saiten (53–55), dann Anstieg ∝ f bis zum Diskant |
+
+**Wurlitzer, Hammer-Raster** (Probe wie §2.4, Schlitz T = 1 mm, y₀ = 0,5 mm, wenn nicht anders gesagt):
+
+| Hammer | Spanne | Verlauf |
+|---|---|---|
+| Stulov n = 100 (4,7 g, p 5,2) — WU1 a | 20,8 LU | 72: −7 … 96: −28 |
+| Stulov n = 108 (4,1 g, p 5,3) | 13,6 LU (T 1,5: 13,2; T 2,0: 13,3) | 72: −7 … 96: −21 |
+| Rhodes-Neopren 3 g (p 2,8, k 597) | 13,6 LU | 75: −10 … 96: −23 |
+| HC 3 g, p 2,5, k 30 N/mm^p | 35,3 LU | Diskant stumm |
+| HC 2 g, p 2,5, k 100 | 17,2 LU | 75: −13 … 96: −30 |
+| **HC 3 g, p 1,5 (Hertz), k 300 N/mm^1,5, λ 0,3 ms/mm** | **11,9 LU** (T 1,5: **10,8**; T 2,0: 11,0) | 33: −21 … 78: −9 … 96: −19 |
+| derselbe mit 2 g | 11,8 LU | 33: −21 … 84: −9 … 96: −14 |
+| derselbe mit 4 g | 26,9 LU | 96: −35 |
+
+Die Spanne hängt an der Hammermasse gegen die 0,2-g-Diskantzunge (3 g geht, 4 g nicht) und an der Härte (ein weicher Filz mit
+p = 5,2 gibt der leichten Zunge kaum Impuls); die Plattendicke T verschiebt den Pegel, kaum die Spanne. Der kleine harte
+Hammer passt zum Bauteil (dreilagiger Ahorn mit dünnem Filz, Manual S. 2) — Masse und Steife bleiben Einschätzung (offen bis M8).
+Die Senke bei Taste 54 (−3 … −4 dB) ist der Sprung der Zungendicke .020″ → .026″ zwischen #20 und #21.
+
+**Nach WU2 a und CL2 a (Patrik 2026-11-09):** Hammer HC 3 g, p 1,5, 300 N/mm^1,5, λ 0,3 ms/mm; Schlitz T = 1,5 mm, y₀ = 0,75 mm.
+Wächter LP3 a: **reed_electric_piano 10,8 LU** (−16,1 an 33, −5,4 an 78), kalimba 1,4 LU, clavinet_modal 18,8 LU als Ausnahme mit
+dem Grund aus CL2 a. Helligkeit über die Stärke (Schwerpunkt des Spektrums, erste 8192 Takte, Stärke 0,2 gegen 1,0): Taste 45
+138 → 433 Hz (×3,2), Taste 64 393 → 730 Hz (×1,9), Taste 84 1049 → 1127 Hz (×1,1) — der Kipppunkt aus WU2 a greift nicht, im
+Bass liefert der Schlitz die Obertöne. Pegel (Standardprobe, `instrument_pegel.py`): kalimba −23,87 LUFS bei 0,7627 → 2,5457;
+reed_electric_piano −3,46 bei 1,9335 → 0,6153; clavinet_modal +1,45 bei 0,5258 → 0,0951 — `alt` bleibt, die Loops sind mit dem
+alten Level gemischt (LV1). **Befund:** `instrument_pegel.py --messung --wurzel <Kopie>` schreibt das Skript und die Dateien
+trotzdem im Repo (Kommentare weg, jeder Wert neu gerundet, 28 fremde Dateien) — aus HEAD wiederhergestellt, die drei Zeilen von
+Hand, dann `instrument_katalog.py`.
+
+**Clavinet:** 18,5 LU ohne Übersteuern (Loop-Lautstärke 0,1): 29–50 bei −33 … −28, Senke 53 (−34), dann −32 (56) → −16 (86).
+Der Anstieg ist der Kern: fester Tangentenweg d für alle Tasten (die Mechanik gibt den Spalt vor) und Geschwindigkeit am
+Tonabnehmer → ∝ f. Was ihn am echten Instrument bremst, ist ohne Quelle: Saitenlängen je Taste (sie verschöben die relative Lage
+des Steg-Tonabnehmers — bei festen 4 cm sogar zugunsten des Diskants), Abstand der um 30° gekippten Tonabnehmer zu Bass- und
+Diskantsaiten, Nachgeben der Gummitangente an steifen kurzen Saiten. Ein Wert je Taste ohne Quelle wäre geflickt.

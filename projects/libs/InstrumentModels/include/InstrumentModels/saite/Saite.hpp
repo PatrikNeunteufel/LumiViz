@@ -22,7 +22,10 @@
  * keyboard“, S. 6, nachgelesen), mit der Daempfung der Garnwicklung. Der **Tastendruck** ist ein Pitch nur nach oben
  * mit **Grenze 0 Cent** bis zu einer Messung (F-4-1 a), der **Daempferschieber** eine stufenlose Passage-Spur 0 … 1.
  * Abnahme: zwei elektromagnetische Tonabnehmer (Geschwindigkeit der Saite an zwei Stellen; Lagen nach Remaggi 2012 —
- * nur Bericht; die Kennlinie 4. Ordnung, Gabrielli Tab. 2, ist offen).
+ * nur Bericht; die Kennlinie 4. Ordnung, Gabrielli Tab. 2, ist offen), **seit S183 (CL1 a) mit dem Durchmesser der Saite
+ * gewichtet, ∝ d²**: die .032″-Basssaite gibt bei gleicher Geschwindigkeit 22 dB mehr als die .009″-Diskantsaite — ohne das
+ * stieg der Pegel mit f, 22 LU ueber fuenf Oktaven (Herleitung `docs/modellierung/anbindung-ic/2026-11-09_S183_vorgaben_je_taste.md` §4).
+ * Die Saite traegt dafuer ihren Durchmesser (`durchmesserMm`) statt der Masse je Meter.
  *
  * **Mittelsteg** (Hackbrett, Cimbalom): der Steg teilt den Chor 3 : 2 („the middle bridge splits string courses into
  * a length ratio of 3:2“, Peterson 1994, nur Bericht) — der angeschlagene Abschnitt und der andere mit dem
@@ -82,7 +85,9 @@ struct SaitenSpiel
     int noteMin = 36;
     int noteMax = 96;
     Kurve laengeM;          ///< klingende Laenge (log)
-    Kurve masseGm;          ///< g/m (log)
+    /// Durchmesser der Saite, mm (log; CL1 a, S183 — statt der Masse je Meter): μ = ρ_Stahl·π·d²/4, und der magnetische
+    /// Tonabnehmer sieht die Saite mit ihrem Volumen, Gewicht ∝ d² (Dipolmoment der Saite ∝ Volumen; Horton & Moore 2009)
+    Kurve durchmesserMm;
     Kurve inharmonizitaet;  ///< B (log)
     Kurve t60S;             ///< erste Stufe am ersten Teilton (log)
     Kurve t60SpaetS;        ///< zweite Stufe (log); kuerzer als t60S gilt als t60S

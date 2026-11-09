@@ -202,6 +202,7 @@
                     "source": "akustisch — ohne Bedeutung",
                     "sources": ["lumiviz"]
                 },
+                "pluckForce": 3,
                 "quadraticCoupling": 0,
                 "radiationExponent": {
                     "evidence": "open",
@@ -277,13 +278,13 @@
                     "sources": ["lumiviz"]
                 },
                 "tuned": {
-                    "bowForceHighFf": "1eacd5b29c64cc7a7eeb27cdc101180bceeb33f640572f913e304ed68988af10",
-                    "bowForceHighMf": "3523ac6e40e6d1c926455b8e7c56a618fc8db5d07558a7313118e1f56b069d2f",
-                    "bowForceHighPp": "68b3f0c57636bfd4ffe5b58112a7d5bfca387b0b3aa339e81d28fd5b51b5f044",
-                    "bowForceLowFf": "eba41d4febdb73ca27ba9379523894f2cb9c163fb893b393eb8947c59e602a76",
-                    "bowForceLowMf": "979cec0d9ad4332b176b9ed27270dd38f569ee8f1cae08f4494d6e25a1af7678",
-                    "bowForceLowPp": "b3d4258e6debf8f2e31f2df0157647e9077e312675c7ed45a91b7cff41fffb1c",
-                    "partnerGain": "a2aa317e175834016ab4e8dfa71524ca80e16148b892b5ab6c1f8a0155f05dc2"
+                    "bowForceHighFf": "91c18213a9758ef77ca946f60985bac9843799887b7ce026890c63ba4a730727",
+                    "bowForceHighMf": "876e11d8a501507a1d61595c23297947570403fa2be03bfae3f47a8ad97dc49b",
+                    "bowForceHighPp": "c07693f7796b56d1876b1767af221a727d11b654a1f5afeeeb6dd580837a42e0",
+                    "bowForceLowFf": "3a513714150c4239ae6fe9b4e77f5d05507f2ac5485cb877eb2f79b2f71f11d9",
+                    "bowForceLowMf": "6271c63a6f22e841877504f2ed51f89d0a36a7c8d71ff7f9c4d7d1a47a774739",
+                    "bowForceLowPp": "f959ff5636b9f20575f03265c974ab8c295b650872259dac396649ec12e67ecf",
+                    "partnerGain": "77477bb174348b021ff12539f2cb5e1c61a3ba7330cc01c257776ec4bc5976a3"
                 },
                 "velocityMax": 5
             },
@@ -318,6 +319,7 @@
                 "pickup": ["lumiviz"],
                 "pickupDistance": ["lumiviz"],
                 "pickupOffset": ["lumiviz"],
+                "pluckForce": ["lumiviz"],
                 "quadraticCoupling": ["lumiviz"],
                 "spinUp": ["lumiviz"],
                 "velocityMax": ["lumiviz"]

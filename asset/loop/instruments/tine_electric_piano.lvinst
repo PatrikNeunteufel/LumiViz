@@ -203,6 +203,7 @@
                     "source": "an der Spitze der Tine",
                     "sources": ["lumiviz"]
                 },
+                "pluckForce": 3,
                 "quadraticCoupling": 0,
                 "radiationExponent": {
                     "evidence": "open",
@@ -278,13 +279,13 @@
                     "sources": ["falaize2015", "soenderbo2024"]
                 },
                 "tuned": {
-                    "bowForceHighFf": "2ce44c6e4422616bd23734cb56d520ebdc090d0b1b42e3c7f52541952d64088b",
-                    "bowForceHighMf": "2e35093d2ae96b58572988d3f431abeb1dd140df26154bd50ea5bd60bffdf6a8",
-                    "bowForceHighPp": "be4c5b676e3402c4cf143b9d8807893b0554b9bde86129778e51964c7131001d",
-                    "bowForceLowFf": "aab525126739c222abe64656f9fde249d9e6844963d1cb84568bb6666b4c786c",
-                    "bowForceLowMf": "a39fd6dac0f235f3bacab59bec1c7ef72698dc579a2910eb417e6fadba34028a",
-                    "bowForceLowPp": "fb34c9c39d461eb8199644ff755c090623878de2cf4a36656b9a7b7813d37d57",
-                    "partnerGain": "2c17271994dccc1ef2430eeb023b9736f0ce4f8890846fc54e01ed83b908a92b"
+                    "bowForceHighFf": "0be5dc339ad9307ddf5549aaaaa424c9d3ea40dddf1ee6b11e5c7d5dd4d06425",
+                    "bowForceHighMf": "cf382953940cc8e553e4990a8027d3e7bf37fa6c90d9892c2cb3977f650ffea3",
+                    "bowForceHighPp": "dc5ba4762e0dd60c3d6f94f67c1ba1006bb98d2e23d84ffaf8eb1fa59daa8c39",
+                    "bowForceLowFf": "9d2e11b20d888d513f25ef73f1d3b8cf3721f71b5a7bd9937e4cb8a9e4386477",
+                    "bowForceLowMf": "992f8187c3fade44fbc6885a91f9da79e050436e1d2cf664e797db58511fac6c",
+                    "bowForceLowPp": "f817d4e7ba65e95441cd93a1a4a83037b5c6e0cf7fe58b77d4f7d8b2ce93536a",
+                    "partnerGain": "3525792a111f26ea0771cc4454a826b074941409ed7a4ccd08c4324020d9701b"
                 },
                 "velocityMax": 4
             },
@@ -319,6 +320,7 @@
                 "pickup": ["lumiviz"],
                 "pickupDistance": ["falaize2015"],
                 "pickupOffset": ["lumiviz"],
+                "pluckForce": ["lumiviz"],
                 "quadraticCoupling": ["lumiviz"],
                 "spinUp": ["lumiviz"],
                 "velocityMax": ["soenderbo2024"]

@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["Ambient", "Fusion"],
     "description": "A clamped steel reed per key struck by a felt hammer (Stulov 2009), heard through an electrostatic pickup; unmeasured.",
-    "level": 1.9335,
+    "level": 0.6153,
     "layers": [
         {
             "attack": 5,
@@ -124,22 +124,35 @@
                     "source": "die Tine klingt auf ihrer ersten Mode",
                     "sources": ["lumiviz"]
                 },
-                "malletDampingHc": 0,
-                "malletExponent": 4.3,
-                "malletHuntCrossley": false,
-                "malletHysteresis": 0.8486,
-                "malletMass": 0.008274000000000002,
-                "malletRelaxation": 2.064e-06,
-                "malletStiffness": 1107.085485987569,
+                "malletDampingHc": 0.0003,
+                "malletExponent": 1.5,
+                "malletHuntCrossley": true,
+                "malletHysteresis": 0,
+                "malletMass": 0.003,
+                "malletRelaxation": 0,
+                "malletStiffness": 300,
                 "mass": {
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [33, 0.002],
-                        [96, 0.002]
+                        [33, 0.003158637777164066],
+                        [39, 0.0022878671763481026],
+                        [46, 0.0016796384118082737],
+                        [47, 0.0013473338991295484],
+                        [52, 0.0011597862323006894],
+                        [53, 0.002202449939007499],
+                        [59, 0.0014364200451116313],
+                        [65, 0.0009613497296958475],
+                        [71, 0.0006639370750036244],
+                        [74, 0.0005595673999781747],
+                        [75, 0.00048565781909527686],
+                        [82, 0.0003493603018407278],
+                        [83, 0.000300698943965169],
+                        [89, 0.00025645901074433273],
+                        [96, 0.00020492380514141012]
                     ],
-                    "source": "offen: 2 g (Einschaetzung, Stahlzunge)",
-                    "sources": ["lumiviz"]
+                    "source": "Rechnung je Zunge (wurlitzerMasseKg) aus Laenge (DocWurly, Paleophone), Breite und Dicke (Vintage Vibe 200A) — nur Bericht — und dem Lot aus f0 (Grundmode nach Pfeifle 2017; Stahl nach dem Service Manual): 3,2 g (A1) … 0,2 g (C7); S183 WU1 a, Herleitung 2026-11-09_S183_vorgaben_je_taste.md §2",
+                    "sources": ["pfeifle2017", "vintagevibe-wurlitzer-reeds", "epforum-wurlitzer-reeds", "paleophone-wurlitzer-reeds", "wurlitzer-manual-200"]
                 },
                 "motor": false,
                 "noteMax": 96,
@@ -154,7 +167,7 @@
                     "source": "auf der Achse",
                     "sources": ["lumiviz"]
                 },
-                "outputReference": 7500952.5,
+                "outputReference": 4064.68115234375,
                 "oversampling": 16,
                 "partner": "none",
                 "partnerDamping": {
@@ -189,9 +202,9 @@
                     "source": "offen: Tonebar auf den Grundton gestimmt (Pfeifle 2017: gekoppelt, nur Bericht)",
                     "sources": ["pfeifle2017"]
                 },
-                "pickup": "electrostatic",
-                "pickupDistance": 0.003,
-                "pickupOffset": 0,
+                "pickup": "slot",
+                "pickupDistance": 0.0015,
+                "pickupOffset": 0.00075,
                 "pickupPosition": {
                     "evidence": "computed",
                     "overrides": [],
@@ -202,6 +215,7 @@
                     "source": "an der Spitze der Tine",
                     "sources": ["lumiviz"]
                 },
+                "pluckForce": 3,
                 "quadraticCoupling": 0,
                 "radiationExponent": {
                     "evidence": "open",
@@ -220,7 +234,7 @@
                         [28, 6.266893025770663],
                         [100, 6.266893025770663]
                     ],
-                    "source": "offen: Kragbalken 6,267 (Rechnung); das Loetzinn an der Spitze senkt es (Pfeifle 2017, nur Bericht)",
+                    "source": "offen: Kragbalken 6,267 (Rechnung); das Lot an der Spitze hebt das Verhaeltnis (Pfeifle 2017: Zunge mit Lot, ohne Zahl)",
                     "sources": ["pfeifle2017"]
                 },
                 "ratio3": {
@@ -277,13 +291,13 @@
                     "sources": ["falaize2015", "soenderbo2024"]
                 },
                 "tuned": {
-                    "bowForceHighFf": "9ffa4d4c1bafd977714a6f46dfddafaee439232e43bf89a065ae1e43856955d0",
-                    "bowForceHighMf": "9531895682266b98a2939db3a0bd532c397dce4434d877e1d1a6c17029a4cd11",
-                    "bowForceHighPp": "b76a74c21a68217b12c711a9031ce06c030a4c4d78bee17b23b24086af0f2394",
-                    "bowForceLowFf": "cd192b61942ec6e389ea7e5311eb61ea81deaee1fa1a27ce366243fa4a35afdf",
-                    "bowForceLowMf": "4639f0ab016197eb318ffa4e9217353d9f4a9847e03442321d18d0c12985df87",
-                    "bowForceLowPp": "d276e1d391dfa544a49efdbcfa9f1fb283bbcad01eb43e6a8b33d103b0f2e859",
-                    "partnerGain": "a2fb186824b8d6c6495f9187a35d169a3077728b27f4068c8f235f856b681bec"
+                    "bowForceHighFf": "da00045f1fa0d4c3b20b4b359068c6b5e7e65806c78edee2e0384b8cad427779",
+                    "bowForceHighMf": "414e9016aead150cd445971e9e456e2b02b0ac399eeff7ec8024bb80f23b524e",
+                    "bowForceHighPp": "6c58014ffa57aa817e4ea05cfc6f18f07b16ce286503635a5f847dd988a181cc",
+                    "bowForceLowFf": "ffef2454af5c292ac450e06f0f0b464e3fd6a1396973875b6e82bf4199b1e7dc",
+                    "bowForceLowMf": "cff135d98e71410f7b9a355880e42a3f64771acefb1b203c07c24ad862a2ba64",
+                    "bowForceLowPp": "d234edb9715228de101b17afa0abecb0a900f9993d8edebb72f16a6c1f950a41",
+                    "partnerGain": "43114f52e0f448e094e1388bb45e0e5ced2cda1abb46962f057debc53196bcd9"
                 },
                 "velocityMax": 1.5
             },
@@ -301,12 +315,12 @@
                 "excitation": ["lumiviz"],
                 "fixedRatios": ["lumiviz"],
                 "malletDampingHc": ["lumiviz"],
-                "malletExponent": ["stulov2009"],
+                "malletExponent": ["lumiviz"],
                 "malletHuntCrossley": ["lumiviz"],
-                "malletHysteresis": ["stulov2009"],
-                "malletMass": ["stulov2009"],
-                "malletRelaxation": ["stulov2009"],
-                "malletStiffness": ["stulov2009"],
+                "malletHysteresis": ["lumiviz"],
+                "malletMass": ["lumiviz"],
+                "malletRelaxation": ["lumiviz"],
+                "malletStiffness": ["lumiviz"],
                 "motor": ["lumiviz"],
                 "noteMax": ["lumiviz"],
                 "noteMin": ["lumiviz"],
@@ -316,8 +330,9 @@
                 "partnerGainDb": ["lumiviz"],
                 "partnerGainNote": ["lumiviz"],
                 "pickup": ["lumiviz"],
-                "pickupDistance": ["lumiviz"],
-                "pickupOffset": ["lumiviz"],
+                "pickupDistance": ["pfeifle2017", "wurlitzer-manual-200"],
+                "pickupOffset": ["wurlitzer-manual-200"],
+                "pluckForce": ["lumiviz"],
                 "quadraticCoupling": ["lumiviz"],
                 "spinUp": ["lumiviz"],
                 "velocityMax": ["lumiviz"]

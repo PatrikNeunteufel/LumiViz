@@ -5,7 +5,7 @@
     "category": "percussion",
     "genres": ["Ambient", "Fusion"],
     "description": "A clamped tine per key plucked at its tip (mode ratios after Chapman 2006), without box; unmeasured.",
-    "level": 0.7627,
+    "level": 2.5457,
     "layers": [
         {
             "attack": 5,
@@ -135,11 +135,13 @@
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [50, 0.003],
-                        [86, 0.003]
+                        [50, 0.003568228546389991],
+                        [62, 0.00252311860197578],
+                        [74, 0.0017841142731949955],
+                        [86, 0.00126155930098789]
                     ],
-                    "source": "offen: 3 g (Federstahl 5 cm, Einschaetzung)",
-                    "sources": ["lumiviz"]
+                    "source": "Rechnung: m = ρ·w·t·a mit a(f) = 91,8 cm·√Hz/√f aus Chapman 2006 Tab. 1 (nachgelesen S183), Federstahl 1,2 × 5 mm (cmuse, nur Bericht): 3,6 g (D3) … 1,3 g (D6); S183 KA1 a, Herleitung 2026-11-09_S183_vorgaben_je_taste.md §3",
+                    "sources": ["chapman2006", "cmuse-kalimba"]
                 },
                 "motor": false,
                 "noteMax": 86,
@@ -154,7 +156,7 @@
                     "source": "auf der Achse",
                     "sources": ["lumiviz"]
                 },
-                "outputReference": 32681.10546875,
+                "outputReference": 59.999794006347656,
                 "oversampling": 64,
                 "partner": "none",
                 "partnerDamping": {
@@ -189,19 +191,20 @@
                     "source": "Resonator 349,1 Hz gegen Stab 348,8 Hz, Rucz & Ulveczki 2021, ICSV27, Tab. 1 S. 5 (nachgelesen IC Session 1)",
                     "sources": ["rucz2021"]
                 },
-                "pickup": "acoustic",
+                "pickup": "bridge",
                 "pickupDistance": 0.001,
                 "pickupOffset": 0,
                 "pickupPosition": {
-                    "evidence": "open",
+                    "evidence": "computed",
                     "overrides": [],
                     "points": [
                         [50, 1],
                         [86, 1]
                     ],
-                    "source": "akustisch",
+                    "source": "ohne Bedeutung: die Kraft an der Einspannung (KA1 a)",
                     "sources": ["lumiviz"]
                 },
+                "pluckForce": 3,
                 "quadraticCoupling": 0,
                 "radiationExponent": {
                     "evidence": "open",
@@ -214,21 +217,21 @@
                     "sources": ["lumiviz"]
                 },
                 "ratio2": {
-                    "evidence": "open",
+                    "evidence": "source",
                     "overrides": [],
                     "points": [
-                        [50, 5.86],
-                        [62, 5.3]
+                        [62, 5.86],
+                        [74, 5.3]
                     ],
-                    "source": "Chapman 2006, Tab. 1 S. 27: D3 5,86, D4 5,30 (nur Bericht, Wortlaut im Bericht)",
+                    "source": "Chapman 2006, Tab. 1 S. 27: D3 (293,7 Hz) 5,86, D4 (587,3 Hz) 5,30 (nachgelesen S183)",
                     "sources": ["chapman2006"]
                 },
                 "ratio3": {
                     "evidence": "open",
                     "overrides": [],
                     "points": [
-                        [50, 16.408],
-                        [62, 14.839999999999998]
+                        [62, 16.408],
+                        [74, 14.839999999999998]
                     ],
                     "source": "offen: Abstand des Kragbalkens (β3/β2)² = (7,855/4,694)² = 2,80 (Rechnung)",
                     "sources": ["lumiviz"]
@@ -275,15 +278,15 @@
                     "sources": ["chapman2006"]
                 },
                 "tuned": {
-                    "bowForceHighFf": "1d476c838e6cc1a537dda7bc4327da1ae5dfe601a101f9ea301713351d308928",
-                    "bowForceHighMf": "263a492fe1fb68dbda2197bdac31374f396b1ee13bbeb6b65cd31296aad2d0db",
-                    "bowForceHighPp": "f3dbef2274bde91e23e7d4e2518663b7042ea65650b3ea765ac44e549c14fc01",
-                    "bowForceLowFf": "abcc9cf91fd82fbb0c4e453737ff6c02202af14be6e0ba233f140e2878f82300",
-                    "bowForceLowMf": "c07e78c0eff20d600485acec311eca96de7b490d5f34fe6ba4c27c3c28d5c5de",
-                    "bowForceLowPp": "e684b8e87e27def148acc7a7fd66eb49d5d3d87abc3b02519faf30a048cfa24f",
-                    "partnerGain": "1d606c47f2fd4bea944efdf37efaca70735dbc3fb66014dc58e08a956653beec"
+                    "bowForceHighFf": "386b3af8332341d49f8c8a3f17ae0a48a67920b05dbe1e662e41f12fc0ca171a",
+                    "bowForceHighMf": "00e1adc8b910ce0f6c034497a897c2d1e95f08de7cf2269efb368abbab3d8c21",
+                    "bowForceHighPp": "dc88cdcc98b33063eabf3b8c7af24e6f57d0bf17df8014f67df2ccfe8f176833",
+                    "bowForceLowFf": "af937d2fa41a2dfb14daa5dfb467c0790a107e92123ab1a29a7729421927097b",
+                    "bowForceLowMf": "29abe74285eb436261b7718e9a7c29de72f10627c3f5a9a46def96c404bdb8f1",
+                    "bowForceLowPp": "1d5ddeea83527427df0bc8f476045a98b2e55883300e099e36b233c7d424063a",
+                    "partnerGain": "9b89e44a9e913bfb77bd5790404a0b580790025c7e80e007052bde142f4f71b0"
                 },
-                "velocityMax": 1
+                "velocityMax": 5
             },
             "coreSources": {
                 "bow": ["lumiviz"],
@@ -316,6 +319,7 @@
                 "pickup": ["lumiviz"],
                 "pickupDistance": ["lumiviz"],
                 "pickupOffset": ["lumiviz"],
+                "pluckForce": ["lumiviz"],
                 "quadraticCoupling": ["lumiviz"],
                 "spinUp": ["lumiviz"],
                 "velocityMax": ["lumiviz"]

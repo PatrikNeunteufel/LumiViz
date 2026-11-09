@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.324.0
-> **Datum:** 2026-11-09 (Sessions 164 bis 182)
+> **Version:** 1.325.0
+> **Datum:** 2026-11-09 (Sessions 164 bis 183)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2854,12 +2854,19 @@ nach KL3-1 a; voller Lauf 1851 / 1851 unter Testing-MSVC, Journal J53–J59,
 (S182, IL1 a–IL3 a):** `asset/loop/modelled_instruments/` (je Instrument ein Loop der Nuancen, `modelled_ensemble`,
 die Beispiele je Klasse, `full/nocturne_demo`), Wächter `*Modelled loops*`. **IC aufgelöst (S182, LP2 b):** LumiViz ist
 die einzige Quelle; Umzug U0–U7 erledigt nach [Aufloesung_IC_Plan.md](modellierung/anbindung-ic/Aufloesung_IC_Plan.md),
-offen nur das Archivieren durch Patrik. **Offen aus S182:** (1) **LP2 b** — die Vorgaben von Wurlitzer, Kalimba und
-Clavinet je Taste mit Quellen herleiten (Gefälle der Lautheit über den Umfang 41,9 / 37,5 / 22 LU; Befund
-[pegel_ueber_den_umfang](modellierung/anbindung-ic/2026-11-09_S182_pegel_ueber_den_umfang.md); Fable-Kandidat), danach
-die Ausnahmen im Wächter `Loop Pegel LP3 a` entfernen (dort auch Glockenspiel 17,2 und Xylophon 19,5 LU, Einbruch ganz
-oben, Ursache offen); (2) **LV1** — Pegel der Loops der Nuancen (Median −32,2 gegen −21,1 LUFS; gemeinsamer Hub
-empfohlen) nach LP2 b; (3) **HF2** — Bezug der `Hoertest.exe` (Frage F2 von CC; HT15–HT18 a entschieden); (4) Hörtest
+offen nur das Archivieren durch Patrik. **LP2 b erledigt 2026-11-09 (S183, Fable; Entscheide WU1 a, WU2 a, KA1 a, CL1 a,
+CL2 a; Herleitung [vorgaben_je_taste](modellierung/anbindung-ic/2026-11-09_S183_vorgaben_je_taste.md), Journal J60–J64):**
+Wurlitzer-Zunge je Taste aus Länge, Breite, Dicke und Lot (`wurlitzerMasseKg`), kleiner harter Hammer, Tonabnehmer als
+Schlitz (Kern `bar`: Abnahme `slot`) — Spanne 34,3 → 10,8 LU; Kalimba: Zupfen mit Kraft (`pluckForce`), Ausgang Kraft am Steg
+(`bridge`), Zunge aus Chapman 2006 — 37,4 → 1,4 LU; Clavinet: Durchmesser je Taste (`stringDiameter` statt `stringMass`),
+Tonabnehmer ∝ d² — 22,0 → 18,8 LU, **Ausnahme in LP3 a bleibt (CL2 a):** der Diskant steigt ∝ f aus festem Tangentenweg und
+Geschwindigkeit am Tonabnehmer, Saitenlängen und Abstände der Tonabnehmer je Taste ohne Quelle — offen bis zu einer Quelle oder
+einer Hörprobe gegen Aufnahmen eines D6. Rechenfassung 2 beider Kerne, drei IC-Abdrücke mit Vermerk neu, Register +7 Quellen,
+Pegel der drei neu (`alt` bleibt → LV1). Nebenbefund: Chapmans Notennamen sind Klaviernoten, `ratio2` der Kalimba lag eine Oktave
+zu tief (berichtigt). Offen in LP3 a weiter Glockenspiel 17,2 und Xylophon 19,5 LU (Einbruch ganz oben, Ursache offen).
+**Offen aus S182:** (2) **LV1** — Pegel der Loops der Nuancen (Median −32,2 gegen −21,1 LUFS; gemeinsamer Hub
+empfohlen; seit S183 dazu: die Loops von Kalimba, Wurlitzer und Clavinet sind mit dem alten Level gemischt — Kalimba +10,5 dB,
+Wurlitzer −10 dB, Clavinet −14,9 dB gegen den Bezug); (3) **HF2** — Bezug der `Hoertest.exe` (Frage F2 von CC; HT15–HT18 a entschieden); (4) Hörtest
 LV-4…LV-8 nach der Übergabe von IC (`modellierung/anbindung-ic/ic/UEBERGABE_LUMIVIZ_HOERTEST.md`). Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6389,6 +6396,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.325.0 | 2026-11-09 | Session 183 (Fable 5.1). §6 Anbindung InstrumentsCalculation: LP2 b erledigt — Vorgaben je Taste für Wurlitzer, Kalimba, Clavinet (WU1 a, WU2 a, KA1 a, CL1 a, CL2 a; Kern `bar` mit `pluckForce`, Abnahmen `slot` und `bridge`; Kern `struckString` mit `stringDiameter`; Rechenfassung 2); LP3 a ohne Ausnahmen Wurlitzer und Kalimba, Clavinet mit Grund CL2 a; LV1 um die drei Pegel ergänzt; HoerTest_Helper statt HörTest_Helper (HT17 a). |
 | 1.324.0 | 2026-11-09 | Session 182 (Opus 5.5). §6 Anbindung InstrumentsCalculation: Loops der Instrumente mit Kern (IL1 a–IL3 a, `modelled_instruments/`); Befund Lautheit über den Umfang (LP1 a), Wächter LP3 a; IC aufgelöst (LP2 b), Umzug U0–U7 (AU1 a, AU1-1 a, AU2 a, AU3, AU3-1 a, HP1 a); offen LP2 b, LV1, HF2, Hörtest LV-4…LV-8, IC archivieren. |
 | 1.323.0 | 2026-11-09 | Session 181 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34i erledigt — Upright, Honky-tonk, CP-70 auf `hammerString`, Kern `struckString` mit `clavinet_modal`, `.lvinst` Fassung 24, KL1 a–KL4 a, KL4-1 a (Kurven nur auf den Umfang der Tafel), KL3-1 a (Upright ohne Boden, HAL-Quellen abgelegt), TT1 a; Rechenzeit ausgesetzt bis zum Tausch der Kühlung; nächster Schritt Loops `IC_Instruments` (Wunsch Patrik), danach 34j. |
 | 1.322.0 | 2026-11-08 | Session 180 (Opus 5.5). §6 Anbindung InstrumentsCalculation: QM1 a gebaut, 34h erledigt — Quellen am Wert (`Werte::quellen`, `.lvinst` Fassung 23 `coreSources`), Quellen je Vorlage für Trommel und Stab, `CREDITS.md` mit 19 Quellen; nächster Schritt 34i. |

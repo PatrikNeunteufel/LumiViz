@@ -46,7 +46,7 @@ Kurve vomFluegel(const Kurve& k, const std::string& was)
 /// `lumiviz`; eine vom Fluegel uebertragene Kurve die Messung an *Salamander*.
 void mitQuellen(SaitenSpiel& s)
 {
-    for (Kurve* k : {&s.laengeM, &s.masseGm, &s.inharmonizitaet, &s.t60S, &s.t60SpaetS, &s.abklingHoch, &s.chor, &s.verstimmungCent,
+    for (Kurve* k : {&s.laengeM, &s.durchmesserMm, &s.inharmonizitaet, &s.t60S, &s.t60SpaetS, &s.abklingHoch, &s.chor, &s.verstimmungCent,
                      &s.polarisationWinkelGrad, &s.polarisationCent, &s.waagrechtVerhaeltnis, &s.anschlagStelle, &s.daempferT60S,
                      &s.garnT60S, &s.schieberT60S})
         k->quellen = {"lumiviz"};
@@ -54,11 +54,13 @@ void mitQuellen(SaitenSpiel& s)
     {
         // T60 „20 s or more“ (Gabrielli et al. 2013, nur Bericht): die Grenze aus der Quelle, gesetzt 10 s
         s.t60S.quellen = s.t60SpaetS.quellen = {"gabrielli2013"};
+        // CL1 a (S183): die Staerken je Taste von zwei Haendlern (nur Bericht), die Zahl der umsponnenen Saiten aus Gabrielli
+        s.durchmesserMm.quellen = {"vintagevibe-clavinet-strings", "electrickeys-clavinet-strings", "gabrielli2013"};
         return;
     }
     // Hackbrett, Cimbalom: Laenge, Masse, B aus der Spannungstabelle (Peterson 2005, nur Bericht); das Abklingen vom
     // Fluegel uebertragen (an Salamander gemessen), weil Peterson es „comparable to that of an undamped piano“ nennt
-    s.laengeM.quellen = s.masseGm.quellen = s.inharmonizitaet.quellen = {"peterson2005"};
+    s.laengeM.quellen = s.durchmesserMm.quellen = s.inharmonizitaet.quellen = {"peterson2005"};
     s.t60S.quellen = s.t60SpaetS.quellen = {"salamander", "peterson2005"};
     s.abklingHoch.quellen = {"salamander"};
 }
@@ -86,13 +88,13 @@ SaitenSpiel hackbrettArt(const std::string& name, int von, int bis)
         const double l = z.laengeZoll * 0.0254;
         const double t = z.spannungLb * 4.44822;
         s.laengeM.punkte.push_back({z.note, l});
-        s.masseGm.punkte.push_back({z.note, 7850.0 * kPi * r * r * 1e3});
+        s.durchmesserMm.punkte.push_back({z.note, 2.0 * r * 1e3});  // CL1 a (S183): der Durchmesser; μ = ρπd²/4 rechnet der Kern
         const double d = 2.0 * r;
         s.inharmonizitaet.punkte.push_back({z.note, kPi * kPi * kPi * 2e11 * d * d * d * d / (64.0 * t * l * l)});
     }
-    s.laengeM.belegkraft = s.masseGm.belegkraft = Belegkraft::Offen;
+    s.laengeM.belegkraft = s.durchmesserMm.belegkraft = Belegkraft::Offen;
     s.laengeM.herkunft = peterson + "; ausserhalb G♯3–G5 der Randwert (offen)";
-    s.masseGm.herkunft = "ρπr² mit r aus " + peterson + " (Rechnung)";
+    s.durchmesserMm.herkunft = "2r mit r aus " + peterson + "; ausserhalb G♯3–G5 der Randwert (offen)";
     s.inharmonizitaet.belegkraft = Belegkraft::Rechnung;
     s.inharmonizitaet.herkunft = "B = π³Ed⁴/(64TL²) (Lehrbuch) mit d, T, L aus " + peterson + " (Rechnung)";
     const hammer::HammerSaite& f = hammer::hammerSaiteVorgabe();
@@ -137,8 +139,18 @@ SaitenSpiel baueVorgabeClavinet()
     s.name = "Clavinet";
     s.noteMin = 29;  // F1–E6, 60 Tasten (offen)
     s.noteMax = 88;
-    s.laengeM = konst(0.5, Belegkraft::Offen, "offen: 0,5 m (wirkt nur auf den Massstab des Ausgangs)", s);
-    s.masseGm = konst(1.0, Belegkraft::Offen, "offen (wirkt nur auf den Massstab)", s);
+    s.laengeM = konst(0.5, Belegkraft::Offen,
+                      "offen: 0,5 m — bestimmt die Lage der Tonabnehmer relativ (Steg 4 cm fest); eine Laengentabelle je Taste fehlt (Remaggi 2012: "
+                      "67,8 cm bei 161 Hz)", s);
+    // CL1 a (S183): die Staerken je Taste nach Vintage Vibe (Zaehlung 10/5/9/3/33) und Electric Keys — .032″ F1–D2, .028″ D♯2–G2,
+    // .022″ G♯2–E3, .011″ F3–G3, .009″ G♯3–E6 (nur Bericht; Gabrielli 2013: „the first 23 strings wound“, Original .008″ statt .009″);
+    // die Umspinnung als Stahl gerechnet (der ganze Durchmesser zaehlt am Tonabnehmer — Material nirgends belegt, offen)
+    s.durchmesserMm = kurveAusPunkten({{29, 0.8128}, {38, 0.8128}, {39, 0.7112}, {43, 0.7112}, {44, 0.5588}, {52, 0.5588},
+                                       {53, 0.2794}, {55, 0.2794}, {56, 0.2286}, {88, 0.2286}},
+                                      Belegkraft::Offen,
+                                      "Staerken je Taste .032/.028/.022/.011/.009 Zoll (Vintage Vibe, Electric Keys: nur Bericht; Gabrielli 2013: 23 "
+                                      "umsponnen); Umspinnung als Stahl gerechnet (offen) — S183 CL1 a, Herleitung "
+                                      "2026-11-09_S183_vorgaben_je_taste.md §4");
     s.inharmonizitaet = konst(1e-4, Belegkraft::Offen, "offen: B je Taste bei Gabrielli et al. 2013 Tab. 1 (nur Bericht, Werte nicht im Repo)", s);
     s.t60S = konst(10.0, Belegkraft::Offen, "offen: T60 „20 s or more“ (Gabrielli, nur Bericht) — 10 s", s);
     s.t60SpaetS = s.t60S;

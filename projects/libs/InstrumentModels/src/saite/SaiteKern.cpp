@@ -123,7 +123,7 @@ const std::vector<Feld>& felder()
         v.push_back(ganzzahl(kNameNoteMin, "Lowest key", "Keys", "MIDI", kSaitenUmfangMin, kSaitenUmfangMax, &SaitenSpiel::noteMin));
         v.push_back(ganzzahl(kNameNoteMax, "Highest key", "Keys", "MIDI", kSaitenUmfangMin, kSaitenUmfangMax, &SaitenSpiel::noteMax));
         v.push_back(kurve("stringLength", "String length", "String", "m", L::Logarithmisch, 0.02, 8.0, &SaitenSpiel::laengeM));
-        v.push_back(kurve("stringMass", "String mass", "String", "g/m", L::Logarithmisch, 0.01, 500.0, &SaitenSpiel::masseGm));
+        v.push_back(kurve("stringDiameter", "String diameter", "String", "mm", L::Logarithmisch, 0.05, 5.0, &SaitenSpiel::durchmesserMm));  // CL1 a (S183)
         v.push_back(kurve("inharmonicity", "Inharmonicity", "String", "", L::Logarithmisch, 1e-7, 0.1, &SaitenSpiel::inharmonizitaet));
         v.push_back(kurve("decay", "Decay", "Decay", "s", L::Logarithmisch, 0.01, 120.0, &SaitenSpiel::t60S));
         v.push_back(kurve("lateDecay", "Late decay", "Decay", "s", L::Logarithmisch, 0.01, 120.0, &SaitenSpiel::t60SpaetS));
@@ -268,7 +268,7 @@ Parametertafel baueTafel(const Vorlage& vorlage)
     Parametertafel t;
     t.kern = std::string(kKernName);
     t.titel = "Struck string";
-    t.rechenFassung = 1;
+    t.rechenFassung = 2;  // S183 (CL1 a): Durchmesser statt Masse, der magnetische Tonabnehmer mit d² gewichtet
     t.noteMin = kSaitenUmfangMin;
     t.noteMax = kSaitenUmfangMax;
     t.gruppen = {"Keys", "String", "Decay", "Course", "Excitation", "Tangent", "Damper", "Pickups", "Amp", "Output"};

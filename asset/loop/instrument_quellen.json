@@ -264,7 +264,7 @@
       "license": "not checked (no notice seen, report only)",
       "creditRequired": true,
       "shippable": true,
-      "note": "34g, aus IC quellen.md (Angabe aus dem Bericht): Tab. 1 S. 27, die Verhaeltnisse der Kalimba D3/D4 — an der Quelle nicht geprueft"
+      "note": "34g, aus IC quellen.md: Tab. 1 S. 27, die Verhaeltnisse der Kalimba; S183 (LP2 b) gelesen (PDF unter cmake/quellen/platte-stab, Canadian Acoustics frei zugaenglich, kein Lizenzvermerk im PDF): dazu die Laengen a, b der fuenf Zungen — Chapmans Notennamen sind Klaviernoten (D3 = 293,7 Hz = MIDI 62)"
     },
     {
       "key": "falaize2015",
@@ -288,7 +288,7 @@
       "license": "not checked (no notice seen, report only)",
       "creditRequired": true,
       "shippable": true,
-      "note": "34g, aus IC quellen.md (Bericht): nur Begruendungen offener Werte (Stimmfeder, Loetzinn, Tonebar gekoppelt) — keine Zahl uebernommen"
+      "note": "34g, aus IC quellen.md (Bericht): Begruendungen offener Werte (Stimmfeder, Loetzinn, Tonebar gekoppelt); S183 (LP2 b) gelesen (PDF unter cmake/quellen/platte-stab, dafx.de): die Zunge schwingt in der Grundmode (S. DAFX-21), der Tonabnehmer ist ein Ausschnitt der geladenen Platte (Fig. 2, S. DAFX-18) — keine Zahl uebernommen"
     },
     {
       "key": "thomas2014",
@@ -417,6 +417,62 @@
       "creditRequired": true,
       "shippable": true,
       "note": "34i (S181), aus IC klassen/Klasse 1 - Hammer-Saite/quellen.md (Bericht): die Lagen der Tonabnehmer (4 cm bzw. 6,5-18,5 cm vom Ende), auf 0,5 m als 0,10 und 0,30 der klingenden Laenge (offen)"
+    },
+    {
+      "key": "wurlitzer-manual-200",
+      "credit": "The Wurlitzer Company, Electronic Pianos Series 200 and 200A Service Manual (OS 153), De Kalb, Illinois; scan tropicalfishvintage.com",
+      "license": "manufacturer document, no notice seen (report only) - facts used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "S183 (LP2 b, WU1 a): „Three ply maple covered with mothproofed felt“, „Swedish Sandvik steel reeds“ (S. 2), Blow distance 1 5/64″ (S. 17), Pickups 160-170 V (S. 4), zu laute Toene: „bend the ends of the pickup up slightly (1/32″ to 1/16″)“ (S. 43) — gelesen S183, Ablage cmake/quellen/platte-stab"
+    },
+    {
+      "key": "vintagevibe-wurlitzer-reeds",
+      "credit": "Vintage Vibe, Case Study: Wurlitzer Electric Piano Reeds (vintagevibe.com/blogs/news), reed dimensions table 200A series",
+      "license": "not checked (dealer page, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "S183 (LP2 b, WU1 a): Breite je Gruppe 1-14 .155″, 15-20 .129″, 21-42 .120″, 43-50 .110″, 51-64 .097″; Dicke der Zunge .020″ (200) → .026″ (200A) — Wortlaut im Agentenbericht der Sitzung"
+    },
+    {
+      "key": "epforum-wurlitzer-reeds",
+      "credit": "The Electric Piano Forum (ep-forum.com), threads 8418 „Wurlitzer 200 Reed Dimensions“ (cinnanon 2014, DocWurly 2016) and 9643 „The formula for lengths of Wurly reeds“ (DocWurly 2017)",
+      "license": "not checked (forum posts, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "S183 (LP2 b, WU1 a): Laenge je Nummer (#1 = 2 19/20″, −1/20″ je Zunge bis #20 = 2″, ab #21 −1/44″ bis #64 = 1″), Dicke am 140B .024-.026″/.022″, seitlicher Abstand zum Schlitz .0115″ → .0075″ je Seite — Wortlaut im Agentenbericht"
+    },
+    {
+      "key": "paleophone-wurlitzer-reeds",
+      "credit": "Espinola, Wurlitzer EP Reed Compatibility History (paleophone.net), reed style 4 width chart",
+      "license": "not checked (blog, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "S183 (LP2 b, WU1 a): dieselbe Laengenformel wie das EP-Forum („Reed #1 is always 2 and 19/20 of an inch long“), Breiten .150/.125/.120/.110/.097″ — Wortlaut im Agentenbericht"
+    },
+    {
+      "key": "cmuse-kalimba",
+      "credit": "CMUSE, Kalimba Tine Length Calculator (cmuse.org), material table and typical tine thickness",
+      "license": "not checked (web page, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "S183 (LP2 b, KA1 a): Federstahl „around 1.2 millimeters is typical“, E 200 GPa, ρ 7850; 17-key C kalimba C4 „about 61 mm active“ — Wortlaut im Agentenbericht; stimmt am Kragbalken auf 10-20 % mit Chapman 2006"
+    },
+    {
+      "key": "vintagevibe-clavinet-strings",
+      "credit": "Vintage Vibe, Hohner Clavinet Replacement Strings (vintagevibe.com/products/clavinet-strings), string placement list",
+      "license": "not checked (dealer page, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "S183 (LP2 b, CL1 a): „10x .032 Gauge: F1 - D1, 5x .028 Gauge: D#1 - G2, 9x .022 Gauge: G#2 - E2, 3x .011 Gauge: F3 - G3, 35x* .009 Gauge: G#3 - E5“ (Zaehlung 10/5/9/3/33 plus zwei extra; die Notennamen der Seite sind in sich widerspruechlich) — Wortlaut im Agentenbericht"
+    },
+    {
+      "key": "electrickeys-clavinet-strings",
+      "credit": "Electric Keys, Hohner Clavinet Strings (electrickeys.co.uk), gauge table by key range",
+      "license": "not checked (dealer page, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "S183 (LP2 b, CL1 a): „Keys F1 - D2, 0.032 Gauge / Keys D#2 - G2, 0.028 Gauge / Keys G#2 - E3, 0.022 Gauge / Keys F3 - G3, 0.011 Gauge / Keys G#3 - E5, 0.009 Gauge“, gewickelt von Mapes — Wortlaut im Agentenbericht"
     }
   ]
 }

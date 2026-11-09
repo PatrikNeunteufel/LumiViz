@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["Fusion", "Jazz"],
     "description": "A string per key struck and held by a tangent, three semitones lower when released (Gabrielli et al. 2013), heard through two magnetic pickups and the shelves of the amplifier; modal, next to the waveguide clavinet until the listening test; unmeasured.",
-    "level": 0.5258,
+    "level": 0.0951,
     "layers": [
         {
             "attack": 5,
@@ -97,7 +97,7 @@
                 "middleBridgeSplit": 0,
                 "noteMax": 88,
                 "noteMin": 29,
-                "outputReference": 14.262412071228027,
+                "outputReference": 0.7453245520591736,
                 "oversampling": 32,
                 "pickup": "magnetic",
                 "pickupPositions": [
@@ -148,6 +148,24 @@
                     "source": "die Tangente trifft das Ende des klingenden Teils",
                     "sources": ["lumiviz"]
                 },
+                "stringDiameter": {
+                    "evidence": "open",
+                    "overrides": [],
+                    "points": [
+                        [29, 0.8128],
+                        [38, 0.8128],
+                        [39, 0.7112],
+                        [43, 0.7112],
+                        [44, 0.5588],
+                        [52, 0.5588],
+                        [53, 0.2794],
+                        [55, 0.2794],
+                        [56, 0.2286],
+                        [88, 0.2286]
+                    ],
+                    "source": "Staerken je Taste .032/.028/.022/.011/.009 Zoll (Vintage Vibe, Electric Keys: nur Bericht; Gabrielli 2013: 23 umsponnen); Umspinnung als Stahl gerechnet (offen) — S183 CL1 a, Herleitung 2026-11-09_S183_vorgaben_je_taste.md §4",
+                    "sources": ["vintagevibe-clavinet-strings", "electrickeys-clavinet-strings", "gabrielli2013"]
+                },
                 "stringLength": {
                     "evidence": "open",
                     "overrides": [],
@@ -155,17 +173,7 @@
                         [29, 0.5],
                         [88, 0.5]
                     ],
-                    "source": "offen: 0,5 m (wirkt nur auf den Massstab des Ausgangs)",
-                    "sources": ["lumiviz"]
-                },
-                "stringMass": {
-                    "evidence": "open",
-                    "overrides": [],
-                    "points": [
-                        [29, 1],
-                        [88, 1]
-                    ],
-                    "source": "offen (wirkt nur auf den Massstab)",
+                    "source": "offen: 0,5 m — bestimmt die Lage der Tonabnehmer relativ (Steg 4 cm fest); eine Laengentabelle je Taste fehlt (Remaggi 2012: 67,8 cm bei 161 Hz)",
                     "sources": ["lumiviz"]
                 },
                 "strings": {
