@@ -32,6 +32,7 @@
 #include "loop/Aufnahme.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
+#include "HoerlisteAblage.hpp"
 #include "loop/Tastatur.hpp"
 
 #include <QDir>
@@ -205,8 +206,9 @@ TEST_CASE("Loop Stab 34g die mitgelieferten Stabspiele tragen ihre Vorlage")
 TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_Helper: je Instrument drei Lagen und drei Staerken, IC gegen Synth")
 {
     // Werkzeug (Teilplan 34g-6): schreibt die Liste der Stabspiele im Format von HoerTest_Helper (dessen Konzept §11,
-    // §12, Schema 1; Muster der IC-Liste `hoertest/listen/04_platte_stab`) in den Ordner der Variable — gedacht
-    // `hoertest/listen/stab_34g`: `liste.json`, `klaenge/` (gitignored, HT8 a) und `klaenge.sha256`. Gerechnet wie im
+    // §12, Schema 1; Muster der IC-Liste `hoertest/listen/ic/04_platte_stab`) in den Ordner der Variable — der Hoerort
+    // `…\cmake\samples\Hoerproben\LumiViz\stab_34g` (AU3, S182): `liste.json`, `klaenge/` und `klaenge.sha256`;
+    // die Liste und die Abdruecke kommen danach auch versioniert nach `hoertest/listen/stab_34g` (AU3-1 a). Gerechnet wie im
     // Programm (rendereTon aus der Datei), 2 s gehalten, jeder Klang auf einen gemeinsamen Pegel (hoechstens −23 LUFS, ohne Spitze ueber
     // 0,89; BS.1770-4, `AudioCore/Lautheit`;
     // die Lautheit vorher steht als Messwert `lufs_vorher`). Ohne die Variable meldet er das und prueft nichts. Pruefen:
@@ -375,6 +377,8 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
                       "--test-case=\"Loop Stab 34g Hoerproben*\"\n";
     for (const QString& z : summen) text += z.toUtf8() + '\n';
     REQUIRE(summenDatei.write(text) > 0);
+    summenDatei.close();
+    hoerliste::legeInsRepo(dir);  // AU3-1 a: Liste und Abdruecke auch versioniert unter hoertest/listen/<liste>
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare IC gegen Synth) unter " << ordner.toStdString());
     MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, ungeaendert): " << stille.join(QStringLiteral(", ")).toStdString());
     CHECK(paare == 9);

@@ -31,6 +31,7 @@
 #include "loop/Aufnahme.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
+#include "HoerlisteAblage.hpp"
 #include "loop/Tastatur.hpp"
 
 #include <QDir>
@@ -252,7 +253,8 @@ TEST_CASE("Loop Klasse1 34i die mitgelieferten Instrumente der Klasse 1 tragen i
 TEST_CASE("Loop Klasse1 34i Hoerproben (LUMIVIZ_34I_WAV) — Liste fuer HoerTest_Helper: je Instrument drei Lagen und drei Staerken, Paare")
 {
     // Werkzeug (Teilplan 34i-6, Muster `Loop Stab 34g Hoerproben`): schreibt die Liste im Format von HoerTest_Helper
-    // (dessen Konzept §11, §12, Schema 1) in den Ordner der Variable — gedacht `hoertest/listen/klasse1_34i`:
+    // (dessen Konzept §11, §12, Schema 1) in den Ordner der Variable — der Hoerort `…\cmake\samples\Hoerproben\LumiViz\klasse1_34i` (AU3, S182; Liste
+    // und Abdruecke danach auch versioniert unter `hoertest/listen/klasse1_34i`, AU3-1 a):
     // `liste.json`, `klaenge/` (gitignored) und `klaenge.sha256`. Gerechnet wie im Programm (rendereTon aus der Datei),
     // 2 s gehalten, jeder Klang auf einen gemeinsamen Pegel (hoechstens −23 LUFS, ohne Spitze ueber 0,89). Paare:
     // `clavinet_modal` gegen `clavinet` (IK2-8 a: das bessere behaelt den Namen), das Upright gegen `grand_piano`,
@@ -442,6 +444,8 @@ TEST_CASE("Loop Klasse1 34i Hoerproben (LUMIVIZ_34I_WAV) — Liste fuer HoerTest
                       "--test-case=\"Loop Klasse1 34i Hoerproben*\"\n";
     for (const QString& z : summen) text += z.toUtf8() + '\n';
     REQUIRE(summenDatei.write(text) > 0);
+    summenDatei.close();
+    hoerliste::legeInsRepo(dir);  // AU3-1 a: Liste und Abdruecke auch versioniert unter hoertest/listen/<liste>
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare) unter " << ordner.toStdString());
     MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, ungeaendert): " << stille.join(QStringLiteral(", ")).toStdString());
     CHECK(paare == 8);

@@ -1,0 +1,225 @@
+{
+  "schema": 1,
+  "titel": "Klasse 11_tonrad: Hoerproben der Vorgaben (L5)",
+  "ziel": "Erstes Hoeren der Vorgaben je Instrument (AUFTRAG_BAU §4 Punkt 4, L5) — ungemessen, ohne Bezug",
+  "katalog": null,
+  "kontrolle": "moderat",
+  "pegel": {
+    "lufs": -23,
+    "toleranz_lu": 1
+  },
+  "dauer_s": null,
+  "gruppe_nach": ["instrument"],
+  "fassungen": {
+    "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
+  },
+  "klaenge": [{
+      "id": "Orgel_akkord_e20",
+      "datei": "klaenge/Orgel_akkord_e20.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Orgel",
+        "staerke": "e20",
+        "spielweise": "akkord"
+      }
+    }, {
+      "id": "Orgel_akkord_e60",
+      "datei": "klaenge/Orgel_akkord_e60.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Orgel",
+        "staerke": "e60",
+        "spielweise": "akkord"
+      }
+    }, {
+      "id": "Orgel_akkord_e100",
+      "datei": "klaenge/Orgel_akkord_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Orgel",
+        "staerke": "e100",
+        "spielweise": "akkord"
+      }
+    }, {
+      "id": "Orgel_rotary_hochlauf",
+      "datei": "klaenge/Orgel_rotary_hochlauf.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Orgel",
+        "spielweise": "rotary_hochlauf"
+      }
+    }, {
+      "id": "Orgel_scanner_v3",
+      "datei": "klaenge/Orgel_scanner_v3.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Orgel",
+        "spielweise": "scanner_v3"
+      }
+    }, {
+      "id": "Orgel_scanner_c3",
+      "datei": "klaenge/Orgel_scanner_c3.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Orgel",
+        "spielweise": "scanner_c3"
+      }
+    }, {
+      "id": "Hausorgel_stoesse",
+      "datei": "klaenge/Hausorgel_stoesse.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Hausorgel",
+        "spielweise": "stoesse"
+      }
+    }, {
+      "id": "Hausorgel_einzeltrigger",
+      "datei": "klaenge/Hausorgel_einzeltrigger.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Hausorgel",
+        "spielweise": "einzeltrigger"
+      }
+    }],
+  "messwerte": [{
+      "achsen": {
+        "instrument": "Orgel",
+        "staerke": "e20",
+        "spielweise": "akkord"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -38.850000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Orgel",
+        "staerke": "e60",
+        "spielweise": "akkord"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.949999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Orgel",
+        "staerke": "e100",
+        "spielweise": "akkord"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -15.94,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Orgel",
+        "spielweise": "rotary_hochlauf"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.68,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Orgel",
+        "spielweise": "scanner_v3"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.920000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Orgel",
+        "spielweise": "scanner_c3"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.289999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Hausorgel",
+        "spielweise": "stoesse"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -26.859999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Hausorgel",
+        "spielweise": "einzeltrigger"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -25.32,
+          "einheit": "LUFS"
+        }]
+    }],
+  "punkte": [{
+      "id": "p001",
+      "art": "einzel",
+      "klang": "Orgel_akkord_e20",
+      "frage": "Klingt es nach Tonradorgel (888000000, Rotary langsam)? Klick glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p002",
+      "art": "einzel",
+      "klang": "Orgel_akkord_e60",
+      "frage": "Klingt es nach Tonradorgel (888000000, Rotary langsam)? Klick glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p003",
+      "art": "einzel",
+      "klang": "Orgel_akkord_e100",
+      "frage": "Klingt es nach Tonradorgel (888000000, Rotary langsam)? Klick glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p004",
+      "art": "einzel",
+      "klang": "Orgel_rotary_hochlauf",
+      "frage": "Rotary schnell ab 0,5 s, langsam ab 2 s (Zeitkonstanten offen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p005",
+      "art": "einzel",
+      "klang": "Orgel_scanner_v3",
+      "frage": "Scanner-Vibrato/Chorus: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p006",
+      "art": "einzel",
+      "klang": "Orgel_scanner_c3",
+      "frage": "Scanner-Vibrato/Chorus: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p007",
+      "art": "einzel",
+      "klang": "Hausorgel_stoesse",
+      "frage": "house_organ: kurze Akkorde mit Perkussion — kommt es dem Vorbild nahe (F-5 a)?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p008",
+      "art": "einzel",
+      "klang": "Hausorgel_einzeltrigger",
+      "frage": "Perkussion mit Einzeltrigger (nur die erste Taste): hoerbar?",
+      "pole": ["nein", "ja"]
+    }]
+}

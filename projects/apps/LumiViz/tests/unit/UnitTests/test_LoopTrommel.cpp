@@ -31,6 +31,7 @@
 #include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
+#include "HoerlisteAblage.hpp"
 #include "loop/Tastatur.hpp"
 
 #include <QDir>
@@ -359,7 +360,8 @@ TEST_CASE("Loop Trommel 34h-5 Spielweise im Klang: der Kern spielt den Randschla
 TEST_CASE("Loop Trommel 34h-6 Hoerproben (LUMIVIZ_34H_WAV) — Liste fuer HoerTest_Helper: je Trommel drei Staerken, Spielweisen, IC gegen Synth")
 {
     // Werkzeug (Teilplan 34h-6): schreibt die Liste der Trommeln im Format von HoerTest_Helper (dessen Konzept §11, §12,
-    // Schema 1; Muster `hoertest/listen/stab_34g`) in den Ordner der Variable — gedacht `hoertest/listen/membran_34h`:
+    // Schema 1; Muster `hoertest/listen/stab_34g`) in den Ordner der Variable — der Hoerort `…\cmake\samples\Hoerproben\LumiViz\membran_34h` (AU3, S182; Liste
+    // und Abdruecke danach auch versioniert unter `hoertest/listen/membran_34h`, AU3-1 a):
     // `liste.json`, `klaenge/` (gitignored) und `klaenge.sha256`. Gerechnet wie im Programm (rendereTon aus der Datei),
     // 1,5 s gehalten; je Klang auf einen gemeinsamen Pegel (hoechstens −23 LUFS, ohne Spitze ueber 0,89). Die Staerken
     // a-18, a-9, a0 sind die Geschwindigkeiten pp, mf, ff von IC (TM1 a: tempoFf · 10^(Stufe/20); tempoPp = tempoFf/8).
@@ -545,6 +547,8 @@ TEST_CASE("Loop Trommel 34h-6 Hoerproben (LUMIVIZ_34H_WAV) — Liste fuer HoerTe
                       "--test-case=\"Loop Trommel 34h-6 Hoerproben*\"\n";
     for (const QString& z : summen) text += z.toUtf8() + '\n';
     REQUIRE(summenDatei.write(text) > 0);
+    summenDatei.close();
+    hoerliste::legeInsRepo(dir);  // AU3-1 a: Liste und Abdruecke auch versioniert unter hoertest/listen/<liste>
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare IC gegen Synth) unter " << ordner.toStdString());
     MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, ungeaendert): " << stille.join(QStringLiteral(", ")).toStdString());
     CHECK(paare == 3);

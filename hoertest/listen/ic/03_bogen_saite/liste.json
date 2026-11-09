@@ -1,0 +1,2071 @@
+{
+  "schema": 1,
+  "titel": "Klasse 03_bogen_saite: Hoerproben der Vorgaben (L5)",
+  "ziel": "Erstes Hoeren der Vorgaben je Instrument (AUFTRAG_BAU §4 Punkt 4, L5) — ungemessen, ohne Bezug",
+  "katalog": null,
+  "kontrolle": "moderat",
+  "pegel": {
+    "lufs": -23.100000000000001,
+    "toleranz_lu": 1
+  },
+  "dauer_s": null,
+  "gruppe_nach": ["instrument"],
+  "fassungen": {
+    "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
+  },
+  "klaenge": [{
+      "id": "Cello_D2_e0",
+      "datei": "klaenge/Cello_D2_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D2",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Cello_D2_e50",
+      "datei": "klaenge/Cello_D2_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D2",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Cello_D2_e100",
+      "datei": "klaenge/Cello_D2_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D2",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Cello_Ais3_e0",
+      "datei": "klaenge/Cello_Ais3_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Cello_Ais3_e50",
+      "datei": "klaenge/Cello_Ais3_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Cello_Ais3_e100",
+      "datei": "klaenge/Cello_Ais3_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Cello_D5_e0",
+      "datei": "klaenge/Cello_D5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Cello_D5_e50",
+      "datei": "klaenge/Cello_D5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Cello_D5_e100",
+      "datei": "klaenge/Cello_D5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Cello_Ais3_vibrato",
+      "datei": "klaenge/Cello_Ais3_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Cello_Ais3_pizzicato",
+      "datei": "klaenge/Cello_Ais3_pizzicato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "pizzicato"
+      }
+    }, {
+      "id": "Cello_Ais3_spiccato",
+      "datei": "klaenge/Cello_Ais3_spiccato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "spiccato"
+      }
+    }, {
+      "id": "Cello_Ais3_tremolo",
+      "datei": "klaenge/Cello_Ais3_tremolo.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "tremolo"
+      }
+    }, {
+      "id": "Cello_Ais3_col_legno",
+      "datei": "klaenge/Cello_Ais3_col_legno.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "col_legno"
+      }
+    }, {
+      "id": "Cello_Ais3_ponticello",
+      "datei": "klaenge/Cello_Ais3_ponticello.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "ponticello"
+      }
+    }, {
+      "id": "Cello_Ais3_tasto",
+      "datei": "klaenge/Cello_Ais3_tasto.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "tasto"
+      }
+    }, {
+      "id": "Cello_Ais3_sordino",
+      "datei": "klaenge/Cello_Ais3_sordino.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "sordino"
+      }
+    }, {
+      "id": "Cello_Ais3_legato",
+      "datei": "klaenge/Cello_Ais3_legato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "legato"
+      }
+    }, {
+      "id": "Cello_Ais3_ensemble8",
+      "datei": "klaenge/Cello_Ais3_ensemble8.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "ensemble8"
+      }
+    }, {
+      "id": "Violine_A3_e0",
+      "datei": "klaenge/Violine_A3_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "A3",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Violine_A3_e50",
+      "datei": "klaenge/Violine_A3_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "A3",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Violine_A3_e100",
+      "datei": "klaenge/Violine_A3_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "A3",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Violine_Dis5_e0",
+      "datei": "klaenge/Violine_Dis5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Violine_Dis5_e50",
+      "datei": "klaenge/Violine_Dis5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Violine_Dis5_e100",
+      "datei": "klaenge/Violine_Dis5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Violine_F6_e0",
+      "datei": "klaenge/Violine_F6_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "F6",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Violine_F6_e50",
+      "datei": "klaenge/Violine_F6_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "F6",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Violine_F6_e100",
+      "datei": "klaenge/Violine_F6_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "F6",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Violine_Dis5_vibrato",
+      "datei": "klaenge/Violine_Dis5_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Violine_Dis5_pizzicato",
+      "datei": "klaenge/Violine_Dis5_pizzicato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "pizzicato"
+      }
+    }, {
+      "id": "Violine_Dis5_spiccato",
+      "datei": "klaenge/Violine_Dis5_spiccato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "spiccato"
+      }
+    }, {
+      "id": "Violine_Dis5_tremolo",
+      "datei": "klaenge/Violine_Dis5_tremolo.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "tremolo"
+      }
+    }, {
+      "id": "Violine_Dis5_col_legno",
+      "datei": "klaenge/Violine_Dis5_col_legno.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "col_legno"
+      }
+    }, {
+      "id": "Violine_Dis5_ponticello",
+      "datei": "klaenge/Violine_Dis5_ponticello.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "ponticello"
+      }
+    }, {
+      "id": "Violine_Dis5_tasto",
+      "datei": "klaenge/Violine_Dis5_tasto.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "tasto"
+      }
+    }, {
+      "id": "Violine_Dis5_sordino",
+      "datei": "klaenge/Violine_Dis5_sordino.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "sordino"
+      }
+    }, {
+      "id": "Violine_Dis5_legato",
+      "datei": "klaenge/Violine_Dis5_legato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "legato"
+      }
+    }, {
+      "id": "Violine_Dis5_ensemble8",
+      "datei": "klaenge/Violine_Dis5_ensemble8.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "ensemble8"
+      }
+    }, {
+      "id": "Viola_D3_e0",
+      "datei": "klaenge/Viola_D3_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "D3",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Viola_D3_e50",
+      "datei": "klaenge/Viola_D3_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "D3",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Viola_D3_e100",
+      "datei": "klaenge/Viola_D3_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "D3",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Viola_Gis4_e0",
+      "datei": "klaenge/Viola_Gis4_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Viola_Gis4_e50",
+      "datei": "klaenge/Viola_Gis4_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Viola_Gis4_e100",
+      "datei": "klaenge/Viola_Gis4_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Viola_A5_e0",
+      "datei": "klaenge/Viola_A5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "A5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Viola_A5_e50",
+      "datei": "klaenge/Viola_A5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "A5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Viola_A5_e100",
+      "datei": "klaenge/Viola_A5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "A5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Viola_Gis4_vibrato",
+      "datei": "klaenge/Viola_Gis4_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Viola_Gis4_pizzicato",
+      "datei": "klaenge/Viola_Gis4_pizzicato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "pizzicato"
+      }
+    }, {
+      "id": "Viola_Gis4_spiccato",
+      "datei": "klaenge/Viola_Gis4_spiccato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "spiccato"
+      }
+    }, {
+      "id": "Viola_Gis4_tremolo",
+      "datei": "klaenge/Viola_Gis4_tremolo.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "tremolo"
+      }
+    }, {
+      "id": "Viola_Gis4_col_legno",
+      "datei": "klaenge/Viola_Gis4_col_legno.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "col_legno"
+      }
+    }, {
+      "id": "Viola_Gis4_ponticello",
+      "datei": "klaenge/Viola_Gis4_ponticello.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "ponticello"
+      }
+    }, {
+      "id": "Viola_Gis4_tasto",
+      "datei": "klaenge/Viola_Gis4_tasto.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "tasto"
+      }
+    }, {
+      "id": "Viola_Gis4_sordino",
+      "datei": "klaenge/Viola_Gis4_sordino.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "sordino"
+      }
+    }, {
+      "id": "Viola_Gis4_legato",
+      "datei": "klaenge/Viola_Gis4_legato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "legato"
+      }
+    }, {
+      "id": "Viola_Gis4_ensemble8",
+      "datei": "klaenge/Viola_Gis4_ensemble8.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "ensemble8"
+      }
+    }, {
+      "id": "Kontrabass_Fis1_e0",
+      "datei": "klaenge/Kontrabass_Fis1_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "Fis1",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Kontrabass_Fis1_e50",
+      "datei": "klaenge/Kontrabass_Fis1_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "Fis1",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Kontrabass_Fis1_e100",
+      "datei": "klaenge/Kontrabass_Fis1_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "Fis1",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Kontrabass_H2_e0",
+      "datei": "klaenge/Kontrabass_H2_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Kontrabass_H2_e50",
+      "datei": "klaenge/Kontrabass_H2_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Kontrabass_H2_e100",
+      "datei": "klaenge/Kontrabass_H2_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Kontrabass_C4_e0",
+      "datei": "klaenge/Kontrabass_C4_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "C4",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Kontrabass_C4_e50",
+      "datei": "klaenge/Kontrabass_C4_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "C4",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Kontrabass_C4_e100",
+      "datei": "klaenge/Kontrabass_C4_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "C4",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Kontrabass_H2_vibrato",
+      "datei": "klaenge/Kontrabass_H2_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Kontrabass_H2_pizzicato",
+      "datei": "klaenge/Kontrabass_H2_pizzicato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "pizzicato"
+      }
+    }, {
+      "id": "Kontrabass_H2_spiccato",
+      "datei": "klaenge/Kontrabass_H2_spiccato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "spiccato"
+      }
+    }, {
+      "id": "Kontrabass_H2_tremolo",
+      "datei": "klaenge/Kontrabass_H2_tremolo.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "tremolo"
+      }
+    }, {
+      "id": "Kontrabass_H2_col_legno",
+      "datei": "klaenge/Kontrabass_H2_col_legno.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "col_legno"
+      }
+    }, {
+      "id": "Kontrabass_H2_ponticello",
+      "datei": "klaenge/Kontrabass_H2_ponticello.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "ponticello"
+      }
+    }, {
+      "id": "Kontrabass_H2_tasto",
+      "datei": "klaenge/Kontrabass_H2_tasto.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "tasto"
+      }
+    }, {
+      "id": "Kontrabass_H2_sordino",
+      "datei": "klaenge/Kontrabass_H2_sordino.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "sordino"
+      }
+    }, {
+      "id": "Kontrabass_H2_legato",
+      "datei": "klaenge/Kontrabass_H2_legato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "legato"
+      }
+    }, {
+      "id": "Kontrabass_H2_ensemble8",
+      "datei": "klaenge/Kontrabass_H2_ensemble8.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "ensemble8"
+      }
+    }],
+  "messwerte": [{
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D2",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -34.18,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D2",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -27.870000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D2",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.030000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -30.829999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.359999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.719999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -34.409999999999997,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -28.050000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "D5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.059999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.050000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "pizzicato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -37.850000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "spiccato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.850000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "tremolo"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.010000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "col_legno"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -25.059999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "ponticello"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -20.559999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "tasto"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.07,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "sordino"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -30.219999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "legato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.329999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Cello",
+        "ton": "Ais3",
+        "spielweise": "ensemble8"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.02,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "A3",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -26.809999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "A3",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.100000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "A3",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.800000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -27.23,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -20.5,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -14.07,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "F6",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -27.66,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "F6",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -20.780000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "F6",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -13.890000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -19.149999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "pizzicato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -35.859999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "spiccato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.32,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "tremolo"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.25,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "col_legno"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.489999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "ponticello"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.670000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "tasto"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.359999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "sordino"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -26.609999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "legato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.23,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Violine",
+        "ton": "Dis5",
+        "spielweise": "ensemble8"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.800000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "D3",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -26.710000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "D3",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.120000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "D3",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -20.699999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -29.760000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.989999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -16.27,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "A5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -32.100000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "A5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.739999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "A5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -19.210000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.629999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "pizzicato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -34.149999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "spiccato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.539999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "tremolo"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.550000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "col_legno"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.579999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "ponticello"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -19.760000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "tasto"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -16.390000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "sordino"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -29.359999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "legato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.16,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Viola",
+        "ton": "Gis4",
+        "spielweise": "ensemble8"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -21.690000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "Fis1",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -11.91,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "Fis1",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -6.4299999999999997,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "Fis1",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": 2.2799999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -15.199999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.460000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -12.42,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "C4",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.739999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "C4",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -15.15,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "C4",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.4000000000000004,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.199999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "pizzicato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -5.8399999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "spiccato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -13.869999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "tremolo"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.010000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "col_legno"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -16.530000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "ponticello"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.050000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "tasto"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -9.3599999999999994,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "sordino"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.199999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "legato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -13.130000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Kontrabass",
+        "ton": "H2",
+        "spielweise": "ensemble8"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -17.09,
+          "einheit": "LUFS"
+        }]
+    }],
+  "punkte": [{
+      "id": "p001",
+      "art": "einzel",
+      "klang": "Cello_D2_e0",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p002",
+      "art": "einzel",
+      "klang": "Cello_D2_e50",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p003",
+      "art": "einzel",
+      "klang": "Cello_D2_e100",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p004",
+      "art": "einzel",
+      "klang": "Cello_Ais3_e0",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p005",
+      "art": "einzel",
+      "klang": "Cello_Ais3_e50",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p006",
+      "art": "einzel",
+      "klang": "Cello_Ais3_e100",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p007",
+      "art": "einzel",
+      "klang": "Cello_D5_e0",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p008",
+      "art": "einzel",
+      "klang": "Cello_D5_e50",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p009",
+      "art": "einzel",
+      "klang": "Cello_D5_e100",
+      "frage": "Klingt es nach Cello (ungemessen (Korpus ausser der Wolfton-Mode offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p010",
+      "art": "einzel",
+      "klang": "Cello_Ais3_vibrato",
+      "frage": "Vibrato 20 Cent, 5,5 Hz: glaubhaft, schimmert es?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p011",
+      "art": "einzel",
+      "klang": "Cello_Ais3_pizzicato",
+      "frage": "Pizzicato: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p012",
+      "art": "einzel",
+      "klang": "Cello_Ais3_spiccato",
+      "frage": "Spiccato (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p013",
+      "art": "einzel",
+      "klang": "Cello_Ais3_tremolo",
+      "frage": "Tremolo (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p014",
+      "art": "einzel",
+      "klang": "Cello_Ais3_col_legno",
+      "frage": "Col legno (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p015",
+      "art": "einzel",
+      "klang": "Cello_Ais3_ponticello",
+      "frage": "Sul ponticello: heller, glasiger?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p016",
+      "art": "einzel",
+      "klang": "Cello_Ais3_tasto",
+      "frage": "Sul tasto: weicher?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p017",
+      "art": "einzel",
+      "klang": "Cello_Ais3_sordino",
+      "frage": "Con sordino: gedeckter?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p018",
+      "art": "einzel",
+      "klang": "Cello_Ais3_legato",
+      "frage": "Legato in einem Strich: Uebergaenge glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p019",
+      "art": "einzel",
+      "klang": "Cello_Ais3_ensemble8",
+      "frage": "Ensemble aus 8 Stimmen (Streuung gesetzt): wie ein Satz?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p020",
+      "art": "einzel",
+      "klang": "Violine_A3_e0",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p021",
+      "art": "einzel",
+      "klang": "Violine_A3_e50",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p022",
+      "art": "einzel",
+      "klang": "Violine_A3_e100",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p023",
+      "art": "einzel",
+      "klang": "Violine_Dis5_e0",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p024",
+      "art": "einzel",
+      "klang": "Violine_Dis5_e50",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p025",
+      "art": "einzel",
+      "klang": "Violine_Dis5_e100",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p026",
+      "art": "einzel",
+      "klang": "Violine_F6_e0",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p027",
+      "art": "einzel",
+      "klang": "Violine_F6_e50",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p028",
+      "art": "einzel",
+      "klang": "Violine_F6_e100",
+      "frage": "Klingt es nach Violine (ungemessen (Staerken des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p029",
+      "art": "einzel",
+      "klang": "Violine_Dis5_vibrato",
+      "frage": "Vibrato 20 Cent, 5,5 Hz: glaubhaft, schimmert es?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p030",
+      "art": "einzel",
+      "klang": "Violine_Dis5_pizzicato",
+      "frage": "Pizzicato: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p031",
+      "art": "einzel",
+      "klang": "Violine_Dis5_spiccato",
+      "frage": "Spiccato (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p032",
+      "art": "einzel",
+      "klang": "Violine_Dis5_tremolo",
+      "frage": "Tremolo (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p033",
+      "art": "einzel",
+      "klang": "Violine_Dis5_col_legno",
+      "frage": "Col legno (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p034",
+      "art": "einzel",
+      "klang": "Violine_Dis5_ponticello",
+      "frage": "Sul ponticello: heller, glasiger?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p035",
+      "art": "einzel",
+      "klang": "Violine_Dis5_tasto",
+      "frage": "Sul tasto: weicher?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p036",
+      "art": "einzel",
+      "klang": "Violine_Dis5_sordino",
+      "frage": "Con sordino: gedeckter?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p037",
+      "art": "einzel",
+      "klang": "Violine_Dis5_legato",
+      "frage": "Legato in einem Strich: Uebergaenge glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p038",
+      "art": "einzel",
+      "klang": "Violine_Dis5_ensemble8",
+      "frage": "Ensemble aus 8 Stimmen (Streuung gesetzt): wie ein Satz?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p039",
+      "art": "einzel",
+      "klang": "Viola_D3_e0",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p040",
+      "art": "einzel",
+      "klang": "Viola_D3_e50",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p041",
+      "art": "einzel",
+      "klang": "Viola_D3_e100",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p042",
+      "art": "einzel",
+      "klang": "Viola_Gis4_e0",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p043",
+      "art": "einzel",
+      "klang": "Viola_Gis4_e50",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p044",
+      "art": "einzel",
+      "klang": "Viola_Gis4_e100",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p045",
+      "art": "einzel",
+      "klang": "Viola_A5_e0",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p046",
+      "art": "einzel",
+      "klang": "Viola_A5_e50",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p047",
+      "art": "einzel",
+      "klang": "Viola_A5_e100",
+      "frage": "Klingt es nach Viola (ungemessen (Saiten Haendler, Korpus verschoben, Staerken offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p048",
+      "art": "einzel",
+      "klang": "Viola_Gis4_vibrato",
+      "frage": "Vibrato 20 Cent, 5,5 Hz: glaubhaft, schimmert es?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p049",
+      "art": "einzel",
+      "klang": "Viola_Gis4_pizzicato",
+      "frage": "Pizzicato: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p050",
+      "art": "einzel",
+      "klang": "Viola_Gis4_spiccato",
+      "frage": "Spiccato (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p051",
+      "art": "einzel",
+      "klang": "Viola_Gis4_tremolo",
+      "frage": "Tremolo (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p052",
+      "art": "einzel",
+      "klang": "Viola_Gis4_col_legno",
+      "frage": "Col legno (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p053",
+      "art": "einzel",
+      "klang": "Viola_Gis4_ponticello",
+      "frage": "Sul ponticello: heller, glasiger?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p054",
+      "art": "einzel",
+      "klang": "Viola_Gis4_tasto",
+      "frage": "Sul tasto: weicher?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p055",
+      "art": "einzel",
+      "klang": "Viola_Gis4_sordino",
+      "frage": "Con sordino: gedeckter?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p056",
+      "art": "einzel",
+      "klang": "Viola_Gis4_legato",
+      "frage": "Legato in einem Strich: Uebergaenge glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p057",
+      "art": "einzel",
+      "klang": "Viola_Gis4_ensemble8",
+      "frage": "Ensemble aus 8 Stimmen (Streuung gesetzt): wie ein Satz?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p058",
+      "art": "einzel",
+      "klang": "Kontrabass_Fis1_e0",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p059",
+      "art": "einzel",
+      "klang": "Kontrabass_Fis1_e50",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p060",
+      "art": "einzel",
+      "klang": "Kontrabass_Fis1_e100",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p061",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_e0",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p062",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_e50",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p063",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_e100",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p064",
+      "art": "einzel",
+      "klang": "Kontrabass_C4_e0",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p065",
+      "art": "einzel",
+      "klang": "Kontrabass_C4_e50",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p066",
+      "art": "einzel",
+      "klang": "Kontrabass_C4_e100",
+      "frage": "Klingt es nach Kontrabass (ungemessen (Saiten Haendler, Guete und Staerke des Korpus offen))? Ansatz und Strich glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p067",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_vibrato",
+      "frage": "Vibrato 20 Cent, 5,5 Hz: glaubhaft, schimmert es?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p068",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_pizzicato",
+      "frage": "Pizzicato: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p069",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_spiccato",
+      "frage": "Spiccato (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p070",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_tremolo",
+      "frage": "Tremolo (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p071",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_col_legno",
+      "frage": "Col legno (ungemessen): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p072",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_ponticello",
+      "frage": "Sul ponticello: heller, glasiger?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p073",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_tasto",
+      "frage": "Sul tasto: weicher?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p074",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_sordino",
+      "frage": "Con sordino: gedeckter?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p075",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_legato",
+      "frage": "Legato in einem Strich: Uebergaenge glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p076",
+      "art": "einzel",
+      "klang": "Kontrabass_H2_ensemble8",
+      "frage": "Ensemble aus 8 Stimmen (Streuung gesetzt): wie ein Satz?",
+      "pole": ["nein", "ja"]
+    }]
+}

@@ -1,0 +1,1340 @@
+{
+  "schema": 1,
+  "titel": "Klasse 10_zunge: Hoerproben der Vorgaben (L5)",
+  "ziel": "Erstes Hoeren der Vorgaben je Instrument (AUFTRAG_BAU §4 Punkt 4, L5) — ungemessen, ohne Bezug",
+  "katalog": null,
+  "kontrolle": "moderat",
+  "pegel": {
+    "lufs": -26.800000000000001,
+    "toleranz_lu": 1
+  },
+  "dauer_s": null,
+  "gruppe_nach": ["instrument"],
+  "fassungen": {
+    "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
+  },
+  "klaenge": [{
+      "id": "Akkordeon_Gis3_e0",
+      "datei": "klaenge/Akkordeon_Gis3_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Gis3",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Akkordeon_Gis3_e50",
+      "datei": "klaenge/Akkordeon_Gis3_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Gis3",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Akkordeon_Gis3_e100",
+      "datei": "klaenge/Akkordeon_Gis3_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Gis3",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Akkordeon_Cis5_e0",
+      "datei": "klaenge/Akkordeon_Cis5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Akkordeon_Cis5_e50",
+      "datei": "klaenge/Akkordeon_Cis5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Akkordeon_Cis5_e100",
+      "datei": "klaenge/Akkordeon_Cis5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Akkordeon_F6_e0",
+      "datei": "klaenge/Akkordeon_F6_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "F6",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Akkordeon_F6_e50",
+      "datei": "klaenge/Akkordeon_F6_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "F6",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Akkordeon_F6_e100",
+      "datei": "klaenge/Akkordeon_F6_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "F6",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Akkordeon_Cis5_vibrato",
+      "datei": "klaenge/Akkordeon_Cis5_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Akkordeon_Cis5_bend",
+      "datei": "klaenge/Akkordeon_Cis5_bend.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "spielweise": "bend"
+      }
+    }, {
+      "id": "Akkordeon_Cis5_balgwechsel",
+      "datei": "klaenge/Akkordeon_Cis5_balgwechsel.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "spielweise": "balgwechsel"
+      }
+    }, {
+      "id": "Akkordeon_bass_C3",
+      "datei": "klaenge/Akkordeon_bass_C3.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Akkordeon",
+        "spielweise": "bass_C3"
+      }
+    }, {
+      "id": "Harmonium_Dis3_e0",
+      "datei": "klaenge/Harmonium_Dis3_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Dis3",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Harmonium_Dis3_e50",
+      "datei": "klaenge/Harmonium_Dis3_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Dis3",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Harmonium_Dis3_e100",
+      "datei": "klaenge/Harmonium_Dis3_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Dis3",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Harmonium_Gis4_e0",
+      "datei": "klaenge/Harmonium_Gis4_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Harmonium_Gis4_e50",
+      "datei": "klaenge/Harmonium_Gis4_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Harmonium_Gis4_e100",
+      "datei": "klaenge/Harmonium_Gis4_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Harmonium_Cis6_e0",
+      "datei": "klaenge/Harmonium_Cis6_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Cis6",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Harmonium_Cis6_e50",
+      "datei": "klaenge/Harmonium_Cis6_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Cis6",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Harmonium_Cis6_e100",
+      "datei": "klaenge/Harmonium_Cis6_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Cis6",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Harmonium_Gis4_vibrato",
+      "datei": "klaenge/Harmonium_Gis4_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Harmonium_Gis4_bend",
+      "datei": "klaenge/Harmonium_Gis4_bend.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "spielweise": "bend"
+      }
+    }, {
+      "id": "Harmonium_Gis4_balgwechsel",
+      "datei": "klaenge/Harmonium_Gis4_balgwechsel.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "spielweise": "balgwechsel"
+      }
+    }, {
+      "id": "Melodica_Gis3_e0",
+      "datei": "klaenge/Melodica_Gis3_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis3",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Melodica_Gis3_e50",
+      "datei": "klaenge/Melodica_Gis3_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis3",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Melodica_Gis3_e100",
+      "datei": "klaenge/Melodica_Gis3_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis3",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Melodica_Gis4_e0",
+      "datei": "klaenge/Melodica_Gis4_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Melodica_Gis4_e50",
+      "datei": "klaenge/Melodica_Gis4_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Melodica_Gis4_e100",
+      "datei": "klaenge/Melodica_Gis4_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Melodica_Gis5_e0",
+      "datei": "klaenge/Melodica_Gis5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Melodica_Gis5_e50",
+      "datei": "klaenge/Melodica_Gis5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Melodica_Gis5_e100",
+      "datei": "klaenge/Melodica_Gis5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Melodica_Gis4_vibrato",
+      "datei": "klaenge/Melodica_Gis4_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Melodica_Gis4_bend",
+      "datei": "klaenge/Melodica_Gis4_bend.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "spielweise": "bend"
+      }
+    }, {
+      "id": "Melodica_Gis4_balgwechsel",
+      "datei": "klaenge/Melodica_Gis4_balgwechsel.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "spielweise": "balgwechsel"
+      }
+    }, {
+      "id": "Mundharmonika_Dis4_e0",
+      "datei": "klaenge/Mundharmonika_Dis4_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Dis4",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Mundharmonika_Dis4_e50",
+      "datei": "klaenge/Mundharmonika_Dis4_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Dis4",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Mundharmonika_Dis4_e100",
+      "datei": "klaenge/Mundharmonika_Dis4_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Dis4",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Mundharmonika_Fis5_e0",
+      "datei": "klaenge/Mundharmonika_Fis5_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Mundharmonika_Fis5_e50",
+      "datei": "klaenge/Mundharmonika_Fis5_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Mundharmonika_Fis5_e100",
+      "datei": "klaenge/Mundharmonika_Fis5_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Mundharmonika_Gis6_e0",
+      "datei": "klaenge/Mundharmonika_Gis6_e0.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Gis6",
+        "staerke": "e0"
+      }
+    }, {
+      "id": "Mundharmonika_Gis6_e50",
+      "datei": "klaenge/Mundharmonika_Gis6_e50.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Gis6",
+        "staerke": "e50"
+      }
+    }, {
+      "id": "Mundharmonika_Gis6_e100",
+      "datei": "klaenge/Mundharmonika_Gis6_e100.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Gis6",
+        "staerke": "e100"
+      }
+    }, {
+      "id": "Mundharmonika_Fis5_vibrato",
+      "datei": "klaenge/Mundharmonika_Fis5_vibrato.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "spielweise": "vibrato"
+      }
+    }, {
+      "id": "Mundharmonika_Fis5_bend",
+      "datei": "klaenge/Mundharmonika_Fis5_bend.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "spielweise": "bend"
+      }
+    }, {
+      "id": "Mundharmonika_Fis5_balgwechsel",
+      "datei": "klaenge/Mundharmonika_Fis5_balgwechsel.wav",
+      "fassung": "vorgabe",
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "spielweise": "balgwechsel"
+      }
+    }],
+  "messwerte": [{
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Gis3",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -54.329999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Gis3",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -43.520000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Gis3",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -37.009999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -46.630000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -31.02,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.620000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "F6",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -34.57,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "F6",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -25.960000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "F6",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -18.460000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -28.109999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "spielweise": "bend"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -31.710000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "ton": "Cis5",
+        "spielweise": "balgwechsel"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -28.210000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Akkordeon",
+        "spielweise": "bass_C3"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -54.090000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Dis3",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -55.270000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Dis3",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -53.270000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Dis3",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -51.229999999999997,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -11.800000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -9.1300000000000008,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -11.34,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Cis6",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -2.8500000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Cis6",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -0.88,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Cis6",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": 0.78000000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.4199999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "spielweise": "bend"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.7200000000000006,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Harmonium",
+        "ton": "Gis4",
+        "spielweise": "balgwechsel"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -8.4800000000000004,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis3",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -47.25,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis3",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -36.479999999999997,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis3",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -30.079999999999998,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -43.030000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -26.41,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -15.550000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -33.020000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -20.899999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -10.57,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.43,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "spielweise": "bend"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -28.539999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Melodica",
+        "ton": "Gis4",
+        "spielweise": "balgwechsel"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.539999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Dis4",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -47.880000000000003,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Dis4",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -33.729999999999997,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Dis4",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -26.09,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -36.75,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -24.469999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -14.41,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Gis6",
+        "staerke": "e0"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.760000000000002,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Gis6",
+        "staerke": "e50"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -19.530000000000001,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Gis6",
+        "staerke": "e100"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -15.609999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "spielweise": "vibrato"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.199999999999999,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "spielweise": "bend"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -23.77,
+          "einheit": "LUFS"
+        }]
+    }, {
+      "achsen": {
+        "instrument": "Mundharmonika",
+        "ton": "Fis5",
+        "spielweise": "balgwechsel"
+      },
+      "fassung": "vorgabe",
+      "werte": [{
+          "name": "lufs_vorher",
+          "wert": -22.300000000000001,
+          "einheit": "LUFS"
+        }]
+    }],
+  "punkte": [{
+      "id": "p001",
+      "art": "einzel",
+      "klang": "Akkordeon_Gis3_e0",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p002",
+      "art": "einzel",
+      "klang": "Akkordeon_Gis3_e50",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p003",
+      "art": "einzel",
+      "klang": "Akkordeon_Gis3_e100",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p004",
+      "art": "einzel",
+      "klang": "Akkordeon_Cis5_e0",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p005",
+      "art": "einzel",
+      "klang": "Akkordeon_Cis5_e50",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p006",
+      "art": "einzel",
+      "klang": "Akkordeon_Cis5_e100",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p007",
+      "art": "einzel",
+      "klang": "Akkordeon_F6_e0",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p008",
+      "art": "einzel",
+      "klang": "Akkordeon_F6_e50",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p009",
+      "art": "einzel",
+      "klang": "Akkordeon_F6_e100",
+      "frage": "Klingt es nach Akkordeon (ungemessen (TinySOL lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p010",
+      "art": "einzel",
+      "klang": "Akkordeon_Cis5_vibrato",
+      "frage": "Vibrato ueber den Wind: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p011",
+      "art": "einzel",
+      "klang": "Akkordeon_Cis5_bend",
+      "frage": "Bend (Ventil, gekappt): hoerbar?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p012",
+      "art": "einzel",
+      "klang": "Akkordeon_Cis5_balgwechsel",
+      "frage": "Balgwechsel bei 0,8 s: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p013",
+      "art": "einzel",
+      "klang": "Akkordeon_bass_C3",
+      "frage": "Bass-Seite (16′ + 8′): glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p014",
+      "art": "einzel",
+      "klang": "Harmonium_Dis3_e0",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p015",
+      "art": "einzel",
+      "klang": "Harmonium_Dis3_e50",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p016",
+      "art": "einzel",
+      "klang": "Harmonium_Dis3_e100",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p017",
+      "art": "einzel",
+      "klang": "Harmonium_Gis4_e0",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p018",
+      "art": "einzel",
+      "klang": "Harmonium_Gis4_e50",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p019",
+      "art": "einzel",
+      "klang": "Harmonium_Gis4_e100",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p020",
+      "art": "einzel",
+      "klang": "Harmonium_Cis6_e0",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p021",
+      "art": "einzel",
+      "klang": "Harmonium_Cis6_e50",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p022",
+      "art": "einzel",
+      "klang": "Harmonium_Cis6_e100",
+      "frage": "Klingt es nach Harmonium (ungemessen (Euterpea CC0 lokal; Gehaeuse offen))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p023",
+      "art": "einzel",
+      "klang": "Harmonium_Gis4_vibrato",
+      "frage": "Vibrato ueber den Wind: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p024",
+      "art": "einzel",
+      "klang": "Harmonium_Gis4_bend",
+      "frage": "Bend (Ventil, gekappt): hoerbar?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p025",
+      "art": "einzel",
+      "klang": "Harmonium_Gis4_balgwechsel",
+      "frage": "Balgwechsel bei 0,8 s: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p026",
+      "art": "einzel",
+      "klang": "Melodica_Gis3_e0",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p027",
+      "art": "einzel",
+      "klang": "Melodica_Gis3_e50",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p028",
+      "art": "einzel",
+      "klang": "Melodica_Gis3_e100",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p029",
+      "art": "einzel",
+      "klang": "Melodica_Gis4_e0",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p030",
+      "art": "einzel",
+      "klang": "Melodica_Gis4_e50",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p031",
+      "art": "einzel",
+      "klang": "Melodica_Gis4_e100",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p032",
+      "art": "einzel",
+      "klang": "Melodica_Gis5_e0",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p033",
+      "art": "einzel",
+      "klang": "Melodica_Gis5_e50",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p034",
+      "art": "einzel",
+      "klang": "Melodica_Gis5_e100",
+      "frage": "Klingt es nach Melodica (ungemessen (fese CC BY 4.0 lokal))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p035",
+      "art": "einzel",
+      "klang": "Melodica_Gis4_vibrato",
+      "frage": "Vibrato ueber den Wind: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p036",
+      "art": "einzel",
+      "klang": "Melodica_Gis4_bend",
+      "frage": "Bend (Ventil, gekappt): hoerbar?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p037",
+      "art": "einzel",
+      "klang": "Melodica_Gis4_balgwechsel",
+      "frage": "Balgwechsel bei 0,8 s: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p038",
+      "art": "einzel",
+      "klang": "Mundharmonika_Dis4_e0",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p039",
+      "art": "einzel",
+      "klang": "Mundharmonika_Dis4_e50",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p040",
+      "art": "einzel",
+      "klang": "Mundharmonika_Dis4_e100",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p041",
+      "art": "einzel",
+      "klang": "Mundharmonika_Fis5_e0",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p042",
+      "art": "einzel",
+      "klang": "Mundharmonika_Fis5_e50",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p043",
+      "art": "einzel",
+      "klang": "Mundharmonika_Fis5_e100",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p044",
+      "art": "einzel",
+      "klang": "Mundharmonika_Gis6_e0",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p045",
+      "art": "einzel",
+      "klang": "Mundharmonika_Gis6_e50",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p046",
+      "art": "einzel",
+      "klang": "Mundharmonika_Gis6_e100",
+      "frage": "Klingt es nach Mundharmonika (ungemessen (gerade Toene; Bending ueber den Vokaltrakt nicht gebaut — F-6 a))? Ansprache glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p047",
+      "art": "einzel",
+      "klang": "Mundharmonika_Fis5_vibrato",
+      "frage": "Vibrato ueber den Wind: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p048",
+      "art": "einzel",
+      "klang": "Mundharmonika_Fis5_bend",
+      "frage": "Bend (Ventil, gekappt): hoerbar?",
+      "pole": ["nein", "ja"]
+    }, {
+      "id": "p049",
+      "art": "einzel",
+      "klang": "Mundharmonika_Fis5_balgwechsel",
+      "frage": "Balgwechsel bei 0,8 s: glaubhaft?",
+      "pole": ["nein", "ja"]
+    }]
+}
