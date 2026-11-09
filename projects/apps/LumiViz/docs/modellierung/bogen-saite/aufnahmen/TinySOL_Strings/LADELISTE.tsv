@@ -1,0 +1,3 @@
+sha256	pfad	url
+a537e5de4f64edf0a56032369f66fc76adcb67db875e466f54cad2999e00364c	TinySOL.tar.gz (auspacken nach ./ nur ./Strings/*, ohne .DS_Store; Dateien siehe SHA256SUMS)	https://zenodo.org/api/records/3685367/files/TinySOL.tar.gz/content
+925727f1036cb3d574856470be6b04af5c9961102902a23cc8eafc7907d040da	TinySOL_metadata.csv	https://zenodo.org/api/records/3685367/files/TinySOL_metadata.csv/content
