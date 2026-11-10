@@ -5,15 +5,18 @@
   "katalog": null,
   "kontrolle": "moderat",
   "pegel": {
-    "lufs": -29.399999999999999,
+    "lufs": -29.4,
     "toleranz_lu": 1
   },
   "dauer_s": null,
-  "gruppe_nach": ["instrument"],
+  "gruppe_nach": [
+    "instrument"
+  ],
   "fassungen": {
     "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
   },
-  "klaenge": [{
+  "klaenge": [
+    {
       "id": "Marimba_D2_a-30",
       "datei": "klaenge/Marimba_D2_a-30.wav",
       "fassung": "vorgabe",
@@ -22,7 +25,8 @@
         "ton": "D2",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Marimba_D2_a-12",
       "datei": "klaenge/Marimba_D2_a-12.wav",
       "fassung": "vorgabe",
@@ -31,7 +35,8 @@
         "ton": "D2",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Marimba_D2_a0",
       "datei": "klaenge/Marimba_D2_a0.wav",
       "fassung": "vorgabe",
@@ -40,7 +45,8 @@
         "ton": "D2",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Marimba_Fis4_a-30",
       "datei": "klaenge/Marimba_Fis4_a-30.wav",
       "fassung": "vorgabe",
@@ -49,7 +55,8 @@
         "ton": "Fis4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Marimba_Fis4_a-12",
       "datei": "klaenge/Marimba_Fis4_a-12.wav",
       "fassung": "vorgabe",
@@ -58,7 +65,8 @@
         "ton": "Fis4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Marimba_Fis4_a0",
       "datei": "klaenge/Marimba_Fis4_a0.wav",
       "fassung": "vorgabe",
@@ -67,7 +75,8 @@
         "ton": "Fis4",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Marimba_Ais6_a-30",
       "datei": "klaenge/Marimba_Ais6_a-30.wav",
       "fassung": "vorgabe",
@@ -76,7 +85,8 @@
         "ton": "Ais6",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Marimba_Ais6_a-12",
       "datei": "klaenge/Marimba_Ais6_a-12.wav",
       "fassung": "vorgabe",
@@ -85,7 +95,8 @@
         "ton": "Ais6",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Marimba_Ais6_a0",
       "datei": "klaenge/Marimba_Ais6_a0.wav",
       "fassung": "vorgabe",
@@ -94,7 +105,8 @@
         "ton": "Ais6",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Marimba_Fis4_rand",
       "datei": "klaenge/Marimba_Fis4_rand.wav",
       "fassung": "vorgabe",
@@ -103,7 +115,8 @@
         "ton": "Fis4",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_G4_a-30",
       "datei": "klaenge/Xylophon_G4_a-30.wav",
       "fassung": "vorgabe",
@@ -112,7 +125,8 @@
         "ton": "G4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_G4_a-12",
       "datei": "klaenge/Xylophon_G4_a-12.wav",
       "fassung": "vorgabe",
@@ -121,7 +135,8 @@
         "ton": "G4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_G4_a0",
       "datei": "klaenge/Xylophon_G4_a0.wav",
       "fassung": "vorgabe",
@@ -130,7 +145,8 @@
         "ton": "G4",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_D6_a-30",
       "datei": "klaenge/Xylophon_D6_a-30.wav",
       "fassung": "vorgabe",
@@ -139,7 +155,8 @@
         "ton": "D6",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_D6_a-12",
       "datei": "klaenge/Xylophon_D6_a-12.wav",
       "fassung": "vorgabe",
@@ -148,7 +165,8 @@
         "ton": "D6",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_D6_a0",
       "datei": "klaenge/Xylophon_D6_a0.wav",
       "fassung": "vorgabe",
@@ -157,7 +175,8 @@
         "ton": "D6",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_Ais7_a-30",
       "datei": "klaenge/Xylophon_Ais7_a-30.wav",
       "fassung": "vorgabe",
@@ -166,7 +185,8 @@
         "ton": "Ais7",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_Ais7_a-12",
       "datei": "klaenge/Xylophon_Ais7_a-12.wav",
       "fassung": "vorgabe",
@@ -175,7 +195,8 @@
         "ton": "Ais7",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_Ais7_a0",
       "datei": "klaenge/Xylophon_Ais7_a0.wav",
       "fassung": "vorgabe",
@@ -184,7 +205,8 @@
         "ton": "Ais7",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Xylophon_D6_rand",
       "datei": "klaenge/Xylophon_D6_rand.wav",
       "fassung": "vorgabe",
@@ -193,7 +215,8 @@
         "ton": "D6",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_D3_a-30",
       "datei": "klaenge/Vibraphon_D3_a-30.wav",
       "fassung": "vorgabe",
@@ -202,7 +225,8 @@
         "ton": "D3",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_D3_a-12",
       "datei": "klaenge/Vibraphon_D3_a-12.wav",
       "fassung": "vorgabe",
@@ -211,7 +235,8 @@
         "ton": "D3",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_D3_a0",
       "datei": "klaenge/Vibraphon_D3_a0.wav",
       "fassung": "vorgabe",
@@ -220,7 +245,8 @@
         "ton": "D3",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis4_a-30",
       "datei": "klaenge/Vibraphon_Gis4_a-30.wav",
       "fassung": "vorgabe",
@@ -229,7 +255,8 @@
         "ton": "Gis4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis4_a-12",
       "datei": "klaenge/Vibraphon_Gis4_a-12.wav",
       "fassung": "vorgabe",
@@ -238,7 +265,8 @@
         "ton": "Gis4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis4_a0",
       "datei": "klaenge/Vibraphon_Gis4_a0.wav",
       "fassung": "vorgabe",
@@ -247,7 +275,8 @@
         "ton": "Gis4",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Dis6_a-30",
       "datei": "klaenge/Vibraphon_Dis6_a-30.wav",
       "fassung": "vorgabe",
@@ -256,7 +285,8 @@
         "ton": "Dis6",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Dis6_a-12",
       "datei": "klaenge/Vibraphon_Dis6_a-12.wav",
       "fassung": "vorgabe",
@@ -265,7 +295,8 @@
         "ton": "Dis6",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Dis6_a0",
       "datei": "klaenge/Vibraphon_Dis6_a0.wav",
       "fassung": "vorgabe",
@@ -274,7 +305,8 @@
         "ton": "Dis6",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis4_motor2",
       "datei": "klaenge/Vibraphon_Gis4_motor2.wav",
       "fassung": "vorgabe",
@@ -283,7 +315,8 @@
         "ton": "Gis4",
         "spielweise": "motor2"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis4_motor6",
       "datei": "klaenge/Vibraphon_Gis4_motor6.wav",
       "fassung": "vorgabe",
@@ -292,7 +325,8 @@
         "ton": "Gis4",
         "spielweise": "motor6"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis4_gedaempft",
       "datei": "klaenge/Vibraphon_Gis4_gedaempft.wav",
       "fassung": "vorgabe",
@@ -301,7 +335,8 @@
         "ton": "Gis4",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis4_rand",
       "datei": "klaenge/Vibraphon_Gis4_rand.wav",
       "fassung": "vorgabe",
@@ -310,7 +345,8 @@
         "ton": "Gis4",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis3_gestrichen_e0",
       "datei": "klaenge/Vibraphon_Gis3_gestrichen_e0.wav",
       "fassung": "vorgabe",
@@ -320,7 +356,8 @@
         "staerke": "e0",
         "spielweise": "gestrichen"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Gis3_gestrichen_e50",
       "datei": "klaenge/Vibraphon_Gis3_gestrichen_e50.wav",
       "fassung": "vorgabe",
@@ -330,7 +367,8 @@
         "staerke": "e50",
         "spielweise": "gestrichen"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Dis5_gestrichen_e0",
       "datei": "klaenge/Vibraphon_Dis5_gestrichen_e0.wav",
       "fassung": "vorgabe",
@@ -340,7 +378,8 @@
         "staerke": "e0",
         "spielweise": "gestrichen"
       }
-    }, {
+    },
+    {
       "id": "Vibraphon_Dis5_gestrichen_e50",
       "datei": "klaenge/Vibraphon_Dis5_gestrichen_e50.wav",
       "fassung": "vorgabe",
@@ -350,7 +389,8 @@
         "staerke": "e50",
         "spielweise": "gestrichen"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_A5_a-30",
       "datei": "klaenge/Glockenspiel_A5_a-30.wav",
       "fassung": "vorgabe",
@@ -359,7 +399,8 @@
         "ton": "A5",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_A5_a-12",
       "datei": "klaenge/Glockenspiel_A5_a-12.wav",
       "fassung": "vorgabe",
@@ -368,7 +409,8 @@
         "ton": "A5",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_A5_a0",
       "datei": "klaenge/Glockenspiel_A5_a0.wav",
       "fassung": "vorgabe",
@@ -377,16 +419,8 @@
         "ton": "A5",
         "staerke": "a0"
       }
-    }, {
-      "id": "Glockenspiel_A6_a-30",
-      "datei": "klaenge/Glockenspiel_A6_a-30.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Glockenspiel",
-        "ton": "A6",
-        "staerke": "a-30"
-      }
-    }, {
+    },
+    {
       "id": "Glockenspiel_A6_a-12",
       "datei": "klaenge/Glockenspiel_A6_a-12.wav",
       "fassung": "vorgabe",
@@ -395,7 +429,8 @@
         "ton": "A6",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_A6_a0",
       "datei": "klaenge/Glockenspiel_A6_a0.wav",
       "fassung": "vorgabe",
@@ -404,7 +439,8 @@
         "ton": "A6",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_Ais7_a-30",
       "datei": "klaenge/Glockenspiel_Ais7_a-30.wav",
       "fassung": "vorgabe",
@@ -413,7 +449,8 @@
         "ton": "Ais7",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_Ais7_a-12",
       "datei": "klaenge/Glockenspiel_Ais7_a-12.wav",
       "fassung": "vorgabe",
@@ -422,7 +459,8 @@
         "ton": "Ais7",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_Ais7_a0",
       "datei": "klaenge/Glockenspiel_Ais7_a0.wav",
       "fassung": "vorgabe",
@@ -431,7 +469,8 @@
         "ton": "Ais7",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Glockenspiel_A6_rand",
       "datei": "klaenge/Glockenspiel_A6_rand.wav",
       "fassung": "vorgabe",
@@ -440,7 +479,8 @@
         "ton": "A6",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_D3_a-30",
       "datei": "klaenge/Roehrenglocken_D3_a-30.wav",
       "fassung": "vorgabe",
@@ -449,7 +489,8 @@
         "ton": "D3",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_D3_a-12",
       "datei": "klaenge/Roehrenglocken_D3_a-12.wav",
       "fassung": "vorgabe",
@@ -458,7 +499,8 @@
         "ton": "D3",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_D3_a0",
       "datei": "klaenge/Roehrenglocken_D3_a0.wav",
       "fassung": "vorgabe",
@@ -467,7 +509,8 @@
         "ton": "D3",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Gis3_a-30",
       "datei": "klaenge/Roehrenglocken_Gis3_a-30.wav",
       "fassung": "vorgabe",
@@ -476,7 +519,8 @@
         "ton": "Gis3",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Gis3_a-12",
       "datei": "klaenge/Roehrenglocken_Gis3_a-12.wav",
       "fassung": "vorgabe",
@@ -485,7 +529,8 @@
         "ton": "Gis3",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Gis3_a0",
       "datei": "klaenge/Roehrenglocken_Gis3_a0.wav",
       "fassung": "vorgabe",
@@ -494,7 +539,8 @@
         "ton": "Gis3",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Dis4_a-30",
       "datei": "klaenge/Roehrenglocken_Dis4_a-30.wav",
       "fassung": "vorgabe",
@@ -503,7 +549,8 @@
         "ton": "Dis4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Dis4_a-12",
       "datei": "klaenge/Roehrenglocken_Dis4_a-12.wav",
       "fassung": "vorgabe",
@@ -512,7 +559,8 @@
         "ton": "Dis4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Dis4_a0",
       "datei": "klaenge/Roehrenglocken_Dis4_a0.wav",
       "fassung": "vorgabe",
@@ -521,7 +569,8 @@
         "ton": "Dis4",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Gis3_gedaempft",
       "datei": "klaenge/Roehrenglocken_Gis3_gedaempft.wav",
       "fassung": "vorgabe",
@@ -530,7 +579,8 @@
         "ton": "Gis3",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Roehrenglocken_Gis3_rand",
       "datei": "klaenge/Roehrenglocken_Gis3_rand.wav",
       "fassung": "vorgabe",
@@ -539,7 +589,8 @@
         "ton": "Gis3",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Celesta_D4_a-30",
       "datei": "klaenge/Celesta_D4_a-30.wav",
       "fassung": "vorgabe",
@@ -548,7 +599,8 @@
         "ton": "D4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Celesta_D4_a-12",
       "datei": "klaenge/Celesta_D4_a-12.wav",
       "fassung": "vorgabe",
@@ -557,7 +609,8 @@
         "ton": "D4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Celesta_D4_a0",
       "datei": "klaenge/Celesta_D4_a0.wav",
       "fassung": "vorgabe",
@@ -566,16 +619,8 @@
         "ton": "D4",
         "staerke": "a0"
       }
-    }, {
-      "id": "Celesta_C6_a-30",
-      "datei": "klaenge/Celesta_C6_a-30.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Celesta",
-        "ton": "C6",
-        "staerke": "a-30"
-      }
-    }, {
+    },
+    {
       "id": "Celesta_C6_a-12",
       "datei": "klaenge/Celesta_C6_a-12.wav",
       "fassung": "vorgabe",
@@ -584,7 +629,8 @@
         "ton": "C6",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Celesta_C6_a0",
       "datei": "klaenge/Celesta_C6_a0.wav",
       "fassung": "vorgabe",
@@ -593,16 +639,8 @@
         "ton": "C6",
         "staerke": "a0"
       }
-    }, {
-      "id": "Celesta_Ais7_a-30",
-      "datei": "klaenge/Celesta_Ais7_a-30.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Celesta",
-        "ton": "Ais7",
-        "staerke": "a-30"
-      }
-    }, {
+    },
+    {
       "id": "Celesta_Ais7_a-12",
       "datei": "klaenge/Celesta_Ais7_a-12.wav",
       "fassung": "vorgabe",
@@ -611,7 +649,8 @@
         "ton": "Ais7",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Celesta_Ais7_a0",
       "datei": "klaenge/Celesta_Ais7_a0.wav",
       "fassung": "vorgabe",
@@ -620,7 +659,8 @@
         "ton": "Ais7",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Celesta_C6_gedaempft",
       "datei": "klaenge/Celesta_C6_gedaempft.wav",
       "fassung": "vorgabe",
@@ -629,7 +669,8 @@
         "ton": "C6",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Celesta_C6_rand",
       "datei": "klaenge/Celesta_C6_rand.wav",
       "fassung": "vorgabe",
@@ -638,16 +679,8 @@
         "ton": "C6",
         "spielweise": "rand"
       }
-    }, {
-      "id": "Kalimba_E3_a-30",
-      "datei": "klaenge/Kalimba_E3_a-30.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Kalimba",
-        "ton": "E3",
-        "staerke": "a-30"
-      }
-    }, {
+    },
+    {
       "id": "Kalimba_E3_a-12",
       "datei": "klaenge/Kalimba_E3_a-12.wav",
       "fassung": "vorgabe",
@@ -656,7 +689,8 @@
         "ton": "E3",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Kalimba_E3_a0",
       "datei": "klaenge/Kalimba_E3_a0.wav",
       "fassung": "vorgabe",
@@ -665,7 +699,8 @@
         "ton": "E3",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Kalimba_Gis4_a-30",
       "datei": "klaenge/Kalimba_Gis4_a-30.wav",
       "fassung": "vorgabe",
@@ -674,7 +709,8 @@
         "ton": "Gis4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Kalimba_Gis4_a-12",
       "datei": "klaenge/Kalimba_Gis4_a-12.wav",
       "fassung": "vorgabe",
@@ -683,7 +719,8 @@
         "ton": "Gis4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Kalimba_Gis4_a0",
       "datei": "klaenge/Kalimba_Gis4_a0.wav",
       "fassung": "vorgabe",
@@ -692,7 +729,8 @@
         "ton": "Gis4",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Kalimba_C6_a-30",
       "datei": "klaenge/Kalimba_C6_a-30.wav",
       "fassung": "vorgabe",
@@ -701,7 +739,8 @@
         "ton": "C6",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Kalimba_C6_a-12",
       "datei": "klaenge/Kalimba_C6_a-12.wav",
       "fassung": "vorgabe",
@@ -710,7 +749,8 @@
         "ton": "C6",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Kalimba_C6_a0",
       "datei": "klaenge/Kalimba_C6_a0.wav",
       "fassung": "vorgabe",
@@ -719,7 +759,8 @@
         "ton": "C6",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_Fis1_a-30",
       "datei": "klaenge/Rhodes_Fis1_a-30.wav",
       "fassung": "vorgabe",
@@ -728,7 +769,8 @@
         "ton": "Fis1",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_Fis1_a-12",
       "datei": "klaenge/Rhodes_Fis1_a-12.wav",
       "fassung": "vorgabe",
@@ -737,7 +779,8 @@
         "ton": "Fis1",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_Fis1_a0",
       "datei": "klaenge/Rhodes_Fis1_a0.wav",
       "fassung": "vorgabe",
@@ -746,7 +789,8 @@
         "ton": "Fis1",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_E4_a-30",
       "datei": "klaenge/Rhodes_E4_a-30.wav",
       "fassung": "vorgabe",
@@ -755,7 +799,8 @@
         "ton": "E4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_E4_a-12",
       "datei": "klaenge/Rhodes_E4_a-12.wav",
       "fassung": "vorgabe",
@@ -764,7 +809,8 @@
         "ton": "E4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_E4_a0",
       "datei": "klaenge/Rhodes_E4_a0.wav",
       "fassung": "vorgabe",
@@ -773,16 +819,8 @@
         "ton": "E4",
         "staerke": "a0"
       }
-    }, {
-      "id": "Rhodes_D7_a-30",
-      "datei": "klaenge/Rhodes_D7_a-30.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Rhodes",
-        "ton": "D7",
-        "staerke": "a-30"
-      }
-    }, {
+    },
+    {
       "id": "Rhodes_D7_a-12",
       "datei": "klaenge/Rhodes_D7_a-12.wav",
       "fassung": "vorgabe",
@@ -791,7 +829,8 @@
         "ton": "D7",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_D7_a0",
       "datei": "klaenge/Rhodes_D7_a0.wav",
       "fassung": "vorgabe",
@@ -800,7 +839,8 @@
         "ton": "D7",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Rhodes_E4_gedaempft",
       "datei": "klaenge/Rhodes_E4_gedaempft.wav",
       "fassung": "vorgabe",
@@ -809,7 +849,8 @@
         "ton": "E4",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Wurlitzer_H1_a-30",
       "datei": "klaenge/Wurlitzer_H1_a-30.wav",
       "fassung": "vorgabe",
@@ -818,7 +859,8 @@
         "ton": "H1",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Wurlitzer_H1_a-12",
       "datei": "klaenge/Wurlitzer_H1_a-12.wav",
       "fassung": "vorgabe",
@@ -827,7 +869,8 @@
         "ton": "H1",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Wurlitzer_H1_a0",
       "datei": "klaenge/Wurlitzer_H1_a0.wav",
       "fassung": "vorgabe",
@@ -836,16 +879,8 @@
         "ton": "H1",
         "staerke": "a0"
       }
-    }, {
-      "id": "Wurlitzer_E4_a-30",
-      "datei": "klaenge/Wurlitzer_E4_a-30.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Wurlitzer",
-        "ton": "E4",
-        "staerke": "a-30"
-      }
-    }, {
+    },
+    {
       "id": "Wurlitzer_E4_a-12",
       "datei": "klaenge/Wurlitzer_E4_a-12.wav",
       "fassung": "vorgabe",
@@ -854,7 +889,8 @@
         "ton": "E4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Wurlitzer_E4_a0",
       "datei": "klaenge/Wurlitzer_E4_a0.wav",
       "fassung": "vorgabe",
@@ -863,25 +899,8 @@
         "ton": "E4",
         "staerke": "a0"
       }
-    }, {
-      "id": "Wurlitzer_Ais6_a-30",
-      "datei": "klaenge/Wurlitzer_Ais6_a-30.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Wurlitzer",
-        "ton": "Ais6",
-        "staerke": "a-30"
-      }
-    }, {
-      "id": "Wurlitzer_Ais6_a-12",
-      "datei": "klaenge/Wurlitzer_Ais6_a-12.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Wurlitzer",
-        "ton": "Ais6",
-        "staerke": "a-12"
-      }
-    }, {
+    },
+    {
       "id": "Wurlitzer_Ais6_a0",
       "datei": "klaenge/Wurlitzer_Ais6_a0.wav",
       "fassung": "vorgabe",
@@ -890,7 +909,8 @@
         "ton": "Ais6",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Wurlitzer_E4_gedaempft",
       "datei": "klaenge/Wurlitzer_E4_gedaempft.wav",
       "fassung": "vorgabe",
@@ -899,7 +919,8 @@
         "ton": "E4",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D4_a-30",
       "datei": "klaenge/Steeldrum_D4_a-30.wav",
       "fassung": "vorgabe",
@@ -908,7 +929,8 @@
         "ton": "D4",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D4_a-12",
       "datei": "klaenge/Steeldrum_D4_a-12.wav",
       "fassung": "vorgabe",
@@ -917,7 +939,8 @@
         "ton": "D4",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D4_a0",
       "datei": "klaenge/Steeldrum_D4_a0.wav",
       "fassung": "vorgabe",
@@ -926,7 +949,8 @@
         "ton": "D4",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D5_a-30",
       "datei": "klaenge/Steeldrum_D5_a-30.wav",
       "fassung": "vorgabe",
@@ -935,7 +959,8 @@
         "ton": "D5",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D5_a-12",
       "datei": "klaenge/Steeldrum_D5_a-12.wav",
       "fassung": "vorgabe",
@@ -944,7 +969,8 @@
         "ton": "D5",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D5_a0",
       "datei": "klaenge/Steeldrum_D5_a0.wav",
       "fassung": "vorgabe",
@@ -953,7 +979,8 @@
         "ton": "D5",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D6_a-30",
       "datei": "klaenge/Steeldrum_D6_a-30.wav",
       "fassung": "vorgabe",
@@ -962,7 +989,8 @@
         "ton": "D6",
         "staerke": "a-30"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D6_a-12",
       "datei": "klaenge/Steeldrum_D6_a-12.wav",
       "fassung": "vorgabe",
@@ -971,7 +999,8 @@
         "ton": "D6",
         "staerke": "a-12"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D6_a0",
       "datei": "klaenge/Steeldrum_D6_a0.wav",
       "fassung": "vorgabe",
@@ -980,7 +1009,8 @@
         "ton": "D6",
         "staerke": "a0"
       }
-    }, {
+    },
+    {
       "id": "Steeldrum_D5_rand",
       "datei": "klaenge/Steeldrum_D5_rand.wav",
       "fassung": "vorgabe",
@@ -989,404 +1019,505 @@
         "ton": "D5",
         "spielweise": "rand"
       }
-    }],
-  "messwerte": [{
+    }
+  ],
+  "messwerte": [
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "D2",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -58.710000000000001,
+          "wert": -58.71,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "D2",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -40.009999999999998,
+          "wert": -40.01,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "D2",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -27.420000000000002,
+          "wert": -27.42,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "Fis4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -47.469999999999999,
+          "wert": -47.47,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "Fis4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -29.309999999999999,
+          "wert": -29.31,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "Fis4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -17.239999999999998,
+          "wert": -17.24,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "Ais6",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -69.640000000000001,
+          "wert": -69.64,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "Ais6",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -24.289999999999999,
+          "wert": -24.29,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "Ais6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -7.6399999999999997,
+          "wert": -7.64,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Marimba",
         "ton": "Fis4",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.409999999999997,
+          "wert": -41.41,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "G4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -56.170000000000002,
+          "wert": -56.17,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "G4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -37.950000000000003,
+          "wert": -37.95,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "G4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -25.199999999999999,
+          "wert": -25.2,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "D6",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -53.409999999999997,
+          "wert": -53.41,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "D6",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -30.109999999999999,
+          "wert": -30.11,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "D6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -16.93,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "Ais7",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -70.939999999999998,
+          "wert": -70.94,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "Ais7",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -43.469999999999999,
+          "wert": -43.47,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "Ais7",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.729999999999997,
+          "wert": -41.73,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Xylophon",
         "ton": "D6",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -44.539999999999999,
+          "wert": -44.54,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "D3",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -55.039999999999999,
+          "wert": -55.04,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "D3",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -40.189999999999998,
+          "wert": -40.19,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "D3",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -25.640000000000001,
+          "wert": -25.64,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -48.549999999999997,
+          "wert": -48.55,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -30.34,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -19.370000000000001,
+          "wert": -19.37,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Dis6",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -47.850000000000001,
+          "wert": -47.85,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Dis6",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -23.699999999999999,
+          "wert": -23.7,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Dis6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -10.25,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis4",
         "spielweise": "motor2"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -35.310000000000002,
+          "wert": -35.31,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis4",
         "spielweise": "motor6"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -37.07,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis4",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -30.34,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis4",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -45.090000000000003,
+          "wert": -45.09,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis3",
@@ -1394,12 +1525,15 @@
         "spielweise": "gestrichen"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -48.780000000000001,
+          "wert": -48.78,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Gis3",
@@ -1407,12 +1541,15 @@
         "spielweise": "gestrichen"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.729999999999997,
+          "wert": -41.73,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Dis5",
@@ -1420,12 +1557,15 @@
         "spielweise": "gestrichen"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -38.369999999999997,
+          "wert": -38.37,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Vibraphon",
         "ton": "Dis5",
@@ -1433,1511 +1573,1960 @@
         "spielweise": "gestrichen"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -31.420000000000002,
+          "wert": -31.42,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "A5",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -52.649999999999999,
+          "wert": -52.65,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "A5",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -33.670000000000002,
+          "wert": -33.67,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "A5",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -22.41,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Glockenspiel",
-        "ton": "A6",
-        "staerke": "a-30"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "A6",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -31.859999999999999,
+          "wert": -31.86,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "A6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -15.890000000000001,
+          "wert": -15.89,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "Ais7",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -67,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "Ais7",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -40.280000000000001,
+          "wert": -40.28,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "Ais7",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -37.210000000000001,
+          "wert": -37.21,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Glockenspiel",
         "ton": "A6",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.090000000000003,
+          "wert": -41.09,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "D3",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -59.380000000000003,
+          "wert": -59.38,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "D3",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.840000000000003,
+          "wert": -39.84,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "D3",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.870000000000001,
+          "wert": -26.87,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Gis3",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -59,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Gis3",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.049999999999997,
+          "wert": -39.05,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Gis3",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -25.579999999999998,
+          "wert": -25.58,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Dis4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -58.659999999999997,
+          "wert": -58.66,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Dis4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -38.460000000000001,
+          "wert": -38.46,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Dis4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -24.73,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Gis3",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -33.789999999999999,
+          "wert": -33.79,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Roehrenglocken",
         "ton": "Gis3",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -33.109999999999999,
+          "wert": -33.11,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "D4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -57.960000000000001,
+          "wert": -57.96,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "D4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -44.490000000000002,
+          "wert": -44.49,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "D4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -32.229999999999997,
+          "wert": -32.23,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Celesta",
-        "ton": "C6",
-        "staerke": "a-30"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "C6",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -31.489999999999998,
+          "wert": -31.49,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "C6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -24.109999999999999,
+          "wert": -24.11,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Celesta",
-        "ton": "Ais7",
-        "staerke": "a-30"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "Ais7",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -43.579999999999998,
+          "wert": -43.58,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "Ais7",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -13.050000000000001,
+          "wert": -13.05,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "C6",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -31.489999999999998,
+          "wert": -31.49,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Celesta",
         "ton": "C6",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -52.460000000000001,
+          "wert": -52.46,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Kalimba",
-        "ton": "E3",
-        "staerke": "a-30"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "E3",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -59.670000000000002,
+          "wert": -59.67,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "E3",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -48.409999999999997,
+          "wert": -48.41,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "Gis4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -60.170000000000002,
+          "wert": -60.17,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "Gis4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -43.780000000000001,
+          "wert": -43.78,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "Gis4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -31.780000000000001,
+          "wert": -31.78,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "C6",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -45.219999999999999,
+          "wert": -45.22,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "C6",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -27.219999999999999,
+          "wert": -27.22,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Kalimba",
         "ton": "C6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -15.859999999999999,
+          "wert": -15.86,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "Fis1",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -56.829999999999998,
+          "wert": -56.83,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "Fis1",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.049999999999997,
+          "wert": -39.05,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "Fis1",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -30.289999999999999,
+          "wert": -30.29,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "E4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -53.75,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "E4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -34.590000000000003,
+          "wert": -34.59,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "E4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -23.920000000000002,
+          "wert": -23.92,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Rhodes",
-        "ton": "D7",
-        "staerke": "a-30"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "D7",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -50.259999999999998,
+          "wert": -50.26,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "D7",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -21.43,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Rhodes",
         "ton": "E4",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -32.119999999999997,
+          "wert": -32.12,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Wurlitzer",
         "ton": "H1",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -63.460000000000001,
+          "wert": -63.46,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Wurlitzer",
         "ton": "H1",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -22.77,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Wurlitzer",
         "ton": "H1",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -10.44,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Wurlitzer",
-        "ton": "E4",
-        "staerke": "a-30"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Wurlitzer",
         "ton": "E4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -46.68,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Wurlitzer",
         "ton": "E4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -28.98,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Wurlitzer",
-        "ton": "Ais6",
-        "staerke": "a-30"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Wurlitzer",
-        "ton": "Ais6",
-        "staerke": "a-12"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Wurlitzer",
         "ton": "Ais6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -42.880000000000003,
+          "wert": -42.88,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Wurlitzer",
         "ton": "E4",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -43.229999999999997,
+          "wert": -43.23,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D4",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -62.140000000000001,
+          "wert": -62.14,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D4",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -44.25,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D4",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -33.810000000000002,
+          "wert": -33.81,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D5",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -59.840000000000003,
+          "wert": -59.84,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D5",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -40.670000000000002,
+          "wert": -40.67,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D5",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.449999999999999,
+          "wert": -26.45,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D6",
         "staerke": "a-30"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -58.390000000000001,
+          "wert": -58.39,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D6",
         "staerke": "a-12"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -36.740000000000002,
+          "wert": -36.74,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D6",
         "staerke": "a0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -23.68,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Steeldrum",
         "ton": "D5",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -42.020000000000003,
+          "wert": -42.02,
           "einheit": "LUFS"
-        }]
-    }],
-  "punkte": [{
+        }
+      ]
+    }
+  ],
+  "punkte": [
+    {
       "id": "p001",
       "art": "einzel",
       "klang": "Marimba_D2_a-30",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p002",
       "art": "einzel",
       "klang": "Marimba_D2_a-12",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p003",
       "art": "einzel",
       "klang": "Marimba_D2_a0",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p004",
       "art": "einzel",
       "klang": "Marimba_Fis4_a-30",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p005",
       "art": "einzel",
       "klang": "Marimba_Fis4_a-12",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p006",
       "art": "einzel",
       "klang": "Marimba_Fis4_a0",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p007",
       "art": "einzel",
       "klang": "Marimba_Ais6_a-30",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p008",
       "art": "einzel",
       "klang": "Marimba_Ais6_a-12",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p009",
       "art": "einzel",
       "klang": "Marimba_Ais6_a0",
       "frage": "Klingt es nach Marimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p010",
       "art": "einzel",
       "klang": "Marimba_Fis4_rand",
       "frage": "Anschlag nahe dem Rand: heller, mit Mode 2?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p011",
       "art": "einzel",
       "klang": "Xylophon_G4_a-30",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p012",
       "art": "einzel",
       "klang": "Xylophon_G4_a-12",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p013",
       "art": "einzel",
       "klang": "Xylophon_G4_a0",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p014",
       "art": "einzel",
       "klang": "Xylophon_D6_a-30",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p015",
       "art": "einzel",
       "klang": "Xylophon_D6_a-12",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p016",
       "art": "einzel",
       "klang": "Xylophon_D6_a0",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p017",
       "art": "einzel",
       "klang": "Xylophon_Ais7_a-30",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p018",
       "art": "einzel",
       "klang": "Xylophon_Ais7_a-12",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p019",
       "art": "einzel",
       "klang": "Xylophon_Ais7_a0",
       "frage": "Klingt es nach Xylophon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p020",
       "art": "einzel",
       "klang": "Xylophon_D6_rand",
       "frage": "Anschlag nahe dem Rand: heller, mit Mode 2?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p021",
       "art": "einzel",
       "klang": "Vibraphon_D3_a-30",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p022",
       "art": "einzel",
       "klang": "Vibraphon_D3_a-12",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p023",
       "art": "einzel",
       "klang": "Vibraphon_D3_a0",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p024",
       "art": "einzel",
       "klang": "Vibraphon_Gis4_a-30",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p025",
       "art": "einzel",
       "klang": "Vibraphon_Gis4_a-12",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p026",
       "art": "einzel",
       "klang": "Vibraphon_Gis4_a0",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p027",
       "art": "einzel",
       "klang": "Vibraphon_Dis6_a-30",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p028",
       "art": "einzel",
       "klang": "Vibraphon_Dis6_a-12",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p029",
       "art": "einzel",
       "klang": "Vibraphon_Dis6_a0",
       "frage": "Klingt es nach Vibraphon (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p030",
       "art": "einzel",
       "klang": "Vibraphon_Gis4_motor2",
       "frage": "Motor 2 U/s: Tiefe und Form des Vibratos glaubhaft (Tiefe offen)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p031",
       "art": "einzel",
       "klang": "Vibraphon_Gis4_motor6",
       "frage": "Motor 6 U/s: Tiefe und Form des Vibratos glaubhaft (Tiefe offen)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p032",
       "art": "einzel",
       "klang": "Vibraphon_Gis4_gedaempft",
       "frage": "Daempfer nach 0,5 s: zu schnell, zu langsam?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p033",
       "art": "einzel",
       "klang": "Vibraphon_Gis4_rand",
       "frage": "Anschlag nahe dem Rand: heller, mit Mode 2?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p034",
       "art": "einzel",
       "klang": "Vibraphon_Gis3_gestrichen_e0",
       "frage": "Gestrichen (Bogen × Stab, ungemessen; tief mit Resonator +100 Cent, offen.md): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p035",
       "art": "einzel",
       "klang": "Vibraphon_Gis3_gestrichen_e50",
       "frage": "Gestrichen (Bogen × Stab, ungemessen; tief mit Resonator +100 Cent, offen.md): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p036",
       "art": "einzel",
       "klang": "Vibraphon_Dis5_gestrichen_e0",
       "frage": "Gestrichen (Bogen × Stab, ungemessen; tief mit Resonator +100 Cent, offen.md): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p037",
       "art": "einzel",
       "klang": "Vibraphon_Dis5_gestrichen_e50",
       "frage": "Gestrichen (Bogen × Stab, ungemessen; tief mit Resonator +100 Cent, offen.md): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p038",
       "art": "einzel",
       "klang": "Glockenspiel_A5_a-30",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p039",
       "art": "einzel",
       "klang": "Glockenspiel_A5_a-12",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p040",
       "art": "einzel",
       "klang": "Glockenspiel_A5_a0",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p041",
-      "art": "einzel",
-      "klang": "Glockenspiel_A6_a-30",
-      "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p042",
       "art": "einzel",
       "klang": "Glockenspiel_A6_a-12",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p043",
       "art": "einzel",
       "klang": "Glockenspiel_A6_a0",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p044",
       "art": "einzel",
       "klang": "Glockenspiel_Ais7_a-30",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p045",
       "art": "einzel",
       "klang": "Glockenspiel_Ais7_a-12",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p046",
       "art": "einzel",
       "klang": "Glockenspiel_Ais7_a0",
       "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p047",
       "art": "einzel",
       "klang": "Glockenspiel_A6_rand",
       "frage": "Anschlag nahe dem Rand: heller, mit Mode 2?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p048",
       "art": "einzel",
       "klang": "Roehrenglocken_D3_a-30",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p049",
       "art": "einzel",
       "klang": "Roehrenglocken_D3_a-12",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p050",
       "art": "einzel",
       "klang": "Roehrenglocken_D3_a0",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p051",
       "art": "einzel",
       "klang": "Roehrenglocken_Gis3_a-30",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p052",
       "art": "einzel",
       "klang": "Roehrenglocken_Gis3_a-12",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p053",
       "art": "einzel",
       "klang": "Roehrenglocken_Gis3_a0",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p054",
       "art": "einzel",
       "klang": "Roehrenglocken_Dis4_a-30",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p055",
       "art": "einzel",
       "klang": "Roehrenglocken_Dis4_a-12",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p056",
       "art": "einzel",
       "klang": "Roehrenglocken_Dis4_a0",
       "frage": "Klingt es nach Roehrenglocken (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p057",
       "art": "einzel",
       "klang": "Roehrenglocken_Gis3_gedaempft",
       "frage": "Daempfer nach 0,5 s: zu schnell, zu langsam?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p058",
       "art": "einzel",
       "klang": "Roehrenglocken_Gis3_rand",
       "frage": "Anschlag nahe dem Rand: heller, mit Mode 2?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p059",
       "art": "einzel",
       "klang": "Celesta_D4_a-30",
       "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p060",
       "art": "einzel",
       "klang": "Celesta_D4_a-12",
       "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p061",
       "art": "einzel",
       "klang": "Celesta_D4_a0",
       "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p062",
-      "art": "einzel",
-      "klang": "Celesta_C6_a-30",
-      "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p063",
       "art": "einzel",
       "klang": "Celesta_C6_a-12",
       "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p064",
       "art": "einzel",
       "klang": "Celesta_C6_a0",
       "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p065",
-      "art": "einzel",
-      "klang": "Celesta_Ais7_a-30",
-      "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p066",
       "art": "einzel",
       "klang": "Celesta_Ais7_a-12",
       "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p067",
       "art": "einzel",
       "klang": "Celesta_Ais7_a0",
       "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p068",
       "art": "einzel",
       "klang": "Celesta_C6_gedaempft",
       "frage": "Daempfer nach 0,5 s: zu schnell, zu langsam?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p069",
       "art": "einzel",
       "klang": "Celesta_C6_rand",
       "frage": "Anschlag nahe dem Rand: heller, mit Mode 2?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p070",
-      "art": "einzel",
-      "klang": "Kalimba_E3_a-30",
-      "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p071",
       "art": "einzel",
       "klang": "Kalimba_E3_a-12",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p072",
       "art": "einzel",
       "klang": "Kalimba_E3_a0",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p073",
       "art": "einzel",
       "klang": "Kalimba_Gis4_a-30",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p074",
       "art": "einzel",
       "klang": "Kalimba_Gis4_a-12",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p075",
       "art": "einzel",
       "klang": "Kalimba_Gis4_a0",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p076",
       "art": "einzel",
       "klang": "Kalimba_C6_a-30",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p077",
       "art": "einzel",
       "klang": "Kalimba_C6_a-12",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p078",
       "art": "einzel",
       "klang": "Kalimba_C6_a0",
       "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p079",
       "art": "einzel",
       "klang": "Rhodes_Fis1_a-30",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p080",
       "art": "einzel",
       "klang": "Rhodes_Fis1_a-12",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p081",
       "art": "einzel",
       "klang": "Rhodes_Fis1_a0",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p082",
       "art": "einzel",
       "klang": "Rhodes_E4_a-30",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p083",
       "art": "einzel",
       "klang": "Rhodes_E4_a-12",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p084",
       "art": "einzel",
       "klang": "Rhodes_E4_a0",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p085",
-      "art": "einzel",
-      "klang": "Rhodes_D7_a-30",
-      "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p086",
       "art": "einzel",
       "klang": "Rhodes_D7_a-12",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p087",
       "art": "einzel",
       "klang": "Rhodes_D7_a0",
       "frage": "Klingt es nach Rhodes (ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p088",
       "art": "einzel",
       "klang": "Rhodes_E4_gedaempft",
       "frage": "Daempfer nach 0,5 s: zu schnell, zu langsam?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p089",
       "art": "einzel",
       "klang": "Wurlitzer_H1_a-30",
       "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p090",
       "art": "einzel",
       "klang": "Wurlitzer_H1_a-12",
       "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p091",
       "art": "einzel",
       "klang": "Wurlitzer_H1_a0",
       "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p092",
-      "art": "einzel",
-      "klang": "Wurlitzer_E4_a-30",
-      "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p093",
       "art": "einzel",
       "klang": "Wurlitzer_E4_a-12",
       "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p094",
       "art": "einzel",
       "klang": "Wurlitzer_E4_a0",
       "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p095",
-      "art": "einzel",
-      "klang": "Wurlitzer_Ais6_a-30",
-      "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p096",
-      "art": "einzel",
-      "klang": "Wurlitzer_Ais6_a-12",
-      "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p097",
       "art": "einzel",
       "klang": "Wurlitzer_Ais6_a0",
       "frage": "Klingt es nach Wurlitzer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p098",
       "art": "einzel",
       "klang": "Wurlitzer_E4_gedaempft",
       "frage": "Daempfer nach 0,5 s: zu schnell, zu langsam?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p099",
       "art": "einzel",
       "klang": "Steeldrum_D4_a-30",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p100",
       "art": "einzel",
       "klang": "Steeldrum_D4_a-12",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p101",
       "art": "einzel",
       "klang": "Steeldrum_D4_a0",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p102",
       "art": "einzel",
       "klang": "Steeldrum_D5_a-30",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p103",
       "art": "einzel",
       "klang": "Steeldrum_D5_a-12",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p104",
       "art": "einzel",
       "klang": "Steeldrum_D5_a0",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p105",
       "art": "einzel",
       "klang": "Steeldrum_D6_a-30",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p106",
       "art": "einzel",
       "klang": "Steeldrum_D6_a-12",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p107",
       "art": "einzel",
       "klang": "Steeldrum_D6_a0",
       "frage": "Klingt es nach Steeldrum (Deluxe, ungemessen (Aufnahme nur NC, F-7 c))? Farbe ueber die Staerke glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p108",
       "art": "einzel",
       "klang": "Steeldrum_D5_rand",
       "frage": "Anschlag nahe dem Rand: heller, mit Mode 2?",
-      "pole": ["nein", "ja"]
-    }]
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    }
+  ]
 }

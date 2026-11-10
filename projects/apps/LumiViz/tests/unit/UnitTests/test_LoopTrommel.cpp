@@ -32,6 +32,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "HoerlisteAblage.hpp"
+#include "HoerlistePegel.hpp"
 #include "loop/Tastatur.hpp"
 
 #include <QDir>
@@ -384,15 +385,8 @@ TEST_CASE("Loop Trommel 34h-6 Hoerproben (LUMIVIZ_34H_WAV) — Liste fuer HoerTe
     };
     const Staerke staerken[] = {{"a-18", -18}, {"a-9", -9}, {"a0", 0}};
     QJsonArray klaenge, messwerte, punkte;
-    QStringList summen, ids, stille;
-    struct Gerechnet
-    {
-        QString datei;
-        std::vector<float> daten;
-        double lufs;
-        float spitze;
-    };
-    std::vector<Gerechnet> gerechnet;
+    QStringList ids;
+    std::vector<hoerliste::Klang> gerechnet;
     const auto ablegen = [&](const Instrument& inst, const QString& instrument, int hoehe, const Staerke& st, const QString& spielweise,
                              const std::vector<KernSpurWert>& werte, const QString& fassung) {
         const QString id = inst.name + QStringLiteral("_") + QString::number(hoehe) + QStringLiteral("_") + QString::fromLatin1(st.name) +
@@ -407,11 +401,8 @@ TEST_CASE("Loop Trommel 34h-6 Hoerproben (LUMIVIZ_34H_WAV) — Liste fuer HoerTe
         t.kernSpuren = werte;
         Klang k = rendereTon(inst, t, kRate);
         const lumi::audio::Lautheit vorher = lumi::audio::messeLautheit(k.daten, kRate);
-        if (vorher.stille) stille << id;
         const QString datei = QStringLiteral("klaenge/") + id + QStringLiteral(".wav");
-        float spitze = 0.0f;
-        for (const float x : k.daten) spitze = std::max(spitze, std::abs(x));
-        gerechnet.push_back(Gerechnet{datei, std::move(k.daten), vorher.stille ? -300.0 : vorher.lufs, spitze});
+        gerechnet.push_back(hoerliste::Klang{id, datei, std::move(k.daten)});
         QJsonObject achsen{{QStringLiteral("instrument"), instrument},
                            {QStringLiteral("taste"), hoehe},
                            {QStringLiteral("ton"), tonName(hoehe)},
@@ -479,48 +470,13 @@ TEST_CASE("Loop Trommel 34h-6 Hoerproben (LUMIVIZ_34H_WAV) — Liste fuer HoerTe
                                   {QStringLiteral("vorzug"), QStringLiteral("Welcher klingt mehr nach einer Conga?")}});
         ++paare;
     }
-    double ziel = kZielHoechstens;
-    for (const Gerechnet& g : gerechnet)
-        if (g.lufs > -299.0 && g.spitze > 0.0f) ziel = std::min(ziel, g.lufs + 20.0 * std::log10(kSpitzeHoechstens / g.spitze));
-    ziel = std::floor(ziel * 10.0) / 10.0;
-    // in Runden: die integrierte Lautheit leiser Klaenge haengt am absoluten Gate (−70 LUFS) und damit am Massstab — kommt
-    // nach dem Nachregeln eine Spitze ueber 0,89, sinkt der gemeinsame Pegel um den Ueberschuss (S179: die Bassdrum pp)
-    const std::vector<Gerechnet> roh = gerechnet;
-    for (int versuch = 0; versuch < 6; ++versuch)
-    {
-        gerechnet = roh;
-        float hoechste = 0.0f;
-        for (Gerechnet& g : gerechnet)
-        {
-            if (g.lufs > -299.0)
-            {
-                double ist = g.lufs;
-                for (int runde = 0; runde < 8 && std::abs(ist - ziel) > 0.05; ++runde)
-                {
-                    const double faktor = std::pow(10.0, (ziel - ist) / 20.0);
-                    for (float& x : g.daten) x = static_cast<float>(x * faktor);
-                    ist = lumi::audio::messeLautheit(g.daten, kRate).lufs;
-                }
-                CHECK_MESSAGE(std::abs(ist - ziel) <= 0.05, g.datei.toStdString() << ": " << ist << " statt " << ziel << " LUFS");
-            }
-            for (const float x : g.daten) hoechste = std::max(hoechste, std::abs(x));
-        }
-        if (hoechste <= kSpitzeHoechstens) break;
-        ziel = std::floor((ziel - 20.0 * std::log10(hoechste / kSpitzeHoechstens)) * 10.0) / 10.0;
-    }
-    for (Gerechnet& g : gerechnet)
-    {
-        float spitze = 0.0f;
-        for (const float x : g.daten) spitze = std::max(spitze, std::abs(x));
-        CHECK_MESSAGE(spitze <= kSpitzeHoechstens, g.datei.toStdString() << ": Spitze " << spitze);
-        REQUIRE(schreibeWav(dir.filePath(g.datei), g.daten, kRate));
-        QFile geschrieben(dir.filePath(g.datei));
-        REQUIRE(geschrieben.open(QIODevice::ReadOnly));
-        const QByteArray bytes = geschrieben.readAll();
-        summen << QString::fromStdString(kern::sha256(std::span<const std::uint8_t>(reinterpret_cast<const std::uint8_t*>(bytes.constData()),
-                                                                                     static_cast<std::size_t>(bytes.size())))) +
-                      QStringLiteral("  ") + g.datei;
-    }
+    // der gemeinsame Pegel, jeder Klang nachgeregelt (in Runden, S179: die Bassdrum pp), stille nicht in der Liste
+    // (PN1 a, PN2 a, KZ1 a)
+    const hoerliste::Pegel pegel = hoerliste::gleicheAn(gerechnet, kRate, kZielHoechstens, kSpitzeHoechstens);
+    const double ziel = pegel.ziel;
+    const QStringList& stille = pegel.stille;
+    hoerliste::ohneStille(klaenge, messwerte, punkte, stille);
+    const QStringList summen = hoerliste::schreibeKlaenge(dir, gerechnet, kRate);
     const QJsonObject liste{
         {QStringLiteral("schema"), 1},
         {QStringLiteral("titel"), QStringLiteral("LumiViz 34h: die Trommeln des Kerns membrane, Spielweisen, gegen die Nachbildung der Conga")},
@@ -550,9 +506,10 @@ TEST_CASE("Loop Trommel 34h-6 Hoerproben (LUMIVIZ_34H_WAV) — Liste fuer HoerTe
     summenDatei.close();
     hoerliste::legeInsRepo(dir);  // AU3-1 a: Liste und Abdruecke auch versioniert unter hoertest/listen/<liste>
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare IC gegen Synth) unter " << ordner.toStdString());
-    MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, ungeaendert): " << stille.join(QStringLiteral(", ")).toStdString());
+    MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, nicht in der Liste, PN2 a): "
+                     << stille.join(QStringLiteral(", ")).toStdString());
     CHECK(paare == 3);
-    CHECK(klaenge.size() == 6 * 3 + 3 * 3 + 7 + 1 + 3);  // sechs feste Trommeln, die Pauke in drei Lagen, Spielweisen, Synth
+    CHECK(klaenge.size() + stille.size() == 6 * 3 + 3 * 3 + 7 + 1 + 3);  // sechs feste Trommeln, die Pauke in drei Lagen, Spielweisen, Synth
 }
 
 TEST_CASE("Loop Trommel 34h-6 Rechenzeit: je Trommel der Anteil an der Echtzeit und das Verhaeltnis zum Fluegel")

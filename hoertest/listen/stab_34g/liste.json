@@ -177,17 +177,6 @@
         {
             "achsen": {
                 "instrument": "Xylophone",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "datei": "klaenge/xylophone_103_a-30.wav",
-            "fassung": "ic",
-            "id": "xylophone_103_a-30"
-        },
-        {
-            "achsen": {
-                "instrument": "Xylophone",
                 "staerke": "a-12",
                 "taste": 103,
                 "ton": "G7"
@@ -338,17 +327,6 @@
             "datei": "klaenge/glockenspiel_84_a0.wav",
             "fassung": "ic",
             "id": "glockenspiel_84_a0"
-        },
-        {
-            "achsen": {
-                "instrument": "Glockenspiel",
-                "staerke": "a-30",
-                "taste": 93,
-                "ton": "A6"
-            },
-            "datei": "klaenge/glockenspiel_93_a-30.wav",
-            "fassung": "ic",
-            "id": "glockenspiel_93_a-30"
         },
         {
             "achsen": {
@@ -573,17 +551,6 @@
         {
             "achsen": {
                 "instrument": "Celesta",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "datei": "klaenge/celesta_103_a-30.wav",
-            "fassung": "ic",
-            "id": "celesta_103_a-30"
-        },
-        {
-            "achsen": {
-                "instrument": "Celesta",
                 "staerke": "a-12",
                 "taste": 103,
                 "ton": "G7"
@@ -771,17 +738,6 @@
         {
             "achsen": {
                 "instrument": "Tine electric piano",
-                "staerke": "a-30",
-                "taste": 95,
-                "ton": "B6"
-            },
-            "datei": "klaenge/tine_electric_piano_95_a-30.wav",
-            "fassung": "ic",
-            "id": "tine_electric_piano_95_a-30"
-        },
-        {
-            "achsen": {
-                "instrument": "Tine electric piano",
                 "staerke": "a-12",
                 "taste": 95,
                 "ton": "B6"
@@ -866,17 +822,6 @@
             "datei": "klaenge/reed_electric_piano_64_a0.wav",
             "fassung": "ic",
             "id": "reed_electric_piano_64_a0"
-        },
-        {
-            "achsen": {
-                "instrument": "Reed electric piano",
-                "staerke": "a-30",
-                "taste": 91,
-                "ton": "G6"
-            },
-            "datei": "klaenge/reed_electric_piano_91_a-30.wav",
-            "fassung": "ic",
-            "id": "reed_electric_piano_91_a-30"
         },
         {
             "achsen": {
@@ -1311,22 +1256,6 @@
         {
             "achsen": {
                 "instrument": "Xylophone",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -300
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Xylophone",
                 "staerke": "a-12",
                 "taste": 103,
                 "ton": "G7"
@@ -1545,22 +1474,6 @@
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
                     "wert": -21.3
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Glockenspiel",
-                "staerke": "a-30",
-                "taste": 93,
-                "ton": "A6"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -300
                 }
             ]
         },
@@ -1887,22 +1800,6 @@
         {
             "achsen": {
                 "instrument": "Celesta",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -300
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Celesta",
                 "staerke": "a-12",
                 "taste": 103,
                 "ton": "G7"
@@ -2175,22 +2072,6 @@
         {
             "achsen": {
                 "instrument": "Tine electric piano",
-                "staerke": "a-30",
-                "taste": 95,
-                "ton": "B6"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -300
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Tine electric piano",
                 "staerke": "a-12",
                 "taste": 95,
                 "ton": "B6"
@@ -2313,22 +2194,6 @@
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
                     "wert": -21.96
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Reed electric piano",
-                "staerke": "a-30",
-                "taste": 91,
-                "ton": "G6"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -300
                 }
             ]
         },
@@ -2763,16 +2628,6 @@
         {
             "art": "einzel",
             "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p016",
-            "klang": "xylophone_103_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Xylophone (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p017",
             "klang": "xylophone_103_a-12",
             "pole": [
@@ -2905,16 +2760,6 @@
             "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p030",
             "klang": "glockenspiel_84_a0",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Glockenspiel (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p031",
-            "klang": "glockenspiel_93_a-30",
             "pole": [
                 "nein",
                 "ja"
@@ -3123,16 +2968,6 @@
         {
             "art": "einzel",
             "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p052",
-            "klang": "celesta_103_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Celesta (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p053",
             "klang": "celesta_103_a-12",
             "pole": [
@@ -3303,16 +3138,6 @@
         {
             "art": "einzel",
             "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p070",
-            "klang": "tine_electric_piano_95_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Tine electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p071",
             "klang": "tine_electric_piano_95_a-12",
             "pole": [
@@ -3385,16 +3210,6 @@
             "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p078",
             "klang": "reed_electric_piano_64_a0",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Reed electric piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p079",
-            "klang": "reed_electric_piano_91_a-30",
             "pole": [
                 "nein",
                 "ja"

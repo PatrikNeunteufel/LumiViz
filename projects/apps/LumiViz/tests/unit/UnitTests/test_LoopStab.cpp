@@ -33,6 +33,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "HoerlisteAblage.hpp"
+#include "HoerlistePegel.hpp"
 #include "loop/Tastatur.hpp"
 
 #include <QDir>
@@ -242,17 +243,8 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
     };
     const Staerke staerken[] = {{"a-30", -30}, {"a-12", -12}, {"a0", 0}};
     QJsonArray klaenge, messwerte, punkte;
-    QStringList summen;
     QStringList ids;
-    QStringList stille;
-    struct Gerechnet
-    {
-        QString datei;
-        std::vector<float> daten;
-        double lufs;  ///< vorher; −300 = still
-        float spitze;
-    };
-    std::vector<Gerechnet> gerechnet;
+    std::vector<hoerliste::Klang> gerechnet;
     const auto ablegen = [&](const Instrument& inst, const QString& instrument, int hoehe, const Staerke& st, const QString& fassung) {
         const QString id = inst.name + QStringLiteral("_") + QString::number(hoehe) + QStringLiteral("_") + QString::fromLatin1(st.name);
         if (ids.contains(id)) return id;  // derselbe Klang aus der Reihe der Lagen und aus einem Vergleich
@@ -264,13 +256,8 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
         t.anschlagStufe = st.stufe;
         Klang k = rendereTon(inst, t, kRate);
         const lumi::audio::Lautheit vorher = lumi::audio::messeLautheit(k.daten, kRate);
-        // still (unter dem absoluten Gate, −70 LUFS): bleibt, wie er ist, mit −300 wie in der IC-Liste — ein Befund der
-        // ungemessenen Vorgaben (in der Hoehe bei kleiner Staerke zu schwacher Anschlag; IC hat 10 von 108 still)
-        if (vorher.stille) stille << id;
         const QString datei = QStringLiteral("klaenge/") + id + QStringLiteral(".wav");
-        float spitze = 0.0f;
-        for (const float x : k.daten) spitze = std::max(spitze, std::abs(x));
-        gerechnet.push_back(Gerechnet{datei, std::move(k.daten), vorher.stille ? -300.0 : vorher.lufs, spitze});
+        gerechnet.push_back(hoerliste::Klang{id, datei, std::move(k.daten)});
         const QJsonObject achsen{{QStringLiteral("instrument"), instrument},
                                  {QStringLiteral("taste"), hoehe},
                                  {QStringLiteral("ton"), tonName(hoehe)},
@@ -321,36 +308,13 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
             ++paare;
         }
     }
-    // der gemeinsame Pegel, dann jeder Klang darauf — nachgeregelt, weil das absolute Gate (−70 LUFS) die integrierte
-    // Lautheit sehr leiser Klaenge vom Massstab abhaengen laesst; stille bleiben, wie sie sind
-    double ziel = kZielHoechstens;
-    for (const Gerechnet& g : gerechnet)
-        if (g.lufs > -299.0 && g.spitze > 0.0f) ziel = std::min(ziel, g.lufs + 20.0 * std::log10(kSpitzeHoechstens / g.spitze));
-    ziel = std::floor(ziel * 10.0) / 10.0;
-    for (Gerechnet& g : gerechnet)
-    {
-        if (g.lufs > -299.0)
-        {
-            double ist = g.lufs;
-            for (int runde = 0; runde < 8 && std::abs(ist - ziel) > 0.05; ++runde)
-            {
-                const double faktor = std::pow(10.0, (ziel - ist) / 20.0);
-                for (float& x : g.daten) x = static_cast<float>(x * faktor);
-                ist = lumi::audio::messeLautheit(g.daten, kRate).lufs;
-            }
-            CHECK_MESSAGE(std::abs(ist - ziel) <= 0.05, g.datei.toStdString() << ": " << ist << " statt " << ziel << " LUFS");
-        }
-        float spitze = 0.0f;
-        for (const float x : g.daten) spitze = std::max(spitze, std::abs(x));
-        CHECK_MESSAGE(spitze < 1.0f, g.datei.toStdString() << ": Spitze " << spitze);
-        REQUIRE(schreibeWav(dir.filePath(g.datei), g.daten, kRate));
-        QFile geschrieben(dir.filePath(g.datei));
-        REQUIRE(geschrieben.open(QIODevice::ReadOnly));
-        const QByteArray bytes = geschrieben.readAll();
-        summen << QString::fromStdString(kern::sha256(std::span<const std::uint8_t>(reinterpret_cast<const std::uint8_t*>(bytes.constData()),
-                                                                                     static_cast<std::size_t>(bytes.size())))) +
-                      QStringLiteral("  ") + g.datei;
-    }
+    // der gemeinsame Pegel, jeder Klang nachgeregelt; stille kommen nicht in die Liste (PN2 a, S186 — ein Befund der
+    // ungemessenen Vorgaben: in der Hoehe bei kleiner Staerke zu schwacher Anschlag)
+    const hoerliste::Pegel pegel = hoerliste::gleicheAn(gerechnet, kRate, kZielHoechstens, kSpitzeHoechstens);
+    const double ziel = pegel.ziel;
+    const QStringList& stille = pegel.stille;
+    hoerliste::ohneStille(klaenge, messwerte, punkte, stille);
+    const QStringList summen = hoerliste::schreibeKlaenge(dir, gerechnet, kRate);
     const QJsonObject liste{
         {QStringLiteral("schema"), 1},
         {QStringLiteral("titel"), QStringLiteral("LumiViz 34g: die Stabspiele des Kerns bar, gegen die Nachbildungen")},
@@ -380,7 +344,8 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
     summenDatei.close();
     hoerliste::legeInsRepo(dir);  // AU3-1 a: Liste und Abdruecke auch versioniert unter hoertest/listen/<liste>
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare IC gegen Synth) unter " << ordner.toStdString());
-    MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, ungeaendert): " << stille.join(QStringLiteral(", ")).toStdString());
+    MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, nicht in der Liste, PN2 a): "
+                     << stille.join(QStringLiteral(", ")).toStdString());
     CHECK(paare == 9);
-    CHECK(klaenge.size() == 81 + 9 + 6);  // die mittleren Noten der Paare sind schon in der Reihe der Lagen
+    CHECK(klaenge.size() + stille.size() == 81 + 9 + 6);  // die mittleren Noten der Paare sind schon in der Reihe der Lagen
 }

@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.328.0
-> **Datum:** 2026-11-10 (Sessions 164 bis 185)
+> **Version:** 1.329.0
+> **Datum:** 2026-11-10 (Sessions 164 bis 186)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2877,8 +2877,22 @@ LV-4…LV-8 nach der Übergabe von IC (`modellierung/anbindung-ic/ic/UEBERGABE_L
 2026-11-10 (S185):** die Klänge liegen am Hörort neben ihrer Liste (AU3), alle 14 Listen gültig (`Hoertest --liste-pruefen`);
 **HL1 a:** `stab_34g` und `klasse1_34i` nach LP2 b am Hörort und im Repo neu geschrieben (92 von 96 bzw. 13 von 50 Klängen
 neu; `stab_34g` jetzt −26,6 statt −27,2 LUFS, keine gleichen Abdrücke der Kalimba mehr), `membran_34h` war aktuell; die
-zwei Antworten in `hoertest/ergebnisse/stab_34g/pn.jsonl` gehören zur Fassung vom 08.11. und werden neu gehört. Weiter mit
-LV-5 (Pegel: LumiViz gegen HT an denselben Dateien). Danach **34j**
+zwei Antworten in `hoertest/ergebnisse/stab_34g/pn.jsonl` gehören zur Fassung vom 08.11. und werden neu gehört. **LV-5
+erledigt 2026-11-10 (S186, [Befund](modellierung/anbindung-ic/2026-11-10_S186_lv5_pegel_der_hoerlisten.md)):** IC, HT und
+`AudioCore` messen ab 0,4 s gleich; die 18 IC-Klänge abseits des Pegels kamen vom Angleichen in einem Schritt (das absolute
+Gate −70 LUFS hängt am Maßstab). **PN1 a:** die IC-Listen nachgeregelt mit `tools/hoertest/ic_nachregeln.py` (01 −33,3 →
+−34,7, 02 −25,1 → −25,6, 05 −30,8 → −33,0 LUFS, 04 und 07 gleich; 03, 06, 08–11 unberührt; Sicherung der fünf alten Listen
+unter `…\Hoerproben\IC_vor_S186\`); alle elf mit HT 0 außerhalb. **PN2 a:** stille Klänge kommen nicht in eine Liste —
+heraus bei IC 11 (01 Flügel Port C6 a-30; 04 Glockenspiel A6 a-30, Celesta C6/Ais7 a-30, Kalimba E3 a-30, Rhodes D7 a-30,
+Wurlitzer E4 a-30, Ais6 a-30/a-12; 07 Trompete A3 e0, Fis5 e0), bei `stab_34g` 5 (`xylophone_103`, `glockenspiel_93`,
+`celesta_103`, `tine_electric_piano_95`, `reed_electric_piano_91`, je a-30) — **Befund am Modell, offen:** diese Anschläge
+liegen roh unter −70 LUFS (Xylophon 103: a0 −21,2 LUFS, a-30 −85,7 — über 60 dB für 30 dB Stärke; vermutet: der Hammer
+erreicht in der Höhe bei kleiner Stärke kaum Kontakt; ungeprüft). **KZ1 a:** ein Klang einer Liste ist mindestens 0,4 s
+lang (der Schreiber füllt mit Stille auf; IC: 9 Klänge Marimba Ais6, Xylophon D6/Ais7); Vorschlag an HT, dass
+`--liste-pruefen` einen kürzeren als Fehler meldet (Sync `sync_hoertest`, STATUS LV-5). Die Schreiber von LumiViz teilen
+dafür `HoerlistePegel.hpp` (`gleicheAn`, `ohneStille`, `schreibeKlaenge`); `klasse1_34i` und `membran_34h` Byte für Byte
+wie vorher, `stab_34g` ohne die fünf stillen. Weiter mit Schritt 3 der Übergabe (welche Liste je Klasse gilt), dann LV-6.
+Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
 — bei Chaigne et al. 2013 und den übrigen lokalen Upright-Quellen nur als Bild oder gar nicht; Recherche S181
@@ -6407,6 +6421,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.329.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: LV-5 erledigt — PN1 a (IC-Listen nachgeregelt), PN2 a (stille Klänge nicht in einer Liste; Befund am Modell), KZ1 a (Klänge mindestens 0,4 s; Vorschlag an HT); weiter Schritt 3 der Übergabe, LV-6. |
 | 1.328.0 | 2026-11-10 | Session 185 (Opus 5.5). §6 Hörtest: LV-4 erledigt (Ablage am Hörort, 14 Listen gültig); HL1 a — `stab_34g` und `klasse1_34i` nach LP2 b neu geschrieben; weiter LV-5. |
 | 1.327.0 | 2026-11-10 | Session 185 (Opus 5.5). Genre-Zahl in `test_LoopInstrumentPalette` auf 31 (Fusion seit S182); voller Lauf nach CMakeCraft v0.14.1 1855 / 1855 unter beiden Compilern; §6 LV1 erledigt (LV1 a: kein mitgelieferter Loop über −1 dBFS, Tafel `loop_lautstaerke.py`, Wächter `Loop Spitze LV1 a`; Loop_Konzept 0.132.0); HF2 a (Hoertest wie Sichttest neben der App, gebaut nach S6 von HoerTest_Helper), HF3 a (Prüfwerkzeuge nie in einer Auslieferung). |
 | 1.326.0 | 2026-11-09 | Session 184 (Opus 5.5). CMakeCraft v0.14.1 gepinnt (HF2 teilweise); Befunde ohne Code (veraltete VS-Exe, stummer Composer-Clip mit Grundpegel 0); offen: Genre-Zahl in `test_LoopInstrumentPalette` (31 statt 30), voller Lauf nach dem Pin-Wechsel. |

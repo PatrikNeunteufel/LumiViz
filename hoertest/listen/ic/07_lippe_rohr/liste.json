@@ -5,15 +5,18 @@
   "katalog": null,
   "kontrolle": "moderat",
   "pegel": {
-    "lufs": -28.199999999999999,
+    "lufs": -28.2,
     "toleranz_lu": 1
   },
   "dauer_s": null,
-  "gruppe_nach": ["instrument"],
+  "gruppe_nach": [
+    "instrument"
+  ],
   "fassungen": {
     "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
   },
-  "klaenge": [{
+  "klaenge": [
+    {
       "id": "Posaune_G2_e0",
       "datei": "klaenge/Posaune_G2_e0.wav",
       "fassung": "vorgabe",
@@ -22,7 +25,8 @@
         "ton": "G2",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Posaune_G2_e50",
       "datei": "klaenge/Posaune_G2_e50.wav",
       "fassung": "vorgabe",
@@ -31,7 +35,8 @@
         "ton": "G2",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Posaune_G2_e100",
       "datei": "klaenge/Posaune_G2_e100.wav",
       "fassung": "vorgabe",
@@ -40,7 +45,8 @@
         "ton": "G2",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_e0",
       "datei": "klaenge/Posaune_Ais3_e0.wav",
       "fassung": "vorgabe",
@@ -49,7 +55,8 @@
         "ton": "Ais3",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_e50",
       "datei": "klaenge/Posaune_Ais3_e50.wav",
       "fassung": "vorgabe",
@@ -58,7 +65,8 @@
         "ton": "Ais3",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_e100",
       "datei": "klaenge/Posaune_Ais3_e100.wav",
       "fassung": "vorgabe",
@@ -67,7 +75,8 @@
         "ton": "Ais3",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Cis5_e0",
       "datei": "klaenge/Posaune_Cis5_e0.wav",
       "fassung": "vorgabe",
@@ -76,7 +85,8 @@
         "ton": "Cis5",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Cis5_e50",
       "datei": "klaenge/Posaune_Cis5_e50.wav",
       "fassung": "vorgabe",
@@ -85,7 +95,8 @@
         "ton": "Cis5",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Cis5_e100",
       "datei": "klaenge/Posaune_Cis5_e100.wav",
       "fassung": "vorgabe",
@@ -94,7 +105,8 @@
         "ton": "Cis5",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_vibrato",
       "datei": "klaenge/Posaune_Ais3_vibrato.wav",
       "fassung": "vorgabe",
@@ -103,7 +115,8 @@
         "ton": "Ais3",
         "spielweise": "vibrato"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_growl",
       "datei": "klaenge/Posaune_Ais3_growl.wav",
       "fassung": "vorgabe",
@@ -112,7 +125,8 @@
         "ton": "Ais3",
         "spielweise": "growl"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_fall",
       "datei": "klaenge/Posaune_Ais3_fall.wav",
       "fassung": "vorgabe",
@@ -121,7 +135,8 @@
         "ton": "Ais3",
         "spielweise": "fall"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_legato",
       "datei": "klaenge/Posaune_Ais3_legato.wav",
       "fassung": "vorgabe",
@@ -130,7 +145,8 @@
         "ton": "Ais3",
         "spielweise": "legato"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_Straight",
       "datei": "klaenge/Posaune_Ais3_Straight.wav",
       "fassung": "vorgabe",
@@ -139,7 +155,8 @@
         "ton": "Ais3",
         "spielweise": "Straight"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_Cup",
       "datei": "klaenge/Posaune_Ais3_Cup.wav",
       "fassung": "vorgabe",
@@ -148,7 +165,8 @@
         "ton": "Ais3",
         "spielweise": "Cup"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_Harmon",
       "datei": "klaenge/Posaune_Ais3_Harmon.wav",
       "fassung": "vorgabe",
@@ -157,7 +175,8 @@
         "ton": "Ais3",
         "spielweise": "Harmon"
       }
-    }, {
+    },
+    {
       "id": "Posaune_Ais3_Harmon_wahwah",
       "datei": "klaenge/Posaune_Ais3_Harmon_wahwah.wav",
       "fassung": "vorgabe",
@@ -166,7 +185,8 @@
         "ton": "Ais3",
         "spielweise": "Harmon_wahwah"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A3_e0",
       "datei": "klaenge/Alphorn_A3_e0.wav",
       "fassung": "vorgabe",
@@ -175,7 +195,8 @@
         "ton": "A3",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A3_e50",
       "datei": "klaenge/Alphorn_A3_e50.wav",
       "fassung": "vorgabe",
@@ -184,7 +205,8 @@
         "ton": "A3",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A3_e100",
       "datei": "klaenge/Alphorn_A3_e100.wav",
       "fassung": "vorgabe",
@@ -193,7 +215,8 @@
         "ton": "A3",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A4_e0",
       "datei": "klaenge/Alphorn_A4_e0.wav",
       "fassung": "vorgabe",
@@ -202,7 +225,8 @@
         "ton": "A4",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A4_e50",
       "datei": "klaenge/Alphorn_A4_e50.wav",
       "fassung": "vorgabe",
@@ -211,7 +235,8 @@
         "ton": "A4",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A4_e100",
       "datei": "klaenge/Alphorn_A4_e100.wav",
       "fassung": "vorgabe",
@@ -220,7 +245,8 @@
         "ton": "A4",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A3_vibrato",
       "datei": "klaenge/Alphorn_A3_vibrato.wav",
       "fassung": "vorgabe",
@@ -229,7 +255,8 @@
         "ton": "A3",
         "spielweise": "vibrato"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A3_growl",
       "datei": "klaenge/Alphorn_A3_growl.wav",
       "fassung": "vorgabe",
@@ -238,7 +265,8 @@
         "ton": "A3",
         "spielweise": "growl"
       }
-    }, {
+    },
+    {
       "id": "Alphorn_A3_fall",
       "datei": "klaenge/Alphorn_A3_fall.wav",
       "fassung": "vorgabe",
@@ -247,16 +275,8 @@
         "ton": "A3",
         "spielweise": "fall"
       }
-    }, {
-      "id": "Trompete_A3_e0",
-      "datei": "klaenge/Trompete_A3_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Trompete",
-        "ton": "A3",
-        "staerke": "e0"
-      }
-    }, {
+    },
+    {
       "id": "Trompete_A3_e50",
       "datei": "klaenge/Trompete_A3_e50.wav",
       "fassung": "vorgabe",
@@ -265,7 +285,8 @@
         "ton": "A3",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Trompete_A3_e100",
       "datei": "klaenge/Trompete_A3_e100.wav",
       "fassung": "vorgabe",
@@ -274,7 +295,8 @@
         "ton": "A3",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Gis4_e0",
       "datei": "klaenge/Trompete_Gis4_e0.wav",
       "fassung": "vorgabe",
@@ -283,7 +305,8 @@
         "ton": "Gis4",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Gis4_e50",
       "datei": "klaenge/Trompete_Gis4_e50.wav",
       "fassung": "vorgabe",
@@ -292,7 +315,8 @@
         "ton": "Gis4",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Gis4_e100",
       "datei": "klaenge/Trompete_Gis4_e100.wav",
       "fassung": "vorgabe",
@@ -301,16 +325,8 @@
         "ton": "Gis4",
         "staerke": "e100"
       }
-    }, {
-      "id": "Trompete_Fis5_e0",
-      "datei": "klaenge/Trompete_Fis5_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Trompete",
-        "ton": "Fis5",
-        "staerke": "e0"
-      }
-    }, {
+    },
+    {
       "id": "Trompete_Fis5_e50",
       "datei": "klaenge/Trompete_Fis5_e50.wav",
       "fassung": "vorgabe",
@@ -319,7 +335,8 @@
         "ton": "Fis5",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Fis5_e100",
       "datei": "klaenge/Trompete_Fis5_e100.wav",
       "fassung": "vorgabe",
@@ -328,7 +345,8 @@
         "ton": "Fis5",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Gis4_vibrato",
       "datei": "klaenge/Trompete_Gis4_vibrato.wav",
       "fassung": "vorgabe",
@@ -337,7 +355,8 @@
         "ton": "Gis4",
         "spielweise": "vibrato"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Gis4_growl",
       "datei": "klaenge/Trompete_Gis4_growl.wav",
       "fassung": "vorgabe",
@@ -346,7 +365,8 @@
         "ton": "Gis4",
         "spielweise": "growl"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Gis4_fall",
       "datei": "klaenge/Trompete_Gis4_fall.wav",
       "fassung": "vorgabe",
@@ -355,7 +375,8 @@
         "ton": "Gis4",
         "spielweise": "fall"
       }
-    }, {
+    },
+    {
       "id": "Trompete_Gis4_legato",
       "datei": "klaenge/Trompete_Gis4_legato.wav",
       "fassung": "vorgabe",
@@ -364,709 +385,935 @@
         "ton": "Gis4",
         "spielweise": "legato"
       }
-    }],
-  "messwerte": [{
+    }
+  ],
+  "messwerte": [
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "G2",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -55.899999999999999,
+          "wert": -55.9,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "G2",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -47.200000000000003,
+          "wert": -47.2,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "G2",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.049999999999997,
+          "wert": -39.05,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -38.5,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -28.059999999999999,
+          "wert": -28.06,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -18.16,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Cis5",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -8.2699999999999996,
+          "wert": -8.27,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Cis5",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -7.6399999999999997,
+          "wert": -7.64,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Cis5",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -7.0499999999999998,
+          "wert": -7.05,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "vibrato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -25.870000000000001,
+          "wert": -25.87,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "growl"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -30.890000000000001,
+          "wert": -30.89,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "fall"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.050000000000001,
+          "wert": -26.05,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "legato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.030000000000001,
+          "wert": -26.03,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "Straight"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -36.189999999999998,
+          "wert": -36.19,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "Cup"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -31.170000000000002,
+          "wert": -31.17,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "Harmon"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -35.689999999999998,
+          "wert": -35.69,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Posaune",
         "ton": "Ais3",
         "spielweise": "Harmon_wahwah"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.399999999999999,
+          "wert": -39.4,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A3",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.079999999999998,
+          "wert": -26.08,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A3",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -26.27,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A3",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.079999999999998,
+          "wert": -26.08,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A4",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -38.43,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A4",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -37.990000000000002,
+          "wert": -37.99,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A4",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -38.700000000000003,
+          "wert": -38.7,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A3",
         "spielweise": "vibrato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.210000000000001,
+          "wert": -26.21,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A3",
         "spielweise": "growl"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -5.2000000000000002,
+          "wert": -5.2,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Alphorn",
         "ton": "A3",
         "spielweise": "fall"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.219999999999999,
+          "wert": -26.22,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Trompete",
-        "ton": "A3",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "A3",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -42.899999999999999,
+          "wert": -42.9,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "A3",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -33.689999999999998,
+          "wert": -33.69,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Gis4",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -72.030000000000001,
+          "wert": -72.03,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Gis4",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -30.920000000000002,
+          "wert": -30.92,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Gis4",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -17.899999999999999,
+          "wert": -17.9,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Trompete",
-        "ton": "Fis5",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -300,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Fis5",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -26.780000000000001,
+          "wert": -26.78,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Fis5",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -19.98,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Gis4",
         "spielweise": "vibrato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -27.440000000000001,
+          "wert": -27.44,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Gis4",
         "spielweise": "growl"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -32.530000000000001,
+          "wert": -32.53,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Gis4",
         "spielweise": "fall"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -27.620000000000001,
+          "wert": -27.62,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Trompete",
         "ton": "Gis4",
         "spielweise": "legato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -27.59,
           "einheit": "LUFS"
-        }]
-    }],
-  "punkte": [{
+        }
+      ]
+    }
+  ],
+  "punkte": [
+    {
       "id": "p001",
       "art": "einzel",
       "klang": "Posaune_G2_e0",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p002",
       "art": "einzel",
       "klang": "Posaune_G2_e50",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p003",
       "art": "einzel",
       "klang": "Posaune_G2_e100",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p004",
       "art": "einzel",
       "klang": "Posaune_Ais3_e0",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p005",
       "art": "einzel",
       "klang": "Posaune_Ais3_e50",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p006",
       "art": "einzel",
       "klang": "Posaune_Ais3_e100",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p007",
       "art": "einzel",
       "klang": "Posaune_Cis5_e0",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p008",
       "art": "einzel",
       "klang": "Posaune_Cis5_e50",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p009",
       "art": "einzel",
       "klang": "Posaune_Cis5_e100",
       "frage": "Klingt es nach Posaune (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p010",
       "art": "einzel",
       "klang": "Posaune_Ais3_vibrato",
       "frage": "Vibrato der Lippe 25 Cent: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p011",
       "art": "einzel",
       "klang": "Posaune_Ais3_growl",
       "frage": "Growl (Oktave tiefer gesungen): rau genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p012",
       "art": "einzel",
       "klang": "Posaune_Ais3_fall",
       "frage": "Fall am Ende: wie ein Fall?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p013",
       "art": "einzel",
       "klang": "Posaune_Ais3_legato",
       "frage": "Legato mit dem Zug: Uebergaenge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p014",
       "art": "einzel",
       "klang": "Posaune_Ais3_Straight",
       "frage": "Daempfer Straight (Werte offen): erkennbar?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p015",
       "art": "einzel",
       "klang": "Posaune_Ais3_Cup",
       "frage": "Daempfer Cup (Werte offen): erkennbar?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p016",
       "art": "einzel",
       "klang": "Posaune_Ais3_Harmon",
       "frage": "Daempfer Harmon (Werte offen): erkennbar?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p017",
       "art": "einzel",
       "klang": "Posaune_Ais3_Harmon_wahwah",
       "frage": "Wah-Wah am Harmon (Hand zu/auf je 0,3 s; Restflaeche zu offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p018",
       "art": "einzel",
       "klang": "Alphorn_A3_e0",
       "frage": "Klingt es nach Alphorn (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p019",
       "art": "einzel",
       "klang": "Alphorn_A3_e50",
       "frage": "Klingt es nach Alphorn (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p020",
       "art": "einzel",
       "klang": "Alphorn_A3_e100",
       "frage": "Klingt es nach Alphorn (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p021",
       "art": "einzel",
       "klang": "Alphorn_A4_e0",
       "frage": "Klingt es nach Alphorn (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p022",
       "art": "einzel",
       "klang": "Alphorn_A4_e50",
       "frage": "Klingt es nach Alphorn (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p023",
       "art": "einzel",
       "klang": "Alphorn_A4_e100",
       "frage": "Klingt es nach Alphorn (ungemessen)? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p024",
       "art": "einzel",
       "klang": "Alphorn_A3_vibrato",
       "frage": "Vibrato der Lippe 25 Cent: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p025",
       "art": "einzel",
       "klang": "Alphorn_A3_growl",
       "frage": "Growl (Oktave tiefer gesungen): rau genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p026",
       "art": "einzel",
       "klang": "Alphorn_A3_fall",
       "frage": "Fall am Ende: wie ein Fall?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p027",
-      "art": "einzel",
-      "klang": "Trompete_A3_e0",
-      "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p028",
       "art": "einzel",
       "klang": "Trompete_A3_e50",
       "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p029",
       "art": "einzel",
       "klang": "Trompete_A3_e100",
       "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p030",
       "art": "einzel",
       "klang": "Trompete_Gis4_e0",
       "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p031",
       "art": "einzel",
       "klang": "Trompete_Gis4_e50",
       "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p032",
       "art": "einzel",
       "klang": "Trompete_Gis4_e100",
       "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p033",
-      "art": "einzel",
-      "klang": "Trompete_Fis5_e0",
-      "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p034",
       "art": "einzel",
       "klang": "Trompete_Fis5_e50",
       "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p035",
       "art": "einzel",
       "klang": "Trompete_Fis5_e100",
       "frage": "Klingt es nach Trompete (ungemessen (Bohrung vereinfacht nach Soares 2025; Ventile gerechnet; Lippe uebertragen))? Schmettern bei ff glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p036",
       "art": "einzel",
       "klang": "Trompete_Gis4_vibrato",
       "frage": "Vibrato der Lippe 25 Cent: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p037",
       "art": "einzel",
       "klang": "Trompete_Gis4_growl",
       "frage": "Growl (Oktave tiefer gesungen): rau genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p038",
       "art": "einzel",
       "klang": "Trompete_Gis4_fall",
       "frage": "Fall am Ende: wie ein Fall?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p039",
       "art": "einzel",
       "klang": "Trompete_Gis4_legato",
       "frage": "Legato mit Ventilen: Uebergaenge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }]
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    }
+  ]
 }

@@ -5,15 +5,18 @@
   "katalog": null,
   "kontrolle": "moderat",
   "pegel": {
-    "lufs": -30.800000000000001,
+    "lufs": -33.0,
     "toleranz_lu": 1
   },
   "dauer_s": null,
-  "gruppe_nach": ["instrument"],
+  "gruppe_nach": [
+    "instrument"
+  ],
   "fassungen": {
     "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
   },
-  "klaenge": [{
+  "klaenge": [
+    {
       "id": "Tom_e0",
       "datei": "klaenge/Tom_e0.wav",
       "fassung": "vorgabe",
@@ -21,7 +24,8 @@
         "instrument": "Tom",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Tom_e50",
       "datei": "klaenge/Tom_e50.wav",
       "fassung": "vorgabe",
@@ -29,7 +33,8 @@
         "instrument": "Tom",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Tom_e100",
       "datei": "klaenge/Tom_e100.wav",
       "fassung": "vorgabe",
@@ -37,7 +42,8 @@
         "instrument": "Tom",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Tom_mitte",
       "datei": "klaenge/Tom_mitte.wav",
       "fassung": "vorgabe",
@@ -45,7 +51,8 @@
         "instrument": "Tom",
         "spielweise": "mitte"
       }
-    }, {
+    },
+    {
       "id": "Tom_rand",
       "datei": "klaenge/Tom_rand.wav",
       "fassung": "vorgabe",
@@ -53,7 +60,8 @@
         "instrument": "Tom",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Tom_gedaempft",
       "datei": "klaenge/Tom_gedaempft.wav",
       "fassung": "vorgabe",
@@ -61,7 +69,8 @@
         "instrument": "Tom",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Tom_wirbel",
       "datei": "klaenge/Tom_wirbel.wav",
       "fassung": "vorgabe",
@@ -69,7 +78,8 @@
         "instrument": "Tom",
         "spielweise": "wirbel"
       }
-    }, {
+    },
+    {
       "id": "Pauke_e0",
       "datei": "klaenge/Pauke_e0.wav",
       "fassung": "vorgabe",
@@ -77,7 +87,8 @@
         "instrument": "Pauke",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Pauke_e50",
       "datei": "klaenge/Pauke_e50.wav",
       "fassung": "vorgabe",
@@ -85,7 +96,8 @@
         "instrument": "Pauke",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Pauke_e100",
       "datei": "klaenge/Pauke_e100.wav",
       "fassung": "vorgabe",
@@ -93,7 +105,8 @@
         "instrument": "Pauke",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Pauke_mitte",
       "datei": "klaenge/Pauke_mitte.wav",
       "fassung": "vorgabe",
@@ -101,7 +114,8 @@
         "instrument": "Pauke",
         "spielweise": "mitte"
       }
-    }, {
+    },
+    {
       "id": "Pauke_rand",
       "datei": "klaenge/Pauke_rand.wav",
       "fassung": "vorgabe",
@@ -109,7 +123,8 @@
         "instrument": "Pauke",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Pauke_gedaempft",
       "datei": "klaenge/Pauke_gedaempft.wav",
       "fassung": "vorgabe",
@@ -117,7 +132,8 @@
         "instrument": "Pauke",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Pauke_wirbel",
       "datei": "klaenge/Pauke_wirbel.wav",
       "fassung": "vorgabe",
@@ -125,7 +141,8 @@
         "instrument": "Pauke",
         "spielweise": "wirbel"
       }
-    }, {
+    },
+    {
       "id": "Pauke_glissando",
       "datei": "klaenge/Pauke_glissando.wav",
       "fassung": "vorgabe",
@@ -133,7 +150,8 @@
         "instrument": "Pauke",
         "spielweise": "glissando"
       }
-    }, {
+    },
+    {
       "id": "Bassdrum_e0",
       "datei": "klaenge/Bassdrum_e0.wav",
       "fassung": "vorgabe",
@@ -141,7 +159,8 @@
         "instrument": "Bassdrum",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Bassdrum_e50",
       "datei": "klaenge/Bassdrum_e50.wav",
       "fassung": "vorgabe",
@@ -149,7 +168,8 @@
         "instrument": "Bassdrum",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Bassdrum_e100",
       "datei": "klaenge/Bassdrum_e100.wav",
       "fassung": "vorgabe",
@@ -157,7 +177,8 @@
         "instrument": "Bassdrum",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Bassdrum_mitte",
       "datei": "klaenge/Bassdrum_mitte.wav",
       "fassung": "vorgabe",
@@ -165,7 +186,8 @@
         "instrument": "Bassdrum",
         "spielweise": "mitte"
       }
-    }, {
+    },
+    {
       "id": "Bassdrum_rand",
       "datei": "klaenge/Bassdrum_rand.wav",
       "fassung": "vorgabe",
@@ -173,7 +195,8 @@
         "instrument": "Bassdrum",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Bassdrum_gedaempft",
       "datei": "klaenge/Bassdrum_gedaempft.wav",
       "fassung": "vorgabe",
@@ -181,7 +204,8 @@
         "instrument": "Bassdrum",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Bassdrum_wirbel",
       "datei": "klaenge/Bassdrum_wirbel.wav",
       "fassung": "vorgabe",
@@ -189,7 +213,8 @@
         "instrument": "Bassdrum",
         "spielweise": "wirbel"
       }
-    }, {
+    },
+    {
       "id": "Snare_e0",
       "datei": "klaenge/Snare_e0.wav",
       "fassung": "vorgabe",
@@ -197,7 +222,8 @@
         "instrument": "Snare",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Snare_e50",
       "datei": "klaenge/Snare_e50.wav",
       "fassung": "vorgabe",
@@ -205,7 +231,8 @@
         "instrument": "Snare",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Snare_e100",
       "datei": "klaenge/Snare_e100.wav",
       "fassung": "vorgabe",
@@ -213,7 +240,8 @@
         "instrument": "Snare",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Snare_mitte",
       "datei": "klaenge/Snare_mitte.wav",
       "fassung": "vorgabe",
@@ -221,7 +249,8 @@
         "instrument": "Snare",
         "spielweise": "mitte"
       }
-    }, {
+    },
+    {
       "id": "Snare_rand",
       "datei": "klaenge/Snare_rand.wav",
       "fassung": "vorgabe",
@@ -229,7 +258,8 @@
         "instrument": "Snare",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Snare_gedaempft",
       "datei": "klaenge/Snare_gedaempft.wav",
       "fassung": "vorgabe",
@@ -237,7 +267,8 @@
         "instrument": "Snare",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Snare_wirbel",
       "datei": "klaenge/Snare_wirbel.wav",
       "fassung": "vorgabe",
@@ -245,7 +276,8 @@
         "instrument": "Snare",
         "spielweise": "wirbel"
       }
-    }, {
+    },
+    {
       "id": "Snare_randschlag",
       "datei": "klaenge/Snare_randschlag.wav",
       "fassung": "vorgabe",
@@ -253,7 +285,8 @@
         "instrument": "Snare",
         "spielweise": "randschlag"
       }
-    }, {
+    },
+    {
       "id": "Snare_reifen",
       "datei": "klaenge/Snare_reifen.wav",
       "fassung": "vorgabe",
@@ -261,7 +294,8 @@
         "instrument": "Snare",
         "spielweise": "reifen"
       }
-    }, {
+    },
+    {
       "id": "Snare_ohne_teppich",
       "datei": "klaenge/Snare_ohne_teppich.wav",
       "fassung": "vorgabe",
@@ -269,7 +303,8 @@
         "instrument": "Snare",
         "spielweise": "ohne_teppich"
       }
-    }, {
+    },
+    {
       "id": "Tabla_e0",
       "datei": "klaenge/Tabla_e0.wav",
       "fassung": "vorgabe",
@@ -277,7 +312,8 @@
         "instrument": "Tabla",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Tabla_e50",
       "datei": "klaenge/Tabla_e50.wav",
       "fassung": "vorgabe",
@@ -285,7 +321,8 @@
         "instrument": "Tabla",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Tabla_e100",
       "datei": "klaenge/Tabla_e100.wav",
       "fassung": "vorgabe",
@@ -293,7 +330,8 @@
         "instrument": "Tabla",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Tabla_mitte",
       "datei": "klaenge/Tabla_mitte.wav",
       "fassung": "vorgabe",
@@ -301,7 +339,8 @@
         "instrument": "Tabla",
         "spielweise": "mitte"
       }
-    }, {
+    },
+    {
       "id": "Tabla_rand",
       "datei": "klaenge/Tabla_rand.wav",
       "fassung": "vorgabe",
@@ -309,7 +348,8 @@
         "instrument": "Tabla",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Tabla_gedaempft",
       "datei": "klaenge/Tabla_gedaempft.wav",
       "fassung": "vorgabe",
@@ -317,7 +357,8 @@
         "instrument": "Tabla",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Tabla_wirbel",
       "datei": "klaenge/Tabla_wirbel.wav",
       "fassung": "vorgabe",
@@ -325,7 +366,8 @@
         "instrument": "Tabla",
         "spielweise": "wirbel"
       }
-    }, {
+    },
+    {
       "id": "Conga_e0",
       "datei": "klaenge/Conga_e0.wav",
       "fassung": "vorgabe",
@@ -333,7 +375,8 @@
         "instrument": "Conga",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Conga_e50",
       "datei": "klaenge/Conga_e50.wav",
       "fassung": "vorgabe",
@@ -341,7 +384,8 @@
         "instrument": "Conga",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Conga_e100",
       "datei": "klaenge/Conga_e100.wav",
       "fassung": "vorgabe",
@@ -349,7 +393,8 @@
         "instrument": "Conga",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Conga_mitte",
       "datei": "klaenge/Conga_mitte.wav",
       "fassung": "vorgabe",
@@ -357,7 +402,8 @@
         "instrument": "Conga",
         "spielweise": "mitte"
       }
-    }, {
+    },
+    {
       "id": "Conga_rand",
       "datei": "klaenge/Conga_rand.wav",
       "fassung": "vorgabe",
@@ -365,7 +411,8 @@
         "instrument": "Conga",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Conga_gedaempft",
       "datei": "klaenge/Conga_gedaempft.wav",
       "fassung": "vorgabe",
@@ -373,7 +420,8 @@
         "instrument": "Conga",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Conga_wirbel",
       "datei": "klaenge/Conga_wirbel.wav",
       "fassung": "vorgabe",
@@ -381,7 +429,8 @@
         "instrument": "Conga",
         "spielweise": "wirbel"
       }
-    }, {
+    },
+    {
       "id": "Bongo_e0",
       "datei": "klaenge/Bongo_e0.wav",
       "fassung": "vorgabe",
@@ -389,7 +438,8 @@
         "instrument": "Bongo",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Bongo_e50",
       "datei": "klaenge/Bongo_e50.wav",
       "fassung": "vorgabe",
@@ -397,7 +447,8 @@
         "instrument": "Bongo",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Bongo_e100",
       "datei": "klaenge/Bongo_e100.wav",
       "fassung": "vorgabe",
@@ -405,7 +456,8 @@
         "instrument": "Bongo",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Bongo_mitte",
       "datei": "klaenge/Bongo_mitte.wav",
       "fassung": "vorgabe",
@@ -413,7 +465,8 @@
         "instrument": "Bongo",
         "spielweise": "mitte"
       }
-    }, {
+    },
+    {
       "id": "Bongo_rand",
       "datei": "klaenge/Bongo_rand.wav",
       "fassung": "vorgabe",
@@ -421,7 +474,8 @@
         "instrument": "Bongo",
         "spielweise": "rand"
       }
-    }, {
+    },
+    {
       "id": "Bongo_gedaempft",
       "datei": "klaenge/Bongo_gedaempft.wav",
       "fassung": "vorgabe",
@@ -429,7 +483,8 @@
         "instrument": "Bongo",
         "spielweise": "gedaempft"
       }
-    }, {
+    },
+    {
       "id": "Bongo_wirbel",
       "datei": "klaenge/Bongo_wirbel.wav",
       "fassung": "vorgabe",
@@ -437,908 +492,1282 @@
         "instrument": "Bongo",
         "spielweise": "wirbel"
       }
-    }],
-  "messwerte": [{
+    }
+  ],
+  "messwerte": [
+    {
       "achsen": {
         "instrument": "Tom",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -51.109999999999999,
+          "wert": -51.11,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tom",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.619999999999997,
+          "wert": -41.62,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tom",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -32.310000000000002,
+          "wert": -32.31,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tom",
         "spielweise": "mitte"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -35.450000000000003,
+          "wert": -35.45,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tom",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -38.579999999999998,
+          "wert": -38.58,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tom",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -38.789999999999999,
+          "wert": -38.79,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tom",
         "spielweise": "wirbel"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -30.559999999999999,
+          "wert": -30.56,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -51.780000000000001,
+          "wert": -51.78,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.490000000000002,
+          "wert": -41.49,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -29.960000000000001,
+          "wert": -29.96,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "spielweise": "mitte"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -30.559999999999999,
+          "wert": -30.56,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -41.43,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -40.950000000000003,
+          "wert": -40.95,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "spielweise": "wirbel"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -29.68,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Pauke",
         "spielweise": "glissando"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.090000000000003,
+          "wert": -39.09,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bassdrum",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -52.789999999999999,
+          "wert": -52.79,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bassdrum",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -42.68,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bassdrum",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -31.32,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bassdrum",
         "spielweise": "mitte"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -36.210000000000001,
+          "wert": -36.21,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bassdrum",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.780000000000001,
+          "wert": -39.78,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bassdrum",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -42.729999999999997,
+          "wert": -42.73,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bassdrum",
         "spielweise": "wirbel"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -30.210000000000001,
+          "wert": -30.21,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -47.990000000000002,
+          "wert": -47.99,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.560000000000002,
+          "wert": -39.56,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -33.25,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "spielweise": "mitte"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -35.090000000000003,
+          "wert": -35.09,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -49.380000000000003,
+          "wert": -49.38,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -39.560000000000002,
+          "wert": -39.56,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "spielweise": "wirbel"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -31.23,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "spielweise": "randschlag"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -49.090000000000003,
+          "wert": -49.09,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "spielweise": "reifen"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -53.079999999999998,
+          "wert": -53.08,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Snare",
         "spielweise": "ohne_teppich"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -37.859999999999999,
+          "wert": -37.86,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tabla",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -52.109999999999999,
+          "wert": -52.11,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tabla",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.859999999999999,
+          "wert": -41.86,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tabla",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -35.789999999999999,
+          "wert": -35.79,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tabla",
         "spielweise": "mitte"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -46.450000000000003,
+          "wert": -46.45,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tabla",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -51.950000000000003,
+          "wert": -51.95,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tabla",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -40,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tabla",
         "spielweise": "wirbel"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -33.43,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Conga",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -53.960000000000001,
+          "wert": -53.96,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Conga",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -43.939999999999998,
+          "wert": -43.94,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Conga",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -34.100000000000001,
+          "wert": -34.1,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Conga",
         "spielweise": "mitte"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -43.340000000000003,
+          "wert": -43.34,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Conga",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -49.509999999999998,
+          "wert": -49.51,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Conga",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -41.960000000000001,
+          "wert": -41.96,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Conga",
         "spielweise": "wirbel"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -35.490000000000002,
+          "wert": -35.49,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bongo",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -52.689999999999998,
+          "wert": -52.69,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bongo",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -42.579999999999998,
+          "wert": -42.58,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bongo",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -32.719999999999999,
+          "wert": -32.72,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bongo",
         "spielweise": "mitte"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -40.759999999999998,
+          "wert": -40.76,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bongo",
         "spielweise": "rand"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -45.210000000000001,
+          "wert": -45.21,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bongo",
         "spielweise": "gedaempft"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -40.600000000000001,
+          "wert": -40.6,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Bongo",
         "spielweise": "wirbel"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -34.18,
           "einheit": "LUFS"
-        }]
-    }],
-  "punkte": [{
+        }
+      ]
+    }
+  ],
+  "punkte": [
+    {
       "id": "p001",
       "art": "einzel",
       "klang": "Tom_e0",
       "frage": "Klingt es nach Tom (ungemessen (Tom-Tom-Datensatz lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p002",
       "art": "einzel",
       "klang": "Tom_e50",
       "frage": "Klingt es nach Tom (ungemessen (Tom-Tom-Datensatz lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p003",
       "art": "einzel",
       "klang": "Tom_e100",
       "frage": "Klingt es nach Tom (ungemessen (Tom-Tom-Datensatz lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p004",
       "art": "einzel",
       "klang": "Tom_mitte",
       "frage": "Schlag in die Mitte: dumpfer (Pauke: tonlos)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p005",
       "art": "einzel",
       "klang": "Tom_rand",
       "frage": "Am Rand: heller, obertonreicher?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p006",
       "art": "einzel",
       "klang": "Tom_gedaempft",
       "frage": "Abgedaempft (Hand): kurz genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p007",
       "art": "einzel",
       "klang": "Tom_wirbel",
       "frage": "Wirbel 1,5 s (Rate offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p008",
       "art": "einzel",
       "klang": "Pauke_e0",
       "frage": "Klingt es nach Pauke (ungemessen (VCSL/VSCO lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p009",
       "art": "einzel",
       "klang": "Pauke_e50",
       "frage": "Klingt es nach Pauke (ungemessen (VCSL/VSCO lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p010",
       "art": "einzel",
       "klang": "Pauke_e100",
       "frage": "Klingt es nach Pauke (ungemessen (VCSL/VSCO lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p011",
       "art": "einzel",
       "klang": "Pauke_mitte",
       "frage": "Schlag in die Mitte: dumpfer (Pauke: tonlos)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p012",
       "art": "einzel",
       "klang": "Pauke_rand",
       "frage": "Am Rand: heller, obertonreicher?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p013",
       "art": "einzel",
       "klang": "Pauke_gedaempft",
       "frage": "Abgedaempft (Hand): kurz genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p014",
       "art": "einzel",
       "klang": "Pauke_wirbel",
       "frage": "Wirbel 1,5 s (Rate offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p015",
       "art": "einzel",
       "klang": "Pauke_glissando",
       "frage": "Pedal-Glissando +4 Halbtoene: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p016",
       "art": "einzel",
       "klang": "Bassdrum_e0",
       "frage": "Klingt es nach Bassdrum (ungemessen (Werte offen; DrumGizmo lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p017",
       "art": "einzel",
       "klang": "Bassdrum_e50",
       "frage": "Klingt es nach Bassdrum (ungemessen (Werte offen; DrumGizmo lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p018",
       "art": "einzel",
       "klang": "Bassdrum_e100",
       "frage": "Klingt es nach Bassdrum (ungemessen (Werte offen; DrumGizmo lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p019",
       "art": "einzel",
       "klang": "Bassdrum_mitte",
       "frage": "Schlag in die Mitte: dumpfer (Pauke: tonlos)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p020",
       "art": "einzel",
       "klang": "Bassdrum_rand",
       "frage": "Am Rand: heller, obertonreicher?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p021",
       "art": "einzel",
       "klang": "Bassdrum_gedaempft",
       "frage": "Abgedaempft (Hand): kurz genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p022",
       "art": "einzel",
       "klang": "Bassdrum_wirbel",
       "frage": "Wirbel 1,5 s (Rate offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p023",
       "art": "einzel",
       "klang": "Snare_e0",
       "frage": "Klingt es nach Snare (ungemessen (Teppich vereinfacht; DrumGizmo lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p024",
       "art": "einzel",
       "klang": "Snare_e50",
       "frage": "Klingt es nach Snare (ungemessen (Teppich vereinfacht; DrumGizmo lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p025",
       "art": "einzel",
       "klang": "Snare_e100",
       "frage": "Klingt es nach Snare (ungemessen (Teppich vereinfacht; DrumGizmo lokal))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p026",
       "art": "einzel",
       "klang": "Snare_mitte",
       "frage": "Schlag in die Mitte: dumpfer (Pauke: tonlos)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p027",
       "art": "einzel",
       "klang": "Snare_rand",
       "frage": "Am Rand: heller, obertonreicher?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p028",
       "art": "einzel",
       "klang": "Snare_gedaempft",
       "frage": "Abgedaempft (Hand): kurz genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p029",
       "art": "einzel",
       "klang": "Snare_wirbel",
       "frage": "Wirbel 1,5 s (Rate offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p030",
       "art": "einzel",
       "klang": "Snare_randschlag",
       "frage": "Rimshot (Klick halbphysikalisch): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p031",
       "art": "einzel",
       "klang": "Snare_reifen",
       "frage": "Cross-Stick: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p032",
       "art": "einzel",
       "klang": "Snare_ohne_teppich",
       "frage": "Teppich ab: wie eine Tom?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p033",
       "art": "einzel",
       "klang": "Tabla_e0",
       "frage": "Klingt es nach Tabla (ungemessen (Bols als Artikulation offen))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p034",
       "art": "einzel",
       "klang": "Tabla_e50",
       "frage": "Klingt es nach Tabla (ungemessen (Bols als Artikulation offen))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p035",
       "art": "einzel",
       "klang": "Tabla_e100",
       "frage": "Klingt es nach Tabla (ungemessen (Bols als Artikulation offen))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p036",
       "art": "einzel",
       "klang": "Tabla_mitte",
       "frage": "Schlag in die Mitte: dumpfer (Pauke: tonlos)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p037",
       "art": "einzel",
       "klang": "Tabla_rand",
       "frage": "Am Rand: heller, obertonreicher?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p038",
       "art": "einzel",
       "klang": "Tabla_gedaempft",
       "frage": "Abgedaempft (Hand): kurz genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p039",
       "art": "einzel",
       "klang": "Tabla_wirbel",
       "frage": "Wirbel 1,5 s (Rate offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p040",
       "art": "einzel",
       "klang": "Conga_e0",
       "frage": "Klingt es nach Conga (ungemessen (offener Kessel ohne Moden-Daten))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p041",
       "art": "einzel",
       "klang": "Conga_e50",
       "frage": "Klingt es nach Conga (ungemessen (offener Kessel ohne Moden-Daten))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p042",
       "art": "einzel",
       "klang": "Conga_e100",
       "frage": "Klingt es nach Conga (ungemessen (offener Kessel ohne Moden-Daten))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p043",
       "art": "einzel",
       "klang": "Conga_mitte",
       "frage": "Schlag in die Mitte: dumpfer (Pauke: tonlos)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p044",
       "art": "einzel",
       "klang": "Conga_rand",
       "frage": "Am Rand: heller, obertonreicher?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p045",
       "art": "einzel",
       "klang": "Conga_gedaempft",
       "frage": "Abgedaempft (Hand): kurz genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p046",
       "art": "einzel",
       "klang": "Conga_wirbel",
       "frage": "Wirbel 1,5 s (Rate offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p047",
       "art": "einzel",
       "klang": "Bongo_e0",
       "frage": "Klingt es nach Bongo (ungemessen (offener Kessel ohne Moden-Daten))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p048",
       "art": "einzel",
       "klang": "Bongo_e50",
       "frage": "Klingt es nach Bongo (ungemessen (offener Kessel ohne Moden-Daten))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p049",
       "art": "einzel",
       "klang": "Bongo_e100",
       "frage": "Klingt es nach Bongo (ungemessen (offener Kessel ohne Moden-Daten))? Gleiten und Abklingen glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p050",
       "art": "einzel",
       "klang": "Bongo_mitte",
       "frage": "Schlag in die Mitte: dumpfer (Pauke: tonlos)?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p051",
       "art": "einzel",
       "klang": "Bongo_rand",
       "frage": "Am Rand: heller, obertonreicher?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p052",
       "art": "einzel",
       "klang": "Bongo_gedaempft",
       "frage": "Abgedaempft (Hand): kurz genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p053",
       "art": "einzel",
       "klang": "Bongo_wirbel",
       "frage": "Wirbel 1,5 s (Rate offen): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }]
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    }
+  ]
 }
