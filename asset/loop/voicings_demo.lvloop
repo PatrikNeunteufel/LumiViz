@@ -1,25 +1,79 @@
 {
-    "format": "lumiviz-loop",
-    "version": 11,
-    "bpm": 84,
     "beatsPerBar": 4,
-    "stepsPerBeat": 4,
-    "swing": 0.2,
-    "volume": 0.4,
-    "tags": {
-        "title": "Late Changes",
-        "artist": "LumiViz",
-        "genre": "Jazz"
-    },
+    "bpm": 84,
+    "channels": [
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "pattern": "Brush",
+                    "repeat": 2,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "gain": 0,
+            "id": 1,
+            "name": "Drums"
+        },
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "pattern": "Keys",
+                    "repeat": 2,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "gain": 1.15,
+            "id": 2,
+            "name": "Keys"
+        },
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "frozen": "",
+                    "pattern": "Bass",
+                    "repeat": 2,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "gain": 0,
+            "id": 3,
+            "name": "Bass"
+        }
+    ],
+    "format": "lumiviz-loop",
+    "limiter": true,
     "patterns": [
         {
-            "name": "Keys",
-            "kind": "instrument",
             "bars": 4,
             "instrument": "tine_piano",
-            "volume": 0.9991,
-            "pan": -0.1,
+            "kind": "instrument",
+            "lanes": {
+                "expression": [
+                ],
+                "pitch": [
+                ],
+                "sostenuto": [
+                ],
+                "sustain": [
+                ],
+                "switches": {
+                },
+                "vibrato": [
+                ]
+            },
             "mute": false,
+            "name": "Keys",
             "notes": [
                 [0, 6, 50, 0.7],
                 [0, 6, 53, 0.7],
@@ -53,16 +107,37 @@
                 [58, 4, 52, 0.6],
                 [58, 4, 55, 0.6],
                 [58, 4, 57, 0.6]
-            ]
+            ],
+            "pan": -0.1,
+            "strum": {
+                "hand": "halfBeat",
+                "spread": 8
+            },
+            "swingOffset": 0,
+            "voices": [
+            ],
+            "volume": 0.9991
         },
         {
-            "name": "Bass",
-            "kind": "instrument",
             "bars": 4,
             "instrument": "round_bass",
-            "volume": 0.988,
-            "pan": 0.0,
+            "kind": "instrument",
+            "lanes": {
+                "expression": [
+                ],
+                "pitch": [
+                ],
+                "sostenuto": [
+                ],
+                "sustain": [
+                ],
+                "switches": {
+                },
+                "vibrato": [
+                ]
+            },
             "mute": false,
+            "name": "Bass",
             "notes": [
                 [0, 4, 38, 0.8],
                 [8, 4, 38, 0.8],
@@ -72,78 +147,59 @@
                 [40, 4, 36, 0.8],
                 [48, 4, 45, 0.8],
                 [56, 4, 45, 0.8]
-            ]
+            ],
+            "pan": 0,
+            "strum": {
+                "hand": "halfBeat",
+                "spread": 8
+            },
+            "swingOffset": 0,
+            "voices": [
+            ],
+            "volume": 0.988
         },
         {
-            "name": "Brush",
-            "kind": "drumkit",
             "bars": 4,
+            "kind": "drumkit",
+            "name": "Brush",
+            "rows": [
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]
+            ],
+            "swingOffset": 0,
             "tracks": [
                 {
+                    "mute": false,
                     "name": "Kick",
+                    "pan": 0,
                     "sound": "kit:kick",
-                    "volume": 0.4,
-                    "pan": 0.0,
-                    "mute": false
+                    "volume": 0.4
                 },
                 {
+                    "mute": false,
                     "name": "Snare",
+                    "pan": 0,
                     "sound": "kit:snare",
-                    "volume": 0.3,
-                    "pan": 0.0,
-                    "mute": false
+                    "volume": 0.3
                 },
                 {
+                    "mute": false,
                     "name": "Ride",
-                    "sound": "kit:hat_closed",
-                    "volume": 0.3,
                     "pan": 0.3,
-                    "mute": false
+                    "sound": "kit:hat_closed",
+                    "volume": 0.3
                 }
-            ],
-            "rows": [
-                [1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0],
-                [1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0, 1.0, 0, 0, 1.0]
             ]
         }
     ],
-    "channels": [
-        {
-            "name": "Drums",
-            "enabled": true,
-            "clips": [
-                {
-                    "pattern": "Brush",
-                    "start": 0,
-                    "repeat": 2
-                }
-            ],
-            "gain": 0.0
-        },
-        {
-            "name": "Keys",
-            "enabled": true,
-            "clips": [
-                {
-                    "pattern": "Keys",
-                    "start": 0,
-                    "repeat": 2
-                }
-            ],
-            "gain": 1.15
-        },
-        {
-            "name": "Bass",
-            "enabled": true,
-            "clips": [
-                {
-                    "pattern": "Bass",
-                    "start": 0,
-                    "repeat": 2
-                }
-            ],
-            "gain": 0.0
-        }
-    ]
+    "stepsPerBeat": 4,
+    "swing": 0.2,
+    "tags": {
+        "artist": "LumiViz",
+        "genre": "Jazz",
+        "title": "Late Changes"
+    },
+    "version": 18,
+    "volume": 0.4
 }

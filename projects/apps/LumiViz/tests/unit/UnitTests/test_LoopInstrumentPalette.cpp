@@ -277,7 +277,7 @@ TEST_CASE("Loop Instruments-Fenster: Suche und Genre — was nicht passt, versch
     // „All" und die Genres, die die Instrumente tragen
     CHECK(genre->itemText(0) == QStringLiteral("All"));
     CHECK(genre->count() == bekannteGenres().size() + 1);
-    CHECK(bekannteGenres().size() == 30);  // S123: Chillout, Electronica, Jazz, World aus make_showcase.py; S133: Classical (pizzicato_demo); S136: Folk (strum_demo)
+    CHECK(bekannteGenres().size() == 31);  // S123: Chillout, Electronica, Jazz, World aus make_showcase.py; S133: Classical (pizzicato_demo); S136: Folk (strum_demo); S182: Fusion (make_modelled_loops.py)
     CHECK(bekannteGenres().contains(QStringLiteral("Funk")));
 
     // --- Genre: die vier aus dem Funk-Loop, je unter ihrer Art
