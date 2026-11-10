@@ -74,8 +74,42 @@ klingt bei v1 dort noch mit 24 dB Umfang, das Modell nicht.
 - Damit sind die fünf stillen Stabspiele aus PN2 a erklärt: Celesta, Tine (Kontakt), Xylophon 103, Glockenspiel 93,
   Reed 91 (Nullstelle).
 
-## 5 Offen
+## 5 HS-1 a: der belegte Satz (S186)
 
-Entscheid, wie weiter (Vorlage S186). Danach je Option gegen alle Zielgrößen rechnen: Kontaktzeit je Taste und Stärke
-(Askenfelt & Jansson), Umfang des Tons je Taste (*Salamander*), Helligkeit je Stärke an C4 und C6 (*Salamander*, HU3-1),
-Spreizung je dB Stufe (DY2 a, 0,9–1,4), Auslenkung gegen Chabassier Tab. IV.
+**ε belegt.** Kartofelev & Stulov 2014 (*Acta Mechanica*, DOI 10.1007/s00707-014-1109-1; Dissertation Kartofelev, TTU
+2014, S. 73, Gl. 4–7, **am Bild der Seite gelesen**): p = 3,7 + 0,015 N; **γ = 0,9894 + 0,000088 N, 0,9895 ≤ γ ≤ 0,9972**;
+τ0 = 2,72 − 0,02 N + 0,00009 N² µs; F0 = 15 500·e^(0,059 N) N/mm^p; 1 ≤ N ≤ 88, nach Stulov 2005. Das **n²** im Druck von
+2009 ist der Druckfehler, nicht das Vorzeichen — der Kern rechnet seit HU3-1 c ein falsches ε (C8: 0,31 statt 0,997).
+Gegenprobe (Recherche, eigene Rechnung): VITA 2010 n = 70 im Dreiparametermodell α = 0,395 ms, Q0 = 4270 N/mm^p; mit der
+linearen Form α = γτ0/(1 − γ) = 395 µs, Q0 = F0(1 − γ) = 4279. Recherche:
+`recherche/2026-11-10_S186_hammerfilz_hysterese_exponent.md`. p eingespielter Hämmer je Taste: nichts Neues.
+
+**Konvergenz.** Mit ε nahe 1 und τ0 ≈ 1,7 µs reicht der Kontakt 8-fach (2,6 µs) nicht: an C8 bei 0,45 m/s Umfang 59 dB
+(8-fach), 44 (32-fach), 43 (128-fach). Für die Messung ist die Überabtastung seit S186 ein Feld von `HammerAnschlag`
+(`ueberabtastung`, Vorgabe `kHammerUeberabtastung` = 8, Bit für Bit wie vorher — Bezug `*test_LoopHammerTon*`
+grün). Heute (ε klein) ist 8-fach konvergiert.
+
+**Gegen alle Zielgrößen** (Messfall `LUMIVIZ_HS1_MESSUNG=<datei.md>` in `test_LoopLeiserAnschlag.cpp`, Vorgabe des
+Flügels, Release-clang; Werte bei 128-fach, konvergiert):
+
+| Satz | (1) Kontakt, RMS log | (2) Umfang des Tons, RMS dB (C7 / D7 / C8) | (3) Helligkeit RMS C4 / C6 | (5) Auslenkung / Tab. IV |
+|---|---|---|---|---|
+| heute (ε „−“) | 0,33 | 18,6 (39 / 58 / 87) | 0,32 / 0,71 | 0,31 … 0,73 |
+| S1: ε linear, Q0 nach 2009 | 0,29 | 6,0 (31 / 34 / 43) | 0,17 / **1,69** | 0,31 … 0,64 |
+| S2: ε linear, Q0 = F0(1 − ε) | 0,29 | 6,1 (32 / 35 / 44) | 0,19 / **1,69** | 0,31 … 0,64 |
+| Probe ε = 0,997 fest | 0,30 | 5,9 | 0,41 / 1,75 | 0,30 … 0,65 |
+
+*Salamander* C7 / D7 / C8: 29 / 25 / 24 dB. Kontaktzeit S1 an C7 0,93 / 0,74 / 0,60 ms gegen 0,9 / 0,65 / 0,55, an C8
+0,71 / 0,53 / 0,38 gegen 1,2 / 0,55 / 0,45. (4) Spreizung über den Umfang steckt in (2): A0 … C6 bleibt S1 bei 20–34 dB
+wie heute.
+
+**Widerspruch.** Der belegte Satz trifft den Umfang des Tons dreimal besser, die Kontaktzeit leicht besser und die
+Helligkeit an C4 doppelt so gut — **aber an C6 wird der Hammer mit der Stärke nicht mehr heller** (Steigungen −0,15 …
+0,16 statt *Salamander* 0,73 … 2,55; heute 0,39 … 3,53). Mit großer Hysterese bestimmt die Dämpfung des Filzes den Puls,
+die Nichtlinearität kommt kaum noch zur Wirkung. Offen, ob das am Satz liegt (unintonierte Hämmer, p ≈ 4,3 an C6), an der
+Messung der Helligkeit am Ton ohne Boden, oder an *Salamander* (Boden, Mikrofon). Noch nicht gerechnet: Rechenzeit mit
+32-fachem Kontakt; der Stab (dieselbe Filzformel) mit dem neuen ε.
+
+## 6 Offen
+
+Vorlage an Patrik (S186): wie mit dem Widerspruch an C6 umgehen, bevor der Satz in den Kern kommt.

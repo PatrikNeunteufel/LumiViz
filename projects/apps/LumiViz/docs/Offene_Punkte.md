@@ -2913,7 +2913,10 @@ regt ab Taste 84 bei ppp … p viel zu schwach an (Umfang des Tons ppp → ff an
 vier Klavieren; Ursachen im Hammersatz: die Hysterese fehlt im Diskant (Stulov Gl. 9 im Bild „ε = 0,9894 + 8,8·10⁻⁵ n²“,
 seit HU3-1 c „−“ ohne Beleg) und vermutlich p ≈ 5 des nicht intonierten Satzes; Stufen unter −27 liegen unter der
 Spielgrenze 0,21 m/s (Goebl 2001); beim Stab dazu Nullstellen des Pulses — erklärt auch die stillen Stabspiele oben;
-Entscheid, wie weiter, offen; (b) Kalimba: die Stärke wirkt nur als Faktor (lineares Zupfen,
+**HS-1 a (S186):** ε belegt — Kartofelev & Stulov 2014 (Dissertation S. 73, am Bild): γ = 0,9894 + 0,000088 N, das n² von
+2009 ist der Druckfehler, der Kern rechnet ein falsches ε; mit dem belegten Satz (konvergiert erst mit 32-fachem Kontakt,
+`HammerAnschlag::ueberabtastung`) Umfang des Tons gegen *Salamander* RMS 6,0 statt 18,6 dB, aber die Helligkeit je Stärke
+an C6 bricht ein (RMS 1,69 statt 0,71) — Vorlage zum Widerspruch offen (Befund §5); (b) Kalimba: die Stärke wirkt nur als Faktor (lineares Zupfen,
 KA1 a) — ob das Instrument mit der Stärke heller wird, ist ungeprüft; (c) IC 02 Zupfen: ebenso nur Faktor (Kraft fester
 Form) — für den Port der Klasse 2 (34k); (d) IC 08: leeres Fenster des Blasdrucks an Sopran H3, Alt E3, Tenor H2 (Tenor H2
 in der Oktave); (e) IC 09 Shakuhachi D5, Ais5 nicht auf dem Ton; (f) IC 07 Alphorn A3 Gleichanteil und falscher Ton — mit
@@ -6450,7 +6453,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.333.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest, Befund am Modell (a) untersucht (NS1 a): der Hammer regt ab Taste 84 bei ppp … p zu schwach an — Hysterese im Diskant fehlt (Vorzeichen in Stulov Gl. 9), vermutlich p ≈ 5; Messfall `test_LoopLeiserAnschlag`, Recherche Kontaktzeit; Entscheid offen. |
+| 1.333.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest, Befund am Modell (a) untersucht (NS1 a, HS-1 a): der Hammer regt ab Taste 84 bei ppp … p zu schwach an — ε belegt (Kartofelev & Stulov 2014: linear, das n² von 2009 ist der Druckfehler), der belegte Satz braucht 32-fachen Kontakt und trifft den Umfang des Tons, verliert aber die Helligkeit an C6; Messfälle `test_LoopLeiserAnschlag` (LV6A, HS1), zwei Recherchen; Vorlage zum Widerspruch offen. |
 | 1.332.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: LV-6 erledigt — LV6-1 a (gleich klingende Klänge nur einmal), LV6-2 a (Honky-tonk an Taste 41), LV6-3 a (ohne Ton nicht in einer Liste), LV6-4 a (nicht auf dem Ton nicht in einer Liste); sechs Befunde am Modell; Befund des Honky-tonk 103 a-30 aus 34i geklärt. |
 | 1.331.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: Schritt 3 der Übergabe erledigt — LG1 a (für die Klassen 1, 4, 5 gelten nur die Listen von LumiViz; Hackbrett, Cimbalom, Steeldrum als Deluxe in `klasse1_34i` und `stab_34g`; IC 01, 04, 05 abgelöst). |
 | 1.330.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Anbindung InstrumentsCalculation: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l. |

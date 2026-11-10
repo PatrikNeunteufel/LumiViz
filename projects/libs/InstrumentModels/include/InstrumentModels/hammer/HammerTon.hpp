@@ -58,6 +58,9 @@ struct HammerAnschlag
     /// Pedal *Practice* getreten: der Filz des Moderators in Reihe, Q_m in N/mm^p_m (0 = ohne).
     double moderatorSteife = 0.0;
     double moderatorExponent = 2.0;
+    /// So viel feiner rechnet der Kontakt (nur fuer Messungen der Konvergenz, HS-1 S186; mit der Vorgabe Bit fuer Bit
+    /// wie mit `kHammerUeberabtastung`).
+    int ueberabtastung = kHammerUeberabtastung;
 };
 
 /// Eine Mode des Chors an einem Teilton (fuer Tests und Messungen): der Eigenwert

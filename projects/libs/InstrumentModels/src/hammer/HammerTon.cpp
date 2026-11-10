@@ -460,7 +460,8 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
     const Werte w = werteAn(saite, anschlag);
     const double fs = anschlag.rate;
     const double dt = 1.0 / fs;
-    const double dtFein = dt / kHammerUeberabtastung;
+    const int ueber = std::max(1, anschlag.ueberabtastung);
+    const double dtFein = dt / ueber;
     const double pi = std::numbers::pi;
 
     // --- die Moden: je Teilton der Chor (HT3 a) ---
@@ -504,7 +505,7 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
     double hammerY = 0.0;  // m, zur Saite hin positiv
     double hammerV = tempo;
     const auto kontaktMax = std::min<std::int64_t>(frames, std::llround(kKontaktMaxS * fs));
-    const auto freiNoetig = std::max<std::int64_t>(1, std::llround(kFreiS * fs * kHammerUeberabtastung));
+    const auto freiNoetig = std::max<std::int64_t>(1, std::llround(kFreiS * fs * ueber));
     std::int64_t frei = 0;
     bool beruehrt = false;
     double erster = 0.0;
@@ -535,7 +536,7 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
         if (laengs.an()) aus += laengs.schritt(moden, dt);
         summe[static_cast<std::size_t>(n)] = aus;
         if (n < messEnde) auslenkung();
-        for (int u = 0; u < kHammerUeberabtastung; ++u)
+        for (int u = 0; u < ueber; ++u)
         {
             double saiteY = 0.0;
             for (const Mode& m : moden) saiteY += m.abnahme * m.zustand.imag();
@@ -569,7 +570,7 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
             {
                 if (messung != nullptr)
                 {
-                    const double t = (static_cast<double>(n) * kHammerUeberabtastung + u) * dtFein;
+                    const double t = (static_cast<double>(n) * ueber + u) * dtFein;
                     if (!beruehrt) erster = t;
                     messung->kontaktS = t - erster;
                     messung->kraftSpitzeN = std::max(messung->kraftSpitzeN, kraft);
