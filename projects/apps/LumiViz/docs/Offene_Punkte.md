@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.328.0
+> **Version:** 1.327.0
 > **Datum:** 2026-11-10 (Sessions 164 bis 185)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2873,12 +2873,7 @@ nach dem ersten Release von HoerTest_Helper (S6):** wie Sichttest — External `
 Hoertest) gehören in jeden Arbeitsbau, auch Release, und nie in eine Auslieferung — das Paket der App wird ohne
 `sichttest\`, `SichttestSteuerung1.dll`, `hoertest\` und ohne `SICHTTEST_VORHANDEN` geschnürt; gebaut mit dem ersten Paket
 der App, was CMakeCraft dafür braucht, dann bei CC anfragen. **Offen aus S182:** (4) Hörtest
-LV-4…LV-8 nach der Übergabe von IC (`modellierung/anbindung-ic/ic/UEBERGABE_LUMIVIZ_HOERTEST.md`). **LV-4 erledigt
-2026-11-10 (S185):** die Klänge liegen am Hörort neben ihrer Liste (AU3), alle 14 Listen gültig (`Hoertest --liste-pruefen`);
-**HL1 a:** `stab_34g` und `klasse1_34i` nach LP2 b am Hörort und im Repo neu geschrieben (92 von 96 bzw. 13 von 50 Klängen
-neu; `stab_34g` jetzt −26,6 statt −27,2 LUFS, keine gleichen Abdrücke der Kalimba mehr), `membran_34h` war aktuell; die
-zwei Antworten in `hoertest/ergebnisse/stab_34g/pn.jsonl` gehören zur Fassung vom 08.11. und werden neu gehört. Weiter mit
-LV-5 (Pegel: LumiViz gegen HT an denselben Dateien). Danach **34j**
+LV-4…LV-8 nach der Übergabe von IC (`modellierung/anbindung-ic/ic/UEBERGABE_LUMIVIZ_HOERTEST.md`). Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
 — bei Chaigne et al. 2013 und den übrigen lokalen Upright-Quellen nur als Bild oder gar nicht; Recherche S181
@@ -6407,7 +6402,6 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.328.0 | 2026-11-10 | Session 185 (Opus 5.5). §6 Hörtest: LV-4 erledigt (Ablage am Hörort, 14 Listen gültig); HL1 a — `stab_34g` und `klasse1_34i` nach LP2 b neu geschrieben; weiter LV-5. |
 | 1.327.0 | 2026-11-10 | Session 185 (Opus 5.5). Genre-Zahl in `test_LoopInstrumentPalette` auf 31 (Fusion seit S182); voller Lauf nach CMakeCraft v0.14.1 1855 / 1855 unter beiden Compilern; §6 LV1 erledigt (LV1 a: kein mitgelieferter Loop über −1 dBFS, Tafel `loop_lautstaerke.py`, Wächter `Loop Spitze LV1 a`; Loop_Konzept 0.132.0); HF2 a (Hoertest wie Sichttest neben der App, gebaut nach S6 von HoerTest_Helper), HF3 a (Prüfwerkzeuge nie in einer Auslieferung). |
 | 1.326.0 | 2026-11-09 | Session 184 (Opus 5.5). CMakeCraft v0.14.1 gepinnt (HF2 teilweise); Befunde ohne Code (veraltete VS-Exe, stummer Composer-Clip mit Grundpegel 0); offen: Genre-Zahl in `test_LoopInstrumentPalette` (31 statt 30), voller Lauf nach dem Pin-Wechsel. |
 | 1.325.0 | 2026-11-09 | Session 183 (Fable 5.1). §6 Anbindung InstrumentsCalculation: LP2 b erledigt — Vorgaben je Taste für Wurlitzer, Kalimba, Clavinet (WU1 a, WU2 a, KA1 a, CL1 a, CL2 a; Kern `bar` mit `pluckForce`, Abnahmen `slot` und `bridge`; Kern `struckString` mit `stringDiameter`; Rechenfassung 2); LP3 a ohne Ausnahmen Wurlitzer und Kalimba, Clavinet mit Grund CL2 a; LV1 um die drei Pegel ergänzt; HoerTest_Helper statt HörTest_Helper (HT17 a). |
