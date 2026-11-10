@@ -1,7 +1,7 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.14.0
-> **Datum:** 2026-11-09 (Session 182)
+> **Version:** 0.16.0
+> **Datum:** 2026-11-10 (Session 186)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
 > der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
@@ -13,7 +13,7 @@
 > Zupfkraft und den Abnahmen `slot`/`bridge`, Kern `struckString` mit Durchmesser je Taste, beide Rechenfassung 2.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`)
+> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -422,7 +422,17 @@ wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teil
 | 34i | Klasse 1 ohne Flügel | Upright, Honky-tonk, elektrischer Flügel (CP-70), Clavinet (Name nach den Hörproben, IK2-8 a); ehemals Stufe 32 | wie 34g |
 | 34j | Klasse 10 | Akkordeon, Harmonium, Melodica, Mundharmonika; Stimmung über `InstrumentTuneTool`; Vorlage `harvest/instruments-calculation/rechnung/klassen/10_zunge/` (S182) | wie 34g; Wächter der Stimmung |
 | 34k | Klasse 2 je Note | Cembalo, Harfe, Gitarre, Laute, Oud; Vorlage `harvest/instruments-calculation/rechnung/klassen/02_zupf_saite/` (S182); Korpus `korpusImpulsantwort`, Vergleich IC-Luftraum (IK2-10 a); Messung von `stimme` (Kipppunkt IK2-11 a) | wie 34g; Bericht Luftraum gegen Korpus |
+| 34m | Klasse 7 (LR1 a; nach 34j und 34k, **vor 34l**) | Kern `Blech` mit laufender Anregung (Blasdruck als Spur) für alle spielbaren Instrumente der Klasse: Posaune, Trompete, Alphorn; Vorlage `harvest/instruments-calculation/rechnung/klassen/07_lippe_rohr/`, Doku `../modellierung/lippe-rohr/ic/`; Ursache des NaN am Alphorn A2 (ab rund 53 ms), Geometrie des Alphorns aus einer Quelle (R1, Mundstück, Becher, Länge); Rechenzeit (nach dem Tausch der Kühlung); Loops als Demos, das Alphorn zuerst; Hörliste. Tuba, Horn, Didgeridoo erst mit belegter Bohrung bzw. Lippe. Teilplan bis zum Abschluss vor dem Bau | wie 34g; kein NaN über den Umfang; Rechenzeit im Bericht |
 | 34l | Abschluss | Handbuch, Sichttest-Liste, Hörprobenliste für HörTest, Doku (Modul-Doku der Bibliotheken); ~~Auftrag an IC als Datei~~ entfällt (IC aufgelöst S182, LP2 b); den Teil der übernommenen Klassen in `harvest/instruments-calculation/` löschen | Bereich und voller Lauf unter beiden Compilern |
+
+✅ **LR1 a** (Patrik S186): **Klasse 7 kommt als eigene Stufe 34m in den Plan**, über den ganzen Kern `Blech` mit
+Posaune, Trompete und Alphorn, nach 34j und 34k und vor dem Abschluss 34l (der die Vorlagen unter `harvest/` löscht).
+Grund: alle Blechbläser teilen einen Kern; wer ihn für das Alphorn baut, baut ihn für alle, und die Befunde der Klasse
+gehen in eine Fassung des Kerns statt in eine spätere zweite mit neuen Abdrücken und Hörproben. Das Alphorn ist das am
+schwächsten belegte Instrument der Klasse (Geometrie unvollständig, A2 NaN). Verworfen: b (nur das Alphorn vorziehen —
+die Demo stünde auf den schwächsten Werten), c (erst nach 34l entscheiden — gewinnt nichts). Kippt, wenn sich die Geometrie
+des Alphorns belegen lässt und die Ursache des NaN klein ist (dann ginge das Alphorn zuerst ohne Nachteil). Ob 34m vor 34j
+gezogen wird, ist eine eigene Frage (Reihenfolge nach dem, was Patrik zuerst hören will).
 
 ✅ **KN1 a** (Patrik S175, „Alle nach Empfehlung“): **Die Bibliothek Kern heißt `InstrumentCore`** (Ziel und Ordner
 `projects/libs/InstrumentCore`, Namensraum `lumi::kern`, Paket `instrumentcore`); die Bibliothek Messung (34e) heißt
@@ -804,6 +814,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.16.0 | 2026-11-10 | Session 186. §6: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l; Kopf auf 0.16.0 (stand noch auf 0.14.0). |
 | 0.15.0 | 2026-11-09 | Session 183. LP2 b erledigt: Vermerk im Kopf (WU1 a, WU2 a, KA1 a, CL1 a, CL2 a; Kern `bar` mit `pluckForce`, Abnahmen `slot` und `bridge`; Kern `struckString` mit `stringDiameter`; Rechenfassung 2; Journal J60–J64). |
 | 0.14.0 | 2026-11-09 | Session 182. IC aufgelöst (LP2 b): Vermerk im Kopf, Bezug auf die Ablage der IC-Doku, 34j/34k mit Vorlage unter `harvest/`, 34l ohne Auftrag an IC, TP1 a als überholt markiert; Plan des Umzugs `../modellierung/anbindung-ic/Aufloesung_IC_Plan.md` (U0–U7). |
 | 0.13.0 | 2026-11-09 | Session 181. §6: Teilplan 34i (34i-1 bis 34i-7), KL1 a (Kern `struckString` ganz, nur das Clavinet ausgeliefert), KL2 a (Namen, `clavinet_modal` bis zu den Hörproben), KL3 a (Körper `pleyel_p131` für Upright und Honky-tonk), KL4 a (Umfang in der Tafel des Flügel-Kerns); Rechenzeit ausgesetzt bis zum Tausch der Kühlung. Dazu im Bau: KL4-1 a (Kurven nur auf den Umfang der Tafel gerichtet), TT1 a (Tafel „Hammer string“), KL3-1 a (Upright ohne Boden, Recherche; 34i-5 entfällt bis zum Fund); 34i-1 bis 34i-4 und 34i-6 gebaut (Journal J53–J59, Bericht `modellierung/hammer-saite/klasse1_ohne_fluegel.md`). |

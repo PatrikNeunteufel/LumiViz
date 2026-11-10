@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.329.0
+> **Version:** 1.330.0
 > **Datum:** 2026-11-10 (Sessions 164 bis 186)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2893,7 +2893,9 @@ lang (der Schreiber füllt mit Stille auf; IC: 9 Klänge Marimba Ais6, Xylophon 
 dafür `HoerlistePegel.hpp` (`gleicheAn`, `ohneStille`, `schreibeKlaenge`); `klasse1_34i` und `membran_34h` Byte für Byte
 wie vorher, `stab_34g` ohne die fünf stillen. Weiter mit Schritt 3 der Übergabe (welche Liste je Klasse gilt), dann LV-6.
 Danach **34j**
-(Klasse 10, Vorlage unter `harvest/instruments-calculation/`). Offen aus 34i:
+(Klasse 10, Vorlage unter `harvest/instruments-calculation/`), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
+[Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
 — bei Chaigne et al. 2013 und den übrigen lokalen Upright-Quellen nur als Bild oder gar nicht; Recherche S181
 `modellierung/hammer-saite/recherche/2026-11-09_S181_upright_boden_bauplan.md`: kein frei lesbarer, vollständiger Satz;
@@ -6421,6 +6423,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.330.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Anbindung InstrumentsCalculation: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l. |
 | 1.329.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: LV-5 erledigt — PN1 a (IC-Listen nachgeregelt), PN2 a (stille Klänge nicht in einer Liste; Befund am Modell), KZ1 a (Klänge mindestens 0,4 s; Vorschlag an HT); weiter Schritt 3 der Übergabe, LV-6. |
 | 1.328.0 | 2026-11-10 | Session 185 (Opus 5.5). §6 Hörtest: LV-4 erledigt (Ablage am Hörort, 14 Listen gültig); HL1 a — `stab_34g` und `klasse1_34i` nach LP2 b neu geschrieben; weiter LV-5. |
 | 1.327.0 | 2026-11-10 | Session 185 (Opus 5.5). Genre-Zahl in `test_LoopInstrumentPalette` auf 31 (Fusion seit S182); voller Lauf nach CMakeCraft v0.14.1 1855 / 1855 unter beiden Compilern; §6 LV1 erledigt (LV1 a: kein mitgelieferter Loop über −1 dBFS, Tafel `loop_lautstaerke.py`, Wächter `Loop Spitze LV1 a`; Loop_Konzept 0.132.0); HF2 a (Hoertest wie Sichttest neben der App, gebaut nach S6 von HoerTest_Helper), HF3 a (Prüfwerkzeuge nie in einer Auslieferung). |
