@@ -25,8 +25,10 @@ Schreibt unter `asset/loop/modelled_instruments/`:
 
 Die Beispiele je Klasse (`grand_piano_demo`, `bars_demo`, `membrane_demo`, `keys_demo`) und das ganze Stueck
 `full/nocturne_demo` schreiben ihre eigenen Skripte in denselben Ordner. Der Umfang jedes Instruments kommt aus seiner
-Datei (`coreParams` `noteMin`/`noteMax`), nicht aus einer Liste hier. Die Lautstaerken sind fuer den Pegel der
-Instrumente auf dem Bezug gesetzt (`instrument_pegel.PEGEL`: alt = neu). Selbst gesetzt, kein fremdes Werk. Kein Zufall:
+Datei (`coreParams` `noteMin`/`noteMax`), nicht aus einer Liste hier. Die Lautstaerken der Muster sind fuer den Pegel
+der Instrumente auf dem Bezug gesetzt (`instrument_pegel.PEGEL`: alt = neu); die Lautstaerke jedes Loops kommt aus der
+gemessenen Tafel `loop_lautstaerke.LAUT` (LV1 a: Spitze bis −1 dBFS, hoechstens 1; `LOOP_LAUT` nur fuer einen Loop,
+der dort noch nicht steht). Selbst gesetzt, kein fremdes Werk. Kein Zufall:
 zwei Laeufe ergeben dieselben Dateien.
 """
 
@@ -34,6 +36,7 @@ import argparse
 import json
 from pathlib import Path
 
+from loop_lautstaerke import laut
 from make_examples import TAKT, als_text, loop
 from make_membran_loops import kit_rollen, spur, zeile
 
@@ -230,7 +233,7 @@ def nuancen(name, kit):
     if name in SPIELWEISEN:
         patterns.append(spielweisen_muster(name, kit))
         kanaele.append(("Techniques", [("Techniques", erstes["bars"], 1)]))
-    return loop(titel(name) + " nuances", "", BPM, LOOP_LAUT, patterns, kanaele)
+    return loop(titel(name) + " nuances", "", BPM, laut("modelled_instruments/" + name, LOOP_LAUT), patterns, kanaele)
 
 
 # --- das Ensemble -------------------------------------------------------------
@@ -317,7 +320,7 @@ def ensemble(kit):
         kanaele.append((name, [(name, 0, 2 if name in durchgehend else 1)]))
     for name in zweite:
         kanaele.append((name, [(name, 4, 1)]))
-    return loop("Modelled ensemble", "Fusion", 100, 0.25, p, kanaele)
+    return loop("Modelled ensemble", "Fusion", 100, laut("modelled_instruments/modelled_ensemble", 0.25), p, kanaele)
 
 
 def main():

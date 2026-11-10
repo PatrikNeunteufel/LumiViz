@@ -30,6 +30,7 @@ import math
 from pathlib import Path
 
 import nocturne_op9_2
+from loop_lautstaerke import laut
 from make_examples import TAKT, als_text, loop, muster
 
 HIER = Path(__file__).resolve().parent
@@ -73,7 +74,7 @@ def rechte_hand():
 def grand_piano_demo():
     takte = len(MELODIE)
     return loop(
-        "Grand piano demo", "Classical", 72, 0.35,
+        "Grand piano demo", "Classical", 72, laut("modelled_instruments/grand_piano_demo", 0.35),  # LV1 a
         # beide Haende in einem Muster (HD1 a); die Stimmen je Note (HD2 a) kommen mit 31d-9 in die Datei
         [muster("Piano", "grand_piano", linke_hand() + rechte_hand(), laut=0.8, pan=0.0, takte=takte)],
         [("Piano", [("Piano", 0, 1)])],

@@ -65,7 +65,7 @@ PEGEL = {
     "chord_stab": (1.0, 2.5293),
     "clave": (0.49, 1.012),
     "clavinet": (0.705, 1.1452),
-    "clavinet_modal": (0.5258, 0.0951),  # S183 (LP2 b, CL1 a): Durchmesser je Taste, Tonabnehmer mit d²: +1.449 LUFS bei 0.5258 -> 0.0951; alt bleibt (die Loops sind mit 0.5258 gemischt, LV1); S181: -7.817 LUFS bei 1.0 -> 0.5258
+    "clavinet_modal": (0.0951, 0.0951),  # S185 (LV1 a): alt = neu, die Loops sind fuer den Bezug geschrieben; S183 (LP2 b, CL1 a): Durchmesser je Taste, Tonabnehmer mit d²: +1.449 LUFS bei 0.5258 -> 0.0951; S181: -7.817 LUFS bei 1.0 -> 0.5258
     "clavinet_old": (0.6, 0.9427),
     "clean_guitar": (0.398, 1.387),
     "clean_guitar_old": (0.7, 2.2392),
@@ -91,7 +91,7 @@ PEGEL = {
     "house_piano": (1.0, 1.2222),
     "hum_pad": (0.85, 0.5331),
     "jazz_guitar": (0.51, 1.3465),
-    "kalimba": (0.7627, 2.5457),  # S183 (LP2 b, KA1 a): Zupfkraft statt Weg, Kraft am Steg: -23.869 LUFS bei 0.7627 -> 2.5457; alt bleibt (die Loops sind mit 0.7627 gemischt, LV1); S178 (34g): alt = neu
+    "kalimba": (2.5457, 2.5457),  # S185 (LV1 a): alt = neu, die Loops sind fuer den Bezug geschrieben; S183 (LP2 b, KA1 a): Zupfkraft statt Weg, Kraft am Steg: -23.869 LUFS bei 0.7627 -> 2.5457; S178 (34g): alt = neu
     "koto": (0.8, 0.5774),
     "lead": (1.0, 0.7343),
     "low_tom": (4.5087, 4.5087),  # S179 (34h): neu, Kit-Trommel auf dem Bezug wie jedes Kern-Instrument (alt = neu)
@@ -107,7 +107,7 @@ PEGEL = {
     "piezo_guitar": (0.505, 1.2388),
     "pizzicato_violin": (1.0, 5.559),
     "pluck": (1.0, 2.2722),
-    "reed_electric_piano": (1.9335, 0.6153),  # S183 (LP2 b, WU1 a, WU2 a): Zunge je Taste, harter Hammer, Schlitz: -3.455 LUFS bei 1.9335 -> 0.6153; alt bleibt (die Loops sind mit 1.9335 gemischt, LV1); S178 (34g): alt = neu
+    "reed_electric_piano": (0.6153, 0.6153),  # S185 (LV1 a): alt = neu, die Loops sind fuer den Bezug geschrieben; S183 (LP2 b, WU1 a, WU2 a): Zunge je Taste, harter Hammer, Schlitz: -3.455 LUFS bei 1.9335 -> 0.6153; S178 (34g): alt = neu
     "reese_bass": (0.6, 0.5013),
     "reverse_swell": (0.7, 0.6194),
     "rolling_bass": (0.7, 0.9255),

@@ -18,6 +18,7 @@ Kein Zufall: zwei Laeufe ergeben dieselbe Datei.
 
 from pathlib import Path
 
+from loop_lautstaerke import laut
 from make_examples import TAKT, als_text, loop, muster
 
 HIER = Path(__file__).resolve().parent
@@ -97,7 +98,7 @@ def membrane_demo():
     erste, zweite = trommeln(kit, False), trommeln(kit, True)
     patterns = [erste, zweite, pauke(), tabla()]
     kanaele = [("Kit", [("Kit", 0, 1), ("Hands", 4, 1)]), ("Timpani", [("Timpani", 0, 2)]), ("Tabla", [("Tabla", 4, 1)])]
-    return loop("Membrane demo", "World", 100, 0.3, patterns, kanaele)
+    return loop("Membrane demo", "World", 100, laut("modelled_instruments/membrane_demo", 0.3), patterns, kanaele)  # LV1 a
 
 
 def main():

@@ -18,6 +18,7 @@ ergeben dieselbe Datei.
 
 from pathlib import Path
 
+from loop_lautstaerke import laut
 from make_examples import TAKT, als_text, je_takt, loop, muster
 
 HIER = Path(__file__).resolve().parent
@@ -60,7 +61,8 @@ def elektrisch():
 def keys_demo():
     erste, zweite = hammer(), elektrisch()
     kanaele = [(m["name"], [(m["name"], 0, 1)]) for m in erste] + [(m["name"], [(m["name"], 4, 1)]) for m in zweite]
-    return loop("Keys demo", "Jazz", 104, 0.3, erste + zweite, kanaele, swing=0.15)
+    return loop("Keys demo", "Jazz", 104, laut("modelled_instruments/keys_demo", 0.3), erste + zweite, kanaele,
+                swing=0.15)  # LV1 a
 
 
 def main():

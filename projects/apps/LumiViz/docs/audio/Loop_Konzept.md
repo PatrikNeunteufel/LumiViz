@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.131.0
-> **Datum:** 2026-11-01 (Session 170)
+> **Version:** 0.132.0
+> **Datum:** 2026-11-10 (Session 185)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3928,6 +3928,25 @@ Bezug, derselbe Bezug in Programm und Skript. **Offen:** Load instrument als Sch
 ein Instrument über 1 wird dabei leiser; die Kits (27d) spielen die Instrumente mit dem neuen
 Pegel, bis 27d sie nachzieht.
 
+✅ **LV1 a** (Patrik S185): **Kein mitgelieferter Loop kommt über −1 dBFS; die Loops mit Kern
+bekommen die höchste Lautstärke bis 1, bei der das gilt.** Befund vorher: die Loops unter
+`modelled_instruments/` lagen bei −32,2 LUFS (Median der 21 Loops der Nuancen) gegen −21,1 der
+übrigen 49 — jeder trug die Lautstärke 0,3 (−10,5 dB), spielt aber nur ein Instrument. Kein
+übriger Loop kam über −1,5 dBFS, der Begrenzer (Decke −0,1 dBFS, LL7 a) arbeitete bei keinem.
+Ein gemeinsamer Hub von +10,5 dB hätte acht Nuancen (Trommeln, Clavinet: Spitze bis 31 dB über
+der Lautheit) an den Begrenzer gebracht, bis 6,5 dB — genau an den lauten Stufen, die Takt 2
+zeigt. Gebaut: Tafel `asset/loop/loop_lautstaerke.py` (gemessen, Ziel −1,05 dBFS, zwei Compiler
+runden nicht gleich), Wächter `Loop Spitze LV1 a` in `test_LoopWerte.cpp` über alle mitgelieferten
+Loops, zwei Durchläufe, ohne Begrenzer; Ausnahme `full/nocturne_demo` (NP2 a). Danach: Nuancen
+−22,4 LUFS im Median (−32,4 Clavinet … −16,6 Celesta), Beispiele mit Kern −27,7 … −18,9; 17 von 26
+Loops voll angehoben, die übrigen von ihrer Spitze begrenzt (Clavinet +3,1, Handtrommeln +4,8 …
++7,5, Ensemble +0,8 dB). Verworfen: b (gemeinsamer Hub — der Begrenzer an 8 Nuancen und 4
+Beispielen, bis 8,8 dB), c (je Loop auf −21,1 LUFS — der Begrenzer bis 10,4 dB, die Unterschiede
+zwischen den Instrumenten eingeebnet). Kippt, wenn die Loops der Nuancen vor allem dem Vergleich
+der Lautheit dienen sollen (dann b). Dazu `alt = neu` für Kalimba, Wurlitzer und Clavinet in
+`instrument_pegel.py` (die Loops sind für den Bezug geschrieben; sonst hätte `--loops` nach einem
+neuen Lauf der Skripte um bis 14,9 dB falsch nachgezogen).
+
 ## 4o. Muster, Clips und Spuren als Dateien (Stufe 33 — Entscheide Patrik S167)
 
 **Wunsch Patrik (S167):** eigene Kreationen in anderen Loops wiederverwenden — ein Muster
@@ -4692,6 +4711,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.132.0** (S185, 2026-11-10): §4n LV1 a — kein mitgelieferter Loop über −1 dBFS, Lautstärke der Loops mit Kern aus der gemessenen Tafel `loop_lautstaerke.py`, Wächter `Loop Spitze LV1 a`.
 - **0.131.0** (S171, 2026-11-02): §4p 15m — Handbuch, Sichttest-Liste, Bericht von Bounce im Panel („Wie 15m abgeschlossen ist“); Stufe 15 fertig.
 - **0.130.0** (S171, 2026-11-02): §4p ST1 a (Prüfbaustein = echter Baustein Sidechain), ST2 a (Kennung je Kanal, Fassung 17); 15l gebaut („Wie 15l gebaut ist“).
 - **0.129.0** (S170, 2026-11-01): §4p BC1 a — WV7 a berichtigt: Nachklang beim Bounce wie Freeze und Export (bis unter −96 dB).

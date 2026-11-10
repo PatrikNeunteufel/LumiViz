@@ -106,6 +106,16 @@ Muster-Lautstärken (Fassung unter 11) — danach `python asset/loop/instrument_
 es zieht sie nach (Muster mal alt/neu, der Überschuss in den Fader des Kanals) und setzt
 Fassung 11.
 
+**Lautstärke der Loops mit Kern (S185, LV1 a):** kein mitgelieferter Loop kommt über −1 dBFS
+(Wächter `Loop Spitze LV1 a` in `test_LoopWerte.cpp`, über zwei Durchläufe; Ausnahme
+`full/nocturne_demo` nach NP2 a) — der Begrenzer am Ausgang arbeitet bei keinem. Die Loops unter
+`modelled_instruments/` (ohne `full/`) bekommen die höchste Lautstärke bis 1, bei der das gilt; sie
+steht als gemessene Tafel in **`loop_lautstaerke.py`** (`LAUT`), die fünf Skripte der Loops mit Kern
+lesen sie. Nach einer Klangänderung an einem Instrument mit Kern: messen
+(`LUMIVIZ_LOOP_SPITZEN_DATEI=<datei.tsv>`, Fall `Loop Spitze LV1 a*`), dann
+`python asset/loop/loop_lautstaerke.py --messung <datei.tsv>` (setzt nur das Feld `volume` der
+Loops), dann `loop_werte.txt` nur in den geänderten Zeilen.
+
 | Datei | Titel | Wie gerechnet |
 |---|---|---|
 | `bass.lvinst` | Bass | Säge mit Tiefpass, den die Hüllkurve kurz öffnet |

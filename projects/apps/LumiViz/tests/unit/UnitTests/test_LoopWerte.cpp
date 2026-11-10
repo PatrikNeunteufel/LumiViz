@@ -109,7 +109,9 @@ constexpr Probe kProben[] = {{36, 250}, {60, 500}, {81, 120}};
 /// Geplant wie im Programm — mit der Auskunft ueber die Saiten der Instrumente (seit S134; bis dahin
 /// ohne, die Saitenplanung aus Stufe 23b fehlte hier). `ohneStrum`: Spread 0 und keine Abweichungen der
 /// Akkorde — fuer Hoerproben „vor Strum" (`LUMIVIZ_LOOP_WAV_OHNE_STRUM=1`, Stufe 24b).
-std::vector<float> rechneLoop(const QString& pfad, bool ohneStrum = false)
+/// `durchlaeufe` > 1 rechnet den Loop so oft hintereinander, wie das Programm ihn wiederholt (der
+/// Nachklang eines Durchlaufs liegt im naechsten).
+std::vector<float> rechneLoop(const QString& pfad, bool ohneStrum = false, int durchlaeufe = 1)
 {
     Loop loop;
     if (!ladeLoop(pfad, loop)) return {};
@@ -124,7 +126,7 @@ std::vector<float> rechneLoop(const QString& pfad, bool ohneStrum = false)
     const auto klaenge = std::make_shared<const Klaenge>(looptest::klaengeOhneEngine(ablauf));
     Klangerzeuger erzeuger;
     erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge, saiten));
-    const int frames = static_cast<int>(ablauf.durchlaufFrames);
+    const int frames = static_cast<int>(ablauf.durchlaufFrames) * durchlaeufe;
     std::vector<float> durchlauf(static_cast<std::size_t>(frames) * 2);
     for (int stelle = 0; stelle < frames; stelle += 441)
         erzeuger.render(durchlauf.data() + 2 * static_cast<std::ptrdiff_t>(stelle), std::min(441, frames - stelle));
@@ -294,4 +296,62 @@ TEST_CASE("Loop Werte: jedes mitgelieferte Instrument und jedes Beispiel rechnet
             CHECK(gleich == static_cast<int>(alles.size()));
         }
     }
+}
+
+// Wächter LV1 a (Entscheid Patrik S185): kein mitgelieferter Loop kommt über −1 dBFS — der Begrenzer am
+// Ausgang (Decke −0,1 dBFS, LL7 a) arbeitet bei keinem, jeder klingt Bit für Bit, wie der Klangerzeuger ihn
+// rechnet. Gemessen über zwei Durchläufe (der Nachklang des ersten liegt im zweiten, wie im Programm), ohne
+// Begrenzer. Die Gesamtlautstärke der Loops mit Kern steht als gemessene Tafel in
+// `asset/loop/loop_lautstaerke.py`: `LUMIVIZ_LOOP_SPITZEN_DATEI=<datei.tsv>` schreibt je Loop die Spitze, dann
+// `python asset/loop/loop_lautstaerke.py --messung <datei.tsv>`.
+TEST_CASE("Loop Spitze LV1 a: kein mitgelieferter Loop ueber -1 dBFS")
+{
+    const WerteApp app;
+    // Ausnahmen mit Grund; eine Ausnahme braucht den Begrenzer an
+    const std::map<QString, const char*> ausnahmen = {
+        {QStringLiteral("modelled_instruments/full/nocturne_demo.lvloop"),
+         "NP2 a: Fader +7 dB, der Begrenzer faengt die lauten Stellen"},
+    };
+    constexpr double kGrenzeDb = -1.0;
+    const QDir wurzel(looptest::repoWurzel().filePath(QStringLiteral("asset/loop")));
+    const QStringList loops = looptest::mitgelieferteLoops();
+    REQUIRE(loops.size() >= 20);
+
+    QFile tafel(qEnvironmentVariable("LUMIVIZ_LOOP_SPITZEN_DATEI"));
+    const bool schreiben = !tafel.fileName().isEmpty();
+    QTextStream aus;
+    if (schreiben)
+    {
+        REQUIRE(tafel.open(QIODevice::WriteOnly));
+        aus.setDevice(&tafel);
+        aus << "# Loop <Tab> Spitze in dBFS ueber zwei Durchlaeufe <Tab> Lautstaerke des Loops (test_LoopWerte.cpp)\n";
+    }
+    int geprueft = 0;
+    double hoechste = -1000.0;
+    QString lautester;
+    for (const QString& pfad : loops)
+    {
+        const QString name = wurzel.relativeFilePath(pfad);
+        CAPTURE(name.toStdString());
+        Loop loop;
+        REQUIRE(ladeLoop(pfad, loop));
+        const Wert wert = messe(rechneLoop(pfad, false, 2));
+        const double db = wert.spitze > 0.0 ? 20.0 * std::log10(wert.spitze) : -1000.0;
+        if (schreiben) aus << name << '\t' << QString::number(db, 'f', 3) << '\t' << QString::number(loop.laut, 'g', 6) << '\n';
+        ++geprueft;
+        if (const auto ausnahme = ausnahmen.find(name); ausnahme != ausnahmen.end())
+        {
+            MESSAGE(name.toStdString() << ": " << db << " dBFS, Ausnahme (" << std::string(ausnahme->second) << ")");
+            CHECK(loop.limiter);
+            continue;
+        }
+        if (db > hoechste)
+        {
+            hoechste = db;
+            lautester = name;
+        }
+        CHECK(db <= kGrenzeDb);
+    }
+    MESSAGE(geprueft << " Loops; hoechste Spitze " << hoechste << " dBFS (" << lautester.toStdString() << ")");
+    CHECK(geprueft == loops.size());
 }

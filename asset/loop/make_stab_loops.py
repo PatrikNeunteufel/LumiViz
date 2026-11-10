@@ -18,6 +18,7 @@ Laeufe ergeben dieselbe Datei.
 
 from pathlib import Path
 
+from loop_lautstaerke import laut
 from make_examples import TAKT, als_text, je_takt, loop, muster
 
 HIER = Path(__file__).resolve().parent
@@ -69,7 +70,7 @@ def tasten():
 def bars_demo():
     erste, zweite = mallets(), tasten()
     kanaele = [(m["name"], [(m["name"], 0, 1)]) for m in erste] + [(m["name"], [(m["name"], 4, 1)]) for m in zweite]
-    return loop("Bars demo", "Ambient", 96, 0.3, erste + zweite, kanaele)
+    return loop("Bars demo", "Ambient", 96, laut("modelled_instruments/bars_demo", 0.3), erste + zweite, kanaele)  # LV1 a
 
 
 def main():
