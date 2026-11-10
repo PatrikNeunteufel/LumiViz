@@ -471,11 +471,14 @@ TEST_CASE("Loop Trommel 34h-6 Hoerproben (LUMIVIZ_34H_WAV) — Liste fuer HoerTe
         ++paare;
     }
     // der gemeinsame Pegel, jeder Klang nachgeregelt (in Runden, S179: die Bassdrum pp), stille nicht in der Liste
-    // (PN1 a, PN2 a, KZ1 a)
+    // (PN1 a, PN2 a, KZ1 a); ohne Ton und gleich klingend heraus (LV6-3 a, LV6-1 a — bei den Trommeln keiner)
+    const hoerliste::Bereinigt bereinigt = hoerliste::bereinige(klaenge, messwerte, punkte, gerechnet, kRate);
+    CHECK_MESSAGE(bereinigt.ohneTon.isEmpty(), bereinigt.ohneTon.join(QStringLiteral(", ")).toStdString());
+    CHECK_MESSAGE(bereinigt.gleich.isEmpty(), bereinigt.gleich.join(QStringLiteral(", ")).toStdString());
     const hoerliste::Pegel pegel = hoerliste::gleicheAn(gerechnet, kRate, kZielHoechstens, kSpitzeHoechstens);
     const double ziel = pegel.ziel;
     const QStringList& stille = pegel.stille;
-    hoerliste::ohneStille(klaenge, messwerte, punkte, stille);
+    hoerliste::ohneKlaenge(klaenge, messwerte, punkte, stille);
     const QStringList summen = hoerliste::schreibeKlaenge(dir, gerechnet, kRate);
     const QJsonObject liste{
         {QStringLiteral("schema"), 1},

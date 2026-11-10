@@ -574,17 +574,6 @@
         {
             "achsen": {
                 "instrument": "Kalimba",
-                "staerke": "a-30",
-                "taste": 55,
-                "ton": "G3"
-            },
-            "datei": "klaenge/kalimba_55_a-30.wav",
-            "fassung": "ic",
-            "id": "kalimba_55_a-30"
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
                 "staerke": "a-12",
                 "taste": 55,
                 "ton": "G3"
@@ -592,28 +581,6 @@
             "datei": "klaenge/kalimba_55_a-12.wav",
             "fassung": "ic",
             "id": "kalimba_55_a-12"
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a0",
-                "taste": 55,
-                "ton": "G3"
-            },
-            "datei": "klaenge/kalimba_55_a0.wav",
-            "fassung": "ic",
-            "id": "kalimba_55_a0"
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a-30",
-                "taste": 68,
-                "ton": "G#4"
-            },
-            "datei": "klaenge/kalimba_68_a-30.wav",
-            "fassung": "ic",
-            "id": "kalimba_68_a-30"
         },
         {
             "achsen": {
@@ -629,28 +596,6 @@
         {
             "achsen": {
                 "instrument": "Kalimba",
-                "staerke": "a0",
-                "taste": 68,
-                "ton": "G#4"
-            },
-            "datei": "klaenge/kalimba_68_a0.wav",
-            "fassung": "ic",
-            "id": "kalimba_68_a0"
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a-30",
-                "taste": 81,
-                "ton": "A5"
-            },
-            "datei": "klaenge/kalimba_81_a-30.wav",
-            "fassung": "ic",
-            "id": "kalimba_81_a-30"
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
                 "staerke": "a-12",
                 "taste": 81,
                 "ton": "A5"
@@ -658,17 +603,6 @@
             "datei": "klaenge/kalimba_81_a-12.wav",
             "fassung": "ic",
             "id": "kalimba_81_a-12"
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a0",
-                "taste": 81,
-                "ton": "A5"
-            },
-            "datei": "klaenge/kalimba_81_a0.wav",
-            "fassung": "ic",
-            "id": "kalimba_81_a0"
         },
         {
             "achsen": {
@@ -1932,22 +1866,6 @@
         {
             "achsen": {
                 "instrument": "Kalimba",
-                "staerke": "a-30",
-                "taste": 55,
-                "ton": "G3"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -50.46
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
                 "staerke": "a-12",
                 "taste": 55,
                 "ton": "G3"
@@ -1958,38 +1876,6 @@
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
                     "wert": -33.19
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a0",
-                "taste": 55,
-                "ton": "G3"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -21.84
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a-30",
-                "taste": 68,
-                "ton": "G#4"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -49.96
                 }
             ]
         },
@@ -2012,38 +1898,6 @@
         {
             "achsen": {
                 "instrument": "Kalimba",
-                "staerke": "a0",
-                "taste": 68,
-                "ton": "G#4"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -20.7
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a-30",
-                "taste": 81,
-                "ton": "A5"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -49.69
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
                 "staerke": "a-12",
                 "taste": 81,
                 "ton": "A5"
@@ -2054,22 +1908,6 @@
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
                     "wert": -32.43
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Kalimba",
-                "staerke": "a0",
-                "taste": 81,
-                "ton": "A5"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -21.08
                 }
             ]
         },
@@ -2715,7 +2553,7 @@
         }
     ],
     "pegel": {
-        "lufs": -26.6,
+        "lufs": -25.9,
         "toleranz_lu": 1
     },
     "punkte": [
@@ -3231,17 +3069,7 @@
         },
         {
             "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p055",
-            "klang": "kalimba_55_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "frage": "Klingt es nach Kalimba (ungemessen)?",
             "id": "p056",
             "klang": "kalimba_55_a-12",
             "pole": [
@@ -3251,27 +3079,7 @@
         },
         {
             "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p057",
-            "klang": "kalimba_55_a0",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p058",
-            "klang": "kalimba_68_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "frage": "Klingt es nach Kalimba (ungemessen)?",
             "id": "p059",
             "klang": "kalimba_68_a-12",
             "pole": [
@@ -3281,39 +3089,9 @@
         },
         {
             "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p060",
-            "klang": "kalimba_68_a0",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p061",
-            "klang": "kalimba_81_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "frage": "Klingt es nach Kalimba (ungemessen)?",
             "id": "p062",
             "klang": "kalimba_81_a-12",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Kalimba (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p063",
-            "klang": "kalimba_81_a0",
             "pole": [
                 "nein",
                 "ja"

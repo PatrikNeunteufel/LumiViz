@@ -435,13 +435,21 @@ TEST_CASE("Loop Klasse1 34i Hoerproben (LUMIVIZ_34I_WAV) — Liste fuer HoerTest
         ++paare;
         ++deluxe;
     }
+    // LV6-2 a (S186): das Honky-tonk auch an der ersten verstimmten Saite (MIDI 41, `hammer/Vorgaben.cpp`) — an seiner
+    // tiefen Lage 26 ist es nach Vorgabe das Upright (dort faellt es nach LV6-1 a heraus); am Ende, damit die Kennungen bleiben
+    {
+        const Instrument honky = lies(QStringLiteral("honky_tonk_piano"));
+        for (const Staerke& st : staerken) einzel(ablegen(honky, honky.titel, 41, st, QStringLiteral("ic")), honky.titel);
+    }
 
-    // der gemeinsame Pegel, jeder Klang nachgeregelt, stille nicht in der Liste (wie 34g; PN1 a, PN2 a, KZ1 a)
+    // der gemeinsame Pegel, jeder Klang nachgeregelt, stille nicht in der Liste (wie 34g; PN1 a, PN2 a, KZ1 a); vorher
+    // ohne Ton und gleich klingend heraus (LV6-3 a, LV6-1 a)
     const qsizetype punkteGeplant = punkte.size();
+    const hoerliste::Bereinigt bereinigt = hoerliste::bereinige(klaenge, messwerte, punkte, gerechnet, kRate);
     const hoerliste::Pegel pegel = hoerliste::gleicheAn(gerechnet, kRate, kZielHoechstens, kSpitzeHoechstens);
     const double ziel = pegel.ziel;
     const QStringList& stille = pegel.stille;
-    hoerliste::ohneStille(klaenge, messwerte, punkte, stille);
+    hoerliste::ohneKlaenge(klaenge, messwerte, punkte, stille);
     const QStringList summen = hoerliste::schreibeKlaenge(dir, gerechnet, kRate);
     const QJsonObject liste{
         {QStringLiteral("schema"), 1},
@@ -480,7 +488,14 @@ TEST_CASE("Loop Klasse1 34i Hoerproben (LUMIVIZ_34I_WAV) — Liste fuer HoerTest
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare) unter " << ordner.toStdString());
     MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, nicht in der Liste, PN2 a): "
                      << stille.join(QStringLiteral(", ")).toStdString());
+    MESSAGE("ohne Ton (LV6-3 a): " << bereinigt.ohneTon.join(QStringLiteral(", ")).toStdString()
+                                   << "; gleich klingend, nicht in der Liste (LV6-1 a): " << bereinigt.gleich.join(QStringLiteral(", ")).toStdString());
     CHECK(deluxe == 2);
     CHECK(paare == 8 + 2);
-    CHECK(punkteGeplant == 36 + 18 + 8 + 2);
+    CHECK(punkteGeplant == 36 + 18 + 8 + 2 + 3);
+    // LV6-3 a: im Diskant bei a-30 nur ein Puls (Befund am Modell); LV6-1 a: das Honky-tonk 26 ist das Upright 26
+    CHECK(bereinigt.ohneTon == QStringList{QStringLiteral("upright_piano_103_a-30"), QStringLiteral("honky_tonk_piano_103_a-30"),
+                                           QStringLiteral("electric_grand_piano_95_a-30")});
+    CHECK(bereinigt.gleich == QStringList{QStringLiteral("honky_tonk_piano_26_a-30"), QStringLiteral("honky_tonk_piano_26_a-12"),
+                                          QStringLiteral("honky_tonk_piano_26_a0")});
 }

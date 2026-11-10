@@ -19,16 +19,6 @@
   },
   "klaenge": [
     {
-      "id": "Cembalo_G1_e0",
-      "datei": "klaenge/Cembalo_G1_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "G1",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Cembalo_G1_e50",
       "datei": "klaenge/Cembalo_G1_e50.wav",
       "fassung": "vorgabe",
@@ -36,26 +26,6 @@
         "instrument": "Cembalo",
         "ton": "G1",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Cembalo_G1_e100",
-      "datei": "klaenge/Cembalo_G1_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "G1",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Cembalo_H3_e0",
-      "datei": "klaenge/Cembalo_H3_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "H3",
-        "staerke": "e0"
       }
     },
     {
@@ -69,26 +39,6 @@
       }
     },
     {
-      "id": "Cembalo_H3_e100",
-      "datei": "klaenge/Cembalo_H3_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "H3",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Cembalo_Cis6_e0",
-      "datei": "klaenge/Cembalo_Cis6_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "Cis6",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Cembalo_Cis6_e50",
       "datei": "klaenge/Cembalo_Cis6_e50.wav",
       "fassung": "vorgabe",
@@ -96,16 +46,6 @@
         "instrument": "Cembalo",
         "ton": "Cis6",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Cembalo_Cis6_e100",
-      "datei": "klaenge/Cembalo_Cis6_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "Cis6",
-        "staerke": "e100"
       }
     },
     {
@@ -129,16 +69,6 @@
       }
     },
     {
-      "id": "Harfe_D1_e0",
-      "datei": "klaenge/Harfe_D1_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "D1",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Harfe_D1_e50",
       "datei": "klaenge/Harfe_D1_e50.wav",
       "fassung": "vorgabe",
@@ -146,26 +76,6 @@
         "instrument": "Harfe",
         "ton": "D1",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Harfe_D1_e100",
-      "datei": "klaenge/Harfe_D1_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "D1",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Harfe_Dis4_e0",
-      "datei": "klaenge/Harfe_Dis4_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "Dis4",
-        "staerke": "e0"
       }
     },
     {
@@ -179,26 +89,6 @@
       }
     },
     {
-      "id": "Harfe_Dis4_e100",
-      "datei": "klaenge/Harfe_Dis4_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "Dis4",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Harfe_Dis7_e0",
-      "datei": "klaenge/Harfe_Dis7_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "Dis7",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Harfe_Dis7_e50",
       "datei": "klaenge/Harfe_Dis7_e50.wav",
       "fassung": "vorgabe",
@@ -206,16 +96,6 @@
         "instrument": "Harfe",
         "ton": "Dis7",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Harfe_Dis7_e100",
-      "datei": "klaenge/Harfe_Dis7_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "Dis7",
-        "staerke": "e100"
       }
     },
     {
@@ -259,16 +139,6 @@
       }
     },
     {
-      "id": "Gitarre__Deluxe__Fis2_e0",
-      "datei": "klaenge/Gitarre__Deluxe__Fis2_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "Fis2",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Gitarre__Deluxe__Fis2_e50",
       "datei": "klaenge/Gitarre__Deluxe__Fis2_e50.wav",
       "fassung": "vorgabe",
@@ -276,26 +146,6 @@
         "instrument": "Gitarre (Deluxe)",
         "ton": "Fis2",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Gitarre__Deluxe__Fis2_e100",
-      "datei": "klaenge/Gitarre__Deluxe__Fis2_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "Fis2",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Gitarre__Deluxe__Cis4_e0",
-      "datei": "klaenge/Gitarre__Deluxe__Cis4_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "Cis4",
-        "staerke": "e0"
       }
     },
     {
@@ -309,26 +159,6 @@
       }
     },
     {
-      "id": "Gitarre__Deluxe__Cis4_e100",
-      "datei": "klaenge/Gitarre__Deluxe__Cis4_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "Cis4",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Gitarre__Deluxe__G5_e0",
-      "datei": "klaenge/Gitarre__Deluxe__G5_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "G5",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Gitarre__Deluxe__G5_e50",
       "datei": "klaenge/Gitarre__Deluxe__G5_e50.wav",
       "fassung": "vorgabe",
@@ -336,16 +166,6 @@
         "instrument": "Gitarre (Deluxe)",
         "ton": "G5",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Gitarre__Deluxe__G5_e100",
-      "datei": "klaenge/Gitarre__Deluxe__G5_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "G5",
-        "staerke": "e100"
       }
     },
     {
@@ -379,16 +199,6 @@
       }
     },
     {
-      "id": "Laute_A2_e0",
-      "datei": "klaenge/Laute_A2_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "A2",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Laute_A2_e50",
       "datei": "klaenge/Laute_A2_e50.wav",
       "fassung": "vorgabe",
@@ -396,26 +206,6 @@
         "instrument": "Laute",
         "ton": "A2",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Laute_A2_e100",
-      "datei": "klaenge/Laute_A2_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "A2",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Laute_Cis4_e0",
-      "datei": "klaenge/Laute_Cis4_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "Cis4",
-        "staerke": "e0"
       }
     },
     {
@@ -429,26 +219,6 @@
       }
     },
     {
-      "id": "Laute_Cis4_e100",
-      "datei": "klaenge/Laute_Cis4_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "Cis4",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Laute_Dis5_e0",
-      "datei": "klaenge/Laute_Dis5_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "Dis5",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Laute_Dis5_e50",
       "datei": "klaenge/Laute_Dis5_e50.wav",
       "fassung": "vorgabe",
@@ -456,16 +226,6 @@
         "instrument": "Laute",
         "ton": "Dis5",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Laute_Dis5_e100",
-      "datei": "klaenge/Laute_Dis5_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "Dis5",
-        "staerke": "e100"
       }
     },
     {
@@ -479,16 +239,6 @@
       }
     },
     {
-      "id": "Oud_Fis2_e0",
-      "datei": "klaenge/Oud_Fis2_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Fis2",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Oud_Fis2_e50",
       "datei": "klaenge/Oud_Fis2_e50.wav",
       "fassung": "vorgabe",
@@ -496,26 +246,6 @@
         "instrument": "Oud",
         "ton": "Fis2",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Oud_Fis2_e100",
-      "datei": "klaenge/Oud_Fis2_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Fis2",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Oud_Ais3_e0",
-      "datei": "klaenge/Oud_Ais3_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Ais3",
-        "staerke": "e0"
       }
     },
     {
@@ -529,26 +259,6 @@
       }
     },
     {
-      "id": "Oud_Ais3_e100",
-      "datei": "klaenge/Oud_Ais3_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Ais3",
-        "staerke": "e100"
-      }
-    },
-    {
-      "id": "Oud_Cis5_e0",
-      "datei": "klaenge/Oud_Cis5_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Cis5",
-        "staerke": "e0"
-      }
-    },
-    {
       "id": "Oud_Cis5_e50",
       "datei": "klaenge/Oud_Cis5_e50.wav",
       "fassung": "vorgabe",
@@ -556,16 +266,6 @@
         "instrument": "Oud",
         "ton": "Cis5",
         "staerke": "e50"
-      }
-    },
-    {
-      "id": "Oud_Cis5_e100",
-      "datei": "klaenge/Oud_Cis5_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Cis5",
-        "staerke": "e100"
       }
     },
     {
@@ -584,21 +284,6 @@
       "achsen": {
         "instrument": "Cembalo",
         "ton": "G1",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -29.55,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "G1",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
@@ -606,36 +291,6 @@
         {
           "name": "lufs_vorher",
           "wert": -27.33,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "G1",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -25.11,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "H3",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -23.52,
           "einheit": "LUFS"
         }
       ]
@@ -658,36 +313,6 @@
     {
       "achsen": {
         "instrument": "Cembalo",
-        "ton": "H3",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -19.09,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "Cis6",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -49.06,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Cembalo",
         "ton": "Cis6",
         "staerke": "e50"
       },
@@ -696,21 +321,6 @@
         {
           "name": "lufs_vorher",
           "wert": -46.84,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Cembalo",
-        "ton": "Cis6",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -44.62,
           "einheit": "LUFS"
         }
       ]
@@ -749,21 +359,6 @@
       "achsen": {
         "instrument": "Harfe",
         "ton": "D1",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -57.24,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "D1",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
@@ -771,36 +366,6 @@
         {
           "name": "lufs_vorher",
           "wert": -48.47,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "D1",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -39.44,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "Dis4",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -40.05,
           "einheit": "LUFS"
         }
       ]
@@ -823,36 +388,6 @@
     {
       "achsen": {
         "instrument": "Harfe",
-        "ton": "Dis4",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -21.99,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "Dis7",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -62.39,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Harfe",
         "ton": "Dis7",
         "staerke": "e50"
       },
@@ -861,21 +396,6 @@
         {
           "name": "lufs_vorher",
           "wert": -53.36,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Harfe",
-        "ton": "Dis7",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -44.33,
           "einheit": "LUFS"
         }
       ]
@@ -944,21 +464,6 @@
       "achsen": {
         "instrument": "Gitarre (Deluxe)",
         "ton": "Fis2",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -43.66,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "Fis2",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
@@ -966,36 +471,6 @@
         {
           "name": "lufs_vorher",
           "wert": -34.63,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "Fis2",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -25.6,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "Cis4",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -42.32,
           "einheit": "LUFS"
         }
       ]
@@ -1018,36 +493,6 @@
     {
       "achsen": {
         "instrument": "Gitarre (Deluxe)",
-        "ton": "Cis4",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -24.25,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "G5",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -52.39,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
         "ton": "G5",
         "staerke": "e50"
       },
@@ -1056,21 +501,6 @@
         {
           "name": "lufs_vorher",
           "wert": -43.36,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Gitarre (Deluxe)",
-        "ton": "G5",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -34.33,
           "einheit": "LUFS"
         }
       ]
@@ -1124,21 +554,6 @@
       "achsen": {
         "instrument": "Laute",
         "ton": "A2",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -44.48,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "A2",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
@@ -1146,36 +561,6 @@
         {
           "name": "lufs_vorher",
           "wert": -35.45,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "A2",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -26.42,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "Cis4",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -47.19,
           "einheit": "LUFS"
         }
       ]
@@ -1198,36 +583,6 @@
     {
       "achsen": {
         "instrument": "Laute",
-        "ton": "Cis4",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -29.13,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "Dis5",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -38.93,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Laute",
         "ton": "Dis5",
         "staerke": "e50"
       },
@@ -1236,21 +591,6 @@
         {
           "name": "lufs_vorher",
           "wert": -30.54,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Laute",
-        "ton": "Dis5",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -21.5,
           "einheit": "LUFS"
         }
       ]
@@ -1274,21 +614,6 @@
       "achsen": {
         "instrument": "Oud",
         "ton": "Fis2",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -49.86,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Fis2",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
@@ -1296,36 +621,6 @@
         {
           "name": "lufs_vorher",
           "wert": -41.13,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Fis2",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -32.1,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Ais3",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -38.04,
           "einheit": "LUFS"
         }
       ]
@@ -1348,36 +643,6 @@
     {
       "achsen": {
         "instrument": "Oud",
-        "ton": "Ais3",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -19.98,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Cis5",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -39.44,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Oud",
         "ton": "Cis5",
         "staerke": "e50"
       },
@@ -1386,21 +651,6 @@
         {
           "name": "lufs_vorher",
           "wert": -30.41,
-          "einheit": "LUFS"
-        }
-      ]
-    },
-    {
-      "achsen": {
-        "instrument": "Oud",
-        "ton": "Cis5",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [
-        {
-          "name": "lufs_vorher",
-          "wert": -21.37,
           "einheit": "LUFS"
         }
       ]
@@ -1451,39 +701,9 @@
       "vorzug": "Welcher klingt glaubhafter?"
     },
     {
-      "id": "p003",
-      "art": "einzel",
-      "klang": "Cembalo_G1_e0",
-      "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p004",
       "art": "einzel",
       "klang": "Cembalo_G1_e50",
-      "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p005",
-      "art": "einzel",
-      "klang": "Cembalo_G1_e100",
-      "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p006",
-      "art": "einzel",
-      "klang": "Cembalo_H3_e0",
       "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1501,39 +721,9 @@
       ]
     },
     {
-      "id": "p008",
-      "art": "einzel",
-      "klang": "Cembalo_H3_e100",
-      "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p009",
-      "art": "einzel",
-      "klang": "Cembalo_Cis6_e0",
-      "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p010",
       "art": "einzel",
       "klang": "Cembalo_Cis6_e50",
-      "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p011",
-      "art": "einzel",
-      "klang": "Cembalo_Cis6_e100",
       "frage": "Klingt es nach Cembalo (ungemessen (VCSL lokal))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1561,39 +751,9 @@
       ]
     },
     {
-      "id": "p014",
-      "art": "einzel",
-      "klang": "Harfe_D1_e0",
-      "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p015",
       "art": "einzel",
       "klang": "Harfe_D1_e50",
-      "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p016",
-      "art": "einzel",
-      "klang": "Harfe_D1_e100",
-      "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p017",
-      "art": "einzel",
-      "klang": "Harfe_Dis4_e0",
       "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1611,39 +771,9 @@
       ]
     },
     {
-      "id": "p019",
-      "art": "einzel",
-      "klang": "Harfe_Dis4_e100",
-      "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p020",
-      "art": "einzel",
-      "klang": "Harfe_Dis7_e0",
-      "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p021",
       "art": "einzel",
       "klang": "Harfe_Dis7_e50",
-      "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p022",
-      "art": "einzel",
-      "klang": "Harfe_Dis7_e100",
       "frage": "Klingt es nach Harfe (ungemessen (Koerper offen; VSCO lokal))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1671,39 +801,9 @@
       ]
     },
     {
-      "id": "p025",
-      "art": "einzel",
-      "klang": "Gitarre__Deluxe__Fis2_e0",
-      "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p026",
       "art": "einzel",
       "klang": "Gitarre__Deluxe__Fis2_e50",
-      "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p027",
-      "art": "einzel",
-      "klang": "Gitarre__Deluxe__Fis2_e100",
-      "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p028",
-      "art": "einzel",
-      "klang": "Gitarre__Deluxe__Cis4_e0",
       "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1721,39 +821,9 @@
       ]
     },
     {
-      "id": "p030",
-      "art": "einzel",
-      "klang": "Gitarre__Deluxe__Cis4_e100",
-      "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p031",
-      "art": "einzel",
-      "klang": "Gitarre__Deluxe__G5_e0",
-      "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p032",
       "art": "einzel",
       "klang": "Gitarre__Deluxe__G5_e50",
-      "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p033",
-      "art": "einzel",
-      "klang": "Gitarre__Deluxe__G5_e100",
       "frage": "Klingt es nach Gitarre (Deluxe) (ungemessen (Korpus offen bis zum Fit an Mores))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1771,39 +841,9 @@
       ]
     },
     {
-      "id": "p035",
-      "art": "einzel",
-      "klang": "Laute_A2_e0",
-      "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p036",
       "art": "einzel",
       "klang": "Laute_A2_e50",
-      "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p037",
-      "art": "einzel",
-      "klang": "Laute_A2_e100",
-      "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p038",
-      "art": "einzel",
-      "klang": "Laute_Cis4_e0",
       "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1821,39 +861,9 @@
       ]
     },
     {
-      "id": "p040",
-      "art": "einzel",
-      "klang": "Laute_Cis4_e100",
-      "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p041",
-      "art": "einzel",
-      "klang": "Laute_Dis5_e0",
-      "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p042",
       "art": "einzel",
       "klang": "Laute_Dis5_e50",
-      "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p043",
-      "art": "einzel",
-      "klang": "Laute_Dis5_e100",
       "frage": "Klingt es nach Laute (ungemessen (Muschelboden und Saiten offen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1871,39 +881,9 @@
       ]
     },
     {
-      "id": "p045",
-      "art": "einzel",
-      "klang": "Oud_Fis2_e0",
-      "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p046",
       "art": "einzel",
       "klang": "Oud_Fis2_e50",
-      "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p047",
-      "art": "einzel",
-      "klang": "Oud_Fis2_e100",
-      "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p048",
-      "art": "einzel",
-      "klang": "Oud_Ais3_e0",
       "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",
@@ -1921,39 +901,9 @@
       ]
     },
     {
-      "id": "p050",
-      "art": "einzel",
-      "klang": "Oud_Ais3_e100",
-      "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p051",
-      "art": "einzel",
-      "klang": "Oud_Cis5_e0",
-      "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
       "id": "p052",
       "art": "einzel",
       "klang": "Oud_Cis5_e50",
-      "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
-      "pole": [
-        "nein",
-        "ja"
-      ]
-    },
-    {
-      "id": "p053",
-      "art": "einzel",
-      "klang": "Oud_Cis5_e100",
       "frage": "Klingt es nach Oud (ungemessen (Decke offen, Abdallah et al. 2026 lesen; ohne Aufnahme))? Abklingen in zwei Stufen glaubhaft?",
       "pole": [
         "nein",

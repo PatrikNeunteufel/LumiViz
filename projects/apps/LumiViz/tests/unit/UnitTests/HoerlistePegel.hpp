@@ -15,6 +15,12 @@
  *   Klaenge haengt am absoluten Gate und damit am Massstab, ein Faktor in einem Schritt trifft nicht (IC lag so bis 8,8 LU
  *   daneben, `docs/modellierung/anbindung-ic/2026-11-10_S186_lv5_pegel_der_hoerlisten.md`). Kommt danach eine Spitze ueber
  *   die Grenze, sinkt der gemeinsame Pegel um den Ueberschuss (S179: die Bassdrum pp).
+ * - **LV6-3 a:** ein Klang ohne Ton (nach den ersten 20 ms weniger als −80 dB seiner Energie — nur ein Puls) kommt nicht
+ *   in die Liste; gemeldet als Befund am Modell (`bereinige`).
+ * - **LV6-1 a:** Klaenge, die nach dem Angleichen gleich klingen (Rest der Differenz unter −60 dB), kommen nur einmal in
+ *   die Liste: je Gruppe gleicher Staerken die mittlere, deren Frage die Staerke nicht mehr nennt; je Gruppe gleicher
+ *   Instrumente der erste (`bereinige`; Befund `docs/modellierung/anbindung-ic/2026-11-10_S186_lv6_gleiche_klaenge.md`).
+ *   Die Kennungen der uebrigen Punkte bleiben (Luecken), ein Paar, das einen herausgenommenen Klang nennt, faellt mit.
  *
  * Messung: `lumi::audio::messeLautheit` (Stereo, verschraenkt).
  ****************************************************************************************
@@ -37,6 +43,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <map>
 #include <span>
 #include <vector>
 
@@ -124,9 +131,9 @@ inline Pegel gleicheAn(std::vector<Klang>& klaenge, int rate, double zielHoechst
     return p;
 }
 
-/// PN2 a: die stillen Klaenge aus der Liste — ihr Eintrag, ihr Messwert (gleiche Achsen und Fassung) und jeder Punkt,
-/// der sie nennt (einzel ueber `klang`, paar ueber `klaenge`).
-inline void ohneStille(QJsonArray& klaenge, QJsonArray& messwerte, QJsonArray& punkte, const QStringList& stille)
+/// PN2 a, LV6-1 a, LV6-3 a: Klaenge aus der Liste — ihr Eintrag, ihr Messwert (gleiche Achsen und Fassung) und jeder
+/// Punkt, der sie nennt (einzel ueber `klang`, paar ueber `klaenge`).
+inline void ohneKlaenge(QJsonArray& klaenge, QJsonArray& messwerte, QJsonArray& punkte, const QStringList& stille)
 {
     if (stille.isEmpty()) return;
     QJsonArray k2, m2, p2;
@@ -157,6 +164,138 @@ inline void ohneStille(QJsonArray& klaenge, QJsonArray& messwerte, QJsonArray& p
     klaenge = k2;
     messwerte = m2;
     punkte = p2;
+}
+
+/// Was `bereinige` herausgenommen hat (LV6-1 a, LV6-3 a).
+struct Bereinigt
+{
+    QStringList ohneTon;    ///< nur ein Puls, danach still (LV6-3 a)
+    QStringList gleich;     ///< klingt nach dem Angleichen wie ein anderer Klang der Liste (LV6-1 a)
+    QStringList vertreter;  ///< bleibt fuer eine Gruppe gleicher Staerken; seine Frage nennt die Staerke nicht mehr
+};
+
+inline constexpr double kGleichDb = -60.0;    ///< LV6-1 a: Rest der Differenz nach dem Angleichen
+inline constexpr double kOhneTonDb = -80.0;   ///< LV6-3 a: Energie nach `kOhneTonNachS` gegen die ganze
+inline constexpr double kOhneTonNachS = 0.02;
+
+/// LV6-3 a: nach den ersten 20 ms weniger als −80 dB der Energie des Klangs (Stereo, verschraenkt).
+inline bool ohneTon(const std::vector<float>& daten, int rate)
+{
+    const std::size_t ab = static_cast<std::size_t>(std::lround(kOhneTonNachS * rate)) * 2;
+    double gesamt = 0.0, danach = 0.0;
+    for (std::size_t i = 0; i < daten.size(); ++i)
+    {
+        const double e = static_cast<double>(daten[i]) * daten[i];
+        gesamt += e;
+        if (i >= ab) danach += e;
+    }
+    return gesamt > 0.0 && danach < gesamt * std::pow(10.0, kOhneTonDb / 10.0);
+}
+
+/// Der Rest der Differenz zweier Klaenge, beide auf gleiche Energie gebracht, in dB (0 dB, wenn einer still ist).
+inline double restDb(const std::vector<float>& a, const std::vector<float>& b)
+{
+    const std::size_t n = std::min(a.size(), b.size());
+    double ea = 0.0, eb = 0.0;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        ea += static_cast<double>(a[i]) * a[i];
+        eb += static_cast<double>(b[i]) * b[i];
+    }
+    if (n == 0 || ea <= 0.0 || eb <= 0.0) return 0.0;
+    const double fa = 1.0 / std::sqrt(ea / static_cast<double>(n)), fb = 1.0 / std::sqrt(eb / static_cast<double>(n));
+    double d = 0.0;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        const double x = a[i] * fa - b[i] * fb;
+        d += x * x;
+    }
+    return 10.0 * std::log10(d / static_cast<double>(n) + 1e-300);
+}
+
+/// Die Zahl einer Staerke: `a-30` → −30, `e50` → 50.
+inline int staerkeWert(const QString& s)
+{
+    qsizetype i = 0;
+    while (i < s.size() && !s[i].isDigit() && s[i] != QLatin1Char('-')) ++i;
+    return s.mid(i).toInt();
+}
+
+/// LV6-3 a, LV6-1 a — vor `gleicheAn`: nimmt die Klaenge ohne Ton und die gleich klingenden aus `gerechnet` und aus der
+/// Liste (Eintrag, Messwert, Punkte); verglichen werden zwei Klaenge gleicher Fassung, deren Achsen sich nur in der
+/// Staerke oder nur im Instrument unterscheiden. Die Frage eines Vertreters gleicher Staerken verliert den Satz zur Staerke.
+inline Bereinigt bereinige(QJsonArray& klaenge, QJsonArray& messwerte, QJsonArray& punkte, std::vector<Klang>& gerechnet, int rate)
+{
+    Bereinigt b;
+    std::map<QString, const Klang*> daten;
+    for (const Klang& k : gerechnet) daten[k.id] = &k;
+    for (const Klang& k : gerechnet)
+        if (ohneTon(k.daten, rate)) b.ohneTon << k.id;
+
+    struct Eintrag
+    {
+        QString id;
+        QJsonObject achsen;
+        QJsonValue fassung;
+    };
+    std::vector<Eintrag> e;
+    for (const QJsonValue& v : klaenge)
+    {
+        const QJsonObject o = v.toObject();
+        const QString id = o.value(QStringLiteral("id")).toString();
+        if (!b.ohneTon.contains(id) && daten.count(id) != 0)
+            e.push_back({id, o.value(QStringLiteral("achsen")).toObject(), o.value(QStringLiteral("fassung"))});
+    }
+    std::vector<std::size_t> wurzel(e.size());
+    for (std::size_t i = 0; i < e.size(); ++i) wurzel[i] = i;
+    const auto finde = [&](std::size_t i) {
+        while (wurzel[i] != i) i = wurzel[i] = wurzel[wurzel[i]];
+        return i;
+    };
+    for (std::size_t i = 0; i < e.size(); ++i)
+        for (std::size_t j = i + 1; j < e.size(); ++j)
+        {
+            if (e[i].fassung != e[j].fassung) continue;
+            QStringList anders;
+            QStringList schluessel = e[i].achsen.keys() + e[j].achsen.keys();
+            schluessel.removeDuplicates();
+            for (const QString& s : schluessel)
+                if (e[i].achsen.value(s) != e[j].achsen.value(s)) anders << s;
+            if (anders != QStringList{QStringLiteral("staerke")} && anders != QStringList{QStringLiteral("instrument")}) continue;
+            if (restDb(daten.at(e[i].id)->daten, daten.at(e[j].id)->daten) < kGleichDb) wurzel[finde(j)] = finde(i);
+        }
+    std::map<std::size_t, std::vector<std::size_t>> gruppen;
+    for (std::size_t i = 0; i < e.size(); ++i) gruppen[finde(i)].push_back(i);
+    for (const auto& [_, g] : gruppen)
+    {
+        if (g.size() < 2) continue;
+        const QJsonValue instrument = e[g.front()].achsen.value(QStringLiteral("instrument"));
+        const bool staerken = std::all_of(g.begin(), g.end(), [&](std::size_t i) { return e[i].achsen.value(QStringLiteral("instrument")) == instrument; });
+        std::vector<std::size_t> reihe = g;  // in der Reihenfolge der Liste
+        if (staerken)
+            std::stable_sort(reihe.begin(), reihe.end(), [&](std::size_t x, std::size_t y) {
+                return staerkeWert(e[x].achsen.value(QStringLiteral("staerke")).toString()) <
+                       staerkeWert(e[y].achsen.value(QStringLiteral("staerke")).toString());
+            });
+        const std::size_t bleibt = staerken ? reihe[(reihe.size() - 1) / 2] : reihe.front();
+        if (staerken) b.vertreter << e[bleibt].id;
+        for (const std::size_t i : reihe)
+            if (i != bleibt) b.gleich << e[i].id;
+    }
+
+    const QStringList weg = b.ohneTon + b.gleich;
+    std::erase_if(gerechnet, [&](const Klang& k) { return weg.contains(k.id); });
+    ohneKlaenge(klaenge, messwerte, punkte, weg);
+    for (QJsonValueRef pt : punkte)
+    {
+        QJsonObject o = pt.toObject();
+        if (!b.vertreter.contains(o.value(QStringLiteral("klang")).toString())) continue;
+        QString frage = o.value(QStringLiteral("frage")).toString();
+        frage.remove(QStringLiteral(" Farbe ueber die Staerke glaubhaft?"));
+        o[QStringLiteral("frage")] = frage;
+        pt = o;
+    }
+    return b;
 }
 
 /// Schreibt die Klaenge als WAV unter `ort` und gibt je Klang die Zeile fuer `klaenge.sha256`. Eine WAV unter

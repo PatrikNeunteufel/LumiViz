@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.331.0
+> **Version:** 1.332.0
 > **Datum:** 2026-11-10 (Sessions 164 bis 186)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2890,14 +2890,31 @@ liegen roh unter −70 LUFS (Xylophon 103: a0 −21,2 LUFS, a-30 −85,7 — üb
 erreicht in der Höhe bei kleiner Stärke kaum Kontakt; ungeprüft). **KZ1 a:** ein Klang einer Liste ist mindestens 0,4 s
 lang (der Schreiber füllt mit Stille auf; IC: 9 Klänge Marimba Ais6, Xylophon D6/Ais7); Vorschlag an HT, dass
 `--liste-pruefen` einen kürzeren als Fehler meldet (Sync `sync_hoertest`, STATUS LV-5). Die Schreiber von LumiViz teilen
-dafür `HoerlistePegel.hpp` (`gleicheAn`, `ohneStille`, `schreibeKlaenge`); `klasse1_34i` und `membran_34h` Byte für Byte
+dafür `HoerlistePegel.hpp` (`gleicheAn`, `ohneKlaenge`, `schreibeKlaenge`; seit LV-6 auch `bereinige`); `klasse1_34i` und `membran_34h` Byte für Byte
 wie vorher, `stab_34g` ohne die fünf stillen. **Schritt 3 der Übergabe erledigt 2026-11-10 (S186, LG1 a):** für die
 Klassen 1, 4 und 5 gelten nur die Listen von LumiViz; `klasse1_34i` trägt dazu Hackbrett und Cimbalom, `stab_34g` die
 Steeldrum als Deluxe (nicht ausgeliefert, KL1 a, KS4 a; aus dem Kern, gestimmt wie vom Werkzeug,
 `tests/unit/UnitTests/VorlageOhneDatei.hpp`), die neuen Punkte am Ende — alte Punkte und Klänge Byte für Byte gleich
 (`klasse1_34i` 72 Klänge / 64 Punkte, `stab_34g` 100 / 94); IC 01, 04, 05 abgelöst: aus dem Repo entfernt, am Hörort mit
 `abgeloest.txt`, ungehört (Wächter `Hoerlisten AU3-1 a` prüft, dass sie nicht zurückkommen). Für 2, 3, 6–11 bleiben die
-IC-Listen die einzigen bis zum Port. Weiter mit LV-6 (übrig: 2 Hinweise in `klasse1_34i`, IC 02, 07, 08, 09).
+IC-Listen die einzigen bis zum Port. **LV-6 erledigt 2026-11-10 (S186,
+[Befund](modellierung/anbindung-ic/2026-11-10_S186_lv6_gleiche_klaenge.md)):** HT sah 21 gleiche Abdrücke, nach dem
+Angleichen klangen 29 Gruppen gleich. **LV6-1 a:** gleich klingende Klänge (Rest unter −60 dB) nur einmal, je Ton die
+mittlere Stärke (`hoerliste::bereinige`, für IC `ic_nachregeln.py`) — heraus Kalimba 6 (`stab_34g`), IC 02 30, IC 08 4.
+**LV6-2 a:** das Honky-tonk zusätzlich an Taste 41 (erste verstimmte Saite); seine Lage 26 ist nach Vorgabe das Upright und
+fällt nach LV6-1 a heraus. **LV6-3 a:** Klänge ohne Ton (nach 20 ms unter −80 dB) nicht in einer Liste — Upright und
+Honky-tonk 103 a-30, CP-70 95 a-30. **LV6-4 a:** Klänge, die gemessen nicht auf ihrem Ton stehen, nicht in einer Liste — IC
+Tenorsax H2, Shakuhachi D5/Ais5, Alphorn A3 (17 Klänge). Stand: `klasse1_34i` 69 Klänge / 61 Punkte (übrige Bytes gleich),
+`stab_34g` 94 / 88 (Pegel −25,9 statt −26,6 LUFS, alle Klänge neu skaliert), IC 02 26 / 24, 07 31, 08 49, 09 25; alle 11
+Listen mit `--liste-pruefen` 0 Fehler, 0 Hinweise; Sicherung von 08, 09 unter `…\Hoerproben\IC_vor_S186\`. **Befunde am
+Modell, offen:** (a) Hammer-Saite: bei a-30 im Diskant kein Ton — der Hammer (0,16 m/s) drückt die Saite quasi-statisch,
+Kontakt 2,65 ms gegen eine Periode von 0,32 ms (G7), CP-70 H6 4,0 ms; Hammertempo bei kleiner Stärke und Kontakt prüfen
+(gehört vermutlich zum Befund der stillen Stabspiele oben); (b) Kalimba: die Stärke wirkt nur als Faktor (lineares Zupfen,
+KA1 a) — ob das Instrument mit der Stärke heller wird, ist ungeprüft; (c) IC 02 Zupfen: ebenso nur Faktor (Kraft fester
+Form) — für den Port der Klasse 2 (34k); (d) IC 08: leeres Fenster des Blasdrucks an Sopran H3, Alt E3, Tenor H2 (Tenor H2
+in der Oktave); (e) IC 09 Shakuhachi D5, Ais5 nicht auf dem Ton; (f) IC 07 Alphorn A3 Gleichanteil und falscher Ton — mit
+A2 (NaN) in 34m. Vorschlag an HT: `--liste-pruefen` meldet gleich klingende Klänge, nicht nur gleiche Bytes. Als Nächstes
+im Hörtest: L5 (die Listen hören).
 Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
@@ -2910,8 +2927,8 @@ die HAL-Volltexte zum P131 hat Patrik am Ende von S181 abgelegt (seit S182 unter
 auf einen belegten Bauplan prüfen**; gebaut wird er mit einem belegten Satz); der Hörtest
 `hoertest/listen/klasse1_34i` (danach `clavinet` modal oder Waveguide, IK2-8 a); die Lizenzen der fünf neuen Quellen
 (`yamaha-u1`, `ptg-honkytonk`, `smem-cp70`, `modartt-cp80`, `remaggi2012`, „report only“); Befund: das Honky-tonk klingt bei
-a-30 an Taste 103 wie das Upright (die Verstimmung wirkt erst ab a-12; vermutlich trifft der Hammer leise eine Saite —
-ungeprüft). **Die Rechenzeit ist ausgesetzt, bis die Kühlung des Rechners erneuert ist** (Patrik S181): RZ-S180 a für QM1 a
+a-30 an Taste 103 wie das Upright — geklärt S186 (LV-6): dort klingt keins von beiden, nur ein Puls (Befund am Modell (a)
+oben). **Die Rechenzeit ist ausgesetzt, bis die Kühlung des Rechners erneuert ist** (Patrik S181): RZ-S180 a für QM1 a
 und die Fälle der Stufe 34i werden danach gesammelt nachgeholt (dreimal `*31b-3 Rechenzeit*` allein nach der Taktprobe,
 Spanne unter 1,15). Offen aus 34h: der Hörtest `hoertest/listen/membran_34h` (danach `conga` IC oder Synth, IK2-8 a); die Lizenzen der neun neuen
 Quellen (Register, „report only“); Befunde: der Cross-Stick 15 dB unter der Snare, der Teppich folgt der Stärke nicht (IC,
@@ -6429,6 +6446,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.332.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: LV-6 erledigt — LV6-1 a (gleich klingende Klänge nur einmal), LV6-2 a (Honky-tonk an Taste 41), LV6-3 a (ohne Ton nicht in einer Liste), LV6-4 a (nicht auf dem Ton nicht in einer Liste); sechs Befunde am Modell; Befund des Honky-tonk 103 a-30 aus 34i geklärt. |
 | 1.331.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: Schritt 3 der Übergabe erledigt — LG1 a (für die Klassen 1, 4, 5 gelten nur die Listen von LumiViz; Hackbrett, Cimbalom, Steeldrum als Deluxe in `klasse1_34i` und `stab_34g`; IC 01, 04, 05 abgelöst). |
 | 1.330.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Anbindung InstrumentsCalculation: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l. |
 | 1.329.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: LV-5 erledigt — PN1 a (IC-Listen nachgeregelt), PN2 a (stille Klänge nicht in einer Liste; Befund am Modell), KZ1 a (Klänge mindestens 0,4 s; Vorschlag an HT); weiter Schritt 3 der Übergabe, LV-6. |

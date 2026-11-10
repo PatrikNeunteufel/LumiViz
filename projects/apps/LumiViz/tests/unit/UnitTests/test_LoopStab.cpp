@@ -320,11 +320,13 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
             ++deluxe;
         }
     // der gemeinsame Pegel, jeder Klang nachgeregelt; stille kommen nicht in die Liste (PN2 a, S186 — ein Befund der
-    // ungemessenen Vorgaben: in der Hoehe bei kleiner Staerke zu schwacher Anschlag)
+    // ungemessenen Vorgaben: in der Hoehe bei kleiner Staerke zu schwacher Anschlag); vorher ohne Ton und gleich
+    // klingend heraus (LV6-3 a, LV6-1 a: die Kalimba wird linear gezupft, ihre Staerken klingen gleich)
+    const hoerliste::Bereinigt bereinigt = hoerliste::bereinige(klaenge, messwerte, punkte, gerechnet, kRate);
     const hoerliste::Pegel pegel = hoerliste::gleicheAn(gerechnet, kRate, kZielHoechstens, kSpitzeHoechstens);
     const double ziel = pegel.ziel;
     const QStringList& stille = pegel.stille;
-    hoerliste::ohneStille(klaenge, messwerte, punkte, stille);
+    hoerliste::ohneKlaenge(klaenge, messwerte, punkte, stille);
     const QStringList summen = hoerliste::schreibeKlaenge(dir, gerechnet, kRate);
     const QJsonObject liste{
         {QStringLiteral("schema"), 1},
@@ -359,7 +361,14 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare IC gegen Synth) unter " << ordner.toStdString());
     MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, nicht in der Liste, PN2 a): "
                      << stille.join(QStringLiteral(", ")).toStdString());
+    MESSAGE("ohne Ton (LV6-3 a): " << bereinigt.ohneTon.join(QStringLiteral(", ")).toStdString()
+                                   << "; gleich klingend, nicht in der Liste (LV6-1 a): " << bereinigt.gleich.join(QStringLiteral(", ")).toStdString());
     CHECK(deluxe == 1);
     CHECK(paare == 9);
-    CHECK(klaenge.size() + stille.size() == 81 + 9 + 9 + 6);  // die mittleren Noten der Paare sind schon in der Reihe der Lagen
+    // die mittleren Noten der Paare sind schon in der Reihe der Lagen
+    CHECK(klaenge.size() + stille.size() + bereinigt.ohneTon.size() + bereinigt.gleich.size() == 81 + 9 + 9 + 6);
+    // LV6-1 a: von der Kalimba bleibt je Ton a-12 (sie wird linear gezupft, KA1 a — Befund am Modell)
+    CHECK(bereinigt.gleich.size() == 6);
+    CHECK(std::all_of(bereinigt.gleich.begin(), bereinigt.gleich.end(), [](const QString& id) { return id.startsWith(QStringLiteral("kalimba_")); }));
+    CHECK(bereinigt.ohneTon.isEmpty());
 }

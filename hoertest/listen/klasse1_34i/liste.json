@@ -83,17 +83,6 @@
         {
             "achsen": {
                 "instrument": "Upright piano",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "datei": "klaenge/upright_piano_103_a-30.wav",
-            "fassung": "ic",
-            "id": "upright_piano_103_a-30"
-        },
-        {
-            "achsen": {
-                "instrument": "Upright piano",
                 "staerke": "a-12",
                 "taste": 103,
                 "ton": "G7"
@@ -112,39 +101,6 @@
             "datei": "klaenge/upright_piano_103_a0.wav",
             "fassung": "ic",
             "id": "upright_piano_103_a0"
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a-30",
-                "taste": 26,
-                "ton": "D1"
-            },
-            "datei": "klaenge/honky_tonk_piano_26_a-30.wav",
-            "fassung": "ic",
-            "id": "honky_tonk_piano_26_a-30"
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a-12",
-                "taste": 26,
-                "ton": "D1"
-            },
-            "datei": "klaenge/honky_tonk_piano_26_a-12.wav",
-            "fassung": "ic",
-            "id": "honky_tonk_piano_26_a-12"
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a0",
-                "taste": 26,
-                "ton": "D1"
-            },
-            "datei": "klaenge/honky_tonk_piano_26_a0.wav",
-            "fassung": "ic",
-            "id": "honky_tonk_piano_26_a0"
         },
         {
             "achsen": {
@@ -178,17 +134,6 @@
             "datei": "klaenge/honky_tonk_piano_64_a0.wav",
             "fassung": "ic",
             "id": "honky_tonk_piano_64_a0"
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "datei": "klaenge/honky_tonk_piano_103_a-30.wav",
-            "fassung": "ic",
-            "id": "honky_tonk_piano_103_a-30"
         },
         {
             "achsen": {
@@ -277,17 +222,6 @@
             "datei": "klaenge/electric_grand_piano_64_a0.wav",
             "fassung": "ic",
             "id": "electric_grand_piano_64_a0"
-        },
-        {
-            "achsen": {
-                "instrument": "Electric grand piano",
-                "staerke": "a-30",
-                "taste": 95,
-                "ton": "B6"
-            },
-            "datei": "klaenge/electric_grand_piano_95_a-30.wav",
-            "fassung": "ic",
-            "id": "electric_grand_piano_95_a-30"
         },
         {
             "achsen": {
@@ -809,6 +743,39 @@
             "datei": "klaenge/cimbalom_60_folge_clip_mitschwingen.wav",
             "fassung": "deluxe",
             "id": "cimbalom_60_folge_clip_mitschwingen"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/honky_tonk_piano_41_a-30.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_41_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/honky_tonk_piano_41_a-12.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_41_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/honky_tonk_piano_41_a0.wav",
+            "fassung": "ic",
+            "id": "honky_tonk_piano_41_a0"
         }
     ],
     "kontrolle": "moderat",
@@ -912,22 +879,6 @@
         {
             "achsen": {
                 "instrument": "Upright piano",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -62.7
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Upright piano",
                 "staerke": "a-12",
                 "taste": 103,
                 "ton": "G7"
@@ -954,54 +905,6 @@
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
                     "wert": -27.64
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a-30",
-                "taste": 26,
-                "ton": "D1"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -48.31
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a-12",
-                "taste": 26,
-                "ton": "D1"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -28.49
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a0",
-                "taste": 26,
-                "ton": "D1"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -16.46
                 }
             ]
         },
@@ -1050,22 +953,6 @@
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
                     "wert": -23.07
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Honky-tonk piano",
-                "staerke": "a-30",
-                "taste": 103,
-                "ton": "G7"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -60.91
                 }
             ]
         },
@@ -1194,22 +1081,6 @@
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
                     "wert": -20.63
-                }
-            ]
-        },
-        {
-            "achsen": {
-                "instrument": "Electric grand piano",
-                "staerke": "a-30",
-                "taste": 95,
-                "ton": "B6"
-            },
-            "fassung": "ic",
-            "werte": [
-                {
-                    "einheit": "LUFS",
-                    "name": "lufs_vorher",
-                    "wert": -58.79
                 }
             ]
         },
@@ -1968,6 +1839,54 @@
                     "wert": -35.42
                 }
             ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-30",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -53.12
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a-12",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.96
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Honky-tonk piano",
+                "staerke": "a0",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "ic",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -20.37
+                }
+            ]
         }
     ],
     "pegel": {
@@ -2038,16 +1957,6 @@
         {
             "art": "einzel",
             "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p007",
-            "klang": "upright_piano_103_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p008",
             "klang": "upright_piano_103_a-12",
             "pole": [
@@ -2060,36 +1969,6 @@
             "frage": "Klingt es nach Upright piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p009",
             "klang": "upright_piano_103_a0",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p010",
-            "klang": "honky_tonk_piano_26_a-30",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p011",
-            "klang": "honky_tonk_piano_26_a-12",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p012",
-            "klang": "honky_tonk_piano_26_a0",
             "pole": [
                 "nein",
                 "ja"
@@ -2120,16 +1999,6 @@
             "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p015",
             "klang": "honky_tonk_piano_64_a0",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p016",
-            "klang": "honky_tonk_piano_103_a-30",
             "pole": [
                 "nein",
                 "ja"
@@ -2210,16 +2079,6 @@
             "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
             "id": "p024",
             "klang": "electric_grand_piano_64_a0",
-            "pole": [
-                "nein",
-                "ja"
-            ]
-        },
-        {
-            "art": "einzel",
-            "frage": "Klingt es nach Electric grand piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
-            "id": "p025",
-            "klang": "electric_grand_piano_95_a-30",
             "pole": [
                 "nein",
                 "ja"
@@ -2604,6 +2463,36 @@
                 "cimbalom_60_folge_clip_ohne"
             ],
             "vorzug": "Welcher klingt glaubhafter (Mitschwingen der anderen Choere, Kopplung offen)?"
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p065",
+            "klang": "honky_tonk_piano_41_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p066",
+            "klang": "honky_tonk_piano_41_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Honky-tonk piano (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p067",
+            "klang": "honky_tonk_piano_41_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
         }
     ],
     "schema": 1,

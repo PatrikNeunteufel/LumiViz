@@ -5,15 +5,18 @@
   "katalog": null,
   "kontrolle": "moderat",
   "pegel": {
-    "lufs": -23,
+    "lufs": -23.0,
     "toleranz_lu": 1
   },
   "dauer_s": null,
-  "gruppe_nach": ["instrument"],
+  "gruppe_nach": [
+    "instrument"
+  ],
   "fassungen": {
     "vorgabe": "die Vorgabe des Modells (baueVorgabe…), InstrumentsCalculation rechnung/"
   },
-  "klaenge": [{
+  "klaenge": [
+    {
       "id": "Klarinette_F3_e0",
       "datei": "klaenge/Klarinette_F3_e0.wav",
       "fassung": "vorgabe",
@@ -22,7 +25,8 @@
         "ton": "F3",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_F3_e50",
       "datei": "klaenge/Klarinette_F3_e50.wav",
       "fassung": "vorgabe",
@@ -31,7 +35,8 @@
         "ton": "F3",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_F3_e100",
       "datei": "klaenge/Klarinette_F3_e100.wav",
       "fassung": "vorgabe",
@@ -40,7 +45,8 @@
         "ton": "F3",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_e0",
       "datei": "klaenge/Klarinette_Fis4_e0.wav",
       "fassung": "vorgabe",
@@ -49,7 +55,8 @@
         "ton": "Fis4",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_e50",
       "datei": "klaenge/Klarinette_Fis4_e50.wav",
       "fassung": "vorgabe",
@@ -58,7 +65,8 @@
         "ton": "Fis4",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_e100",
       "datei": "klaenge/Klarinette_Fis4_e100.wav",
       "fassung": "vorgabe",
@@ -67,7 +75,8 @@
         "ton": "Fis4",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis5_e0",
       "datei": "klaenge/Klarinette_Fis5_e0.wav",
       "fassung": "vorgabe",
@@ -76,7 +85,8 @@
         "ton": "Fis5",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis5_e50",
       "datei": "klaenge/Klarinette_Fis5_e50.wav",
       "fassung": "vorgabe",
@@ -85,7 +95,8 @@
         "ton": "Fis5",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis5_e100",
       "datei": "klaenge/Klarinette_Fis5_e100.wav",
       "fassung": "vorgabe",
@@ -94,7 +105,8 @@
         "ton": "Fis5",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_atem",
       "datei": "klaenge/Klarinette_Fis4_atem.wav",
       "fassung": "vorgabe",
@@ -103,7 +115,8 @@
         "ton": "Fis4",
         "spielweise": "atem"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_flatter",
       "datei": "klaenge/Klarinette_Fis4_flatter.wav",
       "fassung": "vorgabe",
@@ -112,7 +125,8 @@
         "ton": "Fis4",
         "spielweise": "flatter"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_bend",
       "datei": "klaenge/Klarinette_Fis4_bend.wav",
       "fassung": "vorgabe",
@@ -121,7 +135,8 @@
         "ton": "Fis4",
         "spielweise": "bend"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_vibrato",
       "datei": "klaenge/Klarinette_Fis4_vibrato.wav",
       "fassung": "vorgabe",
@@ -130,7 +145,8 @@
         "ton": "Fis4",
         "spielweise": "vibrato"
       }
-    }, {
+    },
+    {
       "id": "Klarinette_Fis4_legato",
       "datei": "klaenge/Klarinette_Fis4_legato.wav",
       "fassung": "vorgabe",
@@ -139,16 +155,8 @@
         "ton": "Fis4",
         "spielweise": "legato"
       }
-    }, {
-      "id": "Sopransaxophon_H3_e0",
-      "datei": "klaenge/Sopransaxophon_H3_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Sopransaxophon",
-        "ton": "H3",
-        "staerke": "e0"
-      }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H3_e50",
       "datei": "klaenge/Sopransaxophon_H3_e50.wav",
       "fassung": "vorgabe",
@@ -157,16 +165,8 @@
         "ton": "H3",
         "staerke": "e50"
       }
-    }, {
-      "id": "Sopransaxophon_H3_e100",
-      "datei": "klaenge/Sopransaxophon_H3_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Sopransaxophon",
-        "ton": "H3",
-        "staerke": "e100"
-      }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_e0",
       "datei": "klaenge/Sopransaxophon_H4_e0.wav",
       "fassung": "vorgabe",
@@ -175,7 +175,8 @@
         "ton": "H4",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_e50",
       "datei": "klaenge/Sopransaxophon_H4_e50.wav",
       "fassung": "vorgabe",
@@ -184,7 +185,8 @@
         "ton": "H4",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_e100",
       "datei": "klaenge/Sopransaxophon_H4_e100.wav",
       "fassung": "vorgabe",
@@ -193,7 +195,8 @@
         "ton": "H4",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H5_e0",
       "datei": "klaenge/Sopransaxophon_H5_e0.wav",
       "fassung": "vorgabe",
@@ -202,7 +205,8 @@
         "ton": "H5",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H5_e50",
       "datei": "klaenge/Sopransaxophon_H5_e50.wav",
       "fassung": "vorgabe",
@@ -211,7 +215,8 @@
         "ton": "H5",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H5_e100",
       "datei": "klaenge/Sopransaxophon_H5_e100.wav",
       "fassung": "vorgabe",
@@ -220,7 +225,8 @@
         "ton": "H5",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_atem",
       "datei": "klaenge/Sopransaxophon_H4_atem.wav",
       "fassung": "vorgabe",
@@ -229,7 +235,8 @@
         "ton": "H4",
         "spielweise": "atem"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_flatter",
       "datei": "klaenge/Sopransaxophon_H4_flatter.wav",
       "fassung": "vorgabe",
@@ -238,7 +245,8 @@
         "ton": "H4",
         "spielweise": "flatter"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_bend",
       "datei": "klaenge/Sopransaxophon_H4_bend.wav",
       "fassung": "vorgabe",
@@ -247,7 +255,8 @@
         "ton": "H4",
         "spielweise": "bend"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_vibrato",
       "datei": "klaenge/Sopransaxophon_H4_vibrato.wav",
       "fassung": "vorgabe",
@@ -256,7 +265,8 @@
         "ton": "H4",
         "spielweise": "vibrato"
       }
-    }, {
+    },
+    {
       "id": "Sopransaxophon_H4_legato",
       "datei": "klaenge/Sopransaxophon_H4_legato.wav",
       "fassung": "vorgabe",
@@ -265,34 +275,8 @@
         "ton": "H4",
         "spielweise": "legato"
       }
-    }, {
-      "id": "Tenorsaxophon_H2_e0",
-      "datei": "klaenge/Tenorsaxophon_H2_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Tenorsaxophon",
-        "ton": "H2",
-        "staerke": "e0"
-      }
-    }, {
-      "id": "Tenorsaxophon_H2_e50",
-      "datei": "klaenge/Tenorsaxophon_H2_e50.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Tenorsaxophon",
-        "ton": "H2",
-        "staerke": "e50"
-      }
-    }, {
-      "id": "Tenorsaxophon_H2_e100",
-      "datei": "klaenge/Tenorsaxophon_H2_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Tenorsaxophon",
-        "ton": "H2",
-        "staerke": "e100"
-      }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_e0",
       "datei": "klaenge/Tenorsaxophon_H3_e0.wav",
       "fassung": "vorgabe",
@@ -301,7 +285,8 @@
         "ton": "H3",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_e50",
       "datei": "klaenge/Tenorsaxophon_H3_e50.wav",
       "fassung": "vorgabe",
@@ -310,7 +295,8 @@
         "ton": "H3",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_e100",
       "datei": "klaenge/Tenorsaxophon_H3_e100.wav",
       "fassung": "vorgabe",
@@ -319,7 +305,8 @@
         "ton": "H3",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H4_e0",
       "datei": "klaenge/Tenorsaxophon_H4_e0.wav",
       "fassung": "vorgabe",
@@ -328,7 +315,8 @@
         "ton": "H4",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H4_e50",
       "datei": "klaenge/Tenorsaxophon_H4_e50.wav",
       "fassung": "vorgabe",
@@ -337,7 +325,8 @@
         "ton": "H4",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H4_e100",
       "datei": "klaenge/Tenorsaxophon_H4_e100.wav",
       "fassung": "vorgabe",
@@ -346,7 +335,8 @@
         "ton": "H4",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_atem",
       "datei": "klaenge/Tenorsaxophon_H3_atem.wav",
       "fassung": "vorgabe",
@@ -355,7 +345,8 @@
         "ton": "H3",
         "spielweise": "atem"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_flatter",
       "datei": "klaenge/Tenorsaxophon_H3_flatter.wav",
       "fassung": "vorgabe",
@@ -364,7 +355,8 @@
         "ton": "H3",
         "spielweise": "flatter"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_bend",
       "datei": "klaenge/Tenorsaxophon_H3_bend.wav",
       "fassung": "vorgabe",
@@ -373,7 +365,8 @@
         "ton": "H3",
         "spielweise": "bend"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_vibrato",
       "datei": "klaenge/Tenorsaxophon_H3_vibrato.wav",
       "fassung": "vorgabe",
@@ -382,7 +375,8 @@
         "ton": "H3",
         "spielweise": "vibrato"
       }
-    }, {
+    },
+    {
       "id": "Tenorsaxophon_H3_legato",
       "datei": "klaenge/Tenorsaxophon_H3_legato.wav",
       "fassung": "vorgabe",
@@ -391,16 +385,8 @@
         "ton": "H3",
         "spielweise": "legato"
       }
-    }, {
-      "id": "Altsaxophon_E3_e0",
-      "datei": "klaenge/Altsaxophon_E3_e0.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Altsaxophon",
-        "ton": "E3",
-        "staerke": "e0"
-      }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E3_e50",
       "datei": "klaenge/Altsaxophon_E3_e50.wav",
       "fassung": "vorgabe",
@@ -409,16 +395,8 @@
         "ton": "E3",
         "staerke": "e50"
       }
-    }, {
-      "id": "Altsaxophon_E3_e100",
-      "datei": "klaenge/Altsaxophon_E3_e100.wav",
-      "fassung": "vorgabe",
-      "achsen": {
-        "instrument": "Altsaxophon",
-        "ton": "E3",
-        "staerke": "e100"
-      }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_e0",
       "datei": "klaenge/Altsaxophon_E4_e0.wav",
       "fassung": "vorgabe",
@@ -427,7 +405,8 @@
         "ton": "E4",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_e50",
       "datei": "klaenge/Altsaxophon_E4_e50.wav",
       "fassung": "vorgabe",
@@ -436,7 +415,8 @@
         "ton": "E4",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_e100",
       "datei": "klaenge/Altsaxophon_E4_e100.wav",
       "fassung": "vorgabe",
@@ -445,7 +425,8 @@
         "ton": "E4",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E5_e0",
       "datei": "klaenge/Altsaxophon_E5_e0.wav",
       "fassung": "vorgabe",
@@ -454,7 +435,8 @@
         "ton": "E5",
         "staerke": "e0"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E5_e50",
       "datei": "klaenge/Altsaxophon_E5_e50.wav",
       "fassung": "vorgabe",
@@ -463,7 +445,8 @@
         "ton": "E5",
         "staerke": "e50"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E5_e100",
       "datei": "klaenge/Altsaxophon_E5_e100.wav",
       "fassung": "vorgabe",
@@ -472,7 +455,8 @@
         "ton": "E5",
         "staerke": "e100"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_atem",
       "datei": "klaenge/Altsaxophon_E4_atem.wav",
       "fassung": "vorgabe",
@@ -481,7 +465,8 @@
         "ton": "E4",
         "spielweise": "atem"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_flatter",
       "datei": "klaenge/Altsaxophon_E4_flatter.wav",
       "fassung": "vorgabe",
@@ -490,7 +475,8 @@
         "ton": "E4",
         "spielweise": "flatter"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_bend",
       "datei": "klaenge/Altsaxophon_E4_bend.wav",
       "fassung": "vorgabe",
@@ -499,7 +485,8 @@
         "ton": "E4",
         "spielweise": "bend"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_vibrato",
       "datei": "klaenge/Altsaxophon_E4_vibrato.wav",
       "fassung": "vorgabe",
@@ -508,7 +495,8 @@
         "ton": "E4",
         "spielweise": "vibrato"
       }
-    }, {
+    },
+    {
       "id": "Altsaxophon_E4_legato",
       "datei": "klaenge/Altsaxophon_E4_legato.wav",
       "fassung": "vorgabe",
@@ -517,1015 +505,1235 @@
         "ton": "E4",
         "spielweise": "legato"
       }
-    }],
-  "messwerte": [{
+    }
+  ],
+  "messwerte": [
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "F3",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -22.25,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "F3",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -18.710000000000001,
+          "wert": -18.71,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "F3",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -17.649999999999999,
+          "wert": -17.65,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -15.15,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -13.76,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -12.550000000000001,
+          "wert": -12.55,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis5",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -11.779999999999999,
+          "wert": -11.78,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis5",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -10.32,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis5",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -9.0800000000000001,
+          "wert": -9.08,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "spielweise": "atem"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -13.33,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "spielweise": "flatter"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -14.19,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "spielweise": "bend"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -13.140000000000001,
+          "wert": -13.14,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "spielweise": "vibrato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -13.289999999999999,
+          "wert": -13.29,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Klarinette",
         "ton": "Fis4",
         "spielweise": "legato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -13.52,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Sopransaxophon",
-        "ton": "H3",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -10.699999999999999,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H3",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -10.699999999999999,
+          "wert": -10.7,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Sopransaxophon",
-        "ton": "H3",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -10.699999999999999,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -14.970000000000001,
+          "wert": -14.97,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -13.390000000000001,
+          "wert": -13.39,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -11.65,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H5",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -11.289999999999999,
+          "wert": -11.29,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H5",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -8.0800000000000001,
+          "wert": -8.08,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H5",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -5.4299999999999997,
+          "wert": -5.43,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "spielweise": "atem"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -12.98,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "spielweise": "flatter"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -13.44,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "spielweise": "bend"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -12.76,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "spielweise": "vibrato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -12.94,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Sopransaxophon",
         "ton": "H4",
         "spielweise": "legato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -12.15,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Tenorsaxophon",
-        "ton": "H2",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -9.0800000000000001,
-          "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Tenorsaxophon",
-        "ton": "H2",
-        "staerke": "e50"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -9.0800000000000001,
-          "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Tenorsaxophon",
-        "ton": "H2",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -9.0800000000000001,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -14.84,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -12.57,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -10.970000000000001,
+          "wert": -10.97,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H4",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -6.0899999999999999,
+          "wert": -6.09,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H4",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -4.4800000000000004,
+          "wert": -4.48,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H4",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -3.3799999999999999,
+          "wert": -3.38,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "spielweise": "atem"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -12.09,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "spielweise": "flatter"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -12.550000000000001,
+          "wert": -12.55,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "spielweise": "bend"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -11.970000000000001,
+          "wert": -11.97,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "spielweise": "vibrato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -11.960000000000001,
+          "wert": -11.96,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Tenorsaxophon",
         "ton": "H3",
         "spielweise": "legato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -11.869999999999999,
+          "wert": -11.87,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Altsaxophon",
-        "ton": "E3",
-        "staerke": "e0"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -12.609999999999999,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E3",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -12.609999999999999,
+          "wert": -12.61,
           "einheit": "LUFS"
-        }]
-    }, {
-      "achsen": {
-        "instrument": "Altsaxophon",
-        "ton": "E3",
-        "staerke": "e100"
-      },
-      "fassung": "vorgabe",
-      "werte": [{
-          "name": "lufs_vorher",
-          "wert": -12.609999999999999,
-          "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -16.02,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -13.77,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -11.75,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E5",
         "staerke": "e0"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -9.2300000000000004,
+          "wert": -9.23,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E5",
         "staerke": "e50"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -6.7699999999999996,
+          "wert": -6.77,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E5",
         "staerke": "e100"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -4.5700000000000003,
+          "wert": -4.57,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "spielweise": "atem"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -13.17,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "spielweise": "flatter"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -13.48,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "spielweise": "bend"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
           "wert": -12.98,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "spielweise": "vibrato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -13.130000000000001,
+          "wert": -13.13,
           "einheit": "LUFS"
-        }]
-    }, {
+        }
+      ]
+    },
+    {
       "achsen": {
         "instrument": "Altsaxophon",
         "ton": "E4",
         "spielweise": "legato"
       },
       "fassung": "vorgabe",
-      "werte": [{
+      "werte": [
+        {
           "name": "lufs_vorher",
-          "wert": -12.880000000000001,
+          "wert": -12.88,
           "einheit": "LUFS"
-        }]
-    }],
-  "punkte": [{
+        }
+      ]
+    }
+  ],
+  "punkte": [
+    {
       "id": "p001",
       "art": "einzel",
       "klang": "Klarinette_F3_e0",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p002",
       "art": "einzel",
       "klang": "Klarinette_F3_e50",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p003",
       "art": "einzel",
       "klang": "Klarinette_F3_e100",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p004",
       "art": "einzel",
       "klang": "Klarinette_Fis4_e0",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p005",
       "art": "einzel",
       "klang": "Klarinette_Fis4_e50",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p006",
       "art": "einzel",
       "klang": "Klarinette_Fis4_e100",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p007",
       "art": "einzel",
       "klang": "Klarinette_Fis5_e0",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p008",
       "art": "einzel",
       "klang": "Klarinette_Fis5_e50",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p009",
       "art": "einzel",
       "klang": "Klarinette_Fis5_e100",
       "frage": "Klingt es nach Klarinette (ungemessen)? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p010",
       "art": "einzel",
       "klang": "Klarinette_Fis4_atem",
       "frage": "Einsatz ohne Zunge: weich genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p011",
       "art": "einzel",
       "klang": "Klarinette_Fis4_flatter",
       "frage": "Flatterzunge (25 Hz): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p012",
       "art": "einzel",
       "klang": "Klarinette_Fis4_bend",
       "frage": "Bend nach unten ueber den Vokaltrakt: hoerbar?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p013",
       "art": "einzel",
       "klang": "Klarinette_Fis4_vibrato",
       "frage": "Vibrato ueber den Druck: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p014",
       "art": "einzel",
       "klang": "Klarinette_Fis4_legato",
       "frage": "Legato (Moden ueberblendet): Uebergaenge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p015",
-      "art": "einzel",
-      "klang": "Sopransaxophon_H3_e0",
-      "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p016",
       "art": "einzel",
       "klang": "Sopransaxophon_H3_e50",
       "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p017",
-      "art": "einzel",
-      "klang": "Sopransaxophon_H3_e100",
-      "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p018",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_e0",
       "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p019",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_e50",
       "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p020",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_e100",
       "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p021",
       "art": "einzel",
       "klang": "Sopransaxophon_H5_e0",
       "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p022",
       "art": "einzel",
       "klang": "Sopransaxophon_H5_e50",
       "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p023",
       "art": "einzel",
       "klang": "Sopransaxophon_H5_e100",
       "frage": "Klingt es nach Sopransaxophon (ungemessen (Blatt der Klarinette uebertragen))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p024",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_atem",
       "frage": "Einsatz ohne Zunge: weich genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p025",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_flatter",
       "frage": "Flatterzunge (25 Hz): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p026",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_bend",
       "frage": "Bend nach unten ueber den Vokaltrakt: hoerbar?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p027",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_vibrato",
       "frage": "Vibrato ueber den Druck: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p028",
       "art": "einzel",
       "klang": "Sopransaxophon_H4_legato",
       "frage": "Legato (Moden ueberblendet): Uebergaenge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p029",
-      "art": "einzel",
-      "klang": "Tenorsaxophon_H2_e0",
-      "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p030",
-      "art": "einzel",
-      "klang": "Tenorsaxophon_H2_e50",
-      "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p031",
-      "art": "einzel",
-      "klang": "Tenorsaxophon_H2_e100",
-      "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p032",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_e0",
       "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p033",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_e50",
       "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p034",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_e100",
       "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p035",
       "art": "einzel",
       "klang": "Tenorsaxophon_H4_e0",
       "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p036",
       "art": "einzel",
       "klang": "Tenorsaxophon_H4_e50",
       "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p037",
       "art": "einzel",
       "klang": "Tenorsaxophon_H4_e100",
       "frage": "Klingt es nach Tenorsaxophon (ungemessen (Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p038",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_atem",
       "frage": "Einsatz ohne Zunge: weich genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p039",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_flatter",
       "frage": "Flatterzunge (25 Hz): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p040",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_bend",
       "frage": "Bend nach unten ueber den Vokaltrakt: hoerbar?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p041",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_vibrato",
       "frage": "Vibrato ueber den Druck: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p042",
       "art": "einzel",
       "klang": "Tenorsaxophon_H3_legato",
       "frage": "Legato (Moden ueberblendet): Uebergaenge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p043",
-      "art": "einzel",
-      "klang": "Altsaxophon_E3_e0",
-      "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p044",
       "art": "einzel",
       "klang": "Altsaxophon_E3_e50",
       "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
-      "id": "p045",
-      "art": "einzel",
-      "klang": "Altsaxophon_E3_e100",
-      "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p046",
       "art": "einzel",
       "klang": "Altsaxophon_E4_e0",
       "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p047",
       "art": "einzel",
       "klang": "Altsaxophon_E4_e50",
       "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p048",
       "art": "einzel",
       "klang": "Altsaxophon_E4_e100",
       "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p049",
       "art": "einzel",
       "klang": "Altsaxophon_E5_e0",
       "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p050",
       "art": "einzel",
       "klang": "Altsaxophon_E5_e50",
       "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p051",
       "art": "einzel",
       "klang": "Altsaxophon_E5_e100",
       "frage": "Klingt es nach Altsaxophon (ungemessen (Kegel nach Petersen 2020 und Ukshini 2025; Blatt der Klarinette uebertragen, Mundstueck abgeleitet))? Einsatz mit der Zunge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p052",
       "art": "einzel",
       "klang": "Altsaxophon_E4_atem",
       "frage": "Einsatz ohne Zunge: weich genug?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p053",
       "art": "einzel",
       "klang": "Altsaxophon_E4_flatter",
       "frage": "Flatterzunge (25 Hz): glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p054",
       "art": "einzel",
       "klang": "Altsaxophon_E4_bend",
       "frage": "Bend nach unten ueber den Vokaltrakt: hoerbar?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p055",
       "art": "einzel",
       "klang": "Altsaxophon_E4_vibrato",
       "frage": "Vibrato ueber den Druck: glaubhaft?",
-      "pole": ["nein", "ja"]
-    }, {
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    },
+    {
       "id": "p056",
       "art": "einzel",
       "klang": "Altsaxophon_E4_legato",
       "frage": "Legato (Moden ueberblendet): Uebergaenge glaubhaft?",
-      "pole": ["nein", "ja"]
-    }]
+      "pole": [
+        "nein",
+        "ja"
+      ]
+    }
+  ]
 }

@@ -1,5 +1,5 @@
 # Abdruck jedes Klangs (SHA-256 der WAV-Datei). Geschrieben mit: ic_hoerproben hoertest
-# Nachgeregelt S186 (PN1 a, PN2 a, KZ1 a) mit: python -I tools/hoertest/ic_nachregeln.py (LumiViz)
+# Nachgeregelt S186 (PN1 a, PN2 a, KZ1 a, LV6-1 a, LV6-3 a, LV6-4 a) mit: python -I tools/hoertest/ic_nachregeln.py (LumiViz)
 7c058fc5506736b8f8faab0a3bfaf2898ccfb5161a392dc6b615095b484f76cd  klaenge/Posaune_G2_e0.wav
 fd51665a3312d1bbecb847c5f24a9c4c4ac921c59d951518e5edd51d15a5320d  klaenge/Posaune_G2_e50.wav
 7f284ee1e420e48224af136423800fdd3ea19ca268b4d2e69c8854fa9217873d  klaenge/Posaune_G2_e100.wav
@@ -17,15 +17,9 @@ db619ebfd7853df62fbdc92d4ebfbabf3bc317e2a65bf91e9802beaca9706397  klaenge/Posaun
 0f79100a8d9a8f7239f62a6b23ee5c0098d05a8fdefcc7e93a2b94a7d4bf2b13  klaenge/Posaune_Ais3_Cup.wav
 e1b4aebae7bde7e8f683e7991c7287f6f6ba9b1b616d9d08ddb9f92c7bbba490  klaenge/Posaune_Ais3_Harmon.wav
 7259763276d03979bde9075f2c1c531dc0dba461e02cf54ffc44cf21ee0984aa  klaenge/Posaune_Ais3_Harmon_wahwah.wav
-ca43e5e4050caa13d9557c56d549461d1e7aa92fcd2b769503232a1e507bb891  klaenge/Alphorn_A3_e0.wav
-d1813fff4ab50ac9b53a532fb5179b933eb95ed60de899d9d665d341eaba68e6  klaenge/Alphorn_A3_e50.wav
-ca43e5e4050caa13d9557c56d549461d1e7aa92fcd2b769503232a1e507bb891  klaenge/Alphorn_A3_e100.wav
 1bbe3feca1681f9b68169c26a8138f0a98d948dab867014685e292e28b5739c9  klaenge/Alphorn_A4_e0.wav
 7c7bc5488d5c8e291639576c6618e2abb0a0f750c22867b11022bef178bd7f2c  klaenge/Alphorn_A4_e50.wav
 af3894181668b3501583134290301e6b56882c0f18733bf61e63157e7c4124ad  klaenge/Alphorn_A4_e100.wav
-90c0d079daf4c810e654ce60c01d0f01dae980bc0fe004a9535d02ceee519307  klaenge/Alphorn_A3_vibrato.wav
-655527885f5ea31c9a7b642899e0ef84523fc87544333c04896eb0e9d21c5786  klaenge/Alphorn_A3_growl.wav
-6ed963b4da348d2aa1543c6386eafe541a990367d16d71b1af43251bfe8b6d49  klaenge/Alphorn_A3_fall.wav
 c5217fecdc01c5e8b3ab060a328fbc1f31eb139844fbdfffc0fa03210a4c6c8b  klaenge/Trompete_A3_e50.wav
 2ef1994af7e3b3b052107dfbdf5191f23cf67d9368adafb76a12f5f25297aff6  klaenge/Trompete_A3_e100.wav
 6a28417ac054771dc5f84ad3c7dbb996ea470b9e76a61c3e5fdeda3e4069340d  klaenge/Trompete_Gis4_e0.wav

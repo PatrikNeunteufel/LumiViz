@@ -8,9 +8,17 @@ Je Liste:
 - **PN2 a:** ein stiller Klang (Rohton ganz unter −70 LUFS, `lufs_vorher` −300) kommt aus der Liste — mit seinem Messwert,
   den Punkten, die ihn nennen, und seiner Datei. Er wird gemeldet (Befund am Modell, nicht an der Liste).
 - **KZ1 a:** ein Klang unter 0,4 s wird hinten mit Stille auf 0,4 s aufgefuellt, damit BS.1770-4 ihn messen kann.
+- **LV6-3 a:** ein Klang ohne Ton (nach den ersten 20 ms weniger als −80 dB seiner Energie, nur ein Puls) kommt heraus.
+- **LV6-4 a:** ein Klang, der gemessen nicht auf seinem Ton steht (`FALSCHER_TON`, von Hand an den Linien des Spektrums
+  bestimmt, Befund `docs/modellierung/anbindung-ic/2026-11-10_S186_lv6_gleiche_klaenge.md` §4), kommt heraus.
+- **LV6-1 a:** Klaenge, die nach dem Angleichen gleich klingen (Rest der Differenz unter −60 dB; zwei Klaenge gleicher
+  Fassung, deren Achsen sich nur in der Staerke oder nur im Instrument unterscheiden), kommen nur einmal in die Liste:
+  je Gruppe gleicher Staerken die mittlere, sonst der erste. Wie `HoerlistePegel.hpp` (`bereinige`) bei LumiViz.
 - **PN1 a:** jeder Klang wird nachgeregelt — verstaerken, neu messen, bis hoechstens 0,05 LU vom Pegel. Der Pegel sinkt,
   wenn sonst eine Spitze ueber 0,99 kaeme (wie IC: auf 0,1 LU abgerundet).
-Eine Liste, an der nichts zu tun ist, bleibt Byte fuer Byte, wie sie ist.
+Was herauskommt, geht mit seinem Messwert, den Punkten, die ihn nennen, und seiner Datei; die Kennungen der uebrigen
+Punkte bleiben. Vor der ersten Aenderung einer Liste wird ihr Ordner nach `<Hoerort>\\..\\IC_vor_S186\\<liste>` gesichert,
+falls dort noch keiner liegt. Eine Liste, an der nichts zu tun ist, bleibt Byte fuer Byte, wie sie ist.
 
 Die Messung ist BS.1770-4 wie `lumi::audio::messeLautheit` und HoerTest_Helper (`Lautheit.cpp`): K-Filter, Bloecke
 400 ms mit Schritt 100 ms ab dem ersten Wert, Gate −70 LUFS absolut und −10 LU relativ.
@@ -35,7 +43,17 @@ from scipy.signal import lfilter
 SPITZE_HOECHSTENS = 0.99  # wie IC (`Sammlung.cpp`, kSpitzeHoechstens)
 GENAU_LU = 0.05  # wie die Schreiber von LumiViz (`test_LoopStab.cpp`)
 KURZ_S = 0.4
-VERMERK = "# Nachgeregelt S186 (PN1 a, PN2 a, KZ1 a) mit: python -I tools/hoertest/ic_nachregeln.py (LumiViz)"
+GLEICH_DB = -60.0  # LV6-1 a
+OHNE_TON_DB, OHNE_TON_NACH_S = -80.0, 0.02  # LV6-3 a
+# LV6-4 a (S186): Klaenge, die nicht auf ihrem Ton stehen — (Liste, Anfang der Kennung): Befund (Linien 0,3–1,2 s)
+FALSCHER_TON = {
+    ("08_rohrblatt_rohr", "Tenorsaxophon_H2_"): "spricht in der Oktave (245 Hz stark, 121 Hz bei -32 dB); Fenster des Drucks leer",
+    ("09_luftstrahl_rohr", "Shakuhachi_D5_"): "eine Linie bei 3267 Hz (5,56 x Soll), nicht der Ton",
+    ("09_luftstrahl_rohr", "Shakuhachi_Ais5_"): "Linien 2493, 3415, 4338 ... Hz, nicht harmonisch zum Soll",
+    ("07_lippe_rohr", "Alphorn_A3_"): "Gleichanteil ueber dem RMS, Linien 114, 278, 325 Hz, nicht harmonisch zu 220 Hz",
+}
+VERMERK = "# Nachgeregelt S186 (PN1 a, PN2 a, KZ1 a, LV6-1 a, LV6-3 a, LV6-4 a) mit: python -I tools/hoertest/ic_nachregeln.py (LumiViz)"
+VERMERK_ALT = "# Nachgeregelt S186 (PN1 a, PN2 a, KZ1 a) mit: python -I tools/hoertest/ic_nachregeln.py (LumiViz)"
 
 
 # --- WAV -----------------------------------------------------------------------------------------------------------
@@ -149,6 +167,70 @@ def lufs_vorher(liste, klang):
     return None
 
 
+def ohne_ton(werte, rate):
+    """LV6-3 a: nach den ersten 20 ms weniger als −80 dB der Energie des Klangs."""
+    e = (werte * werte).sum(axis=1)
+    gesamt, danach = e.sum(), e[round(OHNE_TON_NACH_S * rate):].sum()
+    return gesamt > 0 and danach < gesamt * 10 ** (OHNE_TON_DB / 10)
+
+
+def rest_db(a, b):
+    """Rest der Differenz zweier Klaenge, beide auf gleiche Energie gebracht, in dB."""
+    n = min(a.shape[0], b.shape[0])
+    a, b = a[:n].ravel(), b[:n].ravel()
+    ea, eb = math.sqrt(np.mean(a * a)), math.sqrt(np.mean(b * b))
+    if ea == 0 or eb == 0:
+        return 0.0
+    d = a / ea - b / eb
+    return 10 * math.log10(np.mean(d * d) + 1e-300)
+
+
+def staerke_wert(s):
+    """`e50` -> 50, `a-30` -> -30."""
+    i = 0
+    while i < len(s) and not (s[i].isdigit() or s[i] == "-"):
+        i += 1
+    return int(s[i:])
+
+
+def gleiche(eintraege):
+    """LV6-1 a: [(klang, werte)] -> (herausgenommen, Vertreter) — wie `hoerliste::bereinige` in LumiViz."""
+    wurzel = list(range(len(eintraege)))
+
+    def finde(i):
+        while wurzel[i] != i:
+            wurzel[i] = wurzel[wurzel[i]]
+            i = wurzel[i]
+        return i
+
+    for i in range(len(eintraege)):
+        for j in range(i + 1, len(eintraege)):
+            (ki, wi), (kj, wj) = eintraege[i], eintraege[j]
+            if ki.get("fassung") != kj.get("fassung"):
+                continue
+            ai, aj = ki.get("achsen", {}), kj.get("achsen", {})
+            anders = sorted(s for s in set(ai) | set(aj) if ai.get(s) != aj.get(s))
+            if anders not in (["staerke"], ["instrument"]):
+                continue
+            if rest_db(wi, wj) < GLEICH_DB:
+                wurzel[finde(j)] = finde(i)
+    gruppen = {}
+    for i in range(len(eintraege)):
+        gruppen.setdefault(finde(i), []).append(i)
+    heraus, vertreter = [], []
+    for g in gruppen.values():
+        if len(g) < 2:
+            continue
+        instrument = eintraege[g[0]][0]["achsen"].get("instrument")
+        staerken = all(eintraege[i][0]["achsen"].get("instrument") == instrument for i in g)
+        reihe = sorted(g, key=lambda i: staerke_wert(eintraege[i][0]["achsen"]["staerke"])) if staerken else g
+        bleibt = reihe[(len(reihe) - 1) // 2] if staerken else reihe[0]
+        if staerken:
+            vertreter.append(eintraege[bleibt][0]["id"])
+        heraus += [eintraege[i][0]["id"] for i in reihe if i != bleibt]
+    return heraus, vertreter
+
+
 def bearbeite(ordner, trocken):
     liste_pfad = ordner / "liste.json"
     liste = json.loads(liste_pfad.read_text(encoding="utf-8"))
@@ -171,7 +253,15 @@ def bearbeite(ordner, trocken):
                 continue
         klaenge.append((k, bloecke, rate, werte, kurz))
 
-    zu_tun = bool(still) or any(kurz or abs(lautheit(w, r) - pegel) > GENAU_LU for _, _, r, w, kurz in klaenge)
+    # LV6-4 a, LV6-3 a, LV6-1 a — vor dem Pegel (der Rest der Differenz haengt nicht am Massstab)
+    falsch = [k["id"] for k, _, _, _, _ in klaenge
+              if any(ordner.name == l and k["id"].startswith(p) for l, p in FALSCHER_TON)]
+    ohne = [k["id"] for k, _, r, w, _ in klaenge if k["id"] not in falsch and ohne_ton(w, r)]
+    gleich, vertreter = gleiche([(k, w) for k, _, _, w, _ in klaenge if k["id"] not in falsch + ohne])
+    heraus = falsch + ohne + gleich
+    klaenge = [t for t in klaenge if t[0]["id"] not in heraus]
+
+    zu_tun = bool(still) or bool(heraus) or any(kurz or abs(lautheit(w, r) - pegel) > GENAU_LU for _, _, r, w, kurz in klaenge)
     if not zu_tun:
         print("%s: nichts zu tun (Pegel %.1f LUFS, %d Klaenge)" % (ordner.name, pegel, len(klaenge)))
         return False
@@ -194,14 +284,27 @@ def bearbeite(ordner, trocken):
           "aufgefuellt (KZ1 a): %s; still, herausgenommen (PN2 a): %s" % (
               ordner.name, pegel, ziel, 20 * math.log10(spitze), len(geaendert), len(klaenge), abweichung,
               ", ".join(k["id"] for k, _, _, _, kurz in klaenge if kurz) or "-", ", ".join(still) or "-"))
+    for p in falsch:
+        print("  nicht auf dem Ton, herausgenommen (LV6-4 a): %s — %s" % (
+            p, next(b for (l, a), b in FALSCHER_TON.items() if ordner.name == l and p.startswith(a))))
+    if ohne:
+        print("  ohne Ton, herausgenommen (LV6-3 a): %s" % ", ".join(ohne))
+    if gleich:
+        print("  gleich klingend, herausgenommen (LV6-1 a): %s; es bleiben %s" % (", ".join(gleich), ", ".join(vertreter)))
     if trocken:
         return True
+
+    # Sicherung des Ordners vor der ersten Aenderung (wie S186 PN1 a)
+    sicherung = ordner.parent.parent / "IC_vor_S186" / ordner.name
+    if not sicherung.exists():
+        shutil.copytree(ordner, sicherung)
+        print("  gesichert nach %s" % sicherung)
 
     # Dateien
     for (k, bloecke, _, _, _), (neu, _) in zip(klaenge, geregelt):
         if k["id"] in geaendert:
             schreibe_wav(ordner / k["datei"], bloecke, neu)
-    weg = set(still)
+    weg = set(still) | set(heraus)
     for k in liste["klaenge"]:
         if k["id"] in weg:
             (ordner / k["datei"]).unlink()
@@ -220,7 +323,8 @@ def bearbeite(ordner, trocken):
 
     # Abdruecke: der Kopf bleibt, darunter der Vermerk, dann je Klang in der Reihenfolge der Liste
     summen_pfad = ordner / "klaenge.sha256"
-    kopf = [z for z in summen_pfad.read_text(encoding="utf-8").splitlines() if z.startswith("#") and z != VERMERK]
+    kopf = [z for z in summen_pfad.read_text(encoding="utf-8").splitlines()
+            if z.startswith("#") and z not in (VERMERK, VERMERK_ALT)]
     zeilen = kopf + [VERMERK]
     for k in liste["klaenge"]:
         zeilen.append("%s  %s" % (hashlib.sha256((ordner / k["datei"]).read_bytes()).hexdigest(), k["datei"]))
