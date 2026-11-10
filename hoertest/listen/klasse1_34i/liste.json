@@ -1010,7 +1010,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -50.92
+                    "wert": -43.61
                 }
             ]
         },
@@ -1026,7 +1026,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -41.33
+                    "wert": -34.13
                 }
             ]
         },
@@ -1042,7 +1042,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -39.6
+                    "wert": -32.41
                 }
             ]
         },
@@ -1058,7 +1058,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -49.78
+                    "wert": -28.49
                 }
             ]
         },
@@ -1074,7 +1074,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -30.44
+                    "wert": -38.21
                 }
             ]
         },
@@ -1090,7 +1090,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -26.37
+                    "wert": -37.19
                 }
             ]
         },
@@ -1106,7 +1106,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -24.04
+                    "wert": -13.25
                 }
             ]
         },
@@ -1122,7 +1122,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -28.74
+                    "wert": -13.04
                 }
             ]
         },
@@ -1138,7 +1138,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -15.4
+                    "wert": -23.99
                 }
             ]
         },
@@ -1170,7 +1170,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -37.78
+                    "wert": -32.87
                 }
             ]
         },
@@ -1218,7 +1218,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -28.18
+                    "wert": -22.32
                 }
             ]
         },
@@ -1346,7 +1346,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -40.84
+                    "wert": -35.95
                 }
             ]
         },
@@ -1362,7 +1362,7 @@
                 {
                     "einheit": "LUFS",
                     "name": "lufs_vorher",
-                    "wert": -40.34
+                    "wert": -35.45
                 }
             ]
         }
