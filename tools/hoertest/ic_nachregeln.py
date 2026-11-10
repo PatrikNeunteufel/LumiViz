@@ -235,6 +235,9 @@ def main():
     a.add_argument("--trocken", action="store_true", help="nur rechnen und melden, nichts schreiben")
     arg = a.parse_args()
     for ordner in sorted(p.parent for p in arg.hoerort.glob("*/liste.json")):
+        if (ordner / "abgeloest.txt").exists():  # LG1 a (S186): durch eine Liste von LumiViz abgeloest, nicht gehoert
+            print("%s: abgeloest, uebersprungen" % ordner.name)
+            continue
         if bearbeite(ordner, arg.trocken) and arg.repo and not arg.trocken:
             ziel = arg.repo / ordner.name
             if not ziel.is_dir():

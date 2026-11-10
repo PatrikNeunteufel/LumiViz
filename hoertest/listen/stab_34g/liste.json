@@ -1,6 +1,7 @@
 {
     "dauer_s": null,
     "fassungen": {
+        "deluxe": "Vorgabe des Kerns bar ohne mitgelieferte Datei (Deluxe, KS4 a), ungemessen",
         "ic": "die Vorgabe des Kerns bar aus InstrumentsCalculation (LumiViz Stufe 34g), ungemessen",
         "synth": "die Nachbildung aus Schichten (synth_<name>)"
     },
@@ -1009,6 +1010,105 @@
             "datei": "klaenge/synth_kalimba_74_a-12.wav",
             "fassung": "synth",
             "id": "synth_kalimba_74_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-30",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/steelpan_65_a-30.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_65_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-12",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/steelpan_65_a-12.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_65_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a0",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/steelpan_65_a0.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_65_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-30",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "datei": "klaenge/steelpan_74_a-30.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_74_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-12",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "datei": "klaenge/steelpan_74_a-12.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_74_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a0",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "datei": "klaenge/steelpan_74_a0.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_74_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-30",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/steelpan_83_a-30.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_83_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-12",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/steelpan_83_a-12.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_83_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a0",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/steelpan_83_a0.wav",
+            "fassung": "deluxe",
+            "id": "steelpan_83_a0"
         }
     ],
     "kontrolle": "moderat",
@@ -2468,6 +2568,150 @@
                     "wert": -19.41
                 }
             ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-30",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -59.93
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-12",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -37.57
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a0",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -28.88
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-30",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -56.83
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-12",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -38.58
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a0",
+                "taste": 74,
+                "ton": "D5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.44
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-30",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -54.69
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a-12",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -34.92
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Steelpan",
+                "staerke": "a0",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -22.26
+                }
+            ]
         }
     ],
     "pegel": {
@@ -3315,9 +3559,99 @@
                 "synth_kalimba_74_a-12"
             ],
             "vorzug": "Welcher klingt mehr nach Kalimba?"
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p091",
+            "klang": "steelpan_65_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p092",
+            "klang": "steelpan_65_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p093",
+            "klang": "steelpan_65_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p094",
+            "klang": "steelpan_74_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p095",
+            "klang": "steelpan_74_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p096",
+            "klang": "steelpan_74_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p097",
+            "klang": "steelpan_83_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p098",
+            "klang": "steelpan_83_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Steelpan (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p099",
+            "klang": "steelpan_83_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
         }
     ],
     "schema": 1,
-    "titel": "LumiViz 34g: die Stabspiele des Kerns bar, gegen die Nachbildungen",
-    "ziel": "Erstes Hoeren der neun Stabspiele aus IC (ungemessen, Z2 a) und welches den Namen behaelt, IC oder Synth (IK2-8 a)"
+    "titel": "LumiViz 34g: die Stabspiele des Kerns bar, gegen die Nachbildungen; Deluxe Steeldrum",
+    "ziel": "Erstes Hoeren der neun Stabspiele aus IC (ungemessen, Z2 a) und welches den Namen behaelt, IC oder Synth (IK2-8 a); die Steeldrum (nicht ausgeliefert, KS4 a; Tonfelder Platzhalter) als Beleg fuer Deluxe (LG1 a)"
 }

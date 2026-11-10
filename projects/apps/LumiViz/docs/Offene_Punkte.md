@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.330.0
+> **Version:** 1.331.0
 > **Datum:** 2026-11-10 (Sessions 164 bis 186)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2891,7 +2891,13 @@ erreicht in der Höhe bei kleiner Stärke kaum Kontakt; ungeprüft). **KZ1 a:** 
 lang (der Schreiber füllt mit Stille auf; IC: 9 Klänge Marimba Ais6, Xylophon D6/Ais7); Vorschlag an HT, dass
 `--liste-pruefen` einen kürzeren als Fehler meldet (Sync `sync_hoertest`, STATUS LV-5). Die Schreiber von LumiViz teilen
 dafür `HoerlistePegel.hpp` (`gleicheAn`, `ohneStille`, `schreibeKlaenge`); `klasse1_34i` und `membran_34h` Byte für Byte
-wie vorher, `stab_34g` ohne die fünf stillen. Weiter mit Schritt 3 der Übergabe (welche Liste je Klasse gilt), dann LV-6.
+wie vorher, `stab_34g` ohne die fünf stillen. **Schritt 3 der Übergabe erledigt 2026-11-10 (S186, LG1 a):** für die
+Klassen 1, 4 und 5 gelten nur die Listen von LumiViz; `klasse1_34i` trägt dazu Hackbrett und Cimbalom, `stab_34g` die
+Steeldrum als Deluxe (nicht ausgeliefert, KL1 a, KS4 a; aus dem Kern, gestimmt wie vom Werkzeug,
+`tests/unit/UnitTests/VorlageOhneDatei.hpp`), die neuen Punkte am Ende — alte Punkte und Klänge Byte für Byte gleich
+(`klasse1_34i` 72 Klänge / 64 Punkte, `stab_34g` 100 / 94); IC 01, 04, 05 abgelöst: aus dem Repo entfernt, am Hörort mit
+`abgeloest.txt`, ungehört (Wächter `Hoerlisten AU3-1 a` prüft, dass sie nicht zurückkommen). Für 2, 3, 6–11 bleiben die
+IC-Listen die einzigen bis zum Port. Weiter mit LV-6 (übrig: 2 Hinweise in `klasse1_34i`, IC 02, 07, 08, 09).
 Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
@@ -6423,6 +6429,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.331.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: Schritt 3 der Übergabe erledigt — LG1 a (für die Klassen 1, 4, 5 gelten nur die Listen von LumiViz; Hackbrett, Cimbalom, Steeldrum als Deluxe in `klasse1_34i` und `stab_34g`; IC 01, 04, 05 abgelöst). |
 | 1.330.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Anbindung InstrumentsCalculation: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l. |
 | 1.329.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: LV-5 erledigt — PN1 a (IC-Listen nachgeregelt), PN2 a (stille Klänge nicht in einer Liste; Befund am Modell), KZ1 a (Klänge mindestens 0,4 s; Vorschlag an HT); weiter Schritt 3 der Übergabe, LV-6. |
 | 1.328.0 | 2026-11-10 | Session 185 (Opus 5.5). §6 Hörtest: LV-4 erledigt (Ablage am Hörort, 14 Listen gültig); HL1 a — `stab_34g` und `klasse1_34i` nach LP2 b neu geschrieben; weiter LV-5. |

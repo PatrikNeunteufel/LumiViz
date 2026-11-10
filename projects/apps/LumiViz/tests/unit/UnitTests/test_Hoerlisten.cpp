@@ -65,5 +65,10 @@ TEST_CASE("Hoerlisten AU3-1 a: die Liste im Repo und am Hoerort sind gleich")
         }
     }
     MESSAGE(listen << " Listen im Repo, " << verglichen << " am Hoerort verglichen");
-    CHECK(listen >= 14);  // S182: drei von LumiViz (stab_34g, membran_34h, klasse1_34i), elf aus IC
+    // S182: drei von LumiViz (stab_34g, membran_34h, klasse1_34i), elf aus IC; S186 (LG1 a): IC 01, 04, 05 durch die
+    // drei von LumiViz abgeloest, aus dem Repo entfernt (am Hoerort mit `abgeloest.txt`) — bleiben acht aus IC
+    CHECK(listen >= 11);
+    for (const char* abgeloest : {"01_hammer_saite", "04_platte_stab", "05_membran"})
+        CHECK_MESSAGE(!QDir(hoerliste::repo().absoluteFilePath(QStringLiteral("hoertest/listen/ic/") + QLatin1String(abgeloest))).exists(),
+                      abgeloest << " ist abgeloest (LG1 a) — nicht wieder ins Repo legen");
 }

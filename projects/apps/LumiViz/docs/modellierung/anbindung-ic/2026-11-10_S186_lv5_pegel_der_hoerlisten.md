@@ -97,3 +97,18 @@ gleich (Abdrücke verglichen). Wächter `Hoerlisten AU3-1 a` grün. Die fünf al
 `…\cmake\samples\Hoerproben\IC_vor_S186\` (darf weg, sobald die neuen abgenommen sind). Die Schreiber von LumiViz teilen
 seit S186 `tests/unit/UnitTests/HoerlistePegel.hpp` (`gleicheAn`, `ohneStille`, `schreibeKlaenge`) — vorher stand dieselbe
 Pegelregel dreimal da, bei Stab und Klasse 1 ohne die Runde, die den Pegel bei zu hoher Spitze senkt.
+
+## 7 Nachtrag: welche Liste je Klasse gilt (Übergabe §4 Schritt 3, LG1 a, S186)
+
+Für die Klassen 1, 4 und 5 gelten **nur die Listen von LumiViz** — sie lassen sich aus dem eigenen Kern neu schreiben
+(HT8 a), die IC-Listen nicht mehr. Was nur IC hatte, rechnet der Kern von LumiViz Bit für Bit gleich (`werte/klasse1_ic.txt`,
+`werte/stab_ic.txt`) und kommt jetzt als Fassung `deluxe` dazu: Hackbrett und Cimbalom (je drei Lagen × drei Stärken und ein
+Paar Folge je Clip mit/ohne Mitschwingen, wie IC `hoerproben.cpp`) in `klasse1_34i`, die Steeldrum (drei Lagen × drei
+Stärken; Tonfelder Platzhalter, KS4 a) in `stab_34g`. Gestimmt wie `InstrumentTuneTool --all --reference`, geladen wie eine
+Datei (`tests/unit/UnitTests/VorlageOhneDatei.hpp`); die neuen Punkte stehen am Ende, damit die Kennungen bleiben, auf die
+Antworten verweisen. Ergebnis: `klasse1_34i` 72 Klänge / 64 Punkte (−35,3 LUFS), `stab_34g` 100 / 94 (−26,6 LUFS); alle
+alten Punkte und Klänge Byte für Byte gleich; `Hoertest --liste-pruefen` gültig, 0 außerhalb (in `klasse1_34i` die zwei
+Hinweise Upright = Honky-tonk, LV-6). Der Flügel Port von IC entfällt (IK2 c verworfen; der Flügel von LumiViz steht in der
+Liste). IC 01, 04, 05 sind **abgelöst**: aus dem Repo entfernt, am Hörort mit `abgeloest.txt` (ungehört),
+`tools/hoertest/ic_nachregeln.py` überspringt sie, der Wächter `Hoerlisten AU3-1 a` prüft, dass sie nicht zurückkommen.
+Eng 12 / 12 unter Release-clang und Testing-MSVC.

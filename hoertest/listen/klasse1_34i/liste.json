@@ -1,6 +1,7 @@
 {
     "dauer_s": null,
     "fassungen": {
+        "deluxe": "Vorgabe des Kerns struckString ohne mitgelieferte Datei (Deluxe, KL1 a), ungemessen",
         "grand": "der Fluegel grand_piano (gemessen an Salamander, mit Boden)",
         "ic": "die Vorgabe aus InstrumentsCalculation (LumiViz Stufe 34i), ungemessen",
         "mitte": "Clavinet modal, nur der mittlere Tonabnehmer",
@@ -562,6 +563,252 @@
             "datei": "klaenge/clavinet_modal_41_a-12_steg.wav",
             "fassung": "steg",
             "id": "clavinet_modal_41_a-12_steg"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-30",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/hammered_dulcimer_48_a-30.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_48_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-12",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/hammered_dulcimer_48_a-12.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_48_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a0",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/hammered_dulcimer_48_a0.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_48_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/hammered_dulcimer_64_a-30.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_64_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/hammered_dulcimer_64_a-12.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_64_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "datei": "klaenge/hammered_dulcimer_64_a0.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_64_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-30",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "datei": "klaenge/hammered_dulcimer_81_a-30.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_81_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-12",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "datei": "klaenge/hammered_dulcimer_81_a-12.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_81_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a0",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "datei": "klaenge/hammered_dulcimer_81_a0.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_81_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "spielweise": "folge_clip_ohne",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/hammered_dulcimer_60_folge_clip_ohne.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_60_folge_clip_ohne"
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "spielweise": "folge_clip_mitschwingen",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/hammered_dulcimer_60_folge_clip_mitschwingen.wav",
+            "fassung": "deluxe",
+            "id": "hammered_dulcimer_60_folge_clip_mitschwingen"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-30",
+                "taste": 43,
+                "ton": "G2"
+            },
+            "datei": "klaenge/cimbalom_43_a-30.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_43_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-12",
+                "taste": 43,
+                "ton": "G2"
+            },
+            "datei": "klaenge/cimbalom_43_a-12.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_43_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a0",
+                "taste": 43,
+                "ton": "G2"
+            },
+            "datei": "klaenge/cimbalom_43_a0.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_43_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-30",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "datei": "klaenge/cimbalom_63_a-30.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_63_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-12",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "datei": "klaenge/cimbalom_63_a-12.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_63_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a0",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "datei": "klaenge/cimbalom_63_a0.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_63_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-30",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/cimbalom_83_a-30.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_83_a-30"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-12",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/cimbalom_83_a-12.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_83_a-12"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a0",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "datei": "klaenge/cimbalom_83_a0.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_83_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "spielweise": "folge_clip_ohne",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/cimbalom_60_folge_clip_ohne.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_60_folge_clip_ohne"
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "spielweise": "folge_clip_mitschwingen",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "datei": "klaenge/cimbalom_60_folge_clip_mitschwingen.wav",
+            "fassung": "deluxe",
+            "id": "cimbalom_60_folge_clip_mitschwingen"
         }
     ],
     "kontrolle": "moderat",
@@ -1365,6 +1612,362 @@
                     "wert": -35.45
                 }
             ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-30",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -63.15
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-12",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -47.11
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a0",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -35.46
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-30",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -59.45
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-12",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -41.99
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a0",
+                "taste": 64,
+                "ton": "E4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.23
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-30",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -58.58
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a-12",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -41.3
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "staerke": "a0",
+                "taste": 81,
+                "ton": "A5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -29.24
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "spielweise": "folge_clip_ohne",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -33.36
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Hammered dulcimer",
+                "spielweise": "folge_clip_mitschwingen",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -34.58
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-30",
+                "taste": 43,
+                "ton": "G2"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -63.46
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-12",
+                "taste": 43,
+                "ton": "G2"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -43.19
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a0",
+                "taste": 43,
+                "ton": "G2"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.85
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-30",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -61.26
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-12",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -40.57
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a0",
+                "taste": 63,
+                "ton": "D#4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.71
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-30",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -59.53
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a-12",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -42.25
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "staerke": "a0",
+                "taste": 83,
+                "ton": "B5"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.69
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "spielweise": "folge_clip_ohne",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -34.78
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Cimbalom",
+                "spielweise": "folge_clip_mitschwingen",
+                "staerke": "a-12",
+                "taste": 60,
+                "ton": "C4"
+            },
+            "fassung": "deluxe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -35.42
+                }
+            ]
         }
     ],
     "pegel": {
@@ -1803,9 +2406,207 @@
                 "clavinet_modal_41_a-12_mitte"
             ],
             "vorzug": "Welcher klingt heller (Tonabnehmer am Steg)?"
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p045",
+            "klang": "hammered_dulcimer_48_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p046",
+            "klang": "hammered_dulcimer_48_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p047",
+            "klang": "hammered_dulcimer_48_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p048",
+            "klang": "hammered_dulcimer_64_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p049",
+            "klang": "hammered_dulcimer_64_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p050",
+            "klang": "hammered_dulcimer_64_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p051",
+            "klang": "hammered_dulcimer_81_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p052",
+            "klang": "hammered_dulcimer_81_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Hammered dulcimer (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p053",
+            "klang": "hammered_dulcimer_81_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "paar",
+            "id": "p054",
+            "klaenge": [
+                "hammered_dulcimer_60_folge_clip_mitschwingen",
+                "hammered_dulcimer_60_folge_clip_ohne"
+            ],
+            "vorzug": "Welcher klingt glaubhafter (Mitschwingen der anderen Choere, Kopplung offen)?"
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p055",
+            "klang": "cimbalom_43_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p056",
+            "klang": "cimbalom_43_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p057",
+            "klang": "cimbalom_43_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p058",
+            "klang": "cimbalom_63_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p059",
+            "klang": "cimbalom_63_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p060",
+            "klang": "cimbalom_63_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p061",
+            "klang": "cimbalom_83_a-30",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p062",
+            "klang": "cimbalom_83_a-12",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Cimbalom (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p063",
+            "klang": "cimbalom_83_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "paar",
+            "id": "p064",
+            "klaenge": [
+                "cimbalom_60_folge_clip_mitschwingen",
+                "cimbalom_60_folge_clip_ohne"
+            ],
+            "vorzug": "Welcher klingt glaubhafter (Mitschwingen der anderen Choere, Kopplung offen)?"
         }
     ],
     "schema": 1,
-    "titel": "LumiViz 34i: Klasse 1 ohne Fluegel — Upright, Honky-tonk, CP-70, Clavinet",
-    "ziel": "Erstes Hoeren der vier Instrumente aus IC (ungemessen, Z2 a); welches Clavinet den Namen behaelt (IK2-8 a); ob das Upright sich vom Fluegel abhebt"
+    "titel": "LumiViz 34i: Klasse 1 ohne Fluegel — Upright, Honky-tonk, CP-70, Clavinet; Deluxe Hackbrett, Cimbalom",
+    "ziel": "Erstes Hoeren der vier Instrumente aus IC (ungemessen, Z2 a); welches Clavinet den Namen behaelt (IK2-8 a); ob das Upright sich vom Fluegel abhebt; Hackbrett und Cimbalom (nicht ausgeliefert, KL1 a) als Beleg fuer Deluxe (LG1 a)"
 }

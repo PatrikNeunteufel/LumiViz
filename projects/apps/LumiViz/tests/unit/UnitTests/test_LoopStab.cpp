@@ -34,6 +34,7 @@
 #include "loop/Loop.hpp"
 #include "HoerlisteAblage.hpp"
 #include "HoerlistePegel.hpp"
+#include "VorlageOhneDatei.hpp"
 #include "loop/Tastatur.hpp"
 
 #include <QDir>
@@ -274,22 +275,24 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
         return id;
     };
     const auto punktId = [&] { return QStringLiteral("p%1").arg(punkte.size() + 1, 3, 10, QLatin1Char('0')); };
-    for (const stab::Vorlage& v : stab::vorlagen())
-    {
-        if (!v.ausgeliefert) continue;
-        const Instrument inst = lies(QString::fromStdString(v.name));
+    // je Instrument drei Lagen und drei Staerken; die Steeldrum geht nicht mit (KS4 a), wird aber gehoert — aus dem Kern
+    // von LumiViz, gestimmt wie vom Werkzeug (Deluxe, LG1 a: die Liste von LumiViz loest IC 04 ab). Ihre Punkte kommen
+    // ans Ende, damit die Kennungen der uebrigen bleiben, auf die schon Antworten verweisen
+    const auto lagenUndStaerken = [&](const stab::Vorlage& v, const Instrument& inst, const QString& fassung) {
         const int lagen[] = {v.spiel.noteMin + 5, (v.spiel.noteMin + v.spiel.noteMax) / 2, v.spiel.noteMax - 5};
         for (const int hoehe : lagen)
             for (const Staerke& st : staerken)
             {
-                const QString id = ablegen(inst, inst.titel, hoehe, st, QStringLiteral("ic"));
+                const QString id = ablegen(inst, inst.titel, hoehe, st, fassung);
                 punkte.append(QJsonObject{{QStringLiteral("id"), punktId()},
                                           {QStringLiteral("art"), QStringLiteral("einzel")},
                                           {QStringLiteral("klang"), id},
                                           {QStringLiteral("frage"), QStringLiteral("Klingt es nach %1 (ungemessen)? Farbe ueber die Staerke glaubhaft?").arg(inst.titel)},
                                           {QStringLiteral("pole"), QJsonArray{QStringLiteral("nein"), QStringLiteral("ja")}}});
             }
-    }
+    };
+    for (const stab::Vorlage& v : stab::vorlagen())
+        if (v.ausgeliefert) lagenUndStaerken(v, lies(QString::fromStdString(v.name)), QStringLiteral("ic"));
     // blind: das Modell aus IC gegen die Nachbildung gleichen Namens (IK2-8 a: nach dem Hoeren entscheidet Patrik)
     int paare = 0;
     for (const char* name : {"marimba", "vibraphone", "kalimba"})
@@ -308,6 +311,14 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
             ++paare;
         }
     }
+    int deluxe = 0;
+    for (const stab::Vorlage& v : stab::vorlagen())
+        if (!v.ausgeliefert)
+        {
+            const QString name = QString::fromStdString(v.name);
+            lagenUndStaerken(v, vorlage::wieAusDerDatei(instrumentVon(v), name), QStringLiteral("deluxe"));
+            ++deluxe;
+        }
     // der gemeinsame Pegel, jeder Klang nachgeregelt; stille kommen nicht in die Liste (PN2 a, S186 — ein Befund der
     // ungemessenen Vorgaben: in der Hoehe bei kleiner Staerke zu schwacher Anschlag)
     const hoerliste::Pegel pegel = hoerliste::gleicheAn(gerechnet, kRate, kZielHoechstens, kSpitzeHoechstens);
@@ -317,9 +328,10 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
     const QStringList summen = hoerliste::schreibeKlaenge(dir, gerechnet, kRate);
     const QJsonObject liste{
         {QStringLiteral("schema"), 1},
-        {QStringLiteral("titel"), QStringLiteral("LumiViz 34g: die Stabspiele des Kerns bar, gegen die Nachbildungen")},
+        {QStringLiteral("titel"), QStringLiteral("LumiViz 34g: die Stabspiele des Kerns bar, gegen die Nachbildungen; Deluxe Steeldrum")},
         {QStringLiteral("ziel"), QStringLiteral("Erstes Hoeren der neun Stabspiele aus IC (ungemessen, Z2 a) und welches den Namen behaelt, IC oder "
-                                                "Synth (IK2-8 a)")},
+                                                "Synth (IK2-8 a); die Steeldrum (nicht ausgeliefert, KS4 a; Tonfelder Platzhalter) als Beleg "
+                                                "fuer Deluxe (LG1 a)")},
         {QStringLiteral("katalog"), QJsonValue::Null},
         {QStringLiteral("kontrolle"), QStringLiteral("moderat")},
         {QStringLiteral("pegel"), QJsonObject{{QStringLiteral("lufs"), ziel}, {QStringLiteral("toleranz_lu"), 1}}},
@@ -327,7 +339,8 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
         {QStringLiteral("gruppe_nach"), QJsonArray{QStringLiteral("instrument")}},
         {QStringLiteral("fassungen"),
          QJsonObject{{QStringLiteral("ic"), QStringLiteral("die Vorgabe des Kerns bar aus InstrumentsCalculation (LumiViz Stufe 34g), ungemessen")},
-                     {QStringLiteral("synth"), QStringLiteral("die Nachbildung aus Schichten (synth_<name>)")}}},
+                     {QStringLiteral("synth"), QStringLiteral("die Nachbildung aus Schichten (synth_<name>)")},
+                     {QStringLiteral("deluxe"), QStringLiteral("Vorgabe des Kerns bar ohne mitgelieferte Datei (Deluxe, KS4 a), ungemessen")}}},
         {QStringLiteral("klaenge"), klaenge},
         {QStringLiteral("messwerte"), messwerte},
         {QStringLiteral("punkte"), punkte}};
@@ -346,6 +359,7 @@ TEST_CASE("Loop Stab 34g Hoerproben (LUMIVIZ_34G_WAV) — Liste fuer HoerTest_He
     MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare IC gegen Synth) unter " << ordner.toStdString());
     MESSAGE("Pegel " << ziel << " LUFS; " << stille.size() << " still (unter −70 LUFS, nicht in der Liste, PN2 a): "
                      << stille.join(QStringLiteral(", ")).toStdString());
+    CHECK(deluxe == 1);
     CHECK(paare == 9);
-    CHECK(klaenge.size() + stille.size() == 81 + 9 + 6);  // die mittleren Noten der Paare sind schon in der Reihe der Lagen
+    CHECK(klaenge.size() + stille.size() == 81 + 9 + 9 + 6);  // die mittleren Noten der Paare sind schon in der Reihe der Lagen
 }
