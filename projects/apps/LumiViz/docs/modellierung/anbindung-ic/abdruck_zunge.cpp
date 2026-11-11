@@ -14,8 +14,8 @@
  *   0,4 s gehalten, 28 800 Frames (mit dem Absetzen des Winds und dem Ausklang);
  * - am Akkordeon die Bass-Seite tief / mitte / hoch bei Expression 0,5;
  * - je Instrument an der Mitte Vibrato (20 Cent, 5,5 Hz) und Bend (−50 Cent), am Akkordeon der Balgwechsel bei 0,2 s;
- * - je Instrument der Bezug `ausgangBezug` aus IC `normiere` (0,6 s bei Expression 1) und zum Vergleich mit einer
- *   Probe von 1 s (die Laenge der Probe von LumiViz) — beim gehaltenen Ton sind sie nicht von selbst gleich;
+ * - je Instrument der Bezug `ausgangBezug` aus IC `normiere` (0,6 s bei Expression 1 an der Mitte ab `bassAb`) und mit
+ *   der Probe von LumiViz (`kern::bezugsProbe`: Mitte von noteMin … noteMax, 1 s) — beim gehaltenen Ton nicht gleich;
  * - je Instrument die drei Kurven aus `Stimmung.inc` (f₀ und das Fenster des Drucks je Note) Punkt fuer Punkt in Hex.
  */
 #include "klassen/10_zunge/Zunge.hpp"
@@ -45,12 +45,12 @@ std::string hexVon(double x)
     return t;
 }
 
-/// IC `normiere` (klassen/10_zunge/Vorgaben.cpp:27–39) mit waehlbarer Laenge der Probe.
-double bezugMit(ZungenSpiel s, double sekunden)
+/// IC `normiere` (klassen/10_zunge/Vorgaben.cpp:27–39) mit waehlbarer Note und Laenge der Probe.
+double bezugMit(ZungenSpiel s, int note, double sekunden)
 {
     s.ausgangBezug = 1.0;
     ZungenAnschlag a;
-    a.note = (std::max(s.noteMin, s.bassAb) + s.noteMax) / 2;
+    a.note = note;
     a.expression = 1.0;
     a.haltenS = sekunden;
     std::vector<float> ton;
@@ -90,7 +90,7 @@ int main()
     std::printf("# abdruck <name> <sha256>: 28800 Frames bei 48 kHz; _e0/_e05/_e1 = Expression; 0,4 s gehalten, ausser\n");
     std::printf("#   zunge_Akkordeon_m69_mf (IC test_zunge: Expression 0,5, 0,8 s gehalten)\n");
     std::printf("# bezug <name> <hex der 64 Bit> <Zahl>: ausgangBezug nach IC normiere (0,6 s, Expression 1, Mitte ab bassAb)\n");
-    std::printf("# bezug1s <name> <hex> <Zahl>: dieselbe Rechnung mit einer Probe von 1 s\n");
+    std::printf("# bezugLv <name> <hex> <Zahl>: dieselbe Rechnung mit der Probe von LumiViz (Mitte noteMin…noteMax, 1 s)\n");
     std::printf("# kurve <name> <eigenfrequenz|druckUnten|druckOben> <note> <hex> <Zahl>: die Stimmung aus Stimmung.inc\n");
 
     struct Fall
@@ -152,15 +152,16 @@ int main()
     int fehler = 0;
     for (const Fall& f : faelle)
     {
-        const double ic = bezugMit(f.s, 0.6);
+        const double ic = bezugMit(f.s, (std::max(f.s.noteMin, f.s.bassAb) + f.s.noteMax) / 2, 0.6);
         if (hexVon(ic) != hexVon(f.s.ausgangBezug))
         {
             ++fehler;
             std::printf("# FEHLER: %s normiere hier anders als in der Vorgabe\n", f.name);
         }
         std::printf("bezug %s %s %.17g\n", f.name, hexVon(f.s.ausgangBezug).c_str(), f.s.ausgangBezug);
-        const double lv = bezugMit(f.s, 1.0);
-        std::printf("bezug1s %s %s %.17g\n", f.name, hexVon(lv).c_str(), lv);
+        // die Probe von LumiViz (kern::bezugsProbe): Mitte des ganzen Umfangs, Stufe 0 = Expression 1, 1 s gehalten
+        const double lv = bezugMit(f.s, (f.s.noteMin + f.s.noteMax) / 2, 1.0);
+        std::printf("bezugLv %s %s %.17g\n", f.name, hexVon(lv).c_str(), lv);
     }
 
     // die Kurven

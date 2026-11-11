@@ -3,7 +3,7 @@
 # abdruck <name> <sha256>: 28800 Frames bei 48 kHz; _e0/_e05/_e1 = Expression; 0,4 s gehalten, ausser
 #   zunge_Akkordeon_m69_mf (IC test_zunge: Expression 0,5, 0,8 s gehalten)
 # bezug <name> <hex der 64 Bit> <Zahl>: ausgangBezug nach IC normiere (0,6 s, Expression 1, Mitte ab bassAb)
-# bezug1s <name> <hex> <Zahl>: dieselbe Rechnung mit einer Probe von 1 s
+# bezugLv <name> <hex> <Zahl>: dieselbe Rechnung mit der Probe von LumiViz (Mitte noteMin…noteMax, 1 s)
 # kurve <name> <eigenfrequenz|druckUnten|druckOben> <note> <hex> <Zahl>: die Stimmung aus Stimmung.inc
 abdruck zunge_Akkordeon_m69_mf 1a20c5e06bebc1978469be550dd4746a716c85efe942316727af691610bae73c
 abdruck zunge_Akkordeon_m53_e0 b355315a3f4887d149c3ca3dff747dc1aab74469b2a8ce780b49f8b5900ec62c
@@ -55,13 +55,13 @@ abdruck zunge_Mundharmonika_m78_vibrato 57fc12ce35ff528829f9bdc7acc2a0afb5d46ec7
 abdruck zunge_Mundharmonika_m78_bend 1386b0c715e92b82048c726f7939d73c24025437979c4996b1f0b24d0413ab3f
 abdruck zunge_Akkordeon_m69_balgwechsel 90facaea1b02397ab6751696a0f296352b67ef63154f6ea5ca608b4c5925dbe1
 bezug Akkordeon 3ff9240060000000 1.5712894201278687
-bezug1s Akkordeon 3ff95ad280000000 1.5846734046936035
+bezugLv Akkordeon 3fd70d51e0000000 0.36018797755241394
 bezug Harmonium 3fb27f3ce0000000 0.072253994643688202
-bezug1s Harmonium 3fb400c4c0000000 0.078136727213859558
+bezugLv Harmonium 3fb400c4c0000000 0.078136727213859558
 bezug Melodica 3fe07e3d80000000 0.51541018486022949
-bezug1s Melodica 3fe0855a00000000 0.51627826690673828
+bezugLv Melodica 3fe0855a00000000 0.51627826690673828
 bezug Mundharmonika 3fe364e620000000 0.60606676340103149
-bezug1s Mundharmonika 3fe364e6e0000000 0.60606712102890015
+bezugLv Mundharmonika 3fe364e6e0000000 0.60606712102890015
 kurve Akkordeon eigenfrequenz 29 404643679cd7d908 44.526599507707999
 kurve Akkordeon eigenfrequenz 30 4046a7d3ba2fa864 45.311148904104613
 kurve Akkordeon eigenfrequenz 31 4048a4f688ff0f0c 49.288773655453127
