@@ -1,0 +1,589 @@
+# Bezuege der Klasse 10 aus InstrumentsCalculation (4409088, Vorlage unter harvest/), gerechnet 34j-1 (S189)
+# mit docs/modellierung/anbindung-ic/abdruck_zunge.cpp unter MSVC (/MD) — nicht von Hand aendern
+# abdruck <name> <sha256>: 28800 Frames bei 48 kHz; _e0/_e05/_e1 = Expression; 0,4 s gehalten, ausser
+#   zunge_Akkordeon_m69_mf (IC test_zunge: Expression 0,5, 0,8 s gehalten)
+# bezug <name> <hex der 64 Bit> <Zahl>: ausgangBezug nach IC normiere (0,6 s, Expression 1, Mitte ab bassAb)
+# bezug1s <name> <hex> <Zahl>: dieselbe Rechnung mit einer Probe von 1 s
+# kurve <name> <eigenfrequenz|druckUnten|druckOben> <note> <hex> <Zahl>: die Stimmung aus Stimmung.inc
+abdruck zunge_Akkordeon_m69_mf 1a20c5e06bebc1978469be550dd4746a716c85efe942316727af691610bae73c
+abdruck zunge_Akkordeon_m53_e0 b355315a3f4887d149c3ca3dff747dc1aab74469b2a8ce780b49f8b5900ec62c
+abdruck zunge_Akkordeon_m53_e05 dedc093c6c75db52d1fed6652c8e2e40fb3fa3d1e528b2f2943cb83c9c102145
+abdruck zunge_Akkordeon_m53_e1 f147cb3a58ad697a05a045a0207d9efdabf19bde13bf5a15cfa8cd0efb09caed
+abdruck zunge_Akkordeon_m73_e0 b407a4833b1b086c8b24898809f01892beda2a93cf9b6dc632d2c37dae65b4d5
+abdruck zunge_Akkordeon_m73_e05 8ceb450ee9a9ead0a72b7fe36b6a68cfdfad9a3db43f18ab84ded86db8f3e79b
+abdruck zunge_Akkordeon_m73_e1 b6fa3044cb52a2bfc6a4a41cd6ff3f9b46f66137808f36d260506e9c20699941
+abdruck zunge_Akkordeon_m93_e0 578e76558bdc2fe934edf070c12a69ae17398f8a83d70ed3064be29b5e572626
+abdruck zunge_Akkordeon_m93_e05 70862f1e9d658cb2ea4d0babb6c59f2d4d6a856a8d338d9acef1c749f7630cf8
+abdruck zunge_Akkordeon_m93_e1 548379b6f52f81a152598f4a20fd7cf5299bf0749eb82a6cd43fa2ec150bdc57
+abdruck zunge_Harmonium_m48_e0 f6c660ec7c23865af4e55ede142278039927f98cd484d0ddd14b168a3942bdef
+abdruck zunge_Harmonium_m48_e05 c55b7a0b9c34ffb2e9397d3e8f6fe643729a059cb86183ed4037f7a234dabca9
+abdruck zunge_Harmonium_m48_e1 bf71493d78ce7be0bebd0ad441fc9e9fac23ddd34bf925f4ee50408a4da96f1c
+abdruck zunge_Harmonium_m68_e0 352c70044e7c6eec174a9e75c25f44c35eb09f4fcd2adbf8f1aa29e422f2f935
+abdruck zunge_Harmonium_m68_e05 9e3df3f95d06933866551730448237a04be0b64d2e051e7812832443ceacf028
+abdruck zunge_Harmonium_m68_e1 0966b5d4bf4357728b23e21a63f9b44d4a12aa4b91c73ed6cd39a2ee73f9a6f7
+abdruck zunge_Harmonium_m89_e0 27e791e2c9f084729b8691a1a764d3221a5ba4609ec19447db5458bd83f04867
+abdruck zunge_Harmonium_m89_e05 27e791e2c9f084729b8691a1a764d3221a5ba4609ec19447db5458bd83f04867
+abdruck zunge_Harmonium_m89_e1 27e791e2c9f084729b8691a1a764d3221a5ba4609ec19447db5458bd83f04867
+abdruck zunge_Melodica_m53_e0 887e8d972fc64ddf412694b61f4ef5473e3ee1976d03373108fa5eae007cb108
+abdruck zunge_Melodica_m53_e05 3b5bb60588bf34c27045ce5790ad45007e3c0ae8d6c109e1663337904b88750f
+abdruck zunge_Melodica_m53_e1 bb813212f4e177ddf596ebb3067171ec985173754d33fa7f6c1fc9097252d53e
+abdruck zunge_Melodica_m68_e0 618ab0e5f7807375e7de76fc88873069b6c3e6394794fd4024e4cfce114e677f
+abdruck zunge_Melodica_m68_e05 efb50bfe0df6a1766d385069d95a98d3e0c960e941fd92afdb083d68dd21b661
+abdruck zunge_Melodica_m68_e1 86d21e8ad2f3301bccb0667bcff7d5cf8d87eb6538d6347c8dbe05bfd94b8a42
+abdruck zunge_Melodica_m84_e0 2acf28a31173247163c3a1c91682bbbfce6409a49098f02c706acd6c965f24c6
+abdruck zunge_Melodica_m84_e05 1399045b3445fbf432834b52c774bea7ebaea6921ff55932ae156555c23033bc
+abdruck zunge_Melodica_m84_e1 b3e6680ed48a8e617d22ce964f7cc4fa001124904154145b6aebfbba4537560f
+abdruck zunge_Mundharmonika_m60_e0 01bc46fc90c04467f6d4f10e0025c0b97356acea5e0c428986d263ec8818c954
+abdruck zunge_Mundharmonika_m60_e05 40b29f0ac5e879e86946719c56d86d9263eec39bc3bde8ce7c1320c5b4585d0e
+abdruck zunge_Mundharmonika_m60_e1 f04e320995fca84305ec2eb79e2dd734bc0bbf385145ddad02b81438f32ead7c
+abdruck zunge_Mundharmonika_m78_e0 b712e5b6781d5f97fac79beb6d6780fa22d246ac3f0359f0aaf5c25771a449c1
+abdruck zunge_Mundharmonika_m78_e05 ad034d5ef97b3b295ff566777385ac22c21091a98aadeaa2acb54bfaaa1ebce0
+abdruck zunge_Mundharmonika_m78_e1 4ac249c832f1f453b0d93a4fbd89ec90417aecdb3a09eebb9941530874ea0cd7
+abdruck zunge_Mundharmonika_m96_e0 76d9c47f30837a16095d2ffdcb3fdd643d41bb801030d42014dec14f723792f2
+abdruck zunge_Mundharmonika_m96_e05 8f5a473999d6668dd15e8d5f893eaa9e12d4741251ded1c930e68da2625dbc38
+abdruck zunge_Mundharmonika_m96_e1 09e49aa2dcc3377d5614d172b879437f8c9318f92a1c4a0ec59c6d112ef13c23
+abdruck zunge_Akkordeon_bass_m29_e05 016800f4d3c3e81018f3e26d6e8aa1006f891b22c3cf83d63f0c19680c5c6621
+abdruck zunge_Akkordeon_bass_m40_e05 0b8b04a0ed59726062e4819e917d55f7150ab5e56acf2a0f249ec97c59e3273c
+abdruck zunge_Akkordeon_bass_m52_e05 7929a51b66f9dc383d5d72ef2c44bd86dccfefa0b9c98d25476133ae16c49f82
+abdruck zunge_Akkordeon_m73_vibrato aa319bce91ee642c3922ade36a74c4aa2ba4c1ecaf4296024ce30b97ce293ac7
+abdruck zunge_Akkordeon_m73_bend 15c72f57b4c5abdeb0c465d05601fbbf2d474930834fbd8fe6c29c836c4e8e74
+abdruck zunge_Harmonium_m68_vibrato 8b14cd29838fb27f7475516dd17ea6888817796ed3cc7edd489f839b5840d8ea
+abdruck zunge_Harmonium_m68_bend fe7e796adba2db31a945f561d0d34a149ea7cd32e666273b3b53ea3b62866e0a
+abdruck zunge_Melodica_m68_vibrato c7a1a58e740c71b7a353e53f56a3953658e729c717030f36269d3417334311e2
+abdruck zunge_Melodica_m68_bend 47d1c9921d978dc7d44e9fb25c015ad4c769e473437746b0605f480c8835077b
+abdruck zunge_Mundharmonika_m78_vibrato 57fc12ce35ff528829f9bdc7acc2a0afb5d46ec791f69213002ffe31f1b1c057
+abdruck zunge_Mundharmonika_m78_bend 1386b0c715e92b82048c726f7939d73c24025437979c4996b1f0b24d0413ab3f
+abdruck zunge_Akkordeon_m69_balgwechsel 90facaea1b02397ab6751696a0f296352b67ef63154f6ea5ca608b4c5925dbe1
+bezug Akkordeon 3ff9240060000000 1.5712894201278687
+bezug1s Akkordeon 3ff95ad280000000 1.5846734046936035
+bezug Harmonium 3fb27f3ce0000000 0.072253994643688202
+bezug1s Harmonium 3fb400c4c0000000 0.078136727213859558
+bezug Melodica 3fe07e3d80000000 0.51541018486022949
+bezug1s Melodica 3fe0855a00000000 0.51627826690673828
+bezug Mundharmonika 3fe364e620000000 0.60606676340103149
+bezug1s Mundharmonika 3fe364e6e0000000 0.60606712102890015
+kurve Akkordeon eigenfrequenz 29 404643679cd7d908 44.526599507707999
+kurve Akkordeon eigenfrequenz 30 4046a7d3ba2fa864 45.311148904104613
+kurve Akkordeon eigenfrequenz 31 4048a4f688ff0f0c 49.288773655453127
+kurve Akkordeon eigenfrequenz 32 404ac4f81dbc0626 53.538821903999903
+kurve Akkordeon eigenfrequenz 33 404c024741f1e3a5 56.017799609289149
+kurve Akkordeon eigenfrequenz 34 404c202462e812f5 56.251110423390777
+kurve Akkordeon eigenfrequenz 35 404ede3cb6b9c6cc 61.736227837287146
+kurve Akkordeon eigenfrequenz 36 40512dd41591cbbb 68.716069595698102
+kurve Akkordeon eigenfrequenz 37 4051ab9edb8c6334 70.681570899102383
+kurve Akkordeon eigenfrequenz 38 405275da0d1ebbb8 73.841433792126622
+kurve Akkordeon eigenfrequenz 39 40538db66688d088 78.214257844551071
+kurve Akkordeon eigenfrequenz 40 4054b6722f1d6f3f 82.850719240898783
+kurve Akkordeon eigenfrequenz 41 4055f0d3a07921cb 87.762916677754376
+kurve Akkordeon eigenfrequenz 42 40573d92bffb03b4 92.962081904536547
+kurve Akkordeon eigenfrequenz 43 40589ea844ca6dc3 98.47902030723985
+kurve Akkordeon eigenfrequenz 44 405a149eb0b45641 104.32218568430928
+kurve Akkordeon eigenfrequenz 45 405ba093fe821482 110.50903284743438
+kurve Akkordeon eigenfrequenz 46 405d432da2ec85d8 117.04966042612011
+kurve Akkordeon eigenfrequenz 47 405eff0b4545f744 123.98506290276151
+kurve Akkordeon eigenfrequenz 48 40606acd96405044 131.33759605942953
+kurve Akkordeon eigenfrequenz 49 40616421ec04a810 139.12914086255523
+kurve Akkordeon eigenfrequenz 50 40626c6894ac9c64 147.38776620591227
+kurve Akkordeon eigenfrequenz 51 40638482ac4f0b70 156.1409513038484
+kurve Akkordeon eigenfrequenz 52 4064ad260f2346f6 165.41089589014126
+kurve Akkordeon eigenfrequenz 53 4065e713cc4a1c6a 175.22116674876025
+kurve Akkordeon eigenfrequenz 54 406733bdc158734a 185.61691348338564
+kurve Akkordeon eigenfrequenz 55 406894a058ae15a6 196.64457353592769
+kurve Akkordeon eigenfrequenz 56 406a0a7a20e22952 208.32740825817251
+kurve Akkordeon eigenfrequenz 57 406b967af436e82c 220.70250902866371
+kurve Akkordeon eigenfrequenz 58 406d39c8837bec08 233.80572675899043
+kurve Akkordeon eigenfrequenz 59 406ef61d57b8838e 247.69108186757916
+kurve Akkordeon eigenfrequenz 60 4070669f0d7687eb 262.41383119870324
+kurve Akkordeon eigenfrequenz 61 40715fea58ef57b1 277.9947137212103
+kurve Akkordeon eigenfrequenz 62 40726873e25c2c44 294.52829204564136
+kurve Akkordeon eigenfrequenz 63 407380991becaff3 312.03738014656045
+kurve Akkordeon eigenfrequenz 64 4074a8e59153d630 330.55604679821681
+kurve Akkordeon eigenfrequenz 65 4075e3356704a5e7 350.20053769889495
+kurve Akkordeon eigenfrequenz 66 407730b06481de3b 371.04306460122797
+kurve Akkordeon eigenfrequenz 67 407890fcc23c5bb0 393.06170867516903
+kurve Akkordeon eigenfrequenz 68 407a07a18dfeccbb 416.47694205790657
+kurve Akkordeon eigenfrequenz 69 407b929196f0f546 441.16054433941133
+kurve Akkordeon eigenfrequenz 70 407d3624c0d00a5f 467.38397294298005
+kurve Akkordeon eigenfrequenz 71 407ef3f393f767f3 495.24696728365888
+kurve Akkordeon eigenfrequenz 72 408064c6d13da84c 524.59707878274776
+kurve Akkordeon eigenfrequenz 73 40815e559c6916f6 555.79180223561593
+kurve Akkordeon eigenfrequenz 74 4082666a70cd0919 588.80197296318067
+kurve Akkordeon eigenfrequenz 75 40837fc323347f3c 623.97028199208535
+kurve Akkordeon eigenfrequenz 76 4084a8a5223e297b 661.08063171924675
+kurve Akkordeon eigenfrequenz 77 4085e3022781178d 700.37605191090699
+kurve Akkordeon eigenfrequenz 78 4087308e3aea9a57 742.06944831164844
+kurve Akkordeon eigenfrequenz 79 40888ea7c0e30a0c 785.8319108712617
+kurve Akkordeon eigenfrequenz 80 408a076f26b7579e 832.92927306400429
+kurve Akkordeon eigenfrequenz 81 408b9400734f0745 882.50021993390021
+kurve Akkordeon eigenfrequenz 82 408d37e1c7d2f5f9 934.9852444154086
+kurve Akkordeon eigenfrequenz 83 408ef4aec7eff4b9 990.58534228768906
+kurve Akkordeon eigenfrequenz 84 40906371d9748cd0 1048.8611810885377
+kurve Akkordeon eigenfrequenz 85 40915bd95251c428 1110.9622280860876
+kurve Akkordeon eigenfrequenz 86 4092672c7e5193e3 1177.7934506174577
+kurve Akkordeon eigenfrequenz 87 40937ee98d4ba4bc 1247.7280780619903
+kurve Akkordeon eigenfrequenz 88 4094a459f4630a88 1321.0878463244608
+kurve Akkordeon eigenfrequenz 89 4095dd92dc39215b 1399.3934182097062
+kurve Akkordeon eigenfrequenz 90 40972bacbb38dd2c 1482.9186829457276
+kurve Akkordeon eigenfrequenz 91 40989340ba07b25f 1572.8132096483821
+kurve Akkordeon eigenfrequenz 92 409a05315974c9f1 1665.2981928108459
+kurve Akkordeon eigenfrequenz 93 409b88215a3be796 1762.0325707779025
+kurve Akkordeon druckUnten 30 4091ad7bc01366b5 1131.3708498984754
+kurve Akkordeon druckUnten 31 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckUnten 32 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckUnten 33 40a1ad7bc01366b5 2262.7416997969508
+kurve Akkordeon druckUnten 34 4098fffffffffffc 1599.9999999999991
+kurve Akkordeon druckUnten 35 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckUnten 36 40b505bcafcef55c 5381.7370576237699
+kurve Akkordeon druckUnten 38 4059000000000000 100
+kurve Akkordeon druckUnten 39 4059000000000000 100
+kurve Akkordeon druckUnten 40 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 41 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 42 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 43 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 44 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 45 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 46 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 47 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 48 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 49 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 50 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 51 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 52 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 53 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 54 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 55 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 56 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 57 4061ad7bc01366b8 141.42135623730951
+kurve Akkordeon druckUnten 58 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 59 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckUnten 60 4061ad7bc01366b8 141.42135623730951
+kurve Akkordeon druckUnten 61 4061ad7bc01366b8 141.42135623730951
+kurve Akkordeon druckUnten 62 4061ad7bc01366b8 141.42135623730951
+kurve Akkordeon druckUnten 63 4061ad7bc01366b8 141.42135623730951
+kurve Akkordeon druckUnten 64 406505bcafcef55f 168.1792830507429
+kurve Akkordeon druckUnten 65 406505bcafcef55f 168.1792830507429
+kurve Akkordeon druckUnten 66 4068ffffffffffff 199.99999999999997
+kurve Akkordeon druckUnten 67 4068ffffffffffff 199.99999999999997
+kurve Akkordeon druckUnten 68 4068ffffffffffff 199.99999999999997
+kurve Akkordeon druckUnten 69 406dbaecefedae10 237.84142300054418
+kurve Akkordeon druckUnten 70 406dbaecefedae10 237.84142300054418
+kurve Akkordeon druckUnten 71 4071ad7bc01366b7 282.84271247461896
+kurve Akkordeon druckUnten 72 4071ad7bc01366b7 282.84271247461896
+kurve Akkordeon druckUnten 73 4071ad7bc01366b7 282.84271247461896
+kurve Akkordeon druckUnten 74 407505bcafcef55e 336.35856610148574
+kurve Akkordeon druckUnten 75 407505bcafcef55e 336.35856610148574
+kurve Akkordeon druckUnten 76 4078fffffffffffe 399.99999999999989
+kurve Akkordeon druckUnten 77 4078fffffffffffe 399.99999999999989
+kurve Akkordeon druckUnten 78 407dbaecefedae0e 475.68284600108825
+kurve Akkordeon druckUnten 79 407dbaecefedae0e 475.68284600108825
+kurve Akkordeon druckUnten 80 4081ad7bc01366b6 565.68542494923781
+kurve Akkordeon druckUnten 81 4081ad7bc01366b6 565.68542494923781
+kurve Akkordeon druckUnten 82 408505bcafcef55d 672.71713220297136
+kurve Akkordeon druckUnten 83 408505bcafcef55d 672.71713220297136
+kurve Akkordeon druckUnten 84 4088fffffffffffd 799.99999999999966
+kurve Akkordeon druckUnten 85 4088fffffffffffd 799.99999999999966
+kurve Akkordeon druckUnten 86 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckUnten 87 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckUnten 88 4091ad7bc01366b5 1131.3708498984754
+kurve Akkordeon druckUnten 89 4091ad7bc01366b5 1131.3708498984754
+kurve Akkordeon druckUnten 90 409505bcafcef55c 1345.4342644059425
+kurve Akkordeon druckUnten 91 4098fffffffffffc 1599.9999999999991
+kurve Akkordeon druckUnten 92 4098fffffffffffc 1599.9999999999991
+kurve Akkordeon druckUnten 93 409dbaecefedae0c 1902.7313840043525
+kurve Akkordeon druckOben 30 4091ad7bc01366b5 1131.3708498984754
+kurve Akkordeon druckOben 31 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 32 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckOben 33 40a1ad7bc01366b5 2262.7416997969508
+kurve Akkordeon druckOben 34 4098fffffffffffc 1599.9999999999991
+kurve Akkordeon druckOben 35 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckOben 36 40b505bcafcef55c 5381.7370576237699
+kurve Akkordeon druckOben 38 4059000000000000 100
+kurve Akkordeon druckOben 39 405dbaecefedae11 118.92071150027211
+kurve Akkordeon druckOben 40 4061ad7bc01366b8 141.42135623730951
+kurve Akkordeon druckOben 41 406505bcafcef55f 168.1792830507429
+kurve Akkordeon druckOben 42 406505bcafcef55f 168.1792830507429
+kurve Akkordeon druckOben 43 4068ffffffffffff 199.99999999999997
+kurve Akkordeon druckOben 44 406dbaecefedae10 237.84142300054418
+kurve Akkordeon druckOben 45 4071ad7bc01366b7 282.84271247461896
+kurve Akkordeon druckOben 46 407505bcafcef55e 336.35856610148574
+kurve Akkordeon druckOben 47 407505bcafcef55e 336.35856610148574
+kurve Akkordeon druckOben 48 4078fffffffffffe 399.99999999999989
+kurve Akkordeon druckOben 49 407dbaecefedae0e 475.68284600108825
+kurve Akkordeon druckOben 50 407dbaecefedae0e 475.68284600108825
+kurve Akkordeon druckOben 51 4081ad7bc01366b6 565.68542494923781
+kurve Akkordeon druckOben 52 408505bcafcef55d 672.71713220297136
+kurve Akkordeon druckOben 53 408505bcafcef55d 672.71713220297136
+kurve Akkordeon druckOben 54 4088fffffffffffd 799.99999999999966
+kurve Akkordeon druckOben 55 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckOben 56 408dbaecefedae0d 951.36569200217639
+kurve Akkordeon druckOben 57 4091ad7bc01366b5 1131.3708498984754
+kurve Akkordeon druckOben 58 409505bcafcef55c 1345.4342644059425
+kurve Akkordeon druckOben 59 409505bcafcef55c 1345.4342644059425
+kurve Akkordeon druckOben 60 4098fffffffffffc 1599.9999999999991
+kurve Akkordeon druckOben 61 409dbaecefedae0d 1902.7313840043528
+kurve Akkordeon druckOben 62 409dbaecefedae0d 1902.7313840043528
+kurve Akkordeon druckOben 63 40a1ad7bc01366b5 2262.7416997969508
+kurve Akkordeon druckOben 64 40a505bcafcef55c 2690.868528811885
+kurve Akkordeon druckOben 65 40a505bcafcef55c 2690.868528811885
+kurve Akkordeon druckOben 66 40a8fffffffffffc 3199.9999999999982
+kurve Akkordeon druckOben 67 40adbaecefedae0d 3805.4627680087056
+kurve Akkordeon druckOben 68 40adbaecefedae0d 3805.4627680087056
+kurve Akkordeon druckOben 69 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 70 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 71 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 72 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 73 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 74 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 75 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 76 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 77 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 78 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 79 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 80 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 81 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 82 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 83 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 84 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 85 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 86 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 87 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 88 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 89 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 90 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 91 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 92 40b1ad7bc01366b5 4525.4833995939016
+kurve Akkordeon druckOben 93 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium eigenfrequenz 48 4060475ee27005d5 130.23033258323144
+kurve Harmonium eigenfrequenz 49 4061425757d901cc 138.07316200622734
+kurve Harmonium eigenfrequenz 50 406249ad2c456c5f 146.30238927420848
+kurve Harmonium eigenfrequenz 51 406362c43669379f 155.08645172643898
+kurve Harmonium eigenfrequenz 52 406489e075435d91 164.30864966542552
+kurve Harmonium eigenfrequenz 53 4065c48c8b88b550 174.14215637875395
+kurve Harmonium eigenfrequenz 54 40671138ac7fd51d 184.53816819159775
+kurve Harmonium eigenfrequenz 55 406870ae010f83cc 195.52124074011078
+kurve Harmonium eigenfrequenz 56 4069e5f2b9288323 207.18587930595922
+kurve Harmonium eigenfrequenz 57 406b727ad025cd07 219.57749183066355
+kurve Harmonium eigenfrequenz 58 406d14f036c35b3c 232.65432298808616
+kurve Harmonium eigenfrequenz 59 406ed104cc6c1dba 246.53183575741224
+kurve Harmonium eigenfrequenz 60 40705afc82d6fb50 261.68664821603033
+kurve Harmonium eigenfrequenz 61 40715411dd3354f7 277.25436134387513
+kurve Harmonium eigenfrequenz 62 40725b909c49cdc5 293.72280529813389
+kurve Harmonium eigenfrequenz 63 407373544fbb3129 311.20808385011566
+kurve Harmonium eigenfrequenz 64 40749b7107e5d136 329.71509542248111
+kurve Harmonium eigenfrequenz 65 4075d5064e5195df 349.31403953427611
+kurve Harmonium eigenfrequenz 66 407721910962e596 370.09790934211321
+kurve Harmonium eigenfrequenz 67 407881767c18e1da 392.09142694205877
+kurve Harmonium eigenfrequenz 68 4079f6b409ac7334 415.41895453799521
+kurve Harmonium eigenfrequenz 69 407b81dcf6b8f5f4 440.11644623041434
+kurve Harmonium eigenfrequenz 70 407d24a8cc0556c8 466.29121019444983
+kurve Harmonium eigenfrequenz 71 407ee03ed54ccd78 494.01534013749142
+kurve Harmonium eigenfrequenz 72 40805b28723dcec2 523.394749148247
+kurve Harmonium eigenfrequenz 73 40815423d18428cc 554.51748946427824
+kurve Harmonium eigenfrequenz 74 40825bca126fbd85 587.47366797730558
+kurve Harmonium eigenfrequenz 75 40837394a2d02d14 622.44757616651123
+kurve Harmonium eigenfrequenz 76 40849b7529fe453d 659.43220900200652
+kurve Harmonium eigenfrequenz 77 4085d51148bbc19d 698.63343950924502
+kurve Harmonium eigenfrequenz 78 408721962cab6b1d 740.19832738800653
+kurve Harmonium eigenfrequenz 79 4088812bc621f5f6 784.14637400180686
+kurve Harmonium eigenfrequenz 80 4089f69a48466f59 830.82533316638285
+kurve Harmonium eigenfrequenz 81 408b82061cca4689 880.25298460033184
+kurve Harmonium eigenfrequenz 82 408d24ac50536d6b 932.5841375844733
+kurve Harmonium eigenfrequenz 83 408edfd91d527fb3 987.9810129590245
+kurve Harmonium eigenfrequenz 84 40905a6b0241df57 1046.6045007984701
+kurve Harmonium eigenfrequenz 85 409153fabd31d8fa 1108.9948623455698
+kurve Harmonium eigenfrequenz 86 40925ad13ce43e7a 1174.7043338454373
+kurve Harmonium eigenfrequenz 87 4093723c5e4d1fae 1244.5589534807764
+kurve Harmonium eigenfrequenz 88 40949a6b3653af05 1318.6046994281362
+kurve Harmonium eigenfrequenz 89 4095d3d9084a0487 1396.9619456830276
+kurve Harmonium druckUnten 48 40a505bcafcef55c 2690.868528811885
+kurve Harmonium druckUnten 49 40a505bcafcef55c 2690.868528811885
+kurve Harmonium druckUnten 50 40a8fffffffffffc 3199.9999999999982
+kurve Harmonium druckUnten 51 40a8fffffffffffc 3199.9999999999982
+kurve Harmonium druckUnten 52 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 53 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 54 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 55 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 56 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckUnten 57 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckUnten 58 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckUnten 59 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckUnten 60 4091ad7bc01366b5 1131.3708498984754
+kurve Harmonium druckUnten 61 4091ad7bc01366b5 1131.3708498984754
+kurve Harmonium druckUnten 62 409505bcafcef55c 1345.4342644059425
+kurve Harmonium druckUnten 63 409505bcafcef55c 1345.4342644059425
+kurve Harmonium druckUnten 64 409505bcafcef55c 1345.4342644059425
+kurve Harmonium druckUnten 65 409dbaecefedae0c 1902.7313840043525
+kurve Harmonium druckUnten 66 409505bcafcef55c 1345.4342644059425
+kurve Harmonium druckUnten 67 409dbaecefedae0c 1902.7313840043525
+kurve Harmonium druckUnten 68 4098fffffffffffc 1599.9999999999991
+kurve Harmonium druckUnten 69 409dbaecefedae0c 1902.7313840043525
+kurve Harmonium druckUnten 70 409dbaecefedae0c 1902.7313840043525
+kurve Harmonium druckUnten 71 40a1ad7bc01366b5 2262.7416997969508
+kurve Harmonium druckUnten 72 409dbaecefedae0c 1902.7313840043525
+kurve Harmonium druckUnten 73 40a1ad7bc01366b5 2262.7416997969508
+kurve Harmonium druckUnten 74 40a505bcafcef55c 2690.868528811885
+kurve Harmonium druckUnten 75 40a1ad7bc01366b5 2262.7416997969508
+kurve Harmonium druckUnten 76 40a505bcafcef55c 2690.868528811885
+kurve Harmonium druckUnten 77 40a8fffffffffffc 3199.9999999999982
+kurve Harmonium druckUnten 78 40a8fffffffffffc 3199.9999999999982
+kurve Harmonium druckUnten 79 40a8fffffffffffc 3199.9999999999982
+kurve Harmonium druckUnten 80 40a8fffffffffffc 3199.9999999999982
+kurve Harmonium druckUnten 81 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 82 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 83 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 84 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 85 40adbaecefedae0c 3805.4627680087051
+kurve Harmonium druckUnten 86 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckUnten 87 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckUnten 88 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckUnten 89 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 48 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 49 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 50 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 51 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 52 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 53 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 54 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 55 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 56 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 57 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 58 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 59 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 60 4098fffffffffffc 1599.9999999999991
+kurve Harmonium druckOben 61 4098fffffffffffc 1599.9999999999991
+kurve Harmonium druckOben 62 409dbaecefedae0c 1902.7313840043525
+kurve Harmonium druckOben 63 40a1ad7bc01366b5 2262.7416997969508
+kurve Harmonium druckOben 64 40a505bcafcef55c 2690.868528811885
+kurve Harmonium druckOben 65 40a505bcafcef55c 2690.868528811885
+kurve Harmonium druckOben 66 40a8fffffffffffc 3199.9999999999982
+kurve Harmonium druckOben 67 40adbaecefedae0d 3805.4627680087056
+kurve Harmonium druckOben 68 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 69 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 70 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 71 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 72 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 73 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 74 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 75 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 76 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 77 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 78 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 79 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 80 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 81 40b1ad7bc01366b5 4525.4833995939016
+kurve Harmonium druckOben 82 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 83 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 84 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 85 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 86 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 87 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 88 40b505bcafcef55c 5381.7370576237699
+kurve Harmonium druckOben 89 40b505bcafcef55c 5381.7370576237699
+kurve Melodica eigenfrequenz 53 4065e713cc4a1c6a 175.22116674876025
+kurve Melodica eigenfrequenz 54 406733bdc158734a 185.61691348338564
+kurve Melodica eigenfrequenz 55 406894a058ae15a6 196.64457353592769
+kurve Melodica eigenfrequenz 56 406a0a7a20e22952 208.32740825817251
+kurve Melodica eigenfrequenz 57 406b967af436e82c 220.70250902866371
+kurve Melodica eigenfrequenz 58 406d39c8837bec08 233.80572675899043
+kurve Melodica eigenfrequenz 59 406ef61d57b8838e 247.69108186757916
+kurve Melodica eigenfrequenz 60 4070669f0d7687eb 262.41383119870324
+kurve Melodica eigenfrequenz 61 40715fea58ef57b1 277.9947137212103
+kurve Melodica eigenfrequenz 62 40726873e25c2c44 294.52829204564136
+kurve Melodica eigenfrequenz 63 407380991becaff3 312.03738014656045
+kurve Melodica eigenfrequenz 64 4074a8e59153d630 330.55604679821681
+kurve Melodica eigenfrequenz 65 4075e3356704a5e7 350.20053769889495
+kurve Melodica eigenfrequenz 66 407730b06481de3b 371.04306460122797
+kurve Melodica eigenfrequenz 67 407890fcc23c5bb0 393.06170867516903
+kurve Melodica eigenfrequenz 68 407a07a18dfeccbb 416.47694205790657
+kurve Melodica eigenfrequenz 69 407b929196f0f546 441.16054433941133
+kurve Melodica eigenfrequenz 70 407d3624c0d00a5f 467.38397294298005
+kurve Melodica eigenfrequenz 71 407ef3f393f767f3 495.24696728365888
+kurve Melodica eigenfrequenz 72 408064c6d13da84c 524.59707878274776
+kurve Melodica eigenfrequenz 73 40815e559c6916f6 555.79180223561593
+kurve Melodica eigenfrequenz 74 4082666a70cd0919 588.80197296318067
+kurve Melodica eigenfrequenz 75 40837fc323347f3c 623.97028199208535
+kurve Melodica eigenfrequenz 76 4084a8a5223e297b 661.08063171924675
+kurve Melodica eigenfrequenz 77 4085e3022781178d 700.37605191090699
+kurve Melodica eigenfrequenz 78 4087308e3aea9a57 742.06944831164844
+kurve Melodica eigenfrequenz 79 40888ea7c0e30a0c 785.8319108712617
+kurve Melodica eigenfrequenz 80 408a076f26b7579e 832.92927306400429
+kurve Melodica eigenfrequenz 81 408b9400734f0745 882.50021993390021
+kurve Melodica eigenfrequenz 82 408d37e1c7d2f5f9 934.9852444154086
+kurve Melodica eigenfrequenz 83 408ef4aec7eff4b9 990.58534228768906
+kurve Melodica eigenfrequenz 84 40906371d9748cd0 1048.8611810885377
+kurve Melodica druckUnten 53 405dbaecefedae11 118.92071150027211
+kurve Melodica druckUnten 54 405dbaecefedae11 118.92071150027211
+kurve Melodica druckUnten 55 405dbaecefedae11 118.92071150027211
+kurve Melodica druckUnten 56 405dbaecefedae11 118.92071150027211
+kurve Melodica druckUnten 57 4061ad7bc01366b8 141.42135623730951
+kurve Melodica druckUnten 58 405dbaecefedae11 118.92071150027211
+kurve Melodica druckUnten 59 405dbaecefedae11 118.92071150027211
+kurve Melodica druckUnten 60 4061ad7bc01366b8 141.42135623730951
+kurve Melodica druckUnten 61 4061ad7bc01366b8 141.42135623730951
+kurve Melodica druckUnten 62 4061ad7bc01366b8 141.42135623730951
+kurve Melodica druckUnten 63 4061ad7bc01366b8 141.42135623730951
+kurve Melodica druckUnten 64 406505bcafcef55f 168.1792830507429
+kurve Melodica druckUnten 65 406505bcafcef55f 168.1792830507429
+kurve Melodica druckUnten 66 4068ffffffffffff 199.99999999999997
+kurve Melodica druckUnten 67 4068ffffffffffff 199.99999999999997
+kurve Melodica druckUnten 68 4068ffffffffffff 199.99999999999997
+kurve Melodica druckUnten 69 406dbaecefedae10 237.84142300054418
+kurve Melodica druckUnten 70 406dbaecefedae10 237.84142300054418
+kurve Melodica druckUnten 71 4071ad7bc01366b7 282.84271247461896
+kurve Melodica druckUnten 72 4071ad7bc01366b7 282.84271247461896
+kurve Melodica druckUnten 73 4071ad7bc01366b7 282.84271247461896
+kurve Melodica druckUnten 74 407505bcafcef55e 336.35856610148574
+kurve Melodica druckUnten 75 407505bcafcef55e 336.35856610148574
+kurve Melodica druckUnten 76 4078fffffffffffe 399.99999999999989
+kurve Melodica druckUnten 77 4078fffffffffffe 399.99999999999989
+kurve Melodica druckUnten 78 407dbaecefedae0e 475.68284600108825
+kurve Melodica druckUnten 79 407dbaecefedae0e 475.68284600108825
+kurve Melodica druckUnten 80 4081ad7bc01366b6 565.68542494923781
+kurve Melodica druckUnten 81 4081ad7bc01366b6 565.68542494923781
+kurve Melodica druckUnten 82 408505bcafcef55d 672.71713220297136
+kurve Melodica druckUnten 83 408505bcafcef55d 672.71713220297136
+kurve Melodica druckUnten 84 4088fffffffffffd 799.99999999999966
+kurve Melodica druckOben 53 408505bcafcef55d 672.71713220297136
+kurve Melodica druckOben 54 4088fffffffffffd 799.99999999999966
+kurve Melodica druckOben 55 408dbaecefedae0d 951.36569200217639
+kurve Melodica druckOben 56 408dbaecefedae0d 951.36569200217639
+kurve Melodica druckOben 57 4091ad7bc01366b5 1131.3708498984754
+kurve Melodica druckOben 58 409505bcafcef55c 1345.4342644059425
+kurve Melodica druckOben 59 409505bcafcef55c 1345.4342644059425
+kurve Melodica druckOben 60 4098fffffffffffc 1599.9999999999991
+kurve Melodica druckOben 61 409dbaecefedae0d 1902.7313840043528
+kurve Melodica druckOben 62 409dbaecefedae0d 1902.7313840043528
+kurve Melodica druckOben 63 40a1ad7bc01366b5 2262.7416997969508
+kurve Melodica druckOben 64 40a505bcafcef55c 2690.868528811885
+kurve Melodica druckOben 65 40a505bcafcef55c 2690.868528811885
+kurve Melodica druckOben 66 40a8fffffffffffc 3199.9999999999982
+kurve Melodica druckOben 67 40adbaecefedae0d 3805.4627680087056
+kurve Melodica druckOben 68 40adbaecefedae0d 3805.4627680087056
+kurve Melodica druckOben 69 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 70 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 71 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 72 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 73 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 74 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 75 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 76 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 77 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 78 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 79 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 80 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 81 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 82 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 83 40b1ad7bc01366b5 4525.4833995939016
+kurve Melodica druckOben 84 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika eigenfrequenz 60 40706b628dd15fbd 262.71156102930746
+kurve Mundharmonika eigenfrequenz 61 407165221c2e5cb4 278.32082765684322
+kurve Mundharmonika eigenfrequenz 62 40726dd17a287485 294.8636418895988
+kurve Mundharmonika eigenfrequenz 63 40738650a94e6a9c 312.39469271308349
+kurve Mundharmonika eigenfrequenz 64 4074af4609766202 330.9545988678293
+kurve Mundharmonika eigenfrequenz 65 4075ea04c4dffc3a 350.62616431707613
+kurve Mundharmonika eigenfrequenz 66 407737e4cdf9976e 371.49336049553574
+kurve Mundharmonika eigenfrequenz 67 40789939871154f3 393.57654482622382
+kurve Mundharmonika eigenfrequenz 68 407a0fab9d062f7f 416.97939779678558
+kurve Mundharmonika eigenfrequenz 69 407b9bc862d2018d 441.73642236741654
+kurve Mundharmonika eigenfrequenz 70 407d3fdf4d36e4c0 467.99201699679179
+kurve Mundharmonika eigenfrequenz 71 407efdf792bf6c64 495.87294268393293
+kurve Mundharmonika eigenfrequenz 72 40806a395bdcba47 525.2780072445247
+kurve Mundharmonika eigenfrequenz 73 408163ff4f87f6f4 556.49966341230765
+kurve Mundharmonika eigenfrequenz 74 40826cf954385d5e 589.62174266848501
+kurve Mundharmonika eigenfrequenz 75 4083859d82e3c3cf 624.70190980855284
+kurve Mundharmonika eigenfrequenz 76 4084af400e4698c0 661.90627722886711
+kurve Mundharmonika eigenfrequenz 77 4085ea2208179689 701.26661699703357
+kurve Mundharmonika eigenfrequenz 78 4087375c32757286 742.92001811748264
+kurve Mundharmonika eigenfrequenz 79 4088971e0be41023 786.88967111753698
+kurve Mundharmonika eigenfrequenz 80 408a0ef6a43ed6f6 833.87043046086796
+kurve Mundharmonika eigenfrequenz 81 408b9c7057b36234 883.55485477584307
+kurve Mundharmonika eigenfrequenz 82 408d40c8eff2fb40 936.09811391667608
+kurve Mundharmonika eigenfrequenz 83 408efd6b4f3dda41 991.67739723512943
+kurve Mundharmonika eigenfrequenz 84 409068f935d9b442 1050.2433694854994
+kurve Mundharmonika eigenfrequenz 85 409164e69e04b04d 1113.2252121670347
+kurve Mundharmonika eigenfrequenz 86 40926a9eb6cc9e81 1178.6549941989654
+kurve Mundharmonika eigenfrequenz 87 409384874fb44b87 1249.1321399851893
+kurve Mundharmonika eigenfrequenz 88 4094aeced5e23bca 1323.7019877766602
+kurve Mundharmonika eigenfrequenz 89 4095e65e17b38563 1401.5918872881091
+kurve Mundharmonika eigenfrequenz 90 409735e615594ddb 1485.4746908143777
+kurve Mundharmonika eigenfrequenz 91 409899c80568f52f 1574.4453331374787
+kurve Mundharmonika eigenfrequenz 92 409a0bab61f48365 1666.9173658566663
+kurve Mundharmonika eigenfrequenz 93 409b941c127f5db6 1765.0274143124529
+kurve Mundharmonika eigenfrequenz 94 409d40a55f347ae7 1872.1614959907545
+kurve Mundharmonika eigenfrequenz 95 409ef34e3be0e6f9 1980.8264002934432
+kurve Mundharmonika eigenfrequenz 96 40a0686f2ae07701 2100.2171239991444
+kurve Mundharmonika druckUnten 60 4061ad7bc01366b8 141.42135623730951
+kurve Mundharmonika druckUnten 61 4061ad7bc01366b8 141.42135623730951
+kurve Mundharmonika druckUnten 62 4061ad7bc01366b8 141.42135623730951
+kurve Mundharmonika druckUnten 63 406505bcafcef55f 168.1792830507429
+kurve Mundharmonika druckUnten 64 4068ffffffffffff 199.99999999999997
+kurve Mundharmonika druckUnten 65 4068ffffffffffff 199.99999999999997
+kurve Mundharmonika druckUnten 66 4068ffffffffffff 199.99999999999997
+kurve Mundharmonika druckUnten 67 406dbaecefedae10 237.84142300054418
+kurve Mundharmonika druckUnten 68 406dbaecefedae10 237.84142300054418
+kurve Mundharmonika druckUnten 69 4071ad7bc01366b7 282.84271247461896
+kurve Mundharmonika druckUnten 70 4071ad7bc01366b7 282.84271247461896
+kurve Mundharmonika druckUnten 71 407505bcafcef55e 336.35856610148574
+kurve Mundharmonika druckUnten 72 407505bcafcef55e 336.35856610148574
+kurve Mundharmonika druckUnten 73 4078fffffffffffe 399.99999999999989
+kurve Mundharmonika druckUnten 74 4078fffffffffffe 399.99999999999989
+kurve Mundharmonika druckUnten 75 407dbaecefedae0e 475.68284600108825
+kurve Mundharmonika druckUnten 76 407dbaecefedae0e 475.68284600108825
+kurve Mundharmonika druckUnten 77 4081ad7bc01366b6 565.68542494923781
+kurve Mundharmonika druckUnten 78 4081ad7bc01366b6 565.68542494923781
+kurve Mundharmonika druckUnten 79 408505bcafcef55d 672.71713220297136
+kurve Mundharmonika druckUnten 80 408505bcafcef55d 672.71713220297136
+kurve Mundharmonika druckUnten 81 4088fffffffffffd 799.99999999999966
+kurve Mundharmonika druckUnten 82 4088fffffffffffd 799.99999999999966
+kurve Mundharmonika druckUnten 83 408dbaecefedae0d 951.36569200217639
+kurve Mundharmonika druckUnten 84 408dbaecefedae0d 951.36569200217639
+kurve Mundharmonika druckUnten 85 4091ad7bc01366b5 1131.3708498984754
+kurve Mundharmonika druckUnten 86 409505bcafcef55c 1345.4342644059425
+kurve Mundharmonika druckUnten 87 409505bcafcef55c 1345.4342644059425
+kurve Mundharmonika druckUnten 88 4098fffffffffffc 1599.9999999999991
+kurve Mundharmonika druckUnten 89 4098fffffffffffc 1599.9999999999991
+kurve Mundharmonika druckUnten 90 409dbaecefedae0c 1902.7313840043525
+kurve Mundharmonika druckUnten 91 409dbaecefedae0c 1902.7313840043525
+kurve Mundharmonika druckUnten 92 40a1ad7bc01366b5 2262.7416997969508
+kurve Mundharmonika druckUnten 93 40a505bcafcef55c 2690.868528811885
+kurve Mundharmonika druckUnten 94 40a505bcafcef55c 2690.868528811885
+kurve Mundharmonika druckUnten 95 40a8fffffffffffc 3199.9999999999982
+kurve Mundharmonika druckUnten 96 40a8fffffffffffc 3199.9999999999982
+kurve Mundharmonika druckOben 60 4098fffffffffffc 1599.9999999999991
+kurve Mundharmonika druckOben 61 409dbaecefedae0d 1902.7313840043528
+kurve Mundharmonika druckOben 62 409dbaecefedae0d 1902.7313840043528
+kurve Mundharmonika druckOben 63 40a1ad7bc01366b5 2262.7416997969508
+kurve Mundharmonika druckOben 64 40a505bcafcef55c 2690.868528811885
+kurve Mundharmonika druckOben 65 40a505bcafcef55c 2690.868528811885
+kurve Mundharmonika druckOben 66 40a8fffffffffffc 3199.9999999999982
+kurve Mundharmonika druckOben 67 40adbaecefedae0d 3805.4627680087056
+kurve Mundharmonika druckOben 68 40adbaecefedae0d 3805.4627680087056
+kurve Mundharmonika druckOben 69 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 70 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 71 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 72 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 73 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 74 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 75 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 76 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 77 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 78 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 79 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 80 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 81 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 82 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 83 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 84 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 85 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 86 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 87 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 88 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 89 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 90 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 91 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 92 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 93 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 94 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 95 40b1ad7bc01366b5 4525.4833995939016
+kurve Mundharmonika druckOben 96 40b1ad7bc01366b5 4525.4833995939016
+# normiere nachgerechnet: gleich fuer alle vier

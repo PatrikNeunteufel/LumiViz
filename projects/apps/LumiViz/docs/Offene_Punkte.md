@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.336.0
-> **Datum:** 2026-11-11 (Sessions 164 bis 187)
+> **Version:** 1.337.0
+> **Datum:** 2026-11-11 (Sessions 164 bis 189)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2925,8 +2925,8 @@ im Hörtest: L5 (die Listen hören).
 Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`; **geplant S188:** Teilplan 34j-1 bis 34j-10 nach ZV1 a–ZV3 a,
 Befund [2026-11-11_S188_befund_ic_vorlage.md](modellierung/zunge/2026-11-11_S188_befund_ic_vorlage.md) — erst der Umzug
-Bit für Bit, dann die Vorgaben je Taste mit Quellen, ein Winddruck für alle Tasten, laufender Wind; nächster Schritt
-34j-1), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+Bit für Bit, dann die Vorgaben je Taste mit Quellen, ein Winddruck für alle Tasten, laufender Wind; **34j-1 erledigt
+S189** (Beleg `werte/zunge_ic.txt`, Journal J66); nächster Schritt 34j-2), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6456,6 +6456,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.337.0 | 2026-11-11 | Session 189 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-1 erledigt — Beleg aus der Vorlage `werte/zunge_ic.txt` (49 Abdrücke, vier Bezüge, 524 Kurvenpunkte; Programm `anbindung-ic/abdruck_zunge.cpp`), Journal J66. |
 | 1.336.0 | 2026-11-11 | Session 188 (Fable 5.2). §6 Anbindung InstrumentsCalculation: 34j geplant — Befund an der IC-Vorlage der Zunge, ZV1 a–ZV3 a, Teilplan 34j-1 bis 34j-10 im Konzept §6. |
 | 1.335.0 | 2026-11-11 | Session 187 (Opus 5.5). §6 HS-4 untersucht (HS-4 a, HS4-1 a): Recherche, Wellenleiter, zwei Gesetze, Zielgröße nachgeprüft — ruht bis zu den Originalen. |
 | 1.334.0 | 2026-11-11 | Session 187 (Opus 5.5). §6 Hörtest, Befund (a): HS-2 a (Umfang an den Teiltönen von *Salamander*: der Vorteil des belegten Satzes ist echt), HS-3 a (ε und Q0 nach Kartofelev & Stulov 2014, Kontakt 32-fach, Celesta und Cimbalom mit; Dateien, Abdrücke mit Vermerk, Pegel, Loop-Werte, Klangfassung, Hörlisten `klasse1_34i`, `stab_34g` neu); HS3-1 a (Celesta-Spielweisen an Taste 72), HS3-2 a (`pv1` abgeschlossen); offen HS-4 (Helligkeit je Stärke im Diskant). |

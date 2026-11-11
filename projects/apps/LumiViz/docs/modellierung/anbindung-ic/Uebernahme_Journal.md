@@ -1,6 +1,6 @@
 # Übernahme-Journal — Bausteine aus IC und LumiViz in die Bibliotheken
 
-> **Version:** 0.10.0
+> **Version:** 0.11.0
 > **Datum:** 2026-11-09 (Sessions 175–181)
 > **Typ:** Journal (Instrumente_IC_Konzept.md IK2-2 a: „jede Übernahme steht in `Uebernahme_Journal.md`“)
 > **Status:** wird je Teilschritt fortgeschrieben
@@ -380,10 +380,20 @@ Rechenzeit ausgesetzt bis zum Tausch der Kühlung).
 (HS3-1 a; an 84 −42,6 dB); Abdrücke und Hammer-Bezug unter beiden Compilern gleich. **Voller Lauf 1860 / 1860, 0 Skips unter
 Release-clang (789 s) und Testing-MSVC (695 s).** Rechenzeit `*31b-3*` ausgesetzt bis zum Tausch der Kühlung.
 
+## 6e. Stufe 34j — Klasse 10, der Kern `freeReed` (S189 ff.)
+
+Teilplan 34j-1 bis 34j-10 im Konzept §6 (ZV1 a–ZV3 a). Quellen: LumiViz `master` `4aa4fb5d` (nach S188), die IC-Vorlage
+unter `harvest/instruments-calculation/rechnung` (IC `4409088`, `klassen/10_zunge/` mit `Stimmung.inc`).
+
+| Nr. | Baustein | Quelle | Ziel | Übernommen | Verworfen / geändert, warum |
+|---|---|---|---|---|---|
+| J66 | Bezug aus IC (34j-1) | IC `werte/abdruck_msvc.txt` (ein Abdruck der Klasse 10), die Vorlage der Klasse 10 | `docs/modellierung/anbindung-ic/abdruck_zunge.cpp` mit `.bat`, `tests/unit/UnitTests/werte/zunge_ic.txt` (589 Zeilen) | der IC-Abdruck `zunge_Akkordeon_m69_mf` — vom Programm gleich `abdruck_msvc.txt` gerechnet (`1a20c5e0…bae73c`) | **neu:** IC führt die übrigen nicht; das Programm rechnet sie mit der Vorlage unter MSVC `/MD`, ohne sie zu ändern: je Instrument tief / mitte / hoch (Akkordeon ab `bassAb`) bei Expression 0 / 0,5 / 1 (0,4 s gehalten, 28 800 Frames, mit Absetzen und Ausklang), die Bass-Seite des Akkordeons an 29 / 40 / 52, je Instrument an der Mitte Vibrato (20 Cent, 5,5 Hz) und Bend (−50 Cent), der Balgwechsel am Akkordeon m69 bei 0,2 s — 49 Abdrücke; die vier Bezüge als Bits (nachgerechnet gleich der Vorgabe); die drei Kurven aus `Stimmung.inc` je Instrument Punkt für Punkt als Bits (524 Punkte). **Befund 1 (Bezug):** mit einer Probe von 1 s statt IC `normiere` (0,6 s) kommen bei allen vier andere Bits heraus (Akkordeon 1,5713 → 1,5847, Harmonium 0,0723 → 0,0781, Melodica 0,5154 → 0,5163, Mundharmonika gleich bis 6·10⁻⁷) — anders als bei der Trommel (J43); die Zeilen `bezug1s` stehen für 34j-2 (IK2-10 a) im Beleg. **Befund 2 (Vorlage):** am Harmonium fällt das Fenster an 87–89 auf einen Druck zusammen (5 382 Pa), dort ändert die Expression nichts (die drei Abdrücke an 89 gleich); am Akkordeon haben die Bass-Noten 29 und 37 kein Fenster (die Kurve überspringt sie) — beides gehört zum Befund S188 und wird in 34j-5 neu hergeleitet. **Plattform:** `clang-cl /O2 /MD` mit `-ffp-contract=off -fno-fast-math` (die Schalter der Kern-Bibliotheken in `Solution.json`) gibt alle 589 Zeilen gleich |
+
 ## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.11.0 | 2026-11-11 | Session 189. §6e neu: 34j-1 (J66). |
 | 0.10.0 | 2026-11-11 | Session 187. §6d neu: HS-3 a (J65, Wächter). |
 | 0.9.0 | 2026-11-09 | Session 183. §6c neu: LP2 b (J60–J64, Wächter). |
 | 0.8.0 | 2026-11-09 | Session 181. §6b neu: 34i (J53–J59, Wächter). |
