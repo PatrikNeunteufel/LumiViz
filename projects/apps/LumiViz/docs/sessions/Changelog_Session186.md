@@ -26,4 +26,4 @@
 ## Geprüft
 
 - Eng 12 / 12 unter Release-clang und Testing-MSVC; alle 11 Hörlisten mit `Hoertest --liste-pruefen` 0 Fehler, 0 Hinweise.
-- Hammer-Bezug Bit für Bit nach der Änderung am Kern (62 / 62 unter Release-clang).
+- Hammer-Bezug Bit für Bit nach der Änderung am Kern (62 / 62 unter Release-clang und Testing-MSVC).

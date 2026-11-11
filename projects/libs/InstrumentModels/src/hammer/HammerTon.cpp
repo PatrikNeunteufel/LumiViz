@@ -510,7 +510,12 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
     bool beruehrt = false;
     double erster = 0.0;
     std::int64_t n = 0;
-    if (messung != nullptr) *messung = HammerMessung{};
+    const bool kraftVerlauf = messung != nullptr && messung->mitKraftVerlauf;
+    if (messung != nullptr)
+    {
+        *messung = HammerMessung{};
+        messung->mitKraftVerlauf = kraftVerlauf;
+    }
     // die groesste Auslenkung einer Saite an neun Stellen (nur mit `messung`)
     const auto auslenkung = [&]() {
         if (messung == nullptr) return;
@@ -562,6 +567,7 @@ void rechneHammerTon(const HammerSaite& saite, const HammerAnschlag& anschlag, s
             const double phi = druck > 0.0 ? std::pow(druck, w.p) : 0.0;
             gedaechtnis = gedaechtnis * kern + phi * w.tauS * (1.0 - kern);
             const double kraft = std::max(0.0, f0Hammer * (phi - (w.tauS > 0.0 ? w.eps * gedaechtnis / w.tauS : 0.0)));
+            if (kraftVerlauf) messung->kraftN.push_back(kraft);
             // die Moden sehen die Kraft erst im naechsten Schritt (Impulsinvarianz, Gl. 10)
             for (Mode& m : moden) m.zustand = m.polFein * (m.zustand + m.eingang * (kraft * dtFein));
             hammerV -= kraft / w.hammerKg * dtFein;

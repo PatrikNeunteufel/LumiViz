@@ -110,6 +110,53 @@ die Nichtlinearität kommt kaum noch zur Wirkung. Offen, ob das am Satz liegt (u
 Messung der Helligkeit am Ton ohne Boden, oder an *Salamander* (Boden, Mikrofon). Noch nicht gerechnet: Rechenzeit mit
 32-fachem Kontakt; der Stab (dieselbe Filzformel) mit dem neuen ε.
 
-## 6 Offen
+## 6 HS-2: woher der Widerspruch kommt (S187, 2026-11-11)
 
-Vorlage an Patrik (S186): wie mit dem Widerspruch an C6 umgehen, bevor der Satz in den Kern kommt.
+**Werkzeug.** `HammerMessung::mitKraftVerlauf` hält die Kraft je feinem Schritt fest (nur zum Messen, Bit für Bit wie
+vorher: 42 / 42 Fälle `*Hammer*,*Leiser*` unter Release-clang). Neuer Messfall `LUMIVIZ_HS2_MESSUNG=<datei.md>` in
+`test_LoopLeiserAnschlag.cpp`: an C4 und C6 je Stufe Kontakt, Kraft, Grundton, Teiltöne 2 … 8 **am Ton und am Kraftpuls
+allein**, dazu die Rechenzeit 8- gegen 32-fach. Im Messfall HS-1 neu: die Helligkeit gegen *Salamander* an **allen 30
+gemessenen Tasten** (`helligkeit_n` in `salamander_c5.txt`, bisher nur C4/C6 genutzt), `LUMIVIZ_HS1_FEIN=<n>`,
+`LUMIVIZ_HS1_NUR_S2`, und drei Sätze „S2 mit α × k“.
+
+**Konvergenz.** Die Helligkeit ist bei 32-fach konvergiert (gegen 128-fach höchstens 0,05).
+
+**Ursache: die Zähigkeit des Filzes.** Für t ≫ τ0 (τ0 ≈ 1,8 µs, Kontakt ≈ 1 ms) rechnet Stulovs Gesetz
+F ≈ Q0·(φ + α·dφ/dt) mit α = ετ0/(1 − ε). Heute (ε „−“) ist α an C6 ≈ 3 µs, mit dem belegten ε ≈ 360 µs. Das ist ein
+Hochpass (1 + jωα) auf den Puls, gleich für jede Stärke: an C6 ist bei S2 schon der **Kraftpuls allein** bei 0,16 m/s
+so hell wie bei 5 m/s (Teilton 8 gegen 1: −34 dB bzw. −30 dB; heute −112 bzw. −20 dB). Steigung am Puls über alle
+Stufen 0,00 … 0,04 (heute 1,1 … 1,6). Derselbe Hochpass hebt den leisen Anschlag im hohen Diskant — darum bessert S2 den
+Umfang des Tons. **Ein Regler, zwei Zielgrößen gegenläufig.**
+
+**α als Regler** (S2, ε so verkleinert, dass α × k; Q0, τ0, p wie S2; 32-fach):
+
+| Satz | (1) Kontakt RMS log | (2) Umfang RMS dB | (3) Helligkeit RMS Bass / Mitte / Diskant | (3) C4 / C6 | (5) Auslenkung / Tab. IV |
+|---|---|---|---|---|---|
+| heute (ε „−“) | 0,33 | 18,7 | 0,25 / 0,39 / **0,61** | 0,33 / 0,71 | 0,32 … 0,74 |
+| S2 (α × 1, belegt) | 0,28 | **6,5** | 0,26 / 0,38 / 1,03 | 0,15 / 1,67 | 0,31 … 0,64 |
+| α × 0,3 | **0,24** | 12,8 | 0,25 / **0,28** / 0,73 | 0,21 / 1,32 | 0,32 … 0,67 |
+| α × 0,1 | 0,27 | 16,9 | 0,24 / 0,35 / **0,55** | 0,28 / 0,98 | 0,33 … 0,70 |
+| α × 0,03 | 0,31 | 17,1 | 0,25 / 0,38 / 0,59 | 0,31 / 0,68 | 0,33 … 0,73 |
+
+(Bereiche: 21–45, 48–69, 72–105; 63 / 56 / 57 Paare Taste × Teilton.) Kein α trifft Umfang und Helligkeit zugleich.
+Je Taste (Modell − *Salamander*, Mittel n = 2 … 8): S2 liegt ab Taste 66 durchweg zu dunkel im Zuwachs (−0,4 … −1,6,
+am stärksten 78–84), heute 63–81 zu hell (+0,3 … +0,6) und **ab 84 in allen Sätzen zu dunkel** (−0,2 … −0,7) — dort
+fehlt dem Modell in jeder Fassung etwas. Der Bass hängt an keinem Satz (0,24 … 0,26). Die Kontaktzeit an C6 pp bleibt
+in allen Sätzen zu kurz (1,3 … 1,7 ms gegen 2,5 bei Askenfelt & Jansson), die Auslenkung bei 30 … 75 % von Tab. IV.
+
+**Die Zielgröße (2) ist im hohen Diskant nicht sicher.** `pegelumfang` ist der Pegel des **ganzen** Signals der ersten
+0,3 s (v16 gegen v1, `Fluegelmessung.cpp`), nicht der Saite: Anschlaggeräusch, Raum und Rauschen der Aufnahme zählen bei
+v1 mit, und Teilton 1 ist dort „kaum messbar“ (Kommentar am Code, Befund S152). Die Werte 96–108 springen (28,7 / 35,2 /
+24,9 / 38,9 / 23,6 dB) — so springt kein Hammersatz. Das Modell misst dagegen die reine Saite. Der Vorteil von S2 in (2)
+kommt ganz aus 87–108 (21–84 liegen heute und S2 auf 0,5 dB gleich); ob er echt ist, zeigt erst ein Umfang **an den Teiltönen** von *Salamander* (Archiv auf E:).
+
+**Rechenzeit 32-fach.** 1 s Ton, S2, kleinstes von fünf: Bass +5 … +10 % (Taste 21: 32,0 → 35,2 ms), Mitte +5 %, oben
+bis +33 % auf 1 ms. Gegen die Grenze 4,6 % im Bass (in Ruhe heute 3,9 … 4,2 %) wird es knapp; gültig erst nach dem Tausch
+der Kühlung.
+
+**Stab.** Nur die Celesta nimmt den Stulov-Filz (Taste 88, `stab/Vorgaben.cpp`), mit 16-fachem Kontakt (1,3 µs > τ0
+1,8 µs ist nicht konvergiert). Sie hängt an derselben Entscheidung; gerechnet erst im Umbau.
+
+## 7 Offen
+
+Vorlage HS-2 an Patrik (S187): welcher Satz in den Kern kommt, und ob vorher (2) an den Teiltönen nachgemessen wird.

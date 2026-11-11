@@ -131,6 +131,10 @@ struct HammerMessung
     /// Die groesste Auslenkung einer Saite in den ersten 30 ms, an neun Stellen
     /// (L/10 … 9L/10) gesucht, in m.
     double auslenkungSpitzeM = 0.0;
+    /// Nur zum Messen (HS-2, S187): mit `true` wird die Kraft zwischen Hammer und Saite je feinem Schritt
+    /// (`1/(rate·ueberabtastung)`) in `kraftN` festgehalten, vom ersten Schritt bis zum Ende des Kontakts.
+    bool mitKraftVerlauf = false;
+    std::vector<double> kraftN;
 };
 
 /// Einen Ton rechnen: `frames` Abtastwerte in eine Seite (Mono), der Wert in

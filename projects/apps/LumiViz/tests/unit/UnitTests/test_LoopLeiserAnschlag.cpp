@@ -33,11 +33,13 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <functional>
 #include <map>
 #include <iomanip>
+#include <numbers>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -227,6 +229,7 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
     // (4) Spreizung ueber den Umfang (A0 … C8) — in (2) enthalten
     // (5) Auslenkung je Durchmesser gegen Chabassier, Joly & Chaigne 2013 Tab. IV
     std::map<int, double> umfangSal;
+    std::map<int, std::array<double, 7>> hellSal;  // HS-2: Helligkeit je Staerke an jeder gemessenen Taste (0 = nicht gemessen)
     {
         std::ifstream f(werteDatei("salamander_c5.txt").toStdString());
         REQUIRE(f.good());
@@ -240,6 +243,11 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
             double wert = 0.0;
             z >> taste >> groesse >> wert;
             if (groesse == "pegelumfang") umfangSal[taste] = wert;
+            if (groesse.rfind("helligkeit_", 0) == 0)
+            {
+                const int n = std::stoi(groesse.substr(11));
+                if (n >= 2 && n <= 8) hellSal[taste][static_cast<std::size_t>(n - 2)] = wert;
+            }
         }
         REQUIRE(umfangSal.size() >= 20);
     }
@@ -278,11 +286,34 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
              }
          }},
     };
+    // HS-2 (S187): fuer t >> τ0 rechnet der Filz F ≈ Q0·(φ + α·dφ/dt), α = ε·τ0/(1 − ε) — S2 mit kleinerem α zeigt,
+    // was die Zaehigkeit an jeder Zielgroesse ausmacht. α ueber ε: ε' = kα/(τ0 + kα), Q0 und τ0 wie S2 (τ0 kleiner
+    // ginge nicht: der feine Schritt muss unter τ0 bleiben, sonst verschwindet die Zaehigkeit in der Rekursion)
+    for (const double faktor : {0.3, 0.1, 0.03})
+    {
+        std::ostringstream name;
+        name << "S2, alpha x " << faktor << " (eps kleiner, Q0 und tau0 wie S2)";
+        const auto s2 = saetze[3].setze;
+        saetze.push_back({name.str(), [s2, faktor](hammer::HammerSaite& s) {
+                              s2(s);
+                              for (std::size_t i = 0; i < s.hammerHysterese.punkte.size(); ++i)
+                              {
+                                  auto& p = s.hammerHysterese.punkte[i];
+                                  const double tau = hammer::stulovHammerRelaxationUs(p.note - 20);
+                                  const double alpha = p.wert * tau / (1.0 - p.wert);
+                                  p.wert = faktor * alpha / (tau + faktor * alpha);
+                              }
+                          }});
+    }
+    if (qEnvironmentVariableIsSet("LUMIVIZ_HS1_NUR_S2"))
+        saetze.erase(saetze.begin(), saetze.begin() + 3);
 
     std::ostringstream o;
     o << std::fixed;
-    // die Konvergenz: der Kontakt 8- (wie im Programm), 32- und 128-fach feiner (τ0 ≈ 1,7 µs gegen 2,6 µs bei 8)
+    // die Konvergenz: der Kontakt 8- (wie im Programm), 32- und 128-fach feiner (τ0 ≈ 1,7 µs gegen 2,6 µs bei 8);
+    // `LUMIVIZ_HS1_FEIN=<n>` rechnet nur eine Stufe (HS-2: 32-fach ist fuer alle Groessen konvergiert)
     std::vector<int> stufenFein{8, 32, 128};
+    if (qEnvironmentVariableIsSet("LUMIVIZ_HS1_FEIN")) stufenFein = {qEnvironmentVariableIntValue("LUMIVIZ_HS1_FEIN")};
     for (const Satz& satz : saetze)
         for (const int ueber : stufenFein)
     {
@@ -356,6 +387,42 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
             }
             o << " — RMS " << std::sqrt(f / 7.0) << "\n\n";
         }
+        // (3) ueber den ganzen Umfang (HS-2): RMS je Bereich ueber alle gemessenen Teiltoene
+        if (!qEnvironmentVariableIsSet("LUMIVIZ_HS1_OHNE_UMFANG_HELL"))
+        {
+            struct Bereich
+            {
+                const char* name;
+                int von, bis;
+                double f = 0.0;
+                int n = 0;
+            };
+            std::array<Bereich, 3> bereiche{{{"Bass 21–45", 21, 45}, {"Mitte 48–69", 48, 69}, {"Diskant 72–105", 72, 105}}};
+            o << "Helligkeit ueber den Umfang, Modell − Salamander je Taste (Mittel n = 2 … 8):" << std::setprecision(2);
+            for (const auto& [taste, sal] : hellSal)
+            {
+                const std::array<double, 7> w = helligkeit(taste);
+                double summe = 0.0;
+                int zahl = 0;
+                for (std::size_t j = 0; j < 7; ++j)
+                    if (sal[j] != 0.0 && std::isfinite(w[j]))
+                    {
+                        const double d = w[j] - sal[j];
+                        summe += d;
+                        ++zahl;
+                        for (Bereich& b : bereiche)
+                            if (taste >= b.von && taste <= b.bis)
+                            {
+                                b.f += d * d;
+                                ++b.n;
+                            }
+                    }
+                if (zahl > 0) o << ' ' << taste << ": " << summe / zahl << ';';
+            }
+            o << " — RMS";
+            for (const Bereich& b : bereiche) o << ' ' << b.name << ' ' << (b.n > 0 ? std::sqrt(b.f / b.n) : std::nan("")) << " (" << b.n << ')';
+            o << "\n\n";
+        }
         // (5)
         o << "Auslenkung je Durchmesser / Chabassier Tab. IV:";
         for (const Adr& z : chabassier)
@@ -379,4 +446,187 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
     REQUIRE(aus.good());
     aus << o.str();
     MESSAGE("Saetze nach " << datei.toStdString());
+}
+
+namespace
+{
+
+/// Steigung der Ausgleichsgeraden y(x).
+double steigung(const std::vector<double>& x, const std::vector<double>& y)
+{
+    const auto n = static_cast<double>(x.size());
+    if (x.size() < 3) return std::nan("");
+    double sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (std::size_t i = 0; i < x.size(); ++i)
+    {
+        sx += x[i];
+        sy += y[i];
+        sxx += x[i] * x[i];
+        sxy += x[i] * y[i];
+    }
+    return (n * sxy - sx * sy) / (n * sxx - sx * sx);
+}
+
+/// Betrag des Kraftpulses bei `f` Hz (Fourier-Summe ueber den feinen Schritt), dB.
+double pulsDb(const std::vector<double>& kraft, double dtFein, double f)
+{
+    double re = 0.0, im = 0.0;
+    for (std::size_t i = 0; i < kraft.size(); ++i)
+    {
+        const double phase = 2.0 * std::numbers::pi * f * static_cast<double>(i) * dtFein;
+        re += kraft[i] * std::cos(phase);
+        im -= kraft[i] * std::sin(phase);
+    }
+    return 20.0 * std::log10(std::hypot(re, im) * dtFein + 1e-300);
+}
+
+}  // namespace
+
+TEST_CASE("Loop Leiser Anschlag HS-2 Diagnose (LUMIVIZ_HS2_MESSUNG) — Helligkeit je Staerke am Ton und am Kraftpuls")
+{
+    const QString datei = qEnvironmentVariable("LUMIVIZ_HS2_MESSUNG");
+    if (datei.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_HS2_MESSUNG=<datei.md> zerlegt die Helligkeit je Staerke an C4/C6 (Ton und Kraftpuls je Stufe)");
+        return;
+    }
+    // Befund S186 §5: mit dem belegten eps wird der Hammer an C6 mit der Staerke nicht heller. Hier je Stufe: Tempo,
+    // Kontaktzeit, groesste Kraft, Grundton am Ton, Teiltoene 2 … 8 gegen den Grundton am Ton und am Kraftpuls allein
+    // (ohne Saite: zeigt, ob der Hammer selbst nicht heller wird). Steigungen ueber alle Stufen (-30 … 0, wie HS-1) und
+    // ueber den spielbaren Bereich -21 … 0 (0,45 … 5 m/s, DY2 a).
+    const double epsN = 0.000088;
+    struct Fall
+    {
+        std::string name;
+        std::function<void(hammer::HammerSaite&)> setze;
+    };
+    const std::vector<Fall> faelle{
+        {"heute", [](hammer::HammerSaite&) {}},
+        {"S2 (Kartofelev & Stulov 2014)", [epsN](hammer::HammerSaite& s) {
+             for (auto& p : s.hammerHysterese.punkte) p.wert = 0.9894 + epsN * (p.note - 20);
+             for (auto& p : s.hammerSteife.punkte)
+             {
+                 const int n = p.note - 20;
+                 p.wert = 15500.0 * std::exp(0.059 * n) * (1.0 - (0.9894 + epsN * n));
+             }
+         }},
+    };
+    std::vector<int> fein{32};
+    if (qEnvironmentVariableIsSet("LUMIVIZ_HS2_FEIN")) fein = {qEnvironmentVariableIntValue("LUMIVIZ_HS2_FEIN")};
+    std::ostringstream o;
+    o << std::fixed;
+    for (const Fall& fall : faelle)
+        for (const int ueber : fein)
+            for (const int taste : {60, 84})
+            {
+                hammer::HammerSaite s = hammer::hammerSaiteVorgabe();
+                fall.setze(s);
+                o << "\n## " << fall.name << " — Taste " << taste << ", Kontakt " << ueber << "-fach\n\n";
+                o << "| Stufe | m/s | Kontakt ms | Kraft N | Grund dB | Ton n=2 … 8 gegen Grund, dB | Puls Grund dB | Puls n=2 … 8 gegen Grund, dB |\n";
+                o << "|---|---|---|---|---|---|---|---|\n";
+                std::array<std::vector<double>, 7> xT, yT, xTs, yTs, xP, yP, xPs, yPs;
+                std::vector<double> stufen, grundT;
+                for (int stufe = -30; stufe <= 0; stufe += 2)
+                {
+                    hammer::HammerAnschlag a;
+                    a.taste = taste;
+                    a.hz = hz(taste);
+                    a.stufe = stufe;
+                    a.halten = kRate;
+                    a.rate = kRate;
+                    a.ueberabtastung = ueber;
+                    hammer::HammerMessung m;
+                    m.mitKraftVerlauf = true;
+                    std::vector<float> mono;
+                    hammer::rechneHammerTon(s, a, mono, kRate, &m);
+                    const std::vector<double> d(mono.begin(), mono.end());
+                    const lumi::messung::KanalMessung km = lumi::messung::messeKanal(d, kRate, hz(taste), lumi::kern::fft(), false);
+                    const lumi::messung::TeiltonKurz* t1 = km.erkannt ? km.teilton(1) : nullptr;
+                    const double dtFein = 1.0 / (static_cast<double>(kRate) * ueber);
+                    const double p1 = pulsDb(m.kraftN, dtFein, hz(taste));
+                    o << "| " << stufe << " | " << std::setprecision(2) << hammer::hammerTempo(stufe) << " | " << m.kontaktS * 1e3
+                      << " | " << std::setprecision(1) << m.kraftSpitzeN << " | " << (t1 ? t1->anfangDb : std::nan("")) << " |";
+                    for (int n = 2; n <= 8; ++n)
+                    {
+                        const lumi::messung::TeiltonKurz* tn = t1 ? km.teilton(n) : nullptr;
+                        if (tn != nullptr)
+                        {
+                            const double r = tn->anfangDb - t1->anfangDb;
+                            o << ' ' << r;
+                            xT[n - 2].push_back(t1->anfangDb);
+                            yT[n - 2].push_back(r);
+                            if (stufe >= -21)
+                            {
+                                xTs[n - 2].push_back(t1->anfangDb);
+                                yTs[n - 2].push_back(r);
+                            }
+                        }
+                        else
+                            o << " –";
+                    }
+                    o << " | " << p1 << " |";
+                    for (int n = 2; n <= 8; ++n)
+                    {
+                        const double r = pulsDb(m.kraftN, dtFein, n * hz(taste)) - p1;
+                        o << ' ' << r;
+                        xP[n - 2].push_back(p1);
+                        yP[n - 2].push_back(r);
+                        if (stufe >= -21)
+                        {
+                            xPs[n - 2].push_back(p1);
+                            yPs[n - 2].push_back(r);
+                        }
+                    }
+                    o << " |\n";
+                    if (t1 != nullptr)
+                    {
+                        stufen.push_back(stufe);
+                        grundT.push_back(t1->anfangDb);
+                    }
+                }
+                const auto reihe = [&](const char* name, const std::array<std::vector<double>, 7>& x,
+                                       const std::array<std::vector<double>, 7>& y) {
+                    o << name << ":" << std::setprecision(2);
+                    for (std::size_t j = 0; j < 7; ++j) o << ' ' << steigung(x[j], y[j]);
+                    o << "\n\n";
+                };
+                o << "\nGrund am Ton je dB Stufe: " << std::setprecision(2) << steigung(stufen, grundT) << "\n\n";
+                reihe("Steigung Ton, alle Stufen (wie HS-1)", xT, yT);
+                reihe("Steigung Ton, -21 … 0", xTs, yTs);
+                reihe("Steigung Puls, alle Stufen", xP, yP);
+                reihe("Steigung Puls, -21 … 0", xPs, yPs);
+            }
+    // Rechenzeit des Kontakts: ein Ton von 1 s mit S2, 8- gegen 32-fach, je fuenfmal, das kleinste (nur das Verhaeltnis
+    // zaehlt — die Rechenzeit gegen die Echtzeit ist ausgesetzt, bis die Kuehlung getauscht ist)
+    {
+        hammer::HammerSaite s = hammer::hammerSaiteVorgabe();
+        faelle[1].setze(s);
+        o << "\n## Rechenzeit 1 s Ton, S2, kleinstes von fuenf\n\n| Taste | Stufe | 8-fach ms | 32-fach ms | Verhaeltnis |\n|---|---|---|---|---|\n";
+        for (const int taste : {21, 48, 84, 108})
+            for (const int stufe : {-21, 0})
+            {
+                double ms[2] = {1e300, 1e300};
+                for (int i = 0; i < 2; ++i)
+                    for (int wdh = 0; wdh < 5; ++wdh)
+                    {
+                        hammer::HammerAnschlag a;
+                        a.taste = taste;
+                        a.hz = hz(taste);
+                        a.stufe = stufe;
+                        a.halten = kRate;
+                        a.rate = kRate;
+                        a.ueberabtastung = i == 0 ? 8 : 32;
+                        std::vector<float> mono;
+                        const auto t0 = std::chrono::steady_clock::now();
+                        hammer::rechneHammerTon(s, a, mono, kRate);
+                        ms[i] = std::min(ms[i], std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count());
+                    }
+                o << "| " << taste << " | " << stufe << " | " << std::setprecision(1) << ms[0] << " | " << ms[1] << " | "
+                  << std::setprecision(2) << ms[1] / ms[0] << " |\n";
+            }
+    }
+    std::ofstream aus(datei.toStdString(), std::ios::binary);
+    REQUIRE(aus.good());
+    aus << o.str();
+    MESSAGE("Diagnose nach " << datei.toStdString());
 }
