@@ -454,10 +454,19 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
                 const lumi::messung::KanalMessung m = lumi::messung::messeKanal(d, kRate, hz(taste), lumi::kern::fft(), false);
                 const lumi::messung::TeiltonKurz* t1 = m.erkannt ? m.teilton(1) : nullptr;
                 if (t1 == nullptr) continue;
+                // HS4-1 a: `LUMIVIZ_HS1_HELL_SUMME=1` misst je dB der Summe der Teiltoene 1 … 8 statt je dB Teilton 1
+                double x = t1->anfangDb;
+                if (qEnvironmentVariableIsSet("LUMIVIZ_HS1_HELL_SUMME"))
+                {
+                    double summe = 0.0;
+                    for (const lumi::messung::TeiltonKurz& t : m.teiltoene)
+                        if (t.k >= 1 && t.k <= 8) summe += std::pow(10.0, t.anfangDb / 10.0);
+                    x = 10.0 * std::log10(summe);
+                }
                 for (int n = 2; n <= 8; ++n)
                     if (const lumi::messung::TeiltonKurz* tn = m.teilton(n); tn != nullptr)
                     {
-                        grund[static_cast<std::size_t>(n - 2)].push_back(t1->anfangDb);
+                        grund[static_cast<std::size_t>(n - 2)].push_back(x);
                         rel[static_cast<std::size_t>(n - 2)].push_back(tn->anfangDb - t1->anfangDb);
                     }
             }

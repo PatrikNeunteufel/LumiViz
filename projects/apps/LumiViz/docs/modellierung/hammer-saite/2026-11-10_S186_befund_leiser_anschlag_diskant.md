@@ -221,8 +221,8 @@ wirkt nach oben immer weniger, die hohen Stäbe klingen ohnehin schnell ab). `ma
 
 ## 9 HS-4: wo die Helligkeit verloren geht (S187, Zwischenstand)
 
-Recherche `recherche/2026-11-11_S187_helligkeit_je_staerke.md`. Eigene Rechnungen (Skripte im Scratchpad S187,
-`hs4_wand.py`, `hs4_schicht.py`; Filz wie im Kern, Steigung am Kraftpuls bei n·f1 wie an *Salamander*), C6:
+Recherche `recherche/2026-11-11_S187_helligkeit_je_staerke.md`. Eigene Rechnungen (Skripte unter `proben/2026-11-11_S187_hs4_wand_saite.py` und
+`proben/2026-11-11_S187_hs4_wellenleiter_gesetze.py`; die Probe in Schichten nur im Scratchpad S187; Filz wie im Kern, Steigung am Kraftpuls bei n·f1 wie an *Salamander*), C6:
 
 | Filz | Wand | unendliche Saite (3) | endliche ideale Saite (Wellenleiter, x_H 0,12) | Kern (§6) |
 |---|---|---|---|---|
@@ -238,7 +238,7 @@ bei ff kaum tiefer ein als bei ppp (0,24 gegen 0,21 mm). Zwei Kennzahlen zeigen,
 ff ist am Flügel 2,5 / 0,85 ms (Verhältnis 2,9; Askenfelt & Jansson), im Modell 1,32 / 0,98 (1,35); T2 − T1 an C6 bei
 *Russell* pp −19,8, ff −6,7 dB, im Modell (Ton) −15 bzw. −16 dB — der leise Anschlag ist zu kurz, der laute zu dunkel.
 
-**HS-4 a: zwei Gesetze am Wellenleiter** (`hs4_gesetze.py`, Saite nach den Kurven der Vorgabe, C6; *Salamander* RMS-Ziel 0,
+**HS-4 a: zwei Gesetze am Wellenleiter** (`proben/2026-11-11_S187_hs4_wellenleiter_gesetze.py`, Saite nach den Kurven der Vorgabe, C6; *Salamander* RMS-Ziel 0,
 Umfang an den Teiltönen 23,7, Askenfelt 2,5 / 1,1 / 0,85 ms, Russell T2 − T1 pp → ff +13,1 dB):
 
 | Gesetz | Helligkeit RMS | Umfang | Kontakt pp / mf / ff | T2 − T1 pp → ff |
@@ -255,6 +255,23 @@ Abbildung nicht genannt). Die Zielgröße Helligkeit selbst ist nicht nachgeprü
 zählen je Teilton nur die Ebenen, in denen er gefunden ist (an C6 bei v1 13 von 16 Teiltönen beider Kanäle), die
 Steigung gilt je dB Grundton, und der Grundton wächst im Modell an C6 um 2,1 dB je dB Stärke. Die nicht erreichten
 Originale stehen in `Bibliothek_offen.md` (Abschnitt S187).
+
+**HS4-1 a: die Zielgröße nachgeprüft** (Messfall `LUMIVIZ_HS4_SAL_HELL=<datei.md>` mit `LUMIVIZ_SALAMANDER` in
+`test_LoopSalamander.cpp`; im Modell `LUMIVIZ_HS1_HELL_SUMME=1`). Helligkeit an *Salamander* n = 2 … 8 in vier Fassungen:
+
+| Taste | A wie V1 a | B je dB Summe der Teiltöne | C nur Teiltöne in allen Ebenen | D nur v6 … v16 |
+|---|---|---|---|---|
+| 60 | 0,17 … 1,90 | 0,17 … 1,67 | wie A | 0,03 … 1,54 |
+| 72 | 0,26 … 1,67 | 0,25 … 1,62 | wie A | 0,26 … 1,07 |
+| 84 | 0,72 … 2,52 | 0,68 … 2,34 | 0,72 … 1,98 (n ≤ 5) | 0,77 … 2,75 |
+
+**Die Zielgröße trägt**: Bezug, Auswahl der Ebenen und Teiltöne verschieben sie um höchstens ein Drittel, das
+Hellerwerden bleibt in jeder Fassung. Je Ebene an C6 (Mittel der Kanäle, Teilton n gegen 1): v1 −25,0 / −33,5 / −54,0
+(n = 2 / 3 / 4), v16 −6,3 / −19,0 / −13,5 dB, der Grundton steigt dabei um 23 dB. Das Modell (S2, Diagnose §6) liegt bei
+ppp bei −15 / −20 / −24 dB, bei ff bei −16 / −23 / −19 — **zu hell im Leisen, zu dunkel im Lauten**. Ein Filz, der im
+Leisen einen dunklen Puls mit genug Grundton gibt und im Lauten einen hellen, ist mit keinem geprüften Gesetz gefunden.
+Nach dem Kipppunkt von HS-4 ruht der Punkt bis zu den Originalen (`Bibliothek_offen.md`); die Pegel je Ebene sind die
+schärfere Zielgröße für den nächsten Anlauf.
 
 ## 10 Offen
 

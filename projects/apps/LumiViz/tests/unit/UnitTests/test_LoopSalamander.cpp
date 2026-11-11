@@ -1581,3 +1581,163 @@ TEST_CASE("Loop Salamander HS-2 Umfang an den Teiltoenen (LUMIVIZ_HS2_SAL_UMFANG
     std::ofstream((variable + QStringLiteral(".txt")).toStdString(), std::ios::binary) << txt.str();
     MESSAGE("Umfang nach " << variable.toStdString());
 }
+
+namespace
+{
+
+/// Steigung der Ausgleichsgeraden y(x); NaN unter sechs Punkten (wie `verdichte`).
+double hs4Steigung(const std::vector<double>& x, const std::vector<double>& y)
+{
+    if (x.size() < 6) return std::nan("");
+    const auto n = static_cast<double>(x.size());
+    double sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (std::size_t i = 0; i < x.size(); ++i)
+    {
+        sx += x[i];
+        sy += y[i];
+        sxx += x[i] * x[i];
+        sxy += x[i] * y[i];
+    }
+    return (n * sxy - sx * sy) / (n * sxx - sx * sx);
+}
+
+}  // namespace
+
+TEST_CASE("Loop Salamander HS4-1 Helligkeit nachgeprueft (LUMIVIZ_HS4_SAL_HELL)")
+{
+    // HS4-1 a (S187): die Zielgroesse `helligkeit_n` (V1 a: je Kanal Steigung von Teilton n − 1 je dB Teilton 1 ueber
+    // die Ebenen, in denen beide gefunden sind, Median der Kanaele) in vier Fassungen: (A) wie V1 a, (B) je dB der Summe
+    // der Teiltoene 1 … 8, (C) wie A, nur Teiltoene in allen 16 Ebenen beider Kanaele, (D) wie A nur ueber v6 … v16.
+    // Dazu je Ebene die Pegel der Teiltoene gegen Teilton 1 (Mittel der Kanaele) und die Zahl der gefundenen. Schreibt
+    // `<datei.md>` und `<datei>.txt` (Taste, Fassung, Steigungen n = 2 … 8).
+    const QString variable = qEnvironmentVariable("LUMIVIZ_HS4_SAL_HELL");
+    const QString ordnerText = qEnvironmentVariable("LUMIVIZ_SALAMANDER");
+    if (variable.isEmpty() || ordnerText.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_HS4_SAL_HELL=<datei.md> mit LUMIVIZ_SALAMANDER=<Ordner> prueft die Helligkeit je Staerke an Salamander nach");
+        return;
+    }
+    const std::filesystem::path ordner = ordnerText.toStdU16String();
+    std::vector<SalamanderTaste> tasten;
+    for (const SalamanderTaste& t : salamanderTasten())
+        if (t.midi == 60 || t.midi == 72 || t.midi == 84 || t.midi == 96 || t.midi == 105) tasten.push_back(t);
+    REQUIRE(tasten.size() == 5);
+    const lumi::kern::Fft& fft = lumi::kern::fft();
+    // je Taste, Ebene, Kanal: Teilton 1 … 8 (NaN = nicht gefunden) und die Summe
+    struct Kanal
+    {
+        std::array<double, 8> t;
+        double summe = std::nan("");
+    };
+    std::vector<std::vector<std::array<Kanal, 2>>> alle(tasten.size(), std::vector<std::array<Kanal, 2>>(kEbenen));
+    std::vector<std::thread> arbeiter;
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+        arbeiter.emplace_back([&, i] {
+            for (int e = 1; e <= kEbenen; ++e)
+            {
+                const std::optional<lumi::audio::WavInhalt> wav = lumi::audio::liesWavDatei(salamanderDatei(ordner, tasten[i], e));
+                if (!wav) continue;
+                const auto [l, r] = trenne(wav->stereo);
+                for (int k = 0; k < 2; ++k)
+                {
+                    Kanal& z = alle[i][static_cast<std::size_t>(e - 1)][static_cast<std::size_t>(k)];
+                    z.t.fill(std::nan(""));
+                    const KanalMessung m = messeKanal(k == 0 ? l : r, wav->rate, tastenFrequenz(tasten[i].midi), fft, false);
+                    if (!m.erkannt) continue;
+                    double s = 0.0;
+                    for (const TeiltonKurz& t : m.teiltoene)
+                        if (t.k >= 1 && t.k <= 8)
+                        {
+                            z.t[static_cast<std::size_t>(t.k - 1)] = t.anfangDb;
+                            s += std::pow(10.0, t.anfangDb / 10.0);
+                        }
+                    if (s > 0.0) z.summe = 10.0 * std::log10(s);
+                }
+            }
+        });
+    for (std::thread& t : arbeiter) t.join();
+
+    std::ostringstream o, txt;
+    o << std::fixed << std::setprecision(2) << "# HS4-1 a: Helligkeit je Staerke an *Salamander*, nachgeprueft (S187)\n\n";
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+    {
+        const auto& ebenen = alle[i];
+        // C: Teiltoene, die in allen Ebenen beider Kanaele gefunden sind
+        std::array<bool, 8> ueberall{};
+        for (int n = 1; n <= 8; ++n)
+        {
+            bool ja = true;
+            for (const auto& e : ebenen)
+                for (const Kanal& k : e) ja = ja && std::isfinite(k.t[static_cast<std::size_t>(n - 1)]);
+            ueberall[static_cast<std::size_t>(n - 1)] = ja;
+        }
+        o << "## Taste " << tasten[i].midi << "\n\n| Fassung | n = 2 … 8 |\n|---|---|\n";
+        const char* namen[] = {"A wie V1 a (je dB Teilton 1)", "B je dB Summe der Teiltoene", "C wie A, nur Teiltoene in allen Ebenen",
+                               "D wie A, nur v6 … v16"};
+        for (int fassung = 0; fassung < 4; ++fassung)
+        {
+            o << "| " << namen[fassung] << " |";
+            txt << tasten[i].midi << '\t' << static_cast<char>('A' + fassung);
+            for (int n = 2; n <= 8; ++n)
+            {
+                std::vector<double> je;
+                for (int k = 0; k < 2; ++k)
+                {
+                    std::vector<double> x, y;
+                    for (std::size_t e = 0; e < ebenen.size(); ++e)
+                    {
+                        if (fassung == 3 && e < 5) continue;
+                        const Kanal& z = ebenen[e][static_cast<std::size_t>(k)];
+                        const double t1 = z.t[0], tn = z.t[static_cast<std::size_t>(n - 1)];
+                        if (!std::isfinite(t1) || !std::isfinite(tn)) continue;
+                        x.push_back(fassung == 1 ? z.summe : t1);
+                        y.push_back(tn - t1);
+                    }
+                    if (fassung == 2 && !ueberall[static_cast<std::size_t>(n - 1)]) x.clear();
+                    const double s = hs4Steigung(x, y);
+                    if (std::isfinite(s)) je.push_back(s);
+                }
+                double w = std::nan("");
+                if (je.size() == 2) w = 0.5 * (je[0] + je[1]);
+                if (je.size() == 1) w = je[0];
+                o << ' ' << w;
+                txt << '\t' << w;
+            }
+            o << " |\n";
+            txt << '\n';
+        }
+        o << "\nJe Ebene (Mittel der Kanaele): Teilton 1, Summe, Teiltoene 2 … 8 gegen 1 (– = nicht gefunden), Zahl gefunden\n\n";
+        for (std::size_t e = 0; e < ebenen.size(); ++e)
+        {
+            const auto mittel = [&](auto feld) {
+                double s = 0;
+                int n = 0;
+                for (const Kanal& k : ebenen[e])
+                    if (const double v = feld(k); std::isfinite(v))
+                    {
+                        s += v;
+                        ++n;
+                    }
+                return n > 0 ? s / n : std::nan("");
+            };
+            int gefunden = 0;
+            for (const Kanal& k : ebenen[e])
+                for (const double v : k.t) gefunden += std::isfinite(v) ? 1 : 0;
+            o << "v" << e + 1 << ": " << std::setprecision(1) << mittel([](const Kanal& k) { return k.t[0]; }) << " / "
+              << mittel([](const Kanal& k) { return k.summe; }) << " |";
+            for (int n = 2; n <= 8; ++n)
+            {
+                const double v = mittel([n](const Kanal& k) { return k.t[static_cast<std::size_t>(n - 1)] - k.t[0]; });
+                if (std::isfinite(v))
+                    o << ' ' << v;
+                else
+                    o << " –";
+            }
+            o << " | " << gefunden << "\n\n";
+        }
+        o << std::setprecision(2);
+    }
+    std::ofstream(variable.toStdString(), std::ios::binary) << o.str();
+    std::ofstream((variable + QStringLiteral(".txt")).toStdString(), std::ios::binary) << txt.str();
+    MESSAGE("Helligkeit nach " << variable.toStdString());
+}
