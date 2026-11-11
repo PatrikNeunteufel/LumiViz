@@ -219,7 +219,26 @@ wirkt nach oben immer weniger, die hohen Stäbe klingen ohnehin schnell ab). `ma
 (`NOTE_DER_SPIELWEISEN`), `celesta.lvloop` (drei Noten), Spitze unverändert, eine Zeile `loop_werte.txt`, Klangfassung.
 **HS3-2 a:** die Hörliste `pv1` ist als Stand vor HS-3 abgeschlossen (`hoertest/README.md`).
 
-## 9 Offen
+## 9 HS-4: wo die Helligkeit verloren geht (S187, Zwischenstand)
+
+Recherche `recherche/2026-11-11_S187_helligkeit_je_staerke.md`. Eigene Rechnungen (Skripte im Scratchpad S187,
+`hs4_wand.py`, `hs4_schicht.py`; Filz wie im Kern, Steigung am Kraftpuls bei n·f1 wie an *Salamander*), C6:
+
+| Filz | Wand | unendliche Saite (3) | endliche ideale Saite (Wellenleiter, x_H 0,12) | Kern (§6) |
+|---|---|---|---|---|
+| S2 | 0,82 … 1,47 | 0,56 … 1,97 | −0,05 … 0,67 | −0,25 … 0,04 |
+| vor HS-3 | 0,90 … 2,73 | 0,74 … 2,64 | 0,28 … 1,61 | 0,29 … 1,56 |
+
+*Salamander* C6: 0,73 … 2,55. **Der Kern rechnet richtig**: Auch die exakte endliche Saite ohne Modenschnitt wird mit
+S2 kaum heller. Der Verlust liegt in der Kopplung des zähen Filzes an die endliche Saite (Reflexionen vom kurzen Ende
+während des Kontakts von 1–3 Perioden), nicht im Filz allein. Ein steilerer oder flacherer Filz (p ± 0,5 … +1, Q0 bei
+0,5 mm gleich) ändert den Diskant nicht (RMS 0,99 … 1,06). Ein Filz in Schichten (Zähigkeit an der Oberfläche wie S2, im
+Kern 3 µs, d0 0,05 … 0,4 mm; Voigt-Form am Wellenleiter, Probe) auch nicht: mit der Zähigkeit von S2 drückt der Hammer
+bei ff kaum tiefer ein als bei ppp (0,24 gegen 0,21 mm). Zwei Kennzahlen zeigen, was fehlt: die Kontaktzeit an C6 pp /
+ff ist am Flügel 2,5 / 0,85 ms (Verhältnis 2,9; Askenfelt & Jansson), im Modell 1,32 / 0,98 (1,35); T2 − T1 an C6 bei
+*Russell* pp −19,8, ff −6,7 dB, im Modell (Ton) −15 bzw. −16 dB — der leise Anschlag ist zu kurz, der laute zu dunkel.
+
+## 10 Offen
 
 - **HS-4:** die Helligkeit je Stärke ab Taste 66 zu klein, ab 84 in jedem Satz — ein Mechanismus fehlt dem Modell;
   danach eine neue Flügel-Liste statt `pv1`.

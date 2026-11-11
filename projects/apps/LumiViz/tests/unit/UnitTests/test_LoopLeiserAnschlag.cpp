@@ -333,6 +333,22 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
                               }
                           }});
     }
+    // HS-4 (S187): steilerer Filz bei gleicher Zaehigkeit — p um dp hoeher, Q0 so, dass die Kraft bei 0,5 mm Eindrueckung
+    // gleich bleibt (Q0·0,5^p fest)
+    for (const double dp : {0.5, 1.0, -0.5})
+    {
+        std::ostringstream name;
+        name << "S2, p " << (dp > 0 ? "+" : "") << dp << " (Q0 bei 0,5 mm gleich)";
+        const auto s2 = saetze[3].setze;
+        saetze.push_back({name.str(), [s2, dp](hammer::HammerSaite& s) {
+                              s2(s);
+                              for (std::size_t i = 0; i < s.hammerExponent.punkte.size(); ++i)
+                                  s.hammerExponent.punkte[i].wert += dp;
+                              for (auto& p : s.hammerSteife.punkte) p.wert *= std::pow(0.5, -dp);
+                          }});
+    }
+    if (const QString nur = qEnvironmentVariable("LUMIVIZ_HS1_NUR"); !nur.isEmpty())
+        std::erase_if(saetze, [&](const Satz& s) { return s.name.find(nur.toStdString()) == std::string::npos; });
     if (qEnvironmentVariableIsSet("LUMIVIZ_HS1_NUR_S2"))
         saetze.erase(saetze.begin(), saetze.begin() + 3);
 
