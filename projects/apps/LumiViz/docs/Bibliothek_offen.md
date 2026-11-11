@@ -66,3 +66,17 @@ Recherchen dazu: `modellierung/hammer-saite/recherche/2026-10-25_S153_zweite_pol
 | 5 | Valette, Cuesta 1993 (Buch, Titel ungeprüft: *Mécanique de la corde vibrante*) | — | `highDecay` | nicht online |
 | 5 | Fletcher, Rossing, *The Physics of Musical Instruments*, Kap. 12 | — | alle | Buch |
 | 5 | Capleton, *The Physics of Piano Unisons* (Buch, Titel nur aus einer Händlerangabe) | — | Verstimmung | Buch |
+
+## Modellierung — Hammerfilz, Helligkeit je Stärke (Anlass: S187, HS-4 a)
+
+Recherche: `modellierung/hammer-saite/recherche/2026-11-11_S187_helligkeit_je_staerke.md` (§ Reichweite). Angaben aus dem
+Agentenbericht, **ohne DOI geprüft** — am Katalog prüfen. Wofür: ein Filzgesetz, das im Diskant mit der Stärke heller wird
+und den leisen Anschlag laut genug lässt (Befund `hammer-saite/2026-11-10_S186_befund_leiser_anschlag_diskant.md` §9).
+
+| Vorrang | Quelle | Wofür | Stand |
+|---|---|---|---|
+| 1 | Stulov, „Experimental and computational studies of piano hammers“, Acta Acustica 91, 1086–1097 (2005) | Herkunft des Satzes je Taste, Messverfahren, Geschwindigkeiten | Bezahlschranke |
+| 1 | Giordano & Winans, „Piano hammers and their force compression characteristics: does a power law make sense?“, JASA (2000) | Filzgesetz je Belastungsrate | Bezahlschranke |
+| 2 | Russell & Rossing, „Testing the nonlinearity of piano hammers using residual shock spectra“, Acta Acustica (1998) | Spektren je Stärke (online nur Abbildung C6 pp/ff) | Bezahlschranke |
+| 2 | Hall & Askenfelt, „Piano string excitation V: Spectra for real hammers and strings“, JASA (1988); Hall, „… VI: Nonlinear modeling“, JASA (1992) | Spektren je Stärke, Kontakt | Bezahlschranke |
+| 3 | Giordano & Millis, Stulov 1995/2004/2008, Birkett 2013, Vyasarayani, Birkett & McPhee 2009 | Filz, Stiel | Bezahlschranke bzw. gesperrt |

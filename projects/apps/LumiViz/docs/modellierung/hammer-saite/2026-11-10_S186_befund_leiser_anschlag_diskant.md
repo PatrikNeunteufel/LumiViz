@@ -238,6 +238,24 @@ bei ff kaum tiefer ein als bei ppp (0,24 gegen 0,21 mm). Zwei Kennzahlen zeigen,
 ff ist am Flügel 2,5 / 0,85 ms (Verhältnis 2,9; Askenfelt & Jansson), im Modell 1,32 / 0,98 (1,35); T2 − T1 an C6 bei
 *Russell* pp −19,8, ff −6,7 dB, im Modell (Ton) −15 bzw. −16 dB — der leise Anschlag ist zu kurz, der laute zu dunkel.
 
+**HS-4 a: zwei Gesetze am Wellenleiter** (`hs4_gesetze.py`, Saite nach den Kurven der Vorgabe, C6; *Salamander* RMS-Ziel 0,
+Umfang an den Teiltönen 23,7, Askenfelt 2,5 / 1,1 / 0,85 ms, Russell T2 − T1 pp → ff +13,1 dB):
+
+| Gesetz | Helligkeit RMS | Umfang | Kontakt pp / mf / ff | T2 − T1 pp → ff |
+|---|---|---|---|---|
+| S2 | 1,83 | 34,0 | 1,34 / 1,18 / 1,02 | −3,9 |
+| S2 + zweite Relaxation, k2 = 1 … 10, T_R = 0,1 … 1 ms | 1,68 … 1,81 | 26,6 … 32,8 | 1,21 … 1,32 / … / 0,97 … 1,04 | −2,6 … +7,3 |
+| Zähigkeit ∝ (v_ref/|u̇|)^q, q = 0,5 / 1, v_ref = 0,5 / 2 m/s | 2,03 … 2,08 | 26,3 … 28,6 | 1,26 … 1,58 / … / 1,04 … 1,08 | −2,0 … +8,2 |
+
+**Keines trägt**: die Helligkeit bleibt um 1,7 … 2,1 RMS, das Verhältnis pp/ff der Kontaktzeit um 1,2 … 1,5. Die zweite
+Relaxation hebt den leisen Anschlag (Umfang −7 dB) und T2 − T1 (bis +7 dB), nicht die Steigung. **Nebenbefund:** an den
+Tasten 96 und 108 trifft S2 die Kontaktzeiten schon (0,95 / 0,75 / 0,60 gegen 0,9 / 0,65 / 0,55 ms; 0,74 / 0,55 / 0,38
+gegen 1,2 / 0,55 / 0,45) — die Kennzahl „pp zu kurz“ ist vor allem C6 pp (2,5 ms, abgelesen, Geschwindigkeit der
+Abbildung nicht genannt). Die Zielgröße Helligkeit selbst ist nicht nachgeprüft wie der Umfang in HS-2 a: an *Salamander*
+zählen je Teilton nur die Ebenen, in denen er gefunden ist (an C6 bei v1 13 von 16 Teiltönen beider Kanäle), die
+Steigung gilt je dB Grundton, und der Grundton wächst im Modell an C6 um 2,1 dB je dB Stärke. Die nicht erreichten
+Originale stehen in `Bibliothek_offen.md` (Abschnitt S187).
+
 ## 10 Offen
 
 - **HS-4:** die Helligkeit je Stärke ab Taste 66 zu klein, ab 84 in jedem Satz — ein Mechanismus fehlt dem Modell;
