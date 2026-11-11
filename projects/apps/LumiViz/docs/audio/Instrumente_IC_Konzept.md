@@ -1,7 +1,7 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.16.0
-> **Datum:** 2026-11-10 (Session 186)
+> **Version:** 0.17.0
+> **Datum:** 2026-11-11 (Session 188)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
 > der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
@@ -13,7 +13,7 @@
 > Zupfkraft und den Abnahmen `slot`/`bridge`, Kern `struckString` mit Durchmesser je Taste, beide Rechenfassung 2.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`)
+> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j geplant (S188, ZV1 a–ZV3 a, Teilplan 34j-1 bis 34j-10)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -420,7 +420,7 @@ wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teil
 | 34g | Klasse 4 | Adapter, Vorgaben als `.lvinst` (Namen nach IK2-8 a), `synth_marimba`/`synth_vibraphone` mit Skript für die Loops, Pegel, Kennzeichnung „ungemessen“, `<name>_demo`, Hörproben-Liste | `Loop Werte` nur Namen geändert; Rechenzeit ≤ 4,6 %; Kennzahl Verhältnis zum Flügel im Bericht |
 | 34h | Klasse 5 | Trommeln, neues Kit, Demo, Pegel, Liste | wie 34g |
 | 34i | Klasse 1 ohne Flügel | Upright, Honky-tonk, elektrischer Flügel (CP-70), Clavinet (Name nach den Hörproben, IK2-8 a); ehemals Stufe 32 | wie 34g |
-| 34j | Klasse 10 | Akkordeon, Harmonium, Melodica, Mundharmonika; Stimmung über `InstrumentTuneTool`; Vorlage `harvest/instruments-calculation/rechnung/klassen/10_zunge/` (S182) | wie 34g; Wächter der Stimmung |
+| 34j | Klasse 10 | Akkordeon, Harmonium, Melodica, Mundharmonika; Stimmung über `InstrumentTuneTool`; Vorlage `harvest/instruments-calculation/rechnung/klassen/10_zunge/` (S182). **Seit S188 nach ZV1 a–ZV3 a:** erst der Umzug Bit für Bit als Beleg, dann die Vorgaben je Taste mit Quellen hergeleitet, ein Winddruck für alle Tasten, laufender Wind — Teilplan 34j unten | Zielgrößen je Instrument (jede Taste spricht im Windbereich an, Lautheit über den Umfang ≤ 15 LU, ±10 Cent); Wächter der Stimmung; voller Lauf |
 | 34k | Klasse 2 je Note | Cembalo, Harfe, Gitarre, Laute, Oud; Vorlage `harvest/instruments-calculation/rechnung/klassen/02_zupf_saite/` (S182); Korpus `korpusImpulsantwort`, Vergleich IC-Luftraum (IK2-10 a); Messung von `stimme` (Kipppunkt IK2-11 a) | wie 34g; Bericht Luftraum gegen Korpus |
 | 34m | Klasse 7 (LR1 a; nach 34j und 34k, **vor 34l**) | Kern `Blech` mit laufender Anregung (Blasdruck als Spur) für alle spielbaren Instrumente der Klasse: Posaune, Trompete, Alphorn; Vorlage `harvest/instruments-calculation/rechnung/klassen/07_lippe_rohr/`, Doku `../modellierung/lippe-rohr/ic/`; Ursache des NaN am Alphorn A2 (ab rund 53 ms), Geometrie des Alphorns aus einer Quelle (R1, Mundstück, Becher, Länge); Rechenzeit (nach dem Tausch der Kühlung); Loops als Demos, das Alphorn zuerst; Hörliste. Tuba, Horn, Didgeridoo erst mit belegter Bohrung bzw. Lippe. Teilplan bis zum Abschluss vor dem Bau | wie 34g; kein NaN über den Umfang; Rechenzeit im Bericht |
 | 34l | Abschluss | Handbuch, Sichttest-Liste, Hörprobenliste für HörTest, Doku (Modul-Doku der Bibliotheken); ~~Auftrag an IC als Datei~~ entfällt (IC aufgelöst S182, LP2 b); den Teil der übernommenen Klassen in `harvest/instruments-calculation/` löschen | Bereich und voller Lauf unter beiden Compilern |
@@ -755,6 +755,76 @@ string“** (bis S181 „Grand piano“) — der Titel nennt das Verfahren wie b
 steht nicht im Abdruck der Werte (`Klangfassung` unverändert). Verworfen: b (lassen). Kippt, wenn der Kern im Creator als
 Flügel benannt sein soll.
 
+**Teilplan 34j** (S188, Zuschnitt nach IK2-2 a, IK2-8 a, IK2-10 a, IK2-11 a, SK4 a, ZV1 a–ZV3 a; Nummern fest). Gefunden
+(Befund [2026-11-11_S188_befund_ic_vorlage.md](../modellierung/zunge/2026-11-11_S188_befund_ic_vorlage.md), am Ton der
+Vorlage gemessen, Bau gleich IC `zunge_Akkordeon_m69_mf`): die Vorlage stuft über den Umfang nur die Länge der Zunge
+(`Zunge.cpp:38–42`) und gibt jeder Taste bei gleicher Expression einen anderen Druck (Fenster je Note, `Zunge.cpp:45–51`)
+— Lautheit über den Umfang 15,4–28,9 LU (Akkordeon Diskant, Melodica, Mundharmonika) und 48,9–52,8 LU (Harmonium), die
+Bass-Seite des Akkordeons stumm, am Harmonium die Tasten 48–57 fast stumm und die Dynamik −0,6–5,6 LU, Bend −100 Cent
+ergibt +8,0 Cent; mit einem Druck für alle Tasten ist die Lautheit eben (3–5 LU), aber die Ansprechschwelle steigt mit der
+Tonhöhe (F3 unter 150 Pa, A6 ab rund 1 200 Pa). IC führt einen Abdruck (`zunge_Akkordeon_m69_mf`) — die übrigen rechnet
+ein Programm gegen die Vorlage wie in 34h; der Kern ruft `messung::tonhoehe` und `einschwingen` selbst
+(`Zunge.cpp:109–121`), `stimme` läuft auf `parallelJe` (IC: alle vier 1:41 min auf vier Threads); IC normiert mit 0,6 s
+bei Expression 1 an der Mitte oberhalb der Teilung, LumiViz mit 1 s bei Stufe 0; die App gibt einem Kern eine Note, die
+Stufe und feste Spurwerte am Beginn (`Instrument.cpp:2964–2969`) und nimmt die Expression danach als Pegel
+(`Instrument.cpp:3067 ff.`), der Tonname trägt die Spuren schon (`Loop.cpp:644–647`); der Kern `bar` nennt `expression`
+in seiner Auskunft (Bogen) und bleibt beim Pegel; die Quellen der Klasse liegen nicht unter `…\cmake\quellen`, Aufnahmen
+keine; kein Name kollidiert. Die Rechenzeit ist ausgesetzt (Kühlung): die Fälle werden gebaut, die Zahlen nachgeholt.
+
+| Nr. | Inhalt | fertig, wenn |
+|---|---|---|
+| 34j-1 | Beleg aus der Vorlage: Programm mit Baubefehl unter `docs/modellierung/anbindung-ic/` (Muster `abdruck_trommel.bat`), `werte/zunge_ic.txt` — je Instrument tief/mitte/hoch bei Expression 0 / 0,5 / 1, Vibrato, Bend, Balgwechsel, Bass-Seite, die vier Bezüge, die Kurven aus `Stimmung.inc` | Akkordeon m69 mf gleich IC `abdruck_msvc.txt` |
+| 34j-2 | Kern `freeReed` unter `InstrumentModels/zunge/` (`lumi::kern::zunge`), Tafel „Free reed“: `Zunge.cpp`, `Vorgaben.cpp` per Skript (Anker je genau einmal); das Messen zieht aus dem Kern (IK2-2 a): innere Größe `reedTip`, gemessen wird im Stimmer; Tafel (*Keys* mit Umfang nach KS1 a und `bassBelow`, *Reed*, *Chamber*, *Wind*, *Ranks* und *Bass ranks* als Listen, *Case*, *Tunable*, *Output*); Bezug über `normiere` (IK2-10 a — Probe gegen den IC-Bezug prüfen, IC normiert anders); Adapter Rechenweg Note, in diesem Schritt wie IC (feste Werte am Beginn) | alle Abdrücke aus 34j-1 Bit für Bit unter Release-clang und Testing-MSVC; die IC-Fälle aus `test_zunge` grün |
+| 34j-3 | Stimmer `freeReed` in `InstrumentMeasure/ZungeStimmen` (f₀ und Fenster des Drucks je Note, IK2-11 a), Dauer gemessen | Kurven Bit für Bit gleich `Stimmung.inc` für alle vier; Wächter Stimmung rot bei absichtlich veralteten Werten |
+| 34j-4 | Recherche und Quellen (ZV1 a): die freien Arbeiten aus `../modellierung/zunge/ic/quellen.md` nach `…\cmake\quellen\zunge\` (Ladeliste vorher zur Freigabe), Register, `archiv_index.py`; gesucht: Maße der Stimmplatten je Ton (Länge, Breite, Dicke, Aufbiegung), Basszungen (Gewichte), Kanzellen je Ton, Harmonium- und Mundharmonika-Zungen, gemessene Balg- und Atemdrücke, Einschwingzeiten, Bend nach Adachi et al.; Agenten ohne Browser; Bericht unter `../modellierung/zunge/recherche/` | Bericht mit Fundstelle je Größe (Seite, an der Abbildung gegengeprüft). **Haltepunkt:** je Instrument, ob die Quellen für die Herleitung reichen — sonst Vorlage (Kipppunkt ZV1 a) |
+| 34j-5 | Herleitung am Kern aus 34j-2, ohne App: Vorgaben je Taste als Kurven, Windbereich je Instrument (ZV2 a), Basszungen, Harmonium, Bend; je Instrument jede Option gegen **alle** Zielgrößen gerechnet (spricht im Windbereich an, Lautheit über den Umfang, Stimmung über den Windbereich, Dynamik, Einschwingzeit, Amplitude gegen Cottingham 15 %, Tonhöhe über den Druck gegen Adachi); Dokument `../modellierung/zunge/<Datum>_vorgaben_je_taste.md` | Entscheide je Instrument (ZV4 ff.). **Haltepunkt:** was kein Instrument trägt, wird nicht ausgeliefert, mit benannter Lücke |
+| 34j-6 | Kern Rechenfassung 2 nach 34j-5: die Größen je Taste als Kurven der Tafel mit Quelle und Belegkraft, Wind nach ZV2 a (`windMin`, `windMax`; f₀ am mittleren Druck gestimmt; die Fenster als Prüfgröße), Stimmer neu; Wächter „jede Taste deckt den Windbereich“; `zunge_ic.txt` mit Vermerk neu (Journal); Messfall `LUMIVIZ_34J_MESSUNG=<datei.md>` mit der Messkette des Befunds S188 (Lautheit aus `AudioCore`) | die Zielgrößen aus 34j-5 am gebauten Kern wie am Prüfstand; die IC-Fälle angepasst mit Grund im Journal |
+| 34j-7 | Laufender Wind (ZV3 a): der Kern liest `expression`, `vibrato` und `bellows` (Richtung 0/1, am Wechsel der Druckeinbruch) über die Zeit, `pitch` nur, wenn 34j-5 eine tragende Abbildung ergibt; Stärke = Stufe mal Expression (SK4 a), die Abbildung Stufe → Stärke an der gemessenen Kurve Pegel über Druck festgelegt (Grundsatz TM1 a: eine Note bei −20 dB klingt rund 20 dB leiser, begrenzt durch die Dynamik des Instruments); `nachklang` aus dem Ausklang der Zunge (gemessen 31–777 ms), gegen die Messung geprüft; `KernAuskunft` bekommt ein Feld für dauernde Anregung (nicht die Liste der Spuren — `bar` nennt `expression` für den Bogen), `InstrumentCore` nächste Fassung; die App gibt solchen Kernen die Spuren von Muster und Clip in den Tonauftrag und nimmt die Expression nicht mehr als Pegel. Die Spuren `bellows` im Loop erst mit 31g (wie `motor`) | konstante Spur Bit für Bit wie 34j-6; ein Crescendo am gehaltenen Ton ändert Pegel und Teiltöne; `Loop Werte`, `Klangfassung` und Flügel-Bezug unverändert (kein anderer Kern betroffen) |
+| 34j-8 | die `.lvinst` der Instrumente, die 34j-5 trägt — `accordion`, `harmonium`, `melodica`, `harmonica` (IK2-8 a): Schreiber `LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1`, `InstrumentTuneTool --all --reference`, Katalog, Register und `CREDITS.md`, Pegel und `loop_werte.txt` nur neue Zeilen, `klangfassung.txt` nachgeführt, Zahlen je Art in den Tests | `Loop Pegel LP3 a` ohne Ausnahme; `Loop Werte` nur neue Zeilen; Quellen-Wächter grün |
+| 34j-9 | `free_reeds_demo.lvloop` (Crescendo über die Expression am Clip, Musette), Loops je Instrument über `make_modelled_loops.py`, Lautstärke nach LV1 a (Skript zuerst in einer Kopie); Hörliste `hoertest/listen/zunge_34j` am Hörort (je Instrument tief/mitte/hoch bei −18/−9/0, Crescendo, Vibrato, Balgwechsel, Musette gegen einen Chor, Bass-Seite), sie löst `ic/10_zunge` ab (wie LG1 a); Creator-Fall mit dem Akkordeon (Listen der Chöre, gestimmte Werte; Bild); Fall `*34j Rechenzeit*` (Akkordeon, Bass-Seite und Musette) | `--liste-pruefen` 0 Fehler, 0 Hinweise; Rechenzeit ≤ 4,6 % (RZ1-1 a) nach dem Tausch der Kühlung nachgeholt |
+| 34j-10 | Modul-Doku, Journal J66 ff., Konzept, Bericht der Klasse `../modellierung/zunge/README.md`, Pakete `instrumentcore` und `instrumentmodels` (nächste Fassung), Steckbrief; `klassen/10_zunge` und `werkzeuge/stimme_zunge.cpp` unter `harvest/` gelöscht | **voller Lauf** unter beiden Compilern (neuer Kern, Core und Rechenweg der App geändert; UF17-1 a) |
+
+Prüfung je Teilschritt nach MT1 a (eng unter Release-clang, beide gebaut). Modell je Sitzung: 34j-1 bis 34j-3 und 34j-6
+bis 34j-10 Opus; 34j-4 und 34j-5 Fable (Herleitung aus mehreren Quellen).
+
+Abgeleitet: Namen nach IK2-8 a (Kern nach dem Verfahren, wie `bar`, `membrane`, `struckString`); Stärke nach SK4 a; die
+Hörliste von LumiViz löst die von IC ab wie bei den Klassen 1, 4, 5 (LG1 a).
+
+**Nicht in 34j** (in IC nicht gebaut, `../modellierung/zunge/ic/offen.md`; jede Zeile braucht Bedienung aus 31g oder eine
+Quelle, die fehlt): Register als Spur (F-4 a — die Chöre stehen fest in der Tafel), Bisonorik und Bellows shake (F-3 a),
+Prolongement, Expression-Register und Percussion des Harmoniums (F-7 a), Bending und Overblow der Mundharmonika über den
+Vokaltrakt (F-6 a), Cassotto und Verdeck.
+
+✅ **ZV1 a** (Patrik S188, „Alle nach Empfehlung“): **34j zieht den Kern zuerst Bit für Bit um und leitet danach die
+Vorgaben je Taste mit Quellen her wie LP2 b** — Zunge (Länge, Breite, Dicke, Aufbiegung), Kanzelle und Kanal je Taste,
+Basszungen, Harmonium, Bend nach Adachi. Zielgrößen je Instrument: jede Taste spricht im Windbereich an, Lautheit über den
+Umfang ≤ 15 LU, Stimmung ±10 Cent, Dynamik und Einschwingzeit im Bericht; ausgeliefert wird ein Instrument erst, wenn es
+sie hält; Haltepunkt nach der Recherche. Grund: der wortgleiche Umzug fällt in allen gemessenen Zielgrößen durch
+(15–53 LU, halbes Akkordeon, Harmonium ohne Dynamik), die Ursache ist von der Art, die LP2 b an Wurlitzer und Kalimba
+behoben hat (41,9 → 10,8 LU, 37,5 → 1,4 LU). Verworfen: b (ausliefern, was spielt, vier Ausnahmen in LP3 a — Hörlisten,
+Pegel, Loops und Abdrücke zweimal, der Hörtest an bekannten Fehlern), c (nur Beleg, Herleitung als spätere Stufe — der
+Kern ohne spielbares Instrument, dieselben Dateien zweimal geöffnet). Kippt auf c, wenn die Recherche für kein Instrument
+Maße je Taste hergibt; auf b, wenn Patrik die Klasse vor der Herleitung hören will.
+
+✅ **ZV2 a** (Patrik S188): **Die Stärke gibt einen Winddruck des Instruments, gleich für alle Tasten** —
+p = p_min · (p_max / p_min)^Stärke, der Windbereich als belegter Wert der Tafel (Harmonium 0,2–1,5 kPa nach Puranik &
+Scavone; Akkordeon und Atem aus der Recherche); f₀ wird am mittleren Druck gestimmt; die Fenster je Note bleiben
+gestimmte Werte als Prüfgröße, ein Wächter meldet jede Taste, deren Fenster den Windbereich nicht deckt. Berichtigt IC
+F-2 a („Weg über den Tonumfang“). Grund: ein Balg hat einen Druck (IC F-5 a); die Gegenprobe zeigt bei gleichem Druck
+3–5 LU über den Umfang, wo die Zungen ansprechen, gegen 22–26 LU mit dem Fenster je Note (F3 283 Pa, A6 2 934 Pa bei
+derselben Expression). Verworfen: b (Fenster je Note wie IC — jede Diskanttaste spricht an, aber mit Drücken bis 4,5 kPa,
+die kein Balg liefert). Kippt auf b, wenn sich keine Zungenmaße finden, mit denen alle Tasten eines Instruments über
+seinen Windbereich ansprechen.
+
+✅ **ZV3 a** (Patrik S188): **34j baut den laufenden Wind** — der Kern liest Expression, Vibrato und die Balgrichtung als
+Kurven über die Zeit; die App gibt einem Kern mit dauernder Anregung die Spuren von Muster und Clip in den Tonauftrag
+und nimmt die Expression dann nicht mehr als Pegel; mit konstanter Spur bleibt der Ton Bit für Bit gleich; 34m nutzt
+denselben Weg. Grund: SK4 a — bei dauernder Anregung ist die Expression die Stärke der Anregung, und der Balg ist am
+Akkordeon die einzige Quelle der Dynamik; die Zunge ist der einfachere erste Fall (kein Rohr, keine Kette). Verworfen: b
+(feste Werte am Beginn der Note, laufend erst mit 34m — Hörliste, Demo und Töne der Zunge entstünden in 34m neu). Kippt
+auf b, wenn das Blech einen anderen Weg braucht als Spuren im Tonauftrag (Rechenweg Kette), sodass die App-Seite zweimal
+gebaut würde.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -814,6 +884,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.17.0 | 2026-11-11 | Session 188. §6: Teilplan 34j (34j-1 bis 34j-10) nach dem Befund an der IC-Vorlage der Zunge; ZV1 a (Umzug als Beleg, dann Vorgaben je Taste mit Quellen), ZV2 a (ein Winddruck für alle Tasten), ZV3 a (laufender Wind in 34j); Zeile 34j der Übersicht. |
 | 0.16.0 | 2026-11-10 | Session 186. §6: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l; Kopf auf 0.16.0 (stand noch auf 0.14.0). |
 | 0.15.0 | 2026-11-09 | Session 183. LP2 b erledigt: Vermerk im Kopf (WU1 a, WU2 a, KA1 a, CL1 a, CL2 a; Kern `bar` mit `pluckForce`, Abnahmen `slot` und `bridge`; Kern `struckString` mit `stringDiameter`; Rechenfassung 2; Journal J60–J64). |
 | 0.14.0 | 2026-11-09 | Session 182. IC aufgelöst (LP2 b): Vermerk im Kopf, Bezug auf die Ablage der IC-Doku, 34j/34k mit Vorlage unter `harvest/`, 34l ohne Auftrag an IC, TP1 a als überholt markiert; Plan des Umzugs `../modellierung/anbindung-ic/Aufloesung_IC_Plan.md` (U0–U7). |
