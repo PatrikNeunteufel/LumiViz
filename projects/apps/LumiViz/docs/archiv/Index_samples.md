@@ -9,26 +9,33 @@
 <!-- SYSTEM:ANFANG -->
 ## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\samples`
 
-*Stand 2026-11-09.*
+*Stand 2026-11-11.*
 
-**Gesamt:** 1875 Dateien, 2.9 GB.
+**Gesamt:** 2265 Dateien, 3.1 GB.
 
 ### Hörproben
 
 | Liste | Klänge | Größe | Zustand |
 |---|---|---|---|
 | `_werkzeug/Hoertest` | 0 | 63.6 MB | Werkzeug |
-| `IC/01_hammer_saite` | 70 | 32.9 MB | offen |
-| `IC/02_zupf_saite` | 56 | 25.6 MB | offen |
+| `IC/01_hammer_saite` | 69 | 32.5 MB | offen |
+| `IC/02_zupf_saite` | 26 | 11.8 MB | offen |
 | `IC/03_bogen_saite` | 76 | 25.9 MB | offen |
-| `IC/04_platte_stab` | 108 | 60.6 MB | offen |
-| `IC/05_membran` | 53 | 19.4 MB | offen |
+| `IC/04_platte_stab` | 100 | 57.2 MB | offen |
+| `IC/05_membran` | 53 | 19.5 MB | offen |
 | `IC/06_becken_gong` | 44 | 18.1 MB | offen |
-| `IC/07_lippe_rohr` | 39 | 10.8 MB | offen |
-| `IC/08_rohrblatt_rohr` | 56 | 15.4 MB | offen |
-| `IC/09_luftstrahl_rohr` | 33 | 8.8 MB | offen |
+| `IC/07_lippe_rohr` | 31 | 8.6 MB | offen |
+| `IC/08_rohrblatt_rohr` | 49 | 13.6 MB | offen |
+| `IC/09_luftstrahl_rohr` | 25 | 6.6 MB | offen |
 | `IC/10_zunge` | 49 | 13.6 MB | offen |
 | `IC/11_tonrad` | 8 | 4.4 MB | offen |
+| `IC_vor_S186/01_hammer_saite` | 70 | 32.9 MB | offen |
+| `IC_vor_S186/02_zupf_saite` | 56 | 25.6 MB | offen |
+| `IC_vor_S186/04_platte_stab` | 108 | 60.6 MB | offen |
+| `IC_vor_S186/05_membran` | 53 | 19.4 MB | offen |
+| `IC_vor_S186/07_lippe_rohr` | 39 | 10.8 MB | offen |
+| `IC_vor_S186/08_rohrblatt_rohr` | 56 | 15.4 MB | offen |
+| `IC_vor_S186/09_luftstrahl_rohr` | 33 | 8.8 MB | offen |
 | `LumiViz/hoerproben_11d` | 5 | 2.2 MB | offen |
 | `LumiViz/hoerproben_11e` | 6 | 2.4 MB | offen |
 | `LumiViz/hoerproben_11f` | 12 | 2.7 MB | offen |
@@ -60,12 +67,12 @@
 | `LumiViz/hoerproben_s130` | 5 | 10.1 MB | offen |
 | `LumiViz/hoerproben_s_g3` | 6 | 31.0 MB | offen |
 | `LumiViz/hoerproben_saiten_loops` | 9 | 66.4 MB | offen |
-| `LumiViz/klasse1_34i` | 50 | 29.2 MB | offen |
+| `LumiViz/klasse1_34i` | 72 | 55.4 MB | offen |
 | `LumiViz/lautheit_s139` | 2 | 79.5 MB | offen |
 | `LumiViz/membran_34h` | 38 | 18.7 MB | offen |
 | `LumiViz/salamander_31d3` | 15 | 88.8 MB | offen |
 | `LumiViz/salamander_31d6` | 15 | 93.3 MB | offen |
-| `LumiViz/stab_34g` | 96 | 47.1 MB | offen |
+| `LumiViz/stab_34g` | 94 | 45.6 MB | offen |
 | `LumiViz/stil_tabs` | 26 | 98.2 MB | offen |
 | `LumiViz/titanium` | 1 | 39.9 MB | offen |
 <!-- SYSTEM:ENDE -->
@@ -73,7 +80,7 @@
 <!-- WECHSEL:ANFANG -->
 ## Wechselplatte: `E:\samples`
 
-*Stand 2026-11-09.*
+*Stand 2026-11-11.*
 
 **Gesamt:** 44757 Dateien, 24.3 GB.
 

@@ -80,3 +80,21 @@ und den leisen Anschlag laut genug lässt (Befund `hammer-saite/2026-11-10_S186_
 | 2 | Russell & Rossing, „Testing the nonlinearity of piano hammers using residual shock spectra“, Acta Acustica (1998) | Spektren je Stärke (online nur Abbildung C6 pp/ff) | Bezahlschranke |
 | 2 | Hall & Askenfelt, „Piano string excitation V: Spectra for real hammers and strings“, JASA (1988); Hall, „… VI: Nonlinear modeling“, JASA (1992) | Spektren je Stärke, Kontakt | Bezahlschranke |
 | 3 | Giordano & Millis, Stulov 1995/2004/2008, Birkett 2013, Vyasarayani, Birkett & McPhee 2009 | Filz, Stiel | Bezahlschranke bzw. gesperrt |
+
+## Modellierung — Durchschlagende Zunge, Maße je Ton (Anlass: S190, 34j-4)
+
+Recherche: `modellierung/zunge/recherche/2026-11-11_S190_*.md`, Auswertung
+`modellierung/zunge/2026-11-11_S190_quellenlage_34j-4.md`. Angaben aus den Agentenberichten und aus `zunge/ic/quellen.md`,
+**Titel der Bücher am Katalog prüfen**. Wofür: eine Maßtabelle der Zungen je Ton gibt es öffentlich für kein Instrument
+der Klasse 10; die Vorgaben je Taste (34j-5) stützen sich auf wenige Ankerpunkte.
+
+| Vorrang | Quelle | Wofür | Stand |
+|---|---|---|---|
+| 1 | Richter, G.: *Akustische Probleme bei Akkordeons und Mundharmonikas*, Teil 1 und 2 (Schmülling, 1985) | Zungenmaße, Kanzellen (Kap. 5.3 nach Pomberger u. a. 2021), Aufbiegung, Druck — nach zwei Berichten die ergiebigste Quelle | nur gedruckt |
+| 1 | Ricot, Caussé, Misdariis: „Aerodynamic excitation and sound production of blown-closed free reeds without acoustic coupling: The example of the accordion reed“, JASA 117(4), 2279–2290 (2005), DOI 10.1121/1.1852546 | Anregung und Abstrahlung der Akkordeonzunge, Maße des Versuchs | Bezahlschranke; HAL ohne Volltext bzw. gesperrt |
+| 1 | Adachi u. a.: „Time-domain simulation of harmonica pitch bending and overblowing“, JASA 159(5), 4191–4203 (2026), DOI 10.1121/10.0043784 | Parametersatz der Mundharmonika, Zungenpaar | Bezahlschranke, kein Preprint gefunden |
+| 2 | Llanos-Vázquez, Elejalde-García, Macho-Stadler u. a., Acta Acustica united with Acustica 100 (2014) 375–384; Dissertation Llanos Vázquez (UPV/EHU 2015, Repositorium ADDI) | Akkordeonzungen: Einschwingen, beschwerte Zungen, weitere Töne | Bezahlschranke; Dissertation beim Abruf 404 |
+| 2 | Koopman & Cottingham, Reed Organ Society Bulletin 15 (3–4), 17–23 (1997) | Schwelle und Amplitude über Druck an Harmoniumzungen (Primärquelle zu „about 0.2 kPa“) | nicht online |
+| 2 | St. Hilaire, Wilson, Beavers: „Aerodynamic excitation of the harmonium reed“, J. Fluid Mech. 49, 803–816 (1971), DOI 10.1017/s0022112071002374 | Schwelle, Trägheit der Anströmung | Bezahlschranke |
+| 2 | Milne, H. F.: *The Reed Organ: Its Design and Construction* (1930) | Zungen- und Zellenmaße je Fußlage, Winddruck (archive.org nur Ausleihe, OCR verstümmelt — S. 27–45, 138–149) | Buch |
+| 3 | Johnston, Acoustics Australia 15, 69–75 (1987); Braasch & Ahrens 2000; Tonon 2009; Millot 1999 (Dissertation), Millot 2001; Gellerman, *The American Reed Organ*; Benetoux, *The Ins and the Outs of the Accordion* (2002) | Mundharmonika-Bend, Harmonium, Akkordeonbau | nicht erreicht bzw. Buch |

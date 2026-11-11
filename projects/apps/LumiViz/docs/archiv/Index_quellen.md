@@ -1,16 +1,17 @@
 # Index: fremde Dokumente
 
 > Ablage `…\Visuals_Project\cmake\quellen` — Paper, Bücher, Noten und andere Dokumente, die aus
-> urheberrechtlichen Gründen nicht ins Repo gehören; archiviert auf der Wechselplatte (`<Laufwerk>:\quellen`).
+> urheberrechtlichen Gründen nicht ins Repo gehören; archiviert auf der Wechselplatte unter
+> `<Laufwerk>:\samples\quellen` (seit S189; früher `<Laufwerk>:\quellen`, der Buchstabe kann wechseln).
 > **Vor Gebrauch Patrik bitten, sie verfügbar zu machen.** Zitiert wird in den Berichten unter
 > `docs/modellierung/` mit Seite. Erzeugt von `tools/archiv_index.py`.
 
 <!-- SYSTEM:ANFANG -->
 ## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\quellen`
 
-*Stand 2026-11-09.*
+*Stand 2026-11-11.*
 
-**Gesamt:** 127 Dateien, 331.5 MB.
+**Gesamt:** 157 Dateien, 378.1 MB.
 
 ### .
 
@@ -174,6 +175,40 @@
 ### wave-clips
 
 - `Mauch_Dixon_2014_pYIN_ICASSP.pdf` (124.3 KB)
+
+### zunge
+
+> Quellen der Klasse 10 (durchschlagende Zunge: Akkordeon, Harmonium, Mundharmonika, Melodica) fuer LumiViz Stufe 34j; Herkunft je Datei in LADELISTE.tsv, Berichte unter LumiViz docs/modellierung/zunge/.
+
+- `Adachi_etal_2026_AccordionPitchBending_FA2026_000418.pdf` (1.3 MB)
+- `Bahnson_Antaki_Beery_1998_DiatonicHarmonica_JASA103.pdf` (1.6 MB)
+- `Braasch_Cottingham_2023_FreeReeds_AcousticsToday.pdf` (397.4 KB)
+- `Cottingham_1998_ICA.pdf` (152.5 KB)
+- `Cottingham_2011_AcousticsOfFreeReedInstruments_PhysicsToday64-3.pdf` (292.3 KB)
+- `Cottingham_2013_ReedVibrationPitchBending_CCRMA_Music318_Folien.pdf` (2.0 MB)
+- `Cottingham_2017_ReedChamberResonances_ISMA2017_paper_52_Abstract.pdf` (188.7 KB)
+- `Cottingham_Lilly_Reed_1999_Berlin1.pdf` (592.9 KB)
+- `Cottingham_Reed_Busha_1999_Berlin2.pdf` (656.2 KB)
+- `Cottingham_Wolff_2015_FreeReedInitialTransients_ViennaTalk2015_39_Abstract.pdf` (515.8 KB)
+- `ElejaldeGarcia_etal_2021_AccordionAcousticsPitchBending_AiP-2021-02.pdf` (1.1 MB)
+- `Fletcher_1993_AutonomousVibrationPressureControlledValves_JASA93.pdf` (833.6 KB)
+- `Fletcher_2001_Ueberblick_UNSW.pdf` (183.8 KB)
+- `Fouche_1928_AnchesHarmonium_AFST_afst.350.pdf` (7.2 MB)
+- `Goldbrunner_Harmoniumreparatur_gdo.pdf` (6.6 MB)
+- `Granzow_Rossing_Egbert_2015_BionicPitchBenders_ViennaTalk2015_Abstract.pdf` (513.3 KB)
+- `Guimaraes_etal_2004_ID9_sea-acustica.pdf` (220.6 KB)
+- `Hergert_2023_CelesteRanksOrgansAccordions_FA2023.pdf` (1.7 MB)
+- `LADELISTE.tsv` (8.1 KB)
+- `LlanosVazquez_etal_2008_Acoustics08_001900.pdf` (436.1 KB)
+- `LlanosVazquez_etal_2014_Tecniacustica_AMS-0_003_CI.pdf` (589.3 KB)
+- `Lu_2014_TwoHoleDrawThreeHoleBlowHarmonica_PHYS406_Studienarbeit.pdf` (993.6 KB)
+- `Millot_Baumann_2007_MinimalModelFreeReeds_ActaAcustica93_arXiv2401.01606.pdf` (4.0 MB)
+- `Pomberger_etal_2021_Stimmstock_DAGA2021_000550.pdf` (3.7 MB)
+- `Puranik_Scavone_2023_ClampedBarModelFreeReeds_FA2023.pdf` (4.2 MB)
+- `Puranik_Scavone_2023_SignalModelHarmonium_DAFx23_paper_47.pdf` (5.3 MB)
+- `Tarnopolsky_etal_2001_UNSW.pdf` (794.3 KB)
+- `Tarnopolsky_Fletcher_Lai_2000_OscillatingReedValves_JASA108.pdf` (122.2 KB)
+- `Tonon_2005_ReedCavityDesignResonance_PICA2.pdf` (661.3 KB)
 <!-- SYSTEM:ENDE -->
 
 <!-- WECHSEL:ANFANG -->

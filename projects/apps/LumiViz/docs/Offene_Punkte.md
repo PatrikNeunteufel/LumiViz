@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.337.0
-> **Datum:** 2026-11-11 (Sessions 164 bis 189)
+> **Version:** 1.338.0
+> **Datum:** 2026-11-11 (Sessions 164 bis 190)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2926,8 +2926,12 @@ Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`; **geplant S188:** Teilplan 34j-1 bis 34j-10 nach ZV1 a–ZV3 a,
 Befund [2026-11-11_S188_befund_ic_vorlage.md](modellierung/zunge/2026-11-11_S188_befund_ic_vorlage.md) — erst der Umzug
 Bit für Bit, dann die Vorgaben je Taste mit Quellen, ein Winddruck für alle Tasten, laufender Wind; **34j-1 bis 34j-3
-erledigt S189** (Beleg `werte/zunge_ic.txt`, Kern `freeReed`, Stimmer, Journal J66–J69); nächster Schritt 34j-4 mit
-Fable — Recherche, Ladeliste vorher an Patrik), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+erledigt S189** (Beleg `werte/zunge_ic.txt`, Kern `freeReed`, Stimmer, Journal J66–J69); **34j-4 erledigt S190**
+(28 Arbeiten unter `…\cmake\quellen\zunge\`, Quellenlage
+[2026-11-11_S190_quellenlage_34j-4.md](modellierung/zunge/2026-11-11_S190_quellenlage_34j-4.md): keine Maßtabelle je
+Ton, nur Anker; ZQ1 a, ZQ2 a, ZH1 a–ZH3 a im Konzept §6); nächster Schritt **34j-5 mit Fable** — Herleitung je Taste am
+Kern aus Ankern und Schwellentheorie nach Fletcher, Belegkraft je Wert, Melodica als Annahme; offen dabei: Balgdruck des
+Akkordeons und Atemdruck sind nirgends gemessen gefunden, Richter 1985 in `Bibliothek_offen.md`), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6457,6 +6461,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.338.0 | 2026-11-11 | Session 190 (Fable 5.2). §6 Anbindung InstrumentsCalculation: 34j-4 erledigt — Recherche und Quellen der Klasse 10 (28 Arbeiten in der Ablage, drei Agentenberichte, Quellenlage gegengelesen); ZQ1 a, ZQ2 a, ZH1 a–ZH3 a; nächster Schritt 34j-5. `Bibliothek_offen.md`: Abschnitt Durchschlagende Zunge. |
 | 1.337.0 | 2026-11-11 | Session 189 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-1 erledigt — Beleg aus der Vorlage `werte/zunge_ic.txt` (49 Abdrücke, je vier Bezüge nach IC und nach der Probe von LumiViz, 524 Kurvenpunkte; Programm `anbindung-ic/abdruck_zunge.cpp`), Journal J66; 34j-2 erledigt — Kern `freeReed` unter `InstrumentModels/zunge/`, Messen in `InstrumentMeasure/ZungeStimmen`, `test_InstrumentModelsZunge` (9 Fälle, eng unter Release-clang und Testing-MSVC grün), Journal J67, J68; 34j-3 erledigt — Stimmer `zungeStimmer` (alle vier Bit für Bit wie IC `Stimmung.inc`, 42 s mit `LUMIVIZ_34J_STIMMEN=1`), zwei Fälle mehr, Journal J69. |
 | 1.336.0 | 2026-11-11 | Session 188 (Fable 5.2). §6 Anbindung InstrumentsCalculation: 34j geplant — Befund an der IC-Vorlage der Zunge, ZV1 a–ZV3 a, Teilplan 34j-1 bis 34j-10 im Konzept §6. |
 | 1.335.0 | 2026-11-11 | Session 187 (Opus 5.5). §6 HS-4 untersucht (HS-4 a, HS4-1 a): Recherche, Wellenleiter, zwei Gesetze, Zielgröße nachgeprüft — ruht bis zu den Originalen. |
