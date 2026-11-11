@@ -29,6 +29,7 @@
 #include "InstrumentModels/hammer/HammerKern.hpp"
 #include "InstrumentModels/stab/StabKern.hpp"
 #include "InstrumentModels/trommel/TrommelKern.hpp"
+#include "InstrumentModels/zunge/ZungeKern.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/KernDatei.hpp"
 
@@ -397,4 +398,32 @@ TEST_CASE("Instrument Quellen QM1 a: Quellen am Wert — richten, vergleichen, D
     kn::Werte zurueck = kn::trommel::werteAus(pauke.spiel);
     lumi::loop::quellenAusJson(tafel, j, zurueck);
     CHECK(zurueck.quellen == w.quellen);
+}
+
+TEST_CASE("Instrument Quellen 34j-6: die Vorlagen des Kerns freeReed nennen nur Schluessel aus dem Register")
+{
+    // die Dateien kommen mit 34j-8; bis dahin prueft der Waechter die Vorlagen selbst — jede Kurve je Taste und jeder
+    // Wert ohne Kurve nennt bekannte, auslieferbare Quellen
+    const Register r = liesRegister();
+    REQUIRE(!r.empty());
+    Pruefung p;
+    for (const lumi::kern::zunge::Vorlage& v : lumi::kern::zunge::vorlagen())
+    {
+        const lumi::kern::Werte w = lumi::kern::zunge::werteVon(v);
+        for (const auto& [name, wert] : w.felder)
+            if (const auto* k = std::get_if<lumi::kern::Kurve>(&wert); k != nullptr && !k->punkte.empty())
+            {
+                if (k->quellen.empty()) p.fehler.push_back(v.name + " " + name + ": nennt keine Quelle");
+                pruefeSchluessel(r, v.name + " " + name, k->quellen, p);
+            }
+        for (const auto& [name, quellen] : w.quellen)
+        {
+            if (quellen.empty()) p.fehler.push_back(v.name + " " + name + ": nennt keine Quelle");
+            pruefeSchluessel(r, v.name + " " + name, quellen, p);
+        }
+    }
+    CHECK_MESSAGE(p.fehler.empty(), zusammen(p.fehler));
+    MESSAGE(p.benutzt.size() << " Quellen in den Vorlagen der Zunge");
+    CHECK(p.benutzt.count("adachi2026") == 1);
+    CHECK(p.benutzt.count("millot2007") == 1);
 }

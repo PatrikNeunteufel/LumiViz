@@ -1,20 +1,26 @@
 /**
  * @file ZungeStimmen.hpp
- * @brief Messen und Stimmen am Kern `freeReed` (Klasse 10): Tonhoehe, Ansprechen und Einschwingen einer Zunge, f₀ und
- *        das Fenster des Drucks je Note (Instrumente_IC_Konzept.md 34j-2, 34j-3, IK2-2 a, IK2-11 a)
+ * @brief Messen und Stimmen am Kern `freeReed` (Klasse 10): Tonhoehe, Ansprechen, Lautheit und Einschwingen einer Zunge,
+ *        f₀ je Note am mittleren Druck (Instrumente_IC_Konzept.md 34j-2, 34j-3, 34j-6, IK2-2 a, IK2-11 a, ZV5 a)
  *
- * **Stimmer** (34j-3): uebernommen aus IC `Zunge.cpp` `stimme` (`4409088`), die Rechnung wortgleich — je Note das Fenster:
- * Raster 2^(1/4) von 100 Pa bis 6 kPa, die Zunge spricht an (Amplitude ≥ 2 % der Laenge, Tonhoehe ±100 Cent an f₀), der
- * laengste Lauf, bei mehr als drei Schritten innen um je einen gekuerzt; dann f₀ in hoechstens sechs Runden so, dass sie in
- * der (geometrischen) Mitte des Fensters auf der Note spielt (sie schwingt „somewhat below“ f₀); eine Note ohne Fenster
- * behaelt f₀ = 1,02 · f und fehlt in den Kurven des Fensters. Gerechnet wird ohne Bezug (die Zunge allein), je Note auf
- * dem Pool (`kern::parallelJe`); IC: alle vier Instrumente 1:41 min auf vier Threads.
+ * **Messen an der Taste** (34j-6, die Messkette des Pruefstands S190 `docs/modellierung/zunge/proben/
+ * 2026-11-11_S190_pruefstand.cpp`): eine Zunge allein, 1 s gehalten, 1,2 s gerechnet, 48 kHz, Wind in 20 ms auf den
+ * Druck. Tonhoehe aus den aufsteigenden Nulldurchgaengen der Auslenkung um ihre Mitte im letzten Viertel des Haltens;
+ * Amplitude die halbe Spanne dort; „spricht“ = Amplitude ≥ ¼ der Ruhelage und gegen das Viertel davor um nicht mehr
+ * als 10 % gewachsen; Lautheit des Schalls (ρ/(4π)·dU/dt) ueber die letzten 0,4 s des Haltens mit `AudioCore`
+ * (Momentary nach BS.1770, mono); Einschwingen = erster 5-ms-Block mit der Spitze ≥ −5 dB der Endhuelle (der Spitze der
+ * letzten 50 Bloecke), Anstieg ab −50 dB.
  *
- * **Messen:** uebernommen aus IC `rechnung/klassen/10_zunge/Zunge.cpp` (`4409088`), der Messteil von `rechneEineZunge` wortgleich:
- * IC mass im Kern, hier misst `InstrumentMeasure` am Ton (IK2-2 a) — die Tonhoehe mit YIN (B2, 30 … 3000 Hz) als Median der
- * stimmhaften Rahmen von der Haelfte des Haltens bis zu seinem Ende (mindestens 0,1 s, mehr als die Haelfte stimmhaft),
- * das Einschwingen (B5) ueber das Halten; die Spitze der Auslenkung gibt der Kern (`reedTip`). Gemessen wird die erste
- * Zunge allein, wie IC (ein Chor, vor Gehaeuse und Bezug).
+ * **Stimmer** (34j-6, ZV5 a): je Note f₀ in hoechstens sechs Runden so, dass die Zunge am mittleren Druck
+ * `windMitte(spiel)` auf der Note spielt (auf 0,05 Cent; Start 1,02 · f, sie schwingt „somewhat below“ f₀) — wie der
+ * Pruefstand. Spricht sie dort nicht, behaelt sie den letzten Wert, und die Note steht in `stumm`. Dann, wo das Spiel
+ * ueber das Ventil bendet (ZV7 a, ZV8 a), je Note der Bend: die Tonhoehe gegen offen bei den Oeffnungen 2^(−k/4),
+ * k = 1 … 7, und die Grenze (die kleinste Oeffnung, die noch anspricht, in hoechstens 12 Halbierungen auf 1 %); ohne Bend
+ * flache Kurven (0 Cent, Grenze 1). Je Note auf dem Pool (`kern::parallelJe`). Bis Rechenfassung 1 (IC `stimme`, J69)
+ * stimmte er ein Fenster des Drucks je Note.
+ *
+ * **Messen wie IC** (34j-2, J68): `messeZungenTon` — Tonhoehe mit YIN (B2, 30 … 3000 Hz) als Median der stimmhaften Rahmen
+ * von der Haelfte des Haltens bis zu seinem Ende, Einschwingen (B5) ueber das Halten; fuer die Faelle aus IC `test_zunge`.
  *
  * Ohne Qt.
  */
@@ -42,24 +48,64 @@ struct ZungenTon
 /// Misst den Ton einer Zunge (`rechneEineZunge`, ohne Bezug) wie IC: `haltenS` und `rate` aus dem Anschlag.
 [[nodiscard]] ZungenTon messeZungenTon(std::span<const double> ton, double haltenS, int rate, double amplitudeRel);
 
-/// Eine Zunge mit f₀ und Zielfrequenz rechnen und messen; mit `ton` der Ton dazu.
-[[nodiscard]] ZungenTon messeEineZunge(const kern::zunge::ZungenSpiel& spiel, double f0, double hz, const kern::zunge::ZungenAnschlag& a,
+/// Eine Zunge mit f₀ an ihrer Tonhoehe rechnen und messen wie IC; mit `ton` der Ton dazu.
+[[nodiscard]] ZungenTon messeEineZunge(const kern::zunge::ZungenSpiel& spiel, double f0, int zungenNote, const kern::zunge::ZungenAnschlag& a,
                                        std::int64_t frames, std::vector<double>* ton = nullptr);
 
-/// Die erste Zunge des Tons wie IC `rechneZungenTon(…, &messung)`: der erste Chor der Seite (Bass unter `bassAb`).
+/// Die erste Zunge des Tons: der erste Chor der Seite (Bass unter `bassAb`), wie IC gemessen.
 [[nodiscard]] ZungenTon messeErsteZunge(const kern::zunge::ZungenSpiel& spiel, const kern::zunge::ZungenAnschlag& a, std::int64_t frames);
 
-/// Die drei gestimmten Kurven eines Spiels (siehe Kopf), mit Belegkraft *Rechnung*.
+/// Eine Zunge an der Taste mit der Messkette des Pruefstands (siehe Kopf).
+struct ZungenTaste
+{
+    bool spricht = false;
+    bool waechst = false;     ///< im letzten Viertel um mehr als 10 % gewachsen
+    double hz = 0.0;          ///< 0 = keine drei Nulldurchgaenge
+    double lufs = -200.0;     ///< Momentary ueber die letzten 0,4 s des Haltens
+    double einS = -1.0;       ///< bis −5 dB der Endhuelle
+    double anstiegS = -1.0;   ///< −50 → −5 dB
+    double ampLaenge = 0.0;   ///< Amplitude / Laenge
+    double ampRuhe = 0.0;     ///< Amplitude / Ruhelage
+};
+[[nodiscard]] ZungenTaste messeZungenTaste(const kern::zunge::ZungenSpiel& spiel, double f0, int zungenNote, double druckPa,
+                                           double ventilFaktor = 1.0);
+
+/// f₀ einer Zunge, so dass sie am Druck auf ihrer Note spielt (siehe Kopf); `spricht` falsch, wenn sie dort nicht anspricht.
+[[nodiscard]] double stimmeZunge(const kern::zunge::ZungenSpiel& spiel, int zungenNote, double druckPa, bool* spricht = nullptr);
+
+/// Die gestimmten Kurven eines Spiels, mit Belegkraft *Rechnung*, und die Noten, die am mittleren Druck nicht ansprechen.
 struct ZungenStimmung
 {
-    kern::Kurve eigenfrequenz;  ///< `reedFrequency`
-    kern::Kurve druckUnten;     ///< `windLow`
-    kern::Kurve druckOben;      ///< `windHigh`
+    kern::Kurve eigenfrequenz;                  ///< `reedFrequency`
+    std::vector<kern::Kurve> bendCentJeStufe;   ///< `bendStep1` … `bendStep7`
+    kern::Kurve bendGrenzeOeffnung;             ///< `bendLimitOpening`
+    kern::Kurve bendGrenzeCent;                 ///< `bendLimitCent`
+    std::vector<int> stumm;
 };
-/// Stimmt ein Spiel ueber seinen Umfang `noteMin` … `noteMax`; die gestimmten Kurven in `spiel` wirken dabei nicht.
+
+/// Der Bend einer Zunge am Druck (ZV8 a): gegen offen gemessen bei den Oeffnungen `bendStufe(k)`, die Grenze (letzte
+/// Oeffnung, die anspricht) auf 1 % eingegabelt; Cent ≤ 0, unter der Grenze der Wert der Grenze.
+struct ZungenBend
+{
+    std::vector<double> centJeStufe;
+    double grenzeOeffnung = 1.0;
+    double grenzeCent = 0.0;
+};
+[[nodiscard]] ZungenBend messeBend(const kern::zunge::ZungenSpiel& spiel, double f0, int zungenNote, double druckPa);
+/// Stimmt ein Spiel ueber seinen Umfang `noteMin` … `noteMax`; die gestimmte Kurve in `spiel` wirkt dabei nicht.
 [[nodiscard]] ZungenStimmung zungenStimmung(const kern::zunge::ZungenSpiel& spiel);
 
-/// Der Stimmer des Kerns `freeReed`: rechnet alle drei zusammen und gibt die verlangten.
+/// Die Pruefgroesse „jede Taste deckt den Windbereich“ (34j-6): je Note `noteMin` … `noteMax` die Zunge dieser
+/// Tonhoehe mit der gestimmten f₀ bei `windMinPa`, am mittleren Druck und bei `windMaxPa` (die Zungen der Fusslagen
+/// liegen im Umfang und sind damit mitgeprueft).
+struct ZungenWindbereich
+{
+    std::vector<int> noten;
+    std::vector<ZungenTaste> min, mitte, max;  ///< je Note
+};
+[[nodiscard]] ZungenWindbereich messeWindbereich(const kern::zunge::ZungenSpiel& spiel);
+
+/// Der Stimmer des Kerns `freeReed`.
 [[nodiscard]] Stimmer zungeStimmer();
 
 }  // namespace lumi::messung

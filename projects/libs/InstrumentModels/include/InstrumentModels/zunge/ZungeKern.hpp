@@ -6,18 +6,21 @@
  * **Ein Kern, vier Instrumente** (KS1 a): die Tafel traegt den moeglichen Umfang MIDI 21–108, jedes Instrument seinen
  * eigenen in `noteMin`/`noteMax` (Gruppe *Keys*, dazu `bassBelow`: darunter spielt die Bass-Seite des Akkordeons, 0 =
  * keine). Die Gruppen folgen den Abschnitten von `ZungenSpiel` (Keys, Reed, Chamber, Wind, Ranks, Bass ranks, Case,
- * Tunable, Output); die Choere sind Listen. **Gestimmt** (IK2-11 a) sind f₀ der Zunge je Note (`reedFrequency`) und das
- * Fenster des Drucks, in dem sie anspricht (`windLow`, `windHigh`) — der Stimmer `InstrumentMeasure/ZungeStimmen`
- * rechnet sie (34j-3; bis dahin aus `werte/zunge_ic.txt`). Den Bezug `outputReference` setzt `kern::normiereNachTafel`
- * mit der Probe von LumiViz (Mitte des Umfangs, 1 s) — IC normierte 0,6 s an der Mitte ab `bassBelow`; am Akkordeon gibt
- * das einen anderen Bezug (Uebernahme-Journal J67).
+ * Tunable, Output); die Choere sind Listen. **Rechenfassung 2** (34j-6): die Groessen der Zunge (*Reed*) und der Kanzelle
+ * (*Chamber*) sind Kurven je Taste mit Belegkraft und Quellen je Kurve; *Wind* ist ein Druckbereich fuer alle Tasten
+ * (`windMin`, `windMax`, ZV2 a). **Gestimmt** (IK2-11 a) sind f₀ der Zunge je Note (`reedFrequency`) am mittleren Druck
+ * (ZV5 a) und der Bend ueber das Ventil je Taste (ZV8 a: `bendStep1` … `bendStep7` bei den Oeffnungen 2^(−k/4), dazu
+ * `bendLimitOpening`, `bendLimitCent`) — der Stimmer `InstrumentMeasure/ZungeStimmen`. Bis Rechenfassung 1 stimmte er dazu ein Fenster des Drucks je
+ * Note, in dem die Expression waehlte (IC); das Fenster ist jetzt Pruefgroesse („jede Taste deckt den Windbereich“).
+ * Den Bezug `outputReference` setzt `kern::normiereNachTafel` mit der Probe von LumiViz (Mitte des Umfangs, 1 s).
  *
- * **Adapter** (Rechenweg Note, in 34j-2 wie IC: feste Werte am Beginn der Note): die erste Note des Auftrags; die Expression
- * (Spur `expression` am Beginn, ohne Spur 1 — SK4 a) waehlt den Druck im Fenster der Note (IC); `pitch` (Cent, nur abwaerts,
- * gekappt) schliesst das Ventil, `vibrato` (Cent) moduliert den Druck mit 5 Hz; gehalten wird bis zum Ende der Note, danach
- * setzt der Wind in 30 ms ab. Die Stufe wirkt in 34j-2 nicht (die Abbildung Stufe → Staerke legt 34j-7 an der gemessenen
- * Kurve fest, SK4 a); die Tonhoehe kommt aus der Note (IC), nicht aus `hz`. Laufender Wind, `bellows` und der Ausklang der
- * Zunge kommen mit 34j-7 (ZV3 a).
+ * **Adapter** (Rechenweg Note, feste Werte am Beginn der Note): die erste Note des Auftrags; die Expression (Spur
+ * `expression` am Beginn, ohne Spur 1 — SK4 a) waehlt den Druck im Windbereich; `vibrato` (Cent) moduliert den Druck mit
+ * 5 Hz; gehalten wird bis zum Ende der Note, danach setzt der Wind in 30 ms ab. `pitch` (Cent am Beginn, ZV9 a) schliesst
+ * das Ventil ueber die gestimmte Kurve der Taste (`ventilFuerCent`: nur abwaerts, gekappt an ihrer Grenze; ZV7 a, ZV8 a)
+ * — 34j-7 macht daraus einen Verlauf. Die Stufe wirkt noch nicht (die Abbildung Stufe → Staerke legt 34j-7 an der
+ * gemessenen Kurve fest, SK4 a); die Tonhoehe kommt aus der Note, nicht aus `hz`. Laufender Wind, `bellows` und der
+ * Ausklang der Zunge kommen mit 34j-7 (ZV3 a).
  *
  * Reines C++ ohne Qt.
  */
@@ -38,8 +41,12 @@ inline constexpr std::string_view kKernName = "freeReed";
 
 /// Die Namen der gestimmten Werte, in der Reihenfolge der Tafel.
 inline constexpr std::string_view kEigenfrequenz = "reedFrequency";
-inline constexpr std::string_view kDruckUnten = "windLow";
-inline constexpr std::string_view kDruckOben = "windHigh";
+/// ZV8 a: der Bend je Taste — `bendStep1` … `bendStep7` (Cent bei den Oeffnungen `bendStufe(k)`) und die Grenze.
+inline constexpr std::string_view kBendGrenzeOeffnung = "bendLimitOpening";
+inline constexpr std::string_view kBendGrenzeCent = "bendLimitCent";
+[[nodiscard]] std::string bendStufenName(int k);  ///< k = 0 … kBendStufen − 1
+/// Alle gestimmten Werte in der Reihenfolge der Tafel.
+[[nodiscard]] std::vector<std::string> gestimmteNamen();
 /// Der Bezug des Ausgangs.
 inline constexpr std::string_view kBezug = "outputReference";
 /// Die innere Groesse: die Spitze der Auslenkung der ersten Zunge / ihre Laenge.
@@ -64,7 +71,7 @@ struct Vorlage
     std::string titel;
     ZungenSpiel spiel;
     /// QM1 a: die Quellen der Werte ohne Kurve, die nicht die eigene Vorgabe (`lumiviz`) sind; die Tafel traegt die der
-    /// ersten Vorlage. In 34j-2 leer: die Quellen der Klasse kommen mit der Recherche 34j-4 ins Register
+    /// ersten Vorlage; die Kurven tragen ihre Quellen selbst (34j-6)
     QuellenJeWert quellen;
 };
 /// Die vier Vorlagen in der Reihenfolge der IC-Vorgaben (Akkordeon, Harmonium, Melodica, Mundharmonika).

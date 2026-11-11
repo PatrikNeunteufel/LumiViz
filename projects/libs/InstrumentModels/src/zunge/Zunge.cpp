@@ -24,40 +24,98 @@ double hzVon(double note)
     return 440.0 * std::exp2((note - 69.0) / 12.0);
 }
 
+double an(const Kurve& k, int note)
+{
+    return wertAn(k, note, Skala::Logarithmisch);
+}
+
 }  // namespace
 
-void rechneEineZunge(const ZungenSpiel& s, double f0, double noteHz, const ZungenAnschlag& a, std::vector<double>& aus, std::int64_t frames,
+ZungeAnDerTaste zungeAn(const ZungenSpiel& s, int zungenNote)
+{
+    ZungeAnDerTaste z;
+    z.laenge = an(s.laengeM, zungenNote);
+    z.breite = an(s.breiteM, zungenNote);
+    // die Masse aus der Masse je wirksamer Flaeche (die Reihenfolge wie im Pruefstand S190)
+    z.masse = an(s.flaechenmasse, zungenNote) * 0.5 * z.laenge * z.breite;
+    z.zeta = an(s.zeta, zungenNote);
+    z.ruhe = an(s.ruheM, zungenNote);
+    z.spalt = an(s.seitenspaltM, zungenNote);
+    z.kanzelle = an(s.kanzelleM3, zungenNote);
+    z.kanalLaenge = an(s.kanalLaengeM, zungenNote);
+    z.kanalFlaeche = an(s.kanalFlaecheM2, zungenNote);
+    z.ventil = an(s.ventilFlaecheM2, zungenNote);
+    return z;
+}
+
+double windBei(const ZungenSpiel& s, double expression)
+{
+    const double e = std::clamp(expression, 0.0, 1.0);
+    return s.windMinPa * std::pow(s.windMaxPa / s.windMinPa, e);
+}
+
+double windMitte(const ZungenSpiel& s)
+{
+    return windBei(s, 0.5);
+}
+
+double bendStufe(int k)
+{
+    return std::exp2(-(k + 1) / 4.0);
+}
+
+double ventilFuerCent(const ZungenSpiel& s, int note, double cent)
+{
+    if (!s.bendUeberVentil || cent >= 0.0 || s.bendGrenzeOeffnung.punkte.empty() || s.bendGrenzeCent.punkte.empty() ||
+        static_cast<int>(s.bendCentJeStufe.size()) != kBendStufen)
+        return 1.0;
+    const int n = std::clamp(note, s.noteMin, s.noteMax);
+    const double grenzeF = std::clamp(wertAn(s.bendGrenzeOeffnung, n, Skala::Logarithmisch), 1e-6, 1.0);
+    const double grenzeC = std::min(0.0, wertAn(s.bendGrenzeCent, n, Skala::Linear));
+    const double ziel = std::max(cent, grenzeC);
+    if (ziel >= 0.0) return 1.0;
+    // die Punkte (Oeffnung, Cent) von offen bis zur Grenze, fallend in der Oeffnung
+    double fVor = 1.0, cVor = 0.0;
+    for (int k = 0; k <= kBendStufen; ++k)
+    {
+        const bool letzte = k == kBendStufen || bendStufe(k) <= grenzeF;
+        const double f = letzte ? grenzeF : bendStufe(k);
+        const double c = letzte ? grenzeC : std::min(0.0, wertAn(s.bendCentJeStufe[static_cast<std::size_t>(k)], n, Skala::Linear));
+        if (c <= ziel && c < cVor)
+        {
+            const double u = (ziel - cVor) / (c - cVor);
+            return std::exp(std::log(fVor) + u * (std::log(f) - std::log(fVor)));
+        }
+        if (letzte) return grenzeF;
+        fVor = f;
+        cVor = std::min(cVor, c);
+    }
+    return grenzeF;
+}
+
+void rechneEineZunge(const ZungenSpiel& s, double f0, int zungenNote, const ZungenAnschlag& a, std::vector<double>& aus, std::int64_t frames,
                      ZungenMessung* messung)
 {
     aus.assign(static_cast<std::size_t>(std::max<std::int64_t>(0, frames)), 0.0);
+    if (messung != nullptr && messung->auslenkung != nullptr) messung->auslenkung->assign(aus.size(), 0.0);
     if (frames <= 0 || f0 <= 0.0) return;
     const double fs = static_cast<double>(a.rate) * kUeber, dt = 1.0 / fs;
-    // die Zunge zu dieser Note: Laenge ∝ 1/√f (bei gleicher Dicke, f ∝ h/L² — Rechnung), Masse ∝ Laenge
-    const double laenge = s.laengeC4M * std::sqrt(hzVon(60.0) / noteHz);
-    const double masse = s.masseC4Kg * laenge / s.laengeC4M;
+    const ZungeAnDerTaste z = zungeAn(s, zungenNote);
+    const double laenge = z.laenge, masse = z.masse;
     const double w0 = 2.0 * kPi * f0;
-    const double steife = masse * w0 * w0, daempfung = 2.0 * s.zeta * masse * w0;
-    const double sr = 0.5 * laenge * s.breiteM;  // wirksame Flaeche fuer die Kraft (offen)
-    const double e = std::clamp(a.expression, 0.0, 1.0);
-    double p0 = s.druckPpPa * std::pow(s.druckFfPa / s.druckPpPa, e);
-    if (!s.druckUntenJeNote.punkte.empty())
-    {
-        const int n0 = std::clamp(static_cast<int>(std::lround(69.0 + 12.0 * std::log2(noteHz / 440.0))), s.noteMin, s.noteMax);
-        const double u = wertAn(s.druckUntenJeNote, n0, Skala::Logarithmisch);
-        const double o = std::max(u, wertAn(s.druckObenJeNote, n0, Skala::Logarithmisch));
-        p0 = u * std::pow(o / u, e);
-    }
-    if (a.druckPa > 0.0) p0 = a.druckPa;
-    const double bend = std::clamp(a.pitchCent, -s.bendGrenzeCent, 0.0);
-    // das Ventil: der Bend schliesst es (Adachi: kleinere Oeffnung → tiefer); Abbildung Cent → Oeffnung offen
-    // (−100 Cent → 1 % der Oeffnung); was die Physik nicht hergibt, faellt weg (F-2 a: das Modell kappt)
-    const double ventil = s.ventilFlaecheM2 * std::pow(10.0, 2.0 * bend / 100.0);
-    const double traegheit = kRho * s.kanalLaengeM / s.kanalFlaecheM2;
-    const double kKanz = kRho * kC * kC / s.kanzelleM3;
+    const double steife = masse * w0 * w0, daempfung = 2.0 * z.zeta * masse * w0;
+    const double sr = 0.5 * laenge * z.breite;  // wirksame Flaeche fuer die Kraft (offen)
+    const double p0 = a.druckPa > 0.0 ? a.druckPa : windBei(s, a.expression);
+    // das Ventil: der Bend schliesst es (Adachi: kleinere Oeffnung → tiefer); was die Physik nicht hergibt, faellt weg
+    // (F-2 a: das Modell kappt)
+    const double ventil = z.ventil * (a.ventilFaktor > 0.0 ? std::min(1.0, a.ventilFaktor) : 1.0);
+    const double traegheit = kRho * z.kanalLaenge / z.kanalFlaeche;
+    const double kKanz = kRho * kC * kC / z.kanzelle;
     const auto halten = static_cast<std::int64_t>(std::llround(a.haltenS * a.rate)) * kUeber;
     double y = 0.0, v = 0.0, p1 = 0.0, u = 0.0, uVor = 0.0, phaseV = 0.0;
     double yMax = 0.0;
     std::vector<double> summe(static_cast<std::size_t>(frames), 0.0);
+    std::vector<double>* spur = messung != nullptr ? messung->auslenkung : nullptr;
     for (std::int64_t n = 0; n < frames * kUeber; ++n)
     {
         const double t = static_cast<double>(n) * dt;
@@ -72,7 +130,7 @@ void rechneEineZunge(const ZungenSpiel& s, double f0, double noteHz, const Zunge
         const double dpv = p - p1;
         const double uEin = ventil * std::sqrt(2.0 * std::abs(dpv) / kRho) * (dpv >= 0.0 ? 1.0 : -1.0);
         // der Schlitz: Durchflussflaeche und traege Stroemung
-        const double su = s.breiteM * std::sqrt((y + s.ruheM) * (y + s.ruheM) + s.seitenspaltM * s.seitenspaltM);
+        const double su = z.breite * std::sqrt((y + z.ruhe) * (y + z.ruhe) + z.spalt * z.spalt);
         // der Druck an der Zunge (hinter dem traegen Kanal): der Strahl durch den Schlitz, p₂ = ½ρ(U/S_u)²; U geschlossen
         // geloest (implizit): T·(U′ − U)/Δt = p₁ − c·U′|U′| mit c = ½ρ/S_u² — sonst wurde es bei kleiner Traegheit instabil
         const double c = 0.5 * kRho / (su * su);
@@ -93,6 +151,7 @@ void rechneEineZunge(const ZungenSpiel& s, double f0, double noteHz, const Zunge
             const auto i = static_cast<std::size_t>(n / kUeber);
             summe[i] = kRho / (4.0 * kPi) * (u - uVor) * a.rate;
             uVor = u;
+            if (spur != nullptr) (*spur)[i] = y;
         }
     }
     aus = summe;
@@ -106,7 +165,7 @@ ZungeDesChors zungeDesChors(const ZungenSpiel& s, const Chor& c, int note)
     // f₀ aus der Stimmung der Note, um die Schwebung verschoben (offen: f₀ ∝ Spielfrequenz in der Naehe)
     const int n0 = std::clamp(static_cast<int>(n), s.noteMin, s.noteMax);
     const double verh = s.eigenfrequenzJeNote.punkte.empty() ? 1.02 : wertAn(s.eigenfrequenzJeNote, n0, Skala::Logarithmisch) / hzVon(n0);
-    return ZungeDesChors{ziel * verh, ziel};
+    return ZungeDesChors{ziel * verh, ziel, n0};
 }
 
 void rechneZungenTon(const ZungenSpiel& s, const ZungenAnschlag& a, std::vector<float>& mono, std::int64_t frames, ZungenMessung* messung)
@@ -116,13 +175,14 @@ void rechneZungenTon(const ZungenSpiel& s, const ZungenAnschlag& a, std::vector<
     const bool bass = s.bassAb > 0 && a.note < s.bassAb;
     const std::vector<Chor>& choere = bass ? s.bassChoere : s.choere;
     std::vector<double> summe(static_cast<std::size_t>(frames), 0.0), ton;
+    // das Ventil der Taste oeffnet fuer alle ihre Zungen gleich: der Bend aus der Kurve der gespielten Note (ZV9 a)
+    ZungenAnschlag b = a;
+    if (b.ventilFaktor <= 0.0) b.ventilFaktor = ventilFuerCent(s, a.note, a.pitchCent);
     bool erster = true;
     for (const Chor& c : choere)
     {
         const ZungeDesChors z = zungeDesChors(s, c, a.note);
-        ZungenMessung m;
-        rechneEineZunge(s, z.f0, z.hz, a, ton, frames, erster && messung != nullptr ? &m : nullptr);
-        if (erster && messung != nullptr) *messung = m;
+        rechneEineZunge(s, z.f0, z.note, b, ton, frames, erster ? messung : nullptr);
         erster = false;
         for (std::size_t i = 0; i < summe.size(); ++i) summe[i] += c.pegel * ton[i];
     }

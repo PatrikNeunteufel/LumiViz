@@ -481,6 +481,86 @@
       "creditRequired": true,
       "shippable": true,
       "note": "S183 (LP2 b, CL1 a): „Keys F1 - D2, 0.032 Gauge / Keys D#2 - G2, 0.028 Gauge / Keys G#2 - E3, 0.022 Gauge / Keys F3 - G3, 0.011 Gauge / Keys G#3 - E5, 0.009 Gauge“, gewickelt von Mapes — Wortlaut im Agentenbericht"
+    },
+    {
+      "key": "adachi2026",
+      "credit": "S. Adachi, H. Okada, T. Samejima, M. Takeda, K. Nishimiya, Aerodynamic mechanism of accordion pitch bending: simulation and theoretical analysis, Forum Acusticum 2026, Graz, CC BY 3.0 (creativecommons.org/licenses/by/3.0/)",
+      "license": "CC BY 3.0 Unported (p. 1)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191), Klasse 10: die C4-Zunge Tab. 1 (32,8 × 3,45 mm, (2/3) × 0,248 g, ζ 0,003, Ruhelage 0,3 mm, Seitenspalt 0,14 mm), Tonhoehe ueber Druck Abb. 5; PDF unter cmake/quellen/zunge (LADELISTE Nr. 3); nicht begutachtet"
+    },
+    {
+      "key": "llanosvazquez2014",
+      "credit": "R. Llanos-Vazquez, M. J. Elejalde-Garcia, E. Macho-Stadler, Acustica de la lengueta libre del acordeon, Tecniacustica 2014, Murcia",
+      "license": "not checked (no notice seen) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191): zwei Akkordeonzungen 42 mm / 142,7 Hz und 37 mm / 226,4 Hz (Tabla 3), beschwerte Zungen (f/f′)² = 0,98 + 3,7·M/m, Einschwingzeit A4 60–90 ms; PDF unter cmake/quellen/zunge (Nr. 22)"
+    },
+    {
+      "key": "fletcher1993",
+      "credit": "N. H. Fletcher, Autonomous vibration of simple pressure-controlled valves in gas flows, J. Acoust. Soc. Am. 93 (1993)",
+      "license": "(c) Acoustical Society of America - formulas used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191): Schliessdruck und Schwelle (Gl. 6, 19–21, am Seitenbild gelesen S190); PDF unter cmake/quellen/zunge (Nr. 13)"
+    },
+    {
+      "key": "hergert2023",
+      "credit": "W. Hergert, Celeste ranks in organs and accordions, Forum Acusticum 2023, doi:10.61782/fa.2023.0326, CC BY 3.0 (creativecommons.org/licenses/by/3.0/)",
+      "license": "CC BY 3.0 Unported (p. 1)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "Musette: Schwebung 2,00 Hz an A4 (S. 4460, in IC gelesen); PDF unter cmake/quellen/zunge (Nr. 4)"
+    },
+    {
+      "key": "cottingham1998",
+      "credit": "J. P. Cottingham, two-page paper on the free reed of a reed organ, ICA/ASA 1998 (cs.bu.edu/fac/snyder/TablatureWeb/ICA.PDF)",
+      "license": "not checked (no notice seen) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191): die Harmoniumzunge C3 — 150 N/m, 0,21 g, 4 mm breit, rund 4 cm, ζ 0,006, Spieldruck; PDF unter cmake/quellen/zunge (Nr. 17)"
+    },
+    {
+      "key": "cottingham-reed-busha1999",
+      "credit": "J. P. Cottingham, C. H. Reed, M. Busha, Variation of frequency with blowing pressure for an air-driven free reed, Forum Acusticum / 137th ASA, Berlin 1999",
+      "license": "not checked (no notice seen) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191): Tonhoehe ueber Druck an C3 (rund −24 Cent/kPa), Minimum der Tonhoehe Abb. 3; PDF unter cmake/quellen/zunge (Nr. 16)"
+    },
+    {
+      "key": "puranik2023",
+      "credit": "N. Puranik, G. Scavone, A clamped bar model for free reeds, Forum Acusticum 2023, doi:10.61782/fa.2023.0853, CC BY 3.0 (creativecommons.org/licenses/by/3.0/)",
+      "license": "CC BY 3.0 Unported (p. 1)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "Klasse 10: das Stroemungsmodell (Gl. 1–5), die Harmoniumzunge B5 16 × 2 × 0,4 mm, Ruhelage 0,1 mm, Kanzellendruck 0,2–1,5 kPa am Instrument (S. 1810); PDF unter cmake/quellen/zunge (Nr. 1)"
+    },
+    {
+      "key": "millot2007",
+      "credit": "L. Millot, C. Baumann, minimal model of free reeds, Acta Acustica united with Acustica 93 (2007); arXiv:2401.01606",
+      "license": "arXiv nonexclusive-distrib 1.0 - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191): die Mundharmonika-Zunge (Lee Oskar, 444 Hz) Tab. 2 S. 14 — 12,95 × 2,1 mm, 47,9 N/m, Ruhelage 0,528 mm, Spalt 50 µm, Q 95 (am Seitenbild gelesen S190); PDF unter cmake/quellen/zunge (Nr. 12)"
+    },
+    {
+      "key": "accordionists-info",
+      "credit": "Forum accordionists.info, threads „Bass Reeds Modification“ (2018), „Common reed sizes?“ (2025) and others",
+      "license": "not checked (forum posts, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191), geringe Belegkraft: Basszunge 60 × 6 mm, E1-Zunge 60–80 mm — Wortlaut im Agentenbericht docs/modellierung/zunge/recherche/2026-11-11_S190_akkordeon_zungenmasse.md (Q8, Q10)"
+    },
+    {
+      "key": "harp-l-seydel",
+      "credit": "D. Payne, Interesting little Seydel reedslot legacy, Harp-L mailing list, 2009-09-05 (harp-l.org)",
+      "license": "not checked (mailing list post, report only) - numbers used, no text",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "34j-6 (S191), geringe Belegkraft: Schlitzlaengen der Blaszungen 17 … 7 mm (Seydel Bandmaster in G, um 1915) — Wortlaut im Agentenbericht docs/modellierung/zunge/recherche/2026-11-11_S190_harmonium_mundharmonika_melodica.md (Q15)"
     }
   ]
 }

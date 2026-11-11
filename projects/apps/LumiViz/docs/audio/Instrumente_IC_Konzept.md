@@ -1,7 +1,7 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.18.0
-> **Datum:** 2026-11-11 (Session 190)
+> **Version:** 0.19.0
+> **Datum:** 2026-11-11 (Session 191)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
 > der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
@@ -13,7 +13,7 @@
 > Zupfkraft und den Abnahmen `slot`/`bridge`, Kern `struckString` mit Durchmesser je Taste, beide Rechenfassung 2.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j geplant (S188, ZV1 a–ZV3 a, Teilplan 34j-1 bis 34j-10)
+> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j in Arbeit seit 2026-11-11 (S189; 34j-1 bis 34j-6 fertig)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -912,6 +912,21 @@ ab C♯6 keiner; bei 1 600 Pa bis rund −50 Cent (Spieler 10–35 Cent, mit Bal
 Kippt auf b, wenn die Kurve je Taste am gebauten Kern nicht eindeutig umkehrbar ist (am Prüfstand an sechs Tasten und
 sieben Öffnungen monoton).
 
+✅ **ZV8 a** (Patrik S191): **Der Stimmer legt den Bend je Taste auf dem Raster 2^(−1/4) mit der Grenze ab** — gestimmte
+Kurven `bendStep1` … `bendStep7` (Cent gegen offen am mittleren Druck bei den Öffnungen 0,84 … 0,30; unter der Grenze
+der Taste ihr Wert) und `bendLimitOpening`, `bendLimitCent` (die kleinste Öffnung, die noch anspricht, auf 1 %
+eingegabelt, und die Tonhöhe dort); dazwischen linear in ln(Öffnung). Grund: gegen ein Raster 2^(−1/8) liegt der größte
+Fehler bei 2,0 Cent (Raster 0,7 / 0,5 / 0,35 mit Grenze: 4,3 Cent an F3–F♯3; nur die Grenze: 14,9 Cent); die Grenze
+liegt an F3 bei Öffnung 0,26 und −60 Cent, an A4 bei 0,375 und −15 Cent, ab C♯6 gibt es keinen Bend. Verworfen: b
+(fünf Kurven, doppelter Fehler im Bass), c (nur die Grenze). Kippt auf b, wenn die Hörprobe in 34j-9 4 Cent im Bend
+nicht hören lässt und neun Kurven im Creator unhandlich sind.
+
+✅ **ZV9 a** (Patrik S191): **`pitch` wirkt schon in 34j-6** — am Beginn der Note über die gestimmte Kurve der gespielten
+Taste (`ventilFuerCent`: nur abwärts, gekappt an der Grenze), dieselbe Öffnung für alle Zungen der Taste; 34j-7 macht
+daraus einen Verlauf. Grund: kein Zwischenstand, in dem die Auskunft eine Spur nennt, die nichts tut; Umkehrung und
+Grenze werden geprüft, wo die Kurve entsteht. Verworfen: b (`pitch` erst mit 34j-7). Kippt auf b, wenn 34j-7 für den
+laufenden Bend eine andere Größe braucht als Cent am Beginn.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -971,6 +986,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.19.0 | 2026-11-11 | Session 191. §6: 34j-6 erledigt (Kern `freeReed` Rechenfassung 2, Journal J70); ZV8 a (Bend je Taste auf dem Raster 2^(−1/4) mit Grenze), ZV9 a (`pitch` wirkt schon in 34j-6, am Beginn der Note). |
 | 0.18.0 | 2026-11-11 | Session 190. §6: 34j-4 erledigt (Quellenlage, 28 Arbeiten in der Ablage); ZQ1 a, ZQ2 a (Ablage), ZH1 a (Herleitung aus Ankern und Schwellentheorie, Belegkraft je Wert), ZH2 a (Melodica als Annahme, „ungemessen“), ZH3 a (Amplitude gegen die Messung von 1999); Zielgrößen in Zeile 34j-5 nachgeführt. 34j-5 gerechnet: ZV4 a (Kern-Form bleibt, Rechenfassung 2 ändert die Vorgaben), ZV5 a (Tonhöhe folgt dem Druck; Stimmung ±10 Cent am mittleren Druck), ZV6 a (Bass-Seite 8′ und 4′), ZV7 a (Bend über das Ventil, Kurve und Grenze je Taste aus dem Stimmer). |
 | 0.17.0 | 2026-11-11 | Session 188. §6: Teilplan 34j (34j-1 bis 34j-10) nach dem Befund an der IC-Vorlage der Zunge; ZV1 a (Umzug als Beleg, dann Vorgaben je Taste mit Quellen), ZV2 a (ein Winddruck für alle Tasten), ZV3 a (laufender Wind in 34j); Zeile 34j der Übersicht. |
 | 0.16.0 | 2026-11-10 | Session 186. §6: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l; Kopf auf 0.16.0 (stand noch auf 0.14.0). |
