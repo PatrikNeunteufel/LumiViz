@@ -143,8 +143,9 @@ void richteHammerSaite(HammerSaite& saite);
 [[nodiscard]] double rtHammerExponent(int i);
 [[nodiscard]] double rtHammerSteifeNm(int i);
 [[nodiscard]] double rtHammerSteife(int i);
-/// Stulov & Kartofelev 2009, Gl. 9 (nach Stulov 2005) — die Groessen des Hammers an Taste n (1 … 88, n = MIDI − 20):
-/// Masse in g, Exponent p, statische Steife Q0 in N/mm^p, Hysterese ε und Relaxation τ in µs (HU3-1 c).
+/// Die Groessen des Hammers an Taste n (1 … 88, n = MIDI − 20): Masse in g, Exponent p, statische Steife Q0 in N/mm^p,
+/// Hysterese ε und Relaxation τ in µs. Masse, p, τ nach Stulov & Kartofelev 2009, Gl. 9 (nach Stulov 2005; HU3-1 c);
+/// ε und Q0 = F0·(1 − ε) nach Kartofelev & Stulov 2014, Gl. 5 und 7 (HS-3 a, S187 — p und τ dort gleich).
 [[nodiscard]] double stulovHammerMasseG(int n);
 [[nodiscard]] double stulovHammerExponent(int n);
 [[nodiscard]] double stulovHammerSteife(int n);

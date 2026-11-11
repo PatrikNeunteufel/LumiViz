@@ -3,7 +3,9 @@
 # fenster <wert> <note>=<N> ...: IC rechnung/klassen/04_platte_stab/Stimmung.inc (erzeugt von ic_stimme_stab)
 # S183 (LP2 b): Kalimba und Wurlitzer bewusst anders als IC (Vorgaben je Taste, Zupfen mit Kraft, Abnahmen Steg und Schlitz;
 #   Entscheide KA1 a, WU1 a; Journal J60-J64) — die beiden Abdruecke sind der Stand von LumiViz, nicht mehr IC
-abdruck stab_Celesta_mitte_a-12 63fc7a39d98d9ec5b2778325383c40c22415ee5c3a16a509b7f9f0d5896c0745
+# S187 (HS-3 a): die Celesta bewusst anders als IC (Hammer wie der Fluegel nach Kartofelev & Stulov 2014, Kontakt
+#   32-fach; Journal J65) - der Abdruck ist der Stand von LumiViz
+abdruck stab_Celesta_mitte_a-12 afd1e0aa1fc16e32512574ed90d641e69696ac71d2bb55f6fb85bc1a16f268da
 abdruck stab_Glockenspiel_mitte_a-12 4acfa2c95df2a74d49b28b25ddf7d701de7ad4adc467e2d8f963b3c06eaf73e1
 abdruck stab_Kalimba_mitte_a-12 9ce4d826bb24e77bb4f61ff0ccb1cff17ff3be59479be7162eb1925a4de15860
 abdruck stab_Marimba_mitte_a-12 91f0fe1f9ea0e76ffe9124406b1173f639ef707f366f0d2d597b9b3bb3ca9991

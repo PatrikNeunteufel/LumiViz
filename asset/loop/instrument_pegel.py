@@ -61,7 +61,7 @@ PEGEL = {
     "brass": (0.7, 0.6164),
     "broken_radio": (0.45, 0.3341),
     "cascade": (0.6, 0.5748),
-    "celesta": (1.4618, 1.4618),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
+    "celesta": (1.4287, 1.4287),  # S187 (HS-3 a, Hammer nach Kartofelev & Stulov 2014): -13.201 LUFS bei 1.4618 -> 1.4287 (alt = neu); S178 (34g): neu, die Loops fuer den Bezug geschrieben
     "chord_stab": (1.0, 2.5293),
     "clave": (0.49, 1.012),
     "clavinet": (0.705, 1.1452),
@@ -73,19 +73,19 @@ PEGEL = {
     "cowbell": (0.64, 1.0833),
     "drop_d_guitar": (0.795, 0.4987),
     "dulcimer": (0.9, 1.0063),
-    "electric_grand_piano": (2.5073, 2.5073),  # S181 (34i): neu, -21.384 LUFS bei 1.0 -> 2.5073 (alt = neu, die Loops fuer den Bezug geschrieben)
+    "electric_grand_piano": (2.6044, 2.6044),  # S187 (HS-3 a, Hammer nach Kartofelev & Stulov 2014): -13.730 LUFS bei 2.5073 -> 2.6044 (alt = neu); S181 (34i): neu, -21.384 LUFS bei 1.0 -> 2.5073 (alt = neu, die Loops fuer den Bezug geschrieben)
     "female_choir": (0.8, 0.5392),
     "fifth_pad": (0.55, 0.5772),
     "finger_bass": (1.0, 1.1852),
     "flute": (0.8, 0.5298),
     "ghost": (0.7, 0.4897),
     "glockenspiel": (0.6842, 0.6842),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
-    "grand_piano": (4.2418, 4.2418),  # S160 (HU4-1 a, Boden mit c = 4,5): -13,833 LUFS bei 4,0355 -> 4,2418; die Loops sind fuer den Bezug geschrieben, darum alt = neu (S159: 4,1788 -> 4,0355)
+    "grand_piano": (4.4916, 4.4916),  # S187 (HS-3 a, Hammer nach Kartofelev & Stulov 2014): -13.897 LUFS bei 4.2418 -> 4.4916 (alt = neu); S160 (HU4-1 a, Boden mit c = 4,5): -13,833 LUFS bei 4,0355 -> 4,2418; die Loops sind fuer den Bezug geschrieben, darum alt = neu (S159: 4,1788 -> 4,0355)
     "growl_bass": (0.55, 0.3081),
     "guitar": (1.0, 2.0941),
     "guitar_old": (1.0, 2.2333),
     "harp": (0.85, 0.6098),
-    "honky_tonk_piano": (2.3097, 2.3097),  # S181 (34i): neu, -20.671 LUFS bei 1.0 -> 2.3097 (alt = neu, die Loops fuer den Bezug geschrieben)
+    "honky_tonk_piano": (2.4356, 2.4356),  # S187 (HS-3 a, Hammer nach Kartofelev & Stulov 2014): -13.861 LUFS bei 2.3097 -> 2.4356 (alt = neu); S181 (34i): neu, -20.671 LUFS bei 1.0 -> 2.3097 (alt = neu, die Loops fuer den Bezug geschrieben)
     "hoover": (0.45, 0.346),
     "house_organ": (1.0, 0.802),
     "house_piano": (1.0, 1.2222),
@@ -148,7 +148,7 @@ PEGEL = {
     "ukulele": (0.878, 2.8112),
     "upright_bass": (0.954, 0.9867),
     "upright_bass_old": (0.85, 0.9781),
-    "upright_piano": (1.8787, 1.8787),  # S181 (34i): neu, -18.877 LUFS bei 1.0 -> 1.8787 (alt = neu, die Loops fuer den Bezug geschrieben)
+    "upright_piano": (1.9779, 1.9779),  # S187 (HS-3 a, Hammer nach Kartofelev & Stulov 2014): -13.847 LUFS bei 1.8787 -> 1.9779 (alt = neu); S181 (34i): neu, -18.877 LUFS bei 1.0 -> 1.8787 (alt = neu, die Loops fuer den Bezug geschrieben)
     "vibraphone": (0.6094, 0.6094),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
     "violin": (1.0, 0.7915),
     "vocal_chop": (0.9, 1.1367),

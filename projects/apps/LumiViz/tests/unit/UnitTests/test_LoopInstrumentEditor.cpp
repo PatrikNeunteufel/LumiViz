@@ -1973,7 +1973,8 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(stellenTitel->isHidden());  // die Ansicht traegt ihren eigenen Kopf
         auto* steife = ansicht->findChild<QLabel*>(QStringLiteral("creatorCoreValue_hammerStiffness"));
         REQUIRE(steife != nullptr);
-        CHECK(steife->text().contains(QStringLiteral("9600")));  // gerundet, nicht 9599.69
+        CAPTURE(steife->text().toStdString());
+        CHECK(steife->text().contains(QStringLiteral("7961")));  // gerundet, nicht 7960.62 (HS-3 a, S187; vorher 9600)
         QStringList gruppen;
         for (const std::string& g : tafel.gruppen) gruppen << QString::fromStdString(g);
         CHECK(ansicht->gruppen() == gruppen);

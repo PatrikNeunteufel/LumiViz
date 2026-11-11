@@ -36,8 +36,9 @@
 namespace lumi::kern::hammer
 {
 
-/// So viel feiner rechnet der Kontakt mit dem Hammer.
-inline constexpr int kHammerUeberabtastung = 8;
+/// So viel feiner rechnet der Kontakt mit dem Hammer. HS-3 a (S187): 32 — mit ε nahe 1 muss der feine Schritt unter
+/// τ0 ≈ 1,7 µs liegen; 8-fach (2,6 µs) lag an C8 um bis 15 dB daneben, 32-fach ist gegen 128-fach konvergiert.
+inline constexpr int kHammerUeberabtastung = 32;
 /// Teiltoene nur bis zu diesem Anteil der Abtastrate.
 inline constexpr double kHammerTeiltonGrenze = 0.45;
 /// Hoechstens so viele Teiltoene je Saite.

@@ -177,6 +177,24 @@ TEST_CASE("Modelled loops S182 Spielweisen (IL2 a): jede Drum-Spur mit coreTrack
         }
     }
     MESSAGE(geprueft << " Spielweisen an " << mitSpielweise.size() << " Instrumenten");
+    // S187 (nach HS-3 a): `LUMIVIZ_IL2_PROBE=<instrument>` misst den Daempfer je Taste und Laenge (nur Zahlen)
+    if (const QString probe = qEnvironmentVariable("LUMIVIZ_IL2_PROBE"); !probe.isEmpty())
+    {
+        const Instrument inst = liesInstrument(probe);
+        for (const double druck : {0.5, 0.0})
+            for (const int hoehe : {60, 72, 84, 96})
+                for (const int dauer : {150, 300, 600})
+                {
+                    TonAngabe ohne;
+                    ohne.instrument = inst.name;
+                    ohne.hoehe = hoehe;
+                    ohne.dauerMs = dauer;
+                    TonAngabe mit = ohne;
+                    mit.kernSpuren = kernSpurenAusJson(QJsonObject{{QStringLiteral("damperPressure"), druck}});
+                    MESSAGE(probe.toStdString() << " damperPressure " << druck << " Taste " << hoehe << " " << dauer << " ms: "
+                                                << abstandDb(rendereTon(inst, ohne, 48000), rendereTon(inst, mit, 48000)) << " dB");
+                }
+    }
     // alle ausser dem CP-70 (er hat nur Sustain), dem Fluegel (una corda mit `softFactor` 1 ohne Wirkung) und der
     // Kalimba (gezupft) — S182; was die Werte aus IC heute abschalten, steht in make_modelled_loops.py
     CHECK(mitSpielweise.size() == 18);

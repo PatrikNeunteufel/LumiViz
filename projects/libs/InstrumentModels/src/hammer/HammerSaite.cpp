@@ -50,12 +50,14 @@ HammerSaite baueVorgabe()
     for (const int m : kVorgabeTasten)
         if (m > 40) s.inharmonizitaet.punkte.push_back(NotenWert{m, rigaudB(m, kRigaudBassSteigung, kRigaudBassAchse)});
     // belegt (HU3-1 c, S159; davor HT2 a nach RT-0425 Gl. 2–4): der Hammer nach Stulov & Kartofelev 2009 Gl. 9
-    // (Taste n = MIDI − 20) — die Helligkeit je Staerke an Salamander trifft Stulov, RT-0425 kaum (Befund S159)
+    // (Taste n = MIDI − 20) — die Helligkeit je Staerke an Salamander trifft Stulov, RT-0425 kaum (Befund S159);
+    // ε und Q0 seit HS-3 a (S187) nach Kartofelev & Stulov 2014 (Befund hammer-saite/…_S186_befund_leiser_anschlag §5–7)
     const std::string stulov = "Stulov & Kartofelev 2009, eq. 9 (HU3-1 c)";
+    const std::string kartofelev = "Kartofelev & Stulov 2014, eq. 5 and 7: Q0 = F0 (1 - eps) (HS-3 a)";
     s.hammerMasseG = kurveAus(kHammerTasten, [](int m) { return stulovHammerMasseG(m - 20); }, Belegkraft::Quelle, stulov);
     s.hammerExponent = kurveAus(kHammerTasten, [](int m) { return stulovHammerExponent(m - 20); }, Belegkraft::Quelle, stulov);
-    s.hammerSteife = kurveAus(kHammerTasten, [](int m) { return stulovHammerSteife(m - 20); }, Belegkraft::Quelle, stulov);
-    s.hammerHysterese = kurveAus(kHammerTasten, [](int m) { return stulovHammerHysterese(m - 20); }, Belegkraft::Quelle, stulov);
+    s.hammerSteife = kurveAus(kHammerTasten, [](int m) { return stulovHammerSteife(m - 20); }, Belegkraft::Quelle, kartofelev);
+    s.hammerHysterese = kurveAus(kHammerTasten, [](int m) { return stulovHammerHysterese(m - 20); }, Belegkraft::Quelle, kartofelev);
     s.hammerRelaxationUs =
         kurveAus(kHammerTasten, [](int m) { return stulovHammerRelaxationUs(m - 20); }, Belegkraft::Quelle, stulov);
     // belegt (HT1 a): RT-0425 Anhang A, C1 … B7 — µ = ρπd²/4, f_l0/f0 = √(EA/T0) mit E = 2,02·10¹¹ Pa; die Tasten so
@@ -122,7 +124,8 @@ HammerSaite baueVorgabe()
     // eigene Vorgabe oder Annahme ohne fremde Quelle
     const std::vector<std::string> salamander{"salamander"}, rtQ{"rt0425"}, stulovQ{"stulov2009"}, eigen{"lumiviz"};
     s.inharmonizitaet.quellen = {"salamander", "rigaud2011"};
-    for (Kurve* k : {&s.hammerMasseG, &s.hammerExponent, &s.hammerSteife, &s.hammerHysterese, &s.hammerRelaxationUs}) k->quellen = stulovQ;
+    for (Kurve* k : {&s.hammerMasseG, &s.hammerExponent, &s.hammerRelaxationUs}) k->quellen = stulovQ;
+    for (Kurve* k : {&s.hammerSteife, &s.hammerHysterese}) k->quellen = {"kartofelev2014"};
     for (Kurve* k : {&s.saitenLaengeM, &s.saitenMasseGm, &s.laengsVerhaeltnis, &s.anschlagStelle}) k->quellen = rtQ;
     s.stegWinkelGrad.quellen = {"salamander", "lumiviz"};
     for (Kurve* k : {&s.abklingS, &s.abklingHoch, &s.verstimmungCent}) k->quellen = salamander;
@@ -215,12 +218,17 @@ double stulovHammerExponent(int n)
 
 double stulovHammerSteife(int n)
 {
-    return 183.0 * std::exp(0.045 * n);
+    // HS-3 a (S187): Q0 = F0·(1 − ε), F0 = 15 500·e^(0,059 N) N/mm^p (Kartofelev & Stulov 2014, Gl. 7) — F0 ist die
+    // Steife im Augenblick, der Kern rechnet mit der statischen Q0 (`HammerTon.cpp`: F0 = q0/(1 − ε))
+    return 15500.0 * std::exp(0.059 * n) * (1.0 - stulovHammerHysterese(n));
 }
 
 double stulovHammerHysterese(int n)
 {
-    return 0.9894 - 8.8e-5 * n * n;
+    // HS-3 a (S187): γ = 0,9894 + 0,000088 N, 0,9895 ≤ γ ≤ 0,9972 (Kartofelev & Stulov 2014, Gl. 5; Dissertation
+    // Kartofelev S. 73, am Bild gelesen S186) — das n² im Druck von 2009 ist der Druckfehler; HU3-1 c rechnete
+    // 0,9894 − 8,8·10⁻⁵ n² (ohne Beleg, C8: 0,31 statt 0,997)
+    return 0.9894 + 8.8e-5 * n;
 }
 
 double stulovHammerRelaxationUs(int n)

@@ -35,6 +35,14 @@
       "note": "die Formeln des Hammers je Taste (HU3-1 c); uebernommen werden Formeln und Zahlen, nicht der Text — Lizenz nicht geprueft"
     },
     {
+      "key": "kartofelev2014",
+      "credit": "D. Kartofelev, A. Stulov (2014), Acta Mechanica, doi:10.1007/s00707-014-1109-1, eq. 5 and 7 (hammer felt hysteresis and stiffness)",
+      "license": "not checked (formulas and values)",
+      "creditRequired": true,
+      "shippable": true,
+      "note": "Hysterese und Steife des Hammers je Taste (HS-3 a, S187; gelesen in der Dissertation Kartofelev, TTU 2014, S. 73); uebernommen werden Formeln und Zahlen, nicht der Text — Lizenz nicht geprueft"
+    },
+    {
       "key": "rigaud2011",
       "credit": "Rigaud, David & Daudet (2011), eq. 5",
       "license": "not checked (formula)",

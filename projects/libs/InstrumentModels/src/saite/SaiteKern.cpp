@@ -257,7 +257,8 @@ QuellenJeWert quellenDerSaite(std::string_view name)
     else if (name == "cimbalom")
     {
         dazu("malletMass", {"peterson2005"});
-        for (const std::string_view w : {"malletStiffness", "malletExponent", "malletHysteresis", "malletRelaxation"}) dazu(w, {"stulov2009"});
+        for (const std::string_view w : {"malletExponent", "malletRelaxation"}) dazu(w, {"stulov2009"});
+        for (const std::string_view w : {"malletStiffness", "malletHysteresis"}) dazu(w, {"kartofelev2014"});  // HS-3 a
     }
     return q;
 }

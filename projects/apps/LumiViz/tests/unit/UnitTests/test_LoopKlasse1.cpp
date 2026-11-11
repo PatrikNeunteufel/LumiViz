@@ -493,9 +493,9 @@ TEST_CASE("Loop Klasse1 34i Hoerproben (LUMIVIZ_34I_WAV) — Liste fuer HoerTest
     CHECK(deluxe == 2);
     CHECK(paare == 8 + 2);
     CHECK(punkteGeplant == 36 + 18 + 8 + 2 + 3);
-    // LV6-3 a: im Diskant bei a-30 nur ein Puls (Befund am Modell); LV6-1 a: das Honky-tonk 26 ist das Upright 26
-    CHECK(bereinigt.ohneTon == QStringList{QStringLiteral("upright_piano_103_a-30"), QStringLiteral("honky_tonk_piano_103_a-30"),
-                                           QStringLiteral("electric_grand_piano_95_a-30")});
+    // LV6-3 a: bis HS-3 a kam im Diskant bei a-30 nur ein Puls (Upright und Honky-tonk 103, CP-70 95); mit dem Hammer
+    // nach Kartofelev & Stulov 2014 (S187) klingen sie. LV6-1 a: das Honky-tonk 26 ist das Upright 26
+    CHECK(bereinigt.ohneTon.isEmpty());
     CHECK(bereinigt.gleich == QStringList{QStringLiteral("honky_tonk_piano_26_a-30"), QStringLiteral("honky_tonk_piano_26_a-12"),
                                           QStringLiteral("honky_tonk_piano_26_a0")});
 }

@@ -216,13 +216,17 @@ TEST_CASE("Loop Hammer-Saite 31a Vorgaben")
     CHECK(rigaudB(21, kRigaudBassSteigung, kRigaudBassAchse) == doctest::Approx(2.8e-4).epsilon(0.05));
     CHECK(rigaudB(41, kRigaudBassSteigung, kRigaudBassAchse) == doctest::Approx(1.35e-4).epsilon(0.05));
 
-    // Stulov & Kartofelev 2009 Gl. 9 (HU3-1 c): an Taste 1 m 11,0 g, p 3,715, Q0 191 N/mm^p, ε 0,989, τ 2,70 µs;
-    // an Taste 88 m 5,33 g, p 5,02, Q0 9600, ε 0,308, τ 1,66 µs
+    // Stulov & Kartofelev 2009 Gl. 9 (HU3-1 c): an Taste 1 m 11,0 g, p 3,715, τ 2,70 µs; an Taste 88 m 5,33 g, p 5,02,
+    // τ 1,66 µs. HS-3 a (S187), Kartofelev & Stulov 2014 Gl. 5 und 7: ε = 0,9894 + 0,000088 N (0,9895 … 0,9972 nach der
+    // Arbeit), Q0 = 15 500·e^(0,059 N)·(1 − ε) — an Taste 1 173 N/mm^p, an 88 7960; Gegenprobe VITA 2010 an n = 70:
+    // Q0 = 4270 N/mm^p im Dreiparametermodell (Befund S186 §5)
     CHECK(stulovHammerMasseG(1) == doctest::Approx(11.0001));
     CHECK(stulovHammerExponent(88) == doctest::Approx(5.02));
-    CHECK(stulovHammerSteife(88) == doctest::Approx(183.0 * std::exp(0.045 * 88)));
-    CHECK(stulovHammerHysterese(1) == doctest::Approx(0.9893));
-    CHECK(stulovHammerHysterese(88) == doctest::Approx(0.308).epsilon(0.01));
+    CHECK(stulovHammerHysterese(1) == doctest::Approx(0.9895).epsilon(1e-4));
+    CHECK(stulovHammerHysterese(88) == doctest::Approx(0.9972).epsilon(1e-4));
+    CHECK(stulovHammerSteife(1) == doctest::Approx(172.8).epsilon(0.002));
+    CHECK(stulovHammerSteife(88) == doctest::Approx(7960.0).epsilon(0.002));
+    CHECK(stulovHammerSteife(70) == doctest::Approx(4270.0).epsilon(0.01));
     CHECK(stulovHammerRelaxationUs(88) == doctest::Approx(1.66).epsilon(0.01));
     const HammerSaite& v = hammerSaiteVorgabe();
     for (const int taste : {21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99, 105, 108})

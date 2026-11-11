@@ -1,6 +1,6 @@
 # Übernahme-Journal — Bausteine aus IC und LumiViz in die Bibliotheken
 
-> **Version:** 0.8.0
+> **Version:** 0.10.0
 > **Datum:** 2026-11-09 (Sessions 175–181)
 > **Typ:** Journal (Instrumente_IC_Konzept.md IK2-2 a: „jede Übernahme steht in `Uebernahme_Journal.md`“)
 > **Status:** wird je Teilschritt fortgeschrieben
@@ -369,10 +369,22 @@ Abdrücke mit Vermerk neu, die übrigen (Hackbrett, Cimbalom, alle anderen Stabs
 Report S183. Kein voller Lauf (UF17-1 a: Rechenkern geändert — der volle Lauf folgt mit dem Abschluss der Stufe oder auf Anforderung;
 Rechenzeit ausgesetzt bis zum Tausch der Kühlung).
 
+## 6d. HS-3 a — der Hammer nach Kartofelev & Stulov 2014 (S187)
+
+| Nr. | Was | Quelle | Wo | Bit für Bit | Abweichung |
+|---|---|---|---|---|---|
+| J65 | Hysterese und Steife des Filzhammers, Kontakt 32-fach | Kartofelev & Stulov 2014, Gl. 5 und 7 (Dissertation Kartofelev S. 73, am Bild) | `hammer/HammerSaite.cpp` (`stulovHammerHysterese`, `stulovHammerSteife`), `HammerTon.hpp` (`kHammerUeberabtastung` 32), `HammerKern.cpp` (Rechenfassung 2), `stab/Vorgaben.cpp` (Celesta 32-fach), Register `kartofelev2014` | Masse, p, τ0 wie IC | **neu statt IC:** ε = 0,9894 + 0,000088 N statt 0,9894 − 8,8·10⁻⁵ n² (IC und LumiViz seit HU3-1 c ohne Beleg), Q0 = F0·(1 − ε); Befund `hammer-saite/2026-11-10_S186_befund_leiser_anschlag_diskant.md` §5–§8. Abdrücke `hammer_vorgabe_*` (5), `klasse1_Upright`, `_Honkytonk`, `_CP70`, `_Cimbalom`, `stab_Celesta_mitte_a-12` neu mit Vermerk |
+
+**Wächter HS-3 a** (S187): Release-clang und Testing-MSVC `*Hammer*,*Leiser*,*Stab*,*Klasse1*,*34i*,*34g*,*Instrument*,*Klangfassung*,
+*Loop Werte*,*Loop Pegel*,*Modelled loops*,*Loop Spitze*` grün, nachdem die Spielweisen der Celesta an Taste 72 liegen
+(HS3-1 a; an 84 −42,6 dB); Abdrücke und Hammer-Bezug unter beiden Compilern gleich. **Voller Lauf 1860 / 1860, 0 Skips unter
+Release-clang (789 s) und Testing-MSVC (695 s).** Rechenzeit `*31b-3*` ausgesetzt bis zum Tausch der Kühlung.
+
 ## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.10.0 | 2026-11-11 | Session 187. §6d neu: HS-3 a (J65, Wächter). |
 | 0.9.0 | 2026-11-09 | Session 183. §6c neu: LP2 b (J60–J64, Wächter). |
 | 0.8.0 | 2026-11-09 | Session 181. §6b neu: 34i (J53–J59, Wächter). |
 | 0.7.0 | 2026-11-08 | Session 180. §6a neu: QM1 a (J50–J52, Wächter). |

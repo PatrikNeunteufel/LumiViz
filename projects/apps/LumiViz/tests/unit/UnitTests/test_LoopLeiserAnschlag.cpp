@@ -205,6 +205,30 @@ std::pair<double, double> tonUndKontakt(const hammer::HammerSaite& s, int taste,
 }
 
 
+/// HS-2 a: der Ton gemessen wie *Salamander* (`messeKanal`): Pegel des ganzen Signals der ersten 0,3 s und Summe der
+/// Teiltoene 1 … 8 zu Beginn, dB; −300, wo nichts erkannt ist.
+std::pair<double, double> ganzUndTeiltoene(const hammer::HammerSaite& s, int taste, double tempo, int ueber)
+{
+    hammer::HammerAnschlag a;
+    a.ueberabtastung = ueber;
+    a.taste = taste;
+    a.hz = hz(taste);
+    a.stufe = static_cast<int>(std::lround(20.0 * std::log10(tempo / hammer::kHammerTempoMax)));
+    a.tempoFaktor = tempo / hammer::hammerTempo(a.stufe);
+    a.halten = kRate;
+    a.gedaempft = false;
+    a.rate = kRate;
+    std::vector<float> mono;
+    hammer::rechneHammerTon(s, a, mono, kRate);
+    const std::vector<double> d(mono.begin(), mono.end());
+    const lumi::messung::KanalMessung m = lumi::messung::messeKanal(d, kRate, hz(taste), lumi::kern::fft(), false);
+    if (!m.erkannt) return {-300.0, -300.0};
+    double summe = 0.0;
+    for (const lumi::messung::TeiltonKurz& t : m.teiltoene)
+        if (t.k <= 8) summe += std::pow(10.0, t.anfangDb / 10.0);
+    return {m.pegelDb, summe > 0.0 ? 10.0 * std::log10(summe) : -300.0};
+}
+
 /// `werte/<name>` neben dieser Datei.
 QString werteDatei(const char* name)
 {
@@ -268,7 +292,11 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
                               {53, 1.0525, 3.0, 2.10}, {73, 0.921, 4.5, 2.64},   {91, 0.794, 1.5, 0.443}};
 
     std::vector<Satz> saetze{
-        {"heute (Stulov Gl. 9, eps mit Minus)", [](hammer::HammerSaite&) {}},
+        // seit HS-3 a (S187) ist die Vorgabe S2; der Satz von vorher (HU3-1 c) hier von Hand
+        {"vor HS-3 (Stulov Gl. 9, eps mit Minus)", [](hammer::HammerSaite& s) {
+             for (auto& p : s.hammerHysterese.punkte) p.wert = 0.9894 - 8.8e-5 * (p.note - 20) * (p.note - 20);
+             for (auto& p : s.hammerSteife.punkte) p.wert = 183.0 * std::exp(0.045 * (p.note - 20));
+         }},
         {"Probe eps = 0,997 fest", [](hammer::HammerSaite& s) {
              for (auto& p : s.hammerHysterese.punkte) p.wert = 0.997;
          }},
@@ -344,6 +372,54 @@ TEST_CASE("Loop Leiser Anschlag HS-1 Saetze (LUMIVIZ_HS1_MESSUNG) — Hammerwert
             ++n2;
         }
         o << " — RMS " << std::sqrt(fehler2 / n2) << " dB\n\n";
+        // (2) HS-2 a: an beiden Seiten gleich gemessen (`messeKanal`) — ganzes Signal 0,3 s und Summe der Teiltoene, gegen
+        // die Messung `LUMIVIZ_HS2_SAL_UMFANG` an *Salamander* (Datei `<…>.md.txt`: Taste, ganz, Teiltoene, Teilton 1)
+        if (const QString salDatei = qEnvironmentVariable("LUMIVIZ_HS1_SAL_TEILTOENE"); !salDatei.isEmpty())
+        {
+            std::map<int, std::pair<double, double>> sal;
+            std::ifstream f(salDatei.toStdString());
+            REQUIRE(f.good());
+            std::string zeile;
+            while (std::getline(f, zeile))
+            {
+                if (zeile.empty() || zeile[0] == '#') continue;
+                std::istringstream z(zeile);
+                int taste = 0;
+                double ganz = 0.0, teile = 0.0;
+                z >> taste >> ganz >> teile;
+                sal[taste] = {ganz, teile};
+            }
+            REQUIRE(sal.size() >= 20);
+            double fGanz = 0.0, fTeile = 0.0, fTeileHoch = 0.0;
+            int nGanz = 0, nTeile = 0, nTeileHoch = 0;
+            o << "Umfang gleich gemessen, ganz 0,3 s / Teiltoene, dB (Salamander):";
+            for (const auto& [taste, ziel] : sal)
+            {
+                const auto leise = ganzUndTeiltoene(s, taste, 0.45, ueber);
+                const auto laut = ganzUndTeiltoene(s, taste, 5.0, ueber);
+                const double uGanz = laut.first - leise.first, uTeile = laut.second - leise.second;
+                o << std::setprecision(1) << ' ' << taste << ": " << uGanz << " (" << ziel.first << ") / " << uTeile << " ("
+                  << ziel.second << ");";
+                if (leise.first > -299.0 && laut.first > -299.0)
+                {
+                    fGanz += (uGanz - ziel.first) * (uGanz - ziel.first);
+                    ++nGanz;
+                }
+                if (leise.second > -299.0 && laut.second > -299.0 && ziel.second > -100.0 && ziel.second < 200.0)
+                {
+                    fTeile += (uTeile - ziel.second) * (uTeile - ziel.second);
+                    ++nTeile;
+                    if (taste >= 87)
+                    {
+                        fTeileHoch += (uTeile - ziel.second) * (uTeile - ziel.second);
+                        ++nTeileHoch;
+                    }
+                }
+            }
+            o << " — RMS ganz " << std::sqrt(fGanz / std::max(1, nGanz)) << " dB (" << nGanz << "), Teiltoene "
+              << std::sqrt(fTeile / std::max(1, nTeile)) << " dB (" << nTeile << "), Teiltoene ab 87 "
+              << std::sqrt(fTeileHoch / std::max(1, nTeileHoch)) << " dB (" << nTeileHoch << ")\n\n";
+        }
         // (3)
         const auto helligkeit = [&](int taste) {
             std::array<std::vector<double>, 7> grund, rel;
@@ -501,7 +577,10 @@ TEST_CASE("Loop Leiser Anschlag HS-2 Diagnose (LUMIVIZ_HS2_MESSUNG) — Helligke
         std::function<void(hammer::HammerSaite&)> setze;
     };
     const std::vector<Fall> faelle{
-        {"heute", [](hammer::HammerSaite&) {}},
+        {"vor HS-3 (eps mit Minus)", [](hammer::HammerSaite& s) {
+             for (auto& p : s.hammerHysterese.punkte) p.wert = 0.9894 - 8.8e-5 * (p.note - 20) * (p.note - 20);
+             for (auto& p : s.hammerSteife.punkte) p.wert = 183.0 * std::exp(0.045 * (p.note - 20));
+         }},
         {"S2 (Kartofelev & Stulov 2014)", [epsN](hammer::HammerSaite& s) {
              for (auto& p : s.hammerHysterese.punkte) p.wert = 0.9894 + epsN * (p.note - 20);
              for (auto& p : s.hammerSteife.punkte)

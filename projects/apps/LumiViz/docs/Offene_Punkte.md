@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.333.0
-> **Datum:** 2026-11-10 (Sessions 164 bis 186)
+> **Version:** 1.334.0
+> **Datum:** 2026-11-11 (Sessions 164 bis 187)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2916,7 +2916,7 @@ Spielgrenze 0,21 m/s (Goebl 2001); beim Stab dazu Nullstellen des Pulses — erk
 **HS-1 a (S186):** ε belegt — Kartofelev & Stulov 2014 (Dissertation S. 73, am Bild): γ = 0,9894 + 0,000088 N, das n² von
 2009 ist der Druckfehler, der Kern rechnet ein falsches ε; mit dem belegten Satz (konvergiert erst mit 32-fachem Kontakt,
 `HammerAnschlag::ueberabtastung`) Umfang des Tons gegen *Salamander* RMS 6,0 statt 18,6 dB, aber die Helligkeit je Stärke
-an C6 bricht ein (RMS 1,69 statt 0,71) — Vorlage zum Widerspruch offen (Befund §5); (b) Kalimba: die Stärke wirkt nur als Faktor (lineares Zupfen,
+an C6 bricht ein (RMS 1,69 statt 0,71). **HS-2 a, HS-3 a erledigt 2026-11-11 (S187, Befund §6–§8):** die Zähigkeit des Filzes (α = ετ0/(1 − ε) ≈ 360 µs) ist ein Hochpass gleich für jede Stärke — sie hebt den leisen Anschlag und nimmt das Hellerwerden; der Umfang an den Teiltönen von *Salamander* nachgemessen (`LUMIVIZ_HS2_SAL_UMFANG`): S2 RMS 5,4 statt 13,5 dB, ab Taste 87 7,4 statt 25,3; **im Kern** ε und Q0 nach Kartofelev & Stulov 2014, Kontakt 32-fach (`hammerString` Rechenfassung 2), Celesta und Cimbalom mit; Upright/Honky-tonk 103 und CP-70 95 bei a-30 klingen jetzt (`klasse1_34i` 72 / 64). **Offen HS-4:** die Helligkeit je Stärke ab Taste 66 zu klein (Diskant RMS 1,03, ab 84 in jedem Satz) — ein fehlender Mechanismus, danach eine neue Flügel-Liste; **HS3-1 a:** die Spielweisen der Celesta im Beispiel-Loop an Taste 72 (Half damper −34,2 dB, an 84 nur noch −42,6); **HS3-2 a:** `pv1` als Stand vor HS-3 abgeschlossen; (b) Kalimba: die Stärke wirkt nur als Faktor (lineares Zupfen,
 KA1 a) — ob das Instrument mit der Stärke heller wird, ist ungeprüft; (c) IC 02 Zupfen: ebenso nur Faktor (Kraft fester
 Form) — für den Port der Klasse 2 (34k); (d) IC 08: leeres Fenster des Blasdrucks an Sopran H3, Alt E3, Tenor H2 (Tenor H2
 in der Oktave); (e) IC 09 Shakuhachi D5, Ais5 nicht auf dem Ton; (f) IC 07 Alphorn A3 Gleichanteil und falscher Ton — mit
@@ -6453,6 +6453,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.334.0 | 2026-11-11 | Session 187 (Opus 5.5). §6 Hörtest, Befund (a): HS-2 a (Umfang an den Teiltönen von *Salamander*: der Vorteil des belegten Satzes ist echt), HS-3 a (ε und Q0 nach Kartofelev & Stulov 2014, Kontakt 32-fach, Celesta und Cimbalom mit; Dateien, Abdrücke mit Vermerk, Pegel, Loop-Werte, Klangfassung, Hörlisten `klasse1_34i`, `stab_34g` neu); HS3-1 a (Celesta-Spielweisen an Taste 72), HS3-2 a (`pv1` abgeschlossen); offen HS-4 (Helligkeit je Stärke im Diskant). |
 | 1.333.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest, Befund am Modell (a) untersucht (NS1 a, HS-1 a): der Hammer regt ab Taste 84 bei ppp … p zu schwach an — ε belegt (Kartofelev & Stulov 2014: linear, das n² von 2009 ist der Druckfehler), der belegte Satz braucht 32-fachen Kontakt und trifft den Umfang des Tons, verliert aber die Helligkeit an C6; Messfälle `test_LoopLeiserAnschlag` (LV6A, HS1), zwei Recherchen; Vorlage zum Widerspruch offen. |
 | 1.332.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: LV-6 erledigt — LV6-1 a (gleich klingende Klänge nur einmal), LV6-2 a (Honky-tonk an Taste 41), LV6-3 a (ohne Ton nicht in einer Liste), LV6-4 a (nicht auf dem Ton nicht in einer Liste); sechs Befunde am Modell; Befund des Honky-tonk 103 a-30 aus 34i geklärt. |
 | 1.331.0 | 2026-11-10 | Session 186 (Opus 5.5). §6 Hörtest: Schritt 3 der Übergabe erledigt — LG1 a (für die Klassen 1, 4, 5 gelten nur die Listen von LumiViz; Hackbrett, Cimbalom, Steeldrum als Deluxe in `klasse1_34i` und `stab_34g`; IC 01, 04, 05 abgelöst). |

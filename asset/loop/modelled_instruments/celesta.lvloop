@@ -79,7 +79,7 @@
                     "pan": 0.0,
                     "mute": false,
                     "instrument": "celesta",
-                    "note": 84,
+                    "note": 72,
                     "length": 300,
                     "coreTracks": {}
                 },
@@ -90,7 +90,7 @@
                     "pan": 0.0,
                     "mute": false,
                     "instrument": "celesta",
-                    "note": 84,
+                    "note": 72,
                     "length": 300,
                     "coreTracks": {
                         "damperPressure": 0.5
@@ -103,7 +103,7 @@
                     "pan": 0.0,
                     "mute": false,
                     "instrument": "celesta",
-                    "note": 84,
+                    "note": 72,
                     "length": 300,
                     "coreTracks": {
                         "damperPressure": 0

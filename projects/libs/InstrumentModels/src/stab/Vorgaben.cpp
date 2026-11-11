@@ -312,13 +312,14 @@ StabSpiel baueVorgabeCelesta()
     s.partner = PartnerArt::EineMode;  // der Holzkasten je Ton als Luftraum mit einer Mode (T4 a)
     s.partnerVerhaeltnis = konst(1.0, Belegkraft::Offen, "offen: der Kasten auf den Grundton gestimmt (Entwurf §4: „wie Kalimba oder Rohr“)", s);
     s.partnerXi = konst(kRuczXiRohr, Belegkraft::Offen, "offen: wie das Rohr bei Rucz", s);
-    // der Hammer: Filz nach Stulov & Kartofelev 2009 Gl. 9 (ueber das Vorbild), an der Taste — uebertragen vom Fluegel
+    // der Hammer: Filz nach Stulov & Kartofelev 2009 Gl. 9 (ueber das Vorbild), an der Taste — uebertragen vom Fluegel;
+    // ε und Q0 seit HS-3 a (S187) nach Kartofelev & Stulov 2014, der Kontakt 32-fach (τ0 ≈ 1,8 µs, wie der Fluegel)
     s.schlaegel.masseKg = hammer::stulovHammerMasseG(88 - 20) * 1e-3;
     s.schlaegel.q0 = hammer::stulovHammerSteife(88 - 20);
     s.schlaegel.p = hammer::stulovHammerExponent(88 - 20);
     s.schlaegel.eps = hammer::stulovHammerHysterese(88 - 20);
     s.schlaegel.tauS = hammer::stulovHammerRelaxationUs(88 - 20) * 1e-6;
-    s.ueberabtastung = 16;
+    s.ueberabtastung = 32;
     s.daempfer = DaempferArt::Einzeln;
     s.daempferT60S = konst(0.2, Belegkraft::Offen, "offen: wie der Daempfer des Fluegels im Diskant (Vorbild 0,2 s)", s);
     s.partnerZielNote = 84;  // KS2 a: der Stimmer setzt den Pegel durch das Modell

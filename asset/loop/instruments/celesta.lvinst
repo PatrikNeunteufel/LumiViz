@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["Ambient", "Fusion"],
     "description": "A steel bar per key over a wooden box tuned to the fundamental, struck by a felt hammer (Stulov 2009) and damped when the key is released; unmeasured.",
-    "level": 1.4618,
+    "level": 1.4287,
     "layers": [
         {
             "attack": 5,
@@ -127,10 +127,10 @@
                 "malletDampingHc": 0,
                 "malletExponent": 4.720000000000001,
                 "malletHuntCrossley": false,
-                "malletHysteresis": 0.5824879999999999,
+                "malletHysteresis": 0.9953839999999999,
                 "malletMass": 0.0065044,
                 "malletRelaxation": 1.7761600000000002e-06,
-                "malletStiffness": 3902.9429606509234,
+                "malletStiffness": 3953.547488224998,
                 "mass": {
                     "evidence": "open",
                     "overrides": [],
@@ -154,8 +154,8 @@
                     "source": "offen: auf der Laengsachse (dann ohne Torsion); M1",
                     "sources": ["lumiviz"]
                 },
-                "outputReference": 429102.75,
-                "oversampling": 16,
+                "outputReference": 223019.015625,
+                "oversampling": 32,
                 "partner": "singleMode",
                 "partnerDamping": {
                     "evidence": "open",
@@ -171,8 +171,8 @@
                     "evidence": "computed",
                     "overrides": [],
                     "points": [
-                        [60, 39.11473843879243],
-                        [108, 39.11473843879243]
+                        [60, 38.33706729962555],
+                        [108, 38.33706729962555]
                     ],
                     "source": "tuned through the model: +15 dB with the partner at key 84 (\"by as much as 15 dB\", Rucz & Ulveczki 2021 p. 7)",
                     "sources": ["rucz2021"]
@@ -278,13 +278,13 @@
                     "sources": ["lumiviz"]
                 },
                 "tuned": {
-                    "bowForceHighFf": "3e7844d7cbaef7cd12c34209210d1dfcd0d7b70d623b129985b6be290b3824ae",
-                    "bowForceHighMf": "effceebbfdab087c12c7e29893aa39f7466b3b04f12425d2cb9be15764999873",
-                    "bowForceHighPp": "6520e532b0424109664e9caf22c2e4a2f6768ea942a9bec6b41922bc4dc5d34a",
-                    "bowForceLowFf": "0912d96adaf316caa1fa77620430a00bc3901c434ad4856e48be01aecfe9d8f3",
-                    "bowForceLowMf": "31839d00425546a30b33f948c7d4b050df244e35f11a0d9acc85b038c12959bc",
-                    "bowForceLowPp": "3693ae4278754c44203deeb3d50e23f1f5eb58459ad391805ce5681d0bdea232",
-                    "partnerGain": "ee1af7f3ac40f571c0e397f26f80848cbe38ea5c9bcbb04083c0235ab9a7ed20"
+                    "bowForceHighFf": "a0c6c2f3f975df67ebde85a8bd27fa15c6e0d33673d9c753818d1cc42e1ef542",
+                    "bowForceHighMf": "f386482c1ca573f745a4ab8c88efc424210e223fd2b88c52c7bd45e3ec62dd51",
+                    "bowForceHighPp": "a5cbcefdc3c0dd2027e41c7ebf810ba700282ff77649c81d95435e8179df6fdb",
+                    "bowForceLowFf": "647ca28d3d14c2803066aa8bafda5260b2ff8547d4349b695e632a61591647fa",
+                    "bowForceLowMf": "96fd0250cf331f68b1b2a87af56ac33c2eaa531aa72aa12b0049bde34371241e",
+                    "bowForceLowPp": "23b0d731f413bbb401e299caa82d3c8741f2e51424a87035c03d0335f32fe9bc",
+                    "partnerGain": "2ada0b551b90a4f31970f048545fb37f6a436d013546cf980e28b7637e0cb698"
                 },
                 "velocityMax": 5
             },
@@ -304,10 +304,10 @@
                 "malletDampingHc": ["lumiviz"],
                 "malletExponent": ["stulov2009"],
                 "malletHuntCrossley": ["lumiviz"],
-                "malletHysteresis": ["stulov2009"],
+                "malletHysteresis": ["kartofelev2014"],
                 "malletMass": ["stulov2009"],
                 "malletRelaxation": ["stulov2009"],
-                "malletStiffness": ["stulov2009"],
+                "malletStiffness": ["kartofelev2014"],
                 "motor": ["lumiviz"],
                 "noteMax": ["lumiviz"],
                 "noteMin": ["lumiviz"],

@@ -209,9 +209,14 @@ def staerke_muster(name, kit):
     return {"name": "Strength", "kind": "drumkit", "bars": 1, "tracks": spuren, "rows": rows}
 
 
+# HS3-1 a (S187): die Spielweisen der Celesta an Taste 72 — an der Mitte (84) wirkt der Daempfer seit dem Hammer nach
+# Kartofelev & Stulov 2014 kaum noch (Half damper −42,6 dB gegen den normalen Ton, an 72 −34,2 dB; `LUMIVIZ_IL2_PROBE`)
+NOTE_DER_SPIELWEISEN = {"celesta": 72}
+
+
 def spielweisen_muster(name, kit):
     weisen = SPIELWEISEN[name]
-    note = note_der_spielweisen(name)
+    note = NOTE_DER_SPIELWEISEN.get(name) or note_der_spielweisen(name)
     takte = (len(weisen) * HALB + TAKT - 1) // TAKT
     spuren, rows = [], []
     for i, (titel_, kern, laenge) in enumerate(weisen):

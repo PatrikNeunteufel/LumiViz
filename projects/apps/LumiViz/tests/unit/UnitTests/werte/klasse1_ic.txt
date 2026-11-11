@@ -1,16 +1,19 @@
 # Bezuege der Klasse 1 aus InstrumentsCalculation (bb7e6d6), uebernommen 34i (S181) - nicht von Hand aendern
 # abdruck <name> <sha256>: IC rechnung/werte/abdruck_msvc.txt (Windows)
-abdruck hammer_vorgabe_m100_a-12_d500 5c2bfaae4584339cfc0ed74a2f18e3a7fee8378e03b58536302ac63ac2f0b03e
-abdruck hammer_vorgabe_m21_a-12_d500 117a47f0ddd727c858d9311bd6885193c25ec7bd67dd4ad2f71887bca280c58b
-abdruck hammer_vorgabe_m40_a-12_d500 34b9cb14963fc7e934c1bf4ac4a59a5fd97ea9e1b1374d6130f5bc5bf23c058f
-abdruck hammer_vorgabe_m60_a-12_d500 e35284a36db20f48a03df73f2db2d5e7c2c32dee7f9382cbfcd882cca86795ad
-abdruck hammer_vorgabe_m84_a-12_d500 fc722b21628db47c42c80777a0079e15645c778610a2195e75039017e5a3254c
-abdruck klasse1_CP70_m60_a-12 563c53ef4af7bab0a0bd69073c8b6d2527f1b30a34047f919d151f2abcf70676
-abdruck klasse1_Cimbalom_m60_a-12 30e27fb1d8c704c6630631a80a71d9b17b5698399284099600f2cb5d8320d47e
+# S187 (HS-3 a): der Hammer bewusst anders als IC (eps und Q0 nach Kartofelev & Stulov 2014, Kontakt 32-fach;
+#   Befund hammer-saite/2026-11-10_S186_befund_leiser_anschlag_diskant.md §5-7, Journal J65) - die Abdruecke der
+#   Fluegel-Vorgabe, von Upright, Honky-tonk, CP-70 und Cimbalom sind der Stand von LumiViz
+abdruck hammer_vorgabe_m100_a-12_d500 fa1d09f79788feaa478bd0d08b61252dcfc72120ce905747b3e2b7d80d8a6a8a
+abdruck hammer_vorgabe_m21_a-12_d500 0b171c5204fb7e5f09bb38fb5f4fadc8805ce6eb4fe5985f04c62a1a0a4113c3
+abdruck hammer_vorgabe_m40_a-12_d500 fcaf29e662a6410f4e730ad4a301ae2d603152be8e220b83061d6505bf4b93c5
+abdruck hammer_vorgabe_m60_a-12_d500 ec1d0c7b0a118ff0f569bd1e1966d4403f896bad426c3126539187863bf6fd6b
+abdruck hammer_vorgabe_m84_a-12_d500 f4f3dc63adc106cf73d444d90f8c8252ad0e813d2a67134aa3c0e37843cb4fb6
+abdruck klasse1_CP70_m60_a-12 9fbba89e859f07b846555ecbcadc630e8b1c2fc5014ccba52704a2eb0ec9cd09
+abdruck klasse1_Cimbalom_m60_a-12 9d6b8756fd74cbed4135ae17cf1d2553b50870ac0950642fd6e224b64b585338
 # S183 (LP2 b, CL1 a): das Clavinet bewusst anders als IC (Durchmesser je Taste, Tonabnehmer mit d² gewichtet; Journal J62) —
 #   der Abdruck ist der Stand von LumiViz; Hackbrett und Cimbalom bleiben Bit fuer Bit
 abdruck klasse1_Clavinet_m60_a-12 2b51611a7d46814cc789b597c0640c44fb99401df401d24925d6175ad2ce66c6
 abdruck klasse1_Hackbrett_m60_a-12 b8a2760664b7c5c1fba528eb6290d844d31750caa40219cfb41d58ed9c176650
-abdruck klasse1_Honkytonk_m60_a-12 e1a13f38420245393b6518c5807b8f0584c20b5b96a417c01d4020ec29b803bd
-abdruck klasse1_Upright_m60_a-12 642bce1039e56d25161ee8f7e66863b066bf5ce5dd2a1b0f8dd063eeb2856d1e
+abdruck klasse1_Honkytonk_m60_a-12 525d0de5a36f8db9ab6098d5e1845ff6b870641270894b703e01fdbac0b68b09
+abdruck klasse1_Upright_m60_a-12 f97bcfce77f086d99a3e58a50226958eb4d522250e3f7b0dcbde648544a3ac02
 abdruck saite_Hackbrett_clip_C4_G4 0aea689652aa957acb3e82f1f72be0a1045185f2f8df6f4118e5a76303d731cb

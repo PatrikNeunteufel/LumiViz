@@ -47,7 +47,7 @@ Parametertafel baueTafel()
     Parametertafel t;
     t.kern = std::string(kKernName);
     t.titel = "Hammer string";  // TT1 a (S181): das Verfahren, nicht ein Instrument (Upright, Honky-tonk, CP-70 auf demselben Kern)
-    t.rechenFassung = 1;
+    t.rechenFassung = 2;  // S187 (HS-3 a): der Kontakt 32-fach statt 8-fach
     t.noteMin = kTasteMin;
     t.noteMax = kTasteMax;
     t.gruppen = {"Keys", "String", "Choir", "Decay", "Hammer", "Damper", "Pedals"};

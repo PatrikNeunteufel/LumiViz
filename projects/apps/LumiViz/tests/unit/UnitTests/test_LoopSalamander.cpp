@@ -1473,3 +1473,111 @@ TEST_CASE("Loop Salamander 31d-7 B Moden gegen Ton (LUMIVIZ_31D7_MODEN)")
     std::ofstream(ziel / "moden_gegen_ton.txt", std::ios::binary) << bericht.str();
     MESSAGE(bericht.str());
 }
+
+TEST_CASE("Loop Salamander HS-2 Umfang an den Teiltoenen (LUMIVIZ_HS2_SAL_UMFANG)")
+{
+    // HS-2 a (S187): `pegelumfang` misst das ganze Signal der ersten 0,3 s (v16 gegen v1) — bei v1 im hohen Diskant zaehlen
+    // Anschlaggeraeusch, Raum und Rauschen mit. Hier je Taste und Ebene, je Kanal: der Pegel des ganzen Signals (wie
+    // `pegelumfang`), die Summe der Teiltoene 1 … 8 zu Beginn (`anfangDb`, nur die Saite), Teilton 1 allein, die Zahl der
+    // gefundenen Teiltoene und das Rauschen vor dem Einsatz. Schreibt die Tafel nach `LUMIVIZ_HS2_SAL_UMFANG=<datei.md>`
+    // und die Umfaenge je Taste nach `<datei>.txt` (Taste, ganz, Teiltoene, Teilton 1 — Mittel der Kanaele).
+    const QString variable = qEnvironmentVariable("LUMIVIZ_HS2_SAL_UMFANG");
+    const QString ordnerText = qEnvironmentVariable("LUMIVIZ_SALAMANDER");
+    if (variable.isEmpty() || ordnerText.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_HS2_SAL_UMFANG=<datei.md> mit LUMIVIZ_SALAMANDER=<Ordner> misst den Umfang des Tons an den Teiltoenen");
+        return;
+    }
+    const std::filesystem::path ordner = ordnerText.toStdU16String();
+    const std::vector<SalamanderTaste> tasten = salamanderTasten();
+    const lumi::kern::Fft& fft = lumi::kern::fft();
+    struct Ebene
+    {
+        double ganz[2]{-300, -300}, teile[2]{-300, -300}, t1[2]{-300, -300}, rauschen[2]{-300, -300};
+        int zahl[2]{0, 0};
+    };
+    std::vector<std::vector<Ebene>> alle(tasten.size(), std::vector<Ebene>(kEbenen));
+    std::vector<std::string> fehler(tasten.size());
+    std::atomic<std::size_t> naechste{0};
+    std::vector<std::thread> arbeiter;
+    for (unsigned a = 0; a < 8; ++a)
+        arbeiter.emplace_back([&] {
+            for (std::size_t i = naechste++; i < tasten.size(); i = naechste++)
+                for (int e = 1; e <= kEbenen; ++e)
+                {
+                    const std::optional<lumi::audio::WavInhalt> wav = lumi::audio::liesWavDatei(salamanderDatei(ordner, tasten[i], e));
+                    if (!wav || wav->rate != 48000)
+                    {
+                        fehler[i] = salamanderDatei(ordner, tasten[i], e).string() + " nicht zu lesen";
+                        return;
+                    }
+                    const auto [l, r] = trenne(wav->stereo);
+                    Ebene& z = alle[i][static_cast<std::size_t>(e - 1)];
+                    for (int k = 0; k < 2; ++k)
+                    {
+                        const std::vector<double>& ton = k == 0 ? l : r;
+                        const KanalMessung m = messeKanal(ton, wav->rate, tastenFrequenz(tasten[i].midi), fft, false);
+                        if (!m.erkannt) continue;
+                        z.ganz[k] = m.pegelDb;
+                        double summe = 0.0;
+                        for (const TeiltonKurz& t : m.teiltoene)
+                            if (t.k <= 8)
+                            {
+                                summe += std::pow(10.0, t.anfangDb / 10.0);
+                                ++z.zahl[k];
+                            }
+                        if (summe > 0.0) z.teile[k] = 10.0 * std::log10(summe);
+                        if (const TeiltonKurz* t1 = m.teilton(1)) z.t1[k] = t1->anfangDb;
+                        // wie `pegelZuBeginn`: 10·log10(2·Mittel der Quadrate), bis 5 ms vor dem Einsatz
+                        const auto vor = static_cast<std::size_t>(std::max(0.0, m.einsatzS - 0.005) * wav->rate);
+                        if (vor >= 240)
+                        {
+                            double s = 0.0;
+                            for (std::size_t j = 0; j < vor; ++j) s += ton[j] * ton[j];
+                            z.rauschen[k] = 10.0 * std::log10(std::max(2.0 * s / static_cast<double>(vor), 1e-30));
+                        }
+                    }
+                }
+        });
+    for (std::thread& t : arbeiter) t.join();
+    for (const std::string& f : fehler) REQUIRE_MESSAGE(f.empty(), f);
+
+    const auto mittel2 = [](double a, double b) {
+        if (a <= -299.0) return b;
+        if (b <= -299.0) return a;
+        return 0.5 * (a + b);
+    };
+    std::ostringstream o, txt;
+    o << std::fixed << std::setprecision(1);
+    o << "# HS-2 a: Umfang des Tons an *Salamander* — ganzes Signal gegen Teiltoene (S187)\n\n";
+    o << "Mittel der Kanaele, dB (willkuerlicher Bezug). v1 und v16: ganz / Summe Teiltoene 1 … 8 (Zahl links + rechts) / "
+         "Teilton 1 / Rauschen vor dem Einsatz.\n\n";
+    o << "| Taste | Umfang ganz | Umfang Teiltoene | Umfang Teilton 1 | v1 | v16 |\n|---|---|---|---|---|---|\n";
+    txt << "# Taste\tganz\tteiltoene\tteilton1 (dB, v16 gegen v1, Mittel der Kanaele)\n";
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+    {
+        const Ebene& a = alle[i].front();
+        const Ebene& b = alle[i].back();
+        const double uGanz = mittel2(b.ganz[0] - a.ganz[0], b.ganz[1] - a.ganz[1]);
+        const double uTeile = mittel2(b.teile[0] - a.teile[0], b.teile[1] - a.teile[1]);
+        const double uT1 = mittel2(b.t1[0] - a.t1[0], b.t1[1] - a.t1[1]);
+        o << "| " << tasten[i].midi << " | " << uGanz << " | " << uTeile << " | " << uT1 << " | " << mittel2(a.ganz[0], a.ganz[1]) << " / "
+          << mittel2(a.teile[0], a.teile[1]) << " (" << a.zahl[0] + a.zahl[1] << ") / " << mittel2(a.t1[0], a.t1[1]) << " / "
+          << mittel2(a.rauschen[0], a.rauschen[1]) << " | " << mittel2(b.ganz[0], b.ganz[1]) << " / " << mittel2(b.teile[0], b.teile[1])
+          << " (" << b.zahl[0] + b.zahl[1] << ") / " << mittel2(b.t1[0], b.t1[1]) << " / " << mittel2(b.rauschen[0], b.rauschen[1])
+          << " |\n";
+        txt << tasten[i].midi << '\t' << uGanz << '\t' << uTeile << '\t' << uT1 << '\n';
+    }
+    o << "\n## Summe der Teiltoene je Ebene v1 … v16 gegen v16, ab Taste 72\n\n";
+    for (std::size_t i = 0; i < tasten.size(); ++i)
+    {
+        if (tasten[i].midi < 72) continue;
+        const double oben = mittel2(alle[i].back().teile[0], alle[i].back().teile[1]);
+        o << tasten[i].midi << ":";
+        for (const Ebene& z : alle[i]) o << ' ' << mittel2(z.teile[0], z.teile[1]) - oben;
+        o << "\n\n";
+    }
+    std::ofstream(variable.toStdString(), std::ios::binary) << o.str();
+    std::ofstream((variable + QStringLiteral(".txt")).toStdString(), std::ios::binary) << txt.str();
+    MESSAGE("Umfang nach " << variable.toStdString());
+}

@@ -157,6 +157,69 @@ der Kühlung.
 **Stab.** Nur die Celesta nimmt den Stulov-Filz (Taste 88, `stab/Vorgaben.cpp`), mit 16-fachem Kontakt (1,3 µs > τ0
 1,8 µs ist nicht konvergiert). Sie hängt an derselben Entscheidung; gerechnet erst im Umbau.
 
-## 7 Offen
+## 7 HS-2 a: der Umfang an den Teiltönen (S187)
 
-Vorlage HS-2 an Patrik (S187): welcher Satz in den Kern kommt, und ob vorher (2) an den Teiltönen nachgemessen wird.
+Entscheid **HS-2 a** (Patrik S187): vor der Wahl des Satzes den Umfang von *Salamander* an den Teiltönen nachmessen.
+Messfall `LUMIVIZ_HS2_SAL_UMFANG=<datei.md>` mit `LUMIVIZ_SALAMANDER` in `test_LoopSalamander.cpp` (35 s): je Taste und
+Ebene, je Kanal der Pegel des ganzen Signals der ersten 0,3 s (wie `pegelumfang`), die **Summe der Teiltöne 1 … 8**
+zu Beginn (`anfangDb`), Teilton 1, das Rauschen vor dem Einsatz; schreibt die Umfänge je Taste nach `<datei>.txt`. Im
+Messfall HS-1 misst `LUMIVIZ_HS1_SAL_TEILTOENE=<datei.txt>` das Modell **auf dieselbe Weise** (`messeKanal`, ppp 0,45
+→ ff 5 m/s) und vergleicht.
+
+***Salamander*, v16 gegen v1, dB:**
+
+| Taste | 72 | 78 | 84 | 87 | 90 | 93 | 96 | 99 | 102 | 105 | 108 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| ganzes Signal | 21,4 | 22,5 | 21,8 | 25,6 | 27,8 | 25,2 | 28,3 | 33,9 | 24,5 | 38,7 | 22,0 |
+| Teiltöne 1 … 8 | 21,9 | 22,7 | 23,7 | 28,1 | 31,7 | 26,0 | 29,7 | 38,7 | 34,2 | 54,4 | 38,7 |
+
+Bis Taste 78 gleich; 84–96 an den Teiltönen 2 … 4 dB mehr, 99–108 5 … 17 dB mehr — dort trägt bei v1 das Geräusch
+neben den Teiltönen (108: ganz −42,5, Teiltöne −56,4 dB). An 105 und 108 liegt v1 nahe am Rauschen vor dem Einsatz
+(−55 / −48 dB), der Wert ist dort eine Untergrenze. Bis 81 liegen ganzes Signal und Teiltöne im ganzen Umfang auf wenigen
+dB gleich (Ausreißer 48: v1 links nur teilweise erkannt).
+
+**Modell gleich gemessen** (32-fach): RMS an den Teiltönen über alle 30 Tasten / ab Taste 87 (8 Tasten):
+
+| Satz | Teiltöne, alle | Teiltöne ab 87 | ganzes Signal 0,3 s |
+|---|---|---|---|
+| heute (ε „−“) | 13,5 | 25,3 | 4,8 |
+| S1 | 5,4 | 7,5 | 5,1 |
+| **S2** | **5,4** | **7,4** | 5,1 |
+| α × 0,3 | 9,6 | 17,1 | 4,9 |
+| α × 0,1 | 12,8 | 23,9 | 4,8 |
+| Probe ε = 0,997 | 5,4 | 7,3 | 5,2 |
+
+**Ergebnis.** Der Vorteil von S2 in (2) ist echt: an der Saite selbst ist der leise Anschlag ab Taste 87 heute
+um 5 … 48 dB zu leise (90: 46 statt 32, 102: 59 statt 34, 108: 87 statt 39), mit S2 zwischen −4 und +9 dB (nur 105:
+−14, dort ist der Wert von *Salamander* unsicher). Auch das Modell trägt
+beim leisen Anschlag Energie neben den Teiltönen (den Puls des Kontakts selbst): am ganzen Signal gemessen liegen alle
+Sätze bei 5 dB — die alte Fassung von (2) hat den Unterschied darum noch unterschätzt. Nach dem Kipppunkt der Vorlage
+HS-2 gilt damit S2; die fehlende Helligkeit je Stärke im Diskant (§6) bleibt eigener offener Punkt.
+
+## 8 HS-3 a: der belegte Satz im Kern (S187)
+
+Entscheid **HS-3 a** (Patrik S187). `stulovHammerHysterese` rechnet ε = 0,9894 + 0,000088 N, `stulovHammerSteife`
+Q0 = 15 500·e^(0,059 N)·(1 − ε) (Kartofelev & Stulov 2014, Gl. 5 und 7; Register `kartofelev2014`); Masse, p, τ0 bleiben
+nach Stulov & Kartofelev 2009. `kHammerUeberabtastung` 32, Kern `hammerString` Rechenfassung 2. Celesta (Kern `bar`,
+Taste 88) mit 32-fach, Cimbalom (Deluxe) über dieselben Formeln. Neu geschrieben: `grand_piano`, `upright_piano`,
+`honky_tonk_piano`, `electric_grand_piano`, `celesta` (übrige Kern-Dateien nach dem Stimmen Byte für Byte gleich);
+IC-Abdrücke mit Vermerk (Journal J65), `hammer_bezug_windows.txt` (unter Release-clang und Testing-MSVC gleich);
+Pegel auf den Bezug (Flügel 4,2418 → 4,4916, Upright 1,8787 → 1,9779, Honky-tonk 2,3097 → 2,4356, CP-70 2,5073 → 2,6044,
+Celesta 1,4618 → 1,4287; `alt = neu`); Lautstärke dreier Loops (LV1 a); `loop_werte.txt` (25 Zeilen),
+`klangfassung.txt`; Hörlisten `klasse1_34i` (72 Klänge / 64 Punkte — die drei Klänge ohne Ton klingen jetzt) und
+`stab_34g` (94 / 88), beide gültig.
+
+**Folgen am Wächter.** Die Celesta-Spur *Half damper* (Taste 84, 300 ms) unterscheidet sich nur noch um −42,6 dB vom
+normalen Ton (vorher −37,8; *Damper off* −29,3 statt −24,5): der Anschlag trägt mehr Energie, der Nachklang anteilig
+weniger. `test_LoopHammerTon` prüft die Helligkeit an C6 nicht mehr (HS-4).
+
+**HS3-1 a** (Patrik S187): die Spielweisen der Celesta im Beispiel-Loop an Taste 72 statt 84 — der Dämpfer wirkt dort
+(`LUMIVIZ_IL2_PROBE=celesta`, Half damper / 300 ms: 60 −29,0, 72 −34,2, 84 −42,6, 96 −61,3 dB; der Dämpfer der Celesta
+wirkt nach oben immer weniger, die hohen Stäbe klingen ohnehin schnell ab). `make_modelled_loops.py`
+(`NOTE_DER_SPIELWEISEN`), `celesta.lvloop` (drei Noten), Spitze unverändert, eine Zeile `loop_werte.txt`, Klangfassung.
+**HS3-2 a:** die Hörliste `pv1` ist als Stand vor HS-3 abgeschlossen (`hoertest/README.md`).
+
+## 9 Offen
+
+- **HS-4:** die Helligkeit je Stärke ab Taste 66 zu klein, ab 84 in jedem Satz — ein Mechanismus fehlt dem Modell;
+  danach eine neue Flügel-Liste statt `pv1`.

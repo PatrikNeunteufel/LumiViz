@@ -278,7 +278,8 @@ QuellenJeWert quellenDesStabs(std::string_view name)
     }
     if (name == "celesta")
     {
-        alle({"malletMass", "malletStiffness", "malletExponent", "malletHysteresis", "malletRelaxation"}, {"stulov2009"});
+        alle({"malletMass", "malletExponent", "malletRelaxation"}, {"stulov2009"});
+        alle({"malletStiffness", "malletHysteresis"}, {"kartofelev2014"});  // HS-3 a (S187)
         dazu(kPartnerZielDb, {"rucz2021"});
     }
     if (name == "reed_electric_piano")
