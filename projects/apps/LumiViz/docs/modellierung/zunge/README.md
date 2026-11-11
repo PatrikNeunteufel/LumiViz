@@ -12,6 +12,10 @@
 - [2026-11-11_S190_quellenlage_34j-4.md](2026-11-11_S190_quellenlage_34j-4.md) — Quellenlage nach der Recherche
   (34j-4): keine Maßtabelle je Ton, gegengelesene Anker (Akkordeonzungen, Harmoniumzunge C3, Schwellentheorie nach
   Fletcher), Stand je Instrument.
+- [2026-11-11_S190_vorgaben_je_taste.md](2026-11-11_S190_vorgaben_je_taste.md) — Herleitung der Vorgaben je Taste
+  am Prüfstand (34j-5): Formeln für Schließdruck und Anfachung, Kern-Form gegen das Modell nach Adachi, Gesetze über
+  den Umfang für Akkordeon (Diskant, Bass), Harmonium, Mundharmonika, Melodica, Bend über das Ventil; Prüfstand und
+  Ergebnisse unter [proben/](proben).
 
 ## Recherchen (Agentenberichte, unverändert)
 

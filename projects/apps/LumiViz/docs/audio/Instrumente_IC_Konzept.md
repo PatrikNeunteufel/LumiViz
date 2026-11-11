@@ -779,7 +779,7 @@ keine; kein Name kollidiert. Die Rechenzeit ist ausgesetzt (Kühlung): die Fäll
 | 34j-4 | Recherche und Quellen (ZV1 a): die freien Arbeiten aus `../modellierung/zunge/ic/quellen.md` nach `…\cmake\quellen\zunge\` (Ladeliste vorher zur Freigabe), Register, `archiv_index.py`; gesucht: Maße der Stimmplatten je Ton (Länge, Breite, Dicke, Aufbiegung), Basszungen (Gewichte), Kanzellen je Ton, Harmonium- und Mundharmonika-Zungen, gemessene Balg- und Atemdrücke, Einschwingzeiten, Bend nach Adachi et al.; Agenten ohne Browser; Bericht unter `../modellierung/zunge/recherche/` | Bericht mit Fundstelle je Größe (Seite, an der Abbildung gegengeprüft). **Haltepunkt:** je Instrument, ob die Quellen für die Herleitung reichen — sonst Vorlage (Kipppunkt ZV1 a) |
 | 34j-5 | Herleitung am Kern aus 34j-2, ohne App: Vorgaben je Taste als Kurven, Windbereich je Instrument (ZV2 a), Basszungen, Harmonium, Bend; je Instrument jede Option gegen **alle** Zielgrößen gerechnet (spricht im Windbereich an, Lautheit über den Umfang, Stimmung über den Windbereich, Dynamik, Einschwingzeit, Amplitude über dem Druck gegen Cottingham, Lilly, Reed 1999 Abb. 2 (ZH3 a), Tonhöhe über den Druck gegen Adachi und Cottingham 1999; dazu das belegte Verhalten nach ZH1 a); Dokument `../modellierung/zunge/<Datum>_vorgaben_je_taste.md` | Entscheide je Instrument (ZV4 ff.). **Haltepunkt:** was kein Instrument trägt, wird nicht ausgeliefert, mit benannter Lücke |
 | 34j-6 | Kern Rechenfassung 2 nach 34j-5: die Größen je Taste als Kurven der Tafel mit Quelle und Belegkraft, Wind nach ZV2 a (`windMin`, `windMax`; f₀ am mittleren Druck gestimmt; die Fenster als Prüfgröße), Stimmer neu; Wächter „jede Taste deckt den Windbereich“; `zunge_ic.txt` mit Vermerk neu (Journal); Messfall `LUMIVIZ_34J_MESSUNG=<datei.md>` mit der Messkette des Befunds S188 (Lautheit aus `AudioCore`) | die Zielgrößen aus 34j-5 am gebauten Kern wie am Prüfstand; die IC-Fälle angepasst mit Grund im Journal |
-| 34j-7 | Laufender Wind (ZV3 a): der Kern liest `expression`, `vibrato` und `bellows` (Richtung 0/1, am Wechsel der Druckeinbruch) über die Zeit, `pitch` nur, wenn 34j-5 eine tragende Abbildung ergibt; Stärke = Stufe mal Expression (SK4 a), die Abbildung Stufe → Stärke an der gemessenen Kurve Pegel über Druck festgelegt (Grundsatz TM1 a: eine Note bei −20 dB klingt rund 20 dB leiser, begrenzt durch die Dynamik des Instruments); `nachklang` aus dem Ausklang der Zunge (gemessen 31–777 ms), gegen die Messung geprüft; `KernAuskunft` bekommt ein Feld für dauernde Anregung (nicht die Liste der Spuren — `bar` nennt `expression` für den Bogen), `InstrumentCore` nächste Fassung; die App gibt solchen Kernen die Spuren von Muster und Clip in den Tonauftrag und nimmt die Expression nicht mehr als Pegel. Die Spuren `bellows` im Loop erst mit 31g (wie `motor`) | konstante Spur Bit für Bit wie 34j-6; ein Crescendo am gehaltenen Ton ändert Pegel und Teiltöne; `Loop Werte`, `Klangfassung` und Flügel-Bezug unverändert (kein anderer Kern betroffen) |
+| 34j-7 | Laufender Wind (ZV3 a): der Kern liest `expression`, `vibrato` und `bellows` (Richtung 0/1, am Wechsel der Druckeinbruch) über die Zeit, `pitch` über die Kurve Ventilöffnung → Cent je Taste aus dem Stimmer, gekappt an der Grenze der Taste (ZV7 a); Stärke = Stufe mal Expression (SK4 a), die Abbildung Stufe → Stärke an der gemessenen Kurve Pegel über Druck festgelegt (Grundsatz TM1 a: eine Note bei −20 dB klingt rund 20 dB leiser, begrenzt durch die Dynamik des Instruments); `nachklang` aus dem Ausklang der Zunge (gemessen 31–777 ms), gegen die Messung geprüft; `KernAuskunft` bekommt ein Feld für dauernde Anregung (nicht die Liste der Spuren — `bar` nennt `expression` für den Bogen), `InstrumentCore` nächste Fassung; die App gibt solchen Kernen die Spuren von Muster und Clip in den Tonauftrag und nimmt die Expression nicht mehr als Pegel. Die Spuren `bellows` im Loop erst mit 31g (wie `motor`) | konstante Spur Bit für Bit wie 34j-6; ein Crescendo am gehaltenen Ton ändert Pegel und Teiltöne; `Loop Werte`, `Klangfassung` und Flügel-Bezug unverändert (kein anderer Kern betroffen) |
 | 34j-8 | die `.lvinst` der Instrumente, die 34j-5 trägt — `accordion`, `harmonium`, `melodica`, `harmonica` (IK2-8 a): Schreiber `LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1`, `InstrumentTuneTool --all --reference`, Katalog, Register und `CREDITS.md`, Pegel und `loop_werte.txt` nur neue Zeilen, `klangfassung.txt` nachgeführt, Zahlen je Art in den Tests | `Loop Pegel LP3 a` ohne Ausnahme; `Loop Werte` nur neue Zeilen; Quellen-Wächter grün |
 | 34j-9 | `free_reeds_demo.lvloop` (Crescendo über die Expression am Clip, Musette), Loops je Instrument über `make_modelled_loops.py`, Lautstärke nach LV1 a (Skript zuerst in einer Kopie); Hörliste `hoertest/listen/zunge_34j` am Hörort (je Instrument tief/mitte/hoch bei −18/−9/0, Crescendo, Vibrato, Balgwechsel, Musette gegen einen Chor, Bass-Seite), sie löst `ic/10_zunge` ab (wie LG1 a); Creator-Fall mit dem Akkordeon (Listen der Chöre, gestimmte Werte; Bild); Fall `*34j Rechenzeit*` (Akkordeon, Bass-Seite und Musette) | `--liste-pruefen` 0 Fehler, 0 Hinweise; Rechenzeit ≤ 4,6 % (RZ1-1 a) nach dem Tausch der Kühlung nachgeholt |
 | 34j-10 | Modul-Doku, Journal J66 ff., Konzept, Bericht der Klasse `../modellierung/zunge/README.md`, Pakete `instrumentcore` und `instrumentmodels` (nächste Fassung), Steckbrief; `klassen/10_zunge` und `werkzeuge/stimme_zunge.cpp` unter `harvest/` gelöscht | **voller Lauf** unter beiden Compilern (neuer Kern, Core und Rechenweg der App geändert; UF17-1 a) |
@@ -868,6 +868,50 @@ Plausibilität im Bericht. Grund: eine Zielgröße hängt an einer Messung; die 
 Verworfen: b (15 % bleiben), c (keine Zielgröße). Kippt auf b, wenn eine Quelle eine Messkurve mit rund 15 % für
 Akkordeonzungen liefert.
 
+**34j-5 gerechnet (S190).** Herleitung und Zahlen:
+[2026-11-11_S190_vorgaben_je_taste.md](../modellierung/zunge/2026-11-11_S190_vorgaben_je_taste.md), Prüfstand unter
+`../modellierung/zunge/proben/` (rechnet Bit für Bit wie der Kern). Schließdruck = Masse je Fläche · ω₀² · Aufbiegung,
+Schwelle bestenfalls 2ζ mal Schließdruck; mit Gesetzen je Taste sprechen alle vier Instrumente auf jeder Taste über
+ihren Windbereich an (Akkordeon Diskant 41 / 41 / 41, Lautheit über den Umfang 2,4 / 1,7 / 4,1 LU; Harmonium
+42 / 42 / 42; Mundharmonika 37 / 37 / 37; Melodica 32 / 32 / 32; Bass 8′ 23 / 24 / 24).
+
+✅ **ZV4 a** (Patrik S190): **Der Kern behält seine Gleichungen; Rechenfassung 2 ändert die Vorgaben** — die Größen je
+Taste als Kurven der Tafel (Länge, Breite, Masse je Fläche, Aufbiegung, Seitenspalt, Dämpfung, Kanal, Ventil,
+Kanzelle) mit Belegkraft je Wert. Das Modell nach Adachi u. a. 2026 (Gl. 2–7) bleibt Prüfgröße an C4 im Prüfstand.
+Grund: nachgebaut trifft es seine veröffentlichten Zahlen (265,17 gegen 265,1 Hz, 261,65 gegen 261,7 Hz, 1,68 gegen
+rund 1,6 mm), über den Umfang aber spricht es mit der veröffentlichten Trägheit bei 0 / 6 / 6 von 15 Tasten an
+(Endwert erst nach 2–3 s; gemessen an A4 60–90 ms), und mit vierfacher Trägheit wächst die Amplitude bis 160 % der
+Zungenlänge — es hat keinen Begrenzer. Die Kern-Form: 15 / 15 / 15, 70–95 ms, 1–5 % der Länge. Verworfen: b (Adachis
+Gleichungen im Kern). Kippt auf b, wenn sich für die Adachi-Form eine belegte Begrenzung der Amplitude findet (etwa
+die Plattendicke).
+
+✅ **ZV5 a** (Patrik S190): **Die Tonhöhe folgt dem Druck wie gemessen** (Satz D3: Ventil 6 mm² an C4, über den Umfang
+gestuft; an C4 −11 Cent/kPa gegen −16 gemessen, Harmonium C3 −22 gegen rund −24). Die Zielgröße Stimmung aus ZV1 a
+lautet damit: **±10 Cent am mittleren Druck über alle Tasten**; die Abweichung über den Windbereich ist eine
+Berichtsgröße mit der Messung als Bezug (Akkordeon +4,8 … −16,7 Cent, Harmonium +4,9 … −24,0 Cent). Grund: das
+Sinken mit dem Balgdruck ist an zwei Instrumenten gemessen und trägt den Bend über die halb gedrückte Taste; alle
+Tasten sinken gemeinsam (ein Balg, ZV2 a). Verworfen: b (halbe Steigung, ohne Beleg), c (±10 Cent über den ganzen
+Windbereich, Ventil offen — die Tonhöhe über dem Druck als Lücke, der Bend ohne Mechanismus). Kippt auf c, wenn die
+Verstimmung bei ff im Zusammenspiel stört.
+
+✅ **ZV6 a** (Patrik S190): **Die Bass-Seite des Akkordeons klingt in 8′ und 4′** (`bassChoere` {0; 1,0} und {+12; 0,7}
+statt 16′ und 8′), die tiefste Zunge ist F1; Tasten und Teilung bleiben. Grund: der 16′ von F1 läge bei 21,8 Hz, die
+tiefste echte Zunge um E1; im Prüfstand sprechen die Zungen F0–E1 bei 200 Pa nicht an (0 von 5), die der Lage 8′
+23 / 24 / 24, die 4′-Lage liegt im Diskantgesetz. Verworfen: b (16′ bleibt, Wind ab 300 Pa — der Windbereich des
+Diskants ohne Beleg enger), c (Tasten eine Oktave hinauf — die Teilung rückt in den Diskant). Kippt auf b, wenn eine
+Quelle Zungen unter E1 belegt.
+
+✅ **ZV7 a** (Patrik S190): **34j-7 baut den Bend über das Ventil für Akkordeon und Melodica.** Der Stimmer (34j-6)
+misst je Taste am mittleren Druck die Kurve Ventilöffnung → Cent und ihre Grenze (letzte Öffnung, bei der die Zunge
+anspricht) und legt beide als gestimmte Werte ab; der Kern bildet die Spur `pitch` über diese Kurve ab und kappt an
+der Grenze der Taste (SK3 a: die Grenze trägt das Instrument); `bendGrenzeCent` als fester Wert entfällt, ebenso die
+Abbildung der Vorlage (−100 Cent → 1 % der Öffnung). Dass der Bend bei höherem Druck tiefer wird, bleibt. Grund: mit
+dem Ventilgesetz aus ZV5 a verhält sich der Bend wie gemessen — bei 566 Pa bis −33 Cent an F3, −25 an C♯4, −9 an A4,
+ab C♯6 keiner; bei 1 600 Pa bis rund −50 Cent (Spieler 10–35 Cent, mit Balg tiefer, ab C6 kein Bend). Verworfen: b
+(Bend in 34j ungebaut), c (Eigenfrequenz unmittelbar verschieben — ein Bend ohne Pegelabfall und Klangänderung).
+Kippt auf b, wenn die Kurve je Taste am gebauten Kern nicht eindeutig umkehrbar ist (am Prüfstand an sechs Tasten und
+sieben Öffnungen monoton).
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -927,7 +971,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.18.0 | 2026-11-11 | Session 190. §6: 34j-4 erledigt (Quellenlage, 28 Arbeiten in der Ablage); ZQ1 a, ZQ2 a (Ablage), ZH1 a (Herleitung aus Ankern und Schwellentheorie, Belegkraft je Wert), ZH2 a (Melodica als Annahme, „ungemessen“), ZH3 a (Amplitude gegen die Messung von 1999); Zielgrößen in Zeile 34j-5 nachgeführt. |
+| 0.18.0 | 2026-11-11 | Session 190. §6: 34j-4 erledigt (Quellenlage, 28 Arbeiten in der Ablage); ZQ1 a, ZQ2 a (Ablage), ZH1 a (Herleitung aus Ankern und Schwellentheorie, Belegkraft je Wert), ZH2 a (Melodica als Annahme, „ungemessen“), ZH3 a (Amplitude gegen die Messung von 1999); Zielgrößen in Zeile 34j-5 nachgeführt. 34j-5 gerechnet: ZV4 a (Kern-Form bleibt, Rechenfassung 2 ändert die Vorgaben), ZV5 a (Tonhöhe folgt dem Druck; Stimmung ±10 Cent am mittleren Druck), ZV6 a (Bass-Seite 8′ und 4′), ZV7 a (Bend über das Ventil, Kurve und Grenze je Taste aus dem Stimmer). |
 | 0.17.0 | 2026-11-11 | Session 188. §6: Teilplan 34j (34j-1 bis 34j-10) nach dem Befund an der IC-Vorlage der Zunge; ZV1 a (Umzug als Beleg, dann Vorgaben je Taste mit Quellen), ZV2 a (ein Winddruck für alle Tasten), ZV3 a (laufender Wind in 34j); Zeile 34j der Übersicht. |
 | 0.16.0 | 2026-11-10 | Session 186. §6: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l; Kopf auf 0.16.0 (stand noch auf 0.14.0). |
 | 0.15.0 | 2026-11-09 | Session 183. LP2 b erledigt: Vermerk im Kopf (WU1 a, WU2 a, KA1 a, CL1 a, CL2 a; Kern `bar` mit `pluckForce`, Abnahmen `slot` und `bridge`; Kern `struckString` mit `stringDiameter`; Rechenfassung 2; Journal J60–J64). |
