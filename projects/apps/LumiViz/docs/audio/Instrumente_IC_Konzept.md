@@ -13,7 +13,7 @@
 > Zupfkraft und den Abnahmen `slot`/`bridge`, Kern `struckString` mit Durchmesser je Taste, beide Rechenfassung 2.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j in Arbeit seit 2026-11-11 (S189; 34j-1 bis 34j-6 fertig)
+> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j in Arbeit seit 2026-11-11 (S189; 34j-1 bis 34j-6 fertig, 34j-7 begonnen)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -927,6 +927,36 @@ daraus einen Verlauf. Grund: kein Zwischenstand, in dem die Auskunft eine Spur n
 Grenze werden geprüft, wo die Kurve entsteht. Verworfen: b (`pitch` erst mit 34j-7). Kippt auf b, wenn 34j-7 für den
 laufenden Bend eine andere Größe braucht als Cent am Beginn.
 
+**34j-7 begonnen (S191):** der laufende Wind ist gebaut — der Kern liest `expression`, `pitch`, `vibrato` und `bellows`
+über die Zeit (eine konstante Spur rechnet Bit für Bit wie der feste Wert), `KernAuskunft::anregungDauernd`, die App gibt
+einem solchen Kern Expression (Muster mal Clip), Pitch und Vibrato als Spuren und legt die Expression nicht als Pegel
+hinter den Ton. Gemessen (Messfall `LUMIVIZ_34J_MESSUNG` in `test_InstrumentModelsZunge`): Dynamik Stärke 0 → 1 15–18 LU,
+Ausklang bis −60 dB 55–4 570 ms, Bend über die Spur −19,9 Cent in der Mitte des Winds. Offen: ZV10 a, ZV11 a bauen,
+ZV12 a.
+
+✅ **ZV10 a** (Patrik S191, „alle nach Empfehlung“): **Die Stufe setzt die Stärke je Taste an ihrer gemessenen Kurve** —
+gestimmte Kurven `strengthAtLevel2` … `strengthAtLevel20` (die Stärke, bei der die Taste 2, 4 … 20 dB leiser klingt als
+bei voller Stärke; unter ihrer Dynamik 0), dazwischen linear; Stärke = diese Stärke mal Expression (SK4 a). Grund: am Ton
+nachgemessen größter Fehler gegen TM1 a 1,8 LU (Akkordeon, Melodica), 0,3 LU (Harmonium, Mundharmonika); an der
+mittleren Kurve 2,9 / 0,6 LU, an der Geraden 1 + Stufe/Dynamik 4,4 / 0,9 LU. Verworfen: b (mittlere Kurve), c (Gerade).
+Kippt auf b, wenn ZV12 zeigt, dass der Anstieg des Pegels unter voller Stärke ein Fehler des Modells ist und die Kurven
+danach über alle Tasten gleich laufen.
+
+✅ **ZV11 a** (Patrik S191): **Der Nachklang ist eine gestimmte Kurve je Taste** (`releaseTime`): am Kern bei `windMin`
+bis −60 dB unter dem gehaltenen Ton gemessen (dort klingt die Zunge am längsten, 1,03–1,50 mal die Mitte). Grund: nichts
+wird abgeschnitten (fest 1 s schneidet 30 von 65 Akkordeon- und 5 von 32 Melodicatasten ab, Akkordeon tief bis 4,6 s), und
+kein Ausklang wird umsonst gerechnet — die Formel 6,9/(ζω₀) überschätzt um das 1,2- bis 2,9-Fache (die Dämpfung durch die
+Strömung fehlt ihr; im Bass 8,3 s). Verworfen: b (Formel wie `bar`, `membrane`), c (fest 1 s). Kippt auf b, wenn die
+Messung bei `windMin` an langsam ansprechenden Tasten (F1) unstet ist.
+
+✅ **ZV12 a** (Patrik S191): **Der Befund „lauter wird dunkler“ wird nach ZV10 und ZV11, vor 34j-8 untersucht** — Spektren
+über dem Blasdruck in den Quellen (Cottingham 2011, Braasch & Cottingham 2023, Tarnopolsky u. a. 2000) und am Kern die
+Ursache; Vorlage mit Optionen. Befund: der Schwerpunkt der Teiltöne 1–20 wird von Stärke 0 auf 1 nur an einem Teil der
+Tasten heller (Akkordeon 10 von 17, Verhältnis 0,49–2,05; Harmonium 4 von 11; Melodica 1 von 8; Mundharmonika 4 von 10;
+Melodica A4 im Crescendo 1 394 → 895 Hz). Grund: 34j-8 liefert Instrumente, Pegel, Loops und Abdrücke aus — ist die
+Klangfarbe über dem Druck falsch, entstünde alles zweimal (wie S187). Verworfen: b (in der Hörprobe 34j-9). Kippt auf b,
+wenn die Quellen keine Spektren über dem Druck hergeben.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -986,7 +1016,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 0.19.0 | 2026-11-11 | Session 191. §6: 34j-6 erledigt (Kern `freeReed` Rechenfassung 2, Journal J70); ZV8 a (Bend je Taste auf dem Raster 2^(−1/4) mit Grenze), ZV9 a (`pitch` wirkt schon in 34j-6, am Beginn der Note). |
+| 0.19.0 | 2026-11-11 | Session 191. §6: 34j-6 erledigt (Kern `freeReed` Rechenfassung 2, Journal J70); ZV8 a (Bend je Taste auf dem Raster 2^(−1/4) mit Grenze), ZV9 a (`pitch` wirkt schon in 34j-6, am Beginn der Note). 34j-7 begonnen (laufender Wind, Journal J71); ZV10 a (Stufe → Stärke je Taste an der gemessenen Kurve), ZV11 a (Nachklang als gestimmte Kurve je Taste), ZV12 a (Befund Helligkeit über dem Druck vor 34j-8 untersuchen). |
 | 0.18.0 | 2026-11-11 | Session 190. §6: 34j-4 erledigt (Quellenlage, 28 Arbeiten in der Ablage); ZQ1 a, ZQ2 a (Ablage), ZH1 a (Herleitung aus Ankern und Schwellentheorie, Belegkraft je Wert), ZH2 a (Melodica als Annahme, „ungemessen“), ZH3 a (Amplitude gegen die Messung von 1999); Zielgrößen in Zeile 34j-5 nachgeführt. 34j-5 gerechnet: ZV4 a (Kern-Form bleibt, Rechenfassung 2 ändert die Vorgaben), ZV5 a (Tonhöhe folgt dem Druck; Stimmung ±10 Cent am mittleren Druck), ZV6 a (Bass-Seite 8′ und 4′), ZV7 a (Bend über das Ventil, Kurve und Grenze je Taste aus dem Stimmer). |
 | 0.17.0 | 2026-11-11 | Session 188. §6: Teilplan 34j (34j-1 bis 34j-10) nach dem Befund an der IC-Vorlage der Zunge; ZV1 a (Umzug als Beleg, dann Vorgaben je Taste mit Quellen), ZV2 a (ein Winddruck für alle Tasten), ZV3 a (laufender Wind in 34j); Zeile 34j der Übersicht. |
 | 0.16.0 | 2026-11-10 | Session 186. §6: LR1 a — Stufe 34m Klasse 7 (Kern `Blech`; Posaune, Trompete, Alphorn) nach 34j und 34k, vor 34l; Kopf auf 0.16.0 (stand noch auf 0.14.0). |

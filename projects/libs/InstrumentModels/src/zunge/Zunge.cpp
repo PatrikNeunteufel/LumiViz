@@ -29,6 +29,28 @@ double an(const Kurve& k, int note)
     return wertAn(k, note, Skala::Logarithmisch);
 }
 
+/// Eine Spur vorwaerts lesen, Frame fuer Frame — dieselben Werte wie `spurWert`, ohne jedes Mal zu suchen.
+class SpurLeser
+{
+public:
+    explicit SpurLeser(const Spur& s) : m_p(s.punkte) {}
+    double bei(Frames f)
+    {
+        if (m_p.empty()) return 0.0;
+        if (f <= m_p.front().frame) return m_p.front().wert;
+        if (f >= m_p.back().frame) return m_p.back().wert;
+        while (m_i + 1 < m_p.size() && m_p[m_i + 1].frame <= f) ++m_i;  // m_p[m_i].frame <= f < m_p[m_i + 1].frame
+        const SpurPunkt& x = m_p[m_i];
+        const SpurPunkt& y = m_p[m_i + 1];
+        const double u = static_cast<double>(f - x.frame) / static_cast<double>(y.frame - x.frame);
+        return x.wert + u * (y.wert - x.wert);
+    }
+
+private:
+    const std::vector<SpurPunkt>& m_p;
+    std::size_t m_i = 0;
+};
+
 }  // namespace
 
 ZungeAnDerTaste zungeAn(const ZungenSpiel& s, int zungenNote)
@@ -64,33 +86,52 @@ double bendStufe(int k)
     return std::exp2(-(k + 1) / 4.0);
 }
 
-double ventilFuerCent(const ZungenSpiel& s, int note, double cent)
+BendDerTaste bendAn(const ZungenSpiel& s, int note)
 {
-    if (!s.bendUeberVentil || cent >= 0.0 || s.bendGrenzeOeffnung.punkte.empty() || s.bendGrenzeCent.punkte.empty() ||
+    BendDerTaste b;
+    if (!s.bendUeberVentil || s.bendGrenzeOeffnung.punkte.empty() || s.bendGrenzeCent.punkte.empty() ||
         static_cast<int>(s.bendCentJeStufe.size()) != kBendStufen)
-        return 1.0;
+        return b;
     const int n = std::clamp(note, s.noteMin, s.noteMax);
     const double grenzeF = std::clamp(wertAn(s.bendGrenzeOeffnung, n, Skala::Logarithmisch), 1e-6, 1.0);
     const double grenzeC = std::min(0.0, wertAn(s.bendGrenzeCent, n, Skala::Linear));
-    const double ziel = std::max(cent, grenzeC);
-    if (ziel >= 0.0) return 1.0;
-    // die Punkte (Oeffnung, Cent) von offen bis zur Grenze, fallend in der Oeffnung
-    double fVor = 1.0, cVor = 0.0;
-    for (int k = 0; k <= kBendStufen; ++k)
+    b.bendet = grenzeC < 0.0;
+    b.oeffnung.push_back(1.0);
+    b.cent.push_back(0.0);
+    for (int k = 0; k < kBendStufen && bendStufe(k) > grenzeF; ++k)
     {
-        const bool letzte = k == kBendStufen || bendStufe(k) <= grenzeF;
-        const double f = letzte ? grenzeF : bendStufe(k);
-        const double c = letzte ? grenzeC : std::min(0.0, wertAn(s.bendCentJeStufe[static_cast<std::size_t>(k)], n, Skala::Linear));
+        b.oeffnung.push_back(bendStufe(k));
+        b.cent.push_back(std::min(0.0, wertAn(s.bendCentJeStufe[static_cast<std::size_t>(k)], n, Skala::Linear)));
+    }
+    b.oeffnung.push_back(grenzeF);
+    b.cent.push_back(grenzeC);
+    return b;
+}
+
+double oeffnungFuer(const BendDerTaste& b, double cent)
+{
+    if (!b.bendet || cent >= 0.0) return 1.0;
+    const double ziel = std::max(cent, b.cent.back());
+    if (ziel >= 0.0) return 1.0;
+    // vom offenen Ventil zur Grenze: das erste Stueck, das den Bend erreicht
+    double fVor = b.oeffnung.front(), cVor = b.cent.front();
+    for (std::size_t k = 1; k < b.oeffnung.size(); ++k)
+    {
+        const double f = b.oeffnung[k], c = b.cent[k];
         if (c <= ziel && c < cVor)
         {
             const double u = (ziel - cVor) / (c - cVor);
             return std::exp(std::log(fVor) + u * (std::log(f) - std::log(fVor)));
         }
-        if (letzte) return grenzeF;
         fVor = f;
         cVor = std::min(cVor, c);
     }
-    return grenzeF;
+    return b.oeffnung.back();
+}
+
+double ventilFuerCent(const ZungenSpiel& s, int note, double cent)
+{
+    return oeffnungFuer(bendAn(s, note), cent);
 }
 
 void rechneEineZunge(const ZungenSpiel& s, double f0, int zungenNote, const ZungenAnschlag& a, std::vector<double>& aus, std::int64_t frames,
@@ -105,10 +146,10 @@ void rechneEineZunge(const ZungenSpiel& s, double f0, int zungenNote, const Zung
     const double w0 = 2.0 * kPi * f0;
     const double steife = masse * w0 * w0, daempfung = 2.0 * z.zeta * masse * w0;
     const double sr = 0.5 * laenge * z.breite;  // wirksame Flaeche fuer die Kraft (offen)
-    const double p0 = a.druckPa > 0.0 ? a.druckPa : windBei(s, a.expression);
+    double p0 = a.druckPa > 0.0 ? a.druckPa : windBei(s, a.expression);
     // das Ventil: der Bend schliesst es (Adachi: kleinere Oeffnung → tiefer); was die Physik nicht hergibt, faellt weg
     // (F-2 a: das Modell kappt)
-    const double ventil = z.ventil * (a.ventilFaktor > 0.0 ? std::min(1.0, a.ventilFaktor) : 1.0);
+    double ventil = z.ventil * (a.ventilFaktor > 0.0 ? std::min(1.0, a.ventilFaktor) : 1.0);
     const double traegheit = kRho * z.kanalLaenge / z.kanalFlaeche;
     const double kKanz = kRho * kC * kC / z.kanzelle;
     const auto halten = static_cast<std::int64_t>(std::llround(a.haltenS * a.rate)) * kUeber;
@@ -116,16 +157,40 @@ void rechneEineZunge(const ZungenSpiel& s, double f0, int zungenNote, const Zung
     double yMax = 0.0;
     std::vector<double> summe(static_cast<std::size_t>(frames), 0.0);
     std::vector<double>* spur = messung != nullptr ? messung->auslenkung : nullptr;
+    // 34j-7 (ZV3 a): die Verlaeufe, je Ausgangswert gelesen (die vier Schritte dazwischen halten ihn)
+    const bool expressionLaeuft = a.druckPa <= 0.0 && !a.expressionVerlauf.punkte.empty();
+    const bool pitchLaeuft = a.ventilFaktor <= 0.0 && !a.pitchVerlauf.punkte.empty();
+    const bool vibratoLaeuft = !a.vibratoVerlauf.punkte.empty();
+    const bool balgLaeuft = !a.balgVerlauf.punkte.empty();
+    const BendDerTaste bend = pitchLaeuft ? bendAn(s, a.note) : BendDerTaste{};
+    SpurLeser eLeser(a.expressionVerlauf), pLeser(a.pitchVerlauf), vLeser(a.vibratoVerlauf), bLeser(a.balgVerlauf);
+    double vibratoCent = a.vibratoCent;
+    int richtung = balgLaeuft ? (bLeser.bei(0) >= 0.5 ? 1 : 0) : 0;
+    double spurWechselS = -1.0;
     for (std::int64_t n = 0; n < frames * kUeber; ++n)
     {
         const double t = static_cast<double>(n) * dt;
+        if (n % kUeber == 0)
+        {
+            const Frames i = n / kUeber;
+            if (expressionLaeuft) p0 = windBei(s, eLeser.bei(i));
+            if (pitchLaeuft) ventil = z.ventil * oeffnungFuer(bend, pLeser.bei(i));
+            if (vibratoLaeuft) vibratoCent = vLeser.bei(i);
+            if (balgLaeuft)
+                if (const int r = bLeser.bei(i) >= 0.5 ? 1 : 0; r != richtung)
+                {
+                    richtung = r;
+                    spurWechselS = t;
+                }
+        }
         // der Wind: Anstieg 20 ms, Absetzen 30 ms (offen), Vibrato, Balgwechsel (Einbruch 60 ms, offen)
         double env = std::min(1.0, t / 0.02);
         if (n >= halten) env *= std::max(0.0, 1.0 - (t - a.haltenS) / 0.03);
         if (a.balgwechselS >= 0.0 && t >= a.balgwechselS && t < a.balgwechselS + 0.06)
             env *= 0.2 + 0.8 * std::abs(std::cos(kPi * (t - a.balgwechselS) / 0.06));
+        if (spurWechselS >= 0.0 && t < spurWechselS + 0.06) env *= 0.2 + 0.8 * std::abs(std::cos(kPi * (t - spurWechselS) / 0.06));
         phaseV += 2.0 * kPi * a.vibratoHz * dt;
-        const double p = p0 * env * (1.0 + 0.002 * a.vibratoCent * std::sin(phaseV));
+        const double p = p0 * env * (1.0 + 0.002 * vibratoCent * std::sin(phaseV));
         // das Ventil (Bernoulli): Fluss aus dem Balg in die Kanzelle
         const double dpv = p - p1;
         const double uEin = ventil * std::sqrt(2.0 * std::abs(dpv) / kRho) * (dpv >= 0.0 ? 1.0 : -1.0);
@@ -177,7 +242,7 @@ void rechneZungenTon(const ZungenSpiel& s, const ZungenAnschlag& a, std::vector<
     std::vector<double> summe(static_cast<std::size_t>(frames), 0.0), ton;
     // das Ventil der Taste oeffnet fuer alle ihre Zungen gleich: der Bend aus der Kurve der gespielten Note (ZV9 a)
     ZungenAnschlag b = a;
-    if (b.ventilFaktor <= 0.0) b.ventilFaktor = ventilFuerCent(s, a.note, a.pitchCent);
+    if (b.ventilFaktor <= 0.0 && a.pitchVerlauf.punkte.empty()) b.ventilFaktor = ventilFuerCent(s, a.note, a.pitchCent);
     bool erster = true;
     for (const Chor& c : choere)
     {

@@ -54,6 +54,10 @@ struct KernAuskunft
     /// `korpusImpulsantwort`); sonst rechnet der Kern ihn selbst (Klassen 4 und 5, IK2-10 a) und der Creator zeigt
     /// keinen Kasten *Body* (CK1 a, §6a 1; 34g)
     bool koerperAnDerSchicht = false;
+    /// der Kern regt dauernd an (Wind, Bogen, Atem — SK4 a, ZV3 a): die Expression ist die Staerke der Anregung, nicht ein
+    /// Pegel. Die App gibt ihm die Spuren von Muster und Clip ueber die Zeit in den Auftrag und legt die Expression nicht
+    /// als Pegel hinter den Ton (34j-7; `bar` mit Bogen nennt `expression` und bleibt beim Pegel)
+    bool anregungDauernd = false;
 
     [[nodiscard]] bool operator==(const KernAuskunft&) const = default;
 };

@@ -336,7 +336,8 @@ TEST_CASE("InstrumentModels 34j-2 Kern freeReed: Tafel, Fabrik, Vorlagen, Werte 
     CHECK(t.tafel.gruppen == std::vector<std::string>{"Keys", "Reed", "Chamber", "Wind", "Ranks", "Bass ranks", "Case", "Tunable", "Output"});
     CHECK(t.auskunft.rechenweg == Rechenweg::Note);
     CHECK_FALSE(t.auskunft.koerperAnDerSchicht);
-    CHECK(t.auskunft.spuren == std::vector<std::string>{"expression", "pitch", "vibrato"});
+    CHECK(t.auskunft.spuren == std::vector<std::string>{"expression", "pitch", "vibrato", "bellows"});
+    CHECK(t.auskunft.anregungDauernd);
     CHECK(t.auskunft.innere == std::vector<std::string>{std::string(kInnereSpitze)});
     std::vector<std::string> gestimmt, kurven;
     for (const ParameterAngabe& a : t.tafel.werte)
@@ -630,6 +631,45 @@ TEST_CASE("InstrumentModels 34j-2 IC test_zunge: Determinismus ueber Threads, In
     leer.frames = 10;
     k->rechne(leer, t);
     CHECK(t == std::vector<float>(10, 0.0f));
+}
+
+TEST_CASE("InstrumentModels 34j-7 Kern freeReed: laufender Wind — konstante Spur Bit fuer Bit, Balgwechsel als Spur")
+{
+    // eine Spur mit gleichen Punkten rechnet wie ein fester Wert (34j-7: „konstante Spur Bit fuer Bit wie 34j-6“)
+    const Beleg& b = beleg();
+    const auto zwei = [](std::string_view name, double w) { return Spur{std::string(name), {SpurPunkt{0, w}, SpurPunkt{12000, w}}}; };
+    for (const Vorlage& v : vorlagen())
+    {
+        CAPTURE(v.name);
+        const int tief = std::max(v.spiel.noteMin, v.spiel.bassAb), mitte = (tief + v.spiel.noteMax) / 2;
+        const std::string basis = "zunge_" + v.spiel.name + "_m" + std::to_string(mitte);
+        CHECK(kernAbdruck(v.name, mitte, 19200, {zwei(spur::kExpression, 0.5)}) == b.abdruck.at(basis + "_e05"));
+        CHECK(kernAbdruck(v.name, mitte, 19200, {zwei(spur::kExpression, 0.5), zwei(spur::kPitch, -20.0)}) == b.abdruck.at(basis + "_bend"));
+        CHECK(kernAbdruck(v.name, mitte, 19200, {zwei(spur::kExpression, 0.5), zwei(kSpurBalg, 0.0)}) == b.abdruck.at(basis + "_e05"));
+    }
+    // das Vibrato als konstante Spur gleich dem festen Wert
+    CHECK(kernAbdruck("melodica", 68, 19200, {zwei(spur::kExpression, 0.5), zwei(spur::kVibrato, 20.0)}) ==
+          kernAbdruck("melodica", 68, 19200, {spurAm(spur::kExpression, 0.5), spurAm(spur::kVibrato, 20.0)}));
+    // der Balgwechsel als Spur (0 → 1 bei 0,2 s): der Druck bricht ein wie beim festen Wechsel `balgwechselS`, nur an
+    // diesem Frame; davor gleich dem Ton ohne Wechsel
+    ZungenAnschlag w = ton(69, 0.5, 0.4);
+    w.balgVerlauf = Spur{std::string(kSpurBalg), {SpurPunkt{0, 0.0}, SpurPunkt{9600, 0.0}, SpurPunkt{9600, 1.0}}};
+    std::vector<float> mit, ohne, fest;
+    rechneZungenTon(akkordeon(), w, mit, kFrames);
+    rechneZungenTon(akkordeon(), ton(69, 0.5, 0.4), ohne, kFrames);
+    ZungenAnschlag f = ton(69, 0.5, 0.4);
+    f.balgwechselS = 0.2;
+    rechneZungenTon(akkordeon(), f, fest, kFrames);
+    CHECK(std::equal(mit.begin(), mit.begin() + 9600, ohne.begin()));
+    CHECK(mit != ohne);
+    const auto energie = [](const std::vector<float>& t, std::size_t von, std::size_t bis) {
+        double e = 0.0;
+        for (std::size_t i = von; i < bis; ++i) e += double(t[i]) * double(t[i]);
+        return e;
+    };
+    // im Einbruch leiser, und so tief wie der feste Wechsel (auf 1 %)
+    CHECK(energie(mit, 10080, 12480) < 0.8 * energie(ohne, 10080, 12480));
+    CHECK(energie(mit, 9600, 19200) == doctest::Approx(energie(fest, 9600, 19200)).epsilon(0.01));
 }
 
 TEST_CASE("InstrumentModels 34j-6 Waechter freeReed: jede Taste deckt den Windbereich")
@@ -1034,6 +1074,228 @@ TEST_CASE("InstrumentModels 34j-6 Messfall freeReed: die Zielgroessen von 34j-5 
         for (std::size_t a = 0; a < ablagen.size(); ++a) o << " " << ablagen[a].name << " " << groesster[a] << " ct;";
         o << "\n";
         MESSAGE(s.name << ": Fehler der Ablage " << groesster[0] << " / " << groesster[1] << " / " << groesster[2] << " Cent");
+    }
+    // 34j-7: der Pegel ueber der Staerke (Stufe → Staerke, SK4 a, TM1 a) und der Ausklang nach dem Wind (Nachklang)
+    o << "\n## 34j-7 Pegel ueber der Staerke — ganzer Ton, Lautheit gegen Staerke 1 (LU), jede vierte Taste\n";
+    for (const Vorlage& v : vorlagen())
+    {
+        const ZungenSpiel s = spielGestimmt(v.name);
+        std::vector<int> noten;
+        for (int n = s.noteMin; n <= s.noteMax; n += 4) noten.push_back(n);
+        constexpr int kStufen = 11;
+        std::vector<double> l(noten.size() * kStufen);
+        parallelJe(l.size(), [&](std::size_t k) { l[k] = tonLufs(s, noten[k / kStufen], static_cast<double>(k % kStufen) / 10.0); });
+        std::vector<double> mittel(kStufen, 0.0), lo(kStufen, 1e9), hi(kStufen, -1e9);
+        for (std::size_t i = 0; i < noten.size(); ++i)
+            for (int j = 0; j < kStufen; ++j)
+            {
+                const double d = l[i * kStufen + j] - l[i * kStufen + kStufen - 1];
+                mittel[j] += d / static_cast<double>(noten.size());
+                lo[j] = std::min(lo[j], d);
+                hi[j] = std::max(hi[j], d);
+            }
+        const double dyn = -mittel[0];
+        double abweichung = 0.0;
+        for (int j = 0; j < kStufen; ++j) abweichung = std::max(abweichung, std::abs(mittel[j] + dyn * (1.0 - j / 10.0)));
+        o << "\n### " << s.name << "\n\n| Staerke | Mittel | von | bis |\n|---|---|---|---|\n";
+        for (int j = 0; j < kStufen; ++j)
+        {
+            char z[120];
+            std::snprintf(z, sizeof z, "| %.1f | %+.1f | %+.1f | %+.1f |\n", j / 10.0, mittel[j], lo[j], hi[j]);
+            o << z;
+        }
+        // die Stufe, an der die gemessene Kurve den Pegel trifft, gegen die Gerade s = 1 + Stufe/Dynamik
+        o << "\nDynamik (Staerke 0 → 1) " << dyn << " LU; groesste Abweichung der Kurve von der Geraden " << abweichung << " LU\n\n| Stufe | Staerke aus der Kurve | aus der Geraden |\n|---|---|---|\n";
+        for (const double stufe : {-3.0, -6.0, -12.0, -20.0, -30.0})
+        {
+            double sk = 0.0;
+            for (int j = kStufen - 1; j > 0; --j)
+                if (mittel[j - 1] <= stufe && stufe <= mittel[j])
+                {
+                    sk = (j - 1 + (stufe - mittel[j - 1]) / (mittel[j] - mittel[j - 1])) / 10.0;
+                    break;
+                }
+            char z[120];
+            std::snprintf(z, sizeof z, "| %.0f | %.3f | %.3f |\n", stufe, sk, std::max(0.0, 1.0 + stufe / dyn));
+            o << z;
+        }
+        MESSAGE(s.name << ": Dynamik " << dyn << " LU, Abweichung von der Geraden " << abweichung << " LU");
+    }
+    // Drei Abbildungen Stufe → Staerke gegen das Ziel „eine Note bei −x dB klingt x LU leiser, hoechstens bis zur
+    // Dynamik der Taste“, am Ton nachgemessen: a je Taste an ihrer Kurve (Raster 2 dB, dazwischen linear), b an der
+    // mittleren Kurve des Instruments, c die Gerade s = 1 + Stufe/Dynamik
+    o << "\n## 34j-7 Stufe → Staerke: Fehler gegen das Ziel (LU), am Ton nachgemessen, jede zweite Taste\n\n"
+         "| Instrument | a je Taste, Raster 2 dB | b mittlere Kurve | c Gerade |\n|---|---|---|---|\n";
+    for (const Vorlage& v : vorlagen())
+    {
+        const ZungenSpiel s = spielGestimmt(v.name);
+        std::vector<int> noten;
+        for (int n = s.noteMin; n <= s.noteMax; n += 2) noten.push_back(n);
+        constexpr int kRaster = 21;  // Staerke 0, 0,05 … 1
+        std::vector<double> kurve(noten.size() * kRaster);
+        parallelJe(kurve.size(), [&](std::size_t k) { kurve[k] = tonLufs(s, noten[k / kRaster], static_cast<double>(k % kRaster) / 20.0); });
+        // relativ zu Staerke 1; die Staerke zu einem Pegel: von oben die erste Stelle, an der die Kurve ihn erreicht
+        const auto staerkeFuer = [](const std::vector<double>& l, double ziel) {
+            if (ziel >= 0.0) return 1.0;
+            for (int j = kRaster - 1; j > 0; --j)
+                if (l[static_cast<std::size_t>(j - 1)] <= ziel && ziel <= l[static_cast<std::size_t>(j)])
+                {
+                    const double u = (ziel - l[static_cast<std::size_t>(j - 1)]) / (l[static_cast<std::size_t>(j)] - l[static_cast<std::size_t>(j - 1)]);
+                    return (j - 1 + u) / 20.0;
+                }
+            return 0.0;
+        };
+        std::vector<std::vector<double>> rel(noten.size(), std::vector<double>(kRaster));
+        std::vector<double> mittel(kRaster, 0.0);
+        for (std::size_t i = 0; i < noten.size(); ++i)
+            for (int j = 0; j < kRaster; ++j)
+            {
+                rel[i][static_cast<std::size_t>(j)] = kurve[i * kRaster + j] - kurve[i * kRaster + kRaster - 1];
+                mittel[static_cast<std::size_t>(j)] += rel[i][static_cast<std::size_t>(j)] / static_cast<double>(noten.size());
+            }
+        const double dyn = -mittel[0];
+        const std::vector<double> stufen = {-1.0, -3.0, -5.0, -7.0, -11.0, -15.0, -19.0};
+        std::vector<double> soll(noten.size() * stufen.size()), sk[3];
+        for (auto& x : sk) x.resize(soll.size());
+        for (std::size_t i = 0; i < noten.size(); ++i)
+            for (std::size_t j = 0; j < stufen.size(); ++j)
+            {
+                const double st = stufen[j];
+                const std::size_t k = i * stufen.size() + j;
+                soll[k] = std::max(st, rel[i].front());
+                // a: Raster 2 dB je Taste, dazwischen linear
+                const double unten = std::floor(st / 2.0) * 2.0, oben = unten + 2.0;
+                const double su = staerkeFuer(rel[i], unten), so = staerkeFuer(rel[i], oben);
+                sk[0][k] = su + (st - unten) / 2.0 * (so - su);
+                sk[1][k] = staerkeFuer(mittel, st);
+                sk[2][k] = std::max(0.0, 1.0 + st / dyn);
+            }
+        std::vector<double> ist(3 * soll.size());
+        parallelJe(ist.size(), [&](std::size_t k) {
+            const std::size_t a = k / soll.size(), m = k % soll.size();
+            const std::size_t i = m / stufen.size();
+            ist[k] = tonLufs(s, noten[i], sk[a][m]) - kurve[i * kRaster + kRaster - 1];
+        });
+        double fehler[3] = {0, 0, 0};
+        for (std::size_t k = 0; k < ist.size(); ++k) fehler[k / soll.size()] = std::max(fehler[k / soll.size()], std::abs(ist[k] - soll[k % soll.size()]));
+        char z[200];
+        std::snprintf(z, sizeof z, "| %s | %.2f | %.2f | %.2f |\n", s.name.c_str(), fehler[0], fehler[1], fehler[2]);
+        o << z;
+        MESSAGE(s.name << ": Stufe → Staerke, groesster Fehler a " << fehler[0] << " / b " << fehler[1] << " / c " << fehler[2] << " LU");
+    }
+    // die Helligkeit ueber der Staerke: Schwerpunkt der ersten zwanzig Teiltoene bei Staerke 0 und 1 (ganzer Ton)
+    o << "\n## 34j-7 Helligkeit ueber der Staerke — Schwerpunkt der Teiltoene 1–20, Staerke 1 gegen 0\n\n| Instrument | Verhaeltnis min … max | Tasten heller |\n|---|---|---|\n";
+    for (const Vorlage& v : vorlagen())
+    {
+        const ZungenSpiel s = spielGestimmt(v.name);
+        std::vector<int> noten;
+        for (int n = s.noteMin; n <= s.noteMax; n += 4) noten.push_back(n);
+        std::vector<double> sp(2 * noten.size());
+        parallelJe(sp.size(), [&](std::size_t k) {
+            const int n = noten[k / 2];
+            std::vector<float> t;
+            rechneZungenTon(s, ton(n, k % 2 == 0 ? 0.0 : 1.0, 1.0), t, 57600);
+            const double f0 = hzVon(n);
+            double summe = 0.0, gewicht = 0.0;
+            for (int h = 1; h <= 20 && h * f0 < 20000.0; ++h)
+            {
+                const double b = band(t, 28800, 9600, h * f0);
+                summe += h * f0 * b;
+                gewicht += b;
+            }
+            sp[k] = gewicht > 0.0 ? summe / gewicht : 0.0;
+        });
+        double lo = 1e9, hi = 0.0;
+        int heller = 0;
+        for (std::size_t i = 0; i < noten.size(); ++i)
+        {
+            const double r = sp[2 * i + 1] / sp[2 * i];
+            lo = std::min(lo, r);
+            hi = std::max(hi, r);
+            heller += r > 1.0 ? 1 : 0;
+        }
+        char z[200];
+        std::snprintf(z, sizeof z, "| %s | %.2f … %.2f | %d von %zu |\n", s.name.c_str(), lo, hi, heller, noten.size());
+        o << z;
+        MESSAGE(s.name << ": Schwerpunkt ff/pp " << lo << " … " << hi << ", heller an " << heller << " von " << noten.size());
+    }
+    o << "\n## 34j-7 Ausklang nach dem Wind — bis −60 dB des gehaltenen Tons (Expression 0,5, ganzer Ton), gegen 6,9 / (ζ·ω₀)\n\n"
+         "| Instrument | gemessen min … max (ms) | Formel min … max (ms) | ueber 1 s |\n|---|---|---|---|\n";
+    for (const Vorlage& v : vorlagen())
+    {
+        const ZungenSpiel s = spielGestimmt(v.name);
+        const int anzahl = s.noteMax - s.noteMin + 1;
+        std::vector<double> gemessen(static_cast<std::size_t>(anzahl)), formel(static_cast<std::size_t>(anzahl));
+        std::vector<double> beiPp(static_cast<std::size_t>(anzahl)), beiFf(static_cast<std::size_t>(anzahl));
+        const auto ausklang = [&](int n, double e) {
+            std::vector<float> t;
+            rechneZungenTon(s, ton(n, e, 0.5), t, 48000 * 21 / 2);
+            const std::size_t block = 240;
+            double ref = 0.0;
+            for (std::size_t k = 19200; k < 24000; ++k) ref += double(t[k]) * double(t[k]);
+            ref /= 4800.0;
+            std::size_t letzter = 24000;
+            for (std::size_t k = 24000; k + block <= t.size(); k += block)
+            {
+                double x = 0.0;
+                for (std::size_t j = 0; j < block; ++j) x += double(t[k + j]) * double(t[k + j]);
+                if (x / block > ref * 1e-6) letzter = k + block;
+            }
+            return 1e3 * static_cast<double>(letzter - 24000) / 48000.0;
+        };
+        parallelJe(gemessen.size(), [&](std::size_t i) {
+            const int n = s.noteMin + static_cast<int>(i);
+            beiPp[i] = ausklang(n, 0.0);
+            beiFf[i] = ausklang(n, 1.0);
+            std::vector<float> t;
+            rechneZungenTon(s, ton(n, 0.5, 0.5), t, 48000 * 21 / 2);
+            const std::size_t block = 240;
+            double ref = 0.0;
+            for (std::size_t k = 19200; k < 24000; ++k) ref += double(t[k]) * double(t[k]);
+            ref /= 4800.0;
+            std::size_t letzter = 24000;
+            for (std::size_t k = 24000; k + block <= t.size(); k += block)
+            {
+                double e = 0.0;
+                for (std::size_t j = 0; j < block; ++j) e += double(t[k + j]) * double(t[k + j]);
+                if (e / block > ref * 1e-6) letzter = k + block;
+            }
+            gemessen[i] = 1e3 * static_cast<double>(letzter - 24000) / 48000.0;
+            const double f0 = wertAn(s.eigenfrequenzJeNote, n, Skala::Logarithmisch);
+            formel[i] = 1e3 * 6.9078 / (zungeAn(s, n).zeta * 2.0 * kPi * f0);
+        });
+        int ueber = 0;
+        for (const double g : gemessen) ueber += g > 1000.0 ? 1 : 0;
+        char z[200];
+        std::snprintf(z, sizeof z, "| %s | %.0f … %.0f | %.0f … %.0f | %d von %d |\n", s.name.c_str(), *std::min_element(gemessen.begin(), gemessen.end()),
+                      *std::max_element(gemessen.begin(), gemessen.end()), *std::min_element(formel.begin(), formel.end()),
+                      *std::max_element(formel.begin(), formel.end()), ueber, anzahl);
+        o << z;
+        MESSAGE(z);
+        double vonPp = 1e9, bisPp = 0.0, vonFf = 1e9, bisFf = 0.0, anteilLo = 1e9, anteilHi = 0.0;
+        for (std::size_t i = 0; i < gemessen.size(); ++i)
+        {
+            vonPp = std::min(vonPp, beiPp[i] / gemessen[i]);
+            bisPp = std::max(bisPp, beiPp[i] / gemessen[i]);
+            vonFf = std::min(vonFf, beiFf[i] / gemessen[i]);
+            bisFf = std::max(bisFf, beiFf[i] / gemessen[i]);
+            anteilLo = std::min(anteilLo, gemessen[i] / formel[i]);
+            anteilHi = std::max(anteilHi, gemessen[i] / formel[i]);
+        }
+        char zz0[240];
+        std::snprintf(zz0, sizeof zz0, "%s: Ausklang bei Expression 0 / 1 gegen 0,5: %.2f … %.2f / %.2f … %.2f; gemessen gegen die Formel %.2f … %.2f",
+                      s.name.c_str(), vonPp, bisPp, vonFf, bisFf, anteilLo, anteilHi);
+        o << "\n" << zz0 << "\n";
+        MESSAGE(zz0);
+        o << "\n<details><summary>je Taste (" << s.name << ")</summary>\n\n| Note | gemessen ms | Expression 0 | Expression 1 | Formel ms |\n|---|---|---|---|---|\n";
+        for (int i = 0; i < anzahl; i += 3)
+        {
+            const auto k = static_cast<std::size_t>(i);
+            char zz[120];
+            std::snprintf(zz, sizeof zz, "| %d | %.0f | %.0f | %.0f | %.0f |\n", s.noteMin + i, gemessen[k], beiPp[k], beiFf[k], formel[k]);
+            o << zz;
+        }
+        o << "\n</details>\n";
     }
     std::ofstream f(ziel, std::ios::binary);
     f << o.str();

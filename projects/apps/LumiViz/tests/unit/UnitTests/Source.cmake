@@ -158,6 +158,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopStab.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopTrommel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKlasse1.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopZunge.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopModelled.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Hoerlisten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopDehner.cpp"

@@ -2939,7 +2939,9 @@ Umfang (Annahme), Amplitude der Mundharmonika über 15 % der Länge, F1 bei 200 
 `Bibliothek_offen.md`; **34j-6 erledigt S191** (Kern `freeReed` Rechenfassung 2, Journal J70, Messung
 [2026-11-11_S191_messung_34j6.md](modellierung/zunge/proben/2026-11-11_S191_messung_34j6.md): der Kern gibt die Zahlen
 des Prüfstands wieder; ZV8 a — Bend je Taste auf dem Raster 2^(−1/4) mit Grenze, ZV9 a — `pitch` am Beginn der Note;
-F1 bei 200 Pa als benannte Ausnahme im Wächter); nächster Schritt **34j-7 mit Opus** — laufender Wind), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+F1 bei 200 Pa als benannte Ausnahme im Wächter); **34j-7 in Arbeit seit 2026-11-11** (S191, laufender Wind gebaut, Journal
+J71); offen in 34j-7: ZV10 a (Stufe → Stärke je Taste an der gemessenen Kurve), ZV11 a (Nachklang als gestimmte Kurve je
+Taste), danach ZV12 a (Befund „lauter wird dunkler“ vor 34j-8 untersuchen) — alles Konzept §6), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6469,7 +6471,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.339.0 | 2026-11-11 | Session 191 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-6 erledigt — Kern `freeReed` Rechenfassung 2 (Kurven je Taste, ein Windbereich, f₀ am mittleren Druck, Bass 8′ + 4′, Bend je Taste), ZV8 a, ZV9 a; Messung `modellierung/zunge/proben/2026-11-11_S191_messung_34j6.md`. |
+| 1.339.0 | 2026-11-11 | Session 191 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-6 erledigt — Kern `freeReed` Rechenfassung 2 (Kurven je Taste, ein Windbereich, f₀ am mittleren Druck, Bass 8′ + 4′, Bend je Taste), ZV8 a, ZV9 a; Messung `modellierung/zunge/proben/2026-11-11_S191_messung_34j6.md`. 34j-7 begonnen (laufender Wind); ZV10 a, ZV11 a, ZV12 a. |
 | 1.338.0 | 2026-11-11 | Session 190 (Fable 5.2). §6 Anbindung InstrumentsCalculation: 34j-4 erledigt — Recherche und Quellen der Klasse 10 (28 Arbeiten in der Ablage, drei Agentenberichte, Quellenlage gegengelesen); ZQ1 a, ZQ2 a, ZH1 a–ZH3 a. `Bibliothek_offen.md`: Abschnitt Durchschlagende Zunge. 34j-5 gerechnet — Prüfstand am Kern, Vorgaben je Taste für Akkordeon, Harmonium, Mundharmonika, Melodica, Bend über das Ventil; ZV4 a–ZV7 a; nächster Schritt 34j-6. |
 | 1.337.0 | 2026-11-11 | Session 189 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-1 erledigt — Beleg aus der Vorlage `werte/zunge_ic.txt` (49 Abdrücke, je vier Bezüge nach IC und nach der Probe von LumiViz, 524 Kurvenpunkte; Programm `anbindung-ic/abdruck_zunge.cpp`), Journal J66; 34j-2 erledigt — Kern `freeReed` unter `InstrumentModels/zunge/`, Messen in `InstrumentMeasure/ZungeStimmen`, `test_InstrumentModelsZunge` (9 Fälle, eng unter Release-clang und Testing-MSVC grün), Journal J67, J68; 34j-3 erledigt — Stimmer `zungeStimmer` (alle vier Bit für Bit wie IC `Stimmung.inc`, 42 s mit `LUMIVIZ_34J_STIMMEN=1`), zwei Fälle mehr, Journal J69. |
 | 1.336.0 | 2026-11-11 | Session 188 (Fable 5.2). §6 Anbindung InstrumentsCalculation: 34j geplant — Befund an der IC-Vorlage der Zunge, ZV1 a–ZV3 a, Teilplan 34j-1 bis 34j-10 im Konzept §6. |

@@ -554,6 +554,15 @@ struct Instrument
 /// unter dem Abdruck der Werte). `nullptr` fuer eine andere Schicht oder einen unbekannten Kern.
 [[nodiscard]] std::shared_ptr<const kern::Tonkern> tonkernFuer(const Schicht& schicht);
 
+/// Ist die Schicht eine Kern-Schicht, deren Kern dauernd anregt (`kern::KernAuskunft::anregungDauernd`, 34j-7, ZV3 a)?
+/// Dann ist die Expression die Staerke der Anregung: sie geht mit Pitch und Vibrato als Spur in den Auftrag und wirkt
+/// nicht als Pegel hinter dem Ton.
+[[nodiscard]] bool anregungDauernd(const Schicht& schicht);
+/// Expression (Muster mal Clip), Pitch und Vibrato eines Tons als Spuren des Kerns, in Frames ab dem Einsatz der Schicht
+/// (34j-7): eine Expression allein mit ihren Punkten, beide zusammen als Produkt an den Punkten beider und dazwischen je
+/// Millisekunde; an einem Sprung der Wert davor einen Frame vorher.
+void haengeVerlaeufeAn(const TonAngabe& ton, int rate, std::int64_t einsatz, kern::Tonauftrag& auftrag);
+
 // --- die Datei `.lvinst` (Entscheide Patrik S110, I2 b und I3 a; S111, F1 a) --
 // Ein Instrument ist eine Datei, abgelegt wie die Klaenge des Kits: die
 // mitgelieferten unter `asset/loop/instruments`, eigene irgendwo. Im Programm

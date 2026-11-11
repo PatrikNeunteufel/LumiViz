@@ -37,6 +37,7 @@
 #pragma once
 
 #include "InstrumentCore/Kurve.hpp"
+#include "InstrumentCore/Tonauftrag.hpp"
 
 #include <cstdint>
 #include <string>
@@ -92,8 +93,18 @@ inline constexpr int kBendStufen = 7;
 static_assert(kBendStufen == 7, "ZungenSpiel::bendCentJeStufe mitziehen");
 [[nodiscard]] double bendStufe(int k);  ///< k = 0 … kBendStufen − 1
 
-/// Die Ventiloeffnung zu einem Bend in Cent an einer Note (ZV9 a): nur abwaerts, gekappt an der Grenze der Taste, ueber
-/// die gestimmte Kurve linear in ln(Oeffnung); 1 ohne Bend oder ohne gestimmte Kurven.
+/// Der Bend einer Taste, aus den gestimmten Kurven gelesen: die Punkte (Oeffnung, Cent) von offen bis zur Grenze.
+struct BendDerTaste
+{
+    bool bendet = false;
+    std::vector<double> oeffnung;  ///< fallend, zuerst 1
+    std::vector<double> cent;      ///< zuerst 0
+};
+[[nodiscard]] BendDerTaste bendAn(const ZungenSpiel& s, int note);
+/// Die Ventiloeffnung zu einem Bend in Cent (ZV9 a): nur abwaerts, gekappt an der Grenze der Taste, linear in
+/// ln(Oeffnung); 1 ohne Bend.
+[[nodiscard]] double oeffnungFuer(const BendDerTaste& b, double cent);
+/// Dasselbe an einer Note: `oeffnungFuer(bendAn(s, note), cent)`.
 [[nodiscard]] double ventilFuerCent(const ZungenSpiel& s, int note, double cent);
 
 /// Die Groessen einer Zunge an ihrer Tonhoehe, wie der Kern sie aus den Kurven liest.
@@ -122,6 +133,10 @@ struct ZungenAnschlag
     double vibratoHz = 5.0;
     double balgwechselS = -1.0;  ///< ≥ 0: Druckeinbruch (F-3 a)
     int rate = 48000;
+    /// 34j-7 (ZV3 a): die Verlaeufe ueber die Zeit, in Frames ab dem Beginn des Tons (linear zwischen den Punkten wie
+    /// `spurWert`); ohne Punkte gilt der feste Wert oben. `balg`: die Richtung des Balgs 0/1 — an jedem Wechsel (der
+    /// Wert geht ueber 0,5) bricht der Druck ein wie bei `balgwechselS`.
+    Spur expressionVerlauf, pitchVerlauf, vibratoVerlauf, balgVerlauf;
 };
 
 /// Die innere Groesse `reedTip`: die Spitze der Auslenkung in der zweiten Haelfte des Haltens; mit `auslenkung` die

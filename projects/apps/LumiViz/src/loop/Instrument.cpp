@@ -2285,6 +2285,69 @@ bool stufeImNamen(const Instrument& instrument)
     });
 }
 
+bool anregungDauernd(const Schicht& schicht)
+{
+    if (!istKernSchicht(schicht)) return false;
+    const kern::KernTyp* typ = kern::kerne().typ(schicht.kernName.toStdString());
+    return typ != nullptr && typ->auskunft.anregungDauernd;
+}
+
+namespace
+{
+
+/// Punkte in ms ab dem Anschlag als Spurpunkte in Frames ab dem Einsatz der Schicht.
+template <typename P, typename W>
+std::vector<kern::SpurPunkt> spurPunkte(const std::vector<P>& punkte, W wert, int rate, std::int64_t einsatz)
+{
+    std::vector<kern::SpurPunkt> s;
+    s.reserve(punkte.size());
+    for (const P& p : punkte) s.push_back({std::llround(p.ms * static_cast<double>(rate) / 1000.0) - einsatz, wert(p)});
+    return s;
+}
+
+}  // namespace
+
+void haengeVerlaeufeAn(const TonAngabe& ton, int rate, std::int64_t einsatz, kern::Tonauftrag& auftrag)
+{
+    const auto tausendstel = [](const PegelPunkt& p) { return p.tausendstel / 1000.0; };
+    const auto cent = [](const TonPunkt& p) { return static_cast<double>(p.cent); };
+    // die Expression: Muster mal Clip (SK4 a). Ist eine leer, die andere wie sie ist; sonst das Produkt an jedem Punkt
+    // beider und dazwischen je Millisekunde (zwei lineare Stuecke ergeben eine Parabel)
+    if (!ton.ausdruckMuster.empty() || !ton.ausdruckClip.empty())
+    {
+        kern::Spur e{std::string(kern::spur::kExpression), {}};
+        if (ton.ausdruckClip.empty())
+            e.punkte = spurPunkte(ton.ausdruckMuster, tausendstel, rate, einsatz);
+        else if (ton.ausdruckMuster.empty())
+            e.punkte = spurPunkte(ton.ausdruckClip, tausendstel, rate, einsatz);
+        else
+        {
+            const kern::Spur m{"", spurPunkte(ton.ausdruckMuster, tausendstel, rate, einsatz)};
+            const kern::Spur c{"", spurPunkte(ton.ausdruckClip, tausendstel, rate, einsatz)};
+            std::vector<kern::Frames> stellen;
+            for (const kern::SpurPunkt& p : m.punkte) stellen.push_back(p.frame);
+            for (const kern::SpurPunkt& p : c.punkte) stellen.push_back(p.frame);
+            std::sort(stellen.begin(), stellen.end());
+            stellen.erase(std::unique(stellen.begin(), stellen.end()), stellen.end());
+            const kern::Frames ms = std::max<kern::Frames>(1, rate / 1000);
+            const auto bei = [&](kern::Frames f) { return kern::spurWert(m, f, 1.0) * kern::spurWert(c, f, 1.0); };
+            // an einem Sprung (zwei Punkte an derselben Stelle) der Wert davor und danach
+            const auto davor = [&](kern::Frames f) { return kern::spurWert(m, f - 1, 1.0) * kern::spurWert(c, f - 1, 1.0); };
+            for (std::size_t i = 0; i < stellen.size(); ++i)
+            {
+                const kern::Frames f = stellen[i];
+                if (i > 0)
+                    for (kern::Frames g = stellen[i - 1] + ms; g < f; g += ms) e.punkte.push_back({g, bei(g)});
+                if (i > 0 && davor(f) != bei(f) && f - 1 > e.punkte.back().frame) e.punkte.push_back({f - 1, davor(f)});
+                e.punkte.push_back({f, bei(f)});
+            }
+        }
+        auftrag.spuren.push_back(std::move(e));
+    }
+    if (!ton.tonhoehe.empty()) auftrag.spuren.push_back({std::string(kern::spur::kPitch), spurPunkte(ton.tonhoehe, cent, rate, einsatz)});
+    if (!ton.vibrato.empty()) auftrag.spuren.push_back({std::string(kern::spur::kVibrato), spurPunkte(ton.vibrato, cent, rate, einsatz)});
+}
+
 std::shared_ptr<const kern::Tonkern> tonkernFuer(const Schicht& schicht)
 {
     if (!istKernSchicht(schicht)) return nullptr;
@@ -2967,6 +3030,8 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             if (angabe != nullptr)
                 for (const KernSpurWert& w : angabe->kernSpuren)
                     auftrag.spuren.push_back(kern::Spur{w.name.toStdString(), {kern::SpurPunkt{0, w.wert}}});
+            // Stufe 34j-7 (ZV3 a): ein Kern mit dauernder Anregung liest Expression, Pitch und Vibrato ueber die Zeit
+            if (angabe != nullptr && anregungDauernd(schicht)) haengeVerlaeufeAn(*angabe, rate, einsatz, auftrag);
             if (!schicht.koerper.isEmpty())
                 if (const std::shared_ptr<const BodenImKlang> boden = bodenVon(schicht.koerper))
                     bodenKlang = bodenAntwortFuer(*boden, ton, rate);
@@ -3064,8 +3129,9 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
                 rechneForm(schicht, hz, huelle, rate, eine, weg);
             else
                 rechneSchwingung(schicht, hz, huelle, rate, eine, weg);
-            // Stufe 28c-2b (SK12 a): eine Schicht ohne Saite nimmt die Expression am Ende
-            if (ausdruck)
+            // Stufe 28c-2b (SK12 a): eine Schicht ohne Saite nimmt die Expression am Ende — ausser ein Kern mit dauernder
+            // Anregung (34j-7, SK4 a): dort ist sie der Wind und steht schon im Auftrag
+            if (ausdruck && !(tonkern && anregungDauernd(schicht)))
             {
                 Ausdrucksweg::Leser leser(*ausdruck);
                 for (std::size_t i = 0; i + 1 < eine.size(); i += 2)

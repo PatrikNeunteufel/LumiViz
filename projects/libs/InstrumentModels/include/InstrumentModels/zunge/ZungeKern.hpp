@@ -47,6 +47,8 @@ inline constexpr std::string_view kBendGrenzeCent = "bendLimitCent";
 [[nodiscard]] std::string bendStufenName(int k);  ///< k = 0 … kBendStufen − 1
 /// Alle gestimmten Werte in der Reihenfolge der Tafel.
 [[nodiscard]] std::vector<std::string> gestimmteNamen();
+/// Die Spur der Balgrichtung (34j-7, ZV3 a): 0/1, am Wechsel bricht der Druck ein; im Loop erst mit 31g (wie `motor`).
+inline constexpr std::string_view kSpurBalg = "bellows";
 /// Der Bezug des Ausgangs.
 inline constexpr std::string_view kBezug = "outputReference";
 /// Die innere Groesse: die Spitze der Auslenkung der ersten Zunge / ihre Laenge.

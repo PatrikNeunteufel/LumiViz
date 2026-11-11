@@ -409,7 +409,8 @@ const KernTyp& kernTyp()
         t.tafel = baueTafel(vorlagen().front());
         t.auskunft.rechenweg = Rechenweg::Note;
         t.auskunft.stufeImNamen = true;
-        t.auskunft.spuren = {std::string(spur::kExpression), std::string(spur::kPitch), std::string(spur::kVibrato)};
+        t.auskunft.spuren = {std::string(spur::kExpression), std::string(spur::kPitch), std::string(spur::kVibrato), std::string(kSpurBalg)};
+        t.auskunft.anregungDauernd = true;  // 34j-7 (ZV3 a, SK4 a): die Expression ist der Wind, kein Pegel
         t.auskunft.innere = {std::string(kInnereSpitze)};
         t.auskunft.vorbereitungTeuer = false;
         t.auskunft.koerperAnDerSchicht = false;
@@ -464,9 +465,24 @@ ZungenAnschlag anschlagAus(const Tonauftrag& auftrag)
     const KettenNote& n = auftrag.noten.front();
     a.note = n.note;
     a.haltenS = static_cast<double>(n.ende - n.beginn) / auftrag.rate;
-    if (const Spur* e = findeSpur(auftrag, spur::kExpression)) a.expression = std::clamp(spurWert(*e, n.beginn, 1.0), 0.0, 1.0);
-    if (const Spur* p = findeSpur(auftrag, spur::kPitch)) a.pitchCent = spurWert(*p, n.beginn, 0.0);
-    if (const Spur* v = findeSpur(auftrag, spur::kVibrato)) a.vibratoCent = spurWert(*v, n.beginn, 0.0);
+    // der Wert am Beginn der Note; laeuft die Spur (mehr als ein Punkt), liest der Kern sie ueber die Zeit (34j-7, ZV3 a)
+    const auto lauf = [](const Spur* s) { return s != nullptr && s->punkte.size() > 1; };
+    if (const Spur* e = findeSpur(auftrag, spur::kExpression))
+    {
+        a.expression = std::clamp(spurWert(*e, n.beginn, 1.0), 0.0, 1.0);
+        if (lauf(e)) a.expressionVerlauf = *e;
+    }
+    if (const Spur* p = findeSpur(auftrag, spur::kPitch))
+    {
+        a.pitchCent = spurWert(*p, n.beginn, 0.0);
+        if (lauf(p)) a.pitchVerlauf = *p;
+    }
+    if (const Spur* v = findeSpur(auftrag, spur::kVibrato))
+    {
+        a.vibratoCent = spurWert(*v, n.beginn, 0.0);
+        if (lauf(v)) a.vibratoVerlauf = *v;
+    }
+    if (const Spur* b = findeSpur(auftrag, kSpurBalg); b != nullptr && !b->punkte.empty()) a.balgVerlauf = *b;
     return a;
 }
 
