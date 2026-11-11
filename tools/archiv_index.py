@@ -4,7 +4,9 @@ Archiv auf der Wechselplatte —, auch wenn das Archiv nicht eingesteckt ist.
     python tools/archiv_index.py [--archiv <Laufwerk>]     z. B.  --archiv E
 
 Je Ablage zwei Abschnitte: **Systemplatte** (`…\\Visuals_Project\\cmake\\<ablage>`) und **Wechselplatte**
-(`<Laufwerk>:\\<ablage>`; ohne Angabe wird D: bis Z: gesucht). Ist ein Ort nicht da, bleibt sein Abschnitt aus dem
+(`<Laufwerk>:\\samples`, die Quellen darunter in `<Laufwerk>:\\samples\\quellen` — S189, sonst wie frueher
+`<Laufwerk>:\\quellen`; ohne Angabe wird D: bis Z: gesucht). Ein Ordner `quellen` direkt in der Ablage der Samples ist das
+Archiv der Quellen und zaehlt nicht zu den Samples. Ist ein Ort nicht da, bleibt sein Abschnitt aus dem
 vorigen Index stehen (mit dem Datum, an dem er geschrieben wurde). Schreibt
 `projects/apps/LumiViz/docs/archiv/Index_samples.md` und `Index_quellen.md`.
 
@@ -28,6 +30,9 @@ ZIEL = REPO / "projects" / "apps" / "LumiViz" / "docs" / "archiv"
 BEGLEIT = ("HERKUNFT.md", "README.md", "readme.txt", "Readme.txt")
 MERKMAL = re.compile(r"lizenz|license|licence|herkunft|quelle|source|url|doi|zenodo|cc[- ]by|cc0|public domain", re.I)
 OHNE = {"README.md"}  # die Beschreibung der Ablage selbst
+QUELLEN_IN_SAMPLES = "quellen"  # S189: das Archiv der Quellen liegt unter dem der Samples
+# wo eine Ablage auf der Wechselplatte liegt, in dieser Reihenfolge gesucht
+ARCHIV = {"samples": ("samples",), "quellen": ("samples/" + QUELLEN_IN_SAMPLES, "quellen")}
 
 KOPF = {
     "samples": ["# Index: Samples, Messdaten und Hörproben", "",
@@ -38,7 +43,8 @@ KOPF = {
                 "> `tools/archiv_index.py`."],
     "quellen": ["# Index: fremde Dokumente", "",
                 "> Ablage `…\\Visuals_Project\\cmake\\quellen` — Paper, Bücher, Noten und andere Dokumente, die aus",
-                "> urheberrechtlichen Gründen nicht ins Repo gehören; archiviert auf der Wechselplatte (`<Laufwerk>:\\quellen`).",
+                "> urheberrechtlichen Gründen nicht ins Repo gehören; archiviert auf der Wechselplatte unter",
+                "> `<Laufwerk>:\\samples\\quellen` (seit S189; früher `<Laufwerk>:\\quellen`, der Buchstabe kann wechseln).",
                 "> **Vor Gebrauch Patrik bitten, sie verfügbar zu machen.** Zitiert wird in den Berichten unter",
                 "> `docs/modellierung/` mit Seite. Erzeugt von `tools/archiv_index.py`."],
 }
@@ -52,12 +58,13 @@ def groesse(n):
         n /= 1024
 
 
-def dateien(ordner):
-    return [p for p in ordner.rglob("*") if p.is_file()]
+def dateien(ordner, ohne=None):
+    """Alle Dateien unter `ordner`; `ohne` ein Unterordner, der nicht mitzaehlt."""
+    return [p for p in ordner.rglob("*") if p.is_file() and (ohne is None or ohne not in p.parents)]
 
 
-def zusammenfassung(ordner):
-    fs = dateien(ordner)
+def zusammenfassung(ordner, ohne=None):
+    fs = dateien(ordner, ohne)
     endungen = Counter((p.suffix.lower() or "(ohne)") for p in fs)
     return len(fs), sum(p.stat().st_size for p in fs), ", ".join(f"{e} {n}" for e, n in endungen.most_common(5))
 
@@ -81,9 +88,11 @@ def begleitzeilen(ordner):
 
 
 def eintraege_samples(wurzel):
-    """Quellen: Ordner mit HERKUNFT.md; ohne solche ein Ordner der ersten Ebene als Ganzes (ohne die Hoerproben)."""
+    """Quellen: Ordner mit HERKUNFT.md; ohne solche ein Ordner der ersten Ebene als Ganzes (ohne die Hoerproben und das
+    Archiv der Quellen)."""
     aus = []
-    for oben in sorted(p for p in wurzel.iterdir() if p.is_dir() and not p.name.startswith("$") and p.name != "Hoerproben"):
+    for oben in sorted(p for p in wurzel.iterdir()
+                       if p.is_dir() and not p.name.startswith("$") and p.name not in ("Hoerproben", QUELLEN_IN_SAMPLES)):
         mit = sorted(oben.rglob("HERKUNFT.md"))
         if mit:
             aus.extend(h.parent for h in mit)
@@ -115,8 +124,9 @@ def hoerproben(wurzel):
 def abschnitt_samples(wurzel):
     z = []
     eintraege = eintraege_samples(wurzel)
-    n_alle, b_alle, _ = zusammenfassung(wurzel)
-    z += [f"**Gesamt:** {n_alle} Dateien, {groesse(b_alle)}.", ""]
+    n_alle, b_alle, _ = zusammenfassung(wurzel, ohne=wurzel / QUELLEN_IN_SAMPLES)
+    z += [f"**Gesamt:** {n_alle} Dateien, {groesse(b_alle)}"
+          + (" (ohne das Archiv der Quellen in `quellen`)." if (wurzel / QUELLEN_IN_SAMPLES).is_dir() else "."), ""]
     if eintraege:
         z += ["| Quelle | Dateien | Größe | Endungen |", "|---|---|---|---|"]
         for e in eintraege:
@@ -172,9 +182,12 @@ def wurzeln(name, laufwerk):
     system = CMAKE / name
     wechsel = None
     for lw in ([laufwerk] if laufwerk else string.ascii_uppercase[3:]):
-        p = Path(f"{lw}:/") / name
-        if p.is_dir() and any(p.iterdir()):
-            wechsel = p
+        for teil in ARCHIV[name]:
+            p = Path(f"{lw}:/") / teil
+            if p.is_dir() and any(p.iterdir()):
+                wechsel = p
+                break
+        if wechsel is not None:
             break
     return {"system": system if system.is_dir() else None, "wechsel": wechsel}
 
