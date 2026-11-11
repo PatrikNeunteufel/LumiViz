@@ -790,7 +790,7 @@ bis 34j-10 Opus; 34j-4 und 34j-5 Fable (Herleitung aus mehreren Quellen).
 Abgeleitet: Namen nach IK2-8 a (Kern nach dem Verfahren, wie `bar`, `membrane`, `struckString`); Stärke nach SK4 a; die
 Hörliste von LumiViz löst die von IC ab wie bei den Klassen 1, 4, 5 (LG1 a).
 
-**Nicht in 34j** (in IC nicht gebaut, `../modellierung/zunge/ic/offen.md`; jede Zeile braucht Bedienung aus 31g oder eine
+**Nicht in 34j** (gebilligt Patrik S188; in IC nicht gebaut, `../modellierung/zunge/ic/offen.md`; jede Zeile braucht Bedienung aus 31g oder eine
 Quelle, die fehlt): Register als Spur (F-4 a — die Chöre stehen fest in der Tafel), Bisonorik und Bellows shake (F-3 a),
 Prolongement, Expression-Register und Percussion des Harmoniums (F-7 a), Bending und Overblow der Mundharmonika über den
 Vokaltrakt (F-6 a), Cassotto und Verdeck.
