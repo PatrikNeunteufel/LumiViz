@@ -18,6 +18,9 @@
  *   IC-Rechnung `normiere` am uebernommenen Kern gleich den Zeilen `bezug`.
  * - Die IC-Faelle aus `rechnung/klassen/10_zunge/test_zunge.cpp` (`4409088`) mit den IC-Grenzen; gemessen wird mit
  *   `InstrumentMeasure/ZungeStimmen` (IK2-2 a). Die Rechenzeit kommt mit 34j-9 (`*34j Rechenzeit*`).
+ * - Der Stimmer (34j-3): die Melodica ueber `stimmeUndNormiere` Bit fuer Bit gleich IC `Stimmung.inc`, mit Bezug und dem
+ *   Waechter fuer veraltete Werte; alle vier Instrumente nur mit `LUMIVIZ_34J_STIMMEN=1` (rechnet je Instrument einige
+ *   zehn Sekunden), ohne Variable nur eine Meldung.
  ****************************************************************************************
  */
 
@@ -30,10 +33,12 @@
 #include "InstrumentModels/zunge/ZungeKern.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <complex>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -479,4 +484,72 @@ TEST_CASE("InstrumentModels 34j-2 IC test_zunge: Determinismus ueber Threads, In
     leer.frames = 10;
     k->rechne(leer, t);
     CHECK(t == std::vector<float>(10, 0.0f));
+}
+
+namespace
+{
+
+/// Die Kurven des Belegs fuer ein Instrument (IC-Name) gegen eine Stimmung, Punkt fuer Punkt Bit fuer Bit.
+void pruefeStimmung(const std::string& icName, const lumi::messung::ZungenStimmung& st)
+{
+    CAPTURE(icName);
+    const auto& k = icBeleg().kurven.at(icName);
+    CHECK(st.eigenfrequenz.punkte == k.at("eigenfrequenz"));
+    CHECK(st.druckUnten.punkte == k.at("druckUnten"));
+    CHECK(st.druckOben.punkte == k.at("druckOben"));
+}
+
+}  // namespace
+
+TEST_CASE("InstrumentModels 34j-3 Stimmer freeReed: Melodica Bit fuer Bit wie IC, Bezug, Waechter fuer veraltete Werte")
+{
+    const std::vector<std::string> drei = {std::string(kEigenfrequenz), std::string(kDruckUnten), std::string(kDruckOben)};
+    REQUIRE(lumi::messung::stimmerFuer(lumi::messung::stimmer(), kKernName) != nullptr);
+    Werte w = werteAus(vorlage("melodica").spiel);
+    const auto beginn = std::chrono::steady_clock::now();
+    const lumi::messung::StimmBericht b = lumi::messung::stimmeUndNormiere(kerne(), lumi::messung::stimmer(), kKernName, w, true, true);
+    const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - beginn).count();
+    MESSAGE("Melodica gestimmt und normiert in " << dauer << " s auf " << poolThreads() << " Threads (32 Tasten)");
+    CHECK_MESSAGE(b.fehler.empty(), (b.fehler.empty() ? std::string() : b.fehler.front()));
+    CHECK(b.gestimmt == drei);
+    REQUIRE(b.mitBezug);
+    CHECK(hexVon(b.bezug) == icBeleg().bezugLv.at("Melodica"));
+    pruefeStimmung("Melodica", lumi::messung::ZungenStimmung{w.kurve(kEigenfrequenz), w.kurve(kDruckUnten), w.kurve(kDruckOben)});
+    CHECK(richteWerte(kernTyp().tafel, w).empty());
+    // der Waechter (IK2-11 a): frisch gestimmt nichts veraltet, der Bezug passt
+    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, w).empty());
+    CHECK_FALSE(lumi::messung::bezugVeraltet(kerne(), kKernName, w));
+    // absichtlich veraltet: eine Eingabe der Zunge geaendert — alle drei gestimmten Werte melden sich
+    Werte alt = w;
+    alt.setze("reedDamping", alt.zahl("reedDamping") * 1.5);
+    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, alt) == drei);
+    // ein fremder Abdruck an einem gestimmten Wert genuegt
+    Werte fremd = w;
+    fremd.merkeAbdruck(std::string(kDruckOben), "0000");
+    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, fremd) == std::vector<std::string>{std::string(kDruckOben)});
+    // ein falscher Bezug faellt auf
+    Werte bezug = w;
+    bezug.setze(std::string(kBezug), b.bezug * 1.01);
+    CHECK(lumi::messung::bezugVeraltet(kerne(), kKernName, bezug));
+}
+
+TEST_CASE("InstrumentModels 34j-3 Stimmer freeReed: alle vier Bit fuer Bit wie IC Stimmung.inc (LUMIVIZ_34J_STIMMEN=1)")
+{
+    const char* e = std::getenv("LUMIVIZ_34J_STIMMEN");
+    if (e == nullptr || std::string(e) != "1")
+    {
+        MESSAGE("LUMIVIZ_34J_STIMMEN=1 stimmt alle vier Instrumente am Modell (Melodica laeuft immer, im Fall davor)");
+        return;
+    }
+    double gesamt = 0.0;
+    for (const Vorlage& v : vorlagen())
+    {
+        const auto beginn = std::chrono::steady_clock::now();
+        const lumi::messung::ZungenStimmung st = lumi::messung::zungenStimmung(v.spiel);
+        const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - beginn).count();
+        gesamt += dauer;
+        MESSAGE(v.name << ": " << (v.spiel.noteMax - v.spiel.noteMin + 1) << " Tasten in " << dauer << " s");
+        pruefeStimmung(v.spiel.name, st);
+    }
+    MESSAGE("alle vier in " << gesamt << " s auf " << poolThreads() << " Threads (IC: 101 s auf vier)");
 }

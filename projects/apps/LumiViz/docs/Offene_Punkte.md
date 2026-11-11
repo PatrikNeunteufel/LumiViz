@@ -2925,8 +2925,9 @@ im Hörtest: L5 (die Listen hören).
 Danach **34j**
 (Klasse 10, Vorlage unter `harvest/instruments-calculation/`; **geplant S188:** Teilplan 34j-1 bis 34j-10 nach ZV1 a–ZV3 a,
 Befund [2026-11-11_S188_befund_ic_vorlage.md](modellierung/zunge/2026-11-11_S188_befund_ic_vorlage.md) — erst der Umzug
-Bit für Bit, dann die Vorgaben je Taste mit Quellen, ein Winddruck für alle Tasten, laufender Wind; **34j-1 und 34j-2
-erledigt S189** (Beleg `werte/zunge_ic.txt`, Kern `freeReed`, Journal J66–J68); nächster Schritt 34j-3), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+Bit für Bit, dann die Vorgaben je Taste mit Quellen, ein Winddruck für alle Tasten, laufender Wind; **34j-1 bis 34j-3
+erledigt S189** (Beleg `werte/zunge_ic.txt`, Kern `freeReed`, Stimmer, Journal J66–J69); nächster Schritt 34j-4 mit
+Fable — Recherche, Ladeliste vorher an Patrik), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6456,7 +6457,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.337.0 | 2026-11-11 | Session 189 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-1 erledigt — Beleg aus der Vorlage `werte/zunge_ic.txt` (49 Abdrücke, je vier Bezüge nach IC und nach der Probe von LumiViz, 524 Kurvenpunkte; Programm `anbindung-ic/abdruck_zunge.cpp`), Journal J66; 34j-2 erledigt — Kern `freeReed` unter `InstrumentModels/zunge/`, Messen in `InstrumentMeasure/ZungeStimmen`, `test_InstrumentModelsZunge` (9 Fälle, eng unter Release-clang und Testing-MSVC grün), Journal J67, J68. |
+| 1.337.0 | 2026-11-11 | Session 189 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-1 erledigt — Beleg aus der Vorlage `werte/zunge_ic.txt` (49 Abdrücke, je vier Bezüge nach IC und nach der Probe von LumiViz, 524 Kurvenpunkte; Programm `anbindung-ic/abdruck_zunge.cpp`), Journal J66; 34j-2 erledigt — Kern `freeReed` unter `InstrumentModels/zunge/`, Messen in `InstrumentMeasure/ZungeStimmen`, `test_InstrumentModelsZunge` (9 Fälle, eng unter Release-clang und Testing-MSVC grün), Journal J67, J68; 34j-3 erledigt — Stimmer `zungeStimmer` (alle vier Bit für Bit wie IC `Stimmung.inc`, 42 s mit `LUMIVIZ_34J_STIMMEN=1`), zwei Fälle mehr, Journal J69. |
 | 1.336.0 | 2026-11-11 | Session 188 (Fable 5.2). §6 Anbindung InstrumentsCalculation: 34j geplant — Befund an der IC-Vorlage der Zunge, ZV1 a–ZV3 a, Teilplan 34j-1 bis 34j-10 im Konzept §6. |
 | 1.335.0 | 2026-11-11 | Session 187 (Opus 5.5). §6 HS-4 untersucht (HS-4 a, HS4-1 a): Recherche, Wellenleiter, zwei Gesetze, Zielgröße nachgeprüft — ruht bis zu den Originalen. |
 | 1.334.0 | 2026-11-11 | Session 187 (Opus 5.5). §6 Hörtest, Befund (a): HS-2 a (Umfang an den Teiltönen von *Salamander*: der Vorteil des belegten Satzes ist echt), HS-3 a (ε und Q0 nach Kartofelev & Stulov 2014, Kontakt 32-fach, Celesta und Cimbalom mit; Dateien, Abdrücke mit Vermerk, Pegel, Loop-Werte, Klangfassung, Hörlisten `klasse1_34i`, `stab_34g` neu); HS3-1 a (Celesta-Spielweisen an Taste 72), HS3-2 a (`pv1` abgeschlossen); offen HS-4 (Helligkeit je Stärke im Diskant). |
