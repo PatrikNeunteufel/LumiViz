@@ -1,15 +1,23 @@
 /**
  ****************************************************************************************
  * @file   test_LoopZunge.cpp
- * @brief  Stufe 34j-7: der Kern `freeReed` im Ton der App — laufender Wind (docs/audio/Instrumente_IC_Konzept.md 34j-7,
- *         ZV3 a, SK4 a)
+ * @brief  Stufe 34j-7, 34j-8: der Kern `freeReed` im Ton der App — laufender Wind und die mitgelieferten Instrumente
+ *         `accordion`, `harmonium`, `melodica`, `harmonica` (docs/audio/Instrumente_IC_Konzept.md 34j-7, 34j-8, ZV3 a,
+ *         SK4 a, IK2-8 a)
  *
  * @author Patrik Neunteufel
  * @date   November 2026
  *
  * @details
- * Ohne Qt-Anwendung, ohne Ton, ohne Engine. Die Instrumente entstehen aus den Vorlagen des Kerns, gestimmt und normiert
- * wie `InstrumentTuneTool` (die Dateien kommen mit 34j-8).
+ * Ohne Qt-Anwendung, ohne Ton, ohne Engine. Liest vom Arbeitsordner aus — die Test-Exe aus dem Projekt-Root starten.
+ *
+ * - **Schreiben** (Muster `test_LoopStab.cpp`): `LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1` schreibt die vier Vorlagen als
+ *   `asset/loop/instruments/<name>.lvinst` mit dem Schreiber des Programms — ohne gestimmte Werte und Bezug. Danach je
+ *   Datei `InstrumentTuneTool <datei> --all --reference` und `python asset/loop/instrument_katalog.py`.
+ * - **Waechter** (ohne zu stimmen): jede Datei lesbar, Kern `freeReed`, ohne Pedale, ihre Werte die der Vorlage (bis auf
+ *   die gestimmten und den Bezug), die gestimmten Kurven und der Bezug Bit fuer Bit wie `werte/zunge_ic.txt` (die
+ *   schreibt der Stimmer, `test_InstrumentModelsZunge`), der Ton ueber den Kern Bit fuer Bit wie der Abdruck dort.
+ * - Die Faelle der App spielen die mitgelieferten Dateien, wie das Programm.
  *
  * - Ein Kern mit dauernder Anregung bekommt Expression, Pitch und Vibrato der Note als Spuren in den Auftrag; die
  *   Expression wirkt nicht als Pegel hinter dem Ton: eine Expression des Musters gleich einem festen Wert der Spur des
@@ -20,17 +28,30 @@
 
 #include <doctest.h>
 
+#include "InstrumentCore/Pruefsumme.hpp"
 #include "InstrumentMeasure/Bausteine.hpp"
 #include "InstrumentMeasure/ZungeStimmen.hpp"
 #include "InstrumentModels/Kerne.hpp"
 #include "InstrumentModels/zunge/ZungeKern.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Tastatur.hpp"
+
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <map>
 #include <numbers>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -51,27 +72,102 @@ const zunge::Vorlage& vorlage(std::string_view name)
     return zunge::vorlagen().front();
 }
 
-/// Das Instrument einer Vorlage, gestimmt und normiert wie `InstrumentTuneTool`.
-Instrument instrumentVon(std::string_view name)
+QString dateiVon(const zunge::Vorlage& v)
 {
-    const zunge::Vorlage& v = vorlage(name);
-    kern::Werte w = zunge::werteVon(v);
-    // ueber den Stimmer des Kerns (alle gestimmten Werte, dann der Bezug) — keine eigene Liste der Namen
-    const lumi::messung::StimmBericht b = lumi::messung::stimmeUndNormiere(kern::kerne(), lumi::messung::stimmer(), zunge::kKernName, w, true, true);
-    REQUIRE_MESSAGE(b.fehler.empty(), (b.fehler.empty() ? std::string() : b.fehler.front()));
-    REQUIRE(b.gestimmt == zunge::gestimmteNamen());
-    REQUIRE(kern::richteWerte(zunge::kernTyp().tafel, w).empty());
-    std::vector<std::string> fehler;
+    return QStringLiteral("asset/loop/instruments/") + QString::fromStdString(v.name) + QStringLiteral(".lvinst");
+}
+
+/// Ohne Pedale (eine Zunge hat keinen Daempfer; den Umfang traegt die Tafel, KL4 a).
+Tastatur tastaturVon(const zunge::ZungenSpiel& s)
+{
+    Tastatur t;
+    t.links = PedalArt::Keins;
+    t.mitte = PedalArt::Keins;
+    t.rechts = PedalArt::Keins;
+    t.bassSustainBis = s.noteMin;
+    richteTastatur(t);
+    return t;
+}
+
+/// Das Instrument einer Vorlage, wie es das Programm schreibt — ohne gestimmte Werte und Bezug (die setzt das Werkzeug).
+Instrument zumSchreiben(const zunge::Vorlage& v)
+{
     Instrument i;
     i.titel = QString::fromStdString(v.titel);
     Schicht s;
     s.name = i.titel;
     s.kernName = QString::fromUtf8(zunge::kKernName.data(), static_cast<qsizetype>(zunge::kKernName.size()));
-    s.kernWerte = w;
-    richteSchicht(s, &fehler);
-    REQUIRE(fehler.empty());
+    s.kernWerte = zunge::werteVon(v);  // mit den Quellen der Vorlage (QM1 a)
+    std::vector<std::string> fehler;
+    richteSchicht(s, &fehler);  // meldet die leeren gestimmten — die stimmt das Werkzeug
     i.schichten[0] = s;
+    i.tastatur = tastaturVon(v.spiel);
     return i;
+}
+
+/// Die mitgelieferte Datei einer Vorlage, wie das Programm sie liest.
+Instrument liesDatei(const zunge::Vorlage& v)
+{
+    QFile datei(dateiVon(v));
+    Instrument i;
+    REQUIRE_MESSAGE(datei.open(QIODevice::ReadOnly), v.name << " nicht gefunden — LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1, dann InstrumentTuneTool");
+    REQUIRE_MESSAGE(ausJson(QJsonDocument::fromJson(datei.readAll()).object(), i),
+                    v.name << " nicht lesbar (nicht gestimmt?) — InstrumentTuneTool <datei> --all --reference");
+    i.name = QString::fromStdString(v.name);
+    return i;
+}
+
+/// Das Instrument einer Vorlage aus der mitgelieferten Datei (34j-8; bis dahin am Modell gestimmt).
+Instrument instrumentVon(std::string_view name)
+{
+    return liesDatei(vorlage(name));
+}
+
+double ausHex(const std::string& h)
+{
+    const std::uint64_t b = std::stoull(h, nullptr, 16);
+    double x = 0.0;
+    std::memcpy(&x, &b, sizeof x);
+    return x;
+}
+
+std::string hexVon(double x)
+{
+    std::uint64_t b = 0;
+    std::memcpy(&b, &x, sizeof b);
+    char t[32];
+    std::snprintf(t, sizeof t, "%016llx", static_cast<unsigned long long>(b));
+    return t;
+}
+
+/// Die Bezugsdatei des Kerns (`werte/zunge_ic.txt`): Abdruecke, Bezuege und die gestimmten Kurven je Instrument.
+struct Beleg
+{
+    std::map<std::string, std::string> abdruck, bezugLv;
+    std::map<std::string, std::map<std::string, std::vector<kern::NotenWert>>> kurven;
+};
+
+Beleg liesBeleg()
+{
+    Beleg r;
+    std::ifstream f(std::filesystem::path(__FILE__).parent_path() / "werte" / "zunge_ic.txt");
+    std::string zeile;
+    while (std::getline(f, zeile))
+    {
+        std::istringstream z(zeile);
+        std::string art, name;
+        z >> art >> name;
+        if (art == "abdruck" || art == "bezugLv")
+            z >> (art == "abdruck" ? r.abdruck : r.bezugLv)[name];
+        else if (art == "kurve")
+        {
+            std::string welche, hex;
+            int note = 0;
+            z >> welche >> note >> hex;
+            r.kurven[name][welche].push_back(kern::NotenWert{note, ausHex(hex)});
+        }
+    }
+    return r;
 }
 
 const Instrument& akkordeon()
@@ -141,6 +237,66 @@ TonAngabe ton(int hoehe, int dauerMs)
 }
 
 }  // namespace
+
+TEST_CASE("Loop Zunge 34j-8 die mitgelieferten Zungeninstrumente tragen ihre Vorlage und ihre Stimmung")
+{
+    if (qEnvironmentVariableIntValue("LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN") == 1)
+        for (const zunge::Vorlage& v : zunge::vorlagen())
+        {
+            QFile aus(dateiVon(v));
+            REQUIRE_MESSAGE(aus.open(QIODevice::WriteOnly | QIODevice::Truncate), "asset/loop/instruments nicht gefunden — aus dem Projekt-Root starten");
+            REQUIRE(aus.write(QJsonDocument(alsJson(zumSchreiben(v))).toJson(QJsonDocument::Indented)) > 0);
+            MESSAGE(v.name << ".lvinst geschrieben — danach InstrumentTuneTool <datei> --all --reference, dann instrument_katalog.py");
+        }
+
+    const Beleg b = liesBeleg();
+    REQUIRE_MESSAGE(b.bezugLv.size() == 4, "werte/zunge_ic.txt fehlt");
+    const kern::Parametertafel& tafel = zunge::kernTyp().tafel;
+    int geprueft = 0;
+    for (const zunge::Vorlage& v : zunge::vorlagen())
+    {
+        CAPTURE(v.name);
+        const Instrument ist = liesDatei(v);
+        REQUIRE(ist.schichten.size() == 1);
+        const Schicht& s = ist.schichten[0];
+        REQUIRE(istKernSchicht(s));
+        CHECK(s.kernName == QStringLiteral("freeReed"));
+        CHECK(s.koerper.isEmpty());
+        REQUIRE(ist.tastatur.has_value());
+        CHECK(*ist.tastatur == tastaturVon(v.spiel));
+        CHECK(kern::ungemessen(tafel, s.kernWerte));
+        kern::Werte gerichtet = s.kernWerte;
+        CHECK(kern::richteWerte(tafel, gerichtet).empty());  // vollstaendig gestimmt, mit Bezug
+        ++geprueft;
+
+        // die Werte der Vorlage (gerichtet), ohne die gestimmten und den Bezug
+        kern::Werte soll = zunge::werteVon(v);
+        (void)kern::richteWerte(tafel, soll);  // meldet die leeren gestimmten — die stimmt das Werkzeug
+        for (const kern::ParameterAngabe& a : tafel.werte)
+        {
+            if (a.gestimmt || a.name == tafel.bezugWert) continue;
+            CAPTURE(a.name);
+            const kern::Wert* w = s.kernWerte.finde(a.name);
+            REQUIRE(w != nullptr);
+            CHECK_MESSAGE(*w == *soll.finde(a.name), "veraltet — LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1, InstrumentTuneTool, instrument_katalog.py");
+        }
+        // die Stimmung des Werkzeugs gleich der des Stimmers in der Bezugsdatei, Punkt fuer Punkt; der Bezug ebenso
+        for (const std::string& n : zunge::gestimmteNamen())
+        {
+            CAPTURE(n);
+            CHECK_MESSAGE(s.kernWerte.kurve(n).punkte == b.kurven.at(v.spiel.name).at(n), "veraltet — InstrumentTuneTool <datei> --all --reference");
+        }
+        CHECK(hexVon(s.kernWerte.zahl(tafel.bezugWert)) == b.bezugLv.at(v.spiel.name));
+        // der Ton ueber den Kern aus den Werten der Datei: ff an der Mitte, 0,4 s gehalten, wie der Abdruck `_e1`
+        const std::shared_ptr<const kern::Tonkern> k = kern::kerne().erzeuge(zunge::kKernName, s.kernWerte);
+        REQUIRE(k != nullptr);
+        const int tief = std::max(v.spiel.noteMin, v.spiel.bassAb), mitte = (tief + v.spiel.noteMax) / 2;
+        std::vector<float> ton;
+        k->rechne(kern::einzelnote(mitte, 440.0 * std::exp2((mitte - 69) / 12.0), 0, 19200, 28800, 48000.0), ton);
+        CHECK(kern::abdruck(ton) == b.abdruck.at("zunge_" + v.spiel.name + "_m" + std::to_string(mitte) + "_e1"));
+    }
+    CHECK(geprueft == 4);
+}
 
 TEST_CASE("Loop Zunge 34j-7: die Expression ist der Wind, kein Pegel (ZV3 a, SK4 a)")
 {

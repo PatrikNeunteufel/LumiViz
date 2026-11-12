@@ -1,10 +1,14 @@
 # Changelog Session 192 (2026-11-12)
 
 > Der Kern der durchschlagenden Zunge folgt jetzt der Anschlagstufe und klingt je Taste so lange aus, wie er es
-> tatsächlich tut (34j-7 fertig). Noch kein mitgeliefertes Instrument nutzt ihn (die Dateien kommen mit 34j-8).
+> tatsächlich tut (34j-7 fertig). Vier neue mitgelieferte Instrumente spielen auf ihm: Accordion, Harmonium, Melodica,
+> Harmonica (34j-8).
 
 ## Neu
 
+- Vier Instrumente mit durchschlagender Zunge im Fenster *Instruments*: Accordion und Harmonium unter *Keys*, Melodica
+  und Harmonica unter *Wind* — gerechnet, je Taste gestimmt, auf den gemeinsamen Pegel gebracht, ungemessen. Ihre
+  Beispiel-Loops kommen mit 34j-9.
 - Die Anschlagstufe wirkt: je Taste gemessen, bei welcher Stärke der Ton 2, 4 … 20 dB leiser klingt; eine Note bei
   −x dB klingt am Ton nachgemessen x LU leiser, höchstens bis zur Dynamik der Taste (Akkordeon und Melodica auf
   1,8 LU, Harmonium und Mundharmonika auf 0,3 LU). Mit Expression gilt Stärke mal Expression.
@@ -32,5 +36,5 @@
 
 - Messungen `docs/modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md` und `…_messung_zv12.md`, Befund
   `docs/modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md`, Quellenbericht unter `recherche/`.
-- Eng 101 / 101 unter Release-clang und Testing-MSVC, die Stimmung aller vier unter beiden Bit für Bit gleich. Kein
-  voller Lauf (kommt mit 34j-10).
+- Eng 101 / 101 unter Release-clang und Testing-MSVC, die Stimmung aller vier unter beiden Bit für Bit gleich; nach
+  34j-8 der Bereich der Instrumente, Pegel, Werte und Quellen 292 / 292. Kein voller Lauf (kommt mit 34j-10).

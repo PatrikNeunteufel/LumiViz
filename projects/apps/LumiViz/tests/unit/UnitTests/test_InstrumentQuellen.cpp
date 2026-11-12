@@ -27,6 +27,7 @@
 
 #include "InstrumentModels/Kerne.hpp"
 #include "InstrumentModels/hammer/HammerKern.hpp"
+#include "InstrumentModels/saite/SaiteKern.hpp"
 #include "InstrumentModels/stab/StabKern.hpp"
 #include "InstrumentModels/trommel/TrommelKern.hpp"
 #include "InstrumentModels/zunge/ZungeKern.hpp"
@@ -279,6 +280,13 @@ lumi::kern::Werte sollVon(const std::string& kern, const std::string& name)
     if (kern == kn::hammer::kKernName)
         for (const kn::hammer::Vorlage& v : kn::hammer::vorlagen())
             if (v.name == name) return kn::hammer::werteVon(v);
+    // S192 (34j-8): jede Kern-Datei gegen ihre eigene Vorlage — die Tafel traegt nur die Quellen der ersten
+    if (kern == kn::saite::kKernName)
+        for (const kn::saite::Vorlage& v : kn::saite::vorlagen())
+            if (v.name == name) return kn::saite::werteVon(v);
+    if (kern == kn::zunge::kKernName)
+        for (const kn::zunge::Vorlage& v : kn::zunge::vorlagen())
+            if (v.name == name) return kn::zunge::werteVon(v);
     return kn::vorgaben(kn::kerne().typ(kern)->tafel);
 }
 
@@ -360,7 +368,7 @@ TEST_CASE("Instrument Quellen QM1 a: die Kern-Dateien tragen die Quellen ihrer V
             }
         }
     }
-    CHECK(mitKern == 21);  // S181: dazu upright_piano, honky_tonk_piano, electric_grand_piano, clavinet_modal (34i); S180: grand_piano, neun Stabspiele (34g), sieben Trommeln (34h)
+    CHECK(mitKern == 25);  // S192: dazu accordion, harmonium, melodica, harmonica (34j-8); S181: dazu upright_piano, honky_tonk_piano, electric_grand_piano, clavinet_modal (34i); S180: grand_piano, neun Stabspiele (34g), sieben Trommeln (34h)
 }
 
 TEST_CASE("Instrument Quellen QM1 a: Quellen am Wert — richten, vergleichen, Datei")

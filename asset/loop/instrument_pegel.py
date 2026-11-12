@@ -48,6 +48,7 @@ LEVEL_MAX = 10 ** (24 / 20)  # +24 dB, `kInstrumentLautMax`
 
 # --- PEGEL: geschrieben von --messung; Name: (alt, neu) ---
 PEGEL = {
+    "accordion": (0.8904, 0.8904),  # S192 (34j-8): neu, -12.392 LUFS bei 1.0 -> 0.8904 (alt = neu, die Loops fuer den Bezug geschrieben)
     "acid_bass": (1.0, 2.423),
     "alien_choir": (0.6, 0.4009),
     "alto_flute": (0.85, 0.4644),
@@ -84,6 +85,8 @@ PEGEL = {
     "growl_bass": (0.55, 0.3081),
     "guitar": (1.0, 2.0941),
     "guitar_old": (1.0, 2.2333),
+    "harmonica": (1.0457, 1.0457),  # S192 (34j-8): neu, -13.788 LUFS bei 1.0 -> 1.0457 (alt = neu, die Loops fuer den Bezug geschrieben)
+    "harmonium": (0.7348, 0.7348),  # S192 (34j-8): neu, -10.723 LUFS bei 1.0 -> 0.7348 (alt = neu, die Loops fuer den Bezug geschrieben)
     "harp": (0.85, 0.6098),
     "honky_tonk_piano": (2.4356, 2.4356),  # S187 (HS-3 a, Hammer nach Kartofelev & Stulov 2014): -13.861 LUFS bei 2.3097 -> 2.4356 (alt = neu); S181 (34i): neu, -20.671 LUFS bei 1.0 -> 2.3097 (alt = neu, die Loops fuer den Bezug geschrieben)
     "hoover": (0.45, 0.346),
@@ -96,6 +99,7 @@ PEGEL = {
     "lead": (1.0, 0.7343),
     "low_tom": (4.5087, 4.5087),  # S179 (34h): neu, Kit-Trommel auf dem Bezug wie jedes Kern-Instrument (alt = neu)
     "marimba": (0.5296, 0.5296),  # S178 (34g): neu, die Loops fuer den Bezug geschrieben (alt = neu)
+    "melodica": (0.5814, 0.5814),  # S192 (34j-8): neu, -8.689 LUFS bei 1.0 -> 0.5814 (alt = neu, die Loops fuer den Bezug geschrieben)
     "muted_guitar": (1.0, 4.5798),
     "muted_guitar_old": (0.8, 2.7136),
     "nylon_guitar": (0.638, 2.1107),

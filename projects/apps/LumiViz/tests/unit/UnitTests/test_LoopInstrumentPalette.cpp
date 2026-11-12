@@ -120,12 +120,12 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     CHECK(zeilen.last() == QStringLiteral("[My files]"));
     // (S123: aus Formen, aus Samples und Drums dazu — wer Instrumente dazulegt, stellt die Zahlen nach,
     // wie in test_LoopInstrument)
-    CHECK(fenster.unter(QStringLiteral("Keys")).size() == 17);  // S181 (34i): vier aus Klasse 1; S178 (34g): drei aus dem Kern bar; S157 (31d-8): grand_piano; S133 (Stufe 23g): die alten als <name>_old
+    CHECK(fenster.unter(QStringLiteral("Keys")).size() == 19);  // S192 (34j-8): accordion, harmonium; S181 (34i): vier aus Klasse 1; S178 (34g): drei aus dem Kern bar; S157 (31d-8): grand_piano; S133 (Stufe 23g): die alten als <name>_old
     CHECK(fenster.unter(QStringLiteral("Bass")).size() == 15);
     CHECK(fenster.unter(QStringLiteral("Lead")).size() == 7);
     CHECK(fenster.unter(QStringLiteral("Pads and strings")).size() == 9);
     CHECK(fenster.unter(QStringLiteral("Plucked")).size() == 22);
-    CHECK(fenster.unter(QStringLiteral("Wind")).size() == 7);
+    CHECK(fenster.unter(QStringLiteral("Wind")).size() == 9);  // S192 (34j-8): melodica, harmonica
     CHECK(fenster.unter(QStringLiteral("Percussion")).size() == 20);  // S179 (34h): vier aus dem Kern membrane; S178 (34g): sechs aus bar
     CHECK(fenster.unter(QStringLiteral("Drums")).size() == 23);  // S179 (34h): drei aus membrane; Stufe 11f, S123, drei Besen S124
     CHECK(fenster.unter(QStringLiteral("Unusual")).size() == 8);
@@ -135,8 +135,8 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     // unter einer Art stehen sie nach Titel
     CHECK(fenster.unter(QStringLiteral("Wind")) ==
           QStringList{QStringLiteral("alto_flute"), QStringLiteral("alto_sax"), QStringLiteral("brass"),
-                      QStringLiteral("shape_flower_flute"), QStringLiteral("flute"), QStringLiteral("sax"),
-                      QStringLiteral("shakuhachi")});
+                      QStringLiteral("shape_flower_flute"), QStringLiteral("flute"), QStringLiteral("harmonica"),
+                      QStringLiteral("melodica"), QStringLiteral("sax"), QStringLiteral("shakuhachi")});
 
     auto* titel = fenster.findChild<QLabel*>(QStringLiteral("instrumentPaletteTitle"));
     auto* satz = fenster.findChild<QLabel*>(QStringLiteral("instrumentPaletteDescription"));

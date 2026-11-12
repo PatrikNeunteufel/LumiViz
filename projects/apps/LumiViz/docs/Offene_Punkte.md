@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.341.0
+> **Version:** 1.342.0
 > **Datum:** 2026-11-12 (Sessions 164 bis 192)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2947,7 +2947,8 @@ Stärke je Taste ZV10 a und Nachklang je Taste ZV11 a nach ZV13 a, Journal J72, 
 **offen bis zur Hörprobe 34j-9 (ZV14 a):** Akkordeon E3–A3 und Melodica F3–A3 werden mit dem Wind 0,77–0,98-fach
 dunkler (das Ventil drosselt), die Amplitude des Harmoniums wächst mit dem Druck 1,5- bis 2-fach (gemessen fast gleich,
 Cottingham u. a. 1999); nicht im Bestand: Ricot, Caussé & Misdariis 2005, Koopman & Cottingham 1997, Llanos-Vázquez u. a.
-2014; **als Nächstes 34j-8** — alles Konzept §6), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+2014; **34j-8 erledigt S192** (die vier Zungeninstrumente als `.lvinst`, Journal J73); **als Nächstes 34j-9** (Loops,
+Hörliste, Creator-Fall, Rechenzeit) — alles Konzept §6), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6477,6 +6478,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.342.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34j-8 erledigt (accordion, harmonium, melodica, harmonica; Journal J73); als Nächstes 34j-9. |
 | 1.341.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: ZV12 a erledigt (Messfehler, Rest am unteren Diskant vom Ventil), ZV14 a; zwei Befunde offen bis 34j-9 (unterer Diskant dunkler, Amplitude des Harmoniums über dem Druck). |
 | 1.340.0 | 2026-11-12 | Session 192 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-7 erledigt — ZV10 a (Stufe → Stärke je Taste) und ZV11 a nach ZV13 a (neu: Nachklang als längster Ausklang über sechs Haltedauern und drei Stärken) gebaut, Journal J72; vor 34j-8 ZV12 a. |
 | 1.339.0 | 2026-11-11 | Session 191 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-6 erledigt — Kern `freeReed` Rechenfassung 2 (Kurven je Taste, ein Windbereich, f₀ am mittleren Druck, Bass 8′ + 4′, Bend je Taste), ZV8 a, ZV9 a; Messung `modellierung/zunge/proben/2026-11-11_S191_messung_34j6.md`. 34j-7 begonnen (laufender Wind); ZV10 a, ZV11 a, ZV12 a. |

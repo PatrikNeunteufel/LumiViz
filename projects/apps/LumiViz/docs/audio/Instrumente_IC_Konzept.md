@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.21.0
+> **Version:** 0.22.0
 > **Datum:** 2026-11-12 (Session 192)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -13,7 +13,7 @@
 > Zupfkraft und den Abnahmen `slot`/`bridge`, Kern `struckString` mit Durchmesser je Taste, beide Rechenfassung 2.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j in Arbeit seit 2026-11-11 (S189; 34j-1 bis 34j-7 fertig, ZV12 a untersucht, ZV14 a; als Nächstes 34j-8)
+> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j in Arbeit seit 2026-11-11 (S189; 34j-1 bis 34j-8 fertig; als Nächstes 34j-9)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -998,6 +998,17 @@ unteren Diskant × 4 — heller, aber die Tonhöhe fiele über den Wind nur noch
 Klangfarbe des unteren Diskants vor dem Ausliefern belegt sein soll; auf b, wenn eine dieser Quellen am Schall „heller über
 den ganzen Umfang“ misst.
 
+**34j-8 erledigt (S192, Journal J73):** `accordion`, `harmonium`, `melodica`, `harmonica` unter `asset/loop/instruments/`,
+geschrieben vom Programm (`test_LoopZunge`, `LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1`), gestimmt und normiert mit
+`InstrumentTuneTool --all --reference` (Stimmung und Bezug Bit für Bit wie `werte/zunge_ic.txt`; der neue Wächter
+„Loop Zunge 34j-8“ bindet beides an die Datei); ohne Pedale; Art nach dem Aufbau (mit Balg und Tastatur *keys*, geblasen
+*wind*); Pegel −12,4 / −10,7 / −8,7 / −13,8 LUFS bei 1,0 → 0,8904 / 0,7348 / 0,5814 / 1,0457 (alt = neu); `LP3 a` ohne
+Ausnahme (über den Umfang 4,3 / 3,7 / 4,2 / 0,9 LU); `loop_werte.txt` und `klangfassung.txt` je zwölf neue Zeilen, keine
+alte geändert; zehn Zeilen mehr in `CREDITS.md`. Die Fälle der App in `test_LoopZunge` spielen jetzt die Dateien. Der
+Quellen-Wächter vergleicht jede Kern-Datei mit ihrer eigenen Vorlage (bis S192 nur Trommel, Stab, Hammer — die übrigen
+mit der ersten Vorlage der Tafel; jetzt auch `struckString` und `freeReed`). Genres bekommen die vier mit ihren Loops in
+34j-9.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1057,6 +1068,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.22.0 | 2026-11-12 | Session 192. §6: 34j-8 erledigt — die vier Zungeninstrumente als `.lvinst`, gestimmt, Pegel, Katalog, Credits; Journal J73. |
 | 0.21.0 | 2026-11-12 | Session 192. §6: ZV12 a erledigt — der Befund „lauter wird dunkler“ war größtenteils ein Messfehler (Teiltöne an der Sollfrequenz), Rest am unteren Diskant vom Ventil; ZV14 a (Kern bleibt, Messung an der gemessenen Tonhöhe, Rest als Befund bis 34j-9). |
 | 0.20.0 | 2026-11-12 | Session 192. §6: 34j-7 erledigt — ZV10 a gebaut (Stufe → Stärke je Taste, gestimmt), ZV11 a gebaut nach ZV13 a (neu: `releaseTime` als längster Ausklang über sechs Haltedauern und drei Stärken, −60 dB unter der lautesten Stelle der Note); Journal J72. |
 | 0.19.0 | 2026-11-11 | Session 191. §6: 34j-6 erledigt (Kern `freeReed` Rechenfassung 2, Journal J70); ZV8 a (Bend je Taste auf dem Raster 2^(−1/4) mit Grenze), ZV9 a (`pitch` wirkt schon in 34j-6, am Beginn der Note). 34j-7 begonnen (laufender Wind, Journal J71); ZV10 a (Stufe → Stärke je Taste an der gemessenen Kurve), ZV11 a (Nachklang als gestimmte Kurve je Taste), ZV12 a (Befund Helligkeit über dem Druck vor 34j-8 untersuchen). |

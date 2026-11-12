@@ -206,6 +206,18 @@ KATALOG = {
                             "Adhikari 2008), struck by a finger; unmeasured."),
     "conga": ("percussion", "A head on an open shell, struck by the hand; unmeasured."),
     "bongo": ("percussion", "A 7-inch head on an open shell, struck by the hand; unmeasured."),
+    # --- S192 (34j-8, IK2-8 a): der Kern `freeReed` (Klasse 10 aus InstrumentsCalculation, Vorgaben je Taste S190),
+    # geschrieben vom Programm (test_LoopZunge.cpp, LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1), gestimmt und normiert von
+    # InstrumentTuneTool --all --reference; Art nach dem Aufbau: mit Balg und Tastatur keys, geblasen wind
+    "accordion": ("keys", "A free reed per key in its chamber behind a pallet, driven by one bellows for all keys; two "
+                          "reeds a musette apart on the treble side (2 Hz at A4, Hergert 2023), the Stradella bass side in "
+                          "8' and 4'; half-pressed keys bend through the pallet (Adachi et al. 2026); unmeasured."),
+    "harmonium": ("keys", "A free reed per key in its chamber, one wind of 0.2 to 1.5 kPa for all keys (Puranik & Scavone "
+                          "2023), behind a case low-pass; unmeasured."),
+    "melodica": ("wind", "The free reeds of the accordion treble, one rank, blown through a mouthpiece; half-pressed keys "
+                         "bend through the pallet; unmeasured."),
+    "harmonica": ("wind", "A small free reed per hole, blown without pallet, the breath of 0.15 to 1 kPa as the wind; "
+                          "unmeasured."),
 }
 
 _KOPF = ("format", "version", "title", "category", "genres", "description", "level", "layers")

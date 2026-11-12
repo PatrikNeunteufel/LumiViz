@@ -350,7 +350,7 @@ TEST_SUITE("LoopInstrument")
         // und drei Besen (S124, Stufe 21d)
         // S178 (34g, KS4 a): neun aus dem Kern `bar`; die Nachbildungen marimba, vibraphone, kalimba heissen synth_<name>
         // S179 (34h, TM4 a): sieben aus dem Kern `membrane`; die Nachbildung conga heisst synth_conga
-        REQUIRE(alle.size() == 128);  // S181 (34i): upright_piano, honky_tonk_piano, electric_grand_piano, clavinet_modal; S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
+        REQUIRE(alle.size() == 132);  // S192 (34j-8): accordion, harmonium, melodica, harmonica; S181 (34i): upright_piano, honky_tonk_piano, electric_grand_piano, clavinet_modal; S157 (31d-8): grand_piano; S133 (Stufe 23g): acht alte als <name>_old, sechs neue (S-G3 a)
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
@@ -693,19 +693,19 @@ TEST_SUITE("LoopInstrument")
         }
         // nach dem Titel zugeordnet (asset/loop/instrument_katalog.py) — wer eines dazulegt, stellt die Zahl nach
         // (S123: aus Formen, aus Samples und elf Drums dazu)
-        CHECK(jeArt[QStringLiteral("keys")] == 17);  // S181 (34i): vier aus Klasse 1; S178 (34g): celesta, tine/reed_electric_piano; S157: grand_piano; S133: clavinet_old
+        CHECK(jeArt[QStringLiteral("keys")] == 19);  // S192 (34j-8): accordion, harmonium; S181 (34i): vier aus Klasse 1; S178 (34g): celesta, tine/reed_electric_piano; S157: grand_piano; S133: clavinet_old
         CHECK(jeArt[QStringLiteral("bass")] == 15);  // S133: slap_bass_old, upright_bass_old, finger_bass
         CHECK(jeArt[QStringLiteral("lead")] == 7);
         CHECK(jeArt[QStringLiteral("pads")] == 9);
         CHECK(jeArt[QStringLiteral("plucked")] == 22);  // S133: fuenf Gitarren *_old, fuenf neue
-        CHECK(jeArt[QStringLiteral("wind")] == 7);
+        CHECK(jeArt[QStringLiteral("wind")] == 9);  // S192 (34j-8): melodica, harmonica
         CHECK(jeArt[QStringLiteral("percussion")] == 20);  // S179 (34h): timpani, tabla, conga, bongo; S178 (34g): sechs Stabspiele
         CHECK(jeArt[QStringLiteral("drums")] == 23);  // S179 (34h): low_tom, bass_drum, snare_drum; Stufe 11f, S123, drei Besen S124
         CHECK(jeArt[QStringLiteral("unusual")] == 8);
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Violin steht in keinem (Guitar bis S136,
         // seither in strum_demo), die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine
         // Drum-Spuren), Flower Flute (S123) auch nicht
-        CHECK(ohneGenre == 34);  // S181 (34i): die vier aus Klasse 1 spielt keys_demo (Jazz); seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie); S179 (34h): die
+        CHECK(ohneGenre == 38);  // S192 (34j-8): die vier Zungeninstrumente bis zu ihren Loops (34j-9); S181 (34i): die vier aus Klasse 1 spielt keys_demo (Jazz); seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie); S179 (34h): die
                                  // fuenf Trommeln ausser timpani und tabla (membrane_demo spielt die beiden als Instrument)
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         // seit S138 (26h) spielt die Guitar auch in tabs_demo (Blues)
@@ -771,7 +771,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 128);  // S181 (34i): vier aus Klasse 1;  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 132);  // S192 (34j-8): vier aus Klasse 10; S181 (34i): vier aus Klasse 1;  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {
