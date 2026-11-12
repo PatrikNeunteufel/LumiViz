@@ -19,6 +19,10 @@
  * - Die IC-Faelle aus `rechnung/klassen/02_zupf_saite/test_zupf.cpp` (`4409088`) mit den IC-Grenzen; gemessen wird mit
  *   `InstrumentMeasure/ZupfStimmen` (IK2-2 a). Ohne Koto (zurueckgestellt) und ohne die Rechenzeit (kommt mit 34k-10,
  *   `*34k Rechenzeit*`; ausgesetzt bis zum Tausch der Kuehlung).
+ * - Der Stimmer (34k-3): die Laute ueber `stimmeUndNormiere` Bit fuer Bit gleich der Laufzeit im Beleg, mit Bezug und dem
+ *   Waechter fuer veraltete Werte; alle fuenf ueber `zupfLaufzeit`.
+ * - Die zweite Tonhoehenmessung (34k-3, `InstrumentMeasure/Grundton`): an gerechneten Toenen ohne bzw. mit schwachem
+ *   Grundton auf ±1 Cent; an den gestimmten Toenen der fuenf nur Zahlen (die Pruefung ±10 Cent kommt mit 34k-6).
  ****************************************************************************************
  */
 
@@ -27,11 +31,14 @@
 #include "InstrumentCore/Anschlag.hpp"
 #include "InstrumentCore/Pool.hpp"
 #include "InstrumentCore/Pruefsumme.hpp"
+#include "InstrumentMeasure/Bausteine.hpp"
+#include "InstrumentMeasure/Grundton.hpp"
 #include "InstrumentMeasure/ZupfStimmen.hpp"
 #include "InstrumentModels/Kerne.hpp"
 #include "InstrumentModels/zupf/ZupfKern.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -622,4 +629,187 @@ TEST_CASE("InstrumentModels 34k-2 IC test_zupf: Determinismus auf Threads")
     CHECK(a == q[0]);
     CHECK(a == q[1]);
     CHECK(abdruck(a) == icBeleg().abdruck.at("zupf_Gitarre_m52_mf"));
+}
+
+TEST_CASE("InstrumentModels 34k-3 Stimmer pluckedString: Laute Bit fuer Bit wie IC, Bezug, Waechter fuer veraltete Werte")
+{
+    const std::vector<std::string> eins = {std::string(kLaufzeit)};
+    REQUIRE(lumi::messung::stimmerFuer(lumi::messung::stimmer(), kKernName) != nullptr);
+    Werte w = werteAus(vorlage("lute").spiel);
+    const auto beginn = std::chrono::steady_clock::now();
+    const lumi::messung::StimmBericht b = lumi::messung::stimmeUndNormiere(kerne(), lumi::messung::stimmer(), kKernName, w, true, true);
+    const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - beginn).count();
+    MESSAGE("Laute gestimmt und normiert in " << dauer << " s auf " << poolThreads() << " Threads (13 Stuetzpunkte)");
+    CHECK_MESSAGE(b.fehler.empty(), (b.fehler.empty() ? std::string() : b.fehler.front()));
+    CHECK(b.gestimmt == eins);
+    REQUIRE(b.mitBezug);
+    CHECK(hexVon(b.bezug) == icBeleg().bezugLv.at("Laute"));
+    CHECK(w.kurve(kLaufzeit).punkte == icBeleg().laufzeit.at("Laute"));
+    CHECK(w.kurve(kLaufzeit).belegkraft == Belegkraft::Rechnung);
+    CHECK(richteWerte(kernTyp().tafel, w).empty());
+    // der Waechter (IK2-11 a): frisch gestimmt nichts veraltet, der Bezug passt
+    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, w).empty());
+    CHECK_FALSE(lumi::messung::bezugVeraltet(kerne(), kKernName, w));
+    // absichtlich veraltet: eine Eingabe der Saite geaendert
+    Werte alt = w;
+    alt.setze("stringQ", alt.zahl("stringQ") * 1.5);
+    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, alt) == eins);
+    // die mitschwingenden Saiten wirken nicht auf die Stimmung — sie veralten nichts
+    Werte mit = w;
+    Liste l;
+    Werte e;
+    e.felder.emplace_back("note", std::int64_t{55});
+    l.eintraege.push_back(e);
+    mit.setze("sympatheticStrings", l);
+    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, mit).empty());
+    // ein fremder Abdruck genuegt
+    Werte fremd = w;
+    fremd.merkeAbdruck(std::string(kLaufzeit), "0000");
+    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, fremd) == eins);
+    // ein falscher Bezug faellt auf
+    Werte bezug = w;
+    bezug.setze(std::string(kBezug), b.bezug * 1.01);
+    CHECK(lumi::messung::bezugVeraltet(kerne(), kKernName, bezug));
+}
+
+TEST_CASE("InstrumentModels 34k-3 Stimmer pluckedString: alle fuenf Bit fuer Bit wie IC stimme")
+{
+    double gesamt = 0.0;
+    for (const Vorlage& v : vorlagen())
+    {
+        CAPTURE(v.name);
+        const auto beginn = std::chrono::steady_clock::now();
+        const Kurve k = lumi::messung::zupfLaufzeit(v.spiel);
+        const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - beginn).count();
+        gesamt += dauer;
+        MESSAGE(v.name << ": " << k.punkte.size() << " Stuetzpunkte in " << dauer << " s");
+        CHECK(k.punkte == icBeleg().laufzeit.at(icName(v.name)));
+    }
+    MESSAGE("alle fuenf in " << gesamt << " s auf " << poolThreads() << " Threads");
+}
+
+namespace
+{
+
+/// Ein gerechneter Ton aus Teiltoenen: f_k = k·f₀·√(1 + B·k²), Amplitude a_k, Abklingzeit τ_k, Phase fest; dazu Rauschen
+/// (Gleichverteilung aus einer festen Folge) mit der Spitze `rauschen`.
+std::vector<double> teiltonTon(double f0, double steife, const std::vector<std::pair<int, double>>& teiltoene, double rauschen, double sekunden = 0.6)
+{
+    const int rate = 48000;
+    std::vector<double> t(static_cast<std::size_t>(sekunden * rate), 0.0);
+    for (const auto& [k, a] : teiltoene)
+    {
+        const double f = k * f0 * std::sqrt(1.0 + steife * k * k);
+        const double tau = 1.5 / std::sqrt(double(k));
+        for (std::size_t i = 0; i < t.size(); ++i)
+        {
+            const double s = double(i) / rate;
+            t[i] += a * std::exp(-s / tau) * std::sin(2.0 * kPi * f * s + 0.7 * k);
+        }
+    }
+    std::uint64_t z = 0x9e3779b97f4a7c15ull;
+    for (double& x : t)
+    {
+        z = z * 6364136223846793005ull + 1442695040888963407ull;
+        x += rauschen * (double(z >> 11) / double(1ull << 53) * 2.0 - 1.0);
+    }
+    return t;
+}
+
+double centZwischen(double ist, double soll) { return 1200.0 * std::log2(ist / soll); }
+
+}  // namespace
+
+TEST_CASE("InstrumentModels 34k-3 zweite Tonhoehenmessung: Grundton aus den Teiltoenen ohne und mit schwachem Grundton")
+{
+    using lumi::messung::grundtonAusTeiltoenen;
+    // (1) ohne Grundton: G2 + 13,7 Cent, Teiltoene 2 … 10, Rauschen −80 dB
+    {
+        const double f0 = hzVon(43) * std::exp2(13.7 / 1200.0);
+        std::vector<std::pair<int, double>> tt;
+        for (int k = 2; k <= 10; ++k) tt.emplace_back(k, 1.0 / k);
+        const std::vector<double> t = teiltonTon(f0, 0.0, tt, 1e-4);
+        const lumi::messung::Grundton g = grundtonAusTeiltoenen(t, 48000, hzVon(43));
+        REQUIRE(g.gefunden);
+        MESSAGE("ohne Grundton: " << centZwischen(g.hz, f0) << " Cent daneben aus " << g.teiltoene << " Teiltoenen, B = " << g.steife);
+        CHECK(std::abs(centZwischen(g.hz, f0)) < 1.0);
+        CHECK(g.teiltoene == 9);
+        // die Messung des Stimmers (IC) sucht nur nahe der Note: ohne Grundton misst sie dort Rauschen und Nebenkeulen (nur Zahl)
+        const lumi::messung::ZupfTon ic = lumi::messung::messeZupfSumme(t, 43, 48000);
+        MESSAGE("die Messung des Stimmers am selben Ton: " << centZwischen(ic.spielHz, f0) << " Cent");
+        // und YIN (B2) als Median der stimmhaften Rahmen
+        const lumi::messung::Tonhoehe y = lumi::messung::tonhoehe(t, 48000, 30.0, 3000.0);
+        std::vector<double> hz;
+        for (const double x : y.hz)
+            if (x > 0.0) hz.push_back(x);
+        if (!hz.empty())
+        {
+            std::nth_element(hz.begin(), hz.begin() + hz.size() / 2, hz.end());
+            MESSAGE("YIN am selben Ton: " << centZwischen(hz[hz.size() / 2], f0) << " Cent (Median)");
+        }
+    }
+    // (2) schwacher Grundton (−40 dB) an einer steifen Saite: A1 − 21,3 Cent, B = 3·10⁻⁴, Teiltoene 1 … 12
+    {
+        const double f0 = hzVon(33) * std::exp2(-21.3 / 1200.0);
+        std::vector<std::pair<int, double>> tt = {{1, 0.01}};
+        for (int k = 2; k <= 12; ++k) tt.emplace_back(k, 1.0 / k);
+        const std::vector<double> t = teiltonTon(f0, 3e-4, tt, 1e-4);
+        const lumi::messung::Grundton g = grundtonAusTeiltoenen(t, 48000, hzVon(33));
+        REQUIRE(g.gefunden);
+        MESSAGE("schwacher Grundton, steif: " << centZwischen(g.hz, f0) << " Cent daneben aus " << g.teiltoene << " Teiltoenen, B = " << g.steife);
+        CHECK(std::abs(centZwischen(g.hz, f0)) < 1.0);
+        CHECK(g.steife == doctest::Approx(3e-4).epsilon(0.1));
+    }
+    // (3) die Schaetzung 40 Cent daneben: der zweite Durchgang findet den Ton
+    {
+        const double f0 = hzVon(57);
+        std::vector<std::pair<int, double>> tt;
+        for (int k = 2; k <= 8; ++k) tt.emplace_back(k, 1.0);
+        const std::vector<double> t = teiltonTon(f0, 0.0, tt, 1e-4);
+        const lumi::messung::Grundton g = grundtonAusTeiltoenen(t, 48000, f0 * std::exp2(40.0 / 1200.0));
+        REQUIRE(g.gefunden);
+        CHECK(std::abs(centZwischen(g.hz, f0)) < 1.0);
+    }
+    // (4) ohne Signal nichts
+    CHECK_FALSE(grundtonAusTeiltoenen(std::vector<double>(28800, 0.0), 48000, 110.0).gefunden);
+    CHECK_FALSE(grundtonAusTeiltoenen(std::vector<double>(2000, 0.0), 48000, 110.0).gefunden);
+}
+
+TEST_CASE("InstrumentModels 34k-3 zweite Tonhoehenmessung an den gestimmten Toenen der fuenf (nur Zahlen)")
+{
+    // die Pruefung ±10 Cent an jeder Taste kommt mit 34k-6; hier, wie weit die IC-Stimmung nach der zweiten Messung liegt
+    for (const Vorlage& v : vorlagen())
+    {
+        const ZupfSpiel s = spielWieIc(v.name);
+        const int n = s.noteMax - s.noteMin + 1;
+        std::vector<double> cent(static_cast<std::size_t>(n), 0.0);
+        std::vector<int> zahl(static_cast<std::size_t>(n), 0);
+        parallelJe(static_cast<std::size_t>(n), [&](std::size_t i) {
+            const int note = s.noteMin + static_cast<int>(i);
+            std::vector<double> summe;
+            rechneZupfSumme(s, ton(note, 0.5, 0.6), summe, 28800);
+            const lumi::messung::Grundton g = lumi::messung::grundtonAusTeiltoenen(summe, 48000, hzVon(note));
+            cent[i] = g.gefunden ? centZwischen(g.hz, hzVon(note)) : 1e9;
+            zahl[i] = g.teiltoene;
+        });
+        double schlimmste = 0.0;
+        int wo = s.noteMin, ueber10 = 0, ohne = 0;
+        for (int i = 0; i < n; ++i)
+        {
+            if (cent[static_cast<std::size_t>(i)] > 1e8)
+            {
+                ++ohne;
+                continue;
+            }
+            if (std::abs(cent[static_cast<std::size_t>(i)]) > 10.0) ++ueber10;
+            if (std::abs(cent[static_cast<std::size_t>(i)]) > std::abs(schlimmste))
+            {
+                schlimmste = cent[static_cast<std::size_t>(i)];
+                wo = s.noteMin + i;
+            }
+        }
+        MESSAGE(v.name << ": " << n << " Tasten, schlimmste " << schlimmste << " Cent an " << wo << ", ueber 10 Cent " << ueber10 << ", ohne Ergebnis "
+                       << ohne);
+        CHECK(ohne == 0);
+    }
 }

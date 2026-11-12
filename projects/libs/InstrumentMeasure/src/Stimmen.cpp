@@ -6,6 +6,7 @@
 
 #include "InstrumentMeasure/StabStimmen.hpp"
 #include "InstrumentMeasure/ZungeStimmen.hpp"
+#include "InstrumentMeasure/ZupfStimmen.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -16,7 +17,7 @@ namespace lumi::messung
 const std::vector<Stimmer>& stimmer()
 {
     // die Klassen bringen ihre mit: Klasse 4 in 34g (KS2 a, KS3 a), Klasse 10 in 34j, Klasse 2 in 34k
-    static const std::vector<Stimmer> liste{stabStimmer(), zungeStimmer()};  // 34j-3: Klasse 10
+    static const std::vector<Stimmer> liste{stabStimmer(), zungeStimmer(), zupfStimmer()};  // 34j-3: Klasse 10, 34k-3: Klasse 2
     return liste;
 }
 

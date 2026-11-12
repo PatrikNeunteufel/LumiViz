@@ -4,6 +4,9 @@
  */
 #include "InstrumentMeasure/ZupfStimmen.hpp"
 
+#include "InstrumentCore/Pool.hpp"
+#include "InstrumentModels/zupf/ZupfKern.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -64,6 +67,54 @@ ZupfTon messeZupfTon(const kern::zupf::ZupfSpiel& spiel, const kern::zupf::ZupfA
     kern::zupf::rechneZupfSumme(spiel, a, summe, frames);
     if (summe.empty() || spiel.laengeJeNote.punkte.empty()) return {};
     return messeZupfSumme(summe, a.note, a.rate);
+}
+
+kern::Kurve zupfLaufzeit(const kern::zupf::ZupfSpiel& s, unsigned threads)
+{
+    using namespace kern::zupf;
+    // IC Zupf.cpp:391–424 wortgleich (ohne `spielbar`; gemessen ueber `messeZupfTon` statt im Kern)
+    std::vector<int> noten;
+    for (int n = s.noteMin; n <= s.noteMax; n += 3) noten.push_back(n);
+    if (noten.back() != s.noteMax) noten.push_back(s.noteMax);
+    std::vector<double> k(noten.size(), 1.0);
+    ZupfSpiel t = s;
+    t.laufzeitJeNote = {};
+    kern::parallelJe(
+        noten.size(),
+        [&](std::size_t i) {
+            double faktor = 1.0;
+            for (int runde = 0; runde < 3; ++runde)
+            {
+                ZupfSpiel u = t;
+                u.laufzeitJeNote = kern::kurveAusPunkten({{noten[i], faktor}});
+                ZupfAnschlag a;
+                a.note = noten[i];
+                a.haltenS = 0.6;
+                const ZupfTon m = messeZupfTon(u, a, static_cast<std::int64_t>(0.6 * a.rate));
+                if (!m.schwingt) break;
+                const double fehler = 1200.0 * std::log2(m.spielHz / hzVon(noten[i]));
+                if (std::abs(fehler) < 0.6) break;
+                faktor *= m.spielHz / hzVon(noten[i]);
+            }
+            k[i] = faktor;
+        },
+        threads);
+    kern::Kurve kurve;
+    kurve.belegkraft = kern::Belegkraft::Rechnung;
+    kurve.herkunft = "Faktor auf die Laufzeiten: die Spitze des Grundtons auf der Note (stimme)";
+    for (std::size_t i = 0; i < noten.size(); ++i) kurve.punkte.push_back({noten[i], k[i]});
+    return kurve;
+}
+
+Stimmer zupfStimmer()
+{
+    using namespace kern::zupf;
+    return Stimmer{std::string(kKernName), [](const kern::Fabrik&, const kern::Werte& werte, const std::vector<std::string>& namen) {
+                       GestimmteWerte aus;
+                       if (std::find(namen.begin(), namen.end(), std::string(kLaufzeit)) != namen.end())
+                           aus.emplace_back(std::string(kLaufzeit), zupfLaufzeit(spielAus(werte)));
+                       return aus;
+                   }};
 }
 
 }  // namespace lumi::messung
