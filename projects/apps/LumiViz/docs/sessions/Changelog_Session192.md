@@ -40,6 +40,9 @@
 
 ## Geprüft
 
+- Vor dem Teilplan 34k die IC-Vorlage der Klasse 2 am Ton gemessen (nichts am Programm):
+  `docs/modellierung/gezupfte-saite/2026-11-12_S192_befund_ic_vorlage.md`.
+
 - Messungen `docs/modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md` und `…_messung_zv12.md`, Befund
   `docs/modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md`, Quellenbericht unter `recherche/`.
 - Eng 101 / 101 unter Release-clang und Testing-MSVC, die Stimmung aller vier unter beiden Bit für Bit gleich; nach

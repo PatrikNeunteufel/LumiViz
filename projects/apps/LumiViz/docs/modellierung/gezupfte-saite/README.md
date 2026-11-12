@@ -24,6 +24,11 @@ hakwright.co.uk, deshalb seit S146 nicht mehr versioniert (vorher unter `docs/au
 ## Noch offen
 Der Gitarrenkorpus nach KB1 a auf die gemeinsame Grundlage (`../koerper/`).
 
+## Befunde
+- [2026-11-12_S192_befund_ic_vorlage.md](2026-11-12_S192_befund_ic_vorlage.md) — die IC-Vorlage der Klasse 2 am Ton
+  gemessen, vor dem Teilplan 34k: keines der fünf Instrumente hält 15 LU über den Umfang (18,6–36,1 LU), der Tastenstoß
+  des Cembalos ist stumm, die Harfe im Clip braucht 14 % der Echtzeit. Programm und Rohausgabe unter [proben/](proben).
+
 ## Aus InstrumentsCalculation (S182)
 
 - [ic/](ic/) — die Vorarbeiten aus IC zu Klasse 2 (Cembalo, Harfe, Gitarre, Laute, Oud; Stufe 34k) (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.
