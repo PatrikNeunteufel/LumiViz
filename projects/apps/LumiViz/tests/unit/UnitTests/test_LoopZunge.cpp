@@ -177,11 +177,17 @@ TEST_CASE("Loop Zunge 34j-7: ein Crescendo am gehaltenen Ton wird lauter und hel
     t.ausdruckMuster = {{0, 0}, {1500, 1000}};
     const std::vector<double> x = links(rendereTon(m, t, kRate));
     const double leise = rmsDb(x, 0.25, 0.45), laut = rmsDb(x, 1.55, 1.75);
-    const double hellLeise = schwerpunktHz(x, 0.25, 440.0), hellLaut = schwerpunktHz(x, 1.55, 440.0);
-    MESSAGE("Melodica A4 Crescendo: " << laut - leise << " dB lauter, Schwerpunkt " << hellLeise << " → " << hellLaut << " Hz");
+    // ZV14 a (S192): die Teiltoene an der gespielten Tonhoehe gelesen — sie folgt dem Wind (ZV5 a); an der Sollfrequenz
+    // fielen bei ff die hohen Teiltoene aus dem Fenster (Befund S191 „lauter wird dunkler“, ZV12 a)
+    const double fLeise = tonhoeheHz(x, 0.25, 0.45), fLaut = tonhoeheHz(x, 1.55, 1.75);
+    const double hellLeise = schwerpunktHz(x, 0.25, fLeise), hellLaut = schwerpunktHz(x, 1.55, fLaut);
+    MESSAGE("Melodica A4 Crescendo: " << laut - leise << " dB lauter, " << fLeise << " → " << fLaut << " Hz, Schwerpunkt " << hellLeise << " → "
+                                      << hellLaut << " Hz");
     CHECK(laut - leise > 8.0);
-    // die Teiltoene aendern sich mit dem Wind (34j-7); Befund S191: im Modell wird der Ton dabei dunkler, nicht heller
-    CHECK(std::abs(hellLaut / hellLeise - 1.0) > 0.05);
+    CHECK(fLaut < fLeise);  // die Tonhoehe faellt mit dem Druck (ZV5 a)
+    // belegt ist die Richtung (Puranik & Scavone 2023: die Zungenbewegung wird mit dem Druck obertonreicher), nicht das
+    // Mass; gemessen S192 1,08-fach (das Fenster bei 0,25 s liegt bei Expression rund 0,17; Staerke 0 → 1 am Kern 1,22)
+    CHECK(hellLaut > 1.03 * hellLeise);
     // ohne Verlauf, fest bei 0 und bei 1: das Crescendo liegt zwischen beiden
     TonAngabe pp = ton(69, 2000), ff = ton(69, 2000);
     pp.ausdruckMuster = {{0, 0}};

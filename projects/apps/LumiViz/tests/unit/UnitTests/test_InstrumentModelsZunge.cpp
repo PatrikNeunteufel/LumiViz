@@ -24,6 +24,8 @@
  * - Messfall `LUMIVIZ_34J_MESSUNG=<datei.md>`: je Instrument und Taste die Zielgroessen von 34j-5 wie der Pruefstand
  *   (`docs/modellierung/zunge/proben/2026-11-11_S190_pruefstand_ergebnisse.txt`), dazu die Lautheit des ganzen Tons
  *   ueber den Umfang (Befund S188) und der Bend ueber das Ventil; ohne Variable nur eine Meldung.
+ * - Messfall `LUMIVIZ_ZV12_MESSUNG=<datei.md>` (ZV12 a, ZV14 a, S192): die Klangfarbe ueber dem Druck an der Sollfrequenz
+ *   und an der gemessenen Tonhoehe, je Zunge und ganzer Ton, dazu Varianten am unteren Diskant des Akkordeons.
  ****************************************************************************************
  */
 
@@ -964,7 +966,188 @@ double tonLufs(const ZungenSpiel& s, int note, double e)
     return lumi::messung::tonLautheit(s, note, e);
 }
 
+/// ZV12 a: die Klangfarbe einer Zunge oder des ganzen Tons bei einer Expression — Teiltoene 1 … 20 (Hann, 9600 Werte
+/// ab 0,6 s, 1 s gehalten) einmal an der Sollfrequenz der Taste (wie die Messung S191) und einmal an der gemessenen
+/// Tonhoehe der ersten Zunge (Nulldurchgaenge der Auslenkung im letzten halben Halten).
+struct Klangfarbe
+{
+    double fSoll = 0.0, fIst = 0.0;
+    double schwerSoll = 0.0, schwerIst = 0.0;  ///< Schwerpunkt der Teiltoene (Hz), gewichtet mit dem Betrag
+    std::vector<double> dbIst;                 ///< Pegel der Teiltoene gegen den ersten (dB), an der gemessenen Tonhoehe
+    double ampRuhe = 0.0;                      ///< halbe Spanne der Auslenkung / Ruheoeffnung
+};
+
+const Chor& ersterChor(const ZungenSpiel& s, int note)
+{
+    const bool bass = s.bassAb > 0 && note < s.bassAb;
+    return (bass ? s.bassChoere : s.choere).front();
+}
+
+Klangfarbe klangfarbe(const ZungenSpiel& s, int note, double e, bool ganzerTon)
+{
+    Klangfarbe k;
+    const ZungeDesChors z = zungeDesChors(s, ersterChor(s, note), note);
+    std::vector<double> aus, y;
+    ZungenMessung m;
+    m.auslenkung = &y;
+    rechneEineZunge(s, z.f0, z.note, ton(note, e, 1.0), aus, 57600, &m);
+    // die Tonhoehe aus den aufsteigenden Nulldurchgaengen um die Mitte, 0,5 … 1 s
+    double lo = 1e30, hi = -1e30;
+    for (std::size_t i = 24000; i < 48000; ++i)
+    {
+        lo = std::min(lo, y[i]);
+        hi = std::max(hi, y[i]);
+    }
+    const double mitte = 0.5 * (lo + hi);
+    k.ampRuhe = 0.5 * (hi - lo) / zungeAn(s, z.note).ruhe;
+    double erster = -1.0, letzter = -1.0;
+    int zahl = 0;
+    for (std::size_t i = 24001; i < 48000; ++i)
+    {
+        const double u = y[i - 1] - mitte, v = y[i] - mitte;
+        if (u < 0.0 && v >= 0.0)
+        {
+            const double t = (static_cast<double>(i - 1) + u / (u - v)) / 48000.0;
+            if (zahl == 0) erster = t;
+            letzter = t;
+            ++zahl;
+        }
+    }
+    k.fIst = zahl >= 3 ? (zahl - 1) / (letzter - erster) : 0.0;
+    k.fSoll = z.hz;
+    std::vector<float> t;
+    if (ganzerTon)
+        rechneZungenTon(s, ton(note, e, 1.0), t, 57600);
+    else
+        t.assign(aus.begin(), aus.end());
+    const auto schwer = [&](double f, std::vector<double>* db) {
+        double summe = 0.0, gewicht = 0.0, eins = 0.0;
+        for (int h = 1; h <= 20 && h * f < 20000.0; ++h)
+        {
+            const double b = band(t, 28800, 9600, h * f);
+            if (h == 1) eins = b;
+            summe += h * f * b;
+            gewicht += b;
+            if (db != nullptr) db->push_back(20.0 * std::log10(std::max(b, 1e-30) / std::max(eins, 1e-30)));
+        }
+        return gewicht > 0.0 ? summe / gewicht : 0.0;
+    };
+    k.schwerSoll = schwer(k.fSoll, nullptr);
+    k.schwerIst = k.fIst > 0.0 ? schwer(k.fIst, &k.dbIst) : 0.0;
+    return k;
+}
+
 }  // namespace
+
+TEST_CASE("InstrumentModels ZV12 Messfall freeReed: Klangfarbe ueber dem Druck (LUMIVIZ_ZV12_MESSUNG=<datei.md>)")
+{
+    const char* ziel = std::getenv("LUMIVIZ_ZV12_MESSUNG");
+    if (ziel == nullptr || *ziel == '\0')
+    {
+        MESSAGE("LUMIVIZ_ZV12_MESSUNG=<datei.md> misst die Klangfarbe ueber dem Druck an Sollfrequenz und gemessener Tonhoehe");
+        return;
+    }
+    std::ostringstream o;
+    o << "# ZV12 a: Klangfarbe ueber dem Druck am Kern freeReed (S192)\n\n"
+         "> test_InstrumentModelsZunge, `LUMIVIZ_ZV12_MESSUNG`. Schwerpunkt der Teiltoene 1–20 (Hann, 9600 Werte ab 0,6 s, 1 s "
+         "gehalten), Staerke 1 gegen 0. **Soll:** an h · Sollfrequenz der Taste (wie S191); **Ist:** an h · gemessener Tonhoehe der "
+         "ersten Zunge (Nulldurchgaenge der Auslenkung). Je Zunge = die erste Zunge allein; ganzer Ton = alle Choere und Gehaeuse.\n";
+    for (const Vorlage& v : vorlagen())
+    {
+        const ZungenSpiel s = spielGestimmt(v.name);
+        std::vector<int> noten;
+        for (int n = s.noteMin; n <= s.noteMax; n += 4) noten.push_back(n);
+        const double stufen[] = {0.0, 0.5, 1.0};
+        std::vector<Klangfarbe> zunge(noten.size() * 3), ganz(noten.size() * 3);
+        parallelJe(2 * zunge.size(), [&](std::size_t k) {
+            const std::size_t i = k / 6, j = (k / 2) % 3;
+            (k % 2 == 0 ? zunge : ganz)[i * 3 + j] = klangfarbe(s, noten[i], stufen[j], k % 2 == 1);
+        });
+        int hellerSoll[2] = {0, 0}, hellerIst[2] = {0, 0};
+        o << "\n## " << s.name << "\n\n| Note | Cent pp / mf / ff gegen Soll | Zunge: ff/pp Soll | Ist | ganzer Ton: Soll | Ist | Amplitude/Ruhe pp / ff | "
+             "Teiltoene 2/3/5/10 gegen 1 bei pp (dB) | bei ff |\n|---|---|---|---|---|---|---|---|---|\n";
+        for (std::size_t i = 0; i < noten.size(); ++i)
+        {
+            const Klangfarbe& pp = zunge[i * 3];
+            const Klangfarbe& mf = zunge[i * 3 + 1];
+            const Klangfarbe& ff = zunge[i * 3 + 2];
+            const double rz[2] = {ff.schwerSoll / pp.schwerSoll, ff.schwerIst / pp.schwerIst};
+            const double rg[2] = {ganz[i * 3 + 2].schwerSoll / ganz[i * 3].schwerSoll, ganz[i * 3 + 2].schwerIst / ganz[i * 3].schwerIst};
+            hellerSoll[0] += rz[0] > 1.0;
+            hellerIst[0] += rz[1] > 1.0;
+            hellerSoll[1] += rg[0] > 1.0;
+            hellerIst[1] += rg[1] > 1.0;
+            const auto db = [](const Klangfarbe& k, std::size_t h) { return h < k.dbIst.size() ? k.dbIst[h] : -999.0; };
+            const auto cent = [](const Klangfarbe& k) { return k.fIst > 0.0 ? 1200.0 * std::log2(k.fIst / k.fSoll) : 0.0; };
+            char z[400];
+            std::snprintf(z, sizeof z, "| %d | %+.1f / %+.1f / %+.1f | %.2f | %.2f | %.2f | %.2f | %.2f / %.2f | %.0f / %.0f / %.0f / %.0f | %.0f / %.0f / %.0f / %.0f |\n",
+                          noten[i], cent(pp), cent(mf), cent(ff), rz[0], rz[1], rg[0], rg[1], pp.ampRuhe, ff.ampRuhe, db(pp, 1), db(pp, 2), db(pp, 4),
+                          db(pp, 9), db(ff, 1), db(ff, 2), db(ff, 4), db(ff, 9));
+            o << z;
+        }
+        char zs[300];
+        std::snprintf(zs, sizeof zs, "%s: heller bei ff — je Zunge Soll %d / Ist %d, ganzer Ton Soll %d / Ist %d von %zu", s.name.c_str(), hellerSoll[0],
+                      hellerIst[0], hellerSoll[1], hellerIst[1], noten.size());
+        o << "\n" << zs << "\n";
+        MESSAGE(std::string(zs));
+    }
+    // die Ursache am Rest (Akkordeon E3–A3, Melodica F3–A3: mit mehr Wind kleinere Amplitude, dunkler): je Groesse der
+    // Kanzelle, des Kanals und des Ventils mal 4 und mal 1/4, die erste Zunge allein, Staerke 0 gegen 1
+    o << "\n## Ursache am Rest: Varianten an Akkordeon 45 / 49 / 53 / 57 (erste Zunge, Ist)\n\n| Variante | Note | ff/pp Schwerpunkt | "
+         "Amplitude/Ruhe pp / ff | mittlere Lage/Ruhe pp / ff | Cent ff gegen mf |\n|---|---|---|---|---|---|\n";
+    {
+        const ZungenSpiel basis = spielGestimmt("accordion");
+        struct Variante
+        {
+            const char* name;
+            Kurve ZungenSpiel::* feld;
+            double faktor;
+        };
+        const Variante varianten[] = {{"wie gestimmt", nullptr, 1.0},
+                                      {"Ventil x4", &ZungenSpiel::ventilFlaecheM2, 4.0},
+                                      {"Ventil x1/4", &ZungenSpiel::ventilFlaecheM2, 0.25},
+                                      {"Kanzelle x4", &ZungenSpiel::kanzelleM3, 4.0},
+                                      {"Kanzelle x1/4", &ZungenSpiel::kanzelleM3, 0.25},
+                                      {"Kanal-Laenge x4", &ZungenSpiel::kanalLaengeM, 4.0},
+                                      {"Kanal-Laenge x1/4", &ZungenSpiel::kanalLaengeM, 0.25},
+                                      {"Daempfung x4", &ZungenSpiel::zeta, 4.0},
+                                      {"Ruheoeffnung x2", &ZungenSpiel::ruheM, 2.0}};
+        const int noten[] = {45, 49, 53, 57};
+        constexpr std::size_t kV = std::size(varianten), kN = std::size(noten);
+        std::vector<Klangfarbe> r(kV * kN * 3);
+        std::vector<double> lage(kV * kN * 3);
+        parallelJe(r.size(), [&](std::size_t k) {
+            const std::size_t vi = k / (kN * 3), ni = (k / 3) % kN, ei = k % 3;
+            ZungenSpiel s = basis;
+            if (varianten[vi].feld != nullptr)
+                for (NotenWert& p : (s.*varianten[vi].feld).punkte) p.wert *= varianten[vi].faktor;
+            r[k] = klangfarbe(s, noten[ni], ei * 0.5, false);
+            // die mittlere Lage der Zunge (gegen die Ruheoeffnung; negativ = zum Schlitz hin)
+            const ZungeDesChors z = zungeDesChors(s, ersterChor(s, noten[ni]), noten[ni]);
+            std::vector<double> aus, y;
+            ZungenMessung m;
+            m.auslenkung = &y;
+            rechneEineZunge(s, z.f0, z.note, ton(noten[ni], ei * 0.5, 1.0), aus, 57600, &m);
+            double summe = 0.0;
+            for (std::size_t i = 24000; i < 48000; ++i) summe += y[i];
+            lage[k] = summe / 24000.0 / zungeAn(s, z.note).ruhe;
+        });
+        for (std::size_t vi = 0; vi < kV; ++vi)
+            for (std::size_t ni = 0; ni < kN; ++ni)
+            {
+                const std::size_t k = (vi * kN + ni) * 3;
+                char z[300];
+                std::snprintf(z, sizeof z, "| %s | %d | %.2f | %.2f / %.2f | %+.2f / %+.2f | %+.1f |\n", varianten[vi].name, noten[ni],
+                              r[k + 2].schwerIst / r[k].schwerIst, r[k].ampRuhe, r[k + 2].ampRuhe, lage[k], lage[k + 2],
+                              r[k + 2].fIst > 0.0 && r[k + 1].fIst > 0.0 ? 1200.0 * std::log2(r[k + 2].fIst / r[k + 1].fIst) : 0.0);
+                o << z;
+            }
+    }
+    std::ofstream f(ziel, std::ios::binary);
+    f << o.str();
+    CHECK(f.good());
+    MESSAGE("geschrieben: " << std::string(ziel));
+}
 
 TEST_CASE("InstrumentModels 34j-6 Messfall freeReed: die Zielgroessen von 34j-5 am Kern (LUMIVIZ_34J_MESSUNG=<datei.md>)")
 {
@@ -1290,28 +1473,17 @@ TEST_CASE("InstrumentModels 34j-6 Messfall freeReed: die Zielgroessen von 34j-5 
         o << z;
         MESSAGE(s.name << ": Stufe → Staerke, groesster Fehler a " << fehler[0] << " / b " << fehler[1] << " / c " << fehler[2] << " LU");
     }
-    // die Helligkeit ueber der Staerke: Schwerpunkt der ersten zwanzig Teiltoene bei Staerke 0 und 1 (ganzer Ton)
-    o << "\n## 34j-7 Helligkeit ueber der Staerke — Schwerpunkt der Teiltoene 1–20, Staerke 1 gegen 0\n\n| Instrument | Verhaeltnis min … max | Tasten heller |\n|---|---|---|\n";
+    // die Helligkeit ueber der Staerke: Schwerpunkt der ersten zwanzig Teiltoene bei Staerke 0 und 1 (ganzer Ton) — seit
+    // ZV14 a (S192) an der gemessenen Tonhoehe (`klangfarbe`), S191 an der Sollfrequenz (Messfehler, ZV12 a)
+    o << "\n## 34j-7 Helligkeit ueber der Staerke — Schwerpunkt der Teiltoene 1–20 an der gemessenen Tonhoehe, Staerke 1 gegen 0\n\n"
+         "| Instrument | Verhaeltnis min … max | Tasten heller |\n|---|---|---|\n";
     for (const Vorlage& v : vorlagen())
     {
         const ZungenSpiel s = spielGestimmt(v.name);
         std::vector<int> noten;
         for (int n = s.noteMin; n <= s.noteMax; n += 4) noten.push_back(n);
         std::vector<double> sp(2 * noten.size());
-        parallelJe(sp.size(), [&](std::size_t k) {
-            const int n = noten[k / 2];
-            std::vector<float> t;
-            rechneZungenTon(s, ton(n, k % 2 == 0 ? 0.0 : 1.0, 1.0), t, 57600);
-            const double f0 = hzVon(n);
-            double summe = 0.0, gewicht = 0.0;
-            for (int h = 1; h <= 20 && h * f0 < 20000.0; ++h)
-            {
-                const double b = band(t, 28800, 9600, h * f0);
-                summe += h * f0 * b;
-                gewicht += b;
-            }
-            sp[k] = gewicht > 0.0 ? summe / gewicht : 0.0;
-        });
+        parallelJe(sp.size(), [&](std::size_t k) { sp[k] = klangfarbe(s, noten[k / 2], k % 2 == 0 ? 0.0 : 1.0, true).schwerIst; });
         double lo = 1e9, hi = 0.0;
         int heller = 0;
         for (std::size_t i = 0; i < noten.size(); ++i)

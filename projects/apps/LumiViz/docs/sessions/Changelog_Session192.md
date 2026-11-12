@@ -14,14 +14,23 @@
 ## Entschieden
 
 - ZV13 a: der Nachklang ist die Hülle über Haltedauer und Stärke (präzisiert ZV11 a, das die Haltedauer offen ließ).
+- ZV14 a: der Kern bleibt; die Klangfarbe wird an der gespielten Tonhöhe gemessen.
+
+## Behoben
+
+- Der Befund „mit mehr Wind wird der Ton dunkler“ (S191) war größtenteils ein Fehler der Messung: sie las die Teiltöne
+  an der Sollfrequenz, die Tonhöhe sinkt aber mit dem Druck. Richtig gemessen wird der Ton mit dem Wind heller
+  (Harmonium und Mundharmonika an jeder Taste, Melodica an 6 von 8, Akkordeon an 12 von 17).
 
 ## Bekannt
 
-- Mit mehr Wind wird der Ton an vielen Tasten dunkler statt heller — Untersuchung ZV12 a vor 34j-8.
+- Akkordeon E3–A3 und Melodica F3–A3 werden mit dem Wind leicht dunkler (das Ventil drosselt dort); die Zunge des
+  Harmoniums schwingt mit mehr Druck weiter aus, als gemessen. Beides wird in der Hörprobe 34j-9 geprüft.
 - Das Stimmen aller vier Instrumente dauert jetzt 41 s statt 13 s (18 Ausklänge je Taste).
 
 ## Geprüft
 
-- Messung `docs/modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md`.
-- Eng 100 / 100 unter Release-clang und Testing-MSVC, die Stimmung aller vier unter beiden Bit für Bit gleich. Kein
+- Messungen `docs/modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md` und `…_messung_zv12.md`, Befund
+  `docs/modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md`, Quellenbericht unter `recherche/`.
+- Eng 101 / 101 unter Release-clang und Testing-MSVC, die Stimmung aller vier unter beiden Bit für Bit gleich. Kein
   voller Lauf (kommt mit 34j-10).

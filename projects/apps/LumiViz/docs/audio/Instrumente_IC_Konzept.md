@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.20.0
+> **Version:** 0.21.0
 > **Datum:** 2026-11-12 (Session 192)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -13,7 +13,7 @@
 > Zupfkraft und den Abnahmen `slot`/`bridge`, Kern `struckString` mit Durchmesser je Taste, beide Rechenfassung 2.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j in Arbeit seit 2026-11-11 (S189; 34j-1 bis 34j-7 fertig, vor 34j-8 ZV12 a)
+> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j in Arbeit seit 2026-11-11 (S189; 34j-1 bis 34j-7 fertig, ZV12 a untersucht, ZV14 a; als Nächstes 34j-8)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -938,8 +938,8 @@ Note bei −x dB ihr Ziel auf 1,79 LU (Akkordeon), 0,27 (Harmonium), 1,84 (Melod
 liegt zwischen den Stufen, die Stützpunkte treffen auf 0,05 LU. ZV11 a nach ZV13 a — `releaseTime` je Taste
 (`messeNachklang`), `nachklang` liest ihn: Akkordeon 190–4 575 ms, Harmonium 845–1 110, Melodica 310–1 525,
 Mundharmonika 60–340. Das Stimmen aller vier dauert 41 s (vorher 13 s). Messung
-[`proben/2026-11-12_S192_messung_34j7.md`](../modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md). Offen vor 34j-8:
-ZV12 a.
+[`proben/2026-11-12_S192_messung_34j7.md`](../modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md). ZV12 a danach
+untersucht, ZV14 a (unten).
 
 ✅ **ZV10 a** (Patrik S191, „alle nach Empfehlung“): **Die Stufe setzt die Stärke je Taste an ihrer gemessenen Kurve** —
 gestimmte Kurven `strengthAtLevel2` … `strengthAtLevel20` (die Stärke, bei der die Taste 2, 4 … 20 dB leiser klingt als
@@ -975,6 +975,28 @@ alle Tasten wird etwa gleich viel Nachklang gerechnet (Akkordeon 46,7 gegen 48,3
 Stimmer misst 18 Ausklänge je Taste. Verworfen: b (ZV11 a wie gebaut, bis 110 ms abgeschnitten), c (Formel 6,9/(ζω₀),
 1,3–2,1-fach Nachklang und an einer Akkordeontaste zu kurz). Kippt auf b, wenn Haltedauern über 4 s beim Akkordeon
 deutlich länger ausklingen (von 2 auf 4 s 1,18 → 1,16).
+
+**ZV12 a erledigt (S192):** der Befund „lauter wird dunkler“ war größtenteils ein Fehler der Messung — S191 las die
+Teiltöne an der Sollfrequenz der Taste, die Tonhöhe folgt aber dem Druck (ZV5 a, bei ff bis −24 Cent), bei ff fielen die
+hohen Teiltöne aus dem Fenster. An der gemessenen Tonhöhe wird der Ton mit dem Wind heller: Harmonium 11 von 11,
+Mundharmonika 10 von 10, Melodica 6 von 8, Akkordeon (ganzer Ton) 12 von 17. Rest: Akkordeon E3–A3 und Melodica F3–A3
+0,77–0,98-fach dunkler — dort drosselt das Ventil (ZV5 a), die Amplitude bleibt oder fällt (Ventil × 4: 1,15–1,23-fach
+heller). Quellen: kein gemessenes Spektrum des Schalls über dem Druck in den 28 Arbeiten; die Zungenbewegung wird mit dem
+Druck obertonreicher (Puranik & Scavone 2023, gedr. S. 1810–1811), die Amplitude von Harmoniumzungen bleibt fast gleich
+und fällt oben um rund 15 % (Cottingham u. a. 1999). Befund
+[`../modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md`](../modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md),
+Messung `proben/2026-11-12_S192_messung_zv12.md`, Agentenbericht `recherche/2026-11-12_S192_klangfarbe_ueber_druck.md`.
+
+✅ **ZV14 a** (Patrik S192): **Der Kern bleibt; die Messung liest die Teiltöne an der gemessenen Tonhöhe** (Messfall
+`LUMIVIZ_34J_MESSUNG`, `LUMIVIZ_ZV12_MESSUNG`, der Crescendo-Fall in `test_LoopZunge` prüft „heller“ an der Melodica A4:
+1,08-fach). Der Rest am unteren Diskant und die Amplitude des Harmoniums über dem Druck (im Kern 1,5- bis 2-fach,
+gemessen fast gleich) stehen als Befund in den Offenen Punkten, zu prüfen in der Hörprobe 34j-9; weiter mit 34j-8. Grund:
+a liegt an allen gemessenen Zielgrößen am nächsten (Tonhöhe über dem Druck, Amplitude im unteren Diskant, Richtung
+„heller“ an 39 von 46 Tasten); a legt nichts fest, was ein späterer Befund nicht neu stimmen kann. Verworfen: b (Ventil im
+unteren Diskant × 4 — heller, aber die Tonhöhe fiele über den Wind nur noch 3–5 statt 17 Cent, die Amplitude wüchse um
+70–130 %), c (vor 34j-8 Ricot u. a. 2005, Koopman & Cottingham 1997, Llanos-Vázquez u. a. 2014 laden). Kippt auf c, wenn die
+Klangfarbe des unteren Diskants vor dem Ausliefern belegt sein soll; auf b, wenn eine dieser Quellen am Schall „heller über
+den ganzen Umfang“ misst.
 
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
@@ -1035,6 +1057,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.21.0 | 2026-11-12 | Session 192. §6: ZV12 a erledigt — der Befund „lauter wird dunkler“ war größtenteils ein Messfehler (Teiltöne an der Sollfrequenz), Rest am unteren Diskant vom Ventil; ZV14 a (Kern bleibt, Messung an der gemessenen Tonhöhe, Rest als Befund bis 34j-9). |
 | 0.20.0 | 2026-11-12 | Session 192. §6: 34j-7 erledigt — ZV10 a gebaut (Stufe → Stärke je Taste, gestimmt), ZV11 a gebaut nach ZV13 a (neu: `releaseTime` als längster Ausklang über sechs Haltedauern und drei Stärken, −60 dB unter der lautesten Stelle der Note); Journal J72. |
 | 0.19.0 | 2026-11-11 | Session 191. §6: 34j-6 erledigt (Kern `freeReed` Rechenfassung 2, Journal J70); ZV8 a (Bend je Taste auf dem Raster 2^(−1/4) mit Grenze), ZV9 a (`pitch` wirkt schon in 34j-6, am Beginn der Note). 34j-7 begonnen (laufender Wind, Journal J71); ZV10 a (Stufe → Stärke je Taste an der gemessenen Kurve), ZV11 a (Nachklang als gestimmte Kurve je Taste), ZV12 a (Befund Helligkeit über dem Druck vor 34j-8 untersuchen). |
 | 0.18.0 | 2026-11-11 | Session 190. §6: 34j-4 erledigt (Quellenlage, 28 Arbeiten in der Ablage); ZQ1 a, ZQ2 a (Ablage), ZH1 a (Herleitung aus Ankern und Schwellentheorie, Belegkraft je Wert), ZH2 a (Melodica als Annahme, „ungemessen“), ZH3 a (Amplitude gegen die Messung von 1999); Zielgrößen in Zeile 34j-5 nachgeführt. 34j-5 gerechnet: ZV4 a (Kern-Form bleibt, Rechenfassung 2 ändert die Vorgaben), ZV5 a (Tonhöhe folgt dem Druck; Stimmung ±10 Cent am mittleren Druck), ZV6 a (Bass-Seite 8′ und 4′), ZV7 a (Bend über das Ventil, Kurve und Grenze je Taste aus dem Stimmer). |
