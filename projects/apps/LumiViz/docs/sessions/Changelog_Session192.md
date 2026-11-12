@@ -2,7 +2,8 @@
 
 > Der Kern der durchschlagenden Zunge folgt jetzt der Anschlagstufe und klingt je Taste so lange aus, wie er es
 > tatsächlich tut (34j-7 fertig). Vier neue mitgelieferte Instrumente spielen auf ihm: Accordion, Harmonium, Melodica,
-> Harmonica (34j-8), mit einem Beispiel-Loop und je einem Loop ihrer Nuancen (34j-9).
+> Harmonica (34j-8), mit einem Beispiel-Loop und je einem Loop ihrer Nuancen (34j-9). Damit ist die Stufe 34j
+> abgeschlossen (34j-10).
 
 ## Neu
 
@@ -45,3 +46,5 @@
   34j-8 der Bereich der Instrumente, Pegel, Werte und Quellen 292 / 292; nach 34j-9 Loops, Zunge, Creator, Werte, Klangfassung, Instrumente, Pegel, Quellen und Hörlisten 161 / 161 unter beiden. Kein voller Lauf (kommt mit
   34j-10).
 - Die Rechenzeit der Zungen nur gemessen, nicht geprüft (Kühlung): 1,3 % der Echtzeit am Akkordeon, 0,6 % an den übrigen.
+- Nach 34j-10 der volle Lauf: 1888 / 1888, 0 Skips unter Release-clang (13 min) und Testing-MSVC (13 min); die
+  Quellpakete `instrumentcore` 0.6.0, `instrumentmodels` 0.7.0, `instrumentmeasure` 0.4.0 mit gültigen Summen.

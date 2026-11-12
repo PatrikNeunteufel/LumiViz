@@ -1,11 +1,11 @@
 # InstrumentModels — die Rechenkerne der Instrumentklassen
 
-> **Version:** 0.5.0
-> **Datum:** 2026-11-09
+> **Version:** 0.7.0
+> **Datum:** 2026-11-12
 > **Typ:** CppModuleDoc
-> **Status:** gebaut (Stufe 34d: der Flügel; 34g: Klasse 4, der Kern `bar`; 34h: Klasse 5, der Kern `membrane`; 34i: Klasse 1 ohne Flügel — Upright, Honky-tonk, CP-70 auf `hammerString`, der Kern `struckString`)
+> **Status:** gebaut (Stufe 34d: der Flügel; 34g: Klasse 4, der Kern `bar`; 34h: Klasse 5, der Kern `membrane`; 34i: Klasse 1 ohne Flügel — Upright, Honky-tonk, CP-70 auf `hammerString`, der Kern `struckString`; 34j: Klasse 10, der Kern `freeReed`)
 > **Modul:** InstrumentModels (STATIC, `projects/libs/InstrumentModels`)
-> **Namespace:** `lumi::kern` (Fabrik, geteilte Bausteine), je Klasse `lumi::kern::<klasse>` (`lumi::kern::hammer`, `lumi::kern::saite`, `lumi::kern::stab`, `lumi::kern::trommel`)
+> **Namespace:** `lumi::kern` (Fabrik, geteilte Bausteine), je Klasse `lumi::kern::<klasse>` (`lumi::kern::hammer`, `lumi::kern::saite`, `lumi::kern::stab`, `lumi::kern::trommel`, `lumi::kern::zunge`)
 > **Abhängigkeiten:** InstrumentCore (PUBLIC), Standardbibliothek; kein Qt, kein `windows.h`
 > **Zielgruppe:** Entwickler
 > **Sprache:** Deutsch
@@ -37,7 +37,9 @@ dieser einen Bibliothek. Jede Übernahme steht im
 
 | Kopf | Inhalt |
 |---|---|
-| `Kerne.hpp` | `kerne()`: die Fabrik der eingebauten Kerne — `hammerString` (34d), `bar` (34g), `membrane` (34h), `struckString` (34i); die übrigen Klassen aus IC folgen |
+| `Kerne.hpp` | `kerne()`: die Fabrik der eingebauten Kerne — `hammerString` (34d), `bar` (34g), `membrane` (34h), `struckString` (34i), `freeReed` (34j); die übrigen Klassen folgen |
+| `zunge/Zunge.hpp` | 34j: das Spiel `ZungenSpiel` (Größen je Taste als Kurven: Länge, Breite, Masse je Fläche, Dämpfung, Aufbiegung, Seitenspalt, Kanzelle, Kanal, Ventil; ein Windbereich `windMin`/`windMax`; Chöre und Bass-Chöre als `Chor`; die gestimmten Kurven f₀, Bend, Stärke je Stufe, Nachklang), `ZungenAnschlag` (Expression, Pitch, Vibrato, Balg je als Wert und Verlauf), `ZungenMessung`, `rechneZungenTon`, `rechneEineZunge`, `zungeAn`, `windBei`/`windMitte`, `bendAn`/`oeffnungFuer`/`ventilFuerCent` (ZV8 a), `staerkeBei` (ZV10 a), `nachklangBei` (ZV13 a), die vier Vorgaben `baueVorgabeAkkordeon/Harmonium/Melodica/Mundharmonika` (`src/zunge/Vorgaben.cpp`, Herleitung S190) |
+| `zunge/ZungeKern.hpp` | der Kern: `kKernName` `"freeReed"`, `kernTyp()` (Tafel „Free reed“, Rechenfassung 2, neun Gruppen), die gestimmten Namen (`reedFrequency`, `bendStep1…7`, `bendLimitOpening`, `bendLimitCent`, `strengthAtLevel2…20`, `releaseTime`; `gestimmteNamen()`), die Spur `bellows`, die innere Größe `reedTip`, `werteAus`/`spielAus`, `anschlagAus`, `vorlagen()` (`accordion`, `harmonium`, `melodica`, `harmonica`), `werteVon`, `ZungeKern` |
 | `saite/Saite.hpp` | 34i, aus IC: das Spiel `SaitenSpiel` (Kurven über den Umfang, Tangente oder Schlägel, Mittelsteg, Mitschwingen, Dämpfer, Garn, Schieber, Tonabnehmer, Verstärker), `SaitenAnschlag`, `SaitenMessung`, `saitenNachklang`, `rechneSaitenTon`, `rechneSaitenClip` (Mitschwingen je Clip), `richteSaitenSpiel` (auf den Umfang der Tafel, `kSaitenUmfangMin/Max`, KL4-1 a), die drei Vorgaben `baueVorgabeClavinet/Hackbrett/Cimbalom` |
 | `saite/SaiteKern.hpp` | der Kern: `kKernName` `"struckString"`, `kernTyp()` (Tafel mit zehn Gruppen, Bezug in einer Runde), die Spuren `damperSlider`, `keyPressure`, `pickupSelection`, `werteAus`/`spielAus`, `abnehmerWahlAus`, `anschlagAus`, `vorlagen()` (`clavinet_modal` ausgeliefert, `hammered_dulcimer`, `cimbalom` nicht — KL1 a), `werteVon`, `SaiteKern` |
 | `gemeinsam/Membran.hpp` | 34h, aus IC: die Moden kreisrunder Felle mit Luftlast (Rayleigh) und Kessel als Luftfeder, zwei Felle gekoppelt (`Fell`, `FellMode`, `Kessel`, `fellModen`, `formAn`, `besselNull`); der Löser `zerlegeSymmetrisch` aus dem Core |
@@ -47,8 +49,8 @@ dieser einen Bibliothek. Jede Übernahme steht im
 | `gemeinsam/Reibung.hpp` | 34g, aus IC: die Reibung Bogen–Schwinger nach Galluzzo mit Haften und Hysterese (der Bogen am Stab, später Klasse 3) |
 | `stab/Stab.hpp` | 34g, aus IC: das Spiel `StabSpiel` (Kurven über den Umfang des Instruments), `StabAnschlag`, `StabMessung` (mit dem gehaltenen Teil für den Stimmer), `stabModen`, `stabNachklang`, `rechneStabTon`, `richteStabSpiel`, die zehn Vorgaben (`baueVorgabe…`, `alleStabSpiele`) |
 | `stab/StabKern.hpp` | der Kern: `kKernName` `"bar"`, `kernTyp()` (Tafel mit dem Umfang je Instrument, Auskunft, `erzeuge`), die Spuren `motor`, `bowed`, `malletOffset`, `damperPressure`, die gestimmten Werte `partnerGain` und `bowForce*`, `werteAus`/`spielAus`, `anschlagAus`, `vorlagen()` (die zehn mit Namen nach KS4 a, je mit den Quellen der Werte ohne Kurve, QM1 a), `werteVon` (die Werte einer Vorlage mit ihren Quellen; die Tafel trägt die der ersten Vorlage), `StabKern` |
-| `hammer/HammerSaite.hpp` | das Spiel des Flügels: `HammerSaite` (22 Kurven über A0–C8), `kurvenAngaben()` (die eine Liste: Feld, Name in `coreParams`, Titel, Gruppe, Einheit, Skala, Grenzen), `richteHammerSaite`, `hammerSaiteVorgabe` (jede Kurve mit Belegkraft und Herkunft), `chorAn`, die Formeln nach RT-0425, Stulov & Kartofelev 2009 und Rigaud |
-| `hammer/HammerTon.hpp` | der Ton: `HammerAnschlag` (Taste, Hz, Stufe, Halten, Dämpfer, Rate, `tempoFaktor`, Moderator), `rechneHammerTon`, `hammerNachklang`, `hammerTempo`, Moden des Chors (`chorModen`, `ebenenModen`, `stossJeSaite`, `hammerTeiltonModen`), `kHammerKraftBezug`, `kSchalldruckBezug` |
+| `hammer/HammerSaite.hpp` | das Spiel des Flügels: `HammerSaite` (22 Kurven über A0–C8), `kurvenAngaben()` (die eine Liste: Feld, Name in `coreParams`, Titel, Gruppe, Einheit, Skala, Grenzen), `richteHammerSaite`, `hammerSaiteVorgabe` (jede Kurve mit Belegkraft und Herkunft), `chorAn`, die Formeln nach RT-0425, Kartofelev & Stulov 2014 (Hysterese ε und Steife Q0, seit S187 HS-3 a) und Rigaud |
+| `hammer/HammerTon.hpp` | der Ton: `HammerAnschlag` (Taste, Hz, Stufe, Halten, Dämpfer, Rate, `tempoFaktor`, Moderator, `ueberabtastung` — Vorgabe `kHammerUeberabtastung` 32 seit S187), `rechneHammerTon`, `hammerNachklang`, `hammerTempo`, Moden des Chors (`chorModen`, `ebenenModen`, `stossJeSaite`, `hammerTeiltonModen`), `kHammerKraftBezug`, `kSchalldruckBezug` |
 | `hammer/HammerKern.hpp` | der Kern: `kKernName` `"hammerString"`, `kernTyp()` (Tafel „Hammer string“, Auskunft, `erzeuge`), `Pedalwerte` (Gruppe *Pedals*, FU2 a), `werteAus` (seit 34i mit dem Umfang, KL4 a)/`saiteAus`/`pedalwerteAus` (Spiel ↔ Werte), `anschlagAus`, `vorlagen()` (34i: `upright_piano`, `honky_tonk_piano`, `electric_grand_piano`; der Flügel selbst ist die Tafel), `werteVon`, `HammerKern` |
 | `hammer/HammerSaite.hpp` (34i) | dazu `baueVorgabeUpright`, `baueVorgabeHonkytonk`, `baueVorgabeCp70` aus IC `VorgabenRest.cpp` (`src/hammer/Vorgaben.cpp`) |
 
@@ -57,7 +59,8 @@ dieser einen Bibliothek. Jede Übernahme steht im
 - **Tafel** (IK2-4 a, §6a; Titel „Hammer string“, TT1 a): Gruppen *Keys* (seit 34i `noteMin`/`noteMax`, KL4 a),
   *String*, *Choir*, *Decay*, *Hammer*, *Damper*, *Pedals*; die 22 Kurven aus `kurvenAngaben()`, dazu `undampedFrom`
   (Ganzzahl, 89), `softFactor` (1), `moderatorStiffness` (2), `moderatorExponent` (2). Möglicher Tastenumfang 21–108,
-  `rechenFassung` 1. Der Körper steht **nicht** in der Tafel, sondern
+  `rechenFassung` 2 (seit S187, HS-3 a: der Kontakt 32-fach überabgetastet, mit der Hysterese nahe 1 erst dort
+  konvergent). Der Körper steht **nicht** in der Tafel, sondern
   an der Schicht (FU1 a) — die App faltet ihn.
 - **Auskunft:** Rechenweg *Note*, Stufe im Namen (`:a<stufe>`), Spuren `soft` und `practice` (Stufe ≥ 0,5 am Beginn der
   Note), innere Größe `contact` (Kontaktzeit, Kraftspitze); die Vorbereitung ist billig.
@@ -113,6 +116,26 @@ dieser einen Bibliothek. Jede Übernahme steht im
   (`richteStabSpiel`, `richteSaitenSpiel` ebenso) — ein kleinerer Umfang ändert keinen Ton darin.
 - Die Rechnung Bit für Bit wie IC (`werte/klasse1_ic.txt`: zwölf Abdrücke aus `abdruck_msvc.txt`).
 
+### 3.5 Die durchschlagende Zunge — Kern `freeReed` (34j)
+
+- **Ein Kern, vier Instrumente:** Akkordeon (F1–A6, Bass-Seite unter F3 mit 8′ + 4′, Diskant Musette aus zwei Chören 8′),
+  Harmonium (C3–F6, ein Chor, Gehäuse als Tiefpass 3 kHz), Melodica (F3–C6), Mundharmonika (C4–C7). Gruppen *Keys*,
+  *Reed*, *Chamber*, *Wind*, *Ranks* und *Bass ranks* (Listen von `Chor`), *Case*, *Tunable*, *Output*.
+- **Rechenfassung 2** (34j-6, ZV2 a–ZV9 a): die Größen je Taste als Kurven mit Quelle und Belegkraft (Gesetze aus der
+  Herleitung S190, `docs/modellierung/zunge/2026-11-11_S190_vorgaben_je_taste.md`), ein Windbereich je Instrument über
+  der Expression, f₀ am mittleren Druck gestimmt (ZV5 a), Bend über das Ventil je Taste auf dem Raster 2^(−1/4) mit
+  Grenze (ZV8 a) — an Akkordeon und Melodica (`palletBend`).
+- **Laufender Wind** (34j-7, ZV3 a, SK4 a): `KernAuskunft::anregungDauernd` — die Expression ist der Wind, kein Pegel;
+  Expression, `pitch`, `vibrato` und `bellows` (Richtung 0/1, am Wechsel ein Druckeinbruch) über die Zeit, eine konstante
+  Spur Bit für Bit wie der feste Wert. Stärke = `staerkeBei(Stufe)` · Expression (ZV10 a: je Taste gestimmt, bei welcher
+  Stärke der Ton 2 … 20 dB leiser klingt; unter der Dynamik der Taste 0). Nachklang je Taste gestimmt (ZV13 a: der
+  längste Ausklang über sechs Haltedauern und drei Stärken bis −60 dB unter der lautesten Stelle der Note).
+- **Gestimmt** im Stimmer `InstrumentMeasure/ZungeStimmen` (alle vier in rund 41 s); Bezug `outputReference` über
+  `normiere` (IK2-10 a).
+- Die Rechnung des Übergangs Bit für Bit wie IC (34j-2), seit Rechenfassung 2 gegen `werte/zunge_ic.txt`, das der Kern
+  selbst schreibt (`LUMIVIZ_ZUNGE_BEZUG_SCHREIBEN=1`, Vermerk J70).
+- Übersicht, Befunde und Rechenzeit: `apps/LumiViz/docs/modellierung/zunge/README.md`.
+
 ## 4. Tests
 
 - `tests/unit/UnitTests/test_InstrumentModels.cpp` — `*InstrumentModels*`: `kerne()` kennt den Flügel (Tafel), Werte ↔
@@ -133,6 +156,11 @@ dieser einen Bibliothek. Jede Übernahme steht im
   `LUMIVIZ_34I_KLEMMEN=1` (was das alte Klemmen am CP-70 änderte).
 - `test_LoopKlasse1.cpp` — die mitgelieferten Dateien (schreiben mit `LUMIVIZ_KLASSE1_INSTRUMENTE_SCHREIBEN=1`, Wächter),
   die Hörliste `LUMIVIZ_34I_WAV`.
+- `test_InstrumentModelsZunge.cpp` — `*34j*`: die Tafel `freeReed`, die Gesetze je Taste, die Abdrücke und Kurven gegen
+  `werte/zunge_ic.txt`, Windbereich und Bend als Wächter, Stärke je Stufe und Nachklang am Ton nachgemessen, konstante
+  Spuren und Balg; Messfälle `LUMIVIZ_34J_MESSUNG`, `LUMIVIZ_ZV12_MESSUNG`, alle vier stimmen mit `LUMIVIZ_34J_STIMMEN=1`.
+- `test_LoopZunge.cpp` — die mitgelieferten Dateien (schreiben mit `LUMIVIZ_ZUNGE_INSTRUMENTE_SCHREIBEN=1`, Wächter), der
+  Wind im Ton der App (Expression, Crescendo, Pitch, Vibrato), die Hörliste `LUMIVIZ_34J_WAV`, die Rechenzeit (Zahlen).
 - `test_LoopHammerSaite.cpp` (Kurven, Vorgaben, Datei Fassung 24), `test_LoopHammerTon.cpp` (am gerechneten Ton
   gemessen; Bezug je Plattform Bit für Bit, Rechenzeit `*31b-3*`), `test_LoopKleinEigen.cpp`.
 - Wächter der Bits: `*Loop Werte*`, `*Klangfassung*`, Flügel-Bezug; im Creator `test_LoopInstrumentEditor`
@@ -142,6 +170,7 @@ dieser einen Bibliothek. Jede Übernahme steht im
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.7.0 | 2026-11-12 | Session 192 (Bibliothek 0.7.0; S183 trug die Doku 0.6.0, `Solution.json` blieb auf 0.5.0). S187 HS-3 a: der Hammer nach Kartofelev & Stulov 2014 (`stulovHammerHysterese`, `stulovHammerSteife`), `kHammerUeberabtastung` 32, `hammerString` Rechenfassung 2, die Celesta 32-fach (J65). 34j (S189–S192): der Kern `freeReed` unter `zunge/` — Übernahme Bit für Bit (J66–J68), Rechenfassung 2 mit den Größen je Taste (J70), laufender Wind, Stärke je Stufe und Nachklang je Taste (J71, J72), die vier Vorlagen `accordion`, `harmonium`, `melodica`, `harmonica` (J73). |
 | 0.6.0 | 2026-11-09 | Session 183. LP2 b (WU1 a, KA1 a, CL1 a): die Vorgaben von Wurlitzer, Kalimba und Clavinet je Taste (`stab/Vorgaben.cpp` `wurlitzerMasseKg`, `kalimbaMasse`; `saite/Vorgaben.cpp` Durchmesser je Taste); Kern `bar`: Zupfen mit Kraft (`zupfKraftN`, Tafel `pluckForce`), Abnahmen `Schlitz` (Wurlitzer, Tafel `slot`) und `Steg` (Kalimba, Tafel `bridge`), Rechenfassung 2; Kern `struckString`: `durchmesserMm` statt `masseGm` (Tafel `stringDiameter` statt `stringMass`), der magnetische Tonabnehmer mit d² gewichtet, Rechenfassung 2; `StabStimmen` stimmt den Partner auch bei Abnahme Steg (Journal J60–J64). |
 | 0.5.0 | 2026-11-09 | Session 181. 34i: Upright, Honky-tonk, CP-70 als Vorlagen des Flügel-Kerns (`hammer/Vorgaben.cpp`, `Vorlage`, `vorlagen()`, `werteVon`), der Umfang in der Tafel des Flügels (KL4 a), die Tafel heißt „Hammer string“ (TT1 a); der Kern `struckString` (`saite/`, KL1 a); `richteStabSpiel`/`richteSaitenSpiel` auf den Umfang der Tafel (KL4-1 a) (Journal J53–J59). |
 | 0.4.0 | 2026-11-08 | Session 180. QM1 a: `Vorlage::quellen` und `werteVon` in `membrane` und `bar` — die Quellen je Instrument für die Werte ohne Kurve (Trommel je 2–5 der 9 Quellen; Celesta und Reed electric piano Stulov, Tine electric piano Sønderbo und Falaize & Hélie); die Tafel trägt die der ersten Vorlage; die Herkunft der Schlägel der Membran sagt jetzt, dass nur der Stock an der Kontaktzeit gesetzt ist (wie IC `Vorgaben.cpp`) (Journal J50, J51). |

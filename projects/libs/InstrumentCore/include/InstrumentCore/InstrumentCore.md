@@ -1,7 +1,7 @@
 # InstrumentCore — die Bibliothek der Rechenkerne
 
-> **Version:** 0.4.0
-> **Datum:** 2026-11-09
+> **Version:** 0.5.0
+> **Datum:** 2026-11-12
 > **Typ:** CppModuleDoc
 > **Status:** gebaut (Stufe 34c; 34g: Umfang je Instrument, gestimmte Werte in Reihenfolge; QM1 a: Quellen am Wert); die Kerne in `InstrumentModels` (34d, BK1 a)
 > **Modul:** InstrumentCore (STATIC, `projects/libs/InstrumentCore`)
@@ -68,6 +68,7 @@ näher, meldet die Zerlegung `entartet` (L11) — die Vektoren des Paars sind da
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.5.0 | 2026-11-12 | Session 191 (Bibliothek 0.6.0). 34j-7 (ZV3 a, SK4 a): `KernAuskunft::anregungDauernd` — ein Kern, der dauernd anregt (Wind), bekommt die Expression als Stärke der Anregung über die Zeit; die App legt sie dann nicht als Pegel hinter den Ton (Journal J71). Alle bisherigen Kerne melden `false`, Bit für Bit wie vorher. |
 | 0.4.0 | 2026-11-09 | Session 181 (Bibliothek 0.5.0). KL4-1 a: `richteWerte` richtet die Kurven nur auf den Umfang der Tafel — der Umfang des Instruments verschiebt keine Stützpunkte mehr (er begrenzt Spiel, Bezugsprobe und Ansicht); vorher änderte ein kleinerer Umfang den Klang der Tasten darin (am CP-70 der Ton an Taste 60 um −36 dB). Die Abdrücke von `bar`, `membrane` und Flügel bleiben Bit für Bit (Journal J55). |
 | 0.3.0 | 2026-11-08 | Session 180 (Bibliothek 0.4.0). QM1 a: Quellen am Wert für alle Werte ohne Kurve (`Werte::quellen`, `QuellenJeWert`), `vorgaben` und `richteWerte` mit Quellen, der Vergleich ohne sie (Journal J50). |
 | 0.2.0 | 2026-11-08 | Session 178 (Bibliothek 0.3.0). 34g: der Umfang je Instrument (KS1 a: `umfangVon`/`umfangBis`, `tastenumfang`, `bezugsProbe(tafel, werte)`), gestimmte Werte in Reihenfolge (KS2 a), `KernAuskunft::koerperAnDerSchicht` (CK1 a), `richteKurve` richtet den Ersatz und trägt seine Quellen mit (Journal J33, J34, J40). |

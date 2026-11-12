@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.343.0
+> **Version:** 1.344.0
 > **Datum:** 2026-11-12 (Sessions 164 bis 192)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2949,7 +2949,10 @@ dunkler (das Ventil drosselt), die Amplitude des Harmoniums wächst mit dem Druc
 Cottingham u. a. 1999); nicht im Bestand: Ricot, Caussé & Misdariis 2005, Koopman & Cottingham 1997, Llanos-Vázquez u. a.
 2014; **34j-8 erledigt S192** (die vier Zungeninstrumente als `.lvinst`, Journal J73); **34j-9 erledigt S192** (`free_reeds_demo`,
 Loops der Nuancen, Hörliste `zunge_34j` — ⬜ ungehört, löst IC 10 ab —, Creator-Fall; Rechenzeit nur Zahlen bis zur
-Kühlung; Journal J74); **als Nächstes 34j-10** (Doku, Pakete, voller Lauf) — alles Konzept §6), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+Kühlung; Journal J74); **34j-10 erledigt S192 — Stufe 34j fertig** (Modul-Doku, Bibliotheken 0.6.0 / 0.7.0 / 0.4.0 mit
+Quellpaketen, Bericht `modellierung/zunge/README.md`, harvest gelöscht, voller Lauf 1888 / 1888 unter beiden Compilern;
+Journal J75); 🔧 die harvest-Teile 01, 04, 05 sind übernommen, aber nach der Regel im harvest-README noch nicht gelöscht
+— alles Konzept §6), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6479,6 +6482,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.344.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34j-10 erledigt, Stufe 34j fertig (Journal J75); 🔧 harvest 01, 04, 05 noch nicht gelöscht. |
 | 1.343.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34j-9 erledigt (Loops, Hörliste `zunge_34j`, Creator-Fall; Journal J74); als Nächstes 34j-10. |
 | 1.342.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34j-8 erledigt (accordion, harmonium, melodica, harmonica; Journal J73); als Nächstes 34j-9. |
 | 1.341.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: ZV12 a erledigt (Messfehler, Rest am unteren Diskant vom Ventil), ZV14 a; zwei Befunde offen bis 34j-9 (unterer Diskant dunkler, Amplitude des Harmoniums über dem Druck). |

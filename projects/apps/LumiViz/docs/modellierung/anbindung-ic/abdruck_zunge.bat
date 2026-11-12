@@ -4,6 +4,9 @@ rem
 rem   abdruck_zunge.bat Ausgabeordner [IC-rechnung]
 rem
 rem Ohne zweiten Ordner gilt die Vorlage im Repo: harvest\instruments-calculation\rechnung (IC 4409088).
+rem Seit S192 (34j-10) ist klassen\10_zunge dort geloescht: die Vorlage aus dem Git-Verlauf holen, etwa
+rem   git archive 6e9f4756 harvest/instruments-calculation/rechnung | tar -x -C <ordner>
+rem und <ordner>\harvest\instruments-calculation\rechnung als zweiten Ordner angeben.
 rem Baut mit MSVC (cl /O2 /fp:precise /MD) in der Umgebung von Visual Studio 18 - die Plattform von IC
 rem werte/abdruck_msvc.txt - und schreibt zunge_ic.txt in den Ausgabeordner. Die Vorlage bleibt unberuehrt.
 rem Mit clang++ -O2 -ffp-contract=off (Schalter von IC) und /MD-Laufzeit kommen dieselben Bits heraus (S189 geprueft).

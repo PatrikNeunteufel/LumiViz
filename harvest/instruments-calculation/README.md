@@ -9,7 +9,7 @@
 
 ## Wozu
 
-Vorlage für die Klassen, die LumiViz noch nicht rechnet (Stufe 34j Klasse 10, 34k Klasse 2; Klassen 3, 6–9, 11 ohne
+Vorlage für die Klassen, die LumiViz noch nicht rechnet (Stufe 34k Klasse 2; Klassen 3, 6–9, 11 ohne
 Stufe), und Beleg, woraus die übernommenen Kerne stammen. Die Doku dazu liegt unter
 `projects/apps/LumiViz/docs/modellierung/<klasse>/ic/`, die Abdrücke unter `rechnung/werte/` (je Compiler; unter Windows
 gilt `abdruck_msvc.txt`, auch für Windows-clang).
@@ -30,7 +30,7 @@ Bibliotheken, nicht Zeile für Zeile verglichen.
 | `klassen/04_platte_stab` | **übernommen** (34g; die Steeldrum als Vorgabe ohne Datei) | `InstrumentModels/src/stab/` |
 | `klassen/05_membran` | **übernommen** (34h) | `InstrumentModels/src/trommel/` |
 | `klassen/06_becken_gong` … `09_luftstrahl_rohr`, `11_tonrad` | offen, ohne Stufe | — |
-| `klassen/10_zunge` | offen — Stufe 34j (Akkordeon, Harmonium, Melodica, Mundharmonika) | — |
+| `klassen/10_zunge` | **übernommen und gelöscht** (34j, S192; zuletzt im Commit `6e9f4756`) | `InstrumentModels/src/zunge/` |
 | `gemeinsam/` Balken, Membran, Reibung | übernommen | `InstrumentModels/…/gemeinsam/` |
 | `gemeinsam/` Eigenzerlegung, Fft, Kurve, Modal | übernommen | `projects/libs/InstrumentCore/` |
 | `gemeinsam/` Rohr, Rohrschleife | offen (Klassen 7–9) | — |
@@ -38,7 +38,8 @@ Bibliotheken, nicht Zeile für Zeile verglichen.
 | `gemeinsam/` Json, Werkzeug | Hilfen von IC (Lautheit dort für die Hörlisten; in LumiViz `AudioCore/Lautheit`) | — |
 | `messung/`, `setzen/` | übernommen (34e) | `projects/libs/InstrumentMeasure/` |
 | `werkzeuge/stimme_stab.cpp` | übernommen | `InstrumentMeasure/StabStimmen` |
-| `werkzeuge/stimme_blech.cpp`, `…_bogen`, `…_luftstrahl`, `…_rohrblatt`, `…_zunge` | offen, mit ihrer Klasse | — |
+| `werkzeuge/stimme_zunge.cpp` | **übernommen und gelöscht** (34j, S192) | `InstrumentMeasure/ZungeStimmen` |
+| `werkzeuge/stimme_blech.cpp`, `…_bogen`, `…_luftstrahl`, `…_rohrblatt` | offen, mit ihrer Klasse | — |
 | `werkzeuge/hoerproben.cpp`, `Sammlung.cpp`, `Hoerproben.hpp` | nicht übernommen — schrieben die IC-Hörlisten (jetzt `hoertest/listen/ic/`, Klänge unter `…\cmake\samples\Hoerproben\IC\`) | — |
 | `werkzeuge/messe.cpp`, `glaette_ziel.cpp`, Tests | Vorlage | — |
 | `werte/` | Abdrücke und Bezüge von IC; die übernommenen Klassen tragen ihre Teile in `tests/unit/UnitTests/werte/*_ic.txt` | — |

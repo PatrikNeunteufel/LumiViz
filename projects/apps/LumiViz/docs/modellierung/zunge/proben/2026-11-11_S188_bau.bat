@@ -1,5 +1,7 @@
 @echo off
 rem S188: ein Messprogramm gegen die IC-Vorlage der Zunge bauen (harvest/instruments-calculation, wird sonst nicht gebaut).
+rem Seit S192 (34j-10) ist klassen/10_zunge dort geloescht - aus dem Git-Verlauf holen (Commit 6e9f4756, siehe
+rem docs/modellierung/anbindung-ic/abdruck_zunge.bat) und R unten auf jenen Ordner setzen.
 rem
 rem   2026-11-11_S188_bau.bat <quelle.cpp> <ziel.exe>
 rem

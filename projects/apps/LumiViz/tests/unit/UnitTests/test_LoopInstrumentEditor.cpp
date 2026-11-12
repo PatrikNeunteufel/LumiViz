@@ -2270,8 +2270,8 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(zeileVon("noteMax").contains(QStringLiteral("A6 (93)")));
         CHECK(zeileVon("bassBelow").contains(QStringLiteral("F3 (53)")));
         // die gestimmten Werte (Gruppe Tunable): je Taste des Umfangs ein Wert, keiner fehlt. Unter der Dynamik einer Taste
-        // ist die Staerke einer Stufe 0 (ZV10 a) — beim Akkordeon ab −10 dB an jeder Taste; nicht nur 0 muessen die Stufe
-        // −2 dB, der Nachklang und die Grenze des Bends sein
+        // ist die Staerke einer Stufe 0 (ZV10 a) — beim Akkordeon bei −18 und −20 dB an jeder Taste, bei −16 dB an 55 von 65
+        // (werte/zunge_ic.txt); nicht nur 0 muessen die Stufe −2 dB, der Nachklang und die Grenze des Bends sein
         int gestimmt = 0;
         for (const lumi::kern::ParameterAngabe& a : tafel.werte)
         {
