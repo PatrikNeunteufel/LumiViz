@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.346.0
-> **Datum:** 2026-11-12 (Sessions 164 bis 193)
+> **Version:** 1.347.0
+> **Datum:** 2026-11-12 (Sessions 164 bis 194)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2952,7 +2952,7 @@ Loops der Nuancen, Hörliste `zunge_34j` — ⬜ ungehört, löst IC 10 ab —, 
 Kühlung; Journal J74); **34j-10 erledigt S192 — Stufe 34j fertig** (Modul-Doku, Bibliotheken 0.6.0 / 0.7.0 / 0.4.0 mit
 Quellpaketen, Bericht `modellierung/zunge/README.md`, harvest gelöscht, voller Lauf 1888 / 1888 unter beiden Compilern;
 Journal J75); 🔧 die harvest-Teile 01, 04, 05 sind übernommen, aber nach der Regel im harvest-README noch nicht gelöscht
-— alles Konzept §6), **34k** (🟠 Befund S192 an der IC-Vorlage: keines der fünf hält LP3 a, 18,6–36,1 LU über den Umfang; Tastenstoß des Cembalos stumm; Harfe im Clip 14 % der Echtzeit; Bestand der LumiViz-Gitarren; [Befund](modellierung/gezupfte-saite/2026-11-12_S192_befund_ic_vorlage.md); S193: [Gegenprobe](modellierung/gezupfte-saite/2026-11-12_S193_gegenprobe_ursachen.md) — Ursachen im Rechengesetz (Zupf als Kraftstoß fester Dauer, wenige scharfe Stegmoden), Mitschwingen je Note linear; GZ1 a–GZ4 a, GZ1-1 a; **Teilplan 34k-1 bis 34k-11 im Konzept §6** — 🟡 nächster Schritt 34k-1 (Opus); 🟠 Haltepunkte in 34k-4 (Quellen, Weg des Körpers je Instrument), 34k-5 (statistischer Teil ohne Bauplan), 34k-6 (Bend ±10 Cent); gesetzte Schwellen ohne Quelle: Sprung ≤ 6 LU, Auswahl der Harfensaiten ≤ 3 dB / ≤ 2 LU), dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+— alles Konzept §6), **34k** (🟠 Befund S192 an der IC-Vorlage: keines der fünf hält LP3 a, 18,6–36,1 LU über den Umfang; Tastenstoß des Cembalos stumm; Harfe im Clip 14 % der Echtzeit; Bestand der LumiViz-Gitarren; [Befund](modellierung/gezupfte-saite/2026-11-12_S192_befund_ic_vorlage.md); S193: [Gegenprobe](modellierung/gezupfte-saite/2026-11-12_S193_gegenprobe_ursachen.md) — Ursachen im Rechengesetz (Zupf als Kraftstoß fester Dauer, wenige scharfe Stegmoden), Mitschwingen je Note linear; GZ1 a–GZ4 a, GZ1-1 a; **Teilplan 34k-1 bis 34k-11 im Konzept §6** — S194: **34k-1 bis 34k-3 erledigt** (Beleg `werte/zupf_ic.txt`, Kern `pluckedString` Bit für Bit, Stimmer, zweite Tonhöhenmessung `InstrumentMeasure/Grundton`; Journal J76–J78; PD1 a: *Pedals* mit 34k-7); 🟠 Befund: an den IC-gestimmten Tönen die zweite Messung bis 5,7 Cent neben der Note (Gitarre 43), keine über 10 Cent; 🟡 nächster Schritt 34k-4 (Fable; vorher `…\cmake\quellen` und Archiv VCSL, Iowa MIS, Mores 2021 verfügbar machen); 🟠 Haltepunkte in 34k-4 (Quellen, Weg des Körpers je Instrument), 34k-5 (statistischer Teil ohne Bauplan), 34k-6 (Bend ±10 Cent); gesetzte Schwellen ohne Quelle: Sprung ≤ 6 LU, Auswahl der Harfensaiten ≤ 3 dB / ≤ 2 LU), dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6482,6 +6482,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.347.0 | 2026-11-12 | Session 194 (Opus 5.5). §6: 34k-1 bis 34k-3 erledigt (J76–J78), PD1 a, Befund der zweiten Tonhöhenmessung; nächster Schritt 34k-4. |
 | 1.346.0 | 2026-11-12 | Session 193 (Fable 5.2). §6: 34k — Gegenprobe an der IC-Vorlage, GZ1 a–GZ4 a und GZ1-1 a, Teilplan 34k-1 bis 34k-11 im Konzept; Haltepunkte und gesetzte Schwellen benannt. |
 | 1.345.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34k — Befund an der IC-Vorlage der Klasse 2 vor dem Teilplan. |
 | 1.344.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34j-10 erledigt, Stufe 34j fertig (Journal J75); 🔧 harvest 01, 04, 05 noch nicht gelöscht. |
