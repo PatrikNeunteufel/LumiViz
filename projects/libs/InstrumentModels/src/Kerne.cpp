@@ -9,6 +9,7 @@
 #include "InstrumentModels/stab/StabKern.hpp"
 #include "InstrumentModels/trommel/TrommelKern.hpp"
 #include "InstrumentModels/zunge/ZungeKern.hpp"
+#include "InstrumentModels/zupf/ZupfKern.hpp"
 
 #include <cassert>
 #include <string>
@@ -31,6 +32,8 @@ const Fabrik& kerne()
         assert(fehlerSaite.empty());
         [[maybe_unused]] const std::vector<std::string> fehlerZunge = f.registriere(zunge::kernTyp());  // 34j: Klasse 10
         assert(fehlerZunge.empty());
+        [[maybe_unused]] const std::vector<std::string> fehlerZupf = f.registriere(zupf::kernTyp());  // 34k: Klasse 2
+        assert(fehlerZupf.empty());
         return f;
     }();
     return eingebaut;

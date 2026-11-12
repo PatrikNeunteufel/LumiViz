@@ -155,6 +155,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentModelsMembran.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentModelsKlasse1.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentModelsZunge.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_InstrumentModelsZupf.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopStab.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopTrommel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKlasse1.cpp"

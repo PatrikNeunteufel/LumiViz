@@ -30,6 +30,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Teiltonmessung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Zielsumme.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ZungeStimmen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ZupfStimmen.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentMeasure/Bausteine.hpp"
@@ -47,6 +48,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentMeasure/Teiltonmessung.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentMeasure/Zielsumme.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentMeasure/ZungeStimmen.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentMeasure/ZupfStimmen.hpp"
 )
 set(_local_templates
     # (templates - *.t; *.tpp)

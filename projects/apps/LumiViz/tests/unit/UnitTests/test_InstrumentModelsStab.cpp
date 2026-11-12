@@ -301,7 +301,7 @@ TEST_CASE("InstrumentModels 34g Kern bar: Tafel, Fabrik, Vorlagen, Werte hin und
     const std::vector<std::string> fehler = pruefeTafel(t.tafel);
     CHECK_MESSAGE(fehler.empty(), (fehler.empty() ? std::string() : fehler.front()));
     REQUIRE(kerne().typ(kKernName) != nullptr);
-    CHECK(kerne().namen() == std::vector<std::string>{"hammerString", "bar", "membrane", "struckString", "freeReed"});  // 34j: freeReed
+    CHECK(kerne().namen() == std::vector<std::string>{"hammerString", "bar", "membrane", "struckString", "freeReed", "pluckedString"});  // 34k: pluckedString
     CHECK(t.tafel.bezugWert == kBezug);
     CHECK(t.tafel.umfangVon == "noteMin");
     CHECK(t.auskunft.rechenweg == Rechenweg::Note);
