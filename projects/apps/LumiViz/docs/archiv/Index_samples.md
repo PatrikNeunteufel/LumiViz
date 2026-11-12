@@ -9,9 +9,9 @@
 <!-- SYSTEM:ANFANG -->
 ## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\samples`
 
-*Stand 2026-11-11.*
+*Stand 2026-11-12.*
 
-**Gesamt:** 2265 Dateien, 3.1 GB.
+**Gesamt:** 2321 Dateien, 3.1 GB.
 
 ### Hörproben
 
@@ -75,12 +75,13 @@
 | `LumiViz/stab_34g` | 94 | 45.6 MB | offen |
 | `LumiViz/stil_tabs` | 26 | 98.2 MB | offen |
 | `LumiViz/titanium` | 1 | 39.9 MB | offen |
+| `LumiViz/zunge_34j` | 53 | 29.5 MB | offen |
 <!-- SYSTEM:ENDE -->
 
 <!-- WECHSEL:ANFANG -->
 ## Wechselplatte: `E:\samples`
 
-*Stand 2026-11-11.*
+*Stand 2026-11-12.*
 
 **Gesamt:** 44757 Dateien, 24.3 GB.
 

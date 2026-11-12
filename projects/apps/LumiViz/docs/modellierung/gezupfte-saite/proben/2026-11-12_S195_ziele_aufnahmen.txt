@@ -1,0 +1,1038 @@
+# S195 Ziele aus Aufnahmen (Spalten im Kopf der Quelle erklaert)
+gruppe	variante	note	mom	int1	spitze	frueh	spaet	t20	t60	boden	dauer	okt	datei
+Concert Harp	KSHarp_f	45	-27.4	-30.7	-20.8	6.1	2.9	2.28	10.98	-53	11.09	0	KSHarp_A2_f1.wav
+Concert Harp	KSHarp_mf	45	-37.3	-40.4	-28.5	3.1	2.5	4.78	11.22	-52	11.38	0	KSHarp_A2_mf1.wav
+Concert Harp	KSHarp_f	69	-24.9	-30.6	-9.1	17.6	7.0	0.50	8.58	-80	11.66	0	KSHarp_A4_f1.wav
+Concert Harp	KSHarp_mf	69	-30.7	-36.7	-15.7	19.1	9.0	0.56	9.96	-74	12.15	0	KSHarp_A4_mf1.wav
+Concert Harp	KSHarp_f	93	-32.3	-36.4	-20.4	63.2	54.3	0.22	2.46	-67	3.08	0	KSHarp_A6_f1.wav
+Concert Harp	KSHarp_mf	93	-37.6	-41.0	-25.0	51.5	61.3	0.32	3.48	-61	3.61	0	KSHarp_A6_mf1.wav
+Concert Harp	KSHarp_f	35	-35.1	-36.5	-27.0	1.8	1.1	9.86	25.22	-58	25.36	0	KSHarp_B1_f1.wav
+Concert Harp	KSHarp_mf	35	-48.5	-49.2	-40.3	2.8	2.8	10.12	12.86	-48	12.95	0	KSHarp_B1_mf1.wav
+Concert Harp	KSHarp_f	59	-28.1	-32.7	-20.0	11.5	3.8	1.84	11.78	-71	11.88	0	KSHarp_B3_f1.wav
+Concert Harp	KSHarp_mf	59	-31.4	-34.6	-24.4	10.2	1.9	1.58	11.04	-67	11.23	0	KSHarp_B3_mf1.wav
+Concert Harp	KSHarp_f	83	-32.3	-37.6	-18.7	47.6	5.2	0.32	3.60	-66	4.19	0	KSHarp_B5_f1.wav
+Concert Harp	KSHarp_mf	83	-34.2	-39.1	-25.3	27.3	21.9	0.58	3.02	-66	4.42	0	KSHarp_B5_mf1.wav
+Concert Harp	KSHarp_f	95	-26.8	-29.5	-12.5	64.5	48.3	0.14	1.02	-74	3.13	0	KSHarp_B6_f1.wav
+Concert Harp	KSHarp_mf	95	-40.7	-43.2	-26.1	104.1	40.2	0.14	2.68	-61	2.74	0	KSHarp_B6_mf1.wav
+Concert Harp	KSHarp_f	48	-27.5	-29.1	-22.0	6.9	2.9	2.88	14.12	-67	15.81	0	KSHarp_C3_f2.wav
+Concert Harp	KSHarp_mf	48	-39.9	-42.1	-33.6	10.5	2.5	1.88	10.60	-47	10.66	0	KSHarp_C3_mf3.wav
+Concert Harp	KSHarp_f	72	-23.5	-29.6	-9.4	20.4	6.8	0.56	7.06	-76	12.69	0	KSHarp_C5_f1.wav
+Concert Harp	KSHarp_mf	72	-28.4	-32.8	-17.2	12.9	7.8	1.08	6.86	-65	7.01	0	KSHarp_C5_mf1.wav
+Concert Harp	KSHarp_f	38	-27.9	-31.5	-20.0	5.9	2.9	2.06	13.76	-64	13.90	0	KSHarp_D2_f1.wav
+Concert Harp	KSHarp_mf	38	-42.2	-47.3	-33.0	7.8	1.7	8.44	9.76	-57	9.87	0	KSHarp_D2_mf1.wav
+Concert Harp	KSHarp_f	62	-25.1	-31.0	-12.2	22.0	5.5	0.54	10.58	-69	11.30	0	KSHarp_D4_f1.wav
+Concert Harp	KSHarp_mf	62	-30.9	-35.1	-20.5	17.6	7.2	0.90	9.94	-69	10.89	0	KSHarp_D4_mf1.wav
+Concert Harp	KSHarp_f	86	-26.4	-30.9	-14.8	42.0	34.0	0.38	1.92	-74	7.45	0	KSHarp_D6_f1.wav
+Concert Harp	KSHarp_mf	86	-33.1	-38.0	-21.8	50.0	13.5	0.30	2.30	-68	3.90	0	KSHarp_D6_mf1.wav
+Concert Harp	KSHarp_f	98	-33.2	-35.9	-22.1	185.0	42.9	0.12	2.38	-66	2.82	0	KSHarp_D7_f1.wav
+Concert Harp	KSHarp_p	98	-57.7	-59.8	-44.0	71.8	16.1	0.22	1.08	-43	1.14	0	KSHarp_D7_p1.wav
+Concert Harp	KSHarp_f	28	-41.0	-42.2	-31.9	1.9	1.0	19.90	21.06	-46	21.14	0	KSHarp_E1_f1.wav
+Concert Harp	KSHarp_f	52	-30.9	-34.4	-20.6	4.9	3.6	2.44	15.58	-68	15.94	0	KSHarp_E3_f1.wav
+Concert Harp	KSHarp_mf	52	-37.7	-41.2	-27.2	3.4	0.2	3.04	13.86	-61	13.95	0	KSHarp_E3_mf1.wav
+Concert Harp	KSHarp_f	76	-23.3	-27.4	-12.2	52.1	5.2	0.84	6.80	-75	9.80	0	KSHarp_E5_f1.wav
+Concert Harp	KSHarp_mf	76	-27.3	-30.5	-19.8	74.0	4.2	1.54	6.46	-68	6.64	0	KSHarp_E5_mf1.wav
+Concert Harp	KSHarp_f	41	-34.1	-35.7	-24.0	1.9	0.9	7.46	23.94	-54	24.03	0	KSHarp_F2_f1.wav
+Concert Harp	KSHarp_mf	41	-45.7	-47.4	-36.5	1.7	0.7	15.36	17.42	-41	17.50	0	KSHarp_F2_mf1.wav
+Concert Harp	KSHarp_f	65	-23.6	-28.0	-14.2	18.3	6.1	0.78	9.60	-74	10.62	0	KSHarp_F4_f1.wav
+Concert Harp	KSHarp_mf	65	-27.6	-30.8	-20.3	16.5	4.1	1.22	10.36	-71	10.85	0	KSHarp_F4_mf1.wav
+Concert Harp	KSHarp_f	89	-27.0	-31.9	-14.8	40.4	40.4	0.40	3.10	-71	4.40	0	KSHarp_F6_f1.wav
+Concert Harp	KSHarp_mf	89	-37.7	-42.7	-25.8	39.0	33.0	0.42	2.28	-60	2.34	0	KSHarp_F6_mf1.wav
+Concert Harp	KSHarp_f	101	-29.4	-32.2	-15.4	116.0	89.3	0.12	0.54	-73	1.88	0	KSHarp_F7_f1.wav
+Concert Harp	KSHarp_p	101	-53.5	-55.7	-44.6	110.1	57.7	0.18	1.24	-46	1.31	0	KSHarp_F7_p1.wav
+Concert Harp	KSHarp_f	31	-40.3	-42.6	-29.5	2.6	0.9	6.80	15.72	-52	15.80	0	KSHarp_G1_f1.wav
+Concert Harp	KSHarp_mp	31	-59.9	-62.0	-46.9	3.4	-0.4	2.78	2.98	-31	6.75	0	KSHarp_G1_mp1.wav
+Concert Harp	KSHarp_f	55	-25.0	-29.3	-14.7	6.6	3.9	1.72	13.12	-76	13.97	0	KSHarp_G3_f1.wav
+Concert Harp	KSHarp_mf	55	-32.0	-33.6	-23.6	8.1	2.9	2.88	9.92	-69	10.24	0	KSHarp_G3_mf1.wav
+Concert Harp	KSHarp_f	79	-29.4	-34.7	-15.0	30.2	11.5	0.40	4.64	-70	5.32	0	KSHarp_G5_f1.wav
+Concert Harp	KSHarp_mf	79	-33.6	-38.3	-21.1	31.0	6.3	0.54	4.82	-63	5.95	0	KSHarp_G5_mf1.wav
+Folk Harp	EWHarp_Normal_v2_rr	34	-38.6	-40.4	-32.6	5.5	7.1	3.86	7.98	-53	8.04	1	EWHarp_Normal_A#1_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	34	-21.7	-25.3	-13.5	6.8	5.4	2.28	10.14	-72	11.46	1	EWHarp_Normal_A#1_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	46	-31.2	-32.9	-25.0	7.1	9.6	2.50	6.20	-61	6.29	1	EWHarp_Normal_A#2_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	46	-22.0	-26.5	-10.5	8.6	5.6	1.62	6.94	-72	8.06	1	EWHarp_Normal_A#2_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	58	-28.5	-31.5	-23.9	9.4	8.2	1.66	3.78	-52	3.92	1	EWHarp_Normal_A#3_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	58	-19.7	-22.7	-10.7	12.2	5.7	0.88	4.06	-66	5.26	1	EWHarp_Normal_A#3_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	70	-35.3	-39.8	-26.1	34.8	103.4	0.52	1.90	-51	1.92	1	EWHarp_Normal_A#4_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	70	-21.2	-25.7	-11.1	65.1	30.1	0.32	1.90	-69	2.76	1	EWHarp_Normal_A#4_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	24	-41.1	-42.4	-33.1	0.8	4.7	12.76	19.66	-49	19.93	1	EWHarp_Normal_C1_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	24	-25.3	-28.4	-16.3	5.5	0.8	2.60	27.80	-67	30.12	1	EWHarp_Normal_C1_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	36	-31.5	-36.7	-22.5	4.5	3.5	2.16	9.86	-62	10.25	1	EWHarp_Normal_C2_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	36	-10.9	-15.0	-1.1	8.2	4.7	1.52	10.30	-83	12.86	1	EWHarp_Normal_C2_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	48	-35.8	-41.0	-25.9	2.4	8.0	3.20	7.78	-58	7.84	1	EWHarp_Normal_C3_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	48	-17.1	-23.4	-6.9	30.6	2.9	0.30	8.40	-78	9.60	1	EWHarp_Normal_C3_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	60	-39.3	-46.1	-24.1	24.9	8.6	0.18	4.34	-57	4.39	1	EWHarp_Normal_C4_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	60	-25.0	-31.0	-9.9	25.2	6.8	0.44	7.40	-73	10.89	1	EWHarp_Normal_C4_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	72	-37.3	-42.2	-27.9	32.0	27.7	0.64	2.02	-52	2.08	1	EWHarp_Normal_C5_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	72	-29.5	-34.2	-18.4	22.6	50.6	0.58	2.96	-60	3.04	1	EWHarp_Normal_C5_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	26	-30.8	-33.5	-23.8	1.6	2.4	3.84	17.90	-60	18.04	1	EWHarp_Normal_D1_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	26	-24.1	-25.1	-15.0	3.6	1.3	5.18	21.28	-66	22.02	1	EWHarp_Normal_D1_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	38	-36.9	-40.9	-27.2	4.7	8.8	2.52	6.64	-57	6.68	1	EWHarp_Normal_D2_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	38	-23.0	-28.0	-11.4	13.0	2.7	0.96	10.52	-71	12.71	1	EWHarp_Normal_D2_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	50	-37.5	-38.6	-29.9	5.9	115.7	3.38	5.66	-53	5.72	1	EWHarp_Normal_D3_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	50	-18.4	-21.2	-11.5	9.8	5.2	1.86	8.28	-74	9.56	1	EWHarp_Normal_D3_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	62	-44.5	-49.3	-33.7	40.2	5.5	0.50	5.32	-49	5.42	1	EWHarp_Normal_D4_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	62	-21.5	-25.9	-10.9	33.6	5.7	0.30	6.60	-73	8.05	1	EWHarp_Normal_D4_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	74	-40.4	-44.7	-30.6	20.4	15.6	0.50	2.58	-50	2.61	1	EWHarp_Normal_D5_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	74	-23.6	-28.3	-11.2	54.3	34.5	0.30	1.78	-70	2.53	1	EWHarp_Normal_D5_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	28	-29.3	-30.8	-21.6	4.2	2.7	4.08	13.96	-62	14.26	1	EWHarp_Normal_E1_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	28	-18.2	-20.3	-10.4	4.6	3.9	3.60	14.14	-74	16.25	1	EWHarp_Normal_E1_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	40	-37.4	-39.7	-26.4	4.8	7.2	3.62	7.74	-55	7.77	1	EWHarp_Normal_E2_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	40	-24.5	-29.0	-12.6	5.8	6.3	2.26	7.74	-67	8.44	1	EWHarp_Normal_E2_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	52	-28.9	-32.2	-21.5	9.7	8.1	1.70	5.90	-64	6.67	1	EWHarp_Normal_E3_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	52	-14.8	-18.5	-7.7	18.8	6.6	1.08	6.54	-80	9.54	1	EWHarp_Normal_E3_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	64	-33.4	-37.7	-25.5	26.2	27.0	0.64	4.04	-59	4.10	1	EWHarp_Normal_E4_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	64	-22.3	-27.4	-10.7	7.8	16.0	0.58	5.70	-76	7.07	1	EWHarp_Normal_E4_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	76	-32.8	-36.3	-20.7	34.7	0.0	0.28	1.20	-64	1.62	1	EWHarp_Normal_E5_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	76	-28.5	-32.6	-14.1	33.9	21.1	0.26	1.38	-67	1.88	1	EWHarp_Normal_E5_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	30	-31.5	-34.5	-23.9	17.0	3.0	1.20	8.28	-60	8.36	1	EWHarp_Normal_F#1_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	30	-24.9	-27.5	-15.6	4.9	2.3	3.08	14.70	-67	15.59	1	EWHarp_Normal_F#1_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	42	-36.0	-38.4	-27.9	3.8	23.5	4.06	8.84	-54	9.00	1	EWHarp_Normal_F#2_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	42	-22.6	-26.4	-12.9	12.0	3.8	1.48	8.46	-67	9.46	1	EWHarp_Normal_F#2_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	54	-38.2	-42.7	-29.3	10.8	6.0	1.58	6.52	-53	6.61	1	EWHarp_Normal_F#3_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	54	-17.2	-22.4	-6.9	54.7	5.1	0.34	6.54	-77	10.39	1	EWHarp_Normal_F#3_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	66	-39.4	-43.9	-29.0	19.3	21.9	1.06	2.90	-50	2.93	1	EWHarp_Normal_F#4_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	66	-24.2	-29.7	-13.5	22.2	18.8	0.76	4.50	-68	5.82	1	EWHarp_Normal_F#4_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	78	-29.9	-33.4	-20.1	61.7	38.7	0.28	1.28	-61	1.57	1	EWHarp_Normal_F#5_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	78	-21.8	-25.9	-9.6	63.5	25.9	0.18	1.28	-70	2.27	1	EWHarp_Normal_F#5_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	32	-38.1	-39.2	-30.8	1.7	2.7	10.30	18.22	-50	18.32	1	EWHarp_Normal_G#1_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	32	-21.7	-24.9	-13.8	1.9	1.4	5.94	18.86	-67	19.41	1	EWHarp_Normal_G#1_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	44	-33.8	-35.2	-28.7	7.3	6.4	3.18	7.46	-55	7.53	1	EWHarp_Normal_G#2_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	44	-22.7	-26.2	-11.2	9.3	6.1	1.58	6.08	-70	6.55	1	EWHarp_Normal_G#2_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	56	-43.2	-47.1	-29.0	6.9	8.2	1.64	4.04	-52	4.07	1	EWHarp_Normal_G#3_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	56	-22.6	-27.5	-7.8	38.4	9.0	0.34	4.30	-74	5.84	1	EWHarp_Normal_G#3_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	68	-33.8	-38.5	-21.3	23.3	47.4	0.70	1.92	-58	1.98	1	EWHarp_Normal_G#4_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	68	-28.4	-32.9	-14.6	50.2	7.5	0.28	3.10	-62	3.44	1	EWHarp_Normal_G#4_v3_RR1.wav
+Folk Harp	EWHarp_Normal_v2_rr	80	-29.0	-33.0	-19.3	55.4	29.2	0.22	0.80	-69	1.26	1	EWHarp_Normal_G#5_v2_RR1.wav
+Folk Harp	EWHarp_Normal_v3_rr	80	-21.5	-23.9	-8.3	106.5	27.2	0.18	0.86	-74	1.53	1	EWHarp_Normal_G#5_v3_RR1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	22	-48.0	-50.0	-34.8	55.9	0.0	0.46	0.56	-27	0.63	9	ZuckermannKitHarpsi_Lute_Rel_A#0_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	34	-38.7	-41.2	-23.8	87.2	26.1	0.16	0.86	-44	0.93	1	ZuckermannKitHarpsi_Lute_Rel_A#1_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	58	-42.1	-44.9	-26.2	64.3	26.5	0.10	1.48	-53	1.54	1	ZuckermannKitHarpsi_Lute_Rel_A#3_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	70	-50.3	-52.6	-32.1	57.0	72.0	0.26	0.50	-37	0.56	9	ZuckermannKitHarpsi_Lute_Rel_A#4_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	45	-40.8	-43.3	-25.3	94.5	34.2	0.16	0.88	-45	0.94	0	ZuckermannKitHarpsi_Lute_Rel_A2_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	24	-50.6	-52.6	-35.8	73.8	47.1	0.26	0.46	-33	0.54	9	ZuckermannKitHarpsi_Lute_Rel_C1_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	48	-38.3	-40.6	-23.4	104.3	19.8	0.16	0.82	-45	0.87	1	ZuckermannKitHarpsi_Lute_Rel_C3_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	60	-47.2	-51.2	-31.3	58.9	2.0	0.30	0.86	-36	0.92	1	ZuckermannKitHarpsi_Lute_Rel_C4_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	26	-44.6	-46.5	-28.2	63.3	29.8	0.32	0.50	-30	0.54	9	ZuckermannKitHarpsi_Lute_Rel_D1_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	38	-43.2	-45.8	-29.1	39.1	52.3	0.36	0.60	-30	0.70	9	ZuckermannKitHarpsi_Lute_Rel_D2_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	50	-46.1	-48.6	-28.3	89.3	44.0	0.18	0.66	-52	0.71	9	ZuckermannKitHarpsi_Lute_Rel_D3_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	62	-47.5	-51.2	-32.6	61.0	46.8	0.26	0.54	-36	0.62	9	ZuckermannKitHarpsi_Lute_Rel_D4_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	74	-44.6	-47.5	-30.4	62.9	63.0	0.28	0.72	-47	0.81	9	ZuckermannKitHarpsi_Lute_Rel_D5_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	28	-42.7	-45.8	-31.3	74.7	88.4	0.42	0.66	-42	0.73	9	ZuckermannKitHarpsi_Lute_Rel_E1_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	40	-46.0	-49.0	-31.1	55.8	27.4	0.28	0.58	-34	0.64	9	ZuckermannKitHarpsi_Lute_Rel_E2_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	52	-44.8	-47.2	-28.3	67.2	43.8	0.22	0.60	-44	0.65	9	ZuckermannKitHarpsi_Lute_Rel_E3_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	64	-42.7	-46.8	-27.6	73.5	13.5	0.42	0.70	-32	0.76	9	ZuckermannKitHarpsi_Lute_Rel_E4_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	76	-49.8	-51.7	-32.2	64.3	61.6	0.28	0.52	-37	0.59	9	ZuckermannKitHarpsi_Lute_Rel_E5_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	30	-38.9	-41.7	-25.8	79.9	14.5	0.28	0.66	-32	0.74	9	ZuckermannKitHarpsi_Lute_Rel_F#1_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	54	-46.9	-49.0	-30.9	62.6	65.5	0.30	0.52	-37	0.56	9	ZuckermannKitHarpsi_Lute_Rel_F#3_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	66	-46.5	-46.5	-30.9	71.3	57.1	0.28	0.44	-34	0.49	9	ZuckermannKitHarpsi_Lute_Rel_F#4_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	32	-42.7	-44.6	-27.7	60.8	5.9	0.40	0.52	-29	0.56	9	ZuckermannKitHarpsi_Lute_Rel_G#1_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	44	-45.1	-47.8	-27.6	73.4	37.8	0.16	0.78	-45	0.83	9	ZuckermannKitHarpsi_Lute_Rel_G#2_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	56	-43.5	-46.2	-26.7	93.0	39.2	0.16	0.46	-35	0.51	9	ZuckermannKitHarpsi_Lute_Rel_G#3_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	68	-47.3	-49.8	-30.3	72.1	36.8	0.18	0.48	-35	0.54	9	ZuckermannKitHarpsi_Lute_Rel_G#4_rr1.wav
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	43	-44.2	-47.9	-28.3	55.3	27.7	0.30	0.96	-42	1.01	1	ZuckermannKitHarpsi_Lute_Rel_G2_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	22	-50.3	-53.1	-38.2	43.4	10.7	0.42	2.02	-44	2.12	1	ZuckermannKitHarpsi_Normal_Rel_A#0_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	34	-38.4	-41.0	-22.8	94.5	31.4	0.12	1.06	-55	1.14	1	ZuckermannKitHarpsi_Normal_Rel_A#1_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	58	-45.2	-48.1	-28.7	99.7	35.5	0.12	0.64	-43	0.69	9	ZuckermannKitHarpsi_Normal_Rel_A#3_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	70	-49.3	-51.7	-32.5	61.7	40.1	0.24	0.56	-37	0.62	9	ZuckermannKitHarpsi_Normal_Rel_A#4_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	47	-43.1	-46.0	-25.6	115.7	24.4	0.14	1.08	-52	1.13	1	ZuckermannKitHarpsi_Normal_Rel_B2_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	24	-54.2	-56.6	-39.4	57.5	123.5	0.30	0.48	-33	0.62	9	ZuckermannKitHarpsi_Normal_Rel_C1_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	36	-45.1	-45.1	-29.5	89.5	35.1	0.22	0.38	-30	0.42	9	ZuckermannKitHarpsi_Normal_Rel_C2_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	48	-41.3	-44.0	-25.2	89.7	18.5	0.18	1.04	-46	1.09	1	ZuckermannKitHarpsi_Normal_Rel_C3_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	60	-47.1	-50.8	-30.2	49.0	0.4	0.32	0.54	-32	0.61	9	ZuckermannKitHarpsi_Normal_Rel_C4_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	72	-36.9	-36.9	-22.8	225.9	32.7	0.10	0.58	-42	0.64	9	ZuckermannKitHarpsi_Normal_Rel_C5_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	26	-45.7	-49.1	-33.5	44.2	7.6	0.34	1.02	-32	1.12	1	ZuckermannKitHarpsi_Normal_Rel_D1_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	38	-43.4	-44.8	-29.4	46.9	69.6	0.28	0.48	-31	0.60	9	ZuckermannKitHarpsi_Normal_Rel_D2_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	50	-48.5	-51.1	-31.8	62.8	-0.7	0.88	1.18	-43	1.23	9	ZuckermannKitHarpsi_Normal_Rel_D3_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	62	-49.6	-52.8	-34.8	56.6	104.5	0.28	0.56	-45	0.65	9	ZuckermannKitHarpsi_Normal_Rel_D4_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	74	-43.4	-45.7	-28.1	58.7	80.3	0.30	0.50	-35	0.56	9	ZuckermannKitHarpsi_Normal_Rel_D5_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	28	-43.5	-46.5	-33.4	55.1	21.2	0.48	0.96	-34	1.10	1	ZuckermannKitHarpsi_Normal_Rel_E1_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	40	-45.9	-49.0	-31.4	58.3	14.9	0.30	0.96	-52	1.05	0	ZuckermannKitHarpsi_Normal_Rel_E2_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	52	-45.3	-49.6	-29.0	49.9	21.9	0.24	0.88	-40	0.92	-1	ZuckermannKitHarpsi_Normal_Rel_E3_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	64	-42.8	-47.6	-29.6	25.2	19.8	0.46	1.08	-37	1.16	1	ZuckermannKitHarpsi_Normal_Rel_E4_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	76	-48.4	-48.4	-31.3	73.3	75.8	0.28	0.44	-36	0.49	9	ZuckermannKitHarpsi_Normal_Rel_E5_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	30	-46.9	-50.0	-33.7	60.5	13.7	0.30	1.00	-36	1.05	1	ZuckermannKitHarpsi_Normal_Rel_F#1_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	42	-42.1	-46.7	-28.3	15.7	10.5	0.94	1.88	-33	1.93	1	ZuckermannKitHarpsi_Normal_Rel_F#2_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	54	-43.1	-47.9	-28.8	41.3	33.9	0.96	1.00	-41	1.05	1	ZuckermannKitHarpsi_Normal_Rel_F#3_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	66	-47.1	-49.7	-29.2	88.5	60.1	0.18	0.56	-42	0.61	9	ZuckermannKitHarpsi_Normal_Rel_F#4_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	32	-41.3	-44.6	-27.4	72.9	17.5	0.28	0.98	-42	1.03	1	ZuckermannKitHarpsi_Normal_Rel_G#1_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	44	-44.4	-50.4	-28.8	51.6	13.0	0.22	1.34	-41	1.40	0	ZuckermannKitHarpsi_Normal_Rel_G#2_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	56	-43.5	-47.4	-29.1	53.3	11.2	0.24	0.78	-35	0.83	9	ZuckermannKitHarpsi_Normal_Rel_G#3_rr1.wav
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	68	-46.3	-50.3	-29.7	56.2	20.5	0.26	0.66	-34	0.72	9	ZuckermannKitHarpsi_Normal_Rel_G#4_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	22	-32.8	-35.0	-22.8	5.7	10.8	3.36	6.06	-116	6.90	1	ZuckermannKitHarpsi_Lute_Sus_A#0_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	34	-22.1	-26.8	-10.7	13.2	9.4	0.96	3.96	-123	4.39	1	ZuckermannKitHarpsi_Lute_Sus_A#1_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	46	-24.8	-28.6	-14.3	21.1	7.4	1.04	2.92	-117	4.24	1	ZuckermannKitHarpsi_Lute_Sus_A#2_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	58	-20.6	-24.3	-10.0	60.4	58.5	0.40	1.76	-127	2.95	1	ZuckermannKitHarpsi_Lute_Sus_A#3_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	70	-25.8	-29.5	-12.3	60.2	33.3	0.32	1.90	-115	2.22	1	ZuckermannKitHarpsi_Lute_Sus_A#4_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	24	-30.4	-33.0	-19.2	4.3	4.2	3.56	9.38	-269	10.62	1	ZuckermannKitHarpsi_Lute_Sus_C1_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	48	-22.0	-25.9	-12.2	16.3	14.9	1.16	4.12	-122	4.76	1	ZuckermannKitHarpsi_Lute_Sus_C3_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	60	-28.7	-32.6	-15.5	76.3	10.8	0.22	2.70	-120	3.21	1	ZuckermannKitHarpsi_Lute_Sus_C4_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	72	-26.2	-28.8	-13.5	114.0	35.2	0.16	1.60	-119	2.11	1	ZuckermannKitHarpsi_Lute_Sus_C5_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	72	-39.9	-42.3	-26.0	175.7	27.7	0.10	0.96	-74	1.13	1	ZuckermannKitHarpsi_Lute_Sus_C5_rr2.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	26	-29.4	-32.5	-19.4	8.2	7.4	1.92	5.22	-126	6.57	1	ZuckermannKitHarpsi_Lute_Sus_D1_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	38	-28.6	-33.5	-14.2	17.2	12.3	0.88	2.84	-116	3.66	1	ZuckermannKitHarpsi_Lute_Sus_D2_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	50	-20.4	-24.9	-9.3	18.0	18.9	1.00	3.46	-126	4.17	1	ZuckermannKitHarpsi_Lute_Sus_D3_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	62	-23.9	-27.7	-14.1	41.7	17.9	0.30	1.98	-102	2.23	1	ZuckermannKitHarpsi_Lute_Sus_D4_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	74	-34.5	-38.5	-22.2	79.6	33.3	0.20	1.42	-112	1.88	1	ZuckermannKitHarpsi_Lute_Sus_D5_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	28	-25.2	-27.9	-15.2	8.0	11.7	2.16	4.54	-120	5.15	1	ZuckermannKitHarpsi_Lute_Sus_E1_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	40	-27.3	-31.3	-15.8	22.5	19.8	0.96	3.16	-117	4.09	1	ZuckermannKitHarpsi_Lute_Sus_E2_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	52	-25.7	-30.5	-14.0	30.4	7.5	0.66	2.62	-119	4.12	1	ZuckermannKitHarpsi_Lute_Sus_E3_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	64	-24.0	-28.4	-11.1	68.4	24.1	0.36	1.82	-116	2.31	1	ZuckermannKitHarpsi_Lute_Sus_E4_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	76	-36.8	-39.6	-22.3	105.1	39.8	0.12	1.32	-108	1.88	1	ZuckermannKitHarpsi_Lute_Sus_E5_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	30	-26.1	-29.2	-16.0	11.8	11.9	1.52	4.00	-119	4.75	1	ZuckermannKitHarpsi_Lute_Sus_F#1_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	42	-23.0	-27.0	-11.1	15.3	19.9	1.16	3.32	-119	3.82	1	ZuckermannKitHarpsi_Lute_Sus_F#2_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	54	-27.7	-33.0	-13.8	21.9	19.8	0.86	2.34	-117	2.95	1	ZuckermannKitHarpsi_Lute_Sus_F#3_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	66	-25.0	-28.7	-11.6	88.0	22.1	0.26	1.42	-114	1.85	1	ZuckermannKitHarpsi_Lute_Sus_F#4_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	32	-28.5	-31.8	-16.7	10.8	7.8	1.58	3.92	-111	4.40	1	ZuckermannKitHarpsi_Lute_Sus_G#1_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	44	-33.9	-38.6	-19.0	17.0	19.0	0.86	2.70	-116	3.70	1	ZuckermannKitHarpsi_Lute_Sus_G#2_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	56	-26.9	-30.9	-14.9	40.6	21.1	0.46	1.94	-118	2.49	1	ZuckermannKitHarpsi_Lute_Sus_G#3_rr1.wav
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	68	-27.1	-30.7	-14.7	50.6	15.4	0.32	1.50	-82	1.63	1	ZuckermannKitHarpsi_Lute_Sus_G#4_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	22	-31.7	-33.6	-21.8	3.0	3.0	5.72	13.14	-125	14.14	1	ZuckermannKitHarpsi_Normal_Sus_A#0_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	34	-23.2	-27.5	-13.4	5.2	5.8	1.94	6.96	-128	7.57	1	ZuckermannKitHarpsi_Normal_Sus_A#1_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	46	-23.8	-26.6	-12.1	7.4	5.0	2.22	7.62	-139	8.95	1	ZuckermannKitHarpsi_Normal_Sus_A#2_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	58	-18.9	-23.5	-9.3	17.5	14.6	0.96	4.08	-129	5.32	1	ZuckermannKitHarpsi_Normal_Sus_A#3_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	70	-22.5	-27.6	-11.2	36.7	9.2	0.54	3.60	-126	4.08	1	ZuckermannKitHarpsi_Normal_Sus_A#4_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	24	-31.3	-33.1	-19.5	3.5	2.9	4.54	11.92	-267	13.21	1	ZuckermannKitHarpsi_Normal_Sus_C1_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	36	-28.5	-31.9	-15.9	8.1	4.0	1.60	6.84	-116	7.48	1	ZuckermannKitHarpsi_Normal_Sus_C2_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	48	-21.3	-24.7	-11.1	9.8	6.4	1.58	6.70	-276	8.48	1	ZuckermannKitHarpsi_Normal_Sus_C3_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	60	-22.7	-27.2	-12.0	19.5	7.7	0.66	4.50	-125	6.46	1	ZuckermannKitHarpsi_Normal_Sus_C4_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	72	-21.5	-25.9	-9.9	49.2	17.4	0.38	2.68	-138	3.44	1	ZuckermannKitHarpsi_Normal_Sus_C5_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	26	-28.6	-30.5	-18.4	3.9	2.0	4.06	12.56	-137	14.21	1	ZuckermannKitHarpsi_Normal_Sus_D1_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	38	-25.6	-28.8	-15.0	6.6	5.0	2.48	7.12	-143	7.94	1	ZuckermannKitHarpsi_Normal_Sus_D2_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	50	-19.7	-23.9	-8.9	11.9	8.5	1.28	5.58	-130	6.32	1	ZuckermannKitHarpsi_Normal_Sus_D3_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	62	-20.7	-26.0	-9.9	19.2	9.2	0.68	4.06	-122	4.70	1	ZuckermannKitHarpsi_Normal_Sus_D4_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	74	-29.6	-36.0	-17.7	18.6	6.9	0.60	3.66	-121	4.04	1	ZuckermannKitHarpsi_Normal_Sus_D5_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	28	-25.9	-27.8	-17.0	3.3	3.0	3.92	11.42	-133	12.83	1	ZuckermannKitHarpsi_Normal_Sus_E1_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	40	-26.2	-29.1	-16.7	7.3	10.3	2.30	5.34	-120	5.99	1	ZuckermannKitHarpsi_Normal_Sus_E2_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	52	-22.6	-26.7	-11.6	9.0	5.8	1.60	6.48	-126	7.23	1	ZuckermannKitHarpsi_Normal_Sus_E3_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	64	-21.2	-25.9	-11.1	36.2	6.6	0.62	3.76	-125	4.87	1	ZuckermannKitHarpsi_Normal_Sus_E4_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	76	-31.7	-36.4	-22.6	32.4	12.5	0.52	2.66	-88	2.85	1	ZuckermannKitHarpsi_Normal_Sus_E5_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	30	-26.2	-28.3	-16.2	5.9	3.0	2.86	10.20	-273	11.93	1	ZuckermannKitHarpsi_Normal_Sus_F#1_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	42	-21.2	-24.1	-10.7	7.4	5.8	2.20	7.80	-277	9.76	1	ZuckermannKitHarpsi_Normal_Sus_F#2_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	54	-23.1	-28.0	-12.2	13.8	8.0	1.16	4.82	-137	5.38	1	ZuckermannKitHarpsi_Normal_Sus_F#3_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	66	-21.4	-26.1	-11.9	18.2	10.7	0.98	3.72	-94	4.04	1	ZuckermannKitHarpsi_Normal_Sus_F#4_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	32	-27.7	-30.0	-16.8	5.3	6.3	2.92	8.60	-133	9.43	1	ZuckermannKitHarpsi_Normal_Sus_G#1_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	44	-32.5	-35.4	-21.2	6.4	8.8	2.44	5.56	-131	6.41	1	ZuckermannKitHarpsi_Normal_Sus_G#2_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	56	-24.1	-29.0	-14.3	17.5	16.1	0.92	4.04	-118	4.60	1	ZuckermannKitHarpsi_Normal_Sus_G#3_rr1.wav
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	68	-24.8	-30.7	-13.5	24.0	13.9	0.66	3.30	-119	4.09	1	ZuckermannKitHarpsi_Normal_Sus_G#4_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	34	-47.0	-51.0	-33.3	28.2	87.3	0.30	0.80	-52	0.84	9	HarpsiRH_HighRel_Far_A#1_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	46	-44.4	-49.2	-30.4	35.8	65.1	0.50	0.80	-51	0.83	9	HarpsiRH_HighRel_Far_A#2_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	70	-42.0	-46.1	-26.2	46.1	56.3	0.32	0.68	-63	0.72	9	HarpsiRH_HighRel_Far_A#4_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	82	-44.8	-48.8	-30.4	22.4	0.0	0.62	0.70	-29	0.76	9	HarpsiRH_HighRel_Far_A#5_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	57	-47.3	-52.2	-31.1	50.7	38.5	0.36	1.08	-63	1.13	1	HarpsiRH_HighRel_Far_A3_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	37	-46.1	-49.9	-32.6	37.7	55.4	0.36	0.84	-51	0.87	1	HarpsiRH_HighRel_Far_C#2_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	49	-43.5	-48.5	-28.7	35.6	55.8	0.38	0.86	-62	0.93	9	HarpsiRH_HighRel_Far_C#3_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	61	-46.6	-52.5	-31.9	18.8	37.1	1.00	1.10	-45	1.16	1	HarpsiRH_HighRel_Far_C#4_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	72	-41.0	-45.1	-24.4	49.3	46.1	0.28	0.84	-59	0.88	1	HarpsiRH_HighRel_Far_C5_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	84	-45.5	-49.5	-29.1	60.5	42.5	0.22	0.88	-64	0.97	1	HarpsiRH_HighRel_Far_C6_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	62	-46.2	-50.2	-30.5	44.9	92.2	0.44	0.68	-56	0.71	9	HarpsiRH_HighRel_Far_D4_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	74	-44.5	-49.6	-29.0	41.4	45.2	0.38	0.90	-66	0.96	1	HarpsiRH_HighRel_Far_D5_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	40	-35.7	-37.1	-19.4	20.3	30.3	0.48	0.56	-32	0.70	9	HarpsiRH_HighRel_Far_E2_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	52	-44.3	-48.5	-30.8	52.0	7.7	0.38	1.08	-43	1.11	1	HarpsiRH_HighRel_Far_E3_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	64	-45.9	-49.4	-33.0	46.0	89.1	0.34	0.78	-52	0.84	9	HarpsiRH_HighRel_Far_E4_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	76	-45.5	-50.2	-31.1	27.4	45.5	0.50	0.78	-39	0.89	1	HarpsiRH_HighRel_Far_E5_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	30	-44.6	-50.1	-30.5	33.1	21.0	0.36	1.14	-55	1.24	9	HarpsiRH_HighRel_Far_F#1_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	42	-42.6	-46.6	-25.7	30.5	98.7	0.50	0.74	-49	0.78	9	HarpsiRH_HighRel_Far_F#2_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	54	-44.3	-48.5	-29.1	73.5	46.6	0.24	0.82	-61	0.88	0	HarpsiRH_HighRel_Far_F#3_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	66	-42.4	-47.4	-28.3	38.3	25.1	0.30	1.36	-77	1.46	1	HarpsiRH_HighRel_Far_F#4_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	78	-45.0	-49.1	-29.1	47.9	49.3	0.24	0.82	-63	0.90	1	HarpsiRH_HighRel_Far_F#5_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	32	-41.2	-45.8	-27.4	20.7	136.9	0.52	0.74	-36	0.82	9	HarpsiRH_HighRel_Far_G#1_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	44	-40.8	-45.3	-26.5	16.2	0.0	0.66	0.72	-30	0.93	1	HarpsiRH_HighRel_Far_G#2_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	56	-41.9	-48.2	-27.0	26.7	14.4	0.42	1.80	-71	1.87	0	HarpsiRH_HighRel_Far_G#3_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	68	-47.2	-51.1	-32.0	54.0	45.7	0.26	0.82	-60	0.89	1	HarpsiRH_HighRel_Far_G#4_rr1.wav
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	80	-46.6	-51.3	-31.1	33.9	50.1	0.44	0.80	-50	0.85	9	HarpsiRH_HighRel_Far_G#5_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	22	-53.2	-57.0	-39.5	49.0	16.4	0.62	0.84	-72	0.93	9	HarpsiRH_LowRel_Far_A#0_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	34	-49.7	-52.2	-33.2	71.6	100.7	0.24	0.54	-80	0.68	9	HarpsiRH_LowRel_Far_A#1_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	46	-52.2	-54.7	-36.6	59.2	103.8	0.24	0.52	-76	0.64	9	HarpsiRH_LowRel_Far_A#2_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	58	-47.4	-51.2	-32.1	56.7	46.9	0.24	0.76	-69	0.84	9	HarpsiRH_LowRel_Far_A#3_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	70	-47.1	-51.3	-34.5	44.9	31.9	0.32	1.46	-77	1.69	1	HarpsiRH_LowRel_Far_A#4_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	24	-45.4	-49.8	-31.0	43.8	65.2	0.40	0.92	-63	1.00	-1	HarpsiRH_LowRel_Far_C1_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	36	-55.6	-58.2	-39.0	84.9	99.2	0.18	0.60	-54	0.65	9	HarpsiRH_LowRel_Far_C2_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	48	-46.8	-50.7	-35.3	11.2	34.7	1.10	1.54	-68	1.58	0	HarpsiRH_LowRel_Far_C3_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	60	-39.6	-43.7	-24.0	49.1	57.4	0.24	0.84	-64	0.92	9	HarpsiRH_LowRel_Far_C4_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	72	-41.9	-45.9	-24.5	69.2	54.6	0.20	0.84	-69	0.94	-1	HarpsiRH_LowRel_Far_C5_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	26	-42.4	-47.3	-29.4	36.7	29.1	0.40	0.96	-48	0.99	-1	HarpsiRH_LowRel_Far_D1_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	38	-47.0	-51.5	-34.5	30.8	64.5	0.52	1.04	-72	1.18	1	HarpsiRH_LowRel_Far_D2_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	50	-54.7	-58.3	-39.5	77.2	61.4	0.22	0.66	-74	0.79	9	HarpsiRH_LowRel_Far_D3_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	62	-43.8	-49.3	-30.0	46.0	21.7	0.32	1.56	-81	1.70	1	HarpsiRH_LowRel_Far_D4_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	28	-45.8	-50.9	-29.2	16.6	80.1	0.86	1.34	-52	1.39	1	HarpsiRH_LowRel_Far_E1_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	40	-45.1	-50.6	-28.9	15.2	113.4	0.66	0.86	-51	0.95	1	HarpsiRH_LowRel_Far_E2_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	52	-48.3	-52.0	-35.0	60.5	90.3	0.32	0.66	-80	0.86	9	HarpsiRH_LowRel_Far_E3_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	64	-45.8	-50.4	-32.8	45.2	24.8	0.36	1.20	-71	1.34	1	HarpsiRH_LowRel_Far_E4_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	18	-43.0	-46.9	-30.9	42.7	30.8	0.38	1.14	-76	1.31	1	HarpsiRH_LowRel_Far_F#0_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	30	-54.4	-59.1	-38.7	40.9	41.1	0.40	0.96	-60	1.01	1	HarpsiRH_LowRel_Far_F#1_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	42	-41.2	-43.7	-27.8	96.7	49.2	0.20	0.66	-78	0.81	9	HarpsiRH_LowRel_Far_F#2_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	54	-41.9	-45.9	-28.8	17.1	65.1	0.86	1.36	-47	1.41	1	HarpsiRH_LowRel_Far_F#3_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	66	-45.6	-50.1	-30.1	46.5	39.5	0.36	1.08	-67	1.17	9	HarpsiRH_LowRel_Far_F#4_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	20	-45.2	-49.6	-30.9	31.6	80.6	0.54	0.86	-61	0.93	-1	HarpsiRH_LowRel_Far_G#0_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	32	-42.4	-47.4	-28.5	36.2	23.3	0.38	1.34	-75	1.49	9	HarpsiRH_LowRel_Far_G#1_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	44	-42.8	-46.2	-30.9	42.9	80.6	0.42	0.88	-58	0.96	1	HarpsiRH_LowRel_Far_G#2_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	56	-44.3	-48.4	-30.6	42.9	24.3	0.42	1.32	-57	1.39	1	HarpsiRH_LowRel_Far_G#3_rr1.wav
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	68	-48.6	-53.4	-34.2	57.4	21.6	0.28	1.30	-64	1.37	1	HarpsiRH_LowRel_Far_G#4_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	34	-23.4	-26.9	-13.7	12.7	3.9	1.42	9.56	-96	10.54	1	HarpsiRH_High_Far_A#1_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	46	-25.0	-29.8	-14.2	7.2	3.8	1.30	8.76	-84	9.07	1	HarpsiRH_High_Far_A#2_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	70	-20.6	-24.8	-11.9	46.2	12.7	0.42	4.90	-105	5.58	1	HarpsiRH_High_Far_A#4_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	82	-33.8	-39.0	-22.8	11.7	4.1	1.56	3.52	-63	3.57	1	HarpsiRH_High_Far_A#5_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	57	-23.2	-28.5	-14.5	22.9	6.2	0.58	5.16	-95	5.85	1	HarpsiRH_High_Far_A3_rr2.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	37	-21.7	-24.3	-13.0	5.4	4.1	2.42	11.16	-92	12.22	1	HarpsiRH_High_Far_C#2_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	49	-23.5	-27.8	-14.1	1.3	6.3	4.26	8.82	-81	9.07	1	HarpsiRH_High_Far_C#3_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	61	-27.6	-32.6	-16.5	27.1	8.3	4.42	5.78	-50	5.82	1	HarpsiRH_High_Far_C#4_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	72	-29.3	-34.7	-20.0	17.1	2.8	0.70	3.82	-79	4.10	1	HarpsiRH_High_Far_C5_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	84	-39.0	-44.6	-26.5	20.1	5.3	1.38	2.42	-86	2.66	1	HarpsiRH_High_Far_C6_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	62	-25.1	-29.8	-13.5	28.0	4.2	3.64	4.88	-97	5.60	1	HarpsiRH_High_Far_D4_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	74	-28.6	-33.4	-17.1	32.2	9.1	0.48	4.74	-90	5.08	1	HarpsiRH_High_Far_D5_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	40	-21.6	-24.8	-12.8	5.9	6.2	2.70	7.54	-69	7.65	1	HarpsiRH_High_Far_E2_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	52	-23.0	-28.3	-13.9	14.3	4.2	0.88	7.78	-68	7.89	1	HarpsiRH_High_Far_E3_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	64	-27.7	-32.5	-16.2	14.7	7.6	1.14	5.12	-93	5.27	1	HarpsiRH_High_Far_E4_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	76	-27.5	-33.0	-15.5	25.0	13.7	0.50	3.52	-77	4.05	1	HarpsiRH_High_Far_E5_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	30	-22.9	-26.2	-13.7	12.3	1.8	5.66	11.76	-99	12.33	1	HarpsiRH_High_Far_F#1_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	42	-23.3	-27.5	-13.4	9.6	1.9	5.30	6.88	-64	6.98	1	HarpsiRH_High_Far_F#2_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	54	-21.2	-25.8	-12.2	1.4	-0.6	5.26	6.28	-92	6.67	1	HarpsiRH_High_Far_F#3_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	66	-24.6	-28.9	-16.6	7.3	6.5	1.74	4.88	-92	5.60	1	HarpsiRH_High_Far_F#4_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	78	-34.8	-40.2	-22.1	32.9	9.9	2.54	3.24	-76	3.36	1	HarpsiRH_High_Far_F#5_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	32	-22.1	-26.3	-13.2	5.4	4.0	1.92	10.50	-98	11.25	1	HarpsiRH_High_Far_G#1_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	44	-24.7	-28.2	-14.5	6.1	6.3	2.30	6.54	-77	6.69	1	HarpsiRH_High_Far_G#2_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	56	-25.4	-30.9	-14.5	22.3	3.7	0.68	5.58	-101	6.76	1	HarpsiRH_High_Far_G#3_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	68	-27.8	-33.6	-16.2	34.1	12.2	0.36	4.72	-93	5.02	1	HarpsiRH_High_Far_G#4_rr1.wav
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	80	-32.9	-38.0	-19.9	17.5	10.3	0.84	3.44	-69	3.54	1	HarpsiRH_High_Far_G#5_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	22	-21.3	-22.9	-12.7	4.5	2.7	3.42	13.96	-96	14.86	1	HarpsiRH_Low_Far_A#0_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	34	-25.0	-27.5	-16.2	4.3	6.1	3.62	9.16	-97	9.72	1	HarpsiRH_Low_Far_A#1_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	46	-23.0	-26.0	-14.6	7.5	6.4	1.92	7.58	-101	8.53	1	HarpsiRH_Low_Far_A#2_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	58	-20.0	-24.2	-11.9	23.7	22.4	0.80	4.08	-94	5.09	1	HarpsiRH_Low_Far_A#3_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	70	-26.4	-30.9	-17.9	22.2	18.0	0.82	3.00	-109	4.41	1	HarpsiRH_Low_Far_A#4_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	24	-20.6	-21.8	-12.1	3.7	2.8	3.88	15.18	-102	16.75	1	HarpsiRH_Low_Far_C1_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	36	-23.0	-24.8	-14.1	3.9	4.1	3.98	10.56	-102	11.09	1	HarpsiRH_Low_Far_C2_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	48	-22.8	-25.7	-15.7	9.3	5.7	1.92	6.78	-89	7.09	1	HarpsiRH_Low_Far_C3_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	60	-22.5	-27.3	-14.2	17.8	14.9	1.08	4.40	-84	4.81	1	HarpsiRH_Low_Far_C4_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	72	-25.5	-30.1	-14.0	56.8	15.3	0.24	2.84	-113	5.00	1	HarpsiRH_Low_Far_C5_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	26	-23.0	-24.5	-15.5	4.9	3.1	3.60	12.76	-94	13.54	1	HarpsiRH_Low_Far_D1_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	38	-23.1	-25.2	-14.5	4.2	7.5	3.94	7.94	-81	8.26	1	HarpsiRH_Low_Far_D2_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	50	-24.5	-27.5	-16.9	6.8	9.1	2.50	6.06	-85	6.39	1	HarpsiRH_Low_Far_D3_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	62	-25.1	-29.9	-14.0	18.7	13.7	0.60	4.76	-99	5.00	1	HarpsiRH_Low_Far_D4_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	28	-22.3	-23.4	-15.2	3.6	4.8	5.24	11.94	-95	12.80	1	HarpsiRH_Low_Far_E1_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	40	-22.1	-23.5	-14.4	5.4	4.4	3.40	9.60	-88	10.06	1	HarpsiRH_Low_Far_E2_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	52	-24.0	-27.4	-14.7	13.2	14.3	1.56	4.54	-89	5.05	1	HarpsiRH_Low_Far_E3_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	64	-21.9	-26.6	-13.1	21.3	12.1	0.64	3.76	-102	5.15	1	HarpsiRH_Low_Far_E4_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	18	-23.5	-25.3	-14.2	2.9	2.8	5.62	15.72	-112	17.41	1	HarpsiRH_Low_Far_F#0_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	30	-23.6	-25.9	-13.6	4.0	5.0	4.06	10.42	-109	11.73	1	HarpsiRH_Low_Far_F#1_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	42	-24.8	-27.2	-14.4	4.9	6.7	3.30	8.10	-95	8.58	1	HarpsiRH_Low_Far_F#2_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	54	-23.5	-27.1	-14.6	10.2	10.0	1.72	5.24	-94	5.70	1	HarpsiRH_Low_Far_F#3_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	66	-25.5	-29.2	-16.6	9.6	9.5	1.04	4.56	-98	5.40	1	HarpsiRH_Low_Far_F#4_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	20	-22.2	-23.4	-13.9	3.0	4.3	5.54	14.48	-102	15.06	1	HarpsiRH_Low_Far_G#0_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	32	-22.0	-24.4	-13.8	5.1	4.6	3.26	10.26	-96	11.42	1	HarpsiRH_Low_Far_G#1_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	44	-18.6	-21.6	-11.0	7.7	4.8	2.00	8.44	-96	9.31	1	HarpsiRH_Low_Far_G#2_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	56	-24.3	-27.3	-14.7	11.7	7.3	1.42	4.70	-98	5.06	1	HarpsiRH_Low_Far_G#3_rr1.wav
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	68	-24.2	-29.9	-14.2	45.8	5.9	0.86	4.58	-94	5.57	1	HarpsiRH_Low_Far_G#4_rr1.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	22	-55.3	-56.1	-47.4	5.7	42.6	3.62	4.26	-46	4.33	1	Harpsi2_Rel_A#0_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	34	-52.7	-56.1	-40.7	58.4	35.2	0.24	0.84	-69	1.01	1	Harpsi2_Rel_A#1_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	46	-64.2	-64.2	-49.7	98.3	16.3	0.56	0.80	-53	0.90	1	Harpsi2_Rel_A#2_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	58	-51.6	-56.0	-36.2	30.1	43.9	0.42	1.04	-69	1.16	1	Harpsi2_Rel_A#3_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	70	-56.5	-60.4	-42.0	30.1	58.8	0.44	0.88	-57	0.92	1	Harpsi2_Rel_A#4_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	24	-56.7	-60.3	-44.1	35.0	23.7	0.34	1.30	-63	1.45	0	Harpsi2_Rel_C1_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	36	-64.8	-64.8	-49.9	65.0	78.9	0.24	0.60	-52	0.65	9	Harpsi2_Rel_C2_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	48	-62.2	-62.2	-46.0	58.3	48.5	0.24	0.60	-49	0.67	9	Harpsi2_Rel_C3_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	60	-53.1	-55.4	-36.4	46.5	67.6	0.28	0.90	-68	1.05	1	Harpsi2_Rel_C4_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	72	-64.7	-64.7	-47.7	65.5	50.2	0.22	0.66	-59	0.71	9	Harpsi2_Rel_C5_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	14	-67.5	-67.5	-53.8	28.8	125.1	0.56	0.74	-52	0.81	9	Harpsi2_Rel_D0_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	26	-57.8	-62.9	-43.0	22.9	35.8	0.58	0.96	-46	1.06	0	Harpsi2_Rel_D1_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	38	-54.7	-57.0	-37.6	61.9	58.5	0.28	0.68	-60	0.73	9	Harpsi2_Rel_D2_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	50	-55.7	-58.4	-39.8	56.4	63.7	0.28	0.60	-58	0.64	9	Harpsi2_Rel_D3_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	62	-60.9	-63.2	-44.2	71.5	35.4	0.20	0.72	-59	0.77	9	Harpsi2_Rel_D4_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	28	-60.0	-63.5	-48.6	9.1	51.9	1.52	2.06	-63	2.21	1	Harpsi2_Rel_E1_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	40	-59.9	-62.4	-44.5	109.9	44.0	0.16	0.78	-70	0.87	-1	Harpsi2_Rel_E2_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	52	-61.6	-61.6	-46.8	42.9	40.2	0.36	0.66	-47	0.72	9	Harpsi2_Rel_E3_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	64	-57.6	-59.9	-43.4	38.8	36.4	0.38	1.04	-72	1.14	1	Harpsi2_Rel_E4_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	30	-52.7	-55.6	-40.5	52.9	111.3	0.38	0.70	-60	0.74	9	Harpsi2_Rel_F#1_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	42	-63.1	-63.1	-47.2	49.5	117.5	0.26	0.48	-46	0.53	9	Harpsi2_Rel_F#2_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	54	-53.0	-56.8	-37.3	50.6	48.7	0.28	0.90	-68	1.01	1	Harpsi2_Rel_F#3_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	66	-60.0	-62.4	-42.4	52.7	63.0	0.22	0.70	-63	0.77	9	Harpsi2_Rel_F#4_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	20	-46.1	-47.4	-36.8	3.4	95.4	3.60	3.80	-42	3.93	1	Harpsi2_Rel_G#0_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	32	-56.0	-58.2	-40.2	89.6	45.4	0.18	0.78	-70	0.87	0	Harpsi2_Rel_G#1_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	44	-48.8	-54.5	-36.8	24.0	39.7	0.54	1.00	-53	1.07	1	Harpsi2_Rel_G#2_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	56	-51.0	-54.5	-34.5	36.1	55.9	0.28	0.78	-69	0.96	1	Harpsi2_Rel_G#3_rr1_Main.wav
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	68	-55.0	-59.2	-38.7	36.2	62.9	0.36	0.90	-63	0.94	1	Harpsi2_Rel_G#4_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	22	-24.3	-25.7	-15.3	2.9	2.1	5.28	18.24	-78	18.71	1	Harpsi2_Normal_A#0_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	34	-20.9	-23.4	-14.5	7.8	4.2	1.88	10.94	-96	11.72	1	Harpsi2_Normal_A#1_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	46	-25.3	-28.1	-17.2	5.2	5.3	2.92	9.22	-91	9.76	1	Harpsi2_Normal_A#2_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	46	-25.1	-28.0	-17.0	5.3	4.4	2.88	10.68	-85	10.88	1	Harpsi2_Normal_A#2_rr3_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	58	-25.2	-29.0	-15.0	14.5	13.1	1.02	5.62	-91	6.47	1	Harpsi2_Normal_A#3_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	70	-23.8	-29.1	-13.5	20.0	17.5	0.72	4.52	-87	4.90	1	Harpsi2_Normal_A#4_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	24	-28.3	-30.2	-15.6	3.2	3.3	5.26	13.80	-73	13.96	1	Harpsi2_Normal_C1_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	36	-23.1	-25.1	-14.3	7.7	3.8	2.42	11.42	-89	11.85	1	Harpsi2_Normal_C2_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	48	-25.2	-27.9	-16.0	8.3	7.8	2.20	8.06	-90	9.19	1	Harpsi2_Normal_C3_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	60	-28.5	-33.2	-18.0	16.2	13.9	0.90	5.40	-94	6.11	1	Harpsi2_Normal_C4_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	72	-29.2	-34.1	-19.5	27.8	12.1	0.46	4.62	-84	4.98	1	Harpsi2_Normal_C5_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	14	-27.7	-29.2	-20.5	3.4	4.6	4.74	12.72	-81	13.11	1	Harpsi2_Normal_D0_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	26	-28.3	-30.7	-17.8	4.6	3.8	3.24	13.78	-89	14.32	1	Harpsi2_Normal_D1_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	38	-22.2	-24.8	-15.5	5.4	7.0	2.48	10.28	-89	10.86	1	Harpsi2_Normal_D2_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	38	-21.7	-24.4	-15.0	6.0	5.3	2.10	10.90	-86	11.33	1	Harpsi2_Normal_D2_rr3_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	50	-22.4	-25.8	-14.2	10.4	10.3	1.54	7.64	-86	9.09	1	Harpsi2_Normal_D3_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	62	-28.0	-31.7	-19.0	16.1	2.5	1.16	5.06	-79	5.27	1	Harpsi2_Normal_D4_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	28	-25.1	-27.0	-15.3	3.6	4.8	4.22	12.64	-93	13.06	1	Harpsi2_Normal_E1_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	40	-20.1	-22.8	-13.6	13.2	4.6	1.28	9.28	-94	9.84	1	Harpsi2_Normal_E2_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	52	-22.4	-25.5	-15.6	20.7	3.3	0.98	8.02	-85	8.41	1	Harpsi2_Normal_E3_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	64	-26.2	-31.4	-15.3	10.4	5.4	1.04	5.38	-96	6.01	1	Harpsi2_Normal_E4_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	30	-26.2	-28.4	-14.7	3.8	4.1	3.86	12.52	-90	13.04	1	Harpsi2_Normal_F#1_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	42	-22.1	-23.6	-13.8	7.6	7.4	2.24	7.74	-103	10.99	1	Harpsi2_Normal_F#2_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	54	-22.6	-25.2	-14.7	15.7	14.8	1.46	5.72	-96	7.35	1	Harpsi2_Normal_F#3_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	66	-25.1	-29.6	-15.5	37.2	8.3	0.48	7.36	-97	7.84	1	Harpsi2_Normal_F#4_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	20	-22.8	-24.6	-13.3	3.4	2.2	4.50	14.86	-70	15.15	1	Harpsi2_Normal_G#0_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	32	-25.8	-27.7	-14.2	5.3	5.8	3.02	11.62	-95	12.75	1	Harpsi2_Normal_G#1_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	44	-23.6	-26.9	-13.8	8.9	2.8	2.06	10.14	-87	10.68	1	Harpsi2_Normal_G#2_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	56	-21.9	-26.0	-11.9	12.1	13.3	1.22	7.48	-96	10.10	1	Harpsi2_Normal_G#3_rr1_Main.wav
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	68	-23.7	-29.7	-14.5	32.3	11.7	0.92	6.10	-92	6.97	1	Harpsi2_Normal_G#4_rr1_Main.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	22	-37.8	-41.5	-25.4	40.5	10.6	0.44	3.80	-263	4.81	1	Harpsichord_stop1-rel_A#0_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	34	-41.1	-47.4	-28.6	13.9	15.8	0.70	2.06	-55	2.18	1	Harpsichord_stop1-rel_A#1_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	46	-38.0	-45.0	-26.9	14.5	33.5	0.70	1.66	-62	1.71	1	Harpsichord_stop1-rel_A#2_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	58	-33.3	-37.6	-21.0	27.9	14.1	0.32	2.22	-268	2.43	1	Harpsichord_stop1-rel_A#3_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	23	-34.5	-39.0	-23.8	30.0	18.9	0.38	2.18	-267	2.97	1	Harpsichord_stop1-rel_B0_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	35	-41.3	-47.1	-30.5	32.6	25.9	0.40	1.38	-87	1.44	1	Harpsichord_stop1-rel_B1_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	47	-37.3	-43.0	-23.3	27.1	21.0	0.34	1.90	-266	2.10	1	Harpsichord_stop1-rel_B2_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	59	-33.9	-39.4	-22.5	29.6	22.8	0.50	1.92	-267	2.24	1	Harpsichord_stop1-rel_B3_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	71	-37.7	-43.9	-29.8	22.8	19.3	0.24	1.98	-265	2.19	1	Harpsichord_stop1-rel_B4_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	25	-36.2	-39.6	-23.8	74.5	12.7	0.20	2.58	-266	2.92	1	Harpsichord_stop1-rel_C#1_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	37	-36.7	-38.6	-23.4	99.9	28.4	0.14	1.38	-266	2.07	1	Harpsichord_stop1-rel_C#2_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	49	-31.4	-33.6	-22.0	134.4	16.5	0.16	1.56	-272	2.10	1	Harpsichord_stop1-rel_C#3_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	61	-32.9	-35.6	-22.0	73.0	25.6	0.20	1.32	-269	1.74	1	Harpsichord_stop1-rel_C#4_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	27	-37.1	-39.9	-24.2	76.8	13.6	0.30	2.34	-265	2.63	1	Harpsichord_stop1-rel_D#1_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	39	-37.4	-40.8	-24.3	52.3	17.6	0.24	1.82	-264	2.49	1	Harpsichord_stop1-rel_D#2_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	51	-37.1	-40.3	-27.4	90.1	19.5	0.18	1.30	-263	1.48	1	Harpsichord_stop1-rel_D#3_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	63	-30.6	-33.4	-20.6	90.6	21.1	0.16	1.78	-272	2.06	1	Harpsichord_stop1-rel_D#4_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	28	-37.8	-41.0	-25.2	64.4	19.1	0.26	1.78	-263	2.45	1	Harpsichord_stop1-rel_E1_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	40	-36.4	-39.9	-23.1	88.0	16.8	0.26	2.04	-266	2.21	1	Harpsichord_stop1-rel_E2_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	52	-37.7	-42.8	-22.7	23.6	40.6	0.60	1.46	-264	1.81	1	Harpsichord_stop1-rel_E3_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	64	-39.1	-42.0	-23.8	107.9	25.0	0.08	1.04	-265	1.34	1	Harpsichord_stop1-rel_E4_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	18	-32.4	-35.7	-24.4	41.7	12.5	0.32	2.74	-269	4.01	1	Harpsichord_stop1-rel_F#0_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	30	-34.2	-38.4	-22.6	71.9	14.6	0.24	2.00	-269	2.32	1	Harpsichord_stop1-rel_F#1_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	42	-34.9	-38.0	-23.4	27.6	15.6	0.32	2.50	-267	2.92	1	Harpsichord_stop1-rel_F#2_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	54	-37.1	-39.6	-23.8	81.4	69.9	0.10	0.52	-55	0.63	9	Harpsichord_stop1-rel_F#3_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	66	-32.6	-35.5	-23.0	121.5	25.1	0.12	1.02	-271	1.27	1	Harpsichord_stop1-rel_F#4_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	20	-34.8	-40.6	-22.3	12.1	10.5	0.58	3.56	-268	4.01	1	Harpsichord_stop1-rel_G#0_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	32	-38.5	-42.4	-23.5	57.9	15.4	0.30	2.00	-264	2.36	1	Harpsichord_stop1-rel_G#1_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	44	-36.5	-40.8	-24.5	27.3	15.5	0.42	1.98	-265	2.21	1	Harpsichord_stop1-rel_G#2_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	56	-37.1	-41.2	-24.4	70.8	23.7	0.22	1.54	-260	1.76	1	Harpsichord_stop1-rel_G#3_1.wav
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	68	-38.2	-41.0	-28.0	219.7	24.1	0.12	1.26	-266	1.40	1	Harpsichord_stop1-rel_G#4_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	22	-26.5	-28.9	-17.3	2.7	2.9	5.52	19.76	-272	22.15	1	Harpsichord_stop1_A#0_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	34	-27.5	-31.7	-14.9	5.2	3.5	2.32	11.06	-270	13.00	1	Harpsichord_stop1_A#1_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	46	-21.6	-26.0	-11.8	8.5	4.1	1.54	8.42	-278	10.45	1	Harpsichord_stop1_A#2_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	58	-20.7	-24.9	-10.7	9.7	6.8	1.58	5.28	-277	6.41	1	Harpsichord_stop1_A#3_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	70	-23.3	-28.3	-11.4	40.6	8.8	0.40	3.48	-276	3.88	1	Harpsichord_stop1_A#4_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	23	-25.2	-26.7	-15.9	3.9	3.8	4.30	13.46	-272	16.30	1	Harpsichord_stop1_B0_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	35	-25.6	-29.0	-13.7	5.5	3.3	2.64	11.64	-273	13.87	1	Harpsichord_stop1_B1_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	47	-21.2	-26.0	-10.5	6.6	5.0	1.82	8.42	-278	11.77	1	Harpsichord_stop1_B2_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	59	-21.4	-26.7	-10.6	12.3	9.4	0.86	4.86	-279	6.70	1	Harpsichord_stop1_B3_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	71	-21.0	-25.9	-12.0	22.1	8.4	0.80	3.36	-280	4.95	1	Harpsichord_stop1_B4_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	25	-26.5	-29.0	-16.6	3.4	4.4	4.78	12.06	-272	13.26	1	Harpsichord_stop1_C#1_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	37	-25.8	-29.2	-15.5	5.5	3.9	2.66	11.12	-273	12.98	1	Harpsichord_stop1_C#2_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	49	-19.4	-22.2	-11.4	8.6	8.0	2.16	6.36	-281	8.28	1	Harpsichord_stop1_C#3_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	61	-21.7	-25.2	-10.8	9.1	10.4	1.72	5.38	-278	6.22	1	Harpsichord_stop1_C#4_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	27	-26.3	-29.1	-16.7	4.1	2.3	3.86	13.78	-272	16.08	1	Harpsichord_stop1_D#1_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	39	-21.6	-26.1	-12.7	4.1	4.0	2.40	12.54	-278	16.64	1	Harpsichord_stop1_D#2_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	51	-26.1	-30.9	-15.3	15.8	6.2	0.88	6.46	-274	8.76	1	Harpsichord_stop1_D#3_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	63	-17.5	-21.8	-8.8	7.7	8.8	1.72	6.28	-281	8.13	1	Harpsichord_stop1_D#4_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	28	-26.8	-29.8	-16.0	3.6	4.4	3.36	11.40	-272	12.25	1	Harpsichord_stop1_E1_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	40	-23.0	-26.3	-12.1	3.3	3.8	3.76	11.28	-275	12.07	1	Harpsichord_stop1_E2_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	52	-22.8	-27.8	-11.1	11.6	6.7	0.94	6.24	-277	7.88	1	Harpsichord_stop1_E3_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	64	-19.4	-23.9	-10.9	7.5	5.0	1.56	5.60	-279	7.35	1	Harpsichord_stop1_E4_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	18	-21.4	-25.7	-11.3	5.1	2.6	2.22	14.54	-280	18.51	1	Harpsichord_stop1_F#0_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	30	-22.4	-24.0	-13.4	6.2	4.2	3.26	11.02	-276	12.85	1	Harpsichord_stop1_F#1_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	42	-21.3	-24.6	-12.5	4.1	5.4	2.96	8.12	-279	12.70	1	Harpsichord_stop1_F#2_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	54	-20.4	-25.5	-10.6	6.1	6.5	1.42	7.52	-280	8.83	1	Harpsichord_stop1_F#3_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	66	-15.2	-20.1	-7.7	19.3	21.9	0.88	4.78	-285	6.01	1	Harpsichord_stop1_F#4_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	20	-23.9	-26.6	-14.7	3.9	2.5	3.52	14.34	-275	16.59	1	Harpsichord_stop1_G#0_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	32	-25.8	-28.3	-17.1	5.6	4.6	2.96	10.26	-271	12.53	1	Harpsichord_stop1_G#1_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	44	-22.1	-26.6	-10.9	14.6	4.9	1.06	7.52	-277	10.76	1	Harpsichord_stop1_G#2_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	56	-19.0	-24.6	-8.1	10.0	4.6	0.54	7.52	-279	11.06	1	Harpsichord_stop1_G#3_1.wav
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	68	-15.0	-18.1	-5.7	39.8	13.9	0.56	3.30	-286	5.37	1	Harpsichord_stop1_G#4_1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	22	-50.4	-51.9	-39.0	111.8	105.5	0.20	0.70	-85	0.83	9	Harpsi4_Rel_Main_A#0_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	34	-46.0	-48.9	-34.3	87.5	188.8	0.24	0.54	-77	0.83	9	Harpsi4_Rel_Main_A#1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	46	-46.9	-49.6	-31.1	84.3	60.4	0.12	0.76	-62	0.83	9	Harpsi4_Rel_Main_A#2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	58	-46.5	-49.4	-31.9	62.9	0.0	0.16	0.36	-79	0.83	9	Harpsi4_Rel_Main_A#3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	70	-54.9	-54.9	-36.9	83.6	58.2	0.32	0.80	-55	0.83	9	Harpsi4_Rel_Main_A#4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	21	-48.5	-50.5	-36.0	121.8	43.3	0.20	0.64	-76	0.83	9	Harpsi4_Rel_Main_A0_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	33	-48.6	-51.8	-37.7	82.8	0.0	0.26	0.76	-73	0.83	9	Harpsi4_Rel_Main_A1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	45	-46.9	-51.6	-34.5	28.9	179.0	0.48	0.62	-85	0.83	9	Harpsi4_Rel_Main_A2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	57	-49.9	-52.7	-37.6	115.2	23.2	0.14	0.52	-43	0.83	9	Harpsi4_Rel_Main_A3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	69	-54.8	-56.1	-37.9	170.1	77.1	0.10	0.56	-82	0.83	9	Harpsi4_Rel_Main_A4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	23	-54.1	-56.4	-39.3	136.1	71.3	0.14	0.66	-77	0.83	9	Harpsi4_Rel_Main_B0_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	35	-45.7	-48.2	-33.6	57.2	0.0	0.20	0.72	-70	0.83	9	Harpsi4_Rel_Main_B1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	47	-50.0	-52.5	-35.6	92.2	65.2	0.16	0.60	-83	0.83	9	Harpsi4_Rel_Main_B2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	59	-53.5	-56.7	-37.3	41.1	21.9	0.32	0.80	-42	0.83	9	Harpsi4_Rel_Main_B3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	71	-52.0	-54.0	-38.0	181.8	93.5	0.14	0.50	-102	0.83	9	Harpsi4_Rel_Main_B4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	25	-49.9	-52.4	-38.6	115.5	248.3	0.16	0.60	-85	0.83	9	Harpsi4_Rel_Main_C#1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	37	-47.6	-50.5	-35.1	136.5	68.6	0.22	0.66	-67	0.83	9	Harpsi4_Rel_Main_C#2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	49	-200.0	-200.0	-44.1	161.4	36.0	0.20	0.32	-30	0.34	9	Harpsi4_Rel_Main_C#3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	61	-56.2	-56.2	-38.5	78.8	57.3	0.18	0.56	-70	0.63	9	Harpsi4_Rel_Main_C#4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	73	-54.4	-58.4	-41.8	43.8	45.9	0.24	0.48	-82	0.60	9	Harpsi4_Rel_Main_C#5_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	24	-54.5	-57.0	-40.9	237.2	231.3	0.10	0.44	-78	0.83	9	Harpsi4_Rel_Main_C1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	36	-46.3	-49.4	-34.6	58.8	0.0	0.26	0.50	-74	0.83	9	Harpsi4_Rel_Main_C2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	48	-57.9	-60.0	-45.1	167.8	19.7	0.10	0.64	-71	0.83	9	Harpsi4_Rel_Main_C3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	60	-52.5	-54.9	-38.0	106.2	88.6	0.22	0.76	-76	0.83	9	Harpsi4_Rel_Main_C4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	72	-51.8	-53.0	-39.9	29.3	0.0	0.38	0.48	-47	0.60	9	Harpsi4_Rel_Main_C5_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	27	-45.3	-47.6	-32.8	106.3	92.2	0.20	0.68	-73	0.83	9	Harpsi4_Rel_Main_D#1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	39	-49.3	-52.0	-34.2	100.3	70.4	0.18	0.48	-74	0.56	9	Harpsi4_Rel_Main_D#2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	51	-48.6	-53.1	-34.5	28.3	67.5	0.60	0.76	-47	0.83	9	Harpsi4_Rel_Main_D#3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	63	-58.3	-58.3	-40.5	117.7	27.0	0.14	0.62	-40	0.64	9	Harpsi4_Rel_Main_D#4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	75	-55.5	-55.5	-39.3	144.8	139.8	0.12	0.50	-76	0.60	9	Harpsi4_Rel_Main_D#5_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	26	-53.4	-55.6	-38.6	123.1	148.5	0.24	0.60	-82	0.83	9	Harpsi4_Rel_Main_D1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	38	-62.6	-62.6	-46.6	164.0	137.6	0.18	0.76	-69	0.83	9	Harpsi4_Rel_Main_D2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	50	-55.5	-58.1	-41.5	93.5	53.3	0.16	0.70	-76	0.83	9	Harpsi4_Rel_Main_D3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	62	-54.2	-55.9	-38.1	71.2	7.7	0.14	0.70	-52	0.83	9	Harpsi4_Rel_Main_D4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	74	-53.6	-55.5	-39.0	123.7	188.0	0.14	0.52	-52	0.60	9	Harpsi4_Rel_Main_D5_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	28	-46.9	-49.0	-34.0	88.2	107.2	0.16	0.58	-87	0.83	9	Harpsi4_Rel_Main_E1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	40	-53.0	-55.5	-42.5	105.0	-4.6	0.16	0.52	-36	0.83	9	Harpsi4_Rel_Main_E2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	52	-54.0	-56.8	-37.8	132.2	77.7	0.12	0.78	-63	0.83	9	Harpsi4_Rel_Main_E3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	64	-52.6	-52.6	-36.2	83.1	4.6	0.16	0.78	-32	0.83	9	Harpsi4_Rel_Main_E4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	76	-53.9	-53.9	-35.7	78.0	144.3	0.14	0.44	-82	0.60	9	Harpsi4_Rel_Main_E5_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	18	-45.9	-48.5	-33.7	91.0	102.6	0.24	0.62	-70	0.83	9	Harpsi4_Rel_Main_F#0_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	30	-53.0	-55.7	-37.9	119.4	76.2	0.16	0.74	-72	0.83	9	Harpsi4_Rel_Main_F#1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	42	-46.3	-49.6	-33.9	47.9	69.9	0.40	0.60	-34	0.63	9	Harpsi4_Rel_Main_F#2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	54	-50.2	-53.0	-33.5	49.7	26.9	0.22	0.80	-45	0.83	9	Harpsi4_Rel_Main_F#3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	66	-49.0	-49.0	-29.7	221.1	19.6	0.08	0.80	-61	0.83	9	Harpsi4_Rel_Main_F#4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	17	-40.9	-44.0	-27.3	64.4	139.6	0.30	0.64	-88	0.83	9	Harpsi4_Rel_Main_F0_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	29	-45.0	-47.0	-30.1	63.8	125.3	0.20	0.64	-78	0.83	9	Harpsi4_Rel_Main_F1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	41	-50.0	-53.4	-36.2	62.1	41.1	0.34	0.74	-65	0.83	9	Harpsi4_Rel_Main_F2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	53	-49.3	-54.0	-35.2	68.9	38.2	0.26	0.78	-41	0.83	9	Harpsi4_Rel_Main_F3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	65	-50.7	-53.6	-38.4	47.0	42.6	0.28	0.62	-76	0.83	9	Harpsi4_Rel_Main_F4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	77	-57.9	-60.3	-43.7	219.1	169.3	0.10	0.66	-73	0.83	9	Harpsi4_Rel_Main_F5_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	20	-54.6	-56.7	-41.7	162.7	19.8	0.12	0.54	-77	0.83	9	Harpsi4_Rel_Main_G#0_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	32	-59.3	-61.6	-46.2	95.8	60.6	0.22	0.72	-72	0.83	9	Harpsi4_Rel_Main_G#1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	44	-43.7	-45.6	-31.6	107.4	35.9	0.14	0.58	-91	0.83	9	Harpsi4_Rel_Main_G#2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	56	-53.0	-57.0	-37.4	38.1	159.8	0.36	0.80	-75	0.83	9	Harpsi4_Rel_Main_G#3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	68	-68.5	-68.5	-53.0	112.7	5.4	0.52	0.78	-54	0.83	9	Harpsi4_Rel_Main_G#4_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	19	-52.4	-55.2	-40.3	75.5	64.1	0.26	0.72	-64	0.83	9	Harpsi4_Rel_Main_G0_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	31	-56.8	-58.6	-43.7	76.0	94.8	0.24	0.64	-74	0.83	9	Harpsi4_Rel_Main_G1_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	43	-56.3	-57.0	-42.3	136.0	99.2	0.12	0.70	-64	0.83	9	Harpsi4_Rel_Main_G2_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	55	-49.2	-51.8	-32.3	37.8	28.1	0.36	0.80	-47	0.83	9	Harpsi4_Rel_Main_G3_rr1.wav
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	67	-51.7	-54.3	-38.6	108.5	0.0	0.16	0.60	-85	0.83	9	Harpsi4_Rel_Main_G4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	22	-23.1	-24.4	-14.0	2.9	3.7	6.32	12.88	-135	15.81	1	Harpsi4_Sus_Main_A#0_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	34	-21.2	-23.4	-11.7	5.3	7.0	3.38	10.38	-125	11.37	1	Harpsi4_Sus_Main_A#1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	46	-21.6	-24.7	-12.2	8.5	6.7	2.00	6.36	-101	7.04	1	Harpsi4_Sus_Main_A#2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	58	-21.0	-25.2	-10.2	8.6	8.7	1.66	5.46	-123	6.61	1	Harpsi4_Sus_Main_A#3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	70	-18.8	-23.3	-9.5	32.3	9.6	0.52	3.94	-124	6.29	1	Harpsi4_Sus_Main_A#4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	21	-23.1	-24.4	-14.1	3.5	3.2	4.50	14.46	-136	15.66	1	Harpsi4_Sus_Main_A0_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	33	-23.1	-26.3	-13.7	6.1	6.6	2.20	7.28	-126	9.74	1	Harpsi4_Sus_Main_A1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	45	-20.6	-23.3	-12.8	4.6	6.9	3.42	7.98	-100	9.53	1	Harpsi4_Sus_Main_A2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	57	-21.3	-25.5	-11.2	10.5	7.3	1.34	6.08	-103	7.31	1	Harpsi4_Sus_Main_A3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	69	-21.9	-27.7	-11.5	17.7	7.9	0.86	4.70	-130	6.56	1	Harpsi4_Sus_Main_A4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	23	-22.1	-23.6	-14.3	4.0	3.1	4.34	13.28	-275	16.37	1	Harpsi4_Sus_Main_B0_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	35	-18.5	-21.1	-11.0	6.8	4.3	2.24	9.34	-123	11.51	1	Harpsi4_Sus_Main_B1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	47	-21.4	-24.6	-13.0	14.0	8.6	1.36	6.34	-113	7.53	1	Harpsi4_Sus_Main_B2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	59	-21.7	-26.2	-11.0	9.4	7.9	1.06	6.62	-90	7.30	1	Harpsi4_Sus_Main_B3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	71	-20.9	-25.6	-10.4	38.5	10.9	0.48	5.30	-91	6.30	1	Harpsi4_Sus_Main_B4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	25	-23.7	-25.1	-16.2	3.9	4.9	5.00	10.28	-123	13.59	1	Harpsi4_Sus_Main_C#1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	37	-20.9	-23.8	-11.1	5.3	7.3	2.84	8.12	-130	9.77	1	Harpsi4_Sus_Main_C#2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	49	-22.6	-25.9	-14.4	8.6	10.9	2.02	6.32	-119	7.87	1	Harpsi4_Sus_Main_C#3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	61	-20.4	-25.6	-10.5	10.7	15.9	1.44	4.86	-115	5.24	1	Harpsi4_Sus_Main_C#4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	73	-18.3	-23.5	-11.0	28.9	11.8	0.42	3.94	-89	4.11	1	Harpsi4_Sus_Main_C#5_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	24	-23.5	-25.0	-15.4	2.4	4.8	7.18	15.18	-130	16.35	1	Harpsi4_Sus_Main_C1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	36	-22.9	-24.9	-14.0	5.9	6.0	2.88	8.44	-106	9.27	1	Harpsi4_Sus_Main_C2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	48	-20.6	-24.1	-11.9	10.3	9.5	1.70	5.94	-123	7.58	1	Harpsi4_Sus_Main_C3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	60	-19.9	-24.6	-9.4	11.8	11.4	1.36	4.32	-108	7.39	1	Harpsi4_Sus_Main_C4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	72	-19.5	-23.9	-10.1	21.9	10.1	0.76	4.86	-96	5.30	1	Harpsi4_Sus_Main_C5_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	27	-22.6	-25.0	-14.1	6.6	3.4	2.30	10.18	-136	13.19	1	Harpsi4_Sus_Main_D#1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	39	-23.1	-26.0	-14.3	6.4	8.0	2.38	6.74	-124	9.23	1	Harpsi4_Sus_Main_D#2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	51	-20.3	-24.0	-10.7	14.7	4.7	1.14	6.90	-99	7.11	1	Harpsi4_Sus_Main_D#3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	63	-21.8	-27.4	-12.0	13.0	14.5	1.06	5.46	-95	5.83	1	Harpsi4_Sus_Main_D#4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	75	-23.3	-28.4	-13.8	17.6	14.1	0.72	3.50	-114	4.06	1	Harpsi4_Sus_Main_D#5_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	26	-21.0	-23.1	-12.5	2.8	5.2	5.50	12.70	-276	14.84	1	Harpsi4_Sus_Main_D1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	38	-21.6	-24.0	-13.7	7.5	5.6	2.44	7.54	-128	9.31	1	Harpsi4_Sus_Main_D2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	50	-23.3	-27.2	-14.1	6.5	12.3	2.16	5.04	-125	6.95	1	Harpsi4_Sus_Main_D3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	62	-23.5	-28.1	-12.6	12.1	17.1	1.40	5.04	-105	5.42	1	Harpsi4_Sus_Main_D4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	74	-22.8	-28.2	-13.2	26.8	13.9	0.64	4.46	-120	5.16	1	Harpsi4_Sus_Main_D5_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	28	-20.2	-22.2	-12.6	6.3	3.4	2.76	11.44	-145	13.27	1	Harpsi4_Sus_Main_E1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	40	-22.1	-24.4	-13.0	7.2	3.7	2.36	9.56	-113	10.07	1	Harpsi4_Sus_Main_E2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	52	-21.5	-24.9	-12.0	19.4	8.0	1.00	9.42	-100	10.05	1	Harpsi4_Sus_Main_E3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	64	-19.1	-24.1	-10.7	14.5	9.1	0.96	5.58	-90	6.19	1	Harpsi4_Sus_Main_E4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	76	-22.5	-26.5	-13.3	56.9	13.3	0.72	2.78	-121	4.10	1	Harpsi4_Sus_Main_E5_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	18	-22.8	-25.0	-14.2	2.6	3.9	4.08	13.34	-275	15.75	1	Harpsi4_Sus_Main_F#0_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	30	-21.7	-24.0	-12.8	4.1	6.2	3.96	9.46	-139	12.31	1	Harpsi4_Sus_Main_F#1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	42	-22.6	-25.5	-14.0	5.9	6.4	2.68	8.32	-113	9.53	1	Harpsi4_Sus_Main_F#2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	54	-19.7	-23.0	-10.0	7.2	6.2	1.44	7.88	-137	8.84	1	Harpsi4_Sus_Main_F#3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	66	-21.0	-26.5	-10.1	19.8	12.1	0.72	6.06	-105	6.44	1	Harpsi4_Sus_Main_F#4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	17	-22.1	-24.0	-13.3	3.1	2.8	4.76	16.68	-118	18.98	1	Harpsi4_Sus_Main_F0_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	29	-20.4	-22.0	-12.9	4.3	4.9	3.74	10.66	-119	12.54	1	Harpsi4_Sus_Main_F1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	41	-20.3	-23.6	-9.5	7.5	7.5	1.92	6.60	-126	7.87	1	Harpsi4_Sus_Main_F2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	53	-18.8	-22.4	-10.9	13.6	5.7	1.00	6.58	-112	7.73	1	Harpsi4_Sus_Main_F3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	65	-20.0	-25.3	-10.1	28.2	10.8	0.64	5.16	-87	5.73	1	Harpsi4_Sus_Main_F4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	77	-22.3	-26.1	-13.4	58.2	13.1	0.42	2.88	-118	3.86	1	Harpsi4_Sus_Main_F5_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	20	-24.4	-25.9	-13.4	2.7	4.7	6.64	15.46	-272	17.64	1	Harpsi4_Sus_Main_G#0_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	32	-22.0	-24.0	-13.8	4.4	5.5	3.76	10.50	-126	12.42	1	Harpsi4_Sus_Main_G#1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	44	-20.1	-23.0	-11.3	12.7	3.6	1.54	7.96	-76	8.64	1	Harpsi4_Sus_Main_G#2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	56	-21.8	-25.7	-10.6	9.1	7.9	1.62	5.98	-95	6.51	1	Harpsi4_Sus_Main_G#3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	68	-18.8	-23.8	-10.6	22.9	8.5	0.74	4.14	-120	4.98	1	Harpsi4_Sus_Main_G#4_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	19	-20.8	-22.1	-13.0	2.9	4.2	4.84	14.00	-120	16.83	1	Harpsi4_Sus_Main_G0_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	31	-22.7	-24.8	-13.2	3.7	5.4	4.10	10.78	-134	12.52	1	Harpsi4_Sus_Main_G1_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	43	-23.1	-25.6	-14.3	5.9	6.8	2.78	7.42	-91	8.30	1	Harpsi4_Sus_Main_G2_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	55	-22.1	-26.6	-11.2	9.5	5.1	1.32	7.50	-122	8.26	1	Harpsi4_Sus_Main_G3_rr1.wav
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	67	-22.3	-27.7	-12.0	14.0	8.4	0.94	5.74	-95	6.25	1	Harpsi4_Sus_Main_G4_rr1.wav
+
+## Oktavlage der Namen je Gruppe (Median der gemessenen Lage gegen C4 = 60; die Note wird darum korrigiert)
+Concert Harp	+0 Oktave(n)	45 von 45 Toenen in dieser Lage
+Folk Harp	+1 Oktave(n)	58 von 58 Toenen in dieser Lage
+Harpsichord, English/Releases/Lute	+1 Oktave(n)	5 von 6 Toenen in dieser Lage
+Harpsichord, English/Releases/Normal	+1 Oktave(n)	11 von 14 Toenen in dieser Lage
+Harpsichord, English/Sustains/Lute	+1 Oktave(n)	28 von 28 Toenen in dieser Lage
+Harpsichord, English/Sustains/Normal	+1 Oktave(n)	28 von 28 Toenen in dieser Lage
+Harpsichord, Flemish/Releases/High	+1 Oktave(n)	12 von 14 Toenen in dieser Lage
+Harpsichord, Flemish/Releases/Low	+1 Oktave(n)	12 von 17 Toenen in dieser Lage
+Harpsichord, Flemish/Sustains/High	+1 Oktave(n)	26 von 26 Toenen in dieser Lage
+Harpsichord, Flemish/Sustains/Low	+1 Oktave(n)	28 von 28 Toenen in dieser Lage
+Harpsichord, French/Releases	+1 Oktave(n)	13 von 17 Toenen in dieser Lage
+Harpsichord, French/Sustains	+1 Oktave(n)	30 von 30 Toenen in dieser Lage
+Harpsichord, Italian/Releases/stop1	+1 Oktave(n)	30 von 30 Toenen in dieser Lage
+Harpsichord, Italian/Sustains/stop1	+1 Oktave(n)	32 von 32 Toenen in dieser Lage
+Harpsichord, Unk/Sustains	+1 Oktave(n)	61 von 61 Toenen in dieser Lage
+# Iowa Guitar.ff.sulA.A2B2.mono.aif: 96000 Hz, 39.7 s, Stuecke 3, erwartet 3; Noten aus dem Klang: 45 46 47  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulA	ff	45	-22.7	-24.8	-13.3	131.8	4.1	12.08	15.56	-67	15.72	0	Guitar.ff.sulA.A2B2.mono.aif#1
+Iowa Gitarre sulA	ff	46	-20.6	-24.2	-10.8	73.4	5.1	0.26	10.08	-75	10.26	1	Guitar.ff.sulA.A2B2.mono.aif#2
+Iowa Gitarre sulA	ff	47	-22.8	-26.9	-13.0	3.1	0.6	11.20	12.62	-67	12.71	0	Guitar.ff.sulA.A2B2.mono.aif#3
+# Iowa Guitar.ff.sulA.C3B3.mono.aif: 96000 Hz, 130.6 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 48 49 50 51 52 53 54 55 56 57 58 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulA	ff	48	-39.4	-42.6	-27.5	0.0	0.4	9.56	11.52	-59	13.47	0	Guitar.ff.sulA.C3B3.mono.aif#1
+Iowa Gitarre sulA	ff	49	-31.2	-35.6	-23.1	6.2	0.4	10.42	13.14	-59	13.22	0	Guitar.ff.sulA.C3B3.mono.aif#2
+Iowa Gitarre sulA	ff	50	-29.0	-32.9	-19.3	10.0	0.0	5.66	6.36	-65	11.53	0	Guitar.ff.sulA.C3B3.mono.aif#3
+Iowa Gitarre sulA	ff	51	-27.7	-31.2	-18.6	14.5	1.4	10.84	12.28	-68	12.43	0	Guitar.ff.sulA.C3B3.mono.aif#4
+Iowa Gitarre sulA	ff	52	-19.8	-24.1	-6.2	20.6	7.8	5.90	9.70	-75	11.46	0	Guitar.ff.sulA.C3B3.mono.aif#5
+Iowa Gitarre sulA	ff	53	-25.4	-28.9	-14.6	7.2	5.6	6.94	8.66	-62	8.71	0	Guitar.ff.sulA.C3B3.mono.aif#6
+Iowa Gitarre sulA	ff	54	-21.8	-26.3	-11.4	10.5	8.5	7.42	10.32	-62	10.43	0	Guitar.ff.sulA.C3B3.mono.aif#7
+Iowa Gitarre sulA	ff	55	-17.2	-23.2	-6.3	15.0	15.7	0.94	9.00	-77	9.13	0	Guitar.ff.sulA.C3B3.mono.aif#8
+Iowa Gitarre sulA	ff	56	-16.0	-20.8	-7.8	30.7	42.4	4.48	7.48	-72	7.62	0	Guitar.ff.sulA.C3B3.mono.aif#9
+Iowa Gitarre sulA	ff	57	-16.2	-19.1	-5.5	174.7	60.3	2.70	7.70	-74	7.79	0	Guitar.ff.sulA.C3B3.mono.aif#10
+Iowa Gitarre sulA	ff	58	-12.2	-14.8	-2.4	94.1	53.6	0.18	9.24	-80	9.66	0	Guitar.ff.sulA.C3B3.mono.aif#11
+Iowa Gitarre sulA	ff	59	-11.3	-16.4	-2.7	31.5	1.5	0.40	7.94	-72	8.15	0	Guitar.ff.sulA.C3B3.mono.aif#12
+# Iowa Guitar.ff.sulA.C4E4.mono.aif: 96000 Hz, 38.2 s, Stuecke 5, erwartet 5; Noten aus dem Klang: 60 61 62 63 64  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulA	ff	60	-13.3	-17.1	-4.8	14.0	3.0	2.82	8.52	-70	8.71	0	Guitar.ff.sulA.C4E4.mono.aif#1
+Iowa Gitarre sulA	ff	61	-17.4	-20.8	-9.6	12.8	10.7	6.80	9.10	-74	9.33	0	Guitar.ff.sulA.C4E4.mono.aif#2
+Iowa Gitarre sulA	ff	62	-21.8	-25.6	-11.5	66.7	11.8	3.24	5.90	-71	6.03	0	Guitar.ff.sulA.C4E4.mono.aif#3
+Iowa Gitarre sulA	ff	63	-31.1	-34.9	-20.8	20.1	2.2	2.20	3.08	-65	5.82	0	Guitar.ff.sulA.C4E4.mono.aif#4
+Iowa Gitarre sulA	ff	64	-27.0	-31.2	-16.3	36.6	3.6	4.78	6.24	-65	6.31	0	Guitar.ff.sulA.C4E4.mono.aif#5
+# Iowa Guitar.ff.sulB.B3.mono.aif: 96000 Hz, 9.0 s, Stuecke 1, erwartet 1; Noten aus dem Klang: 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	ff	59	-20.9	-26.2	-9.3	13.6	2.8	6.50	8.90	-68	8.97	0	Guitar.ff.sulB.B3.mono.aif#1
+# Iowa Guitar.ff.sulB.C4B4.mono.aif: 96000 Hz, 84.9 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 60 61 62 63 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	ff	60	-24.0	-28.6	-10.9	8.0	1.3	6.00	7.40	-70	7.46	0	Guitar.ff.sulB.C4B4.mono.aif#1
+Iowa Gitarre sulB	ff	61	-25.2	-30.6	-10.9	10.5	0.7	3.92	5.94	-59	5.99	0	Guitar.ff.sulB.C4B4.mono.aif#2
+Iowa Gitarre sulB	ff	62	-25.2	-30.0	-13.9	6.5	1.3	4.68	6.14	-63	6.31	0	Guitar.ff.sulB.C4B4.mono.aif#3
+Iowa Gitarre sulB	ff	63	-27.7	-32.6	-12.1	0.0	5.9	0.44	2.78	-78	8.20	0	Guitar.ff.sulB.C4B4.mono.aif#4
+Iowa Gitarre sulB	ff	64	-29.4	-34.4	-14.0	5.1	0.8	6.42	6.98	-63	7.09	0	Guitar.ff.sulB.C4B4.mono.aif#5
+Iowa Gitarre sulB	ff	65	-25.6	-30.3	-10.9	17.3	5.8	0.92	3.50	-74	6.88	0	Guitar.ff.sulB.C4B4.mono.aif#6
+Iowa Gitarre sulB	ff	66	-25.9	-31.0	-2.9	23.6	2.0	0.42	7.10	-82	8.21	0	Guitar.ff.sulB.C4B4.mono.aif#7
+Iowa Gitarre sulB	ff	67	-24.7	-28.8	-12.2	9.3	0.8	6.94	8.30	-59	8.36	0	Guitar.ff.sulB.C4B4.mono.aif#8
+Iowa Gitarre sulB	ff	68	-25.6	-29.9	-14.6	10.7	1.5	5.02	6.08	-58	6.12	0	Guitar.ff.sulB.C4B4.mono.aif#9
+Iowa Gitarre sulB	ff	69	-34.2	-40.6	-14.4	0.5	0.7	5.66	6.54	-55	6.59	0	Guitar.ff.sulB.C4B4.mono.aif#10
+Iowa Gitarre sulB	ff	70	-29.0	-34.3	-14.2	5.2	2.7	3.96	4.58	-53	4.67	0	Guitar.ff.sulB.C4B4.mono.aif#11
+Iowa Gitarre sulB	ff	71	-26.5	-31.3	-16.2	5.7	2.1	3.22	4.76	-69	4.84	0	Guitar.ff.sulB.C4B4.mono.aif#12
+# Iowa Guitar.ff.sulB.C5Gb5.mono.aif: 96000 Hz, 37.6 s, Stuecke 7, erwartet 7; Noten aus dem Klang: 72 73 74 75 76 77 78  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	ff	72	-25.2	-30.2	-12.0	8.9	0.8	3.94	4.72	-63	4.81	0	Guitar.ff.sulB.C5Gb5.mono.aif#1
+Iowa Gitarre sulB	ff	73	-21.4	-25.0	-4.5	28.8	2.2	1.70	5.34	-63	5.47	0	Guitar.ff.sulB.C5Gb5.mono.aif#2
+Iowa Gitarre sulB	ff	74	-26.0	-29.5	-4.9	-4.1	4.8	0.54	4.78	-84	5.30	1	Guitar.ff.sulB.C5Gb5.mono.aif#3
+Iowa Gitarre sulB	ff	75	-24.6	-29.2	-11.4	21.6	0.4	4.14	5.80	-69	5.93	0	Guitar.ff.sulB.C5Gb5.mono.aif#4
+Iowa Gitarre sulB	ff	76	-29.6	-33.3	-17.9	26.5	1.5	4.24	4.90	-55	4.98	0	Guitar.ff.sulB.C5Gb5.mono.aif#5
+Iowa Gitarre sulB	ff	77	-27.8	-31.6	-12.9	10.7	1.3	3.78	4.26	-53	4.34	0	Guitar.ff.sulB.C5Gb5.mono.aif#6
+Iowa Gitarre sulB	ff	78	-25.9	-29.4	-8.6	6.4	2.4	3.90	4.90	-58	4.97	1	Guitar.ff.sulB.C5Gb5.mono.aif#7
+# Iowa Guitar.ff.sulD.C4Ab4.mono.aif: 96000 Hz, 71.3 s, Stuecke 9, erwartet 9; Noten aus dem Klang: 60 68 62 63 64 65 66 67 68  — gegen die Reihenfolge abweichend: 1
+Iowa Gitarre sulD	ff	60	-15.6	-20.7	-8.7	19.3	1.4	4.00	7.40	-65	7.49	0	Guitar.ff.sulD.C4Ab4.mono.aif#1
+Iowa Gitarre sulD	ff	61	-13.2	-14.7	-4.9	10.3	0.7	7.54	7.70	-47	8.28	1	Guitar.ff.sulD.C4Ab4.mono.aif#2
+Iowa Gitarre sulD	ff	62	-22.2	-24.7	-15.7	7.4	1.8	6.98	9.82	-71	9.90	0	Guitar.ff.sulD.C4Ab4.mono.aif#3
+Iowa Gitarre sulD	ff	63	-20.4	-24.0	-11.5	9.1	1.1	4.90	8.58	-70	8.67	0	Guitar.ff.sulD.C4Ab4.mono.aif#4
+Iowa Gitarre sulD	ff	64	-20.9	-25.0	-12.6	11.2	1.4	6.88	10.02	-59	10.08	0	Guitar.ff.sulD.C4Ab4.mono.aif#5
+Iowa Gitarre sulD	ff	65	-19.0	-23.3	-11.7	11.4	0.1	2.52	6.56	-74	6.61	0	Guitar.ff.sulD.C4Ab4.mono.aif#6
+Iowa Gitarre sulD	ff	66	-18.2	-22.9	-9.7	15.8	2.9	3.88	6.54	-75	6.63	0	Guitar.ff.sulD.C4Ab4.mono.aif#7
+Iowa Gitarre sulD	ff	67	-16.8	-21.3	-8.6	29.4	1.7	0.52	4.96	-65	5.11	0	Guitar.ff.sulD.C4Ab4.mono.aif#8
+Iowa Gitarre sulD	ff	68	-17.1	-21.3	-8.7	36.5	3.0	2.04	5.62	-68	5.74	0	Guitar.ff.sulD.C4Ab4.mono.aif#9
+# Iowa Guitar.ff.sulD.D3B3.mono.aif: 96000 Hz, 112.6 s, Stuecke 10, erwartet 10; Noten aus dem Klang: 50 51 52 53 54 55 56 57 58 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulD	ff	50	-24.1	-26.6	-16.1	2.1	0.4	15.58	19.00	-62	19.21	0	Guitar.ff.sulD.D3B3.mono.aif#1
+Iowa Gitarre sulD	ff	51	-25.8	-28.7	-15.9	4.1	0.4	11.86	15.26	-61	15.31	0	Guitar.ff.sulD.D3B3.mono.aif#2
+Iowa Gitarre sulD	ff	52	-26.5	-28.9	-17.7	3.3	0.7	10.72	13.02	-59	13.09	0	Guitar.ff.sulD.D3B3.mono.aif#3
+Iowa Gitarre sulD	ff	53	-29.3	-31.3	-23.3	0.0	0.3	6.60	7.34	-57	10.89	0	Guitar.ff.sulD.D3B3.mono.aif#4
+Iowa Gitarre sulD	ff	54	-25.9	-28.1	-19.5	4.1	1.2	5.66	7.04	-63	7.10	0	Guitar.ff.sulD.D3B3.mono.aif#5
+Iowa Gitarre sulD	ff	55	-21.0	-24.1	-12.1	11.5	1.8	4.50	7.92	-71	7.99	0	Guitar.ff.sulD.D3B3.mono.aif#6
+Iowa Gitarre sulD	ff	56	-20.8	-25.6	-12.7	24.5	2.0	2.24	5.60	-65	5.70	0	Guitar.ff.sulD.D3B3.mono.aif#7
+Iowa Gitarre sulD	ff	57	-18.2	-22.1	-10.0	28.1	2.8	2.52	9.90	-76	10.02	0	Guitar.ff.sulD.D3B3.mono.aif#8
+Iowa Gitarre sulD	ff	58	-17.1	-20.9	-8.2	81.0	1.4	3.06	7.60	-72	7.83	0	Guitar.ff.sulD.D3B3.mono.aif#9
+Iowa Gitarre sulD	ff	59	-17.0	-22.9	-8.6	91.1	1.4	2.52	11.70	-83	11.83	0	Guitar.ff.sulD.D3B3.mono.aif#10
+# Iowa Guitar.ff.sulE.C3B3.mono.aif: 96000 Hz, 107.5 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 48 49 50 51 52 53 54 55 56 57 58 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulE	ff	48	-21.2	-24.3	-12.1	5.5	1.4	5.88	8.42	-64	8.48	0	Guitar.ff.sulE.C3B3.mono.aif#1
+Iowa Gitarre sulE	ff	49	-16.6	-19.3	-8.8	7.4	1.2	5.42	9.22	-71	9.37	0	Guitar.ff.sulE.C3B3.mono.aif#2
+Iowa Gitarre sulE	ff	50	-21.9	-24.9	-11.6	9.0	0.4	14.36	15.44	-65	15.59	0	Guitar.ff.sulE.C3B3.mono.aif#3
+Iowa Gitarre sulE	ff	51	-24.3	-27.0	-13.3	4.9	0.7	8.98	9.90	-62	9.98	0	Guitar.ff.sulE.C3B3.mono.aif#4
+Iowa Gitarre sulE	ff	52	-23.3	-26.4	-12.6	5.8	2.7	5.50	6.52	-65	6.60	0	Guitar.ff.sulE.C3B3.mono.aif#5
+Iowa Gitarre sulE	ff	53	-15.1	-19.4	-3.2	15.4	9.3	1.76	3.88	-73	4.21	0	Guitar.ff.sulE.C3B3.mono.aif#6
+Iowa Gitarre sulE	ff	54	-13.4	-18.1	-2.3	12.5	1.1	5.64	8.70	-77	8.84	0	Guitar.ff.sulE.C3B3.mono.aif#7
+Iowa Gitarre sulE	ff	55	-19.3	-23.6	-8.3	8.1	1.7	4.34	7.12	-67	7.19	0	Guitar.ff.sulE.C3B3.mono.aif#8
+Iowa Gitarre sulE	ff	56	-15.5	-19.7	-5.6	23.9	0.5	5.10	6.32	-68	6.50	0	Guitar.ff.sulE.C3B3.mono.aif#9
+Iowa Gitarre sulE	ff	57	-12.8	-17.2	-1.6	77.7	3.9	3.14	10.00	-65	10.11	0	Guitar.ff.sulE.C3B3.mono.aif#10
+Iowa Gitarre sulE	ff	58	-14.8	-18.4	-5.2	48.0	9.1	8.44	10.20	-75	10.50	0	Guitar.ff.sulE.C3B3.mono.aif#11
+Iowa Gitarre sulE	ff	59	-18.4	-22.7	-7.2	29.2	1.3	6.90	7.30	-53	7.36	0	Guitar.ff.sulE.C3B3.mono.aif#12
+# Iowa Guitar.ff.sulE.E2B2.mono.aif: 96000 Hz, 104.8 s, Stuecke 8, erwartet 8; Noten aus dem Klang: 40 41 42 43 44 45 46 47  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulE	ff	40	-22.0	-24.0	-13.6	2.7	0.4	14.60	17.88	-69	18.08	0	Guitar.ff.sulE.E2B2.mono.aif#1
+Iowa Gitarre sulE	ff	41	-19.4	-22.3	-11.1	3.0	0.4	13.40	13.70	-60	13.78	0	Guitar.ff.sulE.E2B2.mono.aif#2
+Iowa Gitarre sulE	ff	42	-18.3	-21.6	-9.1	4.9	0.4	11.14	11.58	-72	11.66	0	Guitar.ff.sulE.E2B2.mono.aif#3
+Iowa Gitarre sulE	ff	43	-19.0	-22.1	-8.7	5.5	0.7	11.58	12.82	-55	12.86	0	Guitar.ff.sulE.E2B2.mono.aif#4
+Iowa Gitarre sulE	ff	44	-19.3	-23.6	-10.3	12.7	3.0	3.94	9.94	-68	10.09	0	Guitar.ff.sulE.E2B2.mono.aif#5
+Iowa Gitarre sulE	ff	45	-18.7	-23.5	-9.8	35.0	7.7	11.86	12.18	-70	12.33	0	Guitar.ff.sulE.E2B2.mono.aif#6
+Iowa Gitarre sulE	ff	46	-14.1	-19.9	-3.0	15.9	2.1	4.04	10.38	-57	10.46	0	Guitar.ff.sulE.E2B2.mono.aif#7
+Iowa Gitarre sulE	ff	47	-20.8	-24.1	-10.3	5.4	0.5	11.24	11.54	-65	11.64	0	Guitar.ff.sulE.E2B2.mono.aif#8
+# Iowa Guitar.ff.sulG.C4B4.mono.aif: 96000 Hz, 105.0 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 60 61 62 63 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	ff	60	-22.1	-27.2	-7.7	13.3	2.0	6.04	8.36	-64	8.42	0	Guitar.ff.sulG.C4B4.mono.aif#1
+Iowa Gitarre sulG	ff	61	-21.7	-26.6	-8.1	10.7	0.3	9.06	10.30	-65	10.39	0	Guitar.ff.sulG.C4B4.mono.aif#2
+Iowa Gitarre sulG	ff	62	-20.9	-25.3	-10.0	10.3	0.5	7.40	8.72	-65	8.78	0	Guitar.ff.sulG.C4B4.mono.aif#3
+Iowa Gitarre sulG	ff	63	-22.4	-26.9	-5.0	11.1	0.3	6.94	8.10	-64	8.16	0	Guitar.ff.sulG.C4B4.mono.aif#4
+Iowa Gitarre sulG	ff	64	-21.4	-25.8	-3.6	12.7	0.3	7.74	8.90	-67	9.01	0	Guitar.ff.sulG.C4B4.mono.aif#5
+Iowa Gitarre sulG	ff	65	-20.2	-24.7	-7.5	11.2	1.2	6.26	7.18	-60	7.23	0	Guitar.ff.sulG.C4B4.mono.aif#6
+Iowa Gitarre sulG	ff	66	-19.7	-24.5	-7.3	10.2	1.0	4.90	7.02	-61	7.06	0	Guitar.ff.sulG.C4B4.mono.aif#7
+Iowa Gitarre sulG	ff	67	-20.2	-24.7	-10.0	16.8	1.0	5.92	8.00	-68	8.08	0	Guitar.ff.sulG.C4B4.mono.aif#8
+Iowa Gitarre sulG	ff	68	-16.7	-20.7	-11.5	27.6	-0.9	5.54	8.40	-74	8.58	0	Guitar.ff.sulG.C4B4.mono.aif#9
+Iowa Gitarre sulG	ff	69	-28.4	-33.9	-10.5	-0.7	0.6	5.78	8.08	-68	8.16	0	Guitar.ff.sulG.C4B4.mono.aif#10
+Iowa Gitarre sulG	ff	70	-25.5	-30.6	-13.1	9.7	1.0	7.18	8.84	-67	8.98	0	Guitar.ff.sulG.C4B4.mono.aif#11
+Iowa Gitarre sulG	ff	71	-26.4	-31.1	-14.2	8.0	0.4	8.46	9.30	-61	9.36	0	Guitar.ff.sulG.C4B4.mono.aif#12
+# Iowa Guitar.ff.sulG.C5Db5.mono.aif: 96000 Hz, 14.9 s, Stuecke 2, erwartet 2; Noten aus dem Klang: 72 73  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	ff	72	-29.5	-34.8	-15.9	6.1	1.0	5.92	6.84	-59	6.88	0	Guitar.ff.sulG.C5Db5.mono.aif#1
+Iowa Gitarre sulG	ff	73	-26.9	-31.7	-16.0	4.7	0.8	6.76	7.76	-58	7.82	0	Guitar.ff.sulG.C5Db5.mono.aif#2
+# Iowa Guitar.ff.sulG.G3B3.mono.aif: 96000 Hz, 40.1 s, Stuecke 5, erwartet 5; Noten aus dem Klang: 55 56 57 58 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	ff	55	-21.7	-26.4	-13.4	9.3	0.6	6.54	8.94	-67	9.01	0	Guitar.ff.sulG.G3B3.mono.aif#1
+Iowa Gitarre sulG	ff	56	-19.7	-24.5	-10.9	20.9	3.6	4.94	7.82	-70	7.92	0	Guitar.ff.sulG.G3B3.mono.aif#2
+Iowa Gitarre sulG	ff	57	-15.8	-19.7	-6.9	75.6	1.4	0.20	7.18	-76	7.35	0	Guitar.ff.sulG.G3B3.mono.aif#3
+Iowa Gitarre sulG	ff	58	-18.3	-22.7	-10.4	49.8	11.7	2.14	7.72	-67	7.85	0	Guitar.ff.sulG.G3B3.mono.aif#4
+Iowa Gitarre sulG	ff	59	-20.2	-25.1	-10.3	19.7	-0.3	4.22	7.22	-72	7.33	0	Guitar.ff.sulG.G3B3.mono.aif#5
+# Iowa Guitar.ff.sul_E.C5Bb5.mono.aif: 96000 Hz, 70.8 s, Stuecke 11, erwartet 11; Noten aus dem Klang: 72 73 74 75 76 77 78 79 80 81 82  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sul_E	ff	72	-27.1	-32.6	-9.9	4.5	0.2	4.74	6.12	-58	6.16	0	Guitar.ff.sul_E.C5Bb5.mono.aif#1
+Iowa Gitarre sul_E	ff	73	-23.8	-28.8	-7.1	18.2	0.6	5.74	6.00	-59	6.08	0	Guitar.ff.sul_E.C5Bb5.mono.aif#2
+Iowa Gitarre sul_E	ff	74	-24.4	-29.9	-7.2	9.7	1.1	4.32	5.98	-61	6.06	0	Guitar.ff.sul_E.C5Bb5.mono.aif#3
+Iowa Gitarre sul_E	ff	75	-27.4	-33.0	-9.4	9.1	0.5	4.72	5.36	-64	5.42	0	Guitar.ff.sul_E.C5Bb5.mono.aif#4
+Iowa Gitarre sul_E	ff	76	-26.0	-30.5	-8.6	17.4	7.3	4.62	6.36	-61	6.54	0	Guitar.ff.sul_E.C5Bb5.mono.aif#5
+Iowa Gitarre sul_E	ff	77	-27.0	-31.7	-11.4	10.0	0.7	5.78	6.28	-62	6.37	0	Guitar.ff.sul_E.C5Bb5.mono.aif#6
+Iowa Gitarre sul_E	ff	78	-25.8	-30.1	-10.2	11.6	0.9	4.94	5.70	-68	5.82	0	Guitar.ff.sul_E.C5Bb5.mono.aif#7
+Iowa Gitarre sul_E	ff	79	-22.8	-26.8	-9.5	28.3	0.4	4.56	5.22	-54	5.31	0	Guitar.ff.sul_E.C5Bb5.mono.aif#8
+Iowa Gitarre sul_E	ff	80	-23.0	-26.7	-8.3	44.7	-0.6	4.24	5.66	-68	5.75	0	Guitar.ff.sul_E.C5Bb5.mono.aif#9
+Iowa Gitarre sul_E	ff	81	-21.9	-26.5	-10.2	22.6	0.9	4.08	6.38	-65	6.46	0	Guitar.ff.sul_E.C5Bb5.mono.aif#10
+Iowa Gitarre sul_E	ff	82	-20.9	-24.5	-10.1	41.1	0.1	4.36	6.98	-64	7.08	0	Guitar.ff.sul_E.C5Bb5.mono.aif#11
+# Iowa Guitar.ff.sul_E.E4B4.mono.aif: 96000 Hz, 56.3 s, Stuecke 8, erwartet 8; Noten aus dem Klang: 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sul_E	ff	64	-26.4	-31.5	-11.0	20.5	0.9	4.06	6.46	-67	6.51	0	Guitar.ff.sul_E.E4B4.mono.aif#1
+Iowa Gitarre sul_E	ff	65	-24.9	-30.6	-7.0	13.5	1.3	5.94	6.92	-66	6.99	0	Guitar.ff.sul_E.E4B4.mono.aif#2
+Iowa Gitarre sul_E	ff	66	-24.3	-29.5	-12.7	3.5	-1.1	4.34	6.96	-55	7.01	0	Guitar.ff.sul_E.E4B4.mono.aif#3
+Iowa Gitarre sul_E	ff	67	-25.0	-29.9	-9.3	7.1	0.5	5.90	7.56	-65	7.66	0	Guitar.ff.sul_E.E4B4.mono.aif#4
+Iowa Gitarre sul_E	ff	68	-25.3	-29.7	-8.5	10.8	0.3	6.02	6.42	-56	6.48	0	Guitar.ff.sul_E.E4B4.mono.aif#5
+Iowa Gitarre sul_E	ff	69	-28.9	-35.6	-9.1	20.1	0.6	6.04	7.44	-66	7.54	0	Guitar.ff.sul_E.E4B4.mono.aif#6
+Iowa Gitarre sul_E	ff	70	-27.2	-32.5	-9.3	4.0	1.0	4.76	6.22	-59	6.31	-1	Guitar.ff.sul_E.E4B4.mono.aif#7
+Iowa Gitarre sul_E	ff	71	-26.5	-32.4	-8.2	11.3	0.3	5.30	6.40	-57	6.47	0	Guitar.ff.sul_E.E4B4.mono.aif#8
+# Iowa Guitar.mf.sulA.A2B2.mono.aif: 96000 Hz, 34.3 s, Stuecke 3, erwartet 3; Noten aus dem Klang: 45 46 47  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulA	mf	45	-36.5	-40.5	-25.6	7.6	0.4	9.88	11.84	-56	12.02	0	Guitar.mf.sulA.A2B2.mono.aif#1
+Iowa Gitarre sulA	mf	46	-27.0	-30.9	-12.8	0.0	34.0	0.06	4.68	-75	10.67	1	Guitar.mf.sulA.A2B2.mono.aif#2
+Iowa Gitarre sulA	mf	47	-29.3	-34.1	-19.3	69.1	0.5	5.12	7.90	-62	9.91	0	Guitar.mf.sulA.A2B2.mono.aif#3
+# Iowa Guitar.mf.sulA.C3B3.mono.aif: 96000 Hz, 114.1 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 48 49 50 59 52 53 54 55 56 57 58 59  — gegen die Reihenfolge abweichend: 1
+Iowa Gitarre sulA	mf	48	-34.0	-39.0	-25.3	28.1	1.0	6.80	7.74	-64	12.45	0	Guitar.mf.sulA.C3B3.mono.aif#1
+Iowa Gitarre sulA	mf	49	-40.3	-44.8	-24.2	0.0	-3.8	0.70	2.88	-58	10.62	0	Guitar.mf.sulA.C3B3.mono.aif#2
+Iowa Gitarre sulA	mf	50	-41.1	-44.9	-13.1	-1.0	14.5	2.80	8.76	-74	9.86	1	Guitar.mf.sulA.C3B3.mono.aif#3
+Iowa Gitarre sulA	mf	51	-24.8	-27.1	-16.3	7.2	0.7	1.48	1.48	-34	9.90	1	Guitar.mf.sulA.C3B3.mono.aif#4
+Iowa Gitarre sulA	mf	52	-39.6	-43.7	-30.0	4.7	1.7	6.36	7.54	-56	8.16	0	Guitar.mf.sulA.C3B3.mono.aif#5
+Iowa Gitarre sulA	mf	53	-28.6	-31.1	-18.7	0.0	-0.2	1.02	2.22	-64	7.84	0	Guitar.mf.sulA.C3B3.mono.aif#6
+Iowa Gitarre sulA	mf	54	-29.4	-32.9	-2.8	18.5	74.0	0.42	3.64	-81	5.52	0	Guitar.mf.sulA.C3B3.mono.aif#7
+Iowa Gitarre sulA	mf	55	-27.9	-31.4	-15.9	57.7	1.9	9.22	10.14	-65	10.29	0	Guitar.mf.sulA.C3B3.mono.aif#8
+Iowa Gitarre sulA	mf	56	-22.7	-25.9	-12.1	68.1	5.1	2.86	6.18	-70	6.31	0	Guitar.mf.sulA.C3B3.mono.aif#9
+Iowa Gitarre sulA	mf	57	-19.5	-22.4	-9.2	134.9	11.1	0.12	7.24	-73	7.41	0	Guitar.mf.sulA.C3B3.mono.aif#10
+Iowa Gitarre sulA	mf	58	-25.5	-28.3	-14.2	118.5	5.5	7.52	9.14	-70	9.26	0	Guitar.mf.sulA.C3B3.mono.aif#11
+Iowa Gitarre sulA	mf	59	-21.3	-25.8	-11.6	14.8	0.7	7.68	8.84	-61	8.95	0	Guitar.mf.sulA.C3B3.mono.aif#12
+# Iowa Guitar.mf.sulA.C4E4.mono.aif: 96000 Hz, 39.6 s, Stuecke 5, erwartet 5; Noten aus dem Klang: 60 61 62 63 64  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulA	mf	60	-32.3	-37.2	-24.4	16.3	2.4	7.00	9.10	-60	9.21	0	Guitar.mf.sulA.C4E4.mono.aif#1
+Iowa Gitarre sulA	mf	61	-36.3	-41.1	-26.7	0.6	1.8	5.64	6.40	-62	7.05	0	Guitar.mf.sulA.C4E4.mono.aif#2
+Iowa Gitarre sulA	mf	62	-26.5	-30.5	-14.5	56.3	5.8	6.84	7.78	-64	7.91	0	Guitar.mf.sulA.C4E4.mono.aif#3
+Iowa Gitarre sulA	mf	63	-25.9	-29.7	-14.3	88.2	0.0	4.22	6.96	-80	7.10	0	Guitar.mf.sulA.C4E4.mono.aif#4
+Iowa Gitarre sulA	mf	64	-30.5	-33.7	-18.8	32.8	2.9	4.00	6.46	-57	6.52	0	Guitar.mf.sulA.C4E4.mono.aif#5
+# Iowa Guitar.mf.sulB.B3.mono.aif: 96000 Hz, 12.0 s, Stuecke 1, erwartet 1; Noten aus dem Klang: 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	mf	59	-27.4	-32.0	-16.5	9.6	0.2	9.12	11.84	-67	11.88	0	Guitar.mf.sulB.B3.mono.aif#1
+# Iowa Guitar.mf.sulB.C4B4.mono.aif: 96000 Hz, 94.6 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 60 61 62 63 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	mf	60	-28.0	-32.5	-16.4	6.1	-0.4	5.82	7.86	-65	7.92	0	Guitar.mf.sulB.C4B4.mono.aif#1
+Iowa Gitarre sulB	mf	61	-26.3	-31.5	-15.7	9.4	1.0	5.30	7.38	-63	7.42	0	Guitar.mf.sulB.C4B4.mono.aif#2
+Iowa Gitarre sulB	mf	62	-28.7	-33.2	-20.1	4.3	1.6	5.78	7.12	-62	7.23	0	Guitar.mf.sulB.C4B4.mono.aif#3
+Iowa Gitarre sulB	mf	63	-29.6	-33.9	-20.8	8.0	1.1	6.56	7.20	-58	7.24	0	Guitar.mf.sulB.C4B4.mono.aif#4
+Iowa Gitarre sulB	mf	64	-31.1	-35.6	-21.7	108.3	0.7	6.26	7.44	-51	8.98	0	Guitar.mf.sulB.C4B4.mono.aif#5
+Iowa Gitarre sulB	mf	65	-28.2	-32.6	-18.0	3.8	1.1	7.10	8.04	-62	8.10	0	Guitar.mf.sulB.C4B4.mono.aif#6
+Iowa Gitarre sulB	mf	66	-27.0	-31.2	-14.8	8.4	1.7	4.54	6.98	-64	7.06	0	Guitar.mf.sulB.C4B4.mono.aif#7
+Iowa Gitarre sulB	mf	67	-26.7	-30.6	-18.2	8.0	0.2	6.48	8.16	-65	8.21	0	Guitar.mf.sulB.C4B4.mono.aif#8
+Iowa Gitarre sulB	mf	68	-25.0	-29.5	-17.5	6.3	2.7	6.22	7.96	-65	8.06	0	Guitar.mf.sulB.C4B4.mono.aif#9
+Iowa Gitarre sulB	mf	69	-37.2	-42.7	-19.2	3.8	1.4	5.30	6.16	-56	6.20	0	Guitar.mf.sulB.C4B4.mono.aif#10
+Iowa Gitarre sulB	mf	70	-33.4	-37.6	-22.3	-0.1	1.2	4.90	6.64	-59	7.97	0	Guitar.mf.sulB.C4B4.mono.aif#11
+Iowa Gitarre sulB	mf	71	-31.1	-36.1	-18.3	10.6	1.3	5.54	6.96	-62	7.04	0	Guitar.mf.sulB.C4B4.mono.aif#12
+# Iowa Guitar.mf.sulB.C5Gb5.mono.aif: 96000 Hz, 42.8 s, Stuecke 7, erwartet 7; Noten aus dem Klang: 72 73 74 75 76 77 78  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	mf	72	-30.0	-35.4	-16.7	5.3	0.7	4.90	7.02	-59	7.06	0	Guitar.mf.sulB.C5Gb5.mono.aif#1
+Iowa Gitarre sulB	mf	73	-28.2	-33.8	-17.2	4.3	1.4	4.52	5.88	-55	5.95	0	Guitar.mf.sulB.C5Gb5.mono.aif#2
+Iowa Gitarre sulB	mf	74	-29.3	-33.8	-19.9	8.2	-0.2	4.76	5.92	-58	6.44	0	Guitar.mf.sulB.C5Gb5.mono.aif#3
+Iowa Gitarre sulB	mf	75	-30.5	-33.4	-13.1	1.2	-0.1	0.54	5.92	-71	7.03	0	Guitar.mf.sulB.C5Gb5.mono.aif#4
+Iowa Gitarre sulB	mf	76	-32.8	-35.9	-21.7	0.0	-0.6	2.02	3.58	-56	4.48	0	Guitar.mf.sulB.C5Gb5.mono.aif#5
+Iowa Gitarre sulB	mf	77	-28.8	-33.2	-13.2	-1.7	8.3	0.80	3.66	-70	4.69	0	Guitar.mf.sulB.C5Gb5.mono.aif#6
+Iowa Gitarre sulB	mf	78	-34.2	-38.2	-11.2	0.0	5.1	0.46	2.64	-73	5.58	1	Guitar.mf.sulB.C5Gb5.mono.aif#7
+# Iowa Guitar.mf.sulD.C4Ab4.mono.aif: 96000 Hz, 62.9 s, Stuecke 9, erwartet 9; Noten aus dem Klang: 60 61 62 63 64 65 66 67 68  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulD	mf	60	-23.9	-27.9	-15.0	13.7	2.8	1.68	5.44	-77	6.76	0	Guitar.mf.sulD.C4Ab4.mono.aif#1
+Iowa Gitarre sulD	mf	61	-22.1	-25.1	-13.3	8.2	0.8	5.00	6.78	-69	6.83	0	Guitar.mf.sulD.C4Ab4.mono.aif#2
+Iowa Gitarre sulD	mf	62	-23.2	-25.5	-12.7	0.0	20.5	0.54	2.74	-77	7.88	0	Guitar.mf.sulD.C4Ab4.mono.aif#3
+Iowa Gitarre sulD	mf	63	-27.1	-30.7	-17.5	9.3	1.2	5.22	7.16	-70	7.30	0	Guitar.mf.sulD.C4Ab4.mono.aif#4
+Iowa Gitarre sulD	mf	64	-25.1	-28.2	-16.0	16.4	6.1	1.76	4.96	-69	7.78	0	Guitar.mf.sulD.C4Ab4.mono.aif#5
+Iowa Gitarre sulD	mf	65	-24.0	-27.2	-14.7	46.2	4.4	0.84	3.76	-64	5.99	0	Guitar.mf.sulD.C4Ab4.mono.aif#6
+Iowa Gitarre sulD	mf	66	-26.6	-29.3	-17.6	9.4	0.4	5.14	6.26	-64	6.40	0	Guitar.mf.sulD.C4Ab4.mono.aif#7
+Iowa Gitarre sulD	mf	67	-25.0	-29.0	-18.2	8.7	0.6	4.30	5.80	-58	5.87	0	Guitar.mf.sulD.C4Ab4.mono.aif#8
+Iowa Gitarre sulD	mf	68	-27.0	-30.1	-19.5	16.6	-18.6	1.52	3.34	-63	5.55	0	Guitar.mf.sulD.C4Ab4.mono.aif#9
+# Iowa Guitar.mf.sulD.D3B3.mono.aif: 96000 Hz, 108.2 s, Stuecke 10, erwartet 10; Noten aus dem Klang: 50 51 59 53 54 55 56 57 58 59  — gegen die Reihenfolge abweichend: 1
+Iowa Gitarre sulD	mf	50	-32.1	-34.0	-21.4	-0.1	0.9	13.40	15.56	-52	17.30	0	Guitar.mf.sulD.D3B3.mono.aif#1
+Iowa Gitarre sulD	mf	51	-32.8	-35.1	-24.8	1.1	0.7	10.50	12.18	-51	13.09	0	Guitar.mf.sulD.D3B3.mono.aif#2
+Iowa Gitarre sulD	mf	52	-25.2	-28.1	-15.9	-17.6	43.6	0.88	0.88	-39	11.78	1	Guitar.mf.sulD.D3B3.mono.aif#3
+Iowa Gitarre sulD	mf	53	-29.8	-32.0	-22.4	2.8	0.6	9.78	11.20	-57	11.34	0	Guitar.mf.sulD.D3B3.mono.aif#4
+Iowa Gitarre sulD	mf	54	-24.8	-27.3	-16.8	2.5	1.5	8.60	9.64	-62	9.78	0	Guitar.mf.sulD.D3B3.mono.aif#5
+Iowa Gitarre sulD	mf	55	-22.0	-25.3	-14.5	6.6	0.3	8.02	10.30	-69	10.46	0	Guitar.mf.sulD.D3B3.mono.aif#6
+Iowa Gitarre sulD	mf	56	-19.4	-24.4	-11.8	8.2	0.7	3.70	6.90	-73	7.03	0	Guitar.mf.sulD.D3B3.mono.aif#7
+Iowa Gitarre sulD	mf	57	-23.4	-30.3	-11.9	1.6	1.0	3.66	7.48	-68	7.59	0	Guitar.mf.sulD.D3B3.mono.aif#8
+Iowa Gitarre sulD	mf	58	-22.4	-27.1	-12.6	33.1	2.5	4.54	7.54	-63	7.61	0	Guitar.mf.sulD.D3B3.mono.aif#9
+Iowa Gitarre sulD	mf	59	-22.1	-27.2	-11.6	16.8	2.3	4.92	8.38	-75	8.52	0	Guitar.mf.sulD.D3B3.mono.aif#10
+# Iowa Guitar.mf.sulE.C3B3.mono.aif: 96000 Hz, 107.9 s, Stuecke 11, erwartet 12 (Zahl passt nicht); Noten aus dem Klang: 48 50 51 52 53 54 55 56 57 58 59
+Iowa Gitarre sulE	mf	48	-24.8	-27.6	-15.5	2.0	1.0	24.40	25.04	-68	25.24	0	Guitar.mf.sulE.C3B3.mono.aif#1
+Iowa Gitarre sulE	mf	50	-30.1	-31.3	-21.2	9.0	1.9	4.46	5.14	-58	12.06	0	Guitar.mf.sulE.C3B3.mono.aif#2
+Iowa Gitarre sulE	mf	51	-28.2	-30.5	-17.7	50.8	0.9	6.18	6.88	-64	10.92	0	Guitar.mf.sulE.C3B3.mono.aif#3
+Iowa Gitarre sulE	mf	52	-26.9	-29.3	-16.1	3.0	2.5	6.98	7.30	-55	7.43	0	Guitar.mf.sulE.C3B3.mono.aif#4
+Iowa Gitarre sulE	mf	53	-21.6	-25.7	-13.1	13.4	5.1	5.18	7.42	-68	7.58	0	Guitar.mf.sulE.C3B3.mono.aif#5
+Iowa Gitarre sulE	mf	54	-26.0	-28.8	-14.1	6.0	0.6	8.00	8.52	-54	8.65	0	Guitar.mf.sulE.C3B3.mono.aif#6
+Iowa Gitarre sulE	mf	55	-24.3	-29.1	-13.2	10.0	7.0	5.80	8.42	-72	8.54	0	Guitar.mf.sulE.C3B3.mono.aif#7
+Iowa Gitarre sulE	mf	56	-21.2	-24.4	-11.5	29.8	2.1	2.82	4.06	-65	4.24	0	Guitar.mf.sulE.C3B3.mono.aif#8
+Iowa Gitarre sulE	mf	57	-20.2	-21.8	-9.4	69.7	3.2	3.64	5.98	-76	6.22	0	Guitar.mf.sulE.C3B3.mono.aif#9
+Iowa Gitarre sulE	mf	58	-18.0	-22.9	-7.9	44.4	20.8	0.90	6.06	-70	6.19	0	Guitar.mf.sulE.C3B3.mono.aif#10
+Iowa Gitarre sulE	mf	59	-20.1	-24.3	-10.4	27.6	7.7	2.28	6.52	-68	6.63	0	Guitar.mf.sulE.C3B3.mono.aif#11
+# Iowa Guitar.mf.sulE.E2B2.mono.aif: 96000 Hz, 83.2 s, Stuecke 8, erwartet 8; Noten aus dem Klang: 40 41 42 43 44 45 46 47  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulE	mf	40	-33.8	-37.8	-25.5	130.6	1.5	1.70	3.74	-58	10.13	0	Guitar.mf.sulE.E2B2.mono.aif#1
+Iowa Gitarre sulE	mf	41	-36.4	-39.6	-25.1	59.5	36.9	2.66	4.08	-58	11.56	0	Guitar.mf.sulE.E2B2.mono.aif#2
+Iowa Gitarre sulE	mf	42	-27.6	-29.8	-19.4	3.7	1.7	7.96	8.84	-61	10.78	0	Guitar.mf.sulE.E2B2.mono.aif#3
+Iowa Gitarre sulE	mf	43	-23.3	-26.8	-14.6	11.8	4.9	6.32	9.12	-66	9.23	0	Guitar.mf.sulE.E2B2.mono.aif#4
+Iowa Gitarre sulE	mf	44	-23.9	-27.8	-16.9	0.0	10.2	0.44	6.06	-70	9.82	0	Guitar.mf.sulE.E2B2.mono.aif#5
+Iowa Gitarre sulE	mf	45	-22.6	-25.9	-14.8	0.0	5.7	2.82	5.98	-64	7.44	0	Guitar.mf.sulE.E2B2.mono.aif#6
+Iowa Gitarre sulE	mf	46	-23.0	-26.8	-12.1	7.1	0.0	0.34	4.54	-79	8.64	0	Guitar.mf.sulE.E2B2.mono.aif#7
+Iowa Gitarre sulE	mf	47	-25.2	-28.8	-14.4	3.6	0.6	9.60	9.94	-56	10.02	0	Guitar.mf.sulE.E2B2.mono.aif#8
+# Iowa Guitar.mf.sulG.C4B4.mono.aif: 96000 Hz, 89.1 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 60 61 62 63 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	mf	60	-25.8	-30.3	-15.9	7.0	0.8	5.46	6.84	-66	6.92	0	Guitar.mf.sulG.C4B4.mono.aif#1
+Iowa Gitarre sulG	mf	61	-26.4	-30.6	-16.6	9.3	0.9	5.42	6.42	-56	6.48	0	Guitar.mf.sulG.C4B4.mono.aif#2
+Iowa Gitarre sulG	mf	62	-27.0	-30.9	-17.2	10.3	1.3	6.32	8.10	-53	8.16	0	Guitar.mf.sulG.C4B4.mono.aif#3
+Iowa Gitarre sulG	mf	63	-26.9	-30.5	-16.5	5.5	1.1	6.58	8.42	-61	8.48	0	Guitar.mf.sulG.C4B4.mono.aif#4
+Iowa Gitarre sulG	mf	64	-28.1	-31.5	-16.1	4.8	1.1	5.44	6.40	-58	6.44	0	Guitar.mf.sulG.C4B4.mono.aif#5
+Iowa Gitarre sulG	mf	65	-26.6	-30.6	-15.6	9.9	1.9	4.88	5.92	-61	5.96	0	Guitar.mf.sulG.C4B4.mono.aif#6
+Iowa Gitarre sulG	mf	66	-25.1	-29.6	-15.4	8.6	0.6	5.12	6.72	-63	6.83	0	Guitar.mf.sulG.C4B4.mono.aif#7
+Iowa Gitarre sulG	mf	67	-25.3	-29.9	-16.9	21.2	0.5	6.98	8.66	-64	8.76	0	Guitar.mf.sulG.C4B4.mono.aif#8
+Iowa Gitarre sulG	mf	68	-24.8	-29.1	-16.6	11.8	1.5	4.44	6.56	-65	6.63	0	Guitar.mf.sulG.C4B4.mono.aif#9
+Iowa Gitarre sulG	mf	69	-34.4	-39.7	-18.1	7.6	0.3	5.26	6.38	-54	6.43	0	Guitar.mf.sulG.C4B4.mono.aif#10
+Iowa Gitarre sulG	mf	70	-34.4	-38.9	-18.8	16.8	0.6	4.60	7.06	-67	7.31	1	Guitar.mf.sulG.C4B4.mono.aif#11
+Iowa Gitarre sulG	mf	71	-28.5	-33.9	-16.7	6.7	1.2	5.32	6.72	-59	6.79	0	Guitar.mf.sulG.C4B4.mono.aif#12
+# Iowa Guitar.mf.sulG.C5Db5.mono.aif: 96000 Hz, 13.2 s, Stuecke 2, erwartet 2; Noten aus dem Klang: 72 73  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	mf	72	-29.9	-34.3	-17.2	11.6	0.5	4.92	6.04	-51	6.09	0	Guitar.mf.sulG.C5Db5.mono.aif#1
+Iowa Gitarre sulG	mf	73	-27.1	-32.2	-15.6	7.6	-0.1	5.26	6.74	-63	6.79	0	Guitar.mf.sulG.C5Db5.mono.aif#2
+# Iowa Guitar.mf.sulG.G3B3.mono.aif: 96000 Hz, 43.8 s, Stuecke 5, erwartet 5; Noten aus dem Klang: 55 56 57 58 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	mf	55	-26.5	-30.5	-18.0	2.0	0.7	10.08	10.78	-63	10.88	0	Guitar.mf.sulG.G3B3.mono.aif#1
+Iowa Gitarre sulG	mf	56	-23.9	-28.9	-15.2	10.8	1.7	5.88	7.44	-76	7.53	0	Guitar.mf.sulG.G3B3.mono.aif#2
+Iowa Gitarre sulG	mf	57	-24.6	-27.9	-15.9	36.7	0.8	5.38	8.44	-62	8.52	0	Guitar.mf.sulG.G3B3.mono.aif#3
+Iowa Gitarre sulG	mf	58	-24.7	-29.4	-15.1	19.9	0.7	5.74	7.76	-68	7.89	0	Guitar.mf.sulG.G3B3.mono.aif#4
+Iowa Gitarre sulG	mf	59	-25.5	-30.4	-17.6	12.5	0.7	6.20	7.86	-62	7.96	0	Guitar.mf.sulG.G3B3.mono.aif#5
+# Iowa Guitar.mf.sul_E.C5B5.mono.aif: 96000 Hz, 69.6 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 72 73 74 75 76 77 78 79 80 81 82 83  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sul_E	mf	72	-34.5	-39.1	-21.2	5.3	0.7	4.98	5.52	-56	5.59	0	Guitar.mf.sul_E.C5B5.mono.aif#1
+Iowa Gitarre sul_E	mf	73	-35.7	-40.2	-24.9	49.4	1.9	3.28	3.62	-52	5.78	1	Guitar.mf.sul_E.C5B5.mono.aif#2
+Iowa Gitarre sul_E	mf	74	-32.4	-36.7	-19.8	17.5	1.2	4.90	5.64	-55	5.89	0	Guitar.mf.sul_E.C5B5.mono.aif#3
+Iowa Gitarre sul_E	mf	75	-32.9	-36.6	-18.3	1.7	2.1	5.12	5.52	-61	5.72	0	Guitar.mf.sul_E.C5B5.mono.aif#4
+Iowa Gitarre sul_E	mf	76	-31.5	-35.8	-18.7	5.3	1.3	5.74	6.36	-57	6.45	0	Guitar.mf.sul_E.C5B5.mono.aif#5
+Iowa Gitarre sul_E	mf	77	-31.7	-35.4	-19.5	2.0	4.3	2.78	3.44	-52	5.75	0	Guitar.mf.sul_E.C5B5.mono.aif#6
+Iowa Gitarre sul_E	mf	78	-28.8	-33.1	-17.5	2.3	1.8	3.34	4.78	-63	6.19	0	Guitar.mf.sul_E.C5B5.mono.aif#7
+Iowa Gitarre sul_E	mf	79	-27.8	-31.0	-16.0	36.5	0.7	5.34	5.78	-55	5.89	0	Guitar.mf.sul_E.C5B5.mono.aif#8
+Iowa Gitarre sul_E	mf	80	-31.9	-36.0	-17.5	19.9	1.5	3.42	3.62	-52	3.68	0	Guitar.mf.sul_E.C5B5.mono.aif#9
+Iowa Gitarre sul_E	mf	81	-34.6	-39.0	-17.1	7.4	2.1	3.90	5.00	-53	5.04	0	Guitar.mf.sul_E.C5B5.mono.aif#10
+Iowa Gitarre sul_E	mf	82	-29.8	-33.3	-14.8	2.0	0.6	3.84	4.80	-58	4.91	0	Guitar.mf.sul_E.C5B5.mono.aif#11
+Iowa Gitarre sul_E	mf	83	-30.6	-35.1	-16.1	149.1	-0.2	3.60	4.40	-65	4.84	0	Guitar.mf.sul_E.C5B5.mono.aif#12
+# Iowa Guitar.mf.sul_E.E4B4.mono.aif: 96000 Hz, 59.1 s, Stuecke 7, erwartet 8 (Zahl passt nicht); Noten aus dem Klang: 64 66 67 68 69 70 71
+Iowa Gitarre sul_E	mf	64	-30.6	-37.7	-16.9	4.8	1.7	7.36	7.94	-55	15.33	0	Guitar.mf.sul_E.E4B4.mono.aif#1
+Iowa Gitarre sul_E	mf	66	-30.3	-33.9	-18.6	6.5	0.9	5.78	6.96	-63	7.13	0	Guitar.mf.sul_E.E4B4.mono.aif#2
+Iowa Gitarre sul_E	mf	67	-33.4	-37.3	-22.2	2.3	1.8	5.76	6.48	-54	6.71	0	Guitar.mf.sul_E.E4B4.mono.aif#3
+Iowa Gitarre sul_E	mf	68	-28.6	-32.7	-19.5	5.4	0.7	6.32	7.60	-66	7.74	0	Guitar.mf.sul_E.E4B4.mono.aif#4
+Iowa Gitarre sul_E	mf	69	-37.5	-42.8	-19.5	4.2	1.2	6.44	7.14	-54	7.19	0	Guitar.mf.sul_E.E4B4.mono.aif#5
+Iowa Gitarre sul_E	mf	70	-32.0	-36.2	-21.7	2.6	1.0	6.16	6.70	-55	6.76	0	Guitar.mf.sul_E.E4B4.mono.aif#6
+Iowa Gitarre sul_E	mf	71	-33.1	-37.1	-20.6	3.3	0.3	5.74	6.54	-59	6.62	0	Guitar.mf.sul_E.E4B4.mono.aif#7
+# Iowa Guitar.pp.sulA.A2B2.mono.aif: 96000 Hz, 32.1 s, Stuecke 4, erwartet 3 (Zahl passt nicht); Noten aus dem Klang: 45 47 46 47
+Iowa Gitarre sulA	pp	45	-26.8	-32.9	-18.1	7.0	3.9	6.00	10.76	-64	10.82	0	Guitar.pp.sulA.A2B2.mono.aif#1
+Iowa Gitarre sulA	pp	47	-92.2	-200.0	-65.5	81.6	0.0	0.54	0.54	-26	1.10	1	Guitar.pp.sulA.A2B2.mono.aif#2
+Iowa Gitarre sulA	pp	46	-29.2	-34.6	-20.4	11.6	2.8	6.56	9.76	-67	9.89	0	Guitar.pp.sulA.A2B2.mono.aif#3
+Iowa Gitarre sulA	pp	47	-46.9	-51.2	-26.0	155.2	0.1	6.16	6.80	-61	8.26	0	Guitar.pp.sulA.A2B2.mono.aif#4
+# Iowa Guitar.pp.sulA.C3B3.mono.aif: 96000 Hz, 113.1 s, Stuecke 13, erwartet 12 (Zahl passt nicht); Noten aus dem Klang: 48 59 49 50 51 52 53 54 55 56 57 58 59
+Iowa Gitarre sulA	pp	48	-37.4	-47.4	-6.1	0.0	9.3	1.02	8.18	-79	9.87	1	Guitar.pp.sulA.C3B3.mono.aif#1
+Iowa Gitarre sulA	pp	59	-86.6	-200.0	-54.2	-6.3	11.4	1.24	1.24	-36	1.40	1	Guitar.pp.sulA.C3B3.mono.aif#2
+Iowa Gitarre sulA	pp	49	-46.0	-52.8	-3.8	25.1	162.9	0.70	7.94	-89	12.54	1	Guitar.pp.sulA.C3B3.mono.aif#3
+Iowa Gitarre sulA	pp	50	-45.6	-49.7	-34.2	2.9	1.1	9.62	11.42	-50	12.09	0	Guitar.pp.sulA.C3B3.mono.aif#4
+Iowa Gitarre sulA	pp	51	-40.6	-45.3	-30.1	33.0	0.5	7.20	9.02	-59	10.89	0	Guitar.pp.sulA.C3B3.mono.aif#5
+Iowa Gitarre sulA	pp	52	-54.4	-57.5	-37.3	0.0	0.2	2.96	4.66	-53	8.31	0	Guitar.pp.sulA.C3B3.mono.aif#6
+Iowa Gitarre sulA	pp	53	-46.8	-51.3	-30.2	110.1	-1.4	3.80	4.02	-55	9.08	0	Guitar.pp.sulA.C3B3.mono.aif#7
+Iowa Gitarre sulA	pp	54	-52.8	-56.9	-30.9	123.0	1.1	2.46	3.08	-60	7.04	0	Guitar.pp.sulA.C3B3.mono.aif#8
+Iowa Gitarre sulA	pp	55	-35.0	-41.3	-15.3	0.0	-0.3	0.26	3.86	-77	4.91	0	Guitar.pp.sulA.C3B3.mono.aif#9
+Iowa Gitarre sulA	pp	56	-30.2	-34.6	-20.0	31.7	3.6	5.50	6.14	-63	6.22	0	Guitar.pp.sulA.C3B3.mono.aif#10
+Iowa Gitarre sulA	pp	57	-29.4	-31.5	-15.5	14.8	9.1	0.72	3.94	-76	5.65	0	Guitar.pp.sulA.C3B3.mono.aif#11
+Iowa Gitarre sulA	pp	58	-27.0	-30.6	-17.9	35.7	9.3	0.66	8.10	-72	8.22	0	Guitar.pp.sulA.C3B3.mono.aif#12
+Iowa Gitarre sulA	pp	59	-48.7	-54.8	-29.9	0.0	8.7	2.26	2.74	-61	7.50	0	Guitar.pp.sulA.C3B3.mono.aif#13
+# Iowa Guitar.pp.sulA.C4E4.mono.aif: 96000 Hz, 30.9 s, Stuecke 5, erwartet 5; Noten aus dem Klang: 60 61 62 63 64  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulA	pp	60	-34.7	-39.1	-25.8	19.2	0.6	5.02	6.62	-61	6.72	0	Guitar.pp.sulA.C4E4.mono.aif#1
+Iowa Gitarre sulA	pp	61	-29.8	-32.8	-21.4	1.9	1.4	5.34	5.84	-58	6.05	0	Guitar.pp.sulA.C4E4.mono.aif#2
+Iowa Gitarre sulA	pp	62	-47.1	-50.8	-28.5	28.7	2.3	4.44	5.92	-57	6.03	1	Guitar.pp.sulA.C4E4.mono.aif#3
+Iowa Gitarre sulA	pp	63	-30.0	-33.0	-19.7	53.7	2.6	3.52	5.64	-62	5.71	0	Guitar.pp.sulA.C4E4.mono.aif#4
+Iowa Gitarre sulA	pp	64	-43.9	-46.7	-34.3	44.8	2.1	2.58	3.78	-52	4.53	0	Guitar.pp.sulA.C4E4.mono.aif#5
+# Iowa Guitar.pp.sulB.B3.mono.aif: 96000 Hz, 6.8 s, Stuecke 1, erwartet 1; Noten aus dem Klang: 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	pp	59	-48.3	-50.9	-25.7	14.8	-0.8	3.78	4.72	-59	6.77	1	Guitar.pp.sulB.B3.mono.aif#1
+# Iowa Guitar.pp.sulB.C4B4.mono.aif: 96000 Hz, 102.1 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 60 61 62 63 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulB	pp	60	-39.4	-43.0	-26.7	0.0	0.4	3.80	5.12	-66	9.20	0	Guitar.pp.sulB.C4B4.mono.aif#1
+Iowa Gitarre sulB	pp	61	-30.4	-34.7	-18.7	12.4	1.0	6.44	7.84	-55	8.29	0	Guitar.pp.sulB.C4B4.mono.aif#2
+Iowa Gitarre sulB	pp	62	-33.8	-37.8	-22.8	-1.4	0.0	6.60	8.08	-67	8.66	0	Guitar.pp.sulB.C4B4.mono.aif#3
+Iowa Gitarre sulB	pp	63	-43.8	-47.2	-18.1	26.0	0.1	7.56	9.40	-72	9.58	1	Guitar.pp.sulB.C4B4.mono.aif#4
+Iowa Gitarre sulB	pp	64	-41.7	-45.0	-29.6	41.9	1.4	5.20	6.04	-51	8.31	0	Guitar.pp.sulB.C4B4.mono.aif#5
+Iowa Gitarre sulB	pp	65	-42.0	-46.6	-28.4	16.2	1.1	6.66	7.50	-57	8.11	0	Guitar.pp.sulB.C4B4.mono.aif#6
+Iowa Gitarre sulB	pp	66	-43.5	-47.5	-25.4	15.8	1.1	6.56	7.48	-53	7.82	1	Guitar.pp.sulB.C4B4.mono.aif#7
+Iowa Gitarre sulB	pp	67	-37.2	-41.1	-25.2	-18.4	0.7	4.88	5.86	-55	7.06	0	Guitar.pp.sulB.C4B4.mono.aif#8
+Iowa Gitarre sulB	pp	68	-43.4	-48.3	-25.6	4.9	0.8	6.20	6.96	-64	7.06	1	Guitar.pp.sulB.C4B4.mono.aif#9
+Iowa Gitarre sulB	pp	69	-43.7	-50.3	-24.6	80.8	0.4	6.32	7.20	-56	7.95	1	Guitar.pp.sulB.C4B4.mono.aif#10
+Iowa Gitarre sulB	pp	70	-39.8	-43.5	-24.9	-2.7	0.4	6.88	7.66	-61	8.07	0	Guitar.pp.sulB.C4B4.mono.aif#11
+Iowa Gitarre sulB	pp	71	-38.3	-43.5	-25.7	-3.6	0.7	6.78	7.96	-58	8.42	0	Guitar.pp.sulB.C4B4.mono.aif#12
+# Iowa Guitar.pp.sulB.C5Gb5.mono.aif: 96000 Hz, 45.9 s, Stuecke 6, erwartet 7 (Zahl passt nicht); Noten aus dem Klang: 72 73 74 75 76 77
+Iowa Gitarre sulB	pp	72	-37.4	-41.3	-24.5	3.3	1.9	5.68	6.34	-52	6.40	0	Guitar.pp.sulB.C5Gb5.mono.aif#1
+Iowa Gitarre sulB	pp	73	-41.9	-45.8	-27.7	0.5	5.4	3.82	4.34	-52	5.90	0	Guitar.pp.sulB.C5Gb5.mono.aif#2
+Iowa Gitarre sulB	pp	74	-38.4	-42.6	-27.1	33.6	0.7	2.80	3.44	-59	6.74	0	Guitar.pp.sulB.C5Gb5.mono.aif#3
+Iowa Gitarre sulB	pp	75	-46.7	-50.6	-27.1	89.7	0.5	7.86	9.36	-58	9.87	1	Guitar.pp.sulB.C5Gb5.mono.aif#4
+Iowa Gitarre sulB	pp	76	-36.1	-40.3	-27.1	7.8	1.9	2.28	3.00	-54	5.29	0	Guitar.pp.sulB.C5Gb5.mono.aif#5
+Iowa Gitarre sulB	pp	77	-44.2	-49.3	-26.9	7.7	2.1	3.82	4.42	-55	10.55	1	Guitar.pp.sulB.C5Gb5.mono.aif#6
+# Iowa Guitar.pp.sulD.C4Ab4.mono.aif: 96000 Hz, 59.7 s, Stuecke 7, erwartet 9 (Zahl passt nicht); Noten aus dem Klang: 60 61 62 63 64 65 67
+Iowa Gitarre sulD	pp	60	-36.4	-41.4	-23.3	8.0	1.6	4.78	6.70	-61	6.82	0	Guitar.pp.sulD.C4Ab4.mono.aif#1
+Iowa Gitarre sulD	pp	61	-19.0	-22.8	-10.0	10.5	1.6	4.34	7.54	-77	7.66	0	Guitar.pp.sulD.C4Ab4.mono.aif#2
+Iowa Gitarre sulD	pp	62	-34.4	-36.5	-25.0	4.6	2.4	5.06	5.94	-54	7.08	0	Guitar.pp.sulD.C4Ab4.mono.aif#3
+Iowa Gitarre sulD	pp	63	-38.4	-41.8	-28.1	3.3	1.4	4.22	4.96	-60	5.59	0	Guitar.pp.sulD.C4Ab4.mono.aif#4
+Iowa Gitarre sulD	pp	64	-32.0	-34.3	-22.4	5.2	0.4	6.96	8.72	-57	9.22	0	Guitar.pp.sulD.C4Ab4.mono.aif#5
+Iowa Gitarre sulD	pp	65	-30.0	-32.5	-22.6	1.7	-0.9	10.86	11.70	-63	12.03	0	Guitar.pp.sulD.C4Ab4.mono.aif#6
+Iowa Gitarre sulD	pp	67	-38.7	-44.3	-23.6	11.2	1.7	7.98	8.64	-53	9.19	0	Guitar.pp.sulD.C4Ab4.mono.aif#7
+# Iowa Guitar.pp.sulD.D3B3.mono.aif: 96000 Hz, 89.1 s, Stuecke 10, erwartet 10; Noten aus dem Klang: 59 59 52 53 54 55 56 57 58 59  — gegen die Reihenfolge abweichend: 2
+Iowa Gitarre sulD	pp	50	-29.6	-32.3	-17.4	1.2	0.4	14.12	14.16	-38	15.02	1	Guitar.pp.sulD.D3B3.mono.aif#1
+Iowa Gitarre sulD	pp	51	-35.8	-37.8	-16.3	8.6	-0.1	7.22	7.22	-39	9.83	1	Guitar.pp.sulD.D3B3.mono.aif#2
+Iowa Gitarre sulD	pp	52	-31.3	-33.6	-22.0	2.9	0.8	6.20	8.28	-69	9.34	0	Guitar.pp.sulD.D3B3.mono.aif#3
+Iowa Gitarre sulD	pp	53	-31.2	-33.8	-22.0	4.1	1.4	6.72	8.28	-62	8.67	0	Guitar.pp.sulD.D3B3.mono.aif#4
+Iowa Gitarre sulD	pp	54	-30.1	-33.3	-22.8	5.9	1.9	5.38	6.52	-61	6.59	0	Guitar.pp.sulD.D3B3.mono.aif#5
+Iowa Gitarre sulD	pp	55	-33.0	-36.3	-20.6	-4.4	1.3	3.80	5.64	-67	7.78	0	Guitar.pp.sulD.D3B3.mono.aif#6
+Iowa Gitarre sulD	pp	56	-27.2	-31.7	-18.9	15.4	0.9	6.14	7.54	-66	7.63	0	Guitar.pp.sulD.D3B3.mono.aif#7
+Iowa Gitarre sulD	pp	57	-30.5	-36.6	-18.9	12.6	1.6	6.02	7.86	-65	7.95	0	Guitar.pp.sulD.D3B3.mono.aif#8
+Iowa Gitarre sulD	pp	58	-26.6	-29.3	-17.2	99.5	2.0	3.44	5.46	-62	5.59	0	Guitar.pp.sulD.D3B3.mono.aif#9
+Iowa Gitarre sulD	pp	59	-28.8	-33.4	-18.3	17.5	0.9	5.52	7.54	-60	7.61	0	Guitar.pp.sulD.D3B3.mono.aif#10
+# Iowa Guitar.pp.sulE.C3B3.mono.aif: 96000 Hz, 77.3 s, Stuecke 11, erwartet 12 (Zahl passt nicht); Noten aus dem Klang: 48 49 51 52 53 54 55 59 57 58 59
+Iowa Gitarre sulE	pp	48	-37.4	-40.2	-26.1	116.9	2.6	2.72	4.32	-59	6.34	0	Guitar.pp.sulE.C3B3.mono.aif#1
+Iowa Gitarre sulE	pp	49	-36.0	-37.5	-26.7	2.2	2.5	5.04	6.72	-62	7.65	0	Guitar.pp.sulE.C3B3.mono.aif#2
+Iowa Gitarre sulE	pp	51	-33.3	-35.8	-23.0	1.2	0.0	0.64	0.86	-51	8.80	0	Guitar.pp.sulE.C3B3.mono.aif#3
+Iowa Gitarre sulE	pp	52	-36.1	-38.9	-24.6	-4.2	3.3	5.38	5.56	-50	6.46	0	Guitar.pp.sulE.C3B3.mono.aif#4
+Iowa Gitarre sulE	pp	53	-31.7	-34.7	-23.5	94.5	0.1	3.26	4.04	-61	7.80	0	Guitar.pp.sulE.C3B3.mono.aif#5
+Iowa Gitarre sulE	pp	54	-36.8	-40.9	-29.5	85.9	0.7	3.06	3.72	-53	6.83	0	Guitar.pp.sulE.C3B3.mono.aif#6
+Iowa Gitarre sulE	pp	55	-29.3	-34.1	-18.8	13.7	4.6	2.08	4.80	-56	4.86	0	Guitar.pp.sulE.C3B3.mono.aif#7
+Iowa Gitarre sulE	pp	59	-21.3	-23.1	-12.9	13.1	0.9	5.66	5.66	-41	6.15	1	Guitar.pp.sulE.C3B3.mono.aif#8
+Iowa Gitarre sulE	pp	57	-24.9	-27.6	-14.6	64.7	0.2	6.88	7.54	-65	7.62	0	Guitar.pp.sulE.C3B3.mono.aif#9
+Iowa Gitarre sulE	pp	58	-30.9	-35.1	-21.0	11.8	1.6	4.20	4.62	-63	4.72	0	Guitar.pp.sulE.C3B3.mono.aif#10
+Iowa Gitarre sulE	pp	59	-28.0	-33.0	-17.7	22.9	4.7	2.04	6.24	-60	6.30	0	Guitar.pp.sulE.C3B3.mono.aif#11
+# Iowa Guitar.pp.sulE.E2B2.mono.aif: 96000 Hz, 76.1 s, Stuecke 8, erwartet 8; Noten aus dem Klang: 40 41 42 43 44 45 46 47  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulE	pp	40	-34.3	-37.1	-26.4	3.6	0.3	9.70	10.64	-55	10.70	0	Guitar.pp.sulE.E2B2.mono.aif#1
+Iowa Gitarre sulE	pp	41	-32.6	-35.0	-16.6	0.0	7.6	0.46	9.28	-73	11.05	1	Guitar.pp.sulE.E2B2.mono.aif#2
+Iowa Gitarre sulE	pp	42	-32.8	-34.5	-22.4	36.2	0.2	3.68	4.30	-64	10.57	0	Guitar.pp.sulE.E2B2.mono.aif#3
+Iowa Gitarre sulE	pp	43	-32.4	-35.7	-15.8	13.3	3.9	3.08	6.84	-75	7.92	1	Guitar.pp.sulE.E2B2.mono.aif#4
+Iowa Gitarre sulE	pp	44	-25.1	-28.3	-17.1	14.1	4.8	4.74	6.34	-67	6.50	0	Guitar.pp.sulE.E2B2.mono.aif#5
+Iowa Gitarre sulE	pp	45	-24.9	-28.8	-16.3	53.5	2.6	7.42	8.54	-61	8.59	0	Guitar.pp.sulE.E2B2.mono.aif#6
+Iowa Gitarre sulE	pp	46	-35.7	-38.7	-23.8	10.8	1.4	6.36	7.34	-61	7.77	0	Guitar.pp.sulE.E2B2.mono.aif#7
+Iowa Gitarre sulE	pp	47	-32.9	-35.8	-22.3	182.0	-1.1	2.34	3.18	-62	9.32	0	Guitar.pp.sulE.E2B2.mono.aif#8
+# Iowa Guitar.pp.sulG.C4B4.mono.aif: 96000 Hz, 75.5 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 60 61 62 63 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	pp	60	-30.5	-35.2	-21.8	6.5	1.6	5.16	5.74	-51	5.97	0	Guitar.pp.sulG.C4B4.mono.aif#1
+Iowa Gitarre sulG	pp	61	-32.7	-36.2	-20.9	1.7	1.0	5.20	6.10	-55	7.75	0	Guitar.pp.sulG.C4B4.mono.aif#2
+Iowa Gitarre sulG	pp	62	-34.2	-37.6	-23.8	-4.7	0.6	2.86	3.96	-51	6.64	0	Guitar.pp.sulG.C4B4.mono.aif#3
+Iowa Gitarre sulG	pp	63	-41.2	-43.7	-27.1	7.6	0.6	2.22	2.88	-52	6.51	0	Guitar.pp.sulG.C4B4.mono.aif#4
+Iowa Gitarre sulG	pp	64	-38.1	-41.0	-24.4	-2.6	-0.8	2.80	3.64	-60	7.88	0	Guitar.pp.sulG.C4B4.mono.aif#5
+Iowa Gitarre sulG	pp	65	-34.3	-37.9	-16.5	8.9	0.4	1.14	3.66	-70	6.69	0	Guitar.pp.sulG.C4B4.mono.aif#6
+Iowa Gitarre sulG	pp	66	-33.6	-37.9	-23.6	5.7	3.9	3.54	4.04	-49	4.55	0	Guitar.pp.sulG.C4B4.mono.aif#7
+Iowa Gitarre sulG	pp	67	-52.5	-56.1	-26.0	0.0	1.1	4.64	5.28	-64	6.17	1	Guitar.pp.sulG.C4B4.mono.aif#8
+Iowa Gitarre sulG	pp	68	-43.1	-47.8	-24.3	-8.0	1.5	4.06	4.84	-54	5.08	1	Guitar.pp.sulG.C4B4.mono.aif#9
+Iowa Gitarre sulG	pp	69	-53.2	-56.6	-25.9	0.0	2.1	4.02	4.62	-54	4.80	1	Guitar.pp.sulG.C4B4.mono.aif#10
+Iowa Gitarre sulG	pp	70	-50.5	-53.8	-29.2	0.0	1.9	3.56	3.98	-56	4.83	1	Guitar.pp.sulG.C4B4.mono.aif#11
+Iowa Gitarre sulG	pp	71	-54.1	-58.3	-26.9	2.8	1.5	4.38	5.16	-49	5.32	1	Guitar.pp.sulG.C4B4.mono.aif#12
+# Iowa Guitar.pp.sulG.C5Db5.mono.aif: 96000 Hz, 12.7 s, Stuecke 2, erwartet 2; Noten aus dem Klang: 72 73  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	pp	72	-43.2	-47.2	-27.1	-3.2	2.6	3.20	3.68	-59	5.56	0	Guitar.pp.sulG.C5Db5.mono.aif#1
+Iowa Gitarre sulG	pp	73	-45.8	-50.0	-26.2	0.0	1.0	2.16	3.02	-63	6.71	1	Guitar.pp.sulG.C5Db5.mono.aif#2
+# Iowa Guitar.pp.sulG.G3B3.mono.aif: 96000 Hz, 42.2 s, Stuecke 5, erwartet 5; Noten aus dem Klang: 55 56 57 58 59  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sulG	pp	55	-35.8	-39.1	-25.8	1.4	0.5	7.58	8.20	-51	8.31	0	Guitar.pp.sulG.G3B3.mono.aif#1
+Iowa Gitarre sulG	pp	56	-27.1	-31.5	-18.9	8.4	-0.1	7.08	8.36	-62	8.44	0	Guitar.pp.sulG.G3B3.mono.aif#2
+Iowa Gitarre sulG	pp	57	-27.9	-32.3	-17.8	6.1	1.3	6.70	8.68	-67	8.80	0	Guitar.pp.sulG.G3B3.mono.aif#3
+Iowa Gitarre sulG	pp	58	-31.6	-34.4	-20.6	2.1	0.8	6.78	8.04	-59	8.18	0	Guitar.pp.sulG.G3B3.mono.aif#4
+Iowa Gitarre sulG	pp	59	-24.9	-29.1	-16.3	16.3	0.9	5.38	7.10	-56	7.17	0	Guitar.pp.sulG.G3B3.mono.aif#5
+# Iowa Guitar.pp.sul_E.C5B5.mono.aif: 96000 Hz, 64.5 s, Stuecke 12, erwartet 12; Noten aus dem Klang: 72 73 74 75 76 77 78 79 80 81 82 83  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sul_E	pp	72	-49.7	-53.7	-28.6	-0.4	0.7	4.36	5.28	-52	5.32	1	Guitar.pp.sul_E.C5B5.mono.aif#1
+Iowa Gitarre sul_E	pp	73	-45.8	-51.3	-25.8	0.0	0.1	4.42	4.92	-55	5.09	1	Guitar.pp.sul_E.C5B5.mono.aif#2
+Iowa Gitarre sul_E	pp	74	-41.4	-45.2	-27.8	30.7	1.4	4.78	5.42	-53	6.11	0	Guitar.pp.sul_E.C5B5.mono.aif#3
+Iowa Gitarre sul_E	pp	75	-42.1	-46.5	-27.5	0.3	3.0	4.76	5.20	-54	5.48	1	Guitar.pp.sul_E.C5B5.mono.aif#4
+Iowa Gitarre sul_E	pp	76	-46.9	-50.9	-28.1	6.5	0.7	5.10	5.60	-65	5.95	1	Guitar.pp.sul_E.C5B5.mono.aif#5
+Iowa Gitarre sul_E	pp	77	-38.4	-43.2	-24.5	0.0	2.2	2.74	3.42	-44	5.10	0	Guitar.pp.sul_E.C5B5.mono.aif#6
+Iowa Gitarre sul_E	pp	78	-37.2	-41.7	-25.2	132.3	0.7	3.52	3.88	-50	5.45	0	Guitar.pp.sul_E.C5B5.mono.aif#7
+Iowa Gitarre sul_E	pp	79	-33.7	-37.8	-25.3	0.0	0.9	3.42	3.94	-48	4.63	0	Guitar.pp.sul_E.C5B5.mono.aif#8
+Iowa Gitarre sul_E	pp	80	-52.4	-57.5	-29.1	11.0	3.8	1.44	2.02	-52	4.36	1	Guitar.pp.sul_E.C5B5.mono.aif#9
+Iowa Gitarre sul_E	pp	81	-54.4	-59.1	-27.8	-17.5	3.0	2.66	3.28	-58	4.64	1	Guitar.pp.sul_E.C5B5.mono.aif#10
+Iowa Gitarre sul_E	pp	82	-51.6	-56.5	-29.1	19.9	4.3	1.86	2.60	-57	4.26	1	Guitar.pp.sul_E.C5B5.mono.aif#11
+Iowa Gitarre sul_E	pp	83	-45.7	-51.4	-25.0	4.3	2.6	3.30	3.98	-56	4.07	1	Guitar.pp.sul_E.C5B5.mono.aif#12
+# Iowa Guitar.pp.sul_E.E4B4.mono.aif: 96000 Hz, 48.0 s, Stuecke 8, erwartet 8; Noten aus dem Klang: 64 65 66 67 68 69 70 71  — gegen die Reihenfolge abweichend: 0
+Iowa Gitarre sul_E	pp	64	-51.4	-55.0	-26.8	0.0	1.4	3.82	4.44	-53	4.64	1	Guitar.pp.sul_E.E4B4.mono.aif#1
+Iowa Gitarre sul_E	pp	65	-53.6	-56.2	-29.0	-11.0	0.3	3.96	4.28	-55	4.34	1	Guitar.pp.sul_E.E4B4.mono.aif#2
+Iowa Gitarre sul_E	pp	66	-42.6	-44.8	-25.0	3.7	1.8	4.74	5.18	-60	6.48	1	Guitar.pp.sul_E.E4B4.mono.aif#3
+Iowa Gitarre sul_E	pp	67	-46.6	-49.7	-25.7	8.9	1.7	5.40	5.92	-59	6.22	1	Guitar.pp.sul_E.E4B4.mono.aif#4
+Iowa Gitarre sul_E	pp	68	-33.0	-36.7	-24.4	3.3	0.4	4.32	4.78	-50	6.57	0	Guitar.pp.sul_E.E4B4.mono.aif#5
+Iowa Gitarre sul_E	pp	69	-46.9	-52.4	-26.7	0.0	1.7	2.80	3.30	-58	5.86	1	Guitar.pp.sul_E.E4B4.mono.aif#6
+Iowa Gitarre sul_E	pp	70	-53.8	-57.1	-31.6	1.2	1.2	5.10	5.58	-53	5.69	1	Guitar.pp.sul_E.E4B4.mono.aif#7
+Iowa Gitarre sul_E	pp	71	-49.3	-52.7	-29.2	8.4	0.6	4.26	4.60	-56	5.77	1	Guitar.pp.sul_E.E4B4.mono.aif#8
+
+## Zusammenfassung je Gruppe und Variante (ab 5 Toenen; Noten nach der Oktavkorrektur, ohne unsichere Stuecke)
+gruppe	variante	toene	umfang	mom_spanne_LU	mom_spanne_p10_p90	mom_min(an)	mom_max(an)	groesster_sprung_LU(zwischen)	sprung_median	spitze_spanne_dB	t60_min	t60_max	boden_median	frueh_min	frueh_max
+Concert Harp	KSHarp_f	23	28-101	17.8	11.6	-41.0(28)	-23.3(76)	7.3(35-38)	3.9	22.8	0.54	25.22	-69	1.8	185.0
+Concert Harp	KSHarp_mf	19	35-95	21.2	18.1	-48.5(35)	-27.3(76)	8.4(41-45)	3.1	24.6	2.28	17.42	-63	1.7	104.1
+Folk Harp	EWHarp_Normal_v2_rr	29	36-92	16.0	12.1	-44.5(74)	-28.5(70)	14.8(68-70)	5.0	14.4	0.80	19.66	-55	0.8	61.7
+Folk Harp	EWHarp_Normal_v3_rr	29	36-92	18.6	11.3	-29.5(84)	-10.9(48)	12.1(48-50)	3.7	17.2	0.86	27.80	-70	1.9	106.5
+Harpsichord, English/Releases/Lute	ZuckermannKitHarpsi_Lute_Rel_rr	26	34-88	12.4	10.8	-50.6(36)	-38.3(60)	7.9(60-62)	3.4	12.4	0.44	1.48	-36	39.1	104.3
+Harpsichord, English/Releases/Normal	ZuckermannKitHarpsi_Normal_Rel_rr	28	34-88	17.3	8.4	-54.2(36)	-36.9(84)	12.4(82-84)	2.9	16.6	0.38	2.02	-37	15.7	225.9
+Harpsichord, English/Sustains/Lute	ZuckermannKitHarpsi_Lute_Sus_rr	28	34-88	19.5	12.5	-39.9(84)	-20.4(62)	10.9(54-56)	2.4	16.7	0.96	9.38	-117	4.3	175.7
+Harpsichord, English/Sustains/Normal	ZuckermannKitHarpsi_Normal_Sus_rr	28	34-88	13.6	11.0	-32.5(56)	-18.9(70)	11.3(54-56)	2.4	13.8	2.66	13.14	-128	3.0	49.2
+Harpsichord, Flemish/Releases/High	HarpsiRH_HighRel_Far_rr	26	42-96	11.6	6.0	-47.3(69)	-35.7(52)	10.5(49-52)	1.8	13.8	0.56	1.80	-52	16.2	73.5
+Harpsichord, Flemish/Releases/Low	HarpsiRH_LowRel_Far_rr	28	30-84	16.0	12.6	-55.6(48)	-39.6(72)	12.0(42-44)	5.1	15.5	0.52	1.56	-68	11.2	96.7
+Harpsichord, Flemish/Sustains/High	HarpsiRH_High_Far_rr	26	42-96	18.3	12.1	-39.0(96)	-20.6(82)	8.6(82-84)	1.8	14.5	2.42	11.76	-86	1.3	46.2
+Harpsichord, Flemish/Sustains/Low	HarpsiRH_Low_Far_rr	28	30-84	7.8	4.9	-26.4(82)	-18.6(56)	6.2(54-56)	1.6	6.9	2.84	15.72	-96	2.9	56.8
+Harpsichord, French/Releases	Harpsi2_Rel_rr_Main	28	26-84	21.4	13.6	-67.5(26)	-46.1(32)	15.3(56-58)	5.0	19.3	0.48	4.26	-59	3.4	109.9
+Harpsichord, French/Sustains	Harpsi2_Normal_rr_Main	30	26-84	9.1	6.6	-29.2(84)	-20.1(52)	5.4(82-84)	1.5	8.6	4.52	18.24	-89	2.9	37.2
+Harpsichord, Italian/Releases/stop1	Harpsichord_stop1-rel_1	31	30-83	10.7	6.0	-41.3(47)	-30.6(75)	8.5(75-76)	1.7	10.0	0.52	3.80	-266	12.1	219.7
+Harpsichord, Italian/Sustains/stop1	Harpsichord_stop1_1	32	30-83	12.5	7.5	-27.5(46)	-15.0(80)	8.2(80-82)	1.8	11.6	3.30	19.76	-277	2.7	40.6
+Harpsichord, Unk/Releases	Harpsi4_Rel_Main_rr	61	17-77	159.1	11.8	-200.0(49)	-40.9(17)	144.5(49-50)	3.5	25.7	0.32	0.80	-73	28.3	237.2
+Harpsichord, Unk/Sustains	Harpsi4_Sus_Main_rr	61	29-89	6.1	3.7	-24.4(32)	-18.3(85)	4.5(85-86)	1.3	6.8	2.78	16.68	-120	2.4	58.2
+Iowa Gitarre sulA	ff	20	45-64	28.2	18.9	-39.4(48)	-11.3(59)	16.7(47-48)	3.9	25.1	3.08	15.56	-68	3.1	174.7
+Iowa Gitarre sulA	mf	20	45-64	21.6	18.4	-41.1(50)	-19.5(57)	16.4(50-51)	4.7	27.2	1.48	11.84	-64	0.6	134.9
+Iowa Gitarre sulA	pp	5	60-64	17.4	17.4	-47.1(62)	-29.8(61)	17.4(61-62)	17.1	14.5	3.78	6.62	-58	1.9	53.7
+Iowa Gitarre sulB	ff	20	59-78	13.3	7.9	-34.2(69)	-20.9(59)	8.6(68-69)	2.0	15.0	2.78	8.90	-63	0.5	28.8
+Iowa Gitarre sulB	mf	20	59-78	12.2	7.1	-37.2(69)	-25.0(68)	12.2(68-69)	1.7	11.2	2.64	11.84	-62	1.2	108.3
+Iowa Gitarre sulB	pp	13	59-71	17.9	10.0	-48.3(59)	-30.4(61)	10.0(62-63)	3.9	11.5	4.72	9.40	-58	4.9	80.8
+Iowa Gitarre sulD	ff	19	50-68	16.1	10.9	-29.3(53)	-13.2(61)	9.0(61-62)	1.6	18.4	4.96	19.00	-65	2.1	91.1
+Iowa Gitarre sulD	mf	19	50-68	13.4	10.1	-32.8(51)	-19.4(56)	7.6(51-52)	2.1	13.2	0.88	15.56	-64	1.1	46.2
+Iowa Gitarre sulD	pp	10	50-59	9.2	6.4	-35.8(51)	-26.6(58)	6.1(50-51)	3.2	6.5	5.46	14.16	-62	1.2	99.5
+Iowa Gitarre sulE	ff	20	40-59	11.5	8.6	-24.3(51)	-12.8(57)	8.2(52-53)	2.6	11.9	3.88	17.88	-65	2.7	77.7
+Iowa Gitarre sulE	mf	8	40-47	13.9	13.9	-36.4(41)	-22.6(45)	8.9(41-42)	2.2	13.5	3.74	9.94	-61	3.6	130.6
+Iowa Gitarre sulE	pp	8	40-47	10.8	10.8	-35.7(46)	-24.9(45)	10.8(45-46)	1.6	10.6	3.18	10.64	-62	3.6	182.0
+Iowa Gitarre sulG	ff	19	55-73	13.6	11.7	-29.5(72)	-15.8(57)	11.7(68-69)	2.0	12.5	6.84	10.30	-67	4.7	75.6
+Iowa Gitarre sulG	mf	19	55-73	10.6	9.8	-34.4(69)	-23.9(56)	9.7(68-69)	0.8	3.7	5.92	10.78	-62	2.0	36.7
+Iowa Gitarre sulG	pp	19	55-73	29.2	26.0	-54.1(71)	-24.9(59)	18.8(66-67)	3.7	12.9	2.88	8.68	-56	1.4	16.3
+Iowa Gitarre sul_E	ff	19	64-82	8.0	5.5	-28.9(69)	-20.9(82)	3.6(68-69)	1.0	5.6	5.22	7.56	-62	3.5	44.7
+Iowa Gitarre sul_E	mf	12	72-83	7.9	5.9	-35.7(73)	-27.8(79)	4.8(81-82)	1.3	10.2	3.44	6.36	-55	1.7	149.1
+Iowa Gitarre sul_E	pp	20	64-83	21.5	19.9	-54.4(81)	-33.0(68)	18.7(79-80)	4.5	7.2	2.02	5.92	-54	0.0	132.3
+
+## Dynamik: Unterschied des Momentary-Maximums zwischen zwei Varianten, Median ueber die Noten
+Concert Harp	KSHarp_f - KSHarp_mf	Noten 19	Median 6.7 LU	p10 3.3	p90 13.9
+Folk Harp	EWHarp_Normal_v3_rr - EWHarp_Normal_v2_rr	Noten 29	Median 13.9 LU	p10 6.6	p90 20.7
+Iowa Gitarre sulA	ff - mf	Noten 20	Median 7.6 LU	p10 -2.9	p90 19.0
+Iowa Gitarre sulB	ff - mf	Noten 20	Median 3.3 LU	p10 1.1	p90 6.8
+Iowa Gitarre sulD	ff - mf	Noten 19	Median 5.1 LU	p10 -1.3	p90 8.8
+Iowa Gitarre sulE	ff - mf	Noten 8	Median 8.9 LU	p10 3.9	p90 17.1
+Iowa Gitarre sulG	ff - mf	Noten 19	Median 5.3 LU	p10 0.4	p90 8.8
+Iowa Gitarre sul_E	ff - mf	Noten 11	Median 7.4 LU	p10 4.7	p90 11.9
+Iowa Gitarre sulA	mf - pp	Noten 5	Median 4.2 LU	p10 -6.5	p90 20.7
+Iowa Gitarre sulB	mf - pp	Noten 13	Median 10.6 LU	p10 5.1	p90 18.4
+Iowa Gitarre sulD	mf - pp	Noten 10	Median 6.0 LU	p10 1.4	p90 10.9
+Iowa Gitarre sulE	mf - pp	Noten 8	Median 5.3 LU	p10 -3.8	p90 12.7
+Iowa Gitarre sulG	mf - pp	Noten 19	Median 9.3 LU	p10 3.3	p90 25.7
+Iowa Gitarre sul_E	mf - pp	Noten 12	Median 15.1 LU	p10 6.7	p90 20.5
+Iowa Gitarre sulA	ff - pp	Noten 5	Median 16.9 LU	p10 -1.1	p90 25.3
+Iowa Gitarre sulB	ff - pp	Noten 13	Median 12.5 LU	p10 8.6	p90 17.8
+Iowa Gitarre sulD	ff - pp	Noten 10	Median 9.4 LU	p10 4.2	p90 12.2
+Iowa Gitarre sulE	ff - pp	Noten 8	Median 13.2 LU	p10 5.8	p90 21.5
+Iowa Gitarre sulG	ff - pp	Noten 19	Median 14.1 LU	p10 7.4	p90 27.7
+Iowa Gitarre sul_E	ff - pp	Noten 19	Median 21.6 LU	p10 10.9	p90 30.7

@@ -33,9 +33,27 @@ Der Gitarrenkorpus nach KB1 a auf die gemeinsame Grundlage (`../koerper/`).
   Mitschwingen je Note ist linear und kostet an der Gitarre 1,1–1,3 %, an der Harfe mit allen Saiten 9,4–9,9 % der
   Echtzeit. Programme und Rohausgaben unter [proben/](proben).
 
+- [2026-11-12_S195_ziele_aufnahmen.md](2026-11-12_S195_ziele_aufnahmen.md) — Ziele an Aufnahmen (VCSL, Iowa MIS) mit
+  der Messkette des Wächters: Cembali 6,1–13,6 LU über den Umfang, Konzertharfe 17,8 LU (ab D2 10,8 LU), Sprünge bis
+  11,3 LU; Ausklang und Dynamik je Lage. Laute und Oud ohne Aufnahme.
+- [2026-11-12_S195_probe_statistik_ohne_bauplan.md](2026-11-12_S195_probe_statistik_ohne_bauplan.md) — Probe 34k-5: der
+  statistische Teil von `InstrumentBody` liefert ohne Bauplan keine Moden; Plattenformeln treffen nur die Größenordnung.
+- [2026-11-12_S195_oud_erster_fall.md](2026-11-12_S195_oud_erster_fall.md) — erster Fall nach KQ6 a: der Ersatz-Bauplan
+  der Oud trifft die erste gemessene Mode, mit keiner Deckendicke alle vier innerhalb von 10 % (ohne Schalllöcher).
+
+## Recherche S195 (34k-4)
+Unter [recherche/](recherche): vier Agentenberichte (`…_cembalo_quellen.md`, `…_harfe_quellen.md`,
+`…_laute_oud_quellen.md`, `…_klassische_gitarre_quellen.md`, unverändert), die
+[Ladeliste](recherche/2026-11-12_S195_ladeliste.md) mit dem Stand nach QZ1 a und der
+[Gegenlese-Befund](recherche/2026-11-12_S195_gegenlesen.md) — **maßgebend ist, was dort am Original bestätigt ist**; was
+nur im Agentenbericht steht, ist nicht geprüft. Die Dateien liegen unter `…\cmake\quellen\gezupfte-saite\` (41 Dateien,
+`SHA256SUMS`).
+
 ## Stufe 34k (Cembalo, Harfe, Laute, Oud, Gitarre auf dem Kern `pluckedString`)
 Entscheide GZ1 a–GZ4 a, GZ1-1 a und der Teilplan 34k-1 bis 34k-11 stehen in `docs/audio/Instrumente_IC_Konzept.md` §6
-(S193).
+(S193); dort auch die Haltepunkte 34k-4 und 34k-5 mit KQ1 a bis KQ7 a (S195): Harfe nach Bell 1988 (Salvi „Orchestra“,
+46 Saiten, Bauplan), Cembalo Taskin 1769, Gitarre mit Modalfit am Archiv Mores, Laute und Oud mit Ersatz-Bauplan;
+`InstrumentBody` bekommt Löcher (KQ7 a).
 
 ## Aus InstrumentsCalculation (S182)
 

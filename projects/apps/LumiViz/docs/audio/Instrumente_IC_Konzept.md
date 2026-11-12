@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.26.0
+> **Version:** 0.27.0
 > **Datum:** 2026-11-12 (Session 194)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1165,6 +1165,89 @@ Abdrücke gestimmter Werte hingen an einer Größe, die nichts rechnet. Die Tafe
 also ändert sich bis dahin keine Datei. Verworfen: b (sieben Ganzzahlen schon in 34k-2, ohne Wirkung bis 34k-7). Kippt,
 wenn vor 34k-7 etwas die Pedale aus der Tafel lesen muss.
 
+**Haltepunkt 34k-4 (S195).** Grundlage: `../modellierung/gezupfte-saite/recherche/2026-11-12_S195_gegenlesen.md`
+(am Original gelesen), `…_ladeliste.md` (QZ1 a: Stufe 1 und 2 geladen), `../modellierung/gezupfte-saite/2026-11-12_S195_ziele_aufnahmen.md`.
+Für keine Option waren die Zielgrößen schon gerechnet — das leistet die Probe in 34k-5; die Entscheide legen fest, welchen
+Weg 34k-5 zuerst baut und misst.
+
+✅ **KQ1 a** (Patrik S195, „alle a“): **Vorbild der `concert_harp` ist die Salvi „Orchestra“ nach Bell 1988** — 46 Saiten
+(00–44, D1 bis G7; Tab. 2.1, 2.2 mit Kern- und Wickeldraht der elf Metallsaiten), der Körper aus dem Bauplan (Abb. 2.4–2.9:
+Fichtenplatte 131 cm, 41→10 cm, 10→3 mm, Furnier, Deckleiste, zwei Leisten, Kasten, Öffnungen, Saitenorte) mit
+`InstrumentBody`. Der Zupf kommt als Geste aus Chadefaux 2012/2013 (Ort als Bruchteil der Länge, Auslenkung,
+Geschwindigkeit), Vermerk „an der Camac Atlantide gemessen“; die tiefen Moden der Atlantide (Le Carrou 2007) sind
+Gegenprobe der Größenordnung, nicht Vorgabe. **Folge: die Harfe trägt 46 Saiten, nicht 47** (PD1 a, Tafel, GZ3 a „alle
+47“ entsprechend). Grund: nur hier kommen Saiten und Körper als gemessene Maße aus einem Instrument, und der Körper ist
+ein Bauplan. Verworfen: b (Camac Atlantide nach Le Carrou 2006: 47 Saiten mit Länge, Durchmesser, Winkel, Lage — aber
+Werkstoffwerte der Saiten von Bell geliehen, Boden nur als Ersatzbalken auf eine Mode gestellt). Kippt auf b, wenn die
+Probe in 34k-5 zeigt, dass `InstrumentBody` den halbkonischen Kasten mit der verjüngten Platte nicht abbildet, oder wenn
+Patrik die 47. Saite (C1) behalten will.
+
+✅ **KQ2 a** (Patrik S195): **Vorbild des `harpsichord` ist der Taskin 1769** — Mensur und Zupfpunkt aus dem Datenblatt
+Edinburgh (elf Tasten), Besaitung nach Di Veroli (nach dem Gegenlesen). Der Körper kommt aus Plattenwerten über den
+statistischen Teil und den belegten tiefen Moden, mit Vermerk, dass diese an anderen Instrumenten gemessen sind (Dulcken
+1755, Välimäki 2004). Zupfpunkte der übrigen Register aus dem gemessenen und dem Springerabstand, Belegkraft
+„abgeleitet“; Kielwerte nach Perng als Startwerte, Vermerk „Modellwert“. Verworfen: b (Körper als „gedachtes
+Instrument“), c (erst Savage 1992 über die Bibliothek beschaffen). Kippt auf c, wenn die Probe in 34k-5 die Sprünge unter
+600 Hz ohne gemessene Moden nicht unter die Grenze bringt; der Körper steht als Daten mit Abdruck in der Tafel und ist
+ersetzbar, sobald Savage vorliegt.
+
+✅ **KQ3 a** (Patrik S195; **ergänzt GZ4 a um einen dritten Weg**): **Die Stegmoden der `classical_guitar` kommen aus
+einem Modalfit an einer Gitarre des Archivs Mores 2021** (Frequenz, Dämpfung, Wert am Stegpunkt; Weg nach Ducceschi
+2026); welche Gitarre, legt 34k-5 mit Begründung fest. Abstrahlgewichte aus dem statistischen Teil über Plattenwerte; die
+zweite Richtung am Steg bleibt Annahme mit Vermerk. Saiten nach Woodhouse u. a. 2012 Tab. I. Grund: der Steg ist die
+gemessene Ursache der Sprünge, eine gemessene Stegmobilität die stärkste Quelle. Verworfen: b (Plattenwerte und tiefe
+Moden, das Archiv nur als Gegenprobe). Kippt auf b, wenn der Fit oberhalb von rund 1 kHz keine stabilen Moden liefert.
+
+✅ **KQ4 a** (Patrik S195): **Die `lute` bekommt die Saiten nach Woodhouse & Lynch-Aird 2019 Tab. II** (8-chörig in G,
+0,625 m); der Körper aus Plattenwerten über den statistischen Teil — Fläche und Luftraum aus der Messzeichnung Rauwolf
+1598, die tiefen Moden aus der Kurve bei Woodhouse 2021 abgelesen (Vermerk „aus der Kurve gelesen, andere Laute“). Der
+Zupf wird von der Gitarre übertragen (Woodhouse 2012), Belegkraft „übertragen“; Dynamik und Ausklang gegen die Gitarre
+plausibilisiert, weil Aufnahmen fehlen — das steht im Bericht der Stufe. Verworfen: b („gedachtes Instrument“). Kippt
+auf b, wenn sich aus der Kurve keine drei bis vier Moden sicher ablesen lassen.
+
+✅ **KQ5 a** (Patrik S195): **Die `oud` wird in 34k gebaut** — Saiten nach Herstellerangaben (Vermerk „Hersteller“), der
+Körper aus Plattenwerten mit den vier gemessenen Moden nach Abdallah 2026 als Anker (142 / 226 / 242 / 280 Hz), die Risha
+als Plektrum mit gesetzten Werten (Vermerk „Annahme“). Geprüft gegen Lautheit über den Umfang, Sprünge und Tonhöhe;
+Dynamik und Ausklang nur gegen Laute und Gitarre plausibilisiert, vermerkt in Tafel und Bericht. Verworfen: b (aus 34k
+herausnehmen, bis Quelle zur Risha und freie Einzeltöne vorliegen). Kippt auf b, wenn Patrik nur Instrumente mit
+gemessenen Zielen ausliefern will.
+
+**Haltepunkt 34k-5 (S195).** Probe `../modellierung/gezupfte-saite/2026-11-12_S195_probe_statistik_ohne_bauplan.md`:
+der statistische Teil nimmt seine Größen aus gerechneten Moden und liefert ohne Bauplan nichts; Plattenformeln treffen an
+den drei Flügelkörpern die Modendichte oberhalb 2,5 kHz auf −16 … +32 %, unter 1 kHz liegen sie um den Faktor 1,2–3,3 zu
+hoch, der Formwert am Stegpunkt liegt um 1,3–4,5 unter 1/√M und streut zwischen den Stegpunkten um 2–8; für das
+Abstrahlgewicht gibt es keine Formel.
+
+✅ **KQ6 a** (Patrik S195; **ersetzt in KQ2 a, KQ4 a, KQ5 a den Weg „Plattenwerte über den statistischen Teil“**):
+**Cembalo, Laute und Oud bekommen je einen Ersatz-Bauplan (`.lvinstbodyplan`), `InstrumentBody` rechnet ihre Moden wie
+beim Flügel.** Belegte Maße gehen ein (Laute: Umriss, Rose, Steglage nach Rauwolf 1598; Oud: Balken und Holzwerte nach
+Abdallah 2026; Cembalo: Mensur und Saitenorte nach Edinburgh, Bodendicke 2–4 mm nach Välimäki 2004); jedes fehlende Maß
+steht als Annahme mit Vermerk im Bauplan. Die Annahmen werden so gesetzt, dass die gerechneten tiefen Moden die belegten
+treffen (Oud 142 / 226 / 242 / 280 Hz; Laute aus der Kurve bei Woodhouse 2021; Cembalo Luftresonanz 37 Hz); der Abstand
+steht im Bericht. **Erster Fall ist die Oud**; verfehlt sie die vier Moden um mehr als 10 %, kommt der Weg erneut zur
+Vorlage. Grund: nur so entstehen einzelne Moden mit Wert am Ort jeder Saite und ein Abstrahlgewicht aus derselben
+Rechnung (KB1 a, GZ4 a). Verworfen: b (gemeinsames Plattenmodell mit Abschlägen aus der Probe — am Flügelboden gemessen,
+nicht übertragbar; ein Steg für alle Tasten), c (GZ4 a kippt auf „gedachtes Instrument“). Kippt auf b, wenn der erste
+Fall die Moden nicht innerhalb von 10 % trifft und sich das nicht auf eine einzelne Annahme zurückführen lässt; für die
+Oud auf c, wenn sich die Deckendicke weder belegen noch aus den vier Moden eingrenzen lässt.
+
+**Erster Fall (S195)** `../modellierung/gezupfte-saite/2026-11-12_S195_oud_erster_fall.md`: der Ersatz-Bauplan der Oud
+(Umriss und Balkenlagen aus Abb. 3 gelesen, ohne Löcher, ohne Steg) trifft die erste Mode bei jeder Dicke von 1,5–2,5 mm
+(138–154 gegen 142 Hz), aber mit keiner Dicke alle vier innerhalb von 10 % (1,75 mm: +1 / −21 / +20 / +9 %); die
+Reihenfolge der Formen ist anders als in der Quelle. Schwelle verfehlt.
+
+✅ **KQ7 a** (Patrik S195): **`InstrumentBody` bekommt Löcher in der Platte** — im Bauplan eine Liste geschlossener
+Innenumrisse, im Netz ausgespart, ihr Rand frei, in der Abstrahlung ohne Fläche. Bestehende Baupläne ohne Löcher rechnen
+Bit für Bit wie vorher; geprüft an einer Platte mit Loch gegen eine geschlossene Lösung oder eine feinere Rechnung. Danach
+die Oud mit ihren drei Löchern (Ø 10,5 cm in 30,0 cm Höhe; zwei Ø 3,9 cm in 20,4 cm Höhe, ±10,3 cm) neu: trifft sie die
+vier Moden innerhalb von 10 % bei einer Dicke zwischen 1,5 und 3 mm, gilt KQ6 a weiter; sonst werden die Bildformen der
+Quelle Mode für Mode zugeordnet, der Abstand je Form berichtet, und der Weg kommt mit diesen Zahlen noch einmal zur
+Vorlage. Grund: ein Loch von 10,5 cm in einer Decke von 37 cm fehlt an der Stelle, an der die Quelle die Bewegung der
+ersten Mode zeigt, und Löcher gehören bei Oud, Gitarre, Laute und Cembalo zur Geometrie. Verworfen: b (Bauplan ohne
+Löcher, Dicke auf die erste Mode, Abweichung bis 21 % als bekannt geführt), c (KQ6 a kippt auf das gemeinsame
+Plattenmodell). Kippt auf b, wenn die Oud auch mit Löchern nicht trifft und die Zuordnung zeigt, dass Messung und Rechnung
+nicht dieselben Moden meinen — dann wird die Schwelle an Laute oder Cembalo neu geprüft.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1225,6 +1308,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 | Version | Datum | Änderung |
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
+| 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
 | 0.25.0 | 2026-11-12 | Session 193. §6: Teilplan 34k (34k-1 bis 34k-11) nach dem Befund S192 und der Gegenprobe S193 an der IC-Vorlage der Klasse 2; GZ1 a (Namen, Bestand bleibt), GZ1-1 a (Spielweisen am Kern, Saitensatz an Laute, Oud und `classical_guitar`), GZ2 a (Umzug als Beleg, dann Rechenfassung 2 mit Quellen), GZ3 a (Mitschwingen je Note), GZ4 a (Steg und Abstrahlung aus einem Körper nach KB1 a; berichtigt IK2-10 a für Klasse 2); Zeile 34k der Übersicht. |
 | 0.24.0 | 2026-11-12 | Session 192. §6: 34j-10 erledigt — Stufe 34j fertig (Modul-Doku, Bibliotheken und Quellpakete, Bericht der Klasse, harvest gelöscht, voller Lauf 1888 / 1888 unter beiden Compilern); Journal J75. |
 | 0.23.0 | 2026-11-12 | Session 192. §6: 34j-9 erledigt — `free_reeds_demo`, Loops der Nuancen, Hörliste `zunge_34j` (löst IC 10 ab), Creator-Fall, Rechenzeit (Zahlen); Journal J74. |

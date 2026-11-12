@@ -9,9 +9,9 @@
 <!-- SYSTEM:ANFANG -->
 ## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\quellen`
 
-*Stand 2026-11-11.*
+*Stand 2026-11-12.*
 
-**Gesamt:** 157 Dateien, 378.1 MB.
+**Gesamt:** 193 Dateien, 573.4 MB.
 
 ### .
 
@@ -24,12 +24,48 @@
 
 ### gezupfte-saite
 
+- `Abdallah_etal_2026_OudSoundboardBracing_Meccanica61.pdf` (4.0 MB)
 - `Bader_Plath_Kontopidis_2025_Dulcken1755HarpsichordDampingBentside_arXiv2511.09037.pdf` (9.6 MB)
+- `Bell_1988_AcousticalInvestigationConcertHarp_PhD.pdf` (82.6 MB)
+- `Camac_2022_StringChartPedalHarps.pdf` (85.9 KB)
+- `Chadefaux_etal_2012_HarpPluckingDescription_JASA131.pdf` (1.6 MB)
+- `Chadefaux_etal_2013_ModelHarpPlucking_JASA133.pdf` (801.3 KB)
 - `Chadefaux_LeCarrou_LeConte_Castellengo_2013_HarpsichordPlectrumStringInteraction_SMAC2013.pdf` (1.7 MB)
+- `DiVeroli_2022_StringingCalculator.xls` (211.0 KB)
+- `Ducceschi_Russo_Webb_2026_65ModelledGuitars_DAFx26.pdf` (8.2 MB)
+- `Edinburgh_StCecilias_96074.html` (61.9 KB)
+- `Edinburgh_StCecilias_96075.html` (56.6 KB)
+- `Edinburgh_StCecilias_96076.html` (55.0 KB)
+- `Edinburgh_StCecilias_96078.html` (58.4 KB)
+- `Edinburgh_StCecilias_96081.html` (60.5 KB)
+- `Edinburgh_StCecilias_96082.html` (60.3 KB)
+- `Edinburgh_StCecilias_96088.html` (53.1 KB)
+- `LeCarrou_2006_VibroacoustiqueHarpeConcert_These.pdf` (3.5 MB)
+- `LeCarrou_Gautier_Badeau_2007_HarpSympatheticModes_ICA.pdf` (286.0 KB)
+- `LeCarrou_Gautier_Badeau_2009_SympatheticModesHarp_ActaAcust95.pdf` (972.6 KB)
+- `LeCarrou_Gautier_Foltete_2007_A0T1ConcertHarp_JASA121.pdf` (1.2 MB)
+- `LeCarrou_Leclere_Gautier_2010_HarpRadiation_JASA127.pdf` (1.5 MB)
+- `LynchAird_Woodhouse_2017_NylonHarpStrings_Materials10.pdf` (3.5 MB)
+- `LynchAird_Woodhouse_2018_GutSyntheticHarpStrings_Materials11.pdf` (1.2 MB)
 - `Mores_2021_Comments_ArchiveGuitars_Zenodo4604576.pdf` (109.9 KB)
 - `Mores_2021_ListOfGuitarsPhysicalMeasures_ArchiveGuitars_Zenodo4604576.pdf` (196.2 KB)
 - `Mores_2021_Method_ArchiveGuitars_Zenodo4604576.pdf` (454.4 KB)
+- `Penttinen_2006_DynamicsHarpsichordSynthesis_DAFx06.pdf` (272.7 KB)
+- `Perng_2012_HarpsichordPlectrumStringInteraction_Diss.pdf` (20.5 MB)
+- `Perng_Smith_Rossing_2010_PlectrumString_DAFx10.pdf` (456.4 KB)
+- `Perng_Smith_Rossing_2011_PlectrumWaveguide_DAFx11.pdf` (1.2 MB)
+- `Roy_LeCarrou_Fabre_Vitrani_2015_PlectreClavecin_CFM.pdf` (302.3 KB)
+- `SantaMariaBouquet_2020_LuteRauwolf1598_CL93.pdf` (2.3 MB)
+- `Scherrer_2013_AngleOfRelease_Diss_McGill.pdf` (35.1 MB)
+- `SHA256SUMS` (4.7 KB)
+- `Traube_2004_TimbreClassicalGuitar_Diss_McGill.pdf` (18.6 MB)
+- `Valimaki_etal_2004_HarpsichordSynthesis_EURASIP.pdf` (1.5 MB)
+- `Waltham_etal_2008_HarpSoundboards_CanAcoust36.pdf` (157.9 KB)
+- `Woodhouse_2021_DoubleDecay_JASA150.pdf` (2.6 MB)
+- `Woodhouse_etal_2012_PerceptualThresholdsGuitarModels_ActaAcustica98.pdf` (1.1 MB)
+- `Woodhouse_LynchAird_2019_ChoosingStringsPlucked_ActaAcustica105.pdf` (1.3 MB)
 - `Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf` (4.7 MB)
+- `Zuckermann_2000_FrenchDoubleVI_StringingSchedule.pdf` (53.4 KB)
 
 ### hammer-saite
 
