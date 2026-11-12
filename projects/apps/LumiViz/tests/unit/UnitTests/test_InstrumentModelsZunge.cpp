@@ -214,6 +214,8 @@ std::vector<std::pair<std::string, ZungenAnschlag>> abdruckFaelle(const ZungenSp
     ZungenAnschlag bend = ton(mitte, 0.5, 0.4);
     bend.pitchCent = -20.0;
     f.emplace_back(basis + std::to_string(mitte) + "_bend", bend);
+    // ZV10 a (S192): Stufe −10 dB ohne Spur — die Staerke aus der gestimmten Kurve der Taste
+    f.emplace_back(basis + std::to_string(mitte) + "_stufe10", ton(mitte, staerkeBei(s, mitte, -10.0), 0.4));
     if (s.bassAb > 0)
     {
         for (const int n : {29, 40, 52}) f.emplace_back("zunge_" + s.name + "_bass_m" + std::to_string(n) + "_e05", ton(n, 0.5, 0.4));
@@ -226,12 +228,12 @@ std::vector<std::pair<std::string, ZungenAnschlag>> abdruckFaelle(const ZungenSp
 }
 
 /// Ein Ton ueber den Kern (Rechenweg Note, beginn 0) mit den Werten aus der Datei.
-std::string kernAbdruck(std::string_view name, int note, Frames halten, std::vector<Spur> spuren)
+std::string kernAbdruck(std::string_view name, int note, Frames halten, std::vector<Spur> spuren, int stufe = 0)
 {
     std::vector<std::string> fehler;
     const std::shared_ptr<const Tonkern> k = kerne().erzeuge(kKernName, gestimmteWerte(vorlage(name), true), &fehler);
     REQUIRE_MESSAGE(k != nullptr, (fehler.empty() ? std::string() : fehler.front()));
-    Tonauftrag a = einzelnote(note, hzVon(note), 0, halten, kFrames, 48000.0);
+    Tonauftrag a = einzelnote(note, hzVon(note), stufe, halten, kFrames, 48000.0);
     a.spuren = std::move(spuren);
     std::vector<float> t;
     k->rechne(a, t);
@@ -264,6 +266,8 @@ std::vector<std::pair<std::string, Kurve>> gestimmteKurven(const lumi::messung::
     for (int k = 0; k < kBendStufen; ++k) v.emplace_back(bendStufenName(k), st.bendCentJeStufe[static_cast<std::size_t>(k)]);
     v.emplace_back(std::string(kBendGrenzeOeffnung), st.bendGrenzeOeffnung);
     v.emplace_back(std::string(kBendGrenzeCent), st.bendGrenzeCent);
+    for (int k = 0; k < kStaerkeStufen; ++k) v.emplace_back(staerkeStufenName(k), st.staerkeJeStufe[static_cast<std::size_t>(k)]);
+    v.emplace_back(std::string(kNachklang), st.nachklang);
     return v;
 }
 
@@ -285,7 +289,8 @@ TEST_CASE("InstrumentModels 34j-6 Kern freeReed: die Bezugsdatei neu schreiben (
          "#   _bend = pitch -20 Cent (ueber die gestimmte Kurve der Taste); der Bezug aus der Zeile bezugLv\n"
          "# bezugLv <name> <hex der 64 Bit> <Zahl>: ausgangBezug nach kern::normiereNachTafel (Mitte noteMin…noteMax, 1 s)\n"
          "# kurve <name> <gestimmter Wert> <note> <hex> <Zahl>: die Stimmung (zungenStimmung, am mittleren Druck) — reedFrequency,\n"
-         "#   bendStep1 … bendStep7, bendLimitOpening, bendLimitCent\n";
+         "#   bendStep1 … bendStep7, bendLimitOpening, bendLimitCent, strengthAtLevel2 … strengthAtLevel20 (ZV10 a), releaseTime\n"
+         "#   (ZV11 a, ZV13 a; beide seit 34j-7, S192)\n";
     std::vector<std::string> kurven, bezuege, abdruecke;
     for (const Vorlage& v : vorlagen())
     {
@@ -350,7 +355,10 @@ TEST_CASE("InstrumentModels 34j-2 Kern freeReed: Tafel, Fabrik, Vorlagen, Werte 
     }
     CHECK(gestimmt == gestimmteNamen());
     CHECK(gestimmt == std::vector<std::string>{"reedFrequency", "bendStep1", "bendStep2", "bendStep3", "bendStep4", "bendStep5", "bendStep6",
-                                               "bendStep7", "bendLimitOpening", "bendLimitCent"});
+                                               "bendStep7", "bendLimitOpening", "bendLimitCent", "strengthAtLevel2", "strengthAtLevel4",
+                                               "strengthAtLevel6", "strengthAtLevel8", "strengthAtLevel10", "strengthAtLevel12",
+                                               "strengthAtLevel14", "strengthAtLevel16", "strengthAtLevel18", "strengthAtLevel20",
+                                               "releaseTime"});
     CHECK(kurven == std::vector<std::string>{"reedLength", "reedWidth", "reedMassPerArea", "reedDamping", "reedRest", "sideGap", "chamberVolume",
                                              "channelLength", "channelArea", "valveArea"});
 
@@ -432,7 +440,7 @@ TEST_CASE("InstrumentModels 34j-6 Kern freeReed: die Kurven je Taste lesen an je
 TEST_CASE("InstrumentModels 34j-6 Kern freeReed: die Abdruecke aus werte/zunge_ic.txt Bit fuer Bit")
 {
     const Beleg& b = beleg();
-    REQUIRE(b.abdruck.size() == 49);
+    REQUIRE(b.abdruck.size() == 53);
     int geprueft = 0;
     for (const Vorlage& v : vorlagen())
     {
@@ -445,7 +453,7 @@ TEST_CASE("InstrumentModels 34j-6 Kern freeReed: die Abdruecke aus werte/zunge_i
             ++geprueft;
         }
     }
-    CHECK(geprueft == 49);
+    CHECK(geprueft == 53);
 
     // ueber den Kern: Expression und Bass-Seite als Spuren am Beginn (Stufe 0)
     const auto ueberKern = [&](const Vorlage& v, int n, double e, Frames halten, std::vector<Spur> mehr = {}) {
@@ -467,6 +475,10 @@ TEST_CASE("InstrumentModels 34j-6 Kern freeReed: die Abdruecke aus werte/zunge_i
         const std::string bend = basis + std::to_string(mitte) + "_bend", ohne = basis + std::to_string(mitte) + "_e05";
         CHECK(ueberKern(v, mitte, 0.5, 19200, {spurAm(spur::kPitch, -20.0)}) == b.abdruck.at(bend));
         CHECK((b.abdruck.at(bend) == b.abdruck.at(ohne)) == !v.spiel.bendUeberVentil);
+        // ZV10 a: die Stufe ueber den Kern wie die Staerke der Kurve; mit Spur Staerke mal Expression (SK4 a)
+        CHECK(kernAbdruck(v.name, mitte, 19200, {}, -10) == b.abdruck.at(basis + std::to_string(mitte) + "_stufe10"));
+        CHECK(kernAbdruck(v.name, mitte, 19200, {spurAm(spur::kExpression, 0.5)}, -10) ==
+              abdruckVon(spielGestimmt(v.name), ton(mitte, 0.5 * staerkeBei(spielGestimmt(v.name), mitte, -10.0), 0.4)));
     }
     CHECK(ueberKern(vorlage("accordion"), 40, 0.5, 19200) == b.abdruck.at("zunge_Akkordeon_bass_m40_e05"));
     // ohne Spur `expression` die volle Staerke (SK4 a)
@@ -624,8 +636,10 @@ TEST_CASE("InstrumentModels 34j-2 IC test_zunge: Determinismus ueber Threads, In
     REQUIRE(innere.ergebnis.front().werte.size() == 1);
     CHECK(innere.ergebnis.front().werte.front() == lumi::messung::messeErsteZunge(s, ton(69, 0.5), 28800).amplitudeRel);
     CHECK(innere.ergebnis.front().werte.front() > 0.02);
-    // Nachklang bis 34j-7 hoechstens 1 s, ohne Note still
-    CHECK(k->nachklang(auftrag, 96000) == 48000);
+    // der Nachklang ist der gestimmte Ausklang der Taste (ZV11 a), hoechstens `hoechstens`; ohne Note still
+    const auto ausklang = static_cast<Frames>(std::ceil(nachklangBei(s, 69) * 48000.0));
+    CHECK(ausklang > 100);
+    CHECK(k->nachklang(auftrag, 1'000'000) == ausklang);
     CHECK(k->nachklang(auftrag, 100) == 100);
     Tonauftrag leer;
     leer.frames = 10;
@@ -670,6 +684,106 @@ TEST_CASE("InstrumentModels 34j-7 Kern freeReed: laufender Wind — konstante Sp
     // im Einbruch leiser, und so tief wie der feste Wechsel (auf 1 %)
     CHECK(energie(mit, 10080, 12480) < 0.8 * energie(ohne, 10080, 12480));
     CHECK(energie(mit, 9600, 19200) == doctest::Approx(energie(fest, 9600, 19200)).epsilon(0.01));
+}
+
+TEST_CASE("InstrumentModels 34j-7 Kern freeReed: die Stufe setzt die Staerke je Taste, der Nachklang ist der Ausklang (ZV10 a, ZV11 a)")
+{
+    // ZV10 a: an jeder Taste faellt die Staerke mit der Stufe, 1 bei 0 dB, 0 unter der Dynamik; am Ton nachgemessen klingt
+    // eine Note bei −x dB x LU leiser, hoechstens bis zur Dynamik der Taste (TM1 a) — gemessen S191 mit dem Raster 1,8 LU.
+    // ZV11 a: nach dem Nachklang ist der Ton bei jeder Staerke 60 dB unter dem gehaltenen (nichts abgeschnitten).
+    for (const Vorlage& v : vorlagen())
+    {
+        CAPTURE(v.name);
+        const ZungenSpiel s = spielGestimmt(v.name);
+        REQUIRE(static_cast<int>(s.staerkeJeStufe.size()) == kStaerkeStufen);
+        int nichtMonoton = 0;
+        for (int n = s.noteMin; n <= s.noteMax; ++n)
+        {
+            CAPTURE(n);
+            CHECK(staerkeBei(s, n, 0.0) == 1.0);
+            double vorher = 1.0;
+            for (int k = 0; k < kStaerkeStufen; ++k)
+            {
+                const double st = wertAn(s.staerkeJeStufe[static_cast<std::size_t>(k)], n, Skala::Linear);
+                CHECK(st >= 0.0);
+                CHECK(st <= 1.0);
+                if (st > vorher + 1e-9) ++nichtMonoton;
+                vorher = st;
+                CHECK(staerkeBei(s, n, staerkeStufeDb(k)) == doctest::Approx(st).epsilon(1e-12));
+            }
+            // zwischen den Stufen linear, unter −20 dB der Wert dort
+            const double s2 = staerkeBei(s, n, -2.0);
+            CHECK(staerkeBei(s, n, -1.0) == doctest::Approx(0.5 * (1.0 + s2)).epsilon(1e-12));
+            CHECK(staerkeBei(s, n, -40.0) == staerkeBei(s, n, -20.0));
+            CHECK(nachklangBei(s, n) > 0.01);
+        }
+        CHECK(nichtMonoton == 0);
+        // am Ton nachgemessen, jede vierte Taste
+        std::vector<int> noten;
+        for (int n = s.noteMin; n <= s.noteMax; n += 4) noten.push_back(n);
+        const std::vector<double> stufen = {-1.0, -3.0, -6.0, -10.0, -15.0, -20.0};
+        const std::size_t je = stufen.size() + 2;
+        std::vector<double> l(noten.size() * je);
+        parallelJe(l.size(), [&](std::size_t k) {
+            const int n = noten[k / je];
+            const std::size_t j = k % je;
+            const double e = j == 0 ? 1.0 : j == 1 ? 0.0 : staerkeBei(s, n, stufen[j - 2]);
+            l[k] = lumi::messung::tonLautheit(s, n, e);
+        });
+        double fehler = 0.0;
+        for (std::size_t i = 0; i < noten.size(); ++i)
+        {
+            const double voll = l[i * je], boden = l[i * je + 1] - voll;
+            for (std::size_t j = 0; j < stufen.size(); ++j)
+                fehler = std::max(fehler, std::abs(l[i * je + 2 + j] - voll - std::max(stufen[j], boden)));
+        }
+        MESSAGE(v.name << ": Stufe → Staerke am Ton bis " << fehler << " LU neben dem Ziel");
+        CHECK(fehler < 2.0);
+        // der Nachklang (ZV13 a): der Stimmer misst (ohne Bezug, wie er stimmt) Bit fuer Bit, was die Kurve traegt; bei
+        // jeder Haltedauer und Staerke ist der Ton danach 60 dB unter der lautesten Stelle derselben Note
+        ZungenSpiel ohneBezug = s;
+        ohneBezug.ausgangBezug = 1.0;
+        const std::vector<int> drei = {noten.front(), noten[noten.size() / 2], noten.back()};
+        const double halten[] = {0.25, 1.0, 4.0}, staerke[] = {0.0, 0.5, 1.0};
+        std::vector<double> gemessen(drei.size()), rest(drei.size() * 9), spitze(drei.size() * 9);
+        parallelJe(drei.size() * 10, [&](std::size_t k) {
+            const std::size_t i = k / 10, j = k % 10;
+            const int n = drei[i];
+            if (j == 0)
+            {
+                gemessen[i] = lumi::messung::messeNachklang(ohneBezug, n);
+                return;
+            }
+            const double h = halten[(j - 1) / 3], e = staerke[(j - 1) % 3];
+            const auto ende = static_cast<std::size_t>(std::llround(h * 48000.0));
+            const auto nach = static_cast<std::size_t>(std::ceil(nachklangBei(s, n) * 48000.0));
+            std::vector<float> t;
+            rechneZungenTon(s, ton(n, e, h), t, static_cast<std::int64_t>(ende + nach + 12000));
+            double hoch = 0.0, danach = 0.0;
+            for (std::size_t b = 0; b + 240 <= t.size(); b += 240)
+            {
+                double x = 0.0;
+                for (std::size_t q = 0; q < 240; ++q) x += double(t[b + q]) * double(t[b + q]);
+                hoch = std::max(hoch, x / 240.0);
+                if (b >= ende + nach) danach = std::max(danach, x / 240.0);
+            }
+            spitze[i * 9 + j - 1] = hoch;
+            rest[i * 9 + j - 1] = danach;
+        });
+        double laengster = 0.0;
+        for (std::size_t i = 0; i < drei.size(); ++i)
+        {
+            CAPTURE(drei[i]);
+            CHECK(gemessen[i] == doctest::Approx(nachklangBei(s, drei[i])).epsilon(1e-12));
+            laengster = std::max(laengster, nachklangBei(s, drei[i]));
+            for (std::size_t j = 0; j < 9; ++j)
+            {
+                CAPTURE(j);
+                CHECK(rest[i * 9 + j] <= spitze[i * 9 + j] * 1e-6);
+            }
+        }
+        MESSAGE(v.name << ": Nachklang an drei Tasten bis " << laengster << " s");
+    }
 }
 
 TEST_CASE("InstrumentModels 34j-6 Waechter freeReed: jede Taste deckt den Windbereich")
@@ -847,13 +961,7 @@ namespace
 /// die letzten 0,4 s des Haltens — die Groesse des Befunds S188 (Lautheit ueber den Umfang des Instruments).
 double tonLufs(const ZungenSpiel& s, int note, double e)
 {
-    std::vector<float> t;
-    rechneZungenTon(s, ton(note, e, 1.0), t, 57600);
-    std::vector<float> stereo(2 * 19200, 0.0f);
-    for (std::size_t i = 0; i < 19200; ++i) stereo[2 * i] = stereo[2 * i + 1] = t[48000 - 19200 + i];
-    lumi::audio::LautheitsMessung l(48000);
-    l.fuettere(stereo.data(), 19200);
-    return l.ergebnis().momentanMaxLufs;
+    return lumi::messung::tonLautheit(s, note, e);
 }
 
 }  // namespace
@@ -1122,10 +1230,11 @@ TEST_CASE("InstrumentModels 34j-6 Messfall freeReed: die Zielgroessen von 34j-5 
         MESSAGE(s.name << ": Dynamik " << dyn << " LU, Abweichung von der Geraden " << abweichung << " LU");
     }
     // Drei Abbildungen Stufe → Staerke gegen das Ziel „eine Note bei −x dB klingt x LU leiser, hoechstens bis zur
-    // Dynamik der Taste“, am Ton nachgemessen: a je Taste an ihrer Kurve (Raster 2 dB, dazwischen linear), b an der
-    // mittleren Kurve des Instruments, c die Gerade s = 1 + Stufe/Dynamik
+    // Dynamik der Taste“, am Ton nachgemessen: a je Taste an ihrer Kurve (seit S192 die gestimmten Kurven `staerkeBei`,
+    // ZV10 a; S191 aus dem Raster 0,05 abgelesen), b an der mittleren Kurve des Instruments, c die Gerade
+    // s = 1 + Stufe/Dynamik
     o << "\n## 34j-7 Stufe → Staerke: Fehler gegen das Ziel (LU), am Ton nachgemessen, jede zweite Taste\n\n"
-         "| Instrument | a je Taste, Raster 2 dB | b mittlere Kurve | c Gerade |\n|---|---|---|---|\n";
+         "| Instrument | a gestimmt je Taste (ZV10 a) | b mittlere Kurve | c Gerade |\n|---|---|---|---|\n";
     for (const Vorlage& v : vorlagen())
     {
         const ZungenSpiel s = spielGestimmt(v.name);
@@ -1163,10 +1272,8 @@ TEST_CASE("InstrumentModels 34j-6 Messfall freeReed: die Zielgroessen von 34j-5 
                 const double st = stufen[j];
                 const std::size_t k = i * stufen.size() + j;
                 soll[k] = std::max(st, rel[i].front());
-                // a: Raster 2 dB je Taste, dazwischen linear
-                const double unten = std::floor(st / 2.0) * 2.0, oben = unten + 2.0;
-                const double su = staerkeFuer(rel[i], unten), so = staerkeFuer(rel[i], oben);
-                sk[0][k] = su + (st - unten) / 2.0 * (so - su);
+                // a: die gestimmten Kurven je Taste (Stufen −2 … −20 dB, dazwischen linear)
+                sk[0][k] = staerkeBei(s, noten[i], st);
                 sk[1][k] = staerkeFuer(mittel, st);
                 sk[2][k] = std::max(0.0, 1.0 + st / dyn);
             }
@@ -1287,6 +1394,20 @@ TEST_CASE("InstrumentModels 34j-6 Messfall freeReed: die Zielgroessen von 34j-5 
                       s.name.c_str(), vonPp, bisPp, vonFf, bisFf, anteilLo, anteilHi);
         o << "\n" << zz0 << "\n";
         MESSAGE(zz0);
+        // ZV11 a (S192): der gestimmte Ausklang (bei Expression 0, 1 s gehalten) gegen den gemessenen in der Mitte
+        double gLo = 1e9, gHi = 0.0, rLo = 1e9, rHi = 0.0;
+        for (std::size_t i = 0; i < gemessen.size(); ++i)
+        {
+            const double g = 1e3 * nachklangBei(s, s.noteMin + static_cast<int>(i));
+            gLo = std::min(gLo, g);
+            gHi = std::max(gHi, g);
+            rLo = std::min(rLo, g / gemessen[i]);
+            rHi = std::max(rHi, g / gemessen[i]);
+        }
+        char zz1[240];
+        std::snprintf(zz1, sizeof zz1, "%s: releaseTime %.0f … %.0f ms, gegen die Mitte %.2f … %.2f", s.name.c_str(), gLo, gHi, rLo, rHi);
+        o << "\n" << zz1 << "\n";
+        MESSAGE(zz1);
         o << "\n<details><summary>je Taste (" << s.name << ")</summary>\n\n| Note | gemessen ms | Expression 0 | Expression 1 | Formel ms |\n|---|---|---|---|---|\n";
         for (int i = 0; i < anzahl; i += 3)
         {
@@ -1296,6 +1417,108 @@ TEST_CASE("InstrumentModels 34j-6 Messfall freeReed: die Zielgroessen von 34j-5 
             o << zz;
         }
         o << "\n</details>\n";
+    }
+    // ZV13 a (S192): der Ausklang haengt auch an der Haltedauer — je Haltedauer und Staerke in drei Lesarten gegen den
+    // gestimmten `releaseTime` (seit ZV13 a die Huelle der Lesart Spitze ueber diese Haltedauern und Staerken), jede zweite
+    // Taste; die Lesart Spitze ist `messeNachklang`, die beiden anderen rechnet der Messfall selbst
+    o << "\n## 34j-7 Ausklang ueber Haltedauer und Staerke gegen releaseTime (S192, ZV13 a), jede zweite Taste\n\n"
+         "Je Lesart: Tasten laenger als releaseTime / groesstes Verhaeltnis / groesster Ueberschuss in ms. Eigener Bezug: −60 dB unter\n"
+         "dem gehaltenen Ton dieser Note (letzte 0,1 s des Haltens). Fester Bezug: −60 dB unter dem eingeschwungenen Ton derselben\n"
+         "Staerke (1 s gehalten). Spitze: −60 dB unter dem lautesten 5-ms-Block der Note selbst (auch nach dem Wind).\n\n"
+         "| Instrument | gehalten s | Staerke | eigener Bezug | fester Bezug | Spitze |\n|---|---|---|---|---|---|\n";
+    for (const Vorlage& v : vorlagen())
+    {
+        ZungenSpiel s = spielGestimmt(v.name);
+        s.ausgangBezug = 1.0;  // wie der Stimmer
+        std::vector<int> noten;
+        for (int n = s.noteMin; n <= s.noteMax; n += 2) noten.push_back(n);
+        const double halten[] = {0.1, 0.25, 0.5, 1.0, 2.0, 4.0};
+        const double staerke[] = {0.0, 0.5, 1.0};
+        constexpr std::size_t kH = std::size(halten), kS = std::size(staerke);
+        // je Ton zwei Lesarten: −60 dB unter dem eigenen gehaltenen Ton (messeNachklang) und unter dem eingeschwungenen
+        // Ton derselben Staerke (1 s gehalten, fester Bezug) — dieselben 5-ms-Bloecke
+        std::vector<double> r(noten.size() * kH * kS), fest(noten.size() * kH * kS), spitze(noten.size() * kH * kS);
+        std::vector<double> bezugJe(noten.size() * kS);
+        const auto energieAmEnde = [](const std::vector<float>& t, std::size_t ende) {
+            const std::size_t von = ende - std::min<std::size_t>(4800, ende);
+            double x = 0.0;
+            for (std::size_t i = von; i < ende; ++i) x += double(t[i]) * double(t[i]);
+            return x / static_cast<double>(ende - von);
+        };
+        parallelJe(bezugJe.size(), [&](std::size_t k) {
+            std::vector<float> t;
+            rechneZungenTon(s, ton(noten[k / kS], staerke[k % kS], 1.0), t, 57600);
+            bezugJe[k] = energieAmEnde(t, 48000);
+        });
+        parallelJe(r.size(), [&](std::size_t k) {
+            const std::size_t i = k / (kH * kS), h = (k / kS) % kH, e = k % kS;
+            spitze[k] = lumi::messung::messeNachklang(s, noten[i], halten[h], staerke[e]);  // ZV13 a
+            std::vector<float> t;
+            const auto ende = static_cast<std::size_t>(std::llround(halten[h] * 48000.0));
+            rechneZungenTon(s, ton(noten[i], staerke[e], halten[h]), t, static_cast<std::int64_t>(ende + 48000 * 16));
+            std::vector<double> bloecke;
+            for (std::size_t b = 0; b + 240 <= t.size(); b += 240)
+            {
+                double x = 0.0;
+                for (std::size_t j = 0; j < 240; ++j) x += double(t[b + j]) * double(t[b + j]);
+                bloecke.push_back(x / 240.0);
+            }
+            const double eigen = energieAmEnde(t, ende);
+            std::size_t letzter = ende, letzterEigen = ende;
+            for (std::size_t b = ende / 240; b < bloecke.size(); ++b)
+            {
+                if (bloecke[b] > bezugJe[i * kS + e] * 1e-6) letzter = (b + 1) * 240;
+                if (bloecke[b] > eigen * 1e-6) letzterEigen = (b + 1) * 240;
+            }
+            fest[k] = static_cast<double>(letzter - ende) / 48000.0;
+            r[k] = static_cast<double>(letzterEigen - ende) / 48000.0;
+        });
+        double maxJe[3] = {0.0, 0.0, 0.0};
+        for (std::size_t h = 0; h < kH; ++h)
+            for (std::size_t e = 0; e < kS; ++e)
+            {
+                int laenger[3] = {0, 0, 0};
+                double verh[3] = {0.0, 0.0, 0.0}, ueber[3] = {0.0, 0.0, 0.0};
+                for (std::size_t i = 0; i < noten.size(); ++i)
+                {
+                    const std::size_t k = (i * kH + h) * kS + e;
+                    const double g = nachklangBei(s, noten[i]);
+                    const double x[3] = {r[k], fest[k], spitze[k]};
+                    for (int a = 0; a < 3; ++a)
+                    {
+                        laenger[a] += x[a] > g + 1e-9 ? 1 : 0;
+                        verh[a] = std::max(verh[a], x[a] / g);
+                        ueber[a] = std::max(ueber[a], 1e3 * (x[a] - g));
+                    }
+                }
+                for (int a = 0; a < 3; ++a) maxJe[a] = std::max(maxJe[a], verh[a]);
+                char z[320];
+                std::snprintf(z, sizeof z, "| %s | %.2f | %.1f | %d / %.2f / %+.0f | %d / %.2f / %+.0f | %d / %.2f / %+.0f |\n", s.name.c_str(), halten[h],
+                              staerke[e], laenger[0], verh[0], ueber[0], laenger[1], verh[1], ueber[1], laenger[2], verh[2], ueber[2]);
+                o << z;
+            }
+        // je Taste der laengste Ausklang ueber alle Haltedauern und Staerken (Lesart Spitze) gegen releaseTime
+        double extraRechnung = 0.0, gestimmtSumme = 0.0, formelSumme = 0.0;
+        int formelZuKurz = 0;
+        for (std::size_t i = 0; i < noten.size(); ++i)
+        {
+            double m = 0.0;
+            for (std::size_t k = i * kH * kS; k < (i + 1) * kH * kS; ++k) m = std::max(m, spitze[k]);
+            extraRechnung += m;
+            gestimmtSumme += nachklangBei(s, noten[i]);
+            const double f0 = wertAn(s.eigenfrequenzJeNote, noten[i], Skala::Logarithmisch);
+            const double formel = 6.9078 / (zungeAn(s, noten[i]).zeta * 2.0 * kPi * f0);
+            formelSumme += formel;
+            formelZuKurz += formel < m ? 1 : 0;
+        }
+        char zs[320];
+        std::snprintf(zs, sizeof zs,
+                      "\n%s: Huelle der Lesart Spitze ueber alle Haltedauern und Staerken im Mittel %.2f mal releaseTime (Summe %.1f gegen %.1f s); "
+                      "die Formel 6,9/(zeta w0) Summe %.1f s, an %d von %zu Tasten kuerzer als die Huelle\n\n",
+                      s.name.c_str(), extraRechnung / gestimmtSumme, extraRechnung, gestimmtSumme, formelSumme, formelZuKurz, noten.size());
+        o << zs;
+        MESSAGE(s.name << ": Ausklang ueber Haltedauer und Staerke bis " << maxJe[0] << " / " << maxJe[1] << " / " << maxJe[2]
+                       << " mal releaseTime (eigener Bezug / fester Bezug / Spitze); " << std::string(zs));
     }
     std::ofstream f(ziel, std::ios::binary);
     f << o.str();

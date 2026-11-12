@@ -56,15 +56,12 @@ Instrument instrumentVon(std::string_view name)
 {
     const zunge::Vorlage& v = vorlage(name);
     kern::Werte w = zunge::werteVon(v);
-    const lumi::messung::ZungenStimmung st = lumi::messung::zungenStimmung(v.spiel);
-    w.setze(std::string(zunge::kEigenfrequenz), st.eigenfrequenz);
-    for (int k = 0; k < zunge::kBendStufen; ++k) w.setze(zunge::bendStufenName(k), st.bendCentJeStufe[static_cast<std::size_t>(k)]);
-    w.setze(std::string(zunge::kBendGrenzeOeffnung), st.bendGrenzeOeffnung);
-    w.setze(std::string(zunge::kBendGrenzeCent), st.bendGrenzeCent);
+    // ueber den Stimmer des Kerns (alle gestimmten Werte, dann der Bezug) — keine eigene Liste der Namen
+    const lumi::messung::StimmBericht b = lumi::messung::stimmeUndNormiere(kern::kerne(), lumi::messung::stimmer(), zunge::kKernName, w, true, true);
+    REQUIRE_MESSAGE(b.fehler.empty(), (b.fehler.empty() ? std::string() : b.fehler.front()));
+    REQUIRE(b.gestimmt == zunge::gestimmteNamen());
     REQUIRE(kern::richteWerte(zunge::kernTyp().tafel, w).empty());
     std::vector<std::string> fehler;
-    w.setze(std::string(zunge::kBezug), kern::normiereNachTafel(kern::kerne(), zunge::kKernName, w, &fehler));
-    REQUIRE(fehler.empty());
     Instrument i;
     i.titel = QString::fromStdString(v.titel);
     Schicht s;

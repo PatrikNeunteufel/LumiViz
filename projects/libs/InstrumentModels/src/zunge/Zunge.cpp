@@ -134,6 +134,31 @@ double ventilFuerCent(const ZungenSpiel& s, int note, double cent)
     return oeffnungFuer(bendAn(s, note), cent);
 }
 
+double staerkeBei(const ZungenSpiel& s, int note, double stufeDb)
+{
+    if (stufeDb >= 0.0 || static_cast<int>(s.staerkeJeStufe.size()) != kStaerkeStufen ||
+        std::any_of(s.staerkeJeStufe.begin(), s.staerkeJeStufe.end(), [](const Kurve& k) { return k.punkte.empty(); }))
+        return 1.0;
+    const int n = std::clamp(note, s.noteMin, s.noteMax);
+    const auto wert = [&](int k) { return std::clamp(wertAn(s.staerkeJeStufe[static_cast<std::size_t>(k)], n, Skala::Linear), 0.0, 1.0); };
+    // von 0 dB (Staerke 1) ueber die Stufen −2, −4 … −20 dB, dazwischen linear
+    double vorDb = 0.0, vorS = 1.0;
+    for (int k = 0; k < kStaerkeStufen; ++k)
+    {
+        const double db = staerkeStufeDb(k), st = wert(k);
+        if (stufeDb >= db) return vorS + (stufeDb - vorDb) / (db - vorDb) * (st - vorS);
+        vorDb = db;
+        vorS = st;
+    }
+    return vorS;
+}
+
+double nachklangBei(const ZungenSpiel& s, int note)
+{
+    if (s.nachklangS.punkte.empty()) return 1.0;
+    return std::max(0.0, wertAn(s.nachklangS, std::clamp(note, s.noteMin, s.noteMax), Skala::Logarithmisch));
+}
+
 void rechneEineZunge(const ZungenSpiel& s, double f0, int zungenNote, const ZungenAnschlag& a, std::vector<double>& aus, std::int64_t frames,
                      ZungenMessung* messung)
 {

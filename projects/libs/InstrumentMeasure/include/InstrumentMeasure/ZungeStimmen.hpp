@@ -16,7 +16,10 @@
  * Pruefstand. Spricht sie dort nicht, behaelt sie den letzten Wert, und die Note steht in `stumm`. Dann, wo das Spiel
  * ueber das Ventil bendet (ZV7 a, ZV8 a), je Note der Bend: die Tonhoehe gegen offen bei den Oeffnungen 2^(−k/4),
  * k = 1 … 7, und die Grenze (die kleinste Oeffnung, die noch anspricht, in hoechstens 12 Halbierungen auf 1 %); ohne Bend
- * flache Kurven (0 Cent, Grenze 1). Je Note auf dem Pool (`kern::parallelJe`). Bis Rechenfassung 1 (IC `stimme`, J69)
+ * flache Kurven (0 Cent, Grenze 1). Je Note auf dem Pool (`kern::parallelJe`). In einer zweiten Runde, mit der
+ * gestimmten f₀ aller Noten (der Ton einer Taste rechnet die Zungen ihrer Fusslagen), je Taste am ganzen Ton Stufe →
+ * Staerke (ZV10 a, `messeDynamik`) und der Ausklang (ZV11 a, ZV13 a: der laengste ueber sechs Haltedauern und drei
+ * Staerken, `messeNachklang`). Bis Rechenfassung 1 (IC `stimme`, J69)
  * stimmte er ein Fenster des Drucks je Note.
  *
  * **Messen wie IC** (34j-2, J68): `messeZungenTon` — Tonhoehe mit YIN (B2, 30 … 3000 Hz) als Median der stimmhaften Rahmen
@@ -80,8 +83,35 @@ struct ZungenStimmung
     std::vector<kern::Kurve> bendCentJeStufe;   ///< `bendStep1` … `bendStep7`
     kern::Kurve bendGrenzeOeffnung;             ///< `bendLimitOpening`
     kern::Kurve bendGrenzeCent;                 ///< `bendLimitCent`
+    std::vector<kern::Kurve> staerkeJeStufe;    ///< `strengthAtLevel2` … `strengthAtLevel20`
+    kern::Kurve nachklang;                      ///< `releaseTime`
     std::vector<int> stumm;
 };
+
+/// Die Lautheit des ganzen Tons einer Taste (alle Choere, Gehaeuse, Bezug) bei einer Staerke: 1 s gehalten, Momentary
+/// ueber die letzten 0,4 s des Haltens (ZV10 a; die Groesse des Befunds S188 und des Messfalls S191).
+[[nodiscard]] double tonLautheit(const kern::zunge::ZungenSpiel& spiel, int note, double staerke);
+
+/// Stufe → Staerke einer Taste (ZV10 a): je Stufe −2 … −20 dB die Staerke, bei der der ganze Ton so viel leiser klingt
+/// als bei Staerke 1 — auf dem Raster 0, 0,05 … 1 von oben die erste Stelle, die den Pegel erreicht, dann eingegabelt
+/// auf 0,05 LU (hoechstens 14 Halbierungen); leiser als bei Staerke 0 kann die Taste nicht, dort 0.
+struct ZungenDynamik
+{
+    std::vector<double> staerkeJeStufe;
+    double dynamikLu = 0.0;  ///< Staerke 1 gegen 0
+};
+[[nodiscard]] ZungenDynamik messeDynamik(const kern::zunge::ZungenSpiel& spiel, int note);
+
+/// Der Ausklang einer Note nach dem Wind (ZV11 a, ZV13 a): der ganze Ton bei einer Haltedauer und Staerke; vom Ende des
+/// Winds, bis jeder 5-ms-Block (Mittel der Energie) 60 dB unter dem lautesten Block derselben Note bleibt — auch wenn die
+/// Zunge nach dem Wind noch anwaechst —, in Sekunden. Gerechnet wird 8 s nach dem Wind, reicht das nicht, doppelt so
+/// lang, hoechstens 32 s.
+[[nodiscard]] double messeNachklang(const kern::zunge::ZungenSpiel& spiel, int note, double haltenS, double staerke);
+/// Die Haltedauern und Staerken, ueber die der Ausklang einer Taste gestimmt wird (ZV13 a).
+inline constexpr double kNachklangHalten[] = {0.1, 0.25, 0.5, 1.0, 2.0, 4.0};
+inline constexpr double kNachklangStaerken[] = {0.0, 0.5, 1.0};
+/// Der Ausklang einer Taste (`releaseTime`, ZV13 a): der laengste ueber `kNachklangHalten` × `kNachklangStaerken`.
+[[nodiscard]] double messeNachklang(const kern::zunge::ZungenSpiel& spiel, int note);
 
 /// Der Bend einer Zunge am Druck (ZV8 a): gegen offen gemessen bei den Oeffnungen `bendStufe(k)`, die Grenze (letzte
 /// Oeffnung, die anspricht) auf 1 % eingegabelt; Cent ≤ 0, unter der Grenze der Wert der Grenze.

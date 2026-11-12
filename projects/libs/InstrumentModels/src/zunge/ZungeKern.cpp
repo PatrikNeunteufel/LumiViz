@@ -6,6 +6,7 @@
 #include "InstrumentModels/zunge/ZungeKern.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <functional>
 #include <memory>
@@ -179,6 +180,22 @@ const std::vector<GestimmtFeld>& gestimmtFelder()
                      "tuned through the model (ZV8 a): the pitch there against the open pallet — the deepest bend of the key (SK3 a: "
                      "the instrument carries the limit); 0 without bend",
                      Skala::Linear, -1200.0, 0.0, [](ZungenSpiel& s) -> Kurve& { return s.bendGrenzeCent; }});
+        for (int k = 0; k < kStaerkeStufen; ++k)
+        {
+            char titel[64];
+            std::snprintf(titel, sizeof titel, "Strength at %d dB", staerkeStufeDb(k));
+            v.push_back({staerkeStufenName(k), titel, "",
+                         "tuned through the model (ZV10 a): the strength (expression 0 … 1) at which the whole tone of the key sounds "
+                         "this many dB quieter than at full strength (momentary loudness of the last 0.4 s of 1 s held, within 0.05 LU); "
+                         "0 below the dynamics of the key; strength = this value times the expression (SK4 a)",
+                         Skala::Linear, 0.0, 1.0,
+                         [k](ZungenSpiel& s) -> Kurve& { return s.staerkeJeStufe[static_cast<std::size_t>(k)]; }});
+        }
+        v.push_back({std::string(kNachklang), "Release time", "s",
+                     "tuned through the model (ZV11 a, ZV13 a): the whole tone of the key, the longest release over the hold times "
+                     "0.1, 0.25, 0.5, 1, 2, 4 s and the strengths 0, 0.5, 1 — from the end of the wind until every 5 ms block stays 60 dB "
+                     "below the loudest block of the same note",
+                     Skala::Logarithmisch, 1e-3, 60.0, [](ZungenSpiel& s) -> Kurve& { return s.nachklangS; }});
         return v;
     }();
     return f;
@@ -376,6 +393,11 @@ std::string bendStufenName(int k)
     return "bendStep" + std::to_string(k + 1);
 }
 
+std::string staerkeStufenName(int k)
+{
+    return "strengthAtLevel" + std::to_string(-staerkeStufeDb(k));
+}
+
 std::vector<std::string> gestimmteNamen()
 {
     std::vector<std::string> v;
@@ -456,7 +478,7 @@ ZungenSpiel spielAus(const Werte& werte)
     return s;
 }
 
-ZungenAnschlag anschlagAus(const Tonauftrag& auftrag)
+ZungenAnschlag anschlagAus(const ZungenSpiel& spiel, const Tonauftrag& auftrag)
 {
     ZungenAnschlag a;
     a.rate = static_cast<int>(auftrag.rate);
@@ -465,12 +487,19 @@ ZungenAnschlag anschlagAus(const Tonauftrag& auftrag)
     const KettenNote& n = auftrag.noten.front();
     a.note = n.note;
     a.haltenS = static_cast<double>(n.ende - n.beginn) / auftrag.rate;
+    // ZV10 a: die Staerke der Stufe an der gespielten Taste, mal der Expression (SK4 a); bei Stufe 0 genau 1
+    const double staerke = staerkeBei(spiel, n.note, auftrag.stufe);
+    a.expression = staerke;
     // der Wert am Beginn der Note; laeuft die Spur (mehr als ein Punkt), liest der Kern sie ueber die Zeit (34j-7, ZV3 a)
     const auto lauf = [](const Spur* s) { return s != nullptr && s->punkte.size() > 1; };
     if (const Spur* e = findeSpur(auftrag, spur::kExpression))
     {
-        a.expression = std::clamp(spurWert(*e, n.beginn, 1.0), 0.0, 1.0);
-        if (lauf(e)) a.expressionVerlauf = *e;
+        a.expression = staerke * std::clamp(spurWert(*e, n.beginn, 1.0), 0.0, 1.0);
+        if (lauf(e))
+        {
+            a.expressionVerlauf = *e;
+            for (SpurPunkt& p : a.expressionVerlauf.punkte) p.wert = staerke * std::clamp(p.wert, 0.0, 1.0);
+        }
     }
     if (const Spur* p = findeSpur(auftrag, spur::kPitch))
     {
@@ -491,7 +520,9 @@ ZungeKern::ZungeKern(ZungenSpiel spiel) : m_spiel(std::move(spiel)) {}
 Frames ZungeKern::nachklang(const Tonauftrag& auftrag, Frames hoechstens) const
 {
     if (auftrag.noten.empty()) return std::min<Frames>(hoechstens, 1);
-    return std::clamp<Frames>(static_cast<Frames>(auftrag.rate), 1, std::max<Frames>(1, hoechstens));
+    // ZV11 a: der gestimmte Ausklang der gespielten Taste (bei `windMin` gemessen, dort klingt sie am laengsten)
+    const auto f = static_cast<Frames>(std::ceil(nachklangBei(m_spiel, auftrag.noten.front().note) * auftrag.rate));
+    return std::clamp<Frames>(f, 1, std::max<Frames>(1, hoechstens));
 }
 
 void ZungeKern::rechne(const Tonauftrag& auftrag, std::vector<float>& ton, Innere* innere) const
@@ -503,7 +534,7 @@ void ZungeKern::rechne(const Tonauftrag& auftrag, std::vector<float>& ton, Inner
     }
     const bool messen = innere != nullptr && std::find(innere->gewuenscht.begin(), innere->gewuenscht.end(), kInnereSpitze) != innere->gewuenscht.end();
     ZungenMessung m;
-    rechneZungenTon(m_spiel, anschlagAus(auftrag), ton, auftrag.frames, messen ? &m : nullptr);
+    rechneZungenTon(m_spiel, anschlagAus(m_spiel, auftrag), ton, auftrag.frames, messen ? &m : nullptr);
     if (messen) innere->ergebnis.push_back(InnereGroesse{std::string(kInnereSpitze), "1/L", {m.amplitudeRel}});
 }
 

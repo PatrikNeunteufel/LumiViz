@@ -9,18 +9,19 @@
  * Tunable, Output); die Choere sind Listen. **Rechenfassung 2** (34j-6): die Groessen der Zunge (*Reed*) und der Kanzelle
  * (*Chamber*) sind Kurven je Taste mit Belegkraft und Quellen je Kurve; *Wind* ist ein Druckbereich fuer alle Tasten
  * (`windMin`, `windMax`, ZV2 a). **Gestimmt** (IK2-11 a) sind f₀ der Zunge je Note (`reedFrequency`) am mittleren Druck
- * (ZV5 a) und der Bend ueber das Ventil je Taste (ZV8 a: `bendStep1` … `bendStep7` bei den Oeffnungen 2^(−k/4), dazu
- * `bendLimitOpening`, `bendLimitCent`) — der Stimmer `InstrumentMeasure/ZungeStimmen`. Bis Rechenfassung 1 stimmte er dazu ein Fenster des Drucks je
+ * (ZV5 a), der Bend ueber das Ventil je Taste (ZV8 a: `bendStep1` … `bendStep7` bei den Oeffnungen 2^(−k/4), dazu
+ * `bendLimitOpening`, `bendLimitCent`), Stufe → Staerke je Taste (ZV10 a: `strengthAtLevel2` … `strengthAtLevel20`) und
+ * der Ausklang je Taste (ZV11 a: `releaseTime`) — der Stimmer `InstrumentMeasure/ZungeStimmen`. Bis Rechenfassung 1 stimmte er dazu ein Fenster des Drucks je
  * Note, in dem die Expression waehlte (IC); das Fenster ist jetzt Pruefgroesse („jede Taste deckt den Windbereich“).
  * Den Bezug `outputReference` setzt `kern::normiereNachTafel` mit der Probe von LumiViz (Mitte des Umfangs, 1 s).
  *
- * **Adapter** (Rechenweg Note, feste Werte am Beginn der Note): die erste Note des Auftrags; die Expression (Spur
- * `expression` am Beginn, ohne Spur 1 — SK4 a) waehlt den Druck im Windbereich; `vibrato` (Cent) moduliert den Druck mit
- * 5 Hz; gehalten wird bis zum Ende der Note, danach setzt der Wind in 30 ms ab. `pitch` (Cent am Beginn, ZV9 a) schliesst
- * das Ventil ueber die gestimmte Kurve der Taste (`ventilFuerCent`: nur abwaerts, gekappt an ihrer Grenze; ZV7 a, ZV8 a)
- * — 34j-7 macht daraus einen Verlauf. Die Stufe wirkt noch nicht (die Abbildung Stufe → Staerke legt 34j-7 an der
- * gemessenen Kurve fest, SK4 a); die Tonhoehe kommt aus der Note, nicht aus `hz`. Laufender Wind, `bellows` und der
- * Ausklang der Zunge kommen mit 34j-7 (ZV3 a).
+ * **Adapter** (Rechenweg Note): die erste Note des Auftrags; die Staerke ist die Staerke der Stufe an der gespielten
+ * Taste (`staerkeBei`, ZV10 a) mal der Expression (Spur `expression`, ohne Spur 1 — SK4 a) und waehlt den Druck im
+ * Windbereich; `vibrato` (Cent) moduliert den Druck mit 5 Hz; gehalten wird bis zum Ende der Note, danach setzt der Wind
+ * in 30 ms ab. `pitch` (Cent, ZV9 a) schliesst das Ventil ueber die gestimmte Kurve der Taste (`ventilFuerCent`: nur
+ * abwaerts, gekappt an ihrer Grenze; ZV7 a, ZV8 a). Laufen die Spuren (mehr als ein Punkt), liest der Kern sie ueber die
+ * Zeit, dazu `bellows` (34j-7, ZV3 a). Die Tonhoehe kommt aus der Note, nicht aus `hz`. Der Nachklang ist der gestimmte
+ * Ausklang der Taste (ZV11 a).
  *
  * Reines C++ ohne Qt.
  */
@@ -45,6 +46,10 @@ inline constexpr std::string_view kEigenfrequenz = "reedFrequency";
 inline constexpr std::string_view kBendGrenzeOeffnung = "bendLimitOpening";
 inline constexpr std::string_view kBendGrenzeCent = "bendLimitCent";
 [[nodiscard]] std::string bendStufenName(int k);  ///< k = 0 … kBendStufen − 1
+/// ZV10 a: Stufe → Staerke je Taste — `strengthAtLevel2` … `strengthAtLevel20` (die Staerke bei −2 … −20 dB).
+[[nodiscard]] std::string staerkeStufenName(int k);  ///< k = 0 … kStaerkeStufen − 1
+/// ZV11 a: der Ausklang je Taste nach dem Wind (Sekunden).
+inline constexpr std::string_view kNachklang = "releaseTime";
 /// Alle gestimmten Werte in der Reihenfolge der Tafel.
 [[nodiscard]] std::vector<std::string> gestimmteNamen();
 /// Die Spur der Balgrichtung (34j-7, ZV3 a): 0/1, am Wechsel bricht der Druck ein; im Loop erst mit 31g (wie `motor`).
@@ -62,8 +67,8 @@ inline constexpr std::string_view kInnereSpitze = "reedTip";
 /// Das Spiel aus gerichteten Werten; fehlt ein Wert, bleibt die Vorgabe von `ZungenSpiel`.
 [[nodiscard]] ZungenSpiel spielAus(const Werte& werte);
 
-/// Der Anschlag fuer die erste Note eines Auftrags (siehe Kopf).
-[[nodiscard]] ZungenAnschlag anschlagAus(const Tonauftrag& auftrag);
+/// Der Anschlag fuer die erste Note eines Auftrags (siehe Kopf); die Stufe ueber die gestimmten Kurven des Spiels.
+[[nodiscard]] ZungenAnschlag anschlagAus(const ZungenSpiel& spiel, const Tonauftrag& auftrag);
 
 /// Eine Vorlage: ein Instrument des Kerns — Name der Datei, Titel, die Werte ohne gestimmte Werte und Bezug (die setzt
 /// `InstrumentTuneTool`). Die Dateien kommen mit 34j-8 (IK2-8 a), soweit 34j-5 sie traegt.
@@ -88,7 +93,7 @@ class ZungeKern final : public Tonkern
 public:
     explicit ZungeKern(ZungenSpiel spiel);
 
-    /// Bis 34j-7 hoechstens eine Sekunde (gemessen klingt die Zunge 31–777 ms nach dem Absetzen des Winds aus, S188).
+    /// Der gestimmte Ausklang der gespielten Taste (`releaseTime`, ZV11 a), hoechstens `hoechstens`.
     [[nodiscard]] Frames nachklang(const Tonauftrag& auftrag, Frames hoechstens) const override;
     /// Eine Note (Rechenweg Note) mit `auftrag.frames` Werten; ohne Note still. Innere Groesse `reedTip`.
     void rechne(const Tonauftrag& auftrag, std::vector<float>& ton, Innere* innere = nullptr) const override;

@@ -85,8 +85,22 @@ struct ZungenSpiel
     std::vector<Kurve> bendCentJeStufe = std::vector<Kurve>(7);  // kBendStufen
     Kurve bendGrenzeOeffnung;  ///< die kleinste Oeffnung (gegen offen), bei der die Zunge noch anspricht; 1 = kein Bend
     Kurve bendGrenzeCent;      ///< die Tonhoehe dort (Cent gegen offen, ≤ 0)
+    /// ZV10 a: die Staerke (Expression 0 … 1), bei der die Taste um 2, 4 … 20 dB leiser klingt als bei voller Staerke
+    /// (`kStaerkeStufen`); leiser als bei Staerke 0 kann sie nicht, dort 0
+    std::vector<Kurve> staerkeJeStufe = std::vector<Kurve>(10);  // kStaerkeStufen
+    Kurve nachklangS;  ///< ZV11 a, ZV13 a: der laengste Ausklang nach dem Wind bis −60 dB unter der lautesten Stelle der Note
     double ausgangBezug = 1.0;
 };
+
+/// Die Stufen der Kurven Stufe → Staerke (ZV10 a): −2, −4 … −20 dB.
+inline constexpr int kStaerkeStufen = 10;
+static_assert(kStaerkeStufen == 10, "ZungenSpiel::staerkeJeStufe mitziehen");
+[[nodiscard]] constexpr int staerkeStufeDb(int k) { return -2 * (k + 1); }  ///< k = 0 … kStaerkeStufen − 1
+/// Die Staerke einer Taste bei einer Anschlagstufe in dB (ZV10 a): 1 bei 0 dB, dazwischen linear zwischen den gestimmten
+/// Stufen, unter −20 dB der Wert bei −20 dB; ohne gestimmte Kurven 1 (die Stufe wirkt nicht).
+[[nodiscard]] double staerkeBei(const ZungenSpiel& s, int note, double stufeDb);
+/// Der Ausklang einer Taste nach dem Ende des Winds in Sekunden (ZV11 a); ohne gestimmte Kurve 1 s.
+[[nodiscard]] double nachklangBei(const ZungenSpiel& s, int note);
 
 /// Die Ventiloeffnungen des Rasters (ZV8 a): 2^(−k/4), k = 1 … 7 (0,84 … 0,30; die tiefste Grenze liegt bei rund 0,26).
 inline constexpr int kBendStufen = 7;
