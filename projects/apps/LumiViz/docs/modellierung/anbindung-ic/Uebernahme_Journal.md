@@ -1,7 +1,7 @@
 # Übernahme-Journal — Bausteine aus IC und LumiViz in die Bibliotheken
 
-> **Version:** 0.14.0
-> **Datum:** 2026-11-09 (Sessions 175–181)
+> **Version:** 0.17.0
+> **Datum:** 2026-11-12 (Sessions 175–194)
 > **Typ:** Journal (Instrumente_IC_Konzept.md IK2-2 a: „jede Übernahme steht in `Uebernahme_Journal.md`“)
 > **Status:** wird je Teilschritt fortgeschrieben
 > **Bezug:** [../../audio/Instrumente_IC_Konzept.md](../../audio/Instrumente_IC_Konzept.md) §5 (IK2-2 a, IK2-2-1 a), §6 (34c,
@@ -403,10 +403,20 @@ unter `harvest/instruments-calculation/rechnung` (IC `4409088`, `klassen/10_zung
 und Bezüge gegen `werte/zunge_ic.txt` (vom Kern geschrieben seit J70), die vier Dateien gegen ihre Vorlage, der Wind im
 Ton der App. Voller Lauf 1888 / 1888 unter beiden Compilern.
 
+## 6f. Stufe 34k — Klasse 2, der Kern `pluckedString` (S194 ff.)
+
+Teilplan 34k-1 bis 34k-11 im Konzept §6 (GZ1 a–GZ4 a, GZ1-1 a). Quellen: LumiViz `master` `a0f5c80e` (nach S193), die
+IC-Vorlage unter `harvest/instruments-calculation/rechnung` (IC `4409088`).
+
+| Nr. | Was | Herkunft | Ziel | Beleg | Abweichung / Befund |
+|---|---|---|---|---|---|
+| J76 | Bezug aus IC (34k-1) | IC `werte/abdruck_msvc.txt` (drei Abdrücke der Klasse 2), die Vorlage `klassen/02_zupf_saite` | `docs/modellierung/anbindung-ic/abdruck_zupf.cpp` mit `.bat`, `tests/unit/UnitTests/werte/zupf_ic.txt` (177 Zeilen) | die drei IC-Abdrücke `zupf_Cembalo_m60_mf`, `zupf_Gitarre_m52_mf`, `zupf_Harfe_clip_C4_E4` — vom Programm gleich `abdruck_msvc.txt` gerechnet | **neu:** IC führt die übrigen nicht; das Programm rechnet sie mit der Vorlage unter MSVC `/MD`, ohne sie zu ändern: je Instrument (Cembalo, Harfe, Gitarre, Laute, Oud) tief / mitte / hoch des Umfangs bei Stärke 0,2 / 0,5 / 1 (0,4 s gehalten, 28 800 Frames, mit Dämpfen und Ausklang); an der Mitte Harfe und Gitarre *laissez vibrer*, Harfe gedämpft nach 0,2 s, Harfe und Gitarre Polarisation 0° und 60°, Cembalo Lautenzug und ohne Tastenstoß bei Stärke 0,2 und 1, Laute und Oud mit einem Chor statt des Doppelchors; Clips (`rechneZupfClip`) Gitarre A3 mit und ohne Mitschwingen, Gitarre E-Dur (sechs Noten, 15 ms versetzt) mit, Harfe C4 / E4 ohne, Harfe unter D-Dur (`harfeMitPedalen`, Pedale F♯ und C♯) mit D4, F♯4, A4 — 65 Abdrücke, keine zwei gleich; die fünf Bezüge als Bits (IC `normiere` nachgerechnet gleich der Vorgabe); die gestimmten Laufzeitfaktoren aus `stimme` je Instrument Punkt für Punkt als Bits (92 Punkte, 0,9991–1,0058). **Befund (Bezug):** mit der Probe von LumiViz (`kern::bezugsProbe`: Mitte, Stärke 1, 1 s statt 0,5 s) kommen bei allen fünf **dieselben** Bits heraus (`bezugLv` = `bezug`) — die Spitze des gezupften Tons liegt in der ersten halben Sekunde, die Mitte des Umfangs ist bei beiden dieselbe Note (anders als bei der Zunge, J66). **Plattform:** `clang-cl /O2 /MD` mit `/clang:-ffp-contract=off /clang:-fno-fast-math` gibt alle 177 Zeilen gleich |
+
 ## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.17.0 | 2026-11-12 | Session 194. §6f neu: 34k-1 (J76); Kopf nachgeführt (stand auf 0.14.0). |
 | 0.16.0 | 2026-11-12 | Session 192. §6e: 34j-10 (J75, Wächter 34j). |
 | 0.15.0 | 2026-11-12 | Session 192. §6e: 34j-9 (J74). |
 | 0.14.0 | 2026-11-12 | Session 192. §6e: 34j-8 (J73). |
