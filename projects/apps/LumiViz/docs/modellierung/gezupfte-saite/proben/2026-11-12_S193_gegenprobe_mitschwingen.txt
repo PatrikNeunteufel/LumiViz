@@ -1,0 +1,32 @@
+A Gitarre Note 45
+  ohne Mitschwingen                  Saiten  0  Nachklang 1-2 s  -100.3 dB RMS  Lautheit  -26.8 LUFS  Rechenzeit  0.28 %
+  mit den sechs leeren Saiten        Saiten  6  Nachklang 1-2 s   -63.9 dB RMS  Lautheit  -26.9 LUFS  Rechenzeit  1.13 %
+A Gitarre Note 57
+  ohne Mitschwingen                  Saiten  0  Nachklang 1-2 s  -140.6 dB RMS  Lautheit  -23.9 LUFS  Rechenzeit  0.28 %
+  mit den sechs leeren Saiten        Saiten  6  Nachklang 1-2 s   -37.8 dB RMS  Lautheit  -29.2 LUFS  Rechenzeit  1.28 %
+A Gitarre Note 64
+  ohne Mitschwingen                  Saiten  0  Nachklang 1-2 s  -166.8 dB RMS  Lautheit  -31.7 LUFS  Rechenzeit  0.28 %
+  mit den sechs leeren Saiten        Saiten  6  Nachklang 1-2 s   -61.7 dB RMS  Lautheit  -34.1 LUFS  Rechenzeit  1.06 %
+A Gitarre Note 76
+  ohne Mitschwingen                  Saiten  0  Nachklang 1-2 s  -165.5 dB RMS  Lautheit  -31.8 LUFS  Rechenzeit  0.27 %
+  mit den sechs leeren Saiten        Saiten  6  Nachklang 1-2 s   -63.7 dB RMS  Lautheit  -35.4 LUFS  Rechenzeit  1.21 %
+B Harfe Note 43
+  ohne Mitschwingen                  Saiten  0  Nachklang 1-2 s  -210.3 dB RMS  Lautheit  -32.1 LUFS  Rechenzeit  0.29 %
+  alle Saiten                        Saiten 47  Nachklang 1-2 s   -68.8 dB RMS  Lautheit  -40.2 LUFS  Rechenzeit  8.65 %
+  nur Oktaven                        Saiten  6  Nachklang 1-2 s   -57.3 dB RMS  Lautheit  -36.3 LUFS  Rechenzeit  1.28 %
+  Oktaven, Quinten, Quarten          Saiten 20  Nachklang 1-2 s   -69.1 dB RMS  Lautheit  -39.9 LUFS  Rechenzeit  3.62 %
+  dazu Terzen und Sexten             Saiten 33  Nachklang 1-2 s   -68.8 dB RMS  Lautheit  -40.2 LUFS  Rechenzeit  6.02 %
+B Harfe Note 60
+  ohne Mitschwingen                  Saiten  0  Nachklang 1-2 s  -224.5 dB RMS  Lautheit  -30.7 LUFS  Rechenzeit  0.26 %
+  alle Saiten                        Saiten 47  Nachklang 1-2 s   -46.1 dB RMS  Lautheit  -35.9 LUFS  Rechenzeit  8.98 %
+  nur Oktaven                        Saiten  6  Nachklang 1-2 s   -45.6 dB RMS  Lautheit  -35.1 LUFS  Rechenzeit  1.23 %
+  Oktaven, Quinten, Quarten          Saiten 20  Nachklang 1-2 s   -46.7 dB RMS  Lautheit  -35.5 LUFS  Rechenzeit  3.60 %
+  dazu Terzen und Sexten             Saiten 33  Nachklang 1-2 s   -46.5 dB RMS  Lautheit  -35.5 LUFS  Rechenzeit  6.51 %
+B Harfe Note 76
+  ohne Mitschwingen                  Saiten  0  Nachklang 1-2 s  -267.4 dB RMS  Lautheit  -49.6 LUFS  Rechenzeit  0.30 %
+  alle Saiten                        Saiten 47  Nachklang 1-2 s   -87.9 dB RMS  Lautheit  -54.9 LUFS  Rechenzeit 10.04 %
+  nur Oktaven                        Saiten  6  Nachklang 1-2 s   -95.8 dB RMS  Lautheit  -49.7 LUFS  Rechenzeit  1.31 %
+  Oktaven, Quinten, Quarten          Saiten 18  Nachklang 1-2 s   -90.1 dB RMS  Lautheit  -52.8 LUFS  Rechenzeit  3.52 %
+  dazu Terzen und Sexten             Saiten 32  Nachklang 1-2 s   -87.2 dB RMS  Lautheit  -53.0 LUFS  Rechenzeit  6.26 %
+C Harfe C4 + E4 laissez vibrer: Clip -33.9 dB RMS, Clip minus Summe der Einzelnoten -184.4 dB RMS
+C Harfe C4 + E4 nach 0,5 s gedaempft: Clip -33.3 dB RMS, Clip minus Summe der Einzelnoten -86.7 dB RMS

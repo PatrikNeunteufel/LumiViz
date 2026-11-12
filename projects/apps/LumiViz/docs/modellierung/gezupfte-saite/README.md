@@ -28,6 +28,14 @@ Der Gitarrenkorpus nach KB1 a auf die gemeinsame Grundlage (`../koerper/`).
 - [2026-11-12_S192_befund_ic_vorlage.md](2026-11-12_S192_befund_ic_vorlage.md) — die IC-Vorlage der Klasse 2 am Ton
   gemessen, vor dem Teilplan 34k: keines der fünf Instrumente hält 15 LU über den Umfang (18,6–36,1 LU), der Tastenstoß
   des Cembalos ist stumm, die Harfe im Clip braucht 14 % der Echtzeit. Programm und Rohausgabe unter [proben/](proben).
+- [2026-11-12_S193_gegenprobe_ursachen.md](2026-11-12_S193_gegenprobe_ursachen.md) — woran das Gefälle hängt: der Zupf
+  als Kraftstoß fester Dauer und wenige scharfe Stegmoden (mit beidem behoben Sprünge 1,9–4,2 LU statt bis 21,8 LU);
+  Mitschwingen je Note ist linear und kostet an der Gitarre 1,1–1,3 %, an der Harfe mit allen Saiten 9,4–9,9 % der
+  Echtzeit. Programme und Rohausgaben unter [proben/](proben).
+
+## Stufe 34k (Cembalo, Harfe, Laute, Oud, Gitarre auf dem Kern `pluckedString`)
+Entscheide GZ1 a–GZ4 a, GZ1-1 a und der Teilplan 34k-1 bis 34k-11 stehen in `docs/audio/Instrumente_IC_Konzept.md` §6
+(S193).
 
 ## Aus InstrumentsCalculation (S182)
 

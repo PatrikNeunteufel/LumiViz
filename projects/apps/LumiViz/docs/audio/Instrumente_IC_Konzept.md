@@ -1,7 +1,7 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.24.0
-> **Datum:** 2026-11-12 (Session 192)
+> **Version:** 0.25.0
+> **Datum:** 2026-11-12 (Session 193)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
 > der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
@@ -13,7 +13,7 @@
 > Zupfkraft und den Abnahmen `slot`/`bridge`, Kern `struckString` mit Durchmesser je Taste, beide Rechenfassung 2.
 > **Typ:** Konzept — Planung der Anbindung der Rechenkerne aus `InstrumentsCalculation` (IC) an LumiViz;
 > Zielbild Z1 bis Z4 und M1 entschieden (Patrik S172), **IK2-0 bis IK2-13 entschieden, IK2-2-1 a, CC1 a, TP1 a**
-> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j erledigt (S189–S192, ZV1 a–ZV14 a; Kern `freeReed`, Akkordeon, Harmonium, Melodica, Mundharmonika)
+> (S173); **Teilplan Stufe 34 (34a–34m, 34m vor 34l) in §6**; 34b erledigt (S174, CMakeCraft v0.14.0, §5a), 34a gebilligt (§6a, CK1 a, CK2 a); 34c erledigt (S175, `InstrumentCore`, KN1 a, KN2 a); 34d erledigt (S176, `InstrumentModels`, FU1 a–FU3 a, BK1 a); 34e erledigt (S177, `InstrumentMeasure`, `AudioCore`, ME1 a–ME4 a); 34f erledigt (S177, Register, Wächter, `InstrumentTuneTool`, WZ1 a, WZ2 a); 34g erledigt (S178, Kern `bar`, neun Stabspiele, KS1 a–KS4 a); 34h erledigt (S179, TM1 a–TM4 a; S180 QM1 a, `.lvinst` Fassung 23); 34i erledigt (S181, KL1 a–KL4 a, KL4-1 a, KL3-1 a, TT1 a; `.lvinst` Fassung 24, Kern `struckString`); 34j erledigt (S189–S192, ZV1 a–ZV14 a; Kern `freeReed`, Akkordeon, Harmonium, Melodica, Mundharmonika); **Teilplan 34k (34k-1 bis 34k-11) in §6** (S193, GZ1 a–GZ4 a, GZ1-1 a)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Spielweisen_Konzept.md](Spielweisen_Konzept.md) (IK1, UF12 a, UF13 a, SP1 a, RF1 a) ·
@@ -261,7 +261,8 @@ Wächter prüft Zahl gegen Werkzeug. Grund: in Klasse 5 hängen die Rauschanteil
 **Pegel** des Instruments über `instrument_pegel.py` (−13,4 LUFS) wie bei allen. **Körper:** Klassen 4 und 5 im Kern
 (Partner Resonatorrohr/Tonebar/Kasten, `Stab.hpp:61`; Membran und Kessel), der Flügel behält den LumiViz-Boden; Klasse 2
 nimmt `korpusImpulsantwort` (LumiViz, Stufe 23), der IC-Luftraum (`gemeinsam/Koerper`, heute ohne Nutzer) wird im
-Teilschritt der Klasse 2 dagegen verglichen (Prüfstein, Hörproben) und ersetzt nur bei deutlich besserem Ergebnis.
+Teilschritt der Klasse 2 dagegen verglichen (Prüfstein, Hörproben) und ersetzt nur bei deutlich besserem Ergebnis
+*(für Klasse 2 berichtigt S193, GZ4 a: Steg und Abstrahlung aus einem Körper nach KB1 a, §6 Teilplan 34k)*.
 **Stereo:** Mono durch Pan/Stereo XY der Schicht, mit Boden durch die Faltung. Verworfen: b (`normiere` zur Laufzeit —
 63 Vorgaben rechnen je einen Ton, die Zahl steht nirgends), c (ein physikalischer Bezug — ohne hörbare Folge neben LUFS,
 Hörorte und Rauschwerte je Klasse neu). Kippt auf c nur als Frage für alle Instrumente (Lautstärke physikalisch statt
@@ -421,7 +422,7 @@ wird. Hörproben sammelt Patrik später (Memory „Proben später“); kein Teil
 | 34h | Klasse 5 | Trommeln, neues Kit, Demo, Pegel, Liste | wie 34g |
 | 34i | Klasse 1 ohne Flügel | Upright, Honky-tonk, elektrischer Flügel (CP-70), Clavinet (Name nach den Hörproben, IK2-8 a); ehemals Stufe 32 | wie 34g |
 | 34j | Klasse 10 | Akkordeon, Harmonium, Melodica, Mundharmonika; Stimmung über `InstrumentTuneTool`; Vorlage `harvest/instruments-calculation/rechnung/klassen/10_zunge/` (S182). **Seit S188 nach ZV1 a–ZV3 a:** erst der Umzug Bit für Bit als Beleg, dann die Vorgaben je Taste mit Quellen hergeleitet, ein Winddruck für alle Tasten, laufender Wind — Teilplan 34j unten | Zielgrößen je Instrument (jede Taste spricht im Windbereich an, Lautheit über den Umfang ≤ 15 LU, ±10 Cent); Wächter der Stimmung; voller Lauf |
-| 34k | Klasse 2 je Note | Cembalo, Harfe, Gitarre, Laute, Oud; Vorlage `harvest/instruments-calculation/rechnung/klassen/02_zupf_saite/` (S182); Korpus `korpusImpulsantwort`, Vergleich IC-Luftraum (IK2-10 a); Messung von `stimme` (Kipppunkt IK2-11 a) | wie 34g; Bericht Luftraum gegen Korpus |
+| 34k | Klasse 2 je Note | Cembalo, Harfe, Gitarre, Laute, Oud; Vorlage `harvest/instruments-calculation/rechnung/klassen/02_zupf_saite/` (S182). **Seit S193 nach GZ1 a–GZ4 a, GZ1-1 a:** erst der Umzug Bit für Bit als Beleg, dann Rechenfassung 2 mit Quellen (Zupf als Auslenkung, Saiten je Taste bzw. je Saite), Steg und Abstrahlung aus einem Körper nach KB1 a (statt `korpusImpulsantwort`), Mitschwingen je Note, Spielweisen am Kern mit Saitensatz — Teilplan 34k unten | Zielgrößen je Instrument (Lautheit über den Umfang ≤ 15 LU, kein Sprung über 6 LU, ±10 Cent unabhängig gemessen); Wächter der Stimmung und der Stegmoden; Bericht Luftraum und Steg gegen `korpusImpulsantwort`; voller Lauf |
 | 34m | Klasse 7 (LR1 a; nach 34j und 34k, **vor 34l**) | Kern `Blech` mit laufender Anregung (Blasdruck als Spur) für alle spielbaren Instrumente der Klasse: Posaune, Trompete, Alphorn; Vorlage `harvest/instruments-calculation/rechnung/klassen/07_lippe_rohr/`, Doku `../modellierung/lippe-rohr/ic/`; Ursache des NaN am Alphorn A2 (ab rund 53 ms), Geometrie des Alphorns aus einer Quelle (R1, Mundstück, Becher, Länge); Rechenzeit (nach dem Tausch der Kühlung); Loops als Demos, das Alphorn zuerst; Hörliste. Tuba, Horn, Didgeridoo erst mit belegter Bohrung bzw. Lippe. Teilplan bis zum Abschluss vor dem Bau | wie 34g; kein NaN über den Umfang; Rechenzeit im Bericht |
 | 34l | Abschluss | Handbuch, Sichttest-Liste, Hörprobenliste für HörTest, Doku (Modul-Doku der Bibliotheken); ~~Auftrag an IC als Datei~~ entfällt (IC aufgelöst S182, LP2 b); den Teil der übernommenen Klassen in `harvest/instruments-calculation/` löschen | Bereich und voller Lauf unter beiden Compilern |
 
@@ -1033,6 +1034,129 @@ seit 34g); Bericht der Klasse `../modellierung/zunge/README.md`; `klassen/10_zun
 `harvest/` gelöscht (zuletzt im Commit `6e9f4756`, die Belege `abdruck_zunge.bat` und S188 nennen ihn). **Voller Lauf**
 1888 / 1888, 0 Skips unter Release-clang (802 s) und Testing-MSVC (752 s).
 
+**Teilplan 34k** (S193, Zuschnitt nach IK2-2 a, IK2-3 a, IK2-8 a, IK2-11 a, KB1 a, F-K1 a, UF9 a, GZ1 a–GZ4 a, GZ1-1 a;
+Nummern fest). Gefunden — Befund [2026-11-12_S192_befund_ic_vorlage.md](../modellierung/gezupfte-saite/2026-11-12_S192_befund_ic_vorlage.md)
+und Gegenprobe [2026-11-12_S193_gegenprobe_ursachen.md](../modellierung/gezupfte-saite/2026-11-12_S193_gegenprobe_ursachen.md),
+beide am Ton der Vorlage gemessen (Bau gleich IC `abdruck_msvc.txt`):
+
+- **Lautheit:** keines der fünf hält `LP3 a` (Cembalo 36,1, Harfe 26,3, Laute 20,0, Gitarre 19,4, Oud 18,6 LU über den
+  Umfang, Sprünge bis 21,8 LU). Zwei Ursachen im Rechengesetz, nicht in den Werten je Taste: **U1** der Zupf ist ein
+  Kraftstoß fester Dauer (`Zupf.cpp:147`, `stossS` 2–4 ms, erste Nullstelle bei 500–1000 Hz); **U2** der Steg trägt 5–10
+  scharfe Moden, die Annahmen sind (`Vorgaben.cpp:92–93, 117, 147, 165, 178`). Mit Stoß = ¼ Periode und einem glatten
+  Prüfsteg fallen die Sprünge auf 1,9–4,2 LU; übrig bleibt ein glatter Anstieg von rund 1 LU je kleine Terz (gleiche Kraft
+  je Taste, Ausgang = abgeleitete Stegschnelle, `Zupf.cpp:187`).
+- **Saiten:** die Vorlage rechnet jede Note als eigene leere Saite (Gitarre 650 mm und 70 N für alle Noten);
+  `ZupfAnschlag` kennt Note, Stärke, Haltedauer, *laissez vibrer*, Lautenzug, Polarisation — keine Saite, keinen Bund,
+  keine Anschlagrichtung. Der Tastenstoß des Cembalos ist stumm (`Zupf.cpp:194`, Faktor 1e-4).
+- **Mitschwingen:** Saiten und Steg sind linear — Clip mit zwei Noten minus Summe der Einzelnoten −184,4 dB (frei), mit
+  Dämpfen 53 dB unter dem Ton. Je Note: Gitarre mit sechs leeren Saiten 1,1–1,3 % der Echtzeit, Harfe mit allen 47 Saiten
+  9,4–9,9 %, mit Oktaven, Quinten, Quarten (18–20 Saiten) 3,7–4,9 % bei höchstens 2,2 dB im Nachklang und 2,1 LU an der
+  Note neben „alle“. Die Saiten am Steg ändern die Lautheit der Note selbst (bis −8,1 LU). Alles unter Drosselung und an
+  den Stegmoden der Vorlage gemessen.
+- **App:** alle Kerne melden Rechenweg „Note“, die App baut `kern::einzelnote` (`Instrument.cpp:3027`); einen Clip-Weg
+  gibt es nicht. `Tonauftrag` trägt schon `pitch`, `vibrato` und `gleitet`. Die **Planung** der Spielweisen (Saitensatz,
+  Akkorde, Griffbilder, Tabs, Saitenwahl, Strum) hängt am Instrument (`instrument.saiten`: `Saitenplan.cpp:131`,
+  `Akkord.cpp:390`, `InstrumentEditor.cpp`), ihr **Klang** (Saite, Bund, Up/Down, Palm mute, Harmonic, Tapping, Bend,
+  Slide, Legato) nur an der Saiten-Schicht (`Instrument.cpp:3046` ff.). Kein Kern-Instrument trägt heute einen Saitensatz
+  — ob die Planung damit ohne Änderung läuft, ist nicht getestet.
+- **Körper:** `korpusImpulsantwort` (`Instrument.cpp:3232`) gibt es für Parlor und Classical, kein Kern-Pfad ruft sie; der
+  Kern-Pfad faltet nur `.lvinstbody` (`:3037`). `InstrumentBody` rechnet Moden mit Wert am Stegpunkt, Verlustfaktor und
+  Abstrahlgewicht (`Auswertung.hpp:156–165`) und den statistischen Teil, keinen Luftraum; die IC-Fassung des Luftraums
+  liegt unter `harvest/instruments-calculation/rechnung/gemeinsam/Koerper.hpp:66–104`.
+- **Namen und Quellen:** `guitar`, `nylon_guitar` (Extended KS, 7 und 5 Loops) und `harp` (Sample) sind vergeben;
+  `harpsichord`, `concert_harp`, `lute`, `oud`, `classical_guitar` frei. In der Ablage `…\cmake\quellen\gezupfte-saite\`
+  liegen Bader 2025 (Dulcken), Chadefaux 2013, Mores, Wright 1996; Aufnahmen im Archiv (Iowa MIS Gitarre, Mores 2021,
+  VCSL). Dünn: Mensuren (Taskin nach Di Veroli nur an den C-Tönen), Harfen-Saitentabellen nicht gefunden, Le Carrou
+  (Dissertation) ungelesen, Abdallah 2026 (Oud) ungeladen. YIN springt bei schwachem Grundton auf Teiltonverhältnisse
+  (Befund S192). Die Rechenzeit ist ausgesetzt (Kühlung): die Fälle werden gebaut, die Zahlen nachgeholt.
+
+| Nr. | Inhalt | fertig, wenn |
+|---|---|---|
+| 34k-1 | Beleg aus der Vorlage: Programm mit Baubefehl `docs/modellierung/anbindung-ic/abdruck_zupf.bat` (Muster `abdruck_zunge.bat`; MSVC `/MD`), `werte/zupf_ic.txt` — je Instrument tief/mitte/hoch bei Stärke 0,2 / 0,5 / 1, *laissez vibrer*, Lautenzug, Doppelchor, Polarisation, Tastenstoß, je ein Clip mit Mitschwingen (Gitarre, Harfe; eine Pedalstellung ungleich C-Dur), die Bezüge, die gestimmten Laufzeitfaktoren aus `stimme` | die drei IC-Abdrücke gleich `abdruck_msvc.txt` |
+| 34k-2 | Kern `pluckedString` unter `InstrumentModels/zupf/` (`lumi::kern::zupf`), Tafel „Plucked string“: `Zupf.cpp`, `Vorgaben.cpp`, `Pedale.cpp` per Skript (Anker je genau einmal); die fünf Vorlagen in `vorlagen()` ohne Datei (wie KL1 a); das Messen zieht aus dem Kern (IK2-2 a); `rechneZupfClip` zieht als Funktion des Kerns mit (Bezug für die Tests, GZ3 a); Tafel (*Keys* mit Umfang nach KS1 a, *String*, *Pluck*, *Bridge* als Liste der Stegmoden, *Courses*, *Sympathetic strings*, *Pedals*, *Tunable*, *Output*); Bezug über `normiere` (Probe gegen den IC-Bezug prüfen); Adapter Rechenweg Note wie IC, ohne Mitschwingen; `clang-cl` mit `/clang:-ffp-contract=off` | alle Abdrücke aus 34k-1 Bit für Bit unter Release-clang und Testing-MSVC; die IC-Fälle aus `test_zupf` grün; `Loop Werte`, `Klangfassung` unverändert |
+| 34k-3 | Stimmer `pluckedString` in `InstrumentMeasure/ZupfStimmen` (Laufzeitfaktor je Note, IK2-11 a), Dauer gemessen; dazu eine **zweite, unabhängige Tonhöhenmessung** für die Prüfung ±10 Cent (Grundton aus den Teiltönen an der gemessenen Tonhöhe, nicht YIN allein — Befund S192), an synthetischen Tönen mit schwachem Grundton geprüft | Kurven Bit für Bit gleich der Vorlage für alle fünf; Wächter Stimmung rot bei absichtlich veralteten Werten; die zweite Messung an einem Ton ohne Grundton auf ±1 Cent |
+| 34k-4 | Recherche und Quellen (GZ2 a, GZ4 a): Ladeliste vorher zur Freigabe, Ablage `…\cmake\quellen\gezupfte-saite\`, Register, `archiv_index.py`; Patrik um Ablage und Archiv bitten. Gesucht je Instrument: **Saiten** (Länge, Durchmesser, Werkstoff, Zug je Taste bzw. je Saite; Cembalo Zupfpunkt je Taste und Register; Harfe Saitentabelle eines Konzertmodells; Laute und Oud Chöre, Stimmung, Mensur; Gitarre Saitensatz mit Zug je Saite); **Zupf** (Auslenkung, Ablösegeschwindigkeit, Zupfstelle, Breite von Finger, Plektrum, Risha, Kiel — Chadefaux 2012 / 2013 und was sie zitieren; Tastenstoß des Cembalos nach Penttinen); **Körper** (Dicke, Fläche, Holz, Beleistung der Decke oder des Bodens, tiefe Moden, Luftraum und Schalllöcher; gemessene Stegadmittanz in zwei Richtungen; Le Carrou für die Harfe, Bader 2025 und Mores für Cembalo und Gitarre, Abdallah 2026 für die Oud); **Ziele** (Ausklang je Lage, Dynamik, Lautheit über den Umfang aus VCSL, Iowa MIS, Mores 2021 — mit derselben Messkette wie das Modell). Agenten ohne Browser; Formeln und Tabellen an der Seite als Bild gegengeprüft; Bericht unter `../modellierung/gezupfte-saite/recherche/` | Bericht mit Fundstelle je Größe. **Haltepunkt:** je Instrument, ob die Quellen für Saiten und Zupf reichen (sonst Kipppunkt GZ2 a), und welchen Weg der Körper nimmt — Bauplan, Plattenwerte oder „gedachtes Instrument“ (Kipppunkt GZ4 a) |
+| 34k-5 | Körper und Steg (GZ4 a): **zuerst die Probe**, ob der statistische Teil von `InstrumentBody` aus Plattenwerten allein (ohne Bauplan) Moden mit Wert am Stegpunkt liefert; Luftraum aus `harvest/…/gemeinsam/Koerper` nach `InstrumentBody` (F-K1 a) hinter der bestehenden Schnittstelle, Tests gegen die geschlossene Lösung (Helmholtz, Kasten); je Instrument ein Körper mit Quellen (`.lvinstbodyplan` oder Plattenwerte mit belegten tiefen Moden) unter `asset/loop/instrument_bodies/`; Werkzeug (`InstrumentBodyTool` oder `InstrumentTuneTool`, nach dem, wo der Körper gelesen wird) schreibt die Stegmoden (Frequenz, Güte, Spitze, Richtung) mit Abdruck des Körpers in die Tafel; die Richtung der Moden als Annahme mit Vermerk, wo keine Quelle sie gibt; `InstrumentBody` nächste Fassung, Modul-Doku | Stegmoden je Instrument aus dem Werkzeug, Wächter rot bei verändertem Körper; `*Loop Koerper*` und die Körper des Flügels unverändert. **Haltepunkt:** liefert die Probe keine Moden ohne Bauplan, Vorlage an Patrik (Bauplan je Instrument, ein gemeinsames Plattenmodell, oder Kipppunkt GZ4 a) |
+| 34k-6 | Herleitung am Kern aus 34k-2, ohne App (Prüfstand wie `proben/2026-11-12_S193_gegenprobe_ursachen.cpp`), Dokument `../modellierung/gezupfte-saite/<Datum>_herleitung.md`: **Zupf** als Auslenkung und Loslassen (Stärke → Auslenkung und Ablösegeschwindigkeit; Zupfstelle und Breite je Instrument); **Saiten** aus 34k-4 — bei Cembalo und Harfe je Taste als Kurven, bei Laute, Oud und Gitarre **je Saite des Saitensatzes**, die Note als gegriffene Saite (Länge um den Bund verkürzt; GZ1-1 a); **Steg** aus 34k-5; **Ausgang** (Abstrahlung statt abgeleiteter Stegschnelle, KB1 a); **Mitschwingen je Note** (GZ3 a): Gitarre, Laute, Oud die übrigen Saiten des Satzes leer, Harfe die Regel der Auswahl gegen „alle 47“ (Nachklang ≤ 3 dB, Lautheit ≤ 2 LU, Rechenzeit ≤ 4,6 %), Cembalo keines; **Tastenstoß**; **Probe Bend**: eine Saite mit laufender Tonhöhe (`pitch`, Bend um 2 Halbtöne, Slide über 5 Bünde) im Wellenleiter mit zwei Polarisationen. Je Instrument jede Option gegen **alle** Zielgrößen gerechnet: Lautheit über den Umfang ≤ 15 LU ohne Ausnahme (Messung wie `LP3 a`: jede dritte Taste, `laut` 0,7, 500 ms) und zusätzlich an **jeder** Taste, kein Sprung über 6 LU zwischen Nachbarn im Terzabstand, Tonhöhe ±10 Cent an der zweiten Messung aus 34k-3, Ausklang und Dynamik gegen Quellen und Aufnahmen, Rechenzeit | Entscheide je Instrument (GZ5 ff.). **Haltepunkte:** was kein Instrument trägt, wird nicht ausgeliefert, mit benannter Lücke; hält der Bend ±10 Cent nicht, Kipppunkt GZ1-1 a (Saite, Bund, Up/Down, Palm mute bleiben; Bend, Slide, Legato eigene Stufe) |
+| 34k-7 | Kern Rechenfassung 2 nach 34k-6: Zupf, Saiten (Kurven je Taste oder Werte je Saite, mit Quelle und Belegkraft), Steg als gestimmte Daten aus 34k-5, Ausgang, Tastenstoß, Mitschwingen je Note im Rechenweg Note (Liste der freien Saiten in der Tafel bzw. aus dem Saitensatz; `rechneZupfClip` als Bezug: je Note gleich dem Clip mit einer Note); Pedalstellung der Harfe als fester Wert am Beginn (TM2 a); Stimmer neu; `zupf_ic.txt` mit Vermerk neu (Journal); Messfall `LUMIVIZ_34K_MESSUNG=<datei.md>` mit der Messkette aus 34k-6 (Lautheit aus `AudioCore`) | die Zielgrößen aus 34k-6 am gebauten Kern wie am Prüfstand; Linearität (Clip minus Summe der Noten, frei) unter −120 dB; die IC-Fälle angepasst mit Grund im Journal |
+| 34k-8 | Spielweisen am Kern (GZ1-1 a): `KettenNote` bekommt Saite, Bund, Anschlagrichtung und Artikulation (`InstrumentCore` nächste Fassung; ohne Angabe wie bisher, andere Kerne Bit für Bit gleich); `KernAuskunft` nennt, dass der Kern einen Saitensatz spielt; die App gibt solchen Kernen aus `TonAngabe` Saite, Bund, Richtung, Artikulation und die Verläufe (`pitch`, `vibrato`, Kette mit `gleitet`) in den Tonauftrag, der Tonname trägt sie wie bei der Saiten-Schicht; der Kern rechnet Up und Down, Palm mute, Harmonic, Tapping, Bend, Slide, Legato, Vibrato nach 34k-6; Kern-Instrument mit Saitensatz in Planung und Fenstern: Instrument-Editor (Tab-Linien, Spur Strum, Menü), Fenster Chords (Griffbilder), Creator (Zeilen *Tuning*, *Strum*, *Play as*) — je ein Fall **über das Fenster** (Memory „Test-Eingaben wie im Programm“), Bilder | ohne Angaben Bit für Bit wie 34k-7; jede Spielweise ändert den Ton messbar in der belegten Richtung (Muster `test_LoopSpielweiseKlang`); Bend und Slide ±10 Cent am Ziel; `Loop Werte`, `Klangfassung`, Flügel-Bezug unverändert |
+| 34k-9 | die `.lvinst` der Instrumente, die 34k-6 trägt — `harpsichord`, `concert_harp` (*keys* bzw. nach dem Katalog), `lute`, `oud`, `classical_guitar` mit Saitensatz (Oud bundlos; Laute und Oud mit Chören): Schreiber `LUMIVIZ_ZUPF_INSTRUMENTE_SCHREIBEN=1`, `InstrumentTuneTool --all --reference`, Katalog, Register und `CREDITS.md`, Pegel und `loop_werte.txt` nur neue Zeilen, `klangfassung.txt` nachgeführt, Zahlen je Art in den Tests; braucht die Datei ein neues Feld, neue `.lvinst`-Fassung (Feld immer geschrieben, Literale in `tests/` breit suchen) | `Loop Pegel LP3 a` ohne Ausnahme; `Loop Werte` nur neue Zeilen; Quellen- und Stimm-Wächter grün |
+| 34k-10 | `plucked_strings_demo.lvloop` (alle fünf; Laute, Oud und Gitarre mit Tabs, Strum und einem Bend), Loops je Instrument über `make_modelled_loops.py`, Lautstärke nach LV1 a (Skripte zuerst in einer Kopie); Hörliste `zupf_34k` am Hörort (je Instrument tief/mitte/hoch bei −18/−9/0, Lautenzug, Tastenstoß, *laissez vibrer*, Mitschwingen an und aus, Harfe Auswahl gegen alle Saiten, Doppelchor, Akkord als Strum Up und Down, Palm mute, Harmonic, Bend, `classical_guitar` gegen `nylon_guitar`), sie löst IC `02_zupf_saite` ab (wie LG1 a); Creator-Fall mit der Laute (Listen der Chöre und Stegmoden, gestimmte Werte, Saitensatz; Bild); Fall `*34k Rechenzeit*` (Harfe mit Mitschwingen, Gitarren-Akkord mit sechs Noten) | `--liste-pruefen` 0 Fehler, 0 Hinweise; Rechenzeit ≤ 4,6 % (RZ1-1 a) nach dem Tausch der Kühlung nachgeholt |
+| 34k-11 | Modul-Doku (`InstrumentModels`, `InstrumentCore`, `InstrumentMeasure`, `InstrumentBody`; Kopf, Changelog und `Solution.json` gegeneinander geprüft), Journal J76 ff., Konzept (IK2-10 a berichtigt), Bericht der Klasse `../modellierung/gezupfte-saite/README.md` mit dem Abschnitt „Luftraum und Steg gegen `korpusImpulsantwort`“, Quellpakete der nächsten Fassungen, Steckbrief; `klassen/02_zupf_saite` und die zugehörigen Werkzeuge unter `harvest/` gelöscht (der Beleg nennt den Commit) | **voller Lauf** unter beiden Compilern (neuer Kern, Core, `InstrumentBody` und Rechenweg der App geändert; UF17-1 a) |
+
+Prüfung je Teilschritt nach MT1 a (eng unter Release-clang, beide gebaut). Modell je Sitzung: 34k-1 bis 34k-3 und 34k-7
+bis 34k-11 Opus; 34k-4 bis 34k-6 Fable (Herleitung aus mehreren Quellen, Schwellen in Frage). Scheitert in 34k-8 der Bend
+am gebauten Kern ohne erkennbare Ursache, ist das ein Fable-Kandidat.
+
+Abgeleitet: Kern nach dem Verfahren benannt (IK2-8 a); die Hörliste von LumiViz löst die von IC ab (LG1 a); Stärke über
+die Anschlagstufe (TM1 a); gestimmte Werte und Stegmoden sind Daten mit Abdruck-Wächter (IK2-11 a).
+
+**Nicht in 34k** (jede Zeile braucht den Rechenweg Clip aus 31e, Bedienung aus 31g oder eine eigene Stufe):
+Pedalwechsel der Harfe innerhalb einer Passage und das Zusammenspiel der Dämpfer (31e); im Akkord gegriffene Saiten als
+mitschwingende Saiten — je Note schwingen die übrigen Saiten **leer** mit, das ist eine benannte Annahme (31e);
+Register des Cembalos als Spur (31g; die Register stehen fest in der Tafel); `guitar` (Stahlsaiten), E-Gitarren und
+Bässe auf dem Kern — eigene spätere Stufe nach der Hörprobe `classical_guitar` gegen `nylon_guitar`; `harp` (Sample) und
+`koto` bleiben; was IC in `../modellierung/gezupfte-saite/ic/offen.md` als nicht gebaut führt.
+
+✅ **GZ1 a** (Patrik S193, „alle a“; in einem Punkt ersetzt durch GZ1-1 a): **34k liefert `harpsichord`, `concert_harp`,
+`lute` und `oud` auf dem Kern `pluckedString`; `harp` (Sample), `guitar` und `nylon_guitar` bleiben** (IK2-8 a). Der
+Satz „die IC-Gitarre wird nicht ausgeliefert, Polarisationen und Steg kommen später an die Waveguide-Saite der
+bestehenden Gitarren“ gilt nicht mehr (GZ1-1 a). Verworfen: c (die IC-Gitarre ersetzt `nylon_guitar` — fünf Loops
+verlören ihre Spielweisen).
+
+✅ **GZ1-1 a** (Patrik S193): **34k baut die Spielweisen in den Kern.** Laute, Oud und Gitarre tragen einen Saitensatz
+(Oud bundlos, Laute und Oud mit Chören je Saite); Akkorde, Griffbilder, Tabs, Saitenwahl und Strum gelten für sie wie für
+jede Gitarre. Der Tonauftrag bekommt an der Note Saite, Bund, Anschlagrichtung und Artikulation; der Kern rechnet die
+gegriffene Saite des Satzes, Up und Down, Palm mute, Harmonic, Tapping sowie Bend, Slide, Legato und Vibrato über `pitch`,
+`vibrato` und `gleitet`. Das Mitschwingen nimmt die übrigen Saiten des Satzes. Die Gitarre wird als `classical_guitar`
+neben `nylon_guitar` ausgeliefert; welches den Platz behält, entscheidet Patrik nach der Hörprobe. Harfe und Cembalo ohne
+Saitensatz. Grund: eine gegriffene Saite ist das Modell des Instruments, und die Vorgaben aus GZ2 a sind bei
+Griffbrett-Instrumenten Werte je Saite, nicht je Taste — wer erst je Taste herleitet, leitet zweimal her; ohne die
+Erweiterung hätten Laute und Oud keine der Spielweisen, die LumiViz an Saiteninstrumenten hat. Verworfen: b (nur der
+Saitensatz, der Klang je Saite später — der Tab zeigt eine Saite, zu hören ist eine andere), c (wie GZ1 a zuerst
+entschieden — gibt Laute und Oud nichts, die zwei Polarisationen müssten im App-Zweig nachgebaut werden). Kippt auf b,
+wenn die Probe in 34k-6 für Bend und Slide die ±10 Cent nicht hält (dann bleiben Saite, Bund, Up/Down und Palm mute, der
+Rest wird eigene Stufe); auf c, wenn Patrik 34k bei vier Instrumenten ohne Griffbrett-Spielweisen halten will.
+
+✅ **GZ2 a** (Patrik S193): **34k zieht den Kern zuerst Bit für Bit um und leitet danach Rechenfassung 2 mit Quellen
+her** — der Zupf als Auslenkung und Loslassen, Saiten aus Mensuren und Saitentabellen, Steg nach GZ4 a, Tastenstoß nach
+Penttinen. Zielgrößen je Instrument: Lautheit über den Umfang ≤ 15 LU ohne Ausnahme, kein Sprung über 6 LU zwischen
+Nachbarn im Terzabstand (Schwelle gesetzt in S193, ohne Quelle), Tonhöhe ±10 Cent an einer unabhängigen Messung, Dynamik
+und Ausklang gegen Quellen und Aufnahmen; ausgeliefert wird ein Instrument erst, wenn es sie hält; Haltepunkt nach der
+Recherche. Grund: die Gegenprobe S193 — die Sprünge fallen von bis zu 21,8 LU auf 1,9–4,2 LU, sobald Zupf und Steg
+stimmen, und nur dann; Werte je Taste berühren keine der zwei Ursachen. Verworfen: b (wortgleich mit einer Pegelkurve je
+Taste — die Stegspitzen sind schmaler als der Tastenabstand des Wächters, der Diskant bliebe ohne Grundton, der
+Tastenstoß stumm), c (ausliefern mit vier bis fünf Ausnahmen in `LP3 a` — Hörliste, Pegel, Loops und Abdrücke zweimal, wie
+bei ZV1 a verworfen). Kippt auf b je Instrument, wenn die Recherche keine Mensur hergibt und das neue Gesetz die Grenze
+trotzdem verfehlt; auf c, wenn Patrik vor der Herleitung hören will.
+
+✅ **GZ3 a** (Patrik S193): **34k rechnet das Mitschwingen je Note** — die gespielte Saite und die freien Saiten des
+Instruments an einem Steg, Rechenweg „Note“. Harfe: eine Auswahl der Saiten, deren Regel die Herleitung gegen die
+Rechnung mit allen Saiten festlegt (Nachklang höchstens 3 dB, Lautheit höchstens 2 LU daneben, Rechenzeit ≤ 4,6 %;
+Grenzen gesetzt in S193); Gitarre, Laute, Oud: die übrigen Saiten des Satzes; Cembalo: keines (Dämpfer).
+`rechneZupfClip` zieht als Bezug für die Tests mit um. Pedalwechsel der Harfe in der Passage und das Zusammenspiel der
+Dämpfer bleiben bei 31e. Grund: die belegte Linearität (−184 dB) — je Note gerechnet ist für frei schwingende Saiten
+dasselbe wie der Clip und der Weg, den UF9 a den exakten nennt; die Saiten am Steg verschieben die Lautheit der Note
+(bis −8,1 LU), Vorgaben ohne sie müssten mit 31e neu gesetzt werden. Ergänzt IK2-7 a („31e mit dem Clip-Weg, der auch
+Klasse 2 trägt“): der Clip-Weg bleibt für das, was je Note nicht geht. Verworfen: b (Adapter ohne Mitschwingen bis 31e,
+wie KL1 a), c (Rechenweg Clip in 34k — App-weite Fragen zu Tonspeicher, Vorhören und Flügel-Pedal, für die 31e einen
+eigenen Messschritt vorsieht; der gemessene Gewinn ist klein). Kippt auf c, wenn die Auswahl am neuen Steg die Grenzen
+nicht innerhalb von 4,6 % hält; auf b, wenn Patrik die Harfe zuerst ohne Mitschwingen hören will.
+
+✅ **GZ4 a** (Patrik S193; **berichtigt IK2-10 a für Klasse 2**): **Steg und Abstrahlung eines Instruments kommen aus
+einem Körper in der Form von KB1 a** — Moden mit Frequenz, Dämpfung, Wert am Stegpunkt und Abstrahlgewicht, darüber der
+statistische Teil. Woher die Moden kommen, entscheidet ein Haltepunkt je Instrument nach der Recherche: aus einem Bauplan
+mit `InstrumentBody`, wo Maße belegt sind; sonst aus Plattenwerten über den statistischen Teil und den belegten tiefen
+Moden (Cembalo: Helmholtz 37 Hz nach Bader 2025). Der Luftraum zieht aus `harvest/…/gemeinsam/Koerper` nach
+`InstrumentBody` (F-K1 a). Ein Werkzeug schreibt die Stegmoden mit Abdruck des Körpers als Daten in die Tafel des Kerns
+(IK2-11 a); der Kern liest `InstrumentBody` nicht. Die Richtung der Moden am Steg (2×2) bleibt Annahme mit Vermerk, bis
+eine Quelle sie gibt. Grund: Rückwirkung und Abstrahlung sollen aus einer Quelle kommen (KB1 a), und der Steg ist die
+gemessene Ursache der Sprünge; er sitzt in der Saitenschleife, eine Faltung nach dem Kern kann ihn nicht ersetzen.
+Verworfen: b (die Vorlage um Moden ergänzen, bis der Steg glatt ist — jede Mode ohne Quelle), c (IK2-10 a wörtlich:
+`korpusImpulsantwort` als Faltung — lässt die Sprünge unverändert und legt einen Gitarrenkorpus hinter ein Cembalo).
+Nicht nachgerechnet: ob der statistische Teil ohne Bauplan Moden liefert — erste Probe in 34k-5. Kippt auf b, als
+„gedachtes Instrument“ gekennzeichnet, für ein Instrument, zu dem weder Bauplan noch Plattenwerte zu finden sind.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1092,6 +1216,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.25.0 | 2026-11-12 | Session 193. §6: Teilplan 34k (34k-1 bis 34k-11) nach dem Befund S192 und der Gegenprobe S193 an der IC-Vorlage der Klasse 2; GZ1 a (Namen, Bestand bleibt), GZ1-1 a (Spielweisen am Kern, Saitensatz an Laute, Oud und `classical_guitar`), GZ2 a (Umzug als Beleg, dann Rechenfassung 2 mit Quellen), GZ3 a (Mitschwingen je Note), GZ4 a (Steg und Abstrahlung aus einem Körper nach KB1 a; berichtigt IK2-10 a für Klasse 2); Zeile 34k der Übersicht. |
 | 0.24.0 | 2026-11-12 | Session 192. §6: 34j-10 erledigt — Stufe 34j fertig (Modul-Doku, Bibliotheken und Quellpakete, Bericht der Klasse, harvest gelöscht, voller Lauf 1888 / 1888 unter beiden Compilern); Journal J75. |
 | 0.23.0 | 2026-11-12 | Session 192. §6: 34j-9 erledigt — `free_reeds_demo`, Loops der Nuancen, Hörliste `zunge_34j` (löst IC 10 ab), Creator-Fall, Rechenzeit (Zahlen); Journal J74. |
 | 0.22.0 | 2026-11-12 | Session 192. §6: 34j-8 erledigt — die vier Zungeninstrumente als `.lvinst`, gestimmt, Pegel, Katalog, Credits; Journal J73. |
