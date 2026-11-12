@@ -41,13 +41,11 @@
 ## Geprüft
 
 - Vor dem Teilplan 34k die IC-Vorlage der Klasse 2 am Ton gemessen (nichts am Programm):
-  `docs/modellierung/gezupfte-saite/2026-11-12_S192_befund_ic_vorlage.md`.
-
+  `docs/modellierung/gezupfte-saite/2026-11-12_S192_befund_ic_vorlage.md`. Der Teilplan 34k folgt in der nächsten Sitzung.
 - Messungen `docs/modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md` und `…_messung_zv12.md`, Befund
   `docs/modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md`, Quellenbericht unter `recherche/`.
 - Eng 101 / 101 unter Release-clang und Testing-MSVC, die Stimmung aller vier unter beiden Bit für Bit gleich; nach
-  34j-8 der Bereich der Instrumente, Pegel, Werte und Quellen 292 / 292; nach 34j-9 Loops, Zunge, Creator, Werte, Klangfassung, Instrumente, Pegel, Quellen und Hörlisten 161 / 161 unter beiden. Kein voller Lauf (kommt mit
-  34j-10).
+  34j-8 der Bereich der Instrumente, Pegel, Werte und Quellen 292 / 292; nach 34j-9 Loops, Zunge, Creator, Werte, Klangfassung, Instrumente, Pegel, Quellen und Hörlisten 161 / 161 unter beiden.
 - Die Rechenzeit der Zungen nur gemessen, nicht geprüft (Kühlung): 1,3 % der Echtzeit am Akkordeon, 0,6 % an den übrigen.
 - Nach 34j-10 der volle Lauf: 1888 / 1888, 0 Skips unter Release-clang (13 min) und Testing-MSVC (13 min); die
   Quellpakete `instrumentcore` 0.6.0, `instrumentmodels` 0.7.0, `instrumentmeasure` 0.4.0 mit gültigen Summen.
