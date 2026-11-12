@@ -1,0 +1,1996 @@
+{
+    "dauer_s": null,
+    "fassungen": {
+        "ein_chor": "das Akkordeon mit nur dem ersten Chor",
+        "musette": "das Akkordeon, wie geliefert: zwei Choere 8′ gegeneinander verstimmt (Musette)",
+        "vorgabe": "die mitgelieferte Datei (Kern freeReed, Vorgaben je Taste S190, gestimmt), ungemessen",
+        "wind": "dieselbe Datei mit Wind ueber der Zeit (Expression, Vibrato, Balg; ZV3 a)"
+    },
+    "gruppe_nach": [
+        "instrument"
+    ],
+    "katalog": null,
+    "klaenge": [
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-18",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "datei": "klaenge/accordion_34_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_34_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "datei": "klaenge/accordion_34_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_34_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a0",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "datei": "klaenge/accordion_34_a0.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_34_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-18",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "datei": "klaenge/accordion_61_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_61_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "datei": "klaenge/accordion_61_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_61_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a0",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "datei": "klaenge/accordion_61_a0.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_61_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-18",
+                "taste": 88,
+                "ton": "E6"
+            },
+            "datei": "klaenge/accordion_88_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_88_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 88,
+                "ton": "E6"
+            },
+            "datei": "klaenge/accordion_88_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_88_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a0",
+                "taste": 88,
+                "ton": "E6"
+            },
+            "datei": "klaenge/accordion_88_a0.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_88_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-18",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/harmonium_53_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_53_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-9",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/harmonium_53_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_53_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a0",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "datei": "klaenge/harmonium_53_a0.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_53_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-18",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/harmonium_68_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_68_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/harmonium_68_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_68_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/harmonium_68_a0.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_68_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-18",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/harmonium_84_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_84_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-9",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/harmonium_84_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_84_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "datei": "klaenge/harmonium_84_a0.wav",
+            "fassung": "vorgabe",
+            "id": "harmonium_84_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-18",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "datei": "klaenge/melodica_58_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_58_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-9",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "datei": "klaenge/melodica_58_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_58_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a0",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "datei": "klaenge/melodica_58_a0.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_58_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-18",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/melodica_68_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_68_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/melodica_68_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_68_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/melodica_68_a0.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_68_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-18",
+                "taste": 79,
+                "ton": "G5"
+            },
+            "datei": "klaenge/melodica_79_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_79_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-9",
+                "taste": 79,
+                "ton": "G5"
+            },
+            "datei": "klaenge/melodica_79_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_79_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a0",
+                "taste": 79,
+                "ton": "G5"
+            },
+            "datei": "klaenge/melodica_79_a0.wav",
+            "fassung": "vorgabe",
+            "id": "melodica_79_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-18",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/harmonica_65_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_65_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-9",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/harmonica_65_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_65_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a0",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "datei": "klaenge/harmonica_65_a0.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_65_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-18",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "datei": "klaenge/harmonica_78_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_78_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-9",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "datei": "klaenge/harmonica_78_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_78_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a0",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "datei": "klaenge/harmonica_78_a0.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_78_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-18",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/harmonica_91_a-18.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_91_a-18"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-9",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/harmonica_91_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_91_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a0",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "datei": "klaenge/harmonica_91_a0.wav",
+            "fassung": "vorgabe",
+            "id": "harmonica_91_a0"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "datei": "klaenge/accordion_61_a0_crescendo.wav",
+            "fassung": "wind",
+            "id": "accordion_61_a0_crescendo"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/accordion_55_a0_crescendo.wav",
+            "fassung": "wind",
+            "id": "accordion_55_a0_crescendo"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "datei": "klaenge/accordion_61_a-9_vibrato.wav",
+            "fassung": "wind",
+            "id": "accordion_61_a-9_vibrato"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/harmonium_68_a0_crescendo.wav",
+            "fassung": "wind",
+            "id": "harmonium_68_a0_crescendo"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/harmonium_68_a-9_vibrato.wav",
+            "fassung": "wind",
+            "id": "harmonium_68_a-9_vibrato"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/melodica_68_a0_crescendo.wav",
+            "fassung": "wind",
+            "id": "melodica_68_a0_crescendo"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "datei": "klaenge/melodica_55_a0_crescendo.wav",
+            "fassung": "wind",
+            "id": "melodica_55_a0_crescendo"
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "datei": "klaenge/melodica_68_a-9_vibrato.wav",
+            "fassung": "wind",
+            "id": "melodica_68_a-9_vibrato"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "datei": "klaenge/harmonica_78_a0_crescendo.wav",
+            "fassung": "wind",
+            "id": "harmonica_78_a0_crescendo"
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "datei": "klaenge/harmonica_78_a-9_vibrato.wav",
+            "fassung": "wind",
+            "id": "harmonica_78_a-9_vibrato"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "balgwechsel",
+                "staerke": "a-9",
+                "taste": 69,
+                "ton": "A4"
+            },
+            "datei": "klaenge/accordion_69_a-9_balgwechsel.wav",
+            "fassung": "wind",
+            "id": "accordion_69_a-9_balgwechsel"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "datei": "klaenge/accordion_41_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_41_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "datei": "klaenge/accordion_48_a-9.wav",
+            "fassung": "vorgabe",
+            "id": "accordion_48_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "musette",
+                "staerke": "a-9",
+                "taste": 57,
+                "ton": "A3"
+            },
+            "datei": "klaenge/accordion_57_a-9_musette.wav",
+            "fassung": "musette",
+            "id": "accordion_57_a-9_musette"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "ein_chor",
+                "staerke": "a-9",
+                "taste": 57,
+                "ton": "A3"
+            },
+            "datei": "klaenge/accordion_ein_chor_57_a-9.wav",
+            "fassung": "ein_chor",
+            "id": "accordion_ein_chor_57_a-9"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "musette",
+                "staerke": "a-9",
+                "taste": 69,
+                "ton": "A4"
+            },
+            "datei": "klaenge/accordion_69_a-9_musette.wav",
+            "fassung": "musette",
+            "id": "accordion_69_a-9_musette"
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "ein_chor",
+                "staerke": "a-9",
+                "taste": 69,
+                "ton": "A4"
+            },
+            "datei": "klaenge/accordion_ein_chor_69_a-9.wav",
+            "fassung": "ein_chor",
+            "id": "accordion_ein_chor_69_a-9"
+        }
+    ],
+    "kontrolle": "moderat",
+    "messwerte": [
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-18",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -33.17
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.12
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a0",
+                "taste": 34,
+                "ton": "A#1"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.35
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-18",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.04
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.54
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a0",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -15.72
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-18",
+                "taste": 88,
+                "ton": "E6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.27
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 88,
+                "ton": "E6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.48
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a0",
+                "taste": 88,
+                "ton": "E6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -15.24
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-18",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -35.83
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-9",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.43
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a0",
+                "taste": 53,
+                "ton": "F3"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -17.37
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-18",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -33.65
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.39
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -15.29
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-18",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.21
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a-9",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "staerke": "a0",
+                "taste": 84,
+                "ton": "C6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -14.26
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-18",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -31.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-9",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.55
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a0",
+                "taste": 58,
+                "ton": "A#3"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -16.5
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-18",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.82
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.22
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -15.22
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-18",
+                "taste": 79,
+                "ton": "G5"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -30.69
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a-9",
+                "taste": 79,
+                "ton": "G5"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.86
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "staerke": "a0",
+                "taste": 79,
+                "ton": "G5"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -14.83
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-18",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.55
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-9",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.13
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a0",
+                "taste": 65,
+                "ton": "F4"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -15.13
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-18",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-9",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.56
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a0",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -14.59
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-18",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -32.49
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a-9",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.39
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "staerke": "a0",
+                "taste": 91,
+                "ton": "G6"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -14.4
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.35
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.36
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 61,
+                "ton": "C#4"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.54
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.69
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonium",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.4
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.23
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 55,
+                "ton": "G3"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -19.45
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Melodica",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 68,
+                "ton": "G#4"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -24.22
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "spielweise": "crescendo",
+                "staerke": "a0",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -18.32
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Harmonica",
+                "spielweise": "vibrato",
+                "staerke": "a-9",
+                "taste": 78,
+                "ton": "F#5"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.56
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "balgwechsel",
+                "staerke": "a-9",
+                "taste": 69,
+                "ton": "A4"
+            },
+            "fassung": "wind",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -22.96
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 41,
+                "ton": "F2"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.47
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "staerke": "a-9",
+                "taste": 48,
+                "ton": "C3"
+            },
+            "fassung": "vorgabe",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.6
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "musette",
+                "staerke": "a-9",
+                "taste": 57,
+                "ton": "A3"
+            },
+            "fassung": "musette",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -25.76
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "ein_chor",
+                "staerke": "a-9",
+                "taste": 57,
+                "ton": "A3"
+            },
+            "fassung": "ein_chor",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -28.26
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "musette",
+                "staerke": "a-9",
+                "taste": 69,
+                "ton": "A4"
+            },
+            "fassung": "musette",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -23.87
+                }
+            ]
+        },
+        {
+            "achsen": {
+                "instrument": "Accordion",
+                "spielweise": "ein_chor",
+                "staerke": "a-9",
+                "taste": 69,
+                "ton": "A4"
+            },
+            "fassung": "ein_chor",
+            "werte": [
+                {
+                    "einheit": "LUFS",
+                    "name": "lufs_vorher",
+                    "wert": -26.47
+                }
+            ]
+        }
+    ],
+    "pegel": {
+        "lufs": -23,
+        "toleranz_lu": 1
+    },
+    "punkte": [
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p001",
+            "klang": "accordion_34_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p002",
+            "klang": "accordion_34_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p003",
+            "klang": "accordion_34_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p004",
+            "klang": "accordion_61_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p005",
+            "klang": "accordion_61_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p006",
+            "klang": "accordion_61_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p007",
+            "klang": "accordion_88_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p008",
+            "klang": "accordion_88_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Accordion (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p009",
+            "klang": "accordion_88_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p010",
+            "klang": "harmonium_53_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p011",
+            "klang": "harmonium_53_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p012",
+            "klang": "harmonium_53_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p013",
+            "klang": "harmonium_68_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p014",
+            "klang": "harmonium_68_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p015",
+            "klang": "harmonium_68_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p016",
+            "klang": "harmonium_84_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p017",
+            "klang": "harmonium_84_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonium (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p018",
+            "klang": "harmonium_84_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p019",
+            "klang": "melodica_58_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p020",
+            "klang": "melodica_58_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p021",
+            "klang": "melodica_58_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p022",
+            "klang": "melodica_68_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p023",
+            "klang": "melodica_68_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p024",
+            "klang": "melodica_68_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p025",
+            "klang": "melodica_79_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p026",
+            "klang": "melodica_79_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Melodica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p027",
+            "klang": "melodica_79_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p028",
+            "klang": "harmonica_65_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p029",
+            "klang": "harmonica_65_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p030",
+            "klang": "harmonica_65_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p031",
+            "klang": "harmonica_78_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p032",
+            "klang": "harmonica_78_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p033",
+            "klang": "harmonica_78_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p034",
+            "klang": "harmonica_91_a-18",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p035",
+            "klang": "harmonica_91_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach Harmonica (ungemessen)? Farbe ueber die Staerke glaubhaft?",
+            "id": "p036",
+            "klang": "harmonica_91_a0",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Waechst der Ton glaubhaft mit dem Wind (lauter, heller)?",
+            "id": "p037",
+            "klang": "accordion_61_a0_crescendo",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Waechst der Ton glaubhaft mit dem Wind? (Befund ZV14 a: hier wird er leicht dunkler)",
+            "id": "p038",
+            "klang": "accordion_55_a0_crescendo",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt das Vibrato (Wind, 5 Hz) glaubhaft?",
+            "id": "p039",
+            "klang": "accordion_61_a-9_vibrato",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Waechst der Ton glaubhaft mit dem Wind (lauter, heller)?",
+            "id": "p040",
+            "klang": "harmonium_68_a0_crescendo",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt das Vibrato (Wind, 5 Hz) glaubhaft?",
+            "id": "p041",
+            "klang": "harmonium_68_a-9_vibrato",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Waechst der Ton glaubhaft mit dem Wind (lauter, heller)?",
+            "id": "p042",
+            "klang": "melodica_68_a0_crescendo",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Waechst der Ton glaubhaft mit dem Wind? (Befund ZV14 a: hier wird er leicht dunkler)",
+            "id": "p043",
+            "klang": "melodica_55_a0_crescendo",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt das Vibrato (Wind, 5 Hz) glaubhaft?",
+            "id": "p044",
+            "klang": "melodica_68_a-9_vibrato",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Waechst der Ton glaubhaft mit dem Wind (lauter, heller)?",
+            "id": "p045",
+            "klang": "harmonica_78_a0_crescendo",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt das Vibrato (Wind, 5 Hz) glaubhaft?",
+            "id": "p046",
+            "klang": "harmonica_78_a-9_vibrato",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt der Balgwechsel nach 1 s glaubhaft (kurzer Einbruch des Drucks)?",
+            "id": "p047",
+            "klang": "accordion_69_a-9_balgwechsel",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach der Bass-Seite eines Akkordeons (Stradella, 8′ + 4′)?",
+            "id": "p048",
+            "klang": "accordion_41_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "einzel",
+            "frage": "Klingt es nach der Bass-Seite eines Akkordeons (Stradella, 8′ + 4′)?",
+            "id": "p049",
+            "klang": "accordion_48_a-9",
+            "pole": [
+                "nein",
+                "ja"
+            ]
+        },
+        {
+            "art": "paar",
+            "id": "p050",
+            "klaenge": [
+                "accordion_57_a-9_musette",
+                "accordion_ein_chor_57_a-9"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Akkordeon (Musette: zwei Choere, schwebend)?"
+        },
+        {
+            "art": "paar",
+            "id": "p051",
+            "klaenge": [
+                "accordion_69_a-9_musette",
+                "accordion_ein_chor_69_a-9"
+            ],
+            "vorzug": "Welcher klingt mehr nach einem Akkordeon (Musette: zwei Choere, schwebend)?"
+        }
+    ],
+    "schema": 1,
+    "titel": "LumiViz 34j: Klasse 10 durchschlagende Zunge — Akkordeon, Harmonium, Melodica, Mundharmonika",
+    "ziel": "Erstes Hoeren der vier Instrumente des Kerns freeReed (ungemessen, Z2 a): Lage und Staerke, der Wind (Crescendo, Vibrato, Balgwechsel), die Bass-Seite und Musette; die offenen Befunde aus ZV14 a (unterer Diskant mit dem Wind dunkler). Loest IC 10_zunge ab (LG1 a)"
+}

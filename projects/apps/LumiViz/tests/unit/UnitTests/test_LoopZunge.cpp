@@ -23,11 +23,15 @@
  *   Expression wirkt nicht als Pegel hinter dem Ton: eine Expression des Musters gleich einem festen Wert der Spur des
  *   Kerns, Bit fuer Bit.
  * - Ein Crescendo am gehaltenen Ton macht ihn lauter und heller; die Spur Pitch senkt die Tonhoehe ueber das Ventil.
+ * - 34j-9: die Hoerliste `zunge_34j` (`LUMIVIZ_34J_WAV=<Hoerort>`) und die Rechenzeit (nur Zahlen).
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
+#include "AudioCore/Lautheit.hpp"
+#include "HoerlisteAblage.hpp"
+#include "HoerlistePegel.hpp"
 #include "InstrumentCore/Pruefsumme.hpp"
 #include "InstrumentMeasure/Bausteine.hpp"
 #include "InstrumentMeasure/ZungeStimmen.hpp"
@@ -37,11 +41,14 @@
 #include "loop/Loop.hpp"
 #include "loop/Tastatur.hpp"
 
+#include <QDir>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -382,4 +389,252 @@ TEST_CASE("Loop Zunge 34j-7: die Spur Pitch senkt die Tonhoehe ueber das Ventil,
     const std::vector<double> xv = links(rendereTon(m, v, kRate));
     CHECK(std::equal(xv.begin(), xv.begin() + kRate, ohne.begin()));
     CHECK_FALSE(std::equal(xv.begin(), xv.end(), ohne.begin()));
+}
+
+TEST_CASE("Loop Zunge 34j-9 Hoerproben (LUMIVIZ_34J_WAV) — Liste fuer HoerTest_Helper: je Instrument drei Lagen und drei Staerken, Wind, Musette")
+{
+    // Werkzeug (Teilplan 34j-9, Muster `Loop Klasse1 34i Hoerproben`): schreibt die Liste im Format von HoerTest_Helper
+    // (dessen Konzept §11, §12, Schema 1) in den Ordner der Variable — der Hoerort
+    // `…\cmake\samples\Hoerproben\LumiViz\zunge_34j` (AU3), Liste und Abdruecke danach auch unter `hoertest/listen/zunge_34j`
+    // (AU3-1 a). Sie loest IC `10_zunge` ab (LG1 a). Gerechnet wie im Programm (rendereTon aus der Datei), jeder Klang auf
+    // einen gemeinsamen Pegel (hoechstens −23 LUFS, ohne Spitze ueber 0,89). Je Instrument tief / mitte / hoch bei den
+    // Stufen −18 / −9 / 0 (2 s), ein Crescendo ueber die Expression (0 → 1 in 2,5 s), Vibrato (20 Cent, 5 Hz); dazu die
+    // zwei offenen Befunde aus ZV14 a (Crescendo an G3 bei Akkordeon und Melodica), der Balgwechsel am Akkordeon (ueber den
+    // Kern, die Spur `bellows` kommt mit 31g in den Loop), die Bass-Seite und Musette gegen einen Chor. Ohne die Variable
+    // meldet er das und prueft nichts. Pruefen: `Hoertest.exe --liste-pruefen <ordner>/liste.json`.
+    const QString ordner = qEnvironmentVariable("LUMIVIZ_34J_WAV");
+    if (ordner.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_34J_WAV nicht gesetzt — keine Hoerproben");
+        return;
+    }
+    const QDir dir(ordner);
+    REQUIRE(QDir().mkpath(dir.filePath(QStringLiteral("klaenge"))));
+    constexpr int kHaltenMs = 2000;
+    constexpr double kZielHoechstens = -23.0;
+    constexpr double kSpitzeHoechstens = 0.89;
+    struct Staerke
+    {
+        const char* name;
+        int stufe;
+    };
+    const Staerke staerken[] = {{"a-18", -18}, {"a-9", -9}, {"a0", 0}};
+    QJsonArray klaenge, messwerte, punkte;
+    QStringList ids;
+    std::vector<hoerliste::Klang> gerechnet;
+    const auto eintragen = [&](const QString& id, std::vector<float> daten, const QJsonObject& achsen, const QString& fassung) {
+        REQUIRE_FALSE(ids.contains(id));
+        ids << id;
+        const lumi::audio::Lautheit vorher = lumi::audio::messeLautheit(daten, kRate);
+        const QString datei = QStringLiteral("klaenge/") + id + QStringLiteral(".wav");
+        gerechnet.push_back(hoerliste::Klang{id, datei, std::move(daten)});
+        klaenge.append(QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("datei"), datei}, {QStringLiteral("fassung"), fassung},
+                                   {QStringLiteral("achsen"), achsen}});
+        messwerte.append(QJsonObject{{QStringLiteral("achsen"), achsen},
+                                     {QStringLiteral("fassung"), fassung},
+                                     {QStringLiteral("werte"), QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("lufs_vorher")},
+                                                                                      {QStringLiteral("wert"), vorher.stille ? -300.0 : std::round(vorher.lufs * 100.0) / 100.0},
+                                                                                      {QStringLiteral("einheit"), QStringLiteral("LUFS")}}}}});
+    };
+    const auto achsenVon = [](const Instrument& inst, int hoehe, const QString& staerke, const QString& spielweise) {
+        QJsonObject a{{QStringLiteral("instrument"), inst.titel}, {QStringLiteral("taste"), hoehe}, {QStringLiteral("ton"), tonName(hoehe)},
+                      {QStringLiteral("staerke"), staerke}};
+        if (!spielweise.isEmpty()) a[QStringLiteral("spielweise")] = spielweise;
+        return a;
+    };
+    // ein Ton wie im Programm; `spielweise` leer: nur Lage und Staerke
+    const auto ablegen = [&](const Instrument& inst, const TonAngabe& t, const Staerke& st, const QString& fassung, const QString& spielweise = {}) {
+        const QString id = inst.name + QStringLiteral("_") + QString::number(t.hoehe) + QStringLiteral("_") + QString::fromLatin1(st.name) +
+                           (spielweise.isEmpty() ? QString() : QStringLiteral("_") + spielweise);
+        TonAngabe a = t;
+        a.instrument = inst.name;
+        a.anschlagStufe = st.stufe;
+        eintragen(id, rendereTon(inst, a, kRate).daten, achsenVon(inst, t.hoehe, QString::fromLatin1(st.name), spielweise), fassung);
+        return id;
+    };
+    const auto punktId = [&] { return QStringLiteral("p%1").arg(punkte.size() + 1, 3, 10, QLatin1Char('0')); };
+    const auto einzel = [&](const QString& id, const QString& frage) {
+        punkte.append(QJsonObject{{QStringLiteral("id"), punktId()},
+                                  {QStringLiteral("art"), QStringLiteral("einzel")},
+                                  {QStringLiteral("klang"), id},
+                                  {QStringLiteral("frage"), frage},
+                                  {QStringLiteral("pole"), QJsonArray{QStringLiteral("nein"), QStringLiteral("ja")}}});
+    };
+    const auto paar = [&](const QString& a, const QString& b, const QString& frage) {
+        punkte.append(QJsonObject{{QStringLiteral("id"), punktId()},
+                                  {QStringLiteral("art"), QStringLiteral("paar")},
+                                  {QStringLiteral("klaenge"), QJsonArray{a, b}},
+                                  {QStringLiteral("vorzug"), frage}});
+    };
+    const std::string namen[] = {"accordion", "harmonium", "melodica", "harmonica"};
+    // je Instrument drei Lagen und drei Staerken
+    for (const std::string& name : namen)
+    {
+        const Instrument inst = instrumentVon(name);
+        const zunge::ZungenSpiel& s = vorlage(name).spiel;
+        for (const int hoehe : {s.noteMin + 5, (s.noteMin + s.noteMax) / 2, s.noteMax - 5})
+            for (const Staerke& st : staerken)
+                einzel(ablegen(inst, ton(hoehe, kHaltenMs), st, QStringLiteral("vorgabe")),
+                       QStringLiteral("Klingt es nach %1 (ungemessen)? Farbe ueber die Staerke glaubhaft?").arg(inst.titel));
+    }
+    // der Wind: Crescendo und Vibrato an der Mitte; die Befunde aus ZV14 a an G3 (Akkordeon E3–A3, Melodica F3–A3 werden
+    // mit dem Wind leicht dunkler)
+    for (const std::string& name : namen)
+    {
+        const Instrument inst = instrumentVon(name);
+        const zunge::ZungenSpiel& s = vorlage(name).spiel;
+        const int mitte = (s.noteMin + s.noteMax) / 2;
+        std::vector<int> tasten{mitte};
+        if (name == "accordion" || name == "melodica") tasten.push_back(55);
+        for (const int hoehe : tasten)
+        {
+            TonAngabe t = ton(hoehe, 3000);
+            t.ausdruckMuster = {{0, 0}, {2500, 1000}};
+            einzel(ablegen(inst, t, staerken[2], QStringLiteral("wind"), QStringLiteral("crescendo")),
+                   hoehe == mitte ? QStringLiteral("Waechst der Ton glaubhaft mit dem Wind (lauter, heller)?")
+                                  : QStringLiteral("Waechst der Ton glaubhaft mit dem Wind? (Befund ZV14 a: hier wird er leicht dunkler)"));
+        }
+        TonAngabe v = ton(mitte, kHaltenMs);
+        v.vibrato = {{0, 20}};
+        einzel(ablegen(inst, v, staerken[1], QStringLiteral("wind"), QStringLiteral("vibrato")),
+               QStringLiteral("Klingt das Vibrato (Wind, 5 Hz) glaubhaft?"));
+    }
+    const Instrument& akk = akkordeon();
+    // der Balgwechsel ueber den Kern (der Loop kennt die Spur erst mit 31g): 1 s ziehen, dann schieben
+    {
+        const int hoehe = 69;
+        const std::shared_ptr<const kern::Tonkern> k = kern::kerne().erzeuge(zunge::kKernName, akk.schichten[0].kernWerte);
+        REQUIRE(k != nullptr);
+        kern::Tonauftrag a = kern::einzelnote(hoehe, 440.0, -9, 2 * kRate, 0, kRate);
+        a.frames = 2 * kRate + k->nachklang(a, 4 * kRate);
+        a.spuren.push_back(kern::Spur{std::string(zunge::kSpurBalg), {{0, 0.0}, {kRate - 1, 0.0}, {kRate, 1.0}}});
+        std::vector<float> mono;
+        k->rechne(a, mono);
+        std::vector<float> stereo(2 * mono.size());
+        for (std::size_t i = 0; i < mono.size(); ++i) stereo[2 * i] = stereo[2 * i + 1] = mono[i];
+        const QString id = akk.name + QStringLiteral("_69_a-9_balgwechsel");
+        eintragen(id, std::move(stereo), achsenVon(akk, hoehe, QStringLiteral("a-9"), QStringLiteral("balgwechsel")), QStringLiteral("wind"));
+        einzel(id, QStringLiteral("Klingt der Balgwechsel nach 1 s glaubhaft (kurzer Einbruch des Drucks)?"));
+    }
+    // die Bass-Seite (unter F3, 8′ + 4′, ZV6 a)
+    for (const int hoehe : {41, 48})
+        einzel(ablegen(akk, ton(hoehe, kHaltenMs), staerken[1], QStringLiteral("vorgabe")),
+               QStringLiteral("Klingt es nach der Bass-Seite eines Akkordeons (Stradella, 8′ + 4′)?"));
+    // Musette gegen einen Chor: dieselbe Datei, nur der erste Chor
+    Instrument einChor = akk;
+    einChor.name = QStringLiteral("accordion_ein_chor");
+    {
+        kern::Wert* w = einChor.schichten[0].kernWerte.finde("ranks");
+        REQUIRE(w != nullptr);
+        auto* liste = std::get_if<kern::Liste>(w);
+        REQUIRE(liste != nullptr);
+        REQUIRE(liste->eintraege.size() == 2);
+        liste->eintraege.resize(1);
+    }
+    int paare = 0;
+    for (const int hoehe : {57, 69})
+    {
+        const QString musette = ablegen(akk, ton(hoehe, kHaltenMs), staerken[1], QStringLiteral("musette"), QStringLiteral("musette"));
+        const QString id = einChor.name + QStringLiteral("_") + QString::number(hoehe) + QStringLiteral("_a-9");
+        TonAngabe t = ton(hoehe, kHaltenMs);
+        t.instrument = einChor.name;
+        t.anschlagStufe = -9;
+        eintragen(id, rendereTon(einChor, t, kRate).daten, achsenVon(akk, hoehe, QStringLiteral("a-9"), QStringLiteral("ein_chor")),
+                  QStringLiteral("ein_chor"));
+        paar(musette, id, QStringLiteral("Welcher klingt mehr nach einem Akkordeon (Musette: zwei Choere, schwebend)?"));
+        ++paare;
+    }
+
+    const qsizetype punkteGeplant = punkte.size();
+    const hoerliste::Bereinigt bereinigt = hoerliste::bereinige(klaenge, messwerte, punkte, gerechnet, kRate);
+    const hoerliste::Pegel pegel = hoerliste::gleicheAn(gerechnet, kRate, kZielHoechstens, kSpitzeHoechstens);
+    hoerliste::ohneKlaenge(klaenge, messwerte, punkte, pegel.stille);
+    const QStringList summen = hoerliste::schreibeKlaenge(dir, gerechnet, kRate);
+    const QJsonObject liste{
+        {QStringLiteral("schema"), 1},
+        {QStringLiteral("titel"), QStringLiteral("LumiViz 34j: Klasse 10 durchschlagende Zunge — Akkordeon, Harmonium, Melodica, Mundharmonika")},
+        {QStringLiteral("ziel"), QStringLiteral("Erstes Hoeren der vier Instrumente des Kerns freeReed (ungemessen, Z2 a): Lage und Staerke, der "
+                                                "Wind (Crescendo, Vibrato, Balgwechsel), die Bass-Seite und Musette; die offenen Befunde aus "
+                                                "ZV14 a (unterer Diskant mit dem Wind dunkler). Loest IC 10_zunge ab (LG1 a)")},
+        {QStringLiteral("katalog"), QJsonValue::Null},
+        {QStringLiteral("kontrolle"), QStringLiteral("moderat")},
+        {QStringLiteral("pegel"), QJsonObject{{QStringLiteral("lufs"), pegel.ziel}, {QStringLiteral("toleranz_lu"), 1}}},
+        {QStringLiteral("dauer_s"), QJsonValue::Null},
+        {QStringLiteral("gruppe_nach"), QJsonArray{QStringLiteral("instrument")}},
+        {QStringLiteral("fassungen"),
+         QJsonObject{{QStringLiteral("vorgabe"), QStringLiteral("die mitgelieferte Datei (Kern freeReed, Vorgaben je Taste S190, gestimmt), ungemessen")},
+                     {QStringLiteral("wind"), QStringLiteral("dieselbe Datei mit Wind ueber der Zeit (Expression, Vibrato, Balg; ZV3 a)")},
+                     {QStringLiteral("musette"), QStringLiteral("das Akkordeon, wie geliefert: zwei Choere 8′ gegeneinander verstimmt (Musette)")},
+                     {QStringLiteral("ein_chor"), QStringLiteral("das Akkordeon mit nur dem ersten Chor")}}},
+        {QStringLiteral("klaenge"), klaenge},
+        {QStringLiteral("messwerte"), messwerte},
+        {QStringLiteral("punkte"), punkte}};
+    QFile aus(dir.filePath(QStringLiteral("liste.json")));
+    REQUIRE(aus.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    REQUIRE(aus.write(QJsonDocument(liste).toJson(QJsonDocument::Indented)) > 0);
+    aus.close();
+    QFile summenDatei(dir.filePath(QStringLiteral("klaenge.sha256")));
+    REQUIRE(summenDatei.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    QByteArray text = "# Abdruck jedes Klangs (SHA-256 der WAV-Datei). Geschrieben mit: LUMIVIZ_34J_WAV=<dieser Ordner> LumiViz.UnitTests "
+                      "--test-case=\"Loop Zunge 34j-9 Hoerproben*\"\n";
+    for (const QString& z : summen) text += z.toUtf8() + '\n';
+    REQUIRE(summenDatei.write(text) > 0);
+    summenDatei.close();
+    hoerliste::legeInsRepo(dir);  // AU3-1 a
+    MESSAGE(klaenge.size() << " Klaenge, " << punkte.size() << " Punkte (davon " << paare << " Paare) unter " << ordner.toStdString());
+    MESSAGE("Pegel " << pegel.ziel << " LUFS; " << pegel.stille.size() << " still: " << pegel.stille.join(QStringLiteral(", ")).toStdString());
+    MESSAGE("ohne Ton (LV6-3 a): " << bereinigt.ohneTon.join(QStringLiteral(", ")).toStdString()
+                                   << "; gleich klingend (LV6-1 a): " << bereinigt.gleich.join(QStringLiteral(", ")).toStdString());
+    CHECK(paare == 2);
+    CHECK(punkteGeplant == 36 + (4 + 2) + 4 + 1 + 2 + 2);
+    CHECK(bereinigt.ohneTon.isEmpty());
+    CHECK(pegel.stille.isEmpty());
+}
+
+TEST_CASE("Loop Zunge 34j-9 Rechenzeit: Akkordeon (Musette und Bass-Seite) und die drei anderen, Anteil an der Echtzeit")
+{
+    // Meldet nur Zahlen (wie `*34h-6 Rechenzeit*`): je Ton ff, 2 s gehalten, das Beste aus drei Laeufen; dazu das Verhaeltnis
+    // zum Fluegel-Kern (A0, Stufe 0, 4 s gehalten, 4,8 s Ton). Die Grenze von 4,6 % prueft Claude von Hand (RZ1-1 a: dreimal
+    // allein nach der Taktprobe, Release-clang) — ausgesetzt, bis die Kuehlung getauscht ist (S181).
+    const auto anteil = [](const kern::Tonkern& k, const kern::Tonauftrag& a) {
+        std::vector<float> t;
+        double best = 1e9;
+        for (int i = 0; i < 3; ++i)
+        {
+            const auto t0 = std::chrono::steady_clock::now();
+            k.rechne(a, t);
+            best = std::min(best, std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
+        }
+        return best / (static_cast<double>(a.frames) / a.rate);
+    };
+    double schwerst = 0.0;
+    std::string welcher;
+    const auto miss = [&](const std::string& name, int note, const std::string& was) {
+        const Instrument inst = instrumentVon(name);
+        const std::shared_ptr<const kern::Tonkern> k = kern::kerne().erzeuge(zunge::kKernName, inst.schichten[0].kernWerte);
+        REQUIRE(k != nullptr);
+        kern::Tonauftrag a = kern::einzelnote(note, 440.0 * std::exp2((note - 69) / 12.0), 0, 2 * kRate, 0, kRate);
+        a.frames = 2 * kRate + k->nachklang(a, 4 * kRate);
+        const double x = anteil(*k, a);
+        MESSAGE(name << " " << was << " an " << note << ": " << 100.0 * x << " % der Echtzeit");
+        if (x > schwerst)
+        {
+            schwerst = x;
+            welcher = name + " " + std::to_string(note);
+        }
+    };
+    miss("accordion", 69, "Musette (zwei Choere)");
+    miss("accordion", 41, "Bass-Seite (8′ + 4′)");
+    miss("accordion", 29, "tiefster Bass");
+    for (const std::string name : {"harmonium", "melodica", "harmonica"})
+    {
+        const zunge::ZungenSpiel& s = vorlage(name).spiel;
+        miss(name, (s.noteMin + s.noteMax) / 2, "Mitte");
+    }
+    const std::shared_ptr<const kern::Tonkern> f = kern::kerne().erzeuge("hammerString", kern::vorgaben(kern::kerne().typ("hammerString")->tafel));
+    REQUIRE(f != nullptr);
+    const double fl = anteil(*f, kern::einzelnote(21, 27.5, 0, 4 * kRate, static_cast<kern::Frames>(4.8 * kRate), kRate));
+    MESSAGE("schwerster Ton: " << welcher << " " << 100.0 * schwerst << " % der Echtzeit, " << schwerst / fl << " x Fluegel (A0 " << 100.0 * fl << " %)");
+    CHECK(schwerst > 0.0);
+    CHECK(fl > 0.0);
 }

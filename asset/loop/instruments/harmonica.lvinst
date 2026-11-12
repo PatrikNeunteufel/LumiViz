@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Harmonica",
     "category": "wind",
-    "genres": [],
+    "genres": ["Folk"],
     "description": "A small free reed per hole, blown without pallet, the breath of 0.15 to 1 kPa as the wind; unmeasured.",
     "level": 1.0457,
     "layers": [

@@ -1,0 +1,143 @@
+{
+    "format": "lumiviz-loop",
+    "version": 11,
+    "bpm": 90,
+    "beatsPerBar": 4,
+    "stepsPerBeat": 4,
+    "swing": 0.0,
+    "volume": 1.0,
+    "tags": {
+        "title": "Melodica nuances",
+        "artist": "LumiViz",
+        "genre": ""
+    },
+    "patterns": [
+        {
+            "name": "Notes",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "melodica",
+            "volume": 0.7,
+            "pan": 0.0,
+            "mute": false,
+            "notes": [
+                [0, 2, 53, 0.7],
+                [2, 2, 57, 0.7],
+                [4, 2, 62, 0.7],
+                [6, 2, 65, 0.7],
+                [8, 2, 71, 0.7],
+                [10, 2, 74, 0.7],
+                [12, 2, 79, 0.7],
+                [14, 2, 84, 0.7],
+                [16, 2, 67, 0.12],
+                [18, 2, 67, 0.25],
+                [20, 2, 67, 0.38],
+                [22, 2, 67, 0.5],
+                [24, 2, 67, 0.62],
+                [26, 2, 67, 0.75],
+                [28, 2, 67, 0.88],
+                [30, 2, 67, 1.0],
+                [32, 1, 67, 0.7],
+                [34, 2, 67, 0.7],
+                [36, 4, 67, 0.7],
+                [40, 8, 67, 0.7],
+                [48, 1, 67, 0.7],
+                [50, 1, 71, 0.7],
+                [52, 1, 74, 0.7],
+                [54, 1, 79, 0.7],
+                [56, 8, 67, 0.8],
+                [56, 8, 71, 0.8],
+                [56, 8, 74, 0.8]
+            ],
+            "lanes": {
+                "sustain": [],
+                "sostenuto": [],
+                "expression": [
+                    [0, 1.0],
+                    [55.5, 1.0],
+                    [56, 0.2],
+                    [60, 1.0],
+                    [63, 0.4]
+                ],
+                "vibrato": [],
+                "pitch": [],
+                "switches": {}
+            }
+        },
+        {
+            "name": "Techniques",
+            "kind": "drumkit",
+            "bars": 2,
+            "tracks": [
+                {
+                    "name": "Normal",
+                    "sound": "",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "melodica",
+                    "note": 67,
+                    "length": 1000,
+                    "coreTracks": {}
+                },
+                {
+                    "name": "Vibrato",
+                    "sound": "",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "melodica",
+                    "note": 67,
+                    "length": 1000,
+                    "coreTracks": {
+                        "vibrato": 20
+                    }
+                },
+                {
+                    "name": "Pallet half closed",
+                    "sound": "",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "melodica",
+                    "note": 67,
+                    "length": 1000,
+                    "coreTracks": {
+                        "pitch": -20
+                    }
+                }
+            ],
+            "rows": [
+                [0.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            ]
+        }
+    ],
+    "channels": [
+        {
+            "name": "Notes",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Notes",
+                    "start": 0,
+                    "repeat": 1
+                }
+            ],
+            "gain": 0.0
+        },
+        {
+            "name": "Techniques",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Techniques",
+                    "start": 4,
+                    "repeat": 1
+                }
+            ],
+            "gain": 0.0
+        }
+    ]
+}

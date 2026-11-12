@@ -7,23 +7,25 @@
 Schreibt unter `asset/loop/modelled_instruments/`:
 
 - **je Instrument ein Loop der Nuancen** (IL1 a), `<instrument>.lvloop`, fuer jedes Instrument, das einen Kern
-  rechnet (`grand_piano`, die Stabspiele aus 34g, die Trommeln aus 34h, die Tasten aus 34i). Kein Instrument dort heisst
+  rechnet (`grand_piano`, die Stabspiele aus 34g, die Trommeln aus 34h, die Tasten aus 34i, die Zungen aus 34j). Kein
+  Instrument dort heisst
   wie ein Beispiel (`*_demo`). Gleicher Aufbau, damit sich
   die Loops vergleichen lassen; 90 bpm, Sechzehntel:
   - Muster *Notes* (vier Takte, nur Instrumente mit mehr als einer Tonhoehe): Takt 1 **Lage** (acht Achtel vom unteren
     zum oberen Ende des Umfangs, auf C-Dur), Takt 2 **Staerke** (die Mitte in acht Stufen, 0,12 … 1), Takt 3 **Laenge**
     (Sechzehntel, Achtel, Viertel, Halbe), Takt 4 **Pedal und Expression** (ein Arpeggio in Sechzehnteln mit Sustain,
-    dann ein Akkord, der auf der Spur Expression an- und abschwillt).
+    dann ein Akkord, der auf der Spur Expression an- und abschwillt; an einer Zunge ist die Expression der Wind, ZV3 a).
+    Das Akkordeon spielt in Takt 1 auch auf der Bass-Seite (unter F3).
   - Muster *Strength* (ein Takt, nur Trommeln mit einer Tonhoehe): die Staerke in acht Stufen als Drum-Spur.
   - Muster *Techniques*: die **Spielweisen des Kerns** als Drum-Spuren mit festem `coreTracks` (IL2 a; TM2 a — Werte
     ueber der Zeit am Muster kommen mit 31g). Jede Spur ein Schlag auf einen halben Takt, die erste *Normal* ohne Spur
     zum Vergleich. Welche Spielweise ein Instrument zeigt, steht unten in `SPIELWEISEN`; jede ist durch den Fall
     `*Modelled loops*` in `test_LoopModelled.cpp` belegt: sie aendert den Ton.
   Die Loops der Nuancen tragen kein Genre (sie zaehlen im Katalog nicht).
-- **das Ensemble** `modelled_ensemble.lvloop` (IL1 a): acht Takte, 100 bpm, Am – F – C – G zweimal; alle Instrumente oben
-  zusammen, die Trommeln ueber das Kit `modelled_drums` (Rollen wie `make_membran_loops.py`), Genre *Fusion*.
+- **das Ensemble** `modelled_ensemble.lvloop` (IL1 a): acht Takte, 100 bpm, Am – F – C – G zweimal; die Instrumente bis
+  34i zusammen (die Zungen aus 34j spielen in `free_reeds_demo`), die Trommeln ueber das Kit `modelled_drums` (Rollen wie `make_membran_loops.py`), Genre *Fusion*.
 
-Die Beispiele je Klasse (`grand_piano_demo`, `bars_demo`, `membrane_demo`, `keys_demo`) und das ganze Stueck
+Die Beispiele je Klasse (`grand_piano_demo`, `bars_demo`, `membrane_demo`, `keys_demo`, `free_reeds_demo`) und das ganze Stueck
 `full/nocturne_demo` schreiben ihre eigenen Skripte in denselben Ordner. Der Umfang jedes Instruments kommt aus seiner
 Datei (`coreParams` `noteMin`/`noteMax`), nicht aus einer Liste hier. Die Lautstaerken der Muster sind fuer den Pegel
 der Instrumente auf dem Bezug gesetzt (`instrument_pegel.PEGEL`: alt = neu); die Lautstaerke jedes Loops kommt aus der
@@ -48,7 +50,8 @@ STAEBE = ["marimba", "vibraphone", "xylophone", "glockenspiel", "tubular_bells",
           "tine_electric_piano", "reed_electric_piano"]
 TROMMELN = ["bass_drum", "snare_drum", "low_tom", "conga", "bongo", "tabla", "timpani"]
 TASTEN = ["clavinet_modal"]
-ALLE = FLUEGEL + STAEBE + TROMMELN + TASTEN
+ZUNGEN = ["accordion", "harmonium", "melodica", "harmonica"]
+ALLE = FLUEGEL + STAEBE + TROMMELN + TASTEN + ZUNGEN
 
 # die Rolle im Kit `modelled_drums` je Trommel (die Lautstaerke kommt von dort)
 ROLLE = {"bass_drum": "kick", "snare_drum": "snare", "low_tom": "tom 1", "conga": "perc 1", "bongo": "perc 2",
@@ -57,7 +60,9 @@ ROLLE = {"bass_drum": "kick", "snare_drum": "snare", "low_tom": "tom 1", "conga"
 # Spielweisen je Instrument: (Name der Spur, coreTracks, Laenge in ms). Die Werte der Spuren nach den Kernen:
 # hammerString soft/practice (getreten), struckString damperSlider 0…1, pickupSelection 0…3 (Beide, Steg, Mitte,
 # Gegenphase), keyPressure Cent; bar motor U/s, bowed 0/1, malletOffset x/L, damperPressure 0…1; membrane stroke 0…5
-# (Normal, Mitte, Rand, Randschlag, Reifen, Gedaempft), roll 0/1, snaresOff 0/1, pitch Cent.
+# (Normal, Mitte, Rand, Randschlag, Reifen, Gedaempft), roll 0/1, snaresOff 0/1, pitch Cent; freeReed vibrato Cent (der
+# Druck schwankt um ±0,2 % je Cent, 5 Hz), pitch Cent (ueber das Ventil, nur Akkordeon und Melodica: `palletBend`,
+# ZV7 a, ZV9 a — an Harmonium und Mundharmonika ohne Wirkung).
 #
 # Nur Spielweisen, die am Instrument wirken (der Fall `*Modelled loops*` misst es). Nicht dabei, weil die Werte aus IC
 # sie heute abschalten (S182 gemessen, −∞ dB Unterschied): `soft` an allen drei Hammer-Klavieren (`softFactor` 1),
@@ -74,6 +79,8 @@ STOCK = [NORMAL, ("Centre", {"stroke": 1}, 1000), ("Edge", {"stroke": 2}, 1000),
          ("Pitch down", {"pitch": -300}, 1000), ("Pitch up", {"pitch": 300}, 1000)]
 HAND = [NORMAL, ("Centre", {"stroke": 1}, 1000), ("Edge", {"stroke": 2}, 1000), ("Muted", {"stroke": 5}, 1000),
         ("Pitch down", {"pitch": -300}, 1000), ("Pitch up", {"pitch": 300}, 1000)]
+ZUNGE = [NORMAL, ("Vibrato", {"vibrato": 20}, 1000)]
+ZUNGE_VENTIL = ZUNGE + [("Pallet half closed", {"pitch": -20}, 1000)]
 SPIELWEISEN = {
     # nur, was das Instrument hat: das Upright und das Honky-tonk den Moderator; der Fluegel nur una corda (heute ohne
     # Wirkung, s. oben) und der CP-70 keins von beiden — beide ohne Muster *Techniques* (Sustain zeigt Takt 4)
@@ -99,6 +106,12 @@ SPIELWEISEN = {
     "clavinet_modal": [("Normal", {}, 400), ("Damper slider half", {"damperSlider": 0.5}, 400),
                        ("Damper slider full", {"damperSlider": 1}, 400), ("Bridge pickup", {"pickupSelection": 1}, 400),
                        ("Middle pickup", {"pickupSelection": 2}, 400), ("Out of phase", {"pickupSelection": 3}, 400)],
+    # 34j-9: Balgwechsel und Bend als Verlauf brauchen Werte ueber der Zeit (31g); fest geht der Wind mit Vibrato und
+    # das halb geschlossene Ventil
+    "accordion": ZUNGE_VENTIL,
+    "harmonium": ZUNGE,
+    "melodica": ZUNGE_VENTIL,
+    "harmonica": ZUNGE,
 }
 # ohne Daempfer kein Sustain: die Trommeln
 MIT_PEDAL = set(FLUEGEL + STAEBE + TASTEN)

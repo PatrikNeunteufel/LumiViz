@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Melodica",
     "category": "wind",
-    "genres": [],
+    "genres": ["Folk"],
     "description": "The free reeds of the accordion treble, one rank, blown through a mouthpiece; half-pressed keys bend through the pallet; unmeasured.",
     "level": 0.5814,
     "layers": [

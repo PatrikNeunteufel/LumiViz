@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Accordion",
     "category": "keys",
-    "genres": [],
+    "genres": ["Folk"],
     "description": "A free reed per key in its chamber behind a pallet, driven by one bellows for all keys; two reeds a musette apart on the treble side (2 Hz at A4, Hergert 2023), the Stradella bass side in 8' and 4'; half-pressed keys bend through the pallet (Adachi et al. 2026); unmeasured.",
     "level": 0.8904,
     "layers": [

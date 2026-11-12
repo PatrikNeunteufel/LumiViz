@@ -39,6 +39,7 @@ LAUT_MAX = 1.0
 
 # --- LAUT: geschrieben von --messung; Loop (ohne .lvloop, relativ zu asset/loop): Lautstaerke ---
 LAUT = {
+    "modelled_instruments/accordion": 1.0,
     "modelled_instruments/bars_demo": 1.0,
     "modelled_instruments/bass_drum": 0.7543,
     "modelled_instruments/bongo": 0.6082,
@@ -46,14 +47,18 @@ LAUT = {
     "modelled_instruments/clavinet_modal": 0.4262,
     "modelled_instruments/conga": 0.5184,
     "modelled_instruments/electric_grand_piano": 1.0,
+    "modelled_instruments/free_reeds_demo": 1.0,
     "modelled_instruments/glockenspiel": 1.0,
     "modelled_instruments/grand_piano": 1.0,
     "modelled_instruments/grand_piano_demo": 1.0,
+    "modelled_instruments/harmonica": 1.0,
+    "modelled_instruments/harmonium": 1.0,
     "modelled_instruments/honky_tonk_piano": 1.0,
     "modelled_instruments/kalimba": 1.0,
     "modelled_instruments/keys_demo": 0.759,
     "modelled_instruments/low_tom": 0.617,
     "modelled_instruments/marimba": 1.0,
+    "modelled_instruments/melodica": 1.0,
     "modelled_instruments/membrane_demo": 0.3475,
     "modelled_instruments/modelled_ensemble": 0.2707,
     "modelled_instruments/reed_electric_piano": 1.0,

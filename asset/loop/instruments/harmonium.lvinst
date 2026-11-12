@@ -3,7 +3,7 @@
     "version": 24,
     "title": "Harmonium",
     "category": "keys",
-    "genres": [],
+    "genres": ["Folk"],
     "description": "A free reed per key in its chamber, one wind of 0.2 to 1.5 kPa for all keys (Puranik & Scavone 2023), behind a case low-pass; unmeasured.",
     "level": 0.7348,
     "layers": [

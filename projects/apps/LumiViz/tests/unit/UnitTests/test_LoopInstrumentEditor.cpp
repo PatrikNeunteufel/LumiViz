@@ -2211,6 +2211,113 @@ TEST_SUITE("LoopInstrumentEditor")
         }
     }
 
+    TEST_CASE("Instrument-Creator 34j-9: das Akkordeon (Kern freeReed) — Core und Level, die Choere als Listen, die gestimmten Kurven, Save as")
+    {
+        // Die Choere (Musette, zwei Eintraege) und die Bass-Seite (8′ + 4′, ZV6 a) stehen als Listen in der Tafel, die
+        // gestimmten Werte (Stimmer, ZV8 a, ZV10 a, ZV13 a) als Kurven ueber den Umfang F1–A6. `LUMIVIZ_CREATOR_CORE_BILD=<datei.png>`
+        // legt dazu ein Bild mit `_accordion` ab (die Gruppen Ranks und Tunable aufgeklappt).
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        const Instrument* gefunden = findeInstrument(QStringLiteral("accordion"));
+        REQUIRE_MESSAGE(gefunden != nullptr, "accordion nicht gefunden — aus dem Projekt-Root starten");
+        const Instrument akk = *gefunden;
+        REQUIRE(istKernSchicht(akk.schichten[0]));
+        CHECK(akk.schichten[0].kernName == QStringLiteral("freeReed"));
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        creator.oeffne(akk);
+        SignalWeg* weg = creator.signalWeg();
+        REQUIRE(weg != nullptr);
+        weg->resize(1400, 40);
+        QStringList namen;
+        for (const WegKasten& einer : weg->kaesten()) namen << einer.titel;
+        CHECK(namen == QStringList{QStringLiteral("Core"), QStringLiteral("Level")});  // die Zunge rechnet Kanzelle und Gehaeuse selbst (CK1 a)
+        auto* marke = creator.findChild<QLabel*>(QStringLiteral("creatorUnmeasured"));
+        REQUIRE(marke != nullptr);
+        CHECK_FALSE(marke->isHidden());  // Z2 a: ungemessen
+
+        KernAnsicht* ansicht = creator.kernAnsicht();
+        REQUIRE(ansicht != nullptr);
+        const lumi::kern::Parametertafel& tafel = lumi::kern::kerne().typ("freeReed")->tafel;
+        QStringList gruppen;
+        for (const std::string& g : tafel.gruppen) gruppen << QString::fromStdString(g);
+        CHECK(ansicht->gruppen() == gruppen);
+        CHECK(ansicht->zeilen().size() == static_cast<qsizetype>(tafel.werte.size()));
+        const auto zeileVon = [&](const char* name) {
+            for (const lumi::kern::ParameterAngabe& a : tafel.werte)
+                if (a.name == name)
+                {
+                    const QString kopf = QString::fromStdString(a.gruppe) + QStringLiteral(" / ") + QString::fromStdString(a.titel) + QStringLiteral(": ");
+                    for (const QString& z : ansicht->zeilen())
+                        if (z.startsWith(kopf)) return z;
+                }
+            return QString();
+        };
+        // Musette: zwei Choere 8′ gegeneinander verstimmt (Hergert); die Bass-Seite 8′ + 4′ (ZV6 a)
+        CHECK(zeileVon("ranks") == QStringLiteral("Ranks / Ranks: 2 entries [Source]"));
+        CHECK(zeileVon("bassRanks") == QStringLiteral("Bass ranks / Bass ranks: 2 entries [Computed]"));
+        CHECK(zeileVon("noteMin").contains(QStringLiteral("F1 (29)")));
+        CHECK(zeileVon("noteMax").contains(QStringLiteral("A6 (93)")));
+        CHECK(zeileVon("bassBelow").contains(QStringLiteral("F3 (53)")));
+        // die gestimmten Werte (Gruppe Tunable): je Taste des Umfangs ein Wert, keiner fehlt. Unter der Dynamik einer Taste
+        // ist die Staerke einer Stufe 0 (ZV10 a) — beim Akkordeon ab −10 dB an jeder Taste; nicht nur 0 muessen die Stufe
+        // −2 dB, der Nachklang und die Grenze des Bends sein
+        int gestimmt = 0;
+        for (const lumi::kern::ParameterAngabe& a : tafel.werte)
+        {
+            if (a.gruppe != "Tunable") continue;
+            CAPTURE(a.name);
+            auto* bild = ansicht->findChild<KernKurvenBild*>(QStringLiteral("creatorCoreCurve_") + QString::fromStdString(a.name));
+            REQUIRE(bild != nullptr);
+            CHECK(bild->werte().size() == static_cast<std::size_t>(93 - 29 + 1));
+            CHECK_FALSE(zeileVon(a.name.c_str()).contains(QStringLiteral("missing")));
+            if (a.name == "strengthAtLevel2" || a.name == "releaseTime" || a.name == "bendLimitCent")
+                CHECK(std::any_of(bild->werte().begin(), bild->werte().end(), [](double w) { return w != 0.0; }));
+            ++gestimmt;
+        }
+        MESSAGE(gestimmt << " gestimmte Kurven in der Ansicht");
+        CHECK(gestimmt == 21);  // f₀, sieben Stufen des Bends und die Grenze in Oeffnung und Cent (ZV8 a), zehn Stufen (ZV10 a), Nachklang (ZV13 a)
+        CHECK_FALSE(creator.geaendert());
+
+        // Save as: Bit fuer Bit, klingt gleich
+        REQUIRE(creator.speichereAlsEigenes(QStringLiteral("Mein Akkordeon")));
+        QFile kopie(creator.datei());
+        REQUIRE(kopie.open(QIODevice::ReadOnly));
+        const QJsonObject kopieJson = QJsonDocument::fromJson(kopie.readAll()).object();
+        QFile vorlage(QStringLiteral("asset/loop/instruments/accordion.lvinst"));
+        REQUIRE(vorlage.open(QIODevice::ReadOnly));
+        const QJsonObject vorlageJson = QJsonDocument::fromJson(vorlage.readAll()).object();
+        CHECK(kopieJson.value(QStringLiteral("layers")) == vorlageJson.value(QStringLiteral("layers")));
+        CHECK(kopieJson.value(QStringLiteral("keyboard")) == vorlageJson.value(QStringLiteral("keyboard")));
+        Instrument gelesen;
+        REQUIRE(ladeInstrument(creator.datei(), gelesen));
+        CHECK(gelesen.schichten == akk.schichten);
+        for (const int note : {41, 69})  // Bass-Seite und Diskant
+            CHECK(rendereTon(gelesen, note, 300.0, 48000).daten == rendereTon(akk, note, 300.0, 48000).daten);
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_CREATOR_CORE_BILD"); !ziel.isEmpty())
+        {
+            InstrumentCreator gezeigt;
+            gezeigt.oeffne(akk);
+            gezeigt.resize(1500, 1100);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();
+            QCoreApplication::processEvents();
+            QFileInfo info(ziel);
+            CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_accordion.") + info.suffix())));
+        }
+    }
+
     TEST_CASE("Instrument-Editor: Edit instrument oeffnet den Creator — gespeichert nennt die Basis seine Datei")
     {
         int argc = 1;

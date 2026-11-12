@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.342.0
+> **Version:** 1.343.0
 > **Datum:** 2026-11-12 (Sessions 164 bis 192)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2944,11 +2944,12 @@ Stärke je Taste ZV10 a und Nachklang je Taste ZV11 a nach ZV13 a, Journal J72, 
 [2026-11-12_S192_messung_34j7.md](modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md)); **ZV12 a erledigt S192**
 (der Befund „lauter wird dunkler“ war größtenteils ein Messfehler, ZV14 a: Kern bleibt, Befund
 [2026-11-12_S192_zv12_klangfarbe_ueber_druck.md](modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md));
-**offen bis zur Hörprobe 34j-9 (ZV14 a):** Akkordeon E3–A3 und Melodica F3–A3 werden mit dem Wind 0,77–0,98-fach
+**offen bis zur Hörprobe `zunge_34j` (ZV14 a, Punkte Crescendo an G3):** Akkordeon E3–A3 und Melodica F3–A3 werden mit dem Wind 0,77–0,98-fach
 dunkler (das Ventil drosselt), die Amplitude des Harmoniums wächst mit dem Druck 1,5- bis 2-fach (gemessen fast gleich,
 Cottingham u. a. 1999); nicht im Bestand: Ricot, Caussé & Misdariis 2005, Koopman & Cottingham 1997, Llanos-Vázquez u. a.
-2014; **34j-8 erledigt S192** (die vier Zungeninstrumente als `.lvinst`, Journal J73); **als Nächstes 34j-9** (Loops,
-Hörliste, Creator-Fall, Rechenzeit) — alles Konzept §6), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
+2014; **34j-8 erledigt S192** (die vier Zungeninstrumente als `.lvinst`, Journal J73); **34j-9 erledigt S192** (`free_reeds_demo`,
+Loops der Nuancen, Hörliste `zunge_34j` — ⬜ ungehört, löst IC 10 ab —, Creator-Fall; Rechenzeit nur Zahlen bis zur
+Kühlung; Journal J74); **als Nächstes 34j-10** (Doku, Pakete, voller Lauf) — alles Konzept §6), **34k**, dann **34m Klasse 7** (LR1 a, S186: Kern `Blech`
 mit Posaune, Trompete, Alphorn, vor dem Abschluss 34l; Alphorn A2 NaN und Geometrie dort; Teilplan vor dem Bau —
 [Konzept §6](audio/Instrumente_IC_Konzept.md)). Offen aus 34i:
 **der Körper von Upright und Honky-tonk** (KL3-1 a: ohne Boden ausgeliefert; Lücke: Steglinie, Bassteg, Stegpunkte je Taste
@@ -6478,6 +6479,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.343.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34j-9 erledigt (Loops, Hörliste `zunge_34j`, Creator-Fall; Journal J74); als Nächstes 34j-10. |
 | 1.342.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: 34j-8 erledigt (accordion, harmonium, melodica, harmonica; Journal J73); als Nächstes 34j-9. |
 | 1.341.0 | 2026-11-12 | Session 192 (Opus 5.5). §6: ZV12 a erledigt (Messfehler, Rest am unteren Diskant vom Ventil), ZV14 a; zwei Befunde offen bis 34j-9 (unterer Diskant dunkler, Amplitude des Harmoniums über dem Druck). |
 | 1.340.0 | 2026-11-12 | Session 192 (Opus 5.5). §6 Anbindung InstrumentsCalculation: 34j-7 erledigt — ZV10 a (Stufe → Stärke je Taste) und ZV11 a nach ZV13 a (neu: Nachklang als längster Ausklang über sechs Haltedauern und drei Stärken) gebaut, Journal J72; vor 34j-8 ZV12 a. |

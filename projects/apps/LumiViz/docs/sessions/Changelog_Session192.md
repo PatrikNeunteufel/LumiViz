@@ -2,13 +2,18 @@
 
 > Der Kern der durchschlagenden Zunge folgt jetzt der Anschlagstufe und klingt je Taste so lange aus, wie er es
 > tatsächlich tut (34j-7 fertig). Vier neue mitgelieferte Instrumente spielen auf ihm: Accordion, Harmonium, Melodica,
-> Harmonica (34j-8).
+> Harmonica (34j-8), mit einem Beispiel-Loop und je einem Loop ihrer Nuancen (34j-9).
 
 ## Neu
 
 - Vier Instrumente mit durchschlagender Zunge im Fenster *Instruments*: Accordion und Harmonium unter *Keys*, Melodica
-  und Harmonica unter *Wind* — gerechnet, je Taste gestimmt, auf den gemeinsamen Pegel gebracht, ungemessen. Ihre
-  Beispiel-Loops kommen mit 34j-9.
+  und Harmonica unter *Wind* — gerechnet, je Taste gestimmt, auf den gemeinsamen Pegel gebracht, ungemessen; Genre
+  *Folk*.
+- Der Loop *Free reeds demo* (Folk): Akkordeon mit Melodie und Bass-Seite, das Harmonium schwillt über die Expression am
+  Clip an, danach Melodica und Mundharmonika. Je Instrument ein Loop der Nuancen (Lage, Stärke, Länge, Expression;
+  Spielweisen *Vibrato* und am Akkordeon und an der Melodica *Pallet half closed*).
+- Die Hörliste `zunge_34j` für HoerTest_Helper (53 Klänge, 51 Punkte); sie ersetzt die Liste `10_zunge` aus
+  InstrumentsCalculation.
 - Die Anschlagstufe wirkt: je Taste gemessen, bei welcher Stärke der Ton 2, 4 … 20 dB leiser klingt; eine Note bei
   −x dB klingt am Ton nachgemessen x LU leiser, höchstens bis zur Dynamik der Taste (Akkordeon und Melodica auf
   1,8 LU, Harmonium und Mundharmonika auf 0,3 LU). Mit Expression gilt Stärke mal Expression.
@@ -37,4 +42,6 @@
 - Messungen `docs/modellierung/zunge/proben/2026-11-12_S192_messung_34j7.md` und `…_messung_zv12.md`, Befund
   `docs/modellierung/zunge/2026-11-12_S192_zv12_klangfarbe_ueber_druck.md`, Quellenbericht unter `recherche/`.
 - Eng 101 / 101 unter Release-clang und Testing-MSVC, die Stimmung aller vier unter beiden Bit für Bit gleich; nach
-  34j-8 der Bereich der Instrumente, Pegel, Werte und Quellen 292 / 292. Kein voller Lauf (kommt mit 34j-10).
+  34j-8 der Bereich der Instrumente, Pegel, Werte und Quellen 292 / 292; nach 34j-9 Loops, Zunge, Creator, Werte, Klangfassung, Instrumente, Pegel, Quellen und Hörlisten 161 / 161 unter beiden. Kein voller Lauf (kommt mit
+  34j-10).
+- Die Rechenzeit der Zungen nur gemessen, nicht geprüft (Kühlung): 1,3 % der Echtzeit am Akkordeon, 0,6 % an den übrigen.

@@ -435,6 +435,7 @@ loop:house_demo.lvloop	2048516	0.515627086	348582.105
 loop:instrument_demo.lvloop	1693440	0.670242131	232649.042
 loop:jazz_guitar_demo.lvloop	641455	0.335136414	50511.5046
 loop:lanes_demo.lvloop	1008000	0.35161826	96775.4773
+loop:modelled_instruments/accordion.lvloop	705600	0.417108625	43689.6714
 loop:modelled_instruments/bars_demo.lvloop	882000	0.745473266	107703.286
 loop:modelled_instruments/bass_drum.lvloop	588000	0.886035979	29702.9704
 loop:modelled_instruments/bongo.lvloop	470400	0.886107087	7529.87361
@@ -442,15 +443,19 @@ loop:modelled_instruments/celesta.lvloop	705600	0.798027456	33873.6502
 loop:modelled_instruments/clavinet_modal.lvloop	823200	0.886012435	5251.02811
 loop:modelled_instruments/conga.lvloop	470400	0.886032462	10992.7509
 loop:modelled_instruments/electric_grand_piano.lvloop	470400	0.805868149	40759.5674
+loop:modelled_instruments/free_reeds_demo.lvloop	814154	0.535251677	86914.6869
 loop:modelled_instruments/full/nocturne_demo.lvloop	9621818	1.67235684	557647.92
 loop:modelled_instruments/glockenspiel.lvloop	588000	0.367225677	62555.5927
 loop:modelled_instruments/grand_piano.lvloop	470400	0.708220959	30599.6572
 loop:modelled_instruments/grand_piano_demo.lvloop	1176000	0.807979405	113717.999
+loop:modelled_instruments/harmonica.lvloop	588000	0.44401896	25588.3247
+loop:modelled_instruments/harmonium.lvloop	588000	0.371176481	36438.9445
 loop:modelled_instruments/honky_tonk_piano.lvloop	588000	0.865008175	38055.6515
 loop:modelled_instruments/kalimba.lvloop	470400	0.873153865	33678.8411
 loop:modelled_instruments/keys_demo.lvloop	814154	0.886113107	62881.3396
 loop:modelled_instruments/low_tom.lvloop	705600	0.886110961	28051.4218
 loop:modelled_instruments/marimba.lvloop	705600	0.350687951	32077.8742
+loop:modelled_instruments/melodica.lvloop	705600	0.452213705	45439.6099
 loop:modelled_instruments/membrane_demo.lvloop	846720	0.885914028	43889.312
 loop:modelled_instruments/modelled_ensemble.lvloop	846720	0.88583076	44211.1402
 loop:modelled_instruments/reed_electric_piano.lvloop	705600	0.333570272	45053.7543

@@ -2,7 +2,7 @@
  ****************************************************************************************
  * @file   test_LoopModelled.cpp
  * @brief  Loop, S182: die Loops der Instrumente mit Kern unter `asset/loop/modelled_instruments/` (Entscheide Patrik
- *         IL1 a, IL2 a, IL3 a; Skript `asset/loop/make_modelled_loops.py`)
+ *         IL1 a, IL2 a, IL3 a; Skript `asset/loop/make_modelled_loops.py`; seit S192 auch die Zungen aus 34j)
  *
  * @author Patrik Neunteufel
  * @date   November 2026
@@ -14,7 +14,7 @@
  *   Klasse und `full/nocturne_demo` — alle mitgeliefert (`asset/Asset.cmake`), lesbar ohne Bericht; jede Note im Umfang
  *   aus der Tafel des Instruments.
  * - **Spielweisen (IL2 a):** die Spielweisen der Instrumente stehen als Drum-Spuren mit festem `coreTracks` (TM2 a).
- *   Fuer `bar`, `hammerString` und `struckString` ist dieser Weg sonst ungeprueft — ein Name, den der Kern nicht liest,
+ *   Fuer `bar`, `hammerString`, `struckString` und `freeReed` ist dieser Weg sonst ungeprueft — ein Name, den der Kern nicht liest,
  *   aendert nichts (Fall „34h-5 Spielweise im Klang“). Deshalb hier je Spur der Ton mit und ohne ihre Werte, und der
  *   Unterschied muss hoerbar sein: die Energie der Differenz mindestens −40 dB unter der des Tons ohne. Die Zahlen je
  *   Spur stehen in der Ausgabe.
@@ -54,6 +54,8 @@ const QStringList kMitKern = {
     QStringLiteral("reed_electric_piano"), QStringLiteral("bass_drum"),          QStringLiteral("snare_drum"),
     QStringLiteral("low_tom"),             QStringLiteral("conga"),              QStringLiteral("bongo"),
     QStringLiteral("tabla"),               QStringLiteral("timpani"),            QStringLiteral("clavinet_modal"),
+    QStringLiteral("accordion"),           QStringLiteral("harmonium"),          QStringLiteral("melodica"),
+    QStringLiteral("harmonica"),
 };
 
 Instrument liesInstrument(const QString& name)
@@ -114,7 +116,7 @@ TEST_CASE("Modelled loops S182 Aufbau: je Instrument mit Kern ein Loop der Nuanc
     QStringList erwartet;
     for (const QString& name : kMitKern) erwartet << name;
     erwartet << QStringLiteral("modelled_ensemble") << QStringLiteral("grand_piano_demo") << QStringLiteral("bars_demo")
-             << QStringLiteral("membrane_demo") << QStringLiteral("keys_demo");
+             << QStringLiteral("membrane_demo") << QStringLiteral("keys_demo") << QStringLiteral("free_reeds_demo");
     for (const QString& name : erwartet)
         CHECK_MESSAGE(hier.contains(QFileInfo(kOrdner + name + QStringLiteral(".lvloop")).absoluteFilePath()), name.toStdString());
     CHECK_MESSAGE(hier.contains(QFileInfo(kOrdner + QStringLiteral("full/nocturne_demo.lvloop")).absoluteFilePath()),
@@ -196,7 +198,8 @@ TEST_CASE("Modelled loops S182 Spielweisen (IL2 a): jede Drum-Spur mit coreTrack
                 }
     }
     // alle ausser dem CP-70 (er hat nur Sustain), dem Fluegel (una corda mit `softFactor` 1 ohne Wirkung) und der
-    // Kalimba (gezupft) — S182; was die Werte aus IC heute abschalten, steht in make_modelled_loops.py
-    CHECK(mitSpielweise.size() == 18);
+    // Kalimba (gezupft) — S182; was die Werte aus IC heute abschalten, steht in make_modelled_loops.py. S192 (34j-9): die
+    // vier Zungen mit Vibrato, Akkordeon und Melodica dazu mit dem halb geschlossenen Ventil
+    CHECK(mitSpielweise.size() == 22);
     for (const char* ohne : {"electric_grand_piano", "grand_piano", "kalimba"}) CHECK_MESSAGE(!mitSpielweise.count(QLatin1String(ohne)), ohne);
 }

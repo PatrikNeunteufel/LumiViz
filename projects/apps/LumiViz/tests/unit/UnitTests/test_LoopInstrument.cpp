@@ -705,7 +705,7 @@ TEST_SUITE("LoopInstrument")
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Violin steht in keinem (Guitar bis S136,
         // seither in strum_demo), die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine
         // Drum-Spuren), Flower Flute (S123) auch nicht
-        CHECK(ohneGenre == 38);  // S192 (34j-8): die vier Zungeninstrumente bis zu ihren Loops (34j-9); S181 (34i): die vier aus Klasse 1 spielt keys_demo (Jazz); seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie); S179 (34h): die
+        CHECK(ohneGenre == 34);  // S192 (34j-9): die vier Zungeninstrumente spielt free_reeds_demo (Folk); S181 (34i): die vier aus Klasse 1 spielt keys_demo (Jazz); seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie); S179 (34h): die
                                  // fuenf Trommeln ausser timpani und tabla (membrane_demo spielt die beiden als Instrument)
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         // seit S138 (26h) spielt die Guitar auch in tabs_demo (Blues)
