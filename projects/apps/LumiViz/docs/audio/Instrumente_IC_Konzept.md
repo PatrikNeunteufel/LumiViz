@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.30.0
+> **Version:** 0.31.0
 > **Datum:** 2026-11-13 (Session 196)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1353,7 +1353,51 @@ Kurve — alles Annahmen mit Vermerk; acht Stegpunkte, je Chor einer (Tasten 38 
 Gekoppelte Moden 132,1 / 264,1 / 334,6 / 471,8 / 488,6 Hz; die Stegadmittanz mit Saitenlast gegen die vier Ziele:
 Lage −1,8 / −4,6 / −1,3 / +3,6 %, Höhe −0,3 / +4,7 / −2,7 / +0,6 dB. Test „Loop Koerper 34k-5 Luftraum die
 mitgelieferte Laute“ prüft beides am Körper. Offen (Bericht §7): 150 und 378 Hz, die Steife am Steg unter 120 Hz, die
-Breite der Luftmode. **Als Nächstes das Cembalo**, dann Harfe und Gitarre.
+Breite der Luftmode.
+
+**Befund am Cembalo (S197, Bericht `../modellierung/gezupfte-saite/2026-11-13_S197_cembalo.md`).** Eine gemessene
+Kurve des Bodens gibt es in den geladenen Quellen nicht. Bader, Plath & Kontopidis 2025 zeigt dafür den Boden des
+Dulcken 1755 fast als Bauplan: Abb. 2 (Eingabe ihres Rechenmodells: Umriss, beide Stege mit Stiften, Anhangleiste des
+4′, Querleiste, vier Rippen), Abb. 1 (gemessene Dicke, 497 Punkte, 2,4–7,5 mm), dazu gemessen die Luftresonanz 37 Hz
+und die Abklingzeit des Bodens 235 ms. Maßstab aus den Stufen des Umrisses: 14 px je cm, Boden 166,4 × 79,7 cm
+(Gegenprobe über die Breite des Instruments, 847 mm). Der Dulcken hat 52 Tasten (H₁–d‴), der Taskin 61.
+
+✅ **KQ13 a** (Patrik S197; **ersetzt in KQ2 a und KQ6 a den Ersatz-Bauplan nach dem Taskin**): **Der Körper des
+`harpsichord` ist der Boden des Dulcken 1755 nach Bader u. a. 2025** — Umriss, Stege, Stiftorte, Rippen, Querleiste,
+Anhangleiste aus Abb. 2, Dicke aus Abb. 1. Die Saiten bleiben die des Taskin 1769 (KQ2 a); Vermerk in Bauplan und
+Tafel „Boden Dulcken 1755, Saiten Taskin 1769“. Grund: Geometrie und Zielgrößen stammen aus demselben Instrument, fast
+jedes Maß des Bodens ist gemessen statt gesetzt. Verworfen: b (Ersatz-Bauplan Taskin aus elf Mensuren — außer der
+Steglinie nichts belegt), c (das Instrument ganz als Dulcken — seine Mensuren und Saiten sind nicht abgedruckt). Kippt
+auf c, wenn sich die Mensuren des Dulcken beschaffen lassen.
+
+✅ **KQ14 a** (Patrik S197): **Die gemessene Dicke geht als Feld in den Bauplan.** Befund danach: `InstrumentBody` hat
+das Feld seit Fassung 1 (`plate.thicknessGrid`, der Steinway nutzt es) — die Vorlage nannte irrtümlich einen Eingriff
+in die Bibliothek; es gibt keine neue Fassung und keine neu zu rechnenden Körper. Gilt auch für die Harfe (Bell 1988:
+10 → 3 mm).
+
+✅ **KQ15 a** (Patrik S197): **Die Tiefe des Hohlraums bleibt bei 20,7 cm** — dem Wert, bei dem die Formel für starre
+Wände die 37 Hz gibt, die die Quelle aus Lochradius und Volumen selbst rechnet, und der zu 256 mm Höhe des Instruments
+passt. Geprüft wird Helmholtz bei starrer Wand 37 Hz innerhalb von 3 % und die Dämpfung aus der gemessenen Abklingzeit
+(α = 6 ln 10 / 0,235 s). Die gekoppelte Luftmode liegt bei 31,7 Hz, **14 % unter der Messung — bekannte Abweichung**,
+in Bauplan und Bericht mit den möglichen Ursachen. Verworfen: b (Tiefe 13–15 cm, bis die gekoppelte Mode trifft — mit
+der Höhe des Instruments nicht vereinbar), c (erst die Ursache suchen — es gibt keine zweite Messgröße, die die
+Kandidaten trennt). Kippt auf c, wenn eine gemessene Kurve des Dulcken oder Savage 1992 vorliegt; auf b, wenn die
+Luftmode in 34k-6 hörbar falsch liegt.
+
+✅ **KQ16 a** (Patrik S197; **berichtigt KQ13 a**: die verlängerte Steglinie verlässt den Boden): **Die 52 Tasten des
+Dulcken (35–86) behalten ihren Punkt; die Tasten 29–34 bekommen den Punkt der Taste 35, die Tasten 87–89 den der
+Taste 86**, mit Vermerk je Punkt. Grund: 52 von 61 Tasten liegen dort, wo am Dulcken die Saite gleicher Tonhöhe den
+Steg trifft. Verworfen: b (61 Tasten gleichmäßig über die Steglinie — jede Taste eigener Punkt, aber keine am Ort
+ihrer Tonhöhe), c (`harpsichord` auf 52 Tasten — widerspricht KQ2 a). Kippt auf b, wenn in 34k-6 an den gleichen
+Basspunkten ein Sprung über 6 LU entsteht.
+
+**KQ13 a bis KQ16 a gebaut (S197)** — `asset/loop/instrument_bodies/harpsichord.lvinstbodyplan` (Schreiber
+`make_cembalo.py`) und `harpsichord.lvinstbody`: 61 Stegpunkte auf der Linie des 8′-Stegs, Dicke als Raster von 2 cm,
+Buche für die Stege, Breiten der Leisten und Querschnitte der Stege als Annahme mit Vermerk. 389 gekoppelte Moden bis 5 kHz (5,7 min): Luft 31,7 Hz, Boden 95,9 / 117,8 / 166,1 / 183,0 / 225,0 Hz; Helmholtz bei
+starrer Wand 37,0 Hz. Test „Loop
+Koerper 34k-5 Luftraum das mitgelieferte Cembalo“. Offen (Bericht §8): keine gemessene Mode des Bodens, Dämpfung für
+alle Frequenzen gleich, Dicke im Diskant eher zu dick gelesen. **Als Nächstes die Harfe** (Bell 1988), dann die
+Gitarre.
 
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
@@ -1416,6 +1460,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.31.0 | 2026-11-13 | Session 197. §6: Befund am Cembalo (keine gemessene Kurve; Boden des Dulcken 1755 in Bader 2025 als Bauplan lesbar); KQ13 a (Körper = Boden des Dulcken, Saiten Taskin), KQ14 a (Dicke als Raster — im Format vorhanden), KQ15 a (Tiefe 20,7 cm, Luftmode als bekannte Abweichung), KQ16 a (Randtasten); Bauplan und Körper des Cembalos unter `asset/`. |
 | 0.30.0 | 2026-11-13 | Session 197. §6: Befund an der gemessenen Stegadmittanz der Laute (Woodhouse 2021 Abb. 1) und an der Rauwolf-Zeichnung; KQ11 a (Ziele in Lage und Höhe, mit Stegleiste und Saitenlast), KQ12 a (Form mal 625/677,4); Bauplan und Körper der Laute unter `asset/`. |
 | 0.29.0 | 2026-11-13 | Session 196. §6: Befund an der gemessenen Kurve der Oud (Abb. 6), KQ10 a ersetzt KQ9 a (Balken wie gezeichnet, 1,5 mm; Ziele 101 / 203 / 280 / 362 Hz); Bauplan und Körper der Oud unter `asset/`, `.lvinstbody` Fassung 3. |
 | 0.28.0 | 2026-11-13 | Session 196. §6: KQ7 a gebaut (Löcher in `InstrumentBody`, Bauplan Fassung 4), zweiter Fall der Oud verfehlt die Schwelle; KQ8 a (erst der Luftraum nach `InstrumentBody`, dann die Oud mit Luftraum gegen die Messung); Luftraum gebaut (F-K1 a), KQ9 a (KQ6 a gilt weiter; Oud mit Luftraum, Balken am Rand, 1,5 mm). |

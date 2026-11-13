@@ -43,6 +43,9 @@ Der Gitarrenkorpus nach KB1 a auf die gemeinsame Grundlage (`../koerper/`).
 - [2026-11-13_S197_laute.md](2026-11-13_S197_laute.md) — die Laute (KQ11 a, KQ12 a): gemessene Stegadmittanz
   (Woodhouse 2021 Abb. 1) am Bild gelesen, Form der Rauwolf-Laute aus dem Vektor-PDF mal 625/677,4, Stegleiste und
   Saitenlast im Vergleich; vier Spitzen in Lage (−1,8 / −4,6 / −1,3 / +3,6 %) und Höhe (−0,3 / +4,7 / −2,7 / +0,6 dB).
+- [2026-11-13_S197_cembalo.md](2026-11-13_S197_cembalo.md) — das Cembalo (KQ13 a–KQ16 a): der Boden des Dulcken 1755
+  aus den Abbildungen von Bader u. a. 2025 gelesen (Geometrie, gemessene Dicke als Raster), Saiten Taskin; Helmholtz
+  bei starrer Wand 37 Hz wie die Quelle, gekoppelte Luftmode 31,7 Hz (−14 % gegen die Messung, bekannte Abweichung).
 
 ## Recherche S195 (34k-4)
 Unter [recherche/](recherche): vier Agentenberichte (`…_cembalo_quellen.md`, `…_harfe_quellen.md`,

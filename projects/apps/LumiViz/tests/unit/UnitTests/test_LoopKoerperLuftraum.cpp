@@ -27,6 +27,10 @@
  *   Stegpunkte; die Stegadmittanz zwischen Chor 1 und 2 mit der Last der gedaempften Saiten trifft die
  *   Spitzen der gemessenen Kurve (Woodhouse 2021, Abb. 1: 132 / 277 / 341 / 476 Hz) in Lage (5 %) und
  *   Hoehe (6 dB).
+ * - Das mitgelieferte Cembalo (KQ13 a, KQ15 a, KQ16 a): der Boden des Dulcken 1755 (Bader u. a. 2025) mit
+ *   der gemessenen Dicke als Raster, 61 Stegpunkte (die neun Tasten ausserhalb des Dulcken am Rand),
+ *   Helmholtz bei starrer Wand 37 Hz, die Daempfung aus der gemessenen Abklingzeit; die gekoppelte Mode
+ *   der Luft als bekannte Abweichung festgehalten.
  ****************************************************************************************
  */
 
@@ -554,5 +558,89 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Laute (KQ11 a, KQ12 a)"
         CHECK(ort < ziel[0] * 1.079);
         CHECK(std::abs(ort / ziel[0] - 1.0) < 0.05);
         CHECK(std::abs(hoehe - ziel[1]) < 6.0);
+    }
+}
+
+TEST_CASE("Loop Koerper 34k-5 Luftraum das mitgelieferte Cembalo (KQ13 a, KQ15 a, KQ16 a)")
+{
+    const QString stamm = QStringLiteral("asset/loop/instrument_bodies/harpsichord");
+    kp::Bauplan plan;
+    REQUIRE_MESSAGE(ladeBauplan(stamm + QLatin1String(kBauplanEndung), plan), "die Test-Exe aus dem Projekt-Root starten");
+    const std::vector<std::string> befunde = kp::pruefe(plan);
+    for (const std::string& b : befunde) MESSAGE(b);
+    CHECK(befunde.empty());
+
+    // KQ13 a: der Boden des Dulcken 1755 nach Bader u. a. 2025 — 166,4 x 79,7 cm (Abb. 2, 14 px je cm), Faser laengs
+    double laenge = 0.0, breite = 0.0;
+    for (const kp::Punkt2& u : plan.platte.umriss)
+    {
+        laenge = std::max(laenge, u.x);
+        breite = std::max(breite, u.y);
+    }
+    CHECK(laenge == doctest::Approx(1.664).epsilon(0.002));
+    CHECK(breite == doctest::Approx(0.797).epsilon(0.005));
+    CHECK(std::abs(kp::flaeche(plan.platte.umriss)) == doctest::Approx(0.691).epsilon(0.01));
+    CHECK(plan.platte.faserWinkelGrad == doctest::Approx(0.0));
+    // KQ14 a: die gemessene Dicke als Raster (Abb. 1, Stufen von 0,5 mm): Bass um 5,7 mm, hinter der
+    // Querleiste 4,3 mm, der Diskant duenner
+    REQUIRE_FALSE(plan.platte.dickeRaster.leer());
+    CHECK(plan.platte.dickeRaster.schritt == doctest::Approx(0.02));
+    CHECK(plan.platte.dickeBei({0.25, 0.08}) == doctest::Approx(0.0057).epsilon(0.1));
+    CHECK(plan.platte.dickeBei({1.40, 0.10}) == doctest::Approx(0.0043).epsilon(0.07));
+    CHECK(plan.platte.dickeBei({1.58, 0.70}) < 0.004);
+    // zwei Stege, Anhangleiste des 4', Querleiste, vier Rippen; die Rose als Loch
+    CHECK(plan.stege.size() == 2);
+    CHECK(plan.rippen.size() == 6);
+    REQUIRE(plan.platte.loecher.size() == 1);
+    CHECK(std::abs(kp::flaeche(plan.platte.loecher[0])) == doctest::Approx(kPi * 0.0385 * 0.0385).epsilon(1e-3));
+    // KQ15 a: die Tiefe 20,7 cm — Helmholtz bei starrer Wand wie die Rechnung der Quelle (37 Hz), innerhalb von 3 %
+    REQUIRE(plan.hohlraum.an());
+    CHECK(plan.hohlraum.volumen == doctest::Approx(0.6908 * 0.207).epsilon(1e-3));
+    const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, kp::Luft{}.dichte, kp::Luft{}.schall);
+    CHECK(std::abs(g.helmholtzHz() / 37.0 - 1.0) < 0.03);
+    // die Daempfung aus der gemessenen Abklingzeit des Bodens: alpha = 6 ln 10 / 0,235 s
+    CHECK(plan.daempfung.a == 0.0);
+    CHECK(plan.daempfung.b == 0.0);
+    CHECK(plan.daempfung.c == doctest::Approx(6.0 * std::log(10.0) / 0.235).epsilon(1e-3));
+    // KQ16 a: 61 Tasten (F1 bis f''', der Umfang des Taskin); die 52 des Dulcken (35 bis 86) je mit eigenem
+    // Punkt, die neun ausserhalb am Punkt der naechsten Randtaste
+    REQUIRE(plan.stegpunkte.size() == 61);
+    for (std::size_t s = 0; s < 61; ++s)
+    {
+        CHECK(plan.stegpunkte[s].taste == 29 + static_cast<int>(s));
+        CHECK_FALSE(plan.stegpunkte[s].quelle.empty());
+    }
+    for (std::size_t s = 0; s < 6; ++s) CHECK(plan.stegpunkte[s].ort == plan.stegpunkte[6].ort);
+    for (std::size_t s = 58; s < 61; ++s) CHECK(plan.stegpunkte[s].ort == plan.stegpunkte[57].ort);
+    for (std::size_t s = 7; s <= 57; ++s)
+    {
+        // quer gleichmaessig (13,0 mm), laengs zum Diskant hin weiter vom Schwanz weg
+        CHECK(plan.stegpunkte[s].ort.y - plan.stegpunkte[s - 1].ort.y == doctest::Approx(0.01304).epsilon(0.01));
+        if (s > 12) CHECK(plan.stegpunkte[s].ort.x > plan.stegpunkte[s - 1].ort.x);
+    }
+
+    kp::Koerper k;
+    REQUIRE(ladeKoerper(stamm + QLatin1String(kKoerperEndung), k));
+    REQUIRE(k.moden.size() > 100);
+    // die unterste ist die Mode der Luft; mit dem nachgiebigen Boden liegt sie unter den gemessenen 37 Hz —
+    // die bekannte Abweichung nach KQ15 a (−14 %), hier festgehalten, damit sie nicht unbemerkt wandert
+    CHECK(k.moden[0].luftAnteil > 0.9);
+    CHECK(k.moden[0].frequenzHz == doctest::Approx(31.7).epsilon(0.02));
+    CHECK(k.moden[0].frequenzHz < 37.0);
+    // die erste Mode des Bodens traegt den Rest der Luft
+    CHECK(k.moden[1].luftAnteil > 0.02);
+    CHECK(k.moden[1].frequenzHz == doctest::Approx(96.0).epsilon(0.03));
+    // jede Taste des Dulcken sieht am Steg Moden: die Summe der Quadrate ihrer Werte ist nicht null, und
+    // Nachbarn unterscheiden sich
+    for (std::size_t s = 6; s <= 57; ++s)
+    {
+        double summe = 0.0, anders = 0.0;
+        for (const kp::ModeImKoerper& m : k.moden)
+        {
+            summe += m.amStegpunkt[s] * m.amStegpunkt[s];
+            if (s > 6) anders += std::abs(m.amStegpunkt[s] - m.amStegpunkt[s - 1]);
+        }
+        CHECK(summe > 0.0);
+        if (s > 6) CHECK(anders > 0.0);
     }
 }
