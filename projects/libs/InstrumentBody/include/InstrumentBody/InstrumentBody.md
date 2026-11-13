@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.18.0  
+> **Version:** 0.19.0  
 > **Datum:** 2026-11-13  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -408,6 +408,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.19.0 | 2026-11-13 | Session 197, Stufe 34k-5, Proben an der Harfe: `Auflager::Gestuetzt` (w = 0 am ganzen Rand, beide Drehungen frei; für beliebig liegende Ränder — die untere Schranke zu `Eingespannt`); Werkzeug: `--free-rim` und `--supported-rim` als Probe-Schalter (ein so gerechneter Körper ist keiner für das Programm). `Eingespannt` und `GelenkigAchsparallel` unverändert. |
 | 0.18.0 | 2026-11-13 | Session 197, Stufe 34k-5, KQ17 a: Öffnungen des Hohlraums außerhalb der Platte (`Oeffnung`, `Hohlraum::oeffnungen`; `.lvinstbodyplan` Fassung 5 mit `cavity.openings`, immer geschrieben, Fassung 4 lesbar); `LochLuft::hoehe` und `::frei`, `luftraumGroessen` nimmt Löcher und Öffnungen parallel, `lochAbstrahlung` rechnet eine Öffnung als freie Punktquelle an ihrem Ort (Löcher der Platte Bit für Bit wie vorher); `pruefe`. Test „Luftraum Oeffnungen ausserhalb der Platte (KQ17 a)“. `kRechenFassung` bleibt 2; der Abdruck ändert sich mit der Fassung — alle mitgelieferten Körper neu gerechnet. |
 | 0.17.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ10 a: `ModeImKoerper::luftAnteil` (`mitLuftraum` setzt ihn), `.lvinstbody` Fassung 3 mit `airShare` je Mode; erster Körper mit Hohlraum ist die mitgelieferte Oud. |
 | 0.16.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ7 a: Löcher in der Platte (`Platte::loecher`, `.lvinstbodyplan` Fassung 4 mit `plate.holes`; `imLoch`, `flaeche(Platte)`, `kantenSchneidenSich`, Prüfung); `NetzAuftrag::loecher`, `Netz::lochkanten`, `lochkantenVon`, `imUmriss` mit `aussenBleibt`; `NetzgeberCdt` spart Löcher aus; `baueSystem` lässt den Lochrand frei; Masse und Abstrahlung ohne das Loch. Test `test_LoopKoerperLoch`. Werkzeug: `--shapes`. **Luftraum** (F-K1 a, KQ8 a): `Hohlraum` im Bauplan (`cavity`), `Luftraum.hpp` (`eigenRangEins`, `luftraumGroessen`, `koppleLuftraum`, `lochAbstrahlung`, `mitLuftraum`), `Auswertung::volumen`; das Werkzeug koppelt, wenn der Bauplan einen Hohlraum hat. Test `test_LoopKoerperLuftraum`. Ohne Löcher und ohne Hohlraum Bit für Bit wie vorher. |

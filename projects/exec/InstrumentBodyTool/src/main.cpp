@@ -171,8 +171,15 @@ int main(int argc, char* argv[])
                                        QStringLiteral("Write the mode shapes (deflection w at the mesh nodes, with the triangles) to this "
                                                       "text file — for comparing with pictures of measured modes; meant for few modes."),
                                        QStringLiteral("file"));
+    const QCommandLineOption freiOpt(QStringLiteral("free-rim"),
+                                     QStringLiteral("Probe only: the rim of the plate is free instead of clamped — for comparing with "
+                                                    "measurements on a free soundboard. Use with --from above the rigid-body modes; "
+                                                    "the body written this way is not a body for the program."));
+    const QCommandLineOption gestuetztOpt(QStringLiteral("supported-rim"),
+                                          QStringLiteral("Probe only: the rim is held in w only, both rotations free, instead of clamped — "
+                                                         "the lower bound for a rim that gives way."));
     parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt, berichtOpt,
-                       formenOpt});
+                       formenOpt, freiOpt, gestuetztOpt});
     parser.process(app);
 
     const auto geberListe = kp::netzgeber();
@@ -249,7 +256,11 @@ int main(int argc, char* argv[])
     t = std::chrono::steady_clock::now();
     const kp::LagrangeDreieck element(ordnung);
     const kp::PlattenSystem s =
-        kp::baueSystem(netz, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); }, kp::Auflager::Eingespannt);
+        kp::baueSystem(netz, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); },
+                       parser.isSet(freiOpt) ? kp::Auflager::Frei
+                                             : parser.isSet(gestuetztOpt) ? kp::Auflager::Gestuetzt : kp::Auflager::Eingespannt);
+    if (parser.isSet(freiOpt)) std::printf("Rim free (--free-rim): a probe, not a body for the program\n");
+    if (parser.isSet(gestuetztOpt)) std::printf("Rim supported (--supported-rim): a probe, not a body for the program\n");
     if (!s.fehler.empty())
     {
         std::fprintf(stderr, "Plate: %s\n", s.fehler.c_str());

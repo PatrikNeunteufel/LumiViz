@@ -363,6 +363,9 @@ enum class Auflager : int
     Eingespannt = 0,       ///< w = φx = φy = 0 am ganzen Rand
     GelenkigAchsparallel,  ///< w = 0, Drehung laengs des Randes = 0; nur achsparallele Raender
     Frei,                  ///< nichts gehalten (K hat dann Starrkoerpermoden; fuer Pruefungen der Auswertung)
+    /// w = 0 am ganzen Rand, beide Drehungen frei („weich gelenkig“; S197) — fuer beliebig liegende Raender;
+    /// die untere Schranke zu `Eingespannt`, wenn der Rand eines Bodens nachgibt. Bisher nur als Probe im Werkzeug.
+    Gestuetzt,
 };
 
 /// Steifigkeit und Masse der Platte, nur die freien Groessen.
@@ -475,6 +478,7 @@ struct PlattenSystem
             if (amRand[q] && auflager != Auflager::Frei)
             {
                 if (auflager == Auflager::Eingespannt) gehalten = true;
+                else if (auflager == Auflager::Gestuetzt) gehalten = (g == 0);  // nur w, beide Drehungen frei
                 else if (g == 0) gehalten = true;                       // w
                 else if (g == 1 && randWaagrecht[q]) gehalten = true;   // φx laengs eines waagrechten Randes
                 else if (g == 2 && randSenkrecht[q]) gehalten = true;   // φy laengs eines senkrechten Randes
