@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.28.0
+> **Version:** 0.29.0
 > **Datum:** 2026-11-13 (Session 196)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1289,7 +1289,36 @@ Deckenmode) aus einer belegten Schalentiefe — das sind die Moden, die die Sait
 kippt auf das Plattenmodell — es hat keinen Luftraum und damit die 142 Hz nicht), c (Oud zurückstellen, erst die
 Laute — verbessert die Oud nicht, die Laute kommt ohnehin als Nächstes). Kippt auf c, wenn „Balkenenden am Rand“
 als unbelegte Annahme nicht tragen soll; auf b, wenn die Laute mit Luftraum ihre gemessene Kurve um mehr als 10 %
-verfehlt und sich das nicht auf eine Annahme zurückführen lässt.
+verfehlt und sich das nicht auf eine Annahme zurückführen lässt. **Ersetzt durch KQ10 a.**
+
+**Befund an der gemessenen Kurve (S196, Bericht §8).** Abb. 6 der Quelle, erstmals als Bild gelesen und
+digitalisiert: Spitzen bei **101 / 139 / 203 (die stärkste, Gruppe 197–210) / 280 / 362 / 385 Hz**, bei 242 Hz ein
+Tal. Tab. 3 (142 / 226 / 242 / 280) ordnet die Messung den vier Moden der FE-Rechnung der Quelle zu und ist keine
+Liste der Spitzen. Die Übertragungskurve am Messpunkt gerechnet: mit den Balken, wie Abb. 3 sie zeichnet
+(1,3–1,5 cm vor dem Rand endend), und 1,5 mm Decke liegen 101 / 203 / 280 / 362 Hz bei 0 / +3 / −1 / 0 %; die
+Fassung nach KQ9 a bei +31 / +20 / −13 / +5 %. 101 Hz ist die Mode der Luft, 203 Hz die verschobene erste
+Deckenmode. Die Spitze bei 139 Hz hat kein Gegenstück (gerechnet eine gegengleiche Mode bei 169 Hz); weder ein
+Steg noch die Lage der kleinen Löcher nach Abb. 5 b schiebt sie dorthin.
+
+✅ **KQ10 a** (Patrik S196; **ersetzt KQ9 a**): **Die Oud bekommt die Balken, wie Abb. 3 sie zeichnet** (aus dem
+Bild gelesen, 1,3–1,5 cm vor dem Rand endend), drei Löcher, Luftraum 20,6 l, Decke 1,5 mm, kein Steg. Zielgrößen sind
+die Spitzen der gemessenen Kurve bei 101 / 203 / 280 / 362 Hz, innerhalb von 3 %. Im Bericht: 139 Hz „ohne
+Gegenstück, möglich eine Mode des ganzen Instruments“ (es war frei gelagert, die Rechnung hält Schale und Rand
+fest), die gerechnete Mode bei 169 Hz „in der Messung nicht als Spitze“. KQ6 a gilt weiter; Cembalo und Laute
+folgen mit Luftraum. Grund: vier der sechs Spitzen innerhalb von 3 %, darunter die Mode der Luft und die stärkste
+Spitze, und die unbelegte Annahme „Balken am Rand“ entfällt. Verworfen: b (1,6 mm — trifft auch 385 Hz, die vier
+großen etwas schlechter; der Unterschied liegt in der Lesegenauigkeit), c (KQ9 a bleibt — verfehlt die Mode der
+Luft um 31 % und die stärkste Spitze um 20 %), d (Oud zurückstellen, bis 139 Hz geklärt ist — die Decke allein
+gibt die Spitze in keiner Gegenprobe her). Kippt auf d, wenn die Oud nur mit einem Bauplan ausgeliefert werden
+soll, der jede gemessene Spitze erklärt. **Lehre:** eine Tabelle „gemessen gegen gerechnet“ ist die Zuordnung der
+Quelle — die gemessene Kurve selbst lesen, bevor eine Schwelle an ihr hängt.
+
+**KQ10 a gebaut (S196)** — `asset/loop/instrument_bodies/oud.lvinstbodyplan` (Schreiber `make_oud.py`) und
+`oud.lvinstbody` (243 Moden bis 5 kHz): sechs Stegpunkte, je Chor einer (Tasten 36 / 41 / 45 / 50 / 55 / 60, die
+leeren Saiten); Dämpfung α = 0,06 f + 23 1/s aus den Halbwertsbreiten der gemessenen Kurve. Gekoppelte Moden
+99,9 / 168,6 / 207,8 / 269–280 / 351 / 362 Hz, gegen 101 / 203 / 280 / 362 Hz −1 / +2 / −2 / 0 %. Der Körper
+trägt je Mode den Anteil der Luft (`.lvinstbody` Fassung 3, `airShare`), der Wächter rechnet die Dämpfung damit
+nach. Bericht §9.
 
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
@@ -1352,6 +1381,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.29.0 | 2026-11-13 | Session 196. §6: Befund an der gemessenen Kurve der Oud (Abb. 6), KQ10 a ersetzt KQ9 a (Balken wie gezeichnet, 1,5 mm; Ziele 101 / 203 / 280 / 362 Hz); Bauplan und Körper der Oud unter `asset/`, `.lvinstbody` Fassung 3. |
 | 0.28.0 | 2026-11-13 | Session 196. §6: KQ7 a gebaut (Löcher in `InstrumentBody`, Bauplan Fassung 4), zweiter Fall der Oud verfehlt die Schwelle; KQ8 a (erst der Luftraum nach `InstrumentBody`, dann die Oud mit Luftraum gegen die Messung); Luftraum gebaut (F-K1 a), KQ9 a (KQ6 a gilt weiter; Oud mit Luftraum, Balken am Rand, 1,5 mm). |
 | 0.25.0 | 2026-11-12 | Session 193. §6: Teilplan 34k (34k-1 bis 34k-11) nach dem Befund S192 und der Gegenprobe S193 an der IC-Vorlage der Klasse 2; GZ1 a (Namen, Bestand bleibt), GZ1-1 a (Spielweisen am Kern, Saitensatz an Laute, Oud und `classical_guitar`), GZ2 a (Umzug als Beleg, dann Rechenfassung 2 mit Quellen), GZ3 a (Mitschwingen je Note), GZ4 a (Steg und Abstrahlung aus einem Körper nach KB1 a; berichtigt IK2-10 a für Klasse 2); Zeile 34k der Übersicht. |
 | 0.24.0 | 2026-11-12 | Session 192. §6: 34j-10 erledigt — Stufe 34j fertig (Modul-Doku, Bibliotheken und Quellpakete, Bericht der Klasse, harvest gelöscht, voller Lauf 1888 / 1888 unter beiden Compilern); Journal J75. |

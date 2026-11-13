@@ -18,7 +18,9 @@
  *   mitgelieferte Koerper unter `asset/loop/instrument_bodies/` passt zu seinem Bauplan und
  *   zur Fassung der Rechnung (`kRechenFassung`) — sonst `InstrumentBodyTool` neu laufen
  *   lassen; Stegpunkte und Hoerorte wie im Bauplan, Moden aufsteigend im Fenster, der
- *   statistische Teil schliesst an, die Datei unter rund 10 MB (Kipppunkt von BM3 c).
+ *   statistische Teil schliesst an, die Datei unter rund 10 MB (Kipppunkt von BM3 c). Mit Hohlraum
+ *   (F-K1 a) traegt jede Mode ihren Anteil der Luft; die Daempfung ist die der Platte mal ihrem
+ *   Anteil plus Anteil der Luft / Guete, die Anteile der Luft summieren sich zu hoechstens 1.
  ****************************************************************************************
  */
 
@@ -61,6 +63,7 @@ kp::Koerper kleinerKoerper()
         kp::ModeImKoerper m;
         m.frequenzHz = 100.0 + 0.1 * i + 1.0 / 3.0;  // nicht in wenigen Stellen darstellbar
         m.verlustfaktor = 0.0113;
+        m.luftAnteil = i == 0 ? 2.0 / 3.0 : 0.0;
         m.werkstoffAnteil = {1.0 / 3.0, 2.0 / 3.0};
         m.amStegpunkt = {1.0 / 7.0, -2.5, 3.0e-9};
         m.abstrahlung = {{0.1, -0.2}, {1.0 / 3.0, 2.0e-12}};
@@ -155,6 +158,23 @@ TEST_CASE("Loop Koerper 31c-5d Datei")
     CHECK(ausAlt.moden[0].verlustfaktor == k.moden[0].verlustfaktor);
     CHECK(ausAlt.statistik.werkstoffAnteil.empty());
 
+    // Fassung 2 (vor F-K1 a): ohne den Anteil der Luft — bleibt lesbar, der Anteil ist 0
+    for (const QJsonValue& e : json.value(QStringLiteral("modes")).toArray()) CHECK(e.toObject().contains(QStringLiteral("airShare")));
+    QJsonObject zwei = json;
+    zwei[QStringLiteral("version")] = 2;
+    moden = json.value(QStringLiteral("modes")).toArray();
+    for (int i = 0; i < moden.size(); ++i)
+    {
+        QJsonObject o = moden[i].toObject();
+        o.remove(QStringLiteral("airShare"));
+        moden[i] = o;
+    }
+    zwei[QStringLiteral("modes")] = moden;
+    kp::Koerper ausZwei;
+    REQUIRE(ausJson(zwei, ausZwei));
+    CHECK(ausZwei.moden[0].luftAnteil == 0.0);
+    CHECK(ausZwei.moden[0].verlustfaktor == k.moden[0].verlustfaktor);
+
     // ueber eine Datei
     const QString pfad = QDir::temp().filePath(QStringLiteral("lumiviz_test_koerper") + QLatin1String(kKoerperEndung));
     REQUIRE(speichereKoerper(k, pfad));
@@ -188,6 +208,7 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
     REQUIRE_MESSAGE(ordner.exists(), "die Test-Exe aus dem Projekt-Root starten");
     const QStringList koerper = ordner.entryList({QStringLiteral("*") + QLatin1String(kKoerperEndung)}, QDir::Files, QDir::Name);
     CHECK(koerper.contains(QStringLiteral("steinway_d") + QLatin1String(kKoerperEndung)));
+    CHECK(koerper.contains(QStringLiteral("oud") + QLatin1String(kKoerperEndung)));
     for (const QString& name : koerper)
     {
         CAPTURE(name.toStdString());
@@ -222,6 +243,7 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
         // (DM1 a); der statistische Teil schliesst an
         REQUIRE_FALSE(k.moden.empty());
         int falsch = 0;
+        double luftSumme = 0.0;
         for (std::size_t i = 0; i < k.moden.size(); ++i)
         {
             const kp::ModeImKoerper& m = k.moden[i];
@@ -230,10 +252,20 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
             double summe = 0.0;
             for (const double a : m.werkstoffAnteil) summe += a;
             falsch += m.werkstoffAnteil.size() == k.werkstoffe.size() && std::abs(summe - 1.0) < 1e-9 ? 0 : 1;
-            const double eta = kp::verlustfaktorAusAnteilen(k.daempfung, m.frequenzHz, m.werkstoffAnteil, k.werkstoffVerlust);
+            double eta = kp::verlustfaktorAusAnteilen(k.daempfung, m.frequenzHz, m.werkstoffAnteil, k.werkstoffVerlust);
+            // mit Hohlraum (F-K1 a): die Platte mal ihrem Anteil plus Anteil der Luft / Guete
+            falsch += m.luftAnteil >= 0.0 && m.luftAnteil <= 1.0 && (plan.hohlraum.an() || m.luftAnteil == 0.0) ? 0 : 1;
+            if (plan.hohlraum.an()) eta = (1.0 - m.luftAnteil) * eta + m.luftAnteil / plan.hohlraum.guete;
+            luftSumme += m.luftAnteil;
             falsch += std::abs(m.verlustfaktor - eta) < 1e-12 ? 0 : 1;
         }
         CHECK(falsch == 0);
+        // die Luft in den Loechern ist ein Freiheitsgrad: ueber alle Moden hoechstens 1, im Fenster fast alles
+        if (plan.hohlraum.an())
+        {
+            CHECK(luftSumme <= 1.0 + 1e-9);
+            CHECK(luftSumme > 0.9);
+        }
         if (k.statistik.dichte > 0.0)
         {
             CHECK(k.statistik.vonHz == k.rechnung.bisHz);

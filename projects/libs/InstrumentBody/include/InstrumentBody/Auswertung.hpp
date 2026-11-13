@@ -157,6 +157,7 @@ struct ModeImKoerper
 {
     double frequenzHz = 0.0;
     double verlustfaktor = 0.0;                      ///< η
+    double luftAnteil = 0.0;                         ///< Anteil der Bewegungsenergie in der Luft der Loecher (F-K1 a); 0 = ohne Hohlraum
     std::vector<double> werkstoffAnteil;             ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
     std::vector<double> amStegpunkt;                 ///< φ je Stegpunkt (Reihenfolge des Bauplans), 1/√kg
     std::vector<std::complex<double>> abstrahlung;  ///< G je Hoerort (Reihenfolge des Bauplans), √kg/m²

@@ -150,9 +150,17 @@ TEST_CASE("Loop Koerper 31c-8 Antwort schnell gegen exakt (AW3-1 a)")
         const std::vector<kp::ModeImKoerper> moden = alleModen(koerper);
         const std::size_t n = lumi::kern::zweierpotenzAb(static_cast<std::size_t>(std::ceil(kp::antwortLaengeS(moden) * rate)));
         double zeitExakt = 0.0, zeitSchnell = 0.0, schlimmster = 0.0;
-        for (const int taste : {30, 80})
-            for (std::size_t o = 0; o < 2; ++o)
+        // die Tasten 30 und 80, wo der Koerper sie hat (Fluegel); sonst sein erster und letzter Stegpunkt (Oud: 36, 60)
+        REQUIRE_FALSE(koerper.stegTasten.empty());
+        REQUIRE_FALSE(koerper.hoerorte.empty());
+        const bool beide = stegpunktVon(koerper, 30) >= 0 && stegpunktVon(koerper, 80) >= 0;
+        const int tasten[2] = {beide ? 30 : koerper.stegTasten.front(), beide ? 80 : koerper.stegTasten.back()};
+        int antworten = 0;
+        for (const int taste : tasten)
+            for (std::size_t o = 0; o < std::min<std::size_t>(2, koerper.hoerorte.size()); ++o)
             {
+                REQUIRE(stegpunktVon(koerper, taste) >= 0);
+                ++antworten;
                 const auto j = static_cast<std::size_t>(stegpunktVon(koerper, taste));
                 auto t0 = std::chrono::steady_clock::now();
                 const auto exakt = kp::antwortSpektrumExakt(moden, j, o, rate, n);
@@ -170,7 +178,8 @@ TEST_CASE("Loop Koerper 31c-8 Antwort schnell gegen exakt (AW3-1 a)")
                 schlimmster = std::max(schlimmster, fehler / spitze);
             }
         MESSAGE(name.toStdString(), ": FFT ", n, ", groesster Fehler ", 20.0 * std::log10(schlimmster), " dB der Spitze; exakt ",
-                zeitExakt / 4.0, " s, schnell ", zeitSchnell / 4.0, " s je Antwort (", zeitExakt / zeitSchnell, "-fach)");
+                zeitExakt / antworten, " s, schnell ", zeitSchnell / antworten, " s je Antwort (", zeitExakt / zeitSchnell, "-fach)");
+        CHECK(schlimmster > 0.0);  // eine Antwort aus lauter Nullen prueft nichts
         CHECK(schlimmster < 1e-4);
     }
 }

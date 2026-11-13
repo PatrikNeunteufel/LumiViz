@@ -20,6 +20,9 @@
  * - An einer gerechneten Platte mit Loch: `Auswertung::volumen`; ein riesiger Hohlraum laesst die
  *   Moden der Platte, wie sie sind; ein kleiner hebt die Moden mit Volumen und laesst die ohne; die
  *   Summe der Eigenwerte stimmt (Spur).
+ * - Die mitgelieferte Oud (KQ10 a; vom Arbeitsordner aus): der Bauplan mit drei Loechern, Hohlraum und
+ *   sechs Stegpunkten, der Koerper mit seinen Moden an den Spitzen der gemessenen Kurve (Abdallah u. a.
+ *   2026, Abb. 6: 101 / 203 / 280 / 362 Hz innerhalb von 3 %), die unterste ist die Mode der Luft.
  ****************************************************************************************
  */
 
@@ -28,6 +31,7 @@
 #include "InstrumentBody/Luftraum.hpp"
 #include "InstrumentBody/NetzCdt.hpp"
 #include "InstrumentBody/Platte.hpp"
+#include "loop/Koerper.hpp"
 #include "loop/KoerperBauplan.hpp"
 
 #include <Eigen/Dense>
@@ -390,4 +394,75 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum an der gerechneten Platte")
     const kp::ModeImKoerper nurPlatte = auswertung.werte(ml.formen[0]);
     CHECK(std::abs(ml.moden[0].abstrahlung[0] - nurPlatte.abstrahlung[0]) > 1e-6);
     CHECK(ml.moden[0].verlustfaktor > 0.0);
+    // jede Mode traegt ihren Anteil der Luft (Koerper Fassung 3)
+    for (std::size_t k = 0; k < ml.moden.size(); ++k) CHECK(ml.moden[k].luftAnteil == ml.luftAnteil[k]);
+}
+
+TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Oud (KQ10 a)")
+{
+    const QString stamm = QStringLiteral("asset/loop/instrument_bodies/oud");
+    kp::Bauplan plan;
+    REQUIRE_MESSAGE(ladeBauplan(stamm + QLatin1String(kBauplanEndung), plan), "die Test-Exe aus dem Projekt-Root starten");
+    const std::vector<std::string> befunde = kp::pruefe(plan);
+    for (const std::string& b : befunde) MESSAGE(b);
+    CHECK(befunde.empty());
+
+    // Abdallah u. a. 2026: Holz Tab. 1, sieben Balken Tab. 2, drei Loecher R 5,3 / 2,0 / 2,0 cm (Abb. 3)
+    const kp::Material* holz = kp::findeMaterial(plan, "sitka");
+    REQUIRE(holz);
+    CHECK(holz->dichte == doctest::Approx(460.0));
+    CHECK(holz->ex == doctest::Approx(10.34e9));
+    CHECK(plan.platte.faserWinkelGrad == doctest::Approx(90.0));
+    CHECK(plan.rippen.size() == 7);
+    CHECK(plan.stege.empty());
+    REQUIRE(plan.platte.loecher.size() == 3);
+    const double soll[3] = {kPi * 0.053 * 0.053, kPi * 0.02 * 0.02, kPi * 0.02 * 0.02};
+    for (std::size_t j = 0; j < 3; ++j) CHECK(std::abs(kp::flaeche(plan.platte.loecher[j])) == doctest::Approx(soll[j]).epsilon(1e-4));
+    // KQ10 a: die Balken enden vor dem Rand (wie Abb. 3 sie zeichnet), keiner beruehrt den Umriss
+    for (const kp::Leiste& r : plan.rippen)
+        for (const kp::Punkt2& ende : {r.linie.front(), r.linie.back()})
+        {
+            if (std::abs(ende.x) < 0.08) continue;  // die inneren Enden der Balken 4 und 5 am grossen Loch
+            double naechster = 1.0;
+            for (const kp::Punkt2& u : plan.platte.umriss) naechster = std::min(naechster, std::hypot(u.x - ende.x, u.y - ende.y));
+            CHECK(naechster > 0.008);
+            CHECK(naechster < 0.03);
+        }
+    // der Hohlraum: die Schale 21 cm tief, 20,6 l
+    REQUIRE(plan.hohlraum.an());
+    CHECK(plan.hohlraum.volumen == doctest::Approx(0.0206).epsilon(0.005));
+    const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, kp::Luft{}.dichte, kp::Luft{}.schall);
+    CHECK(g.helmholtzHz() == doctest::Approx(154.0).epsilon(0.01));
+    // sechs Choere, arabische Stimmung C2 F2 A2 D3 G3 C4, am Steg 9 cm vom unteren Ende
+    REQUIRE(plan.stegpunkte.size() == 6);
+    const int tasten[6] = {36, 41, 45, 50, 55, 60};
+    for (std::size_t s = 0; s < 6; ++s)
+    {
+        CHECK(plan.stegpunkte[s].taste == tasten[s]);
+        CHECK(plan.stegpunkte[s].ort.y == doctest::Approx(0.09));
+        CHECK_FALSE(plan.stegpunkte[s].quelle.empty());
+    }
+    CHECK(plan.stegpunkte[5].ort.x - plan.stegpunkte[0].ort.x == doctest::Approx(0.055));
+    CHECK_FALSE(plan.daempfung.quelle.empty());
+
+    // der Koerper: Moden an den Spitzen der gemessenen Kurve (Abb. 6), jede innerhalb von 3 %
+    kp::Koerper k;
+    REQUIRE(ladeKoerper(stamm + QLatin1String(kKoerperEndung), k));
+    REQUIRE(k.moden.size() > 100);
+    for (const double spitze : {101.0, 203.0, 280.0, 362.0})
+    {
+        double naechste = 0.0;
+        for (const kp::ModeImKoerper& m : k.moden)
+            if (std::abs(m.frequenzHz - spitze) < std::abs(naechste - spitze)) naechste = m.frequenzHz;
+        CAPTURE(spitze);
+        CAPTURE(naechste);
+        CHECK(std::abs(naechste / spitze - 1.0) < 0.03);
+    }
+    // die unterste ist die Mode der Luft, die erste Deckenmode traegt den Rest
+    CHECK(k.moden[0].luftAnteil > 0.6);
+    CHECK(k.moden[0].luftAnteil < 0.7);
+    CHECK(k.moden[2].luftAnteil > 0.25);
+    // die gegengleiche Mode dazwischen (169 Hz) hat kein Volumen und keine Luft
+    CHECK(k.moden[1].luftAnteil < 0.01);
+    CHECK(k.moden[1].frequenzHz == doctest::Approx(169.0).epsilon(0.02));
 }

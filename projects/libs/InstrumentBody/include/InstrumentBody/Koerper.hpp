@@ -26,7 +26,11 @@ namespace lumi::koerper
 /// Die Fassung der Datei `.lvinstbody`, die dieses Programm schreibt; eine hoehere liest es nicht.
 /// Fassung 2 (S149, DM1 a): die Werkstoffe mit ihrem Verlustfaktor, je Mode die Anteile der
 /// Verformungsenergie je Werkstoff, im statistischen Teil deren Mittel. Fassung 1 bleibt lesbar.
-inline constexpr int kKoerperFassung = 2;
+/// Fassung 3 (S196, F-K1 a): je Mode `airShare`, der Anteil der Bewegungsenergie in der Luft der
+/// Loecher (immer geschrieben, 0 = ohne Hohlraum) — damit laesst sich die Daempfung einer gekoppelten
+/// Mode nachrechnen: η = (1 − Anteil) · η der Platte + Anteil / Guete der Luft. Fassung 2 bleibt lesbar
+/// (Anteil 0).
+inline constexpr int kKoerperFassung = 3;
 
 /// Die Fassung der Rechnung (Netz, Platte, Loeser, Auswertung, statistischer Teil). Hochzaehlen,
 /// wenn sich bei gleichem Bauplan ein anderer Koerper ergaebe — dann meldet der Waechter jeden

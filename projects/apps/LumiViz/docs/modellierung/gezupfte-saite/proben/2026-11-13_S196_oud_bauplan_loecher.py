@@ -3,7 +3,7 @@
 
 Aufruf: <oud_umriss.json> <zieldatei.lvinstbodyplan> <dicke_mm> [--ohne-loecher] [--ohne-balken]
         [--steg <laenge_cm> <breite_mm> <hoehe_mm>] [--faser <grad>] [--balken-bis-rand]
-        [--hohlraum [<tiefe_cm>]] [--loecher-gelesen]
+        [--hohlraum [<tiefe_cm>]] [--loecher-gelesen] [--kleine-loecher-x <cm>]
 
 --hohlraum: der Luftraum der Schale (F-K1 a, KQ8 a). Tiefe 21 cm nach der Masszahl in Abb. 3 (Seitenansicht);
 Annahme: jeder Querschnitt eine halbe Ellipse, ihre Tiefe proportional zur Breite der Decke an der Stelle —
@@ -70,10 +70,12 @@ if "--balken-luecke" in schalter:
               for n, y, x0, x1, c, b in BALKEN]
 
 GELESEN = "--loecher-gelesen" in schalter
+# --kleine-loecher-x: Abstand der kleinen Loecher von der Mitte (Abb. 3: 10,3 cm; Abb. 5 b zeichnet rund 7 cm)
+KLEIN_X = float(schalter[schalter.index("--kleine-loecher-x") + 1]) if "--kleine-loecher-x" in schalter else 10.3
 LOECHER = [  # x cm, y cm, durchmesser cm, ecken
     (0.0, 30.0, 10.5 if GELESEN else 10.6, 48),
-    (-10.3, 20.4, 3.9 if GELESEN else 4.0, 24),
-    (10.3, 20.4, 3.9 if GELESEN else 4.0, 24),
+    (-KLEIN_X, 20.4, 3.9 if GELESEN else 4.0, 24),
+    (KLEIN_X, 20.4, 3.9 if GELESEN else 4.0, 24),
 ]
 
 # der Hohlraum: Volumen der Schale aus dem Umriss und der Tiefe

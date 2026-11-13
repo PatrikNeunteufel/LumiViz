@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.16.0  
+> **Version:** 0.17.0  
 > **Datum:** 2026-11-13  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -294,7 +294,10 @@ Löser, Ordnung, Netz für welche Frequenz, Fenster, freie Größen, Zeit), die 
 Reihenfolge der Werte, Luft, Dämpfung, die gerechneten Moden (`ModeImKoerper`) und der statistische Teil.
 
 - **`kKoerperFassung`** — die Fassung der Datei (2 seit S149: `materials` mit `lossFactor`, je Mode
-  `materialShares`, im statistischen Teil deren Mittel; Fassung 1 bleibt lesbar, ohne Anteile).
+  `materialShares`, im statistischen Teil deren Mittel; Fassung 1 bleibt lesbar, ohne Anteile; **3 seit S196**
+  (F-K1 a): je Mode `airShare` = `ModeImKoerper::luftAnteil`, der Anteil der Bewegungsenergie in der Luft der
+  Löcher, immer geschrieben, 0 ohne Hohlraum — die Dämpfung einer gekoppelten Mode ist die der Platte mal ihrem
+  Anteil plus Anteil der Luft / Güte, und der Wächter rechnet sie so nach; Fassung 2 bleibt lesbar, Anteil 0).
 - **`kRechenFassung`** — die Fassung der Rechnung (2 seit S149, DM1 a). Hochzählen, wenn sich bei gleichem Bauplan ein anderer Körper
   ergäbe; dann meldet der Wächter (`test_LoopKoerperDatei`, „Waechter“) jeden mitgelieferten Körper als veraltet, bis
   `InstrumentBodyTool` ihn neu rechnet. Ebenso, wenn sich der Bauplan ändert (der Abdruck passt nicht mehr).
@@ -397,6 +400,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.17.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ10 a: `ModeImKoerper::luftAnteil` (`mitLuftraum` setzt ihn), `.lvinstbody` Fassung 3 mit `airShare` je Mode; erster Körper mit Hohlraum ist die mitgelieferte Oud. |
 | 0.16.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ7 a: Löcher in der Platte (`Platte::loecher`, `.lvinstbodyplan` Fassung 4 mit `plate.holes`; `imLoch`, `flaeche(Platte)`, `kantenSchneidenSich`, Prüfung); `NetzAuftrag::loecher`, `Netz::lochkanten`, `lochkantenVon`, `imUmriss` mit `aussenBleibt`; `NetzgeberCdt` spart Löcher aus; `baueSystem` lässt den Lochrand frei; Masse und Abstrahlung ohne das Loch. Test `test_LoopKoerperLoch`. Werkzeug: `--shapes`. **Luftraum** (F-K1 a, KQ8 a): `Hohlraum` im Bauplan (`cavity`), `Luftraum.hpp` (`eigenRangEins`, `luftraumGroessen`, `koppleLuftraum`, `lochAbstrahlung`, `mitLuftraum`), `Auswertung::volumen`; das Werkzeug koppelt, wenn der Bauplan einen Hohlraum hat. Test `test_LoopKoerperLuftraum`. Ohne Löcher und ohne Hohlraum Bit für Bit wie vorher. |
 | 0.10.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 2: Mobilität (`Mobilitaet.hpp`: MAESSTRO Gl. 10 und 12, Terzbänder, Dichte je Band); Bericht im Werkzeug (`--report`). |
 | 0.11.0 | 2026-10-24 | Session 150, Stufe 31c-6 Teil 3–5: `kDiskantAb` = 41 in `Mobilitaet.hpp` (PF2 a); Prüfstein `test_LoopKoerperPruefstein` (PS3 a, PS4 a, KV2 a). |

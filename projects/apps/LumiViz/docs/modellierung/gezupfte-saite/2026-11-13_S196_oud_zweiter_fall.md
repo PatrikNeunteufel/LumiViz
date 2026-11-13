@@ -160,3 +160,93 @@ belegt; gemessene Formen gibt es nicht.
 **Benannte Annahmen dieses Bauplans:** Deckendicke 1,5–2,0 mm; Balkenenden am Rand befestigt (Abb. 3 zeichnet sie
 kurz davor endend; am Instrument sitzen sie an der Schale — nicht belegt); Querschnitt der Schale; Mündungskorrektur
 und Güte der Luft; kein Steg; Rand eingespannt, Schale starr.
+
+## 8 Die gemessene Kurve (Abb. 6) — nach KQ9 a gelesen
+
+Beim Bauplan für `asset/` (Steglage, Dämpfung) wurde Abb. 6 der Quelle erstmals **als Bild** gelesen: die gemessene
+Übertragungskurve (Beschleunigung je Kraft, 0–400 Hz, Antwortpunkt 3 nahe dem Steg, drei Hammerspitzen). Bisher
+stützte sich alles auf Tab. 3 (142 / 226 / 242 / 280 Hz). Die blaue Kurve ist aus dem Bild digitalisiert
+(`proben/2026-11-13_S196_oud_abb6_kurve.txt`, Seite 8 bei 300 dpi; Achsen am Rahmen gefunden).
+
+**Spitzen der Messung:** **101 / 139 / 197 · 203 · 210 / 280 / 362 / 385 Hz**, dazu eine Schulter bei 222–226 Hz. Die
+stärkste Spitze ist die Gruppe um 203 Hz. **Bei 242 Hz liegt ein Tal** (die Kurve fällt dort auf ihren kleinsten Wert
+zwischen 100 und 400 Hz). Unter 25 Hz zwei Spitzen der Aufhängung — das Instrument war frei gelagert.
+
+Gegen Tab. 3: 142 ≈ die Spitze bei 139, 226 ≈ die Schulter, 280 = die Spitze bei 280; 242 Hz hat an diesem
+Antwortpunkt keine Spitze; die Spitzen bei 101, 203 und 362 Hz nennt die Tabelle nicht. Die Tabelle ordnet die
+Messung den vier Moden der FE-Rechnung der Quelle zu (Schale und Hals fest, ohne Luftraum) — sie ist keine Liste der
+gemessenen Spitzen.
+
+**Gerechnet** am selben Punkt (`proben/2026-11-13_S196_oud_frf_gegen_abb6.py`: aus den gekoppelten Formen die
+Beschleunigung je Kraft am Antwortpunkt, Anregung auf dem 5-cm-Raster aus Abb. 5 b, η einheitlich 0,02; Lochradien
+nach den Maßzahlen, Luftraum 20,6 l). Verglichen werden die Lagen der Spitzen — welche Anregung Abb. 6 zeigt, sagt die
+Quelle nicht:
+
+| Fassung | gekoppelte Moden unter 400 Hz | 101 | 139 | 203 | 280 | 362 | 385 |
+|---|---|---|---|---|---|---|---|
+| Balken wie in Abb. 3 gezeichnet, 1,3 mm | 95 / 155 / 205 / 247 / 248 / 251 / 319 / 328 / 371 / 391 | −6 % | +11 % | +1 % | −10 % | +2 % | +2 % |
+| 1,4 mm | 98 / 162 / 208 / 259 / 263 / 266 / 336 / 346 / 394 | −3 % | +17 % | +2 % | −5 % | −7 % | +2 % |
+| **1,5 mm** | **100 / 169 / 209 / 270 / 276 / 280 / 352 / 363** | **0 %** | +21 % | **+3 %** | **−1 %** | **0 %** | −6 % |
+| 1,6 mm | 103 / 176 / 209 / 282 / 288 / 295 / 367 / 380 | +2 % | +26 % | +3 % | +3 % | +1 % | −1 % |
+| Balken am Rand, 1,5 mm (KQ9 a) | 132 / 243 / 305 / 324 / 378 | +31 % | −5 % | +20 % | −13 % | +5 % | −2 % |
+
+(je gemessene Spitze die nächste Spitze der gerechneten Kurve; Bild
+`proben/2026-11-13_S196_oud_frf_gegen_abb6.png`.)
+
+**Lesart:**
+
+- **Mit den Balken, wie Abb. 3 sie zeichnet (1,3–1,5 cm vor dem Rand endend), und 1,5–1,6 mm Decke trifft die Rechnung
+  vier bis fünf der sechs Spitzen innerhalb von 3 %:** 101 Hz ist die Mode der Luft (Luftanteil 0,65), die Gruppe um
+  203 Hz die von ihr verschobene erste Deckenmode (209 Hz, Luftanteil 0,29), dazu 280 und 362 Hz. Das ist das Bild
+  der Gitarre (Luftmode um 100 Hz, erste Deckenmode um 200 Hz) und passt zu „around 120 Hz and 180–220 Hz“ bei
+  Değirmenli (zehn Ouds; nur Zusammenfassung gelesen).
+- **Die Fassung nach KQ9 a trifft nur 139 und 385 Hz**; sie hat keine Mode bei 101 Hz und liegt an der stärksten
+  Spitze 20 % zu hoch. Die Lesart aus §7 („142 Hz ist die Mode der Luft“) hält gegen die Kurve nicht.
+- **Die Spitze bei 139 Hz hat in der Fassung „wie gezeichnet“ kein Gegenstück**; die Rechnung hat stattdessen eine
+  Mode bei 169 Hz (links und rechts gegengleich, Luftanteil 0,004), die in der Messung nur als kleine Welle zwischen
+  150 und 180 Hz erscheinen könnte. Was 139 Hz ist, sagt die Quelle nicht — möglich ist eine Mode des ganzen
+  Instruments (Hals gegen Schale): es war frei gelagert, die Rechnung hält Schale und Rand fest.
+- Die Annahme „Balkenenden am Rand“ (§7, unbelegt) entfällt damit; „wie gezeichnet“ ist aus Abb. 3 gelesen.
+
+**Grenzen:** die Höhen der Spitzen stimmen nicht (gerechnet ist 276 Hz die stärkste, gemessen 203 Hz) — Anregungsort
+und Dämpfung sind nicht belegt; die Kurve ist aus einem Bild gelesen (±1 Hz); eine Kurve an einem Antwortpunkt.
+Die Lage der kleinen Löcher ist in Abb. 3 (±10,3 cm) und Abb. 5 b (rund ±7 cm) verschieden gezeichnet; gerechnet ist
+Abb. 3.
+
+**Gegenproben zur Spitze bei 139 Hz** (wie gezeichnet, 1,5 mm; gekoppelte Moden in Hz):
+
+| Fassung | Moden | 101 | 139 | 203 | 280 | 362 |
+|---|---|---|---|---|---|---|
+| wie gezeichnet | 100 / 169 / 209 / 270 / 276 / 280 / 352 / 363 | 0 % | +21 % | +3 % | −1 % | 0 % |
+| kleine Löcher bei ±7 cm (Abb. 5 b) | 101 / 169 / 209 / 268 / 276 / 280 / 350 / 367 | 0 % | +22 % | +3 % | −1 % | +1 % |
+| Steg 14 cm × 10 × 6 mm (angenommen, Fichte) | 99 / 164 / 208 / 257 / 271 / 280 / 348 | −1 % | +18 % | +3 % | −3 % | −4 % |
+| Steg 17 cm × 15 × 10 mm (angenommen) | 97 / 156 / 208 / 244 / 254 / 280 / 344 | −3 % | +12 % | +2 % | −9 % | −5 % |
+
+Die Lage der kleinen Löcher ändert nichts. Ein Steg zieht die gegengleiche Mode von 169 auf 156–164 Hz, erreicht 139 Hz
+aber nicht und verschlechtert 280 und 362 Hz; seine Maße sind nicht belegt (Länge aus Abb. 3 und 5 b 14–17 cm).
+Die Mode der Luft und die erste Deckenmode bleiben in allen vier Fassungen bei 97–101 und 208–209 Hz.
+**Die Spitze bei 139 Hz erklärt keine der Gegenproben.**
+
+## 9 Der Bauplan unter `asset/` (KQ10 a)
+
+`asset/loop/instrument_bodies/make_oud.py` schreibt `oud.lvinstbodyplan`; `InstrumentBodyTool … --to 5000` den
+Körper `oud.lvinstbody` (Netz für 5 kHz: 5 629 Knoten, 243 Moden, 1,5 min; statistischer Teil bis 20 kHz).
+
+| Größe | Wert | Herkunft |
+|---|---|---|
+| Umriss, Balken (Lage, Enden), Löcher, Schalentiefe, Steglage | wie §1, §7, §8 | Abb. 3 (gelesen; Maßzahlen R 5,3 / R 2,0 / 21 / 41 cm) |
+| Holz, Balkenmaße | Tab. 1, Tab. 2 | Quelle |
+| Deckendicke | 1,5 mm | **Annahme** (KQ10 a) |
+| Hohlraum | 20,61 l; Mündung 1,7 Radien, Güte 30 | Schalentiefe belegt; Querschnitt, Mündung, Güte **Annahme** |
+| Stegpunkte | je Chor einer, Tasten 36 / 41 / 45 / 50 / 55 / 60 (C2 F2 A2 D3 G3 C4), y = 9 cm, x = −2,75 … +2,75 cm | Stimmung D'Addario EJ95A (KQ5 a); Abstand der Chöre 11 mm **Annahme** |
+| Dämpfung | α = 0,06 f + 23 1/s (η 4,6 % bei 100 Hz, 2,8 % bei 200 Hz, 1,3 % bei 1 kHz) | Halbwertsbreiten der frei stehenden Spitzen in Abb. 6: η 3,4 / 3,3 / 1,6 / 1,5 % bei 139 / 280 / 362 / 385 Hz (`proben/2026-11-13_S196_oud_abb6_daempfung.py`), kleinste Quadrate; über 400 Hz fortgeschrieben |
+| Hörort | 0,5 m vor der Decke | **Annahme** |
+
+**Ergebnis** (gekoppelte Moden, in Klammern der Anteil der Luft): 99,9 (0,65) / 168,6 (0,00) / 207,8 (0,29) /
+269,4 / 274,0 / 279,5 / 351,3 / 361,6 Hz. Gegen die gemessenen Spitzen 101 / 203 / 280 / 362 Hz: **−1 / +2 / −2 /
+0 %** (Spitzen der gerechneten Kurve am Antwortpunkt: 100 / 208 / 274 / 362 Hz). Der Test „Loop Koerper 34k-5
+Luftraum die mitgelieferte Oud (KQ10 a)“ hält das fest (3 %).
+
+**Offen:** die Spitze bei 139 Hz ohne Gegenstück; die Höhen der Spitzen (Anregungsort der Messung unbekannt);
+kein Steg; die Dämpfung über 400 Hz; je Chor ein Stegpunkt — die zwei Saiten eines Chors liegen rund 3 mm
+auseinander und teilen ihn.

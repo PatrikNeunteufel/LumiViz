@@ -344,6 +344,7 @@ struct MitLuftraum
         }
         ModeImKoerper mk = auswertung.werte(mode);
         mk.verlustfaktor = (1.0 - lm.luftAnteil) * mk.verlustfaktor + lm.luftAnteil / plan.hohlraum.guete;
+        mk.luftAnteil = lm.luftAnteil;
         const auto loch = lochAbstrahlung(g, plan.hoerorte, luft, lm.frequenzHz, lm.oeffnung);
         for (std::size_t h = 0; h < mk.abstrahlung.size() && h < loch.size(); ++h) mk.abstrahlung[h] += loch[h];
         aus.moden.push_back(std::move(mk));

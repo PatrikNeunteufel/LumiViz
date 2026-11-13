@@ -88,6 +88,7 @@ QJsonObject alsJson(const Koerper& k)
         moden.append(QJsonObject{
             {QStringLiteral("f"), m.frequenzHz},
             {QStringLiteral("eta"), m.verlustfaktor},
+            {QStringLiteral("airShare"), m.luftAnteil},
             {QStringLiteral("materialShares"), zahlenAlsJson(m.werkstoffAnteil)},
             {QStringLiteral("bridge"), zahlenAlsJson(m.amStegpunkt)},
             {QStringLiteral("radiation"), komplexAlsJson(m.abstrahlung)},
@@ -203,6 +204,7 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
         ModeImKoerper m;
         m.frequenzHz = o.value(QStringLiteral("f")).toDouble();
         m.verlustfaktor = o.value(QStringLiteral("eta")).toDouble();
+        m.luftAnteil = o.value(QStringLiteral("airShare")).toDouble();  // seit Fassung 3 (F-K1 a); davor 0
         if (!zahlenAusJson(o.value(QStringLiteral("materialShares")), m.werkstoffAnteil)) return false;
         if (!zahlenAusJson(o.value(QStringLiteral("bridge")), m.amStegpunkt)) return false;
         if (!komplexAusJson(o.value(QStringLiteral("radiation")), m.abstrahlung)) return false;
