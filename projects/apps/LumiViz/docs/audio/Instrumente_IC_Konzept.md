@@ -1,7 +1,7 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.27.0
-> **Datum:** 2026-11-12 (Session 194)
+> **Version:** 0.28.0
+> **Datum:** 2026-11-13 (Session 196)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
 > der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
@@ -1248,6 +1248,49 @@ Löcher, Dicke auf die erste Mode, Abweichung bis 21 % als bekannt geführt), c 
 Plattenmodell). Kippt auf b, wenn die Oud auch mit Löchern nicht trifft und die Zuordnung zeigt, dass Messung und Rechnung
 nicht dieselben Moden meinen — dann wird die Schwelle an Laute oder Cembalo neu geprüft.
 
+**KQ7 a gebaut, zweiter Fall (S196)** `../modellierung/gezupfte-saite/2026-11-13_S196_oud_zweiter_fall.md`:
+`InstrumentBody` rechnet Löcher (`.lvinstbodyplan` Fassung 4, `plate.holes`; der Kreisring gegen Kirchhoff auf 0,09 %;
+die drei Körper des Flügels neu gerechnet, gleich bis auf Abdruck und Rechenzeit). Die Oud mit ihren drei Löchern:
+143 / 169 / 260 / 276 Hz bei 1,5 mm (+1 / −25 / +7 / −1 %), 148 / 186 / 291 / 304 Hz bei 1,75 mm — die Löcher heben
+die ersten Moden um 3–5 %, **die Schwelle ist wieder verfehlt**. Zuordnung über `InstrumentBodyTool --shapes`: die
+Arten der Formen und ihre Reihenfolge stimmen mit der Rechnung der Quelle überein (die Lesart von S195 „zweite Mode
+mit zwei Bäuchen nebeneinander“ war falsch); die Abstände je Form (bis −20 % und +33 %) schließt keine Dicke.
+Unbelegte Annahmen wirken stärker als die Schwelle (Balkenenden am Rand: erste Mode 148 → 228 Hz), und eine falsche
+Annahme erfüllt sie (Faser quer, 2,5 mm: 156 / 208 / 240 / 285 Hz) — vier Frequenzen ohne gemessene Form prüfen den
+Bauplan nicht. Die Messung stammt von einer Oud mit Luftraum, die Rechnung hat keinen.
+
+✅ **KQ8 a** (Patrik S196): **KQ6 a kippt noch nicht — zuerst zieht der Luftraum nach `InstrumentBody`** (F-K1 a, in
+34k-5 ohnehin vorgesehen), geprüft gegen Helmholtz und Kasten. Danach wird die Oud mit Luftraum gegen die vier
+gemessenen Spitzen gerechnet; Deckendicke, Anschluss der Balkenenden und Schalentiefe stehen als benannte Annahmen im
+Bauplan. Die Schwelle heißt dann: jede gemessene Spitze hat eine gerechnete Mode innerhalb von 10 %, und die
+Zuordnung der Formen wird mit dem Bild belegt. Verfehlt die Oud auch das, kommt KQ6 a zur Vorlage. Grund: Messung
+und Rechnung beschreiben heute nicht dasselbe Ding (ein Überschlag mit angenommener Schalentiefe von 19 cm legt die
+Helmholtz-Frequenz auf rund 125 Hz, dicht an der ersten gemessenen Spitze), und KQ6 a trägt auch Laute und Cembalo.
+Verworfen: b (KQ6 a kippt nach seinem Wortlaut auf das gemeinsame Plattenmodell — dessen Abweichungen aus der Probe
+S195 sind größer als alles, was die Oud verfehlt), c (Bauplan mit Löchern bei 1,5 mm, −25 % an der zweiten Mode als
+bekannt geführt, Schwelle an der Laute neu — dort wartet dieselbe Lücke), d (Faser quer, weil sie trifft —
+widerspricht Instrument und Quelle). Kippt auf b, wenn die Oud mit Luftraum und belegbarer Schalentiefe weiter mehr
+als 10 % verfehlt und sich das nicht auf eine Annahme zurückführen lässt; auf c, wenn sich die Schalentiefe nicht
+belegen lässt und der Luftraum damit nur eine weitere freie Annahme wäre.
+
+**KQ8 a gebaut (S196)** — `InstrumentBody/Luftraum.hpp`: die Moden der Platte (im Vakuum) und die Luft in den Löchern,
+gekoppelt über den Druck des Hohlraums, exakt als Diagonale plus Rang 1; im Bauplan der Block `cavity` (Fassung 4);
+geprüft gegen Helmholtz, den Kasten ohne Loch, zwei gekoppelte Schwinger und den dichten Löser von Eigen. Die Oud
+(Bericht §7): aus Abb. 3 am Bild gelesen die Schale 21 cm tief, Löcher R 5,3 und R 2,0 cm; mit „Querschnitt halbe
+Ellipse“ 20,6 l. **142 Hz ist die Mode der Luft, 226 Hz die von ihr verschobene erste Deckenmode.** Mit Balken am
+Rand und 1,5 mm: 132 / 243 / 305 / 324 Hz — drei gemessene Spitzen mit eigener Mode (−7 % / +7,5 % / +9 %), die Spitze
+bei 242 Hz ohne eigene Mode; mit frei endenden Balken liegt die Luftmode bei 100–117 Hz. Netzunabhängig (drei Netze).
+
+✅ **KQ9 a** (Patrik S196): **KQ6 a gilt weiter, die Oud bekommt diesen Bauplan** — drei Löcher, Luftraum (Schale
+21 cm, 20,6 l), Balken am Rand, 1,5 mm Decke; Dicke, Balkenanschluss und Querschnitt der Schale stehen als Annahmen
+mit Vermerk im Bauplan, die Spitze bei 242 Hz als „ohne Gegenstück“ im Bericht. Cembalo und Laute folgen auf demselben
+Weg, jeweils mit Luftraum. Grund: die Rechnung erklärt die beiden kräftigsten Spitzen (Luft und verschobene
+Deckenmode) aus einer belegten Schalentiefe — das sind die Moden, die die Saite am Steg sieht. Verworfen: b (KQ6 a
+kippt auf das Plattenmodell — es hat keinen Luftraum und damit die 142 Hz nicht), c (Oud zurückstellen, erst die
+Laute — verbessert die Oud nicht, die Laute kommt ohnehin als Nächstes). Kippt auf c, wenn „Balkenenden am Rand“
+als unbelegte Annahme nicht tragen soll; auf b, wenn die Laute mit Luftraum ihre gemessene Kurve um mehr als 10 %
+verfehlt und sich das nicht auf eine Annahme zurückführen lässt.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1309,6 +1352,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.28.0 | 2026-11-13 | Session 196. §6: KQ7 a gebaut (Löcher in `InstrumentBody`, Bauplan Fassung 4), zweiter Fall der Oud verfehlt die Schwelle; KQ8 a (erst der Luftraum nach `InstrumentBody`, dann die Oud mit Luftraum gegen die Messung); Luftraum gebaut (F-K1 a), KQ9 a (KQ6 a gilt weiter; Oud mit Luftraum, Balken am Rand, 1,5 mm). |
 | 0.25.0 | 2026-11-12 | Session 193. §6: Teilplan 34k (34k-1 bis 34k-11) nach dem Befund S192 und der Gegenprobe S193 an der IC-Vorlage der Klasse 2; GZ1 a (Namen, Bestand bleibt), GZ1-1 a (Spielweisen am Kern, Saitensatz an Laute, Oud und `classical_guitar`), GZ2 a (Umzug als Beleg, dann Rechenfassung 2 mit Quellen), GZ3 a (Mitschwingen je Note), GZ4 a (Steg und Abstrahlung aus einem Körper nach KB1 a; berichtigt IK2-10 a für Klasse 2); Zeile 34k der Übersicht. |
 | 0.24.0 | 2026-11-12 | Session 192. §6: 34j-10 erledigt — Stufe 34j fertig (Modul-Doku, Bibliotheken und Quellpakete, Bericht der Klasse, harvest gelöscht, voller Lauf 1888 / 1888 unter beiden Compilern); Journal J75. |
 | 0.23.0 | 2026-11-12 | Session 192. §6: 34j-9 erledigt — `free_reeds_demo`, Loops der Nuancen, Hörliste `zunge_34j` (löst IC 10 ab), Creator-Fall, Rechenzeit (Zahlen); Journal J74. |

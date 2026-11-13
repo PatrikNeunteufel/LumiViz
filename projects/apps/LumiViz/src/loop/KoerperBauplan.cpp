@@ -212,6 +212,8 @@ QJsonObject alsJson(const Bauplan& plan)
         });
     }
     const koerper::Platte& p = plan.platte;
+    QJsonArray loecher;
+    for (const auto& loch : p.loecher) loecher.append(linieAlsJson(loch));
     return QJsonObject{
         {QStringLiteral("format"), QLatin1String(kBauplanFormat)},
         {QStringLiteral("version"), koerper::kBauplanFassung},
@@ -227,6 +229,8 @@ QJsonObject alsJson(const Bauplan& plan)
              {QStringLiteral("outline"), linieAlsJson(p.umriss)},
              {QStringLiteral("thickness"), p.dicke},
              {QStringLiteral("thicknessGrid"), rasterAlsJson(p.dickeRaster)},
+             // seit Fassung 4 (KQ7 a), immer geschrieben
+             {QStringLiteral("holes"), loecher},
          }},
         {QStringLiteral("ribs"), leistenAlsJson(plan.rippen)},
         {QStringLiteral("bridges"), leistenAlsJson(plan.stege)},
@@ -246,6 +250,14 @@ QJsonObject alsJson(const Bauplan& plan)
              {QStringLiteral("c"), plan.daempfung.c},
              {QStringLiteral("law"), QStringLiteral("alpha(f) = a f^2 + b f + c in 1/s, f in Hz; eta = alpha / (2 pi f)")},
              {QStringLiteral("source"), text(plan.daempfung.quelle)},
+         }},
+        // seit Fassung 4 (F-K1 a, KQ8 a), immer geschrieben
+        {QStringLiteral("cavity"),
+         QJsonObject{
+             {QStringLiteral("volume"), plan.hohlraum.volumen},
+             {QStringLiteral("endCorrection"), plan.hohlraum.muendung},
+             {QStringLiteral("q"), plan.hohlraum.guete},
+             {QStringLiteral("source"), text(plan.hohlraum.quelle)},
          }},
     };
 }
@@ -270,6 +282,13 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
     if (!linieAusJson(platte.value(QStringLiteral("outline")), neu.platte.umriss)) return false;
     neu.platte.dicke = platte.value(QStringLiteral("thickness")).toDouble();
     neu.platte.dickeRaster = rasterAusJson(platte.value(QStringLiteral("thicknessGrid")).toObject());
+    // seit Fassung 4 (KQ7 a); fehlt die Liste, hat die Platte keine Loecher
+    for (const QJsonValue& e : platte.value(QStringLiteral("holes")).toArray())
+    {
+        std::vector<Punkt2> loch;
+        if (!linieAusJson(e, loch)) return false;
+        neu.platte.loecher.push_back(std::move(loch));
+    }
     if (!leistenAusJson(wurzel.value(QStringLiteral("ribs")), neu.rippen)) return false;
     if (!leistenAusJson(wurzel.value(QStringLiteral("bridges")), neu.stege)) return false;
     for (const QJsonValue& e : wurzel.value(QStringLiteral("bridgePoints")).toArray())
@@ -302,6 +321,16 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
         neu.daempfung.b = d.value(QStringLiteral("b")).toDouble(vorgabe.b);
         neu.daempfung.c = d.value(QStringLiteral("c")).toDouble(vorgabe.c);
         neu.daempfung.quelle = text(d.value(QStringLiteral("source")));
+    }
+    // seit Fassung 4 (F-K1 a); fehlt der Block, gibt es keinen Hohlraum (die Platte allein wie bis Fassung 3)
+    if (wurzel.contains(QStringLiteral("cavity")))
+    {
+        const QJsonObject c = wurzel.value(QStringLiteral("cavity")).toObject();
+        const koerper::Hohlraum vorgabe;
+        neu.hohlraum.volumen = c.value(QStringLiteral("volume")).toDouble();
+        neu.hohlraum.muendung = c.value(QStringLiteral("endCorrection")).toDouble(vorgabe.muendung);
+        neu.hohlraum.guete = c.value(QStringLiteral("q")).toDouble(vorgabe.guete);
+        neu.hohlraum.quelle = text(c.value(QStringLiteral("source")));
     }
     plan = std::move(neu);
     return true;

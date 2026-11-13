@@ -98,7 +98,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 5002.4814994,
+        "seconds": 5043.9403657,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 923520,
@@ -216501,7 +216501,7 @@
     ],
     "plan": {
         "file": "steinway_d_glass_same_mass.lvinstbodyplan",
-        "fingerprint": "69a1f08bd90c4146b624aac2f4619d17c52978e6fc468aa4f54447ddaf1299a2"
+        "fingerprint": "2fa5b0c206edc4c58494bf8f2bb6269497b29312321d99e1e72351229d4d4a8b"
     },
     "statistical": {
         "bandFromHz": 2500,

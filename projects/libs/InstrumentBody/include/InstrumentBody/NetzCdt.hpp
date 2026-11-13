@@ -8,7 +8,7 @@
  *
  * Ablauf: alle Punkte (Umriss und Zwangslinien, doppelte zusammengelegt) und
  * Kanten einfuegen, sich kreuzende Zwangskanten aufloesen lassen; die Dreiecke
- * ausserhalb des Umrisses sammeln; nach groesster Flaeche, dann nach kleinstem
+ * ausserhalb des Umrisses und in den Loechern (KQ7 a) sammeln; nach groesster Flaeche, dann nach kleinstem
  * Winkel verfeinern (zweimal, bis nichts mehr kommt); die aeusseren entfernen.
  * Knoten in der Reihenfolge, wie sie kommen (`AsProvided`) — zwei Laeufe geben
  * dasselbe Netz. Fehler von CDT kommen als Text in `Netz::fehler` zurueck.
@@ -59,6 +59,15 @@ public:
                 }
             };
             zug(auftrag.umriss, true);
+            for (const auto& loch : auftrag.loecher)
+            {
+                if (loch.size() < 3)
+                {
+                    netz.fehler = "a hole needs three points";
+                    return netz;
+                }
+                zug(loch, true);
+            }
             for (const auto& linie : auftrag.zwangslinien) zug(linie, false);
 
             CDT::Triangulation<double> cdt(CDT::VertexInsertionOrder::AsProvided,
@@ -66,6 +75,20 @@ public:
             cdt.insertVertices(punkte);
             cdt.insertEdges(kanten);
             CDT::TriIndUSet aussen = cdt.collectOuterTriangles();
+            // Loecher (KQ7 a): ihr Rand ist Zwangskante, ein Dreieck liegt also ganz drin oder ganz
+            // draussen — der Schwerpunkt entscheidet. Sie zaehlen wie die aeusseren: nicht verfeinert,
+            // am Ende entfernt.
+            if (!auftrag.loecher.empty())
+            {
+                for (CDT::TriInd t = 0; t < static_cast<CDT::TriInd>(cdt.triangles.size()); ++t)
+                {
+                    if (aussen.count(t) > 0) continue;
+                    const auto& v = cdt.triangles[t].vertices;
+                    const Punkt2 mitte{(cdt.vertices[v[0]].x + cdt.vertices[v[1]].x + cdt.vertices[v[2]].x) / 3.0,
+                                       (cdt.vertices[v[0]].y + cdt.vertices[v[1]].y + cdt.vertices[v[2]].y) / 3.0};
+                    if (imLoch(auftrag.loecher, mitte)) aussen.insert(t);
+                }
+            }
             const auto budget = static_cast<CDT::VertInd>(20.0 * flaecheDesUmrisses(auftrag) / groessteFlaeche(auftrag.kante) + 10000);
             const double kurz = auftrag.kante * 1e-3;
             for (int runde = 0; runde < 2; ++runde)
@@ -88,6 +111,7 @@ public:
             for (const auto& e : cdt.fixedEdges)
                 netz.zwangskanten.push_back({static_cast<int>(std::min(e.v1(), e.v2())), static_cast<int>(std::max(e.v1(), e.v2()))});
             std::sort(netz.zwangskanten.begin(), netz.zwangskanten.end());
+            netz.lochkanten = lochkantenVon(netz, auftrag.loecher, auftrag.kante * 1e-6);
         }
         catch (const std::exception& e)
         {

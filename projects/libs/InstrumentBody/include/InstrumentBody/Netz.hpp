@@ -25,6 +25,7 @@
 
 #include "InstrumentBody/Bauplan.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <numbers>
@@ -39,6 +40,8 @@ struct NetzAuftrag
 {
     std::vector<Punkt2> umriss;                    ///< geschlossen, der erste Punkt nicht wiederholt
     std::vector<std::vector<Punkt2>> zwangslinien;  ///< offene Linienzuege im Umriss; sie duerfen sich kreuzen
+    /// Loecher (KQ7 a): je Loch ein geschlossener Innenumriss, ganz im Umriss; im Loch entsteht kein Dreieck
+    std::vector<std::vector<Punkt2>> loecher;
     double kante = 0.0;                            ///< m: Kantenlaenge der Elemente (gleichseitig gedacht)
     double kleinsterWinkelGrad = 25.0;             ///< kein Dreieck spitzer — ausser an Ecken der Eingabe
 };
@@ -50,6 +53,9 @@ struct Netz
     std::vector<std::array<int, 3>> dreiecke;
     /// Kanten auf dem Umriss oder einer Zwangslinie (Knotenpaare, kleinerer zuerst, sortiert)
     std::vector<std::array<int, 2>> zwangskanten;
+    /// Kanten auf dem Rand eines Lochs (Knotenpaare, kleinerer zuerst, sortiert): Rand der Platte, aber
+    /// frei — kein Auflager haelt sie (KQ7 a). Ohne Loecher leer.
+    std::vector<std::array<int, 2>> lochkanten;
     std::string fehler;  ///< leer = in Ordnung
     /// Was der Netzgeber nicht verfeinern konnte (Dreiecke oder Kanten); nur zur Auskunft
     std::size_t unverfeinert = 0;
@@ -186,8 +192,39 @@ public:
     return aus;
 }
 
-/// Ein Linienzug am Umriss abgeschnitten: zurueck die Stuecke, die innen liegen.
-[[nodiscard]] inline std::vector<std::vector<Punkt2>> imUmriss(const std::vector<Punkt2>& linie, const std::vector<Punkt2>& umriss)
+/// Die Randkanten eines Netzes (Kanten mit nur einem Dreieck), deren Mitte auf dem Rand eines der
+/// Loecher liegt — Knotenpaare, kleinerer zuerst, sortiert. `toleranz` in m.
+[[nodiscard]] inline std::vector<std::array<int, 2>> lochkantenVon(const Netz& n, const std::vector<std::vector<Punkt2>>& loecher,
+                                                                    double toleranz)
+{
+    std::vector<std::array<int, 2>> aus;
+    if (loecher.empty()) return aus;
+    std::vector<std::array<int, 2>> alle;
+    for (const auto& d : n.dreiecke)
+        for (int r = 0; r < 3; ++r) alle.push_back({std::min(d[r], d[(r + 1) % 3]), std::max(d[r], d[(r + 1) % 3])});
+    std::sort(alle.begin(), alle.end());
+    for (std::size_t k = 0; k < alle.size(); ++k)
+    {
+        const bool doppelt = (k > 0 && alle[k - 1] == alle[k]) || (k + 1 < alle.size() && alle[k + 1] == alle[k]);
+        if (doppelt) continue;
+        const Punkt2 a = n.knoten[alle[k][0]], b = n.knoten[alle[k][1]];
+        const Punkt2 mitte{(a.x + b.x) / 2.0, (a.y + b.y) / 2.0};
+        for (const auto& loch : loecher)
+        {
+            if (naechsterRandpunkt(loch, mitte).abstand <= toleranz)
+            {
+                aus.push_back(alle[k]);
+                break;
+            }
+        }
+    }
+    return aus;
+}
+
+/// Ein Linienzug am Umriss abgeschnitten: zurueck die Stuecke, die innen liegen — mit
+/// `aussenBleibt` die Stuecke, die aussen liegen (so endet eine Leiste am Rand eines Lochs).
+[[nodiscard]] inline std::vector<std::vector<Punkt2>> imUmriss(const std::vector<Punkt2>& linie, const std::vector<Punkt2>& umriss,
+                                                               bool aussenBleibt = false)
 {
     std::vector<std::vector<Punkt2>> stuecke;
     std::vector<Punkt2> aktuell;
@@ -208,10 +245,10 @@ public:
     };
     for (std::size_t k = 0; k < linie.size(); ++k)
     {
-        const bool drin = innen(umriss, linie[k]);
+        const bool drin = innen(umriss, linie[k]) != aussenBleibt;
         if (k > 0)
         {
-            const bool vorherDrin = innen(umriss, linie[k - 1]);
+            const bool vorherDrin = innen(umriss, linie[k - 1]) != aussenBleibt;
             if (vorherDrin && !drin) aktuell.push_back(schnitt(linie[k - 1], linie[k]));
             if (!vorherDrin && drin) aktuell.push_back(schnitt(linie[k], linie[k - 1]));
         }
@@ -241,10 +278,20 @@ public:
             {
                 std::vector<double> abstand;
                 for (const double b : l.breite) abstand.push_back(seite * b);
-                for (auto& stueck : imUmriss(versetzt(l.linie, abstand), plan.platte.umriss)) a.zwangslinien.push_back(std::move(stueck));
+                std::vector<std::vector<Punkt2>> stuecke = imUmriss(versetzt(l.linie, abstand), plan.platte.umriss);
+                // an jedem Loch noch einmal: was im Loch liegt, faellt weg
+                for (const auto& loch : plan.platte.loecher)
+                {
+                    std::vector<std::vector<Punkt2>> rest;
+                    for (const auto& stueck : stuecke)
+                        for (auto& teil : imUmriss(stueck, loch, true)) rest.push_back(std::move(teil));
+                    stuecke = std::move(rest);
+                }
+                for (auto& stueck : stuecke) a.zwangslinien.push_back(std::move(stueck));
             }
         }
     }
+    a.loecher = plan.platte.loecher;
     return a;
 }
 

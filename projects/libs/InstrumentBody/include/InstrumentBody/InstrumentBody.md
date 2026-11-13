@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.15.0  
-> **Datum:** 2026-10-24  
+> **Version:** 0.16.0  
+> **Datum:** 2026-11-13  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Antwort.hpp, Statistik.hpp, Koerper.hpp  
+> **Dateien:** Bauplan.hpp, Luftraum.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Antwort.hpp, Statistik.hpp, Koerper.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
@@ -52,6 +52,12 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   `vervollstaendigt`: G = E / (2 (1 + ν))). `verlustfaktor` η je Werkstoff, 0 = keine Angabe.
 - **Platte**: Material, Faserwinkel (Grad gegen die x-Achse), geschlossener Umriss, Dicke — fest oder als
   `Raster` (bilinear; NaN = kein Wert, dann gilt die feste Dicke).
+- **Löcher** (`Platte::loecher`, seit Fassung 4; KQ7 a, S196): je Loch ein geschlossener Innenumriss, ganz im Umriss,
+  keines berührt ein anderes. Im Loch gibt es keine Platte: das Netz spart es aus, sein Rand ist frei (kein Auflager
+  hält ihn), es strahlt nicht und wiegt nichts; Leisten enden am Lochrand. Die Rückseite (HU4 a) rechnet weiter nur
+  über den Außenumriss — der Weg durch ein Loch gehört zum Luftraum (F-K1 a, noch nicht gebaut). Ein Bauplan ohne
+  Löcher rechnet Bit für Bit wie vorher (belegt S196: die drei Steinway-Körper neu gerechnet, gleich bis auf Abdruck
+  und Rechenzeit).
 - **Leisten** (Rippen, Stege): Mittellinie, je Punkt Höhe über der Platte und Breite. Die Rechnung nimmt sie
   als dickere Stellen der Platte (BM1 a, wie MAESSTRO und Chabassier).
 - **Stegpunkte**: je Taste (MIDI) der Ort, an dem die Saiten den Steg treffen, mit Quelle.
@@ -68,15 +74,21 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   Spielweisen_Konzept §4.1).
 - **Dämpfung** (`Daempfung`, seit Fassung 3; HU4-1 a, S160): das Gesetz α(f) = a·f² + b·f + c in 1/s mit Quelle,
   Vorgabe RT-0425 Gl. 1 (a = 2·10⁻⁵, b = 0,07, c = 0); der Steinway D trägt c = 4,5 (siehe Auswertung).
+- **Hohlraum** (`Hohlraum`, seit Fassung 4; F-K1 a, KQ8 a, S196): Volumen in m³ (0 = keiner — dann rechnet die Platte
+  allein wie bis Fassung 3), Mündungskorrektur je Loch in Radien (Vorgabe 1,7 = 2 · 8/(3π), ein Loch in einer dünnen
+  weiten Wand), Güte der Luft in den Löchern (Vorgabe 30), Quelle. Die Rechnung steht in §5.7.
 - **Prüfen**: `pruefe(plan)` nennt je Befund einen Satz (Material fehlt oder doppelt, Werte nicht positiv,
   Querzahl außerhalb der Stabilität — isotrop 0 ≤ ν < 0,5, orthotrop 1 − ν_xy·ν_yx > 0 —, Umriss ohne Fläche,
   Leiste ohne Höhe je Punkt, Stegpunkte nicht aufsteigend, Hörort ohne oder mit doppeltem Namen, nicht über der
-  Platte, Randtiefe oder Schattenfrequenz negativ, a, b oder c der Dämpfung negativ).
-- **Geometrie**: `flaeche`, `innen`, `abstandZurLinie`, `laenge`, `masse` (Platte über ein Raster von 5 mm
+  Platte, Randtiefe oder Schattenfrequenz negativ, a, b oder c der Dämpfung negativ; Loch ohne Fläche, nicht ganz im
+  Umriss, zwei Löcher berühren sich, Stegpunkt in einem Loch).
+- **Geometrie**: `flaeche` (auch der Platte: Umriss ohne Löcher), `imLoch`, `kantenSchneidenSich`, `innen`, `abstandZurLinie`, `laenge`, `masse` (Platte über ein Raster von 5 mm
   summiert, Leisten als Länge mal mittlerer Querschnitt), `naechsterRandpunkt` (der nächste Punkt auf den Kanten
   des Umrisses und sein Abstand).
 
-Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 3) schreibt jedes Feld, auch leere;
+Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 4) schreibt jedes Feld, auch leere;
+die Löcher stehen in `plate.holes` (je Loch eine Liste von Punkten), der Hohlraum in `cavity` (`volume`,
+`endCorrection`, `q`, `source`); Fassung 3 ohne beides bleibt lesbar (keine Löcher, kein Hohlraum);
 NaN im Raster steht als `null`. Die Hörorte stehen in `listeningPoints` (`name`, `x`, `y`, `z`, `source`), die
 Rückseite in `backside` (`rimDepth`, `shadowHz`, `source`), die Dämpfung in `damping` (`a`, `b`, `c`, `law`,
 `source`); Fassung 1 ohne die Liste und Fassung 2 ohne die Blöcke bleiben lesbar (dann keine Hörorte bzw. keine
@@ -90,7 +102,10 @@ Entschieden: BM4 a mit Zusatz (Patrik S147) — CDT jetzt, ein eigener Generator
 - **Schnittstelle** `Netzgeber::vernetze(NetzAuftrag) → Netz`. Hinein: geschlossener Umriss, offene
   Zwangslinien (dürfen sich kreuzen), Kantenlänge, kleinster Winkel (Vorgabe 25°). Heraus: Knoten, Dreiecke
   gegen den Uhrzeiger, Zwangskanten (sortiert), `fehler` (leer = gut), `unverfeinert` (nur Auskunft). Kein Typ
-  von CDT geht über sie hinaus; eine Umsetzung ist zustandslos — zwei Aufrufe, dasselbe Netz.
+  von CDT geht über sie hinaus; eine Umsetzung ist zustandslos — zwei Aufrufe, dasselbe Netz. Seit S196 (KQ7 a)
+  dazu hinein `loecher` (geschlossene Innenumrisse: im Loch kein Dreieck) und heraus `lochkanten` (die Randkanten
+  auf einem Lochrand, sortiert; `lochkantenVon` bestimmt sie für jede Umsetzung aus dem Netz); `netzAuftrag`
+  schneidet die Ränder der Leisten auch an den Löchern ab (`imUmriss(…, aussenBleibt)`).
 - **Aus dem Bauplan** `netzAuftrag(plan, fmax)`: der Umriss der Platte, je Rippe und Steg die beiden Ränder
   (Mittellinie ± halbe Breite, `versetzt`), am Umriss abgeschnitten (`imUmriss`); die Kante nach MAESSTRO Gl. 1,
   `elementKante` = λ_min / 4 an der dünnsten Stelle der Platte, λ = √(2π / f) · (D / (ρ h))^¼, D = E_y h³ / 12.
@@ -98,7 +113,8 @@ Entschieden: BM4 a mit Zusatz (Patrik S147) — CDT jetzt, ein eigener Generator
   `aufZwangskanten(netz, a, b)`.
 - **Umsetzung CDT 2.0.1** (`NetzgeberCdt`, `externals/CDT`, MPL-2.0): Punkte gleicher Lage zusammengelegt,
   Einfügen in gegebener Reihenfolge, sich kreuzende Zwangskanten aufgelöst (`TryResolve`), die äußeren Dreiecke
-  gesammelt, zweimal nach größter Fläche und nach kleinstem Winkel verfeinert, dann entfernt. Fehler von CDT
+  gesammelt — dazu die Dreiecke, deren Schwerpunkt in einem Loch liegt (der Lochrand ist Zwangskante) —, zweimal
+  nach größter Fläche und nach kleinstem Winkel verfeinert, dann entfernt. Fehler von CDT
   (Ausnahmen) als Text.
 - **Eine eigene Umsetzung dazu:** eine Klasse, die `Netzgeber` umsetzt, in `netzgeber()` von `Umsetzungen.hpp`
   eintragen — alle Fälle von `test_LoopKoerperNetz.cpp` laufen dann für beide, und `InstrumentBodyTool --mesher`
@@ -123,7 +139,7 @@ EL1 a (Patrik S147).
   Kanten – Inneres, volle Integration (Gauss auf dem zusammengeklappten Quadrat, k + 2 Punkte je Richtung).
 - **System** (`baueSystem`): Knoten über die Kanten des Netzes durchnummeriert (Kantenknoten vom kleineren Eckknoten
   aus), Auflager eingespannt (der Boden), gelenkig für achsparallele Prüfplatten oder frei (nur für Prüfungen der
-  Auswertung); K und M als `DuenneMatrix` (oberes Dreieck, erst das Muster, dann die Werte) — das Format für den
+  Auswertung); eine Randkante aus `Netz::lochkanten` hält kein Auflager (KQ7 a); K und M als `DuenneMatrix` (oberes Dreieck, erst das Muster, dann die Werte) — das Format für den
   Eigenlöser (BM5-1 a). `elemente` hält je Dreieck seine Knoten (seit 31c-5b, für die Auswertung); `Plattenelement`
   gibt seine Ansatzfunktionen über `basis` heraus.
 - **Gemessen** (Release-clang, S147): Prüfplatten nach Navier (Mindlin, frei aufliegend, orthotrop), Netz nach
@@ -285,6 +301,35 @@ Reihenfolge der Werte, Luft, Dämpfung, die gerechneten Moden (`ModeImKoerper`) 
 - **Datei** (`loop/Koerper`, Qt-JSON, in der App und im Werkzeug): jedes Feld immer geschrieben; Zahlen kommen genau
   zurück; der Samen steht als Text (64 Bit); eine Mode mit falscher Zahl an Werten macht die Datei ungültig.
 
+### 5.7 Luftraum — `InstrumentBody/Luftraum.hpp` (34k-5, F-K1 a)
+
+Die Moden der Platte und die Luft in den Löchern, gekoppelt über den einen Druck des Hohlraums — das Modell der
+IC-Vorlage `harvest/instruments-calculation/rechnung/gemeinsam/Koerper` (dort nach Wright 1996, Gl. A.12–A.28), hier
+auf den gerechneten Moden der Platte **im Vakuum** (M-orthonormal, modale Masse 1):
+
+    q̈_k + ω_k² q_k = a_k P + φ_k(Steg) F,   M_a ü = P,   P = −α (Σ a_k q_k + u),   α = ρ c² / V
+
+- `a_k = ∫ φ_k dS` ist das Volumen je Auslenkung der Mode (`Auswertung::volumen`); `u` das Volumen, das durch alle
+  Löcher nach außen tritt. Mehrere Löcher liegen parallel: je Loch die Länge L = Plattendicke + Mündung · Radius des
+  flächengleichen Kreises, 1/M_a = Σ A_j / (ρ L_j), der Fluss teilt sich wie A_j / L_j (`luftraumGroessen`,
+  `LuftraumGroessen::helmholtzHz`).
+- **Gerechnet** wird das ungedämpfte System genau: Diagonale plus Rang 1 (`eigenRangEins`), die Eigenwerte als
+  Nullstellen der Säkulargleichung 1 + α Σ z_i² / (d_i − λ) = 0 durch Halbieren vom näheren Pol aus, die Vektoren
+  z_i / (d_i − λ); Einträge ohne Kopplung und gleiche Diagonalwerte werden vorher abgespalten. Keine fremde Bibliothek.
+- `koppleLuftraum(frequenzen, volumen, groessen)` gibt je Mode Frequenz, Anteile der Plattenmoden, `oeffnung` (u) und
+  den Anteil der Bewegungsenergie in der Luft; mit einem Loch eine Mode mehr als hinein. An der untersten gehen Platte
+  und Luft gegeneinander, darüber miteinander.
+- `mitLuftraum(auswertung, plan, luft, plattenModen)` wertet jede gekoppelte Mode aus: die gemischte Form durch
+  `Auswertung::werte` bei der neuen Frequenz (Wert an den Stegpunkten, Abstrahlung der Platte), dazu die Löcher als
+  kleine Quellen in ihrem Schwerpunkt (`lochAbstrahlung`); Verlustfaktor = der der Platte mal ihrem Anteil plus
+  Anteil der Luft / Güte. Das Werkzeug ruft es, wenn der Bauplan einen Hohlraum hat; der Körper bleibt eine Liste von
+  Moden wie ohne (KB1 a).
+- **Grenzen:** nur der Druck des Hohlraums als Ganzes (keine höheren Moden der Luft im Kasten), die Wände außer der
+  Platte starr, die Luft vor der Platte nur als Mündungskorrektur, Löcher für die Abstrahlung als Punktquellen (an
+  Hörorten dicht über einem Loch grob), der statistische Teil über den gerechneten Moden ohne Luftraum.
+- **Gemessen** (S196): Rest von `eigenRangEins` gegen Eigen 2·10⁻¹⁶; eine Prüfdecke 0,4 m × 0,3 m mit Loch über 12 l:
+  Helmholtz 131 Hz und erste Deckenmode 116 Hz werden 77 und 189 Hz.
+
 ### 5.6 Eine eigene Umsetzung dazu
 
 Eine Klasse, die `Eigenloeser` umsetzt, in `eigenloeser()` von `Umsetzungen.hpp` eintragen: alle Fälle von
@@ -330,6 +375,20 @@ Zwangslinien, Winkel, Fläche je Dreieck, Umlaufsinn, im Umriss, zwei Läufe gle
 der Steinway D bis 5 kHz mit den Bezugswerten `werte/netz_steinway.txt` (`LUMIVIZ_NETZ_WERTE_SCHREIBEN=1`).
 
 
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperLoch.cpp` (S196, KQ7 a) — ohne Qt-Anwendung: Bauplan mit
+Löchern (Fläche, Masse, `pruefe`), die Datei (Fassung 4, `holes` immer geschrieben, Fassung 3 lesbar, Abdruck), das
+Netz für jede Umsetzung aus `netzgeber()` (im Loch kein Dreieck, Fläche, Lochrand als `lochkanten`, Leisten enden am
+Lochrand), der Kreisring außen eingespannt und innen frei gegen die geschlossene Lösung nach Kirchhoff (Bessel,
+Determinante je Knotendurchmesserzahl; die Lösung selbst am Grenzfall der vollen Scheibe geprüft; gemessen S196:
+fünf Moden auf 0,09 %; mit gehaltenem Lochrand liegt die erste Mode beim Vierfachen), der Ring-Kolben auf der Achse
+(das Loch strahlt nicht).
+
+`projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperLuftraum.cpp` (S196, F-K1 a) — ohne Qt-Anwendung:
+`eigenRangEins` gegen den dichten Löser von Eigen (auch ohne Kopplung und mit gleichen Diagonalwerten; Spur), die
+geschlossenen Lösungen (Helmholtz, Kasten ohne Loch, zwei gekoppelte Schwinger, Phase von Platte und Luft), der
+Hohlraum aus dem Bauplan (Länge der Luft im Loch, zwei Löcher parallel, Datei mit `cavity`, Prüfung), eine
+gerechnete Decke mit Loch (`volumen`, riesiger Hohlraum lässt die Platte wie sie ist, Verschachtelung, Spur).
+
 `projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperBauplan.cpp` — ohne Qt-Anwendung: Geometrie,
 Dickenraster, Masse und Werkstoffe (auch Glas), `pruefe`, die Datei (Hin- und Rückweg, jedes Feld, NaN als null,
 falsches Format, zu neue Fassung).
@@ -338,6 +397,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.16.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ7 a: Löcher in der Platte (`Platte::loecher`, `.lvinstbodyplan` Fassung 4 mit `plate.holes`; `imLoch`, `flaeche(Platte)`, `kantenSchneidenSich`, Prüfung); `NetzAuftrag::loecher`, `Netz::lochkanten`, `lochkantenVon`, `imUmriss` mit `aussenBleibt`; `NetzgeberCdt` spart Löcher aus; `baueSystem` lässt den Lochrand frei; Masse und Abstrahlung ohne das Loch. Test `test_LoopKoerperLoch`. Werkzeug: `--shapes`. **Luftraum** (F-K1 a, KQ8 a): `Hohlraum` im Bauplan (`cavity`), `Luftraum.hpp` (`eigenRangEins`, `luftraumGroessen`, `koppleLuftraum`, `lochAbstrahlung`, `mitLuftraum`), `Auswertung::volumen`; das Werkzeug koppelt, wenn der Bauplan einen Hohlraum hat. Test `test_LoopKoerperLuftraum`. Ohne Löcher und ohne Hohlraum Bit für Bit wie vorher. |
 | 0.10.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 2: Mobilität (`Mobilitaet.hpp`: MAESSTRO Gl. 10 und 12, Terzbänder, Dichte je Band); Bericht im Werkzeug (`--report`). |
 | 0.11.0 | 2026-10-24 | Session 150, Stufe 31c-6 Teil 3–5: `kDiskantAb` = 41 in `Mobilitaet.hpp` (PF2 a); Prüfstein `test_LoopKoerperPruefstein` (PS3 a, PS4 a, KV2 a). |
 | 0.12.0 | 2026-10-24 | Session 150, Stufe 31c-7 Schritt 1: Antwort des Bodens (`Antwort.hpp`: H je Stegpunkt und Hörort, im Spektrum der FFT, Länge). |

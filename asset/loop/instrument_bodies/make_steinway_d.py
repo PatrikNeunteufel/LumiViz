@@ -560,7 +560,7 @@ def baue(pdf, bildpfad=None):
     faser = round(rippenwinkel + 90.0, 1)
     plan = {
         "format": "lumiviz-instrument-body-plan",
-        "version": 3,
+        "version": 4,
         "title": "Steinway D (RT-0425)",
         "description": "Soundboard of a Steinway D after Chabassier & Durufle, RT-0425 (2012): outline, plate "
                        "thickness, ribs and bridge read from Fig. 2, bridge points from Appendix A.",
@@ -589,6 +589,8 @@ def baue(pdf, bildpfad=None):
                 "ny": ny,
                 "values": [None if np.isnan(v) else runde(float(v), 6) for v in raster.ravel()],
             },
+            # Fassung 4 (S196, KQ7 a): Loecher in der Platte — der Boden des Fluegels hat keine
+            "holes": [],
         },
         "ribs": leisten_r,
         "bridges": leisten_s,
@@ -604,6 +606,9 @@ def baue(pdf, bildpfad=None):
                               "(finding S148); c = 4.5 1/s (HU4-1 a, S160) lifts the lowest modes to the loss factors "
                               "measured on soundboards, 1 to 3 % with a mean of 2.3 % (Ege, Boutillon & Rebillat 2013): "
                               "eta 3.0 % at 38 Hz, 2.3 % at 61 Hz, 1.5 % at 300 Hz to 1 kHz, 2.1 % at 3 kHz"},
+        # Fassung 4 (S196, F-K1 a): der Hohlraum hinter der Platte — der Boden des Fluegels schliesst keinen ab
+        "cavity": {"volume": 0.0, "endCorrection": 1.7, "q": 30.0,
+                   "source": "none: a piano soundboard closes no cavity"},
     }
 
     # Pruefung: jeder Stegpunkt auf dem Steg (halbe Breite), Bericht der Zahlen

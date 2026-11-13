@@ -40,7 +40,9 @@ namespace lumi::koerper
 /// Die Fassung des Bauplans, die dieses Programm schreibt; eine hoehere liest es nicht.
 /// 2 (S148, BM6 a): Hoerorte. Fassung 1 bleibt lesbar (ohne Hoerorte).
 /// 3 (S160, HU4 a): die Rueckseite (Kurzschluss ueber den Rand). Fassung 1 und 2 bleiben lesbar (ohne Rueckseite).
-inline constexpr int kBauplanFassung = 3;
+/// 4 (S196, KQ7 a, F-K1 a): Loecher in der Platte, der Hohlraum dahinter. Fassung 1 bis 3 bleiben lesbar
+/// (ohne Loecher, ohne Hohlraum).
+inline constexpr int kBauplanFassung = 4;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -158,6 +160,11 @@ struct Platte
     /// Dicke in m, wo das Raster keinen Wert hat (oder ohne Raster ueberall).
     double dicke = 0.0;
     Raster dickeRaster;  ///< leer = ueberall `dicke`
+    /// Loecher (seit Fassung 4, KQ7 a): je Loch ein geschlossener Innenumriss (der erste Punkt wird
+    /// nicht wiederholt), ganz im Umriss, keines beruehrt ein anderes. Im Loch gibt es keine Platte:
+    /// das Netz spart es aus, sein Rand ist frei, es strahlt nicht und wiegt nichts. Leisten enden
+    /// am Lochrand.
+    std::vector<std::vector<Punkt2>> loecher;
 
     /// Die Dicke an `p` in m.
     [[nodiscard]] double dickeBei(Punkt2 p) const
@@ -219,6 +226,24 @@ struct Rueckseite
     [[nodiscard]] bool operator==(const Rueckseite&) const = default;
 };
 
+/// Der Hohlraum hinter der Platte (seit Fassung 4; F-K1 a, KQ8 a, S196): die Luft im Kasten oder in
+/// der Schale, die ueber die Loecher der Platte nach aussen tritt. `volumen` 0 = keiner — dann rechnet
+/// die Platte allein wie bis Fassung 3. Die Rechnung steht in `Luftraum.hpp`.
+struct Hohlraum
+{
+    double volumen = 0.0;   ///< m³; 0 = aus
+    /// Muendungskorrektur je Loch in Radien des flaechengleichen Kreises, innen und aussen zusammen
+    /// (ein Loch in einer duennen grossen Wand: 2 · 8/(3π) ≈ 1,7).
+    double muendung = 1.7;
+    /// Guete der Luft in den Loechern (Verlust durch Reibung und Abstrahlung): ihr Anteil am
+    /// Verlustfaktor einer Mode ist Anteil der Bewegungsenergie in der Luft / Guete.
+    double guete = 30.0;
+    std::string quelle;     ///< wie die Werte zustande kamen
+
+    [[nodiscard]] bool an() const { return volumen > 0.0; }
+    [[nodiscard]] bool operator==(const Hohlraum&) const = default;
+};
+
 /// Die modale Daempfung α(f) = a f² + b f + c in 1/s, f in Hz (RT-0425 Gl. 1, gelesen als Polynom in f —
 /// Befund S148). Seit HU4-1 a (S160) eine Eingabe des Bauplans: der Steinway D traegt c = 4,5 1/s, damit die
 /// tiefsten Moden die an Resonanzboeden gemessenen 1–3 % erreichen (Ege, Boutillon & Rebillat 2013, Mittel
@@ -254,6 +279,7 @@ struct Bauplan
     std::vector<Hoerort> hoerorte;      ///< seit Fassung 2; leer = keiner
     Rueckseite rueckseite;              ///< seit Fassung 3; Vorgabe aus (Schallwand)
     Daempfung daempfung;                ///< seit Fassung 3; Vorgabe RT-0425 Gl. 1 (c = 0)
+    Hohlraum hohlraum;                  ///< seit Fassung 4; Vorgabe aus (die Platte allein)
 
     [[nodiscard]] bool operator==(const Bauplan&) const = default;
 };
@@ -324,6 +350,50 @@ struct Randpunkt
     return drin;
 }
 
+/// Liegt `p` in einem der Loecher?
+[[nodiscard]] inline bool imLoch(const std::vector<std::vector<Punkt2>>& loecher, Punkt2 p)
+{
+    for (const auto& loch : loecher)
+    {
+        if (innen(loch, p)) return true;
+    }
+    return false;
+}
+
+/// Die Flaeche der Platte in m²: der Umriss ohne die Loecher.
+[[nodiscard]] inline double flaeche(const Platte& platte)
+{
+    double f = flaeche(platte.umriss);
+    for (const auto& loch : platte.loecher) f -= flaeche(loch);
+    return f;
+}
+
+/// Schneiden sich die Strecken a–b und c–d (auch nur in einem Endpunkt)?
+[[nodiscard]] inline bool schneidenSich(Punkt2 a, Punkt2 b, Punkt2 c, Punkt2 d)
+{
+    const auto seite = [](Punkt2 p, Punkt2 q, Punkt2 r) { return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x); };
+    const double s1 = seite(a, b, c), s2 = seite(a, b, d), s3 = seite(c, d, a), s4 = seite(c, d, b);
+    if (((s1 > 0.0 && s2 < 0.0) || (s1 < 0.0 && s2 > 0.0)) && ((s3 > 0.0 && s4 < 0.0) || (s3 < 0.0 && s4 > 0.0))) return true;
+    const auto dazwischen = [](Punkt2 p, Punkt2 q, Punkt2 r) {
+        return std::min(p.x, q.x) <= r.x && r.x <= std::max(p.x, q.x) && std::min(p.y, q.y) <= r.y && r.y <= std::max(p.y, q.y);
+    };
+    return (s1 == 0.0 && dazwischen(a, b, c)) || (s2 == 0.0 && dazwischen(a, b, d)) || (s3 == 0.0 && dazwischen(c, d, a)) ||
+           (s4 == 0.0 && dazwischen(c, d, b));
+}
+
+/// Schneiden oder beruehren sich zwei geschlossene Umrisse an ihren Kanten?
+[[nodiscard]] inline bool kantenSchneidenSich(const std::vector<Punkt2>& u, const std::vector<Punkt2>& v)
+{
+    for (std::size_t k = 0; k < u.size(); ++k)
+    {
+        for (std::size_t l = 0; l < v.size(); ++l)
+        {
+            if (schneidenSich(u[k], u[(k + 1) % u.size()], v[l], v[(l + 1) % v.size()])) return true;
+        }
+    }
+    return false;
+}
+
 /// Der kuerzeste Abstand von `p` zu einem Linienzug, in m; unendlich bei leerem Zug.
 [[nodiscard]] inline double abstandZurLinie(Punkt2 p, const std::vector<Punkt2>& linie)
 {
@@ -383,7 +453,8 @@ struct Randpunkt
     {
         for (double x = xmin + schritt / 2.0; x < xmax; x += schritt)
         {
-            if (innen(plan.platte.umriss, {x, y})) volumen += plan.platte.dickeBei({x, y}) * schritt * schritt;
+            if (innen(plan.platte.umriss, {x, y}) && !imLoch(plan.platte.loecher, {x, y}))
+                volumen += plan.platte.dickeBei({x, y}) * schritt * schritt;
         }
     }
     return volumen * m->dichte;
@@ -408,7 +479,8 @@ struct Randpunkt
 /// Material vorhanden, Umriss mit mindestens drei Punkten und Flaeche, Dicke
 /// positiv, je Leiste mindestens zwei Punkte und so viele Hoehen und Breiten
 /// wie Punkte (alle positiv), Stegpunkte nach Taste aufsteigend und jede Taste einmal,
-/// Hoerorte mit eindeutigem Namen und ueber der Platte.
+/// Hoerorte mit eindeutigem Namen und ueber der Platte; Loecher mit Flaeche, ganz im Umriss, keines
+/// beruehrt ein anderes, kein Stegpunkt in einem Loch.
 [[nodiscard]] inline std::vector<std::string> pruefe(const Bauplan& plan)
 {
     std::vector<std::string> befunde;
@@ -440,6 +512,34 @@ struct Randpunkt
         if (!std::isnan(v) && v <= 0.0)
         {
             befunde.push_back("plate: thickness grid has a value that is not positive");
+            break;
+        }
+    }
+    for (std::size_t k = 0; k < plan.platte.loecher.size(); ++k)
+    {
+        const auto& loch = plan.platte.loecher[k];
+        const std::string wer = "plate: hole " + std::to_string(k + 1);
+        if (loch.size() < 3 || flaeche(loch) <= 0.0)
+        {
+            befunde.push_back(wer + " needs three points and an area");
+            continue;
+        }
+        bool drin = !kantenSchneidenSich(loch, plan.platte.umriss);
+        for (const Punkt2& p : loch) drin = drin && innen(plan.platte.umriss, p);
+        if (!drin) befunde.push_back(wer + " must lie inside the outline");
+        for (std::size_t l = k + 1; l < plan.platte.loecher.size(); ++l)
+        {
+            const auto& anderes = plan.platte.loecher[l];
+            if (anderes.size() < 3) continue;
+            if (kantenSchneidenSich(loch, anderes) || innen(anderes, loch[0]) || innen(loch, anderes[0]))
+                befunde.push_back(wer + " touches hole " + std::to_string(l + 1));
+        }
+    }
+    for (const Stegpunkt& s : plan.stegpunkte)
+    {
+        if (imLoch(plan.platte.loecher, s.ort))
+        {
+            befunde.push_back("bridge points: key " + std::to_string(s.taste) + " lies in a hole");
             break;
         }
     }
@@ -489,6 +589,9 @@ struct Randpunkt
     if (plan.rueckseite.schattenHz < 0.0) befunde.push_back("backside: shadow frequency must not be negative");
     if (plan.daempfung.a < 0.0 || plan.daempfung.b < 0.0 || plan.daempfung.c < 0.0)
         befunde.push_back("damping: a, b and c must not be negative");
+    if (plan.hohlraum.volumen < 0.0) befunde.push_back("cavity: volume must not be negative");
+    if (plan.hohlraum.muendung < 0.0) befunde.push_back("cavity: end correction must not be negative");
+    if (!(plan.hohlraum.guete > 0.0)) befunde.push_back("cavity: quality factor must be positive");
     return befunde;
 }
 

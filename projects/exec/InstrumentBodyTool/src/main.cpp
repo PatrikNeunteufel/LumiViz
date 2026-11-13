@@ -19,6 +19,7 @@
 
 #include "InstrumentBody/Auswertung.hpp"
 #include "InstrumentBody/Koerper.hpp"
+#include "InstrumentBody/Luftraum.hpp"
 #include "InstrumentBody/Mobilitaet.hpp"
 #include "InstrumentBody/Platte.hpp"
 #include "InstrumentBody/Statistik.hpp"
@@ -166,7 +167,12 @@ int main(int argc, char* argv[])
                                                        "to this file. Given a body (.lvinstbody) instead of a plan, only the report "
                                                        "is written."),
                                         QStringLiteral("file"));
-    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt, berichtOpt});
+    const QCommandLineOption formenOpt(QStringLiteral("shapes"),
+                                       QStringLiteral("Write the mode shapes (deflection w at the mesh nodes, with the triangles) to this "
+                                                      "text file — for comparing with pictures of measured modes; meant for few modes."),
+                                       QStringLiteral("file"));
+    parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt, berichtOpt,
+                       formenOpt});
     parser.process(app);
 
     const auto geberListe = kp::netzgeber();
@@ -279,8 +285,28 @@ int main(int argc, char* argv[])
     auftrag.m = &s.m;
     auftrag.vonHz = vonHz;
     auftrag.bisHz = bisHz;
+    // die Formen (--shapes): je Mode w an den Knoten des Netzes (die Ecken der Dreiecke), gehalten = 0
+    const bool mitFormen = parser.isSet(formenOpt);
+    std::vector<std::vector<double>> formen;
+    std::vector<double> formenHz;
+    // mit Hohlraum (F-K1 a): erst alle Moden der Platte sammeln, dann ueber den Luftraum koppeln
+    const bool mitHohlraum = plan.hohlraum.an();
+    std::vector<kp::Mode> plattenModen;
     auftrag.jeMode = [&](const kp::Mode& mode) {
         const auto start = std::chrono::steady_clock::now();
+        if (mitHohlraum)
+        {
+            plattenModen.push_back(mode);
+            return;
+        }
+        if (mitFormen)
+        {
+            std::vector<double> w(netz.knoten.size(), 0.0);
+            for (std::size_t q = 0; q < w.size(); ++q)
+                if (const int g = s.frei[3 * q]; g >= 0) w[q] = mode.form[static_cast<std::size_t>(g)];
+            formen.push_back(std::move(w));
+            formenHz.push_back(mode.frequenzHz);
+        }
         moden.push_back(auswertung.werte(mode));
         sekundenAuswertung += seit(start);
     };
@@ -305,6 +331,31 @@ int main(int argc, char* argv[])
                 "(%d sharpened), %.1f s, peak %.0f MB\n",
                 loeser->name().c_str(), vonHz, bisHz, erg.frequenzenHz.size(), erg.imFenster, erg.faktorisierungen,
                 erg.sekundenZerlegung, erg.groessterRest, erg.nachgeschaerft, erg.sekunden, spitzeMB());
+    if (mitHohlraum)
+    {
+        t = std::chrono::steady_clock::now();
+        std::sort(plattenModen.begin(), plattenModen.end(), [](const kp::Mode& a, const kp::Mode& b) { return a.frequenzHz < b.frequenzHz; });
+        const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, kp::Luft{}.dichte, kp::Luft{}.schall);
+        kp::MitLuftraum ml = kp::mitLuftraum(auswertung, plan, kp::Luft{}, plattenModen);
+        std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu holes, Helmholtz with rigid walls %.1f Hz; plate modes in vacuo:",
+                    plan.hohlraum.volumen, g.loecher.size(), g.helmholtzHz());
+        for (std::size_t i = 0; i < std::min<std::size_t>(plattenModen.size(), 5); ++i) std::printf(" %.1f", plattenModen[i].frequenzHz);
+        std::printf(" Hz; coupled %zu modes, %.2f s\n", ml.moden.size(), seit(t));
+        for (std::size_t i = 0; i < std::min<std::size_t>(ml.moden.size(), 6); ++i)
+            std::printf("  coupled %8.2f Hz  air share %.3f\n", ml.moden[i].frequenzHz, ml.luftAnteil[i]);
+        moden = std::move(ml.moden);
+        if (mitFormen)
+        {
+            for (const kp::Mode& mode : ml.formen)
+            {
+                std::vector<double> w(netz.knoten.size(), 0.0);
+                for (std::size_t q = 0; q < w.size(); ++q)
+                    if (const int gr = s.frei[3 * q]; gr >= 0) w[q] = mode.form[static_cast<std::size_t>(gr)];
+                formen.push_back(std::move(w));
+                formenHz.push_back(mode.frequenzHz);
+            }
+        }
+    }
     std::printf("Evaluated %zu modes in %.1f s (within the eigensolver time)\n", moden.size(), sekundenAuswertung);
 
     // der statistische Teil darueber (31c-5c, ST1 a): Groessen aus der oberen Haelfte des Fensters
@@ -348,6 +399,35 @@ int main(int argc, char* argv[])
         aus.setRealNumberPrecision(12);
         for (const double f : erg.frequenzenHz) aus << f << '\n';
         std::printf("Frequencies: %s\n", qPrintable(parser.value(freqOpt)));
+    }
+    if (mitFormen)
+    {
+        // Textdatei: Kopfzeile, „nodes N" mit x y je Zeile, „triangles T" mit drei Knoten je Zeile,
+        // „modes M", je Mode „mode <Hz>" und eine Zeile mit N Werten w
+        QFile datei(parser.value(formenOpt));
+        if (!datei.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+        {
+            std::fprintf(stderr, "Could not write %s\n", qPrintable(parser.value(formenOpt)));
+            return 1;
+        }
+        QTextStream aus(&datei);
+        aus.setRealNumberPrecision(9);
+        aus << "lumiviz-body-shapes 1\n";
+        aus << "nodes " << netz.knoten.size() << '\n';
+        for (const kp::Punkt2& p : netz.knoten) aus << p.x << ' ' << p.y << '\n';
+        aus << "triangles " << netz.dreiecke.size() << '\n';
+        for (const auto& d : netz.dreiecke) aus << d[0] << ' ' << d[1] << ' ' << d[2] << '\n';
+        aus << "modes " << formen.size() << '\n';
+        std::vector<std::size_t> folge(formen.size());
+        for (std::size_t i = 0; i < folge.size(); ++i) folge[i] = i;
+        std::sort(folge.begin(), folge.end(), [&](std::size_t a, std::size_t b) { return formenHz[a] < formenHz[b]; });
+        for (const std::size_t i : folge)
+        {
+            aus << "mode " << formenHz[i] << '\n';
+            for (const double w : formen[i]) aus << w << ' ';
+            aus << '\n';
+        }
+        std::printf("Shapes: %s (%zu modes, %zu nodes)\n", qPrintable(parser.value(formenOpt)), formen.size(), netz.knoten.size());
     }
 
     // der Koerper (31c-5d): neben den Bauplan oder nach --out

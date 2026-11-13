@@ -219,6 +219,7 @@ public:
                     m_ansatz.push_back(ansatz[g][static_cast<std::size_t>(i)]);
                 }
                 const Punkt2 p{e0.x + (e1.x - e0.x) * xi + (e2.x - e0.x) * eta, e0.y + (e1.y - e0.y) * xi + (e2.y - e0.y) * eta};
+                m_flaeche.push_back(w * det);
                 const Randpunkt rand = m_rueck ? naechsterRandpunkt(umriss, p) : Randpunkt{};
                 for (std::size_t h = 0; h < hoerorte.size(); ++h)
                 {
@@ -241,6 +242,24 @@ public:
 
     /// Die Abtastung jedes Stegpunkts (Reihenfolge des Bauplans) — zur Pruefung, ob er im Netz liegt.
     [[nodiscard]] const std::vector<Abtastung>& stegpunkte() const { return m_steg; }
+
+    /// Das Volumen, das eine Form verdraengt: ∫ w dS ueber die Platte (fuer den Luftraum, `Luftraum.hpp`).
+    [[nodiscard]] double volumen(const std::vector<double>& form) const
+    {
+        double summe = 0.0;
+        for (std::size_t p = 0; p < m_flaeche.size(); ++p)
+        {
+            double w = 0.0;
+            const std::size_t basis = p * static_cast<std::size_t>(m_nk);
+            for (int i = 0; i < m_nk; ++i)
+            {
+                const int g = m_groesse[basis + static_cast<std::size_t>(i)];
+                if (g >= 0) w += m_ansatz[basis + static_cast<std::size_t>(i)] * form[static_cast<std::size_t>(g)];
+            }
+            summe += w * m_flaeche[p];
+        }
+        return summe;
+    }
 
     [[nodiscard]] ModeImKoerper werte(const Mode& mode) const
     {
@@ -292,6 +311,7 @@ private:
     std::vector<Abtastung> m_steg;
     std::vector<int> m_groesse;                 ///< je Gauss-Punkt nk Plaetze von w (−1 = gehalten)
     std::vector<double> m_ansatz;               ///< je Gauss-Punkt nk Ansatzwerte
+    std::vector<double> m_flaeche;              ///< je Gauss-Punkt Gewicht · |det J| (seine Flaeche)
     std::vector<std::vector<double>> m_abstand;  ///< je Hoerort je Gauss-Punkt R
     std::vector<std::vector<double>> m_gewicht;  ///< je Hoerort je Gauss-Punkt Gewicht · |det J| / R
     Rueckseite m_rueckseite;

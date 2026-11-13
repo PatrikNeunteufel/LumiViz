@@ -37,6 +37,11 @@ nach RT-0425 lagen sie bei 1,1 %), der Block `backside` die Rückseite der Platt
 12 cm über den Saiten wirkt der akustische Kurzschluss nicht, Befund HU4 im Spielweisen_Konzept §4.1; für Hörorte im
 Fernfeld vorgesehen). `make_steinway_d.py` schreibt beide; Fassung 2 ohne die Blöcke bleibt lesbar.
 
+**Fassung 4 der Baupläne (S196, KQ7 a):** `plate.holes` trägt Löcher in der Platte (geschlossene Innenumrisse, der Rand
+frei), `cavity` den Hohlraum dahinter (F-K1 a: Volumen, Mündungskorrektur, Güte der Luft; `volume` 0 = keiner); die
+drei Steinway-Böden haben weder Löcher (`[]`) noch Hohlraum. Der Abdruck geht über das JSON samt Fassung — die drei Körper sind
+deshalb neu gerechnet und gleich bis auf Abdruck und Rechenzeit. `make_steinway_d.py` schreibt Fassung 4.
+
 **Ein Körper wird neu gerechnet**, wenn sich sein Bauplan ändert oder die Rechnung (`kRechenFassung` in
 `projects/libs/InstrumentBody/include/InstrumentBody/Koerper.hpp`) — der Test „Loop Koerper 31c-5d Waechter“ meldet es.
 Neu rechnen mit dem Werkzeug (Release-clang, rund 22 Minuten für den Steinway):

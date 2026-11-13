@@ -23,7 +23,8 @@
  *
  * **Auflager:** am Rand eingespannt (w = φx = φy = 0; der Boden im Flügel, BM1 a)
  * oder — fuer Pruefplatten mit achsparallelen Raendern — gelenkig (w = 0 und die
- * Drehung laengs des Randes = 0; die Navier-Loesung).
+ * Drehung laengs des Randes = 0; die Navier-Loesung). Der Rand eines Lochs
+ * (`Netz::lochkanten`, KQ7 a) ist immer frei.
  *
  * Reines C++ ohne Qt und ohne fremde Bibliothek; K und M kommen als
  * `DuenneMatrix` (BM5-1 a).
@@ -440,6 +441,10 @@ struct PlattenSystem
         {
             const int a = d[r], b = d[(r + 1) % 3];
             if (kanten[{std::min(a, b), std::max(a, b)}] != 1) continue;
+            // der Rand eines Lochs ist frei (KQ7 a): kein Auflager haelt ihn
+            if (!netz.lochkanten.empty() &&
+                std::binary_search(netz.lochkanten.begin(), netz.lochkanten.end(), std::array<int, 2>{std::min(a, b), std::max(a, b)}))
+                continue;
             const Punkt2 pa = netz.knoten[a], pb = netz.knoten[b];
             const bool waagrecht = std::abs(pa.y - pb.y) <= 1e-12 * (1.0 + std::abs(pa.x - pb.x));
             const bool senkrecht = std::abs(pa.x - pb.x) <= 1e-12 * (1.0 + std::abs(pa.y - pb.y));

@@ -187,6 +187,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperDatei.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperKlang.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperEigen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperLoch.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperLuftraum.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperMobilitaet.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperNetz.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKoerperPlatte.cpp"
