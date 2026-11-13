@@ -40,6 +40,9 @@ Der Gitarrenkorpus nach KB1 a auf die gemeinsame Grundlage (`../koerper/`).
   statistische Teil von `InstrumentBody` liefert ohne Bauplan keine Moden; Plattenformeln treffen nur die Größenordnung.
 - [2026-11-12_S195_oud_erster_fall.md](2026-11-12_S195_oud_erster_fall.md) — erster Fall nach KQ6 a: der Ersatz-Bauplan
   der Oud trifft die erste gemessene Mode, mit keiner Deckendicke alle vier innerhalb von 10 % (ohne Schalllöcher).
+- [2026-11-13_S197_laute.md](2026-11-13_S197_laute.md) — die Laute (KQ11 a, KQ12 a): gemessene Stegadmittanz
+  (Woodhouse 2021 Abb. 1) am Bild gelesen, Form der Rauwolf-Laute aus dem Vektor-PDF mal 625/677,4, Stegleiste und
+  Saitenlast im Vergleich; vier Spitzen in Lage (−1,8 / −4,6 / −1,3 / +3,6 %) und Höhe (−0,3 / +4,7 / −2,7 / +0,6 dB).
 
 ## Recherche S195 (34k-4)
 Unter [recherche/](recherche): vier Agentenberichte (`…_cembalo_quellen.md`, `…_harfe_quellen.md`,

@@ -23,6 +23,10 @@
  * - Die mitgelieferte Oud (KQ10 a; vom Arbeitsordner aus): der Bauplan mit drei Loechern, Hohlraum und
  *   sechs Stegpunkten, der Koerper mit seinen Moden an den Spitzen der gemessenen Kurve (Abdallah u. a.
  *   2026, Abb. 6: 101 / 203 / 280 / 362 Hz innerhalb von 3 %), die unterste ist die Mode der Luft.
+ * - Die mitgelieferte Laute (KQ11 a, KQ12 a): die Form der Rauwolf-Laute im Massstab 625/677,4, acht
+ *   Stegpunkte; die Stegadmittanz zwischen Chor 1 und 2 mit der Last der gedaempften Saiten trifft die
+ *   Spitzen der gemessenen Kurve (Woodhouse 2021, Abb. 1: 132 / 277 / 341 / 476 Hz) in Lage (5 %) und
+ *   Hoehe (6 dB).
  ****************************************************************************************
  */
 
@@ -40,6 +44,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <numbers>
 #include <vector>
@@ -465,4 +470,89 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Oud (KQ10 a)")
     // die gegengleiche Mode dazwischen (169 Hz) hat kein Volumen und keine Luft
     CHECK(k.moden[1].luftAnteil < 0.01);
     CHECK(k.moden[1].frequenzHz == doctest::Approx(169.0).epsilon(0.02));
+}
+
+TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Laute (KQ11 a, KQ12 a)")
+{
+    const QString stamm = QStringLiteral("asset/loop/instrument_bodies/lute");
+    kp::Bauplan plan;
+    REQUIRE_MESSAGE(ladeBauplan(stamm + QLatin1String(kBauplanEndung), plan), "die Test-Exe aus dem Projekt-Root starten");
+    const std::vector<std::string> befunde = kp::pruefe(plan);
+    for (const std::string& b : befunde) MESSAGE(b);
+    CHECK(befunde.empty());
+
+    // KQ12 a: die Form der Rauwolf-Laute (475 x 326,5 mm, Rose 110 mm, Steg 139 mm), mal 625/677,4
+    const double massstab = 625.0 / 677.4;
+    double laenge = 0.0, breite = 0.0;
+    for (const kp::Punkt2& u : plan.platte.umriss)
+    {
+        laenge = std::max(laenge, u.y);
+        breite = std::max(breite, 2.0 * std::abs(u.x));
+    }
+    CHECK(laenge == doctest::Approx(0.4748 * massstab).epsilon(0.002));
+    CHECK(breite == doctest::Approx(0.3265 * massstab).epsilon(0.005));
+    REQUIRE(plan.platte.loecher.size() == 1);
+    CHECK(std::abs(kp::flaeche(plan.platte.loecher[0])) == doctest::Approx(0.85 * kPi * std::pow(0.055 * massstab, 2)).epsilon(1e-3));
+    REQUIRE(plan.stege.size() == 1);
+    CHECK(plan.stege[0].linie.back().x - plan.stege[0].linie.front().x == doctest::Approx(0.139 * massstab).epsilon(1e-3));
+    // sieben Querbalken, der durch die Rose geteilt; jeder reicht bis an die Muschel
+    CHECK(plan.rippen.size() == 8);
+    // der Hohlraum: 14,0 l der Zeichnung mal Massstab hoch drei
+    REQUIRE(plan.hohlraum.an());
+    CHECK(plan.hohlraum.volumen == doctest::Approx(0.014 * massstab * massstab * massstab).epsilon(1e-3));
+    // acht Choere in G (Woodhouse & Lynch-Aird 2019 Tab. II): D2 F2 G2 C3 F3 A3 D4 G4
+    REQUIRE(plan.stegpunkte.size() == 8);
+    const int tasten[8] = {38, 41, 43, 48, 53, 57, 62, 67};
+    for (std::size_t s = 0; s < 8; ++s)
+    {
+        CHECK(plan.stegpunkte[s].taste == tasten[s]);
+        CHECK_FALSE(plan.stegpunkte[s].quelle.empty());
+    }
+    CHECK_FALSE(plan.daempfung.quelle.empty());
+
+    kp::Koerper k;
+    REQUIRE(ladeKoerper(stamm + QLatin1String(kKoerperEndung), k));
+    REQUIRE(k.moden.size() > 100);
+    // die unterste ist die Mode der Luft
+    CHECK(k.moden[0].luftAnteil > 0.85);
+    CHECK(k.moden[0].frequenzHz == doctest::Approx(132.0).epsilon(0.02));
+
+    // KQ11 a: die Stegadmittanz zwischen Chor 1 und 2 (Mittel der beiden Stegpunkte), mit der Last der
+    // gedaempften Saiten (2,47 N s/m), gegen die Spitzen der gemessenen Kurve (Woodhouse 2021 Abb. 1, aus
+    // dem Bild gelesen): Lage innerhalb von 5 %, Hoehe innerhalb von 6 dB
+    const double saiten = 2.47;
+    auto admittanzDb = [&](double hz) {
+        const double om = 2.0 * kPi * hz;
+        std::complex<double> y = 0.0;
+        for (const kp::ModeImKoerper& m : k.moden)
+        {
+            const double phi = 0.5 * (m.amStegpunkt[6] + m.amStegpunkt[7]);
+            const double omn = 2.0 * kPi * m.frequenzHz;
+            y += std::complex<double>(0.0, om) * phi * phi / (omn * omn * std::complex<double>(1.0, m.verlustfaktor) - om * om);
+        }
+        y /= 1.0 + saiten * y;
+        return 20.0 * std::log10(std::abs(y));
+    };
+    const double ziele[4][2] = {{132.2, -28.0}, {277.1, -17.4}, {340.6, -19.6}, {475.6, -11.8}};
+    for (const auto& ziel : ziele)
+    {
+        // die hoechste Stelle der gerechneten Kurve innerhalb von 8 % um das Ziel muss eine Spitze sein
+        double ort = 0.0, hoehe = -1e9;
+        for (double hz = ziel[0] * 0.92; hz <= ziel[0] * 1.08; hz += 0.1)
+        {
+            const double d = admittanzDb(hz);
+            if (d > hoehe)
+            {
+                hoehe = d;
+                ort = hz;
+            }
+        }
+        CAPTURE(ziel[0]);
+        CAPTURE(ort);
+        CAPTURE(hoehe);
+        CHECK(ort > ziel[0] * 0.921);
+        CHECK(ort < ziel[0] * 1.079);
+        CHECK(std::abs(ort / ziel[0] - 1.0) < 0.05);
+        CHECK(std::abs(hoehe - ziel[1]) < 6.0);
+    }
 }

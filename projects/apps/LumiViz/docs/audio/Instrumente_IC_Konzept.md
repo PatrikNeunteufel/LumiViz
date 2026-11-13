@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.29.0
+> **Version:** 0.30.0
 > **Datum:** 2026-11-13 (Session 196)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1320,6 +1320,41 @@ leeren Saiten); Dämpfung α = 0,06 f + 23 1/s aus den Halbwertsbreiten der geme
 trägt je Mode den Anteil der Luft (`.lvinstbody` Fassung 3, `airShare`), der Wächter rechnet die Dämpfung damit
 nach. Bericht §9.
 
+**Befund an der Laute (S197, Bericht `../modellierung/gezupfte-saite/2026-11-13_S197_laute.md`).** Woodhouse 2021
+Abb. 1 (Stegadmittanz der Laute, zwischen Chor 1 und 2, dB re 1 m/s/N) als Bild gelesen: Spitzen bei **132 / 150 /
+277 / 341 / 378 / 476 Hz** mit −28 / −34 / −17 / −20 / −32 / −12 dB. Die Rauwolf-Zeichnung ist ein Vektor-PDF 1:1 und
+gibt Umriss, Rose, Steg und über sieben Querschnitte den Hohlraum (14,0 l), aber weder Balken noch Deckendicke; ihre
+Mensur ist 677,4 mm, die der gemessenen Laute und des Saitensatzes 625 mm. Die Decke allein ist am Steg 12–18 dB
+beweglicher als gemessen — es fehlen die Stegleiste und die Last der gedämpften Saiten (Summe der Wellenwiderstände
+aus Woodhouse & Lynch-Aird 2019 Tab. II: 2,47 N s/m; dass die Saiten gedämpft waren, ist Annahme). Eine Schwelle nur
+auf die Lage lässt einen Bauplan durch, der 3 % hält und die stärkste Spitze einer am Messpunkt unsichtbaren Mode
+zuordnet (−17 dB).
+
+✅ **KQ11 a** (Patrik S197): **Zielgrößen der Laute sind die vier Spitzen 132 / 277 / 341 / 476 Hz in Lage und Höhe**
+— Lage innerhalb von 5 %, Höhe innerhalb von ±6 dB, gerechnet am Messpunkt der Quelle mit Stegleiste und Saitenlast.
+Die Saitenlast gehört nur zum Vergleich; der Körper unter `asset/` ist ohne Saiten. 150 und 378 Hz stehen im Bericht
+als „ohne Gegenstück“. Grund: erst die Höhe am Messpunkt zeigt, ob eine gerechnete Mode die gemessene ist, und sie
+ist, was die Saite am Steg sieht. Verworfen: b (nur die Lage, 3 % wie bei der Oud — lässt die falsche Zuordnung
+durch), c (3 % und ±6 dB zugleich — kein Fall hält beides, der Bauplan stammt von einer anderen Laute als die
+Messung). Kippt auf c, wenn ein Fall beides hält; auf b, wenn die Annahme „Saiten gedämpft“ nicht Teil einer
+Zielgröße sein soll.
+
+✅ **KQ12 a** (Patrik S197; **ergänzt KQ4 a und KQ6 a**): **Der Bauplan nimmt die Form der Rauwolf-Laute, alle Längen
+mal 625/677,4** (Mensur der gemessenen Laute und des Saitensatzes; Hohlraum 11,0 l), mit Vermerk im Bauplan. Grund:
+Saiten, Stimmung und gemessene Admittanz gehören zu einer Laute mit 0,625 m; mit gleichen Annahmen liegt der Bauplan
+1:1 bei −19 / −15 / −8 %, verkleinert bei −1 / −5 / +2 / +3 %. Verworfen: b (Rauwolf 1:1, die Annahmen gleichen den
+Größenfehler aus), c (Rauwolf 1:1 als eigenes Instrument ohne gemessenes Ziel). Kippt auf b, wenn unveränderte Maße
+wichtiger sind als die Übereinstimmung mit Saiten und Messung.
+
+**KQ11 a und KQ12 a gebaut (S197)** — `asset/loop/instrument_bodies/lute.lvinstbodyplan` (Schreiber `make_laute.py`)
+und `lute.lvinstbody` (128 Moden bis 5 kHz): Decke 1,8 mm, sieben Querbalken bis an die Muschel (14 mm, der zweite
+9,8 mm), Rose zu 85 % offen, Stegleiste 7 g, Dämpfung α = 60 1/s und Güte der Luft 12 aus den Höhen der gemessenen
+Kurve — alles Annahmen mit Vermerk; acht Stegpunkte, je Chor einer (Tasten 38 / 41 / 43 / 48 / 53 / 57 / 62 / 67).
+Gekoppelte Moden 132,1 / 264,1 / 334,6 / 471,8 / 488,6 Hz; die Stegadmittanz mit Saitenlast gegen die vier Ziele:
+Lage −1,8 / −4,6 / −1,3 / +3,6 %, Höhe −0,3 / +4,7 / −2,7 / +0,6 dB. Test „Loop Koerper 34k-5 Luftraum die
+mitgelieferte Laute“ prüft beides am Körper. Offen (Bericht §7): 150 und 378 Hz, die Steife am Steg unter 120 Hz, die
+Breite der Luftmode. **Als Nächstes das Cembalo**, dann Harfe und Gitarre.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1381,6 +1416,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.30.0 | 2026-11-13 | Session 197. §6: Befund an der gemessenen Stegadmittanz der Laute (Woodhouse 2021 Abb. 1) und an der Rauwolf-Zeichnung; KQ11 a (Ziele in Lage und Höhe, mit Stegleiste und Saitenlast), KQ12 a (Form mal 625/677,4); Bauplan und Körper der Laute unter `asset/`. |
 | 0.29.0 | 2026-11-13 | Session 196. §6: Befund an der gemessenen Kurve der Oud (Abb. 6), KQ10 a ersetzt KQ9 a (Balken wie gezeichnet, 1,5 mm; Ziele 101 / 203 / 280 / 362 Hz); Bauplan und Körper der Oud unter `asset/`, `.lvinstbody` Fassung 3. |
 | 0.28.0 | 2026-11-13 | Session 196. §6: KQ7 a gebaut (Löcher in `InstrumentBody`, Bauplan Fassung 4), zweiter Fall der Oud verfehlt die Schwelle; KQ8 a (erst der Luftraum nach `InstrumentBody`, dann die Oud mit Luftraum gegen die Messung); Luftraum gebaut (F-K1 a), KQ9 a (KQ6 a gilt weiter; Oud mit Luftraum, Balken am Rand, 1,5 mm). |
 | 0.25.0 | 2026-11-12 | Session 193. §6: Teilplan 34k (34k-1 bis 34k-11) nach dem Befund S192 und der Gegenprobe S193 an der IC-Vorlage der Klasse 2; GZ1 a (Namen, Bestand bleibt), GZ1-1 a (Spielweisen am Kern, Saitensatz an Laute, Oud und `classical_guitar`), GZ2 a (Umzug als Beleg, dann Rechenfassung 2 mit Quellen), GZ3 a (Mitschwingen je Note), GZ4 a (Steg und Abstrahlung aus einem Körper nach KB1 a; berichtigt IK2-10 a für Klasse 2); Zeile 34k der Übersicht. |

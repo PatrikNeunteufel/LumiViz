@@ -209,6 +209,7 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
     const QStringList koerper = ordner.entryList({QStringLiteral("*") + QLatin1String(kKoerperEndung)}, QDir::Files, QDir::Name);
     CHECK(koerper.contains(QStringLiteral("steinway_d") + QLatin1String(kKoerperEndung)));
     CHECK(koerper.contains(QStringLiteral("oud") + QLatin1String(kKoerperEndung)));
+    CHECK(koerper.contains(QStringLiteral("lute") + QLatin1String(kKoerperEndung)));
     for (const QString& name : koerper)
     {
         CAPTURE(name.toStdString());
