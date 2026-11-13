@@ -261,7 +261,7 @@ TEST_CASE("Loop Koerper 34k-5 Loch Datei")
 {
     const kp::Bauplan plan = lochPlan();
     const QJsonObject json = alsJson(plan);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 4);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);  // `holes` seit Fassung 4
     const QJsonObject platte = json.value(QStringLiteral("plate")).toObject();
     REQUIRE(platte.value(QStringLiteral("holes")).toArray().size() == 1);
     CHECK(platte.value(QStringLiteral("holes")).toArray()[0].toArray().size() == 4);

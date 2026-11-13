@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.17.0  
+> **Version:** 0.18.0  
 > **Datum:** 2026-11-13  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -77,6 +77,13 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
 - **Hohlraum** (`Hohlraum`, seit Fassung 4; F-K1 a, KQ8 a, S196): Volumen in m³ (0 = keiner — dann rechnet die Platte
   allein wie bis Fassung 3), Mündungskorrektur je Loch in Radien (Vorgabe 1,7 = 2 · 8/(3π), ein Loch in einer dünnen
   weiten Wand), Güte der Luft in den Löchern (Vorgabe 30), Quelle. Die Rechnung steht in §5.7.
+  **Öffnungen außerhalb der Platte** (`Hohlraum::oeffnungen`, `Oeffnung`; seit Fassung 5, KQ17 a, S197) — etwa die
+  Öffnungen in der Schale einer Harfe: je Öffnung Ort in der Ebene der Platte, Höhe über der Platte (negativ =
+  dahinter), Fläche, Lippenlänge (die Länge durch die Wand, ohne Mündungskorrektur), Quelle. Die Platte ist dort
+  nicht ausgespart. `luftraumGroessen` nimmt Löcher und Öffnungen parallel (Leitwert A / (Lippe bzw. Dicke +
+  Mündung · Radius)); ein Loch der Platte strahlt in den Halbraum (ρ/2π), eine Öffnung frei von ihrem Ort (ρ/4π) —
+  die Schale schattet in der Rechnung nicht ab. `pruefe`: Fläche positiv, Lippe nicht negativ, Öffnungen nur mit
+  Volumen.
 - **Prüfen**: `pruefe(plan)` nennt je Befund einen Satz (Material fehlt oder doppelt, Werte nicht positiv,
   Querzahl außerhalb der Stabilität — isotrop 0 ≤ ν < 0,5, orthotrop 1 − ν_xy·ν_yx > 0 —, Umriss ohne Fläche,
   Leiste ohne Höhe je Punkt, Stegpunkte nicht aufsteigend, Hörort ohne oder mit doppeltem Namen, nicht über der
@@ -86,9 +93,10 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   summiert, Leisten als Länge mal mittlerer Querschnitt), `naechsterRandpunkt` (der nächste Punkt auf den Kanten
   des Umrisses und sein Abstand).
 
-Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 4) schreibt jedes Feld, auch leere;
+Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 5) schreibt jedes Feld, auch leere;
 die Löcher stehen in `plate.holes` (je Loch eine Liste von Punkten), der Hohlraum in `cavity` (`volume`,
-`endCorrection`, `q`, `source`); Fassung 3 ohne beides bleibt lesbar (keine Löcher, kein Hohlraum);
+`endCorrection`, `q`, `source`, seit Fassung 5 `openings` mit `x`, `y`, `z`, `area`, `lipLength`, `source` je
+Öffnung); Fassung 4 ohne `openings` und Fassung 3 ohne Löcher und Hohlraum bleiben lesbar;
 NaN im Raster steht als `null`. Die Hörorte stehen in `listeningPoints` (`name`, `x`, `y`, `z`, `source`), die
 Rückseite in `backside` (`rimDepth`, `shadowHz`, `source`), die Dämpfung in `damping` (`a`, `b`, `c`, `law`,
 `source`); Fassung 1 ohne die Liste und Fassung 2 ohne die Blöcke bleiben lesbar (dann keine Hörorte bzw. keine
@@ -400,6 +408,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.18.0 | 2026-11-13 | Session 197, Stufe 34k-5, KQ17 a: Öffnungen des Hohlraums außerhalb der Platte (`Oeffnung`, `Hohlraum::oeffnungen`; `.lvinstbodyplan` Fassung 5 mit `cavity.openings`, immer geschrieben, Fassung 4 lesbar); `LochLuft::hoehe` und `::frei`, `luftraumGroessen` nimmt Löcher und Öffnungen parallel, `lochAbstrahlung` rechnet eine Öffnung als freie Punktquelle an ihrem Ort (Löcher der Platte Bit für Bit wie vorher); `pruefe`. Test „Luftraum Oeffnungen ausserhalb der Platte (KQ17 a)“. `kRechenFassung` bleibt 2; der Abdruck ändert sich mit der Fassung — alle mitgelieferten Körper neu gerechnet. |
 | 0.17.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ10 a: `ModeImKoerper::luftAnteil` (`mitLuftraum` setzt ihn), `.lvinstbody` Fassung 3 mit `airShare` je Mode; erster Körper mit Hohlraum ist die mitgelieferte Oud. |
 | 0.16.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ7 a: Löcher in der Platte (`Platte::loecher`, `.lvinstbodyplan` Fassung 4 mit `plate.holes`; `imLoch`, `flaeche(Platte)`, `kantenSchneidenSich`, Prüfung); `NetzAuftrag::loecher`, `Netz::lochkanten`, `lochkantenVon`, `imUmriss` mit `aussenBleibt`; `NetzgeberCdt` spart Löcher aus; `baueSystem` lässt den Lochrand frei; Masse und Abstrahlung ohne das Loch. Test `test_LoopKoerperLoch`. Werkzeug: `--shapes`. **Luftraum** (F-K1 a, KQ8 a): `Hohlraum` im Bauplan (`cavity`), `Luftraum.hpp` (`eigenRangEins`, `luftraumGroessen`, `koppleLuftraum`, `lochAbstrahlung`, `mitLuftraum`), `Auswertung::volumen`; das Werkzeug koppelt, wenn der Bauplan einen Hohlraum hat. Test `test_LoopKoerperLuftraum`. Ohne Löcher und ohne Hohlraum Bit für Bit wie vorher. |
 | 0.10.0 | 2026-10-24 | Session 149, Stufe 31c-6 Teil 2: Mobilität (`Mobilitaet.hpp`: MAESSTRO Gl. 10 und 12, Terzbänder, Dichte je Band); Bericht im Werkzeug (`--report`). |

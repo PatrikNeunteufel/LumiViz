@@ -179,6 +179,12 @@ struct LochLuft
     double flaeche = 0.0;   ///< m²
     double laenge = 0.0;    ///< m: Plattendicke + Muendungskorrektur · Radius
     double anteil = 0.0;    ///< ihr Anteil am Volumenfluss aller Loecher (A/L, zusammen 1)
+    /// Hoehe ueber der Platte in m; 0 = ein Loch der Platte. Eine Oeffnung ausserhalb der Platte (KQ17 a)
+    /// traegt hier ihre Lage.
+    double hoehe = 0.0;
+    /// Ein Loch der Platte liegt in der Schallwand der Platte und strahlt in den Halbraum (ρ/2π); eine
+    /// Oeffnung ausserhalb strahlt frei in den ganzen Raum (ρ/4π) — die Schale schattet nicht ab.
+    bool frei = false;
 };
 
 /// Was die Kopplung braucht: α = ρ c² / V und die akustische Masse der Loecher zusammen.
@@ -226,6 +232,21 @@ struct LuftraumGroessen
         l.flaeche = flaeche(loch);
         const double radius = std::sqrt(l.flaeche / std::numbers::pi);
         l.laenge = plan.platte.dickeBei(l.mitte) + plan.hohlraum.muendung * radius;
+        if (l.flaeche <= 0.0 || l.laenge <= 0.0) continue;
+        l.anteil = l.flaeche / l.laenge;
+        leitwert += l.flaeche / (dichte * l.laenge);
+        g.loecher.push_back(l);
+    }
+    // seit Fassung 5 (KQ17 a): Oeffnungen ausserhalb der Platte, parallel zu den Loechern
+    for (const Oeffnung& o : plan.hohlraum.oeffnungen)
+    {
+        LochLuft l;
+        l.mitte = o.ort;
+        l.hoehe = o.hoehe;
+        l.frei = true;
+        l.flaeche = o.flaeche;
+        const double radius = std::sqrt(std::max(0.0, l.flaeche) / std::numbers::pi);
+        l.laenge = o.lippe + plan.hohlraum.muendung * radius;
         if (l.flaeche <= 0.0 || l.laenge <= 0.0) continue;
         l.anteil = l.flaeche / l.laenge;
         leitwert += l.flaeche / (dichte * l.laenge);
@@ -302,8 +323,17 @@ struct LuftraumMode
         const Hoerort& o = hoerorte[h];
         for (const LochLuft& l : g.loecher)
         {
-            const double r = std::sqrt((l.mitte.x - o.ort.x) * (l.mitte.x - o.ort.x) + (l.mitte.y - o.ort.y) * (l.mitte.y - o.ort.y) + o.hoehe * o.hoehe);
-            aus[h] += luft.dichte / (2.0 * std::numbers::pi) * oeffnung * l.anteil / r * std::complex<double>(std::cos(-k * r), std::sin(-k * r));
+            if (!l.frei)
+            {
+                // ein Loch der Platte — unveraendert (Bit fuer Bit wie bis Fassung 4)
+                const double r = std::sqrt((l.mitte.x - o.ort.x) * (l.mitte.x - o.ort.x) + (l.mitte.y - o.ort.y) * (l.mitte.y - o.ort.y) + o.hoehe * o.hoehe);
+                aus[h] += luft.dichte / (2.0 * std::numbers::pi) * oeffnung * l.anteil / r * std::complex<double>(std::cos(-k * r), std::sin(-k * r));
+                continue;
+            }
+            // eine Oeffnung ausserhalb der Platte (KQ17 a): Punktquelle im freien Raum an ihrem Ort
+            const double dz = o.hoehe - l.hoehe;
+            const double r = std::sqrt((l.mitte.x - o.ort.x) * (l.mitte.x - o.ort.x) + (l.mitte.y - o.ort.y) * (l.mitte.y - o.ort.y) + dz * dz);
+            aus[h] += luft.dichte / (4.0 * std::numbers::pi) * oeffnung * l.anteil / r * std::complex<double>(std::cos(-k * r), std::sin(-k * r));
         }
     }
     return aus;

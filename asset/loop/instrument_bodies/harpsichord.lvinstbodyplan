@@ -1,6 +1,6 @@
 {
  "format": "lumiviz-instrument-body-plan",
- "version": 4,
+ "version": 5,
  "title": "Harpsichord (soundboard of the Dulcken 1755)",
  "description": "Soundboard of the harpsichord by Johann Daniel Dulcken, Antwerp 1755 (MK&G Hamburg), with its air cavity (KQ13 a): outline, both bridges with their pins, the 4' hitchpin rail, cutoff bar and four ribs from Fig. 2 of Bader, Plath & Kontopidis 2025, the measured thickness from Fig. 1 as a grid. Assumptions: widths of the bars, cross-sections and wood of the bridges, shear moduli, open share of the rose, depth of the cavity, rim clamped and case rigid. The strings of the instrument `harpsichord` are those of the Taskin 1769 (KQ2 a): another instrument.",
  "source": "R. Bader, N. Plath, K. Kontopidis, Dulcken 1755 harpsichord, arXiv 2511.09037 (2025), CC BY 4.0: Fig. 2 (geometry), Fig. 1 (measured thickness), both read from the figures; overall size from the online collection of the Museum fuer Kunst und Gewerbe Hamburg (2000.526)",
@@ -4691,6 +4691,7 @@
   "volume": 0.143,
   "endCorrection": 1.7,
   "q": 30.0,
-  "source": "area of the soundboard (0.6908 m2, Fig. 2) times an assumed depth of 0.207 m (the instrument is 256 mm high); rose 7.7 cm wide (photo under Fig. 1); end correction and Q of the air assumed. Measured air resonance: 37 Hz (Bader et al. 2025, Sect. 3.2); with this depth the rigid-wall Helmholtz frequency is 37 Hz as the source computes it, the mode coupled to the soundboard lies 14 % lower (KQ15 a: known deviation)"
+  "source": "area of the soundboard (0.6908 m2, Fig. 2) times an assumed depth of 0.207 m (the instrument is 256 mm high); rose 7.7 cm wide (photo under Fig. 1); end correction and Q of the air assumed. Measured air resonance: 37 Hz (Bader et al. 2025, Sect. 3.2); with this depth the rigid-wall Helmholtz frequency is 37 Hz as the source computes it, the mode coupled to the soundboard lies 14 % lower (KQ15 a: known deviation)",
+  "openings": []
  }
 }

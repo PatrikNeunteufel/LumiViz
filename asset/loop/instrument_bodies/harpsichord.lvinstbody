@@ -71,7 +71,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 344.7245511,
+        "seconds": 315.8689082,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 298440,
@@ -30446,7 +30446,7 @@
     ],
     "plan": {
         "file": "harpsichord.lvinstbodyplan",
-        "fingerprint": "f7388c5ba3b4d2ecc757934fac99df02279574fa300eb9bb744ed3529328e851"
+        "fingerprint": "c30603a8c88a279fe7d5517a482c4fc390fe422721bb2d4b5ebc19859fe14dde"
     },
     "statistical": {
         "bandFromHz": 2500,

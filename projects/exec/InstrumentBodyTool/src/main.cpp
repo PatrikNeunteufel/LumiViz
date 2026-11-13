@@ -337,7 +337,7 @@ int main(int argc, char* argv[])
         std::sort(plattenModen.begin(), plattenModen.end(), [](const kp::Mode& a, const kp::Mode& b) { return a.frequenzHz < b.frequenzHz; });
         const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, kp::Luft{}.dichte, kp::Luft{}.schall);
         kp::MitLuftraum ml = kp::mitLuftraum(auswertung, plan, kp::Luft{}, plattenModen);
-        std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu holes, Helmholtz with rigid walls %.1f Hz; plate modes in vacuo:",
+        std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu holes and openings, Helmholtz with rigid walls %.1f Hz; plate modes in vacuo:",
                     plan.hohlraum.volumen, g.loecher.size(), g.helmholtzHz());
         for (std::size_t i = 0; i < std::min<std::size_t>(plattenModen.size(), 5); ++i) std::printf(" %.1f", plattenModen[i].frequenzHz);
         std::printf(" Hz; coupled %zu modes, %.2f s\n", ml.moden.size(), seit(t));

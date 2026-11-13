@@ -42,7 +42,9 @@ namespace lumi::koerper
 /// 3 (S160, HU4 a): die Rueckseite (Kurzschluss ueber den Rand). Fassung 1 und 2 bleiben lesbar (ohne Rueckseite).
 /// 4 (S196, KQ7 a, F-K1 a): Loecher in der Platte, der Hohlraum dahinter. Fassung 1 bis 3 bleiben lesbar
 /// (ohne Loecher, ohne Hohlraum).
-inline constexpr int kBauplanFassung = 4;
+/// 5 (S197, KQ17 a): Oeffnungen des Hohlraums ausserhalb der Platte (`cavity.openings`). Fassung 1 bis 4
+/// bleiben lesbar (ohne solche Oeffnungen).
+inline constexpr int kBauplanFassung = 5;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -226,9 +228,24 @@ struct Rueckseite
     [[nodiscard]] bool operator==(const Rueckseite&) const = default;
 };
 
+/// Eine Oeffnung des Hohlraums, die nicht in der Platte liegt (seit Fassung 5; KQ17 a, S197) — etwa die
+/// Oeffnungen in der Schale einer Harfe. Sie ist in der Platte nicht ausgespart; ihre Luft tritt wie die
+/// eines Lochs der Platte nach aussen.
+struct Oeffnung
+{
+    Punkt2 ort;             ///< Lage in der Ebene der Platte, m
+    double hoehe = 0.0;     ///< m ueber der Platte (wie beim Hoerort); negativ = hinter der Platte
+    double flaeche = 0.0;   ///< m²
+    double lippe = 0.0;     ///< m: Laenge der Oeffnung durch die Wand (ohne Muendungskorrektur)
+    std::string quelle;
+
+    [[nodiscard]] bool operator==(const Oeffnung&) const = default;
+};
+
 /// Der Hohlraum hinter der Platte (seit Fassung 4; F-K1 a, KQ8 a, S196): die Luft im Kasten oder in
-/// der Schale, die ueber die Loecher der Platte nach aussen tritt. `volumen` 0 = keiner — dann rechnet
-/// die Platte allein wie bis Fassung 3. Die Rechnung steht in `Luftraum.hpp`.
+/// der Schale, die ueber die Loecher der Platte und ueber die `oeffnungen` (seit Fassung 5) nach aussen
+/// tritt. `volumen` 0 = keiner — dann rechnet die Platte allein wie bis Fassung 3. Die Rechnung steht in
+/// `Luftraum.hpp`.
 struct Hohlraum
 {
     double volumen = 0.0;   ///< m³; 0 = aus
@@ -239,6 +256,8 @@ struct Hohlraum
     /// Verlustfaktor einer Mode ist Anteil der Bewegungsenergie in der Luft / Guete.
     double guete = 30.0;
     std::string quelle;     ///< wie die Werte zustande kamen
+    /// Oeffnungen ausserhalb der Platte (seit Fassung 5, KQ17 a); dieselbe Muendungskorrektur wie die Loecher.
+    std::vector<Oeffnung> oeffnungen;
 
     [[nodiscard]] bool an() const { return volumen > 0.0; }
     [[nodiscard]] bool operator==(const Hohlraum&) const = default;
@@ -592,6 +611,12 @@ struct Randpunkt
     if (plan.hohlraum.volumen < 0.0) befunde.push_back("cavity: volume must not be negative");
     if (plan.hohlraum.muendung < 0.0) befunde.push_back("cavity: end correction must not be negative");
     if (!(plan.hohlraum.guete > 0.0)) befunde.push_back("cavity: quality factor must be positive");
+    for (const Oeffnung& o : plan.hohlraum.oeffnungen)
+    {
+        if (!(o.flaeche > 0.0)) befunde.push_back("cavity: the area of an opening must be positive");
+        if (o.lippe < 0.0) befunde.push_back("cavity: the lip length of an opening must not be negative");
+    }
+    if (!plan.hohlraum.an() && !plan.hohlraum.oeffnungen.empty()) befunde.push_back("cavity: openings need a volume");
     return befunde;
 }
 

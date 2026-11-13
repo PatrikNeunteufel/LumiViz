@@ -560,7 +560,7 @@ def baue(pdf, bildpfad=None):
     faser = round(rippenwinkel + 90.0, 1)
     plan = {
         "format": "lumiviz-instrument-body-plan",
-        "version": 4,
+        "version": 5,
         "title": "Steinway D (RT-0425)",
         "description": "Soundboard of a Steinway D after Chabassier & Durufle, RT-0425 (2012): outline, plate "
                        "thickness, ribs and bridge read from Fig. 2, bridge points from Appendix A.",
@@ -607,8 +607,9 @@ def baue(pdf, bildpfad=None):
                               "measured on soundboards, 1 to 3 % with a mean of 2.3 % (Ege, Boutillon & Rebillat 2013): "
                               "eta 3.0 % at 38 Hz, 2.3 % at 61 Hz, 1.5 % at 300 Hz to 1 kHz, 2.1 % at 3 kHz"},
         # Fassung 4 (S196, F-K1 a): der Hohlraum hinter der Platte — der Boden des Fluegels schliesst keinen ab
+        # Fassung 5 (S197, KQ17 a): `openings` — Oeffnungen des Hohlraums ausserhalb der Platte, hier keine
         "cavity": {"volume": 0.0, "endCorrection": 1.7, "q": 30.0,
-                   "source": "none: a piano soundboard closes no cavity"},
+                   "source": "none: a piano soundboard closes no cavity", "openings": []},
     }
 
     # Pruefung: jeder Stegpunkt auf dem Steg (halbe Breite), Bericht der Zahlen

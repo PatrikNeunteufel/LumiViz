@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.31.0
+> **Version:** 0.32.0
 > **Datum:** 2026-11-13 (Session 196)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1399,6 +1399,25 @@ Koerper 34k-5 Luftraum das mitgelieferte Cembalo“. Offen (Bericht §8): keine 
 alle Frequenzen gleich, Dicke im Diskant eher zu dick gelesen. **Als Nächstes die Harfe** (Bell 1988), dann die
 Gitarre.
 
+**Befund an der Harfe (S197, `../modellierung/gezupfte-saite/2026-11-13_S197_harfe_gelesen.md`).** Bell 1988 am Bild
+gelesen: Boden 131 cm, 41 → 10 cm breit, 10 → 3 mm dick, Faser quer, Deck- und Zugleiste aus Buche, zwei
+Fichtenleisten; **sechs Öffnungen in der Rückseite der Schale** (Tab. 4.1: 58–93 cm², Lippen 1,2–2,1 cm), Luftvolumen
+27 ± 2 l, Helmholtz bei starrer Wand 190 Hz; Tab. 6.1: 17 gemessene Moden des Kastens F mit Güte (186 / 204 / 250 /
+289 / 332 / 421 / 468 / 535 Hz …), darunter das gekoppelte Paar aus Luft und erster Bodenmode (186 / 204 Hz) und
+Kopplungen mit höheren Luftmoden (289, 637, 720 Hz). `InstrumentBody` kannte Öffnungen nur als Löcher der Platte
+(`Luftraum.hpp`, `luftraumGroessen`) und rechnet nur die Helmholtz-Mode.
+
+✅ **KQ17 a** (Patrik S197): **Der Hohlraum bekommt Öffnungen außerhalb der Platte** — `cavity.openings` (je Öffnung
+Ort, Höhe über der Platte, Fläche, Lippenlänge, Quelle), immer geschrieben, **Bauplan Fassung 5**; `luftraumGroessen`
+nimmt Löcher und Öffnungen parallel, eine Öffnung strahlt als freie Punktquelle von ihrem Ort. Bestehende Baupläne
+rechnen gleich; alle sechs Körper neu gerechnet und verglichen, voller Lauf unter beiden Compilern. Grund: nur so ist
+abgebildet, was gebaut ist. Verworfen: b (Öffnungen als Löcher im Boden — 450 cm² aus einem Boden, der an der
+schmalen Stelle 10 cm breit ist), c (Harfe ohne Luftraum — gibt das Paar 186 / 204 Hz auf). Kippt auf c, wenn der
+Eingriff nicht gewünscht ist und die Harfe nur oberhalb von 250 Hz stimmen soll. **Offen:** die höheren Luftmoden
+im Kasten (Vorlage, sobald die Harfe einmal gerechnet ist und Tab. 6.1 mit Zahlen zeigt, was ohne sie fehlt); der
+Überschlag mit einzelnen Öffnungen gibt 225 Hz statt der gemessenen 190 Hz — die Mündungskorrektur wird an Bells
+Messung gestellt.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1460,6 +1479,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.32.0 | 2026-11-13 | Session 197. §6: Befund an der Harfe (Bell 1988 gelesen: Maße, Öffnungen in der Schale, Tab. 6.1 mit 17 Moden); KQ17 a (Öffnungen des Hohlraums außerhalb der Platte, Bauplan Fassung 5, alle Körper neu); höhere Luftmoden offen. |
 | 0.31.0 | 2026-11-13 | Session 197. §6: Befund am Cembalo (keine gemessene Kurve; Boden des Dulcken 1755 in Bader 2025 als Bauplan lesbar); KQ13 a (Körper = Boden des Dulcken, Saiten Taskin), KQ14 a (Dicke als Raster — im Format vorhanden), KQ15 a (Tiefe 20,7 cm, Luftmode als bekannte Abweichung), KQ16 a (Randtasten); Bauplan und Körper des Cembalos unter `asset/`. |
 | 0.30.0 | 2026-11-13 | Session 197. §6: Befund an der gemessenen Stegadmittanz der Laute (Woodhouse 2021 Abb. 1) und an der Rauwolf-Zeichnung; KQ11 a (Ziele in Lage und Höhe, mit Stegleiste und Saitenlast), KQ12 a (Form mal 625/677,4); Bauplan und Körper der Laute unter `asset/`. |
 | 0.29.0 | 2026-11-13 | Session 196. §6: Befund an der gemessenen Kurve der Oud (Abb. 6), KQ10 a ersetzt KQ9 a (Balken wie gezeichnet, 1,5 mm; Ziele 101 / 203 / 280 / 362 Hz); Bauplan und Körper der Oud unter `asset/`, `.lvinstbody` Fassung 3. |

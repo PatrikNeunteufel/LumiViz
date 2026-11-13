@@ -214,6 +214,18 @@ QJsonObject alsJson(const Bauplan& plan)
     const koerper::Platte& p = plan.platte;
     QJsonArray loecher;
     for (const auto& loch : p.loecher) loecher.append(linieAlsJson(loch));
+    QJsonArray oeffnungen;
+    for (const koerper::Oeffnung& o : plan.hohlraum.oeffnungen)
+    {
+        oeffnungen.append(QJsonObject{
+            {QStringLiteral("x"), o.ort.x},
+            {QStringLiteral("y"), o.ort.y},
+            {QStringLiteral("z"), o.hoehe},
+            {QStringLiteral("area"), o.flaeche},
+            {QStringLiteral("lipLength"), o.lippe},
+            {QStringLiteral("source"), text(o.quelle)},
+        });
+    }
     return QJsonObject{
         {QStringLiteral("format"), QLatin1String(kBauplanFormat)},
         {QStringLiteral("version"), koerper::kBauplanFassung},
@@ -258,6 +270,8 @@ QJsonObject alsJson(const Bauplan& plan)
              {QStringLiteral("endCorrection"), plan.hohlraum.muendung},
              {QStringLiteral("q"), plan.hohlraum.guete},
              {QStringLiteral("source"), text(plan.hohlraum.quelle)},
+             // seit Fassung 5 (KQ17 a), immer geschrieben
+             {QStringLiteral("openings"), oeffnungen},
          }},
     };
 }
@@ -331,6 +345,18 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
         neu.hohlraum.muendung = c.value(QStringLiteral("endCorrection")).toDouble(vorgabe.muendung);
         neu.hohlraum.guete = c.value(QStringLiteral("q")).toDouble(vorgabe.guete);
         neu.hohlraum.quelle = text(c.value(QStringLiteral("source")));
+        // seit Fassung 5 (KQ17 a); fehlt die Liste, tritt die Luft nur durch die Loecher der Platte
+        for (const QJsonValue& e : c.value(QStringLiteral("openings")).toArray())
+        {
+            const QJsonObject o = e.toObject();
+            koerper::Oeffnung oe;
+            oe.ort = {o.value(QStringLiteral("x")).toDouble(), o.value(QStringLiteral("y")).toDouble()};
+            oe.hoehe = o.value(QStringLiteral("z")).toDouble();
+            oe.flaeche = o.value(QStringLiteral("area")).toDouble();
+            oe.lippe = o.value(QStringLiteral("lipLength")).toDouble();
+            oe.quelle = text(o.value(QStringLiteral("source")));
+            neu.hohlraum.oeffnungen.push_back(std::move(oe));
+        }
     }
     plan = std::move(neu);
     return true;

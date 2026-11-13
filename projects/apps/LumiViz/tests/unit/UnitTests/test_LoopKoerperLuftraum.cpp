@@ -44,6 +44,7 @@
 
 #include <Eigen/Dense>
 
+#include <QJsonArray>
 #include <QJsonObject>
 
 #include <algorithm>
@@ -326,6 +327,101 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum Bauplan und Datei")
     falsch = plan;
     falsch.hohlraum.muendung = -0.1;
     CHECK(befundMit(falsch, "cavity: end correction"));
+}
+
+TEST_CASE("Loop Koerper 34k-5 Luftraum Oeffnungen ausserhalb der Platte (KQ17 a)")
+{
+    // eine Decke ohne Loch: der Hohlraum ist zu, bis er eine Oeffnung in der Schale bekommt
+    kp::Bauplan plan = decke();
+    plan.platte.loecher.clear();
+    plan.hohlraum = {0.027, 1.7, 25.0, "Test"};
+    REQUIRE(kp::pruefe(plan).empty());
+    CHECK(kp::luftraumGroessen(plan, 1.2, 343.0).akustischeMasse == 0.0);
+
+    const double flaeche = 0.0091, lippe = 0.016;
+    plan.hohlraum.oeffnungen.push_back({{0.1, 0.2}, -0.15, flaeche, lippe, "Test"});
+    REQUIRE(kp::pruefe(plan).empty());
+    const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, 1.2, 343.0);
+    REQUIRE(g.loecher.size() == 1);
+    const double radius = std::sqrt(flaeche / kPi);
+    // Helmholtz mit einer Oeffnung: f = c/2π · √(A / (V (Lippe + Muendung · Radius)))
+    CHECK(g.loecher[0].laenge == doctest::Approx(lippe + 1.7 * radius).epsilon(1e-12));
+    CHECK(g.loecher[0].frei);
+    CHECK(g.loecher[0].hoehe == doctest::Approx(-0.15));
+    CHECK(g.loecher[0].anteil == doctest::Approx(1.0));
+    CHECK(g.helmholtzHz() == doctest::Approx(343.0 / (2.0 * kPi) * std::sqrt(flaeche / (0.027 * (lippe + 1.7 * radius)))).epsilon(1e-12));
+
+    // zwei gleiche Oeffnungen parallel: halbe Masse; ein Loch der Platte und eine Oeffnung gleicher Flaeche
+    // und Laenge teilen sich den Fluss zur Haelfte
+    kp::Bauplan zwei = plan;
+    zwei.hohlraum.oeffnungen.push_back({{0.3, 0.2}, -0.15, flaeche, lippe, "Test"});
+    const kp::LuftraumGroessen g2 = kp::luftraumGroessen(zwei, 1.2, 343.0);
+    CHECK(g2.akustischeMasse == doctest::Approx(g.akustischeMasse / 2.0).epsilon(1e-12));
+    CHECK(g2.helmholtzHz() == doctest::Approx(g.helmholtzHz() * std::sqrt(2.0)).epsilon(1e-12));
+    kp::Bauplan gemischt = decke();
+    gemischt.hohlraum = {0.012, 1.7, 25.0, "Test"};
+    const double lochFlaeche = kp::flaeche(gemischt.platte.loecher[0]);
+    gemischt.hohlraum.oeffnungen.push_back({{0.4, 0.1}, -0.1, lochFlaeche, 0.003, "Test"});  // Lippe = Dicke der Platte
+    const kp::LuftraumGroessen g3 = kp::luftraumGroessen(gemischt, 1.2, 343.0);
+    REQUIRE(g3.loecher.size() == 2);
+    CHECK_FALSE(g3.loecher[0].frei);
+    CHECK(g3.loecher[1].frei);
+    CHECK(g3.loecher[0].anteil == doctest::Approx(0.5).epsilon(1e-9));
+    CHECK(g3.loecher[1].anteil == doctest::Approx(0.5).epsilon(1e-9));
+
+    // die Abstrahlung: ein Loch der Platte strahlt in den Halbraum (ρ/2π), eine Oeffnung frei (ρ/4π) von
+    // ihrem Ort aus — an einem Hoerort gleich weit von beiden die Haelfte
+    std::vector<kp::Hoerort> orte{{"vorn", {0.27, 0.15}, 0.5, "Test"}};
+    kp::LuftraumGroessen nurLoch, nurOeffnung;
+    nurLoch.loecher.push_back({{0.27, 0.15}, 0.01, 0.05, 1.0, 0.0, false});
+    nurOeffnung.loecher.push_back({{0.27, 0.15}, 0.01, 0.05, 1.0, 0.0, true});
+    const auto a = kp::lochAbstrahlung(nurLoch, orte, kp::Luft{}, 200.0, 1.0);
+    const auto b = kp::lochAbstrahlung(nurOeffnung, orte, kp::Luft{}, 200.0, 1.0);
+    CHECK(std::abs(a[0]) == doctest::Approx(kp::Luft{}.dichte / (2.0 * kPi) / 0.5).epsilon(1e-12));
+    CHECK(std::abs(b[0]) == doctest::Approx(std::abs(a[0]) / 2.0).epsilon(1e-12));
+    // die Oeffnung 0,15 m hinter der Platte ist vom Hoerort 0,5 m davor 0,65 m entfernt
+    nurOeffnung.loecher[0].hoehe = -0.15;
+    const auto hinten = kp::lochAbstrahlung(nurOeffnung, orte, kp::Luft{}, 200.0, 1.0);
+    CHECK(std::abs(hinten[0]) == doctest::Approx(kp::Luft{}.dichte / (4.0 * kPi) / 0.65).epsilon(1e-12));
+
+    // die Datei: `openings` immer geschrieben (Fassung 5), Hin- und Rueckweg; Fassung 4 ohne die Liste lesbar
+    const QJsonObject json = alsJson(zwei);
+    CHECK(json.value(QStringLiteral("version")).toInt() == 5);
+    const QJsonObject c = json.value(QStringLiteral("cavity")).toObject();
+    REQUIRE(c.value(QStringLiteral("openings")).toArray().size() == 2);
+    const QJsonObject eins = c.value(QStringLiteral("openings")).toArray()[0].toObject();
+    for (const char* feld : {"x", "y", "z", "area", "lipLength", "source"}) CHECK_MESSAGE(eins.contains(QLatin1String(feld)), feld);
+    kp::Bauplan zurueck;
+    REQUIRE(ausJson(json, zurueck));
+    CHECK(zurueck == zwei);
+    CHECK(alsJson(kp::Bauplan{}).value(QStringLiteral("cavity")).toObject().contains(QStringLiteral("openings")));
+    QJsonObject vier = json;
+    QJsonObject cVier = c;
+    cVier.remove(QStringLiteral("openings"));
+    vier[QStringLiteral("cavity")] = cVier;
+    vier[QStringLiteral("version")] = 4;
+    kp::Bauplan alt;
+    REQUIRE(ausJson(vier, alt));
+    CHECK(alt.hohlraum.oeffnungen.empty());
+    CHECK(alt.hohlraum.volumen == doctest::Approx(0.027));
+    // ein Bauplan mit Oeffnung hat einen anderen Abdruck als ohne
+    CHECK(bauplanAbdruck(zwei) != bauplanAbdruck(plan));
+
+    // die Pruefung
+    const auto befundMit = [](const kp::Bauplan& p, const char* stueck) {
+        for (const std::string& b : kp::pruefe(p))
+            if (b.find(stueck) != std::string::npos) return true;
+        return false;
+    };
+    kp::Bauplan falsch = plan;
+    falsch.hohlraum.oeffnungen[0].flaeche = 0.0;
+    CHECK(befundMit(falsch, "cavity: the area"));
+    falsch = plan;
+    falsch.hohlraum.oeffnungen[0].lippe = -0.01;
+    CHECK(befundMit(falsch, "cavity: the lip length"));
+    falsch = plan;
+    falsch.hohlraum.volumen = 0.0;
+    CHECK(befundMit(falsch, "cavity: openings need a volume"));
 }
 
 TEST_CASE("Loop Koerper 34k-5 Luftraum an der gerechneten Platte")
