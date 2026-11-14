@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.20.0  
+> **Version:** 0.21.0  
 > **Datum:** 2026-11-13  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -425,6 +425,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.21.0 | 2026-11-14 | Session 198, Stufe 34k-5, KQ20 a: Abschnitte des Rands — `Randabschnitt` (`kanteVon`, `kanteBis`: Kanten des Umrisses; `wegfeder` in N/m², `drehfeder` in N) in `Rand::abschnitte`, **`.lvinstbodyplan` Fassung 7** mit `rim.sections` (immer geschrieben, Fassung 6 lesbar); `baueSystem` mit `abschnittAmRand` (je Randkante gefragt: die Auslenkung dort nicht gehalten, K bekommt ∫ k_w w² ds + ∫ k_d φ_n² ds; ein Knoten, der auch am übrigen Rand liegt, ist gehalten), `RandFedern`, `naechsteUmrissKante`, `abschnittDerKante`; `pruefe` (Federn nicht negativ, Kanten im Umriss, keine Überdeckung, nicht der ganze Rand). Werkzeug: meldet die Abschnitte. `kRechenFassung` bleibt 2 — ein Bauplan ohne Abschnitte rechnet wie vorher, alle sechs Körper neu (Abdruck). |
 | 0.20.0 | 2026-11-13 | Session 198, Stufe 34k-5, KQ18 a: der Rand der Platte im Bauplan — `Rand` (`Halt::Eingespannt` / `Halt::Elastisch`, `drehfeder` in N, ein Wert für den ganzen Rand), **`.lvinstbodyplan` Fassung 6** mit `rim` (immer geschrieben, Fassung 5 lesbar); `baueSystem` mit `drehfederAmRand` (∫ k_d φ_n² ds über den äußeren Rand) und `baueSystem(netz, element, plan)`; `gaussAufStrecke`; `pruefe` (Feder nicht negativ, nur mit elastischem Halt). Werkzeug: rechnet mit dem Rand des Bauplans; Probe-Schalter `--rim-spring`, `--rim-spring-end`. `kRechenFassung` bleibt 2 — ein eingespannter Bauplan rechnet wie vorher, alle sechs Körper neu (Abdruck). |
 | 0.19.0 | 2026-11-13 | Session 197, Stufe 34k-5, Proben an der Harfe: `Auflager::Gestuetzt` (w = 0 am ganzen Rand, beide Drehungen frei; für beliebig liegende Ränder — die untere Schranke zu `Eingespannt`); Werkzeug: `--free-rim` und `--supported-rim` als Probe-Schalter (ein so gerechneter Körper ist keiner für das Programm). `Eingespannt` und `GelenkigAchsparallel` unverändert. |
 | 0.18.0 | 2026-11-13 | Session 197, Stufe 34k-5, KQ17 a: Öffnungen des Hohlraums außerhalb der Platte (`Oeffnung`, `Hohlraum::oeffnungen`; `.lvinstbodyplan` Fassung 5 mit `cavity.openings`, immer geschrieben, Fassung 4 lesbar); `LochLuft::hoehe` und `::frei`, `luftraumGroessen` nimmt Löcher und Öffnungen parallel, `lochAbstrahlung` rechnet eine Öffnung als freie Punktquelle an ihrem Ort (Löcher der Platte Bit für Bit wie vorher); `pruefe`. Test „Luftraum Oeffnungen ausserhalb der Platte (KQ17 a)“. `kRechenFassung` bleibt 2; der Abdruck ändert sich mit der Fassung — alle mitgelieferten Körper neu gerechnet. |

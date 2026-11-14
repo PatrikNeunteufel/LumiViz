@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.33.0
+> **Version:** 0.35.0
 > **Datum:** 2026-11-13 (Session 198)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1436,6 +1436,14 @@ für den einen Wert spricht die Bauweise. Kippt, wenn die Höhen der Admittanz j
 Feder die Bäuche am Diskant sichtbar falsch setzen. **Offen:** S(2,1) 17–23 % zu hoch (kein Befund über den Rand);
 Ziele und Schwelle der Harfe (Kasten G besaitet, Lage und Höhe mit Saitenlast) als nächste Vorlage.
 
+🔴 **Berichtigung (S198, nach KQ18 a):** der Kipppunkt des Folgeentscheids ist eingetreten, und mehr als das. An der Lage der Bäuche längs der Deckleiste (Bell Abb. 7.8–7.16) geprüft, war die Zuordnung der gerechneten Formen zu Bells S(1,n) um eins versetzt (die Form zu S(1,n) hat n + 1 Bäuche, der am Bassende ist schwach). Richtig zugeordnet trifft der **gestützte Rand** (`elastic`, Feder 0) Ort und Frequenz zugleich: Lage +10 … −8 %, stärkster Bauch ±1 Messort; mit 4500 N liegen die Bäuche 6–9 Messorte zu weit am Bass. Die Zahlen „gestützt −20 … −16 %“ und die Federwerte 3000 / 4500 N im Befund oben sind hinfällig. `rim` und Fassung 6 bleiben (die Vorgabe ist eingespannt); die Harfe bekommt Feder 0. Zahlen im Bericht §11. Lehre: Moden nie nur über Frequenz und Zahl der Bäuche zuordnen, immer auch über deren Lage gegen ein gemessenes Profil.
+
+✅ **KQ19 a** (Patrik S198): **Ziele der Harfe** — der Test prüft S(1,2)–S(1,7) am Kasten G in der Harfe (Bell Abb. 7.8–7.16): Lage ≤ 10 % gegen „ohne Saiten“ und gegen „besaitet“, Ort des stärksten Bauchs ≤ 2 Messorte, Höhe ≤ 6 dB gegen „ohne Saiten“ mit der Dämpfung des Bauplans aus Bells Güten ohne Saiten; S(1,6) fällt bei der Höhe heraus; S(1,1)− und S(1,8) stehen als bekannte Abweichung im Test. Der erste Probekörper verfehlte zwei Ziele knapp (S(1,2) Lage +10,4 %, S(1,7) Höhe −7,3 dB); nach dem Kipppunkt wurde die Ursache gesucht statt die Schwelle geweitet (Bericht §11): Leistenmasse, Wegfeder am ganzen Rand und schmalerer freier Boden scheiden aus; an Bells Messort 2 (Abb. 6.6) liegt die Messung 10–20 dB über der Rechnung, auch zwischen den Resonanzen — das Diskantende ist zu fest gehalten.
+
+✅ **KQ20 a** (Patrik S198): **Halt je Randstück.** `rim.sections` — Abschnitte des Rands, je Abschnitt Kanten des Umrisses (`edges: [von, bis]`), eine Wegfeder (N/m²) und eine Drehfeder (N); im Abschnitt ist die Auslenkung nicht gehalten, der übrige Rand trägt `support`. **`.lvinstbodyplan` Fassung 7**, `sections` immer geschrieben, Fassung 6 liest sich ohne Abschnitte. Das hebt den Ausschluss der Wegfeder aus KQ18 a auf (seine Begründung beruhte auf der falschen Zuordnung). Geprüft gegen die Lévy-Lösung einer Platte mit einer freien Kante auf 1 %.
+
+✅ **KQ21 a** (Patrik S198): **Fassung 7 bleibt, die Harfe bekommt an der Diskantkante 3·10⁶ N/m²** — angepasst, nicht gemessen. Am vollen Kasten gerechnet (Bericht §12) bringt keine Feder S(1,5)–S(1,8) zugleich in die Schwellen (der Kipppunkt von KQ20 a, wörtlich eingetreten); mit 3·10⁶ N/m² liegen S(1,3)–S(1,7) darin (S(1,7) −5,4 statt −7,4 dB), der Pegel an Messort 2 steigt um 5–10 dB von rund 20 dB Lücke. Bekannte Abweichungen im Test: S(1,1)−, S(1,8) (−14 dB) und die Lage von S(1,2) gegen den Kasten ohne Saiten (+10,4 %; besaitet +7 %). Offen: die übrige Ursache am Diskantende (Boden dort dünner, Kopfblock schwingt mit, Leisten enden vor der Kante — nicht untersucht), die Taste je Saite (Annahme Pedal Mitte).
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1497,6 +1505,8 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.35.0 | 2026-11-14 | Session 198. §6: KQ19 a (Ziele der Harfe), KQ20 a (Halt je Randstück, Bauplan Fassung 7), KQ21 a (Diskantkante der Harfe 3·10⁶ N/m², angepasst); Körper `concert_harp`; offen die übrige Ursache am Diskantende und die Taste je Saite. |
+| 0.34.0 | 2026-11-14 | Session 198. §6: Berichtigung zu KQ18 a — der Rand der Harfe ist gestützt (Feder 0), die Zuordnung der Formen war um eins versetzt; offen Ziele und Schwelle der Harfe (KQ19). |
 | 0.33.0 | 2026-11-13 | Session 198. §6: Kap. 7 von Bell gelesen, Rand des Harfenbodens gerechnet; KQ18 a (Rand im Bauplan: eingespannt oder elastisch mit Drehfeder, Fassung 6, alle Körper neu) und Folgeentscheid (ein Federwert für den ganzen Rand); offen S(2,1), Ziele und Schwelle der Harfe. |
 | 0.32.0 | 2026-11-13 | Session 197. §6: Befund an der Harfe (Bell 1988 gelesen: Maße, Öffnungen in der Schale, Tab. 6.1 mit 17 Moden); KQ17 a (Öffnungen des Hohlraums außerhalb der Platte, Bauplan Fassung 5, alle Körper neu); höhere Luftmoden offen. |
 | 0.31.0 | 2026-11-13 | Session 197. §6: Befund am Cembalo (keine gemessene Kurve; Boden des Dulcken 1755 in Bader 2025 als Bauplan lesbar); KQ13 a (Körper = Boden des Dulcken, Saiten Taskin), KQ14 a (Dicke als Raster — im Format vorhanden), KQ15 a (Tiefe 20,7 cm, Luftmode als bekannte Abweichung), KQ16 a (Randtasten); Bauplan und Körper des Cembalos unter `asset/`. |

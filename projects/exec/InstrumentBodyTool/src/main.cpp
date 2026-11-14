@@ -290,6 +290,10 @@ int main(int argc, char* argv[])
                                           : kp::baueSystem(netz, element, plan);
     if (!probeRand && plan.rand.elastisch())
         std::printf("Rim elastic (KQ18 a): held in w, rotational spring %g N\n", plan.rand.drehfeder);
+    if (!probeRand)
+        for (const kp::Randabschnitt& a : plan.rand.abschnitte)
+            std::printf("Rim section '%s' (KQ20 a): outline edges %d to %d, spring %g N/m2 against w, %g N against the slope\n",
+                        a.name.c_str(), a.kanteVon, a.kanteBis, a.wegfeder, a.drehfeder);
     if (parser.isSet(freiOpt)) std::printf("Rim free (--free-rim): a probe, not a body for the program\n");
     if (parser.isSet(gestuetztOpt)) std::printf("Rim supported (--supported-rim): a probe, not a body for the program\n");
     if (feder)

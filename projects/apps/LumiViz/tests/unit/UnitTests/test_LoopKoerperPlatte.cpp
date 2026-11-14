@@ -33,6 +33,8 @@
 
 #include <Eigen/Dense>
 
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QtGlobal>
 
 #include <algorithm>
@@ -312,6 +314,40 @@ double levyMitDrehfeder(const kp::Material& mat, double a, double b, double h, d
     return std::sqrt(omega2) / (2.0 * std::numbers::pi);
 }
 
+/// Lévy: Platte a × b, an x = 0 und an beiden y-Raendern gelenkig, die Kante x = a frei (KQ20 a). Erste Mode
+/// (eine Halbwelle in y): W = A sinh αx + B sin βx; an x = a kein Moment und keine Ersatzquerkraft.
+double levyEineKanteFrei(const kp::Material& mat, double a, double b, double h)
+{
+    const kp::Steife s = kp::gedreht(mat, 0.0);
+    const double h3 = h * h * h / 12.0;
+    const double d11 = h3 * s.q[0], d12 = h3 * s.q[1], d22 = h3 * s.q[3], d66 = h3 * s.q[5];
+    const double hh = d12 + 2.0 * d66, k2 = std::pow(std::numbers::pi / b, 2), m = s.rho * h;
+    const auto f = [&](double omega2) {
+        const double wurzel = std::sqrt(hh * hh * k2 * k2 + d11 * (m * omega2 - d22 * k2 * k2));
+        const double alpha = std::sqrt((hh * k2 + wurzel) / d11), beta = std::sqrt((wurzel - hh * k2) / d11);
+        const double ms = (d11 * alpha * alpha - d12 * k2) * std::sinh(alpha * a);
+        const double vs = alpha * (d11 * alpha * alpha - (d12 + 4.0 * d66) * k2) * std::cosh(alpha * a);
+        const double mn = -(d11 * beta * beta + d12 * k2) * std::sin(beta * a);
+        const double vn = -beta * (d11 * beta * beta + (d12 + 4.0 * d66) * k2) * std::cos(beta * a);
+        return ms * vn - mn * vs;
+    };
+    const double start = d22 * k2 * k2 / m;  // der Streifen laengs y: darueber liegt die Mode
+    double unten = start * (1.0 + 1e-9), oben = unten;
+    const double vorzeichen = f(unten);
+    for (int i = 0; i < 100000; ++i)
+    {
+        oben = unten * 1.0005;
+        if (f(oben) * vorzeichen < 0.0) break;
+        unten = oben;
+    }
+    for (int i = 0; i < 100; ++i)
+    {
+        const double mitte = 0.5 * (unten + oben);
+        (f(mitte) * vorzeichen > 0.0 ? unten : oben) = mitte;
+    }
+    return std::sqrt(0.5 * (unten + oben)) / (2.0 * std::numbers::pi);
+}
+
 }  // namespace
 
 TEST_CASE("Loop Koerper KQ18 Drehfeder am Rand")
@@ -413,7 +449,7 @@ TEST_CASE("Loop Koerper KQ18 Rand im Bauplan")
 
     // die Datei: `rim` immer geschrieben (Fassung 6), Hin- und Rueckweg; Fassung 5 ohne den Block: eingespannt
     const QJsonObject json = alsJson(plan);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 6);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
     const QJsonObject r = json.value(QStringLiteral("rim")).toObject();
     for (const char* feld : {"support", "rotationalStiffness", "source"}) CHECK_MESSAGE(r.contains(QLatin1String(feld)), feld);
     CHECK(r.value(QStringLiteral("support")).toString() == QStringLiteral("elastic"));
@@ -453,6 +489,151 @@ TEST_CASE("Loop Koerper KQ18 Rand im Bauplan")
     falsch = plan;
     falsch.rand.halt = kp::Rand::Halt::Eingespannt;
     CHECK(befundMit(falsch, "rim: a rotational stiffness needs"));
+}
+
+TEST_CASE("Loop Koerper KQ20 Randabschnitte")
+{
+    const double a = 0.3, b = 0.4, h = 0.003;
+    const kp::Material mat = fichte();
+    const kp::Netz netz = rechteckNetz(a, b, 0.04);
+    REQUIRE(netz.fehler.empty());
+    const double d11 = h * h * h / 12.0 * kp::gedreht(mat, 0.0).q[0];
+    const auto platte = [&](kp::Auflager auflager, const std::function<std::optional<kp::RandFedern>(kp::Punkt2)>& abschnitt) {
+        return kp::baueSystem(netz, kp::LagrangeDreieck(3),
+                              [&](kp::Punkt2) {
+                                  kp::Steife s = kp::gedreht(mat, 0.0);
+                                  s.h = h;
+                                  return s;
+                              },
+                              auflager, {}, abschnitt);
+    };
+    const auto kanteRechts = [&](double weg, double dreh) {
+        return [=](kp::Punkt2 mitte) -> std::optional<kp::RandFedern> {
+            if (mitte.x > a - 1e-9) return kp::RandFedern{weg, dreh};
+            return std::nullopt;
+        };
+    };
+    const double gestuetzt = frequenzen(platte(kp::Auflager::Gestuetzt, {}), 1)[0];
+    const double eingespannt = frequenzen(platte(kp::Auflager::Eingespannt, {}), 1)[0];
+
+    // ein Abschnitt, der keine Kante trifft: nichts aendert sich
+    CHECK(frequenzen(platte(kp::Auflager::Gestuetzt, [](kp::Punkt2) -> std::optional<kp::RandFedern> { return std::nullopt; }), 1)[0] ==
+          gestuetzt);
+    // die Kante x = a frei: gegen Lévy auf 1 %
+    const double frei = frequenzen(platte(kp::Auflager::Gestuetzt, kanteRechts(0.0, 0.0)), 1)[0];
+    CHECK(frei == doctest::Approx(levyEineKanteFrei(mat, a, b, h)).epsilon(0.01));
+    CHECK(frei < gestuetzt * 0.8);
+    // die Frequenz steigt mit der Wegfeder; eine sehr harte naehert sich dem gestuetzten Rand von unten
+    double vorher = frei;
+    for (const double weg : {1.0e3, 1.0e4, 1.0e5})
+    {
+        CAPTURE(weg);
+        const double f = frequenzen(platte(kp::Auflager::Gestuetzt, kanteRechts(weg, 0.0)), 1)[0];
+        CHECK(f > vorher * 1.01);
+        CHECK(f < gestuetzt);
+        vorher = f;
+    }
+    const double hart = frequenzen(platte(kp::Auflager::Gestuetzt, kanteRechts(1.0e12, 0.0)), 1)[0];
+    CHECK(hart == doctest::Approx(gestuetzt).epsilon(1e-3));
+    CHECK(hart <= gestuetzt * (1.0 + 1e-9));
+    // harte Weg- und Drehfeder am Abschnitt eines eingespannten Rands: der eingespannte Rand
+    const double hartBeides = frequenzen(platte(kp::Auflager::Eingespannt, kanteRechts(1.0e12, 1.0e6 * d11 / a)), 1)[0];
+    CHECK(hartBeides == doctest::Approx(eingespannt).epsilon(0.01));
+    CHECK(hartBeides <= eingespannt * (1.0 + 1e-9));
+    // die Drehfeder des Abschnitts wirkt: mit harter Wegfeder wie die Drehfeder an dieser Kante (KQ18 a)
+    const double kd = 10.0 * d11 / a;
+    const double mitDreh = frequenzen(platte(kp::Auflager::Gestuetzt, kanteRechts(1.0e12, kd)), 1)[0];
+    const double bezug = frequenzen(kp::baueSystem(netz, kp::LagrangeDreieck(3),
+                                                   [&](kp::Punkt2) {
+                                                       kp::Steife s = kp::gedreht(mat, 0.0);
+                                                       s.h = h;
+                                                       return s;
+                                                   },
+                                                   kp::Auflager::Gestuetzt, [&](kp::Punkt2 p) { return p.x > a - 1e-9 ? kd : 0.0; }),
+                                    1)[0];
+    CHECK(mitDreh == doctest::Approx(bezug).epsilon(1e-3));
+    CHECK(mitDreh > gestuetzt * 1.01);
+
+    // im Bauplan: die Kante 1 des Umrisses ((a,0) → (a,b)) als Abschnitt
+    kp::Bauplan plan;
+    plan.titel = "Test";
+    plan.materialien = {mat};
+    plan.platte.material = "spruce";
+    plan.platte.umriss = {{0.0, 0.0}, {a, 0.0}, {a, b}, {0.0, b}};
+    plan.platte.dicke = h;
+    plan.rand.halt = kp::Rand::Halt::Elastisch;
+    const kp::LagrangeDreieck element(3);
+    CHECK(kp::naechsteUmrissKante(plan.platte.umriss, {a, 0.1}) == 1);
+    CHECK(kp::naechsteUmrissKante(plan.platte.umriss, {0.1, b}) == 2);
+    CHECK(kp::naechsteUmrissKante({}, {0.0, 0.0}) == -1);
+    CHECK(frequenzen(kp::baueSystem(netz, element, plan), 1)[0] == gestuetzt);
+    plan.rand.abschnitte = {{"right edge", 1, 1, 0.0, 0.0, "Test"}};
+    CHECK(frequenzen(kp::baueSystem(netz, element, plan), 1)[0] == frei);
+    plan.rand.abschnitte[0].wegfeder = 1.0e4;
+    plan.rand.abschnitte[0].drehfeder = 2.0;
+    CHECK(frequenzen(kp::baueSystem(netz, element, plan), 1)[0] ==
+          frequenzen(platte(kp::Auflager::Gestuetzt, kanteRechts(1.0e4, 2.0)), 1)[0]);
+    CHECK(kp::pruefe(plan).empty());
+
+    // die Datei: `rim.sections` immer geschrieben (Fassung 7), Hin- und Rueckweg; Fassung 6 ohne die Liste
+    const QJsonObject json = alsJson(plan);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
+    CHECK(kp::kBauplanFassung >= 7);
+    const QJsonObject r = json.value(QStringLiteral("rim")).toObject();
+    REQUIRE(r.value(QStringLiteral("sections")).toArray().size() == 1);
+    const QJsonObject ab = r.value(QStringLiteral("sections")).toArray().at(0).toObject();
+    for (const char* feld : {"name", "edges", "translationalStiffness", "rotationalStiffness", "source"})
+        CHECK_MESSAGE(ab.contains(QLatin1String(feld)), feld);
+    CHECK(ab.value(QStringLiteral("translationalStiffness")).toDouble() == 1.0e4);
+    kp::Bauplan zurueck;
+    REQUIRE(ausJson(json, zurueck));
+    CHECK(zurueck == plan);
+    CHECK(alsJson(kp::Bauplan{}).value(QStringLiteral("rim")).toObject().contains(QStringLiteral("sections")));
+    QJsonObject sechs = json;
+    QJsonObject rSechs = r;
+    rSechs.remove(QStringLiteral("sections"));
+    sechs[QStringLiteral("rim")] = rSechs;
+    sechs[QStringLiteral("version")] = 6;
+    kp::Bauplan alt;
+    REQUIRE(ausJson(sechs, alt));
+    CHECK(alt.rand.abschnitte.empty());
+    CHECK(alt.rand.elastisch());
+    // ein Abschnitt ohne zwei Kanten wird nicht geraten
+    QJsonObject kaputt = json;
+    QJsonObject rKaputt = r;
+    QJsonObject abKaputt = ab;
+    QJsonArray eine;
+    eine.append(1);
+    abKaputt[QStringLiteral("edges")] = eine;
+    QJsonArray liste;
+    liste.append(abKaputt);
+    rKaputt[QStringLiteral("sections")] = liste;
+    kaputt[QStringLiteral("rim")] = rKaputt;
+    CHECK_FALSE(ausJson(kaputt, alt));
+    // der Abdruck haengt an den Abschnitten
+    kp::Bauplan weicher = plan;
+    weicher.rand.abschnitte[0].wegfeder = 0.9e4;
+    CHECK(bauplanAbdruck(weicher) != bauplanAbdruck(plan));
+
+    // die Pruefung
+    const auto befundMit = [](const kp::Bauplan& p, const char* stueck) {
+        for (const std::string& bf : kp::pruefe(p))
+            if (bf.find(stueck) != std::string::npos) return true;
+        return false;
+    };
+    kp::Bauplan falsch = plan;
+    falsch.rand.abschnitte[0].wegfeder = -1.0;
+    CHECK(befundMit(falsch, "stiffness must not be negative"));
+    falsch = plan;
+    falsch.rand.abschnitte[0].kanteBis = 4;
+    CHECK(befundMit(falsch, "edges outside the outline"));
+    falsch = plan;
+    falsch.rand.abschnitte.push_back({"again", 1, 2, 0.0, 0.0, ""});
+    CHECK(befundMit(falsch, "overlaps another section"));
+    falsch = plan;
+    falsch.rand.abschnitte[0].kanteVon = 0;
+    falsch.rand.abschnitte[0].kanteBis = 3;
+    CHECK(befundMit(falsch, "must leave a part of the rim held"));
 }
 
 TEST_CASE("Loop Koerper 31c-3 Steinway D")

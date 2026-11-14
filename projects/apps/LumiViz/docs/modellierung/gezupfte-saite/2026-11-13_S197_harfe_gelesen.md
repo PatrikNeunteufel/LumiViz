@@ -355,5 +355,79 @@ Gegen F lose (Tab. 6.1: 250 / 332 / 421 / 535 / 660 / 775 / 970): +10 / +5 / +2 
 - Die Saitenlast senkt die Güten ab S(1,5) zu wenig (35 gegen 12–19) — 0,25 Z ist dort zu klein oder die Last ist
   nicht nur ein Widerstand quer.
 
+**Gegenproben zu den Höhen.**
+
+- Bells Bezug am Bild nachgelesen (S. 133): „0 dB = 1,58 × 10⁻⁶ s/kg … 116 dB = 1 s/kg“ — stimmt.
+- Rechnung bis 5 kHz statt 1,1 kHz (144 Moden): die Höhen ändern sich um höchstens 0,1 dB. Die abgeschnittenen Moden sind nicht die Ursache.
+- Mit der gemessenen Güte je Mode statt η = 0,027 (Höhe ∝ Q): S(1,2) 0, S(1,3) −4,1, S(1,4) −4,9, S(1,5) −4,2, S(1,7) −5,6 dB (S(1,6) mit Q 10 nicht vergleichbar — zwei Moden übereinander). Es bleibt ein gleichmäßiger Abstand von 4–6 dB ab S(1,3): die Rechnung ist am Bauch um den Faktor 1,6–1,9 zu schwer. Deck- und Zugleiste tragen dort rund die Hälfte der bewegten Masse; ganz ohne ihre Masse wären es etwa +3 dB. Ursache offen.
+- Saitenlast 0,25 / 0,75 / 1 / 3 Z: die Güten ab S(1,5) erreichen die gemessenen (12–19) erst bei 3 Z, dann liegen die Höhen 8–12 dB zu tief. Gemessen **steigen** die Höhen von S(1,5)–S(1,8) mit Saiten um 1–3 dB, obwohl die Güten sich halbieren — das bildet ein Widerstand an den Ösen nicht ab. Für Höhe und Güte ist der Zustand ohne Saiten der saubere Vergleich.
+
+**Probekörper gegen KQ19 a** (`make_harfe.py`, bis 5 kHz, Dämpfung α = 2,6·10⁻⁴ f² + 20,5): Lage S(1,2)–S(1,7) +10,4 / +9,8 / −0,3 / −2,9 / −8,3 / +4,4 % ohne Saiten, Ort überall unter 1 Messort, Höhe +1,6 / −4,6 / −5,5 / −3,1 / – / **−7,3 dB**, S(1,8) −10,6 dB. Zwei Ziele knapp verfehlt (S(1,2) Lage, S(1,7) Höhe).
+
+**Ursache der Höhen gesucht — vier Proben.**
+
+- **Masse der Leisten:** Deck- und Zugleiste tragen am Diskant rund die Hälfte der bewegten Masse; ganz ohne sie wären es höchstens +3 dB. Scheidet als alleinige Ursache aus.
+- **Wegfeder am ganzen Rand** (Basis „Rand frei“, im Modenraum, 10¹² … 3·10⁶ N/m²): die Höhen am stärksten Bauch ändern sich um höchstens ±0,5 dB, die Frequenzen fallen um bis 20 %. Scheidet aus.
+- **Schmalerer freier Boden** (Halteleiste überdeckt 1 / 1,5 cm je Seite; Werkzeug, bis 1,1 kHz): die Bäuche wandern 5–9 Messorte zum Bass, die Höhen werden schlechter (−7 … −9 dB). Scheidet aus — die volle Breite 41 → 10 cm schwingt.
+- **Frequenzgang statt Spitzen** (Bell Abb. 6.6, PDF 260, Kasten F lose, am Bild): an Ort 5 liegen die Täler gemessen bei 71 / 72 / 66 dB (470 / 620 / 800 Hz), gerechnet 69 / 72 / 61 dB — Masse und Steife stimmen dort; an Ort 10 Spitze 332 Hz 100 dB gegen 98 dB. **An Ort 2 liegt die Messung überall 10–20 dB über der Rechnung, auch zwischen den Resonanzen** (300 Hz: 86 gegen 74 dB; 500 Hz: 94 gegen 84 dB; Spitze 665 Hz 108 gegen 94 dB). Bell S. 134: der höchste Wert des Kastens F ist 108 dB bei 660 Hz an Ort 3; die Profile Abb. 6.9 steigen zum Diskantende hin an.
+
+**Messorte berichtigt (Abb. 6.3, PDF 258, am Bild):** die 40 Orte liegen im Abstand 3,5 cm, Ort 1 an der Diskantkante des Bodens, Ort 40 5,7 cm unter seinem Bassende (der Kasten ist 137 cm lang; die Saitenorte der Abb. 6.3 liegen 5,4–6,7 cm über denen aus Abb. 2.9): y = 0,035 · (40 − Ort) − 0,057 m. Gegen die bisherige Annahme (gleichmäßig über 131 cm) am Diskant höchstens 1,2 cm, am Bass 5 cm. Ort 2 liegt 3,7 cm vor der Diskantkante.
+
+**Befund: die Diskantkante des Bodens ist nicht fest gehalten.** Probe im Modenraum (Seiten und Bassende gestützt, Wegfeder nur an der Diskantkante; Q fest 40):
+
+| Diskantkante | Formen: Hz → stärkster Bauch, Höhe |
+|---|---|
+| gehalten | 439 → Ort 6, 101,6 dB · 552 → 4, 101,1 · 658 → 4, 97,1 · 805 → 3, 96,8 · 952 → 3, 93,0 |
+| 10⁷ N/m² | 437 → 6, 101,0 · 547 → 4, 101,1 · 655 → 3, 97,9 · 796 → 3, 97,3 · 939 → 2, 93,6 |
+| 10⁶ N/m² | 437 → 6, 101,0 · 542 → 4, 101,9 · 633 → 2, 102,5 · 747 → 1, 106,7 · 873 → 1, 104,5 |
+| frei | 436 → 6, 101,0 · 533 → 1, 105,5 · 596 → 1, 112,0 · 707 → 1, 108,3 · 849 → 1, 102,7 |
+
+Gemessen (G in der Harfe, ohne Saiten): 545 → Ort 3, 101,5 dB · 757 → 3, 99,5 · 905 → 4, 102. Eine weiche Diskantkante hebt genau die Moden ab S(1,5), die zu tief liegen (S(1,7), S(1,8)), um 5–10 dB und lässt S(1,2)–S(1,4) unberührt; ganz frei ist zu viel (Bauch an Ort 1 statt 3). Die Basis ist grob (Vakuum, älterer Bauplan, abgeschnitten) — die Zahlen zeigen die Richtung, kein Federwert. S(1,3) und S(1,4) bleiben 3–5 dB zu tief (innerhalb der Schwelle); dafür ist keine Ursache gefunden.
+(Proben: `proben/2026-11-14_S198_harfe_wegfeder.py`, `…_harfe_diskantkante.py`, `…_harfe_frequenzgang.py`.)
+
 **Folge für KQ18 a:** der Block `rim` bleibt nötig (die Vorgabe ist eingespannt), die Harfe bekommt aber
 `support: elastic` mit `rotationalStiffness: 0` — gestützt. Die Federwerte aus §9 und §10 sind hinfällig.
+
+## 12 KQ20 a: die Diskantkante als Abschnitt des Rands, am vollen Kasten gerechnet (S198)
+
+KQ20 a (Patrik): Halt je Randstück. `rim.sections` (Fassung 7): Kanten des Umrisses mit eigener Wegfeder (N/m²) und
+Drehfeder (N); im Abschnitt ist w nicht gehalten. Geprüft gegen die Lévy-Lösung einer Platte mit einer freien Kante
+(1 %) und an den Grenzfällen (harte Feder = gestützt / eingespannt). Der Harfenkasten mit Luft, Diskantkante
+(Kante 2 des Umrisses) mit Wegfeder, bis 1,1 kHz; 10¹² N/m² gibt den gestützten Kasten auf die letzte Stelle zurück.
+
+**An den Ösen der Saiten** (wie KQ19 a; die oberste Öse liegt 6,4 cm vor der Kante):
+
+| Wegfeder N/m² | S(1,5): Hz, Lage, Höhe | S(1,6): Hz, Lage | S(1,7): Hz, Lage, Höhe | S(1,8): Lage, Höhe |
+|---|---|---|---|---|
+| gehalten | 529, −2,9 %, −3,1 dB | 650, −8,3 % | 791, +4,4 %, −7,4 dB | −12 %, −10,5 dB |
+| 10⁷ | 529, −3,0 %, −2,9 dB | 647, −8,7 % | 783, +3,5 %, −6,3 dB | −12 %, −11,3 dB |
+| **3·10⁶** | **527, −3,3 %, −2,6 dB** | **641, −9,6 %** | **769, +1,6 %, −5,4 dB** | −12 %, −13,9 dB |
+| 10⁶ | 524, −3,8 %, −2,2 dB | 627, −11,5 % | 740, −2,2 %, −7,4 dB | −4 %, −16,9 dB |
+| frei | 513, −5,8 %, +1,0 dB | 698 (Bauch 2 Orte daneben) | 698, −7,7 %, −10,1 dB | −7 %, −15,0 dB |
+
+S(1,2)–S(1,4) ändern sich nicht (+10,4 / +9,8 / −0,3 %; +1,6 / −4,6 / −5,5 dB). Mit 3·10⁶ N/m² liegen S(1,3)–S(1,7)
+in den Schwellen von KQ19 a; S(1,2) bleibt bei +10,4 % Lage, S(1,8) wird schlechter.
+
+**An Bells Messorten** (Stegpunkte an Ort 1–5 und 10 angehängt; Pegel zwischen den Resonanzen bei 300 / 400 / 500 /
+600 Hz, gegen Kasten F lose, Abb. 6.6):
+
+| | Ort 2 | Ort 5 |
+|---|---|---|
+| gemessen (F) | 86 / 91 / 94 / 96 dB; Spitzen 665 Hz 108, 975 Hz 108 | 81 (250 Hz); Spitzen 421 Hz 104, 535 Hz 103 |
+| gehalten | 67 / 73 / 77 / 74; Spitzen 87–88 | 78 / 85 / 80 / 78; Spitzen 431 Hz 100, 530 Hz 97 |
+| 3·10⁶ | 72 / 78 / 84 / 84; Spitzen 640 Hz 95, 767 Hz 95 | wie gehalten |
+| 10⁶ | 75 / 81 / 88 / 91; Spitzen 626 Hz 100, 738 Hz 99 | Spitzen 431 Hz 100, 525 Hz 96 |
+| frei | 78 / 85 / 98 / 100; Spitzen 513 Hz 103, 589 Hz 104 | Spitzen 430 Hz 100, 514 Hz 94 |
+
+- An Ort 2 schließt die Feder 3·10⁶ N/m² 5–10 dB der Lücke von 17–22 dB; erst die freie Kante erreicht den
+  gemessenen Pegel, legt dann aber die Moden falsch (513 / 589 / 701 Hz gegen 535 / 660 / 775 Hz an F).
+- **Keine Feder an der Diskantkante bringt Frequenzen und Pegel am Diskantende zugleich hin.** Der Rest muss woanders
+  liegen (der Boden am Diskantende weicher oder dünner als 3 mm + Furnier, der Kopfblock schwingt mit, die Leisten
+  enden vor der Kante) — nicht untersucht.
+- Die grobe Probe in §11 (Modenraum) hat die Wirkung an den Saiten überschätzt: sie las an Ort 1–2, wo keine Saite
+  sitzt.
+
+**KQ21 a (Patrik):** Fassung 7 bleibt, die Harfe bekommt 3·10⁶ N/m² an der Diskantkante — angepasst, nicht
+gemessen. Der Körper `concert_harp` (bis 5 kHz, 144 Moden) gegen KQ19 a: Lage +10,4 / +9,7 / −0,3 / −3,3 / −9,6 /
++1,6 % ohne Saiten, +7,0 / +3,8 / +0,2 / −5,1 / −8,1 / +2,1 % besaitet; Ort überall unter 1 Messort; Höhe +1,6 /
+−4,6 / −5,5 / −2,6 / – / −5,4 dB; S(1,8) −14,1 dB. Im Test „Luftraum die mitgelieferte Harfe“ festgehalten.

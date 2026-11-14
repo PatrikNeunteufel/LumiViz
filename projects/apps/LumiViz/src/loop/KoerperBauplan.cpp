@@ -226,6 +226,20 @@ QJsonObject alsJson(const Bauplan& plan)
             {QStringLiteral("source"), text(o.quelle)},
         });
     }
+    QJsonArray abschnitte;
+    for (const koerper::Randabschnitt& a : plan.rand.abschnitte)
+    {
+        QJsonArray kanten;
+        kanten.append(a.kanteVon);
+        kanten.append(a.kanteBis);
+        abschnitte.append(QJsonObject{
+            {QStringLiteral("name"), text(a.name)},
+            {QStringLiteral("edges"), kanten},
+            {QStringLiteral("translationalStiffness"), a.wegfeder},
+            {QStringLiteral("rotationalStiffness"), a.drehfeder},
+            {QStringLiteral("source"), text(a.quelle)},
+        });
+    }
     return QJsonObject{
         {QStringLiteral("format"), QLatin1String(kBauplanFormat)},
         {QStringLiteral("version"), koerper::kBauplanFassung},
@@ -279,6 +293,8 @@ QJsonObject alsJson(const Bauplan& plan)
              {QStringLiteral("support"), plan.rand.elastisch() ? QStringLiteral("elastic") : QStringLiteral("clamped")},
              {QStringLiteral("rotationalStiffness"), plan.rand.drehfeder},
              {QStringLiteral("source"), text(plan.rand.quelle)},
+             // seit Fassung 7 (KQ20 a), immer geschrieben
+             {QStringLiteral("sections"), abschnitte},
          }},
     };
 }
@@ -374,6 +390,21 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
         else if (halt != QLatin1String("clamped")) return false;  // ein unbekannter Halt: nicht raten
         neu.rand.drehfeder = r.value(QStringLiteral("rotationalStiffness")).toDouble();
         neu.rand.quelle = text(r.value(QStringLiteral("source")));
+        // seit Fassung 7 (KQ20 a); fehlt die Liste, traegt der ganze Rand den einen Halt
+        for (const QJsonValue& e : r.value(QStringLiteral("sections")).toArray())
+        {
+            const QJsonObject o = e.toObject();
+            const QJsonArray kanten = o.value(QStringLiteral("edges")).toArray();
+            if (kanten.size() != 2) return false;
+            koerper::Randabschnitt a;
+            a.name = text(o.value(QStringLiteral("name")));
+            a.kanteVon = kanten.at(0).toInt(-1);
+            a.kanteBis = kanten.at(1).toInt(-1);
+            a.wegfeder = o.value(QStringLiteral("translationalStiffness")).toDouble();
+            a.drehfeder = o.value(QStringLiteral("rotationalStiffness")).toDouble();
+            a.quelle = text(o.value(QStringLiteral("source")));
+            neu.rand.abschnitte.push_back(std::move(a));
+        }
     }
     plan = std::move(neu);
     return true;

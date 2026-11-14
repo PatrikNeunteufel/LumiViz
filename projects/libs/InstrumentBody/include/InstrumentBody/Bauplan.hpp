@@ -46,7 +46,9 @@ namespace lumi::koerper
 /// bleiben lesbar (ohne solche Oeffnungen).
 /// 6 (S198, KQ18 a): der Rand der Platte (`rim`) — eingespannt oder in w gehalten mit einer Drehfeder.
 /// Fassung 1 bis 5 bleiben lesbar (der Rand eingespannt).
-inline constexpr int kBauplanFassung = 6;
+/// 7 (S198, KQ20 a): Abschnitte des Rands (`rim.sections`) — Stuecke des Umrisses mit eigener Weg- und
+/// Drehfeder. Fassung 6 bleibt lesbar (keine Abschnitte).
+inline constexpr int kBauplanFassung = 7;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -292,6 +294,24 @@ struct Daempfung
 /// Feder `drehfeder` in N (= N m/rad je m Rand), ein Wert fuer den ganzen Rand; 0 = der Rand nur
 /// gestuetzt. So liegt ein Boden, der zwischen Leisten auf einer nachgiebigen Schale sitzt (Harfe:
 /// Bell 1988 Abb. 2.6). Der Rand eines Lochs ist immer frei.
+///
+/// `abschnitte` (seit Fassung 7; KQ20 a): Stuecke des Umrisses mit eigenem Halt. In einem Abschnitt ist die
+/// Auslenkung nicht gehalten; gegen sie haelt die `wegfeder`, gegen die Drehung um die Randlinie die
+/// `drehfeder` (beide 0 = das Stueck ist frei). Der Rest des Rands traegt `halt`. Ein Knoten, an dem ein
+/// Abschnitt an den uebrigen Rand stoesst, ist gehalten wie der uebrige Rand.
+struct Randabschnitt
+{
+    std::string name;
+    /// Kanten des Umrisses, beide eingeschlossen: Kante k laeuft vom Punkt k zum Punkt k + 1 (die letzte
+    /// zurueck zum Punkt 0)
+    int kanteVon = 0, kanteBis = 0;
+    double wegfeder = 0.0;   ///< N/m² (= N/m je m Rand), gegen w
+    double drehfeder = 0.0;  ///< N (= N m/rad je m Rand), gegen die Drehung um die Randlinie
+    std::string quelle;
+
+    [[nodiscard]] bool operator==(const Randabschnitt&) const = default;
+};
+
 struct Rand
 {
     enum class Halt : int
@@ -302,6 +322,7 @@ struct Rand
     Halt halt = Halt::Eingespannt;
     double drehfeder = 0.0;  ///< N; nur mit `Elastisch`
     std::string quelle;      ///< wie der Wert zustande kam
+    std::vector<Randabschnitt> abschnitte;  ///< seit Fassung 7; leer = der ganze Rand traegt `halt`
 
     [[nodiscard]] bool elastisch() const { return halt == Halt::Elastisch; }
     [[nodiscard]] bool operator==(const Rand&) const = default;
@@ -332,6 +353,37 @@ struct Randpunkt
     Punkt2 punkt;
     double abstand = 0.0;
 };
+
+/// Die Kante des geschlossenen Umrisses, die `p` am naechsten liegt (Kante k: Punkt k → k + 1); −1 ohne Umriss.
+[[nodiscard]] inline int naechsteUmrissKante(const std::vector<Punkt2>& umriss, Punkt2 p)
+{
+    int best = -1;
+    double abstand = std::numeric_limits<double>::infinity();
+    const std::size_t n = umriss.size();
+    for (std::size_t k = 0; k < n; ++k)
+    {
+        const Punkt2& a = umriss[k];
+        const Punkt2& b = umriss[(k + 1) % n];
+        const double dx = b.x - a.x, dy = b.y - a.y;
+        const double laenge2 = dx * dx + dy * dy;
+        const double t = laenge2 > 0.0 ? std::clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / laenge2, 0.0, 1.0) : 0.0;
+        const double d = std::hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+        if (d < abstand)
+        {
+            abstand = d;
+            best = static_cast<int>(k);
+        }
+    }
+    return best;
+}
+
+/// Der Abschnitt des Rands, zu dem die Kante `kante` des Umrisses gehoert; nullptr = keiner.
+[[nodiscard]] inline const Randabschnitt* abschnittDerKante(const Rand& rand, int kante)
+{
+    for (const Randabschnitt& a : rand.abschnitte)
+        if (kante >= a.kanteVon && kante <= a.kanteBis) return &a;
+    return nullptr;
+}
 
 [[nodiscard]] inline Randpunkt naechsterRandpunkt(const std::vector<Punkt2>& umriss, Punkt2 p)
 {
@@ -642,6 +694,27 @@ struct Randpunkt
     if (!plan.hohlraum.an() && !plan.hohlraum.oeffnungen.empty()) befunde.push_back("cavity: openings need a volume");
     if (plan.rand.drehfeder < 0.0) befunde.push_back("rim: rotational stiffness must not be negative");
     if (!plan.rand.elastisch() && plan.rand.drehfeder != 0.0) befunde.push_back("rim: a rotational stiffness needs the support 'elastic'");
+    {
+        const int kanten = static_cast<int>(plan.platte.umriss.size());
+        std::vector<char> belegt(static_cast<std::size_t>(std::max(kanten, 0)), 0);
+        for (const Randabschnitt& a : plan.rand.abschnitte)
+        {
+            const std::string wer = "rim section '" + a.name + "': ";
+            if (a.wegfeder < 0.0 || a.drehfeder < 0.0) befunde.push_back(wer + "stiffness must not be negative");
+            if (a.kanteVon < 0 || a.kanteBis < a.kanteVon || a.kanteBis >= kanten)
+            {
+                befunde.push_back(wer + "edges outside the outline");
+                continue;
+            }
+            for (int k = a.kanteVon; k <= a.kanteBis; ++k)
+            {
+                if (belegt[static_cast<std::size_t>(k)]) befunde.push_back(wer + "overlaps another section");
+                belegt[static_cast<std::size_t>(k)] = 1;
+            }
+        }
+        if (kanten > 0 && std::all_of(belegt.begin(), belegt.end(), [](char b) { return b != 0; }))
+            befunde.push_back("rim: the sections must leave a part of the rim held");
+    }
     return befunde;
 }
 

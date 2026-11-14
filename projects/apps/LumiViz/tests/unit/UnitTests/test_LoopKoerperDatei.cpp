@@ -211,6 +211,7 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
     CHECK(koerper.contains(QStringLiteral("oud") + QLatin1String(kKoerperEndung)));
     CHECK(koerper.contains(QStringLiteral("lute") + QLatin1String(kKoerperEndung)));
     CHECK(koerper.contains(QStringLiteral("harpsichord") + QLatin1String(kKoerperEndung)));
+    CHECK(koerper.contains(QStringLiteral("concert_harp") + QLatin1String(kKoerperEndung)));
     for (const QString& name : koerper)
     {
         CAPTURE(name.toStdString());

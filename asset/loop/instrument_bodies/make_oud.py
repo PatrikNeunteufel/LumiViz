@@ -92,7 +92,7 @@ def baue(masse):
     mitte = (len(LEERE_SAITEN) - 1) / 2.0
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 6,
+        "version": 7,
         "title": "Oud",
         "description": "Substitute plan of an Arabic oud soundboard with its air cavity (KQ6 a, KQ10 a). Outline, brace "
                        "positions and ends, sound holes, bowl depth and bridge position from Abdallah et al. 2026 Fig. 3; "
@@ -127,7 +127,7 @@ def baue(masse):
                              "an ellipse with its depth proportional to the width of the soundboard there; end correction "
                              "of a hole in a thin wide wall and Q of the air assumed",
                    "openings": []},
-        "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "rim clamped and bowl rigid, as in the FE model of the source (Abdallah et al. 2026); assumed"},
+        "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "rim clamped and bowl rigid, as in the FE model of the source (Abdallah et al. 2026); assumed", "sections": []},
     }
 
 

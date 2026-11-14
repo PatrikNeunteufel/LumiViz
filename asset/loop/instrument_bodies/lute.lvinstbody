@@ -18,7 +18,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 69.2617624,
+        "seconds": 52.9721697,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 98424,
@@ -3251,7 +3251,7 @@
     ],
     "plan": {
         "file": "lute.lvinstbodyplan",
-        "fingerprint": "5d6102923269aa33a2249d2b4526d371e0cbff6a90df3c967176b18e2373a220"
+        "fingerprint": "b408c2760238e9602f03d48bc200baa0f5f64eef182734a7bf3d4a30ca99def9"
     },
     "statistical": {
         "bandFromHz": 2500,

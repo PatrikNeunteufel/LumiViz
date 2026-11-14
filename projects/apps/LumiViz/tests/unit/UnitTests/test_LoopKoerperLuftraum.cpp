@@ -740,3 +740,123 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum das mitgelieferte Cembalo (KQ13 a, KQ15 a
         if (s > 6) CHECK(anders > 0.0);
     }
 }
+
+TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)")
+{
+    const QString stamm = QStringLiteral("asset/loop/instrument_bodies/concert_harp");
+    kp::Bauplan plan;
+    REQUIRE_MESSAGE(ladeBauplan(stamm + QLatin1String(kBauplanEndung), plan), "die Test-Exe aus dem Projekt-Root starten");
+    const std::vector<std::string> befunde = kp::pruefe(plan);
+    for (const std::string& b : befunde) MESSAGE(b);
+    CHECK(befunde.empty());
+
+    // der Boden der Salvi „Orchestra“ nach Bell 1988: 131 cm, 41 -> 10 cm
+    REQUIRE(plan.platte.umriss.size() == 4);
+    CHECK(plan.platte.umriss[2].y == doctest::Approx(1.31));
+    CHECK(plan.platte.umriss[1].x - plan.platte.umriss[0].x == doctest::Approx(0.41));
+    CHECK(plan.platte.umriss[2].x - plan.platte.umriss[3].x == doctest::Approx(0.10));
+    // der Hohlraum mit sechs Oeffnungen in der Rueckseite der Schale (KQ17 a)
+    REQUIRE(plan.hohlraum.an());
+    CHECK(plan.hohlraum.volumen == doctest::Approx(0.027));
+    CHECK(plan.hohlraum.oeffnungen.size() == 6);
+    CHECK(plan.platte.loecher.empty());
+    // der Rand gestuetzt (KQ18 a, Feder 0), die Diskantkante als Abschnitt mit Wegfeder (KQ20 a, KQ21 a)
+    CHECK(plan.rand.elastisch());
+    CHECK(plan.rand.drehfeder == 0.0);
+    REQUIRE(plan.rand.abschnitte.size() == 1);
+    CHECK(plan.rand.abschnitte[0].kanteVon == 2);
+    CHECK(plan.rand.abschnitte[0].kanteBis == 2);
+    CHECK(plan.rand.abschnitte[0].wegfeder == doctest::Approx(3.0e6));
+    CHECK(plan.rand.abschnitte[0].drehfeder == 0.0);
+    CHECK_FALSE(plan.rand.abschnitte[0].quelle.empty());
+    // 46 Saiten, je eine Oese auf der Mittellinie; mit dem Pedal in der Mitte die weissen Tasten D1 ... G7
+    REQUIRE(plan.stegpunkte.size() == 46);
+    CHECK(plan.stegpunkte.front().taste == 26);
+    CHECK(plan.stegpunkte.back().taste == 103);
+    for (const kp::Stegpunkt& p : plan.stegpunkte)
+    {
+        const int klasse = p.taste % 12;
+        CHECK_MESSAGE((klasse == 0 || klasse == 2 || klasse == 4 || klasse == 5 || klasse == 7 || klasse == 9 || klasse == 11), p.taste);
+        CHECK(p.ort.x == 0.0);
+        CHECK_FALSE(p.quelle.empty());
+    }
+    CHECK_FALSE(plan.daempfung.quelle.empty());
+
+    kp::Koerper k;
+    REQUIRE(ladeKoerper(stamm + QLatin1String(kKoerperEndung), k));
+    REQUIRE(k.moden.size() > 100);
+    // bekannte Abweichung: S(1,1)- liegt bei 129 Hz (Bell: 153 / 170 / 187 Hz lose, in der Harfe, besaitet) — dort
+    // bewegt sich der ganze Kasten, die Schale ist hier starr
+    CHECK(k.moden[0].frequenzHz == doctest::Approx(129.0).epsilon(0.02));
+    CHECK(k.moden[0].luftAnteil > 0.2);
+
+    // KQ19 a: die Punktadmittanz laengs der Deckleiste gegen Bell 1988 Abb. 7.8-7.16 (Kasten G in der Harfe, am
+    // Bild gelesen; 116 dB = 1 s/kg). Je Mode die hoechste Stelle ueber Frequenz (±12 %) und Oesen.
+    // Messorte nach Abb. 6.3: y = 0,035 (40 - Ort) - 0,057 m.
+    struct Ziel
+    {
+        const char* name;
+        double ohneHz, ohneDb;  // ohne Saiten; Pegel 0 = nicht verglichen
+        int ort;
+        double mitHz;           // besaitet
+    };
+    const Ziel ziele[] = {{"S(1,2)", 249.0, 96.0, 12, 257.0},  {"S(1,3)", 316.0, 104.0, 8, 334.0}, {"S(1,4)", 432.0, 105.5, 5, 430.0},
+                          {"S(1,5)", 545.0, 101.5, 3, 555.0},  {"S(1,6)", 709.0, 0.0, 3, 697.0},   {"S(1,7)", 757.0, 99.5, 3, 753.0}};
+    const auto pegelDb = [&](double hz, std::size_t punkt) {
+        const double om = 2.0 * kPi * hz;
+        std::complex<double> y = 0.0;
+        for (const kp::ModeImKoerper& m : k.moden)
+        {
+            const double phi = m.amStegpunkt[punkt];
+            const double omn = 2.0 * kPi * m.frequenzHz;
+            y += std::complex<double>(0.0, om) * phi * phi / (omn * omn * std::complex<double>(1.0, m.verlustfaktor) - om * om);
+        }
+        return 20.0 * std::log10(std::abs(y));
+    };
+    struct Spitze
+    {
+        double hz = 0.0, db = -1e9;
+        std::size_t punkt = 0;
+    };
+    const auto spitzeUm = [&](double mitte, double breite) {
+        Spitze s;
+        for (double hz = mitte * (1.0 - breite); hz <= mitte * (1.0 + breite); hz += 0.25)
+            for (std::size_t p = 0; p < plan.stegpunkte.size(); ++p)
+                if (const double d = pegelDb(hz, p); d > s.db) s = {hz, d, p};
+        return s;
+    };
+    for (const Ziel& z : ziele)
+    {
+        const Spitze s = spitzeUm(z.ohneHz, 0.12);
+        const double lageOhne = s.hz / z.ohneHz - 1.0, lageMit = s.hz / z.mitHz - 1.0;
+        const double orte = std::abs(plan.stegpunkte[s.punkt].ort.y - (0.035 * (40 - z.ort) - 0.057)) / 0.035;
+        CAPTURE(z.name);
+        CAPTURE(s.hz);
+        CAPTURE(s.db);
+        CAPTURE(orte);
+        // eine Spitze, nicht der Rand des Fensters
+        CHECK(s.hz > z.ohneHz * 0.881);
+        CHECK(s.hz < z.ohneHz * 1.119);
+        CHECK(std::abs(lageMit) < 0.10);
+        if (std::string(z.name) == "S(1,2)")
+        {
+            // bekannte Abweichung: gegen den Kasten ohne Saiten +10,4 % (besaitet +7 %) — im Bereich, in dem die
+            // Luft mitgeht; wird sie kleiner, gehoert S(1,2) in die allgemeine Schwelle
+            CHECK(lageOhne > 0.10);
+            CHECK(lageOhne < 0.11);
+        }
+        else
+            CHECK(std::abs(lageOhne) < 0.10);
+        CHECK(orte < 2.0);
+        // die Hoehe mit der Daempfung des Bauplans (aus Bells Gueten ohne Saiten); S(1,6) hat gemessen zwei
+        // Moden uebereinander (Q 10) und faellt heraus
+        if (z.ohneDb > 0.0) CHECK(std::abs(s.db - (z.ohneDb - 116.0)) < 6.0);
+    }
+    // bekannte Abweichung: S(1,8) (905 Hz, 102 dB an Ort 4) liegt mehr als 6 dB zu tief — das Diskantende ist auch
+    // mit der Feder an der Kante zu steif (Bericht Par. 12)
+    const Spitze acht = spitzeUm(905.0, 0.08);
+    CAPTURE(acht.hz);
+    CAPTURE(acht.db);
+    CHECK(acht.db - (102.0 - 116.0) < -6.0);
+    CHECK(acht.db - (102.0 - 116.0) > -20.0);
+}

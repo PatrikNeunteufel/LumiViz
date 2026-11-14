@@ -98,7 +98,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 1402.0511894,
+        "seconds": 1264.6865021,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 568515,
@@ -89512,7 +89512,7 @@
     ],
     "plan": {
         "file": "steinway_d.lvinstbodyplan",
-        "fingerprint": "f25d320973f40fa5c6968e09a2692af853311b11cdb85dd9b5d6425bc43cabec"
+        "fingerprint": "6fa0d56020f284aa409f8bbec86da70d10483b943f3ae99bdd789a816feb7aa6"
     },
     "statistical": {
         "bandFromHz": 2500,
