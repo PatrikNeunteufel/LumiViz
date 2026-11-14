@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.19.0  
+> **Version:** 0.20.0  
 > **Datum:** 2026-11-13  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -84,6 +84,13 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   Mündung · Radius)); ein Loch der Platte strahlt in den Halbraum (ρ/2π), eine Öffnung frei von ihrem Ort (ρ/4π) —
   die Schale schattet in der Rechnung nicht ab. `pruefe`: Fläche positiv, Lippe nicht negativ, Öffnungen nur mit
   Volumen.
+- **Rand** (`Rand`, `Bauplan::rand`; seit Fassung 6, KQ18 a, S198): der äußere Rand der Platte ist eingespannt
+  (`Halt::Eingespannt`, die Vorgabe — wie bis Fassung 5) oder elastisch gehalten (`Halt::Elastisch`): w gehalten,
+  gegen die Drehung um die Randlinie eine Drehfeder `drehfeder` in N (= N m/rad je m Rand), **ein Wert für den
+  ganzen Rand**; 0 = nur gestützt. So liegt ein Boden, der zwischen Leisten auf einer nachgiebigen Schale sitzt
+  (Harfe: Bell 1988 Abb. 2.6). Der Rand eines Lochs bleibt frei. `pruefe`: Feder nicht negativ, eine Feder nur mit
+  dem Halt elastisch. Eine Wegfeder und ein Verlauf längs des Rands sind nicht im Format (Entscheid Patrik S198:
+  die Messung an der Harfe trägt beides nicht).
 - **Prüfen**: `pruefe(plan)` nennt je Befund einen Satz (Material fehlt oder doppelt, Werte nicht positiv,
   Querzahl außerhalb der Stabilität — isotrop 0 ≤ ν < 0,5, orthotrop 1 − ν_xy·ν_yx > 0 —, Umriss ohne Fläche,
   Leiste ohne Höhe je Punkt, Stegpunkte nicht aufsteigend, Hörort ohne oder mit doppeltem Namen, nicht über der
@@ -93,7 +100,9 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   summiert, Leisten als Länge mal mittlerer Querschnitt), `naechsterRandpunkt` (der nächste Punkt auf den Kanten
   des Umrisses und sein Abstand).
 
-Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 5) schreibt jedes Feld, auch leere;
+Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 6) schreibt jedes Feld, auch leere;
+der Rand steht in `rim` (`support`: `clamped` oder `elastic` — ein anderes Wort macht die Datei unlesbar —,
+`rotationalStiffness`, `source`); Fassung 5 ohne den Block bleibt lesbar (eingespannt);
 die Löcher stehen in `plate.holes` (je Loch eine Liste von Punkten), der Hohlraum in `cavity` (`volume`,
 `endCorrection`, `q`, `source`, seit Fassung 5 `openings` mit `x`, `y`, `z`, `area`, `lipLength`, `source` je
 Öffnung); Fassung 4 ohne `openings` und Fassung 3 ohne Löcher und Hohlraum bleiben lesbar;
@@ -150,6 +159,14 @@ EL1 a (Patrik S147).
   Auswertung); eine Randkante aus `Netz::lochkanten` hält kein Auflager (KQ7 a); K und M als `DuenneMatrix` (oberes Dreieck, erst das Muster, dann die Werte) — das Format für den
   Eigenlöser (BM5-1 a). `elemente` hält je Dreieck seine Knoten (seit 31c-5b, für die Auswertung); `Plattenelement`
   gibt seine Ansatzfunktionen über `basis` heraus.
+- **Drehfeder am Rand** (KQ18 a, S198): `baueSystem(…, auflager, drehfederAmRand)` nimmt je Punkt des äußeren Rands
+  eine Feder k_d in N und legt ∫ k_d φ_n² ds in K (φ_n = φ_x n_x + φ_y n_y, n die Randnormale; je Randkante mit den
+  Ansatzfunktionen des Elements, Gauss auf der Strecke mit k + 2 Punkten, `gaussAufStrecke`). Sie wirkt, wo das
+  Auflager die Drehungen frei lässt: mit `Gestuetzt` ist 0 der gestützte Rand, eine sehr harte Feder nähert sich
+  `Eingespannt`. `baueSystem(netz, element, plan)` baut die Platte eines Bauplans mit dessen Rand — das Werkzeug und
+  die Tests an Bauplänen rufen diese Fassung. Geprüft gegen Lévy (Rechteck, Federn an zwei Rändern: 1 %), gegen beide
+  Grenzfälle und gegen ein gedrehtes Netz (`test_LoopKoerperPlatte`, „KQ18 Drehfeder am Rand“, „KQ18 Rand im
+  Bauplan“). Die Feder trägt keinen eigenen Verlust: die Anteile der Verformungsenergie je Werkstoff zählen sie nicht.
 - **Gemessen** (Release-clang, S147): Prüfplatten nach Navier (Mindlin, frei aufliegend, orthotrop), Netz nach
   MAESSTRO Gl. 1 — k = 3 auf 0,04 % (8 mm), 0,03 % (2 mm, Dicke/Kante 0,084), 0,07 % (1 mm, 0,042); Locking bei k = 1
   (108–871 %) und k = 2 (2,5–10 %) deutlich, bei k = 3 nicht (EL1 a: Kipppunkt 1 % nicht erreicht). Steinway D bis
@@ -408,6 +425,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.20.0 | 2026-11-13 | Session 198, Stufe 34k-5, KQ18 a: der Rand der Platte im Bauplan — `Rand` (`Halt::Eingespannt` / `Halt::Elastisch`, `drehfeder` in N, ein Wert für den ganzen Rand), **`.lvinstbodyplan` Fassung 6** mit `rim` (immer geschrieben, Fassung 5 lesbar); `baueSystem` mit `drehfederAmRand` (∫ k_d φ_n² ds über den äußeren Rand) und `baueSystem(netz, element, plan)`; `gaussAufStrecke`; `pruefe` (Feder nicht negativ, nur mit elastischem Halt). Werkzeug: rechnet mit dem Rand des Bauplans; Probe-Schalter `--rim-spring`, `--rim-spring-end`. `kRechenFassung` bleibt 2 — ein eingespannter Bauplan rechnet wie vorher, alle sechs Körper neu (Abdruck). |
 | 0.19.0 | 2026-11-13 | Session 197, Stufe 34k-5, Proben an der Harfe: `Auflager::Gestuetzt` (w = 0 am ganzen Rand, beide Drehungen frei; für beliebig liegende Ränder — die untere Schranke zu `Eingespannt`); Werkzeug: `--free-rim` und `--supported-rim` als Probe-Schalter (ein so gerechneter Körper ist keiner für das Programm). `Eingespannt` und `GelenkigAchsparallel` unverändert. |
 | 0.18.0 | 2026-11-13 | Session 197, Stufe 34k-5, KQ17 a: Öffnungen des Hohlraums außerhalb der Platte (`Oeffnung`, `Hohlraum::oeffnungen`; `.lvinstbodyplan` Fassung 5 mit `cavity.openings`, immer geschrieben, Fassung 4 lesbar); `LochLuft::hoehe` und `::frei`, `luftraumGroessen` nimmt Löcher und Öffnungen parallel, `lochAbstrahlung` rechnet eine Öffnung als freie Punktquelle an ihrem Ort (Löcher der Platte Bit für Bit wie vorher); `pruefe`. Test „Luftraum Oeffnungen ausserhalb der Platte (KQ17 a)“. `kRechenFassung` bleibt 2; der Abdruck ändert sich mit der Fassung — alle mitgelieferten Körper neu gerechnet. |
 | 0.17.0 | 2026-11-13 | Session 196, Stufe 34k-5, KQ10 a: `ModeImKoerper::luftAnteil` (`mitLuftraum` setzt ihn), `.lvinstbody` Fassung 3 mit `airShare` je Mode; erster Körper mit Hohlraum ist die mitgelieferte Oud. |

@@ -383,9 +383,43 @@ struct PlattenSystem
     std::string fehler;
 };
 
+/// Gauss-Legendre auf [0, 1]: `zahl` Punkte (Ort, Gewicht), genau bis zum Grad 2·zahl − 1.
+[[nodiscard]] inline std::vector<std::array<double, 2>> gaussAufStrecke(int zahl)
+{
+    std::vector<std::array<double, 2>> aus;
+    const double pi = 3.14159265358979323846;
+    for (int i = 0; i < zahl; ++i)
+    {
+        double x = std::cos(pi * (i + 0.75) / (zahl + 0.5));  // Startwert der Nullstelle von P_zahl auf [−1, 1]
+        double dp = 1.0;
+        for (int schritt = 0; schritt < 50; ++schritt)
+        {
+            double p0 = 1.0, p1 = x;
+            for (int n = 2; n <= zahl; ++n)
+            {
+                const double p2 = ((2.0 * n - 1.0) * x * p1 - (n - 1.0) * p0) / n;
+                p0 = p1;
+                p1 = p2;
+            }
+            dp = zahl * (x * p1 - p0) / (x * x - 1.0);
+            const double dx = p1 / dp;
+            x -= dx;
+            if (std::abs(dx) < 1e-15) break;
+        }
+        aus.push_back({0.5 * (x + 1.0), 1.0 / ((1.0 - x * x) * dp * dp)});
+    }
+    return aus;
+}
+
 /// Baut K und M einer Platte auf einem Netz. `steife` liefert den Werkstoff je Punkt.
+///
+/// `drehfederAmRand` (KQ18 a, S198): Drehfeder je Laenge des Rands in N (= N m/rad je m) am Ort des Rands, gegen
+/// die Drehung um die Randlinie (φ_n = φ_x n_x + φ_y n_y): K bekommt ∫ k_d φ_n² ds ueber den aeusseren Rand. Sie
+/// wirkt, wo das Auflager die Drehungen frei laesst (`Gestuetzt`, `Frei`): 0 ist dann der gestuetzte Rand, eine
+/// sehr grosse Feder naehert sich `Eingespannt`. Leer = keine Feder. Der Rand eines Lochs traegt keine.
 [[nodiscard]] inline PlattenSystem baueSystem(const Netz& netz, const Plattenelement& element,
-                                              const std::function<Steife(Punkt2)>& steife, Auflager auflager)
+                                              const std::function<Steife(Punkt2)>& steife, Auflager auflager,
+                                              const std::function<double(Punkt2)>& drehfederAmRand = {})
 {
     PlattenSystem sys;
     sys.element = element.name();
@@ -419,6 +453,7 @@ struct PlattenSystem
     std::vector<std::vector<int>> elementKnoten(netz.dreiecke.size());
     std::vector<char> amRand(static_cast<std::size_t>(knotenGesamt), 0);
     std::vector<char> randWaagrecht(static_cast<std::size_t>(knotenGesamt), 0), randSenkrecht(static_cast<std::size_t>(knotenGesamt), 0);
+    std::vector<std::array<int, 2>> randKanten;  // (Dreieck, Kante r) des aeusseren Rands — fuer die Drehfeder
     for (std::size_t t = 0; t < netz.dreiecke.size(); ++t)
     {
         const auto& d = netz.dreiecke[t];
@@ -456,6 +491,7 @@ struct PlattenSystem
                 sys.fehler = "simply supported needs axis-parallel edges";
                 return sys;
             }
+            randKanten.push_back({static_cast<int>(t), r});
             std::vector<int> aufKante = {a, b};
             for (int i = 0; i < proKante; ++i) aufKante.push_back(ek[3 + r * proKante + i]);
             for (const int q : aufKante)
@@ -526,8 +562,60 @@ struct PlattenSystem
             }
         }
     }
+    // die Drehfeder am aeusseren Rand (KQ18 a): ∫ k_d φ_n² ds je Randkante, mit den Ansatzfunktionen des Elements
+    if (drehfederAmRand)
+    {
+        const double ecke[3][2] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}};
+        const auto punkte = gaussAufStrecke(k + 2);
+        std::vector<double> n, dxi, deta;
+        for (const auto& [t, r] : randKanten)
+        {
+            const auto& d = netz.dreiecke[static_cast<std::size_t>(t)];
+            const auto& ek = elementKnoten[static_cast<std::size_t>(t)];
+            const Punkt2 pa = netz.knoten[d[r]], pb = netz.knoten[d[(r + 1) % 3]];
+            const double lang = std::hypot(pb.x - pa.x, pb.y - pa.y);
+            if (lang <= 0.0) continue;
+            const double normal[2] = {(pb.y - pa.y) / lang, -(pb.x - pa.x) / lang};
+            for (const auto& [s, gewicht] : punkte)
+            {
+                const double xi = ecke[r][0] + (ecke[(r + 1) % 3][0] - ecke[r][0]) * s;
+                const double eta = ecke[r][1] + (ecke[(r + 1) % 3][1] - ecke[r][1]) * s;
+                element.basis(xi, eta, n, dxi, deta);
+                const double feder = drehfederAmRand({pa.x + (pb.x - pa.x) * s, pa.y + (pb.y - pa.y) * s});
+                if (!(feder > 0.0)) continue;
+                const double w = feder * gewicht * lang;
+                for (int a = 0; a < nk; ++a)
+                {
+                    if (n[a] == 0.0) continue;
+                    for (int u = 0; u < 2; ++u)
+                    {
+                        const int i = sys.frei[static_cast<std::size_t>(3 * ek[a] + 1 + u)];
+                        if (i < 0) continue;
+                        for (int b = 0; b < nk; ++b)
+                            for (int v = 0; v < 2; ++v)
+                            {
+                                const int j = sys.frei[static_cast<std::size_t>(3 * ek[b] + 1 + v)];
+                                if (j < i) continue;
+                                sys.k.addiere(i, j, w * n[a] * normal[u] * n[b] * normal[v]);
+                            }
+                    }
+                }
+            }
+        }
+    }
     sys.elemente = std::move(elementKnoten);
     return sys;
+}
+
+/// K und M der Platte eines Bauplans, mit seinem Rand (`Bauplan::rand`, KQ18 a): eingespannt, oder in w
+/// gehalten mit der Drehfeder des Bauplans.
+[[nodiscard]] inline PlattenSystem baueSystem(const Netz& netz, const Plattenelement& element, const Bauplan& plan)
+{
+    const auto steife = [&plan](Punkt2 p) { return steifeBei(plan, p); };
+    if (!plan.rand.elastisch()) return baueSystem(netz, element, steife, Auflager::Eingespannt);
+    const double feder = plan.rand.drehfeder;
+    return baueSystem(netz, element, steife, Auflager::Gestuetzt,
+                      feder > 0.0 ? std::function<double(Punkt2)>([feder](Punkt2) { return feder; }) : std::function<double(Punkt2)>());
 }
 
 }  // namespace lumi::koerper

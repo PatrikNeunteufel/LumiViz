@@ -532,7 +532,7 @@ TEST_CASE("Loop Koerper 31c-4 Eigen Messung Steinway D")
     const kp::Netz netz = kp::NetzgeberCdt().vernetze(kp::netzAuftrag(plan, 5000.0));
     REQUIRE(netz.fehler.empty());
     const kp::PlattenSystem s =
-        kp::baueSystem(netz, kp::LagrangeDreieck(3), [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); }, kp::Auflager::Eingespannt);
+        kp::baueSystem(netz, kp::LagrangeDreieck(3), plan);
     REQUIRE_MESSAGE(s.fehler.empty(), s.fehler);
     MESSAGE("Steinway D: ", s.k.n, " Groessen, Spitze vor dem Loeser ", spitzeMB(), " MB");
     for (const auto& l : eigenloeser())

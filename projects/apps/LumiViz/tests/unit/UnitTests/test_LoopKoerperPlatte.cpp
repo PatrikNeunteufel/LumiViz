@@ -28,6 +28,7 @@
 
 #include "InstrumentBody/NetzCdt.hpp"
 #include "InstrumentBody/Platte.hpp"
+#include "loop/Koerper.hpp"
 #include "loop/KoerperBauplan.hpp"
 
 #include <Eigen/Dense>
@@ -281,6 +282,179 @@ TEST_CASE("Loop Koerper 31c-3 Drehung")
     CHECK(std::abs(f60[0] / f0[0] - 1.0) > 0.01);
 }
 
+namespace
+{
+
+/// Lévy, Kirchhoff, orthotrop (Faser laengs x): Rechteck a × b, alle Raender in w gehalten, an x = 0 und x = a
+/// eine Drehfeder kd (N) gegen die Neigung quer zum Rand, die Raender y = 0 und y = b gelenkig. Die tiefste
+/// Mode (symmetrisch in x, eine Halbwelle in y): W = A cosh αx + C cos βx um die Mitte, am Rand W = 0 und
+/// D11 W'' = −kd W'. Gesucht ist β zwischen gelenkig (π / a) und 2π / a.
+double levyMitDrehfeder(const kp::Material& mat, double a, double b, double h, double kd)
+{
+    const kp::Steife s = kp::gedreht(mat, 0.0);
+    const double h3 = h * h * h / 12.0;
+    const double d11 = h3 * s.q[0], d12 = h3 * s.q[1], d22 = h3 * s.q[3], d66 = h3 * s.q[5];
+    const double hh = d12 + 2.0 * d66, ny = std::numbers::pi / b;
+    const auto f = [&](double beta) {
+        const double alpha = std::sqrt(2.0 * hh * ny * ny / d11 + beta * beta);
+        const double c = std::cos(beta * a / 2.0), si = std::sin(beta * a / 2.0);
+        return d11 * c * (alpha * alpha + beta * beta) + kd * (c * alpha * std::tanh(alpha * a / 2.0) + beta * si);
+    };
+    double unten = std::numbers::pi / a, oben = 2.0 * std::numbers::pi / a;
+    if (kd <= 0.0) oben = unten;
+    for (int i = 0; i < 200 && kd > 0.0; ++i)
+    {
+        const double mitte = 0.5 * (unten + oben);
+        (f(mitte) > 0.0 ? unten : oben) = mitte;
+    }
+    const double beta = 0.5 * (unten + oben);
+    const double omega2 = (d11 * std::pow(beta, 4) + 2.0 * hh * ny * ny * beta * beta + d22 * std::pow(ny, 4)) / (s.rho * h);
+    return std::sqrt(omega2) / (2.0 * std::numbers::pi);
+}
+
+}  // namespace
+
+TEST_CASE("Loop Koerper KQ18 Drehfeder am Rand")
+{
+    // Gauss auf der Strecke: Gewichte 1, Monome genau bis zum Grad 2n − 1
+    for (const int n : {2, 5})
+    {
+        const auto punkte = kp::gaussAufStrecke(n);
+        REQUIRE(punkte.size() == static_cast<std::size_t>(n));
+        for (int grad = 0; grad <= 2 * n - 1; ++grad)
+        {
+            double summe = 0.0;
+            for (const auto& p : punkte) summe += p[1] * std::pow(p[0], grad);
+            CHECK(summe == doctest::Approx(1.0 / (grad + 1.0)).epsilon(1e-12));
+        }
+    }
+
+    const double a = 0.3, b = 0.4, h = 0.003;
+    const kp::Material mat = fichte();
+    const kp::Netz netz = rechteckNetz(a, b, 0.04);
+    REQUIRE(netz.fehler.empty());
+    const double d11 = h * h * h / 12.0 * kp::gedreht(mat, 0.0).q[0];
+    const auto platte = [&](const kp::Netz& n, double faserGrad, kp::Auflager auflager, const std::function<double(kp::Punkt2)>& feder) {
+        return kp::baueSystem(n, kp::LagrangeDreieck(3),
+                              [&, faserGrad](kp::Punkt2) {
+                                  kp::Steife s = kp::gedreht(mat, faserGrad);
+                                  s.h = h;
+                                  return s;
+                              },
+                              auflager, feder);
+    };
+    const auto anXRaendern = [&](double kd) {
+        return [=](kp::Punkt2 p) { return (p.x < 1e-9 || p.x > a - 1e-9) ? kd : 0.0; };
+    };
+
+    // ohne Feder und mit Feder 0: der gestuetzte Rand, unveraendert
+    const double gestuetzt = frequenzen(platte(netz, 0.0, kp::Auflager::Gestuetzt, {}), 1)[0];
+    CHECK(frequenzen(platte(netz, 0.0, kp::Auflager::Gestuetzt, anXRaendern(0.0)), 1)[0] == gestuetzt);
+    CHECK(gestuetzt == doctest::Approx(levyMitDrehfeder(mat, a, b, h, 0.0)).epsilon(0.01));
+    // am eingespannten Rand wirkt sie nicht (die Drehungen sind dort gehalten)
+    const double eingespannt = frequenzen(platte(netz, 0.0, kp::Auflager::Eingespannt, {}), 1)[0];
+    CHECK(frequenzen(platte(netz, 0.0, kp::Auflager::Eingespannt, [](kp::Punkt2) { return 1.0e4; }), 1)[0] == eingespannt);
+
+    // gegen Lévy: zwei Federn zwischen gelenkig und eingespannt, und die Frequenz steigt mit der Feder
+    double vorher = gestuetzt;
+    for (const double faktor : {1.0, 10.0, 100.0})
+    {
+        CAPTURE(faktor);
+        const double kd = faktor * d11 / a;
+        const double fe = frequenzen(platte(netz, 0.0, kp::Auflager::Gestuetzt, anXRaendern(kd)), 1)[0];
+        const double soll = levyMitDrehfeder(mat, a, b, h, kd);
+        CHECK(fe == doctest::Approx(soll).epsilon(0.01));
+        CHECK(fe > vorher * 1.02);
+        vorher = fe;
+    }
+    // eine sehr harte Feder am ganzen Rand naehert sich dem eingespannten Rand
+    const double hart = frequenzen(platte(netz, 0.0, kp::Auflager::Gestuetzt, [&](kp::Punkt2) { return 1.0e6 * d11 / a; }), 1)[0];
+    CHECK(hart == doctest::Approx(eingespannt).epsilon(0.01));
+    CHECK(hart <= eingespannt * (1.0 + 1e-9));
+
+    // die Feder haengt an der Randnormalen: Netz und Faser um 30° gedreht geben dieselben Frequenzen
+    kp::Netz gedreht = netz;
+    const double w = 30.0 * std::numbers::pi / 180.0;
+    for (auto& p : gedreht.knoten) p = {p.x * std::cos(w) - p.y * std::sin(w), p.x * std::sin(w) + p.y * std::cos(w)};
+    const auto gleich = [&](kp::Punkt2) { return 3.0 * d11 / a; };
+    const auto f0 = frequenzen(platte(netz, 0.0, kp::Auflager::Gestuetzt, gleich), 6);
+    const auto f30 = frequenzen(platte(gedreht, 30.0, kp::Auflager::Gestuetzt, gleich), 6);
+    for (std::size_t i = 0; i < f0.size(); ++i) CHECK(f30[i] == doctest::Approx(f0[i]).epsilon(1e-8));
+}
+
+TEST_CASE("Loop Koerper KQ18 Rand im Bauplan")
+{
+    const double a = 0.3, b = 0.4, h = 0.003;
+    kp::Bauplan plan;
+    plan.titel = "Test";
+    plan.materialien = {fichte()};
+    plan.platte.material = "spruce";
+    plan.platte.umriss = {{0.0, 0.0}, {a, 0.0}, {a, b}, {0.0, b}};
+    plan.platte.dicke = h;
+    const kp::Netz netz = rechteckNetz(a, b, 0.04);
+    REQUIRE(netz.fehler.empty());
+    const kp::LagrangeDreieck element(3);
+    const auto steife = [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); };
+
+    // die Vorgabe: eingespannt, wie bis Fassung 5
+    CHECK_FALSE(plan.rand.elastisch());
+    const double eingespannt = frequenzen(kp::baueSystem(netz, element, steife, kp::Auflager::Eingespannt), 1)[0];
+    CHECK(frequenzen(kp::baueSystem(netz, element, plan), 1)[0] == eingespannt);
+    // elastisch ohne Feder: gestuetzt; mit Feder: derselbe Wert am ganzen Rand
+    plan.rand.halt = kp::Rand::Halt::Elastisch;
+    const double gestuetzt = frequenzen(kp::baueSystem(netz, element, steife, kp::Auflager::Gestuetzt), 1)[0];
+    CHECK(frequenzen(kp::baueSystem(netz, element, plan), 1)[0] == gestuetzt);
+    plan.rand.drehfeder = 40.0;
+    plan.rand.quelle = "Test";
+    const double mitFeder = frequenzen(kp::baueSystem(netz, element, plan), 1)[0];
+    CHECK(mitFeder == frequenzen(kp::baueSystem(netz, element, steife, kp::Auflager::Gestuetzt, [](kp::Punkt2) { return 40.0; }), 1)[0]);
+    CHECK(mitFeder > gestuetzt * 1.05);
+    CHECK(mitFeder < eingespannt * 0.95);
+
+    // die Datei: `rim` immer geschrieben (Fassung 6), Hin- und Rueckweg; Fassung 5 ohne den Block: eingespannt
+    const QJsonObject json = alsJson(plan);
+    CHECK(json.value(QStringLiteral("version")).toInt() == 6);
+    const QJsonObject r = json.value(QStringLiteral("rim")).toObject();
+    for (const char* feld : {"support", "rotationalStiffness", "source"}) CHECK_MESSAGE(r.contains(QLatin1String(feld)), feld);
+    CHECK(r.value(QStringLiteral("support")).toString() == QStringLiteral("elastic"));
+    CHECK(r.value(QStringLiteral("rotationalStiffness")).toDouble() == 40.0);
+    kp::Bauplan zurueck;
+    REQUIRE(ausJson(json, zurueck));
+    CHECK(zurueck == plan);
+    CHECK(alsJson(kp::Bauplan{}).value(QStringLiteral("rim")).toObject().value(QStringLiteral("support")).toString() ==
+          QStringLiteral("clamped"));
+    QJsonObject fuenf = json;
+    fuenf.remove(QStringLiteral("rim"));
+    fuenf[QStringLiteral("version")] = 5;
+    kp::Bauplan alt;
+    REQUIRE(ausJson(fuenf, alt));
+    CHECK(alt.rand == kp::Rand{});
+    // ein unbekannter Halt wird nicht geraten
+    QJsonObject fremd = json;
+    QJsonObject rFremd = r;
+    rFremd[QStringLiteral("support")] = QStringLiteral("hinged");
+    fremd[QStringLiteral("rim")] = rFremd;
+    CHECK_FALSE(ausJson(fremd, alt));
+    // der Abdruck haengt am Rand
+    kp::Bauplan haerter = plan;
+    haerter.rand.drehfeder = 41.0;
+    CHECK(bauplanAbdruck(haerter) != bauplanAbdruck(plan));
+
+    // die Pruefung
+    const auto befundMit = [](const kp::Bauplan& p, const char* stueck) {
+        for (const std::string& bf : kp::pruefe(p))
+            if (bf.find(stueck) != std::string::npos) return true;
+        return false;
+    };
+    CHECK_FALSE(befundMit(plan, "rim:"));
+    kp::Bauplan falsch = plan;
+    falsch.rand.drehfeder = -1.0;
+    CHECK(befundMit(falsch, "rim: rotational stiffness must not"));
+    falsch = plan;
+    falsch.rand.halt = kp::Rand::Halt::Eingespannt;
+    CHECK(befundMit(falsch, "rim: a rotational stiffness needs"));
+}
+
 TEST_CASE("Loop Koerper 31c-3 Steinway D")
 {
     kp::Bauplan plan;
@@ -293,7 +467,7 @@ TEST_CASE("Loop Koerper 31c-3 Steinway D")
     REQUIRE(netz.fehler.empty());
     const auto start = std::chrono::steady_clock::now();
     const kp::PlattenSystem s =
-        kp::baueSystem(netz, kp::LagrangeDreieck(k), [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); }, kp::Auflager::Eingespannt);
+        kp::baueSystem(netz, kp::LagrangeDreieck(k), plan);
     const double sekunden = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     REQUIRE_MESSAGE(s.fehler.empty(), s.fehler);
     MESSAGE("Steinway D bis ", fmax, " Hz, k = ", k, ": ", netz.dreiecke.size(), " Dreiecke, ", s.knoten.size(), " Knoten, ", s.k.n,

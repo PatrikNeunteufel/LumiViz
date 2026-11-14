@@ -167,3 +167,123 @@ teilen sich die Luft). **Die Messung liegt zwischen beiden Rändern.** Mit gest�
 gleichmäßig 16–20 % zu tief, S(2,1) 12 % zu hoch. Der Rand des Bodens gibt also nach (Bell: „In all of the modes,
 the back of the soundbox is also in motion“; die Schale ist 3 mm Laminat) — weder eingespannt noch gestützt bildet
 ihn ab. Entscheid KQ18.
+
+## 8 Kap. 7 gelesen (S198; Bild, PDF 270–303, gedruckt S. 144–160 a und Abb. 7.1–7.16)
+
+Bell misst **einen zweiten Kasten G** in drei Zuständen: lose, in der fertigen Harfe ohne Saiten, in der fertigen Harfe
+mit Saiten auf Stimmung (Saiten mit Kunststoffband stark gedämpft; „fertig“ heißt das Holz ohne Mechanik und Lack).
+Eingangsadmittanz an denselben 40 Messorten längs der Deckleiste, Bezug 116 dB = 1 s/kg; Schalldruck in 1,5 m.
+
+| Mode | G lose | G in der Harfe, ohne Saiten | G in der Harfe, besaitet | zum Vergleich F lose (Tab. 6.1) |
+|---|---|---|---|---|
+| B1 (ganze Harfe) | – | 85 | 92 | – |
+| S(1,1)− | 153 (Q 23) | 170 (Q 11) | 187 (Q unbestimmbar) | 186 |
+| S(1,1)+ | 200 | 216 (Q 16) | 207 | 204 |
+| S(1,2) | 221 (Q 13) | 249 (Q 39) | 257 (Q 32) | 250 |
+| S(1,2)′ | 251 (Q 36) | 249 (eine Mode) | 284 (Q 30) | 289 |
+| S(1,3) | 320 (Q 36) | 316 (Q 45) | 334 (Q 27) | 332 |
+| S(1,4) | 420 (Q 38) | 432 (Q 43) | 430 (Q 28) | 421 |
+| S(1,5) | 557 (Q 32) | 545 (Q 31) | 555 (Q 19) | 535 |
+| S(1,6) | 702 (Q 28) | 709 (Q 10) | 697 (Q 12) | 660 |
+| S(1,7) | 768 (Q 44) | 757 (Q 33) | 753 (Q 17) | 775 |
+| S(1,8) | 912 (Q 26) | 905 (Q 18) | 895 (Q 18) | 970 |
+
+(Frequenzen und Güten aus den Bildunterschriften der Abb. 7.8–7.16; dass 289 Hz bei F die S(1,2)′ von Kap. 7 ist,
+ist meine Zuordnung — Tab. 6.1 nennt sie „Kopplung S(1,2) mit Luftmode A1“. Ein dritter Kasten A steht in §4.)
+
+Was das für das Ziel heißt:
+
+- **Zwei Kästen desselben Modells liegen bis 6 % auseinander** (S(1,6): 702 gegen 660; S(1,8): 912 gegen 970),
+  S(1,1)− sogar 18 % (153 gegen 186). Eine Schwelle unter rund 6 % an der Lage wäre enger als die Streuung des Baus.
+- **Ab S(1,3) ändert der Einbau und das Besaiten die Lage um höchstens 2–4 %** (Bell: „maximum of 2 %“; aus den
+  Bildunterschriften bis 4 % bei S(1,3)). Der Rand der höheren Moden hängt also nicht an der Bewegung des ganzen
+  Kastens.
+- **Darunter (S(1,1)− bis S(1,2)′) bewegt sich der ganze Kasten mit**; in der Harfe ist das verhindert (S. 155 f.).
+  S(1,1)− steigt lose → eingebaut → besaitet 153 → 170 → 187 Hz, S(1,2) 221 → 249 → 257 Hz.
+- **Die Saiten** heben S(1,1)− um 10 %, senken die Admittanz an den Bäuchen um bis zu 7 dB und halbieren etwa die
+  Güten der höheren Moden (44 → 17, 32 → 19). Das ist dieselbe Last wie bei der Laute (KQ11 a).
+- Die Höhen der Bäuche stehen in den Kurven (besaitet etwa 90–103 dB, also −26 … −13 dB re 1 m/s/N) — noch nicht
+  abgegriffen.
+- Zwei Moden der ganzen Harfe (B1 85 / 92 Hz, B2) liegen unter dem Kasten; sie gehören nicht zum Boden.
+- Anregung im Saitenwinkel (30°) statt senkrecht: Unterschied selten über ±3 dB (Abb. 7.19 / 7.20).
+- 50 Hz–10 kHz (Abb. 7.21, noch nicht gelesen): Plateau der Maxima 1–1,5 kHz, darüber fällt die Admittanz wie
+  eine Masse.
+- **Die Saiten sitzen auf der Knotenlinie aller S(2,n)** (Ösen in der Mitte der Deckleiste; Bell S. 157: „the
+  central bar of the soundbox is a node for such vibrations“). Für den Ton zählt die Familie S(1,n).
+
+**Wie der Rand gebaut ist (Abb. 2.6, PDF 64, am Bild):** der Rand des Bodens steckt zwischen einer Halteleiste außen
+(„holding bar“, greift über die Kante) und der Randleiste innen („rim bar“), beide auf der Schale; vier Streben
+stützen die Randleisten gegen die Innenleisten (Abb. 2.7). Der Rand ist also in w gehalten und gegen Drehen
+**teilweise** gehalten — eine Drehfeder. Die Skizze hat keinen Maßstab.
+
+## 9 Probe: der Rand als Feder (S198; `proben/2026-11-13_S198_harfe_rand_feder.py`)
+
+Ohne Eingriff in `InstrumentBody`: die Moden des Bodens mit Leisten im Vakuum (geeichtes Holz aus §7.1, Werkzeug mit
+`--shapes`, bis 8 kHz) als Ansatz, die Federn am Rand im Modenraum dazu. Zwei Basen: Rand gestützt (300 Moden; nur
+Drehfeder k_d in N, das ist N m/rad je m Rand) und Rand frei (424 Moden plus drei Starrkörperformen; Wegfeder k_w in
+N/m² und Drehfeder). Zwei Gesetze: k_d gleich über die Länge, oder k_d(y) = k_d · b(0) / b(y) (wächst zum Diskant
+wie 1 / Breite).
+
+**Gegenproben.** k_d = 0 gibt die gestützten Werte zurück (200 / 270 / 346 / 430 / 529 / 650 / 790). k_d → ∞ gibt
+411 / 525 / 644 / 768 / 897 / 1041 Hz gegen eingespannt gerechnete 368 / 462 / 562 / 669 / 781 / 901 — 12–15 % zu
+hoch: bei harter Feder taugt der abgeschnittene Ansatz nicht. Im Bereich der Lösung ändert die Größe der Basis wenig
+(75 → 150 → 300 Moden: S(1,2) 246 → 245 → 244, S(1,7) 811 → 790 → 788 Hz). Die freie Basis trifft die gestützten
+Werte bei k_w = 10⁸ N/m² auf etwa 4 %, bei härterer Feder nicht mehr — **die Zahlen mit Wegfeder sind nur grob**.
+Die Werte von k_d sind eher zu klein (der Ansatz liegt immer über dem wahren Wert); nach dem Einbau neu suchen.
+
+**Ergebnis** (Abweichung der Platte im Vakuum, S(1,2) … S(1,8), dann S(2,1); „–“ = kein Ziel):
+
+| Rand | F lose (Tab. 6.1) | G in der Harfe, besaitet | S(2,1) (F) |
+|---|---|---|---|
+| eingespannt (heute) | +47 / +39 / +34 / +25 / +18 / +16 / – | +43 / +38 / +31 / +21 / +12 / +20 / – | +66 |
+| gestützt | −20 / −19 / −18 / −20 / −20 / −16 / −19 | −22 / −19 / −19 / −22 / −24 / −14 / −12 | +12 |
+| Drehfeder, gleich, 2500 N (F) bzw. 3160 N (G) | −2 / 0 / +1 / −2 / −4 / −3 / (+6) | −2 / +2 / +1 / −3 / −7 / +2 / 0 | +20 |
+| **Drehfeder ∝ 1 / Breite, 1585 N am Bass** | **−2 / +1 / +4 / +2 / 0 / +2 / −5** | **−5 / +1 / +2 / −2 / −5 / +5 / +3** | +17 |
+| Weg- und Drehfeder (10⁷ N/m², 3160 N; grob) | +6 / +2 / +2 / −7 / −11 / −11 / (+7) | – | +7 |
+| gestützt, E quer 11,0 statt 7,3 GPa („stellen“) | −11 / −11 / −10 / −13 / −14 / −10 / −13 | – | +31 |
+
+(Werte in Klammern: die Zuordnung der Form ist dort unsicher.)
+
+- **Eine Drehfeder bei gehaltenem w bringt die ganze Familie S(1,n) auf ±5 %** — an beiden Kästen, lose wie
+  besaitet, mit einem Wert. Das ist innerhalb der Streuung zweier Kästen (6 %, §8). Zwischen den beiden Gesetzen
+  entscheidet die Probe nicht (Mittel ∝ 1 / Breite gegen gleich: 4,3 gegen 4,7 % an F, 3,0 gegen 2,4 % an G
+  besaitet).
+- **S(2,1) bleibt 17–20 % zu hoch.** Eine Wegfeder senkt sie (+7 %), verdirbt aber S(1,5)–S(1,7) (−11 %) — und am
+  freien Boden mit Leisten lag (2,n) 7–18 % zu **tief** (§7.2). Das ist kein Befund über den Rand; offen. Für den
+  Ton ohne Belang, solange die Stegpunkte auf der Mittellinie liegen (§8).
+- **Holz oder Leisten stellen trägt nicht:** mit E quer × 1,5 bleibt S(1,n) 10–14 % zu tief, S(2,1) steigt auf
+  +31 %, und die Eichung am freien Boden geht verloren ((2,n) aus Tab. 3.2 dann +22 / +35 % statt +1 / 0 %).
+- Größenordnung: k_d · b / D (D = Biegesteife der Platte quer) ist am Bass etwa 0,8–1,6, am Diskant 6–17 — der
+  Rand ist am dünnen Diskant fast eingespannt, am dicken Bass fast gestützt. Das passt zur Bauweise (Abb. 2.6).
+- Nicht gerechnet: die gekoppelten S(1,1)∓ mit der Luft unter der Feder, die Höhen der Admittanz, die Güten.
+
+## 10 KQ18 a: die Drehfeder im Element (S198; `proben/2026-11-13_S198_harfe_rand_werkzeug.py`)
+
+Entscheid Patrik **KQ18 a**: Drehfeder am Rand, die Auslenkung bleibt gehalten; keine Wegfeder. `baueSystem` nimmt
+die Feder als Randterm ∫ k_d φ_n² ds (`drehfederAmRand`, wirkt mit `Auflager::Gestuetzt`); geprüft gegen Lévy
+(Rechteck, Federn an zwei Rändern, 1 %), gegen beide Grenzfälle und gegen ein gedrehtes Netz (Fall „KQ18 Drehfeder
+am Rand“ in `test_LoopKoerperPlatte`). Das Werkzeug hat dafür die Probe-Schalter `--rim-spring <N>` und
+`--rim-spring-end <N>` (1 / Feder linear in y; für den Harfenboden ist das Feder ∝ 1 / Breite).
+
+Boden mit Leisten im Vakuum, geeichtes Holz; S(1,2) … S(1,7), dahinter S(2,1) gegen F:
+
+| Feder (Bass → Diskant) | F lose (Tab. 6.1) | G besaitet | S(2,1) |
+|---|---|---|---|
+| 0 (gestützt) | −20 / −19 / −18 / −20 / −20 / −16 | −22 / −19 / −19 / −22 / −24 / −14 | +12 |
+| 2000 N gleich | −6 / −4 / −3 / −6 / −8 / −7 | −8 / −5 / −5 / −9 / −13 / −4 | +18 |
+| **3000 N gleich** | **−1 / 0 / +1 / −2 / −5 / −4** | −4 / −1 / −2 / −6 / −10 / −2 | +20 |
+| **4500 N gleich** | +4 / +5 / +5 / +1 / −2 / −2 | **+1 / +4 / +3 / −3 / −7 / +1** | +23 |
+| 7000 N gleich | +10 / +10 / +9 / +5 / +1 / +1 | +7 / +9 / +7 / +1 / −4 / +4 | +27 |
+| 1000 → 4100 N | −8 / −5 / −3 / −4 / −6 / −5 | −10 / −5 / −5 / −8 / −11 / −2 | +15 |
+| **1600 → 6560 N** | **−3 / 0 / +1 / −1 / −3 / −2** | −6 / −1 / −1 / −4 / −8 / +1 | +17 |
+| **2500 → 10250 N** | +2 / +4 / +6 / +3 / 0 / 0 | **−1 / +4 / +3 / −1 / −5 / +3** | +20 |
+| 4000 → 16400 N | +8 / +9 / +10 / +6 / +3 / +3 | +5 / +9 / +8 / +3 / −2 / +6 | +23 |
+| 10⁹ N (hart) | +45 / +37 / +32 / +24 / +17 / +15 | – | +63 |
+
+- Die Probe im Modenraum (§9) ist bestätigt; die Federwerte liegen im Element rund 20–40 % höher, wie erwartet.
+- Die harte Feder trifft den eingespannten Rand auf 1 % (363 / 456 / 555 gegen 368 / 462 / 562 Hz).
+- **Gleiche Feder gegen Feder ∝ 1 / Breite:** am selben Ziel größte Abweichung 5 gegen 3 % (F), 7 gegen 5 %
+  (G besaitet) — beides innerhalb der Streuung zweier Kästen (6 %). Die Daten entscheiden die Form nicht. Für die
+  gleiche Feder spricht die Bauweise (Halte- und Randleiste laufen über die ganze Länge, Abb. 2.6); für den Verlauf
+  gibt es nur die etwas glattere Anpassung.
+- S(1,8) ist in der Zuordnung der Formen unsicher (mehrere Formen mit sieben Wechseln längs) und oben weggelassen.

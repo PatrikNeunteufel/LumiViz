@@ -273,6 +273,13 @@ QJsonObject alsJson(const Bauplan& plan)
              // seit Fassung 5 (KQ17 a), immer geschrieben
              {QStringLiteral("openings"), oeffnungen},
          }},
+        // seit Fassung 6 (KQ18 a), immer geschrieben
+        {QStringLiteral("rim"),
+         QJsonObject{
+             {QStringLiteral("support"), plan.rand.elastisch() ? QStringLiteral("elastic") : QStringLiteral("clamped")},
+             {QStringLiteral("rotationalStiffness"), plan.rand.drehfeder},
+             {QStringLiteral("source"), text(plan.rand.quelle)},
+         }},
     };
 }
 
@@ -357,6 +364,16 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
             oe.quelle = text(o.value(QStringLiteral("source")));
             neu.hohlraum.oeffnungen.push_back(std::move(oe));
         }
+    }
+    // seit Fassung 6 (KQ18 a); fehlt der Block, ist der Rand eingespannt wie bis Fassung 5
+    if (wurzel.contains(QStringLiteral("rim")))
+    {
+        const QJsonObject r = wurzel.value(QStringLiteral("rim")).toObject();
+        const QString halt = r.value(QStringLiteral("support")).toString();
+        if (halt == QLatin1String("elastic")) neu.rand.halt = koerper::Rand::Halt::Elastisch;
+        else if (halt != QLatin1String("clamped")) return false;  // ein unbekannter Halt: nicht raten
+        neu.rand.drehfeder = r.value(QStringLiteral("rotationalStiffness")).toDouble();
+        neu.rand.quelle = text(r.value(QStringLiteral("source")));
     }
     plan = std::move(neu);
     return true;

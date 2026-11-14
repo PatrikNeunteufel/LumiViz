@@ -44,7 +44,9 @@ namespace lumi::koerper
 /// (ohne Loecher, ohne Hohlraum).
 /// 5 (S197, KQ17 a): Oeffnungen des Hohlraums ausserhalb der Platte (`cavity.openings`). Fassung 1 bis 4
 /// bleiben lesbar (ohne solche Oeffnungen).
-inline constexpr int kBauplanFassung = 5;
+/// 6 (S198, KQ18 a): der Rand der Platte (`rim`) — eingespannt oder in w gehalten mit einer Drehfeder.
+/// Fassung 1 bis 5 bleiben lesbar (der Rand eingespannt).
+inline constexpr int kBauplanFassung = 6;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -285,6 +287,26 @@ struct Daempfung
     [[nodiscard]] bool operator==(const Daempfung&) const = default;
 };
 
+/// Der aeussere Rand der Platte (seit Fassung 6; KQ18 a, S198). `Eingespannt`: w und beide Drehungen
+/// gehalten — wie bis Fassung 5. `Elastisch`: w gehalten, gegen die Drehung um die Randlinie haelt eine
+/// Feder `drehfeder` in N (= N m/rad je m Rand), ein Wert fuer den ganzen Rand; 0 = der Rand nur
+/// gestuetzt. So liegt ein Boden, der zwischen Leisten auf einer nachgiebigen Schale sitzt (Harfe:
+/// Bell 1988 Abb. 2.6). Der Rand eines Lochs ist immer frei.
+struct Rand
+{
+    enum class Halt : int
+    {
+        Eingespannt = 0,
+        Elastisch,
+    };
+    Halt halt = Halt::Eingespannt;
+    double drehfeder = 0.0;  ///< N; nur mit `Elastisch`
+    std::string quelle;      ///< wie der Wert zustande kam
+
+    [[nodiscard]] bool elastisch() const { return halt == Halt::Elastisch; }
+    [[nodiscard]] bool operator==(const Rand&) const = default;
+};
+
 struct Bauplan
 {
     std::string titel;
@@ -299,6 +321,7 @@ struct Bauplan
     Rueckseite rueckseite;              ///< seit Fassung 3; Vorgabe aus (Schallwand)
     Daempfung daempfung;                ///< seit Fassung 3; Vorgabe RT-0425 Gl. 1 (c = 0)
     Hohlraum hohlraum;                  ///< seit Fassung 4; Vorgabe aus (die Platte allein)
+    Rand rand;                          ///< seit Fassung 6; Vorgabe eingespannt
 
     [[nodiscard]] bool operator==(const Bauplan&) const = default;
 };
@@ -617,6 +640,8 @@ struct Randpunkt
         if (o.lippe < 0.0) befunde.push_back("cavity: the lip length of an opening must not be negative");
     }
     if (!plan.hohlraum.an() && !plan.hohlraum.oeffnungen.empty()) befunde.push_back("cavity: openings need a volume");
+    if (plan.rand.drehfeder < 0.0) befunde.push_back("rim: rotational stiffness must not be negative");
+    if (!plan.rand.elastisch() && plan.rand.drehfeder != 0.0) befunde.push_back("rim: a rotational stiffness needs the support 'elastic'");
     return befunde;
 }
 

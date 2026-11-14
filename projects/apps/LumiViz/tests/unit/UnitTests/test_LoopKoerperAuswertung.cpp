@@ -308,7 +308,7 @@ TEST_CASE("Loop Koerper 31c-5b Steinway D")
     REQUIRE(netz.fehler.empty());
     const kp::LagrangeDreieck element(2);
     const kp::PlattenSystem s =
-        kp::baueSystem(netz, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); }, kp::Auflager::Eingespannt);
+        kp::baueSystem(netz, element, plan);
     REQUIRE_MESSAGE(s.fehler.empty(), s.fehler);
     const auto beginn = std::chrono::steady_clock::now();
     const kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte);

@@ -116,7 +116,7 @@ Gerechnet rechne(const kp::Bauplan& plan, const kp::Plattenelement& element, dou
     a.kante = kante;
     const kp::Netz netz = kp::NetzgeberCdt().vernetze(a);
     REQUIRE_MESSAGE(netz.fehler.empty(), netz.fehler);
-    g.system = kp::baueSystem(netz, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); }, kp::Auflager::Eingespannt);
+    g.system = kp::baueSystem(netz, element, plan);
     REQUIRE_MESSAGE(g.system.fehler.empty(), g.system.fehler);
     const int n = g.system.k.n;
     Eigen::MatrixXd k = Eigen::MatrixXd::Zero(n, n), m = Eigen::MatrixXd::Zero(n, n);
@@ -384,9 +384,9 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum Oeffnungen ausserhalb der Platte (KQ17 a)
     const auto hinten = kp::lochAbstrahlung(nurOeffnung, orte, kp::Luft{}, 200.0, 1.0);
     CHECK(std::abs(hinten[0]) == doctest::Approx(kp::Luft{}.dichte / (4.0 * kPi) / 0.65).epsilon(1e-12));
 
-    // die Datei: `openings` immer geschrieben (Fassung 5), Hin- und Rueckweg; Fassung 4 ohne die Liste lesbar
+    // die Datei: `openings` immer geschrieben (seit Fassung 5), Hin- und Rueckweg; Fassung 4 ohne die Liste lesbar
     const QJsonObject json = alsJson(zwei);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 5);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
     const QJsonObject c = json.value(QStringLiteral("cavity")).toObject();
     REQUIRE(c.value(QStringLiteral("openings")).toArray().size() == 2);
     const QJsonObject eins = c.value(QStringLiteral("openings")).toArray()[0].toObject();

@@ -1,6 +1,6 @@
 {
  "format": "lumiviz-instrument-body-plan",
- "version": 5,
+ "version": 6,
  "title": "Oud",
  "description": "Substitute plan of an Arabic oud soundboard with its air cavity (KQ6 a, KQ10 a). Outline, brace positions and ends, sound holes, bowl depth and bridge position from Abdallah et al. 2026 Fig. 3; brace sizes Table 2; wood Table 1. Assumptions: plate thickness 1.5 mm (not given in the source), cross-section of the bowl, no bridge bar, rim clamped and bowl rigid (as in the source's FE), hole rims free, spacing of the courses at the bridge. Set so that the computed modes meet the peaks of the measured response (Fig. 6): 101 / 203 / 280 / 362 Hz within 3 %; the measured peak at 139 Hz has no counterpart.",
  "source": "M. Abdallah, E. Dreik, A. Sassi, M. Paurobally, S. Sassi, Vibroacoustic sensitivity of an oud soundboard to bracing geometry, Meccanica 61:89 (2026), CC BY 4.0",
@@ -1490,5 +1490,10 @@
   "q": 30.0,
   "source": "bowl 21 cm deep (Abdallah et al. 2026 Fig. 3, side view); assumed: every cross-section half an ellipse with its depth proportional to the width of the soundboard there; end correction of a hole in a thin wide wall and Q of the air assumed",
   "openings": []
+ },
+ "rim": {
+  "support": "clamped",
+  "rotationalStiffness": 0.0,
+  "source": "rim clamped and bowl rigid, as in the FE model of the source (Abdallah et al. 2026); assumed"
  }
 }

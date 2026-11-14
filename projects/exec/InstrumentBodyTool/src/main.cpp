@@ -38,6 +38,7 @@
 #include <chrono>
 #include <complex>
 #include <cstdio>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -178,8 +179,16 @@ int main(int argc, char* argv[])
     const QCommandLineOption gestuetztOpt(QStringLiteral("supported-rim"),
                                           QStringLiteral("Probe only: the rim is held in w only, both rotations free, instead of clamped — "
                                                          "the lower bound for a rim that gives way."));
+    const QCommandLineOption federOpt(QStringLiteral("rim-spring"),
+                                      QStringLiteral("Probe only (KQ18): with --supported-rim, a rotational spring along the rim in N "
+                                                     "(N m/rad per m), against the slope across the rim."),
+                                      QStringLiteral("N"));
+    const QCommandLineOption federEndeOpt(QStringLiteral("rim-spring-end"),
+                                          QStringLiteral("Probe only (KQ18): the spring at the largest y of the outline; --rim-spring "
+                                                         "then holds at the smallest y, and 1/spring runs linearly in y between them."),
+                                          QStringLiteral("N"));
     parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt, berichtOpt,
-                       formenOpt, freiOpt, gestuetztOpt});
+                       formenOpt, freiOpt, gestuetztOpt, federOpt, federEndeOpt});
     parser.process(app);
 
     const auto geberListe = kp::netzgeber();
@@ -255,12 +264,37 @@ int main(int argc, char* argv[])
 
     t = std::chrono::steady_clock::now();
     const kp::LagrangeDreieck element(ordnung);
-    const kp::PlattenSystem s =
-        kp::baueSystem(netz, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); },
-                       parser.isSet(freiOpt) ? kp::Auflager::Frei
-                                             : parser.isSet(gestuetztOpt) ? kp::Auflager::Gestuetzt : kp::Auflager::Eingespannt);
+    // Probe (KQ18): Drehfeder am Rand, am kleinsten y `--rim-spring`, am groessten `--rim-spring-end`, 1/Feder linear in y
+    std::function<double(kp::Punkt2)> feder;
+    if (parser.isSet(federOpt))
+    {
+        const double f0 = parser.value(federOpt).toDouble();
+        const double f1 = parser.isSet(federEndeOpt) ? parser.value(federEndeOpt).toDouble() : f0;
+        double y0 = 0.0, y1 = 0.0;
+        for (std::size_t i = 0; i < plan.platte.umriss.size(); ++i)
+        {
+            const double y = plan.platte.umriss[i].y;
+            if (i == 0 || y < y0) y0 = y;
+            if (i == 0 || y > y1) y1 = y;
+        }
+        if (f0 > 0.0 && f1 > 0.0)
+            feder = [=](kp::Punkt2 p) {
+                const double anteil = y1 > y0 ? std::clamp((p.y - y0) / (y1 - y0), 0.0, 1.0) : 0.0;
+                return 1.0 / ((1.0 - anteil) / f0 + anteil / f1);
+            };
+    }
+    // ohne Probe-Schalter gilt der Rand des Bauplans (`rim`, KQ18 a)
+    const bool probeRand = parser.isSet(freiOpt) || parser.isSet(gestuetztOpt);
+    const kp::PlattenSystem s = probeRand ? kp::baueSystem(netz, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); },
+                                                           parser.isSet(freiOpt) ? kp::Auflager::Frei : kp::Auflager::Gestuetzt, feder)
+                                          : kp::baueSystem(netz, element, plan);
+    if (!probeRand && plan.rand.elastisch())
+        std::printf("Rim elastic (KQ18 a): held in w, rotational spring %g N\n", plan.rand.drehfeder);
     if (parser.isSet(freiOpt)) std::printf("Rim free (--free-rim): a probe, not a body for the program\n");
     if (parser.isSet(gestuetztOpt)) std::printf("Rim supported (--supported-rim): a probe, not a body for the program\n");
+    if (feder)
+        std::printf("Rim spring (--rim-spring): %g N at the smallest y, %g N at the largest: a probe, not a body for the program\n",
+                    feder({0.0, -1e30}), feder({0.0, 1e30}));
     if (!s.fehler.empty())
     {
         std::fprintf(stderr, "Plate: %s\n", s.fehler.c_str());

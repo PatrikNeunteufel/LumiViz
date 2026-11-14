@@ -1,7 +1,7 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.32.0
-> **Datum:** 2026-11-13 (Session 196)
+> **Version:** 0.33.0
+> **Datum:** 2026-11-13 (Session 198)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
 > der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
@@ -1418,6 +1418,24 @@ im Kasten (Vorlage, sobald die Harfe einmal gerechnet ist und Tab. 6.1 mit Zahle
 Überschlag mit einzelnen Öffnungen gibt 225 Hz statt der gemessenen 190 Hz — die Mündungskorrektur wird an Bells
 Messung gestellt.
 
+**Befund am Rand des Harfenbodens (S198).** Kap. 7 von Bell gelesen (Kasten G lose, in der Harfe, besaitet): ab
+S(1,3) ändern Einbau und Saiten die Lage um höchstens 2–4 %, zwei Kästen desselben Modells liegen bis 6 %
+auseinander, die Saiten sitzen auf der Knotenlinie aller S(2,n). Der Boden steckt zwischen Halte- und Randleiste
+(Abb. 2.6). Gerechnet (Boden mit Leisten im Vakuum, geeichtes Holz, S(1,2)–S(1,7) gegen Tab. 6.1): Rand eingespannt
++47 … +16 %, gestützt −20 … −16 %, Drehfeder 3000 N bei gehaltenem w −5 … +1 %, Holz stellen (E quer × 1,5) −14 …
+−10 % und die Eichung am freien Boden verloren. Zahlen in
+`../modellierung/gezupfte-saite/2026-11-13_S197_harfe_gelesen.md` §8–§10.
+
+✅ **KQ18 a** (Patrik S198): **Der Rand der Platte steht im Bauplan** — Block `rim`: eingespannt (Vorgabe, wie bisher)
+oder elastisch (w gehalten, Drehfeder in N), immer geschrieben, **Bauplan Fassung 6**; `baueSystem` rechnet die Feder
+als Randterm. Keine Wegfeder: sie bessert nur S(2,1), die die Saiten nicht anregen, und verschlechtert S(1,5)–S(1,7).
+Verworfen: b (Holz oder Leisten stellen). Kippt, wenn S(2,1) Ziel wird (Stegpunkte neben der Mittellinie).
+✅ **Folgeentscheid zu KQ18 a** (Patrik S198): **ein Federwert für den ganzen Rand**, kein Verlauf. Am selben Ziel ist
+die größte Abweichung 5 gegen 3 % (Kasten F) und 7 gegen 5 % (Kasten G besaitet) — innerhalb der Streuung des Baus;
+für den einen Wert spricht die Bauweise. Kippt, wenn die Höhen der Admittanz je Saitenort (Abb. 7.22) mit gleicher
+Feder die Bäuche am Diskant sichtbar falsch setzen. **Offen:** S(2,1) 17–23 % zu hoch (kein Befund über den Rand);
+Ziele und Schwelle der Harfe (Kasten G besaitet, Lage und Höhe mit Saitenlast) als nächste Vorlage.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1479,6 +1497,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.33.0 | 2026-11-13 | Session 198. §6: Kap. 7 von Bell gelesen, Rand des Harfenbodens gerechnet; KQ18 a (Rand im Bauplan: eingespannt oder elastisch mit Drehfeder, Fassung 6, alle Körper neu) und Folgeentscheid (ein Federwert für den ganzen Rand); offen S(2,1), Ziele und Schwelle der Harfe. |
 | 0.32.0 | 2026-11-13 | Session 197. §6: Befund an der Harfe (Bell 1988 gelesen: Maße, Öffnungen in der Schale, Tab. 6.1 mit 17 Moden); KQ17 a (Öffnungen des Hohlraums außerhalb der Platte, Bauplan Fassung 5, alle Körper neu); höhere Luftmoden offen. |
 | 0.31.0 | 2026-11-13 | Session 197. §6: Befund am Cembalo (keine gemessene Kurve; Boden des Dulcken 1755 in Bader 2025 als Bauplan lesbar); KQ13 a (Körper = Boden des Dulcken, Saiten Taskin), KQ14 a (Dicke als Raster — im Format vorhanden), KQ15 a (Tiefe 20,7 cm, Luftmode als bekannte Abweichung), KQ16 a (Randtasten); Bauplan und Körper des Cembalos unter `asset/`. |
 | 0.30.0 | 2026-11-13 | Session 197. §6: Befund an der gemessenen Stegadmittanz der Laute (Woodhouse 2021 Abb. 1) und an der Rauwolf-Zeichnung; KQ11 a (Ziele in Lage und Höhe, mit Stegleiste und Saitenlast), KQ12 a (Form mal 625/677,4); Bauplan und Körper der Laute unter `asset/`. |
