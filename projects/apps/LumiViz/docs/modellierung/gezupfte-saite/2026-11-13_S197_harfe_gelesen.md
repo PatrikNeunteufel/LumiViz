@@ -218,6 +218,8 @@ stützen die Randleisten gegen die Innenleisten (Abb. 2.7). Der Rand ist also in
 
 ## 9 Probe: der Rand als Feder (S198; `proben/2026-11-13_S198_harfe_rand_feder.py`)
 
+> **Überholt (S198, §11):** die Zuordnung der gerechneten Formen zu Bells S(1,n) in diesem Abschnitt war um eins versetzt. Die Federwerte 3000 / 4500 N treffen die Frequenzen, aber nicht die Lage der Bäuche; der gestützte Rand trifft beides.
+
 Ohne Eingriff in `InstrumentBody`: die Moden des Bodens mit Leisten im Vakuum (geeichtes Holz aus §7.1, Werkzeug mit
 `--shapes`, bis 8 kHz) als Ansatz, die Federn am Rand im Modenraum dazu. Zwei Basen: Rand gestützt (300 Moden; nur
 Drehfeder k_d in N, das ist N m/rad je m Rand) und Rand frei (424 Moden plus drei Starrkörperformen; Wegfeder k_w in
@@ -259,6 +261,8 @@ Die Werte von k_d sind eher zu klein (der Ansatz liegt immer über dem wahren We
 
 ## 10 KQ18 a: die Drehfeder im Element (S198; `proben/2026-11-13_S198_harfe_rand_werkzeug.py`)
 
+> **Überholt (S198, §11):** die Zuordnung der gerechneten Formen zu Bells S(1,n) in diesem Abschnitt war um eins versetzt. Die Federwerte 3000 / 4500 N treffen die Frequenzen, aber nicht die Lage der Bäuche; der gestützte Rand trifft beides.
+
 Entscheid Patrik **KQ18 a**: Drehfeder am Rand, die Auslenkung bleibt gehalten; keine Wegfeder. `baueSystem` nimmt
 die Feder als Randterm ∫ k_d φ_n² ds (`drehfederAmRand`, wirkt mit `Auflager::Gestuetzt`); geprüft gegen Lévy
 (Rechteck, Federn an zwei Rändern, 1 %), gegen beide Grenzfälle und gegen ein gedrehtes Netz (Fall „KQ18 Drehfeder
@@ -287,3 +291,69 @@ Boden mit Leisten im Vakuum, geeichtes Holz; S(1,2) … S(1,7), dahinter S(2,1) 
   gleiche Feder spricht die Bauweise (Halte- und Randleiste laufen über die ganze Länge, Abb. 2.6); für den Verlauf
   gibt es nur die etwas glattere Anpassung.
 - S(1,8) ist in der Zuordnung der Formen unsicher (mehrere Formen mit sieben Wechseln längs) und oben weggelassen.
+
+## 11 Gegenprobe an der Lage der Bäuche: der Rand ist gestützt (S198; `proben/2026-11-14_S198_harfe_admittanz.py`)
+
+Für die Höhen der Admittanz (Ziel der Harfe) sind die Profile der Abb. 7.8–7.16 abgegriffen: je Mode die Admittanz
+über die 40 Messorte längs der Deckleiste (Ort 40 am Bass, Ort 1 am Diskant; 3,5 cm Abstand, Bell S. 127; 116 dB =
+1 s/kg). Der stärkste Bauch liegt bei jeder Mode am Diskant und wandert mit n dorthin:
+
+| Bell, Kasten G in der Harfe | ohne Saiten: Hz, Q, Pegel, Ort | besaitet: Hz, Q, Pegel, Ort | weitere Bäuche (lose, Bild 1) |
+|---|---|---|---|
+| S(1,2) | 249, 39, 96 dB, Ort 12 | 257, 32, 92,5 dB, Ort 12 | 30 |
+| S(1,3) | 316, 45, 104 dB, Ort 8 | 334, 27, 101 dB, Ort 8 | 21, 32 |
+| S(1,4) | 432, 43, 105,5 dB, Ort 5 | 430, 28, 99,5 dB, Ort 4 | 14, 23, 32–35 |
+| S(1,5) | 545, 31, 101,5 dB, Ort 3 | 555, 19, 103 dB, Ort 3 | 10, 18, 25, 35 |
+| S(1,6) | 709, 10, 100,5 dB, Ort 3 | 697, 12, 103 dB, Ort 2 | 8, 14, 21, 26 |
+| S(1,7) | 757, 33, 99,5 dB, Ort 3 | 753, 17, 101 dB, Ort 2 | 5, 8, 14, 20, 26 |
+| S(1,8) | 905, 18, 102 dB, Ort 4 | 895, 18, 103,5 dB, Ort 3 | – |
+
+(Am Bild gelesen, ±1–2 dB, ±1 Ort. Saiten: Tab. 2.1 / 2.2 am Bild; Saitenorte Abb. 2.9 von Hand,
+`proben/2026-11-14_S198_harfe_saitenorte.json` — das Skript von S197 findet die Striche am neu gerasterten Bild nicht
+mehr.)
+
+**Gerechnet: wo liegt der stärkste Bauch, und bei welcher Frequenz?** (Boden mit Leisten, geeichtes Holz; Formen auf
+der Mittellinie.)
+
+| Rand | Formen mit stärkstem Bauch an Ort … bei … Hz |
+|---|---|
+| gemessen (G in der Harfe, ohne Saiten) | 12 → 249 · 8 → 316 · 5 → 432 · 3 → 545 · 3 → 709 |
+| **gestützt (Feder 0)** | **12 → 270 · 8 → 346 · 5 → 430 · 4 → 529 · 3 → 650** |
+| Drehfeder 2000 N | 20 → 236 · 15 → 318 · 11 → 407 · 8 → 504 · 5 → 606 · 4 → 720 |
+| Drehfeder 4500 N | 21 → 261 · 15 → 347 · 11 → 441 · 8 → 541 · 6 → 647 · 4 → 762 |
+| eingespannt | 21 → 363 · 16 → 456 · 12 → 555 · 9 → 661 · 7 → 772 |
+
+- **Mit der Feder liegen die Bäuche 6–9 Messorte (20–30 cm) zu weit am Bass.** Die Form, die bei 4500 N auf 441 Hz
+  liegt, hat ihren Bauch an Ort 11; gemessen ist bei 432 Hz Ort 5. Am gemessenen Ort liegt die Admittanz dann
+  18–28 dB unter der Messung.
+- **Mit gestütztem Rand stimmen Ort und Frequenz zugleich.** Die Form zu Bells S(1,n) hat in der Rechnung n + 1
+  Bäuche; der letzte am Bassende (Ort 37–39, 7–13 dB schwächer) liegt bei Bell am Rand der Messorte und ist in den
+  Profilen höchstens als Schulter zu sehen. Die Zuordnung in §7.3, §9 und §10 zählte die Bäuche und war deshalb um
+  eins versetzt — daher „gestützt 16–20 % zu tief“.
+- **Auch die Zahl der Moden stimmt nur so:** mit Luft (Helmholtz starr 185 Hz) rechnet der gestützte Kasten 129 / 192 /
+  208 / 275 / 347 / 431 / 529 / 650 / 790 / 941 Hz; gemessen sind an G lose 153 / 200 / 221 / 251 / 320 / 420 / 557 /
+  702 / 768 / 912 Hz — zehn Moden gegen zehn. Mit der Feder fehlt eine Mode unter 350 Hz (Bells S(1,2)′).
+
+**Gestützter Kasten mit Luft gegen Bell** (η = 0,027 aus den Güten ohne Saiten; Saitenlast je Saite 0,25 · Z an ihrer
+Öse, Z = Wellenwiderstand quer aus Tab. 2.1 / 2.2, Summe 62,6 N s/m — der Faktor ist eine Annahme für den Winkel):
+
+| Mode | ohne Saiten: Lage, Ort, Höhe | besaitet (0,25 Z): Lage, Ort, Höhe, Q gerechnet / gemessen |
+|---|---|---|
+| S(1,2) | +10 %, 13 / 12, −0,3 dB | +7 %, 13 / 12, +2,5 dB, 30 / 32 |
+| S(1,3) | +10 %, 8 / 8, −5,8 dB | +4 %, 8 / 8, −4,0 dB, 32 / 27 |
+| S(1,4) | 0 %, 5 / 5, −6,2 dB | 0 %, 5 / 4, −1,2 dB, 33 / 28 |
+| S(1,5) | −3 %, 4 / 3, −2,7 dB | −5 %, 4 / 3, −5,0 dB, 34 / 19 |
+| S(1,6) | −8 %, 3 / 3, −3,8 dB | −7 %, 3 / 2, −6,9 dB, 35 / 12 |
+| S(1,7) | +4 %, 3 / 3, −5,1 dB | +5 %, 3 / 2, −7,0 dB, 35 / 17 |
+| S(1,8) | +4 %, 2 / 4, −10,1 dB | +5 %, 2 / 3, −11,9 dB, 36 / 18 |
+
+Gegen F lose (Tab. 6.1: 250 / 332 / 421 / 535 / 660 / 775 / 970): +10 / +5 / +2 / −1 / −2 / +2 / −3 %.
+
+- Lage innerhalb +10 / −8 %; drei Kästen desselben Modells streuen bis 14 % (S(1,5): 557 / 535 / 485 an G, F, A).
+- **Die Höhen liegen 0–7 dB zu tief, zum Diskant hin mehr** (S(1,8) −10 … −12 dB). Ursache offen: die Rechnung endet
+  bei 1100 Hz (die höheren Moden fehlen am dünnen Diskantende), Masse und Dicke am Diskant, die Dämpfung je Mode.
+- Die Saitenlast senkt die Güten ab S(1,5) zu wenig (35 gegen 12–19) — 0,25 Z ist dort zu klein oder die Last ist
+  nicht nur ein Widerstand quer.
+
+**Folge für KQ18 a:** der Block `rim` bleibt nötig (die Vorgabe ist eingespannt), die Harfe bekommt aber
+`support: elastic` mit `rotationalStiffness: 0` — gestützt. Die Federwerte aus §9 und §10 sind hinfällig.
