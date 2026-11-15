@@ -132,6 +132,11 @@
             "name": "glass"
         }
     ],
+    "measurement": {
+        "file": "",
+        "fingerprint": "",
+        "fitVersion": 0
+    },
     "modes": [
         {
             "airShare": 0,
@@ -218484,6 +218489,7 @@
             ]
         }
     ],
+    "origin": "plan",
     "plan": {
         "file": "steinway_d_glass_same_mass.lvinstbodyplan",
         "fingerprint": "85457cd120900c2d845f1f46d164f748f5eb214244f1ce0dc00012cc3d820cde"
@@ -218604,5 +218610,5 @@
     },
     "title": "Steinway D with a thin glass soundboard",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 3
+    "version": 4
 }

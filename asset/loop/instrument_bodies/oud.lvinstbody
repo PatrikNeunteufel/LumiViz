@@ -41,6 +41,11 @@
             "name": "sitka"
         }
     ],
+    "measurement": {
+        "file": "",
+        "fingerprint": "",
+        "fitVersion": 0
+    },
     "modes": [
         {
             "airShare": 0.6479615320966865,
@@ -5389,6 +5394,7 @@
             ]
         }
     ],
+    "origin": "plan",
     "plan": {
         "file": "oud.lvinstbodyplan",
         "fingerprint": "f8336ddebf5352e62c7cab300ad8a0792e43a591d06cd27e9fddcec5df2c89ea"
@@ -5424,5 +5430,5 @@
     },
     "title": "Oud",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 3
+    "version": 4
 }

@@ -33,6 +33,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 
 #include <cmath>
@@ -92,9 +93,43 @@ TEST_CASE("Loop Koerper 31c-5d Datei")
     const QJsonObject json = alsJson(k);
     CHECK(json.value(QStringLiteral("format")).toString() == QLatin1String(kKoerperFormat));
     CHECK(json.value(QStringLiteral("version")).toInt() == kp::kKoerperFassung);
-    for (const char* feld : {"title", "description", "units", "plan", "computation", "bridgePoints", "listeningPoints", "air", "damping",
-                             "materials", "modes", "statistical"})
+    for (const char* feld : {"title", "description", "units", "origin", "plan", "measurement", "computation", "bridgePoints",
+                             "listeningPoints", "air", "damping", "materials", "modes", "statistical"})
         CHECK_MESSAGE(json.contains(QLatin1String(feld)), feld);
+    // KQ25 a (Fassung 4): die Herkunft steht immer in der Datei; ein gerechneter Koerper nennt `plan`
+    CHECK(json.value(QStringLiteral("origin")).toString() == QStringLiteral("plan"));
+    {
+        kp::Koerper gemessen = k;
+        gemessen.herkunft = kp::Herkunft::Messung;
+        gemessen.bauplan.clear();
+        gemessen.bauplanAbdruck.clear();
+        gemessen.messung = "pruef.lvinstbodyfit";
+        gemessen.messungAbdruck = std::string(64, 'b');
+        gemessen.fitFassung = kp::kFitFassung;
+        const QJsonObject mj = alsJson(gemessen);
+        CHECK(mj.value(QStringLiteral("origin")).toString() == QStringLiteral("measurement"));
+        CHECK(mj.value(QStringLiteral("measurement")).toObject().value(QStringLiteral("fitVersion")).toInt() == kp::kFitFassung);
+        CHECK(mj.value(QStringLiteral("units")).toString().contains(QStringLiteral("measured")));
+        kp::Koerper mz;
+        REQUIRE(ausJson(mj, mz));
+        CHECK(mz == gemessen);
+        CHECK(mz.herkunft == kp::Herkunft::Messung);
+        // eine unbekannte Herkunft macht die Datei unlesbar
+        QJsonObject fremdeHerkunft = mj;
+        fremdeHerkunft[QStringLiteral("origin")] = QStringLiteral("guess");
+        CHECK_FALSE(ausJson(fremdeHerkunft, mz));
+        // Fassung 3 (vor KQ25 a): ohne `origin` und `measurement` — ein Koerper aus einem Bauplan
+        QJsonObject drei = json;
+        drei[QStringLiteral("version")] = 3;
+        drei.remove(QStringLiteral("origin"));
+        drei.remove(QStringLiteral("measurement"));
+        kp::Koerper ausDrei;
+        REQUIRE(ausJson(drei, ausDrei));
+        CHECK(ausDrei == k);
+        // der Abdruck einer Beschreibung haengt nicht an den Zeilenenden
+        CHECK(messungAbdruck(QByteArray("{\n \"a\": 1\n}\n")) == messungAbdruck(QByteArray("{\r\n \"a\": 1\r\n}\r\n")));
+        CHECK(messungAbdruck(QByteArray("{\n \"a\": 1\n}\n")) != messungAbdruck(QByteArray("{\n \"a\": 2\n}\n")));
+    }
     CHECK(json.value(QStringLiteral("statistical")).toObject().value(QStringLiteral("seed")).toString() ==
           QStringLiteral("9223372036854775813"));
 
@@ -212,12 +247,56 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
     CHECK(koerper.contains(QStringLiteral("lute") + QLatin1String(kKoerperEndung)));
     CHECK(koerper.contains(QStringLiteral("harpsichord") + QLatin1String(kKoerperEndung)));
     CHECK(koerper.contains(QStringLiteral("concert_harp") + QLatin1String(kKoerperEndung)));
+    CHECK(koerper.contains(QStringLiteral("classical_guitar") + QLatin1String(kKoerperEndung)));  // gemessen (KQ25 a)
     for (const QString& name : koerper)
     {
         CAPTURE(name.toStdString());
         const QString pfad = ordner.filePath(name);
         kp::Koerper k;
         REQUIRE(ladeKoerper(pfad, k));
+        if (k.herkunft == kp::Herkunft::Messung)
+        {
+            // KQ25 a: ein gemessener Koerper haengt an seiner Beschreibung `.lvinstbodyfit` und an der Fassung des
+            // Fits. Sonst neu schreiben: python asset/loop/instrument_bodies/make_gitarre.py <Messdatei>
+            QFile fitDatei(ordner.filePath(QString::fromStdString(k.messung)));
+            REQUIRE_MESSAGE(fitDatei.open(QIODevice::ReadOnly), "Beschreibung ", k.messung, " fehlt");
+            const QByteArray inhalt = fitDatei.readAll();
+            CHECK_MESSAGE(k.messungAbdruck == messungAbdruck(inhalt).toStdString(),
+                          "die Beschreibung hat sich geaendert — make_gitarre.py neu laufen lassen");
+            CHECK_MESSAGE(k.fitFassung == kp::kFitFassung, "der Fit hat sich geaendert (kFitFassung) — make_gitarre.py neu laufen lassen");
+            const QJsonObject fit = QJsonDocument::fromJson(inhalt).object();
+            CHECK(fit.value(QStringLiteral("format")).toString() == QLatin1String(kFitFormat));
+            CHECK(fit.value(QStringLiteral("fitVersion")).toInt() == kp::kFitFassung);
+            CHECK_FALSE(fit.value(QStringLiteral("source")).toString().isEmpty());
+            const QJsonArray punkte = fit.value(QStringLiteral("bridgePoints")).toArray();
+            REQUIRE(static_cast<std::size_t>(punkte.size()) == k.stegTasten.size());
+            for (int i = 0; i < punkte.size(); ++i)
+            {
+                CHECK(punkte[i].toObject().value(QStringLiteral("key")).toInt() == k.stegTasten[static_cast<std::size_t>(i)]);
+                CHECK_FALSE(punkte[i].toObject().value(QStringLiteral("source")).toString().isEmpty());
+            }
+            const QJsonArray orte = fit.value(QStringLiteral("listeningPoints")).toArray();
+            REQUIRE(static_cast<std::size_t>(orte.size()) == k.hoerorte.size());
+            for (int i = 0; i < orte.size(); ++i)
+                CHECK(orte[i].toObject().value(QStringLiteral("name")).toString().toStdString() == k.hoerorte[static_cast<std::size_t>(i)]);
+            // kein Bauplan, keine Werkstoffe: die Daempfung ist je Mode gemessen
+            CHECK(k.bauplan.empty());
+            CHECK(k.werkstoffe.empty());
+            REQUIRE_FALSE(k.moden.empty());
+            int falsch = 0;
+            for (std::size_t i = 0; i < k.moden.size(); ++i)
+            {
+                const kp::ModeImKoerper& m = k.moden[i];
+                falsch += (m.frequenzHz >= k.rechnung.vonHz && m.frequenzHz < k.rechnung.bisHz) ? 0 : 1;
+                falsch += (i == 0 || m.frequenzHz >= k.moden[i - 1].frequenzHz) ? 0 : 1;
+                falsch += (m.verlustfaktor > 0.0 && m.verlustfaktor < 0.5) ? 0 : 1;
+                falsch += (m.werkstoffAnteil.empty() && m.luftAnteil == 0.0) ? 0 : 1;
+            }
+            CHECK(falsch == 0);
+            if (k.statistik.dichte > 0.0) CHECK(k.statistik.vonHz == k.rechnung.bisHz);
+            MESSAGE(name.toStdString(), ": ", k.moden.size(), " gemessene Moden bis ", k.rechnung.bisHz, " Hz");
+            continue;
+        }
         kp::Bauplan plan;
         REQUIRE_MESSAGE(ladeBauplan(ordner.filePath(QString::fromStdString(k.bauplan)), plan), "Bauplan ", k.bauplan, " fehlt");
 

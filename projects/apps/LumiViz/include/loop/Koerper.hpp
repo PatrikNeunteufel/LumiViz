@@ -18,6 +18,7 @@
 #include "InstrumentBody/Bauplan.hpp"
 #include "InstrumentBody/Koerper.hpp"
 
+#include <QByteArray>
 #include <QJsonObject>
 #include <QString>
 
@@ -38,5 +39,15 @@ bool ladeKoerper(const QString& pfad, koerper::Koerper& koerper, bool* zuNeu = n
 /// Der Abdruck eines Bauplans: SHA-256 (hex) ueber sein JSON in kompakter Form — gleich, solange
 /// sich am Bauplan nichts aendert, was in der Datei steht.
 [[nodiscard]] QString bauplanAbdruck(const koerper::Bauplan& plan);
+
+/// `format` in der Beschreibung eines Modalfits `.lvinstbodyfit` (KQ25 a): woraus ein gemessener Koerper stammt
+/// (Datensatz, Kanaele, Lage von Schlag und Aufnehmern, Einstellungen des Fits, Stegpunkte, Hoerorte, Annahmen).
+/// Geschrieben von `asset/loop/instrument_bodies/make_gitarre.py`; das Programm liest sie nicht, nur der Waechter.
+inline constexpr const char* kFitFormat = "lumiviz-instrument-body-fit";
+inline constexpr const char* kFitEndung = ".lvinstbodyfit";
+
+/// Der Abdruck einer Beschreibung `.lvinstbodyfit`: SHA-256 (hex) ueber die Bytes der Datei ohne Wagenruecklauf —
+/// so haengt er nicht an den Zeilenenden, mit denen Git die Datei auscheckt.
+[[nodiscard]] QString messungAbdruck(const QByteArray& inhalt);
 
 }  // namespace lumi::loop

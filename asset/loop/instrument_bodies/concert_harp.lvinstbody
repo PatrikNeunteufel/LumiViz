@@ -119,6 +119,11 @@
             "name": "beech"
         }
     ],
+    "measurement": {
+        "file": "",
+        "fingerprint": "",
+        "fitVersion": 0
+    },
     "modes": [
         {
             "airShare": 0.305491183166443,
@@ -14186,6 +14191,7 @@
             ]
         }
     ],
+    "origin": "plan",
     "plan": {
         "file": "concert_harp.lvinstbodyplan",
         "fingerprint": "e5666c0c36dd5f33e694516b15e8cc1b174b54f0acc965fb951ca4b70a05b862"
@@ -14296,5 +14302,5 @@
     },
     "title": "Concert harp",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 3
+    "version": 4
 }

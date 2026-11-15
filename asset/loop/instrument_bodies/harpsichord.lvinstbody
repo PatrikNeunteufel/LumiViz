@@ -100,6 +100,11 @@
             "name": "beech"
         }
     ],
+    "measurement": {
+        "file": "",
+        "fingerprint": "",
+        "fitVersion": 0
+    },
     "modes": [
         {
             "airShare": 0.9601002073124709,
@@ -30444,6 +30449,7 @@
             ]
         }
     ],
+    "origin": "plan",
     "plan": {
         "file": "harpsichord.lvinstbodyplan",
         "fingerprint": "2d50652e3b00003377e8f1213045ddde98bf10f94723499a8f1ebe633f31a546"
@@ -30535,5 +30541,5 @@
     },
     "title": "Harpsichord (soundboard of the Dulcken 1755)",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 3
+    "version": 4
 }

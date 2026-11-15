@@ -1,0 +1,190 @@
+{
+ "format": "lumiviz-instrument-body-fit",
+ "version": 1,
+ "fitVersion": 1,
+ "title": "Classical guitar",
+ "description": "Modal fit to the measured bridge mobility and near-field sound pressure of a classical Spanish guitar from the Mores archive (KQ3 a, KQ23 a to KQ25 a). The body file carries, per mode, the frequency, the loss factor, the mode shape at each of the six strings and a radiation weight for two listening points. Method after Ducceschi, Russo & Webb (DAFx26, 2026, Sec. 3.4) with the full one-second response instead of 62.5 ms, poles from ESPRIT over all six bridge responses, and normal modes with one shape along the saddle (rigid bar with bending).",
+ "source": "R. Mores, Archive for the acoustical documentation of classical Spanish guitars, flamenco guitars and romantic guitars - bridge mobility, Zenodo 4604577 (2021), CC BY 4.0; guitar g34: Manuel Contreras, Madrid 1971, classical Spanish, cedar / Rio palisander, scale 662 mm, 1670 g, measured in the free-field laboratory of the Hamburg University of Applied Sciences on 3 Dec. 2018",
+ "dataset": {
+  "doi": "10.5281/zenodo.4604577",
+  "license": "CC BY 4.0",
+  "file": "qualified_selected_impulses.mat",
+  "sha256": "8a016fab0b3f086a49b2e740c2588fc61938fd09251aab5314413ea4bab72fb6",
+  "guitar": 34,
+  "sampleRate": 48000,
+  "channels": "1 hammer, 2 accelerometer treble, 3 accelerometer bass, 4 microphone upper east, 5 microphone treble, 6 microphone bass; three strikes of 1 s: bass, center, treble",
+  "sensitivities": "hammer 92.90 mV/lbf, accelerometers 10.64 mV/g, microphones 50 mV/Pa, full scale 10 V (batch_extract_bridge_mobility_archive.m of the archive)"
+ },
+ "positions": {
+  "units": "m along the saddle from its centre, bass side negative",
+  "strikes": {
+   "bass": -0.0232,
+   "center": 0.0,
+   "treble": 0.0232
+  },
+  "accelerometers": {
+   "bass": -0.036,
+   "treble": 0.036
+  },
+  "stringSpacing": 0.0116,
+  "source": "Mores 2021, Method Fig. 3: strikes between strings 6/5, 4/3 and 2/1, accelerometers at the ends of the saddle just outside strings 6 and 1; string spacing 11.6 mm assumed (usual size), accelerometers +-36 mm estimated from the photograph (+-3 mm)"
+ },
+ "fit": {
+  "fromHz": 60.0,
+  "toHz": 5000.0,
+  "window": "exponential 3.0 1/s from the strike, subtracted from the damping",
+  "poles": "multichannel ESPRIT per third-octave band over the six bridge accelerances; modes below -25 dB of their band and double poles dropped",
+  "pairs": "below 300 Hz a pair closer than its mean width becomes one pole (frequency and damping re-fitted) if the error in its band rises by at most 0.2 dB",
+  "bridge": "normal modes: residue(strike, sensor) = phi(x_strike) phi(x_sensor), phi(x) = a + b x + c x^2; Gauss-Newton on the six mobilities, error weighted by 1/|Y|",
+  "radiation": "per listening point one complex weight per mode up to the split frequency, fitted to the pressure per force of all three strikes; above it one magnitude per third-octave band with a drawn sign (seed 1), set so that the band level matches on average over the strikes"
+ },
+ "bridgePoints": [
+  {
+   "key": 40,
+   "x": -0.029,
+   "source": "open string 6 (E2): phi at its place on the saddle from the fitted shape; the key is the open string (fretted notes use the played string)"
+  },
+  {
+   "key": 45,
+   "x": -0.0174,
+   "source": "open string 5 (A2): phi at its place on the saddle from the fitted shape; the key is the open string (fretted notes use the played string)"
+  },
+  {
+   "key": 50,
+   "x": -0.0058,
+   "source": "open string 4 (D3): phi at its place on the saddle from the fitted shape; the key is the open string (fretted notes use the played string)"
+  },
+  {
+   "key": 55,
+   "x": 0.0058,
+   "source": "open string 3 (G3): phi at its place on the saddle from the fitted shape; the key is the open string (fretted notes use the played string)"
+  },
+  {
+   "key": 59,
+   "x": 0.0174,
+   "source": "open string 2 (B3): phi at its place on the saddle from the fitted shape; the key is the open string (fretted notes use the played string)"
+  },
+  {
+   "key": 64,
+   "x": 0.029,
+   "source": "open string 1 (E4): phi at its place on the saddle from the fitted shape; the key is the open string (fretted notes use the played string)"
+  }
+ ],
+ "listeningPoints": [
+  {
+   "name": "left",
+   "source": "microphone 'bass': 10 cm above the top plate, 10 cm from the bridge centre towards the bass side (Mores 2021, Method 2c) - near field"
+  },
+  {
+   "name": "right",
+   "source": "microphone 'treble': 10 cm above the top plate, 10 cm from the bridge centre towards the treble side - near field"
+  }
+ ],
+ "assumptions": [
+  "scale of the guitar 662 mm; the strings after Woodhouse et al. 2012 are for 650 mm",
+  "only the motion normal to the top plate is measured; the second direction at the bridge is an assumption elsewhere",
+  "the listening points lie in the near field (10 cm); the other bodies listen at about 1 m",
+  "left = bass side, right = treble side: assigned"
+ ],
+ "check": {
+  "modes": 75,
+  "modesAbove1kHz": 52,
+  "bridgeErrorDb": {
+   "free": {
+    "60-400": 0.91,
+    "400-1000": 1.39,
+    "1000-2500": 1.98,
+    "2500-5000": 1.55
+   },
+   "normalModes": {
+    "60-400": 1.01,
+    "400-1000": 1.77,
+    "1000-2500": 2.45,
+    "2500-5000": 2.31
+   },
+   "note": "rms of 20 lg |fit / measured| over the six bridge mobilities"
+  },
+  "pairs": [
+   {
+    "pair": [
+     97.31,
+     99.66
+    ],
+    "errorPairDb": 0.95,
+    "errorSingleDb": 0.93,
+    "merged": true,
+    "single": [
+     98.0,
+     23.2
+    ]
+   },
+   {
+    "pair": [
+     198.33,
+     201.44
+    ],
+    "errorPairDb": 1.07,
+    "errorSingleDb": 0.5,
+    "merged": true,
+    "single": [
+     200.09,
+     12.7
+    ]
+   },
+   {
+    "pair": [
+     260.36,
+     269.64
+    ],
+    "errorPairDb": 0.67,
+    "errorSingleDb": 0.75,
+    "merged": true,
+    "single": [
+     260.06,
+     28.7
+    ]
+   }
+  ],
+  "effectiveMassString6Kg": {
+   "value": 0.049,
+   "band": "85-240 Hz",
+   "reference": "Wright 1996 Table 5.4: 0.062 kg (guitar BR2, sound hole sealed)"
+  },
+  "radiation": {
+   "splitHz": 1000.0,
+   "thirdOctaveErrorDb": {
+    "500": {
+     "rmsDb": 1.84,
+     "left": {
+      "100-400": 1.5,
+      "500-1000": 1.66,
+      "1250-2500": 2.17,
+      "3150-5000": 3.4
+     },
+     "right": {
+      "100-400": 1.45,
+      "500-1000": 0.83,
+      "1250-2500": 2.07,
+      "3150-5000": 2.51
+     }
+    },
+    "1000": {
+     "rmsDb": 1.62,
+     "left": {
+      "100-400": 0.65,
+      "500-1000": 2.14,
+      "1250-2500": 1.45,
+      "3150-5000": 2.52
+     },
+     "right": {
+      "100-400": 1.01,
+      "500-1000": 2.1,
+      "1250-2500": 1.87,
+      "3150-5000": 2.07
+     }
+    }
+   },
+   "note": "rms error of the third-octave level over bands and the three strikes, per split frequency"
+  }
+ }
+}

@@ -187,8 +187,11 @@ int main(int argc, char* argv[])
                                           QStringLiteral("Probe only (KQ18): the spring at the largest y of the outline; --rim-spring "
                                                          "then holds at the smallest y, and 1/spring runs linearly in y between them."),
                                           QStringLiteral("N"));
+    const QCommandLineOption neuSchreibenOpt(QStringLiteral("rewrite"),
+                                             QStringLiteral("Given a body (.lvinstbody): read it and write it again in the current "
+                                                            "version of the file, without computing anything (to --out, else in place)."));
     parser.addOptions({bisOpt, vonOpt, netzOpt, ordnungOpt, geberOpt, loeserOpt, freqOpt, listeOpt, statOpt, samenOpt, ausOpt, berichtOpt,
-                       formenOpt, freiOpt, gestuetztOpt, federOpt, federEndeOpt});
+                       formenOpt, freiOpt, gestuetztOpt, federOpt, federEndeOpt, neuSchreibenOpt});
     parser.process(app);
 
     const auto geberListe = kp::netzgeber();
@@ -209,9 +212,9 @@ int main(int argc, char* argv[])
     // ein fertiger Koerper: nur der Bericht (31c-6)
     if (parser.positionalArguments().front().endsWith(QLatin1String(lumi::loop::kKoerperEndung), Qt::CaseInsensitive))
     {
-        if (!parser.isSet(berichtOpt))
+        if (!parser.isSet(berichtOpt) && !parser.isSet(neuSchreibenOpt))
         {
-            std::fprintf(stderr, "A body needs --report <file>.\n");
+            std::fprintf(stderr, "A body needs --report <file> or --rewrite.\n");
             return 2;
         }
         kp::Koerper koerper;
@@ -220,6 +223,18 @@ int main(int argc, char* argv[])
         {
             std::fprintf(stderr, neuer ? "The body is from a newer version.\n" : "Could not read the body.\n");
             return 1;
+        }
+        // KQ25 a (S199): nach einer neuen Fassung der Datei die Koerper neu schreiben, ohne neu zu rechnen
+        if (parser.isSet(neuSchreibenOpt))
+        {
+            const QString ziel = parser.isSet(ausOpt) ? parser.value(ausOpt) : parser.positionalArguments().front();
+            if (!lumi::loop::speichereKoerper(koerper, ziel))
+            {
+                std::fprintf(stderr, "Could not write %s\n", qPrintable(ziel));
+                return 1;
+            }
+            std::printf("Rewritten in version %d: %s\n", kp::kKoerperFassung, qPrintable(ziel));
+            if (!parser.isSet(berichtOpt)) return 0;
         }
         const auto start = std::chrono::steady_clock::now();
         if (!schreibeBericht(koerper, parser.value(berichtOpt)))

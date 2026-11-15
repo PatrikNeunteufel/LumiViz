@@ -47,6 +47,11 @@
             "name": "pear"
         }
     ],
+    "measurement": {
+        "file": "",
+        "fingerprint": "",
+        "fitVersion": 0
+    },
     "modes": [
         {
             "airShare": 0.9217223061850222,
@@ -3249,6 +3254,7 @@
             ]
         }
     ],
+    "origin": "plan",
     "plan": {
         "file": "lute.lvinstbodyplan",
         "fingerprint": "b408c2760238e9602f03d48bc200baa0f5f64eef182734a7bf3d4a30ca99def9"
@@ -3287,5 +3293,5 @@
     },
     "title": "Lute",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 3
+    "version": 4
 }

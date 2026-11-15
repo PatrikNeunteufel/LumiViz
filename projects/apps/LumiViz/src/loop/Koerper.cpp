@@ -105,11 +105,22 @@ QJsonObject alsJson(const Koerper& k)
         {QStringLiteral("version"), koerper::kKoerperFassung},
         {QStringLiteral("title"), text(k.titel)},
         {QStringLiteral("description"), text(k.beschreibung)},
-        {QStringLiteral("units"), QStringLiteral("f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) "
-                                                 "(modal mass 1/value^2); radiation: complex pressure per modal acceleration at "
-                                                 "the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)")},
+        {QStringLiteral("units"),
+         k.herkunft == koerper::Herkunft::Messung
+             ? QStringLiteral("f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass "
+                              "1/value^2); radiation: complex pressure per modal acceleration at the listening point, "
+                              "sqrt(kg)/m^2 (fitted to the measured pressure per force)")
+             : QStringLiteral("f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) "
+                              "(modal mass 1/value^2); radiation: complex pressure per modal acceleration at "
+                              "the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)")},
+        // KQ25 a (Fassung 4): woraus der Koerper stammt — beides immer geschrieben
+        {QStringLiteral("origin"), k.herkunft == koerper::Herkunft::Messung ? QStringLiteral("measurement") : QStringLiteral("plan")},
         {QStringLiteral("plan"),
          QJsonObject{{QStringLiteral("file"), text(k.bauplan)}, {QStringLiteral("fingerprint"), text(k.bauplanAbdruck)}}},
+        {QStringLiteral("measurement"),
+         QJsonObject{{QStringLiteral("file"), text(k.messung)},
+                     {QStringLiteral("fingerprint"), text(k.messungAbdruck)},
+                     {QStringLiteral("fitVersion"), k.fitFassung}}},
         {QStringLiteral("computation"),
          QJsonObject{
              {QStringLiteral("version"), r.fassung},
@@ -173,6 +184,16 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
     const QJsonObject plan = wurzel.value(QStringLiteral("plan")).toObject();
     neu.bauplan = text(plan.value(QStringLiteral("file")));
     neu.bauplanAbdruck = text(plan.value(QStringLiteral("fingerprint")));
+    // seit Fassung 4 (KQ25 a); davor immer aus einem Bauplan. Eine unbekannte Herkunft macht die Datei unlesbar.
+    const QString herkunft = wurzel.value(QStringLiteral("origin")).toString(QStringLiteral("plan"));
+    if (herkunft == QLatin1String("measurement"))
+        neu.herkunft = koerper::Herkunft::Messung;
+    else if (herkunft != QLatin1String("plan"))
+        return false;
+    const QJsonObject messung = wurzel.value(QStringLiteral("measurement")).toObject();
+    neu.messung = text(messung.value(QStringLiteral("file")));
+    neu.messungAbdruck = text(messung.value(QStringLiteral("fingerprint")));
+    neu.fitFassung = messung.value(QStringLiteral("fitVersion")).toInt();
     const QJsonObject r = wurzel.value(QStringLiteral("computation")).toObject();
     neu.rechnung.fassung = r.value(QStringLiteral("version")).toInt();
     neu.rechnung.netzgeber = text(r.value(QStringLiteral("mesher")));
@@ -255,6 +276,14 @@ bool ladeKoerper(const QString& pfad, Koerper& koerper, bool* zuNeu)
     const QJsonDocument doc = QJsonDocument::fromJson(datei.readAll(), &fehler);
     if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
     return ausJson(doc.object(), koerper, zuNeu);
+}
+
+QString messungAbdruck(const QByteArray& inhalt)
+{
+    // ohne Wagenruecklauf: der Abdruck haengt nicht daran, mit welchen Zeilenenden Git die Datei auscheckt
+    QByteArray ohne = inhalt;
+    ohne.replace('\r', "");
+    return QString::fromLatin1(QCryptographicHash::hash(ohne, QCryptographicHash::Sha256).toHex());
 }
 
 QString bauplanAbdruck(const koerper::Bauplan& plan)

@@ -128,6 +128,11 @@
             "name": "beech"
         }
     ],
+    "measurement": {
+        "file": "",
+        "fingerprint": "",
+        "fitVersion": 0
+    },
     "modes": [
         {
             "airShare": 0,
@@ -89510,6 +89515,7 @@
             ]
         }
     ],
+    "origin": "plan",
     "plan": {
         "file": "steinway_d.lvinstbodyplan",
         "fingerprint": "6fa0d56020f284aa409f8bbec86da70d10483b943f3ae99bdd789a816feb7aa6"
@@ -89629,5 +89635,5 @@
     },
     "title": "Steinway D (RT-0425)",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 3
+    "version": 4
 }

@@ -30,7 +30,21 @@ namespace lumi::koerper
 /// Loecher (immer geschrieben, 0 = ohne Hohlraum) — damit laesst sich die Daempfung einer gekoppelten
 /// Mode nachrechnen: η = (1 − Anteil) · η der Platte + Anteil / Guete der Luft. Fassung 2 bleibt lesbar
 /// (Anteil 0).
-inline constexpr int kKoerperFassung = 3;
+/// Fassung 4 (S199, KQ25 a): `origin` — woraus der Koerper stammt, `plan` (gerechnet aus einem Bauplan) oder
+/// `measurement` (Modalfit an einer Messung, etwa die Gitarre nach dem Archiv Mores 2021); dazu `measurement` mit
+/// Datei, Abdruck und Fassung des Fits. Beides immer geschrieben. Fassung 3 liest sich als `plan`.
+inline constexpr int kKoerperFassung = 4;
+
+/// Die Fassung des Modalfits fuer gemessene Koerper (`asset/loop/instrument_bodies/make_gitarre.py` traegt dieselbe
+/// Zahl). Hochzaehlen, wenn sich bei gleicher Messung und gleicher Beschreibung ein anderer Koerper ergaebe.
+inline constexpr int kFitFassung = 1;
+
+/// Woraus ein Koerper stammt (KQ25 a).
+enum class Herkunft
+{
+    Bauplan,  ///< gerechnet: `bauplan`, `bauplanAbdruck`, `rechnung.fassung` gelten
+    Messung,  ///< Modalfit an einer Messung: `messung`, `messungAbdruck`, `fitFassung` gelten
+};
 
 /// Die Fassung der Rechnung (Netz, Platte, Loeser, Auswertung, statistischer Teil). Hochzaehlen,
 /// wenn sich bei gleichem Bauplan ein anderer Koerper ergaebe — dann meldet der Waechter jeden
@@ -60,6 +74,10 @@ struct Koerper
     std::string beschreibung;
     std::string bauplan;           ///< der Name der Bauplan-Datei, ohne Ordner
     std::string bauplanAbdruck;    ///< SHA-256 des Bauplans (wie `loop/Koerper` ihn bildet)
+    Herkunft herkunft = Herkunft::Bauplan;
+    std::string messung;           ///< Herkunft Messung: der Name der Beschreibung `.lvinstbodyfit`, ohne Ordner
+    std::string messungAbdruck;    ///< SHA-256 der Beschreibung (`loop/Koerper`: `messungAbdruck`)
+    int fitFassung = 0;            ///< kFitFassung beim Fit; 0 bei Herkunft Bauplan
     Rechnung rechnung;
     std::vector<int> stegTasten;   ///< die Stegpunkte in der Reihenfolge der Werte je Mode (MIDI)
     std::vector<std::string> hoerorte;  ///< die Hoerorte in der Reihenfolge der Gewichte je Mode
