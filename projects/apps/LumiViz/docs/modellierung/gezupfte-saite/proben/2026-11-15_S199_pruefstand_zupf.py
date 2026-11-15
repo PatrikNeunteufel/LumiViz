@@ -2,6 +2,13 @@
 
 Aufruf (vom Projekt-Root): python -B <dieses Skript> gitarre [--je-taste] [--steg-neu] [--winkel <Grad>]
                            python -B <dieses Skript> gitarre-mit [--je-taste]
+                           python -B <dieses Skript> laute | oud [--je-taste]
+
+laute, oud: Saiten in Choeren. Die Saiten eines Chors haengen am selben Stegpunkt und werden zusammen gezupft (im
+Einklang um +-2 bzw. +-1,5 Cent gegeneinander verstimmt wie die Vorgabe des Kerns, oder in der Oktave). Monofile Saiten
+nach Woodhouse & Lynch-Aird 2019 (Gl. 4, 11-17, Tab. I; am Seitenbild gegengeprueft): E aus der Spannung, Verlust =
+Luft (Stokes, mit dem Zuschlag d + 0,2) + lambda * E''/E. Je Taste: Lautheit mit allen Moden und mit den Moden der
+Koerperdatei allein in der Schleife (GZ5 a).
 
 gitarre-mit: Mitschwingen je Note (GZ3 a) - die gespielte Saite und die uebrigen fuenf leer an einem Steg, jede an ihrem
 Stegpunkt, zwei Polarisationen (30 Grad). Der Koerper koppelt die Stegpunkte: Y[(i,a),(j,b)] = Summe phi_ni phi_nj
@@ -182,7 +189,7 @@ def ton2(saite, laenge, x_p, d, winkel_grad, Y, Hz, Hy, w, breite=0.0075, stufe=
     T, m, EI = saite["T"], saite["m"], saite["EI"]
     k2 = (-T + np.sqrt(T * T + 4 * EI * m * w ** 2)) / (2 * EI)
     k = np.sqrt(k2)
-    eta = (T * (saite["etaF"] + saite["etaA"] / w) + EI * saite["etaB"] * k2) / (T + EI * k2)
+    eta = saiten_eta(saite, w, k2)
     k = k * (1 - 0.5j * eta)
     z0 = T * k / w
     f0 = T * d * laenge / (x_p * (laenge - x_p))
@@ -204,13 +211,47 @@ def ton2(saite, laenge, x_p, d, winkel_grad, Y, Hz, Hy, w, breite=0.0075, stufe=
     return F[:, 0:1] * Hz + F[:, 1:2] * Hy
 
 
-def koerper_matrix(kp, w, tan):
-    """Y (Frequenz x 2S x 2S) zwischen allen Stegpunkten und beiden Richtungen, H (Frequenz x 2S x Hoerorte)."""
-    S = kp["steg"].shape[1]
+def saiten_eta(saite, w, k2):
+    """Verlustfaktor der Saite. Mit `d` und `rho` (monofil): Woodhouse & Lynch-Aird 2019 Gl. 11, 12, 14, 15 mit dem
+    Zuschlag (d + 0,2) auf die Luft; sonst Valette mit eta_F, eta_A (Woodhouse u. a. 2012 Gl. 4)."""
+    T, EI = saite["T"], saite["EI"]
+    biegung = EI * saite["etaB"] * k2 / (T + EI * k2)
+    if "d" in saite:
+        f = np.maximum(np.abs(w.real) / (2 * np.pi), 20.0)
+        M = saite["d"] / 4 * np.sqrt(2 * np.pi * f / 1.5e-5)
+        return (saite["d"] * 1000 + 0.2) * 1.2 / saite["rho"] * (2 * np.sqrt(2) * M + 1) / M ** 2 + biegung
+    return T * (saite["etaF"] + saite["etaA"] / w) / (T + EI * k2) + biegung
+
+
+WERKSTOFF = {"N": (4.5, 39.0, 0.25, 1070.0), "F": (3.2, 41.0, 0.18, 1800.0)}   # E0 GPa, Anstieg je GPa Spannung, E'' GPa, rho
+
+
+def monofil(d_mm, hz, laenge, werkstoff):
+    """Eine monofile Saite aus Durchmesser, Ton und Laenge (Woodhouse & Lynch-Aird 2019 Tab. I, Gl. 16, 17)."""
+    e0, anstieg, e2, rho = WERKSTOFF[werkstoff]
+    d = d_mm / 1000
+    flaeche = np.pi * d * d / 4
+    m = rho * flaeche
+    T = 4 * laenge ** 2 * hz ** 2 * m
+    E = (e0 + anstieg * T / flaeche / 1e9) * 1e9
+    return {"T": T, "m": m, "EI": E * np.pi * d ** 4 / 64, "etaB": e2 * 1e9 / E, "d": d, "rho": rho, "hz": hz}
+
+
+def umsponnen(zug_n, hz, laenge):
+    """Eine umsponnene Saite aus Zug und Ton; Biegesteife und Verluste UEBERTRAGEN von den umsponnenen Gitarrensaiten
+    (Woodhouse u. a. 2012 Tab. I, Saiten 4-6: EI 40-57e-6 N m^2, eta_F 2-7e-5, eta_B 2e-2, eta_A 0,9-1,2)."""
+    return {"T": zug_n, "m": zug_n / (4 * laenge ** 2 * hz ** 2), "EI": 50e-6, "etaF": 5e-5, "etaB": 2.0e-2, "etaA": 1.1, "hz": hz}
+
+
+def koerper_matrix(kp, w, tan, punkte=None):
+    """Y (Frequenz x 2S x 2S) zwischen den Stegpunkten der Saiten und beiden Richtungen, H (Frequenz x 2S x Hoerorte).
+    `punkte`: je Saite ihr Stegpunkt (mehrere Saiten duerfen am selben haengen); ohne Angabe je Stegpunkt eine Saite."""
+    steg = kp["steg"] if punkte is None else kp["steg"][:, punkte]
+    S = steg.shape[1]
     wn = 2 * np.pi * kp["f"]
     phi = np.empty((len(wn), 2 * S))
-    phi[:, 0::2] = kp["steg"]
-    phi[:, 1::2] = kp["steg"] * tan[:, None]
+    phi[:, 0::2] = steg
+    phi[:, 1::2] = steg * tan[:, None]
     Y = np.empty((len(w), 2 * S, 2 * S), dtype=complex)
     H = np.empty((len(w), 2 * S, kp["G"].shape[1]), dtype=complex)
     for a in range(0, len(w), 2048):
@@ -225,7 +266,7 @@ def saite_wellen(saite, w):
     T, m, EI = saite["T"], saite["m"], saite["EI"]
     k2 = (-T + np.sqrt(T * T + 4 * EI * m * w ** 2)) / (2 * EI)
     k = np.sqrt(k2)
-    eta = (T * (saite["etaF"] + saite["etaA"] / w) + EI * saite["etaB"] * k2) / (T + EI * k2)
+    eta = saiten_eta(saite, w, k2)
     k = k * (1 - 0.5j * eta)
     return k, T * k / w
 
@@ -240,7 +281,7 @@ def ton_mit(saiten, laengen, gespielt, x_p, d, winkel_grad, Y, H, w, breite=0.00
         k, z0 = saite_wellen(sa, w)
         z[:, 2 * i] = z[:, 2 * i + 1] = z0
         E[:, 2 * i] = E[:, 2 * i + 1] = np.exp(-2j * k * L)
-        if i == gespielt:
+        if i == gespielt or (isinstance(gespielt, (list, tuple)) and i in gespielt):
             T, m = sa["T"], sa["m"]
             f = -(T * d * L / (x_p * (L - x_p))) / (1j * w) * np.exp(-(w * breite / np.sqrt(T / m)) ** 2)
             gi = f / (2 * z0) * (np.exp(-1j * k * x_p) - np.exp(-1j * k * (2 * L - x_p)))
@@ -256,7 +297,8 @@ def ton_mit(saiten, laengen, gespielt, x_p, d, winkel_grad, Y, H, w, breite=0.00
         vplus = np.linalg.solve(eins[None] + E[b][:, :, None] * (M - eins[None]), g[b][:, :, None])[:, :, 0]
         F = z[b] * (2 * vplus - (M @ vplus[:, :, None])[:, :, 0])
         p[b] = np.einsum("fa,fao->fo", F, H[b])
-        F[:, 2 * gespielt:2 * gespielt + 2] = 0
+        for i in (gespielt if isinstance(gespielt, (list, tuple)) else [gespielt]):
+            F[:, 2 * i:2 * i + 2] = 0
         rest[b] = np.einsum("fa,fao->fo", F, H[b])
     return p, rest
 
@@ -266,7 +308,7 @@ def ton(saite, laenge, x_p, d, Y, H, w, breite=0.0075):
     T, m, EI = saite["T"], saite["m"], saite["EI"]
     k2 = (-T + np.sqrt(T * T + 4 * EI * m * w ** 2)) / (2 * EI)
     k = np.sqrt(k2)
-    eta = (T * (saite["etaF"] + saite["etaA"] / w) + EI * saite["etaB"] * k2) / (T + EI * k2)
+    eta = saiten_eta(saite, w, k2)
     k = k * (1 - 0.5j * eta)
     z0 = T * k / w
     f0 = T * d * laenge / (x_p * (laenge - x_p))
@@ -414,7 +456,83 @@ def gitarre_mit(je_taste):
           f"nur die uebrigen Saiten {np.median(a[:, 5]):.1f} dB (von {a[:, 5].min():.1f} bis {a[:, 5].max():.1f})")
 
 
+# ---------------------------------------------------------------- Laute und Oud
+# Laute: Woodhouse & Lynch-Aird 2019 Tab. II (8 Choere in G, 0,625 m; S195 gegengelesen): Taste der leeren Saite,
+# je Saite (Durchmesser mm, Werkstoff, Oktave ueber dem Chor?)
+LAUTE_MENSUR = 0.625
+LAUTE = [(38, [(1.60, "F", 0), (0.925, "N", 12)]), (41, [(1.40, "F", 0), (0.875, "N", 12)]), (43, [(1.25, "F", 0), (0.775, "N", 12)]),
+         (48, [(0.91, "F", 0), (0.91, "F", 0)]), (53, [(0.900, "N", 0), (0.900, "N", 0)]), (57, [(0.725, "N", 0), (0.725, "N", 0)]),
+         (62, [(0.52, "N", 0), (0.52, "N", 0)]), (67, [(0.475, "N", 0)])]
+# Oud: D'Addario EJ95A (Hersteller; Durchmesser in Zoll, Zug in kg), arabische Stimmung C2 F2 A2 D3 G3 C4. Die Mensur
+# nennt der Hersteller nicht: 0,60 m ANNAHME (die Tabelle passt zu 0,594 m). Chor C4: Zug auf der Seite "0.0" - aus
+# Nylon und Durchmesser gerechnet. F2 0.032 ohne Artikelnummer: umsponnen (als Nylon waere die Masse ein Fuenftel).
+OUD_MENSUR = 0.60
+OUD = [(36, [("u", 3.659)]), (41, [("u", 2.86), ("u", 2.86)]), (45, [("u", 3.24), ("u", 3.24)]), (50, [("u", 4.034), ("u", 4.034)]),
+       (55, [("n", 0.031 * 25.4), ("n", 0.031 * 25.4)]), (60, [("n", 0.026 * 25.4), ("n", 0.026 * 25.4)])]
+
+
+def hz_von(taste):
+    return 440.0 * 2 ** ((taste - 69) / 12)
+
+
+def choere(name):
+    """Je Chor (Taste der leeren Saiten, Liste der Saiten); die Mensur; die Verstimmung im Einklang in Cent."""
+    if name == "laute":
+        return [(t, [monofil(d, hz_von(t + okt), LAUTE_MENSUR, w) for d, w, okt in saiten]) for t, saiten in LAUTE], LAUTE_MENSUR, 4.0
+    aus = []
+    for t, saiten in OUD:
+        aus.append((t, [umsponnen(wert * 9.80665, hz_von(t), OUD_MENSUR) if art == "u" else monofil(wert, hz_von(t), OUD_MENSUR, "N")
+                        for art, wert in saiten]))
+    return aus, OUD_MENSUR, 3.0
+
+
+def chor_instrument(name, je_taste, hoechster_bund=12):
+    kp = lade_koerper({"laute": "lute", "oud": "oud"}[name])
+    datei = len(json.loads((KOERPER / f"{ {'laute': 'lute', 'oud': 'oud'}[name] }.lvinstbody").read_text(encoding="utf-8"))["modes"])
+    nur = {"f": kp["f"][:datei], "eta": kp["eta"][:datei], "steg": kp["steg"][:datei], "G": kp["G"][:datei]}
+    w = frequenzen()
+    tan = richtung_tan(kp["f"])
+    ch, mensur, cent = choere(name)
+    print(f"{name}: {len(ch)} Choere, Mensur {mensur} m; Zug je Saite in N: " +
+          " | ".join(" / ".join(f"{s['T']:.1f}" for s in saiten) for _, saiten in ch))
+    print("Taste Chor Bund | Lautheit alle Moden / Moden der Datei (LUFS) | Pegel 1-2 s gegen den Anfang: alle / Datei (dB)")
+    zeilen, kurven = [], {}
+    tasten = range(ch[0][0], ch[-1][0] + hoechster_bund + 1, 1 if je_taste else 3)
+    for taste in tasten:
+        c = max(i for i, (t, _) in enumerate(ch) if t <= taste)
+        bund = taste - ch[c][0]
+        saiten = ch[c][1]
+        punkt = kp["tasten"].index(ch[c][0])
+        if c not in kurven:
+            Y, H = koerper_matrix(kp, w, tan, [punkt] * len(saiten))
+            Yd, _ = koerper_matrix(nur, w, tan[:datei], [punkt] * len(saiten))
+            kurven = {c: (Y, Yd, H)}
+        Y, Yd, H = kurven[c]
+        laenge = mensur * 2 ** (-bund / 12)
+        # im Einklang gegeneinander verstimmt: die Laenge der zweiten Saite um `cent` kuerzer bzw. laenger
+        gleich = len(saiten) == 2 and abs(saiten[0]["hz"] - saiten[1]["hz"]) < 1e-9
+        laengen = [laenge * 2 ** ((-0.5 if i == 0 else 0.5) * cent / 1200) if gleich else laenge for i in range(len(saiten))]
+        xp = min(ZUPFORT, 0.5 * laenge)
+        alle = zeit(ton_mit(saiten, laengen, list(range(len(saiten))), xp, 0.002, 30.0, Y, H, w)[0])
+        dat = zeit(ton_mit(saiten, laengen, list(range(len(saiten))), xp, 0.002, 30.0, Yd, H, w)[0])
+        v, e = VORLAUF, VORLAUF + 0.4
+        zeilen.append((taste, momentary_max(alle), momentary_max(dat), rms_db(alle, 1, 2) - rms_db(alle, v, e),
+                       rms_db(dat, 1, 2) - rms_db(dat, v, e)))
+        z = zeilen[-1]
+        print(f"{taste:3d}  {c + 1}  {bund:2d} | {z[1]:6.1f} / {z[2]:6.1f} | {z[3]:6.1f} / {z[4]:6.1f}", flush=True)
+    a = np.array(zeilen)
+    l = a[:, 1]
+    d3 = np.abs(l[3:] - l[:-3]) if je_taste else np.abs(np.diff(l))
+    print(f"Spanne {l.max() - l.min():.1f} LU, groesster Sprung im Terzabstand {d3.max():.1f} LU (bei Taste {int(a[int(np.argmax(d3)), 0])}), "
+          f"mittlerer {np.median(d3):.1f} LU")
+    print(f"GZ5 a, Moden der Datei ({datei}) gegen alle ({len(kp['f'])}): Lautheit groesster Betrag {np.abs(a[:, 2] - a[:, 1]).max():.2f} LU, "
+          f"Pegel 1-2 s groesster Betrag {np.abs(a[:, 4] - a[:, 3]).max():.2f} dB")
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] in ("laute", "oud"):
+        chor_instrument(sys.argv[1], "--je-taste" in sys.argv)
+        sys.exit(0)
     if len(sys.argv) > 1 and sys.argv[1] == "gitarre-mit":
         gitarre_mit("--je-taste" in sys.argv)
         sys.exit(0)
