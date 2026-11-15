@@ -1,5 +1,5 @@
 """Schreibt den Bauplan der Konzertharfe `concert_harp.lvinstbodyplan` (Stufe 34k-5, S198; KQ1 a, KQ17 a, KQ18 a, KQ19 a, KQ20 a,
-KQ21 a).
+KQ21 a; S199: KQ22 a).
 
 Aufruf (vom Projekt-Root):
     python -I -B asset/loop/instrument_bodies/make_harfe.py [--saiten <saitenorte.json>] [--ziel <ordner>]
@@ -35,6 +35,10 @@ Was woher kommt:
   Stegpunkte        je Saite einer, an ihrer Oese in der Mitte der Deckleiste (Abb. 2.9, von Hand am Bild, +-0,5 cm);
                     Taste = die Saite mit dem Pedal in der Mitte (Bell Tab. 2.1 / 2.2 nennt die Saiten in der
                     Grundstellung, einen Halbton tiefer) — Annahme: D1 ... G7, die weissen Tasten 26 ... 103
+  Tasten            KQ22 a: je chromatischer Taste 25 ... 104 ein Stegpunkt, 80 Punkte an 46 Orten — die schwarze
+                    Taste an der Oese der Saite darunter (Pedal unten), die Taste 25 an der tiefsten Saite (Pedal
+                    oben); der Koerper gibt damit jeder Taste, die eine der 46 Saiten erreicht, eine Antwort.
+                    Benachbarte Oesen unterscheiden sich im Mittel um 1,5 dB je Terzband, 0,4 dB breitbandig
 Zielgroessen nach KQ19 a (S(1,2) ... S(1,7), Kasten G in der Harfe): Lage <= 10 % ohne Saiten und besaitet, Ort des
 staerksten Bauchs <= 2 Messorte, Hoehe <= 6 dB ohne Saiten. Bekannte Abweichungen: S(1,1)-, S(1,8) und die Lage von
 S(1,2) gegen den Kasten ohne Saiten (+10,4 %). Messorte nach Abb. 6.3: y = 0,035 (40 - Ort) - 0,057 m.
@@ -99,12 +103,25 @@ def baue(saiten):
         rippen.append({"name": "harmonic bar " + name, "material": "spruce",
                        "line": [[round(seite * breite(y0) / 4, 5), y0], [round(seite * breite(y1) / 4, 5), y1]],
                        "height": [0.015, 0.007], "width": [0.0115, 0.005]})
-    punkte = [{"key": taste, "x": 0.0, "y": s["ort"],
-               "source": f"string {s['name']} (Bell 1988 Table 2.1 / 2.2: {hz} Hz with the pedal up; the key is the string "
-                         "with the pedal in the middle - assumed); eyelet on the centre line of the cover bar, read by "
-                         "eye from Fig. 2.9"}
-              for s, hz, taste in zip(saiten, SAITEN_HZ, tasten())]
+    # KQ22 a: je chromatischer Taste ein Stegpunkt — die weisse Taste an der Oese ihrer Saite (Pedal in der Mitte),
+    # die schwarze an der Oese der Saite darunter (Pedal unten), die Taste 25 an der tiefsten Saite (Pedal oben)
+    punkte = []
+    for s, hz, taste in zip(saiten, SAITEN_HZ, tasten()):
+        saite = f"string {s['name']} (Bell 1988 Table 2.1 / 2.2: {hz} Hz with the pedal up)"
+        oese = "eyelet on the centre line of the cover bar, read by eye from Fig. 2.9"
+        punkte.append({"key": taste, "x": 0.0, "y": s["ort"],
+                       "source": f"{saite}; the key is the string with the pedal in the middle - assumed; {oese}"})
+        if (taste + 1) % 12 not in WEISS:
+            punkte.append({"key": taste + 1, "x": 0.0, "y": s["ort"],
+                           "source": f"{saite}; the key is the string with the pedal down - assigned (KQ22 a): a black "
+                                     f"key sits on the string below; {oese}"})
+        if taste == 26:
+            punkte.append({"key": 25, "x": 0.0, "y": s["ort"],
+                           "source": f"{saite}; the key is the string with the pedal up - assigned (KQ22 a): the lowest "
+                                     f"key sits on the lowest string; {oese}"})
     punkte.sort(key=lambda p: p["key"])
+    assert [p["key"] for p in punkte] == list(range(25, 105)), "je Taste 25 ... 104 genau ein Stegpunkt"
+    assert len({p["y"] for p in punkte}) == len(saiten), "80 Tasten an 46 Orten"
     return {
         "format": "lumiviz-instrument-body-plan",
         "version": 7,

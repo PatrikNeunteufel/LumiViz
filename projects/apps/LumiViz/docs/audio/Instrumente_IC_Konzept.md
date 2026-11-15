@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.35.0
+> **Version:** 0.36.0
 > **Datum:** 2026-11-13 (Session 198)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1444,6 +1444,8 @@ Ziele und Schwelle der Harfe (Kasten G besaitet, Lage und Höhe mit Saitenlast) 
 
 ✅ **KQ21 a** (Patrik S198): **Fassung 7 bleibt, die Harfe bekommt an der Diskantkante 3·10⁶ N/m²** — angepasst, nicht gemessen. Am vollen Kasten gerechnet (Bericht §12) bringt keine Feder S(1,5)–S(1,8) zugleich in die Schwellen (der Kipppunkt von KQ20 a, wörtlich eingetreten); mit 3·10⁶ N/m² liegen S(1,3)–S(1,7) darin (S(1,7) −5,4 statt −7,4 dB), der Pegel an Messort 2 steigt um 5–10 dB von rund 20 dB Lücke. Bekannte Abweichungen im Test: S(1,1)−, S(1,8) (−14 dB) und die Lage von S(1,2) gegen den Kasten ohne Saiten (+10,4 %; besaitet +7 %). Offen: die übrige Ursache am Diskantende (Boden dort dünner, Kopfblock schwingt mit, Leisten enden vor der Kante — nicht untersucht), die Taste je Saite (Annahme Pedal Mitte).
 
+✅ **KQ22 a** (Patrik S199): **Je chromatischer Taste ein Stegpunkt im Bauplan der Harfe** — 80 Stegpunkte für die Tasten 25–104 an den 46 Ösen: die weiße Taste an der Öse ihrer Saite (Pedal in der Mitte), die schwarze an der Öse der Saite darunter (Pedal unten), die Taste 25 an der tiefsten Saite (Pedal oben); je Punkt steht in `source`, welche Saite mit welcher Pedalstellung gemeint ist. Kein neues Format, keine Änderung am Programm. Befund: `stegpunktVon` (`src/loop/Boden.cpp`) sucht die Taste genau — mit 46 Punkten hätten 34 Tasten im Umfang keinen Körper, der Ton liefe dort ohne Faltung (gegen das Ziel „jede Taste“ aus 34k-6). Nachgerechnet am Körper (`proben/2026-11-15_S199_harfe_nachbarpunkte.py`): benachbarte Saiten unterscheiden sich je Terzband im Mittel um 1,5 dB (90 % unter 3,3 dB, an Knoten einzelner Moden bis 10,4 dB), breitbandig um 0,4 dB (höchstens 1,7 dB) — die Wahl „Saite darunter“ gegen „Saite darüber“ liegt unter der Schwelle von 6 dB aus KQ19 a. Grund: die Zuordnung Taste → Saite steht mit Quelle im Bauplan, wie bei den Randtasten des Cembalos (KQ16 a); das Programm muss nichts über Harfen wissen. Verworfen: b (Regel „nächster Punkt darunter“ in `stegpunktVon` — gälte für jeden Körper, gäbe bei Laute und Oud jeder gegriffenen Note den falschen Chor und ließe eine versehentliche Lücke still klingen), c (nur die weißen Tasten). Kippt, wenn die Pedalstellung in 34k-6 / 34k-7 als Spielweise bestimmen soll, welche Saite eine Taste spielt (dann trägt der Stegpunkt die Saite statt der Taste: neue Bauplan-Fassung, alle Körper neu), oder wenn in 34k-6 an einer schwarzen Taste ein Sprung über 6 LU gegen ihre weißen Nachbarn entsteht. Der Körper ist neu gerechnet (97 s): gleich bis auf Abdruck, Rechenzeit und die 34 neuen Spalten, die den Wert ihrer Saite tragen. **Nebenbefund:** Laute und Oud haben nur an den Tasten ihrer leeren Saiten einen Körper (8 und 6 Stegpunkte) — das löst nach Plan der Saitensatz in 34k-8.
+
 Danach **Rest von Stufe 31 auf der Bibliothek** (IK2-7 a): 31f, 31g (Bedienung nach 34a), 31e mit dem Clip-Weg, 31h.
 Ketten (3, 7, 8, 9) und Clips (11, Mitschwingen) als eigene spätere Stufen (Z1 a).
 
@@ -1505,6 +1507,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.36.0 | 2026-11-15 | Session 199. §6: KQ22 a (je chromatischer Taste ein Stegpunkt im Bauplan der Harfe, 80 Punkte an 46 Orten, Tasten 25–104); Nebenbefund Laute und Oud (Körper nur an den leeren Saiten, bis 34k-8). |
 | 0.35.0 | 2026-11-14 | Session 198. §6: KQ19 a (Ziele der Harfe), KQ20 a (Halt je Randstück, Bauplan Fassung 7), KQ21 a (Diskantkante der Harfe 3·10⁶ N/m², angepasst); Körper `concert_harp`; offen die übrige Ursache am Diskantende und die Taste je Saite. |
 | 0.34.0 | 2026-11-14 | Session 198. §6: Berichtigung zu KQ18 a — der Rand der Harfe ist gestützt (Feder 0), die Zuordnung der Formen war um eins versetzt; offen Ziele und Schwelle der Harfe (KQ19). |
 | 0.33.0 | 2026-11-13 | Session 198. §6: Kap. 7 von Bell gelesen, Rand des Harfenbodens gerechnet; KQ18 a (Rand im Bauplan: eingespannt oder elastisch mit Drehfeder, Fassung 6, alle Körper neu) und Folgeentscheid (ein Federwert für den ganzen Rand); offen S(2,1), Ziele und Schwelle der Harfe. |

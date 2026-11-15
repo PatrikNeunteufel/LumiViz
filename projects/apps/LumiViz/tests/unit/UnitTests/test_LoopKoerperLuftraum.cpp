@@ -769,17 +769,34 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
     CHECK(plan.rand.abschnitte[0].wegfeder == doctest::Approx(3.0e6));
     CHECK(plan.rand.abschnitte[0].drehfeder == 0.0);
     CHECK_FALSE(plan.rand.abschnitte[0].quelle.empty());
-    // 46 Saiten, je eine Oese auf der Mittellinie; mit dem Pedal in der Mitte die weissen Tasten D1 ... G7
-    REQUIRE(plan.stegpunkte.size() == 46);
-    CHECK(plan.stegpunkte.front().taste == 26);
-    CHECK(plan.stegpunkte.back().taste == 103);
-    for (const kp::Stegpunkt& p : plan.stegpunkte)
+    // 46 Saiten, je eine Oese auf der Mittellinie; mit dem Pedal in der Mitte die weissen Tasten D1 ... G7.
+    // KQ22 a: je chromatischer Taste 25 ... 104 ein Stegpunkt, 80 Punkte an 46 Orten — die schwarze Taste an der
+    // Oese der Saite darunter (Pedal unten), die Taste 25 an der tiefsten Saite (Pedal oben)
+    REQUIRE(plan.stegpunkte.size() == 80);
+    const auto weiss = [](int taste) {
+        const int klasse = taste % 12;
+        return klasse == 0 || klasse == 2 || klasse == 4 || klasse == 5 || klasse == 7 || klasse == 9 || klasse == 11;
+    };
+    std::size_t saiten = 0;
+    for (std::size_t s = 0; s < plan.stegpunkte.size(); ++s)
     {
-        const int klasse = p.taste % 12;
-        CHECK_MESSAGE((klasse == 0 || klasse == 2 || klasse == 4 || klasse == 5 || klasse == 7 || klasse == 9 || klasse == 11), p.taste);
+        const kp::Stegpunkt& p = plan.stegpunkte[s];
+        CAPTURE(p.taste);
+        CHECK(p.taste == 25 + static_cast<int>(s));
         CHECK(p.ort.x == 0.0);
         CHECK_FALSE(p.quelle.empty());
+        if (weiss(p.taste))
+        {
+            ++saiten;
+            // jede Saite an ihrem eigenen Ort, zum Diskant hin
+            if (s >= 2) CHECK(p.ort.y > plan.stegpunkte[s - 1].ort.y);
+        }
+        else if (p.taste == 25)
+            CHECK(p.ort == plan.stegpunkte[s + 1].ort);
+        else
+            CHECK(p.ort == plan.stegpunkte[s - 1].ort);
     }
+    CHECK(saiten == 46);
     CHECK_FALSE(plan.daempfung.quelle.empty());
 
     kp::Koerper k;

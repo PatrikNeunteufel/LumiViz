@@ -431,3 +431,24 @@ in den Schwellen von KQ19 a; S(1,2) bleibt bei +10,4 % Lage, S(1,8) wird schlech
 gemessen. Der Körper `concert_harp` (bis 5 kHz, 144 Moden) gegen KQ19 a: Lage +10,4 / +9,7 / −0,3 / −3,3 / −9,6 /
 +1,6 % ohne Saiten, +7,0 / +3,8 / +0,2 / −5,1 / −8,1 / +2,1 % besaitet; Ort überall unter 1 Messort; Höhe +1,6 /
 −4,6 / −5,5 / −2,6 / – / −5,4 dB; S(1,8) −14,1 dB. Im Test „Luftraum die mitgelieferte Harfe“ festgehalten.
+
+## 13 KQ22 a: je chromatischer Taste ein Stegpunkt (S199; `proben/2026-11-15_S199_harfe_nachbarpunkte.py`)
+
+**Befund am Code:** `stegpunktVon` (`src/loop/Boden.cpp`) sucht die Taste genau; `bodenAntwortFuer` gibt sonst keinen
+Klang, der Ton läuft ohne Faltung (`Instrument.cpp`, Kern-Pfad). Mit 46 Stegpunkten auf den weißen Tasten 26–103
+hätten die 32 schwarzen Tasten dazwischen und die Tasten 25 (tiefste Saite, Pedal oben) und 104 (höchste Saite,
+Pedal unten) keinen Körper.
+
+**Nachgerechnet** (145 diskrete Moden, 100–2500 Hz, erster Hörort, ohne den statistischen Teil): der Unterschied der
+Körperantwort zwischen Saiten im Abstand von einer Saite beträgt je Terzband im Mittel 1,5 dB (90 % unter 3,3 dB,
+größter 10,4 dB an einem Knoten), breitbandig im Mittel 0,4 dB (größter 1,7 dB); im Abstand von zwei Saiten 2,6 /
+5,5 / 15,1 dB und breitbandig 0,7 / 2,6 dB. Ob eine schwarze Taste an der Saite darunter oder darüber liegt, bleibt
+damit unter der Schwelle von 6 dB aus KQ19 a.
+
+**KQ22 a (Patrik):** `make_harfe.py` schreibt 80 Stegpunkte für die Tasten 25–104 an den 46 Ösen — die weiße Taste
+an ihrer Saite (Pedal in der Mitte), die schwarze an der Saite darunter (Pedal unten), die Taste 25 an der tiefsten
+Saite (Pedal oben), je Punkt mit Vermerk. Der Körper ist neu gerechnet (97 s) und Feld für Feld verglichen: gleich
+bis auf Abdruck und Rechenzeit; an den 46 alten Tasten sind die Werte je Mode und die Streuung des statistischen
+Teils Bit für Bit gleich, die 34 neuen Spalten tragen den Wert ihrer Saite. Die Zahlen gegen KQ19 a (§12) gelten
+unverändert. Kippt, wenn die Pedalstellung bestimmen soll, welche Saite eine Taste spielt (dann trägt der Stegpunkt
+die Saite, neue Bauplan-Fassung), oder wenn in 34k-6 an einer schwarzen Taste ein Sprung über 6 LU entsteht.
