@@ -7,6 +7,8 @@ Aufruf: python -B <dieses Skript>
    Abklingen gegen sigma_n = eta_n w_n / 2 (Valette), Hoehe bei t = 0 gegen 2 F0 g |sin(n pi x_p / L)| / (w_n L dk/dw).
 3  Zwei Polarisationen: bewegen alle Moden den Steg in derselben Richtung theta und wird unter theta losgelassen, ist
    das die Rechnung mit einer Polarisation und den Formwerten phi / cos(theta); bei Winkel 0 und tan = 0 dieselbe.
+4  Mitschwingen: `ton_mit` mit einer Saite gleich `ton2`; mit sechs Saiten, deren fuenf uebrige einen Wellenwiderstand
+   nahe null haben (Masse und Zug mal 1e-12), gleich der Rechnung mit einer Saite.
 """
 import importlib.util
 import pathlib
@@ -45,8 +47,26 @@ def fall3():
           f"{np.abs(null2 - null1).max() / np.abs(null1).max():.1e}")
 
 
+def fall4():
+    kp = ps.lade_koerper("classical_guitar")
+    w = ps.frequenzen()[::7]
+    tan = ps.richtung_tan(kp["f"])
+    Y, H = ps.koerper_matrix(kp, w, tan)
+    s, L = 3, ps.MENSUR * 2 ** (-5 / 12)
+    bezug = ps.ton2(ps.GITARRE[s], L, 0.16, 0.002, 30.0, *ps.koerper_kurven2(kp, s, w, tan), w)
+    j = 2 * s
+    eine = ps.ton_mit([ps.GITARRE[s]], [L], 0, 0.16, 0.002, 30.0, Y[:, j:j + 2, j:j + 2], H[:, j:j + 2], w)[0]
+    leicht = [sa if i == s else dict(sa, T=sa["T"] * 1e-12, m=sa["m"] * 1e-12, EI=sa["EI"] * 1e-12) for i, sa in enumerate(ps.GITARRE)]
+    sechs = ps.ton_mit(leicht, [L if i == s else ps.MENSUR for i in range(6)], s, 0.16, 0.002, 30.0, Y, H, w)[0]
+    voll, rest = ps.ton_mit(ps.GITARRE, [L if i == s else ps.MENSUR for i in range(6)], s, 0.16, 0.002, 30.0, Y, H, w)
+    print(f"4  ton_mit mit einer Saite gegen ton2: {np.abs(eine - bezug).max() / np.abs(bezug).max():.1e}; sechs Saiten, fuenf "
+          f"ohne Wellenwiderstand: {np.abs(sechs - bezug).max() / np.abs(bezug).max():.1e}; sechs echte Saiten weichen ab um "
+          f"{np.abs(voll - bezug).max() / np.abs(bezug).max():.2f} (relativ, groesster Wert)")
+
+
 if __name__ == "__main__":
     fall3()
+    fall4()
     t = np.arange(int(3 * FS)) / FS
     s = 10 ** (-23 / 20) * np.sin(2 * np.pi * 1000 * t)
     print(f"1  Sinus 1 kHz -23 dBFS stereo: {ps.momentary_max(np.stack([s, s], axis=1)):.2f} LUFS (Soll -23,0)")

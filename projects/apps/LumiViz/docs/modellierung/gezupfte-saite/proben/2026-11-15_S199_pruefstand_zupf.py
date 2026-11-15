@@ -1,6 +1,13 @@
 """S199, 34k-6 — Pruefstand ohne Kern: eine gezupfte Saite am Steg eines Koerpers, im Frequenzbereich gerechnet.
 
 Aufruf (vom Projekt-Root): python -B <dieses Skript> gitarre [--je-taste] [--steg-neu] [--winkel <Grad>]
+                           python -B <dieses Skript> gitarre-mit [--je-taste]
+
+gitarre-mit: Mitschwingen je Note (GZ3 a) - die gespielte Saite und die uebrigen fuenf leer an einem Steg, jede an ihrem
+Stegpunkt, zwei Polarisationen (30 Grad). Der Koerper koppelt die Stegpunkte: Y[(i,a),(j,b)] = Summe phi_ni phi_nj
+d_na d_nb c_n(w). Mit u = Y F, F_i = Z0_i (2 v+_i - u_i) und v+_i = g_i - E_i (u_i - v+_i):
+M = (I + Y Z)^-1 2 Y Z, (I + E (M - I)) v+ = g, F = Z (2 I - M) v+, p = Summe H_i F_i. Dazu der Anteil, den die nicht
+gespielten Saiten abstrahlen (p ohne den Summanden der gespielten Saite).
 
 --winkel: zwei Polarisationen. Die Saite wird unter diesem Winkel gegen die Senkrechte zur Decke losgelassen; jede
 Mode des Koerpers bewegt den Steg in einer Richtung theta_n gegen die Senkrechte (Bank & Karjalainen 2010: Y = Summe
@@ -188,6 +195,63 @@ def ton2(saite, laenge, x_p, d, winkel_grad, Y, Hz, Hy, w, breite=0.0075):
     return F[:, 0:1] * Hz + F[:, 1:2] * Hy
 
 
+def koerper_matrix(kp, w, tan):
+    """Y (Frequenz x 2S x 2S) zwischen allen Stegpunkten und beiden Richtungen, H (Frequenz x 2S x Hoerorte)."""
+    S = kp["steg"].shape[1]
+    wn = 2 * np.pi * kp["f"]
+    phi = np.empty((len(wn), 2 * S))
+    phi[:, 0::2] = kp["steg"]
+    phi[:, 1::2] = kp["steg"] * tan[:, None]
+    Y = np.empty((len(w), 2 * S, 2 * S), dtype=complex)
+    H = np.empty((len(w), 2 * S, kp["G"].shape[1]), dtype=complex)
+    for a in range(0, len(w), 2048):
+        ws = w[a:a + 2048, None]
+        nenner = 1.0 / (wn[None, :] ** 2 - ws ** 2 + 1j * kp["eta"][None, :] * wn[None, :] * ws)
+        Y[a:a + 2048] = np.einsum("fn,na,nb->fab", 1j * ws * nenner, phi, phi, optimize=True)
+        H[a:a + 2048] = np.einsum("fn,na,no->fao", -ws ** 2 * nenner, phi, kp["G"], optimize=True)
+    return Y, H
+
+
+def saite_wellen(saite, w):
+    T, m, EI = saite["T"], saite["m"], saite["EI"]
+    k2 = (-T + np.sqrt(T * T + 4 * EI * m * w ** 2)) / (2 * EI)
+    k = np.sqrt(k2)
+    eta = (T * (saite["etaF"] + saite["etaA"] / w) + EI * saite["etaB"] * k2) / (T + EI * k2)
+    k = k * (1 - 0.5j * eta)
+    return k, T * k / w
+
+
+def ton_mit(saiten, laengen, gespielt, x_p, d, winkel_grad, Y, H, w, breite=0.0075):
+    """Alle Saiten an einem Steg; `gespielt` wird gezupft. Gibt (p, p der nicht gespielten Saiten)."""
+    S, n = len(saiten), len(w)
+    z = np.empty((n, 2 * S), dtype=complex)
+    E = np.empty((n, 2 * S), dtype=complex)
+    g = np.zeros((n, 2 * S), dtype=complex)
+    for i, (sa, L) in enumerate(zip(saiten, laengen)):
+        k, z0 = saite_wellen(sa, w)
+        z[:, 2 * i] = z[:, 2 * i + 1] = z0
+        E[:, 2 * i] = E[:, 2 * i + 1] = np.exp(-2j * k * L)
+        if i == gespielt:
+            T, m = sa["T"], sa["m"]
+            f = -(T * d * L / (x_p * (L - x_p))) / (1j * w) * np.exp(-(w * breite / np.sqrt(T / m)) ** 2)
+            gi = f / (2 * z0) * (np.exp(-1j * k * x_p) - np.exp(-1j * k * (2 * L - x_p)))
+            a = np.radians(winkel_grad)
+            g[:, 2 * i], g[:, 2 * i + 1] = gi * np.cos(a), gi * np.sin(a)
+    p = np.empty((n, H.shape[2]), dtype=complex)
+    rest = np.empty_like(p)
+    eins = np.eye(2 * S)
+    for a in range(0, n, 8192):
+        b = slice(a, a + 8192)
+        YZ = Y[b] * z[b][:, None, :]
+        M = np.linalg.solve(eins[None] + YZ, 2 * YZ)
+        vplus = np.linalg.solve(eins[None] + E[b][:, :, None] * (M - eins[None]), g[b][:, :, None])[:, :, 0]
+        F = z[b] * (2 * vplus - (M @ vplus[:, :, None])[:, :, 0])
+        p[b] = np.einsum("fa,fao->fo", F, H[b])
+        F[:, 2 * gespielt:2 * gespielt + 2] = 0
+        rest[b] = np.einsum("fa,fao->fo", F, H[b])
+    return p, rest
+
+
 # ---------------------------------------------------------------- Saite und Ton
 def ton(saite, laenge, x_p, d, Y, H, w, breite=0.0075):
     T, m, EI = saite["T"], saite["m"], saite["EI"]
@@ -305,7 +369,46 @@ def gitarre(je_taste, steg_neu, winkel=None):
                   f"(starrer Steg frueh {np.nanmedian([z[7] for z in o]):5.1f})")
 
 
+def rms_db(x, von, bis):
+    return 10 * np.log10(np.mean(np.sum(x[int(von * FS):int(bis * FS)] ** 2, axis=1)) + 1e-300)
+
+
+def gitarre_mit(je_taste):
+    kp = lade_koerper("classical_guitar")
+    w = frequenzen()
+    Y, H = koerper_matrix(kp, w, richtung_tan(kp["f"]))
+    zeilen = []
+    print("Taste Saite Bund | Lautheit ohne / mit (LUFS), Unterschied | Pegel 1-2 s gegen 0-0,4 s: ohne, mit, nur die uebrigen Saiten (dB)")
+    for taste in range(40, 84, 1 if je_taste else 3):
+        s = max(i for i, sa in enumerate(GITARRE) if sa["taste"] <= taste)
+        bund = taste - GITARRE[s]["taste"]
+        if bund > 19:
+            continue
+        laenge = MENSUR * 2 ** (-bund / 12)
+        xp = min(ZUPFORT, 0.5 * laenge)
+        j = 2 * s
+        ohne = zeit(ton_mit([GITARRE[s]], [laenge], 0, xp, 0.002, 30.0, Y[:, j:j + 2, j:j + 2], H[:, j:j + 2], w)[0])
+        p, rest = ton_mit(GITARRE, [laenge if i == s else MENSUR for i in range(6)], s, xp, 0.002, 30.0, Y, H, w)
+        mit, uebrige = zeit(p), zeit(rest)
+        v, e = VORLAUF, VORLAUF + 0.4
+        zeilen.append((taste, momentary_max(ohne), momentary_max(mit), rms_db(ohne, 1, 2) - rms_db(ohne, v, e),
+                       rms_db(mit, 1, 2) - rms_db(mit, v, e), rms_db(uebrige, 1, 2) - rms_db(mit, v, e)))
+        z = zeilen[-1]
+        print(f"{taste:3d}  {6 - s}  {bund:2d} | {z[1]:6.1f} / {z[2]:6.1f}  {z[2] - z[1]:+5.1f} | {z[3]:6.1f}  {z[4]:6.1f}  {z[5]:6.1f}", flush=True)
+    a = np.array(zeilen)
+    for name, sp in (("ohne Mitschwingen", 1), ("mit Mitschwingen ", 2)):
+        l = a[:, sp]
+        d3 = np.abs(l[3:] - l[:-3]) if je_taste else np.abs(np.diff(l))
+        print(f"{name}: Spanne {l.max() - l.min():.1f} LU, groesster Sprung im Terzabstand {d3.max():.1f} LU, mittlerer {np.median(d3):.1f} LU")
+    print(f"Lautheit mit - ohne: Median {np.median(a[:, 2] - a[:, 1]):+.1f} LU, von {np.min(a[:, 2] - a[:, 1]):+.1f} bis {np.max(a[:, 2] - a[:, 1]):+.1f} LU")
+    print(f"Pegel 1-2 s gegen den Anfang, Median: ohne {np.median(a[:, 3]):.1f} dB, mit {np.median(a[:, 4]):.1f} dB, "
+          f"nur die uebrigen Saiten {np.median(a[:, 5]):.1f} dB (von {a[:, 5].min():.1f} bis {a[:, 5].max():.1f})")
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "gitarre-mit":
+        gitarre_mit("--je-taste" in sys.argv)
+        sys.exit(0)
     if len(sys.argv) < 2 or sys.argv[1] != "gitarre":
         sys.exit(__doc__)
     gitarre("--je-taste" in sys.argv, "--steg-neu" in sys.argv,
