@@ -178,8 +178,35 @@ Die tiefen Moden im Körper (Hz / Q / φ an den Saiten 6 … 1 in 1/√kg): 79,0
 ## 10 Offen
 
 - Das Paar 260 / 270 Hz an g34 einzeln prüfen; dichte Paare über 300 Hz; Pole nach ESPRIT allgemein nachstellen.
-- Der Bereich über 5 kHz: der Körper endet dort, ohne statistischen Teil.
+- Der Bereich über 5 kHz: erledigt mit KQ26 a (§11). Offen daraus: im Band 3–4 kHz klingt der Körper schneller ab als gemessen; die Dichte des statistischen Teils in 34k-6 gegen die Aufnahmen prüfen.
 - Nahfeld 10 cm gegen 1 m bei den anderen Körpern — in 34k-6 gegen die Aufnahmen prüfen.
 - Die zweite Richtung am Steg (parallel zur Decke) misst Mores nicht — Annahme mit Vermerk (KQ3 a).
 - Gegenprobe der tiefen Moden gegen Wright 1996 Tab. 5.4 und die Streuung nach Woodhouse 2012.
 - Die Stufe bei 2,7–2,9 kHz an g08 und g36 (Aufnehmer oder Steg?).
+
+## 11 Über 5 kHz (KQ26 a)
+
+Proben: `proben/2026-11-15_S199_mores_ueber_5khz.py` (Anregung, Störabstand, Pegel), `_mores_statistik.py` (die Fassungen A, B, C gegen die Messung), `_mores_fit_bis_10khz.py` (Fassung D, 646 s).
+
+**Was die Messung trägt.** Je Terzband 5 / 6,3 / 8 / 10 / 12,7 / 16 kHz: Hammerkraft gegen 1 kHz −2,4 / −4 / −6,5 / −10,5 / −17 / −24 dB; Störabstand an den Mikrofonen (150 ms nach dem Schlag gegen die letzten 150 ms der Sekunde) 22–30 / 18–27 / 15–22 / 11–16 / 5–10 / 1–4 dB, an den Aufnehmern rund 8 dB weniger. Die Messung trägt bis rund 10 kHz; der Anstieg der Kurven bei 16–20 kHz ist Rauschen durch eine fallende Kraft. Der Terzpegel von p / F bleibt von 2 bis 10 kHz flach (−2 … +3 dB re 1 Pa/N). Das Abklingen an den Mikrofonen (Schroeder-Kurve je Terzband, −5 … −25 dB, Rauschen abgezogen; α in 1/s, Energie ~ exp(−α t)) bei 2,5 / 3,15 / 4 / 5 / 6,3 / 8 / 10 kHz: 177 / 164 / 203 / 211 / 211 / 231 / 247. Die Schwankung des Pegels über 6–10 kHz (Streuung von 20 lg |p / F| auf dem 1-Hz-Raster) ist 5,5 / 5,4 dB (`left` / `right`) — der Wert eines dichten Feldes überlappender Moden (5,6 dB).
+
+**Vier Fassungen** (Terzpegel Modell − Messung bei 6,3 / 8 / 10 kHz, Modell im Mittel über die sechs Saiten, Messung im Mittel über die drei Schläge):
+
+| Fassung | `left` dB | `right` dB | α 1/s | Schwankung dB | Moden |
+|---|---|---|---|---|---|
+| A heute: die Ausläufer der 75 Moden | −3,6 / −4,4 / −7,7 | −3,7 / −3,0 / −5,3 | kein Abklingen | 0,5 / 0,4 | 75 |
+| B statistisch nach `schaetze` (Band 2,5–5 kHz, Gesetz an die Pole angepasst: α = 252) | +10,4 / +12,7 / +11,8 | +9,6 / +13,5 / +13,6 | 244 / 238 / 242 | 6,9 / 7,1 | 236 |
+| C statistisch, Größen an der Messung | −0,4 / +1,2 / −0,8 | −1,4 / +1,1 / +0,3 | 211 / 218 / 240 | 5,1 / 5,0 | 236 |
+| C mit dreifacher Dichte | −0,2 / +0,9 / −0,7 | −1,0 / +1,6 / −0,6 | 238 / 223 / 238 | 5,2 / 6,0 | 538 |
+| D Modalfit bis 10 kHz | nicht gerechnet | nicht gerechnet | — | — | 107 |
+
+- **A:** Über der letzten Mode strebt jeder Summand gegen φ · G; die Summe ist ein Sockel ohne Frequenzgang, im Zeitbereich ein Stoß bei t = 0. Beim Schlag `treble` am Hörort `left` liegt er 12–15 dB unter der Messung.
+- **B:** Die Gegenprobe im eigenen Band — die gefitteten Moden 2,5–5 kHz durch gezogene mit den geschätzten Größen ersetzt — liegt 2–9,5 dB über der Messung. Ursachen: Formwert und Abstrahlgewicht sind gegenläufig (das Gewicht ist je Terzband an den Pegel gestellt; rms(φ) · rms(G) liegt 2,6 dB über dem mit 1/σ gewichteten rms(φ · G)), und das relativ angepasste Gesetz (α = 252 1/s) liegt unter der Dämpfung der Pole (Median je Terzband 370–670 1/s, harmonisches Mittel 402 1/s). Die Regel `schaetze` setzt gerechnete Moden voraus.
+- **C:** α(f) = a f² + b f + c mit a, b, c ≥ 0 an das gemessene Abklingen 2,5–10 kHz (relativ, kleinste Quadrate): a = 0, b = 0,0105, c = 147. Dichte (0,0104 Moden je Hz, 26 Pole im Band) und Streuung am Steg (1,12 / 2,15 / 2,78 / 2,78 / 2,15 / 1,04 1/√kg an den Saiten 6 … 1) wie `schaetze`; der Betrag der Abstrahlung je Hörort in acht Schritten so gestellt, dass der Terzpegel 6,3 / 8 / 10 kHz im Mittel stimmt (0,0029 / 0,0023 √kg/m²). Bei 12,7 und 16 kHz liegt das Modell +2,0 / +3,7 dB (`left`) und −0,2 / +0,6 dB (`right`) gegen eine Messung, die dort kaum über dem Rauschen liegt — kein Beleg.
+- **D:** 107 Pole, davon 33 über 5 kHz; Abstand / Breite / Überlappung in 2,5–5 / 5–7 / 7–10 kHz: 100 / 107 / 1,07 — 133 / 161 / 1,21 — 167 / 234 / 1,40. Die Zahl der Pole je Hz fällt, die Modendichte einer Platte nicht: es sind Ersatzpole. Fehler über die sechs Stegkurven frei 0,84 / 1,35 / 1,99 / 1,62 / 2,65 / 1,94 dB, mit Normalmoden 1,15 / 1,81 / 2,43 / 3,07 / 5,72 / 5,95 dB (60–400 / 400–1000 / 1000–2500 / 2500–5000 / 5000–7000 / 7000–10 000 Hz) — die Form längs der Stegeinlage trägt über 5 kHz nicht, und das Band darunter wird schlechter (3,07 statt 2,31 dB).
+
+**Nebenbefunde.** (1) Schlagorte (−23 / 0 / +23 mm) und Aufnehmer (±36 mm) liegen an verschiedenen Stellen: die Messung bestimmt Produkte φ(Schlag) · φ(Aufnehmer); die Größe von φ an den Saiten kommt nur über die Form a + b x + c x². Über rund 2,5 kHz ist die Aufteilung zwischen Formwert und Abstrahlgewicht deshalb nicht belegt, nur ihr Produkt — die Übertragung zwischen Saiten liegt im Modell bei 3–5 kHz 8–14 dB über der zwischen den gemessenen Orten. Für den Klang zählt nur das Produkt (`Boden.cpp`); wer die Stegadmittanz der Gitarre braucht (Saitenlast), darf sie über 2,5 kHz nicht aus diesem Körper nehmen. (2) Im Band 3,15 / 4 kHz klingt der Körper schneller ab als gemessen (α 310 / 276 gegen 164 / 203 1/s) — die gefitteten Pole sind dort breiter als die am längsten klingenden Moden; gehört zu den dichten Paaren über 300 Hz.
+
+**KQ26 a (Patrik):** Fassung C. `make_gitarre.py` Schritt 6, `FIT_FASSUNG` = `kFitFassung` = 2; die Körperdatei trägt den Teil in `statistical` (5–20 kHz, Samen 1) und das Gesetz in `damping`; die Prüfzahlen stehen in der Beschreibung unter `check.statistical`. Lauf vom 15.11.2026 (185 s): die 75 gefitteten Moden Feld für Feld wie vorher, 161 gezogene Moden (die erste bei 5081,8 Hz, die letzte bei 19 930,4 Hz), Terzpegel `left` −0,36 / +1,20 / −0,84 dB, `right` −1,36 / +1,09 / +0,27 dB. Das Skript baut `ziehe` nach (SplitMix64, Rayleigh, Box-Muller); der Wächter „31c-5d“ zieht mit `ziehe` aus der Körperdatei und vergleicht Zahl, die ersten drei und die letzte Frequenz mit der Beschreibung. Über 10 kHz ist das Gesetz fortgesetzt, nicht geprüft.
+
+Nicht gerechnet: wie viel ein Gitarrenton über 5 kHz trägt (Überschlag: bei einer ideal gezupften Saite E4 rund 4 % der Kraftleistung, −14 dB, vor Saitendämpfung und Fingerbreite) — in 34k-6 an den Tönen.

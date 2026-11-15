@@ -37,7 +37,8 @@ inline constexpr int kKoerperFassung = 4;
 
 /// Die Fassung des Modalfits fuer gemessene Koerper (`asset/loop/instrument_bodies/make_gitarre.py` traegt dieselbe
 /// Zahl). Hochzaehlen, wenn sich bei gleicher Messung und gleicher Beschreibung ein anderer Koerper ergaebe.
-inline constexpr int kFitFassung = 1;
+/// 2 (KQ26 a, S199): ueber den gefitteten Moden ein statistischer Teil, seine Groessen an der Messung bestimmt.
+inline constexpr int kFitFassung = 2;
 
 /// Woraus ein Koerper stammt (KQ25 a).
 enum class Herkunft

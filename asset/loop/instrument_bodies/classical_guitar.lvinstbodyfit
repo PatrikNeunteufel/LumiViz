@@ -1,7 +1,7 @@
 {
  "format": "lumiviz-instrument-body-fit",
  "version": 1,
- "fitVersion": 1,
+ "fitVersion": 2,
  "title": "Classical guitar",
  "description": "Modal fit to the measured bridge mobility and near-field sound pressure of a classical Spanish guitar from the Mores archive (KQ3 a, KQ23 a to KQ25 a). The body file carries, per mode, the frequency, the loss factor, the mode shape at each of the six strings and a radiation weight for two listening points. Method after Ducceschi, Russo & Webb (DAFx26, 2026, Sec. 3.4) with the full one-second response instead of 62.5 ms, poles from ESPRIT over all six bridge responses, and normal modes with one shape along the saddle (rigid bar with bending).",
  "source": "R. Mores, Archive for the acoustical documentation of classical Spanish guitars, flamenco guitars and romantic guitars - bridge mobility, Zenodo 4604577 (2021), CC BY 4.0; guitar g34: Manuel Contreras, Madrid 1971, classical Spanish, cedar / Rio palisander, scale 662 mm, 1670 g, measured in the free-field laboratory of the Hamburg University of Applied Sciences on 3 Dec. 2018",
@@ -36,7 +36,8 @@
   "poles": "multichannel ESPRIT per third-octave band over the six bridge accelerances; modes below -25 dB of their band and double poles dropped",
   "pairs": "below 300 Hz a pair closer than its mean width becomes one pole (frequency and damping re-fitted) if the error in its band rises by at most 0.2 dB",
   "bridge": "normal modes: residue(strike, sensor) = phi(x_strike) phi(x_sensor), phi(x) = a + b x + c x^2; Gauss-Newton on the six mobilities, error weighted by 1/|Y|",
-  "radiation": "per listening point one complex weight per mode up to the split frequency, fitted to the pressure per force of all three strikes; above it one magnitude per third-octave band with a drawn sign (seed 1), set so that the band level matches on average over the strikes"
+  "radiation": "per listening point one complex weight per mode up to the split frequency, fitted to the pressure per force of all three strikes; above it one magnitude per third-octave band with a drawn sign (seed 1), set so that the band level matches on average over the strikes",
+  "statistical": "statistical part 5000-20000 Hz (KQ26 a), quantities from the measurement: damping law alpha(f) = a f^2 + b f + c from the decay at the microphones per third-octave band 2.5-10 kHz (Schroeder curve, -5 to -25 dB); density and bridge spread from the poles 2.5-5 kHz as for the bodies from a plan; radiation magnitude per listening point set so that the third-octave level at 6.3 / 8 / 10 kHz matches on average. The measurement carries up to about 10 kHz (signal to noise at the microphones 11-16 dB at 10 kHz, below 10 dB above); above that the law is continued and not checked. Only the product of bridge value and radiation weight is determined by the measurement there, not their split."
  },
  "bridgePoints": [
   {
@@ -185,6 +186,60 @@
     }
    },
    "note": "rms error of the third-octave level over bands and the three strikes, per split frequency"
+  },
+  "statistical": {
+   "decayBandsHz": [
+    2520,
+    3175,
+    4000,
+    5040,
+    6350,
+    8000,
+    10079
+   ],
+   "decayAlphaMeasured": [
+    176.5,
+    163.8,
+    203.4,
+    211.2,
+    211.0,
+    230.8,
+    247.4
+   ],
+   "decayAlphaLaw": [
+    173.1,
+    179.9,
+    188.6,
+    199.5,
+    213.3,
+    230.6,
+    252.5
+   ],
+   "levelBandsHz": [
+    6350,
+    8000,
+    10079
+   ],
+   "levelErrorDb": {
+    "left": [
+     -0.36,
+     1.2,
+     -0.84
+    ],
+    "right": [
+     -1.36,
+     1.09,
+     0.27
+    ]
+   },
+   "drawnModes": 161,
+   "drawnFirstHz": [
+    5081.782556485089,
+    5226.924815402291,
+    5304.742295511863
+   ],
+   "drawnLastHz": 19930.424082695547,
+   "note": "level: third-octave level of pressure per force, model (mean over the six strings) minus measured (mean over the three strikes); alpha in 1/s, energy ~ exp(-alpha t); drawnFirstHz and drawnLastHz are the modes `ziehe` of InstrumentBody draws from the statistical part"
   }
  }
 }

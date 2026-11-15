@@ -1,5 +1,5 @@
 """Schreibt den gemessenen Koerper der klassischen Gitarre: `classical_guitar.lvinstbodyfit` (Beschreibung) und
-`classical_guitar.lvinstbody` (Stufe 34k-5, S199; KQ3 a, KQ23 a, KQ24 a, KQ25 a).
+`classical_guitar.lvinstbody` (Stufe 34k-5, S199; KQ3 a, KQ23 a, KQ24 a, KQ25 a, KQ26 a).
 
 Aufruf (vom Projekt-Root; braucht numpy und scipy):
     python -B asset/loop/instrument_bodies/make_gitarre.py <qualified_selected_impulses.mat> [--ziel <ordner>]
@@ -14,7 +14,7 @@ guitars - bridge mobility“, Zenodo 4604577 (2021), CC BY 4.0 — Gitarre g34 (
 Weg nach Ducceschi, Russo & Webb, DAFx26 (2026) Par. 3.4, mit Abweichungen. Herleitung und Zahlen:
 `projects/apps/LumiViz/docs/modellierung/gezupfte-saite/2026-11-15_S199_gitarre_modalfit.md`.
 
-Der Fit in fuenf Schritten (FIT_FASSUNG = `kFitFassung` in `InstrumentBody/Koerper.hpp`; hochzaehlen, wenn sich bei
+Der Fit in sechs Schritten (FIT_FASSUNG = `kFitFassung` in `InstrumentBody/Koerper.hpp`; hochzaehlen, wenn sich bei
 gleicher Messung ein anderer Koerper ergaebe):
   1 Kurven       Accelerance A/F und Druck P/F je Schlagort aus 1 s, Exponentialfenster 3 1/s ab dem Schlag (wird von
                  der Daempfung abgezogen), die Kraft nur 5 ms um den Schlag
@@ -28,9 +28,17 @@ gleicher Messung ein anderer Koerper ergaebe):
                  Gewicht je Mode aus dem Fit an P/F fuer alle drei Schlagorte; darueber ein Betrag je Terzband mit
                  gezogenem Vorzeichen (Samen 1), so gestellt, dass der Terzpegel im Mittel ueber die Schlagorte stimmt
                  (KQ24 a). Die Grenze (500 Hz oder 1 kHz) nach dem kleineren Fehler ueber beide Hoerorte.
+  6 Statistik    der statistische Teil 5-20 kHz (KQ26 a), Groessen an der Messung: das Daempfungsgesetz
+                 alpha(f) = a f^2 + b f + c aus dem Abklingen der Mikrofone je Terzband 2,5-10 kHz (Schroeder-Kurve,
+                 -5 ... -25 dB); Dichte und Streuung am Steg aus den Polen 2,5-5 kHz wie `schaetze` in
+                 `InstrumentBody/Statistik.hpp`; der Betrag der Abstrahlung je Hoerort so gestellt, dass der Terzpegel
+                 6,3 / 8 / 10 kHz im Mittel stimmt - gerechnet mit den Moden, die `ziehe` daraus zieht (hier
+                 nachgebaut: SplitMix64, Rayleigh, Box-Muller; Samen 1). Die Messung traegt bis rund 10 kHz
+                 (Stoerabstand an den Mikrofonen 11-16 dB); darueber ist das Gesetz fortgesetzt, nicht geprueft.
 """
 import hashlib
 import json
+import math
 import pathlib
 import sys
 import time
@@ -38,9 +46,9 @@ import time
 import numpy as np
 import scipy.io as sio
 import scipy.signal as sig
-from scipy.optimize import least_squares, minimize
+from scipy.optimize import least_squares, minimize, nnls
 
-FIT_FASSUNG = 1
+FIT_FASSUNG = 2
 GITARRE = 34
 MAT_SHA256 = "8a016fab0b3f086a49b2e740c2588fc61938fd09251aab5314413ea4bab72fb6"
 FS = 48000
@@ -50,6 +58,9 @@ P_VOLL = 10000 / 50.0                    # Pa je Vollausschlag (Mikrofon 50 mV/P
 ORTE = ("bass", "center", "treble")
 FENSTER_S = 3.0
 VON, BIS = 60.0, 5000.0
+STAT_BIS = 20000.0                       # Ende des statistischen Teils
+STAT_BAND = (2500.0, 5000.0)             # woraus Dichte und Streuung am Steg geschaetzt werden
+STAT_SAMEN = 1
 PAARE = [("bass", "bass"), ("bass", "treble"), ("center", "bass"), ("center", "treble"), ("treble", "bass"),
          ("treble", "treble")]
 SAITENABSTAND = 0.0116
@@ -310,6 +321,125 @@ def abstrahlung(hz, H, f, s, a, b, c, sel):
                                           for g, v in je_grenze.items()}
 
 
+# ---------------------------------------------------------------- 6 Statistik
+class Zufall:
+    """SplitMix64 und die Umrechnungen wie `lumi::koerper::Zufall` (InstrumentBody/Statistik.hpp)."""
+    M64 = (1 << 64) - 1
+
+    def __init__(self, samen):
+        self.z = samen
+
+    def naechste(self):
+        self.z = (self.z + 0x9E3779B97F4A7C15) & self.M64
+        z = self.z
+        z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & self.M64
+        z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & self.M64
+        return z ^ (z >> 31)
+
+    def gleich(self):
+        return ((self.naechste() >> 11) + 0.5) * (1.0 / 9007199254740992.0)
+
+    def rayleigh(self):
+        return math.sqrt(-4.0 * math.log(self.gleich()) / math.pi)
+
+    def normal(self):
+        u = self.gleich()
+        v = self.gleich()
+        return math.sqrt(-2.0 * math.log(u)) * math.cos(2.0 * math.pi * v)
+
+
+def ziehe(st):
+    """Wie `lumi::koerper::ziehe`: f, sigma, Formwerte (Moden x Saiten), Gewichte (Moden x Hoerorte)."""
+    z = Zufall(st["seed"])
+    a, b, c = st["damping"]
+    f, fs_, ss_, steg, G = st["fromHz"], [], [], [], []
+    while True:
+        f += z.rayleigh() / (st["density"] + st["rise"] * (f - st["fromHz"]))
+        if f >= st["toHz"]:
+            break
+        fs_.append(f)
+        ss_.append(0.5 * (a * f * f + b * f + c))
+        steg.append([s * z.normal() for s in st["bridgeSpread"]])
+        zeile = []
+        for betrag in st["radiation"]:
+            phase = 2.0 * math.pi * z.gleich()
+            zeile.append(complex(betrag * math.cos(phase), betrag * math.sin(phase)))
+        G.append(zeile)
+    return np.array(fs_), np.array(ss_), np.array(steg), np.array(G)
+
+
+def abklingen(x, ip, mitte):
+    """alpha (1/s, Energie ~ exp(-alpha t)) aus der Schroeder-Kurve des Terzbands, -5 ... -25 dB, Rauschen abgezogen."""
+    sos = sig.butter(4, [mitte / 2 ** (1 / 6), mitte * 2 ** (1 / 6)], btype="band", fs=FS, output="sos")
+    y = sig.sosfilt(sos, x)[ip:] ** 2
+    n = int(0.25 * FS)
+    e = np.cumsum((y[:n] - np.mean(y[-4800:]))[::-1])[::-1]
+    db = 10 * np.log10(np.maximum(e, 1e-300) / e[0])
+    ende = int(np.argmax(db < -25)) if (db < -25).any() else n
+    m = db[:ende] <= -5
+    return float(-np.polyfit((np.arange(n) / FS)[:ende][m], db[:ende][m], 1)[0] / (10 * np.log10(np.e)))
+
+
+def statistik(daten, hz, H, f, s, steg, G):
+    mitten = [1000 * 2 ** (k / 3) for k in range(4, 11)]                 # 2,5 ... 10 kHz
+    alpha = []
+    for m in mitten:
+        werte = []
+        for x in daten.values():
+            ip = int(np.argmax(np.abs(x[:, 0])))
+            werte += [abklingen(x[:, kanal], ip, m) for kanal in (4, 5)]
+        alpha.append(float(np.median(werte)))
+    fm, al = np.array(mitten), np.array(alpha)
+    gesetz = nnls(np.stack([fm ** 2, fm, np.ones(len(fm))], axis=1) / al[:, None], np.ones(len(fm)))[0]
+
+    # Dichte und Streuung am Steg wie `schaetze`: zehn Stuecke, eine Gerade durch die Mitten
+    von, bis = STAT_BAND
+    band = (f >= von) & (f < bis)
+    breite = (bis - von) / 10
+    x = von + (np.arange(10) + 0.5) * breite
+    y = np.array([np.sum((f >= von + i * breite) & (f < von + (i + 1) * breite)) for i in range(10)]) / breite
+    steigung, achse = np.polyfit(x, y, 1)
+    st = {"fromHz": BIS, "toHz": STAT_BIS,
+          "density": float(achse + steigung * BIS if steigung > 0 else y.mean()), "rise": float(max(0.0, steigung)),
+          "bridgeSpread": [float(v) for v in np.sqrt(np.mean(steg[band] ** 2, axis=0))],
+          "radiation": [float(v) for v in np.sqrt(np.mean(np.abs(G[band]) ** 2, axis=0))],
+          "seed": STAT_SAMEN, "bandFromHz": von, "bandToHz": bis, "bandModes": int(band.sum()),
+          "damping": [float(v) for v in gesetz]}
+
+    # Betrag der Abstrahlung: der Terzpegel 6,3 / 8 / 10 kHz im Mittel wie gemessen
+    ziel = mitten[4:]
+    sel = (hz >= ziel[0] / 2 ** (1 / 6)) & (hz < ziel[-1] * 2 ** (1 / 6))
+    w = 2 * np.pi * hz[sel]
+
+    def terz(p):
+        return np.array([10 * np.log10(np.mean(p[(hz[sel] >= m / 2 ** (1 / 6)) & (hz[sel] < m * 2 ** (1 / 6))])) for m in ziel])
+
+    mess = [terz(np.mean([np.abs(H[(o, mik)][sel]) ** 2 for o in ORTE], axis=0)) for _, mik in MIKROFONE]
+
+    def modell():
+        fz, sz, stegz, gz = ziehe(st)
+        fa, sa = np.concatenate([f, fz]), np.concatenate([s, sz])
+        B = basis(hz[sel], fa, sa) * (1j * w[:, None])
+        phi, g = np.concatenate([steg, stegz]), np.concatenate([G, gz])
+        return [terz(np.mean([np.abs(B @ (phi[:, k] * g[:, h])) ** 2 for k in range(len(TASTEN))], axis=0))
+                for h in range(len(MIKROFONE))], len(fz), fz
+
+    for _ in range(8):
+        syn, _, _ = modell()
+        for h in range(len(MIKROFONE)):
+            st["radiation"][h] *= float(10 ** (np.mean(mess[h] - syn[h]) / 20))
+    syn, zahl, fz = modell()
+    pruefung = {"decayBandsHz": [round(m) for m in mitten], "decayAlphaMeasured": [round(a, 1) for a in alpha],
+                "decayAlphaLaw": [round(float(gesetz[0] * m * m + gesetz[1] * m + gesetz[2]), 1) for m in mitten],
+                "levelBandsHz": [round(m) for m in ziel],
+                "levelErrorDb": {name: [round(float(v), 2) for v in syn[h] - mess[h]] for h, (name, _) in enumerate(MIKROFONE)},
+                "drawnModes": zahl, "drawnFirstHz": [float(v) for v in fz[:3]], "drawnLastHz": float(fz[-1]),
+                "note": "level: third-octave level of pressure per force, model (mean over the six strings) minus "
+                        "measured (mean over the three strikes); alpha in 1/s, energy ~ exp(-alpha t); drawnFirstHz "
+                        "and drawnLastHz are the modes `ziehe` of InstrumentBody draws from the statistical part"}
+    return st, pruefung
+
+
 # ---------------------------------------------------------------- Dateien
 def beschreibung(pruefung):
     return {
@@ -344,7 +474,16 @@ def beschreibung(pruefung):
                           "Gauss-Newton on the six mobilities, error weighted by 1/|Y|",
                 "radiation": "per listening point one complex weight per mode up to the split frequency, fitted to the "
                              "pressure per force of all three strikes; above it one magnitude per third-octave band "
-                             "with a drawn sign (seed 1), set so that the band level matches on average over the strikes"},
+                             "with a drawn sign (seed 1), set so that the band level matches on average over the strikes",
+                "statistical": f"statistical part {BIS:.0f}-{STAT_BIS:.0f} Hz (KQ26 a), quantities from the measurement: "
+                               "damping law alpha(f) = a f^2 + b f + c from the decay at the microphones per "
+                               "third-octave band 2.5-10 kHz (Schroeder curve, -5 to -25 dB); density and bridge "
+                               "spread from the poles 2.5-5 kHz as for the bodies from a plan; radiation magnitude "
+                               "per listening point set so that the third-octave level at 6.3 / 8 / 10 kHz matches "
+                               "on average. The measurement carries up to about 10 kHz (signal to noise at the "
+                               "microphones 11-16 dB at 10 kHz, below 10 dB above); above that the law is continued "
+                               "and not checked. Only the product of bridge value and radiation weight is determined "
+                               "by the measurement there, not their split."},
         "bridgePoints": [{"key": t, "x": round(x, 5),
                           "source": f"open string {n}: phi at its place on the saddle from the fitted shape; the key is "
                                     "the open string (fretted notes use the played string)"}
@@ -361,7 +500,7 @@ def beschreibung(pruefung):
     }
 
 
-def koerper(f, s, a, b, c, G, fit_datei, abdruck, sekunden):
+def koerper(f, s, a, b, c, G, st, fit_datei, abdruck, sekunden):
     moden = []
     for j in range(len(f)):
         moden.append({"f": float(f[j]), "eta": float(2 * s[j] / (2 * np.pi * f[j])), "airShare": 0.0, "materialShares": [],
@@ -373,7 +512,8 @@ def koerper(f, s, a, b, c, G, fit_datei, abdruck, sekunden):
         "title": "Classical guitar",
         "description": "Measured body: modal fit to guitar g34 of the Mores archive (Manuel Contreras, Madrid 1971, "
                        "cedar / Rio palisander, scale 662 mm). Six bridge points, one per open string; two listening "
-                       "points 10 cm above the top plate (near field). See classical_guitar.lvinstbodyfit.",
+                       "points 10 cm above the top plate (near field); above 5 kHz a statistical part fitted to the "
+                       "measurement. See classical_guitar.lvinstbodyfit.",
         "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); "
                  "radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (fitted to "
                  "the measured pressure per force)",
@@ -385,14 +525,18 @@ def koerper(f, s, a, b, c, G, fit_datei, abdruck, sekunden):
         "bridgePoints": TASTEN,
         "listeningPoints": [name for name, _ in MIKROFONE],
         "air": {"density": 1.29, "speedOfSound": 340},
-        "damping": {"law": "alpha(f) = a f^2 + b f + c in 1/s, f in Hz; eta = alpha / (2 pi f)", "a": 0, "b": 0, "c": 0,
-                    "source": "none: the loss factor of each mode is measured",
+        "damping": {"law": "alpha(f) = a f^2 + b f + c in 1/s, f in Hz; eta = alpha / (2 pi f)",
+                    "a": st["damping"][0], "b": st["damping"][1], "c": st["damping"][2],
+                    "source": "statistical part only: fitted to the measured decay at the microphones, third-octave "
+                              "bands 2.5-10 kHz (KQ26 a); the loss factor of each fitted mode is measured",
                     "perMaterial": "not used: no materials"},
         "materials": [],
         "modes": moden,
-        "statistical": {"fromHz": 0, "toHz": 0, "density": 0, "rise": 0, "bridgeSpread": [], "radiation": [], "seed": "0",
-                        "bandFromHz": 0, "bandToHz": 0, "bandModes": 0, "materialShares": [],
-                        "damping": {"a": 0, "b": 0, "c": 0}},
+        "statistical": {"fromHz": st["fromHz"], "toHz": st["toHz"], "density": st["density"], "rise": st["rise"],
+                        "bridgeSpread": st["bridgeSpread"], "radiation": st["radiation"], "seed": str(st["seed"]),
+                        "bandFromHz": st["bandFromHz"], "bandToHz": st["bandToHz"], "bandModes": st["bandModes"],
+                        "materialShares": [],
+                        "damping": {"a": st["damping"][0], "b": st["damping"][1], "c": st["damping"][2]}},
     }
 
 
@@ -411,7 +555,8 @@ if __name__ == "__main__":
     if hashlib.sha256(roh).hexdigest() != MAT_SHA256:
         sys.exit("die Messdatei ist nicht die des Archivs (SHA-256 weicht ab)")
     d = sio.loadmat(args[0])["qualified_selected_impulses"][GITARRE - 1]
-    hz, H = frfs({ort: d[o * FS:(o + 1) * FS, :] for o, ort in enumerate(ORTE)})
+    daten = {ort: d[o * FS:(o + 1) * FS, :] for o, ort in enumerate(ORTE)}
+    hz, H = frfs(daten)
     sel = (hz >= VON) & (hz <= BIS)
     w = 2 * np.pi * np.maximum(hz, 1e-9)
     acc = [H[p] for p in PAARE]
@@ -423,6 +568,8 @@ if __name__ == "__main__":
     R, rest, fits_frei = frei(hz, mob, f, s, sel)
     a, b, c, fits_steg = stegfit(hz, mob, f, s, sel, R, rest)
     grenze, G, strahl = abstrahlung(hz, H, f, s, a, b, c, sel)
+    steg = np.array([a + b * x + c * x * x for x in X_SAITEN]).T
+    st, st_pruefung = statistik(daten, hz, H, f, s, steg, np.array(G).T)
     bereiche = (("60-400", 60, 400), ("400-1000", 400, 1000), ("1000-2500", 1000, 2500), ("2500-5000", 2500, 5000))
     m6 = (f > 85) & (f < 240)
     phi6 = a + b * X_SAITEN[0] + c * X_SAITEN[0] ** 2
@@ -436,13 +583,15 @@ if __name__ == "__main__":
                                    "reference": "Wright 1996 Table 5.4: 0.062 kg (guitar BR2, sound hole sealed)"},
         "radiation": {"splitHz": grenze, "thirdOctaveErrorDb": strahl,
                       "note": "rms error of the third-octave level over bands and the three strikes, per split frequency"},
+        "statistical": st_pruefung,
     }
     ziel.mkdir(parents=True, exist_ok=True)
     fit_datei = ziel / "classical_guitar.lvinstbodyfit"
     inhalt = (json.dumps(beschreibung(pruefung), indent=1) + "\n").encode("utf-8")
     fit_datei.write_bytes(inhalt)
-    k = koerper(f, s, a, b, c, G, fit_datei.name, abdruck_von(inhalt), time.time() - start)
+    k = koerper(f, s, a, b, c, G, st, fit_datei.name, abdruck_von(inhalt), time.time() - start)
     (ziel / "classical_guitar.lvinstbody").write_bytes((json.dumps(k, indent=4) + "\n").encode("utf-8"))
     print(json.dumps(pruefung, indent=1))
     print(f"{fit_datei} und classical_guitar.lvinstbody: {len(f)} Moden bis {BIS:.0f} Hz, Grenze der Abstrahlung "
-          f"{grenze:.0f} Hz, {time.time() - start:.0f} s")
+          f"{grenze:.0f} Hz, statistisch bis {STAT_BIS:.0f} Hz ({st_pruefung['drawnModes']} gezogene Moden), "
+          f"{time.time() - start:.0f} s")

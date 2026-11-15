@@ -2,7 +2,7 @@
     "format": "lumiviz-instrument-body",
     "version": 4,
     "title": "Classical guitar",
-    "description": "Measured body: modal fit to guitar g34 of the Mores archive (Manuel Contreras, Madrid 1971, cedar / Rio palisander, scale 662 mm). Six bridge points, one per open string; two listening points 10 cm above the top plate (near field). See classical_guitar.lvinstbodyfit.",
+    "description": "Measured body: modal fit to guitar g34 of the Mores archive (Manuel Contreras, Madrid 1971, cedar / Rio palisander, scale 662 mm). Six bridge points, one per open string; two listening points 10 cm above the top plate (near field); above 5 kHz a statistical part fitted to the measurement. See classical_guitar.lvinstbodyfit.",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (fitted to the measured pressure per force)",
     "origin": "measurement",
     "plan": {
@@ -11,8 +11,8 @@
     },
     "measurement": {
         "file": "classical_guitar.lvinstbodyfit",
-        "fingerprint": "03bcfd69e9c23948293cced7a81ff46b9615ea549d2c8ee5c0923a19635ccc72",
-        "fitVersion": 1
+        "fingerprint": "73fd8c8402b6ffef047a3e352995729de53b01d1a6b6fd9ad88f98364b0021cf",
+        "fitVersion": 2
     },
     "computation": {
         "version": 0,
@@ -23,7 +23,7 @@
         "fromHz": 60.0,
         "toHz": 5000.0,
         "unknowns": 0,
-        "seconds": 204.5
+        "seconds": 185.2
     },
     "bridgePoints": [
         40,
@@ -43,10 +43,10 @@
     },
     "damping": {
         "law": "alpha(f) = a f^2 + b f + c in 1/s, f in Hz; eta = alpha / (2 pi f)",
-        "a": 0,
-        "b": 0,
-        "c": 0,
-        "source": "none: the loss factor of each mode is measured",
+        "a": 0.0,
+        "b": 0.010503791931044979,
+        "c": 146.58446935545092,
+        "source": "statistical part only: fitted to the measured decay at the microphones, third-octave bands 2.5-10 kHz (KQ26 a); the loss factor of each fitted mode is measured",
         "perMaterial": "not used: no materials"
     },
     "materials": [],
@@ -1853,21 +1853,31 @@
         }
     ],
     "statistical": {
-        "fromHz": 0,
-        "toHz": 0,
-        "density": 0,
-        "rise": 0,
-        "bridgeSpread": [],
-        "radiation": [],
-        "seed": "0",
-        "bandFromHz": 0,
-        "bandToHz": 0,
-        "bandModes": 0,
+        "fromHz": 5000.0,
+        "toHz": 20000.0,
+        "density": 0.0104,
+        "rise": 0.0,
+        "bridgeSpread": [
+            1.1171963197898835,
+            2.148983134284842,
+            2.778401032329823,
+            2.7812393790094094,
+            2.148655423199143,
+            1.0408092183257165
+        ],
+        "radiation": [
+            0.0029071964067610583,
+            0.002319023117319599
+        ],
+        "seed": "1",
+        "bandFromHz": 2500.0,
+        "bandToHz": 5000.0,
+        "bandModes": 26,
         "materialShares": [],
         "damping": {
-            "a": 0,
-            "b": 0,
-            "c": 0
+            "a": 0.0,
+            "b": 0.010503791931044979,
+            "c": 146.58446935545092
         }
     }
 }

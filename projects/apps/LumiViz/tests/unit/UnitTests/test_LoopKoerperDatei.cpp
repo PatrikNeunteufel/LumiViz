@@ -293,8 +293,30 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
                 falsch += (m.werkstoffAnteil.empty() && m.luftAnteil == 0.0) ? 0 : 1;
             }
             CHECK(falsch == 0);
-            if (k.statistik.dichte > 0.0) CHECK(k.statistik.vonHz == k.rechnung.bisHz);
-            MESSAGE(name.toStdString(), ": ", k.moden.size(), " gemessene Moden bis ", k.rechnung.bisHz, " Hz");
+            // KQ26 a: ein statistischer Teil schliesst an, seine Groessen stammen aus der Messung. Die Beschreibung
+            // nennt die Moden, mit denen das Skript den Pegel gestellt hat — es muessen die von `ziehe` sein.
+            if (k.statistik.dichte > 0.0)
+            {
+                CHECK(k.statistik.vonHz == k.rechnung.bisHz);
+                CHECK(k.statistik.bisHz > k.statistik.vonHz);
+                CHECK(k.statistik.stegStreuung.size() == k.stegTasten.size());
+                CHECK(k.statistik.hoerBetrag.size() == k.hoerorte.size());
+                CHECK(k.statistik.werkstoffAnteil.empty());
+                CHECK(k.statistik.daempfung.verlustfaktor(k.statistik.vonHz) > 0.0);
+                const std::vector<kp::ModeImKoerper> gezogen = kp::ziehe(k.statistik);
+                const QJsonObject st = fit.value(QStringLiteral("check")).toObject().value(QStringLiteral("statistical")).toObject();
+                REQUIRE(static_cast<int>(gezogen.size()) == st.value(QStringLiteral("drawnModes")).toInt());
+                const QJsonArray erste = st.value(QStringLiteral("drawnFirstHz")).toArray();
+                REQUIRE(static_cast<std::size_t>(erste.size()) <= gezogen.size());
+                for (int i = 0; i < erste.size(); ++i)
+                    CHECK(gezogen[static_cast<std::size_t>(i)].frequenzHz == doctest::Approx(erste[i].toDouble()).epsilon(1e-9));
+                CHECK(gezogen.back().frequenzHz == doctest::Approx(st.value(QStringLiteral("drawnLastHz")).toDouble()).epsilon(1e-9));
+                int daneben = 0;
+                for (const kp::ModeImKoerper& m : gezogen) daneben += (m.verlustfaktor > 0.0 && m.verlustfaktor < 0.5) ? 0 : 1;
+                CHECK(daneben == 0);
+            }
+            MESSAGE(name.toStdString(), ": ", k.moden.size(), " gemessene Moden bis ", k.rechnung.bisHz, " Hz, statistisch bis ",
+                    k.statistik.bisHz, " Hz");
             continue;
         }
         kp::Bauplan plan;
