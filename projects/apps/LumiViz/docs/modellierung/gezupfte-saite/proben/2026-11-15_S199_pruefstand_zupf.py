@@ -3,6 +3,14 @@
 Aufruf (vom Projekt-Root): python -B <dieses Skript> gitarre [--je-taste] [--steg-neu] [--winkel <Grad>]
                            python -B <dieses Skript> gitarre-mit [--je-taste]
                            python -B <dieses Skript> laute | oud [--je-taste]
+                           python -B <dieses Skript> harfe | cembalo [--je-taste]
+
+harfe, cembalo: eine Saite je Taste, ohne Mitschwingen. Harfe: 46 Saiten nach Bell 1988 Tab. 2.1 / 2.2 (leer in Ces-Dur),
+die Taste ueber die Pedale (weisse Taste = ihre Saite um einen Halbton verkuerzt, schwarze = die Saite darunter um zwei,
+KQ22 a); Zupf nach Chadefaux u. a. 2012 (0,36 der Laenge vom Boden, 4 mm, 2 m/s beim Abloesen, 25 Grad). Cembalo: ein
+8-Fuss-Register, Mensur und Zupfpunkt des Taskin 1769 an elf Tasten (dazwischen logarithmisch), Draht nach Di Veroli;
+der Kiel loest bei einer festen Kraft aus (CEMBALO_KRAFT; mit --auslenkung stattdessen die Auslenkung nach Perng 2011
+Tab. 2), 20 Grad.
 
 laute, oud: Saiten in Choeren. Die Saiten eines Chors haengen am selben Stegpunkt und werden zusammen gezupft (im
 Einklang um +-2 bzw. +-1,5 Cent gegeneinander verstimmt wie die Vorgabe des Kerns, oder in der Oktave). Monofile Saiten
@@ -223,7 +231,8 @@ def saiten_eta(saite, w, k2):
     return T * (saite["etaF"] + saite["etaA"] / w) / (T + EI * k2) + biegung
 
 
-WERKSTOFF = {"N": (4.5, 39.0, 0.25, 1070.0), "F": (3.2, 41.0, 0.18, 1800.0)}   # E0 GPa, Anstieg je GPa Spannung, E'' GPa, rho
+# E0 GPa, Anstieg je GPa Spannung, E'' GPa, rho (Woodhouse & Lynch-Aird 2019 Tab. I; D = Darm)
+WERKSTOFF = {"N": (4.5, 39.0, 0.25, 1070.0), "F": (3.2, 41.0, 0.18, 1800.0), "D": (6.0, 0.0, 0.24, 1320.0)}
 
 
 def monofil(d_mm, hz, laenge, werkstoff):
@@ -271,7 +280,7 @@ def saite_wellen(saite, w):
     return k, T * k / w
 
 
-def ton_mit(saiten, laengen, gespielt, x_p, d, winkel_grad, Y, H, w, breite=0.0075):
+def ton_mit(saiten, laengen, gespielt, x_p, d, winkel_grad, Y, H, w, breite=0.0075, tempo=0.0):
     """Alle Saiten an einem Steg; `gespielt` wird gezupft. Gibt (p, p der nicht gespielten Saiten)."""
     S, n = len(saiten), len(w)
     z = np.empty((n, 2 * S), dtype=complex)
@@ -284,6 +293,8 @@ def ton_mit(saiten, laengen, gespielt, x_p, d, winkel_grad, Y, H, w, breite=0.00
         if i == gespielt or (isinstance(gespielt, (list, tuple)) and i in gespielt):
             T, m = sa["T"], sa["m"]
             f = -(T * d * L / (x_p * (L - x_p))) / (1j * w) * np.exp(-(w * breite / np.sqrt(T / m)) ** 2)
+            if tempo:      # Geschwindigkeit beim Abloesen, zur Ruhelage hin: dieselbe Form, ueber die Zeit integriert
+                f = f * (1 - (tempo / d) / (1j * w))
             gi = f / (2 * z0) * (np.exp(-1j * k * x_p) - np.exp(-1j * k * (2 * L - x_p)))
             a = np.radians(winkel_grad)
             g[:, 2 * i], g[:, 2 * i + 1] = gi * np.cos(a), gi * np.sin(a)
@@ -529,7 +540,114 @@ def chor_instrument(name, je_taste, hoechster_bund=12):
           f"Pegel 1-2 s groesster Betrag {np.abs(a[:, 4] - a[:, 3]).max():.2f} dB")
 
 
+# ---------------------------------------------------------------- Harfe und Cembalo
+# Bell 1988 Tab. 2.1 (Nylon 00-8, Darm 9-33): Hz, Durchmesser mm, Laenge m; Tab. 2.2 (Metall 34-44): Hz, Kern mm, gesamt mm,
+# Laenge m (am Bild gelesen, S198)
+HARFE_MONO = [(2960, 0.52, 0.071), (2637, 0.52, 0.082), (2489, 0.56, 0.088), (2218, 0.56, 0.095), (1976, 0.61, 0.105),
+              (1864, 0.62, 0.113), (1661, 0.65, 0.123), (1480, 0.69, 0.132), (1318, 0.70, 0.143), (1244, 0.69, 0.154),
+              (1109, 0.70, 0.164), (988, 0.73, 0.177), (932, 0.76, 0.192), (830, 0.80, 0.208), (740, 0.85, 0.225),
+              (659, 0.90, 0.242), (622, 0.95, 0.265), (554, 1.00, 0.285), (494, 1.06, 0.327), (466, 1.12, 0.354),
+              (415, 1.18, 0.385), (370, 1.24, 0.421), (330, 1.30, 0.455), (311, 1.36, 0.498), (277, 1.44, 0.542),
+              (247, 1.52, 0.591), (233, 1.60, 0.644), (207, 1.68, 0.699), (185, 1.76, 0.753), (165, 1.84, 0.813),
+              (155, 1.92, 0.880), (139, 2.00, 0.945), (123, 2.10, 0.999), (116, 2.20, 1.053), (104, 2.35, 1.103)]
+HARFE_METALL = [(92, 0.80, 1.45, 1.150), (82, 0.80, 1.55, 1.180), (77, 0.80, 1.65, 1.222), (69, 0.85, 1.75, 1.257),
+                (61, 0.90, 1.92, 1.299), (58, 0.95, 2.05, 1.330), (52, 1.00, 2.15, 1.359), (46, 1.10, 2.30, 1.397),
+                (41, 1.10, 2.45, 1.421), (39, 1.25, 2.60, 1.445), (35, 1.30, 2.75, 1.475)]
+# Taskin 1769 (Edinburgh 96075): Taste, Laenge mm, Zupfpunkt mm ab Sattel (F3: 151 statt des gedruckten 51, Schreibfehler)
+TASKIN = [(29, 1765, 208), (36, 1681, 191), (41, 1443, 179), (48, 1178, 162), (53, 982, 151), (60, 711, 137), (65, 535, 127),
+          (72, 357, 115), (77, 268, 107), (84, 186, 96), (89, 148, 91)]
+# Besaitung 8 Fuss nach Di Veroli (Tab. 8, Durchmesser Tab. 7): bis Taste, Durchmesser mm, Dichte kg/m3, E GPa. Dichte und E
+# sind ANNAHMEN (Rotmessing 8700 / 115, Gelbmessing 8500 / 110, Eisen 7800 / 170 - Malcolm Rose, moderne Werte).
+TASKIN_DRAHT = [(31, 0.620, 8700, 115), (33, 0.572, 8700, 115), (36, 0.518, 8700, 115), (38, 0.463, 8700, 115), (40, 0.463, 8500, 110),
+                (43, 0.410, 8500, 110), (45, 0.377, 8500, 110), (47, 0.339, 8500, 110), (51, 0.339, 7800, 170), (56, 0.300, 7800, 170),
+                (64, 0.269, 7800, 170), (75, 0.244, 7800, 170), (89, 0.213, 7800, 170)]
+# Perng 2011 Tab. 2: Zupfverhaeltnis -> Auslenkung beim Abloesen in mm (Modell, v = 1 m/s; Saite 0,5 m, T 92 bzw. 135 N).
+# Umgerechnet in die Kraft beim Abloesen, F = T d L / (x (L - x)): 1,6-1,9 N (T 92 N) bzw. 2,4-2,8 N (T 135 N) ueber alle
+# Zupfverhaeltnisse - der Kiel loest bei etwa gleicher Kraft aus, nicht bei gleicher Auslenkung. Chadefaux u. a. 2012
+# nennen fuer das Plektrum des Cembalos 1,5 N. ANNAHME: 2 N fuer jede Taste.
+CEMBALO_KRAFT = 2.0
+PERNG = [(1 / 7, 1.2636), (1 / 6, 1.3719), (1 / 5, 1.5285), (1 / 4, 1.6858), (1 / 3, 1.8708), (1 / 2, 2.2236)]
+
+
+def harfe_taste(taste):
+    """(Saite, Laenge, Zupfort, Auslenkung, Winkel, Breite, Tempo) oder None."""
+    offen = [int(round(69 + 12 * np.log2(hz / 440.0))) for hz, *_ in HARFE_MONO + HARFE_METALL]
+    for versatz in (1, 2, 0):
+        if taste - versatz in offen and (versatz or taste == min(offen)):
+            i = offen.index(taste - versatz)
+            if i < len(HARFE_MONO):
+                hz, d, L = HARFE_MONO[i]
+                sa = monofil(d, hz, L, "N" if i <= 9 else "D")
+            else:
+                hz, kern, gesamt, L = HARFE_METALL[i - len(HARFE_MONO)]
+                # Stahlkern, Umwicklung Kupfer als voller Ring (Annahme wie S198); Biegung vom Kern, Verluste uebertragen
+                m = 7850 * np.pi * (kern / 1000) ** 2 / 4 + 8900 * np.pi * ((gesamt / 1000) ** 2 - (kern / 1000) ** 2) / 4
+                sa = {"T": 4 * L * L * hz * hz * m, "m": m, "EI": 200e9 * np.pi * (kern / 1000) ** 4 / 64, "etaF": 5e-5, "etaB": 2.0e-2,
+                      "etaA": 1.1, "hz": hz}
+            laenge = L * 2 ** (-versatz / 12)
+            return sa, laenge, 0.36 * laenge, 0.004, 25.0, 0.0075, 2.0
+    return None
+
+
+def cembalo_taste(taste):
+    t = [z[0] for z in TASKIN]
+    L = float(np.exp(np.interp(taste, t, np.log([z[1] for z in TASKIN])))) / 1000
+    zupf = float(np.exp(np.interp(taste, t, np.log([z[2] for z in TASKIN])))) / 1000
+    d, rho, e = next((d, rho, e) for bis, d, rho, e in TASKIN_DRAHT if taste <= bis)
+    d /= 1000
+    m = rho * np.pi * d * d / 4
+    # Verlust: Luft nach Stokes (wie monofil), Biegung mit eta_E = 0,001 - ANNAHME (fuer Draht keine Quelle gelesen)
+    sa = {"T": 4 * L * L * hz_von(taste) ** 2 * m, "m": m, "EI": e * 1e9 * np.pi * d ** 4 / 64, "etaB": 1e-3, "d": d, "rho": rho,
+          "hz": hz_von(taste)}
+    if "--auslenkung" in sys.argv:
+        aus = float(np.interp(zupf / L, [p[0] for p in PERNG], [p[1] for p in PERNG])) / 1000
+    else:
+        aus = CEMBALO_KRAFT * zupf * (L - zupf) / (sa["T"] * L)
+    return sa, L, L - zupf, aus, 20.0, 0.003, 0.0
+
+
+def tasten_instrument(name, je_taste):
+    koerper, je = {"harfe": ("concert_harp", harfe_taste), "cembalo": ("harpsichord", cembalo_taste)}[name]
+    kp = lade_koerper(koerper)
+    datei = len(json.loads((KOERPER / f"{koerper}.lvinstbody").read_text(encoding="utf-8"))["modes"])
+    nur = {"f": kp["f"][:datei], "eta": kp["eta"][:datei], "steg": kp["steg"][:datei], "G": kp["G"][:datei]}
+    w = frequenzen()
+    tan = richtung_tan(kp["f"])
+    print(f"{name}: Koerper {koerper}, {datei} Moden in der Datei, {len(kp['f'])} mit dem statistischen Teil")
+    print("Taste | Laenge m, Zug N, Zupfort m | Lautheit alle Moden / Moden der Datei (LUFS) | Pegel 1-2 s gegen den Anfang: alle / Datei (dB) "
+          "| Abfall frueh dB/s")
+    zeilen = []
+    for taste in range(kp["tasten"][0], kp["tasten"][-1] + 1, 1 if je_taste else 3):
+        angabe = je(taste)
+        if angabe is None:
+            continue
+        sa, laenge, xp, d, winkel, breite, tempo = angabe
+        punkt = kp["tasten"].index(taste)
+        Y, H = koerper_matrix(kp, w, tan, [punkt])
+        Yd, _ = koerper_matrix(nur, w, tan[:datei], [punkt])
+        alle = zeit(ton_mit([sa], [laenge], 0, xp, d, winkel, Y, H, w, breite, tempo)[0])
+        dat = zeit(ton_mit([sa], [laenge], 0, xp, d, winkel, Yd, H, w, breite, tempo)[0])
+        v, e = VORLAUF, VORLAUF + 0.4
+        zeilen.append((taste, momentary_max(alle), momentary_max(dat), rms_db(alle, 1, 2) - rms_db(alle, v, e),
+                       rms_db(dat, 1, 2) - rms_db(dat, v, e), abfall(alle)[0]))
+        z = zeilen[-1]
+        print(f"{taste:3d} | {laenge:6.3f} {sa['T']:6.1f} {xp:6.3f} | {z[1]:6.1f} / {z[2]:6.1f} | {z[3]:6.1f} / {z[4]:6.1f} | {z[5]:6.1f}", flush=True)
+    a = np.array(zeilen)
+    l = a[:, 1]
+    d3 = np.abs(l[3:] - l[:-3]) if je_taste else np.abs(np.diff(l))
+    print(f"Spanne {l.max() - l.min():.1f} LU, groesster Sprung im Terzabstand {d3.max():.1f} LU (bei Taste {int(a[int(np.argmax(d3)), 0])}), "
+          f"mittlerer {np.median(d3):.1f} LU")
+    print(f"GZ5 a, Moden der Datei gegen alle: Lautheit groesster Betrag {np.abs(a[:, 2] - a[:, 1]).max():.2f} LU, "
+          f"Pegel 1-2 s groesster Betrag {np.abs(a[:, 4] - a[:, 3]).max():.2f} dB")
+    print("Abfall frueh je Oktave (Median, dB/s): " + "  ".join(
+        f"C{von // 12 - 1} {np.nanmedian(a[(a[:, 0] >= von) & (a[:, 0] < von + 12), 5]):.1f}" for von in range(24, 108, 12)
+        if ((a[:, 0] >= von) & (a[:, 0] < von + 12)).any()))
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] in ("harfe", "cembalo"):
+        tasten_instrument(sys.argv[1], "--je-taste" in sys.argv)
+        sys.exit(0)
     if len(sys.argv) > 1 and sys.argv[1] in ("laute", "oud"):
         chor_instrument(sys.argv[1], "--je-taste" in sys.argv)
         sys.exit(0)
