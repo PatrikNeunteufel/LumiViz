@@ -1,0 +1,43 @@
+# Guitar.mf.sul_E.E4B4.mono.aif: 7 Stuecke, erwartet 8 - ausgelassen
+# Guitar.mf.sulE.C3B3.mono.aif: 11 Stuecke, erwartet 12 - ausgelassen
+# Guitar.pp.sulA.A2B2.mono.aif: 4 Stuecke, erwartet 3 - ausgelassen
+# Guitar.pp.sulA.C3B3.mono.aif: 13 Stuecke, erwartet 12 - ausgelassen
+# Guitar.pp.sulB.C5Gb5.mono.aif: 6 Stuecke, erwartet 7 - ausgelassen
+# Guitar.pp.sulD.C4Ab4.mono.aif: 7 Stuecke, erwartet 9 - ausgelassen
+# Guitar.pp.sulE.C3B3.mono.aif: 11 Stuecke, erwartet 12 - ausgelassen
+66 Toene in allen drei Staerken, 748 Teiltoene
+Median ff - pp / ff - mf in dB je Saite und Frequenzband des Teiltons (Zahl der Werte)
+Saite       0- 300 Hz          300- 600 Hz          600-1200 Hz         1200-2400 Hz         2400-6000 Hz      
+  6       14.3 /   9.9 ( 20)    11.7 /   8.6 ( 24)    17.2 /  11.8 ( 45)    20.3 /  -0.5 (  7)           -          
+  5       20.1 /  18.2 (  3)    10.0 /   6.5 (  5)    12.9 /  -0.7 ( 10)    19.4 /   0.3 ( 21)    12.0 /   7.9 ( 21)
+  4        8.9 /   3.6 ( 11)    10.4 /  -0.1 ( 16)    17.9 /   8.2 ( 32)    16.7 /   9.3 ( 54)     8.5 /  -8.1 (  7)
+  3       12.5 /   5.2 (  8)    18.0 /   4.6 ( 20)    18.2 /   6.3 ( 36)    16.1 /  10.7 ( 72)    19.6 /  11.7 ( 88)
+  2       12.1 /   2.6 (  4)    16.5 /   1.7 ( 13)    18.3 /   5.2 ( 22)    16.0 /   7.9 ( 46)    21.2 /   6.0 ( 71)
+  1              -              16.9 /   7.8 (  3)    15.9 /   4.2 ( 11)    19.1 /   7.8 ( 19)    32.1 /  10.2 ( 58)
+Grundton allein (n = 1): Median ff - pp / ff - mf je Saite
+  6       14.3 /   4.8   (10.-90. Perzentil ff - pp   2.6 ...  18.0; 8 Toene)
+  5       17.3 /   5.9   (10.-90. Perzentil ff - pp   4.4 ...  24.5; 5 Toene)
+  4        9.0 /   2.4   (10.-90. Perzentil ff - pp   1.1 ...  10.6; 10 Toene)
+  3       15.6 /   5.7   (10.-90. Perzentil ff - pp   8.1 ...  29.3; 19 Toene)
+  2       16.5 /   2.4   (10.-90. Perzentil ff - pp   9.6 ...  20.4; 13 Toene)
+  1       16.9 /   5.1   (10.-90. Perzentil ff - pp   9.8 ...  33.0; 11 Toene)
+Ueber alle Saiten, Rest = Median von |gemessen - Gesetz| in dB:
+  ff - pp  nur Auslenkung (A): 18.74; Rest 8.63 dB, Streuung 13.16 dB
+  ff - pp  Auslenkung und Breite (A + B (f / c)^2): 17.57 / 0.01, sqrt(h_pp^2 - h_ff^2) = 6.3 mm; Rest 8.33 dB, Streuung 13.08 dB
+  ff - pp  Auslenkung und Neigung ueber der Frequenz (A + C lb(f / 1 kHz)): 17.20 / 3.00; Rest 7.80 dB, Streuung 12.60 dB
+  ff - mf  nur Auslenkung (A): 8.32; Rest 6.93 dB, Streuung 11.69 dB
+  ff - mf  Auslenkung und Breite (A + B (f / c)^2): 8.51 / -0.00, sqrt(h_pp^2 - h_ff^2) = -2.5 mm; Rest 6.95 dB, Streuung 11.69 dB
+  ff - mf  Auslenkung und Neigung ueber der Frequenz (A + C lb(f / 1 kHz)): 7.89 / 0.84; Rest 6.87 dB, Streuung 11.64 dB
+Anpassung ff - pp = A + B (f / c)^2 je Saite (c = 2 L f der leeren Saite): A dB, B, daraus d_ff / d_pp und sqrt(h_pp^2 - h_ff^2) in mm; Rest in dB (Median des Betrags)
+  6  ff - pp:  A  12.5 dB  B      0.1  ->  d-Verhaeltnis  4.2, Breite  12.1 mm; Rest  5.7 dB
+  6  ff - mf:  A   8.5 dB  B      0.0  ->  d-Verhaeltnis  2.7, Breite   9.3 mm; Rest  5.0 dB
+  5  ff - pp:  A  14.1 dB  B      0.0  ->  d-Verhaeltnis  5.1, Breite   4.8 mm; Rest 12.0 dB
+  5  ff - mf:  A   4.1 dB  B      0.0  ->  d-Verhaeltnis  1.6, Breite   4.2 mm; Rest  9.7 dB
+  4  ff - pp:  A  13.9 dB  B      0.0  ->  d-Verhaeltnis  5.0, Breite   5.3 mm; Rest  7.5 dB
+  4  ff - mf:  A   7.0 dB  B      0.0  ->  d-Verhaeltnis  2.2, Breite   5.3 mm; Rest  7.1 dB
+  3  ff - pp:  A  18.5 dB  B      0.0  ->  d-Verhaeltnis  8.5, Breite   3.5 mm; Rest  8.5 dB
+  3  ff - mf:  A  10.6 dB  B     -0.0  ->  d-Verhaeltnis  3.4, Breite  -5.7 mm; Rest  7.6 dB
+  2  ff - pp:  A  15.8 dB  B      0.1  ->  d-Verhaeltnis  6.2, Breite  12.3 mm; Rest  5.9 dB
+  2  ff - mf:  A   7.0 dB  B     -0.0  ->  d-Verhaeltnis  2.2, Breite  -1.9 mm; Rest  6.4 dB
+  1  ff - pp:  A  19.5 dB  B      0.1  ->  d-Verhaeltnis  9.4, Breite  19.7 mm; Rest  9.8 dB
+  1  ff - mf:  A   6.6 dB  B      0.0  ->  d-Verhaeltnis  2.1, Breite  10.5 mm; Rest  5.5 dB

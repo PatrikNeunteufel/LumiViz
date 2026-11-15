@@ -168,7 +168,16 @@ def koerper_kurven2(kp, punkt, w, tan):
     return Y, Hz, Hy
 
 
-def ton2(saite, laenge, x_p, d, winkel_grad, Y, Hz, Hy, w, breite=0.0075):
+def staerke_faktor(w, stufe):
+    """GZ6 a: die Stufe (dB, <= 0) setzt die Auslenkung (d bei Stufe 0) und kippt das Spektrum des Zupfs um 1 kHz —
+    0,16 dB je Oktave je dB Stufe (angepasst an Iowa MIS: ff - pp 3,0 dB je Oktave bei 18,7 dB)."""
+    if stufe == 0.0:
+        return 1.0
+    f = np.maximum(np.abs(w.real) / (2 * np.pi), 20.0)
+    return 10 ** (stufe * (1 + 0.16 * np.log2(f / 1000.0)) / 20)
+
+
+def ton2(saite, laenge, x_p, d, winkel_grad, Y, Hz, Hy, w, breite=0.0075, stufe=0.0, y_bis=None):
     """Zwei Polarisationen: (I + R_b E) v+ = g (cos a, sin a), R_b = (I + Z0 Y)^-1 (Z0 Y - I), F = 2 Z0 (I + Z0 Y)^-1 v+."""
     T, m, EI = saite["T"], saite["m"], saite["EI"]
     k2 = (-T + np.sqrt(T * T + 4 * EI * m * w ** 2)) / (2 * EI)
@@ -177,7 +186,7 @@ def ton2(saite, laenge, x_p, d, winkel_grad, Y, Hz, Hy, w, breite=0.0075):
     k = k * (1 - 0.5j * eta)
     z0 = T * k / w
     f0 = T * d * laenge / (x_p * (laenge - x_p))
-    f = -f0 / (1j * w) * np.exp(-(w * breite / np.sqrt(T / m)) ** 2)
+    f = -f0 / (1j * w) * np.exp(-(w * breite / np.sqrt(T / m)) ** 2) * staerke_faktor(w, stufe)
     g = f / (2 * z0) * (np.exp(-1j * k * x_p) - np.exp(-1j * k * (2 * laenge - x_p)))
     E = np.exp(-2j * k * laenge)
     n = len(w)
