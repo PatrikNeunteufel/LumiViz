@@ -1,6 +1,14 @@
 """S199, 34k-6 — Pruefstand ohne Kern: eine gezupfte Saite am Steg eines Koerpers, im Frequenzbereich gerechnet.
 
-Aufruf (vom Projekt-Root): python -B <dieses Skript> gitarre [--je-taste]
+Aufruf (vom Projekt-Root): python -B <dieses Skript> gitarre [--je-taste] [--steg-neu] [--winkel <Grad>]
+
+--winkel: zwei Polarisationen. Die Saite wird unter diesem Winkel gegen die Senkrechte zur Decke losgelassen; jede
+Mode des Koerpers bewegt den Steg in einer Richtung theta_n gegen die Senkrechte (Bank & Karjalainen 2010: Y = Summe
+H_n d_n d_n^T, wie im Kern). Der Koerper gibt nur die Senkrechte; tan(theta_n) ist eine ANNAHME, abgelesen an Scherrer
+2013 Abb. A.11 (andere Gitarre): 0,03 bis 200 Hz (Yyy 30 dB unter den tiefen Spitzen von Yzz), steigend auf 0,4 ab
+rund 1,5 kHz (Yyy 5-10 dB unter Yzz), Vorzeichen gezogen (Samen 7).
+
+--steg-neu: Formwert und Abstrahlgewicht des Gitarrenkoerpers ab 2 kHz nach `teile_neu` geteilt.
 
 Das Modell ist linear, also laesst sich der Ton einer Note geschlossen je Frequenz rechnen — ohne Zeitschritt, ohne
 Interpolation, ohne Stimmen. Der Pruefstand ist der Bezug, an dem der Kern (Rechenfassung 2, 34k-7) gemessen wird.
@@ -105,6 +113,81 @@ def koerper_kurven(kp, punkt, w):
     return Y, H
 
 
+# Gemessene Uebertragung Schlagort -> Aufnehmer an g34 (Mittel der sechs Paare, Mobilitaet in dB re 1 m/s/N je
+# Terzband; 2026-11-15_S199_gitarre_admittanz_an_den_saiten.py mit der Messdatei). Ueber 10 kHz traegt die Messung nicht:
+# dort der Wert von 10 kHz.
+GITARRE_UEBERTRAGUNG = {2016: -45.3, 2540: -44.3, 3200: -47.2, 4032: -47.4, 5080: -49.8, 6400: -51.8, 8063: -51.2, 10159: -50.1}
+
+
+def teile_neu(kp, ziel=None, zuschlag=3.0):
+    """Formwert am Steg und Abstrahlgewicht je Terzband neu geteilt (das Produkt, also p / F, bleibt): die
+    Punktadmittanz im Mittel der Stegpunkte = gemessene Uebertragung + `zuschlag` dB (Punkt gegen Uebertragung in einem
+    dichten Modenfeld: Faktor 2). Die Messung bestimmt ueber rund 2,5 kHz nur das Produkt (Bericht S199 Par. 11)."""
+    ziel = ziel or GITARRE_UEBERTRAGUNG
+    mitten = sorted(ziel) + [m for m in (12800, 16127, 20319)]
+    werte = [ziel[m] for m in sorted(ziel)] + [ziel[max(ziel)]] * 3
+    hz = np.arange(1500.0, 22000.0, 2.0)
+    for _ in range(6):
+        pegel = np.mean([np.abs(koerper_kurven(kp, s, 2 * np.pi * hz + 0j)[0]) ** 2 for s in range(kp["steg"].shape[1])], axis=0)
+        for m, z in zip(mitten, werte):
+            band = (hz >= m / 2 ** (1 / 6)) & (hz < m * 2 ** (1 / 6))
+            lam = 10 ** ((10 * np.log10(np.mean(pegel[band])) - (z + zuschlag)) / 20)
+            mo = (kp["f"] >= m / 2 ** (1 / 6)) & (kp["f"] < m * 2 ** (1 / 6))
+            kp["steg"][mo] /= lam
+            kp["G"][mo] *= lam
+    return kp
+
+
+def richtung_tan(f, samen=7):
+    """tan(theta_n) je Mode: Annahme nach Scherrer 2013 Abb. A.11 (siehe Kopf)."""
+    z = Zufall(samen)
+    betrag = np.clip(0.03 * (f / 200.0) ** 1.27, 0.03, 0.4)
+    return betrag * np.array([1.0 if z.gleich() < 0.5 else -1.0 for _ in f])
+
+
+def koerper_kurven2(kp, punkt, w, tan):
+    """Yzz, Yzy, Yyy und der Druck je Kraft senkrecht (Hz) und parallel (Hy) am Stegpunkt."""
+    wn = 2 * np.pi * kp["f"]
+    Y = np.zeros((len(w), 3), dtype=complex)
+    Hz = np.zeros((len(w), kp["G"].shape[1]), dtype=complex)
+    Hy = np.zeros_like(Hz)
+    phi = kp["steg"][:, punkt]
+    for a in range(0, len(w), 4096):
+        ws = w[a:a + 4096, None]
+        nenner = 1.0 / (wn[None, :] ** 2 - ws ** 2 + 1j * kp["eta"][None, :] * wn[None, :] * ws)
+        Y[a:a + 4096] = (1j * ws * nenner) @ np.stack([phi ** 2, tan * phi ** 2, tan ** 2 * phi ** 2], axis=1)
+        Hz[a:a + 4096] = (-ws ** 2 * nenner) @ (phi[:, None] * kp["G"])
+        Hy[a:a + 4096] = (-ws ** 2 * nenner) @ ((tan * phi)[:, None] * kp["G"])
+    return Y, Hz, Hy
+
+
+def ton2(saite, laenge, x_p, d, winkel_grad, Y, Hz, Hy, w, breite=0.0075):
+    """Zwei Polarisationen: (I + R_b E) v+ = g (cos a, sin a), R_b = (I + Z0 Y)^-1 (Z0 Y - I), F = 2 Z0 (I + Z0 Y)^-1 v+."""
+    T, m, EI = saite["T"], saite["m"], saite["EI"]
+    k2 = (-T + np.sqrt(T * T + 4 * EI * m * w ** 2)) / (2 * EI)
+    k = np.sqrt(k2)
+    eta = (T * (saite["etaF"] + saite["etaA"] / w) + EI * saite["etaB"] * k2) / (T + EI * k2)
+    k = k * (1 - 0.5j * eta)
+    z0 = T * k / w
+    f0 = T * d * laenge / (x_p * (laenge - x_p))
+    f = -f0 / (1j * w) * np.exp(-(w * breite / np.sqrt(T / m)) ** 2)
+    g = f / (2 * z0) * (np.exp(-1j * k * x_p) - np.exp(-1j * k * (2 * laenge - x_p)))
+    E = np.exp(-2j * k * laenge)
+    n = len(w)
+    A = np.zeros((n, 2, 2), dtype=complex)          # I + Z0 Y
+    A[:, 0, 0] = 1 + z0 * Y[:, 0]
+    A[:, 0, 1] = A[:, 1, 0] = z0 * Y[:, 1]
+    A[:, 1, 1] = 1 + z0 * Y[:, 2]
+    Ainv = np.linalg.inv(A)
+    eins = np.broadcast_to(np.eye(2), (n, 2, 2))
+    Rb = Ainv @ (A - 2 * eins)
+    a = np.radians(winkel_grad)
+    rechts = g[:, None] * np.array([np.cos(a), np.sin(a)])[None, :]
+    vplus = np.linalg.solve(eins + Rb * E[:, None, None], rechts[:, :, None])[:, :, 0]
+    F = 2 * z0[:, None] * (Ainv @ vplus[:, :, None])[:, :, 0]
+    return F[:, 0:1] * Hz + F[:, 1:2] * Hy
+
+
 # ---------------------------------------------------------------- Saite und Ton
 def ton(saite, laenge, x_p, d, Y, H, w, breite=0.0075):
     T, m, EI = saite["T"], saite["m"], saite["EI"]
@@ -183,8 +266,10 @@ MENSUR = 0.650
 ZUPFORT = 0.16      # m vom Steg (Pavlidou 1997 nach Scherrer 2013 Tab. 2.1: Auslenkung 0,8-4 mm bei 16 cm)
 
 
-def gitarre(je_taste):
+def gitarre(je_taste, steg_neu, winkel=None):
     kp = lade_koerper("classical_guitar")
+    if steg_neu:
+        teile_neu(kp)
     w = frequenzen()
     kurven = {}
     zeilen = []
@@ -193,11 +278,17 @@ def gitarre(je_taste):
         bund = taste - GITARRE[s]["taste"]
         if bund > 19:
             continue
+        punkt = kp["tasten"].index(GITARRE[s]["taste"])
         if s not in kurven:
-            kurven[s] = koerper_kurven(kp, kp["tasten"].index(GITARRE[s]["taste"]), w)
+            kurven[s] = koerper_kurven(kp, punkt, w) if winkel is None else koerper_kurven2(kp, punkt, w, richtung_tan(kp["f"]))
         laenge = MENSUR * 2 ** (-bund / 12)
-        x = zeit(ton(GITARRE[s], laenge, min(ZUPFORT, 0.5 * laenge), 0.002, *kurven[s], w))
-        steif = zeit(ton(GITARRE[s], laenge, min(ZUPFORT, 0.5 * laenge), 0.002, np.zeros(len(w)), kurven[s][1], w))
+        if winkel is None:
+            x = zeit(ton(GITARRE[s], laenge, min(ZUPFORT, 0.5 * laenge), 0.002, *kurven[s], w))
+            steif = zeit(ton(GITARRE[s], laenge, min(ZUPFORT, 0.5 * laenge), 0.002, np.zeros(len(w)), kurven[s][1], w))
+        else:
+            x = zeit(ton2(GITARRE[s], laenge, min(ZUPFORT, 0.5 * laenge), 0.002, winkel, *kurven[s], w))
+            steif = zeit(ton2(GITARRE[s], laenge, min(ZUPFORT, 0.5 * laenge), 0.002, winkel, np.zeros((len(w), 3)),
+                              kurven[s][1], kurven[s][2], w))
         frueh, spaet = abfall(x)
         zeilen.append((taste, 6 - s, bund, momentary_max(x), momentary_max(steif), frueh, spaet, abfall(steif)[0]))
         print(f"Taste {taste:3d}  Saite {6 - s}  Bund {bund:2d}  {zeilen[-1][3]:7.1f} LUFS   starrer Steg {zeilen[-1][4]:7.1f}   "
@@ -217,4 +308,5 @@ def gitarre(je_taste):
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] != "gitarre":
         sys.exit(__doc__)
-    gitarre("--je-taste" in sys.argv)
+    gitarre("--je-taste" in sys.argv, "--steg-neu" in sys.argv,
+            float(sys.argv[sys.argv.index("--winkel") + 1]) if "--winkel" in sys.argv else None)

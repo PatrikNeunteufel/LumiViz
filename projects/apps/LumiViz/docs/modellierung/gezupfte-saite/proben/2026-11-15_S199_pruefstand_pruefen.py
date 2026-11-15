@@ -5,6 +5,8 @@ Aufruf: python -B <dieses Skript>
 1  Lautheit: Sinus 1 kHz, -23 dBFS, beide Kanaele -> -23,0 LUFS (EBU Tech 3341, Fall 1).
 2  Starrer Steg, Ausgang = Kraft am Steg: je Teilton Frequenz gegen n f0 sqrt(1 + B n^2) (B = pi^2 EI / (T L^2)),
    Abklingen gegen sigma_n = eta_n w_n / 2 (Valette), Hoehe bei t = 0 gegen 2 F0 g |sin(n pi x_p / L)| / (w_n L dk/dw).
+3  Zwei Polarisationen: bewegen alle Moden den Steg in derselben Richtung theta und wird unter theta losgelassen, ist
+   das die Rechnung mit einer Polarisation und den Formwerten phi / cos(theta); bei Winkel 0 und tan = 0 dieselbe.
 """
 import importlib.util
 import pathlib
@@ -26,7 +28,25 @@ def projektion(x, hz, t0, dauer=0.4):
     return abs(np.sum(x[a:a + n] * fen * np.exp(-2j * np.pi * hz * t))) * 2 / fen.sum()
 
 
+def fall3():
+    kp = ps.lade_koerper("classical_guitar")
+    w = ps.frequenzen()[::7]                    # ein duennes Raster genuegt fuer den Vergleich der Spektren
+    sa, L = ps.GITARRE[3], ps.MENSUR
+    theta = 20.0
+    t = np.full(len(kp["f"]), np.tan(np.radians(theta)))
+    zwei = ps.ton2(sa, L, 0.16, 0.002, theta, *ps.koerper_kurven2(kp, 3, w, t), w)
+    kp1 = dict(kp)
+    kp1["steg"] = kp["steg"] / np.cos(np.radians(theta))
+    eins = ps.ton(sa, L, 0.16, 0.002, *ps.koerper_kurven(kp1, 3, w), w)
+    null2 = ps.ton2(sa, L, 0.16, 0.002, 0.0, *ps.koerper_kurven2(kp, 3, w, 0 * t), w)
+    null1 = ps.ton(sa, L, 0.16, 0.002, *ps.koerper_kurven(kp, 3, w), w)
+    print(f"3  alle Moden unter {theta:.0f} Grad, Zupf unter {theta:.0f} Grad: groesster Unterschied zur Rechnung mit einer "
+          f"Polarisation {np.abs(zwei - eins).max() / np.abs(eins).max():.1e} (relativ); Winkel 0, tan 0: "
+          f"{np.abs(null2 - null1).max() / np.abs(null1).max():.1e}")
+
+
 if __name__ == "__main__":
+    fall3()
     t = np.arange(int(3 * FS)) / FS
     s = 10 ** (-23 / 20) * np.sin(2 * np.pi * 1000 * t)
     print(f"1  Sinus 1 kHz -23 dBFS stereo: {ps.momentary_max(np.stack([s, s], axis=1)):.2f} LUFS (Soll -23,0)")
