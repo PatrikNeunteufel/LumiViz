@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.44.0
+> **Version:** 0.45.0
 > **Datum:** 2026-11-16 (Session 200)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1476,6 +1476,14 @@ Ziele und Schwelle der Harfe (Kasten G besaitet, Lage und Höhe mit Saitenlast) 
 
 GZ8 a und GZ9 a kamen auf ein einzelnes „a“ zu zwei Fragen; so gelesen.
 
+✅ **GZ10 a** (Patrik S200): **Das Cembalo bekommt einen Tastenstoß: ein Kraftstoß senkrecht auf den Boden am Stegpunkt der Taste, Gauß mit 0,4 ms, 7 mN s bei ff, 10 dB weniger je Stufe (ff, mf, pp = Stufe 0, −9, −18 dB). Die Ablösekraft des Kiels beträgt 2 N bei ff und fällt bis pp um 1 dB.** Belegkraft: Stoßstärke angepasst an Penttinens Hörtest und die VCSL-Aufnahmen, Gesetz je Stufe nach Penttinen 2006, Ort und Form Annahme. Grund: Penttinens Spektren (Abb. 4 / 5) eichen den Stoß nicht (das Fenster fehlt; je nach Fenster 0–39 mN s an C3, 23–187 mN s an C6); mit der Saite bei 1 dB gibt 7 mN s pp → ff 2,3 / 1,8 / 1,7 / 1,3 / 1,1 LU an C2 … C6 gegen rund 1,3 / 2,4 / 2,2 / 1,4 / 1,3 dB im Hörtest (Abb. 6 a, grob gelesen — vor dem Bau am vergrößerten Bild nachlesen) und liegt in der Spanne der Aufnahmen (2,5–10 mN s; Band 30–300 Hz in den ersten 0,2 s). Verworfen: b (10 mN s: C2 um 2 dB überzeichnet), c (5 mN s: C3 / C4 0,9 dB zu wenig), d (kein Stoß: C3 / C4 1,3 dB unter dem Hörtest, das Merkmal lauter Töne fehlt). Kippt auf d, wenn der Stoß in der Hörprobe als Fremdkörper klingt; neu zu stellen, wenn eine Quelle den Weg von der Taste in den Boden belegt.
+
+✅ **GZ11 a** (Patrik S200): **Der Lautenzug ist ein Dämpfer am Sattel: 40 N s/m im Abstand 0,5 mm, für alle Tasten gleich.** Belegkraft: angepasst an das englische Cembalo der VCSL-Sammlung (*Lute* gegen *Normal*, 27 Tasten). Grund: er trifft alle drei gemessenen Größen zugleich und ihren Gang über die Tasten — Lautheit im Median −1,8 LU (C2 −0,9 … C6 −3,4; Aufnahmen −1,8, Bass −0,4 … C6 −4,9), früher Abfall 2,2-fach (1,2–3,8; Aufnahmen 2,3, je Oktave 1,9–3,2), Grundton +0,0 … +4,2 Cent (Aufnahmen Median +1,6, C6 +5,2). Ein schwacher Dämpfer (R ≤ 3 Z0) nimmt die Höhen, nicht den Grundton, und trifft Lautheit und Abfall nie zugleich. Verworfen: b (80 N s/m bei 1 mm: −0,9 LU, bis +6,9 Cent), c (Güte durch acht wie die Vorlage: an der Vorlage 4,4 LU leiser, keine Verstimmung). Kippt, wenn der Dämpfer so dicht am Sattel im Zeitschritt nicht stabil zu bauen ist — dann ein gleichwertiger Abschluss mit denselben drei Zielgrößen.
+
+✅ **GZ12 a** (Patrik S200; **klärt den Satz „die Register stehen fest in der Tafel“**): **34k liefert das `harpsichord` mit einem 8′ je Taste. Zweites 8′ und 4′ kommen mit den Registern als Spur in 31g**; dafür festgehalten: Stegpunkte auf dem 4′-Steg im Körper (das Format um den Steg je Punkt erweitern), Ablösekraft und Zupfpunkt des 4′ an den Aufnahmen bestimmen. Grund: ein Register ist, was die Zielgrößen und alle Aufnahmen messen, und Register sind ein Spielmittel — fest eingebaut wäre das einzelne 8′ nicht mehr spielbar. Gerechnet (S200, Probe-Körper mit beiden Stegen): zweites 8′ ±0,1 LU gegen das erste, beide 8′ +3,9 LU, das 4′ mit 2 N rund 5–8 LU zu laut gegen die Aufnahmen, alle drei +6,9 LU und 9,3 % der Echtzeit. Verworfen: b (beide 8′ fest), c (alle drei fest mit Nachtrag zu 34k-5). Kippt auf c als schaltbares Feld in der Tafel, wenn 31g in absehbarer Zeit nicht gebaut wird.
+
+GZ10 a, GZ11 a und GZ12 a auf „alle drei Fragen a“.
+
 **Prüfstand 34k-6 (S199)** — `../modellierung/gezupfte-saite/proben/2026-11-15_S199_pruefstand_zupf.py`: der Ton einer Note geschlossen je Frequenz (steife Saite mit Dämpfung nach Valette, Zupf als Auslenkung und Loslassen mit Fingerbreite, Punktadmittanz und Abstrahlung aus der Körperdatei, Momentary-Maximum nach BS.1770); der Bezug, an dem der Kern in 34k-7 gemessen wird.
 
 **KQ26 a gebaut (S199)** — `make_gitarre.py` Schritt 6 (Statistik; `ziehe` mit SplitMix64, Rayleigh, Box-Muller nachgebaut), `FIT_FASSUNG` 2: α(f) = 0,0105 · f + 147 1/s (gemessen 177 / 164 / 203 / 211 / 211 / 231 / 247 1/s bei 2,5 … 10 kHz, das Gesetz 173 … 253), Dichte 0,0104 Moden je Hz, 161 gezogene Moden; Terzpegel 6,3 / 8 / 10 kHz `left` −0,36 / +1,20 / −0,84 dB, `right` −1,36 / +1,09 / +0,27 dB. Die 75 gefitteten Moden sind unverändert (Feld für Feld verglichen). Der Wächter prüft, dass die im Skript gezogenen Moden die von `ziehe` sind (Zahl, die ersten drei, die letzte).
@@ -1541,6 +1549,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.45.0 | 2026-11-16 | Session 200. §6: GZ10 a (Tastenstoß 7 mN s bei ff, 10 dB je Stufe; Ablösekraft 2 N), GZ11 a (Lautenzug als Dämpfer am Sattel, 40 N s/m bei 0,5 mm), GZ12 a (ein 8′ je Taste, weitere Register mit 31g). |
 | 0.44.0 | 2026-11-16 | Session 200. §6: GZ8 a (Harfe mit Oktaven, Quinten, Quarten; die Rechenzeit-Grenze gilt für eine Saite ohne Mitschwingen), GZ9 a (Haltepunkt Bend bestanden). |
 | 0.43.0 | 2026-11-15 | Session 199. §6: GZ5-1 a (über 5 kHz ein Dämpfer aus den Größen des statistischen Teils in der Saitenschleife; am Cembalo gerechnet). |
 | 0.42.0 | 2026-11-15 | Session 199. §6: GZ5 a (alle Moden der Körperdatei in der Saitenschleife, Stegkraft aus dem Kern, Faltung in der App), GZ7 a (die App reicht die Moden mit dem Tonauftrag, kein Stegmoden-Werkzeug); Zeile 34k-7. |
