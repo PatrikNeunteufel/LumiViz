@@ -1,0 +1,84 @@
+gitarre: 120 Tasten. Steifheit - Fehler der Teiltoene in Cent (1-12 unter 10 kHz | alle unter 5 kHz): groesster, Mittel der groessten je Taste, Taste des groessten; K wirklich (kleinster / groesster)
+  Band    5 kHz, K  0: 128.0 / 20.8 (Saite 3 Bund 19) |  62.1 / 29.2 | K 0 ... 0
+  Band    5 kHz, K  2:  48.7 /  5.4 (Saite 3 Bund 19) |  26.1 /  5.4 | K 2 ... 2
+  Band    5 kHz, K  4:  35.6 /  3.7 (Saite 3 Bund 19) |  21.3 /  3.8 | K 4 ... 4
+  Band    5 kHz, K  8:  22.5 /  2.4 (Saite 3 Bund 19) |  16.5 /  2.5 | K 8 ... 8
+  Band    5 kHz, K 16:  10.4 /  1.3 (Saite 3 Bund 19) |  11.8 /  1.5 | K 16 ... 16
+  Band    5 kHz, K 32:   2.6 /  0.5 (Saite 2 Bund 19) |   7.6 /  0.8 | K 32 ... 32
+  Band   10 kHz, K  0: 128.0 / 20.8 (Saite 3 Bund 19) |  62.1 / 29.2 | K 0 ... 0
+  Band   10 kHz, K  2:  38.9 / 11.8 (Saite 3 Bund  4) |  39.8 / 13.6 | K 2 ... 2
+  Band   10 kHz, K  4:  28.6 /  8.3 (Saite 3 Bund  5) |  31.6 / 10.2 | K 4 ... 4
+  Band   10 kHz, K  8:  18.7 /  5.2 (Saite 3 Bund  9) |  23.2 /  7.0 | K 8 ... 8
+  Band   10 kHz, K 16:  10.3 /  2.9 (Saite 3 Bund  9) |  15.0 /  4.3 | K 16 ... 16
+  Band   10 kHz, K 32:   4.3 /  1.2 (Saite 3 Bund  4) |   7.8 /  2.1 | K 32 ... 32
+Verlust - Fehler des Abklingens je Teilton in % (Teiltoene 1-12 unter 10 kHz): groesster Betrag, Mittel der groessten je Taste, Taste; dazu der Grundton allein (groesster Betrag)
+  pol1  Band   20 kHz:    40.0 /   15.3 (Saite 3 Bund 19) | Grundton    0.0 | groesster Betrag des Filters 0.998606
+  fir5  Band   20 kHz:    36.4 /   15.6 (Saite 3 Bund 19) | Grundton   13.3 | groesster Betrag des Filters 0.998648
+  fir5  Band   10 kHz:    38.6 /   14.7 (Saite 3 Bund 19) | Grundton   12.5 | groesster Betrag des Filters 0.998619
+  fir5  Band    6 kHz:    41.7 /   15.9 (Saite 3 Bund 19) | Grundton   12.5 | groesster Betrag des Filters 0.998594
+  fir9  Band   20 kHz:    36.4 /   15.7 (Saite 3 Bund 19) | Grundton   11.7 | groesster Betrag des Filters 0.998648
+  fir9  Band   10 kHz:    38.6 /   14.6 (Saite 3 Bund 19) | Grundton   11.3 | groesster Betrag des Filters 0.998619
+  fir9  Band    6 kHz:    47.7 /   17.5 (Saite 1 Bund 15) | Grundton   10.2 | groesster Betrag des Filters 0.998594
+gitarre 120 Tasten
+  K  8: ein Wert   22.5 /  2.4 Cent (1-12) |   16.5 /   2.5 (unter 5 kHz)   zwei Werte  22.5 /  2.4 |   16.5 /   2.5
+  K 16: ein Wert   10.4 /  1.3 Cent (1-12) |   11.8 /   1.5 (unter 5 kHz)   zwei Werte  10.4 /  1.3 |   11.8 /   1.5
+  Verlust fir5 frei : Abklingen 1-12 groesster   21.5 %, Mittel  11.5 % | Grundton groesster  13.4 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 48 von 120
+  Verlust fir9 frei : Abklingen 1-12 groesster   15.9 %, Mittel   5.4 % | Grundton groesster  10.7 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 20 von 120
+  Verlust pol + fir3: Abklingen 1-12 groesster   36.4 %, Mittel  15.6 % | Grundton groesster  13.0 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 0 von 120
+  Verlust pol + fir5: Abklingen 1-12 groesster   19.2 %, Mittel   8.6 % | Grundton groesster   9.7 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 44 von 120
+harfe: 80 Tasten. Steifheit - Fehler der Teiltoene in Cent (1-12 unter 10 kHz | alle unter 5 kHz): groesster, Mittel der groessten je Taste, Taste des groessten; K wirklich (kleinster / groesster)
+  Band    5 kHz, K  0:  57.5 / 26.8 (Taste  78) | 869.7 / 135.9 | K 0 ... 0
+  Band    5 kHz, K  2:  65.3 / 15.1 (Taste  46) | 710.7 / 84.0 | K 2 ... 2
+  Band    5 kHz, K  4:  61.3 / 11.5 (Taste  27) | 648.3 / 74.9 | K 4 ... 4
+  Band    5 kHz, K  8:  39.7 /  7.3 (Taste  27) | 593.3 / 65.1 | K 8 ... 8
+  Band    5 kHz, K 16:  21.2 /  4.1 (Taste  27) | 513.3 / 53.1 | K 8 ... 16
+  Band    5 kHz, K 32:   8.2 /  1.9 (Taste  27) | 392.2 / 38.0 | K 8 ... 32
+  Band   10 kHz, K  0:  57.5 / 26.8 (Taste  78) | 869.7 / 135.9 | K 0 ... 0
+  Band   10 kHz, K  2:  84.2 / 22.4 (Taste  46) | 710.7 / 89.6 | K 2 ... 2
+  Band   10 kHz, K  4:  64.6 / 17.0 (Taste  46) | 648.3 / 79.4 | K 4 ... 4
+  Band   10 kHz, K  8:  42.0 / 10.8 (Taste  46) | 593.3 / 68.5 | K 8 ... 8
+  Band   10 kHz, K 16:  22.4 /  5.9 (Taste  46) | 513.3 / 55.3 | K 8 ... 16
+  Band   10 kHz, K 32:   8.6 /  2.5 (Taste  46) | 392.2 / 39.1 | K 8 ... 32
+Verlust - Fehler des Abklingens je Teilton in % (Teiltoene 1-12 unter 10 kHz): groesster Betrag, Mittel der groessten je Taste, Taste; dazu der Grundton allein (groesster Betrag)
+  pol1  Band   20 kHz:   128.0 /   32.8 (Taste 101) | Grundton    0.0 | groesster Betrag des Filters 1.000305
+  fir5  Band   20 kHz:    41.4 /   16.2 (Taste  27) | Grundton   10.7 | groesster Betrag des Filters 0.999228
+  fir5  Band   10 kHz:    37.5 /   16.4 (Taste  78) | Grundton    9.9 | groesster Betrag des Filters 0.998960
+  fir5  Band    6 kHz:    41.3 /   18.0 (Taste  78) | Grundton    9.6 | groesster Betrag des Filters 0.998853
+  fir9  Band   20 kHz:    34.4 /   15.2 (Taste  78) | Grundton    9.3 | groesster Betrag des Filters 0.999228
+  fir9  Band   10 kHz:    37.5 /   15.8 (Taste  78) | Grundton    9.5 | groesster Betrag des Filters 0.998960
+  fir9  Band    6 kHz:    41.3 /   17.9 (Taste  78) | Grundton    9.6 | groesster Betrag des Filters 0.998853
+harfe 80 Tasten
+  K  8: ein Wert   39.7 /  7.3 Cent (1-12) |  593.3 /  65.1 (unter 5 kHz)   zwei Werte  39.7 /  7.4 |  593.3 /  65.1
+  K 16: ein Wert   21.2 /  4.1 Cent (1-12) |  513.3 /  53.1 (unter 5 kHz)   zwei Werte  21.2 /  4.2 |  513.3 /  53.1
+  Verlust fir5 frei : Abklingen 1-12 groesster   11.2 %, Mittel   5.5 % | Grundton groesster   6.4 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 44 von 80
+  Verlust fir9 frei : Abklingen 1-12 groesster    8.7 %, Mittel   4.2 % | Grundton groesster   8.7 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 37 von 80
+  Verlust pol + fir3: Abklingen 1-12 groesster   34.4 %, Mittel  17.4 % | Grundton groesster   9.2 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 2 von 80
+  Verlust pol + fir5: Abklingen 1-12 groesster    9.4 %, Mittel   3.9 % | Grundton groesster   6.7 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 44 von 80
+cembalo: 61 Tasten. Steifheit - Fehler der Teiltoene in Cent (1-12 unter 10 kHz | alle unter 5 kHz): groesster, Mittel der groessten je Taste, Taste des groessten; K wirklich (kleinster / groesster)
+  Band    5 kHz, K  0:   9.1 /  3.7 (Taste  81) | 285.3 / 29.4 | K 0 ... 0
+  Band    5 kHz, K  2:   6.0 /  0.9 (Taste  29) | 227.7 / 18.4 | K 2 ... 2
+  Band    5 kHz, K  4:   3.8 /  0.6 (Taste  29) | 211.3 / 16.4 | K 4 ... 4
+  Band    5 kHz, K  8:   2.3 /  0.4 (Taste  29) | 189.3 / 14.1 | K 8 ... 8
+  Band    5 kHz, K 16:   1.3 /  0.3 (Taste  29) | 160.6 / 11.5 | K 16 ... 16
+  Band    5 kHz, K 32:   0.7 /  0.2 (Taste  29) | 124.0 /  8.5 | K 16 ... 32
+  Band   10 kHz, K  0:   9.1 /  3.7 (Taste  81) | 285.3 / 29.4 | K 0 ... 0
+  Band   10 kHz, K  2:   6.0 /  1.0 (Taste  29) | 227.7 / 18.7 | K 2 ... 2
+  Band   10 kHz, K  4:   3.8 /  0.6 (Taste  29) | 211.3 / 16.7 | K 4 ... 4
+  Band   10 kHz, K  8:   2.3 /  0.4 (Taste  29) | 189.3 / 14.3 | K 8 ... 8
+  Band   10 kHz, K 16:   1.3 /  0.2 (Taste  29) | 160.6 / 11.6 | K 16 ... 16
+  Band   10 kHz, K 32:   0.7 /  0.2 (Taste  29) | 124.0 /  8.6 | K 16 ... 32
+Verlust - Fehler des Abklingens je Teilton in % (Teiltoene 1-12 unter 10 kHz): groesster Betrag, Mittel der groessten je Taste, Taste; dazu der Grundton allein (groesster Betrag)
+  pol1  Band   20 kHz:    41.1 /   35.7 (Taste  40) | Grundton    0.0 | groesster Betrag des Filters 0.999461
+  fir5  Band   20 kHz:    34.9 /   24.9 (Taste  37) | Grundton   21.2 | groesster Betrag des Filters 0.999415
+  fir5  Band   10 kHz:    34.8 /   24.2 (Taste  37) | Grundton   21.2 | groesster Betrag des Filters 0.999430
+  fir5  Band    6 kHz:    37.5 /   28.2 (Taste  76) | Grundton   21.2 | groesster Betrag des Filters 0.999446
+  fir9  Band   20 kHz:    32.1 /   20.3 (Taste  37) | Grundton   20.6 | groesster Betrag des Filters 0.999464
+  fir9  Band   10 kHz:    31.3 /   19.7 (Taste  35) | Grundton   20.5 | groesster Betrag des Filters 0.999466
+  fir9  Band    6 kHz:    58.3 /   28.4 (Taste  83) | Grundton   20.5 | groesster Betrag des Filters 0.999490
+cembalo 61 Tasten
+  K  8: ein Wert    2.3 /  0.4 Cent (1-12) |  189.3 /  14.1 (unter 5 kHz)   zwei Werte   2.3 /  0.4 |  189.3 /  14.1
+  K 16: ein Wert    1.3 /  0.3 Cent (1-12) |  160.6 /  11.5 (unter 5 kHz)   zwei Werte   1.3 /  0.3 |  160.6 /  11.5
+  Verlust fir5 frei : Abklingen 1-12 groesster   34.8 %, Mittel  24.8 % | Grundton groesster  21.3 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 0 von 61
+  Verlust fir9 frei : Abklingen 1-12 groesster   30.5 %, Mittel  18.6 % | Grundton groesster  20.3 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 0 von 61
+  Verlust pol + fir3: Abklingen 1-12 groesster   32.7 %, Mittel  24.0 % | Grundton groesster  20.9 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 0 von 61
+  Verlust pol + fir5: Abklingen 1-12 groesster   28.0 %, Mittel  18.1 % | Grundton groesster  19.5 % | ohne zulaessige Loesung (Betrag >= 1 oder < 0): 0 von 61
