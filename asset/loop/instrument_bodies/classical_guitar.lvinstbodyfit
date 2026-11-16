@@ -1,7 +1,7 @@
 {
  "format": "lumiviz-instrument-body-fit",
  "version": 1,
- "fitVersion": 2,
+ "fitVersion": 3,
  "title": "Classical guitar",
  "description": "Modal fit to the measured bridge mobility and near-field sound pressure of a classical Spanish guitar from the Mores archive (KQ3 a, KQ23 a to KQ25 a). The body file carries, per mode, the frequency, the loss factor, the mode shape at each of the six strings and a radiation weight for two listening points. Method after Ducceschi, Russo & Webb (DAFx26, 2026, Sec. 3.4) with the full one-second response instead of 62.5 ms, poles from ESPRIT over all six bridge responses, and normal modes with one shape along the saddle (rigid bar with bending).",
  "source": "R. Mores, Archive for the acoustical documentation of classical Spanish guitars, flamenco guitars and romantic guitars - bridge mobility, Zenodo 4604577 (2021), CC BY 4.0; guitar g34: Manuel Contreras, Madrid 1971, classical Spanish, cedar / Rio palisander, scale 662 mm, 1670 g, measured in the free-field laboratory of the Hamburg University of Applied Sciences on 3 Dec. 2018",
@@ -35,7 +35,7 @@
   "window": "exponential 3.0 1/s from the strike, subtracted from the damping",
   "poles": "multichannel ESPRIT per third-octave band over the six bridge accelerances; modes below -25 dB of their band and double poles dropped",
   "pairs": "below 300 Hz a pair closer than its mean width becomes one pole (frequency and damping re-fitted) if the error in its band rises by at most 0.2 dB",
-  "bridge": "normal modes: residue(strike, sensor) = phi(x_strike) phi(x_sensor), phi(x) = a + b x + c x^2; Gauss-Newton on the six mobilities, error weighted by 1/|Y|",
+  "bridge": "normal modes with one shape phi(x) = a + b x + c x^2 along the saddle: first Gauss-Newton on the six mobilities alone (residue(strike, sensor) = phi(x_strike) phi(x_sensor)), then together with the nine curves of sound pressure per force (three strikes, three microphones: sum of phi(x_strike) G), equal weight, error weighted by 1/|Y|, alternating between the weights per microphone and the shape, eight rounds (KQ28 a)",
   "radiation": "per listening point one complex weight per mode up to the split frequency, fitted to the pressure per force of all three strikes; above it one magnitude per third-octave band with a drawn sign (seed 1), set so that the band level matches on average over the strikes",
   "statistical": "statistical part 5000-20000 Hz (KQ26 a), quantities from the measurement: damping law alpha(f) = a f^2 + b f + c from the decay at the microphones per third-octave band 2.5-10 kHz (Schroeder curve, -5 to -25 dB); density and bridge spread from the poles 2.5-5 kHz as for the bodies from a plan; radiation magnitude per listening point set so that the third-octave level at 6.3 / 8 / 10 kHz matches on average. The measurement carries up to about 10 kHz (signal to noise at the microphones 11-16 dB at 10 kHz, below 10 dB above); above that the law is continued and not checked. Only the product of bridge value and radiation weight is determined by the measurement there, not their split."
  },
@@ -97,13 +97,29 @@
     "1000-2500": 1.98,
     "2500-5000": 1.55
    },
-   "normalModes": {
+   "normalModesBridgeOnly": {
     "60-400": 1.01,
     "400-1000": 1.77,
     "1000-2500": 2.45,
     "2500-5000": 2.31
    },
-   "note": "rms of 20 lg |fit / measured| over the six bridge mobilities"
+   "normalModes": {
+    "60-400": 1.34,
+    "400-1000": 2.2,
+    "1000-2500": 2.77,
+    "2500-5000": 2.71
+   },
+   "jointRounds": [
+    0.3741,
+    0.3655,
+    0.3608,
+    0.3583,
+    0.3568,
+    0.3557,
+    0.3548,
+    0.354
+   ],
+   "note": "rms of 20 lg |fit / measured| over the six bridge mobilities; normalModesBridgeOnly: shape from the bridge mobilities alone (start), normalModes: shape from bridge mobilities and sound pressure together (KQ28 a, in the body); jointRounds: rms of the relative error over all fifteen curves after each round"
   },
   "pairs": [
    {
@@ -147,7 +163,7 @@
    }
   ],
   "effectiveMassString6Kg": {
-   "value": 0.049,
+   "value": 0.0524,
    "band": "85-240 Hz",
    "reference": "Wright 1996 Table 5.4: 0.062 kg (guitar BR2, sound hole sealed)"
   },
@@ -155,33 +171,33 @@
    "splitHz": 1000.0,
    "thirdOctaveErrorDb": {
     "500": {
-     "rmsDb": 1.84,
+     "rmsDb": 1.91,
      "left": {
-      "100-400": 1.5,
-      "500-1000": 1.66,
-      "1250-2500": 2.17,
-      "3150-5000": 3.4
+      "100-400": 1.66,
+      "500-1000": 1.67,
+      "1250-2500": 2.15,
+      "3150-5000": 3.57
      },
      "right": {
-      "100-400": 1.45,
-      "500-1000": 0.83,
-      "1250-2500": 2.07,
-      "3150-5000": 2.51
+      "100-400": 1.49,
+      "500-1000": 1.26,
+      "1250-2500": 1.82,
+      "3150-5000": 2.68
      }
     },
     "1000": {
-     "rmsDb": 1.62,
+     "rmsDb": 1.59,
      "left": {
-      "100-400": 0.65,
-      "500-1000": 2.14,
-      "1250-2500": 1.45,
-      "3150-5000": 2.52
+      "100-400": 0.84,
+      "500-1000": 1.67,
+      "1250-2500": 1.87,
+      "3150-5000": 2.26
      },
      "right": {
-      "100-400": 1.01,
-      "500-1000": 2.1,
-      "1250-2500": 1.87,
-      "3150-5000": 2.07
+      "100-400": 0.9,
+      "500-1000": 1.69,
+      "1250-2500": 2.26,
+      "3150-5000": 2.03
      }
     }
    },
@@ -222,14 +238,14 @@
    ],
    "levelErrorDb": {
     "left": [
-     -0.36,
-     1.2,
-     -0.84
+     -0.37,
+     1.18,
+     -0.81
     ],
     "right": [
-     -1.36,
-     1.09,
-     0.27
+     -1.28,
+     1.18,
+     0.11
     ]
    },
    "drawnModes": 161,

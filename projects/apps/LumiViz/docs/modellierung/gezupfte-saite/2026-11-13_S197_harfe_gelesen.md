@@ -452,3 +452,66 @@ bis auf Abdruck und Rechenzeit; an den 46 alten Tasten sind die Werte je Mode un
 Teils Bit für Bit gleich, die 34 neuen Spalten tragen den Wert ihrer Saite. Die Zahlen gegen KQ19 a (§12) gelten
 unverändert. Kippt, wenn die Pedalstellung bestimmen soll, welche Saite eine Taste spielt (dann trägt der Stegpunkt
 die Saite, neue Bauplan-Fassung), oder wenn in 34k-6 an einer schwarzen Taste ein Sprung über 6 LU entsteht.
+
+## 14 Die Mode S(1,1)+ bei 208 Hz und die Tasten 55–57 (S201, 34k-6 Punkt (1))
+
+Anlass: im Prüfstand sind die Tasten 55–57 (196–220 Hz) 8–13 LU lauter als ihre Nachbarn und fallen mit 20–84 dB/s ab;
+ihr Grundton liegt auf der Mode 208,4 Hz des Körpers. Die Höhe von S(1,1) war in S198 nicht geprüft. Proben:
+`proben/2026-11-16_S201_harfe_gegen_bell_7_22.py`, `…_harfe_guete_s11.py`, Rohausgaben daneben.
+
+**Gelesen (Bild).**
+
+- Bell Abb. 7.9 (PDF 295): S(1,1)+ in der Harfe ohne Saiten bei 216 Hz, Q 16, Profil 70–82 dB; besaitet 207 Hz, Q
+  unbestimmbar, 78–86 dB. Abb. 7.8: S(1,1)− in der Harfe 170 Hz, Q 11. S. 152: S(1,1)+ ist „considerably weaker“ als
+  S(1,1)−.
+- Bell Abb. 7.22 / 7.23 (PDF 309): Admittanz und Schalldruck **an der Öse jeder Saite bei deren Frequenz**, fertige
+  Harfe besaitet, Saiten 33 … 10 (104 … 988 Hz). Admittanz (dB, 116 dB = 1 s/kg, ±1 dB): 80 / 89 / 74 / 79 / 81 / 82 /
+  85 / 86 / 84 / 87 / 88 / 89 / 95 / 85 / 89 / 89 / 91 / 90 / 93 / 93 / 99 / 103 / 98 / 99. Text S. 159: mittlerer
+  Schritt zwischen Nachbarsaiten rund 3 dB, größter 15 dB (Saiten 32 / 31); zwei Spitzen, B2 und S(1,3). Schalldruck
+  (Bezug nicht genannt): Anstieg um rund 20 dB zwischen den Saiten 28 und 26, „due to the S(1,1) modes“.
+- Bell Abb. 7.6 (PDF 293), Messort 17: ohne Saiten 65–93 dB, besaitet 76–90 dB — S. 150: besaitet ist die Admittanz
+  „more even“, die Spitzen niedriger, die Täler höher.
+- Le Carrou, Gautier & Foltête 2007 (JASA 121, Camac Atlantide Prestige, besaitet, Saiten mit Papier gedämpft), Abb. 7:
+  Schalldruck je Kraft in 2,35 m (Fernfeld, reflexionsarm), Kraft auf der Mittellinie des Bodens: Spitze 27 · 10⁻³ Pa/N
+  bei 204 Hz, 13–15 · 10⁻³ bei 150–190 Hz, 4 · 10⁻³ bei 240–250 Hz, 2 · 10⁻³ bei 290 Hz — **+16,6 dB bei 204 Hz gegen
+  240–250 Hz**. S. 563: „in a playing configuration, the harp seems to radiate the sound more efficiently in the range
+  140–230 Hz“. Abb. 5: Mobilität an Punkt 34 des Bodens 0,5–6 · 10⁻³ m/s/N (50–72 dB in Bells Maß).
+
+**Gerechnet (Körperdatei, an der Öse bei der Frequenz der Saite; Saitenlast 0 / 0,25 / 1 Z ändert höchstens 2 dB).**
+
+- **Die Mode hat die richtige Höhe:** an Saite 26 (207 Hz) 87,3 dB gegen 86,1 dB bei Bell (+1,2 dB).
+- **Die Güte ist zu hoch:** die Datei trägt 129,0 / 191,8 / 208,4 Hz mit Q 25 / 27 / 27; gemessen in der Harfe Q 11
+  (S(1,1)−) und 16 (S(1,1)+). Der Bauplan nimmt die Güte der Luft (`cavity.q` 16) vom losen Kasten F (Tab. 6.1: 18, 14).
+- **Der Druck je Kraft bei 207 Hz liegt 19,8 dB über dem bei 247 Hz** (Le Carrou, andere Harfe: +16,6 dB bei 204 Hz).
+  Die laute Stelle um 200 Hz ist also eine Eigenschaft der Konzertharfe, nicht ein Fehler der Mode; mit den
+  gemessenen Güten wären es rund 16 dB.
+- **Abseits der Resonanzen liegt die Admittanz der Datei 10–37 dB unter Bells Abb. 7.22** (Median −23 dB; Schritt
+  zwischen Nachbarsaiten im Mittel 7,1 dB gegen 3,7 dB). Die Datei ist der Kasten ohne Saiten — an den Spitzen und in
+  den Tälern passt sie zu Bells Messungen ohne Saiten (§11, Abb. 6.6). Was die besaitete Harfe bei Bell so eben macht,
+  ist nicht geklärt: ein Widerstand je Saite (bis 1 Z) erklärt es nicht, und Le Carrous Mobilität an einer besaiteten
+  Harfe (50–72 dB) liegt beim Modell, nicht bei Bells 80–100 dB. **Zwei Quellen widersprechen sich hier; nicht
+  entschieden.** Am Diskant (Saiten 13–10: Modell 67–70 dB, Bell 98–103 dB) ist es der bekannte offene Punkt aus §12.
+
+**Probe: Güte der Luft 5,5 statt 16** (Bauplan-Kopie, `InstrumentBodyTool … --to 5000`, 91 s): die drei Moden bekommen
+Q 13 / 13 / 13 (gemessen 11 und 16: +1,5 / −1,8 dB an den Spitzen), S(1,2) 274,8 Hz Q 41 → 35 (gemessen 39).
+Prüfstand je Taste (`proben/2026-11-16_S201_pruefstand_harfe_je_taste_luftguete_5.5.txt`):
+
+| | Körper heute (Q der Luft 16) | Q der Luft 5,5 | Aufnahme KSHarp f |
+|---|---|---|---|
+| Spanne ab D2, jede Taste | 23,3 LU | 19,6 LU | – |
+| größter Sprung (Paare bis 4 Halbtöne) | 13,5 LU (56 / 60) | 11,0 LU (56 / 60) | – |
+| mittlerer Sprung | 2,8 LU | 2,9 LU | – |
+| Spanne an den 20 Tasten der Aufnahme | 21,0 LU | 17,5 LU | 10,8 LU |
+| Taste 55 gegen das Mittel von 52 und 59 | +9,4 LU | +6,5 LU | +4,5 LU |
+| Tasten 55 / 56 / 57 | −3,3 / −1,3 / −3,7 LUFS | −6,9 / −5,1 / −6,2 LUFS | – |
+| früher Abfall an Taste 56 | 84 dB/s | 81 dB/s | – |
+
+Die Aufnahme trägt nur jede dritte bis vierte Taste (52, 55, 59 …); die Taste 56 auf der Mode fehlt ihr. Mit Q 5,5
+hält die Harfe den größten Sprung nach GZ14 a (≤ 12 LU); die Spanne bleibt über 15 LU — die leisesten Tasten sind
+92–94 (−23 … −25 LUFS) am Diskantende, wo die Admittanz zu tief liegt (§12).
+
+**KQ29 a (Patrik):** Güte der Luft 5,5. `make_harfe.py` (`cavity.q`, Quelle neu), Körper mit `InstrumentBodyTool concert_harp.lvinstbodyplan --to 5000` neu (96 s): gegen den alten Körper ändern sich nur die Verlustfaktoren (143 von 145 Moden), gegen den Probekörper nur der Abdruck des Bauplans — die Zahlen der Tabelle gelten für die mitgelieferte Datei. Der Test „Luftraum die mitgelieferte Harfe“ prüft `cavity.q` und die Güte der Moden 191,8 / 208,4 Hz (zwischen 11 und 16).
+
+**Offen:** das Diskantende (§12) — an ihm hängt jetzt die Spanne; warum Bells
+besaitete Harfe eben ist (Le Carrou 2006, Thèse, auf Mobilitäten an den Saitenorten durchsehen); der schnelle Abfall
+an Taste 56 (81 dB/s) gegen eine Aufnahme dieser Taste.

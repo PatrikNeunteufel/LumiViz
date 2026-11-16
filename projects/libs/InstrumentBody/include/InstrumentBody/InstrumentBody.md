@@ -1,7 +1,7 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.22.1  
-> **Datum:** 2026-11-13  
+> **Version:** 0.22.2  
+> **Datum:** 2026-11-16  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
@@ -425,6 +425,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.22.2 | 2026-11-16 | Session 201, Stufe 34k-6, KQ28 a: `kFitFassung` 3 — die Form je Mode längs des Stegs wird an den Stegkurven und den Schallkurven gemeinsam gestellt (`make_gitarre.py` Schritt 4). Die zwei Aufnehmer an den Enden der Stegeinlage legen die Form zwischen 500 und 1000 Hz nicht fest: an fünf Moden widersprach sie dem, was die Mikrofone an den drei Schlagorten zeigen, und der Körper lag an der ersten Saite bei 780–880 Hz rund 10 dB unter der Messung. Am Format und an der Bibliothek sonst nichts; der Körper der Gitarre ist neu geschrieben (Pole und gezogene Moden unverändert). |
 | 0.22.1 | 2026-11-15 | Session 199, Stufe 34k-5, KQ26 a: `kFitFassung` 2 — ein gemessener Körper darf über seinen gefitteten Moden einen statistischen Teil tragen, dessen Größen an der Messung bestimmt sind (Dämpfungsgesetz aus dem gemessenen Abklingen, Betrag der Abstrahlung aus dem gemessenen Pegel) statt mit `schaetze` aus den Moden; `ziehe` und das Format bleiben. An gefitteten Polen überschätzt `schaetze` das Produkt aus Formwert und Abstrahlgewicht (Gitarre: 10–14 dB), weil beide gegenläufig sind und das Gesetz unter der Dämpfung der Pole liegt. Am Code der Bibliothek sonst nichts. |
 | 0.22.0 | 2026-11-15 | Session 199, Stufe 34k-5, KQ25 a: ein Körper nennt seine Herkunft — `Herkunft::Bauplan` (gerechnet) oder `Herkunft::Messung` (Modalfit an einer Messung), dazu `Koerper::messung`, `messungAbdruck`, `fitFassung` und `kFitFassung` (1; `make_gitarre.py` trägt dieselbe Zahl). **`.lvinstbody` Fassung 4**: `origin` (`plan` / `measurement`) und `measurement` (`file`, `fingerprint`, `fitVersion`), beides immer geschrieben; Fassung 3 liest sich als `plan`, eine unbekannte Herkunft macht die Datei unlesbar. Ein gemessener Körper trägt keinen Bauplan, keine Werkstoffe und kein Dämpfungsgesetz (η je Mode gemessen); seine Quelle ist die Beschreibung `.lvinstbodyfit` (Abdruck über die Bytes ohne Wagenrücklauf, `loop/Koerper`: `messungAbdruck`). `InstrumentBodyTool <körper> --rewrite` schreibt einen Körper in der heutigen Fassung neu, ohne zu rechnen. Erster gemessener Körper: `classical_guitar` (KQ23 a, KQ24 a). `kRechenFassung` bleibt 2. |
 | 0.21.0 | 2026-11-14 | Session 198, Stufe 34k-5, KQ20 a: Abschnitte des Rands — `Randabschnitt` (`kanteVon`, `kanteBis`: Kanten des Umrisses; `wegfeder` in N/m², `drehfeder` in N) in `Rand::abschnitte`, **`.lvinstbodyplan` Fassung 7** mit `rim.sections` (immer geschrieben, Fassung 6 lesbar); `baueSystem` mit `abschnittAmRand` (je Randkante gefragt: die Auslenkung dort nicht gehalten, K bekommt ∫ k_w w² ds + ∫ k_d φ_n² ds; ein Knoten, der auch am übrigen Rand liegt, ist gehalten), `RandFedern`, `naechsteUmrissKante`, `abschnittDerKante`; `pruefe` (Federn nicht negativ, Kanten im Umriss, keine Überdeckung, nicht der ganze Rand). Werkzeug: meldet die Abschnitte. `kRechenFassung` bleibt 2 — ein Bauplan ohne Abschnitte rechnet wie vorher, alle sechs Körper neu (Abdruck). |

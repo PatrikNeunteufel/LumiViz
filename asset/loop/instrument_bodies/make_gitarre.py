@@ -1,5 +1,5 @@
 """Schreibt den gemessenen Koerper der klassischen Gitarre: `classical_guitar.lvinstbodyfit` (Beschreibung) und
-`classical_guitar.lvinstbody` (Stufe 34k-5, S199; KQ3 a, KQ23 a, KQ24 a, KQ25 a, KQ26 a).
+`classical_guitar.lvinstbody` (Stufe 34k-5, S199; KQ3 a, KQ23 a, KQ24 a, KQ25 a, KQ26 a; Schritt 4 nach KQ28 a, S201).
 
 Aufruf (vom Projekt-Root; braucht numpy und scipy):
     python -B asset/loop/instrument_bodies/make_gitarre.py <qualified_selected_impulses.mat> [--ziel <ordner>]
@@ -22,8 +22,13 @@ gleicher Messung ein anderer Koerper ergaebe):
                  Band und doppelte Pole fallen heraus
   3 Paare        unter 300 Hz: ein Paar, dessen Abstand kleiner ist als die mittlere Breite, wird ein Pol (Frequenz und
                  Daempfung nachgestellt), wenn der Fehler im Band dadurch um hoechstens 0,2 dB steigt
-  4 Steg         Normalmoden: R(Schlag, Aufnehmer) = phi(x_Schlag) phi(x_Aufnehmer), phi(x) = a + b x + c x^2 laengs
-                 der Stegeinlage (starrer Stab mit Biegung), Gauss-Newton; daraus phi an jeder Saite
+  4 Steg         Normalmoden mit einer Form phi(x) = a + b x + c x^2 laengs der Stegeinlage (starrer Stab mit
+                 Biegung). Zuerst an den sechs Stegkurven allein (R(Schlag, Aufnehmer) = phi(x_Schlag)
+                 phi(x_Aufnehmer), Gauss-Newton) - das ist der Start. Dann an den Stegkurven und den neun Schallkurven
+                 (drei Schlagorte, drei Mikrofone: P/F = Summe phi(x_Schlag) G) gemeinsam, beide mit gleichem Gewicht,
+                 abwechselnd die Gewichte je Mikrofon und die Form, acht Runden (KQ28 a): die zwei Aufnehmer an den
+                 Enden der Stegeinlage allein legen die Form zwischen 500 und 1000 Hz nicht fest. Daraus phi an jeder
+                 Saite
   5 Abstrahlung  je Hoerort (Mikrofon bass = left, treble = right, 10 cm ueber der Decke): bis zur Grenze ein komplexes
                  Gewicht je Mode aus dem Fit an P/F fuer alle drei Schlagorte; darueber ein Betrag je Terzband mit
                  gezogenem Vorzeichen (Samen 1), so gestellt, dass der Terzpegel im Mittel ueber die Schlagorte stimmt
@@ -48,7 +53,7 @@ import scipy.io as sio
 import scipy.signal as sig
 from scipy.optimize import least_squares, minimize, nnls
 
-FIT_FASSUNG = 2
+FIT_FASSUNG = 3
 GITARRE = 34
 MAT_SHA256 = "8a016fab0b3f086a49b2e740c2588fc61938fd09251aab5314413ea4bab72fb6"
 FS = 48000
@@ -70,6 +75,8 @@ X_SAITEN = [(k - 2.5) * SAITENABSTAND for k in range(6)]     # Saite 6 (E2) ... 
 TASTEN = [40, 45, 50, 55, 59, 64]
 SAITEN_NAMEN = ["6 (E2)", "5 (A2)", "4 (D3)", "3 (G3)", "2 (B3)", "1 (E4)"]
 MIKROFONE = (("left", "mbass"), ("right", "mtreble"))
+FORM_MIKROFONE = ("mbass", "mtreble", "east")           # Schritt 4: alle drei Mikrofone tragen die Form am Schlagort
+GEMEINSAM_RUNDEN = 8
 QUELLE = ("R. Mores, Archive for the acoustical documentation of classical Spanish guitars, flamenco guitars and "
           "romantic guitars - bridge mobility, Zenodo 4604577 (2021), CC BY 4.0; guitar g34: Manuel Contreras, Madrid "
           "1971, classical Spanish, cedar / Rio palisander, scale 662 mm, 1670 g, measured in the free-field laboratory "
@@ -272,6 +279,96 @@ def stegfit(hz, mob, f, s, sel, R, rest):
     return k[0], k[1], k[2], list(modell(los.x))
 
 
+def gemeinsam(hz, H, mob, f, s, sel, a, b, c):
+    """KQ28 a: die Form je Mode an den sechs Stegkurven UND den neun Schallkurven gemeinsam. Abwechselnd die Gewichte je
+    Mikrofon (linear, ohne Restterm - die Koerperdatei traegt keinen) und a, b, c je Mode mit dem Rest der Stegkurven
+    (Gauss-Newton auf jeder zweiten Frequenz); Fehler relativ, beide Kurvenarten mit gleichem Gewicht."""
+    J = len(f)
+    hzs = hz[sel]
+    w = 2 * np.pi * hzs
+    Bm = basis(hzs, f, s)
+    Bp = Bm * (1j * w[:, None])
+    rest_b = np.stack([1 / (1j * w), 1j * w * 1e-8], axis=1)
+    xh_p = np.array([X_SCHLAG[p[0]] for p in PAARE])
+    xs_p = np.array([X_AUFN[p[1]] for p in PAARE])
+    xh = np.array([X_SCHLAG[o] for o in ORTE])
+    Ysteg = np.array([y[sel] for y in mob])
+    gew_steg = 1.0 / np.maximum(np.abs(Ysteg), 1e-6)
+    schall = [(h, mik) for h in range(len(ORTE)) for mik in FORM_MIKROFONE]
+    Ymik = np.array([H[(ORTE[h], mik)][sel] for h, mik in schall])
+    gew_mik = 1.0 / np.maximum(np.abs(Ymik), 1e-9)
+    skala = np.array([1.0, 30.0, 900.0])
+    nk, n = len(PAARE), len(hzs)
+    ph_h = np.stack([xh_p ** e * skala[e] for e in range(3)])
+    ph_s = np.stack([xs_p ** e * skala[e] for e in range(3)])
+    pm_h = np.stack([xh ** e * skala[e] for e in range(3)])
+    i2 = slice(None, None, 2)
+    n2 = len(hzs[i2])
+
+    def gewichte(k):
+        fm = k.T @ pm_h                                             # (J, Schlagorte)
+        G = {}
+        for mik in FORM_MIKROFONE:
+            zeilen = [q for q, (_, m) in enumerate(schall) if m == mik]
+            A = np.concatenate([Bp * fm[:, schall[q][0]][None, :] * gew_mik[q][:, None] for q in zeilen])
+            G[mik] = np.linalg.lstsq(A, np.concatenate([Ymik[q] * gew_mik[q] for q in zeilen]), rcond=None)[0]
+        return G
+
+    def steg_rest(k):
+        kern = ((k.T @ ph_h) * (k.T @ ph_s)).T @ Bm.T
+        rest = np.zeros((nk, 2))
+        for q in range(nk):
+            A = rest_b * gew_steg[q][:, None]
+            r = (Ysteg[q] - kern[q]) * gew_steg[q]
+            rest[q] = np.linalg.lstsq(np.concatenate([A.real, A.imag]), np.concatenate([r.real, r.imag]), rcond=None)[0]
+        return rest
+
+    def teile(p):
+        return p[:3 * J].reshape(3, J), p[3 * J:].reshape(nk, 2)
+
+    k = np.stack([a, b, c]) / skala[:, None]
+    verlauf = []
+    for _ in range(GEMEINSAM_RUNDEN):
+        G = gewichte(k)
+        Gq = np.array([G[m] for _, m in schall])                    # (Schallkurven, J)
+
+        def res(p):
+            kk, rest = teile(p)
+            ds = (((kk.T @ ph_h) * (kk.T @ ph_s)).T @ Bm[i2].T + rest @ rest_b[i2].T - Ysteg[:, i2]) * gew_steg[:, i2]
+            fm = kk.T @ pm_h
+            dm = np.array([(Bp[i2] @ (fm[:, h] * Gq[q]) - Ymik[q][i2]) * gew_mik[q][i2] for q, (h, _) in enumerate(schall)])
+            return np.concatenate([ds.real.ravel(), ds.imag.ravel(), dm.real.ravel(), dm.imag.ravel()])
+
+        def jac(p):
+            kk, _ = teile(p)
+            fh, fs_ = kk.T @ ph_h, kk.T @ ph_s
+            Js = np.zeros((2, nk, n2, 3 * J + 2 * nk))
+            for q in range(nk):
+                gb = gew_steg[q][i2][:, None] * Bm[i2]
+                for e in range(3):
+                    block = gb * (ph_h[e, q] * fs_[:, q] + ph_s[e, q] * fh[:, q])[None, :]
+                    Js[0, q, :, e * J:(e + 1) * J] = block.real
+                    Js[1, q, :, e * J:(e + 1) * J] = block.imag
+                rb = gew_steg[q][i2][:, None] * rest_b[i2]
+                Js[0, q, :, 3 * J + 2 * q:3 * J + 2 * q + 2] = rb.real
+                Js[1, q, :, 3 * J + 2 * q:3 * J + 2 * q + 2] = rb.imag
+            Jm = np.zeros((2, len(schall), n2, 3 * J + 2 * nk))
+            for q, (h, _) in enumerate(schall):
+                gb = gew_mik[q][i2][:, None] * Bp[i2] * Gq[q][None, :]
+                for e in range(3):
+                    Jm[0, q, :, e * J:(e + 1) * J] = (gb * pm_h[e, h]).real
+                    Jm[1, q, :, e * J:(e + 1) * J] = (gb * pm_h[e, h]).imag
+            return np.concatenate([Js.reshape(2 * nk * n2, -1), Jm.reshape(2 * len(schall) * n2, -1)])
+
+        los = least_squares(res, np.concatenate([k.ravel(), steg_rest(k).ravel()]), jac=jac, method="trf", max_nfev=25,
+                            x_scale="jac")
+        k = teile(los.x)[0]
+        verlauf.append(round(float(np.sqrt(np.mean(los.fun ** 2))), 4))
+    fits = list(((k.T @ ph_h) * (k.T @ ph_s)).T @ Bm.T + steg_rest(k) @ rest_b.T)
+    k = k * skala[:, None]
+    return k[0], k[1], k[2], fits, verlauf
+
+
 # ---------------------------------------------------------------- 5 Abstrahlung
 def abstrahlung(hz, H, f, s, a, b, c, sel):
     w = 2 * np.pi * hz[sel]
@@ -470,8 +567,11 @@ def beschreibung(pruefung):
                          "of their band and double poles dropped",
                 "pairs": "below 300 Hz a pair closer than its mean width becomes one pole (frequency and damping "
                          "re-fitted) if the error in its band rises by at most 0.2 dB",
-                "bridge": "normal modes: residue(strike, sensor) = phi(x_strike) phi(x_sensor), phi(x) = a + b x + c x^2; "
-                          "Gauss-Newton on the six mobilities, error weighted by 1/|Y|",
+                "bridge": "normal modes with one shape phi(x) = a + b x + c x^2 along the saddle: first Gauss-Newton on "
+                          "the six mobilities alone (residue(strike, sensor) = phi(x_strike) phi(x_sensor)), then "
+                          "together with the nine curves of sound pressure per force (three strikes, three "
+                          "microphones: sum of phi(x_strike) G), equal weight, error weighted by 1/|Y|, alternating "
+                          "between the weights per microphone and the shape, eight rounds (KQ28 a)",
                 "radiation": "per listening point one complex weight per mode up to the split frequency, fitted to the "
                              "pressure per force of all three strikes; above it one magnitude per third-octave band "
                              "with a drawn sign (seed 1), set so that the band level matches on average over the strikes",
@@ -566,7 +666,8 @@ if __name__ == "__main__":
     paare = []
     f, s = lege_paare_zusammen(hz, mob, f, s, sel, paare)
     R, rest, fits_frei = frei(hz, mob, f, s, sel)
-    a, b, c, fits_steg = stegfit(hz, mob, f, s, sel, R, rest)
+    a, b, c, fits_allein = stegfit(hz, mob, f, s, sel, R, rest)
+    a, b, c, fits_steg, verlauf = gemeinsam(hz, H, mob, f, s, sel, a, b, c)
     grenze, G, strahl = abstrahlung(hz, H, f, s, a, b, c, sel)
     steg = np.array([a + b * x + c * x * x for x in X_SAITEN]).T
     st, st_pruefung = statistik(daten, hz, H, f, s, steg, np.array(G).T)
@@ -576,8 +677,13 @@ if __name__ == "__main__":
     pruefung = {
         "modes": int(len(f)), "modesAbove1kHz": int((f > 1000).sum()),
         "bridgeErrorDb": {"free": {n: round(fehler(hz, sel, mob, fits_frei, lo, hi), 2) for n, lo, hi in bereiche},
+                          "normalModesBridgeOnly": {n: round(fehler(hz, sel, mob, fits_allein, lo, hi), 2) for n, lo, hi in bereiche},
                           "normalModes": {n: round(fehler(hz, sel, mob, fits_steg, lo, hi), 2) for n, lo, hi in bereiche},
-                          "note": "rms of 20 lg |fit / measured| over the six bridge mobilities"},
+                          "jointRounds": verlauf,
+                          "note": "rms of 20 lg |fit / measured| over the six bridge mobilities; normalModesBridgeOnly: "
+                                  "shape from the bridge mobilities alone (start), normalModes: shape from bridge "
+                                  "mobilities and sound pressure together (KQ28 a, in the body); jointRounds: rms of "
+                                  "the relative error over all fifteen curves after each round"},
         "pairs": paare,
         "effectiveMassString6Kg": {"value": round(float(1 / np.sum(phi6[m6] ** 2)), 4), "band": "85-240 Hz",
                                    "reference": "Wright 1996 Table 5.4: 0.062 kg (guitar BR2, sound hole sealed)"},

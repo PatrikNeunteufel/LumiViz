@@ -1,0 +1,67 @@
+g34, 75 Moden; Gewicht der Schallkurven 0.3
+  Runde 1: Effektivwert des relativen Fehlers 0.2352  (16 s)
+  Runde 2: Effektivwert des relativen Fehlers 0.2328  (28 s)
+  Runde 3: Effektivwert des relativen Fehlers 0.2314  (38 s)
+  Runde 4: Effektivwert des relativen Fehlers 0.2304  (47 s)
+  Runde 5: Effektivwert des relativen Fehlers 0.2297  (52 s)
+  Runde 6: Effektivwert des relativen Fehlers 0.2292  (58 s)
+  Runde 7: Effektivwert des relativen Fehlers 0.2288  (66 s)
+  Runde 8: Effektivwert des relativen Fehlers 0.2285  (73 s)
+
+Formen an den Schlagorten (auf 1 normiert), Moden 500-1100 Hz: Datei -> neu
+    504.6 Hz  +0.19 +0.45 +0.87  ->  +0.31 +0.55 +0.78   phi an Saite 1: +0.90 -> +0.79
+    546.3 Hz  +0.54 +0.73 +0.41  ->  +0.60 +0.71 +0.38   phi an Saite 1: +0.67 -> +0.48
+    567.3 Hz  +0.64 +0.60 +0.48  ->  +0.61 +0.63 +0.49   phi an Saite 1: +1.34 -> +1.40
+    575.6 Hz  +0.34 -0.08 -0.94  ->  +0.44 -0.08 -0.89   phi an Saite 1: -0.85 -> -0.76
+    603.7 Hz  -0.22 -0.79 -0.58  ->  -0.25 -0.78 -0.58   phi an Saite 1: -0.49 -> -0.49
+    606.4 Hz  +0.64 +0.34 -0.69  ->  +0.63 +0.45 -0.63   phi an Saite 1: -0.33 -> -0.25
+    634.6 Hz  +0.16 +0.52 +0.84  ->  +0.31 +0.58 +0.76   phi an Saite 1: +0.96 -> +0.81
+    677.4 Hz  -0.10 -0.50 -0.86  ->  -0.15 -0.54 -0.83   phi an Saite 1: -1.29 -> -1.33
+    718.7 Hz  -0.07 -0.43 -0.90  ->  -0.10 -0.47 -0.88   phi an Saite 1: -1.53 -> -1.50
+    756.6 Hz  +0.83 +0.55 -0.06  ->  +0.78 +0.62 +0.07   phi an Saite 1: -0.36 -> -0.20
+    809.2 Hz  +0.81 +0.55 +0.20  ->  +0.69 +0.65 +0.31   phi an Saite 1: +0.15 -> +0.33
+    863.9 Hz  -0.00 -0.70 -0.72  ->  +0.07 -0.66 -0.75   phi an Saite 1: -0.85 -> -0.89
+    916.0 Hz  +0.69 +0.66 +0.29  ->  +0.66 +0.68 +0.32   phi an Saite 1: +0.44 -> +0.56
+    947.0 Hz  -0.06 -0.70 -0.71  ->  +0.06 -0.59 -0.80   phi an Saite 1: -0.90 -> -1.04
+    979.8 Hz  +0.24 +0.40 +0.89  ->  +0.35 +0.55 +0.76   phi an Saite 1: +1.55 -> +1.31
+   1061.2 Hz  +0.60 +0.79 -0.12  ->  +0.57 +0.82 +0.00   phi an Saite 1: -0.61 -> -0.49
+   1089.3 Hz  +0.54 +0.73 +0.41  ->  +0.50 +0.75 +0.43   phi an Saite 1: +0.70 -> +0.98
+
+Weg                          | Steg dB 60-400 / 400-1000 / 1000-2500 / 2500-5000 | Masse S6 kg | Terzpegel left 100-400 / 500-1000 / 1250-2500 / 3150-5000 | right
+0 Datei                      | 1.01 / 1.77 / 2.45 / 2.31 | 0.049 | 0.65 / 2.14 / 1.45 / 2.53 | 1.01 / 2.10 / 1.87 / 2.05
+1 Formen neu, Grenze 1000 Hz | 1.27 / 1.93 / 2.59 / 2.41 | 0.052 | 0.75 / 1.74 / 1.82 / 2.28 | 0.96 / 1.71 / 2.31 / 1.96
+2 Formen neu, je Mode        | 1.27 / 1.93 / 2.59 / 2.41 | 0.052 | 1.46 / 1.64 / 2.64 / 4.56 | 1.81 / 1.55 / 4.01 / 6.29
+3 Formen der Datei, je Mode  | 1.01 / 1.77 / 2.45 / 2.31 | 0.049 | 1.22 / 2.29 / 3.33 / 5.17 | 1.94 / 2.84 / 7.33 / 6.64
+
+Halbtonbaender der Tasten 40-83, drei Schlagorte: Effektivwert, groesster (Taste, Schlag), Tasten 64-83 am Schlag treble
+0 Datei                      | left 2.0, -8.6 (79, treble), 3.4 | right 2.5, -10.7 (79, treble), 4.8
+1 Formen neu, Grenze 1000 Hz | left 1.5, -6.5 (79, treble), 2.5 | right 2.1, -8.1 (75, center), 3.7
+2 Formen neu, je Mode        | left 1.8, -6.5 (79, treble), 2.5 | right 2.1, -7.6 (75, treble), 3.2
+3 Formen der Datei, je Mode  | left 2.2, -8.8 (79, treble), 3.2 | right 2.6, -10.2 (83, bass), 3.6
+
+Pruefstand, Lautheit je Taste 40-83 (Momentary-Maximum): Spanne, groesster Sprung (Paar), mittlerer Sprung - Paare bis 4 Halbtoene
+0 Datei                      | Zupfort min(16 cm, halbe Saite) |  14.4 LU,  14.3 LU (81/83),  2.0 LU   (79 s)
+0 Datei                      | Zupfort 16 cm fest           |  14.1 LU,  14.1 LU (81/83),  2.0 LU   (85 s)
+1 Formen neu, Grenze 1000 Hz | Zupfort min(16 cm, halbe Saite) |  13.1 LU,  13.1 LU (81/83),  1.6 LU   (90 s)
+1 Formen neu, Grenze 1000 Hz | Zupfort 16 cm fest           |  12.8 LU,  12.8 LU (80/83),  1.7 LU   (96 s)
+2 Formen neu, je Mode        | Zupfort min(16 cm, halbe Saite) |  12.9 LU,  12.9 LU (68/71),  1.9 LU   (101 s)
+2 Formen neu, je Mode        | Zupfort 16 cm fest           |  12.9 LU,  12.9 LU (68/71),  2.0 LU   (108 s)
+3 Formen der Datei, je Mode  | Zupfort min(16 cm, halbe Saite) |  12.3 LU,  12.3 LU (68/71),  1.9 LU   (114 s)
+3 Formen der Datei, je Mode  | Zupfort 16 cm fest           |  12.3 LU,  12.3 LU (68/71),  1.9 LU   (121 s)
+
+Lautheit je Taste 70-83 (LUFS), Zupfort 16 cm fest / mit Klemme:
+Taste | 0 Datei | 1 Formen neu, Grenze 1 | 2 Formen neu, je Mode | 3 Formen der Datei, je
+  70  |    2.4 /    2.4       |    2.0 /    2.0       |    2.1 /    2.1       |    2.8 /    2.8      
+  71  |    6.3 /    6.3       |    5.8 /    5.8       |    6.1 /    6.1       |    7.0 /    7.0      
+  72  |    2.4 /    2.4       |    1.7 /    1.7       |    1.3 /    1.3       |    1.7 /    1.7      
+  73  |    4.4 /    4.4       |    4.3 /    4.3       |    4.8 /    4.8       |    4.8 /    4.8      
+  74  |    3.9 /    3.9       |    3.4 /    3.4       |    4.2 /    4.2       |    4.8 /    4.8      
+  75  |   -0.9 /   -0.9       |   -0.9 /   -0.9       |   -0.1 /   -0.1       |   -0.2 /   -0.2      
+  76  |    0.4 /    0.4       |   -0.1 /   -0.1       |   -0.3 /   -0.3       |    0.2 /    0.2      
+  77  |    1.3 /    1.4       |    0.7 /    0.7       |    0.6 /    0.6       |    1.2 /    1.2      
+  78  |   -4.0 /   -4.2       |   -3.7 /   -3.8       |   -0.6 /   -0.5       |   -0.5 /   -0.2      
+  79  |   -2.5 /   -5.7       |   -2.7 /   -4.8       |   -3.2 /   -3.4       |   -3.3 /   -3.1      
+  80  |   -6.0 /   -5.3       |   -5.9 /   -5.0       |   -3.9 /   -4.0       |   -4.3 /   -4.1      
+  81  |   -7.4 /   -8.1       |   -3.5 /   -6.6       |    0.7 /   -2.1       |   -0.2 /   -2.7      
+  82  |    1.7 /   -1.1       |    3.8 /    2.9       |    3.7 /    3.5       |    1.1 /    1.0      
+  83  |    6.7 /    6.2       |    7.0 /    6.5       |    3.7 /    4.1       |    2.7 /    2.8      

@@ -162,10 +162,12 @@ def baue(saiten):
                     "source": "fit to the Q of soundbox G in the harp without strings (Bell 1988 Figs. 7.10-7.16: 249 / 316 / "
                               "432 / 545 / 757 / 905 Hz with Q 39 / 45 / 43 / 31 / 33 / 18; S(1,6) with Q 10 left out); "
                               "extrapolated above 1 kHz"},
-        "cavity": {"volume": 0.027, "endCorrection": 2.6, "q": 16.0,
+        "cavity": {"volume": 0.027, "endCorrection": 2.6, "q": 5.5,
                    "source": "volume and apertures: Bell 1988 Table 4.1; end correction set so that the Helmholtz mode with "
                              "rigid walls lies at 185 Hz (Bell: 190 Hz; the apertures lie close together); Q of the air "
-                             "from S(1,1)-/+ (Table 6.1: 18, 14)",
+                             "fitted so that S(1,1)-/+ get Q 13 in the harp (Bell 1988 Figs. 7.8, 7.9: 11 and 16 on "
+                             "soundbox G fitted to the harp, without strings; KQ29 a) - it also stands for losses in the "
+                             "frame of the harp; the isolated box F has 18 and 14 (Table 6.1)",
                    "openings": [{"x": 0.0, "y": round(anteil * LAENGE, 4), "z": round(-breite(anteil * LAENGE) / 2, 4),
                                  "area": flaeche, "lipLength": lippe,
                                  "source": f"aperture {nr} (Bell 1988 Table 4.1; position along the box from Fig. 2.8, "

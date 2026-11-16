@@ -806,6 +806,20 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
     // bewegt sich der ganze Kasten, die Schale ist hier starr
     CHECK(k.moden[0].frequenzHz == doctest::Approx(129.0).epsilon(0.02));
     CHECK(k.moden[0].luftAnteil > 0.2);
+    // KQ29 a: die Guete der Luft so, dass S(1,1)- / S(1,1)+ die Gueten des Kastens in der Harfe bekommen
+    // (Bell 1988 Abb. 7.8, 7.9: Q 11 und 16 ohne Saiten); mit der Guete des losen Kastens (16) waeren es 27
+    CHECK(plan.hohlraum.guete == doctest::Approx(5.5));
+    for (const double hz : {191.8, 208.4})
+    {
+        const auto mode = std::min_element(k.moden.begin(), k.moden.end(), [hz](const kp::ModeImKoerper& a, const kp::ModeImKoerper& b) {
+            return std::abs(a.frequenzHz - hz) < std::abs(b.frequenzHz - hz);
+        });
+        CAPTURE(hz);
+        CHECK(mode->frequenzHz == doctest::Approx(hz).epsilon(0.02));
+        CHECK(mode->luftAnteil > 0.2);
+        CHECK(1.0 / mode->verlustfaktor > 11.0);
+        CHECK(1.0 / mode->verlustfaktor < 16.0);
+    }
 
     // KQ19 a: die Punktadmittanz laengs der Deckleiste gegen Bell 1988 Abb. 7.8-7.16 (Kasten G in der Harfe, am
     // Bild gelesen; 116 dB = 1 s/kg). Je Mode die hoechste Stelle ueber Frequenz (±12 %) und Oesen.
