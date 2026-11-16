@@ -1,6 +1,6 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.45.0
+> **Version:** 0.46.0
 > **Datum:** 2026-11-16 (Session 200)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
@@ -1484,6 +1484,12 @@ GZ8 a und GZ9 a kamen auf ein einzelnes „a“ zu zwei Fragen; so gelesen.
 
 GZ10 a, GZ11 a und GZ12 a auf „alle drei Fragen a“.
 
+✅ **GZ13 a** (Patrik S200; **ergänzt GZ10 a**): **Die Ablösekraft des Kiels fällt über den Umfang um 2,8 dB je Oktave: 2 N an C4 bei ff, 4,9 N an F1, 1,0 N an f‴.** Belegkraft: angepasst an die Form der Lautheit von fünf Cembali der VCSL-Sammlung; der Maßstab (2 N an C4) ist Annahme. Grund: die gemessenen Cembali sind über den Umfang eben (je Oktave −1,0 … +0,9 LU), das Modell mit fester Kraft steigt um 15 LU; mit dem Gesetz Spanne 6,8 statt 18,7 LU, 10.–90. Perzentil 4,3 statt 13,0, Abstand zur Form der Aufnahmen 1,7 statt 4,5 LU (Aufnahmen: Spanne 6,1–13,6). Der Bauer schneidet die Kiele nach Gehör auf gleichmäßige Lautstärke: die Kraft je Taste ist am Instrument die Stellgröße. Eine Quelle für die Kraft je Taste gibt es nicht (Roy 2015, Chadefaux 2013 durchsucht; Chadefaux misst 0,8 N an G4). GZ10 a bleibt damit stimmig (Abstand zum Hörtest 1,4 statt 1,8). Verworfen: b (Parabel: 0,1 LU besser, ein Wert mehr), c (feste 2 N: 15 LU Gang bleiben). Nicht getrennt geprüft: ob der Gang am Hörort (ein Punkt 1 m über dem Boden) oder am Körper (Dämpfung für alle Frequenzen gleich) liegt — kippt, wenn sich das zeigt; 4,9 N im Bass liegen am oberen Rand dessen, was Perngs Modell nahelegt (1,6–2,8 N).
+
+✅ **GZ14 a** (Patrik S200; **ersetzt in GZ2 a die Schwellen für Lautheit und Sprünge**): **Gemessen an jeder Taste, Sprünge als Paare bis 4 Halbtöne Abstand: Spanne ≤ 15 LU, an der Harfe ab D2 (darunter folgt sie dem Instrument); mittlerer Sprung ≤ 4 LU; größter Sprung ≤ 12 LU.** Die Schwellen stammen von den Aufnahmen aus S195 (mittlerer Sprung dort höchstens 3,9 LU, größter an den Cembali höchstens 11,3 LU; die Konzertharfe 17,7 LU über den vollen Umfang, 10,8 LU ab D2). Stand der Modelle (S200; Spanne / größter / mittlerer Sprung): Laute 13,9 / 11,8 / 2,4 und Cembalo mit GZ13 a 6,8 / 6,0 / 1,5 halten; Gitarre 13,8 / 13,8 / 2,0 verfehlt den größten Sprung (Tasten 78–83, Ursache offen); Oud 15,8 / 11,2 / 2,6 die Spanne (der einzelne Basschor); Harfe 23,3 / 13,5 / 3,0 Spanne und größten Sprung (Mode 208 Hz unter G3–A3; ohne die drei Tasten 17,0 / 10,4 / 2,8). Verworfen: b (ohne Schwelle für den größten Sprung — der Fehler der Harfe ginge durch), c (15 LU / 6 LU wie gesetzt — kein echtes Instrument hält die 6 LU). Kippt auf b, wenn die 13,8 LU der Gitarre eine Eigenschaft von g34 sind und kein Fehler.
+
+GZ13 a und GZ14 a auf „alle a“.
+
 **Prüfstand 34k-6 (S199)** — `../modellierung/gezupfte-saite/proben/2026-11-15_S199_pruefstand_zupf.py`: der Ton einer Note geschlossen je Frequenz (steife Saite mit Dämpfung nach Valette, Zupf als Auslenkung und Loslassen mit Fingerbreite, Punktadmittanz und Abstrahlung aus der Körperdatei, Momentary-Maximum nach BS.1770); der Bezug, an dem der Kern in 34k-7 gemessen wird.
 
 **KQ26 a gebaut (S199)** — `make_gitarre.py` Schritt 6 (Statistik; `ziehe` mit SplitMix64, Rayleigh, Box-Muller nachgebaut), `FIT_FASSUNG` 2: α(f) = 0,0105 · f + 147 1/s (gemessen 177 / 164 / 203 / 211 / 211 / 231 / 247 1/s bei 2,5 … 10 kHz, das Gesetz 173 … 253), Dichte 0,0104 Moden je Hz, 161 gezogene Moden; Terzpegel 6,3 / 8 / 10 kHz `left` −0,36 / +1,20 / −0,84 dB, `right` −1,36 / +1,09 / +0,27 dB. Die 75 gefitteten Moden sind unverändert (Feld für Feld verglichen). Der Wächter prüft, dass die im Skript gezogenen Moden die von `ziehe` sind (Zahl, die ersten drei, die letzte).
@@ -1549,6 +1555,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 |---|---|---|
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
+| 0.46.0 | 2026-11-16 | Session 200. §6: GZ13 a (Ablösekraft des Cembalos −2,8 dB je Oktave), GZ14 a (Spanne ≤ 15 LU — Harfe ab D2 —, mittlerer Sprung ≤ 4 LU, größter ≤ 12 LU; ersetzt die Schwellen aus GZ2 a). |
 | 0.45.0 | 2026-11-16 | Session 200. §6: GZ10 a (Tastenstoß 7 mN s bei ff, 10 dB je Stufe; Ablösekraft 2 N), GZ11 a (Lautenzug als Dämpfer am Sattel, 40 N s/m bei 0,5 mm), GZ12 a (ein 8′ je Taste, weitere Register mit 31g). |
 | 0.44.0 | 2026-11-16 | Session 200. §6: GZ8 a (Harfe mit Oktaven, Quinten, Quarten; die Rechenzeit-Grenze gilt für eine Saite ohne Mitschwingen), GZ9 a (Haltepunkt Bend bestanden). |
 | 0.43.0 | 2026-11-15 | Session 199. §6: GZ5-1 a (über 5 kHz ein Dämpfer aus den Größen des statistischen Teils in der Saitenschleife; am Cembalo gerechnet). |
