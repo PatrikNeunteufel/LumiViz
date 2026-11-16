@@ -1,0 +1,30 @@
+cembalo: Modell 61 Tasten 29-89: Spanne  18.7 LU, 10.-90. Perzentil  13.0 LU, groesster Sprung (<= 4 Halbtoene)  6.5 LU, mittlerer 1.5 LU
+  Aufnahme Harpsichord, English/Sustains/Normal     28 Toene 34-88: Spanne  13.6 LU, 10.-90. Perzentil  10.4 LU, groesster Sprung (<= 4 Halbtoene) 11.3 LU, mittlerer 2.6 LU
+  Aufnahme Harpsichord, Flemish/Sustains/Low        28 Toene 30-84: Spanne   7.8 LU, 10.-90. Perzentil   4.1 LU, groesster Sprung (<= 4 Halbtoene)  6.2 LU, mittlerer 1.6 LU
+  Aufnahme Harpsichord, French/Sustains             28 Toene 26-84: Spanne   9.1 LU, 10.-90. Perzentil   6.4 LU, groesster Sprung (<= 4 Halbtoene)  6.6 LU, mittlerer 2.1 LU
+  Aufnahme Harpsichord, Italian/Sustains/stop1      32 Toene 30-83: Spanne  12.5 LU, 10.-90. Perzentil   7.4 LU, groesster Sprung (<= 4 Halbtoene)  8.3 LU, mittlerer 1.9 LU
+  Aufnahme Harpsichord, Unk/Sustains                61 Toene 29-89: Spanne   6.1 LU, 10.-90. Perzentil   3.6 LU, groesster Sprung (<= 4 Halbtoene)  5.0 LU, mittlerer 1.3 LU
+Form (Lautheit minus Median, geglaettet) je Oktave: Aufnahmen / Modell / noetige Aenderung der Zupfstaerke dB
+  C1:  -0.6 /  -9.3 /  +8.8
+  C2:  -1.0 /  -4.7 /  +3.8
+  C3:  +0.3 /  -1.7 /  +1.8
+  C4:  +0.4 /  +2.2 /  -1.9
+  C5:  +0.9 /  +2.5 /  -1.7
+  C6:  -0.9 /  +5.3 /  -6.4
+feste Zupfstaerke     : dB je Oktave um C4 +0.74  -> Modell Spanne  18.7 LU, 10.-90. Perzentil  13.0 LU, groesster Sprung (<= 4 Halbtoene)  6.5 LU, mittlerer 1.5 LU; Abstand zur Form der Aufnahmen rms 4.5 LU; Faktor am tiefsten / hoechsten Ton 1.09 / 1.09 (gegen C4 1.09)
+Gerade in der Taste   : dB je Oktave um C4 +0.50 -2.81  -> Modell Spanne   6.8 LU, 10.-90. Perzentil   4.3 LU, groesster Sprung (<= 4 Halbtoene)  6.0 LU, mittlerer 1.5 LU; Abstand zur Form der Aufnahmen rms 1.7 LU; Faktor am tiefsten / hoechsten Ton 2.44 / 0.49 (gegen C4 1.06)
+Parabel in der Taste  : dB je Oktave um C4 +0.31 -2.79 +0.09  -> Modell Spanne   6.6 LU, 10.-90. Perzentil   4.0 LU, groesster Sprung (<= 4 Halbtoene)  6.1 LU, mittlerer 1.5 LU; Abstand zur Form der Aufnahmen rms 1.6 LU; Faktor am tiefsten / hoechsten Ton 2.55 / 0.51 (gegen C4 1.04)
+
+harfe: Modell 80 Tasten 25-104: Spanne  23.3 LU, 10.-90. Perzentil  10.2 LU, groesster Sprung (<= 4 Halbtoene) 13.5 LU, mittlerer 3.0 LU
+  Aufnahme Concert Harp                             23 Toene 28-101: Spanne  17.7 LU, 10.-90. Perzentil  11.0 LU, groesster Sprung (<= 4 Halbtoene)  7.2 LU, mittlerer 3.6 LU
+Form (Lautheit minus Median, geglaettet) je Oktave: Aufnahmen / Modell / noetige Aenderung der Zupfstaerke dB
+  C1: -12.8 /  -1.5 /  -7.9
+  C2:  -2.7 /  +2.1 /  -2.9
+  C3:  +0.2 /  +2.2 /  -1.0
+  C4:  +3.6 /  +0.4 /  +4.3
+  C5:  +1.5 /  +1.4 /  +0.4
+  C6:  -0.1 /  -4.5 /  +5.0
+  C7:  -3.4 /  -1.1 /  -0.2
+feste Zupfstaerke     : dB je Oktave um C4 -0.46  -> Modell Spanne  23.3 LU, 10.-90. Perzentil  10.2 LU, groesster Sprung (<= 4 Halbtoene) 13.5 LU, mittlerer 3.0 LU; Abstand zur Form der Aufnahmen rms 5.5 LU; Faktor am tiefsten / hoechsten Ton 0.95 / 0.95 (gegen C4 0.95)
+Gerade in der Taste   : dB je Oktave um C4 -1.02 +1.51  -> Modell Spanne  26.4 LU, 10.-90. Perzentil  10.4 LU, groesster Sprung (<= 4 Halbtoene) 13.6 LU, mittlerer 3.0 LU; Abstand zur Form der Aufnahmen rms 4.5 LU; Faktor am tiefsten / hoechsten Ton 0.54 / 1.68 (gegen C4 0.89)
+Parabel in der Taste  : dB je Oktave um C4 +0.81 +1.89 -0.51  -> Modell Spanne  31.7 LU, 10.-90. Perzentil  13.3 LU, groesster Sprung (<= 4 Halbtoene) 13.8 LU, mittlerer 3.1 LU; Abstand zur Form der Aufnahmen rms 4.1 LU; Faktor am tiefsten / hoechsten Ton 0.35 / 1.10 (gegen C4 1.10)
