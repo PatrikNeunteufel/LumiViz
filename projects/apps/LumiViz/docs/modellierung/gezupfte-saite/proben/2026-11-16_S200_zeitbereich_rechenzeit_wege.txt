@@ -1,0 +1,51 @@
+== rz_d
+Wege fuer das Mitschwingen, REAL = double; Taktprobe vorher 0.144 s
+Gitarre: 89 Moden, 6 Saiten an 6 Punkten         Durchgriff je Punkt           3.75 /  3.60 /  3.43 % der Echtzeit   (Pruefsumme 1.335656e+01)
+Gitarre: 89 Moden, 6 Saiten an 6 Punkten         dazu Rueckwirkung nur Punkt 0  2.13 /  2.12 /  2.13 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Laute: 142 Moden, 15 Saiten an 8 Punkten         Durchgriff je Punkt           7.07 /  7.12 /  7.08 % der Echtzeit   (Pruefsumme 1.335695e+01)
+Laute: 142 Moden, 15 Saiten an 8 Punkten         dazu Rueckwirkung nur Punkt 0  4.48 /  4.66 /  4.62 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Oud: 257 Moden, 11 Saiten an 6 Punkten           Durchgriff je Punkt           8.66 /  8.63 /  9.84 % der Echtzeit   (Pruefsumme 1.335750e+01)
+Oud: 257 Moden, 11 Saiten an 6 Punkten           dazu Rueckwirkung nur Punkt 0  6.15 /  6.19 /  5.79 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Cembalo: 403 Moden, 3 Saiten an 2 Punkten        Durchgriff je Punkt           6.02 /  6.26 /  5.65 % der Echtzeit   (Pruefsumme 1.335668e+01)
+Cembalo: 403 Moden, 3 Saiten an 2 Punkten        dazu Rueckwirkung nur Punkt 0  5.35 /  5.06 /  5.15 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Harfe: 159 Moden, 20 Saiten (O+Q)                Durchgriff je Punkt          19.43 / 19.87 / 21.20 % der Echtzeit   (Pruefsumme 1.335695e+01)
+Harfe: 159 Moden, 20 Saiten (O+Q)                dazu Rueckwirkung nur Punkt 0 10.75 / 10.81 / 10.69 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Harfe: 159 Moden, 33 Saiten (O+Q+T)              Durchgriff je Punkt          33.30 / 34.92 / 33.23 % der Echtzeit   (Pruefsumme 1.335723e+01)
+Harfe: 159 Moden, 33 Saiten (O+Q+T)              dazu Rueckwirkung nur Punkt 0 17.43 / 15.29 / 15.92 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Harfe: 159 Moden, 46 Saiten (alle)               Durchgriff je Punkt          45.02 / 47.97 / 47.92 % der Echtzeit   (Pruefsumme 1.335756e+01)
+Harfe: 159 Moden, 46 Saiten (alle)               dazu Rueckwirkung nur Punkt 0 20.69 / 21.76 / 22.41 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Taktprobe nachher 0.154 s
+== rz_d_avx2
+Wege fuer das Mitschwingen, REAL = double; Taktprobe vorher 0.148 s
+Gitarre: 89 Moden, 6 Saiten an 6 Punkten         Durchgriff je Punkt           2.87 /  3.03 /  2.98 % der Echtzeit   (Pruefsumme 1.335656e+01)
+Gitarre: 89 Moden, 6 Saiten an 6 Punkten         dazu Rueckwirkung nur Punkt 0  2.49 /  2.24 /  2.15 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Laute: 142 Moden, 15 Saiten an 8 Punkten         Durchgriff je Punkt           7.76 /  7.18 /  7.12 % der Echtzeit   (Pruefsumme 1.335695e+01)
+Laute: 142 Moden, 15 Saiten an 8 Punkten         dazu Rueckwirkung nur Punkt 0  4.47 /  4.55 /  4.46 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Oud: 257 Moden, 11 Saiten an 6 Punkten           Durchgriff je Punkt           7.52 /  6.87 /  7.30 % der Echtzeit   (Pruefsumme 1.335750e+01)
+Oud: 257 Moden, 11 Saiten an 6 Punkten           dazu Rueckwirkung nur Punkt 0  6.70 /  6.64 /  6.04 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Cembalo: 403 Moden, 3 Saiten an 2 Punkten        Durchgriff je Punkt           5.43 /  4.58 /  4.73 % der Echtzeit   (Pruefsumme 1.335668e+01)
+Cembalo: 403 Moden, 3 Saiten an 2 Punkten        dazu Rueckwirkung nur Punkt 0  3.85 /  4.58 /  5.38 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Harfe: 159 Moden, 20 Saiten (O+Q)                Durchgriff je Punkt          18.12 / 18.18 / 16.02 % der Echtzeit   (Pruefsumme 1.335695e+01)
+Harfe: 159 Moden, 20 Saiten (O+Q)                dazu Rueckwirkung nur Punkt 0  9.47 / 10.53 /  9.83 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Harfe: 159 Moden, 33 Saiten (O+Q+T)              Durchgriff je Punkt          25.77 / 26.61 / 28.42 % der Echtzeit   (Pruefsumme 1.335723e+01)
+Harfe: 159 Moden, 33 Saiten (O+Q+T)              dazu Rueckwirkung nur Punkt 0 16.63 / 19.04 / 17.36 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Harfe: 159 Moden, 46 Saiten (alle)               Durchgriff je Punkt          39.04 / 37.92 / 37.21 % der Echtzeit   (Pruefsumme 1.335756e+01)
+Harfe: 159 Moden, 46 Saiten (alle)               dazu Rueckwirkung nur Punkt 0 21.85 / 20.69 / 22.52 % der Echtzeit   (Pruefsumme 1.335652e+01)
+Taktprobe nachher 0.150 s
+== rz_f_avx2
+Wege fuer das Mitschwingen, REAL = float; Taktprobe vorher 0.151 s
+Gitarre: 89 Moden, 6 Saiten an 6 Punkten         Durchgriff je Punkt           2.79 /  2.78 /  3.09 % der Echtzeit   (Pruefsumme 1.335657e+01)
+Gitarre: 89 Moden, 6 Saiten an 6 Punkten         dazu Rueckwirkung nur Punkt 0  2.89 /  1.66 /  1.63 % der Echtzeit   (Pruefsumme 1.335653e+01)
+Laute: 142 Moden, 15 Saiten an 8 Punkten         Durchgriff je Punkt           4.13 /  4.16 /  4.16 % der Echtzeit   (Pruefsumme 1.335697e+01)
+Laute: 142 Moden, 15 Saiten an 8 Punkten         dazu Rueckwirkung nur Punkt 0  3.29 /  3.59 /  3.61 % der Echtzeit   (Pruefsumme 1.335653e+01)
+Oud: 257 Moden, 11 Saiten an 6 Punkten           Durchgriff je Punkt           4.94 /  4.71 /  4.61 % der Echtzeit   (Pruefsumme 1.335751e+01)
+Oud: 257 Moden, 11 Saiten an 6 Punkten           dazu Rueckwirkung nur Punkt 0  3.67 /  3.56 /  3.55 % der Echtzeit   (Pruefsumme 1.335653e+01)
+Cembalo: 403 Moden, 3 Saiten an 2 Punkten        Durchgriff je Punkt           2.41 /  2.42 /  2.46 % der Echtzeit   (Pruefsumme 1.335669e+01)
+Cembalo: 403 Moden, 3 Saiten an 2 Punkten        dazu Rueckwirkung nur Punkt 0  2.25 /  2.23 /  2.24 % der Echtzeit   (Pruefsumme 1.335653e+01)
+Harfe: 159 Moden, 20 Saiten (O+Q)                Durchgriff je Punkt          12.78 / 11.95 / 12.52 % der Echtzeit   (Pruefsumme 1.335696e+01)
+Harfe: 159 Moden, 20 Saiten (O+Q)                dazu Rueckwirkung nur Punkt 0  8.83 /  7.69 /  8.22 % der Echtzeit   (Pruefsumme 1.335653e+01)
+Harfe: 159 Moden, 33 Saiten (O+Q+T)              Durchgriff je Punkt          20.88 / 23.50 / 22.61 % der Echtzeit   (Pruefsumme 1.335725e+01)
+Harfe: 159 Moden, 33 Saiten (O+Q+T)              dazu Rueckwirkung nur Punkt 0 17.41 / 12.88 / 14.53 % der Echtzeit   (Pruefsumme 1.335653e+01)
+Harfe: 159 Moden, 46 Saiten (alle)               Durchgriff je Punkt          28.08 / 28.40 / 29.22 % der Echtzeit   (Pruefsumme 1.335757e+01)
+Harfe: 159 Moden, 46 Saiten (alle)               dazu Rueckwirkung nur Punkt 0 18.52 / 17.81 / 17.71 % der Echtzeit   (Pruefsumme 1.335653e+01)
+Taktprobe nachher 0.155 s

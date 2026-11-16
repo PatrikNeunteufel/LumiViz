@@ -188,10 +188,136 @@ double laufViele(int moden, int werte, int saiten, int punkte, double sekunden, 
     }
     return (jetzt() - t0) / sekunden;
 }
+// Wege fuer das Mitschwingen (Vorlage S200). REAL = double (Vorgabe) oder float (-DREAL=float).
+//   weg 0  Durchgriff je Stegpunkt (2 x 2) statt der vollen Matrix; der Durchgriff zwischen den Punkten wirkt einen Takt
+//          spaeter (er ist klein: B0 ~ dt / 2)
+//   weg 1  dazu Rueckwirkung nur der gespielten Saite: die Moden hoeren nur die Kraft am Punkt 0, die uebrigen Punkte
+//          folgen (u = u_frei), ihre Saiten laufen mit, wirken aber nicht zurueck
+#ifndef REAL
+#define REAL double
+#endif
+double laufWege(int moden, int werte, int saiten, int punkte, int weg, double sekunden, double& pruefsumme)
+{
+    using R = REAL;
+    const std::size_t D = 2 * static_cast<std::size_t>(punkte), N = static_cast<std::size_t>(moden), K = static_cast<std::size_t>(werte);
+    const std::size_t L = 2 * static_cast<std::size_t>(saiten);
+    std::vector<R> pr(N), pi(N), b0r(N), b0i(N), b1r(N), b1i(N), zr(N, 0), zi(N, 0), et(N * D), ef(N, 0);
+    std::vector<double> mpp(static_cast<std::size_t>(punkte) * 3, 0.0);  // je Punkt m00, m01, m11
+    const double dt = 1.0 / kFs;
+    for (std::size_t j = 0; j < N; ++j)
+    {
+        const double f = 40.0 + 4960.0 * (j + 0.5) / moden, wn = 2.0 * kPi * f, beta = 0.02 * wn;
+        const double wd = std::sqrt(wn * wn - 0.25 * beta * beta);
+        const std::complex<double> lam(-0.5 * beta, wd), c = lam / std::complex<double>(0.0, wd), pol = std::exp(lam * dt), x = lam * dt;
+        const std::complex<double> b0 = c * (pol - 1.0 - x) / (lam * x), b1 = c * (pol * (x - 1.0) + 1.0) / (lam * x);
+        pr[j] = static_cast<R>(pol.real()), pi[j] = static_cast<R>(pol.imag());
+        b0r[j] = static_cast<R>(b0.real()), b0i[j] = static_cast<R>(b0.imag()), b1r[j] = static_cast<R>(b1.real()), b1i[j] = static_cast<R>(b1.imag());
+        for (std::size_t d = 0; d < D; ++d) et[d * N + j] = static_cast<R>(0.3 * std::cos(1.7 * j + 0.9 * d));
+        for (std::size_t p = 0; p < static_cast<std::size_t>(punkte); ++p)
+        {
+            const double e0 = et[(2 * p) * N + j], e1 = et[(2 * p + 1) * N + j];
+            mpp[3 * p] += b0.real() * e0 * e0, mpp[3 * p + 1] += b0.real() * e0 * e1, mpp[3 * p + 2] += b0.real() * e1 * e1;
+        }
+    }
+    std::vector<R> h(K, 0);
+    for (std::size_t k = 0; k < K; ++k) h[k] = static_cast<R>(k == K - 8 ? 0.97 : 0.02 / werte * ((k % 2) ? 1.0 : -1.0));
+    const auto n = static_cast<std::size_t>(sekunden * kFs);
+    std::vector<std::vector<R>> aus(L, std::vector<R>(n + K, 0));
+    std::vector<R> v(L), uf(D), u(D), F(D, 0), vp(D);
+    const R z0 = static_cast<R>(0.2);
+    const std::size_t Dr = weg == 1 ? 2 : D;  // Richtungen, deren Kraft die Moden hoeren
+    pruefsumme = 0.0;
+    const double t0 = jetzt();
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        for (std::size_t l = 0; l < L; ++l)
+        {
+            const R s = (l < 2 && i < 96) ? static_cast<R>(0.01) : 0;
+            const R* p = aus[l].data() + i;
+            R t0s = 0, t1s = 0, t2s = 0, t3s = 0;
+            for (std::size_t k = 0; k + 4 <= K; k += 4)
+                t0s += h[k] * p[k], t1s += h[k + 1] * p[k + 1], t2s += h[k + 2] * p[k + 2], t3s += h[k + 3] * p[k + 3];
+            v[l] = s - ((t0s + t1s) + (t2s + t3s));
+        }
+        for (std::size_t d = 0; d < D; ++d) vp[d] = 0;
+        for (std::size_t l = 0; l < L; ++l) vp[(l / 2 % static_cast<std::size_t>(punkte)) * 2 + l % 2] += v[l];
+        for (std::size_t j = 0; j < N; ++j) ef[j] = 0;
+        for (std::size_t d = 0; d < Dr; ++d)
+        {
+            const R* ed = et.data() + d * N;
+            const R fd = F[d];
+            for (std::size_t j = 0; j < N; ++j) ef[j] += ed[j] * fd;
+        }
+        for (std::size_t j = 0; j < N; ++j)
+        {
+            const R r = zr[j] * pr[j] - zi[j] * pi[j] + b1r[j] * ef[j], s = zr[j] * pi[j] + zi[j] * pr[j] + b1i[j] * ef[j];
+            zr[j] = r, zi[j] = s;
+        }
+        for (std::size_t d = 0; d < D; ++d)
+        {
+            const R* ed = et.data() + d * N;
+            R s[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+            std::size_t j = 0;
+            for (; j + 8 <= N; j += 8)
+                for (std::size_t q = 0; q < 8; ++q) s[q] += ed[j + q] * zr[j + q];
+            for (; j < N; ++j) s[0] += ed[j] * zr[j];
+            uf[d] = ((s[0] + s[1]) + (s[2] + s[3])) + ((s[4] + s[5]) + (s[6] + s[7]));
+        }
+        const std::size_t loesen = weg == 1 ? 1 : static_cast<std::size_t>(punkte);
+        for (std::size_t p = 0; p < static_cast<std::size_t>(punkte); ++p)
+        {
+            if (p < loesen)
+            {
+                const double m00 = mpp[3 * p], m01 = mpp[3 * p + 1], m11 = mpp[3 * p + 2];
+                const double a11 = 1.0 + z0 * m00, a12 = z0 * m01, a22 = 1.0 + z0 * m11, det = a11 * a22 - a12 * a12;
+                const double r0 = uf[2 * p] + 2.0 * z0 * (m00 * vp[2 * p] + m01 * vp[2 * p + 1]);
+                const double r1 = uf[2 * p + 1] + 2.0 * z0 * (m01 * vp[2 * p] + m11 * vp[2 * p + 1]);
+                u[2 * p] = static_cast<R>((a22 * r0 - a12 * r1) / det), u[2 * p + 1] = static_cast<R>((a11 * r1 - a12 * r0) / det);
+            }
+            else
+                u[2 * p] = uf[2 * p], u[2 * p + 1] = uf[2 * p + 1];
+        }
+        for (std::size_t d = 0; d < D; ++d) F[d] = z0 * (2 * vp[d] - u[d]);
+        for (std::size_t j = 0; j < N; ++j) ef[j] = 0;
+        for (std::size_t d = 0; d < Dr; ++d)
+        {
+            const R* ed = et.data() + d * N;
+            const R fd = F[d];
+            for (std::size_t j = 0; j < N; ++j) ef[j] += ed[j] * fd;
+        }
+        for (std::size_t j = 0; j < N; ++j) zr[j] += b0r[j] * ef[j], zi[j] += b0i[j] * ef[j];
+        for (std::size_t l = 0; l < L; ++l) aus[l][K + i] = u[(l / 2 % static_cast<std::size_t>(punkte)) * 2 + l % 2] - v[l];
+        pruefsumme += F[0];
+    }
+    return (jetzt() - t0) / sekunden;
+}
 }  // namespace
 
-int main()
+int main(int argc, char**)
 {
+    if (argc > 1)  // irgendein Argument: nur die Wege fuer das Mitschwingen
+    {
+        struct Weg
+        {
+            const char* name;
+            int moden, saiten, punkte;
+        };
+        const Weg wege[] = {{"Gitarre: 89 Moden, 6 Saiten an 6 Punkten", 89, 6, 6},   {"Laute: 142 Moden, 15 Saiten an 8 Punkten", 142, 15, 8},
+                            {"Oud: 257 Moden, 11 Saiten an 6 Punkten", 257, 11, 6},   {"Cembalo: 403 Moden, 3 Saiten an 2 Punkten", 403, 3, 2},
+                            {"Harfe: 159 Moden, 20 Saiten (O+Q)", 159, 20, 20},       {"Harfe: 159 Moden, 33 Saiten (O+Q+T)", 159, 33, 33},
+                            {"Harfe: 159 Moden, 46 Saiten (alle)", 159, 46, 46}};
+        std::printf("Wege fuer das Mitschwingen, REAL = %s; Taktprobe vorher %.3f s\n", sizeof(REAL) == 4 ? "float" : "double", taktprobe());
+        for (const Weg& f : wege)
+            for (int weg = 0; weg < 2; ++weg)
+            {
+                double w[3], summe = 0.0;
+                for (double& x : w) x = 100.0 * laufWege(f.moden, 16, f.saiten, f.punkte, weg, 4.0, summe);
+                std::printf("%-48s %-28s %5.2f / %5.2f / %5.2f %% der Echtzeit   (Pruefsumme %.6e)\n", f.name,
+                            weg == 0 ? "Durchgriff je Punkt" : "dazu Rueckwirkung nur Punkt 0", w[0], w[1], w[2], summe);
+            }
+        std::printf("Taktprobe nachher %.3f s\n", taktprobe());
+        return 0;
+    }
     struct Fall
     {
         const char* name;

@@ -1,0 +1,115 @@
+Tastenstoss: Band 30-300 Hz gegen den ganzen Ton der ersten 0,2 s (dB): frueh / 1,0-1,2 s / vor dem Einsatz
+  englisch Normal  Taste  82:  -14.1 /  -54.5 /    nan
+  englisch Normal  Taste  72:  -14.3 /  -44.8 /    nan
+  englisch Normal  Taste  84:  -15.8 /  -72.4 /    nan
+  englisch Normal  Taste  74:  -19.8 /  -53.7 /    nan
+  englisch Normal  Taste  86:   -5.4 /  -58.6 /    nan
+  englisch Normal  Taste  76:  -13.2 /  -58.1 /    nan
+  englisch Normal  Taste  88:  -18.9 /  -60.5 /    nan
+  englisch Normal  Taste  78:  -18.0 /  -54.0 /    nan
+  englisch Normal  Taste  80:  -13.2 /  -60.2 /    nan
+  englisch Normal  C5-H5: Median frueh  -14.2 dB, spaet  -54.2 dB, vorher    nan dB (6 Toene)
+  englisch Normal  C6-H6: Median frueh  -15.8 dB, spaet  -60.5 dB, vorher    nan dB (3 Toene)
+  englisch Lute    Taste  82:  -15.1 /  -65.3 /    nan
+  englisch Lute    Taste  72:  -11.4 /  -52.7 /    nan
+  englisch Lute    Taste  84:  -16.2 /  -65.7 /    nan
+  englisch Lute    Taste  74:  -21.9 /  -54.0 /    nan
+  englisch Lute    Taste  86:   -4.3 /  -49.8 /    nan
+  englisch Lute    Taste  76:  -11.6 /  -39.0 /    nan
+  englisch Lute    Taste  88:   -9.5 /  -50.3 /    nan
+  englisch Lute    Taste  78:  -14.7 /  -36.1 /    nan
+  englisch Lute    Taste  80:  -11.1 /  -57.2 /    nan
+  englisch Lute    C5-H5: Median frueh  -13.2 dB, spaet  -53.4 dB, vorher    nan dB (6 Toene)
+  englisch Lute    C6-H6: Median frueh   -9.5 dB, spaet  -50.3 dB, vorher    nan dB (3 Toene)
+  franzoesisch     Taste  82:  -19.5 /  -53.1 /    nan
+  franzoesisch     Taste  72:  -13.6 /  -41.5 /    nan
+  franzoesisch     Taste  84:  -17.9 /  -55.7 /    nan
+  franzoesisch     Taste  74:  -13.9 /  -40.4 /    nan
+  franzoesisch     Taste  76:  -13.4 /  -43.0 /    nan
+  franzoesisch     Taste  78:  -17.5 /  -45.4 /    nan
+  franzoesisch     Taste  80:  -22.5 /  -51.5 /    nan
+  franzoesisch     C5-H5: Median frueh  -15.7 dB, spaet  -44.2 dB, vorher    nan dB (6 Toene)
+  franzoesisch     C6-H6: Median frueh  -17.9 dB, spaet  -55.7 dB, vorher    nan dB (1 Toene)
+  Unk              Taste  82:  -30.2 /  -70.1 /    nan
+  Unk              Taste  81:  -26.7 /  -59.2 /    nan
+  Unk              Taste  83:  -22.9 /  -71.3 /    nan
+  Unk              Taste  73:  -24.1 /  -44.5 /    nan
+  Unk              Taste  85:  -27.5 /  -73.6 /    nan
+  Unk              Taste  72:  -19.6 /  -38.1 /    nan
+  Unk              Taste  84:  -28.3 /  -68.2 /    nan
+  Unk              Taste  75:  -24.0 /  -48.7 /    nan
+  Unk              Taste  87:  -27.9 /  -74.4 /    nan
+  Unk              Taste  74:  -23.1 /  -40.4 /    nan
+  Unk              Taste  86:  -26.0 /  -68.3 /    nan
+  Unk              Taste  76:  -28.6 /  -49.1 /    nan
+  Unk              Taste  88:  -30.0 /  -74.6 /    nan
+  Unk              Taste  78:  -23.1 /  -56.9 /    nan
+  Unk              Taste  77:  -22.2 /  -56.6 /    nan
+  Unk              Taste  89:  -25.9 /  -80.0 /    nan
+  Unk              Taste  80:  -27.7 /  -61.2 /    nan
+  Unk              Taste  79:  -22.7 /  -60.3 /    nan
+  Unk              C5-H5: Median frueh  -23.6 dB, spaet  -56.8 dB, vorher    nan dB (12 Toene)
+  Unk              C6-H6: Median frueh  -27.7 dB, spaet  -74.0 dB, vorher    nan dB (6 Toene)
+  flaemisch Low    Taste  82:  -20.9 /  -67.5 /    nan
+  flaemisch Low    Taste  72:  -19.0 /  -45.3 /    nan
+  flaemisch Low    Taste  84:  -20.4 /  -79.5 /    nan
+  flaemisch Low    Taste  74:  -19.3 /  -49.5 /    nan
+  flaemisch Low    Taste  76:  -26.1 /  -56.8 /    nan
+  flaemisch Low    Taste  78:  -19.9 /  -34.3 /    nan
+  flaemisch Low    Taste  80:  -23.9 /  -61.1 /    nan
+  flaemisch Low    C5-H5: Median frueh  -20.4 dB, spaet  -53.2 dB, vorher    nan dB (6 Toene)
+  flaemisch Low    C6-H6: Median frueh  -20.4 dB, spaet  -79.5 dB, vorher    nan dB (1 Toene)
+  flaemisch High   Taste  82:  -26.5 /  -63.5 /    nan
+  flaemisch High   Taste  94:  -10.3 /  -20.2 /    nan
+  flaemisch High   Taste  73:  -20.6 /  -37.8 /    nan
+  flaemisch High   Taste  84:  -18.1 /  -43.6 /    nan
+  flaemisch High   Taste  96:   -6.9 /  -57.4 /    nan
+  flaemisch High   Taste  74:  -24.6 /  -52.6 /    nan
+  flaemisch High   Taste  86:  -13.0 /  -50.9 /    nan
+  flaemisch High   Taste  76:  -21.0 /  -48.8 /    nan
+  flaemisch High   Taste  88:  -14.2 /  -42.8 /    nan
+  flaemisch High   Taste  78:  -20.8 /  -25.7 /    nan
+  flaemisch High   Taste  90:   -8.2 /  -30.6 /    nan
+  flaemisch High   Taste  80:  -22.4 /  -62.7 /    nan
+  flaemisch High   Taste  92:  -10.5 /  -28.0 /    nan
+  flaemisch High   C5-H5: Median frueh  -21.7 dB, spaet  -50.7 dB, vorher    nan dB (6 Toene)
+  flaemisch High   C6-H6: Median frueh  -11.8 dB, spaet  -36.7 dB, vorher    nan dB (6 Toene)
+  flaemisch High   ab C7: Median frueh   -6.9 dB, spaet  -57.4 dB, vorher    nan dB (1 Toene)
+  italienisch      Taste  82:  -30.9 /  -48.7 /    nan
+  italienisch      Taste  83:  -36.8 /  -72.4 /    nan
+  italienisch      Taste  73:  -22.4 /  -35.8 /    nan
+  italienisch      Taste  75:  -26.6 /  -38.2 /    nan
+  italienisch      Taste  76:  -28.4 /  -47.3 /    nan
+  italienisch      Taste  78:  -32.1 /  -55.8 /    nan
+  italienisch      Taste  80:  -35.4 /  -64.2 /    nan
+  italienisch      C5-H5: Median frueh  -30.9 dB, spaet  -48.7 dB, vorher    nan dB (7 Toene)
+
+Lautenzug: Tonhoehe Lute gegen Normal (englisches Cembalo), Cent
+  Taste  34: Normal    58.02 Hz, Lute    58.13 Hz,   +3.2 Cent
+  Taste  36: Normal    65.19 Hz, Lute    65.28 Hz,   +2.2 Cent
+  Taste  38: Normal    73.30 Hz, Lute    73.36 Hz,   +1.5 Cent
+  Taste  40: Normal    82.28 Hz, Lute    82.33 Hz,   +1.0 Cent
+  Taste  42: Normal    92.46 Hz, Lute    92.55 Hz,   +1.8 Cent
+  Taste  44: Normal   103.49 Hz, Lute   103.59 Hz,   +1.6 Cent
+  Taste  46: Normal   116.20 Hz, Lute   116.21 Hz,   +0.1 Cent
+  Taste  50: Normal   146.57 Hz, Lute   146.67 Hz,   +1.2 Cent
+  Taste  52: Normal   165.09 Hz, Lute   165.35 Hz,   +2.7 Cent
+  Taste  54: Normal   185.00 Hz, Lute   185.07 Hz,   +0.6 Cent
+  Taste  56: Normal   207.74 Hz, Lute   207.93 Hz,   +1.6 Cent
+  Taste  58: Normal   233.32 Hz, Lute   233.42 Hz,   +0.7 Cent
+  Taste  60: Normal   261.42 Hz, Lute   261.51 Hz,   +0.6 Cent
+  Taste  62: Normal   293.45 Hz, Lute   293.54 Hz,   +0.6 Cent
+  Taste  64: Normal   329.63 Hz, Lute   329.87 Hz,   +1.3 Cent
+  Taste  66: Normal   369.77 Hz, Lute   370.11 Hz,   +1.6 Cent
+  Taste  68: Normal   415.04 Hz, Lute   415.38 Hz,   +1.4 Cent
+  Taste  70: Normal   466.13 Hz, Lute   466.90 Hz,   +2.9 Cent
+  Taste  72: Normal   523.75 Hz, Lute   524.98 Hz,   +4.1 Cent
+  Taste  74: Normal   586.32 Hz, Lute   587.56 Hz,   +3.7 Cent
+  Taste  76: Normal   658.88 Hz, Lute   659.75 Hz,   +2.3 Cent
+  Taste  78: Normal   738.15 Hz, Lute   739.54 Hz,   +3.3 Cent
+  Taste  80: Normal   828.06 Hz, Lute   828.84 Hz,   +1.6 Cent
+  Taste  82: Normal   928.48 Hz, Lute   929.18 Hz,   +1.3 Cent
+  Taste  84: Normal  1044.31 Hz, Lute  1047.43 Hz,   +5.2 Cent
+  Taste  86: Normal  1180.60 Hz, Lute  1181.17 Hz,   +0.8 Cent
+  Taste  88: Normal  1314.59 Hz, Lute  1327.06 Hz,  +16.3 Cent
+Lute - Normal: Median +1.6 Cent, 10.-90. Perzentil +0.6 ... +3.8; ab C5 Median +3.3 Cent (27 Tasten)

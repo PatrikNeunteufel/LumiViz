@@ -35,6 +35,7 @@ spec.loader.exec_module(ps)
 
 BLOCK = 256
 GRENZEN = []          # --grenzen <Hz> ...: O+Q mit gekuerzter Kopplung (siehe `rechne`)
+EINWEG = []           # --einweg: O+Q mit Rueckwirkung nur der gespielten Saite (siehe `rechne`)
 
 
 def saiten():
@@ -88,6 +89,8 @@ def rechne(kp, tan, alle, s, w):
         # nur "alle" (Bezug) und O+Q; dazu O+Q mit gekuerzter Kopplung: die Moden ueber der Grenze spuert nur die
         # gespielte Saite, die uebrigen Stegpunkte kennen sie nicht (Y bleibt positiv semidefinit)
         wahl = {"alle": wahl["alle"], "O+Q": wahl["O+Q"], **{f"O+Q bis {gr:g} Hz": wahl["O+Q"] for gr in GRENZEN}}
+    if EINWEG:
+        wahl = {"alle": wahl["alle"], "O+Q": wahl["O+Q"], "O+Q einweg": wahl["O+Q"], "O+Q einweg + eigener Steg": wahl["O+Q"]}
     frei = {name: np.array([q for j in idx for q in (2 * j, 2 * j + 1)]) for name, idx in wahl.items()}
     p = {name: np.empty((n, kp["G"].shape[1]), dtype=complex) for name in wahl}
     # Y = Phi^T diag(c) Phi je Frequenz als EIN Matrixprodukt: c (Block x Moden) mal den Produkten phi_a phi_b (Moden x D D)
@@ -110,6 +113,17 @@ def rechne(kp, tan, alle, s, w):
             Yt = ((1j * ws * nenner[:, kp["f"] <= gr]) @ PP[kp["f"] <= gr]).reshape(-1, D, D)
             Yt[:, 2 * s:2 * s + 2, 2 * s:2 * s + 2] = Y[:, 2 * s:2 * s + 2, 2 * s:2 * s + 2]
             tief[f"O+Q bis {gr:g} Hz"] = Yt
+        if EINWEG:
+            # Rueckwirkung nur der gespielten Saite: die uebrigen Stegpunkte folgen ihrer Kraft, ihre eigenen Saiten
+            # wirken nicht auf den Koerper zurueck (Spalte der gespielten Saite); zum Vergleich dazu mit dem eigenen
+            # Stegpunkt je Saite (Diagonale), aber ohne Kopplung der uebrigen untereinander
+            Ye = np.zeros_like(Y)
+            Ye[:, :, 2 * s:2 * s + 2] = Y[:, :, 2 * s:2 * s + 2]
+            tief["O+Q einweg"] = Ye
+            Yd = Ye.copy()
+            for j in range(S):
+                Yd[:, 2 * j:2 * j + 2, 2 * j:2 * j + 2] = Y[:, 2 * j:2 * j + 2, 2 * j:2 * j + 2]
+            tief["O+Q einweg + eigener Steg"] = Yd
         for name, q in frei.items():
             eins = np.eye(len(q))
             Yn = tief.get(name, Y)
@@ -140,6 +154,9 @@ if __name__ == "__main__":
         print(f"Auswahl 'keine' gegen ton_mit: {np.abs(neu['keine'][0] - alt).max() / np.abs(alt).max():.2e}")
         print(f"alle gegen keine in diesem Band (darf abweichen): {np.abs(neu['alle'][0] - alt).max() / np.abs(alt).max():.2e}")
         sys.exit(0)
+    if "--einweg" in sys.argv:
+        sys.argv.remove("--einweg")
+        EINWEG.append(True)
     if "--grenzen" in sys.argv:
         i = sys.argv.index("--grenzen")
         GRENZEN[:] = [float(a) for a in sys.argv[i + 1:]]
