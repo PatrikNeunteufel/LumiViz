@@ -198,6 +198,8 @@ def lautenzug():
     # Umlauf 2 Z0 / R haengt nicht von der Frequenz ab)
     faelle = [(a, r) for a in (0.003, 0.006, 0.012) for r in (0.1, 0.3, 1.0, 3.0)]
     faelle += [(a, -R) for a in (0.001, 0.003) for R in (20.0, 40.0, 80.0, 160.0)]
+    if "--fein" in sys.argv:        # um den Befund herum: Abstand 0,5 / 0,75 mm (die Aufnahmen zeigen ab C5 +3,3 Cent)
+        faelle = [(a, -R) for a in (0.0005, 0.00075) for R in (40.0, 60.0, 80.0)]
     print("Lautenzug: Daempfer im Abstand a vom Sattel, R = r * Z0 oder fest (Spalte 'R' in N s/m). Je Taste: Lautheit gegen ohne "
           "(LU) / Abfall frueh mal / Grundton in Cent")
     print("a mm  r / R | " + " | ".join(f"Taste {t}" for t in tasten) + " | Median")
