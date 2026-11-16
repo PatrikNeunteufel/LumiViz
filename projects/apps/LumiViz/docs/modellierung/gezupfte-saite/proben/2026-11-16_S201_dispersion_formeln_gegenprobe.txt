@@ -1,0 +1,39 @@
+1b  adf.m - die drei Beispiele aus dem Kopf des Codes (fs 44100, beta 0,85), dazu angepasste gleiche Allpaesse
+ f0 32.702 Hz, B 0.0002, Band 2100 Hz: 21 Biquads, |alpha| 0.965 ... 0.991
+  adf, 21 Biquads                       : reiner Verzug   569.76 Takte | Teiltoene 1-51: groesster Fehler  247.8 Cent, 1-12:  12.5 Cent | ohne Steifheit waeren es  362.4 /  24.4 Cent
+  42 gleiche Allpaesse, angepasst (a -0.854): reiner Verzug   813.38 Takte | Teiltoene 1-51: groesster Fehler   56.1 Cent, 1-12:   3.3 Cent | ohne Steifheit waeren es  362.4 /  24.4 Cent
+  16 gleiche Allpaesse, angepasst (a -0.904): reiner Verzug  1029.87 Takte | Teiltoene 1-51: groesster Fehler  120.9 Cent, 1-12:  12.8 Cent | ohne Steifheit waeren es  362.4 /  24.4 Cent
+ f0 65.406 Hz, B 0.0001, Band 2500 Hz: 4 Biquads, |alpha| 0.924 ... 0.942
+  adf, 4 Biquads                        : reiner Verzug   573.14 Takte | Teiltoene 1-35: groesster Fehler    5.9 Cent, 1-12:   0.4 Cent | ohne Steifheit waeren es   99.9 /  12.3 Cent
+  8 gleiche Allpaesse, angepasst (a -0.819): reiner Verzug   593.82 Takte | Teiltoene 1-35: groesster Fehler   17.5 Cent, 1-12:   6.2 Cent | ohne Steifheit waeren es   99.9 /  12.3 Cent
+  16 gleiche Allpaesse, angepasst (a -0.762): reiner Verzug   555.67 Takte | Teiltoene 1-35: groesster Fehler   10.9 Cent, 1-12:   3.5 Cent | ohne Steifheit waeren es   99.9 /  12.3 Cent
+ f0 130.81 Hz, B 0.00015, Band 4300 Hz: 4 Biquads, |alpha| 0.854 ... 0.896
+  adf, 4 Biquads                        : reiner Verzug   281.93 Takte | Teiltoene 1-30: groesster Fehler    5.9 Cent, 1-12:   0.4 Cent | ohne Steifheit waeren es  109.5 /  18.4 Cent
+  8 gleiche Allpaesse, angepasst (a -0.703): reiner Verzug   291.27 Takte | Teiltoene 1-30: groesster Fehler   18.0 Cent, 1-12:   7.6 Cent | ohne Steifheit waeren es  109.5 /  18.4 Cent
+  16 gleiche Allpaesse, angepasst (a -0.620): reiner Verzug   269.02 Takte | Teiltoene 1-30: groesster Fehler   10.9 Cent, 1-12:   4.3 Cent | ohne Steifheit waeren es  109.5 /  18.4 Cent
+1a  Rauhala & Välimäki (Faust) - Wert a1 geschlossen, gegen den angepassten Wert; fs 44100
+ f0 32.702 Hz, B 0.0002, M 8: a1 nach Formel -0.917, angepasst -0.932
+  Formel                                : reiner Verzug  1164.37 Takte | Teiltoene 1-66: groesster Fehler  378.8 Cent, 1-12:   2.7 Cent | ohne Steifheit waeren es  542.2 /  24.4 Cent
+  angepasst                             : reiner Verzug  1119.99 Takte | Teiltoene 1-66: groesster Fehler  315.3 Cent, 1-12:  23.6 Cent | ohne Steifheit waeren es  542.2 /  24.4 Cent
+ f0 65.406 Hz, B 0.0001, M 8: a1 nach Formel -0.811, angepasst -0.826
+  Formel                                : reiner Verzug   597.66 Takte | Teiltoene 1-42: groesster Fehler   52.2 Cent, 1-12:   3.9 Cent | ohne Steifheit waeren es  140.5 /  12.3 Cent
+  angepasst                             : reiner Verzug   590.21 Takte | Teiltoene 1-42: groesster Fehler   35.0 Cent, 1-12:   8.6 Cent | ohne Steifheit waeren es  140.5 /  12.3 Cent
+ f0 130.81 Hz, B 0.00015, M 8: a1 nach Formel -0.687, angepasst -0.685
+  Formel                                : reiner Verzug   294.01 Takte | Teiltoene 1-22: groesster Fehler    5.0 Cent, 1-12:   3.5 Cent | ohne Steifheit waeren es   60.5 /  18.4 Cent
+  angepasst                             : reiner Verzug   294.33 Takte | Teiltoene 1-22: groesster Fehler    6.0 Cent, 1-12:   3.1 Cent | ohne Steifheit waeren es   60.5 /  18.4 Cent
+ f0 65.406 Hz, B 0.0001, M 4: a1 nach Formel -0.854, angepasst -0.875
+  Formel                                : reiner Verzug   623.34 Takte | Teiltoene 1-42: groesster Fehler   69.3 Cent, 1-12:   5.0 Cent | ohne Steifheit waeren es  140.5 /  12.3 Cent
+  angepasst                             : reiner Verzug   614.24 Takte | Teiltoene 1-42: groesster Fehler   46.8 Cent, 1-12:  14.1 Cent | ohne Steifheit waeren es  140.5 /  12.3 Cent
+ f0 261.63 Hz, B 0.0003, M 4: a1 nach Formel -0.626, angepasst -0.613
+  Formel                                : reiner Verzug   151.18 Takte | Teiltoene 1-11: groesster Fehler    3.1 Cent, 1-12:   3.1 Cent | ohne Steifheit waeren es   30.6 /  30.6 Cent
+  angepasst                             : reiner Verzug   151.91 Takte | Teiltoene 1-11: groesster Fehler    1.9 Cent, 1-12:   1.9 Cent | ohne Steifheit waeren es   30.6 /  30.6 Cent
+48 kHz und unsere Saiten: G-Saite der Gitarre (EI 310e-6 N m^2, T 58,3 N, L 0,65 m -> B 1,24e-4), f0 196 Hz und Bund 12
+ f0 196.0 Hz, B 0.000124: adf gibt 1 Biquads
+  adf, 1 Biquads                        : reiner Verzug   232.54 Takte | Teiltoene 1-24: groesster Fehler   24.1 Cent, 1-12:   1.7 Cent | ohne Steifheit waeren es   59.6 /  15.2 Cent
+  8 gleiche Allpaesse, angepasst        : reiner Verzug   215.16 Takte | Teiltoene 1-24: groesster Fehler    6.3 Cent, 1-12:   3.1 Cent | ohne Steifheit waeren es   59.6 /  15.2 Cent
+  16 gleiche Allpaesse, angepasst       : reiner Verzug   199.04 Takte | Teiltoene 1-24: groesster Fehler    3.7 Cent, 1-12:   1.8 Cent | ohne Steifheit waeren es   59.6 /  15.2 Cent
+  Rauhala-Formel M 8 (a1 -0.549)        : reiner Verzug   217.40 Takte | Teiltoene 1-24: groesster Fehler   15.8 Cent, 1-12:   0.7 Cent | ohne Steifheit waeren es   59.6 /  15.2 Cent
+ f0 392.0 Hz, B 0.000496: adf gibt 0 Biquads
+  8 gleiche Allpaesse, angepasst        : reiner Verzug    99.46 Takte | Teiltoene 1-12: groesster Fehler    3.3 Cent, 1-12:   3.3 Cent | ohne Steifheit waeren es   59.3 /  59.3 Cent
+  16 gleiche Allpaesse, angepasst       : reiner Verzug    86.11 Takte | Teiltoene 1-12: groesster Fehler    1.6 Cent, 1-12:   1.6 Cent | ohne Steifheit waeren es   59.3 /  59.3 Cent
+  Rauhala-Formel M 8 (a1 -0.438)        : reiner Verzug   101.96 Takte | Teiltoene 1-12: groesster Fehler   19.2 Cent, 1-12:  19.2 Cent | ohne Steifheit waeren es   59.3 /  59.3 Cent
