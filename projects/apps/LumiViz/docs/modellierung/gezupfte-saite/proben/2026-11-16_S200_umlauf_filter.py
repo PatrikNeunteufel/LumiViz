@@ -77,33 +77,40 @@ def baue(fassung, saite, L, f0):
     else:
         M = 2 if fassung.startswith("fir5") else 4
         # Verlust je Umlauf 1 - H(x) = l0 + sum_m l_m (1 - cos m x): relativer Fehler bei den Teiltoenen
-        # angepasst an den ersten 40 Teiltoenen, Gewicht 1 / n (die tiefen tragen Lautheit und Ausklang)
-        nn = np.arange(1, len(x) + 1)
-        gew = np.where(nn <= 40, 1.0 / nn, 0.0)
-        A = np.stack([np.ones_like(x)] + [1 - np.cos(m * x) for m in range(1, M + 1)], axis=1)
-        ziel = 1 - g
+        # angepasst auf einem Raster vom Grundton bis 20 kHz (nicht nur an den Teiltoenen: bei hohen Tasten sind es zu
+        # wenige, bei tiefen bliebe der Bereich ueber dem 40. Teilton frei), Gewicht 1 / f; alle Beiwerte >= 0, damit
+        # ist der Betrag ueberall <= 1
+        fr = np.geomspace(fn[0], 20000.0, 160)
+        xr = 2 * np.pi * fr / FS
+        ziel = 1 - genau(saite, L, fr)[0]
+        gew = np.sqrt(fn[0] / fr)
+        A = np.stack([np.ones_like(xr)] + [1 - np.cos(m * xr) for m in range(1, M + 1)], axis=1)
         l, _ = opt.nnls(A / ziel[:, None] * gew[:, None], gew)
         c0 = 1 - l[0] - l[1:].sum()
         H = lambda z: (c0 + sum(l[m] * 0.5 * (z ** m + z ** -m) for m in range(1, M + 1))) * z ** -M
+        ap = lambda z: 1.0
         if "+ap" in fassung:
-            K = 4 if fassung.startswith("fir5") else 8
-            # Steifheit: die Phase des genauen Umlaufs ohne ihren linearen Teil am Grundton; K Allpaesse (a + z^-1)/(1 + a z^-1)
-            def ap_phase(a, y):
-                return -K * np.angle((a + np.exp(-1j * y)) / (1 + a * np.exp(-1j * y)))
+            # Steifheit: K gleiche Allpaesse (a + z^-1)/(1 + a z^-1). Die Filter duerfen zusammen nicht mehr Verzug
+            # brauchen, als ein Umlauf lang ist (hohe Tasten): K so gross wie moeglich, solange der Rest >= 2 Takte bleibt.
+            z1 = np.exp(1j * x[0])
+            for K in ((4, 3, 2, 1) if fassung.startswith("fir5") else (8, 6, 4, 3, 2, 1)):
+                def ap_phase(a, y, K=K):
+                    return -K * np.angle((a + np.exp(-1j * y)) / (1 + a * np.exp(-1j * y)))
 
-            def fehler(a):
-                # Verzug so, dass der Grundton stimmt; Fehler der Phase je Teilton in Cent
-                d = (phase[0] - ap_phase(a, x[0])) / x[0]
-                dphi = (d * x + ap_phase(a, x)) - phase
-                n = np.arange(1, len(x) + 1)
-                return np.sum(((1200 / np.log(2) * dphi / (2 * np.pi * n)) ** 2 / n)[:40])
-            # der Wert ueber ein Raster vorgesucht (die Zielfunktion hat Nebenminima), dann verfeinert
-            raster = np.linspace(-0.95, 0.0, 96)
-            i = int(np.argmin([fehler(r) for r in raster]))
-            a = opt.minimize_scalar(fehler, bounds=(raster[max(i - 1, 0)], raster[min(i + 1, 95)]), method="bounded").x
-            ap = lambda z: ((a + 1 / z) / (1 + a / z)) ** K
-        else:
-            ap = lambda z: 1.0
+                def fehler(a):
+                    # Verzug so, dass der Grundton stimmt; Fehler der Phase je Teilton in Cent
+                    d = (phase[0] - ap_phase(a, x[0])) / x[0]
+                    dphi = (d * x + ap_phase(a, x)) - phase
+                    n = np.arange(1, len(x) + 1)
+                    return np.sum(((1200 / np.log(2) * dphi / (2 * np.pi * n)) ** 2 / n)[:40])
+                # der Wert ueber ein Raster vorgesucht (die Zielfunktion hat Nebenminima), dann verfeinert
+                raster = np.linspace(-0.95, 0.0, 96)
+                i = int(np.argmin([fehler(r) for r in raster]))
+                a = opt.minimize_scalar(fehler, bounds=(raster[max(i - 1, 0)], raster[min(i + 1, 95)]), method="bounded").x
+                kandidat = lambda z, a=a, K=K: ((a + 1 / z) / (1 + a / z)) ** K
+                if (phase[0] + np.angle(H(z1) * kandidat(z1))) / x[0] >= 2.0:
+                    ap = kandidat
+                    break
     z1 = np.exp(1j * x[0])
     d = (phase[0] + np.angle(H(z1) * ap(z1))) / x[0]      # Verzug, der die Phase am Grundton trifft
     return lambda w: H(np.exp(1j * w / FS)) * ap(np.exp(1j * w / FS)) * np.exp(-1j * w * d / FS)
