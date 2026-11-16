@@ -1,0 +1,20 @@
+Saite 1, Bend 2 Halbtoene, starrer Steg ab Bund 7: gehalten am Anfang +0.00 Cent, am Ziel -0.05 Cent aus den Teiltoenen 1-4 (ohne Stimmer); der Grundton allein -0.00 / -0.00 Cent
+   ohne Ausgleich            : vor dem Lauf  +0.00 Cent | im Lauf groesster Betrag  +1.26 Cent | am Ziel  -0.02 Cent
+   Ausgleich der Anfangsnote : vor dem Lauf  +0.00 Cent | im Lauf groesster Betrag  +1.25 Cent | am Ziel  -0.02 Cent
+   Ausgleich je Tonhoehe     : vor dem Lauf  +0.00 Cent | im Lauf groesster Betrag  +1.27 Cent | am Ziel  +0.03 Cent
+Saite 1, Slide 5 Buende, starrer Steg ab Bund 5: gehalten am Anfang +0.02 Cent, am Ziel -0.08 Cent aus den Teiltoenen 1-4 (ohne Stimmer); der Grundton allein -0.00 / -0.00 Cent
+   ohne Ausgleich            : vor dem Lauf  +0.02 Cent | im Lauf groesster Betrag  +1.74 Cent | am Ziel  +0.01 Cent
+   Ausgleich der Anfangsnote : vor dem Lauf  -0.00 Cent | im Lauf groesster Betrag  +1.72 Cent | am Ziel  -0.01 Cent
+   Ausgleich je Tonhoehe     : vor dem Lauf  -0.00 Cent | im Lauf groesster Betrag  +1.76 Cent | am Ziel  +0.09 Cent
+Saite 6, Bend 2 Halbtoene, starrer Steg ab Bund 3: gehalten am Anfang -0.04 Cent, am Ziel -0.07 Cent aus den Teiltoenen 1-4 (ohne Stimmer); der Grundton allein -0.03 / -0.01 Cent
+   ohne Ausgleich            : vor dem Lauf  -0.04 Cent | im Lauf groesster Betrag  +6.97 Cent | am Ziel  -0.07 Cent
+   Ausgleich der Anfangsnote : vor dem Lauf  -0.01 Cent | im Lauf groesster Betrag  +7.00 Cent | am Ziel  -0.03 Cent
+   Ausgleich je Tonhoehe     : vor dem Lauf  -0.01 Cent | im Lauf groesster Betrag  +7.03 Cent | am Ziel  -0.00 Cent
+Saite 4, Slide 5 Buende, starrer Steg ab Bund 2: gehalten am Anfang -0.02 Cent, am Ziel -0.01 Cent aus den Teiltoenen 1-4 (ohne Stimmer); der Grundton allein +0.01 / -0.00 Cent
+   ohne Ausgleich            : vor dem Lauf  -0.02 Cent | im Lauf groesster Betrag  +4.77 Cent | am Ziel  -0.01 Cent
+   Ausgleich der Anfangsnote : vor dem Lauf  -0.00 Cent | im Lauf groesster Betrag  +4.78 Cent | am Ziel  +0.01 Cent
+   Ausgleich je Tonhoehe     : vor dem Lauf  -0.00 Cent | im Lauf groesster Betrag  +4.78 Cent | am Ziel  +0.00 Cent
+Saite 1, Bend 2 Halbtoene, starrer Steg ab Bund 12: gehalten am Anfang -0.24 Cent, am Ziel -0.75 Cent aus den Teiltoenen 1-4 (ohne Stimmer); der Grundton allein -0.00 / -0.00 Cent
+   ohne Ausgleich            : vor dem Lauf  -0.23 Cent | im Lauf groesster Betrag  +1.77 Cent | am Ziel  -0.33 Cent
+   Ausgleich der Anfangsnote : vor dem Lauf  +0.00 Cent | im Lauf groesster Betrag  +2.00 Cent | am Ziel  -0.09 Cent
+   Ausgleich je Tonhoehe     : vor dem Lauf  +0.00 Cent | im Lauf groesster Betrag  +2.19 Cent | am Ziel  +0.43 Cent
