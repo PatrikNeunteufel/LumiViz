@@ -1,7 +1,34 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_11_umlauf_filter_grundlagen` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 21:55–22:19, claude-opus-5-5, 76 Runden, success, 5.91 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Seitenbilder aus `…\cmake\quellen\gezupfte-saite\`, Rechnung
+> `proben/2026-11-17_S202_gegenprobe_bericht11.py`, Rohausgabe `.txt` daneben):
+> - **Wörtliche Stellen am Seitenbild — stimmen alle:** Välimäki u. a. 2004 S. 937 (Gl. 1, 2, „g + |r| … below one“,
+>   Länge der Schleife); Bank & Välimäki 2003 S. 19 (Gl. 1, 2, f′(g_k), „never exceeded unity“ — gilt dort für ihr
+>   Klavierbeispiel); Bank & Karjalainen 2010 DAFX-2 (Gl. 1–6, Satz zur bilinearen Abbildung) und DAFX-4 (RK(K + 3),
+>   Gl. 13–17). R_b des Berichts ist Gl. 13 mit Z₀ = Y₀⁻¹ umgeformt.
+> - **Formeln nachgerechnet, stimmen:** M5 (foh) gegen eine feine Zeitintegration mit stückweise linearer Kraft auf
+>   1·10⁻⁶; M6 (sinc², Spitze −0,80 / −3,28 dB bei 8 / 16 kHz); V2 (Algebra und Beispiel, a −0,21021); S3 (Lagrange
+>   0,947 / 0,793, 0,996 / 0,940, 0,9996 / 0,981); S4 (5,45·10⁻²); D1 (2,867 / 45,9); B3 (+5,95 % je Halbton);
+>   Thiran 1 (η −0,0182); Z3 von Hand aus Z1 hergeleitet.
+> - **Befund V6 bestätigt** (Beiwerte aus dem Code des Laufs, Betrag unabhängig mit `scipy.signal.freqz`): Harfe 46
+>   iir4 1,0112 / iir8 1,0026, Harfe 103 iir2 1,0041 / iir4 1,1618, Cembalo 29 iir4 1,0007 — dazu **Harfe 60 iir8
+>   1,0002**, die der Text in V6 nicht nennt (Tabelle 2c markiert sie): **6 statt 5 von 18 Tasten.** Einschränkung: der
+>   Lauf setzt Bank & Välimäki **ohne** deren Glättung [0,25 0,5 0,25] und **ohne** die Vorgabe für hohe Frequenzen aus
+>   einem Ein-Pol mit Überblendung um (beides S. 19); ob das vollständige Verfahren passiv bleibt, ist nicht geprüft.
+> - **Fehler in einer Ausgabe:** die Spalte „Umlauf Takte“ (Tab. 2a) und „Umlauf 245,417“ in S1 lesen die Phase am
+>   nächsten Rasterpunkt **über** f₁ (Raster 0,5 Hz) statt bei f₁: 0,01–0,79 % zu hoch (Cembalo 29 1108,2 statt
+>   fs/f₁ = 1099,5; G-Saite 245,42 statt 245,16, also N 198 + Δ 1,037 + 46,1 statt 46,4). Der Entwurf selbst
+>   interpoliert (`np.interp`) und ist davon frei; D5 rechnet mit fs/f₀.
+> - **Passivität je Mode qualitativ bestätigt, Zahlen anders normiert:** fern der Mode (10 kHz, Q 1,5) trägt der
+>   Wirkanteil bei ii 0,33, trapez 0,062, foh 1,3·10⁻³, bilinear 1,1·10⁻³ der Spitze (Bericht 0,50 / 0,066 / 4,5·10⁻⁹ /
+>   8·10⁻¹⁰ — andere Normierung; die Rangfolge und der Abstand trapez ≫ foh gelten).
+> - M7 (ii) „‖R_b‖₂ ≤ 1 ⟺ Re Y ⪰ 0“ gilt so nur für Z₀ = z₀ I (beide Polarisationen gleiche Wellenimpedanz, bei einer
+>   Saite der Fall); allgemein in der mit Y₀ gewichteten Norm.
+> - **Nicht gegengelesen:** die Tabellen 2b–2d und 3 Zahl für Zahl (eigene Rechnung des Laufs, nur die Stichproben
+>   oben); D2 / D3 (Rauhala, adf) bleiben Abschrift eines Abrufwerkzeugs (Stand S201); Thiran-Formel S2 (JOS PASP) nicht
+>   am Original.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_11_umlauf_filter_grundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_11_umlauf_filter_grundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

@@ -1,0 +1,53 @@
+﻿(1) foh gegen feine Integration, Kraft stueckweise linear (Mode 8 kHz, Q 10)
+   ab Takt 200: groesster Fehler relativ 1.10e-06
+    (M6) sinc^2 bei 5/8/12/16 kHz [dB]: -0.31 / -0.80 / -1.82 / -3.30
+    Spitze foh/kontinuierlich 8000 Hz Q 10: -0.80 dB
+    Spitze foh/kontinuierlich 16000 Hz Q 10: -3.28 dB
+
+(2) Passivitaet: min Re Y_d / max Re Y, Mode 10 kHz Q 1,5 (Bericht: ii 0,50, trapez 0,066 der Spitze fern der Mode)
+   ii      : min Re/max Re +3.33e-01; Re Y unter 500 Hz / Spitze 3.34e-01
+   trapez  : min Re/max Re +6.18e-02; Re Y unter 500 Hz / Spitze 6.29e-02
+   foh     : min Re/max Re +5.13e-07; Re Y unter 500 Hz / Spitze 1.29e-03
+   bilinear: min Re/max Re +8.16e-08; Re Y unter 500 Hz / Spitze 1.11e-03
+
+(3) Einzelformeln
+   (V2) a -0.210207 b 0.786108: |H(f1)| 0.995223, |H(8f1)| 0.988381, |H(0)| 0.995333  (Bericht: a -0,210212, b 0,786102, |H(0)| 0,995333)
+   (S3) Lagrange 1, Bruchteil 0,5: |H| 5 / 10 kHz = 0.9469 / 0.7934
+   (S3) Lagrange 3, Bruchteil 0,5: |H| 5 / 10 kHz = 0.9959 / 0.9404
+   (S3) Lagrange 5, Bruchteil 0,5: |H| 5 / 10 kHz = 0.9996 / 0.9812
+   (S4) -ln|H_L1(0,5)| bei 5 kHz = 5.453e-02 (Bericht 5,45e-2)
+   (D1) (1-a)/(1+a) = 2.867, x16 = 45.9 (Bericht 2,867 / 45,9)
+   (B3) 2^(1/12)-1 = 5.95 %, 2^(2/12)-1 = 12.25 %
+   Thiran 1: eta = (1-D)/(1+D) = -0.0182; Tiefton-Verzug des Allpasses = 1.0370
+
+(4) Befund V6 und Spalte 'Umlauf Takte' mit dem Code des Laufs
+   Gitarre Saite 6 Bund 0         fs/f1   582.53  Spalte   583.24 (+0.12 %)
+   Gitarre Saite 3 Bund 0         fs/f1   245.16  Spalte   245.42 (+0.11 %)
+   Gitarre Saite 3 Bund 2         fs/f1   218.41  Spalte   218.63 (+0.10 %)
+   Gitarre Saite 3 Bund 12        fs/f1   122.56  Spalte   122.66 (+0.09 %)
+   Gitarre Saite 1 Bund 12        fs/f1    72.53  Spalte    72.56 (+0.03 %)
+   Harfe Taste 27 (Metall)        fs/f1  1221.63  Spalte  1228.09 (+0.53 %)
+   Harfe Taste 46 (Darm)          fs/f1   411.12  Spalte   411.99 (+0.21 %)
+        iir2: max|H| (freqz) 0.99797  (Lauf 0.99797)
+        iir4: max|H| (freqz) 1.01115  (Lauf 1.01115)
+        iir8: max|H| (freqz) 1.00256  (Lauf 1.00256)
+   Harfe Taste 60 (Darm)          fs/f1   183.40  Spalte   183.60 (+0.11 %)
+        iir2: max|H| (freqz) 0.99843  (Lauf 0.99843)
+        iir4: max|H| (freqz) 0.99938  (Lauf 0.99938)
+        iir8: max|H| (freqz) 1.00024  (Lauf 1.00024)
+   Harfe Taste 96 (Nylon)         fs/f1    22.91  Spalte    22.92 (+0.02 %)
+   Harfe Taste 103 (Nylon)        fs/f1    15.29  Spalte    15.29 (+0.01 %)
+        iir2: max|H| (freqz) 1.00413  (Lauf 1.00413)
+        iir4: max|H| (freqz) 1.16177  (Lauf 1.16178)
+        iir8: max|H| (freqz) 0.99927  (Lauf 0.99927)
+   Cembalo Taste 29               fs/f1  1099.54  Spalte  1108.25 (+0.79 %)
+        iir2: max|H| (freqz) 0.99831  (Lauf 0.99831)
+        iir4: max|H| (freqz) 1.00071  (Lauf 1.00071)
+        iir8: max|H| (freqz) 0.99977  (Lauf 0.99977)
+   Cembalo Taste 36               fs/f1   733.87  Spalte   734.91 (+0.14 %)
+   Cembalo Taste 60               fs/f1   183.47  Spalte   183.73 (+0.14 %)
+   Cembalo Taste 84               fs/f1    45.86  Spalte    45.88 (+0.04 %)
+   Laute Chor 1 (F) leer          fs/f1   653.47  Spalte   653.89 (+0.06 %)
+   Laute Chor 7 (N) Bund 5        fs/f1   122.45  Spalte   122.60 (+0.13 %)
+   Oud Chor 1 (umsp.) leer        fs/f1   733.86  Spalte   734.90 (+0.14 %)
+   Oud Chor 5 (N) Bund 5          fs/f1   183.45  Spalte   183.69 (+0.13 %)
