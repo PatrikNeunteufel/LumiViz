@@ -1,0 +1,1298 @@
+
+### Gitarre S6 B0: f1 82.40 Hz, Umlauf 582.5 Takte, zaehlend 98 bis 8767 Hz, Abel-Smith 13 Biquads
+  M  13 ( 26 Mult.) | Start     3.48 Cent | angepasst: 1-12   0.13, zaehlend    0.96, alle   180.57 Cent | groesster Radius 0.9489 | Abklingen zaehlend   1.96 %, in der Schwelle 98/98 |   0.1 s
+
+### Gitarre S6 B1: f1 87.30 Hz, Umlauf 549.8 Takte, zaehlend 93 bis 8821 Hz, Abel-Smith 12 Biquads
+  M  12 ( 24 Mult.) | Start     5.56 Cent | angepasst: 1-12   0.19, zaehlend    1.33, alle   181.49 Cent | groesster Radius 0.9480 | Abklingen zaehlend   2.38 %, in der Schwelle 93/93 |   0.1 s
+
+### Gitarre S6 B2: f1 92.49 Hz, Umlauf 519.0 Takte, zaehlend 88 bis 8847 Hz, Abel-Smith 12 Biquads
+  M  12 ( 24 Mult.) | Start     3.94 Cent | angepasst: 1-12   0.14, zaehlend    0.95, alle   175.08 Cent | groesster Radius 0.9434 | Abklingen zaehlend   1.93 %, in der Schwelle 88/88 |   0.1 s
+
+### Gitarre S6 B3: f1 97.99 Hz, Umlauf 489.8 Takte, zaehlend 83 bis 8839 Hz, Abel-Smith 11 Biquads
+  M  11 ( 22 Mult.) | Start     5.88 Cent | angepasst: 1-12   0.18, zaehlend    1.90, alle   181.68 Cent | groesster Radius 0.9415 | Abklingen zaehlend   2.44 %, in der Schwelle 83/83 |   0.1 s
+
+### Gitarre S6 B4: f1 103.82 Hz, Umlauf 462.3 Takte, zaehlend 78 bis 8795 Hz, Abel-Smith 10 Biquads
+  M  10 ( 20 Mult.) | Start     8.37 Cent | angepasst: 1-12   0.25, zaehlend    1.25, alle   182.80 Cent | groesster Radius 0.9398 | Abklingen zaehlend   2.40 %, in der Schwelle 78/78 |   0.1 s
+
+### Gitarre S6 B5: f1 109.99 Hz, Umlauf 436.4 Takte, zaehlend 74 bis 8847 Hz, Abel-Smith 10 Biquads
+  M  10 ( 20 Mult.) | Start     7.59 Cent | angepasst: 1-12   0.19, zaehlend    1.25, alle   180.13 Cent | groesster Radius 0.9352 | Abklingen zaehlend   2.25 %, in der Schwelle 74/74 |   0.1 s
+
+### Gitarre S6 B6: f1 116.53 Hz, Umlauf 411.9 Takte, zaehlend 69 bis 8723 Hz, Abel-Smith 9 Biquads
+  M   9 ( 18 Mult.) | Start     9.47 Cent | angepasst: 1-12   0.26, zaehlend    1.54, alle   186.85 Cent | groesster Radius 0.9319 | Abklingen zaehlend   2.52 %, in der Schwelle 69/69 |   0.1 s
+
+### Gitarre S6 B7: f1 123.46 Hz, Umlauf 388.8 Takte, zaehlend 66 bis 8858 Hz, Abel-Smith 9 Biquads
+  M   9 ( 18 Mult.) | Start     9.52 Cent | angepasst: 1-12   0.22, zaehlend    1.33, alle   174.40 Cent | groesster Radius 0.9285 | Abklingen zaehlend   2.04 %, in der Schwelle 66/66 |   0.1 s
+
+### Gitarre S6 B8: f1 130.80 Hz, Umlauf 367.0 Takte, zaehlend 62 bis 8810 Hz, Abel-Smith 8 Biquads
+  M   8 ( 16 Mult.) | Start    12.18 Cent | angepasst: 1-12   0.36, zaehlend    2.00, alle   185.47 Cent | groesster Radius 0.9268 | Abklingen zaehlend   2.94 %, in der Schwelle 62/62 |   0.1 s
+
+### Gitarre S6 B9: f1 138.58 Hz, Umlauf 346.4 Takte, zaehlend 58 bis 8720 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start    16.38 Cent | angepasst: 1-12   0.55, zaehlend    2.80, alle   196.84 Cent | groesster Radius 0.9238 | Abklingen zaehlend   3.55 %, in der Schwelle 58/58 |   0.1 s
+
+### Gitarre S6 B10: f1 146.82 Hz, Umlauf 326.9 Takte, zaehlend 55 bis 8766 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start    15.76 Cent | angepasst: 1-12   0.44, zaehlend    1.91, alle   185.77 Cent | groesster Radius 0.9185 | Abklingen zaehlend   3.03 %, in der Schwelle 55/55 |   0.1 s
+
+### Gitarre S6 B11: f1 155.55 Hz, Umlauf 308.6 Takte, zaehlend 52 bis 8783 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start    14.75 Cent | angepasst: 1-12   0.35, zaehlend    1.82, alle   182.07 Cent | groesster Radius 0.9131 | Abklingen zaehlend   2.74 %, in der Schwelle 52/52 |   0.1 s
+
+### Gitarre S6 B12: f1 164.80 Hz, Umlauf 291.3 Takte, zaehlend 49 bis 8767 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    21.17 Cent | angepasst: 1-12   0.69, zaehlend    3.20, alle   196.32 Cent | groesster Radius 0.9125 | Abklingen zaehlend   3.81 %, in der Schwelle 49/49 |   0.1 s
+  M   9 ( 18 Mult.) | Start    18.99 Cent | angepasst: 1-12   0.11, zaehlend    0.24, alle   155.39 Cent | groesster Radius 0.8761 | Abklingen zaehlend   0.87 %, in der Schwelle 49/49 |   0.1 s
+
+### Gitarre S6 B13: f1 174.60 Hz, Umlauf 274.9 Takte, zaehlend 46 bis 8712 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    20.02 Cent | angepasst: 1-12   0.50, zaehlend    2.33, alle   185.94 Cent | groesster Radius 0.9050 | Abklingen zaehlend   3.13 %, in der Schwelle 46/46 |   0.1 s
+
+### Gitarre S6 B14: f1 184.99 Hz, Umlauf 259.5 Takte, zaehlend 44 bis 8847 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    20.50 Cent | angepasst: 1-12   0.44, zaehlend    2.13, alle   179.29 Cent | groesster Radius 0.9011 | Abklingen zaehlend   2.99 %, in der Schwelle 44/44 |   0.1 s
+
+### Gitarre S6 B15: f1 195.99 Hz, Umlauf 244.9 Takte, zaehlend 41 bis 8717 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    27.18 Cent | angepasst: 1-12   0.90, zaehlend    3.73, alle   200.14 Cent | groesster Radius 0.8988 | Abklingen zaehlend   4.13 %, in der Schwelle 41/41 |   0.1 s
+  M   8 ( 16 Mult.) | Start    18.06 Cent | angepasst: 1-12   0.12, zaehlend    0.24, alle   152.17 Cent | groesster Radius 0.8530 | Abklingen zaehlend   0.83 %, in der Schwelle 41/41 |   0.1 s
+
+### Gitarre S6 B16: f1 207.64 Hz, Umlauf 231.2 Takte, zaehlend 39 bis 8795 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    28.14 Cent | angepasst: 1-12   0.77, zaehlend    3.16, alle   187.72 Cent | groesster Radius 0.8927 | Abklingen zaehlend   3.73 %, in der Schwelle 39/39 |   0.1 s
+  M   8 ( 16 Mult.) | Start    20.21 Cent | angepasst: 1-12   0.10, zaehlend    0.20, alle   143.22 Cent | groesster Radius 0.8448 | Abklingen zaehlend   0.71 %, in der Schwelle 39/39 |   0.1 s
+
+### Gitarre S6 B17: f1 219.99 Hz, Umlauf 218.2 Takte, zaehlend 37 bis 8847 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    26.01 Cent | angepasst: 1-12   0.60, zaehlend    2.54, alle   181.71 Cent | groesster Radius 0.8858 | Abklingen zaehlend   3.29 %, in der Schwelle 37/37 |   0.1 s
+
+### Gitarre S6 B18: f1 233.08 Hz, Umlauf 205.9 Takte, zaehlend 34 bis 8578 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    36.07 Cent | angepasst: 1-12   1.28, zaehlend    6.07, alle   207.77 Cent | groesster Radius 0.8808 | Abklingen zaehlend   4.95 %, in der Schwelle 34/34 |   0.1 s
+  M   6 ( 12 Mult.) | Start     6.99 Cent | angepasst: 1-12   0.11, zaehlend    0.37, alle   158.77 Cent | groesster Radius 0.8632 | Abklingen zaehlend   0.98 %, in der Schwelle 34/34 |   0.1 s
+
+### Gitarre S6 B19: f1 246.94 Hz, Umlauf 194.4 Takte, zaehlend 33 bis 8858 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    37.83 Cent | angepasst: 1-12   1.40, zaehlend    5.11, alle   196.19 Cent | groesster Radius 0.8806 | Abklingen zaehlend   4.95 %, in der Schwelle 33/33 |   0.1 s
+  M   6 ( 12 Mult.) | Start     8.11 Cent | angepasst: 1-12   0.11, zaehlend    0.32, alle   145.42 Cent | groesster Radius 0.8597 | Abklingen zaehlend   0.98 %, in der Schwelle 33/33 |   0.1 s
+
+### Gitarre S5 B0: f1 110.06 Hz, Umlauf 436.1 Takte, zaehlend 94 bis 10908 Hz, Abel-Smith 8 Biquads
+  M   8 ( 16 Mult.) | Start     7.52 Cent | angepasst: 1-12   0.31, zaehlend    2.66, alle    89.75 Cent | groesster Radius 0.9109 | Abklingen zaehlend   2.57 %, in der Schwelle 94/94 |   0.1 s
+
+### Gitarre S5 B1: f1 116.60 Hz, Umlauf 411.6 Takte, zaehlend 89 bis 10945 Hz, Abel-Smith 8 Biquads
+  M   8 ( 16 Mult.) | Start     7.36 Cent | angepasst: 1-12   0.24, zaehlend    0.78, alle    82.80 Cent | groesster Radius 0.9050 | Abklingen zaehlend   1.84 %, in der Schwelle 89/89 |   0.1 s
+
+### Gitarre S5 B2: f1 123.54 Hz, Umlauf 388.5 Takte, zaehlend 84 bis 10945 Hz, Abel-Smith 8 Biquads
+  M   8 ( 16 Mult.) | Start     6.53 Cent | angepasst: 1-12   0.19, zaehlend    1.01, alle    82.68 Cent | groesster Radius 0.8989 | Abklingen zaehlend   1.71 %, in der Schwelle 84/84 |   0.1 s
+
+### Gitarre S5 B3: f1 130.88 Hz, Umlauf 366.7 Takte, zaehlend 79 bis 10901 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start     9.45 Cent | angepasst: 1-12   0.30, zaehlend    1.45, alle    86.12 Cent | groesster Radius 0.8953 | Abklingen zaehlend   2.14 %, in der Schwelle 79/79 |   0.1 s
+
+### Gitarre S5 B4: f1 138.67 Hz, Umlauf 346.2 Takte, zaehlend 75 bis 10971 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start     8.12 Cent | angepasst: 1-12   0.27, zaehlend    1.32, alle    82.85 Cent | groesster Radius 0.8904 | Abklingen zaehlend   2.01 %, in der Schwelle 75/75 |   0.1 s
+
+### Gitarre S5 B5: f1 146.91 Hz, Umlauf 326.7 Takte, zaehlend 71 bis 11007 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    13.66 Cent | angepasst: 1-12   0.51, zaehlend    1.87, alle    86.15 Cent | groesster Radius 0.8898 | Abklingen zaehlend   2.42 %, in der Schwelle 71/71 |   0.1 s
+
+### Gitarre S5 B6: f1 155.65 Hz, Umlauf 308.4 Takte, zaehlend 67 bis 11004 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    12.19 Cent | angepasst: 1-12   0.40, zaehlend    1.69, alle    83.30 Cent | groesster Radius 0.8804 | Abklingen zaehlend   2.36 %, in der Schwelle 67/67 |   0.1 s
+
+### Gitarre S5 B7: f1 164.90 Hz, Umlauf 291.1 Takte, zaehlend 63 bis 10958 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    12.07 Cent | angepasst: 1-12   0.32, zaehlend    1.41, alle    82.31 Cent | groesster Radius 0.8730 | Abklingen zaehlend   2.05 %, in der Schwelle 63/63 |   0.1 s
+
+### Gitarre S5 B8: f1 174.71 Hz, Umlauf 274.7 Takte, zaehlend 59 bis 10864 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    16.77 Cent | angepasst: 1-12   0.62, zaehlend    2.57, alle    91.18 Cent | groesster Radius 0.8710 | Abklingen zaehlend   2.93 %, in der Schwelle 59/59 |   0.1 s
+
+### Gitarre S5 B9: f1 185.10 Hz, Umlauf 259.3 Takte, zaehlend 56 bis 10931 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    15.68 Cent | angepasst: 1-12   0.52, zaehlend    2.04, alle    87.75 Cent | groesster Radius 0.8622 | Abklingen zaehlend   2.56 %, in der Schwelle 56/56 |   0.1 s
+
+### Gitarre S5 B10: f1 196.11 Hz, Umlauf 244.8 Takte, zaehlend 53 bis 10964 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    14.60 Cent | angepasst: 1-12   0.52, zaehlend    3.62, alle    86.11 Cent | groesster Radius 0.8534 | Abklingen zaehlend   2.82 %, in der Schwelle 53/53 |   0.1 s
+  M   8 ( 16 Mult.) | Start    33.04 Cent | angepasst: 1-12   0.01, zaehlend    0.04, alle    54.46 Cent | groesster Radius 0.8230 | Abklingen zaehlend   0.58 %, in der Schwelle 53/53 |   0.2 s
+
+### Gitarre S5 B11: f1 207.77 Hz, Umlauf 231.0 Takte, zaehlend 50 bis 10958 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    23.22 Cent | angepasst: 1-12   1.08, zaehlend    3.95, alle    95.03 Cent | groesster Radius 0.8550 | Abklingen zaehlend   3.78 %, in der Schwelle 50/50 |   0.1 s
+  M   6 ( 12 Mult.) | Start    15.40 Cent | angepasst: 1-12   0.29, zaehlend    1.63, alle    69.12 Cent | groesster Radius 0.8178 | Abklingen zaehlend   0.95 %, in der Schwelle 50/50 |   0.1 s
+
+### Gitarre S5 B12: f1 220.12 Hz, Umlauf 218.1 Takte, zaehlend 47 bis 10908 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    23.55 Cent | angepasst: 1-12   0.95, zaehlend    4.93, alle    97.05 Cent | groesster Radius 0.8421 | Abklingen zaehlend   3.71 %, in der Schwelle 47/47 |   0.1 s
+  M   6 ( 12 Mult.) | Start    18.02 Cent | angepasst: 1-12   0.20, zaehlend    0.60, alle    69.38 Cent | groesster Radius 0.8001 | Abklingen zaehlend   0.93 %, in der Schwelle 47/47 |   0.1 s
+
+### Gitarre S5 B13: f1 233.21 Hz, Umlauf 205.8 Takte, zaehlend 44 bis 10810 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    21.55 Cent | angepasst: 1-12   0.71, zaehlend    2.46, alle    88.67 Cent | groesster Radius 0.8337 | Abklingen zaehlend   2.78 %, in der Schwelle 44/44 |   0.1 s
+
+### Gitarre S5 B14: f1 247.08 Hz, Umlauf 194.3 Takte, zaehlend 42 bis 10945 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    21.92 Cent | angepasst: 1-12   0.66, zaehlend    2.26, alle    85.46 Cent | groesster Radius 0.8273 | Abklingen zaehlend   2.64 %, in der Schwelle 42/42 |   0.1 s
+
+### Gitarre S5 B15: f1 261.78 Hz, Umlauf 183.4 Takte, zaehlend 39 bis 10750 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    33.11 Cent | angepasst: 1-12   1.53, zaehlend    4.92, alle   101.07 Cent | groesster Radius 0.8238 | Abklingen zaehlend   4.18 %, in der Schwelle 39/39 |   0.1 s
+  M   4 (  8 Mult.) | Start    10.24 Cent | angepasst: 1-12   0.61, zaehlend    1.20, alle    84.09 Cent | groesster Radius 0.8045 | Abklingen zaehlend   2.16 %, in der Schwelle 39/39 |   0.1 s
+
+### Gitarre S5 B16: f1 277.34 Hz, Umlauf 173.1 Takte, zaehlend 37 bis 10810 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    33.11 Cent | angepasst: 1-12   1.42, zaehlend    4.24, alle    94.66 Cent | groesster Radius 0.8139 | Abklingen zaehlend   3.81 %, in der Schwelle 37/37 |   0.1 s
+  M   4 (  8 Mult.) | Start    11.75 Cent | angepasst: 1-12   0.53, zaehlend    0.99, alle    76.89 Cent | groesster Radius 0.7924 | Abklingen zaehlend   1.78 %, in der Schwelle 37/37 |   0.1 s
+
+### Gitarre S5 B17: f1 293.84 Hz, Umlauf 163.4 Takte, zaehlend 35 bis 10837 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    33.35 Cent | angepasst: 1-12   1.33, zaehlend    3.95, alle    95.82 Cent | groesster Radius 0.8071 | Abklingen zaehlend   3.65 %, in der Schwelle 35/35 |   0.1 s
+  M   4 (  8 Mult.) | Start     8.36 Cent | angepasst: 1-12   0.47, zaehlend    0.88, alle    77.08 Cent | groesster Radius 0.7816 | Abklingen zaehlend   1.65 %, in der Schwelle 35/35 |   0.1 s
+
+### Gitarre S5 B18: f1 311.31 Hz, Umlauf 154.2 Takte, zaehlend 33 bis 10824 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    32.78 Cent | angepasst: 1-12   1.09, zaehlend    2.18, alle    85.24 Cent | groesster Radius 0.7986 | Abklingen zaehlend   2.76 %, in der Schwelle 33/33 |   0.1 s
+
+### Gitarre S5 B19: f1 329.82 Hz, Umlauf 145.5 Takte, zaehlend 31 bis 10767 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    45.29 Cent | angepasst: 1-12   3.26, zaehlend   12.06, alle   116.32 Cent | groesster Radius 0.7883 | Abklingen zaehlend   6.71 %, in der Schwelle 31/31 |   0.1 s
+  M   3 (  6 Mult.) | Start    21.69 Cent | angepasst: 1-12   1.12, zaehlend    5.48, alle    94.48 Cent | groesster Radius 0.7612 | Abklingen zaehlend   3.85 %, in der Schwelle 31/31 |   0.1 s
+  M   4 (  8 Mult.) | Start    12.78 Cent | angepasst: 1-12   0.39, zaehlend    3.05, alle    74.00 Cent | groesster Radius 0.7686 | Abklingen zaehlend   1.80 %, in der Schwelle 31/31 |   0.1 s
+  M   6 ( 12 Mult.) | Start    56.52 Cent | angepasst: 1-12   0.01, zaehlend    0.06, alle    44.09 Cent | groesster Radius 0.7345 | Abklingen zaehlend   0.25 %, in der Schwelle 31/31 |   0.2 s
+
+### Gitarre S4 B0: f1 146.99 Hz, Umlauf 326.6 Takte, zaehlend 84 bis 13055 Hz, Abel-Smith 8 Biquads
+  M   8 ( 16 Mult.) | Start     8.12 Cent | angepasst: 1-12   0.24, zaehlend    1.69, alle    46.81 Cent | groesster Radius 0.8866 | Abklingen zaehlend   2.15 %, in der Schwelle 84/84 |   0.1 s
+
+### Gitarre S4 B1: f1 155.73 Hz, Umlauf 308.2 Takte, zaehlend 79 bis 13004 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start     9.79 Cent | angepasst: 1-12   0.40, zaehlend    1.98, alle    49.77 Cent | groesster Radius 0.8843 | Abklingen zaehlend   2.60 %, in der Schwelle 79/79 |   0.1 s
+
+### Gitarre S4 B2: f1 164.99 Hz, Umlauf 290.9 Takte, zaehlend 75 bis 13087 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start    10.60 Cent | angepasst: 1-12   0.32, zaehlend    2.34, alle    44.09 Cent | groesster Radius 0.8775 | Abklingen zaehlend   1.72 %, in der Schwelle 75/75 |   0.1 s
+
+### Gitarre S4 B3: f1 174.80 Hz, Umlauf 274.6 Takte, zaehlend 71 bis 13130 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start     8.48 Cent | angepasst: 1-12   0.25, zaehlend    1.06, alle    43.86 Cent | groesster Radius 0.8668 | Abklingen zaehlend   1.89 %, in der Schwelle 71/71 |   0.1 s
+
+### Gitarre S4 B4: f1 185.19 Hz, Umlauf 259.2 Takte, zaehlend 67 bis 13127 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    14.62 Cent | angepasst: 1-12   0.48, zaehlend    2.09, alle    48.70 Cent | groesster Radius 0.8658 | Abklingen zaehlend   2.71 %, in der Schwelle 67/67 |   0.1 s
+
+### Gitarre S4 B5: f1 196.21 Hz, Umlauf 244.6 Takte, zaehlend 63 bis 13072 Hz, Abel-Smith 6 Biquads
+  M   6 ( 12 Mult.) | Start    13.45 Cent | angepasst: 1-12   0.44, zaehlend    4.02, alle    51.54 Cent | groesster Radius 0.8550 | Abklingen zaehlend   2.95 %, in der Schwelle 63/63 |   0.1 s
+  M   9 ( 18 Mult.) | Start    45.00 Cent | angepasst: 1-12   0.01, zaehlend    0.08, alle    28.10 Cent | groesster Radius 0.8246 | Abklingen zaehlend   0.34 %, in der Schwelle 63/63 |   0.2 s
+
+### Gitarre S4 B6: f1 207.87 Hz, Umlauf 230.9 Takte, zaehlend 59 bis 12959 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    18.66 Cent | angepasst: 1-12   0.70, zaehlend    2.88, alle    55.04 Cent | groesster Radius 0.8534 | Abklingen zaehlend   3.19 %, in der Schwelle 59/59 |   0.1 s
+
+### Gitarre S4 B7: f1 220.24 Hz, Umlauf 217.9 Takte, zaehlend 56 bis 13039 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    15.72 Cent | angepasst: 1-12   0.67, zaehlend    2.73, alle    53.36 Cent | groesster Radius 0.8480 | Abklingen zaehlend   3.09 %, in der Schwelle 56/56 |   0.1 s
+
+### Gitarre S4 B8: f1 233.33 Hz, Umlauf 205.7 Takte, zaehlend 53 bis 13078 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    18.14 Cent | angepasst: 1-12   0.55, zaehlend    1.99, alle    45.85 Cent | groesster Radius 0.8398 | Abklingen zaehlend   2.24 %, in der Schwelle 53/53 |   0.1 s
+
+### Gitarre S4 B9: f1 247.21 Hz, Umlauf 194.2 Takte, zaehlend 50 bis 13071 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    25.63 Cent | angepasst: 1-12   1.22, zaehlend    4.51, alle    58.38 Cent | groesster Radius 0.8362 | Abklingen zaehlend   4.12 %, in der Schwelle 50/50 |   0.1 s
+  M   6 ( 12 Mult.) | Start    28.01 Cent | angepasst: 1-12   0.15, zaehlend    1.29, alle    35.68 Cent | groesster Radius 0.8185 | Abklingen zaehlend   0.78 %, in der Schwelle 50/50 |   0.1 s
+
+### Gitarre S4 B10: f1 261.91 Hz, Umlauf 183.3 Takte, zaehlend 47 bis 13012 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    25.99 Cent | angepasst: 1-12   1.04, zaehlend    3.89, alle    57.89 Cent | groesster Radius 0.8270 | Abklingen zaehlend   3.78 %, in der Schwelle 47/47 |   0.1 s
+  M   6 ( 12 Mult.) | Start    28.64 Cent | angepasst: 1-12   0.10, zaehlend    0.33, alle    35.15 Cent | groesster Radius 0.8017 | Abklingen zaehlend   0.84 %, in der Schwelle 47/47 |   0.1 s
+
+### Gitarre S4 B11: f1 277.48 Hz, Umlauf 173.0 Takte, zaehlend 44 bis 12894 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    24.61 Cent | angepasst: 1-12   0.82, zaehlend    2.87, alle    53.16 Cent | groesster Radius 0.8122 | Abklingen zaehlend   3.08 %, in der Schwelle 44/44 |   0.0 s
+
+### Gitarre S4 B12: f1 293.98 Hz, Umlauf 163.3 Takte, zaehlend 42 bis 13055 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    25.42 Cent | angepasst: 1-12   0.79, zaehlend    2.81, alle    49.95 Cent | groesster Radius 0.8075 | Abklingen zaehlend   3.07 %, in der Schwelle 42/42 |   0.1 s
+
+### Gitarre S4 B13: f1 311.47 Hz, Umlauf 154.1 Takte, zaehlend 39 bis 12822 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    34.44 Cent | angepasst: 1-12   1.84, zaehlend    5.81, alle    64.82 Cent | groesster Radius 0.8030 | Abklingen zaehlend   4.72 %, in der Schwelle 39/39 |   0.1 s
+  M   4 (  8 Mult.) | Start     7.51 Cent | angepasst: 1-12   0.84, zaehlend    6.12, alle    55.63 Cent | groesster Radius 0.7851 | Abklingen zaehlend   3.46 %, in der Schwelle 39/39 |   0.1 s
+  M   6 ( 12 Mult.) | Start    55.47 Cent | angepasst: 1-12   0.03, zaehlend    0.12, alle    28.32 Cent | groesster Radius 0.7585 | Abklingen zaehlend   0.30 %, in der Schwelle 39/39 |   0.1 s
+
+### Gitarre S4 B14: f1 329.99 Hz, Umlauf 145.5 Takte, zaehlend 37 bis 12895 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    35.73 Cent | angepasst: 1-12   1.77, zaehlend    5.39, alle    64.12 Cent | groesster Radius 0.7953 | Abklingen zaehlend   4.53 %, in der Schwelle 37/37 |   0.1 s
+  M   4 (  8 Mult.) | Start    10.10 Cent | angepasst: 1-12   0.45, zaehlend    1.34, alle    45.37 Cent | groesster Radius 0.7779 | Abklingen zaehlend   1.98 %, in der Schwelle 37/37 |   0.1 s
+
+### Gitarre S4 B15: f1 349.61 Hz, Umlauf 137.3 Takte, zaehlend 35 bis 12926 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    35.16 Cent | angepasst: 1-12   1.52, zaehlend    4.68, alle    60.19 Cent | groesster Radius 0.7843 | Abklingen zaehlend   4.11 %, in der Schwelle 35/35 |   0.1 s
+  M   4 (  8 Mult.) | Start     9.25 Cent | angepasst: 1-12   0.71, zaehlend    5.29, alle    50.43 Cent | groesster Radius 0.7650 | Abklingen zaehlend   2.92 %, in der Schwelle 35/35 |   0.1 s
+  M   6 ( 12 Mult.) | Start    66.52 Cent | angepasst: 1-12   0.57, zaehlend    4.47, alle    17.49 Cent | groesster Radius 0.7376 | Abklingen zaehlend   1.25 %, in der Schwelle 35/35 |   0.2 s
+  M   9 ( 18 Mult.) | Start   174.64 Cent | angepasst: 1-12   0.15, zaehlend    1.08, alle    11.70 Cent | groesster Radius 0.6979 | Abklingen zaehlend   0.31 %, in der Schwelle 35/35 |   0.5 s
+
+### Gitarre S4 B16: f1 370.40 Hz, Umlauf 129.6 Takte, zaehlend 33 bis 12910 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    30.35 Cent | angepasst: 1-12   1.42, zaehlend    4.89, alle    59.55 Cent | groesster Radius 0.7727 | Abklingen zaehlend   4.01 %, in der Schwelle 33/33 |   0.1 s
+  M   4 (  8 Mult.) | Start    11.55 Cent | angepasst: 1-12   0.37, zaehlend    5.01, alle    49.59 Cent | groesster Radius 0.7390 | Abklingen zaehlend   2.86 %, in der Schwelle 33/33 |   0.1 s
+  M   6 ( 12 Mult.) | Start    70.87 Cent | angepasst: 1-12   0.49, zaehlend    3.95, alle    15.72 Cent | groesster Radius 0.7252 | Abklingen zaehlend   1.14 %, in der Schwelle 33/33 |   0.1 s
+  M   9 ( 18 Mult.) | Start   196.25 Cent | angepasst: 1-12   0.08, zaehlend    0.52, alle     8.65 Cent | groesster Radius 0.6774 | Abklingen zaehlend   0.15 %, in der Schwelle 33/33 |   0.4 s
+
+### Gitarre S4 B17: f1 392.43 Hz, Umlauf 122.3 Takte, zaehlend 31 bis 12843 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    34.89 Cent | angepasst: 1-12   1.18, zaehlend    3.41, alle    54.39 Cent | groesster Radius 0.7621 | Abklingen zaehlend   3.37 %, in der Schwelle 31/31 |   0.1 s
+  M   4 (  8 Mult.) | Start    13.06 Cent | angepasst: 1-12   0.37, zaehlend    1.67, alle    42.69 Cent | groesster Radius 0.7305 | Abklingen zaehlend   1.82 %, in der Schwelle 31/31 |   0.1 s
+
+### Gitarre S4 B18: f1 415.77 Hz, Umlauf 115.4 Takte, zaehlend 29 bis 12717 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    47.72 Cent | angepasst: 1-12   3.26, zaehlend    9.06, alle    75.02 Cent | groesster Radius 0.7530 | Abklingen zaehlend   6.00 %, in der Schwelle 29/29 |   0.1 s
+  M   3 (  6 Mult.) | Start    12.95 Cent | angepasst: 1-12   0.85, zaehlend    3.00, alle    48.47 Cent | groesster Radius 0.7482 | Abklingen zaehlend   1.90 %, in der Schwelle 29/29 |   0.1 s
+
+### Gitarre S4 B19: f1 440.50 Hz, Umlauf 109.0 Takte, zaehlend 28 bis 13039 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    51.94 Cent | angepasst: 1-12   3.58, zaehlend    9.83, alle    70.10 Cent | groesster Radius 0.7521 | Abklingen zaehlend   6.43 %, in der Schwelle 28/28 |   0.1 s
+  M   3 (  6 Mult.) | Start    13.47 Cent | angepasst: 1-12   0.82, zaehlend    2.05, alle    44.56 Cent | groesster Radius 0.7346 | Abklingen zaehlend   2.55 %, in der Schwelle 28/28 |   0.1 s
+
+### Gitarre S3 B0: f1 195.79 Hz, Umlauf 245.2 Takte, zaehlend 38 bis 8079 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    26.13 Cent | angepasst: 1-12   0.69, zaehlend    2.91, alle   225.05 Cent | groesster Radius 0.8985 | Abklingen zaehlend   3.55 %, in der Schwelle 38/38 |   0.1 s
+
+### Gitarre S3 B1: f1 207.44 Hz, Umlauf 231.4 Takte, zaehlend 36 bis 8114 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    38.73 Cent | angepasst: 1-12   1.66, zaehlend    6.44, alle   248.00 Cent | groesster Radius 0.8987 | Abklingen zaehlend   5.67 %, in der Schwelle 36/36 |   0.1 s
+  M   6 ( 12 Mult.) | Start    13.96 Cent | angepasst: 1-12   0.18, zaehlend    0.66, alle   195.92 Cent | groesster Radius 0.8828 | Abklingen zaehlend   1.44 %, in der Schwelle 36/36 |   0.5 s
+
+### Gitarre S3 B2: f1 219.77 Hz, Umlauf 218.4 Takte, zaehlend 34 bis 8119 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    38.43 Cent | angepasst: 1-12   1.46, zaehlend    5.43, alle   233.05 Cent | groesster Radius 0.8923 | Abklingen zaehlend   5.11 %, in der Schwelle 34/34 |   0.4 s
+  M   6 ( 12 Mult.) | Start    11.95 Cent | angepasst: 1-12   0.14, zaehlend    0.49, alle   184.39 Cent | groesster Radius 0.8755 | Abklingen zaehlend   1.19 %, in der Schwelle 34/34 |   0.7 s
+
+### Gitarre S3 B3: f1 232.84 Hz, Umlauf 206.1 Takte, zaehlend 32 bis 8093 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    38.34 Cent | angepasst: 1-12   1.24, zaehlend    4.45, alle   236.50 Cent | groesster Radius 0.8857 | Abklingen zaehlend   4.53 %, in der Schwelle 32/32 |   0.2 s
+  M   6 ( 12 Mult.) | Start     8.26 Cent | angepasst: 1-12   0.09, zaehlend    0.31, alle   185.35 Cent | groesster Radius 0.8666 | Abklingen zaehlend   0.88 %, in der Schwelle 32/32 |   0.6 s
+
+### Gitarre S3 B4: f1 246.69 Hz, Umlauf 194.6 Takte, zaehlend 30 bis 8030 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    36.39 Cent | angepasst: 1-12   0.91, zaehlend    3.25, alle   223.86 Cent | groesster Radius 0.8765 | Abklingen zaehlend   3.72 %, in der Schwelle 30/30 |   0.1 s
+  M   6 ( 12 Mult.) | Start     6.43 Cent | angepasst: 1-12   0.19, zaehlend    1.65, alle   177.97 Cent | groesster Radius 0.8544 | Abklingen zaehlend   1.02 %, in der Schwelle 30/30 |   0.1 s
+
+### Gitarre S3 B5: f1 261.36 Hz, Umlauf 183.7 Takte, zaehlend 29 bis 8254 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    38.69 Cent | angepasst: 1-12   0.92, zaehlend    3.41, alle   210.61 Cent | groesster Radius 0.8743 | Abklingen zaehlend   3.88 %, in der Schwelle 29/29 |   0.1 s
+  M   6 ( 12 Mult.) | Start     7.63 Cent | angepasst: 1-12   0.06, zaehlend    0.17, alle   161.87 Cent | groesster Radius 0.8528 | Abklingen zaehlend   0.78 %, in der Schwelle 29/29 |   0.1 s
+
+### Gitarre S3 B6: f1 276.91 Hz, Umlauf 173.3 Takte, zaehlend 27 bis 8124 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    54.59 Cent | angepasst: 1-12   2.61, zaehlend    9.46, alle   247.15 Cent | groesster Radius 0.8726 | Abklingen zaehlend   6.69 %, in der Schwelle 27/27 |   0.1 s
+  M   4 (  8 Mult.) | Start    38.39 Cent | angepasst: 1-12   1.01, zaehlend    1.88, alle   209.82 Cent | groesster Radius 0.8560 | Abklingen zaehlend   3.22 %, in der Schwelle 27/27 |   0.1 s
+
+### Gitarre S3 B7: f1 293.38 Hz, Umlauf 163.6 Takte, zaehlend 25 bis 7947 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    52.17 Cent | angepasst: 1-12   1.98, zaehlend    6.00, alle   241.80 Cent | groesster Radius 0.8632 | Abklingen zaehlend   5.30 %, in der Schwelle 25/25 |   0.1 s
+  M   4 (  8 Mult.) | Start    35.31 Cent | angepasst: 1-12   0.66, zaehlend    2.72, alle   211.08 Cent | groesster Radius 0.8411 | Abklingen zaehlend   2.87 %, in der Schwelle 25/25 |   0.1 s
+
+### Gitarre S3 B8: f1 310.83 Hz, Umlauf 154.4 Takte, zaehlend 24 bis 8103 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    52.84 Cent | angepasst: 1-12   1.98, zaehlend    5.78, alle   230.47 Cent | groesster Radius 0.8585 | Abklingen zaehlend   5.19 %, in der Schwelle 24/24 |   0.1 s
+  M   4 (  8 Mult.) | Start    34.96 Cent | angepasst: 1-12   0.49, zaehlend    1.45, alle   196.55 Cent | groesster Radius 0.8482 | Abklingen zaehlend   2.25 %, in der Schwelle 24/24 |   0.1 s
+
+### Gitarre S3 B9: f1 329.32 Hz, Umlauf 145.8 Takte, zaehlend 23 bis 8247 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    54.86 Cent | angepasst: 1-12   1.88, zaehlend    5.57, alle   233.06 Cent | groesster Radius 0.8539 | Abklingen zaehlend   5.09 %, in der Schwelle 23/23 |   0.1 s
+  M   4 (  8 Mult.) | Start    35.29 Cent | angepasst: 1-12   0.64, zaehlend    1.18, alle   197.59 Cent | groesster Radius 0.8306 | Abklingen zaehlend   2.23 %, in der Schwelle 23/23 |   0.1 s
+
+### Gitarre S3 B10: f1 348.91 Hz, Umlauf 137.6 Takte, zaehlend 21 bis 7937 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    74.09 Cent | angepasst: 1-12   5.86, zaehlend   13.48, alle   273.61 Cent | groesster Radius 0.8468 | Abklingen zaehlend   8.43 %, in der Schwelle 21/21 |   0.0 s
+  M   3 (  6 Mult.) | Start    55.45 Cent | angepasst: 1-12   1.92, zaehlend    3.02, alle   227.13 Cent | groesster Radius 0.8247 | Abklingen zaehlend   3.94 %, in der Schwelle 21/21 |   0.1 s
+  M   4 (  8 Mult.) | Start    35.90 Cent | angepasst: 1-12   1.04, zaehlend    1.62, alle   202.69 Cent | groesster Radius 0.7907 | Abklingen zaehlend   2.38 %, in der Schwelle 21/21 |   0.1 s
+
+### Gitarre S3 B11: f1 369.67 Hz, Umlauf 129.8 Takte, zaehlend 20 bis 8019 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    76.69 Cent | angepasst: 1-12   5.36, zaehlend   12.30, alle   252.63 Cent | groesster Radius 0.8387 | Abklingen zaehlend   7.94 %, in der Schwelle 20/20 |   0.1 s
+  M   3 (  6 Mult.) | Start    56.22 Cent | angepasst: 1-12   1.88, zaehlend    2.88, alle   212.51 Cent | groesster Radius 0.8181 | Abklingen zaehlend   3.75 %, in der Schwelle 20/20 |   0.1 s
+
+### Gitarre S3 B12: f1 391.66 Hz, Umlauf 122.6 Takte, zaehlend 19 bis 8079 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    77.53 Cent | angepasst: 1-12   5.27, zaehlend   12.02, alle   257.21 Cent | groesster Radius 0.8349 | Abklingen zaehlend   7.85 %, in der Schwelle 19/19 |   0.1 s
+  M   3 (  6 Mult.) | Start    55.77 Cent | angepasst: 1-12   1.63, zaehlend    2.58, alle   205.98 Cent | groesster Radius 0.8083 | Abklingen zaehlend   3.27 %, in der Schwelle 19/19 |   0.1 s
+
+### Gitarre S3 B13: f1 414.96 Hz, Umlauf 115.7 Takte, zaehlend 18 bis 8114 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    79.16 Cent | angepasst: 1-12   4.86, zaehlend   10.62, alle   248.62 Cent | groesster Radius 0.8272 | Abklingen zaehlend   7.32 %, in der Schwelle 18/18 |   0.1 s
+  M   3 (  6 Mult.) | Start    53.02 Cent | angepasst: 1-12   1.44, zaehlend    2.30, alle   204.19 Cent | groesster Radius 0.8010 | Abklingen zaehlend   3.15 %, in der Schwelle 18/18 |   0.1 s
+
+### Gitarre S3 B14: f1 439.65 Hz, Umlauf 109.2 Takte, zaehlend 17 bis 8119 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    79.46 Cent | angepasst: 1-12   4.33, zaehlend    9.44, alle   243.11 Cent | groesster Radius 0.8198 | Abklingen zaehlend   6.80 %, in der Schwelle 17/17 |   0.1 s
+  M   3 (  6 Mult.) | Start    52.35 Cent | angepasst: 1-12   1.28, zaehlend    1.94, alle   196.31 Cent | groesster Radius 0.7901 | Abklingen zaehlend   2.71 %, in der Schwelle 17/17 |   0.1 s
+
+### Gitarre S3 B15: f1 465.81 Hz, Umlauf 103.0 Takte, zaehlend 16 bis 8093 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    78.96 Cent | angepasst: 1-12   3.98, zaehlend    8.53, alle   242.02 Cent | groesster Radius 0.8136 | Abklingen zaehlend   6.43 %, in der Schwelle 16/16 |   0.0 s
+  M   3 (  6 Mult.) | Start    49.11 Cent | angepasst: 1-12   1.09, zaehlend    1.73, alle   194.61 Cent | groesster Radius 0.7822 | Abklingen zaehlend   2.48 %, in der Schwelle 16/16 |   0.1 s
+
+### Gitarre S3 B16: f1 493.53 Hz, Umlauf 97.3 Takte, zaehlend 15 bis 8030 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    76.06 Cent | angepasst: 1-12   3.33, zaehlend    6.60, alle   224.87 Cent | groesster Radius 0.8016 | Abklingen zaehlend   5.41 %, in der Schwelle 15/15 |   0.1 s
+  M   3 (  6 Mult.) | Start    48.86 Cent | angepasst: 1-12   1.45, zaehlend    2.57, alle   171.34 Cent | groesster Radius 0.7908 | Abklingen zaehlend   0.96 %, in der Schwelle 15/15 |   0.1 s
+
+### Gitarre S3 B17: f1 522.90 Hz, Umlauf 91.8 Takte, zaehlend 14 bis 7927 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start   103.85 Cent | angepasst: 1-12  14.03, zaehlend   25.60, alle   284.80 Cent | groesster Radius 0.8019 | Abklingen zaehlend  12.21 %, in der Schwelle 14/14 |   0.0 s
+  M   2 (  4 Mult.) | Start    77.63 Cent | angepasst: 1-12   3.74, zaehlend    8.73, alle   225.57 Cent | groesster Radius 0.7910 | Abklingen zaehlend   5.60 %, in der Schwelle 14/14 |   0.1 s
+  M   3 (  6 Mult.) | Start    49.71 Cent | angepasst: 1-12   3.35, zaehlend    3.35, alle   193.13 Cent | groesster Radius 0.7297 | Abklingen zaehlend   3.21 %, in der Schwelle 14/14 |   0.1 s
+  M   4 (  8 Mult.) | Start    20.19 Cent | angepasst: 1-12   2.41, zaehlend    3.47, alle   118.28 Cent | groesster Radius 0.7584 | Abklingen zaehlend   0.99 %, in der Schwelle 14/14 |   0.1 s
+  M   6 ( 12 Mult.) | Start    46.79 Cent | angepasst: 1-12   0.71, zaehlend    1.04, alle    83.24 Cent | groesster Radius 0.7373 | Abklingen zaehlend   0.33 %, in der Schwelle 14/14 |   0.3 s
+
+### Gitarre S3 B18: f1 554.03 Hz, Umlauf 86.6 Takte, zaehlend 13 bis 7780 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start   104.31 Cent | angepasst: 1-12  15.03, zaehlend   25.68, alle   306.77 Cent | groesster Radius 0.7917 | Abklingen zaehlend  12.04 %, in der Schwelle 13/13 |   0.0 s
+  M   2 (  4 Mult.) | Start    73.80 Cent | angepasst: 1-12   2.27, zaehlend    4.30, alle   229.51 Cent | groesster Radius 0.7831 | Abklingen zaehlend   4.11 %, in der Schwelle 13/13 |   0.1 s
+  M   3 (  6 Mult.) | Start    44.89 Cent | angepasst: 1-12   2.73, zaehlend    2.73, alle   195.08 Cent | groesster Radius 0.7112 | Abklingen zaehlend   2.52 %, in der Schwelle 13/13 |   0.1 s
+
+### Gitarre S3 B19: f1 587.01 Hz, Umlauf 81.8 Takte, zaehlend 12 bis 7584 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start   100.46 Cent | angepasst: 1-12  21.39, zaehlend   21.39, alle   285.53 Cent | groesster Radius 0.7783 | Abklingen zaehlend  10.54 %, in der Schwelle 12/12 |   0.0 s
+  M   2 (  4 Mult.) | Start    71.46 Cent | angepasst: 1-12   2.83, zaehlend    2.83, alle   203.54 Cent | groesster Radius 0.7702 | Abklingen zaehlend   2.47 %, in der Schwelle 12/12 |   0.1 s
+
+### Gitarre S2 B0: f1 246.51 Hz, Umlauf 194.7 Takte, zaehlend 42 bis 10974 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    25.34 Cent | angepasst: 1-12   0.76, zaehlend    2.80, alle    92.01 Cent | groesster Radius 0.8408 | Abklingen zaehlend   2.62 %, in der Schwelle 42/42 |   0.1 s
+
+### Gitarre S2 B1: f1 261.17 Hz, Umlauf 183.8 Takte, zaehlend 39 bis 10777 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    33.16 Cent | angepasst: 1-12   1.92, zaehlend    6.29, alle   115.04 Cent | groesster Radius 0.8372 | Abklingen zaehlend   4.99 %, in der Schwelle 39/39 |   0.1 s
+  M   4 (  8 Mult.) | Start    14.00 Cent | angepasst: 1-12   0.50, zaehlend    2.00, alle    90.37 Cent | groesster Radius 0.8284 | Abklingen zaehlend   2.14 %, in der Schwelle 39/39 |   0.1 s
+
+### Gitarre S2 B2: f1 276.70 Hz, Umlauf 173.5 Takte, zaehlend 37 bis 10838 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    36.52 Cent | angepasst: 1-12   1.86, zaehlend    5.84, alle   110.07 Cent | groesster Radius 0.8298 | Abklingen zaehlend   4.63 %, in der Schwelle 37/37 |   0.1 s
+  M   4 (  8 Mult.) | Start    12.63 Cent | angepasst: 1-12   0.87, zaehlend    1.48, alle    91.83 Cent | groesster Radius 0.8110 | Abklingen zaehlend   2.52 %, in der Schwelle 37/37 |   0.1 s
+
+### Gitarre S2 B3: f1 293.16 Hz, Umlauf 163.7 Takte, zaehlend 35 bis 10864 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    34.48 Cent | angepasst: 1-12   1.68, zaehlend    5.26, alle   104.24 Cent | groesster Radius 0.8216 | Abklingen zaehlend   4.31 %, in der Schwelle 35/35 |   0.0 s
+  M   4 (  8 Mult.) | Start    12.49 Cent | angepasst: 1-12   0.44, zaehlend    2.93, alle    77.00 Cent | groesster Radius 0.8111 | Abklingen zaehlend   3.02 %, in der Schwelle 35/35 |   0.1 s
+
+### Gitarre S2 B4: f1 310.59 Hz, Umlauf 154.5 Takte, zaehlend 33 bis 10851 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    36.29 Cent | angepasst: 1-12   1.48, zaehlend    4.39, alle   100.26 Cent | groesster Radius 0.8106 | Abklingen zaehlend   3.83 %, in der Schwelle 33/33 |   0.0 s
+  M   4 (  8 Mult.) | Start     9.40 Cent | angepasst: 1-12   0.54, zaehlend    0.99, alle    80.45 Cent | groesster Radius 0.7853 | Abklingen zaehlend   2.49 %, in der Schwelle 33/33 |   0.1 s
+
+### Gitarre S2 B5: f1 329.07 Hz, Umlauf 145.9 Takte, zaehlend 31 bis 10794 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    33.32 Cent | angepasst: 1-12   1.22, zaehlend    3.68, alle    99.13 Cent | groesster Radius 0.8009 | Abklingen zaehlend   3.47 %, in der Schwelle 31/31 |   0.1 s
+  M   4 (  8 Mult.) | Start     8.55 Cent | angepasst: 1-12   0.47, zaehlend    0.82, alle    78.59 Cent | groesster Radius 0.7725 | Abklingen zaehlend   1.56 %, in der Schwelle 31/31 |   0.1 s
+
+### Gitarre S2 B6: f1 348.64 Hz, Umlauf 137.7 Takte, zaehlend 29 bis 10688 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    48.25 Cent | angepasst: 1-12   3.33, zaehlend   12.60, alle   126.95 Cent | groesster Radius 0.7906 | Abklingen zaehlend   6.88 %, in der Schwelle 29/29 |   0.1 s
+  M   3 (  6 Mult.) | Start    23.39 Cent | angepasst: 1-12   1.45, zaehlend    2.57, alle    93.83 Cent | groesster Radius 0.7641 | Abklingen zaehlend   2.83 %, in der Schwelle 29/29 |   0.1 s
+
+### Gitarre S2 B7: f1 369.37 Hz, Umlauf 130.0 Takte, zaehlend 28 bis 10960 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    53.25 Cent | angepasst: 1-12   3.65, zaehlend   10.18, alle   115.69 Cent | groesster Radius 0.7904 | Abklingen zaehlend   6.45 %, in der Schwelle 28/28 |   0.0 s
+  M   3 (  6 Mult.) | Start    25.31 Cent | angepasst: 1-12   2.06, zaehlend    2.43, alle    91.38 Cent | groesster Radius 0.7658 | Abklingen zaehlend   3.22 %, in der Schwelle 28/28 |   0.1 s
+
+### Gitarre S2 B8: f1 391.34 Hz, Umlauf 122.7 Takte, zaehlend 26 bis 10763 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    51.42 Cent | angepasst: 1-12   3.16, zaehlend    7.91, alle   115.36 Cent | groesster Radius 0.7719 | Abklingen zaehlend   5.42 %, in der Schwelle 26/26 |   0.0 s
+  M   3 (  6 Mult.) | Start    22.44 Cent | angepasst: 1-12   1.29, zaehlend    2.01, alle    89.55 Cent | groesster Radius 0.7432 | Abklingen zaehlend   2.38 %, in der Schwelle 26/26 |   0.1 s
+
+### Gitarre S2 B9: f1 414.61 Hz, Umlauf 115.8 Takte, zaehlend 25 bis 10987 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    51.25 Cent | angepasst: 1-12   3.83, zaehlend    8.88, alle   112.64 Cent | groesster Radius 0.7729 | Abklingen zaehlend   5.93 %, in der Schwelle 25/25 |   0.0 s
+  M   3 (  6 Mult.) | Start    20.62 Cent | angepasst: 1-12   1.30, zaehlend    2.00, alle    86.46 Cent | groesster Radius 0.7442 | Abklingen zaehlend   2.71 %, in der Schwelle 25/25 |   0.1 s
+
+### Gitarre S2 B10: f1 439.27 Hz, Umlauf 109.3 Takte, zaehlend 23 bis 10679 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    50.05 Cent | angepasst: 1-12   3.09, zaehlend    6.81, alle   114.08 Cent | groesster Radius 0.7570 | Abklingen zaehlend   4.94 %, in der Schwelle 23/23 |   0.0 s
+  M   3 (  6 Mult.) | Start    17.94 Cent | angepasst: 1-12   0.96, zaehlend    1.40, alle    87.12 Cent | groesster Radius 0.7249 | Abklingen zaehlend   2.04 %, in der Schwelle 23/23 |   0.1 s
+
+### Gitarre S2 B11: f1 465.40 Hz, Umlauf 103.1 Takte, zaehlend 22 bis 10838 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    50.74 Cent | angepasst: 1-12   2.99, zaehlend    6.64, alle   111.27 Cent | groesster Radius 0.7505 | Abklingen zaehlend   4.89 %, in der Schwelle 22/22 |   0.0 s
+  M   3 (  6 Mult.) | Start    16.38 Cent | angepasst: 1-12   0.85, zaehlend    1.30, alle    82.14 Cent | groesster Radius 0.7138 | Abklingen zaehlend   1.88 %, in der Schwelle 22/22 |   0.1 s
+
+### Gitarre S2 B12: f1 493.08 Hz, Umlauf 97.3 Takte, zaehlend 21 bis 10974 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    54.65 Cent | angepasst: 1-12   2.55, zaehlend    5.34, alle   101.79 Cent | groesster Radius 0.7360 | Abklingen zaehlend   4.30 %, in der Schwelle 21/21 |   0.0 s
+  M   3 (  6 Mult.) | Start    11.37 Cent | angepasst: 1-12   0.90, zaehlend    1.32, alle    83.39 Cent | groesster Radius 0.7095 | Abklingen zaehlend   1.96 %, in der Schwelle 21/21 |   0.1 s
+
+### Gitarre S2 B13: f1 522.41 Hz, Umlauf 91.9 Takte, zaehlend 19 bis 10472 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    69.24 Cent | angepasst: 1-12   9.63, zaehlend   19.77, alle   151.33 Cent | groesster Radius 0.7285 | Abklingen zaehlend   9.28 %, in der Schwelle 19/19 |   0.0 s
+  M   2 (  4 Mult.) | Start    33.25 Cent | angepasst: 1-12   1.52, zaehlend    2.74, alle   100.40 Cent | groesster Radius 0.7196 | Abklingen zaehlend   3.08 %, in der Schwelle 19/19 |   0.1 s
+
+### Gitarre S2 B14: f1 553.48 Hz, Umlauf 86.7 Takte, zaehlend 18 bis 10515 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    70.16 Cent | angepasst: 1-12   9.36, zaehlend   19.00, alle   146.46 Cent | groesster Radius 0.7198 | Abklingen zaehlend   9.07 %, in der Schwelle 18/18 |   0.1 s
+  M   2 (  4 Mult.) | Start    31.76 Cent | angepasst: 1-12   5.56, zaehlend    7.94, alle    91.52 Cent | groesster Radius 0.6889 | Abklingen zaehlend   2.15 %, in der Schwelle 18/18 |   0.1 s
+  M   3 (  6 Mult.) | Start    19.20 Cent | angepasst: 1-12   0.21, zaehlend    0.46, alle    73.61 Cent | groesster Radius 0.7000 | Abklingen zaehlend   0.93 %, in der Schwelle 18/18 |   0.1 s
+
+### Gitarre S2 B15: f1 586.41 Hz, Umlauf 81.9 Takte, zaehlend 17 bis 10522 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    68.22 Cent | angepasst: 1-12   8.50, zaehlend   17.00, alle   135.61 Cent | groesster Radius 0.7048 | Abklingen zaehlend   8.35 %, in der Schwelle 17/17 |   0.0 s
+  M   2 (  4 Mult.) | Start    28.04 Cent | angepasst: 1-12   2.90, zaehlend    3.48, alle    96.64 Cent | groesster Radius 0.6734 | Abklingen zaehlend   3.33 %, in der Schwelle 17/17 |   0.1 s
+  M   3 (  6 Mult.) | Start    22.72 Cent | angepasst: 1-12   1.18, zaehlend    2.86, alle    58.64 Cent | groesster Radius 0.6882 | Abklingen zaehlend   0.87 %, in der Schwelle 17/17 |   0.1 s
+
+### Gitarre S2 B16: f1 621.29 Hz, Umlauf 77.3 Takte, zaehlend 16 bis 10489 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    71.81 Cent | angepasst: 1-12   8.45, zaehlend   17.05, alle   134.02 Cent | groesster Radius 0.7008 | Abklingen zaehlend   8.44 %, in der Schwelle 16/16 |   0.0 s
+  M   2 (  4 Mult.) | Start    28.06 Cent | angepasst: 1-12   3.15, zaehlend    3.29, alle    93.32 Cent | groesster Radius 0.6648 | Abklingen zaehlend   3.20 %, in der Schwelle 16/16 |   0.1 s
+  M   3 (  6 Mult.) | Start    29.83 Cent | angepasst: 1-12   0.12, zaehlend    0.20, alle    57.02 Cent | groesster Radius 0.6679 | Abklingen zaehlend   0.53 %, in der Schwelle 16/16 |   0.1 s
+
+### Gitarre S2 B17: f1 658.25 Hz, Umlauf 72.9 Takte, zaehlend 15 bis 10411 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    72.07 Cent | angepasst: 1-12   8.02, zaehlend   15.79, alle   141.23 Cent | groesster Radius 0.6904 | Abklingen zaehlend   8.03 %, in der Schwelle 15/15 |   0.0 s
+  M   2 (  4 Mult.) | Start    19.01 Cent | angepasst: 1-12   2.93, zaehlend    2.93, alle    98.44 Cent | groesster Radius 0.6513 | Abklingen zaehlend   2.88 %, in der Schwelle 15/15 |   0.1 s
+
+### Gitarre S2 B18: f1 697.42 Hz, Umlauf 68.8 Takte, zaehlend 14 bis 10283 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    70.80 Cent | angepasst: 1-12   7.40, zaehlend   14.06, alle   129.71 Cent | groesster Radius 0.6775 | Abklingen zaehlend   7.38 %, in der Schwelle 14/14 |   0.0 s
+  M   2 (  4 Mult.) | Start    15.00 Cent | angepasst: 1-12   1.04, zaehlend    1.80, alle    84.55 Cent | groesster Radius 0.6677 | Abklingen zaehlend   2.07 %, in der Schwelle 14/14 |   0.1 s
+
+### Gitarre S2 B19: f1 738.91 Hz, Umlauf 65.0 Takte, zaehlend 14 bis 10960 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    78.04 Cent | angepasst: 1-12   8.67, zaehlend   16.60, alle   126.98 Cent | groesster Radius 0.6780 | Abklingen zaehlend   8.39 %, in der Schwelle 14/14 |   0.0 s
+  M   2 (  4 Mult.) | Start    23.62 Cent | angepasst: 1-12   1.34, zaehlend    2.32, alle    79.24 Cent | groesster Radius 0.6672 | Abklingen zaehlend   2.50 %, in der Schwelle 14/14 |   0.1 s
+
+### Gitarre S1 B0: f1 330.87 Hz, Umlauf 145.1 Takte, zaehlend 41 bis 14049 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    32.61 Cent | angepasst: 1-12   2.00, zaehlend    5.63, alle    36.73 Cent | groesster Radius 0.7163 | Abklingen zaehlend   3.99 %, in der Schwelle 41/41 |   0.0 s
+  M   3 (  6 Mult.) | Start    11.26 Cent | angepasst: 1-12   0.58, zaehlend    1.85, alle    26.69 Cent | groesster Radius 0.7176 | Abklingen zaehlend   2.58 %, in der Schwelle 41/41 |   0.1 s
+
+### Gitarre S1 B1: f1 350.54 Hz, Umlauf 136.9 Takte, zaehlend 39 bis 14166 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    32.74 Cent | angepasst: 1-12   1.72, zaehlend    4.55, alle    33.26 Cent | groesster Radius 0.6991 | Abklingen zaehlend   3.55 %, in der Schwelle 39/39 |   0.0 s
+  M   3 (  6 Mult.) | Start    10.16 Cent | angepasst: 1-12   0.44, zaehlend    1.45, alle    23.30 Cent | groesster Radius 0.7011 | Abklingen zaehlend   2.17 %, in der Schwelle 39/39 |   0.1 s
+
+### Gitarre S1 B2: f1 371.39 Hz, Umlauf 129.2 Takte, zaehlend 37 bis 14244 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    29.68 Cent | angepasst: 1-12   1.94, zaehlend    5.48, alle    35.51 Cent | groesster Radius 0.7032 | Abklingen zaehlend   3.95 %, in der Schwelle 37/37 |   0.0 s
+  M   3 (  6 Mult.) | Start    12.06 Cent | angepasst: 1-12   0.40, zaehlend    2.82, alle    25.25 Cent | groesster Radius 0.6911 | Abklingen zaehlend   2.14 %, in der Schwelle 37/37 |   0.1 s
+
+### Gitarre S1 B3: f1 393.47 Hz, Umlauf 122.0 Takte, zaehlend 35 bis 14277 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    30.45 Cent | angepasst: 1-12   1.80, zaehlend    5.09, alle    33.72 Cent | groesster Radius 0.6920 | Abklingen zaehlend   3.76 %, in der Schwelle 35/35 |   0.0 s
+  M   3 (  6 Mult.) | Start    13.12 Cent | angepasst: 1-12   0.37, zaehlend    1.26, alle    22.25 Cent | groesster Radius 0.6867 | Abklingen zaehlend   1.65 %, in der Schwelle 35/35 |   0.1 s
+
+### Gitarre S1 B4: f1 416.87 Hz, Umlauf 115.1 Takte, zaehlend 33 bis 14261 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    34.16 Cent | angepasst: 1-12   1.37, zaehlend    3.59, alle    28.08 Cent | groesster Radius 0.6668 | Abklingen zaehlend   3.03 %, in der Schwelle 33/33 |   0.0 s
+  M   3 (  6 Mult.) | Start    15.97 Cent | angepasst: 1-12   0.22, zaehlend    0.56, alle    17.00 Cent | groesster Radius 0.6601 | Abklingen zaehlend   1.29 %, in der Schwelle 33/33 |   0.1 s
+
+### Gitarre S1 B5: f1 441.66 Hz, Umlauf 108.7 Takte, zaehlend 31 bis 14188 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    29.62 Cent | angepasst: 1-12   1.39, zaehlend    3.79, alle    30.34 Cent | groesster Radius 0.6627 | Abklingen zaehlend   3.06 %, in der Schwelle 31/31 |   0.0 s
+  M   3 (  6 Mult.) | Start    16.20 Cent | angepasst: 1-12   0.25, zaehlend    0.73, alle    18.38 Cent | groesster Radius 0.6530 | Abklingen zaehlend   1.17 %, in der Schwelle 31/31 |   0.1 s
+
+### Gitarre S1 B6: f1 467.93 Hz, Umlauf 102.6 Takte, zaehlend 29 bis 14054 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    45.78 Cent | angepasst: 1-12   6.56, zaehlend   14.24, alle    55.31 Cent | groesster Radius 0.6543 | Abklingen zaehlend   6.91 %, in der Schwelle 29/29 |   0.0 s
+  M   2 (  4 Mult.) | Start    10.47 Cent | angepasst: 1-12   1.09, zaehlend    2.72, alle    28.87 Cent | groesster Radius 0.6416 | Abklingen zaehlend   2.50 %, in der Schwelle 29/29 |   0.1 s
+
+### Gitarre S1 B7: f1 495.75 Hz, Umlauf 96.8 Takte, zaehlend 27 bis 13850 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    41.98 Cent | angepasst: 1-12   5.61, zaehlend   11.88, alle    47.43 Cent | groesster Radius 0.6315 | Abklingen zaehlend   5.98 %, in der Schwelle 27/27 |   0.0 s
+  M   2 (  4 Mult.) | Start    12.23 Cent | angepasst: 1-12   1.33, zaehlend    5.79, alle    17.25 Cent | groesster Radius 0.6350 | Abklingen zaehlend   1.65 %, in der Schwelle 27/27 |   0.1 s
+  M   3 (  6 Mult.) | Start    48.24 Cent | angepasst: 1-12   0.18, zaehlend    0.44, alle    18.04 Cent | groesster Radius 0.6296 | Abklingen zaehlend   1.18 %, in der Schwelle 27/27 |   0.1 s
+
+### Gitarre S1 B8: f1 525.23 Hz, Umlauf 91.4 Takte, zaehlend 26 bis 14149 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    47.03 Cent | angepasst: 1-12   6.36, zaehlend   13.41, alle    49.57 Cent | groesster Radius 0.6343 | Abklingen zaehlend   6.65 %, in der Schwelle 26/26 |   0.0 s
+  M   2 (  4 Mult.) | Start    13.19 Cent | angepasst: 1-12   0.78, zaehlend    2.92, alle    19.98 Cent | groesster Radius 0.6186 | Abklingen zaehlend   1.45 %, in der Schwelle 26/26 |   0.1 s
+
+### Gitarre S1 B9: f1 556.47 Hz, Umlauf 86.3 Takte, zaehlend 24 bis 13816 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    45.61 Cent | angepasst: 1-12   5.61, zaehlend   11.61, alle    48.65 Cent | groesster Radius 0.6167 | Abklingen zaehlend   5.97 %, in der Schwelle 24/24 |   0.0 s
+  M   2 (  4 Mult.) | Start    14.59 Cent | angepasst: 1-12   2.06, zaehlend    7.73, alle    33.81 Cent | groesster Radius 0.5944 | Abklingen zaehlend   3.48 %, in der Schwelle 24/24 |   0.1 s
+  M   3 (  6 Mult.) | Start    64.84 Cent | angepasst: 1-12   0.62, zaehlend    2.93, alle    19.06 Cent | groesster Radius 0.5903 | Abklingen zaehlend   1.35 %, in der Schwelle 24/24 |   0.1 s
+
+### Gitarre S1 B10: f1 589.56 Hz, Umlauf 81.4 Takte, zaehlend 23 bis 14042 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    45.14 Cent | angepasst: 1-12   5.26, zaehlend   10.83, alle    43.18 Cent | groesster Radius 0.6011 | Abklingen zaehlend   5.63 %, in der Schwelle 23/23 |   0.0 s
+  M   2 (  4 Mult.) | Start    16.84 Cent | angepasst: 1-12   0.93, zaehlend    2.24, alle    25.06 Cent | groesster Radius 0.6082 | Abklingen zaehlend   2.19 %, in der Schwelle 23/23 |   0.1 s
+
+### Gitarre S1 B11: f1 624.63 Hz, Umlauf 76.8 Takte, zaehlend 22 bis 14243 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    49.78 Cent | angepasst: 1-12   4.77, zaehlend    6.33, alle    34.01 Cent | groesster Radius 0.5999 | Abklingen zaehlend   3.60 %, in der Schwelle 22/22 |   0.0 s
+  M   2 (  4 Mult.) | Start    22.25 Cent | angepasst: 1-12   1.22, zaehlend    4.21, alle    16.16 Cent | groesster Radius 0.5806 | Abklingen zaehlend   1.17 %, in der Schwelle 22/22 |   0.1 s
+  M   3 (  6 Mult.) | Start    74.92 Cent | angepasst: 1-12   2.39, zaehlend    6.32, alle    20.32 Cent | groesster Radius 0.5579 | Abklingen zaehlend   1.96 %, in der Schwelle 22/22 |   0.1 s
+  M   4 (  8 Mult.) | Start   140.00 Cent | angepasst: 1-12   1.33, zaehlend    3.84, alle     4.10 Cent | groesster Radius 0.5721 | Abklingen zaehlend   1.01 %, in der Schwelle 22/22 |   0.1 s
+  M   6 ( 12 Mult.) | Start   289.46 Cent | angepasst: 1-12   0.48, zaehlend    2.33, alle     2.65 Cent | groesster Radius 0.4859 | Abklingen zaehlend   0.74 %, in der Schwelle 22/22 |   0.2 s
+
+### Gitarre S1 B12: f1 661.77 Hz, Umlauf 72.5 Takte, zaehlend 20 bis 13684 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    39.69 Cent | angepasst: 1-12   4.69, zaehlend   15.02, alle    54.16 Cent | groesster Radius 0.5570 | Abklingen zaehlend   6.38 %, in der Schwelle 20/20 |   0.1 s
+  M   2 (  4 Mult.) | Start    22.56 Cent | angepasst: 1-12   0.79, zaehlend    3.87, alle    15.67 Cent | groesster Radius 0.5779 | Abklingen zaehlend   1.11 %, in der Schwelle 20/20 |   0.1 s
+  M   3 (  6 Mult.) | Start    79.26 Cent | angepasst: 1-12   1.80, zaehlend    5.47, alle    35.73 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.34 %, in der Schwelle 20/20 |   0.1 s
+  M   4 (  8 Mult.) | Start   147.93 Cent | angepasst: 1-12   2.18, zaehlend    6.23, alle    20.12 Cent | groesster Radius 0.4936 | Abklingen zaehlend   1.95 %, in der Schwelle 20/20 |   0.1 s
+C:\Users\patri\source\repos\Visuals_Project\cmake\LumiViz\projects\apps\LumiViz\docs\modellierung\gezupfte-saite\proben\2026-11-17_S204_dispersion_biquads.py:67: RuntimeWarning: divide by zero encountered in divide
+  p0 = np.concatenate([np.log(r0 / (RMAX - r0)), np.log(th0 / (np.pi - th0)), [D0]])
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:424: RuntimeWarning: invalid value encountered in subtract
+  upper_dist = ub - x
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:113: RuntimeWarning: invalid value encountered in divide
+  p_norm = norm(suf / denom)
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:115: RuntimeWarning: invalid value encountered in divide
+  phi_prime = -np.sum(suf ** 2 / denom**3) / p_norm
+  M   6 ( 12 Mult.) | Start   322.58 Cent | angepasst: 1-12   0.65, zaehlend    1.04, alle    19.18 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.15 %, in der Schwelle 20/20 |   0.2 s
+
+### Gitarre S1 B13: f1 701.13 Hz, Umlauf 68.5 Takte, zaehlend 19 bis 13779 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    40.26 Cent | angepasst: 1-12   4.78, zaehlend   15.76, alle    50.72 Cent | groesster Radius 0.5434 | Abklingen zaehlend   6.48 %, in der Schwelle 19/19 |   0.0 s
+  M   2 (  4 Mult.) | Start    25.18 Cent | angepasst: 1-12   3.09, zaehlend    7.60, alle    30.74 Cent | groesster Radius 0.5441 | Abklingen zaehlend   3.10 %, in der Schwelle 19/19 |   0.1 s
+  M   3 (  6 Mult.) | Start    87.09 Cent | angepasst: 1-12   0.05, zaehlend    0.15, alle    11.80 Cent | groesster Radius 0.5542 | Abklingen zaehlend   0.30 %, in der Schwelle 19/19 |   0.1 s
+
+### Gitarre S1 B14: f1 742.83 Hz, Umlauf 64.6 Takte, zaehlend 18 bis 13833 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    48.04 Cent | angepasst: 1-12   4.64, zaehlend    9.15, alle    45.77 Cent | groesster Radius 0.5625 | Abklingen zaehlend   5.06 %, in der Schwelle 18/18 |   0.1 s
+  M   2 (  4 Mult.) | Start    30.67 Cent | angepasst: 1-12   0.69, zaehlend    1.21, alle    23.98 Cent | groesster Radius 0.5581 | Abklingen zaehlend   1.42 %, in der Schwelle 18/18 |   0.1 s
+
+### Gitarre S1 B15: f1 787.02 Hz, Umlauf 61.0 Takte, zaehlend 17 bis 13842 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    45.67 Cent | angepasst: 1-12   3.27, zaehlend    5.76, alle    32.14 Cent | groesster Radius 0.5186 | Abklingen zaehlend   3.67 %, in der Schwelle 17/17 |   0.1 s
+  M   2 (  4 Mult.) | Start    29.00 Cent | angepasst: 1-12   1.80, zaehlend    4.12, alle     9.58 Cent | groesster Radius 0.5458 | Abklingen zaehlend   1.15 %, in der Schwelle 17/17 |   0.1 s
+  M   3 (  6 Mult.) | Start   117.52 Cent | angepasst: 1-12   0.05, zaehlend    0.08, alle    10.35 Cent | groesster Radius 0.5290 | Abklingen zaehlend   0.23 %, in der Schwelle 17/17 |   0.1 s
+
+### Gitarre S1 B16: f1 833.83 Hz, Umlauf 57.6 Takte, zaehlend 16 bis 13800 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    48.23 Cent | angepasst: 1-12   4.11, zaehlend    7.67, alle    39.34 Cent | groesster Radius 0.5338 | Abklingen zaehlend   4.41 %, in der Schwelle 16/16 |   0.1 s
+  M   2 (  4 Mult.) | Start    39.36 Cent | angepasst: 1-12   0.46, zaehlend    0.73, alle    16.95 Cent | groesster Radius 0.5172 | Abklingen zaehlend   0.92 %, in der Schwelle 16/16 |   0.1 s
+
+### Gitarre S1 B17: f1 883.42 Hz, Umlauf 54.3 Takte, zaehlend 15 bis 13701 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    28.92 Cent | angepasst: 1-12   4.03, zaehlend    7.38, alle    42.37 Cent | groesster Radius 0.5260 | Abklingen zaehlend   4.35 %, in der Schwelle 15/15 |   0.1 s
+  M   2 (  4 Mult.) | Start   105.78 Cent | angepasst: 1-12   0.46, zaehlend    0.78, alle    18.67 Cent | groesster Radius 0.5095 | Abklingen zaehlend   0.91 %, in der Schwelle 15/15 |   0.1 s
+
+### Gitarre S1 B18: f1 935.97 Hz, Umlauf 51.3 Takte, zaehlend 14 bis 13538 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    32.04 Cent | angepasst: 1-12   3.57, zaehlend    6.44, alle    42.15 Cent | groesster Radius 0.5100 | Abklingen zaehlend   3.92 %, in der Schwelle 14/14 |   0.0 s
+  M   2 (  4 Mult.) | Start   115.71 Cent | angepasst: 1-12   0.23, zaehlend    0.23, alle    16.60 Cent | groesster Radius 0.4815 | Abklingen zaehlend   0.55 %, in der Schwelle 14/14 |   0.1 s
+
+### Gitarre S1 B19: f1 991.65 Hz, Umlauf 48.4 Takte, zaehlend 13 bis 13305 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    37.52 Cent | angepasst: 1-12   2.61, zaehlend    4.46, alle    29.90 Cent | groesster Radius 0.4765 | Abklingen zaehlend   2.94 %, in der Schwelle 13/13 |   0.0 s
+  M   2 (  4 Mult.) | Start   128.44 Cent | angepasst: 1-12   5.38, zaehlend    5.73, alle     5.73 Cent | groesster Radius 0.4610 | Abklingen zaehlend   1.39 %, in der Schwelle 13/13 |   0.1 s
+  M   3 (  6 Mult.) | Start   237.24 Cent | angepasst: 1-12   8.21, zaehlend    8.51, alle     8.51 Cent | groesster Radius 0.4324 | Abklingen zaehlend   2.03 %, in der Schwelle 13/13 |   0.3 s
+  M   4 (  8 Mult.) | Start   364.50 Cent | angepasst: 1-12   6.80, zaehlend    7.59, alle    12.90 Cent | groesster Radius 0.4006 | Abklingen zaehlend   1.99 %, in der Schwelle 13/13 |   0.5 s
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:156: RuntimeWarning: invalid value encountered in scalar add
+  alpha -= (phi + Delta) * ratio / Delta
+  M   6 ( 12 Mult.) | Start   704.54 Cent | angepasst: 1-12   2.80, zaehlend    5.23, alle    30.50 Cent | groesster Radius 0.1812 | Abklingen zaehlend   3.25 %, in der Schwelle 13/13 |   1.9 s
+  M   9 ( 18 Mult.) | Start  1089.80 Cent | angepasst: 1-12   0.14, zaehlend    0.16, alle    22.19 Cent | groesster Radius 0.6949 | Abklingen zaehlend   0.11 %, in der Schwelle 13/13 |   0.8 s
+
+### Harfe T25: f1 35.00 Hz, Umlauf 1371.3 Takte, zaehlend 56 bis 2576 Hz, Abel-Smith 16 Biquads
+  M  16 ( 32 Mult.) | Start    19.45 Cent | angepasst: 1-12   0.22, zaehlend    2.60, alle  1026.51 Cent | groesster Radius 0.9905 | Abklingen zaehlend   4.63 %, in der Schwelle 56/56 |   0.1 s
+
+### Harfe T26: f1 37.09 Hz, Umlauf 1294.3 Takte, zaehlend 53 bis 2586 Hz, Abel-Smith 15 Biquads
+  M  15 ( 30 Mult.) | Start    22.83 Cent | angepasst: 1-12   0.27, zaehlend    3.07, alle  1026.85 Cent | groesster Radius 0.9902 | Abklingen zaehlend   4.64 %, in der Schwelle 53/53 |   0.1 s
+  M  23 ( 46 Mult.) | Start    18.68 Cent | angepasst: 1-12   0.00, zaehlend    0.03, alle   867.97 Cent | groesster Radius 0.9937 | Abklingen zaehlend   0.67 %, in der Schwelle 53/53 |   1.4 s
+
+### Harfe T27: f1 39.29 Hz, Umlauf 1221.6 Takte, zaehlend 50 bis 2584 Hz, Abel-Smith 15 Biquads
+  M  15 ( 30 Mult.) | Start    19.84 Cent | angepasst: 1-12   0.16, zaehlend    1.66, alle   998.40 Cent | groesster Radius 0.9890 | Abklingen zaehlend   3.31 %, in der Schwelle 50/50 |   0.1 s
+
+### Harfe T28: f1 41.32 Hz, Umlauf 1161.6 Takte, zaehlend 54 bis 2853 Hz, Abel-Smith 15 Biquads
+  M  15 ( 30 Mult.) | Start    17.21 Cent | angepasst: 1-12   0.18, zaehlend    1.92, alle   932.41 Cent | groesster Radius 0.9878 | Abklingen zaehlend   3.52 %, in der Schwelle 54/54 |   0.1 s
+
+### Harfe T29: f1 43.44 Hz, Umlauf 1104.9 Takte, zaehlend 61 bis 3275 Hz, Abel-Smith 15 Biquads
+  M  15 ( 30 Mult.) | Start    14.76 Cent | angepasst: 1-12   0.23, zaehlend    2.48, alle   842.16 Cent | groesster Radius 0.9865 | Abklingen zaehlend   4.25 %, in der Schwelle 61/61 |   0.1 s
+
+### Harfe T30: f1 46.02 Hz, Umlauf 1042.9 Takte, zaehlend 58 bis 3307 Hz, Abel-Smith 15 Biquads
+  M  15 ( 30 Mult.) | Start    13.25 Cent | angepasst: 1-12   0.16, zaehlend    1.65, alle   823.51 Cent | groesster Radius 0.9851 | Abklingen zaehlend   3.30 %, in der Schwelle 58/58 |   0.1 s
+
+### Harfe T31: f1 48.74 Hz, Umlauf 984.8 Takte, zaehlend 60 bis 3574 Hz, Abel-Smith 15 Biquads
+  M  15 ( 30 Mult.) | Start    11.57 Cent | angepasst: 1-12   0.15, zaehlend    1.51, alle   761.75 Cent | groesster Radius 0.9835 | Abklingen zaehlend   3.10 %, in der Schwelle 60/60 |   0.1 s
+
+### Harfe T32: f1 51.64 Hz, Umlauf 929.6 Takte, zaehlend 56 bis 3521 Hz, Abel-Smith 14 Biquads
+  M  14 ( 28 Mult.) | Start    12.71 Cent | angepasst: 1-12   0.15, zaehlend    1.44, alle   767.69 Cent | groesster Radius 0.9823 | Abklingen zaehlend   2.95 %, in der Schwelle 56/56 |   0.1 s
+
+### Harfe T33: f1 55.09 Hz, Umlauf 871.2 Takte, zaehlend 65 bis 4230 Hz, Abel-Smith 14 Biquads
+  M  14 ( 28 Mult.) | Start    11.00 Cent | angepasst: 1-12   0.19, zaehlend    1.92, alle   647.95 Cent | groesster Radius 0.9798 | Abklingen zaehlend   3.45 %, in der Schwelle 65/65 |   0.1 s
+
+### Harfe T34: f1 58.37 Hz, Umlauf 822.3 Takte, zaehlend 61 bis 4199 Hz, Abel-Smith 13 Biquads
+  M  13 ( 26 Mult.) | Start    12.71 Cent | angepasst: 1-12   0.22, zaehlend    2.11, alle   654.65 Cent | groesster Radius 0.9787 | Abklingen zaehlend   3.63 %, in der Schwelle 61/61 |   0.1 s
+
+### Harfe T35: f1 61.45 Hz, Umlauf 781.1 Takte, zaehlend 68 bis 4837 Hz, Abel-Smith 14 Biquads
+  M  14 ( 28 Mult.) | Start     7.59 Cent | angepasst: 1-12   0.14, zaehlend    1.22, alle   541.02 Cent | groesster Radius 0.9744 | Abklingen zaehlend   2.57 %, in der Schwelle 68/68 |   0.1 s
+
+### Harfe T36: f1 64.63 Hz, Umlauf 742.7 Takte, zaehlend 69 bis 5122 Hz, Abel-Smith 13 Biquads
+  M  13 ( 26 Mult.) | Start     9.95 Cent | angepasst: 1-12   0.24, zaehlend    1.93, alle   513.47 Cent | groesster Radius 0.9735 | Abklingen zaehlend   3.35 %, in der Schwelle 69/69 |   0.1 s
+
+### Harfe T37: f1 68.47 Hz, Umlauf 701.0 Takte, zaehlend 65 bis 5110 Hz, Abel-Smith 12 Biquads
+  M  12 ( 24 Mult.) | Start    12.10 Cent | angepasst: 1-12   0.30, zaehlend    2.35, alle   518.70 Cent | groesster Radius 0.9726 | Abklingen zaehlend   3.74 %, in der Schwelle 65/65 |   0.1 s
+
+### Harfe T38: f1 73.11 Hz, Umlauf 656.6 Takte, zaehlend 70 bis 5792 Hz, Abel-Smith 12 Biquads
+  M  12 ( 24 Mult.) | Start    10.29 Cent | angepasst: 1-12   0.28, zaehlend    2.12, alle   430.77 Cent | groesster Radius 0.9683 | Abklingen zaehlend   3.45 %, in der Schwelle 70/70 |   0.1 s
+
+### Harfe T39: f1 77.45 Hz, Umlauf 619.7 Takte, zaehlend 66 bis 5784 Hz, Abel-Smith 12 Biquads
+  M  12 ( 24 Mult.) | Start     8.75 Cent | angepasst: 1-12   0.19, zaehlend    1.37, alle   421.99 Cent | groesster Radius 0.9649 | Abklingen zaehlend   2.66 %, in der Schwelle 66/66 |   0.1 s
+
+### Harfe T40: f1 81.58 Hz, Umlauf 588.4 Takte, zaehlend 73 bis 6638 Hz, Abel-Smith 12 Biquads
+  M  12 ( 24 Mult.) | Start     7.33 Cent | angepasst: 1-12   0.18, zaehlend    1.31, alle   335.04 Cent | groesster Radius 0.9596 | Abklingen zaehlend   2.50 %, in der Schwelle 73/73 |   0.1 s
+
+### Harfe T41: f1 86.88 Hz, Umlauf 552.5 Takte, zaehlend 68 bis 6586 Hz, Abel-Smith 11 Biquads
+  M  11 ( 22 Mult.) | Start     9.10 Cent | angepasst: 1-12   0.23, zaehlend    1.61, alle   339.63 Cent | groesster Radius 0.9580 | Abklingen zaehlend   2.82 %, in der Schwelle 68/68 |   0.1 s
+
+### Harfe T42: f1 92.04 Hz, Umlauf 521.5 Takte, zaehlend 64 bis 6563 Hz, Abel-Smith 10 Biquads
+  M  10 ( 20 Mult.) | Start    11.95 Cent | angepasst: 1-12   0.31, zaehlend    2.54, alle   351.64 Cent | groesster Radius 0.9565 | Abklingen zaehlend   3.42 %, in der Schwelle 64/64 |   0.1 s
+
+### Harfe T43: f1 97.47 Hz, Umlauf 492.4 Takte, zaehlend 65 bis 7010 Hz, Abel-Smith 10 Biquads
+  M  10 ( 20 Mult.) | Start     9.86 Cent | angepasst: 1-12   0.26, zaehlend    1.62, alle   302.07 Cent | groesster Radius 0.9507 | Abklingen zaehlend   2.72 %, in der Schwelle 65/65 |   0.1 s
+
+### Harfe T44: f1 103.27 Hz, Umlauf 464.8 Takte, zaehlend 61 bis 6963 Hz, Abel-Smith 9 Biquads
+  M   9 ( 18 Mult.) | Start    13.40 Cent | angepasst: 1-12   0.37, zaehlend    2.22, alle   311.10 Cent | groesster Radius 0.9491 | Abklingen zaehlend   3.26 %, in der Schwelle 61/61 |   0.1 s
+
+### Harfe T45: f1 110.20 Hz, Umlauf 435.6 Takte, zaehlend 28 bis 3398 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    44.96 Cent | angepasst: 1-12   1.39, zaehlend    4.59, alle   739.00 Cent | groesster Radius 0.9506 | Abklingen zaehlend   5.52 %, in der Schwelle 28/28 |   0.1 s
+  M   6 ( 12 Mult.) | Start    41.04 Cent | angepasst: 1-12   0.33, zaehlend    1.24, alle   691.74 Cent | groesster Radius 0.9800 | Abklingen zaehlend   5.25 %, in der Schwelle 28/28 |   0.2 s
+
+### Harfe T46: f1 116.75 Hz, Umlauf 411.1 Takte, zaehlend 27 bis 3484 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    47.32 Cent | angepasst: 1-12   1.40, zaehlend    4.66, alle   732.17 Cent | groesster Radius 0.9491 | Abklingen zaehlend   6.88 %, in der Schwelle 27/27 |   0.1 s
+  M   6 ( 12 Mult.) | Start    43.10 Cent | angepasst: 1-12   0.38, zaehlend    1.29, alle   685.14 Cent | groesster Radius 0.9800 | Abklingen zaehlend   6.76 %, in der Schwelle 27/27 |   0.2 s
+
+### Harfe T47: f1 122.91 Hz, Umlauf 390.5 Takte, zaehlend 29 bis 3894 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    40.43 Cent | angepasst: 1-12   1.03, zaehlend    3.87, alle   628.93 Cent | groesster Radius 0.9409 | Abklingen zaehlend   4.51 %, in der Schwelle 29/29 |   0.1 s
+  M   6 ( 12 Mult.) | Start    34.88 Cent | angepasst: 1-12   0.31, zaehlend    1.10, alle   588.67 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.92 %, in der Schwelle 29/29 |   0.2 s
+
+### Harfe T48: f1 130.33 Hz, Umlauf 368.3 Takte, zaehlend 28 bis 3964 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    54.51 Cent | angepasst: 1-12   2.76, zaehlend    8.80, alle   645.33 Cent | groesster Radius 0.9381 | Abklingen zaehlend   6.52 %, in der Schwelle 28/28 |   0.1 s
+  M   4 (  8 Mult.) | Start    51.78 Cent | angepasst: 1-12   2.73, zaehlend    8.40, alle   642.89 Cent | groesster Radius 0.9382 | Abklingen zaehlend   6.42 %, in der Schwelle 28/28 |   0.2 s
+  M   6 ( 12 Mult.) | Start    46.30 Cent | angepasst: 1-12   0.21, zaehlend    0.63, alle   557.09 Cent | groesster Radius 0.9800 | Abklingen zaehlend   5.81 %, in der Schwelle 28/28 |   0.3 s
+
+### Harfe T49: f1 138.08 Hz, Umlauf 347.6 Takte, zaehlend 27 bis 4064 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    56.96 Cent | angepasst: 1-12   2.61, zaehlend    8.72, alle   634.83 Cent | groesster Radius 0.9367 | Abklingen zaehlend   6.69 %, in der Schwelle 27/27 |   0.1 s
+  M   4 (  8 Mult.) | Start    53.88 Cent | angepasst: 1-12   2.61, zaehlend    8.61, alle   634.78 Cent | groesster Radius 0.9368 | Abklingen zaehlend   6.67 %, in der Schwelle 27/27 |   0.3 s
+  M   6 ( 12 Mult.) | Start    47.56 Cent | angepasst: 1-12   0.19, zaehlend    0.61, alle   547.03 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.79 %, in der Schwelle 27/27 |   0.3 s
+
+### Harfe T50: f1 147.28 Hz, Umlauf 325.9 Takte, zaehlend 28 bis 4441 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    47.88 Cent | angepasst: 1-12   2.06, zaehlend    6.25, alle   536.99 Cent | groesster Radius 0.9238 | Abklingen zaehlend   5.26 %, in der Schwelle 28/28 |   0.1 s
+  M   4 (  8 Mult.) | Start    44.13 Cent | angepasst: 1-12   2.06, zaehlend    6.19, alle   536.95 Cent | groesster Radius 0.9238 | Abklingen zaehlend   5.25 %, in der Schwelle 28/28 |   0.3 s
+  M   6 ( 12 Mult.) | Start    36.30 Cent | angepasst: 1-12   0.12, zaehlend    0.35, alle   458.68 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.99 %, in der Schwelle 28/28 |   0.3 s
+
+### Harfe T51: f1 156.04 Hz, Umlauf 307.6 Takte, zaehlend 27 bis 4551 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    50.10 Cent | angepasst: 1-12   2.10, zaehlend    6.38, alle   537.74 Cent | groesster Radius 0.9220 | Abklingen zaehlend   5.38 %, in der Schwelle 27/27 |   0.1 s
+  M   4 (  8 Mult.) | Start    45.92 Cent | angepasst: 1-12   2.10, zaehlend    6.31, alle   537.70 Cent | groesster Radius 0.9220 | Abklingen zaehlend   5.37 %, in der Schwelle 27/27 |   0.2 s
+  M   6 ( 12 Mult.) | Start    37.36 Cent | angepasst: 1-12   0.02, zaehlend    0.04, alle   422.93 Cent | groesster Radius 0.9029 | Abklingen zaehlend   1.70 %, in der Schwelle 27/27 |   0.1 s
+
+### Harfe T52: f1 164.23 Hz, Umlauf 292.3 Takte, zaehlend 27 bis 4748 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    43.26 Cent | angepasst: 1-12   1.53, zaehlend    4.47, alle   478.15 Cent | groesster Radius 0.9097 | Abklingen zaehlend   4.18 %, in der Schwelle 27/27 |   0.1 s
+  M   4 (  8 Mult.) | Start    38.24 Cent | angepasst: 1-12   0.33, zaehlend    1.05, alle   436.12 Cent | groesster Radius 0.9029 | Abklingen zaehlend   1.82 %, in der Schwelle 27/27 |   0.1 s
+
+### Harfe T53: f1 174.83 Hz, Umlauf 274.6 Takte, zaehlend 26 bis 4877 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    44.42 Cent | angepasst: 1-12   1.52, zaehlend    4.40, alle   461.54 Cent | groesster Radius 0.9065 | Abklingen zaehlend   4.16 %, in der Schwelle 26/26 |   0.1 s
+  M   4 (  8 Mult.) | Start    39.27 Cent | angepasst: 1-12   0.32, zaehlend    0.99, alle   417.53 Cent | groesster Radius 0.8991 | Abklingen zaehlend   1.76 %, in der Schwelle 26/26 |   0.1 s
+
+### Harfe T54: f1 185.23 Hz, Umlauf 259.1 Takte, zaehlend 24 bis 4756 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    63.00 Cent | angepasst: 1-12   4.70, zaehlend   11.23, alle   507.47 Cent | groesster Radius 0.9021 | Abklingen zaehlend   7.19 %, in der Schwelle 24/24 |   0.1 s
+  M   3 (  6 Mult.) | Start    57.94 Cent | angepasst: 1-12   1.04, zaehlend    3.03, alle   458.72 Cent | groesster Radius 0.8981 | Abklingen zaehlend   3.25 %, in der Schwelle 24/24 |   0.1 s
+  M   4 (  8 Mult.) | Start    52.43 Cent | angepasst: 1-12   0.24, zaehlend    0.56, alle   416.81 Cent | groesster Radius 0.8906 | Abklingen zaehlend   1.71 %, in der Schwelle 24/24 |   0.1 s
+
+### Harfe T55: f1 196.02 Hz, Umlauf 244.9 Takte, zaehlend 25 bis 5228 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    60.14 Cent | angepasst: 1-12   4.80, zaehlend   11.45, alle   449.88 Cent | groesster Radius 0.8929 | Abklingen zaehlend   7.12 %, in der Schwelle 25/25 |   0.1 s
+  M   3 (  6 Mult.) | Start    54.03 Cent | angepasst: 1-12   1.70, zaehlend    2.54, alle   402.81 Cent | groesster Radius 0.8779 | Abklingen zaehlend   3.31 %, in der Schwelle 25/25 |   0.1 s
+
+### Harfe T56: f1 207.68 Hz, Umlauf 231.1 Takte, zaehlend 24 bis 5329 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    62.35 Cent | angepasst: 1-12   4.75, zaehlend   11.58, alle   443.02 Cent | groesster Radius 0.8898 | Abklingen zaehlend   7.19 %, in der Schwelle 24/24 |   0.1 s
+  M   3 (  6 Mult.) | Start    55.63 Cent | angepasst: 1-12   1.66, zaehlend    2.52, alle   393.16 Cent | groesster Radius 0.8742 | Abklingen zaehlend   3.25 %, in der Schwelle 24/24 |   0.1 s
+
+### Harfe T57: f1 219.33 Hz, Umlauf 218.8 Takte, zaehlend 24 bis 5583 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    54.68 Cent | angepasst: 1-12   3.76, zaehlend    8.80, alle   385.96 Cent | groesster Radius 0.8727 | Abklingen zaehlend   5.76 %, in der Schwelle 24/24 |   0.1 s
+  M   3 (  6 Mult.) | Start    47.13 Cent | angepasst: 1-12   0.76, zaehlend    2.14, alle   340.28 Cent | groesster Radius 0.8673 | Abklingen zaehlend   2.28 %, in der Schwelle 24/24 |   0.1 s
+
+### Harfe T58: f1 232.38 Hz, Umlauf 206.6 Takte, zaehlend 23 bis 5678 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    56.11 Cent | angepasst: 1-12   3.56, zaehlend    8.15, alle   374.39 Cent | groesster Radius 0.8700 | Abklingen zaehlend   5.62 %, in der Schwelle 23/23 |   0.1 s
+  M   3 (  6 Mult.) | Start    48.04 Cent | angepasst: 1-12   0.66, zaehlend    1.74, alle   325.70 Cent | groesster Radius 0.8631 | Abklingen zaehlend   2.11 %, in der Schwelle 23/23 |   0.1 s
+
+### Harfe T59: f1 246.88 Hz, Umlauf 194.4 Takte, zaehlend 23 bis 5993 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    49.69 Cent | angepasst: 1-12   2.83, zaehlend    6.16, alle   327.10 Cent | groesster Radius 0.8519 | Abklingen zaehlend   4.58 %, in der Schwelle 23/23 |   0.1 s
+  M   3 (  6 Mult.) | Start    40.38 Cent | angepasst: 1-12   0.84, zaehlend    1.22, alle   285.83 Cent | groesster Radius 0.8293 | Abklingen zaehlend   2.02 %, in der Schwelle 23/23 |   0.1 s
+
+### Harfe T60: f1 261.72 Hz, Umlauf 183.4 Takte, zaehlend 22 bis 6088 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    51.89 Cent | angepasst: 1-12   2.74, zaehlend    6.07, alle   326.43 Cent | groesster Radius 0.8481 | Abklingen zaehlend   4.60 %, in der Schwelle 22/22 |   0.1 s
+  M   3 (  6 Mult.) | Start    40.87 Cent | angepasst: 1-12   0.81, zaehlend    1.23, alle   288.38 Cent | groesster Radius 0.8256 | Abklingen zaehlend   1.83 %, in der Schwelle 22/22 |   0.1 s
+
+### Harfe T61: f1 277.29 Hz, Umlauf 173.1 Takte, zaehlend 21 bis 6164 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    53.00 Cent | angepasst: 1-12   2.64, zaehlend    5.50, alle   308.21 Cent | groesster Radius 0.8429 | Abklingen zaehlend   4.40 %, in der Schwelle 21/21 |   0.1 s
+  M   3 (  6 Mult.) | Start    40.80 Cent | angepasst: 1-12   0.76, zaehlend    1.13, alle   269.08 Cent | groesster Radius 0.8187 | Abklingen zaehlend   1.71 %, in der Schwelle 21/21 |   0.1 s
+
+### Harfe T62: f1 293.51 Hz, Umlauf 163.5 Takte, zaehlend 21 bis 6489 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    67.49 Cent | angepasst: 1-12   9.43, zaehlend   19.99, alle   329.12 Cent | groesster Radius 0.8280 | Abklingen zaehlend   9.45 %, in der Schwelle 21/21 |   0.0 s
+  M   2 (  4 Mult.) | Start    55.89 Cent | angepasst: 1-12   3.03, zaehlend    4.16, alle   277.95 Cent | groesster Radius 0.8063 | Abklingen zaehlend   4.22 %, in der Schwelle 21/21 |   0.1 s
+  M   3 (  6 Mult.) | Start    43.89 Cent | angepasst: 1-12   1.90, zaehlend    2.55, alle   250.17 Cent | groesster Radius 0.7758 | Abklingen zaehlend   2.61 %, in der Schwelle 21/21 |   0.1 s
+
+### Harfe T63: f1 310.96 Hz, Umlauf 154.4 Takte, zaehlend 20 bis 6553 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    68.63 Cent | angepasst: 1-12   9.46, zaehlend   19.68, alle   324.16 Cent | groesster Radius 0.8230 | Abklingen zaehlend   9.38 %, in der Schwelle 20/20 |   0.0 s
+  M   2 (  4 Mult.) | Start    56.22 Cent | angepasst: 1-12   3.09, zaehlend    4.19, alle   270.49 Cent | groesster Radius 0.8015 | Abklingen zaehlend   3.89 %, in der Schwelle 20/20 |   0.1 s
+  M   3 (  6 Mult.) | Start    43.37 Cent | angepasst: 1-12   1.79, zaehlend    2.45, alle   240.90 Cent | groesster Radius 0.7670 | Abklingen zaehlend   2.43 %, in der Schwelle 20/20 |   0.1 s
+
+### Harfe T64: f1 329.53 Hz, Umlauf 145.7 Takte, zaehlend 20 bis 6905 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    62.49 Cent | angepasst: 1-12   7.62, zaehlend   17.14, alle   281.31 Cent | groesster Radius 0.7978 | Abklingen zaehlend   8.22 %, in der Schwelle 20/20 |   0.1 s
+  M   2 (  4 Mult.) | Start    46.75 Cent | angepasst: 1-12   1.52, zaehlend    3.07, alle   226.44 Cent | groesster Radius 0.7964 | Abklingen zaehlend   2.86 %, in der Schwelle 20/20 |   0.1 s
+  M   3 (  6 Mult.) | Start    32.21 Cent | angepasst: 1-12   1.44, zaehlend    1.91, alle   205.81 Cent | groesster Radius 0.7394 | Abklingen zaehlend   1.96 %, in der Schwelle 20/20 |   0.1 s
+
+### Harfe T65: f1 349.67 Hz, Umlauf 137.3 Takte, zaehlend 19 bis 6976 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    64.74 Cent | angepasst: 1-12   8.08, zaehlend   16.41, alle   277.57 Cent | groesster Radius 0.7963 | Abklingen zaehlend   8.14 %, in der Schwelle 19/19 |   0.1 s
+  M   2 (  4 Mult.) | Start    49.47 Cent | angepasst: 1-12   2.40, zaehlend    3.30, alle   228.96 Cent | groesster Radius 0.7719 | Abklingen zaehlend   3.19 %, in der Schwelle 19/19 |   0.1 s
+  M   3 (  6 Mult.) | Start    33.56 Cent | angepasst: 1-12   1.39, zaehlend    1.84, alle   205.64 Cent | groesster Radius 0.7361 | Abklingen zaehlend   2.00 %, in der Schwelle 19/19 |   0.1 s
+
+### Harfe T66: f1 370.47 Hz, Umlauf 129.6 Takte, zaehlend 18 bis 7004 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    66.43 Cent | angepasst: 1-12   8.10, zaehlend   16.16, alle   271.61 Cent | groesster Radius 0.7912 | Abklingen zaehlend   8.09 %, in der Schwelle 18/18 |   0.0 s
+  M   2 (  4 Mult.) | Start    49.61 Cent | angepasst: 1-12   2.21, zaehlend    3.10, alle   220.93 Cent | groesster Radius 0.7645 | Abklingen zaehlend   3.05 %, in der Schwelle 18/18 |   0.1 s
+  M   3 (  6 Mult.) | Start    31.18 Cent | angepasst: 1-12   1.28, zaehlend    1.71, alle   196.66 Cent | groesster Radius 0.7272 | Abklingen zaehlend   1.88 %, in der Schwelle 18/18 |   0.1 s
+
+### Harfe T67: f1 392.06 Hz, Umlauf 122.4 Takte, zaehlend 18 bis 7371 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    57.61 Cent | angepasst: 1-12   6.56, zaehlend   12.95, alle   227.75 Cent | groesster Radius 0.7642 | Abklingen zaehlend   6.78 %, in der Schwelle 18/18 |   0.1 s
+  M   2 (  4 Mult.) | Start    39.32 Cent | angepasst: 1-12   1.46, zaehlend    3.51, alle   187.06 Cent | groesster Radius 0.7305 | Abklingen zaehlend   2.92 %, in der Schwelle 18/18 |   0.1 s
+  M   3 (  6 Mult.) | Start    20.14 Cent | angepasst: 1-12   0.85, zaehlend    1.94, alle   135.14 Cent | groesster Radius 0.7430 | Abklingen zaehlend   0.61 %, in der Schwelle 18/18 |   0.1 s
+
+### Harfe T68: f1 415.38 Hz, Umlauf 115.6 Takte, zaehlend 17 bis 7375 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    59.39 Cent | angepasst: 1-12   6.07, zaehlend   11.72, alle   224.57 Cent | groesster Radius 0.7531 | Abklingen zaehlend   6.29 %, in der Schwelle 17/17 |   0.0 s
+  M   2 (  4 Mult.) | Start    37.30 Cent | angepasst: 1-12   1.51, zaehlend    2.09, alle   181.75 Cent | groesster Radius 0.7242 | Abklingen zaehlend   2.21 %, in der Schwelle 17/17 |   0.1 s
+
+### Harfe T69: f1 439.74 Hz, Umlauf 109.2 Takte, zaehlend 17 bis 7781 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    54.69 Cent | angepasst: 1-12   5.51, zaehlend   10.60, alle   199.42 Cent | groesster Radius 0.7329 | Abklingen zaehlend   5.81 %, in der Schwelle 17/17 |   0.1 s
+  M   2 (  4 Mult.) | Start    31.84 Cent | angepasst: 1-12   0.79, zaehlend    1.38, alle   153.56 Cent | groesster Radius 0.7259 | Abklingen zaehlend   1.58 %, in der Schwelle 17/17 |   0.1 s
+
+### Harfe T70: f1 465.90 Hz, Umlauf 103.0 Takte, zaehlend 16 bis 7757 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    54.52 Cent | angepasst: 1-12   5.17, zaehlend    9.76, alle   197.81 Cent | groesster Radius 0.7232 | Abklingen zaehlend   5.47 %, in der Schwelle 16/16 |   0.1 s
+  M   2 (  4 Mult.) | Start    27.57 Cent | angepasst: 1-12   1.24, zaehlend    1.50, alle   151.40 Cent | groesster Radius 0.6849 | Abklingen zaehlend   1.61 %, in der Schwelle 16/16 |   0.1 s
+
+### Harfe T71: f1 493.78 Hz, Umlauf 97.2 Takte, zaehlend 17 bis 8737 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    52.03 Cent | angepasst: 1-12   5.44, zaehlend   10.46, alle   150.69 Cent | groesster Radius 0.7044 | Abklingen zaehlend   5.76 %, in der Schwelle 17/17 |   0.1 s
+  M   2 (  4 Mult.) | Start    23.96 Cent | angepasst: 1-12   1.31, zaehlend    1.81, alle   115.85 Cent | groesster Radius 0.6701 | Abklingen zaehlend   1.95 %, in der Schwelle 17/17 |   0.1 s
+
+### Harfe T72: f1 523.46 Hz, Umlauf 91.7 Takte, zaehlend 16 bis 8707 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    52.38 Cent | angepasst: 1-12   5.03, zaehlend    9.48, alle   146.01 Cent | groesster Radius 0.6925 | Abklingen zaehlend   5.37 %, in der Schwelle 16/16 |   0.1 s
+  M   2 (  4 Mult.) | Start    22.00 Cent | angepasst: 1-12   0.46, zaehlend    0.58, alle    96.88 Cent | groesster Radius 0.6765 | Abklingen zaehlend   1.06 %, in der Schwelle 16/16 |   0.1 s
+
+### Harfe T73: f1 554.59 Hz, Umlauf 86.5 Takte, zaehlend 15 bis 8644 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    51.99 Cent | angepasst: 1-12   4.63, zaehlend    8.60, alle   153.92 Cent | groesster Radius 0.6817 | Abklingen zaehlend   5.00 %, in der Schwelle 15/15 |   0.1 s
+  M   2 (  4 Mult.) | Start    19.89 Cent | angepasst: 1-12   1.30, zaehlend    1.30, alle   116.29 Cent | groesster Radius 0.6419 | Abklingen zaehlend   1.49 %, in der Schwelle 15/15 |   0.1 s
+
+### Harfe T74: f1 587.06 Hz, Umlauf 81.8 Takte, zaehlend 14 bis 8524 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    29.69 Cent | angepasst: 1-12   3.57, zaehlend    6.19, alle   136.90 Cent | groesster Radius 0.6576 | Abklingen zaehlend   3.94 %, in der Schwelle 14/14 |   0.1 s
+  M   2 (  4 Mult.) | Start    10.91 Cent | angepasst: 1-12   0.39, zaehlend    0.54, alle    98.13 Cent | groesster Radius 0.6513 | Abklingen zaehlend   0.81 %, in der Schwelle 14/14 |   0.1 s
+
+### Harfe T75: f1 621.98 Hz, Umlauf 77.2 Takte, zaehlend 13 bis 8377 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    28.14 Cent | angepasst: 1-12   3.45, zaehlend    6.12, alle   136.20 Cent | groesster Radius 0.6522 | Abklingen zaehlend   3.86 %, in der Schwelle 13/13 |   0.1 s
+  M   2 (  4 Mult.) | Start    15.29 Cent | angepasst: 1-12   0.30, zaehlend    0.42, alle    95.13 Cent | groesster Radius 0.6403 | Abklingen zaehlend   0.68 %, in der Schwelle 13/13 |   0.1 s
+
+### Harfe T76: f1 659.11 Hz, Umlauf 72.8 Takte, zaehlend 14 bis 9556 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    16.31 Cent | angepasst: 1-12   9.67, zaehlend    9.67, alle   110.50 Cent | groesster Radius 0.5049 | Abklingen zaehlend   4.62 %, in der Schwelle 14/14 |   0.1 s
+  M   2 (  4 Mult.) | Start    28.69 Cent | angepasst: 1-12   3.65, zaehlend    5.45, alle    74.23 Cent | groesster Radius 0.6002 | Abklingen zaehlend   2.16 %, in der Schwelle 14/14 |   0.1 s
+  M   3 (  6 Mult.) | Start    73.88 Cent | angepasst: 1-12   2.36, zaehlend    3.30, alle    53.01 Cent | groesster Radius 0.5796 | Abklingen zaehlend   1.13 %, in der Schwelle 14/14 |   0.1 s
+  M   4 (  8 Mult.) | Start   124.59 Cent | angepasst: 1-12   0.01, zaehlend    0.01, alle    33.30 Cent | groesster Radius 0.5402 | Abklingen zaehlend   0.06 %, in der Schwelle 14/14 |   0.1 s
+
+### Harfe T77: f1 698.34 Hz, Umlauf 68.7 Takte, zaehlend 13 bis 9399 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    14.57 Cent | angepasst: 1-12   9.11, zaehlend    9.11, alle   118.34 Cent | groesster Radius 0.4968 | Abklingen zaehlend   4.38 %, in der Schwelle 13/13 |   0.1 s
+  M   2 (  4 Mult.) | Start    31.84 Cent | angepasst: 1-12   0.30, zaehlend    0.42, alle    73.86 Cent | groesster Radius 0.6044 | Abklingen zaehlend   0.66 %, in der Schwelle 13/13 |   0.1 s
+
+### Harfe T78: f1 739.88 Hz, Umlauf 64.9 Takte, zaehlend 12 bis 9178 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start     8.80 Cent | angepasst: 1-12   8.95, zaehlend    8.95, alle   105.05 Cent | groesster Radius 0.4863 | Abklingen zaehlend   3.56 %, in der Schwelle 12/12 |   0.1 s
+  M   2 (  4 Mult.) | Start    38.25 Cent | angepasst: 1-12   0.25, zaehlend    0.25, alle    60.72 Cent | groesster Radius 0.5822 | Abklingen zaehlend   0.44 %, in der Schwelle 12/12 |   0.1 s
+
+### Harfe T79: f1 784.16 Hz, Umlauf 61.2 Takte, zaehlend 13 bis 10535 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start     9.05 Cent | angepasst: 1-12   3.23, zaehlend    5.71, alle    83.95 Cent | groesster Radius 0.5762 | Abklingen zaehlend   3.66 %, in der Schwelle 13/13 |   0.0 s
+  M   2 (  4 Mult.) | Start    56.74 Cent | angepasst: 1-12   3.48, zaehlend    3.66, alle    36.86 Cent | groesster Radius 0.5610 | Abklingen zaehlend   1.03 %, in der Schwelle 13/13 |   0.1 s
+  M   3 (  6 Mult.) | Start   131.36 Cent | angepasst: 1-12   5.81, zaehlend    6.73, alle    12.19 Cent | groesster Radius 0.5232 | Abklingen zaehlend   2.03 %, in der Schwelle 13/13 |   0.1 s
+  M   4 (  8 Mult.) | Start   202.36 Cent | angepasst: 1-12   0.26, zaehlend    0.30, alle    16.38 Cent | groesster Radius 0.5002 | Abklingen zaehlend   0.09 %, in der Schwelle 13/13 |   0.2 s
+
+### Harfe T80: f1 830.81 Hz, Umlauf 57.8 Takte, zaehlend 12 bis 10289 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    13.68 Cent | angepasst: 1-12   9.30, zaehlend    9.30, alle    81.77 Cent | groesster Radius 0.5421 | Abklingen zaehlend   4.29 %, in der Schwelle 12/12 |   0.0 s
+  M   2 (  4 Mult.) | Start    68.10 Cent | angepasst: 1-12   0.24, zaehlend    0.24, alle    36.47 Cent | groesster Radius 0.5286 | Abklingen zaehlend   0.28 %, in der Schwelle 12/12 |   0.1 s
+
+### Harfe T81: f1 879.53 Hz, Umlauf 54.6 Takte, zaehlend 12 bis 10845 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    22.62 Cent | angepasst: 1-12   3.59, zaehlend    3.59, alle    62.88 Cent | groesster Radius 0.5172 | Abklingen zaehlend   2.52 %, in der Schwelle 12/12 |   0.1 s
+  M   2 (  4 Mult.) | Start    88.85 Cent | angepasst: 1-12   0.16, zaehlend    0.16, alle    35.94 Cent | groesster Radius 0.5014 | Abklingen zaehlend   0.32 %, in der Schwelle 12/12 |   0.1 s
+
+### Harfe T82: f1 931.85 Hz, Umlauf 51.5 Takte, zaehlend 12 bis 11527 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    25.35 Cent | angepasst: 1-12   4.55, zaehlend    4.55, alle    51.78 Cent | groesster Radius 0.5191 | Abklingen zaehlend   3.08 %, in der Schwelle 12/12 |   0.1 s
+  M   2 (  4 Mult.) | Start    99.50 Cent | angepasst: 1-12   0.26, zaehlend    0.26, alle    26.22 Cent | groesster Radius 0.5029 | Abklingen zaehlend   0.45 %, in der Schwelle 12/12 |   0.1 s
+
+### Harfe T83: f1 987.61 Hz, Umlauf 48.6 Takte, zaehlend 12 bis 12173 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    39.94 Cent | angepasst: 1-12   4.30, zaehlend    4.30, alle    23.08 Cent | groesster Radius 0.4802 | Abklingen zaehlend   1.17 %, in der Schwelle 12/12 |   0.0 s
+  M   2 (  4 Mult.) | Start   126.62 Cent | angepasst: 1-12  10.06, zaehlend   10.06, alle    11.09 Cent | groesster Radius 0.4575 | Abklingen zaehlend   2.80 %, in der Schwelle 12/12 |   0.1 s
+  M   3 (  6 Mult.) | Start   227.13 Cent | angepasst: 1-12   3.40, zaehlend    3.40, alle    24.76 Cent | groesster Radius 0.4131 | Abklingen zaehlend   1.54 %, in der Schwelle 12/12 |   0.2 s
+  M   4 (  8 Mult.) | Start   344.41 Cent | angepasst: 1-12   0.35, zaehlend    0.35, alle     3.25 Cent | groesster Radius 0.4260 | Abklingen zaehlend   0.13 %, in der Schwelle 12/12 |   0.1 s
+
+### Harfe T84: f1 1046.98 Hz, Umlauf 45.8 Takte, zaehlend 11 bis 11815 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    36.60 Cent | angepasst: 1-12   6.34, zaehlend    3.06, alle    39.03 Cent | groesster Radius 0.4658 | Abklingen zaehlend   2.26 %, in der Schwelle 11/11 |   0.1 s
+  M   2 (  4 Mult.) | Start   141.71 Cent | angepasst: 1-12   1.51, zaehlend    0.83, alle    16.02 Cent | groesster Radius 0.4339 | Abklingen zaehlend   0.44 %, in der Schwelle 11/11 |   0.1 s
+
+### Harfe T85: f1 1109.26 Hz, Umlauf 43.3 Takte, zaehlend 10 bis 11359 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    43.90 Cent | angepasst: 1-12   5.84, zaehlend    0.90, alle    27.50 Cent | groesster Radius 0.4103 | Abklingen zaehlend   1.03 %, in der Schwelle 10/10 |   0.1 s
+
+### Harfe T86: f1 1175.20 Hz, Umlauf 40.8 Takte, zaehlend 11 bis 13259 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    54.61 Cent | angepasst: 1-12   4.58, zaehlend    2.08, alle    23.14 Cent | groesster Radius 0.3985 | Abklingen zaehlend   1.67 %, in der Schwelle 11/11 |   0.1 s
+
+### Harfe T87: f1 1245.11 Hz, Umlauf 38.6 Takte, zaehlend 10 bis 12747 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    73.02 Cent | angepasst: 1-12   9.49, zaehlend    2.34, alle    28.50 Cent | groesster Radius 0.4063 | Abklingen zaehlend  15.05 %, in der Schwelle 10/10 |   0.0 s
+
+### Harfe T88: f1 1318.59 Hz, Umlauf 36.4 Takte, zaehlend 9 bis 12305 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    50.49 Cent | angepasst: 1-12  22.38, zaehlend    2.73, alle    32.49 Cent | groesster Radius 0.4511 | Abklingen zaehlend   2.30 %, in der Schwelle 9/9 |   0.0 s
+
+### Harfe T89: f1 1397.17 Hz, Umlauf 34.4 Takte, zaehlend 8 bis 11571 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    51.57 Cent | angepasst: 1-12  34.13, zaehlend    2.16, alle    47.26 Cent | groesster Radius 0.4448 | Abklingen zaehlend   1.91 %, in der Schwelle 8/8 |   0.1 s
+
+### Harfe T90: f1 1480.35 Hz, Umlauf 32.4 Takte, zaehlend 8 bis 12310 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    60.25 Cent | angepasst: 1-12  34.02, zaehlend    1.93, alle    34.02 Cent | groesster Radius 0.4239 | Abklingen zaehlend   1.56 %, in der Schwelle 8/8 |   0.0 s
+
+### Harfe T91: f1 1568.99 Hz, Umlauf 30.6 Takte, zaehlend 8 bis 13040 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    83.80 Cent | angepasst: 1-12  41.82, zaehlend    8.99, alle    41.82 Cent | groesster Radius 0.4360 | Abklingen zaehlend   4.47 %, in der Schwelle 8/8 |   0.1 s
+  M   2 (  4 Mult.) | Start   248.82 Cent | angepasst: 1-12   5.31, zaehlend    3.40, alle     5.31 Cent | groesster Radius 0.3563 | Abklingen zaehlend   0.87 %, in der Schwelle 8/8 |   0.1 s
+  M   3 (  6 Mult.) | Start   464.09 Cent | angepasst: 1-12  46.79, zaehlend    7.90, alle    46.79 Cent | groesster Radius 0.9800 | Abklingen zaehlend   5.31 %, in der Schwelle 8/8 |   0.2 s
+  M   4 (  8 Mult.) | Start   675.27 Cent | angepasst: 1-12   9.36, zaehlend    9.36, alle     9.36 Cent | groesster Radius 0.1341 | Abklingen zaehlend   2.07 %, in der Schwelle 8/8 |   0.1 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12  15.32, zaehlend    8.57, alle    15.32 Cent | groesster Radius 0.3601 | Abklingen zaehlend   2.33 %, in der Schwelle 8/8 |   0.4 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12  11.14, zaehlend    0.03, alle    11.14 Cent | groesster Radius 0.4740 | Abklingen zaehlend   0.03 %, in der Schwelle 8/8 |   0.1 s
+
+### Harfe T92: f1 1662.42 Hz, Umlauf 28.9 Takte, zaehlend 7 bis 12025 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    71.63 Cent | angepasst: 1-12  37.84, zaehlend    1.84, alle    37.84 Cent | groesster Radius 0.4039 | Abklingen zaehlend   1.66 %, in der Schwelle 7/7 |   0.1 s
+
+### Harfe T93: f1 1760.86 Hz, Umlauf 27.3 Takte, zaehlend 8 bis 14627 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   105.89 Cent | angepasst: 1-12  25.66, zaehlend    5.10, alle    25.66 Cent | groesster Radius 0.4226 | Abklingen zaehlend   3.82 %, in der Schwelle 8/8 |   0.1 s
+  M   2 (  4 Mult.) | Start   314.72 Cent | angepasst: 1-12  13.34, zaehlend   12.19, alle    13.34 Cent | groesster Radius 0.3641 | Abklingen zaehlend   3.23 %, in der Schwelle 8/8 |   0.1 s
+  M   3 (  6 Mult.) | Start   544.30 Cent | angepasst: 1-12  33.02, zaehlend    9.33, alle    33.02 Cent | groesster Radius 0.9800 | Abklingen zaehlend   5.69 %, in der Schwelle 8/8 |   1.4 s
+  M   4 (  8 Mult.) | Start   793.11 Cent | angepasst: 1-12   1.40, zaehlend    1.40, alle     1.40 Cent | groesster Radius 0.3789 | Abklingen zaehlend   0.34 %, in der Schwelle 8/8 |   1.2 s
+
+### Harfe T94: f1 1865.71 Hz, Umlauf 25.7 Takte, zaehlend 7 bis 13489 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   100.06 Cent | angepasst: 1-12  63.28, zaehlend   18.30, alle    63.28 Cent | groesster Radius 0.2271 | Abklingen zaehlend   7.28 %, in der Schwelle 7/7 |   0.1 s
+  M   2 (  4 Mult.) | Start   362.36 Cent | angepasst: 1-12  13.63, zaehlend    0.57, alle    13.63 Cent | groesster Radius 0.3251 | Abklingen zaehlend   0.50 %, in der Schwelle 7/7 |   0.1 s
+
+### Harfe T95: f1 1976.13 Hz, Umlauf 24.3 Takte, zaehlend 7 bis 14260 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   140.53 Cent | angepasst: 1-12  10.84, zaehlend    6.42, alle    10.84 Cent | groesster Radius 0.1851 | Abklingen zaehlend   1.28 %, in der Schwelle 7/7 |   0.1 s
+  M   2 (  4 Mult.) | Start   384.54 Cent | angepasst: 1-12  21.53, zaehlend   14.35, alle    21.53 Cent | groesster Radius 0.2727 | Abklingen zaehlend   3.79 %, in der Schwelle 7/7 |   0.1 s
+  M   3 (  6 Mult.) | Start   651.22 Cent | angepasst: 1-12  12.42, zaehlend    3.88, alle    12.42 Cent | groesster Radius 0.1379 | Abklingen zaehlend   1.53 %, in der Schwelle 7/7 |   0.2 s
+  M   4 (  8 Mult.) | Start   946.85 Cent | angepasst: 1-12  25.90, zaehlend   17.06, alle    25.90 Cent | groesster Radius 0.3243 | Abklingen zaehlend   4.83 %, in der Schwelle 7/7 |   0.1 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12  22.30, zaehlend   14.32, alle    22.30 Cent | groesster Radius 0.3161 | Abklingen zaehlend   4.01 %, in der Schwelle 7/7 |   0.1 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12   7.17, zaehlend    1.60, alle     7.17 Cent | groesster Radius 0.4344 | Abklingen zaehlend   0.52 %, in der Schwelle 7/7 |   0.2 s
+
+### Harfe T96: f1 2095.05 Hz, Umlauf 22.9 Takte, zaehlend 7 bis 15177 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   135.28 Cent | angepasst: 1-12  30.38, zaehlend    9.14, alle    30.38 Cent | groesster Radius 0.2499 | Abklingen zaehlend   4.27 %, in der Schwelle 7/7 |   0.1 s
+  M   2 (  4 Mult.) | Start   402.62 Cent | angepasst: 1-12  43.48, zaehlend   25.87, alle    43.48 Cent | groesster Radius 0.2648 | Abklingen zaehlend   7.42 %, in der Schwelle 7/7 |   0.1 s
+  M   3 (  6 Mult.) | Start   718.17 Cent | angepasst: 1-12  38.04, zaehlend   15.94, alle    38.04 Cent | groesster Radius 0.0907 | Abklingen zaehlend   6.11 %, in der Schwelle 7/7 |   0.1 s
+  M   4 (  8 Mult.) | Start   794.13 Cent | angepasst: 1-12  21.44, zaehlend   17.85, alle    21.44 Cent | groesster Radius 0.2696 | Abklingen zaehlend   5.07 %, in der Schwelle 7/7 |   0.2 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12  19.73, zaehlend   15.99, alle    19.73 Cent | groesster Radius 0.2935 | Abklingen zaehlend   4.69 %, in der Schwelle 7/7 |   0.1 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12  20.82, zaehlend   15.96, alle    20.82 Cent | groesster Radius 0.3297 | Abklingen zaehlend   5.14 %, in der Schwelle 7/7 |   0.2 s
+  M  14: passt nicht in den Umlauf
+
+### Harfe T97: f1 2219.83 Hz, Umlauf 21.6 Takte, zaehlend 7 bis 16146 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   137.70 Cent | angepasst: 1-12  46.99, zaehlend   32.94, alle    46.99 Cent | groesster Radius 0.1525 | Abklingen zaehlend   9.88 %, in der Schwelle 7/7 |   0.1 s
+  M   2 (  4 Mult.) | Start   483.38 Cent | angepasst: 1-12  29.89, zaehlend   29.89, alle    29.89 Cent | groesster Radius 0.2212 | Abklingen zaehlend   6.14 %, in der Schwelle 7/7 |   0.2 s
+  M   3 (  6 Mult.) | Start   806.23 Cent | angepasst: 1-12  49.99, zaehlend   38.08, alle    49.99 Cent | groesster Radius 0.2694 | Abklingen zaehlend  10.11 %, in der Schwelle 7/7 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12   7.58, zaehlend    6.61, alle     7.58 Cent | groesster Radius 0.2683 | Abklingen zaehlend   2.88 %, in der Schwelle 7/7 |   0.1 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12   5.93, zaehlend    4.97, alle     5.93 Cent | groesster Radius 0.2858 | Abklingen zaehlend   2.48 %, in der Schwelle 7/7 |   0.1 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12   8.00, zaehlend    6.78, alle     8.00 Cent | groesster Radius 0.2225 | Abklingen zaehlend   3.05 %, in der Schwelle 7/7 |   0.2 s
+  M  14: passt nicht in den Umlauf
+
+### Harfe T98: f1 2351.66 Hz, Umlauf 20.4 Takte, zaehlend 7 bis 17046 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   219.30 Cent | angepasst: 1-12  49.83, zaehlend   35.68, alle    49.83 Cent | groesster Radius 0.1210 | Abklingen zaehlend  10.75 %, in der Schwelle 7/7 |   0.1 s
+  M   2 (  4 Mult.) | Start   536.70 Cent | angepasst: 1-12  29.00, zaehlend   29.00, alle    29.00 Cent | groesster Radius 0.9800 | Abklingen zaehlend   5.80 %, in der Schwelle 7/7 |   0.2 s
+  M   3 (  6 Mult.) | Start   695.87 Cent | angepasst: 1-12  14.39, zaehlend   10.61, alle    14.39 Cent | groesster Radius 0.3082 | Abklingen zaehlend   4.52 %, in der Schwelle 7/7 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12  54.54, zaehlend   42.61, alle    54.54 Cent | groesster Radius 0.2388 | Abklingen zaehlend  11.33 %, in der Schwelle 7/7 |   0.1 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12   3.05, zaehlend    0.01, alle     3.05 Cent | groesster Radius 0.4462 | Abklingen zaehlend   1.07 %, in der Schwelle 7/7 |   0.1 s
+
+### Harfe T99: f1 2491.73 Hz, Umlauf 19.3 Takte, zaehlend 6 bis 15386 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   215.31 Cent | angepasst: 1-12  20.49, zaehlend   20.40, alle    20.49 Cent | groesster Radius 0.2518 | Abklingen zaehlend   5.38 %, in der Schwelle 6/6 |   0.1 s
+  M   2 (  4 Mult.) | Start   512.48 Cent | angepasst: 1-12  23.54, zaehlend   23.54, alle    23.54 Cent | groesster Radius 0.9800 | Abklingen zaehlend   5.05 %, in der Schwelle 6/6 |   0.2 s
+  M   3 (  6 Mult.) | Start   832.55 Cent | angepasst: 1-12  55.29, zaehlend   42.40, alle    55.29 Cent | groesster Radius 0.2267 | Abklingen zaehlend  11.31 %, in der Schwelle 6/6 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12  31.25, zaehlend    0.33, alle    31.25 Cent | groesster Radius 0.6161 | Abklingen zaehlend   3.68 %, in der Schwelle 6/6 |   0.1 s
+
+### Harfe T100: f1 2639.25 Hz, Umlauf 18.2 Takte, zaehlend 6 bis 16301 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   238.41 Cent | angepasst: 1-12  51.52, zaehlend   35.20, alle    51.52 Cent | groesster Radius 0.1028 | Abklingen zaehlend  10.84 %, in der Schwelle 6/6 |   0.1 s
+  M   2 (  4 Mult.) | Start   585.18 Cent | angepasst: 1-12  30.49, zaehlend   30.49, alle    30.49 Cent | groesster Radius 0.1607 | Abklingen zaehlend   6.85 %, in der Schwelle 6/6 |   0.2 s
+  M   3 (  6 Mult.) | Start  1023.13 Cent | angepasst: 1-12  58.17, zaehlend   44.41, alle    58.17 Cent | groesster Radius 0.2178 | Abklingen zaehlend  11.92 %, in der Schwelle 6/6 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12  14.72, zaehlend    9.81, alle    14.72 Cent | groesster Radius 0.2608 | Abklingen zaehlend   4.03 %, in der Schwelle 6/6 |   0.1 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12  15.07, zaehlend   10.47, alle    15.07 Cent | groesster Radius 0.2388 | Abklingen zaehlend   4.08 %, in der Schwelle 6/6 |   0.1 s
+  M   9: passt nicht in den Umlauf
+
+### Harfe T101: f1 2796.19 Hz, Umlauf 17.2 Takte, zaehlend 6 bis 17272 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   242.84 Cent | angepasst: 1-12  40.48, zaehlend   40.48, alle    40.48 Cent | groesster Radius 0.1555 | Abklingen zaehlend   9.12 %, in der Schwelle 6/6 |   0.0 s
+  M   2 (  4 Mult.) | Start   543.63 Cent | angepasst: 1-12  40.65, zaehlend   40.65, alle    40.65 Cent | groesster Radius 0.1457 | Abklingen zaehlend   9.15 %, in der Schwelle 6/6 |   0.2 s
+  M   3 (  6 Mult.) | Start   776.11 Cent | angepasst: 1-12  27.90, zaehlend   27.90, alle    27.90 Cent | groesster Radius 0.2088 | Abklingen zaehlend   6.96 %, in der Schwelle 6/6 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12  45.87, zaehlend   45.87, alle    45.87 Cent | groesster Radius 0.2076 | Abklingen zaehlend  11.70 %, in der Schwelle 6/6 |   0.2 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12  27.46, zaehlend   27.46, alle    27.46 Cent | groesster Radius 0.1883 | Abklingen zaehlend   6.91 %, in der Schwelle 6/6 |   0.1 s
+  M   9: passt nicht in den Umlauf
+
+### Harfe T102: f1 2962.78 Hz, Umlauf 16.2 Takte, zaehlend 6 bis 18364 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   276.96 Cent | angepasst: 1-12  50.45, zaehlend   50.45, alle    50.45 Cent | groesster Radius 0.1730 | Abklingen zaehlend  11.64 %, in der Schwelle 6/6 |   0.1 s
+  M   2 (  4 Mult.) | Start   645.75 Cent | angepasst: 1-12  28.11, zaehlend   28.11, alle    28.11 Cent | groesster Radius 0.1443 | Abklingen zaehlend  11.00 %, in der Schwelle 6/6 |   0.2 s
+  M   3 (  6 Mult.) | Start      nan Cent | angepasst: 1-12  35.64, zaehlend   35.64, alle    35.64 Cent | groesster Radius 0.2436 | Abklingen zaehlend  10.19 %, in der Schwelle 6/6 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12  44.76, zaehlend   44.76, alle    44.76 Cent | groesster Radius 0.2169 | Abklingen zaehlend  12.19 %, in der Schwelle 6/6 |   0.1 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12  37.82, zaehlend   37.82, alle    37.82 Cent | groesster Radius 0.3032 | Abklingen zaehlend  10.40 %, in der Schwelle 6/6 |   0.1 s
+  M   9: passt nicht in den Umlauf
+
+### Harfe T103: f1 3139.67 Hz, Umlauf 15.3 Takte, zaehlend 5 bis 16131 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   320.53 Cent | angepasst: 1-12  39.56, zaehlend   23.13, alle    39.56 Cent | groesster Radius 0.1155 | Abklingen zaehlend   8.01 %, in der Schwelle 5/5 |   0.1 s
+  M   2 (  4 Mult.) | Start   615.13 Cent | angepasst: 1-12  37.63, zaehlend   20.86, alle    37.63 Cent | groesster Radius 0.0736 | Abklingen zaehlend   7.56 %, in der Schwelle 5/5 |   0.1 s
+  M   3 (  6 Mult.) | Start      nan Cent | angepasst: 1-12  38.24, zaehlend   38.24, alle    38.24 Cent | groesster Radius 0.2232 | Abklingen zaehlend  12.17 %, in der Schwelle 5/5 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12  33.17, zaehlend   33.17, alle    33.17 Cent | groesster Radius 0.2456 | Abklingen zaehlend  11.38 %, in der Schwelle 5/5 |   0.1 s
+  M   6 ( 12 Mult.) | Start      nan Cent | angepasst: 1-12  36.53, zaehlend   21.22, alle    36.53 Cent | groesster Radius 0.1657 | Abklingen zaehlend   7.15 %, in der Schwelle 5/5 |   0.1 s
+  M   9: passt nicht in den Umlauf
+
+### Harfe T104: f1 3326.83 Hz, Umlauf 14.4 Takte, zaehlend 5 bis 17148 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   248.55 Cent | angepasst: 1-12  10.07, zaehlend   10.07, alle    10.07 Cent | groesster Radius 0.1799 | Abklingen zaehlend   2.48 %, in der Schwelle 5/5 |   0.1 s
+  M   2 (  4 Mult.) | Start   526.70 Cent | angepasst: 1-12   8.33, zaehlend    8.33, alle     8.33 Cent | groesster Radius 0.1056 | Abklingen zaehlend   1.90 %, in der Schwelle 5/5 |   0.1 s
+  M   3 (  6 Mult.) | Start      nan Cent | angepasst: 1-12  18.23, zaehlend   18.23, alle    18.23 Cent | groesster Radius 0.2039 | Abklingen zaehlend   4.18 %, in der Schwelle 5/5 |   0.1 s
+  M   4 (  8 Mult.) | Start      nan Cent | angepasst: 1-12  25.67, zaehlend   25.67, alle    25.67 Cent | groesster Radius 0.1906 | Abklingen zaehlend   5.81 %, in der Schwelle 5/5 |   0.1 s
+  M   6: passt nicht in den Umlauf
+
+### Cembalo T29: f1 43.65 Hz, Umlauf 1099.5 Takte, zaehlend 244 bis 19991 Hz, Abel-Smith 99 Biquads
+  M  99 (198 Mult.) | Start     3.10 Cent | angepasst: 1-12   0.00, zaehlend    1.50, alle     1.50 Cent | groesster Radius 0.9950 | Abklingen zaehlend  14.03 %, in der Schwelle 244/244 |  12.9 s
+
+### Cembalo T30: f1 46.25 Hz, Umlauf 1037.8 Takte, zaehlend 240 bis 19966 Hz, Abel-Smith 96 Biquads
+  M  96 (192 Mult.) | Start     3.04 Cent | angepasst: 1-12   0.00, zaehlend    1.11, alle     1.11 Cent | groesster Radius 0.9946 | Abklingen zaehlend  12.58 %, in der Schwelle 240/240 |  14.4 s
+
+### Cembalo T31: f1 49.00 Hz, Umlauf 979.6 Takte, zaehlend 236 bis 19964 Hz, Abel-Smith 92 Biquads
+  M  92 (184 Mult.) | Start     3.25 Cent | angepasst: 1-12   0.00, zaehlend    0.99, alle     0.99 Cent | groesster Radius 0.9941 | Abklingen zaehlend  11.10 %, in der Schwelle 236/236 |   9.9 s
+
+### Cembalo T32: f1 51.91 Hz, Umlauf 924.6 Takte, zaehlend 239 bis 19943 Hz, Abel-Smith 88 Biquads
+  M  88 (176 Mult.) | Start     3.92 Cent | angepasst: 1-12   0.00, zaehlend    1.38, alle     1.38 Cent | groesster Radius 0.9934 | Abklingen zaehlend   7.44 %, in der Schwelle 239/239 |  13.9 s
+
+### Cembalo T33: f1 55.00 Hz, Umlauf 872.7 Takte, zaehlend 234 bis 19899 Hz, Abel-Smith 84 Biquads
+  M  84 (168 Mult.) | Start     4.85 Cent | angepasst: 1-12   0.00, zaehlend    2.63, alle     2.63 Cent | groesster Radius 0.9927 | Abklingen zaehlend   6.12 %, in der Schwelle 234/234 |  14.0 s
+
+### Cembalo T34: f1 58.27 Hz, Umlauf 823.7 Takte, zaehlend 237 bis 19878 Hz, Abel-Smith 79 Biquads
+  M  79 (158 Mult.) | Start     3.75 Cent | angepasst: 1-12   0.00, zaehlend    3.23, alle     3.23 Cent | groesster Radius 0.9916 | Abklingen zaehlend   4.31 %, in der Schwelle 237/237 |  13.6 s
+  M 119 (238 Mult.) | Start   245.60 Cent | angepasst: 1-12   0.00, zaehlend    1.10, alle     1.10 Cent | groesster Radius 0.9916 | Abklingen zaehlend   4.65 %, in der Schwelle 237/237 |  11.6 s
+
+### Cembalo T35: f1 61.74 Hz, Umlauf 777.5 Takte, zaehlend 232 bis 19953 Hz, Abel-Smith 73 Biquads
+  M  73 (146 Mult.) | Start     3.88 Cent | angepasst: 1-12   0.00, zaehlend    1.72, alle     1.72 Cent | groesster Radius 0.9898 | Abklingen zaehlend   3.60 %, in der Schwelle 232/232 |   3.6 s
+
+### Cembalo T36: f1 65.41 Hz, Umlauf 733.9 Takte, zaehlend 226 bis 19930 Hz, Abel-Smith 68 Biquads
+  M  68 (136 Mult.) | Start     3.78 Cent | angepasst: 1-12   0.02, zaehlend    3.11, alle     3.11 Cent | groesster Radius 0.9816 | Abklingen zaehlend   3.34 %, in der Schwelle 226/226 |   1.5 s
+  M 102 (204 Mult.) | Start   256.85 Cent | angepasst: 1-12   0.00, zaehlend    2.19, alle     2.19 Cent | groesster Radius 0.9895 | Abklingen zaehlend   3.77 %, in der Schwelle 226/226 |  25.2 s
+
+### Cembalo T37: f1 69.30 Hz, Umlauf 692.7 Takte, zaehlend 224 bis 19915 Hz, Abel-Smith 61 Biquads
+  M  61 (122 Mult.) | Start     4.64 Cent | angepasst: 1-12   0.04, zaehlend    2.10, alle     2.10 Cent | groesster Radius 0.9786 | Abklingen zaehlend   3.40 %, in der Schwelle 224/224 |   1.2 s
+
+### Cembalo T38: f1 73.42 Hz, Umlauf 653.8 Takte, zaehlend 215 bis 19961 Hz, Abel-Smith 56 Biquads
+  M  56 (112 Mult.) | Start     3.38 Cent | angepasst: 1-12   0.05, zaehlend    1.46, alle     1.46 Cent | groesster Radius 0.9776 | Abklingen zaehlend   3.35 %, in der Schwelle 215/215 |   1.0 s
+
+### Cembalo T39: f1 77.78 Hz, Umlauf 617.1 Takte, zaehlend 206 bis 19898 Hz, Abel-Smith 51 Biquads
+  M  51 (102 Mult.) | Start     5.17 Cent | angepasst: 1-12   0.06, zaehlend    1.45, alle     1.45 Cent | groesster Radius 0.9755 | Abklingen zaehlend   3.32 %, in der Schwelle 206/206 |   0.7 s
+
+### Cembalo T40: f1 82.41 Hz, Umlauf 582.5 Takte, zaehlend 197 bis 19876 Hz, Abel-Smith 47 Biquads
+  M  47 ( 94 Mult.) | Start     3.13 Cent | angepasst: 1-12   0.05, zaehlend    0.82, alle     0.82 Cent | groesster Radius 0.9723 | Abklingen zaehlend   3.27 %, in der Schwelle 197/197 |   0.7 s
+
+### Cembalo T41: f1 87.31 Hz, Umlauf 549.8 Takte, zaehlend 194 bis 19912 Hz, Abel-Smith 40 Biquads
+  M  40 ( 80 Mult.) | Start     2.89 Cent | angepasst: 1-12   0.06, zaehlend    0.80, alle     0.80 Cent | groesster Radius 0.9664 | Abklingen zaehlend   3.28 %, in der Schwelle 194/194 |   0.5 s
+
+### Cembalo T42: f1 92.50 Hz, Umlauf 518.9 Takte, zaehlend 186 bis 20000 Hz, Abel-Smith 36 Biquads
+  M  36 ( 72 Mult.) | Start     3.49 Cent | angepasst: 1-12   0.09, zaehlend    1.56, alle     1.56 Cent | groesster Radius 0.9643 | Abklingen zaehlend   3.19 %, in der Schwelle 186/186 |   0.4 s
+
+### Cembalo T43: f1 98.00 Hz, Umlauf 489.8 Takte, zaehlend 177 bis 19916 Hz, Abel-Smith 33 Biquads
+  M  33 ( 66 Mult.) | Start     2.99 Cent | angepasst: 1-12   0.08, zaehlend    1.20, alle     1.20 Cent | groesster Radius 0.9586 | Abklingen zaehlend   3.12 %, in der Schwelle 177/177 |   0.4 s
+
+### Cembalo T44: f1 103.83 Hz, Umlauf 462.3 Takte, zaehlend 172 bis 20000 Hz, Abel-Smith 27 Biquads
+  M  27 ( 54 Mult.) | Start     3.89 Cent | angepasst: 1-12   0.12, zaehlend    1.57, alle     1.57 Cent | groesster Radius 0.9521 | Abklingen zaehlend   3.01 %, in der Schwelle 172/172 |   0.3 s
+
+### Cembalo T45: f1 110.00 Hz, Umlauf 436.4 Takte, zaehlend 163 bis 19872 Hz, Abel-Smith 24 Biquads
+  M  24 ( 48 Mult.) | Start     4.22 Cent | angepasst: 1-12   0.11, zaehlend    2.81, alle     2.81 Cent | groesster Radius 0.9449 | Abklingen zaehlend   2.95 %, in der Schwelle 163/163 |   0.2 s
+
+### Cembalo T46: f1 116.54 Hz, Umlauf 411.9 Takte, zaehlend 158 bis 19948 Hz, Abel-Smith 19 Biquads
+  M  19 ( 38 Mult.) | Start     2.97 Cent | angepasst: 1-12   0.14, zaehlend    1.48, alle     1.48 Cent | groesster Radius 0.9302 | Abklingen zaehlend   2.74 %, in der Schwelle 158/158 |   0.1 s
+
+### Cembalo T47: f1 123.47 Hz, Umlauf 388.8 Takte, zaehlend 150 bis 19918 Hz, Abel-Smith 17 Biquads
+  M  17 ( 34 Mult.) | Start     2.89 Cent | angepasst: 1-12   0.13, zaehlend    1.61, alle     1.61 Cent | groesster Radius 0.9196 | Abklingen zaehlend   2.61 %, in der Schwelle 150/150 |   0.1 s
+
+### Cembalo T48: f1 130.81 Hz, Umlauf 366.9 Takte, zaehlend 138 bis 19966 Hz, Abel-Smith 20 Biquads
+  M  20 ( 40 Mult.) | Start     4.29 Cent | angepasst: 1-12   0.16, zaehlend    4.21, alle     4.21 Cent | groesster Radius 0.9333 | Abklingen zaehlend   3.30 %, in der Schwelle 138/138 |   0.2 s
+  M  30 ( 60 Mult.) | Start   173.31 Cent | angepasst: 1-12   0.21, zaehlend    1.38, alle     1.38 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.05 %, in der Schwelle 138/138 |   3.3 s
+
+### Cembalo T49: f1 138.59 Hz, Umlauf 346.3 Takte, zaehlend 131 bis 19949 Hz, Abel-Smith 18 Biquads
+  M  18 ( 36 Mult.) | Start     5.95 Cent | angepasst: 1-12   0.17, zaehlend    3.02, alle     3.02 Cent | groesster Radius 0.9271 | Abklingen zaehlend   3.13 %, in der Schwelle 131/131 |   0.1 s
+  M  27 ( 54 Mult.) | Start   163.57 Cent | angepasst: 1-12   0.00, zaehlend    1.25, alle     1.25 Cent | groesster Radius 0.8887 | Abklingen zaehlend   2.37 %, in der Schwelle 131/131 |   3.1 s
+
+### Cembalo T50: f1 146.83 Hz, Umlauf 326.9 Takte, zaehlend 124 bis 19873 Hz, Abel-Smith 16 Biquads
+  M  16 ( 32 Mult.) | Start     6.64 Cent | angepasst: 1-12   0.18, zaehlend    3.12, alle     3.12 Cent | groesster Radius 0.9199 | Abklingen zaehlend   3.26 %, in der Schwelle 124/124 |   0.1 s
+  M  24 ( 48 Mult.) | Start   151.51 Cent | angepasst: 1-12   0.20, zaehlend    2.39, alle     2.39 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.76 %, in der Schwelle 124/124 |   0.6 s
+
+### Cembalo T51: f1 155.56 Hz, Umlauf 308.6 Takte, zaehlend 118 bis 19929 Hz, Abel-Smith 14 Biquads
+  M  14 ( 28 Mult.) | Start     4.24 Cent | angepasst: 1-12   0.28, zaehlend    2.11, alle     2.11 Cent | groesster Radius 0.9153 | Abklingen zaehlend   2.81 %, in der Schwelle 118/118 |   0.1 s
+
+### Cembalo T52: f1 164.81 Hz, Umlauf 291.2 Takte, zaehlend 113 bis 19817 Hz, Abel-Smith 11 Biquads
+  M  11 ( 22 Mult.) | Start     6.65 Cent | angepasst: 1-12   0.28, zaehlend    1.90, alle     1.90 Cent | groesster Radius 0.8892 | Abklingen zaehlend   2.77 %, in der Schwelle 113/113 |   0.1 s
+
+### Cembalo T53: f1 174.62 Hz, Umlauf 274.9 Takte, zaehlend 108 bis 19997 Hz, Abel-Smith 10 Biquads
+  M  10 ( 20 Mult.) | Start     6.43 Cent | angepasst: 1-12   0.27, zaehlend    1.85, alle     1.85 Cent | groesster Radius 0.8762 | Abklingen zaehlend   2.59 %, in der Schwelle 108/108 |   0.1 s
+
+### Cembalo T54: f1 185.00 Hz, Umlauf 259.5 Takte, zaehlend 102 bis 19960 Hz, Abel-Smith 9 Biquads
+  M   9 ( 18 Mult.) | Start    10.36 Cent | angepasst: 1-12   0.29, zaehlend    2.37, alle     2.37 Cent | groesster Radius 0.8644 | Abklingen zaehlend   2.11 %, in der Schwelle 102/102 |   0.1 s
+
+### Cembalo T55: f1 196.00 Hz, Umlauf 244.9 Takte, zaehlend 96 bis 19849 Hz, Abel-Smith 8 Biquads
+  M   8 ( 16 Mult.) | Start    10.47 Cent | angepasst: 1-12   0.42, zaehlend    5.67, alle     5.67 Cent | groesster Radius 0.8503 | Abklingen zaehlend   3.37 %, in der Schwelle 96/96 |   0.1 s
+  M  12 ( 24 Mult.) | Start    89.08 Cent | angepasst: 1-12   0.06, zaehlend    2.12, alle     2.12 Cent | groesster Radius 0.8187 | Abklingen zaehlend   0.53 %, in der Schwelle 96/96 |   0.3 s
+
+### Cembalo T56: f1 207.65 Hz, Umlauf 231.2 Takte, zaehlend 91 bis 19897 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start    12.90 Cent | angepasst: 1-12   0.46, zaehlend    2.70, alle     2.70 Cent | groesster Radius 0.8444 | Abklingen zaehlend   2.51 %, in der Schwelle 91/91 |   0.1 s
+
+### Cembalo T57: f1 220.00 Hz, Umlauf 218.2 Takte, zaehlend 87 bis 19942 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    16.62 Cent | angepasst: 1-12   0.72, zaehlend    3.04, alle     3.04 Cent | groesster Radius 0.8083 | Abklingen zaehlend   3.07 %, in der Schwelle 87/87 |   0.1 s
+  M   8 ( 16 Mult.) | Start    66.10 Cent | angepasst: 1-12   0.05, zaehlend    0.49, alle     0.49 Cent | groesster Radius 0.7843 | Abklingen zaehlend   0.88 %, in der Schwelle 87/87 |   0.1 s
+
+### Cembalo T58: f1 233.08 Hz, Umlauf 205.9 Takte, zaehlend 82 bis 19876 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    12.45 Cent | angepasst: 1-12   0.55, zaehlend    4.70, alle     4.70 Cent | groesster Radius 0.7935 | Abklingen zaehlend   1.68 %, in der Schwelle 82/82 |   0.1 s
+  M   8 ( 16 Mult.) | Start    74.96 Cent | angepasst: 1-12   0.09, zaehlend    2.38, alle     2.38 Cent | groesster Radius 0.7504 | Abklingen zaehlend   1.17 %, in der Schwelle 82/82 |   0.1 s
+
+### Cembalo T59: f1 246.94 Hz, Umlauf 194.4 Takte, zaehlend 77 bis 19732 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    17.28 Cent | angepasst: 1-12   1.04, zaehlend    2.76, alle     2.76 Cent | groesster Radius 0.7850 | Abklingen zaehlend   2.74 %, in der Schwelle 77/77 |   0.1 s
+
+### Cembalo T60: f1 261.63 Hz, Umlauf 183.5 Takte, zaehlend 73 bis 19794 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    19.24 Cent | angepasst: 1-12   0.75, zaehlend    3.18, alle     3.18 Cent | groesster Radius 0.7597 | Abklingen zaehlend   2.84 %, in der Schwelle 73/73 |   0.1 s
+  M   6 ( 12 Mult.) | Start    48.02 Cent | angepasst: 1-12   0.10, zaehlend    1.82, alle     1.82 Cent | groesster Radius 0.7494 | Abklingen zaehlend   0.71 %, in der Schwelle 73/73 |   0.1 s
+
+### Cembalo T61: f1 277.18 Hz, Umlauf 173.2 Takte, zaehlend 69 bis 19821 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    19.25 Cent | angepasst: 1-12   0.64, zaehlend    2.55, alle     2.55 Cent | groesster Radius 0.7433 | Abklingen zaehlend   2.49 %, in der Schwelle 69/69 |   0.1 s
+
+### Cembalo T62: f1 293.67 Hz, Umlauf 163.5 Takte, zaehlend 65 bis 19777 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    14.41 Cent | angepasst: 1-12   0.58, zaehlend    4.89, alle     4.89 Cent | groesster Radius 0.7294 | Abklingen zaehlend   3.10 %, in der Schwelle 65/65 |   0.1 s
+  M   6 ( 12 Mult.) | Start    52.36 Cent | angepasst: 1-12   0.05, zaehlend    0.24, alle     0.24 Cent | groesster Radius 0.7030 | Abklingen zaehlend   2.98 %, in der Schwelle 65/65 |   0.1 s
+
+### Cembalo T63: f1 311.13 Hz, Umlauf 154.3 Takte, zaehlend 62 bis 19998 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    22.60 Cent | angepasst: 1-12   1.62, zaehlend    3.31, alle     3.31 Cent | groesster Radius 0.7383 | Abklingen zaehlend   3.05 %, in der Schwelle 62/62 |   0.1 s
+  M   4 (  8 Mult.) | Start    19.77 Cent | angepasst: 1-12   0.52, zaehlend    5.03, alle     5.03 Cent | groesster Radius 0.7073 | Abklingen zaehlend   2.68 %, in der Schwelle 62/62 |   0.1 s
+  M   6 ( 12 Mult.) | Start    93.19 Cent | angepasst: 1-12   0.18, zaehlend    5.66, alle     5.66 Cent | groesster Radius 0.6445 | Abklingen zaehlend   2.67 %, in der Schwelle 62/62 |   0.1 s
+  M   9 ( 18 Mult.) | Start   203.59 Cent | angepasst: 1-12   0.02, zaehlend    0.24, alle     0.24 Cent | groesster Radius 0.6553 | Abklingen zaehlend   2.65 %, in der Schwelle 62/62 |   0.2 s
+
+### Cembalo T64: f1 329.63 Hz, Umlauf 145.6 Takte, zaehlend 58 bis 19806 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    25.83 Cent | angepasst: 1-12   1.32, zaehlend    4.69, alle     4.69 Cent | groesster Radius 0.7178 | Abklingen zaehlend   3.52 %, in der Schwelle 58/58 |   0.1 s
+  M   4 (  8 Mult.) | Start    25.40 Cent | angepasst: 1-12   0.42, zaehlend    7.41, alle     7.41 Cent | groesster Radius 0.6918 | Abklingen zaehlend   3.21 %, in der Schwelle 58/58 |   0.1 s
+  M   6 ( 12 Mult.) | Start    95.36 Cent | angepasst: 1-12   0.03, zaehlend    0.44, alle     0.44 Cent | groesster Radius 0.6789 | Abklingen zaehlend   2.06 %, in der Schwelle 58/58 |   0.1 s
+
+### Cembalo T65: f1 349.23 Hz, Umlauf 137.4 Takte, zaehlend 55 bis 19781 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    25.93 Cent | angepasst: 1-12   2.37, zaehlend    3.50, alle     3.50 Cent | groesster Radius 0.6786 | Abklingen zaehlend   3.11 %, in der Schwelle 55/55 |   0.1 s
+  M   3 (  6 Mult.) | Start    19.52 Cent | angepasst: 1-12   0.67, zaehlend    5.97, alle     5.97 Cent | groesster Radius 0.6429 | Abklingen zaehlend   2.72 %, in der Schwelle 55/55 |   0.1 s
+  M   4 (  8 Mult.) | Start    52.92 Cent | angepasst: 1-12   0.25, zaehlend    6.45, alle     6.45 Cent | groesster Radius 0.6399 | Abklingen zaehlend   2.61 %, in der Schwelle 55/55 |   0.1 s
+  M   6 ( 12 Mult.) | Start   141.54 Cent | angepasst: 1-12   0.07, zaehlend    0.72, alle     0.72 Cent | groesster Radius 0.6246 | Abklingen zaehlend   1.98 %, in der Schwelle 55/55 |   0.2 s
+
+### Cembalo T66: f1 370.00 Hz, Umlauf 129.7 Takte, zaehlend 52 bis 19816 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    31.46 Cent | angepasst: 1-12   2.42, zaehlend    7.17, alle     7.17 Cent | groesster Radius 0.6711 | Abklingen zaehlend   4.37 %, in der Schwelle 52/52 |   0.1 s
+  M   3 (  6 Mult.) | Start    24.04 Cent | angepasst: 1-12   0.78, zaehlend    2.66, alle     2.66 Cent | groesster Radius 0.6668 | Abklingen zaehlend   1.67 %, in der Schwelle 52/52 |   0.1 s
+
+### Cembalo T67: f1 392.00 Hz, Umlauf 122.4 Takte, zaehlend 49 bis 19781 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    22.82 Cent | angepasst: 1-12   1.91, zaehlend    8.85, alle     8.85 Cent | groesster Radius 0.6353 | Abklingen zaehlend   4.47 %, in der Schwelle 49/49 |   0.1 s
+  M   3 (  6 Mult.) | Start    24.63 Cent | angepasst: 1-12   0.38, zaehlend    1.39, alle     1.39 Cent | groesster Radius 0.6154 | Abklingen zaehlend   1.48 %, in der Schwelle 49/49 |   0.1 s
+
+### Cembalo T68: f1 415.31 Hz, Umlauf 115.6 Takte, zaehlend 46 bis 19668 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    31.04 Cent | angepasst: 1-12   1.81, zaehlend    5.23, alle     5.23 Cent | groesster Radius 0.6251 | Abklingen zaehlend   3.41 %, in der Schwelle 46/46 |   0.1 s
+  M   3 (  6 Mult.) | Start    29.21 Cent | angepasst: 1-12   0.76, zaehlend    8.58, alle     8.58 Cent | groesster Radius 0.5969 | Abklingen zaehlend   3.06 %, in der Schwelle 46/46 |   0.1 s
+  M   4 (  8 Mult.) | Start    71.63 Cent | angepasst: 1-12   0.11, zaehlend    2.87, alle     2.87 Cent | groesster Radius 0.6208 | Abklingen zaehlend   1.38 %, in der Schwelle 46/46 |   0.1 s
+
+### Cembalo T69: f1 440.01 Hz, Umlauf 109.1 Takte, zaehlend 44 bis 19947 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    24.94 Cent | angepasst: 1-12   1.43, zaehlend    7.58, alle     7.58 Cent | groesster Radius 0.6156 | Abklingen zaehlend   1.73 %, in der Schwelle 44/44 |   0.1 s
+  M   3 (  6 Mult.) | Start    27.78 Cent | angepasst: 1-12   1.14, zaehlend   12.47, alle    12.47 Cent | groesster Radius 0.5864 | Abklingen zaehlend   4.16 %, in der Schwelle 44/44 |   0.1 s
+  M   4 (  8 Mult.) | Start    72.74 Cent | angepasst: 1-12   0.12, zaehlend    0.81, alle     0.81 Cent | groesster Radius 0.5993 | Abklingen zaehlend   1.28 %, in der Schwelle 44/44 |   0.1 s
+
+### Cembalo T70: f1 466.17 Hz, Umlauf 103.0 Takte, zaehlend 41 bis 19678 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    24.34 Cent | angepasst: 1-12   1.55, zaehlend    8.23, alle     8.23 Cent | groesster Radius 0.5891 | Abklingen zaehlend   4.09 %, in der Schwelle 41/41 |   0.1 s
+  M   3 (  6 Mult.) | Start    29.96 Cent | angepasst: 1-12   0.42, zaehlend    3.47, alle     3.47 Cent | groesster Radius 0.6049 | Abklingen zaehlend   1.13 %, in der Schwelle 41/41 |   0.1 s
+  M   4 (  8 Mult.) | Start    78.38 Cent | angepasst: 1-12   0.06, zaehlend    0.62, alle     0.62 Cent | groesster Radius 0.5654 | Abklingen zaehlend   1.11 %, in der Schwelle 41/41 |   0.1 s
+
+### Cembalo T71: f1 493.89 Hz, Umlauf 97.2 Takte, zaehlend 39 bis 19840 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    33.20 Cent | angepasst: 1-12   1.41, zaehlend    3.86, alle     3.86 Cent | groesster Radius 0.5771 | Abklingen zaehlend   2.81 %, in der Schwelle 39/39 |   0.1 s
+  M   3 (  6 Mult.) | Start    36.29 Cent | angepasst: 1-12   0.44, zaehlend    5.59, alle     5.59 Cent | groesster Radius 0.5740 | Abklingen zaehlend   2.56 %, in der Schwelle 39/39 |   0.1 s
+  M   4 (  8 Mult.) | Start    89.31 Cent | angepasst: 1-12   1.29, zaehlend    8.89, alle     8.89 Cent | groesster Radius 0.5461 | Abklingen zaehlend   2.40 %, in der Schwelle 39/39 |   0.1 s
+  M   6 ( 12 Mult.) | Start   206.63 Cent | angepasst: 1-12   0.83, zaehlend    5.31, alle     5.31 Cent | groesster Radius 0.5639 | Abklingen zaehlend   1.18 %, in der Schwelle 39/39 |   0.3 s
+  M   9 ( 18 Mult.) | Start   390.54 Cent | angepasst: 1-12   1.24, zaehlend   18.08, alle    18.08 Cent | groesster Radius 0.9800 | Abklingen zaehlend  48.73 %, in der Schwelle 37/38 |   0.3 s
+  M  14 ( 28 Mult.) | Start   709.94 Cent | angepasst: 1-12   1.68, zaehlend   12.10, alle    12.10 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.95 %, in der Schwelle 39/39 |   0.4 s
+  M  21 ( 42 Mult.) | Start  1079.54 Cent | angepasst: 1-12   0.46, zaehlend    4.09, alle     4.09 Cent | groesster Radius 0.6322 | Abklingen zaehlend   1.04 %, in der Schwelle 39/39 |   0.8 s
+  M  32 ( 64 Mult.) | Start      nan Cent | angepasst: 1-12   1.00, zaehlend    9.99, alle     9.99 Cent | groesster Radius 0.9800 | Abklingen zaehlend  65.89 %, in der Schwelle 25/39 |   0.6 s
+  M  48: passt nicht in den Umlauf
+
+### Cembalo T72: f1 523.26 Hz, Umlauf 91.7 Takte, zaehlend 37 bis 19948 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    40.43 Cent | angepasst: 1-12   5.97, zaehlend   21.29, alle    21.29 Cent | groesster Radius 0.5421 | Abklingen zaehlend   7.76 %, in der Schwelle 37/37 |   0.1 s
+  M   2 (  4 Mult.) | Start    27.20 Cent | angepasst: 1-12   1.41, zaehlend    8.53, alle     8.53 Cent | groesster Radius 0.5591 | Abklingen zaehlend   3.89 %, in der Schwelle 37/37 |   0.1 s
+  M   3 (  6 Mult.) | Start    91.30 Cent | angepasst: 1-12   1.08, zaehlend    5.75, alle     5.75 Cent | groesster Radius 0.5548 | Abklingen zaehlend   1.28 %, in der Schwelle 36/36 |   0.1 s
+  M   4 (  8 Mult.) | Start   151.85 Cent | angepasst: 1-12   0.08, zaehlend    3.06, alle     3.06 Cent | groesster Radius 0.5817 | Abklingen zaehlend   0.90 %, in der Schwelle 37/37 |   0.1 s
+  M   6 ( 12 Mult.) | Start   276.07 Cent | angepasst: 1-12   4.00, zaehlend    6.46, alle     6.46 Cent | groesster Radius 0.1920 | Abklingen zaehlend   4.29 %, in der Schwelle 37/37 |   0.4 s
+  M   9 ( 18 Mult.) | Start   480.73 Cent | angepasst: 1-12   1.56, zaehlend    6.99, alle     6.99 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.54 %, in der Schwelle 37/37 |   0.3 s
+  M  14 ( 28 Mult.) | Start   805.27 Cent | angepasst: 1-12   0.04, zaehlend    0.56, alle     0.56 Cent | groesster Radius 0.9800 | Abklingen zaehlend   0.58 %, in der Schwelle 37/37 |   0.4 s
+
+### Cembalo T73: f1 554.38 Hz, Umlauf 86.6 Takte, zaehlend 35 bis 19993 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    42.17 Cent | angepasst: 1-12   4.50, zaehlend    6.32, alle     6.32 Cent | groesster Radius 0.5340 | Abklingen zaehlend   4.23 %, in der Schwelle 35/35 |   0.1 s
+  M   2 (  4 Mult.) | Start    29.45 Cent | angepasst: 1-12   1.34, zaehlend    8.58, alle     8.58 Cent | groesster Radius 0.5471 | Abklingen zaehlend   3.84 %, in der Schwelle 35/35 |   0.1 s
+  M   3 (  6 Mult.) | Start    97.30 Cent | angepasst: 1-12   3.71, zaehlend   12.83, alle    12.83 Cent | groesster Radius 0.5507 | Abklingen zaehlend   2.55 %, in der Schwelle 34/34 |   0.1 s
+  M   4 (  8 Mult.) | Start   161.95 Cent | angepasst: 1-12   0.32, zaehlend    3.93, alle     3.93 Cent | groesster Radius 0.5593 | Abklingen zaehlend   1.02 %, in der Schwelle 34/34 |   0.1 s
+  M   6 ( 12 Mult.) | Start   294.73 Cent | angepasst: 1-12   1.15, zaehlend    7.87, alle     7.87 Cent | groesster Radius 0.4780 | Abklingen zaehlend   3.88 %, in der Schwelle 35/35 |   0.3 s
+  M   9 ( 18 Mult.) | Start   515.00 Cent | angepasst: 1-12   1.53, zaehlend    6.50, alle     6.50 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.86 %, in der Schwelle 34/34 |   0.3 s
+  M  14 ( 28 Mult.) | Start   867.91 Cent | angepasst: 1-12   0.08, zaehlend    1.57, alle     1.57 Cent | groesster Radius 0.9800 | Abklingen zaehlend   0.55 %, in der Schwelle 35/35 |   0.8 s
+
+### Cembalo T74: f1 587.35 Hz, Umlauf 81.7 Takte, zaehlend 33 bis 19969 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    39.34 Cent | angepasst: 1-12   4.53, zaehlend    8.50, alle     8.50 Cent | groesster Radius 0.5437 | Abklingen zaehlend   3.12 %, in der Schwelle 33/33 |   0.2 s
+  M   2 (  4 Mult.) | Start    32.64 Cent | angepasst: 1-12   1.24, zaehlend    3.57, alle     3.57 Cent | groesster Radius 0.5454 | Abklingen zaehlend   2.59 %, in der Schwelle 33/33 |   0.3 s
+  M   3 (  6 Mult.) | Start    92.67 Cent | angepasst: 1-12   0.92, zaehlend    6.23, alle     6.23 Cent | groesster Radius 0.5269 | Abklingen zaehlend   2.28 %, in der Schwelle 33/33 |   0.2 s
+  M   4 (  8 Mult.) | Start   176.85 Cent | angepasst: 1-12   1.76, zaehlend   10.32, alle    10.32 Cent | groesster Radius 0.5418 | Abklingen zaehlend   2.47 %, in der Schwelle 32/32 |   0.4 s
+  M   6 ( 12 Mult.) | Start   320.10 Cent | angepasst: 1-12   1.79, zaehlend    8.30, alle     8.30 Cent | groesster Radius 0.4332 | Abklingen zaehlend   2.16 %, in der Schwelle 33/33 |   0.4 s
+  M   9 ( 18 Mult.) | Start   558.70 Cent | angepasst: 1-12   1.19, zaehlend    6.88, alle     6.88 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.67 %, in der Schwelle 32/32 |   0.9 s
+  M  14 ( 28 Mult.) | Start   944.78 Cent | angepasst: 1-12   2.24, zaehlend    9.27, alle     9.27 Cent | groesster Radius 0.4886 | Abklingen zaehlend   2.14 %, in der Schwelle 32/32 |   0.5 s
+  M  21 ( 42 Mult.) | Start      nan Cent | angepasst: 1-12   1.98, zaehlend    8.45, alle     8.45 Cent | groesster Radius 0.5973 | Abklingen zaehlend   1.96 %, in der Schwelle 32/32 |   0.5 s
+  M  32 ( 64 Mult.) | Start      nan Cent | angepasst: 1-12   0.69, zaehlend    3.52, alle     3.52 Cent | groesster Radius 0.9800 | Abklingen zaehlend   0.88 %, in der Schwelle 32/32 |   0.4 s
+  M  48: passt nicht in den Umlauf
+
+### Cembalo T75: f1 622.27 Hz, Umlauf 77.1 Takte, zaehlend 31 bis 19868 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    30.14 Cent | angepasst: 1-12   4.64, zaehlend    9.56, alle     9.56 Cent | groesster Radius 0.5045 | Abklingen zaehlend   4.66 %, in der Schwelle 31/31 |   0.1 s
+  M   2 (  4 Mult.) | Start    40.84 Cent | angepasst: 1-12   2.68, zaehlend   13.21, alle    13.21 Cent | groesster Radius 0.4957 | Abklingen zaehlend   4.17 %, in der Schwelle 31/31 |   0.1 s
+  M   3 (  6 Mult.) | Start   106.95 Cent | angepasst: 1-12   0.44, zaehlend    4.78, alle     4.78 Cent | groesster Radius 0.5372 | Abklingen zaehlend   1.22 %, in der Schwelle 31/31 |   0.1 s
+  M   4 (  8 Mult.) | Start   180.34 Cent | angepasst: 1-12   2.98, zaehlend   15.83, alle    15.83 Cent | groesster Radius 0.4890 | Abklingen zaehlend   4.07 %, in der Schwelle 31/31 |   0.1 s
+  M   6 ( 12 Mult.) | Start   354.84 Cent | angepasst: 1-12   1.48, zaehlend    5.25, alle     5.25 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.30 %, in der Schwelle 31/31 |   0.3 s
+  M   9 ( 18 Mult.) | Start   582.29 Cent | angepasst: 1-12   2.81, zaehlend    7.07, alle     7.07 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.82 %, in der Schwelle 31/31 |   0.3 s
+  M  14 ( 28 Mult.) | Start   978.87 Cent | angepasst: 1-12   0.18, zaehlend    0.79, alle     0.79 Cent | groesster Radius 0.5778 | Abklingen zaehlend   0.20 %, in der Schwelle 31/31 |   0.6 s
+
+### Cembalo T76: f1 659.27 Hz, Umlauf 72.8 Takte, zaehlend 29 bis 19548 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    23.34 Cent | angepasst: 1-12   5.60, zaehlend   21.11, alle    21.11 Cent | groesster Radius 0.4020 | Abklingen zaehlend   6.39 %, in der Schwelle 29/29 |   0.1 s
+  M   2 (  4 Mult.) | Start    47.50 Cent | angepasst: 1-12   3.82, zaehlend   15.82, alle    15.82 Cent | groesster Radius 0.4941 | Abklingen zaehlend   3.13 %, in der Schwelle 29/29 |   0.1 s
+  M   3 (  6 Mult.) | Start   119.77 Cent | angepasst: 1-12   0.75, zaehlend    5.93, alle     5.93 Cent | groesster Radius 0.4485 | Abklingen zaehlend   1.95 %, in der Schwelle 29/29 |   0.1 s
+  M   4 (  8 Mult.) | Start   196.98 Cent | angepasst: 1-12   2.68, zaehlend   11.85, alle    11.85 Cent | groesster Radius 0.4645 | Abklingen zaehlend   2.70 %, in der Schwelle 29/29 |   0.1 s
+  M   6 ( 12 Mult.) | Start   377.02 Cent | angepasst: 1-12   4.27, zaehlend    5.26, alle     5.26 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.83 %, in der Schwelle 29/29 |   0.2 s
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:115: RuntimeWarning: divide by zero encountered in divide
+  phi_prime = -np.sum(suf ** 2 / denom**3) / p_norm
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:154: RuntimeWarning: invalid value encountered in scalar divide
+  ratio = phi / phi_prime
+  M   9 ( 18 Mult.) | Start   649.39 Cent | angepasst: 1-12   0.46, zaehlend    6.20, alle     6.20 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.48 %, in der Schwelle 29/29 |   0.3 s
+  M  14 ( 28 Mult.) | Start  1011.56 Cent | angepasst: 1-12   1.35, zaehlend    7.71, alle     7.71 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.90 %, in der Schwelle 29/29 |   0.4 s
+  M  21 ( 42 Mult.) | Start      nan Cent | angepasst: 1-12   0.52, zaehlend    3.35, alle     3.35 Cent | groesster Radius 0.9800 | Abklingen zaehlend  76.72 %, in der Schwelle 18/29 |   0.2 s
+  M  32 ( 64 Mult.) | Start      nan Cent | angepasst: 1-12   2.66, zaehlend    9.92, alle     9.92 Cent | groesster Radius 0.5262 | Abklingen zaehlend   2.07 %, in der Schwelle 29/29 |   0.3 s
+  M  48: passt nicht in den Umlauf
+
+### Cembalo T77: f1 698.48 Hz, Umlauf 68.7 Takte, zaehlend 27 bis 19270 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    23.49 Cent | angepasst: 1-12   5.80, zaehlend   20.99, alle    20.99 Cent | groesster Radius 0.3843 | Abklingen zaehlend   6.26 %, in der Schwelle 27/27 |   0.1 s
+  M   2 (  4 Mult.) | Start    50.67 Cent | angepasst: 1-12   0.67, zaehlend    2.04, alle     2.04 Cent | groesster Radius 0.4751 | Abklingen zaehlend   1.75 %, in der Schwelle 27/27 |   0.1 s
+
+### Cembalo T78: f1 740.01 Hz, Umlauf 64.9 Takte, zaehlend 26 bis 19667 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    19.46 Cent | angepasst: 1-12   4.66, zaehlend   17.77, alle    17.77 Cent | groesster Radius 0.3862 | Abklingen zaehlend   5.64 %, in der Schwelle 26/26 |   0.1 s
+  M   2 (  4 Mult.) | Start    59.53 Cent | angepasst: 1-12   0.45, zaehlend    1.33, alle     1.33 Cent | groesster Radius 0.4015 | Abklingen zaehlend   0.57 %, in der Schwelle 26/26 |   0.1 s
+
+### Cembalo T79: f1 784.02 Hz, Umlauf 61.2 Takte, zaehlend 24 bis 19207 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    52.72 Cent | angepasst: 1-12   6.52, zaehlend    6.67, alle     6.67 Cent | groesster Radius 0.2676 | Abklingen zaehlend   3.41 %, in der Schwelle 24/24 |   0.1 s
+  M   2 (  4 Mult.) | Start   139.05 Cent | angepasst: 1-12   4.99, zaehlend    6.71, alle     6.71 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.81 %, in der Schwelle 24/24 |   0.2 s
+  M   3 (  6 Mult.) | Start   230.18 Cent | angepasst: 1-12   2.93, zaehlend    6.43, alle     6.43 Cent | groesster Radius 0.1502 | Abklingen zaehlend   3.24 %, in der Schwelle 24/24 |   0.3 s
+  M   4 (  8 Mult.) | Start   354.15 Cent | angepasst: 1-12   5.13, zaehlend   13.16, alle    13.16 Cent | groesster Radius 0.3168 | Abklingen zaehlend   2.46 %, in der Schwelle 24/24 |   0.2 s
+  M   6 ( 12 Mult.) | Start   567.94 Cent | angepasst: 1-12   4.60, zaehlend   11.57, alle    11.57 Cent | groesster Radius 0.3492 | Abklingen zaehlend   2.32 %, in der Schwelle 24/24 |   0.3 s
+  M   9 ( 18 Mult.) | Start   897.91 Cent | angepasst: 1-12   3.13, zaehlend   12.41, alle    12.41 Cent | groesster Radius 0.4067 | Abklingen zaehlend   3.12 %, in der Schwelle 24/24 |   0.4 s
+  M  14 ( 28 Mult.) | Start      nan Cent | angepasst: 1-12   0.33, zaehlend    1.27, alle     1.27 Cent | groesster Radius 0.6620 | Abklingen zaehlend   0.32 %, in der Schwelle 24/24 |   0.4 s
+
+### Cembalo T80: f1 830.64 Hz, Umlauf 57.8 Takte, zaehlend 23 bis 19505 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    52.80 Cent | angepasst: 1-12  12.56, zaehlend   15.16, alle    15.16 Cent | groesster Radius 0.2585 | Abklingen zaehlend   2.16 %, in der Schwelle 23/23 |   0.1 s
+  M   2 (  4 Mult.) | Start   165.58 Cent | angepasst: 1-12  11.85, zaehlend   14.19, alle    14.19 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.03 %, in der Schwelle 23/23 |   0.2 s
+  M   3 (  6 Mult.) | Start   264.16 Cent | angepasst: 1-12   3.88, zaehlend   12.25, alle    12.25 Cent | groesster Radius 0.2378 | Abklingen zaehlend   5.28 %, in der Schwelle 23/23 |   0.2 s
+  M   4 (  8 Mult.) | Start   369.19 Cent | angepasst: 1-12   3.07, zaehlend   13.59, alle    13.59 Cent | groesster Radius 0.3799 | Abklingen zaehlend   5.05 %, in der Schwelle 23/23 |   0.2 s
+  M   6 ( 12 Mult.) | Start   576.65 Cent | angepasst: 1-12   1.16, zaehlend    2.66, alle     2.66 Cent | groesster Radius 0.3716 | Abklingen zaehlend   0.54 %, in der Schwelle 23/23 |   0.3 s
+
+### Cembalo T81: f1 880.04 Hz, Umlauf 54.5 Takte, zaehlend 22 bis 19768 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    72.56 Cent | angepasst: 1-12   1.78, zaehlend   17.44, alle    17.44 Cent | groesster Radius 0.2059 | Abklingen zaehlend   6.35 %, in der Schwelle 22/22 |   0.1 s
+  M   2 (  4 Mult.) | Start   172.04 Cent | angepasst: 1-12  10.00, zaehlend   11.08, alle    11.08 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.57 %, in der Schwelle 22/22 |   0.2 s
+  M   3 (  6 Mult.) | Start   278.32 Cent | angepasst: 1-12   7.75, zaehlend    9.28, alle     9.28 Cent | groesster Radius 0.1351 | Abklingen zaehlend   1.36 %, in der Schwelle 22/22 |   0.3 s
+  M   4 (  8 Mult.) | Start   380.45 Cent | angepasst: 1-12   0.11, zaehlend    0.32, alle     0.32 Cent | groesster Radius 0.3876 | Abklingen zaehlend   0.11 %, in der Schwelle 22/22 |   0.1 s
+
+### Cembalo T82: f1 932.37 Hz, Umlauf 51.5 Takte, zaehlend 21 bis 19991 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    77.92 Cent | angepasst: 1-12   1.36, zaehlend   18.63, alle    18.63 Cent | groesster Radius 0.1926 | Abklingen zaehlend   6.55 %, in der Schwelle 21/21 |   0.1 s
+  M   2 (  4 Mult.) | Start   181.12 Cent | angepasst: 1-12  10.76, zaehlend   11.68, alle    11.68 Cent | groesster Radius 0.9800 | Abklingen zaehlend   1.66 %, in der Schwelle 20/20 |   0.2 s
+  M   3 (  6 Mult.) | Start   291.40 Cent | angepasst: 1-12   8.10, zaehlend    9.60, alle     9.60 Cent | groesster Radius 0.1114 | Abklingen zaehlend   1.43 %, in der Schwelle 20/20 |   0.1 s
+  M   4 (  8 Mult.) | Start   409.67 Cent | angepasst: 1-12   0.58, zaehlend    1.20, alle     1.20 Cent | groesster Radius 0.3550 | Abklingen zaehlend   0.27 %, in der Schwelle 20/20 |   0.2 s
+
+### Cembalo T83: f1 987.82 Hz, Umlauf 48.6 Takte, zaehlend 19 bis 19123 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    89.09 Cent | angepasst: 1-12   3.48, zaehlend   10.59, alle    10.59 Cent | groesster Radius 0.2096 | Abklingen zaehlend   4.77 %, in der Schwelle 19/19 |   0.1 s
+  M   2 (  4 Mult.) | Start   199.68 Cent | angepasst: 1-12   2.76, zaehlend   12.63, alle    12.63 Cent | groesster Radius 0.9800 | Abklingen zaehlend   5.30 %, in der Schwelle 19/19 |   0.2 s
+  M   3 (  6 Mult.) | Start   318.30 Cent | angepasst: 1-12  11.54, zaehlend   14.60, alle    14.60 Cent | groesster Radius 0.1001 | Abklingen zaehlend   2.32 %, in der Schwelle 19/19 |   0.1 s
+  M   4 (  8 Mult.) | Start   446.29 Cent | angepasst: 1-12   3.18, zaehlend    7.46, alle     7.46 Cent | groesster Radius 0.3617 | Abklingen zaehlend   1.69 %, in der Schwelle 19/19 |   0.1 s
+  M   6 ( 12 Mult.) | Start   737.02 Cent | angepasst: 1-12  10.43, zaehlend   13.70, alle    13.70 Cent | groesster Radius 0.0485 | Abklingen zaehlend   2.22 %, in der Schwelle 19/19 |   0.1 s
+  M   9 ( 18 Mult.) | Start  1109.85 Cent | angepasst: 1-12  10.90, zaehlend   21.45, alle    21.45 Cent | groesster Radius 0.3492 | Abklingen zaehlend   4.61 %, in der Schwelle 19/19 |   0.4 s
+  M  14 ( 28 Mult.) | Start      nan Cent | angepasst: 1-12   5.13, zaehlend   12.41, alle    12.41 Cent | groesster Radius 0.3821 | Abklingen zaehlend   4.08 %, in der Schwelle 19/19 |   0.4 s
+  M  21 ( 42 Mult.) | Start      nan Cent | angepasst: 1-12   4.11, zaehlend    7.92, alle     7.92 Cent | groesster Radius 0.3896 | Abklingen zaehlend   1.62 %, in der Schwelle 19/19 |   0.4 s
+  M  32: passt nicht in den Umlauf
+
+### Cembalo T84: f1 1046.56 Hz, Umlauf 45.9 Takte, zaehlend 18 bis 19189 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    75.76 Cent | angepasst: 1-12   5.09, zaehlend    5.09, alle     5.09 Cent | groesster Radius 0.2075 | Abklingen zaehlend   2.75 %, in der Schwelle 18/18 |   0.1 s
+  M   2 (  4 Mult.) | Start   226.56 Cent | angepasst: 1-12   3.74, zaehlend    4.33, alle     4.33 Cent | groesster Radius 0.1891 | Abklingen zaehlend   2.69 %, in der Schwelle 18/18 |   0.3 s
+  M   3 (  6 Mult.) | Start   354.85 Cent | angepasst: 1-12   5.80, zaehlend    9.71, alle     9.71 Cent | groesster Radius 0.2601 | Abklingen zaehlend   2.27 %, in der Schwelle 18/18 |   0.1 s
+  M   4 (  8 Mult.) | Start   494.41 Cent | angepasst: 1-12   2.72, zaehlend    8.30, alle     8.30 Cent | groesster Radius 0.3434 | Abklingen zaehlend   2.46 %, in der Schwelle 18/18 |   0.2 s
+  M   6 ( 12 Mult.) | Start   754.87 Cent | angepasst: 1-12   3.27, zaehlend    8.72, alle     8.72 Cent | groesster Radius 0.2914 | Abklingen zaehlend   2.42 %, in der Schwelle 18/18 |   0.2 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12   5.93, zaehlend   11.40, alle    11.40 Cent | groesster Radius 0.3484 | Abklingen zaehlend   2.51 %, in der Schwelle 18/18 |   0.4 s
+  M  14 ( 28 Mult.) | Start      nan Cent | angepasst: 1-12  12.05, zaehlend   20.64, alle    20.64 Cent | groesster Radius 0.3514 | Abklingen zaehlend   4.19 %, in der Schwelle 18/18 |   0.5 s
+  M  21 ( 42 Mult.) | Start      nan Cent | angepasst: 1-12   3.70, zaehlend    9.48, alle     9.48 Cent | groesster Radius 0.3552 | Abklingen zaehlend   2.53 %, in der Schwelle 18/18 |   0.4 s
+  M  32: passt nicht in den Umlauf
+
+### Cembalo T85: f1 1108.80 Hz, Umlauf 43.3 Takte, zaehlend 17 bis 19184 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    95.40 Cent | angepasst: 1-12  14.21, zaehlend   14.89, alle    14.89 Cent | groesster Radius 0.2013 | Abklingen zaehlend   2.19 %, in der Schwelle 17/17 |   0.1 s
+  M   2 (  4 Mult.) | Start   220.99 Cent | angepasst: 1-12  13.98, zaehlend   14.70, alle    14.70 Cent | groesster Radius 0.1753 | Abklingen zaehlend   2.18 %, in der Schwelle 17/17 |   0.3 s
+  M   3 (  6 Mult.) | Start   357.46 Cent | angepasst: 1-12   9.23, zaehlend   21.14, alle    21.14 Cent | groesster Radius 0.0000 | Abklingen zaehlend   5.66 %, in der Schwelle 17/17 |   0.2 s
+  M   4 (  8 Mult.) | Start   506.94 Cent | angepasst: 1-12  13.12, zaehlend   23.94, alle    23.94 Cent | groesster Radius 0.3149 | Abklingen zaehlend   5.58 %, in der Schwelle 17/17 |   0.1 s
+  M   6 ( 12 Mult.) | Start   844.12 Cent | angepasst: 1-12  12.33, zaehlend   23.24, alle    23.24 Cent | groesster Radius 0.3144 | Abklingen zaehlend   5.57 %, in der Schwelle 17/17 |   0.3 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12  11.96, zaehlend   22.99, alle    22.99 Cent | groesster Radius 0.3439 | Abklingen zaehlend   5.61 %, in der Schwelle 17/17 |   0.3 s
+  M  14 ( 28 Mult.) | Start      nan Cent | angepasst: 1-12   4.57, zaehlend    6.43, alle     6.43 Cent | groesster Radius 0.3158 | Abklingen zaehlend   1.18 %, in der Schwelle 17/17 |   0.4 s
+  M  21: passt nicht in den Umlauf
+
+### Cembalo T86: f1 1174.74 Hz, Umlauf 40.9 Takte, zaehlend 16 bis 19112 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start    90.92 Cent | angepasst: 1-12   4.74, zaehlend    4.74, alle     4.74 Cent | groesster Radius 0.1386 | Abklingen zaehlend   1.26 %, in der Schwelle 16/16 |   0.1 s
+  M   2 (  4 Mult.) | Start   263.10 Cent | angepasst: 1-12   5.27, zaehlend    5.27, alle     5.27 Cent | groesster Radius 0.1619 | Abklingen zaehlend   1.28 %, in der Schwelle 16/16 |   0.2 s
+  M   3 (  6 Mult.) | Start   410.60 Cent | angepasst: 1-12   0.54, zaehlend    1.94, alle     1.94 Cent | groesster Radius 0.3277 | Abklingen zaehlend   0.90 %, in der Schwelle 16/16 |   0.1 s
+
+### Cembalo T87: f1 1244.60 Hz, Umlauf 38.6 Takte, zaehlend 15 bis 18964 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   125.16 Cent | angepasst: 1-12   1.87, zaehlend    5.11, alle     5.11 Cent | groesster Radius 0.3098 | Abklingen zaehlend   2.54 %, in der Schwelle 15/15 |   0.1 s
+  M   2 (  4 Mult.) | Start   267.28 Cent | angepasst: 1-12   1.88, zaehlend    5.94, alle     5.94 Cent | groesster Radius 0.1489 | Abklingen zaehlend   2.69 %, in der Schwelle 15/15 |   0.3 s
+  M   3 (  6 Mult.) | Start   422.97 Cent | angepasst: 1-12   1.20, zaehlend    5.75, alle     5.75 Cent | groesster Radius 0.1929 | Abklingen zaehlend   2.59 %, in der Schwelle 15/15 |   0.1 s
+  M   4 (  8 Mult.) | Start   595.58 Cent | angepasst: 1-12   2.23, zaehlend    8.16, alle     8.16 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.32 %, in der Schwelle 15/15 |   0.3 s
+  M   6 ( 12 Mult.) | Start   882.36 Cent | angepasst: 1-12   1.32, zaehlend    6.50, alle     6.50 Cent | groesster Radius 0.2939 | Abklingen zaehlend   2.76 %, in der Schwelle 15/15 |   0.3 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12   7.02, zaehlend   11.01, alle    11.01 Cent | groesster Radius 0.3501 | Abklingen zaehlend   2.68 %, in der Schwelle 15/15 |   0.4 s
+  M  14 ( 28 Mult.) | Start      nan Cent | angepasst: 1-12  20.90, zaehlend   24.74, alle    24.74 Cent | groesster Radius 0.9794 | Abklingen zaehlend   4.27 %, in der Schwelle 15/15 |   0.3 s
+  M  21: passt nicht in den Umlauf
+
+### Cembalo T88: f1 1318.61 Hz, Umlauf 36.4 Takte, zaehlend 14 bis 18733 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   127.58 Cent | angepasst: 1-12  24.28, zaehlend   28.04, alle    28.04 Cent | groesster Radius 0.3195 | Abklingen zaehlend   5.10 %, in der Schwelle 14/14 |   0.1 s
+  M   2 (  4 Mult.) | Start   277.19 Cent | angepasst: 1-12   6.87, zaehlend   10.40, alle    10.40 Cent | groesster Radius 0.2314 | Abklingen zaehlend   3.05 %, in der Schwelle 14/14 |   0.1 s
+  M   3 (  6 Mult.) | Start   441.61 Cent | angepasst: 1-12  18.95, zaehlend   23.47, alle    23.47 Cent | groesster Radius 0.2874 | Abklingen zaehlend   4.65 %, in der Schwelle 14/14 |   0.1 s
+  M   4 (  8 Mult.) | Start   624.36 Cent | angepasst: 1-12   4.78, zaehlend   10.24, alle    10.24 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.91 %, in der Schwelle 14/14 |   0.3 s
+  M   6 ( 12 Mult.) | Start  1069.30 Cent | angepasst: 1-12  18.74, zaehlend   23.10, alle    23.10 Cent | groesster Radius 0.2929 | Abklingen zaehlend   4.54 %, in der Schwelle 14/14 |   0.4 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12   6.74, zaehlend   10.61, alle    10.61 Cent | groesster Radius 0.3162 | Abklingen zaehlend   3.17 %, in der Schwelle 14/14 |   0.4 s
+  M  14 ( 28 Mult.) | Start      nan Cent | angepasst: 1-12  22.00, zaehlend   27.96, alle    27.96 Cent | groesster Radius 0.9311 | Abklingen zaehlend   6.08 %, in der Schwelle 14/14 |   0.3 s
+  M  21: passt nicht in den Umlauf
+
+### Cembalo T89: f1 1397.03 Hz, Umlauf 34.4 Takte, zaehlend 14 bis 19866 Hz, Abel-Smith 0 Biquads
+  M   1 (  2 Mult.) | Start   139.27 Cent | angepasst: 1-12  12.00, zaehlend   14.81, alle    14.81 Cent | groesster Radius 0.2104 | Abklingen zaehlend   3.26 %, in der Schwelle 14/14 |   0.1 s
+  M   2 (  4 Mult.) | Start   292.21 Cent | angepasst: 1-12   7.91, zaehlend   12.34, alle    12.34 Cent | groesster Radius 0.0229 | Abklingen zaehlend   3.59 %, in der Schwelle 14/14 |   0.1 s
+  M   3 (  6 Mult.) | Start   465.07 Cent | angepasst: 1-12   7.10, zaehlend   11.53, alle    11.53 Cent | groesster Radius 0.2858 | Abklingen zaehlend   3.56 %, in der Schwelle 14/14 |   0.1 s
+  M   4 (  8 Mult.) | Start   656.97 Cent | angepasst: 1-12   5.94, zaehlend   11.01, alle    11.01 Cent | groesster Radius 0.0720 | Abklingen zaehlend   3.73 %, in der Schwelle 14/14 |   0.4 s
+  M   6 ( 12 Mult.) | Start  1116.94 Cent | angepasst: 1-12  23.27, zaehlend   25.70, alle    25.70 Cent | groesster Radius 0.3199 | Abklingen zaehlend   5.47 %, in der Schwelle 13/13 |   0.3 s
+  M   9 ( 18 Mult.) | Start      nan Cent | angepasst: 1-12   9.81, zaehlend   13.96, alle    13.96 Cent | groesster Radius 0.3447 | Abklingen zaehlend   3.58 %, in der Schwelle 14/14 |   0.3 s
+  M  14 ( 28 Mult.) | Start      nan Cent | angepasst: 1-12  11.59, zaehlend   13.28, alle    13.28 Cent | groesster Radius 0.9800 | Abklingen zaehlend   3.14 %, in der Schwelle 13/13 |   0.3 s
+  M  21: passt nicht in den Umlauf
+
+### Laute C1.1 B0: f1 73.45 Hz, Umlauf 653.5 Takte, zaehlend 20 bis 1742 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    91.08 Cent | angepasst: 1-12   2.12, zaehlend    8.44, alle  1316.28 Cent | groesster Radius 0.9786 | Abklingen zaehlend   6.43 %, in der Schwelle 20/20 |   0.1 s
+  M   6 ( 12 Mult.) | Start    90.30 Cent | angepasst: 1-12   2.12, zaehlend    8.45, alle  1316.31 Cent | groesster Radius 0.9826 | Abklingen zaehlend   6.44 %, in der Schwelle 20/20 |   0.2 s
+  M   9 ( 18 Mult.) | Start    89.21 Cent | angepasst: 1-12   0.07, zaehlend    0.16, alle  1067.65 Cent | groesster Radius 0.9549 | Abklingen zaehlend   3.30 %, in der Schwelle 20/20 |   0.3 s
+
+### Laute C1.1 B5: f1 98.09 Hz, Umlauf 489.4 Takte, zaehlend 15 bis 1745 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start   124.21 Cent | angepasst: 1-12   4.97, zaehlend   10.55, alle  1331.16 Cent | groesster Radius 0.9732 | Abklingen zaehlend   8.76 %, in der Schwelle 15/15 |   0.1 s
+  M   4 (  8 Mult.) | Start   123.73 Cent | angepasst: 1-12   4.96, zaehlend   10.55, alle  1331.19 Cent | groesster Radius 0.9800 | Abklingen zaehlend   8.76 %, in der Schwelle 15/15 |   0.2 s
+  M   6 ( 12 Mult.) | Start   122.78 Cent | angepasst: 1-12   4.96, zaehlend   10.55, alle  1331.26 Cent | groesster Radius 0.9800 | Abklingen zaehlend   8.77 %, in der Schwelle 15/15 |   0.3 s
+  M   9 ( 18 Mult.) | Start   121.51 Cent | angepasst: 1-12   0.54, zaehlend    0.97, alle  1154.42 Cent | groesster Radius 0.9571 | Abklingen zaehlend   3.31 %, in der Schwelle 15/15 |   0.3 s
+
+### Laute C1.2 B0: f1 146.85 Hz, Umlauf 326.9 Takte, zaehlend 27 bis 4272 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    48.11 Cent | angepasst: 1-12   1.96, zaehlend    5.83, alle   560.27 Cent | groesster Radius 0.9245 | Abklingen zaehlend   5.04 %, in der Schwelle 27/27 |   0.1 s
+  M   4 (  8 Mult.) | Start    44.23 Cent | angepasst: 1-12   1.96, zaehlend    5.89, alle   560.33 Cent | groesster Radius 0.9244 | Abklingen zaehlend   5.05 %, in der Schwelle 27/27 |   0.2 s
+  M   6 ( 12 Mult.) | Start    37.35 Cent | angepasst: 1-12   0.11, zaehlend    0.28, alle   478.05 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.77 %, in der Schwelle 27/27 |   0.3 s
+
+### Laute C1.2 B5: f1 196.04 Hz, Umlauf 244.9 Takte, zaehlend 20 bis 4218 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    68.93 Cent | angepasst: 1-12   4.42, zaehlend    9.78, alle   582.40 Cent | groesster Radius 0.9052 | Abklingen zaehlend   6.72 %, in der Schwelle 20/20 |   0.1 s
+  M   3 (  6 Mult.) | Start    64.13 Cent | angepasst: 1-12   4.41, zaehlend    9.72, alle   582.54 Cent | groesster Radius 0.9800 | Abklingen zaehlend   6.72 %, in der Schwelle 20/20 |   0.2 s
+  M   4 (  8 Mult.) | Start    59.82 Cent | angepasst: 1-12   0.76, zaehlend    2.27, alle   523.58 Cent | groesster Radius 0.9800 | Abklingen zaehlend   2.70 %, in der Schwelle 20/20 |   0.2 s
+
+### Laute C2.1 B0: f1 87.33 Hz, Umlauf 549.6 Takte, zaehlend 23 bis 2300 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    68.84 Cent | angepasst: 1-12   1.91, zaehlend    7.00, alle  1072.01 Cent | groesster Radius 0.9698 | Abklingen zaehlend   6.32 %, in der Schwelle 23/23 |   0.1 s
+  M   6 ( 12 Mult.) | Start    67.24 Cent | angepasst: 1-12   0.39, zaehlend    0.80, alle   962.55 Cent | groesster Radius 0.9571 | Abklingen zaehlend   5.50 %, in der Schwelle 23/23 |   0.1 s
+
+### Laute C2.1 B5: f1 116.60 Hz, Umlauf 411.7 Takte, zaehlend 17 bis 2262 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    92.14 Cent | angepasst: 1-12   3.32, zaehlend    7.89, alle  1081.70 Cent | groesster Radius 0.9612 | Abklingen zaehlend   7.02 %, in der Schwelle 17/17 |   0.1 s
+  M   4 (  8 Mult.) | Start    91.13 Cent | angepasst: 1-12   3.31, zaehlend    7.85, alle  1081.67 Cent | groesster Radius 0.9612 | Abklingen zaehlend   7.02 %, in der Schwelle 17/17 |   0.3 s
+  M   6 ( 12 Mult.) | Start    89.31 Cent | angepasst: 1-12   0.99, zaehlend    1.77, alle  1003.75 Cent | groesster Radius 0.9529 | Abklingen zaehlend   4.18 %, in der Schwelle 17/17 |   0.2 s
+
+### Laute C2.2 B0: f1 174.63 Hz, Umlauf 274.9 Takte, zaehlend 30 bis 5589 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    40.97 Cent | angepasst: 1-12   1.67, zaehlend    5.00, alle   380.49 Cent | groesster Radius 0.8998 | Abklingen zaehlend   4.41 %, in der Schwelle 30/30 |   0.1 s
+  M   4 (  8 Mult.) | Start    34.20 Cent | angepasst: 1-12   0.68, zaehlend    1.18, alle   348.39 Cent | groesster Radius 0.8861 | Abklingen zaehlend   2.13 %, in der Schwelle 30/30 |   0.1 s
+
+### Laute C2.2 B5: f1 233.11 Hz, Umlauf 205.9 Takte, zaehlend 22 bis 5457 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    57.92 Cent | angepasst: 1-12   3.56, zaehlend    7.88, alle   399.00 Cent | groesster Radius 0.8727 | Abklingen zaehlend   5.52 %, in der Schwelle 22/22 |   0.1 s
+  M   3 (  6 Mult.) | Start    50.12 Cent | angepasst: 1-12   0.67, zaehlend    1.71, alle   354.42 Cent | groesster Radius 0.8669 | Abklingen zaehlend   2.17 %, in der Schwelle 22/22 |   0.1 s
+
+### Laute C3.1 B0: f1 98.02 Hz, Umlauf 489.7 Takte, zaehlend 26 bis 2867 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    58.62 Cent | angepasst: 1-12   2.03, zaehlend    6.95, alle   904.38 Cent | groesster Radius 0.9625 | Abklingen zaehlend   8.59 %, in der Schwelle 26/26 |   0.1 s
+  M   6 ( 12 Mult.) | Start    56.08 Cent | angepasst: 1-12   2.03, zaehlend    6.90, alle   904.50 Cent | groesster Radius 0.9800 | Abklingen zaehlend   8.59 %, in der Schwelle 26/26 |   0.3 s
+  M   9 ( 18 Mult.) | Start    52.46 Cent | angepasst: 1-12   0.02, zaehlend    0.08, alle   759.20 Cent | groesster Radius 0.9474 | Abklingen zaehlend   8.74 %, in der Schwelle 26/26 |   0.3 s
+
+### Laute C3.1 B5: f1 130.86 Hz, Umlauf 366.8 Takte, zaehlend 19 bis 2782 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    76.66 Cent | angepasst: 1-12   2.91, zaehlend    7.10, alle   909.85 Cent | groesster Radius 0.9511 | Abklingen zaehlend   6.43 %, in der Schwelle 19/19 |   0.1 s
+  M   4 (  8 Mult.) | Start    75.01 Cent | angepasst: 1-12   2.89, zaehlend    7.03, alle   909.91 Cent | groesster Radius 0.9800 | Abklingen zaehlend   6.42 %, in der Schwelle 19/19 |   0.3 s
+  M   6 ( 12 Mult.) | Start    72.02 Cent | angepasst: 1-12   0.18, zaehlend    0.32, alle   749.86 Cent | groesster Radius 0.9176 | Abklingen zaehlend   5.20 %, in der Schwelle 19/19 |   0.1 s
+
+### Laute C3.2 B0: f1 196.01 Hz, Umlauf 244.9 Takte, zaehlend 33 bis 6823 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    32.34 Cent | angepasst: 1-12   1.24, zaehlend    4.36, alle   259.15 Cent | groesster Radius 0.8683 | Abklingen zaehlend   3.52 %, in der Schwelle 33/33 |   0.1 s
+  M   4 (  8 Mult.) | Start    23.25 Cent | angepasst: 1-12   0.49, zaehlend    0.82, alle   232.22 Cent | groesster Radius 0.8521 | Abklingen zaehlend   2.66 %, in der Schwelle 33/33 |   0.1 s
+
+### Laute C3.2 B5: f1 261.65 Hz, Umlauf 183.5 Takte, zaehlend 25 bis 6907 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    49.94 Cent | angepasst: 1-12   3.04, zaehlend    7.18, alle   267.74 Cent | groesster Radius 0.8411 | Abklingen zaehlend   5.17 %, in der Schwelle 25/25 |   0.1 s
+  M   3 (  6 Mult.) | Start    38.00 Cent | angepasst: 1-12   1.06, zaehlend    1.56, alle   231.49 Cent | groesster Radius 0.8181 | Abklingen zaehlend   2.24 %, in der Schwelle 25/25 |   0.1 s
+
+### Laute C4.1 B0: f1 130.82 Hz, Umlauf 366.9 Takte, zaehlend 35 bis 4957 Hz, Abel-Smith 4 Biquads
+  M   4 (  8 Mult.) | Start    36.83 Cent | angepasst: 1-12   1.32, zaehlend    5.04, alle   486.22 Cent | groesster Radius 0.9319 | Abklingen zaehlend   4.79 %, in der Schwelle 35/35 |   0.1 s
+  M   6 ( 12 Mult.) | Start    28.24 Cent | angepasst: 1-12   0.12, zaehlend    0.42, alle   421.82 Cent | groesster Radius 0.9208 | Abklingen zaehlend   1.94 %, in der Schwelle 35/35 |   0.1 s
+
+### Laute C4.1 B5: f1 174.64 Hz, Umlauf 274.9 Takte, zaehlend 26 bis 4909 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    50.41 Cent | angepasst: 1-12   1.91, zaehlend    5.96, alle   488.42 Cent | groesster Radius 0.9138 | Abklingen zaehlend   5.16 %, in der Schwelle 26/26 |   0.1 s
+  M   4 (  8 Mult.) | Start    45.27 Cent | angepasst: 1-12   0.55, zaehlend    1.58, alle   447.44 Cent | groesster Radius 0.9076 | Abklingen zaehlend   2.29 %, in der Schwelle 26/26 |   0.1 s
+
+### Laute C5.1 B0: f1 174.63 Hz, Umlauf 274.9 Takte, zaehlend 29 bis 5399 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    40.10 Cent | angepasst: 1-12   1.53, zaehlend    4.90, alle   402.55 Cent | groesster Radius 0.8987 | Abklingen zaehlend   4.20 %, in der Schwelle 29/29 |   0.1 s
+  M   4 (  8 Mult.) | Start    34.09 Cent | angepasst: 1-12   0.58, zaehlend    1.00, alle   366.45 Cent | groesster Radius 0.8845 | Abklingen zaehlend   2.10 %, in der Schwelle 29/29 |   0.1 s
+
+### Laute C5.1 B5: f1 233.12 Hz, Umlauf 205.9 Takte, zaehlend 22 bis 5476 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    61.40 Cent | angepasst: 1-12   4.07, zaehlend    9.10, alle   420.91 Cent | groesster Radius 0.8776 | Abklingen zaehlend   6.15 %, in der Schwelle 22/22 |   0.1 s
+  M   3 (  6 Mult.) | Start    52.91 Cent | angepasst: 1-12   1.30, zaehlend    1.93, alle   371.99 Cent | groesster Radius 0.8592 | Abklingen zaehlend   2.60 %, in der Schwelle 22/22 |   0.1 s
+
+### Laute C6.1 B0: f1 220.01 Hz, Umlauf 218.2 Takte, zaehlend 36 bis 8313 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    28.13 Cent | angepasst: 1-12   1.04, zaehlend    3.24, alle   168.18 Cent | groesster Radius 0.8428 | Abklingen zaehlend   3.18 %, in der Schwelle 36/36 |   0.1 s
+  M   4 (  8 Mult.) | Start    15.59 Cent | angepasst: 1-12   0.53, zaehlend    0.82, alle   146.34 Cent | groesster Radius 0.8216 | Abklingen zaehlend   1.48 %, in der Schwelle 36/36 |   0.1 s
+
+### Laute C6.1 B5: f1 293.69 Hz, Umlauf 163.4 Takte, zaehlend 27 bis 8324 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    43.81 Cent | angepasst: 1-12   2.20, zaehlend    7.70, alle   182.75 Cent | groesster Radius 0.8057 | Abklingen zaehlend   4.93 %, in der Schwelle 27/27 |   0.1 s
+  M   3 (  6 Mult.) | Start    27.18 Cent | angepasst: 1-12   0.98, zaehlend    1.46, alle   152.98 Cent | groesster Radius 0.7822 | Abklingen zaehlend   2.02 %, in der Schwelle 27/27 |   0.1 s
+
+### Laute C7.1 B0: f1 293.67 Hz, Umlauf 163.4 Takte, zaehlend 50 bis 15224 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    19.55 Cent | angepasst: 1-12   0.64, zaehlend    2.70, alle    21.37 Cent | groesster Radius 0.7418 | Abklingen zaehlend   2.61 %, in der Schwelle 50/50 |   0.1 s
+
+### Laute C7.1 B5: f1 392.01 Hz, Umlauf 122.4 Takte, zaehlend 37 bis 15025 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    31.97 Cent | angepasst: 1-12   1.77, zaehlend    6.35, alle    30.85 Cent | groesster Radius 0.6833 | Abklingen zaehlend   4.19 %, in der Schwelle 37/37 |   0.1 s
+  M   3 (  6 Mult.) | Start    14.15 Cent | angepasst: 1-12   0.35, zaehlend    2.71, alle    20.27 Cent | groesster Radius 0.6761 | Abklingen zaehlend   2.29 %, in der Schwelle 37/37 |   0.1 s
+
+### Laute C8.1 B0: f1 392.00 Hz, Umlauf 122.4 Takte, zaehlend 49 bis 19667 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    24.42 Cent | angepasst: 1-12   0.50, zaehlend    1.69, alle     1.69 Cent | groesster Radius 0.5610 | Abklingen zaehlend   1.68 %, in der Schwelle 49/49 |   0.1 s
+
+### Laute C8.1 B5: f1 523.26 Hz, Umlauf 91.7 Takte, zaehlend 37 bis 19830 Hz, Abel-Smith 1 Biquads
+  M   1 (  2 Mult.) | Start    30.63 Cent | angepasst: 1-12   4.92, zaehlend   11.00, alle    11.00 Cent | groesster Radius 0.5409 | Abklingen zaehlend   5.38 %, in der Schwelle 37/37 |   0.1 s
+  M   2 (  4 Mult.) | Start    30.91 Cent | angepasst: 1-12   0.44, zaehlend    1.77, alle     1.77 Cent | groesster Radius 0.4926 | Abklingen zaehlend   1.06 %, in der Schwelle 37/37 |   0.1 s
+
+### Oud C1.1 B0: f1 65.41 Hz, Umlauf 733.9 Takte, zaehlend 83 bis 6101 Hz, Abel-Smith 14 Biquads
+  M  14 ( 28 Mult.) | Start     6.10 Cent | angepasst: 1-12   0.18, zaehlend    1.45, alle   391.29 Cent | groesster Radius 0.9692 | Abklingen zaehlend   2.73 %, in der Schwelle 83/83 |   0.1 s
+
+### Oud C1.1 B5: f1 87.31 Hz, Umlauf 549.8 Takte, zaehlend 62 bis 6080 Hz, Abel-Smith 10 Biquads
+  M  10 ( 20 Mult.) | Start    13.61 Cent | angepasst: 1-12   0.39, zaehlend    2.59, alle   403.31 Cent | groesster Radius 0.9615 | Abklingen zaehlend   3.79 %, in der Schwelle 62/62 |   0.1 s
+
+### Oud C2.1 B0: f1 87.31 Hz, Umlauf 549.8 Takte, zaehlend 69 bis 6688 Hz, Abel-Smith 11 Biquads
+  M  11 ( 22 Mult.) | Start     8.47 Cent | angepasst: 1-12   0.20, zaehlend    1.42, alle   328.52 Cent | groesster Radius 0.9561 | Abklingen zaehlend   2.58 %, in der Schwelle 69/69 |   0.1 s
+
+### Oud C2.1 B5: f1 116.55 Hz, Umlauf 411.9 Takte, zaehlend 52 bis 6736 Hz, Abel-Smith 8 Biquads
+  M   8 ( 16 Mult.) | Start    17.26 Cent | angepasst: 1-12   0.44, zaehlend    2.55, alle   334.64 Cent | groesster Radius 0.9458 | Abklingen zaehlend   3.59 %, in der Schwelle 52/52 |   0.1 s
+
+### Oud C3.1 B0: f1 110.00 Hz, Umlauf 436.4 Takte, zaehlend 67 bis 8052 Hz, Abel-Smith 9 Biquads
+  M   9 ( 18 Mult.) | Start    11.15 Cent | angepasst: 1-12   0.32, zaehlend    1.94, alle   227.78 Cent | groesster Radius 0.9402 | Abklingen zaehlend   2.94 %, in der Schwelle 67/67 |   0.1 s
+
+### Oud C3.1 B5: f1 146.84 Hz, Umlauf 326.9 Takte, zaehlend 50 bis 8016 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start    16.05 Cent | angepasst: 1-12   0.40, zaehlend    1.93, alle   225.01 Cent | groesster Radius 0.9215 | Abklingen zaehlend   2.86 %, in der Schwelle 50/50 |   0.1 s
+
+### Oud C4.1 B0: f1 146.83 Hz, Umlauf 326.9 Takte, zaehlend 66 bis 10397 Hz, Abel-Smith 7 Biquads
+  M   7 ( 14 Mult.) | Start    14.27 Cent | angepasst: 1-12   0.53, zaehlend    2.66, alle   122.70 Cent | groesster Radius 0.9105 | Abklingen zaehlend   3.33 %, in der Schwelle 66/66 |   0.1 s
+
+### Oud C4.1 B5: f1 196.00 Hz, Umlauf 244.9 Takte, zaehlend 49 bis 10291 Hz, Abel-Smith 5 Biquads
+  M   5 ( 10 Mult.) | Start    22.67 Cent | angepasst: 1-12   0.89, zaehlend    3.83, alle   127.03 Cent | groesster Radius 0.8860 | Abklingen zaehlend   4.03 %, in der Schwelle 49/49 |   0.1 s
+  M   8 ( 16 Mult.) | Start    26.56 Cent | angepasst: 1-12   0.10, zaehlend    1.48, alle    88.46 Cent | groesster Radius 0.8567 | Abklingen zaehlend   0.88 %, in der Schwelle 49/49 |   0.2 s
+
+### Oud C5.1 B0: f1 196.01 Hz, Umlauf 244.9 Takte, zaehlend 31 bis 6423 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    33.88 Cent | angepasst: 1-12   1.15, zaehlend    3.41, alle   286.43 Cent | groesster Radius 0.8737 | Abklingen zaehlend   3.25 %, in der Schwelle 31/31 |   0.1 s
+  M   4 (  8 Mult.) | Start    24.56 Cent | angepasst: 1-12   0.45, zaehlend    0.75, alle   258.80 Cent | groesster Radius 0.8563 | Abklingen zaehlend   2.55 %, in der Schwelle 31/31 |   0.1 s
+
+### Oud C5.1 B5: f1 261.65 Hz, Umlauf 183.4 Takte, zaehlend 23 bis 6354 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    49.71 Cent | angepasst: 1-12   2.85, zaehlend    6.21, alle   304.80 Cent | groesster Radius 0.8443 | Abklingen zaehlend   4.67 %, in der Schwelle 23/23 |   0.1 s
+  M   3 (  6 Mult.) | Start    39.10 Cent | angepasst: 1-12   0.89, zaehlend    1.29, alle   267.71 Cent | groesster Radius 0.8213 | Abklingen zaehlend   1.92 %, in der Schwelle 23/23 |   0.1 s
+
+### Oud C6.1 B0: f1 261.63 Hz, Umlauf 183.5 Takte, zaehlend 39 bis 10666 Hz, Abel-Smith 3 Biquads
+  M   3 (  6 Mult.) | Start    26.91 Cent | angepasst: 1-12   0.77, zaehlend    2.82, alle    86.59 Cent | groesster Radius 0.8013 | Abklingen zaehlend   2.95 %, in der Schwelle 39/39 |   0.1 s
+
+### Oud C6.1 B5: f1 349.25 Hz, Umlauf 137.4 Takte, zaehlend 29 bis 10581 Hz, Abel-Smith 2 Biquads
+  M   2 (  4 Mult.) | Start    38.93 Cent | angepasst: 1-12   2.02, zaehlend    5.63, alle    98.72 Cent | groesster Radius 0.7590 | Abklingen zaehlend   4.16 %, in der Schwelle 29/29 |   0.1 s
+  M   3 (  6 Mult.) | Start    13.80 Cent | angepasst: 1-12   0.91, zaehlend    1.35, alle    77.47 Cent | groesster Radius 0.7275 | Abklingen zaehlend   1.78 %, in der Schwelle 29/29 |   0.1 s
+
+
+===== Zusammenfassung (zaehlende Teiltoene, groesster Fehler je Taste) =====
+Instrument | Tasten | Abel-Smith-Zahl Median / max | kleinstes M fuer 10 Cent: Tasten, Median / max | fuer 3 Cent: Tasten, Median / max | bestes Ergebnis Cent Median / max | Abklingen in der Schwelle
+Gitarre  | 120 |    3 /  13 | 120,    3 /  13 | 120,    4 /  13 |  1.63 /   3.00 | 120
+Harfe    |  80 |    1 /  16 |  77,    2 /  16 |  73,    4 /  23 |  1.55 /  28.11 |  80
+Cembalo  |  61 |    4 /  99 |  59,    6 /  99 |  52,   14 / 119 |  1.61 /  11.01 |  60
+Laute    |  22 |    3 /   4 |  22,    3 /   9 |  22,    4 /   9 |  1.32 /   2.71 |  22
+Oud      |  12 |    7 /  14 |  12,    7 /  14 |  12,    8 /  14 |  1.71 /   2.82 |  12
