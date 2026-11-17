@@ -209,7 +209,8 @@ struct ZweiKomponenten
 
 /// KQ32 a (S203): zwei Stufen als Summe zweier abklingender Komponenten mit Boden,
 ///     e_j = A1 · 10^(s1 t_j / 10) + A2 · 10^(s2 t_j / 10) + B,
-/// an die Kurve nach Schroeder angepasst (Abweichung in dB ueber die ersten `m` Rahmen, Levenberg–Marquardt in
+/// an die Kurve nach Schroeder angepasst (Abweichung in dB ueber die ersten `m` Rahmen — der Aufrufer gibt den ganzen
+/// Bereich, den Boden traegt B —, Levenberg–Marquardt in
 /// ln A1, s1, ln A2, s2, ln B). Zwei Geraden mit Knick schaetzen die fruehe Stufe bei flachem Knick zu flach, weil die
 /// langsame Komponente schon vor dem Knick in der Summe steckt (Bericht 16 der Research-Werkbank, Fall D: 40 → 26 dB/s;
 /// an diesem Code vorher 40 → 33 dB/s bei einem Knick 20 dB unter der Spitze). Die Kurve nach Schroeder ist glatt —
@@ -442,7 +443,10 @@ Abklingen zweiStufen(std::span<const double> pegelDb, double schrittS, std::size
     a.t60Frueh = -60.0 / frueh.steigung;
     a.t60Spaet = -60.0 / spaetSteigung;
     // KQ32 a: die Geraden sind der Startwert, die Abklingzeiten und der Knick kommen aus den zwei Komponenten
-    if (const std::optional<ZweiKomponenten> z = zweiKomponenten(e, E, m, knick, schrittS, frueh.steigung, spaetSteigung))
+    // ueber den ganzen Bereich (n Rahmen), nicht nur bis `m`: der Schnitt vor dem Ende haelt den Boden aus den Geraden,
+    // die Anpassung traegt ihn selbst (B) — mit dem Schnitt fehlte ihr, wo der Bereich noch in der spaeten Stufe endet,
+    // der groesste Teil dieser Stufe (Salamander D#4 v12: m = 235 von 645 Rahmen, Knick 0,14 statt 2,3 s; S203)
+    if (const std::optional<ZweiKomponenten> z = zweiKomponenten(e, E, n, knick, schrittS, frueh.steigung, spaetSteigung))
     {
         a.t60Frueh = -60.0 / z->frueh;
         a.t60Spaet = -60.0 / z->spaet;

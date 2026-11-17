@@ -992,6 +992,43 @@ TEST_CASE("Loop Salamander 31d-7 Bilder der Huellkurven (LUMIVIZ_31D7_BILD)")
     MESSAGE("Bilder unter " << ziel.string());
 }
 
+TEST_CASE("Loop Salamander KQ32 zwei Stufen je Ebene (LUMIVIZ_KQ32_TASTE)")
+{
+    // S203, KQ32 a: an einer Taste je Ebene Teilton 1 — die zwei Stufen der Messung und die Huellkurve als Text
+    // (Zeit, Pegel) nach LUMIVIZ_KQ32_AUS, um die Anpassung gegen ein Bild zu pruefen
+    const QString tasteText = qEnvironmentVariable("LUMIVIZ_KQ32_TASTE");
+    const QString salamanderOrdner = qEnvironmentVariable("LUMIVIZ_SALAMANDER");
+    const QString aus = qEnvironmentVariable("LUMIVIZ_KQ32_AUS");
+    if (tasteText.isEmpty() || salamanderOrdner.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_KQ32_TASTE=<midi> mit LUMIVIZ_SALAMANDER=<Ordner> (und LUMIVIZ_KQ32_AUS=<Ordner>) misst je Ebene");
+        return;
+    }
+    const int midi = tasteText.toInt();
+    const std::vector<SalamanderTaste> alle = salamanderTasten();
+    const auto st = std::find_if(alle.begin(), alle.end(), [midi](const SalamanderTaste& t) { return t.midi == midi; });
+    REQUIRE(st != alle.end());
+    const std::filesystem::path ordner = salamanderOrdner.toStdU16String();
+    for (const int ebene : {6, 12, 16})
+    {
+        const std::optional<lumi::audio::WavInhalt> wav = lumi::audio::liesWavDatei(salamanderDatei(ordner, *st, ebene));
+        REQUIRE(wav.has_value());
+        const Ergebnis e = linksGemessen(wav->stereo, wav->rate, midi);
+        REQUIRE(e.erkannt);
+        const Teilton* t = e.teilton(1);
+        REQUIRE(t != nullptr);
+        const Abklingen& a = t->abklingen;
+        MESSAGE("v" << ebene << ": zwei Stufen " << a.zweiStufen << ", frueh " << a.t60Frueh << " s, spaet " << a.t60Spaet
+                    << " s, Knick " << a.knickS << " s, Bereich " << a.vonS << " … " << a.bisS << " s, Schritt " << e.schrittS);
+        if (!aus.isEmpty())
+        {
+            std::filesystem::create_directories(aus.toStdU16String());
+            std::ofstream f(std::filesystem::path(aus.toStdU16String()) / ("kq32_" + std::to_string(midi) + "_v" + std::to_string(ebene) + ".txt"));
+            for (std::size_t i = 0; i < t->pegelDb.size(); ++i) f << i * e.schrittS << '\t' << t->pegelDb[i] << '\n';
+        }
+    }
+}
+
 TEST_CASE("Loop Salamander 31d-7 was die Tiefe im Chor bestimmt (LUMIVIZ_31D7_TIEFE)")
 {
     // SZ1 a: an Tasten mit drei Saiten bei fester Vorgabe je eine Groesse veraendert — die zweite Ebene, die
