@@ -20,6 +20,12 @@
 > - **Nacharbeit:** Auftrag `2026-11-17_22_harfe_nacharbeit` der Werkbank (Messweg bei Bell, besaitete Güten, offene
 >   Quellen der Ladelisten 02 / 12). Für die LumiViz-Seite: Winkelfaktor der Saitenlast (0,75 statt 0,25), Ziel Z1 ohne
 >   Bell 7.22, Güten besaitet gegen KQ29 a.
+> - **Nachtrag S203** (Bericht 22, `2026-11-17_S203_harfe_nacharbeit_werkbank.md`, gegengelesen): **der Bezug von Abb. 7.22 ist
+>   belegt** — Bell S. 149 nennt für alle Admittanzmessungen in Kap. 7 „116dB = 1 Ω⁻¹ (or 1 s/kg)“ (am Seitenbild); die
+>   Folge für S201 oben ist damit erledigt, die Prüfung an Saite 26 gilt mit belegtem Bezug. **Die Reihenfeder im Messweg
+>   ist widerlegt** (die besaiteten Modenprofile liegen 7–15 dB unter der Linie von 5,2·10⁴ N/m; eine zulässige Feder ab
+>   1,2·10⁵ N/m trägt 7–14 dB unter Bell bei), und auch die unbesaiteten Extremwerte steigen um 5,5–6,6 dB/Oktave. Die
+>   Empfehlung „Ziel Z1 ohne Bell 7.22“ (Abschnitt 6) beruhte auf dieser Hypothese und trägt nicht mehr.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_12_harfe_grundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_12_harfe_grundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

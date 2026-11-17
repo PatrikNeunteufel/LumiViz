@@ -1,0 +1,37 @@
+Bezug: 20 lg(1/1,58e-6) = 116.03 dB
+
+1.4 Reihenfeder
+  S(1,1)-   187 Hz: Linie 5,2e4  83.1 dB, Abstand -14.9, k >= 2.89e+05
+  S(1,1)+   207 Hz: Linie 5,2e4  84.0 dB, Abstand  -7.2, k >= 1.19e+05
+  S(1,2)    257 Hz: Linie 5,2e4  85.9 dB, Abstand -13.4, k >= 2.42e+05
+  S(1,2)'   284 Hz: Linie 5,2e4  86.7 dB, Abstand -11.6, k >= 1.99e+05
+  S(1,3)    334 Hz: Linie 5,2e4  88.1 dB, Abstand  -7.4, k >= 1.23e+05
+  S(1,4)    430 Hz: Linie 5,2e4  90.3 dB, Abstand  -9.6, k >= 1.58e+05
+  S(1,5)    555 Hz: Linie 5,2e4  92.6 dB, Abstand -10.9, k >= 1.81e+05
+  S(1,6)    697 Hz: Linie 5,2e4  94.5 dB, Abstand  -9.2, k >= 1.51e+05
+  S(1,7)    753 Hz: Linie 5,2e4  95.2 dB, Abstand  -9.4, k >= 1.54e+05
+  S(1,8)    895 Hz: Linie 5,2e4  96.7 dB, Abstand  -9.8, k >= 1.61e+05
+  weichste zulaessige Feder: 1.19e+05 N/m
+  Beitrag k=1,2e5 bei 104 Hz:  70.7 dB (Bell 7.22 80)
+  Beitrag k=1,2e5 bei 207 Hz:  76.7 dB (Bell 7.22 86)
+  Beitrag k=1,2e5 bei 330 Hz:  80.8 dB (Bell 7.22 95)
+  Beitrag k=1,2e5 bei 494 Hz:  84.3 dB (Bell 7.22 91)
+  Beitrag k=1,2e5 bei 740 Hz:  87.8 dB (Bell 7.22 99)
+  Beitrag k=1,2e5 bei 988 Hz:  90.3 dB (Bell 7.22 99)
+
+1.3 Steigung (dB/Oktave) Minima / Maxima
+  ohne Saiten : +5.5 / +6.6
+  mit Saiten  : +7.0 / +8.9
+
+2 Gueten
+  Le Carrou Tab. 4.1 T1: f 154.1 Hz, Q |s|/(2|Re s|) = 19.1
+  Le Carrou Tab. 4.1 A0: f 170.2 Hz, Q |s|/(2|Re s|) = 19.5
+  zeta 5.5 % -> Q 9.1
+  zeta 4.8 % -> Q 10.4
+  zeta 2.5 % -> Q 20.0
+  zeta 2.3 % -> Q 21.7
+  zeta 0.9 % -> Q 55.6
+  zeta 1.4 % -> Q 35.7
+
+1.2 Abb. 7.6, Stuetzstellen der Tabelle, 200-790 Hz: mit +3.9, ohne -2.2 dB/Okt
+  Energiemittel 400-790 Hz (Stuetzstellen): mit 87.2, ohne 78.0, Differenz +9.2 dB

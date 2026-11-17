@@ -1,0 +1,32 @@
+
+### Gitarre Saite 6 Bund 0
+  voll           iir4: W1 max|H| 11.67077 bei   24000 Hz (gespiegelt 1) | 2a max|H| 0.999996 bei   24000 Hz, Fehler an Sollpunkten W1 134.2 % / 2a 288.1 %
+  voll           iir8: W1 max|H| 0.99263 bei      65 Hz (gespiegelt 0) | 2a max|H| 0.992690 bei       0 Hz, Fehler an Sollpunkten W1 26.7 % / 2a 24.5 %
+  ohne HF        iir4: W1 max|H| 0.99266 bei       0 Hz (gespiegelt 0)
+  ohne HF        iir8: W1 max|H| 0.99269 bei       0 Hz (gespiegelt 0)
+  unter f1 Ziel  iir4: W1 max|H| 35.01698 bei   24000 Hz (gespiegelt 0)
+  unter f1 Ziel  iir8: W1 max|H| 0.99274 bei       0 Hz (gespiegelt 0)
+
+### Gitarre Saite 1 Bund 12
+  voll           iir4: W1 max|H| 0.99741 bei     323 Hz (gespiegelt 0) | 2a max|H| 0.997434 bei     309 Hz, Fehler an Sollpunkten W1 10.3 % / 2a 7.5 %
+  voll           iir8: W1 max|H| 0.99876 bei       0 Hz (gespiegelt 1) | 2a max|H| 0.997384 bei     569 Hz, Fehler an Sollpunkten W1 1.4 % / 2a 1.7 %
+  ohne HF        iir4: W1 max|H| 0.99742 bei       0 Hz (gespiegelt 0)
+  ohne HF        iir8: W1 max|H| 0.99748 bei     382 Hz (gespiegelt 0)
+  unter f1 Ziel  iir4: W1 max|H| 1.00709 bei       0 Hz (gespiegelt 0)
+  unter f1 Ziel  iir8: W1 max|H| 0.99897 bei       0 Hz (gespiegelt 0)
+
+### Harfe Taste 46 (Darm)
+  voll           iir4: W1 max|H| 0.99441 bei       0 Hz (gespiegelt 0) | 2a max|H| 0.994429 bei       0 Hz, Fehler an Sollpunkten W1 154.8 % / 2a 202.2 %
+  voll           iir8: W1 max|H| 0.99458 bei       0 Hz (gespiegelt 1) | 2a max|H| 0.994779 bei       0 Hz, Fehler an Sollpunkten W1 45.6 % / 2a 52.7 %
+  ohne HF        iir4: W1 max|H| 0.99405 bei       0 Hz (gespiegelt 0)
+  ohne HF        iir8: W1 max|H| 0.99446 bei       0 Hz (gespiegelt 0)
+  unter f1 Ziel  iir4: W1 max|H| 0.99553 bei       0 Hz (gespiegelt 0)
+  unter f1 Ziel  iir8: W1 max|H| 1.00078 bei       0 Hz (gespiegelt 1)
+
+### Harfe Taste 60 (Darm)
+  voll           iir4: W1 max|H| 0.99624 bei       0 Hz (gespiegelt 0) | 2a max|H| 0.996373 bei       0 Hz, Fehler an Sollpunkten W1 23.8 % / 2a 49.6 %
+  voll           iir8: W1 max|H| 0.99589 bei     154 Hz (gespiegelt 0) | 2a max|H| 0.995915 bei     169 Hz, Fehler an Sollpunkten W1 6.2 % / 2a 6.2 %
+  ohne HF        iir4: W1 max|H| 0.99620 bei       0 Hz (gespiegelt 0)
+  ohne HF        iir8: W1 max|H| 0.99589 bei     181 Hz (gespiegelt 0)
+  unter f1 Ziel  iir4: W1 max|H| 1.00130 bei       0 Hz (gespiegelt 0)
+  unter f1 Ziel  iir8: W1 max|H| 1.00835 bei       0 Hz (gespiegelt 0)

@@ -1,0 +1,87 @@
+(1) a1 nach Gl. (3)-(8), Tab. 2 - gedruckte Gl. (7) gegen Lesart 'ln B'; daneben an der Abbildung abgelesen (+-0,02)
+  Abb. 3 (f0 65,406 Hz, Taste 16): M | B | Lesart ln B | gedruckt | abgelesen
+    40 | 1e-06 | -0.357 | -1.000 | -0.350
+    20 | 1e-06 | -0.446 | -1.000 | -0.450
+    10 | 1e-06 | -0.538 | -0.999 | -0.530
+     5 | 1e-06 | -0.628 | -0.999 | -0.610
+     1 | 1e-06 | -0.812 | -0.996 | -0.820
+    40 | 1e-03 | -0.833 | -1.000 | -0.840
+    20 | 1e-03 | -0.865 | -1.000 | -0.870
+    10 | 1e-03 | -0.892 | -0.999 | -0.890
+     5 | 1e-03 | -0.916 | -0.998 | -0.920
+     1 | 1e-03 | -0.956 | -0.996 | -0.955
+  Abb. 4 (M 8): Taste | B | Lesart ln B | gedruckt | abgelesen
+     4 ( 32.703 Hz) | 1e-06 | -0.743 | -0.999 | -0.730
+    16 ( 65.406 Hz) | 1e-06 | -0.567 | -0.999 | -0.570
+    28 (130.813 Hz) | 1e-06 | -0.318 | -0.998 | -0.290
+    40 (261.626 Hz) | 1e-06 | -0.015 | -0.997 | -0.010
+     4 ( 32.703 Hz) | 1e-03 | -0.949 | -0.999 | -0.950
+    16 ( 65.406 Hz) | 1e-03 | -0.900 | -0.999 | -0.880
+    28 (130.813 Hz) | 1e-03 | -0.811 | -0.998 | -0.800
+    40 (261.626 Hz) | 1e-03 | -0.655 | -0.996 | -0.650
+  Gegen die Faust-Abschrift (S201 gp.rauhala, 'ln B'): groesste Differenz ueber Abb. 3/4-Punkte 0.00e+00
+
+(2) Abb. 5 nachgerechnet (Lesart ln B): Abweichung in Cent, Stimmung am Grundton. Je M: groesster Wert und bei Hz, erste Frequenz mit < -8,39 Cent (0,5 %-Grenze), Wert bei 700 / 1300 Hz (a), 1500 / 2800 Hz (b), 2500 / 3800 Hz (c)
+  (a) f0 32.703 Hz, B 0.0002, fs 44100
+    M  1: a1 -0.9658 | max  +6.33 bei    263 Hz | < -8,39 ab    572 Hz |   -28.5 /  -141.1
+    M  5: a1 -0.9305 | max  +3.34 bei    330 Hz | < -8,39 ab    680 Hz |   -13.3 /  -100.8
+    M 10: a1 -0.9096 | max  +2.55 bei    364 Hz | < -8,39 ab    753 Hz |    -7.2 /   -76.2
+    M 20: a1 -0.8852 | max  +2.73 bei    467 Hz | < -8,39 ab    906 Hz |    -0.8 /   -45.4
+    M 30: a1 -0.8692 | max  +4.10 bei    572 Hz | < -8,39 ab   1107 Hz |    +3.5 /   -23.3
+    M 40: a1 -0.8572 | max  +7.09 bei    753 Hz | < -8,39 ab   1411 Hz |    +6.9 /    -5.1
+  (a) f0 32.703 Hz, B 0.0002, fs 48000
+    M  1: a1 -0.9658 | max  +3.36 bei    230 Hz | < -8,39 ab    501 Hz |   -33.8 /  -147.0
+    M  5: a1 -0.9305 | max  +0.29 bei    197 Hz | < -8,39 ab    536 Hz |   -23.0 /  -114.0
+    M 10: a1 -0.9096 | max  +0.00 bei     33 Hz | < -8,39 ab    572 Hz |   -19.1 /   -95.1
+    M 20: a1 -0.8852 | max  +0.00 bei     33 Hz | < -8,39 ab    572 Hz |   -15.0 /   -72.3
+    M 30: a1 -0.8692 | max  +0.00 bei     33 Hz | < -8,39 ab    607 Hz |   -12.1 /   -56.4
+    M 40: a1 -0.8572 | max  +0.00 bei     33 Hz | < -8,39 ab    680 Hz |    -9.8 /   -43.6
+  (b) f0 65.406 Hz, B 0.0001, fs 44100
+    M  1: a1 -0.9212 | max  +7.41 bei    724 Hz | < -8,39 ab   1544 Hz |    -8.6 /   -82.5
+    M  5: a1 -0.8411 | max  +4.93 bei    925 Hz | < -8,39 ab   1829 Hz |    -0.5 /   -53.7
+    M 10: a1 -0.7955 | max  +4.45 bei   1060 Hz | < -8,39 ab   2049 Hz |    +2.2 /   -37.3
+    M 20: a1 -0.7438 | max  +5.21 bei   1334 Hz | < -8,39 ab   2503 Hz |    +5.0 /   -18.1
+    M 30: a1 -0.7112 | max  +7.12 bei   1685 Hz | < -8,39 ab   2980 Hz |    +6.9 /    -5.0
+    M 40: a1 -0.6870 | max +10.25 bei   2049 Hz | < -8,39 ab    nan Hz |    +8.6 /    +5.4
+  (b) f0 65.406 Hz, B 0.0001, fs 48000
+    M  1: a1 -0.9212 | max  +4.49 bei    657 Hz | < -8,39 ab   1403 Hz |   -13.1 /   -87.5
+    M  5: a1 -0.8411 | max  +1.22 bei    657 Hz | < -8,39 ab   1544 Hz |    -7.8 /   -64.2
+    M 10: a1 -0.7955 | max  +0.39 bei    591 Hz | < -8,39 ab   1614 Hz |    -6.3 /   -51.9
+    M 20: a1 -0.7438 | max  +0.05 bei    459 Hz | < -8,39 ab   1757 Hz |    -4.7 /   -37.8
+    M 30: a1 -0.7112 | max  +0.01 bei    327 Hz | < -8,39 ab   1975 Hz |    -3.5 /   -28.5
+    M 40: a1 -0.6870 | max  +0.01 bei    327 Hz | < -8,39 ab   2123 Hz |    -2.4 /   -21.2
+  (c) f0 130.82 Hz, B 0.00015, fs 44100
+    M  1: a1 -0.8627 | max  +7.20 bei   1185 Hz | < -8,39 ab   2552 Hz |    -8.4 /   -48.6
+    M  5: a1 -0.7338 | max  +4.28 bei   1587 Hz | < -8,39 ab   3126 Hz |    -1.0 /   -26.8
+    M 10: a1 -0.6636 | max  +3.30 bei   1722 Hz | < -8,39 ab   3420 Hz |    +0.8 /   -17.0
+    M 20: a1 -0.5866 | max  +2.89 bei   1995 Hz | < -8,39 ab   4026 Hz |    +2.3 /    -7.3
+    M 30: a1 -0.5392 | max  +3.18 bei   2411 Hz | < -8,39 ab   4496 Hz |    +3.1 /    -1.8
+    M 40: a1 -0.5049 | max  +3.97 bei   2837 Hz | < -8,39 ab    nan Hz |    +3.8 /    +2.2
+  (c) f0 130.82 Hz, B 0.00015, fs 48000
+    M  1: a1 -0.8627 | max  +4.13 bei   1052 Hz | < -8,39 ab   2411 Hz |   -13.2 /   -53.9
+    M  5: a1 -0.7338 | max  +0.74 bei   1052 Hz | < -8,39 ab   2552 Hz |    -8.7 /   -37.3
+    M 10: a1 -0.6636 | max  +0.03 bei    524 Hz | < -8,39 ab   2552 Hz |    -7.9 /   -30.5
+    M 20: a1 -0.5866 | max  +0.00 bei    131 Hz | < -8,39 ab   2694 Hz |    -7.4 /   -24.1
+    M 30: a1 -0.5392 | max  +0.00 bei    131 Hz | < -8,39 ab   2694 Hz |    -7.0 /   -20.5
+    M 40: a1 -0.5049 | max  +0.00 bei    131 Hz | < -8,39 ab   2837 Hz |    -6.6 /   -18.0
+
+(3) adf.m roh gegen die Abschrift in der S201-Gegenprobe (gp.adf), fs 44100, beta 0,85
+  f0 32.702, B 0.0002, df 2100: nap 21 (S201 21), groesste Differenz der Beiwerte 0.0e+00; phi0/2pi 21.486, mu0 547.09, tau0 1348.54; Pole bei 28 ... 1624 Hz
+    Stimmung grundton   (Verzug  569.76): Teiltoene 1-51; |Cent| 1-12 max   12.5, alle max  247.8 (Teilton 51, 2056 Hz); innerhalb 8,39 Cent bis 1107 Hz zusammenhaengend bis 330 Hz
+    Stimmung Verzug mu0 (Verzug  547.09): Teiltoene 1-51; |Cent| 1-12 max   29.5, alle max  315.8 (Teilton 51, 2056 Hz); innerhalb 8,39 Cent bis 791 Hz zusammenhaengend bis 33 Hz
+    je Teilton (Stimmung Grundton), Cent: +0.0 +0.2 -0.4 -0.7 -1.5 -2.4 -3.5 -5.0 -6.6 -8.5 -10.4 -12.5 -14.7 -16.9 -19.1 -21.1 -23.0 -24.7 -26.0 -27.1 -27.6 -27.6 -26.9 -25.6 -23.5 -20.6 -16.7 -12.0 -6.3 +0.3 +7.9 +16.3 +25.7 +35.7 +46.4 +57.9 +69.8 +82.1 +95.0 +108.1 +121.6 +135.3 +149.4 +163.6 +177.7 +191.4 +204.4 +216.6 +227.9 +238.3 +247.8
+    (4) Pole exakt (Newton-Schritt ersetzt): groesste Verschiebung 49.3 Hz; |Cent| 1-12 max 0.4, alle max 245.5; Fehler bis zum letzten Pol (1626 Hz) max 134.8 Cent
+    (5) adf.m      gegen f_n = n f0/sqrt(1 - B n^2) bis df: |Cent| 1-12 max 13.2, alle max 37.2; beide Gesetze unterscheiden sich am Teilton 47 um 188.0 Cent, am Teilton 12 um 0.72 Cent
+    (5) Pole exakt gegen f_n = n f0/sqrt(1 - B n^2) bis df: |Cent| 1-12 max 0.4, alle max 21.3; beide Gesetze unterscheiden sich am Teilton 47 um 188.0 Cent, am Teilton 12 um 0.72 Cent
+  f0 65.406, B 0.0001, df 2500: nap 4 (S201 4), groesste Differenz der Beiwerte 0.0e+00; phi0/2pi 4.551, mu0 549.53, tau0 674.25; Pole bei 177 ... 1397 Hz
+    Stimmung grundton   (Verzug  573.14): Teiltoene 1-35; |Cent| 1-12 max    0.4, alle max    5.9 (Teilton 29, 1975 Hz); innerhalb 8,39 Cent bis 2425 Hz zusammenhaengend bis 2425 Hz
+    Stimmung Verzug mu0 (Verzug  549.53): Teiltoene 1-35; |Cent| 1-12 max   63.4, alle max   76.1 (Teilton 31, 2123 Hz); innerhalb 8,39 Cent bis 0 Hz zusammenhaengend bis 65 Hz
+    (4) Pole exakt (Newton-Schritt ersetzt): groesste Verschiebung 10.6 Hz; |Cent| 1-12 max 0.4, alle max 6.0; Fehler bis zum letzten Pol (1408 Hz) max 3.2 Cent
+    (5) adf.m      gegen f_n = n f0/sqrt(1 - B n^2) bis df: |Cent| 1-12 max 0.4, alle max 10.7; beide Gesetze unterscheiden sich am Teilton 35 um 13.1 Cent, am Teilton 12 um 0.18 Cent
+    (5) Pole exakt gegen f_n = n f0/sqrt(1 - B n^2) bis df: |Cent| 1-12 max 0.4, alle max 10.7; beide Gesetze unterscheiden sich am Teilton 35 um 13.1 Cent, am Teilton 12 um 0.18 Cent
+  f0 130.81, B 0.00015, df 4300: nap 4 (S201 4), groesste Differenz der Beiwerte 0.0e+00; phi0/2pi 4.253, mu0 269.12, tau0 337.13; Pole bei 324 ... 2660 Hz
+    Stimmung grundton   (Verzug  281.93): Teiltoene 1-30; |Cent| 1-12 max    0.4, alle max    5.9 (Teilton 30, 4181 Hz); innerhalb 8,39 Cent bis 4181 Hz zusammenhaengend bis 4181 Hz
+    Stimmung Verzug mu0 (Verzug  269.12): Teiltoene 1-30; |Cent| 1-12 max   69.4, alle max   75.6 (Teilton 25, 3420 Hz); innerhalb 8,39 Cent bis 0 Hz zusammenhaengend bis 131 Hz
+    (4) Pole exakt (Newton-Schritt ersetzt): groesste Verschiebung 0.7 Hz; |Cent| 1-12 max 0.7, alle max 6.4; Fehler bis zum letzten Pol (2660 Hz) max 0.7 Cent
+    (5) adf.m      gegen f_n = n f0/sqrt(1 - B n^2) bis df: |Cent| 1-12 max 0.5, alle max 21.8; beide Gesetze unterscheiden sich am Teilton 30 um 15.9 Cent, am Teilton 12 um 0.40 Cent
+    (5) Pole exakt gegen f_n = n f0/sqrt(1 - B n^2) bis df: |Cent| 1-12 max 0.8, alle max 22.3; beide Gesetze unterscheiden sich am Teilton 30 um 15.9 Cent, am Teilton 12 um 0.40 Cent

@@ -11,12 +11,13 @@
 
 *Stand 2026-11-17.*
 
-**Gesamt:** 217 Dateien, 601.4 MB.
+**Gesamt:** 222 Dateien, 619.3 MB.
 
 ### .
 
 - `UMZUG_S182.tsv` (36.0 KB)
 - `UMZUG_S202.tsv` (9.1 KB)
+- `UMZUG_S203.tsv` (2.1 KB)
 
 ### bogen-saite
 
@@ -30,6 +31,7 @@
 - `Bank_Karjalainen_2010_PassiveAdmittanceMatrix_DAFx10.pdf` (240.1 KB)
 - `Bank_Valimaki_2003_RobustLossFilter_SPL10.pdf` (200.8 KB)
 - `Bell_1988_AcousticalInvestigationConcertHarp_PhD.pdf` (82.6 MB)
+- `Bell_Firth_oJ_HarpSoundboardSoundbox_ProcIOA.pdf` (973.7 KB)
 - `Camac_2022_StringChartPedalHarps.pdf` (85.9 KB)
 - `Chadefaux_etal_2012_HarpPluckingDescription_JASA131.pdf` (1.6 MB)
 - `Chadefaux_etal_2013_ModelHarpPlucking_JASA133.pdf` (801.3 KB)
@@ -44,6 +46,7 @@
 - `Edinburgh_StCecilias_96082.html` (60.3 KB)
 - `Edinburgh_StCecilias_96088.html` (53.1 KB)
 - `Elie_Gautier_David_2012_MacroParametersClassicalGuitars_JASA.pdf` (328.3 KB)
+- `Fabre_LeCarrou_Chomette_LeBomin_2023_CentralAfricaHarps_FA2023.pdf` (654.4 KB)
 - `Fletcher_Beebe_2010_HarpsichordClavichord_Kap8.pdf` (778.5 KB)
 - `Hess_2013_FrequencyResponseGuitarModifications_SavartJ.pdf` (357.9 KB)
 - `Jansson_1983_FunctionConstructionQualityGuitar_KMA38.pdf` (3.0 MB)
@@ -63,10 +66,12 @@
 - `Perng_2012_HarpsichordPlectrumStringInteraction_Diss.pdf` (20.5 MB)
 - `Perng_Smith_Rossing_2010_PlectrumString_DAFx10.pdf` (456.4 KB)
 - `Perng_Smith_Rossing_2011_PlectrumWaveguide_DAFx11.pdf` (1.2 MB)
+- `Rauhala_Valimaki_2006_DispersionTunableAllpass_DAFx06.pdf` (450.8 KB)
 - `Roy_LeCarrou_Fabre_Vitrani_2015_PlectreClavecin_CFM.pdf` (302.3 KB)
 - `SantaMariaBouquet_2020_LuteRauwolf1598_CL93.pdf` (2.3 MB)
 - `Scherrer_2013_AngleOfRelease_Diss_McGill.pdf` (35.1 MB)
-- `SHA256SUMS` (5.8 KB)
+- `SHA256SUMS` (6.3 KB)
+- `SMAC83_1985_Volume2_FirthBell_HarpSoundboardSoundbox.pdf` (15.9 MB)
 - `Thwaites_Fletcher_1981_NotesOnClavichord.pdf` (714.4 KB)
 - `Traube_2004_TimbreClassicalGuitar_Diss_McGill.pdf` (18.6 MB)
 - `Valimaki_etal_2004_HarpsichordSynthesis_EURASIP.pdf` (1.5 MB)

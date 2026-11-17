@@ -1,0 +1,29 @@
+Abb. 2: C1(M) = m1 ln M + m2, C2(M) = m3 ln M + m4
+  M=1: C1=0.0606  C2=1.9700
+  M=8: C1=0.0868  C2=1.9528
+
+Abb. 3 (f0 65.406, Taste 16) und Abb. 4 (M 8): a1 gedruckt / mit ln B
+  Abb3 M= 1 B=1e-6..1e-3: -0.996/-0.812  -0.996/-0.873  -0.996/-0.921  -0.996/-0.956
+  Abb3 M= 5 B=1e-6..1e-3: -0.999/-0.628  -0.998/-0.741  -0.998/-0.841  -0.998/-0.916
+  Abb3 M=10 B=1e-6..1e-3: -0.999/-0.538  -0.999/-0.671  -0.999/-0.796  -0.999/-0.892
+  Abb3 M=20 B=1e-6..1e-3: -1.000/-0.446  -1.000/-0.596  -1.000/-0.744  -1.000/-0.865
+  Abb3 M=40 B=1e-6..1e-3: -1.000/-0.357  -1.000/-0.518  -1.000/-0.687  -1.000/-0.833
+  Abb4 key= 4 (Ikey 4.00): -0.999/-0.743  -0.999/-0.830  -0.999/-0.900  -0.999/-0.949
+  Abb4 key=16 (Ikey 16.00): -0.999/-0.567  -0.999/-0.695  -0.999/-0.811  -0.999/-0.900
+  Abb4 key=28 (Ikey 28.00): -0.998/-0.318  -0.998/-0.483  -0.998/-0.658  -0.998/-0.811
+  Abb4 key=40 (Ikey 40.00): -0.997/-0.015  -0.996/-0.193  -0.996/-0.420  -0.996/-0.655
+
+Abb. 5: groesste positive Abweichung (Cent) und ihre Frequenz, je fs
+  (a) M= 1: fs 44100: max  +6.2 c bei    263 Hz | fs 48000: max  +3.2 c bei    230 Hz
+  (a) M=10: fs 44100: max  +2.4 c bei    364 Hz | fs 48000: max  -0.2 c bei     33 Hz
+  (a) M=40: fs 44100: max  +6.9 c bei    753 Hz | fs 48000: max  -0.2 c bei     33 Hz
+  (b) M= 1: fs 44100: max  +7.3 c bei    724 Hz | fs 48000: max  +4.4 c bei    657 Hz
+  (b) M=10: fs 44100: max  +4.4 c bei   1060 Hz | fs 48000: max  +0.3 c bei    591 Hz
+  (b) M=40: fs 44100: max +10.1 c bei   2049 Hz | fs 48000: max  -0.1 c bei    327 Hz
+  (c) M= 1: fs 44100: max  +7.1 c bei   1185 Hz | fs 48000: max  +4.0 c bei   1052 Hz
+  (c) M=10: fs 44100: max  +3.2 c bei   1722 Hz | fs 48000: max  -0.1 c bei    524 Hz
+  (c) M=40: fs 44100: max  +3.8 c bei   2837 Hz | fs 48000: max  -0.1 c bei    131 Hz
+
+adf.m Z. 38: pd(f) = tau0/sqrt(1+B (f/f0)^2), f pd(f)/fs = n  ->  f_n = n f0 / sqrt(1 - B n^2)?
+  n=12: numerisch 398.200 Hz, geschlossen 398.200 Hz, R1 398.035 Hz, Abstand 0.72 c
+  n=47: numerisch 2057.204 Hz, geschlossen 2057.204 Hz, R1 1845.545 Hz, Abstand 187.96 c

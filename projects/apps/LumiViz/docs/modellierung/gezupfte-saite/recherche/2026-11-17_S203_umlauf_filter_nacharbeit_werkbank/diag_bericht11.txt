@@ -1,0 +1,9 @@
+Fall | Pole ausserhalb (Betraege) | max|H| wie Bericht 11 (Spiegeln ohne Ausgleich) | mit Ausgleich 1/|r|
+Harfe Taste 46 (Darm)  iir4 | 0 () | 1.011148 bei 0 Hz | 1.011148 bei 0 Hz
+Harfe Taste 46 (Darm)  iir8 | 1 (1.0052) | 1.002556 bei 0 Hz | 0.997353 bei 0 Hz
+Harfe Taste 60 (Darm)  iir8 | 0 () | 1.000241 bei 0 Hz | 1.000241 bei 0 Hz
+Harfe Taste 96 (Nylon) iir2 | 0 () | 1.000054 bei 0 Hz | 1.000054 bei 0 Hz
+Harfe Taste 103 (Nylon iir2 | 0 () | 1.004133 bei 0 Hz | 1.004133 bei 0 Hz
+Harfe Taste 103 (Nylon iir4 | 0 () | 1.161782 bei 24000 Hz | 1.161782 bei 24000 Hz
+Cembalo Taste 29       iir4 | 0 () | 1.000708 bei 0 Hz | 1.000708 bei 0 Hz
+Laute Chor 1 (F) leer  iir8 | 0 () | 1.001828 bei 0 Hz | 1.001828 bei 0 Hz
