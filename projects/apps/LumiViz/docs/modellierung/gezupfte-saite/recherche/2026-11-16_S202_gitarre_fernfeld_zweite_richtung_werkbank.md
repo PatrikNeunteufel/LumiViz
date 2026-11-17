@@ -1,7 +1,23 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_03_gitarre_fernfeld_zweite_richtung` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 20:36–20:47, claude-opus-5-5, 101 Runden, success, 3.31 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Quellen unter `…\cmake\quellen\gezupfte-saite\`):
+> - **Zitate in der Textebene gefunden:** Hess 2013 (Loar, PCB 086D80, 2 cm, 500 Hz, Mittel aus acht Schlägen), Meyer in
+>   Jansson 1983 („scarcely differed … parallel to the top“, PDF 55–59), Bank & Karjalainen 2010 (Gibson, E-Saite;
+>   y = senkrecht, z = parallel; f₃ = 246 Hz), Woodhouse u. a. 2012 (beide Stellen), Traube 2004 („between a third and a
+>   tenth“), Scherrer 2013 („Skilled performers can compensate“), Elie u. a. 2012 („roughly constant …“, „between 1 and
+>   2“).
+> - **Hess 2013 S. 2 am Seitenbild:** Gl. (1)–(3), a = 10,9 cm, „up to about 500 Hz“, „2 cm << a“, „r = 2 m >> a“ —
+>   stimmt.
+> - **Bank & Karjalainen 2010 Abb. 4 am Seitenbild selbst abgelesen:** Yyy (senkrecht) 100 Hz −44…−45, Spitze 240 Hz
+>   −21, 1–3 kHz −45…−50, 3–10 kHz −48…−55 dB; Yyz 100 Hz ≈ −62 (Bericht −65), Spitze −41, darüber −60…−70; Yzz
+>   (parallel) 100 Hz −58…−60, Spitze bei ≈ 280 Hz ≈ −53, 3–10 kHz −65…−75 dB. Die Tabelle des Berichts stimmt in ±3 dB.
+>   Gemessene (gestrichelt) und Fit (durchgezogen) liegen in der Abbildung übereinander; abgelesen ist der Fit.
+> - **Nicht gegengelesen:** Hess Abb. 1a (79 / 70 / 86 dB/N), Scherrer Tab. 2.1, Elie Abb. 7b / 7c (Modendichte,
+>   Verlustfaktor), Jansson Abb. 12, die TU-Berlin-Angaben (`[Werkzeug]`).
+> - **Nacharbeit:** die Lücken 1 (Fernfeld je Terz an einer klassischen Gitarre) und 2 (Yyy, Yzy einer klassischen
+>   Gitarre) sind offen — Auftrag `2026-11-17_23_gitarre_nacharbeit` der Werkbank.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_03_gitarre_fernfeld_zweite_richtung.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_03_gitarre_fernfeld_zweite_richtung/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

@@ -1,7 +1,28 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_16_einzeltoene_messgrundlagen` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-17 08:09–08:33, claude-opus-5-5, 96 Runden, success, 5.72 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Quellen unter `…\cmake\quellen\messung\`, `…\gezupfte-saite\`, `…\koerper\`):
+> - **Wortlaut und Zahlen in der Textebene gefunden:** ITU-R BS.1770-5 — alle sieben Beiwerte des K-Filters bei 48 kHz,
+>   „overlap … 75%“, „−3.01 LKFS“, „other sampling rates …“, „not … suitable … pure tones“; EBU Tech 3341 — Momentary
+>   0,4 s und Short-term 3 s ohne Gate, Anzeige der Maxima; Woodhouse 2021 — alle vier Zitate zum Doppelabklingen;
+>   Välimäki u. a. 2004 („beating and two-stage decay“).
+> - **TU-Berlin-Datenbank (Weinzierl u. a., Doku S. 6, Textebene):** „Acoutic guitar m C2–B5 E2–B5“ und „Double action
+>   harp m C1–F4 C1–F4“ — die Instrumente sind da. **Einschränkung:** die Harfe nur bis **F4**; die Tasten, an denen
+>   die Spanne der Harfe scheitert (Diskant, 92–94), deckt sie nicht. Die Bauart der Gitarre („acoustic“) steht dort
+>   nicht. Der Radius 2,09 m ist die Rechnung des Laufs (im PDF weder „radius“ noch „diameter“).
+> - **Eigene Herleitungen nachgerechnet:** Gl. 3 bei 150 dB/s und W = 0,4 s gibt −11,4 LU; Gl. 6 median|ΔL| = 0,954 σ —
+>   stimmt.
+> - **Zum Vorgehen des Laufs:** `WebFetch` fehlte ihm als Werkzeug; er hat den Unteragenten `web-fetch` als
+>   Abrufwerkzeug benutzt und die abgelegten PDFs selbst gelesen. Seit S202 erlaubt die `CLAUDE.md` der Werkbank rohes
+>   Lesen mit `curl` oder Python (mit Ablage) — dieser Umweg ist damit nicht mehr nötig.
+> - **Nicht gegengelesen:** die Rechnungen in § 3 (`gegenrechnung.py`: Raum, Doppelabklingen, Vorzeichen der
+>   Hüllkurve) Zahl für Zahl, Woodhouse 2021 Gl. 1–5 am Bild, Kubo & Aoshima 1995, Bell S. 160a, Rigaud u. a. 2011, die
+>   ICA-2013-Arbeit (Lundeby-Schritte), alles `[Werkzeug]` / `[nur Zusammenfassung]` (ISO 3382, `pyrato`).
+> - **Nacharbeit:** Auftrag `2026-11-17_26_einzeltoene_nacharbeit` der Werkbank. Für die LumiViz-Seite (wichtigste
+>   Befunde, nicht nachgerechnet): Momentary-Maximum misst das Abklingen mit (bis rund 11 LU über den Umfang der
+>   Harfe); die Sprung-Schwellen aus GZ14 a messen in raumbehafteten Aufnahmen vor allem den Raum; die Messung des
+>   Doppelabklingens mit zwei Geraden schätzt die frühe Rate zu flach — am Code der Teiltonmessung prüfen.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_16_einzeltoene_messgrundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_16_einzeltoene_messgrundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

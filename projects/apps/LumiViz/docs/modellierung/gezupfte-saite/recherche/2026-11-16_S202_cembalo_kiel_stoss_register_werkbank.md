@@ -1,7 +1,26 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_04_cembalo_kiel_stoss_register` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 20:48–21:01, claude-opus-5-5, 69 Runden, success, 2.73 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Quellen unter `…\cmake\quellen\gezupfte-saite\`):
+> - **Zitate in der Textebene gefunden:** Chadefaux u. a. 2012 (1,5 N, aus zweiter Hand), Fletcher & Beebe Kap. 8
+>   (Lautenzug „slide against the 8′ nut“, „damp dramatically the upper harmonics“, Verluste, „pluck fraction“,
+>   70 ± 5 / 68 ± 3 / 72 ± 5 dB(A) auf gedr. S. 133), Law 2008 (6 mm, „middle C“), Välimäki u. a. 2004 (g = 0,9960,
+>   a = −0,0296, r = −0,0015, „19 lowest keys“, „12% to about 50%“).
+> - **Fletcher & Beebe Abb. 8.4 am Seitenbild selbst abgelesen:** Längen und Zupfanteile von C2 bis C5 stimmen in der
+>   angegebenen Genauigkeit; an **C6** sind die Längen kürzer als im Bericht (8′ ≈ 160 statt 175 mm, 4′ ≈ 75–80 statt
+>   90 mm), die Anteile (0,36 / 0,48) stimmen.
+> - **Välimäki u. a. 2004 Abb. 8 b am Seitenbild:** T60 je Teilton stimmt (197 Hz 3,8 s; Teiltöne 2–5 7–9 s;
+>   Teilton 6 11,7 s; 2,4–3,9 kHz 3–6 s). Die Rechnung η = ln 1000 / (π f T60) ist richtig (2,9·10⁻³ bzw.
+>   1,6·10⁻⁴); bei 3,9 kHz liest sich eher 3,0 s, also η ≈ 1,9·10⁻⁴. Die Folgerung „η_innen ≲ 2·10⁻⁴ für Messing bei
+>   1–4 kHz“ trägt. **Aber:** die Folgerung „0,001 lässt die Teiltöne fünfmal zu schnell abklingen“ trifft LumiViz
+>   nicht — im Prüfstand ist 0,001 der Biegeverlust η_B, der nur über den Biegeanteil wirkt (Bericht 14, „Hinweis
+>   vorweg“, in S202 geprüft).
+> - **Nicht gegengelesen:** Välimäki Abb. 5 (B je Taste), Perng 2012 S. 126–128, die Edinburgh-Datenblätter, alles mit
+>   `[Werkzeug]` oder `[nur Zusammenfassung]` (Sankey, Wraight, Trasuntino, Bray Baroque, MacRitchie & Nuti 2015,
+>   Di Veroli) — darunter die einzigen Zahlen zum Mechanikgeräusch und zur Lage der Springer am Taskin 1788.
+> - **Nacharbeit:** Auftrag `2026-11-17_24_cembalo_nacharbeit` der Werkbank (die `[Werkzeug]`-Stellen im Wortlaut, die
+>   gesperrten Quellen).
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_04_cembalo_kiel_stoss_register.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_04_cembalo_kiel_stoss_register/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

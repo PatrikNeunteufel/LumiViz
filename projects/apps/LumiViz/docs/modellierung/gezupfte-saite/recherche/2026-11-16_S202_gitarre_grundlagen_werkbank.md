@@ -1,7 +1,23 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_13_gitarre_grundlagen` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 22:45–23:05, claude-opus-5-5, 92 Runden, success, 5.59 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Seitenbilder des Laufs im Archiv der Werkbank, `seiten/`):
+> - **Wright 1996 Tab. 5.4 und Abb. 5.5 (gedr. S. 98) am Seitenbild:** alle neun Zeilen (f, Masse, Q, wirksame Fläche)
+>   stimmen; Mikrofon 0,9 m vor dem Steg, Antrieb tiefe E, **Schallloch zugeklebt** — bestätigt.
+> - **Scherrer 2013 Abb. 3.8 (gedr. S. 58) am Seitenbild und nachgerechnet:** F = T h (1/x₀ + 1/(L − x₀)) mit T = 70 N,
+>   L = 0,65 m gibt für h = 1 cm in der Mitte 4,3 N, bei x₀ = 1 cm 71 N; die Kurve zeigt 0,45 N und 7 N. Die Achse
+>   passt zu **1 mm**, nicht zu 1 cm — der Befund „um den Faktor 10 falsch beschriftet“ stimmt.
+> - **Modendichte — Vergleich in verschiedenen Bändern:** der Bericht stellt Elies 0,018–0,022 /Hz (gemessen 800–2200 Hz)
+>   gegen „0,0104 /Hz der Körperdatei“ — das ist `statistical.density` aus den Polen in **2,5–5 kHz**. Selbst gezählt in
+>   `classical_guitar.lvinstbody`: **800–2200 Hz 26 Moden = 0,0186 /Hz** (wie Elie), 2,2–5 kHz 0,0111 /Hz. Die Datei
+>   stimmt also im Band der Messung mit Elie überein; ihre Dichte **fällt über 2,2 kHz** auf rund die Hälfte, während Elie
+>   die Dichte dort „roughly constant“ nennt. Die Folgerung für den statistischen Teil (Dichte nach Elie) bleibt
+>   richtig; „fast doppelt so viel wie die Körperdatei“ gilt nur für 2,5–5 kHz.
+> - Bank & Karjalainen 2010 Gl. (4)–(6) stimmen (am Seitenbild DAFX-2, Gegenlesen von Bericht 11).
+> - **Nicht gegengelesen:** Wright Gl. 4.9–4.17 (S. 65–67), Woodhouse 2021 Gl. 1, die Rechnungen r1–r5 (Nahfeld → 1 m
+>   je Mode −11 / −21 dB, Eigenwerte der 2×2-Admittanz), Elie Abb. 9, Mores List (Spaltenbedeutung).
+> - **Nacharbeit:** Auftrag `2026-11-17_23_gitarre_nacharbeit` der Werkbank.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_13_gitarre_grundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_13_gitarre_grundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

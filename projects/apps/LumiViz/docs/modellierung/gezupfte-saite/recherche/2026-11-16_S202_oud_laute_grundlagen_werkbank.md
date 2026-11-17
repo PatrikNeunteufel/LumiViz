@@ -1,7 +1,21 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_15_oud_laute_grundlagen` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-17 07:44–08:04, claude-opus-5-5, 108 Runden, success, 6.78 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Seitenbilder des Laufs im Archiv der Werkbank, `seiten/`):
+> - **Woodhouse 2021 Abb. 9 b (S. 4382) am Seitenbild:** Q rund 840 außerhalb, Spitze 3000 gegenphasig, Senke rund 500
+>   gleichphasig, Zone ±0,4 Cent — die gerechneten 844 / 492 / 3000 stimmen, die gerechnete Breite (±0,7 Cent) nicht,
+>   wie der Bericht selbst sagt. Text „Q-factor of 3000“, c ≈ 300 N s/m bestätigt. Der Widerspruch in Abb. 8 a (die
+>   Moden steigen mit rund 0,44 Hz je Cent statt 0,14) ist auch am Bild da und bleibt offen.
+> - **Woodhouse & Lynch-Aird 2019 S. 524:** „essentially the same tension, around 30 N“ — gefunden. (In der Tabelle zu G1
+>   steht „0,52 N bei 293,7 Hz“; gemeint ist der Durchmesser 0,52 mm.)
+> - **Steg der Rauwolf-Laute (Santa María Bouquet 2020) am Bildausschnitt:** alle Maßzahlen (139 / 134 / 177 / 122,5;
+>   10 → 7 breit; 7 / 6 und 8 / 7 hoch; Ohren 25,5 / 17,6; 12 / 10 mit Ohr) stimmen; die Masse (Quader 139 × 8,5 × 7 mm
+>   bei 600 kg/m³ = 5,0 g) ist richtig gerechnet. Der Befund „S197 nahm 12 mm, das ist die Breite mit Ohr“ trägt.
+> - **Inanli & Altinsoy 2018 S. 924:** wie im Kopf von Bericht 05 (stimmt; das PDF fehlt).
+> - **Nicht gegengelesen:** W&LA 2019 Gl. 3–7 und Tab. I / II, Woodhouse 2021 Gl. 6–10, Chadefaux 2012, Scherrer 2013
+>   S. 25 / 61 / 62, die Rechnungen am Prüfstand (Basschor doppelt +3,7–4,4 LU; Kernsteife ohne Wirkung).
+> - **Nacharbeit:** Auftrag `2026-11-17_25_oud_laute_nacharbeit` der Werkbank.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_15_oud_laute_grundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_15_oud_laute_grundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

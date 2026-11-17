@@ -1,7 +1,16 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_06_einzeltoene_gezupfte_saiten` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 21:16–21:19, claude-sonnet-5-5, 36 Runden, success, 0.53 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202:** Der Bericht stützt sich nach eigener Angabe **ganz** auf Abrufwerkzeuge (`[Werkzeug]`,
+> `[nur Zusammenfassung]`); der Lauf (Sonnet, knappes Budget) hat keine Seite selbst gelesen.
+> - **RWC Instruments Database, Zenodo 17170844 — selbst über die Zenodo-API gelesen (2026-11-17):** Titel, Lizenz
+>   **CC BY-NC 4.0**, Zugang „open“, `RWC-I.zip` 14,2 GB, md5 fb5789335fe68abdc09929618e9f0403, „covers 50 musical
+>   instruments … three variations for each instrument“ — stimmt. **Die Instrumentenliste nennt die Seite nicht**; die
+>   AIST-Seite `staff.aist.go.jp/m.goto/RWC-MDB/rwc-mdb-i.html` war auch jetzt nicht erreichbar (Zeitüberschreitung),
+>   die Vorschau des Archivs bei Zenodo zeigt keine Dateiliste. Ob Harfe, Cembalo, Gitarre darin sind, bleibt offen.
+> - **Alles Übrige nicht gegengelesen** (Freesound, Philharmonia, IRCAM, IDMT, NSynth, VCSL, Sonstige).
+> - **Nacharbeit:** Auftrag `2026-11-17_26_einzeltoene_nacharbeit` der Werkbank.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_06_einzeltoene_gezupfte_saiten.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_06_einzeltoene_gezupfte_saiten/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

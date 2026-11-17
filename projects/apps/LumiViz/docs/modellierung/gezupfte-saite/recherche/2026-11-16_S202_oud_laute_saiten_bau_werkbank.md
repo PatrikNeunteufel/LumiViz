@@ -1,7 +1,23 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_05_oud_laute_saiten_bau` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 21:06–21:15, claude-opus-5-5, 75 Runden, success, 3.25 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202:**
+> - **Das PDF von Inanli & Altinsoy 2018 liegt nirgends:** der Lauf hat es mit einem eigenen Skript (`pdf_lesen.py`,
+>   `urllib`) in eine temporäre Datei geladen und danach gelöscht; es blieben nur die zwei Seitenbilder im Archiv der
+>   Werkbank (`seiten/inanli2018-1.png`, `-2.png`). Seitdem verbietet die `CLAUDE.md` der Werkbank das (Entscheid 2 a).
+>   Ebenso sind **alle Händler- und Herstellerseiten** (Saitensätze, Dusepo, Van Edwards, Schreiner, luth.org) mit
+>   `seite_lesen.py` roh gelesen und **nicht abgelegt** — der Wortlaut lässt sich nicht mehr nachprüfen.
+> - **Inanli & Altinsoy 2018 an den zwei Seitenbildern:** S. 923 — Mensuren 610–620 / 585 mm, Dicke 1,5–2,0 mm, diese
+>   Decke 2,0 mm, 490 × 360 mm, Antwortpunkt (−40, +180) mm, 317 Punkte, 1,22 Hz — stimmt; das Holz heißt **„Borçka
+>   spruce“** (Ort Borçka), nicht „Boróka“. S. 924 — Tab. 1 (alle sieben Zeilen, auch h1 = 5 mm bei Balken 3), Abb. 2
+>   (85 / 42 / 160 / 80 / 490 / 360 mm), die acht Frequenzen 31 … 347 Hz, „three soft foam elements“ — stimmt. Die
+>   Zuordnung der Moden (m, n) steht auf S. 925 und ist **nicht** geprüft (kein Seitenbild).
+> - **Zitate in den lokalen PDFs gefunden:** Woodhouse & Lynch-Aird 2019 (Umspinnung, trockene Reibung), Woodhouse
+>   u. a. 2012 („multifilament cores with metal windings“), Abdallah u. a. 2026 (Değirmenli, „brace tuning“).
+> - **Nicht gegengelesen:** Değirmenli 2017, alle Web- und Händlerangaben (siehe oben), die Laute-Abschnitte, die
+>   Freesound- und Commons-Angaben.
+> - **Nacharbeit:** Auftrag `2026-11-17_25_oud_laute_nacharbeit` der Werkbank (Quellen neu lesen und ablegen).
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_05_oud_laute_saiten_bau.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_05_oud_laute_saiten_bau/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

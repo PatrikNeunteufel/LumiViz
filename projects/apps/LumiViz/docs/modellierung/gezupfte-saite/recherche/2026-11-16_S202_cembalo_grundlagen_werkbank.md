@@ -1,7 +1,24 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_14_cembalo_grundlagen` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 23:10–23:28, claude-opus-5-5, 84 Runden, success, 4.85 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Seitenbilder des Laufs im Archiv der Werkbank, `seiten/`):
+> - **Chadefaux u. a. 2013 S. 158 am Seitenbild:** Tab. 1 (x_s 0,27 / 0,28, y_s 0,71 / 0,90 mm, V, Γ), Tab. 2 (L_s
+>   47,5 cm, T 85,7 N, E 1,5 GPa, L 3,5 mm, L1 2,9 mm, I 0,011 mm⁴), Gl. (4) mit I/8 vorn, K = T/(L_s β(1 − β)) — alles
+>   stimmt.
+> - **Kraft an G4 nachgerechnet:** mit β = 0,259 (aus Taskin 1769, **in der Quelle nicht genannt**) K = 940 N/m und
+>   F = K·√(x² + y²) = 0,71 / 0,89 N — stimmt. Die Zahl hängt an β: mit β = 0,15 wären es rund 1,0 / 1,3 N. Auch dann
+>   bleibt **GZ13 a (2 N an C4) deutlich über der Messung** — der Befund „+10 bis +12 dB an G4“ (y = 2,98 gegen
+>   0,76 / 0,94 mm) ist der wichtigste dieses Berichts für LumiViz.
+> - **„Hinweis vorweg“ (Widerspruch zu Bericht 04) geprüft:** im Prüfstand ist 0,001 der Biegeverlust η_B, er wirkt nur
+>   über den Biegeanteil (Bericht 11, Gl. Z3: η_B EI m ω³/(2T²)); die Folgerung von Bericht 04 „fünfmal zu schnell“
+>   trifft den Prüfstand nicht. Richtig.
+> - **Nicht gegengelesen:** Perng 2012 (Gl. 2.57/2.58/3.5, Tab. 3.1, Abb. 3.15–3.24, 4.24/4.25), Roy 2015, Woodhouse &
+>   Lynch-Aird 2019 S. 518 / 528, die Herleitung K6 und die Rechnung `rechnung.py` Zahl für Zahl (Tabelle 1.3: 13 von
+>   14 Fällen ±11 % gegen Perng).
+> - **Nacharbeit:** Auftrag `2026-11-17_24_cembalo_nacharbeit` der Werkbank. Für die LumiViz-Seite: Maßstab der
+>   Ablösekraft (GZ13 a) gegen Chadefaux und Modell K6; 4′-Zupfpunkt gegen Fletcher & Beebe Abb. 8.4; Lautenzug a ≈
+>   0,5 mm aus der Verstimmung der VCSL-Aufnahmen.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_14_cembalo_grundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_14_cembalo_grundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.
