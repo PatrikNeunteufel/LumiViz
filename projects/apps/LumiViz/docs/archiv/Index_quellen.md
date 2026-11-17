@@ -11,12 +11,12 @@
 
 *Stand 2026-11-17.*
 
-**Gesamt:** 209 Dateien, 585.8 MB.
+**Gesamt:** 217 Dateien, 601.4 MB.
 
 ### .
 
 - `UMZUG_S182.tsv` (36.0 KB)
-- `UMZUG_S202.tsv` (5.4 KB)
+- `UMZUG_S202.tsv` (9.1 KB)
 
 ### bogen-saite
 
@@ -165,9 +165,17 @@
 
 - `1611.01025v1.pdf` (3.3 MB)
 - `2207.05395v3.pdf` (2.9 MB)
+- `BonetFilella_2014_InputImpedanceHornsCrooks_MSc_Edinburgh.pdf` (1.9 MB)
+- `Braden_2006_BoreOptimisationImpedanceBrass_PhD_Edinburgh.pdf` (2.5 MB)
+- `Dell_James_Davidson_Wolfe_2010_HandMuteHornImpedance_ISMA2010.pdf` (154.4 KB)
 - `Hendrie DA thesis 07.pdf` (9.5 MB)
+- `Marcinno_etal_2026_PerfectSwissAlphorn_arXiv2607.22823.pdf` (5.0 MB)
 - `Petiot_Freour_Arimoto_2025_FA_Trompete_Mundrohr.pdf` (1.0 MB)
+- `SHA256SUMS` (870 B)
+- `Silva_etal_2008_RadiationImpedanceCylindricalPipe_arXiv0811.3625.pdf` (358.0 KB)
 - `Soares_et_al_2025_ActaAcustica_9_68_Trompete.pdf` (3.0 MB)
+- `Wachter_2008_StopfenBeiHoernern_Diplomarbeit_mdw.pdf` (5.3 MB)
+- `Ziegenhals_2010_Vuvuzela_DAGA2010.pdf` (370.4 KB)
 
 ### messung
 

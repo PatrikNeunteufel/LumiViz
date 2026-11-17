@@ -4,6 +4,14 @@
 > **Nicht gegengeprüft:** keine Zahl daraus ist von der LumiViz-Sitzung an der Quelle nachgelesen. Vor dem Gebrauch in
 > 34m prüfen, zuerst die Punkte in Abschnitt 9 des Berichts (Radius oder Durchmesser bei Marcinnò, Abb. 3b, Young 2009).
 > Im Lauf war die Shell gesperrt (`quelle_suchen.py`, `curl` fielen aus): PDFs sind nur als Seitenbild gelesen.
+> **Seit S202:** der Auftrag liegt im Archiv der Werkbank (`archiv/auftraege/`, `archiv/ergebnisse/`, `archiv/laeufe/`);
+> die drei PDFs liegen nur unter `…\cmake\quellen\lippe-rohr\` (`Marcinno_etal_2026_PerfectSwissAlphorn_arXiv2607.22823.pdf`,
+> `Wachter_2008_StopfenBeiHoernern_Diplomarbeit_mdw.pdf` — In Copyright, nicht weitergeben —,
+> `Ziegenhals_2010_Vuvuzela_DAGA2010.pdf`). Die Nachprüfung steht in Bericht 07
+> (`2026-11-16_S202_alphorn_nachpruefung_werkbank.md`), dort auch das Gegenlesen. **Gegengelesen in S202 nur über
+> Bericht 07:** dessen Lesart „Radius“ und Tab. 3 sind an Marcinnòs Textebene bestätigt; was dieser Bericht anders
+> sagt (Durchmesser-Verdacht), gilt als überholt. Die übrigen Angaben (Hersteller, Mundstück, Young 2009) sind nicht
+> gegengelesen.
 
 # Bericht: Geometrie und Prüfgrößen des Alphorns (Vorbereitung Stufe 34m)
 
