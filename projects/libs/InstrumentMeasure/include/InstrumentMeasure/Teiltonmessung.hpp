@@ -33,7 +33,10 @@
  *    die spaete ein Fuenftel; mindestens 10 dB Abfall ueber den Bereich, sonst keine Abklingzeit); zwei
  *    Stufen, wenn sie
  *    den Rest mindestens halbieren und die fruehe um das 1,3-fache steiler faellt. T60 = 60 dB
- *    durch die Steigung (wie `decay` und `lateDecay`).
+ *    durch die Steigung (wie `decay` und `lateDecay`). Seit KQ32 a (S203) sind die Geraden nur der Startwert: die
+ *    Abklingzeiten und der Knick kommen aus zwei abklingenden Komponenten mit Boden, an die Kurve nach Schroeder
+ *    angepasst (Levenberg–Marquardt) — die Geraden schaetzten die fruehe Stufe bei flachem Knick zu flach (Knick 20 dB
+ *    unter der Spitze: +20 % auf T60). Ohne plausibles Ergebnis gelten die Geraden.
  * 5. *Schwebung:* die staerkste Periodizitaet im Rest um die Geraden, mindestens zwei Perioden
  *    im Bereich, hoechstens die halbe Fensterrate; erkannt ab 1 dB Tiefe (Spitze zu Spitze) und
  *    dem Zehnfachen des Medians im Periodogramm.

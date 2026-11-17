@@ -565,6 +565,9 @@ TASKIN_DRAHT = [(31, 0.620, 8700, 115), (33, 0.572, 8700, 115), (36, 0.518, 8700
 # Umgerechnet in die Kraft beim Abloesen, F = T d L / (x (L - x)): 1,6-1,9 N (T 92 N) bzw. 2,4-2,8 N (T 135 N) ueber alle
 # Zupfverhaeltnisse - der Kiel loest bei etwa gleicher Kraft aus, nicht bei gleicher Auslenkung. Chadefaux u. a. 2012
 # nennen fuer das Plektrum des Cembalos 1,5 N. ANNAHME: 2 N fuer jede Taste.
+# S203, KQ30 a: der Massstab ist jetzt 1,07 N an C4 bei ff (Chadefaux 2013 an G4, schnell); hier bleibt 2 N, damit die
+# abgelegten Ausgaben dieser Probe gelten - der Pruefstand ist in der Kraft linear, mit dem Stoss im selben Verhaeltnis
+# (3,8 statt 7 mN s) aendert sich keine Zielgroesse.
 CEMBALO_KRAFT = 2.0
 PERNG = [(1 / 7, 1.2636), (1 / 6, 1.3719), (1 / 5, 1.5285), (1 / 4, 1.6858), (1 / 3, 1.8708), (1 / 2, 2.2236)]
 

@@ -290,6 +290,49 @@ TEST_CASE("Loop Teiltonmessung 31d-2 zwei Stufen und eine")
             CHECK(t->abklingen.t60Spaet == doctest::Approx(30.0).epsilon(0.05).scale(0.0));
         }
     }
+    // S203 (Bericht 16 der Research-Werkbank, Fall D): bei flachem Knick schaetzen zwei unabhaengige Geraden die fruehe
+    // Stufe zu flach (dort 40 → 26 dB/s). Die spaete Stufe liegt hier nur 20 dB unter der fruehen, der Knick also bei −20 dB.
+    // Mit zwei Geraden mass dieser Code T60 frueh 1,795 statt 1,5 s (+20 %) und 0,438 statt 0,4 s (+10 %); seit KQ32 a
+    // kommen die Abklingzeiten aus zwei Komponenten mit Boden
+    SUBCASE("flacher Knick: frueh 40 dB/s, spaet 4 dB/s, die spaete 20 dB leiser (Knick nach 0,56 s)")
+    {
+        // 10 Hz Abstand: bis zum Knick (0,56 s) schweben die Moden 5,6-mal — mit 2 Hz nur einmal, dann sind zwei
+        // Abklingzeiten grundsaetzlich nicht zu trennen (die Anpassung an eine exakte Huellkurve gibt dann 1,57 statt
+        // 1,5 s, mit 10 Hz 1,502 s; S203, Probe in Python)
+        const Ergebnis e = miss(erzeuge(zweiModen(220.0, 0.0, 8, 1.5, 15.0, -20.0, 10.0), 8.0, 0.1, 1e-6), kRate, 220.0,
+                                lumi::kern::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 6; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->abklingen.erkannt);
+            CAPTURE(t->abklingen.t60Frueh);
+            CAPTURE(t->abklingen.t60Spaet);
+            CHECK(t->abklingen.zweiStufen);
+            CHECK(t->abklingen.t60Frueh == doctest::Approx(1.5).epsilon(0.05).scale(0.0));
+            CHECK(t->abklingen.t60Spaet == doctest::Approx(15.0).epsilon(0.05).scale(0.0));
+        }
+    }
+    SUBCASE("flacher Knick wie die Harfe im Diskant: frueh 150 dB/s, spaet 20 dB/s, die spaete 20 dB leiser")
+    {
+        const Ergebnis e = miss(erzeuge(zweiModen(988.0, 0.0, 6, 0.4, 3.0, -20.0, 25.0), 4.0, 0.1, 1e-6), kRate, 988.0,
+                                lumi::kern::fft());
+        REQUIRE(e.erkannt);
+        for (int n = 1; n <= 4; ++n)
+        {
+            CAPTURE(n);
+            const Teilton* t = e.teilton(n);
+            REQUIRE(t != nullptr);
+            REQUIRE(t->abklingen.erkannt);
+            CAPTURE(t->abklingen.t60Frueh);
+            CAPTURE(t->abklingen.t60Spaet);
+            CHECK(t->abklingen.zweiStufen);
+            CHECK(t->abklingen.t60Frueh == doctest::Approx(0.4).epsilon(0.05).scale(0.0));
+            CHECK(t->abklingen.t60Spaet == doctest::Approx(3.0).epsilon(0.05).scale(0.0));
+        }
+    }
     SUBCASE("ein Teilton, der nicht um 10 dB faellt, hat keine Abklingzeit")
     {
         // wie Teilton 1 von A0 an Salamander, der im Rauschen schwankt: leise und fast ohne Abfall

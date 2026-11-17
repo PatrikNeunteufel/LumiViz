@@ -79,6 +79,7 @@ Das Ergebnis ist ein Vorschlag (L18).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| (nächste) | 2026-11-17 | Session 203. KQ32 a: `Teiltonmessung` — zwei Stufen aus zwei abklingenden Komponenten mit Boden an der Kurve nach Schroeder (die Geraden mit Knick nur als Startwert); bei flachem Knick vorher +10 … +20 % auf T60 früh. Fälle „flacher Knick“ in `test_Teiltonmessung.cpp`. Fassungsnummer mit dem Ende von 34k. |
 | 0.4.0 | 2026-11-12 | Session 192. 34j: `ZungeStimmen` — S189 aus IC (J69), S191 neu für Rechenfassung 2 (J70), S192 Stärke je Stufe und Nachklang (J72); S183: `StabStimmen` stimmt den Partner auch bei Abnahme `bridge` (J61). Getestet in `test_InstrumentModelsZunge.cpp`. |
 | 0.3.0 | 2026-11-08 | Session 178. 34g: `StabStimmen` (der Stimmer `bar`, KS2 a, KS3 a), `Stimmer` mit den Namen der zu stimmenden Werte und Ketten in Reihenfolge (KS2 a), Abhängigkeit von `InstrumentModels`; B6 am Modell (Journal J34, J38, J41). |
 | 0.2.0 | 2026-11-08 | Session 177. 34f-3: `Stimmen` (IK2-10 a, IK2-11 a). |

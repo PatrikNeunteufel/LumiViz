@@ -6,6 +6,9 @@
  */
 #include "InstrumentMeasure/Teiltonmessung.hpp"
 
+#include <array>
+#include <optional>
+
 namespace lumi::messung
 {
 
@@ -163,6 +166,168 @@ Inharmonie gleicheAusRobust(const std::vector<int>& k, const std::vector<double>
     return e;
 }
 
+namespace
+{
+
+/// Ein kleines lineares System A x = b (k x k, zeilenweise) mit Pivotsuche; false, wenn es singulaer ist.
+bool loeseKlein(std::vector<double> A, std::vector<double> b, std::size_t k, std::vector<double>& x)
+{
+    for (std::size_t s = 0; s < k; ++s)
+    {
+        std::size_t p = s;
+        for (std::size_t r = s + 1; r < k; ++r)
+            if (std::abs(A[r * k + s]) > std::abs(A[p * k + s])) p = r;
+        if (std::abs(A[p * k + s]) < 1e-300) return false;
+        if (p != s)
+        {
+            for (std::size_t c = 0; c < k; ++c) std::swap(A[s * k + c], A[p * k + c]);
+            std::swap(b[s], b[p]);
+        }
+        for (std::size_t r = s + 1; r < k; ++r)
+        {
+            const double f = A[r * k + s] / A[s * k + s];
+            for (std::size_t c = s; c < k; ++c) A[r * k + c] -= f * A[s * k + c];
+            b[r] -= f * b[s];
+        }
+    }
+    x.assign(k, 0.0);
+    for (std::size_t s = k; s-- > 0;)
+    {
+        double summe = b[s];
+        for (std::size_t c = s + 1; c < k; ++c) summe -= A[s * k + c] * x[c];
+        x[s] = summe / A[s * k + s];
+    }
+    return true;
+}
+
+struct ZweiKomponenten
+{
+    double frueh = 0.0;   ///< Steigung der schnellen Komponente, dB/s
+    double spaet = 0.0;   ///< Steigung der langsamen, dB/s
+    double knickS = 0.0;  ///< wo beide gleich laut sind, ab dem Anfang des Bereichs
+};
+
+/// KQ32 a (S203): zwei Stufen als Summe zweier abklingender Komponenten mit Boden,
+///     e_j = A1 · 10^(s1 t_j / 10) + A2 · 10^(s2 t_j / 10) + B,
+/// an die Kurve nach Schroeder angepasst (Abweichung in dB ueber die ersten `m` Rahmen, Levenberg–Marquardt in
+/// ln A1, s1, ln A2, s2, ln B). Zwei Geraden mit Knick schaetzen die fruehe Stufe bei flachem Knick zu flach, weil die
+/// langsame Komponente schon vor dem Knick in der Summe steckt (Bericht 16 der Research-Werkbank, Fall D: 40 → 26 dB/s;
+/// an diesem Code vorher 40 → 33 dB/s bei einem Knick 20 dB unter der Spitze). Die Kurve nach Schroeder ist glatt —
+/// Ausloeschungen einer Schwebung ziehen die Anpassung nicht. Startwerte: die Steigungen der Geraden, die spaete
+/// Komponente aus dem Pegel hinter dem Knick (`knick`), die fruehe aus dem Rest am Anfang, der Boden aus dem Ende. Ohne
+/// plausibles Ergebnis (beide Steigungen negativ, die fruehe mindestens 1,3-mal so steil, der Knick im Bereich)
+/// std::nullopt — dann gelten die Geraden.
+std::optional<ZweiKomponenten> zweiKomponenten(const std::vector<double>& e, const std::vector<double>& E, std::size_t m,
+                                               std::size_t knick, double schrittS, double sFrueh, double sSpaet)
+{
+    const std::size_t n = e.size();
+    if (m < 20 || knick + 5 > m || E.size() < n + 1 || !(sFrueh < 0.0) || !(sSpaet < 0.0) || !(sFrueh < sSpaet))
+        return std::nullopt;
+    const auto faktor = [schrittS](double s) { return std::pow(10.0, s * schrittS / 10.0); };
+
+    // Startwerte: die spaete Komponente aus dem Pegel hinter dem Knick (Achse bei der Steigung der Geraden), die fruehe
+    // aus dem Rest am Anfang, der Boden aus dem Pegel am Ende des Bereichs
+    double achse = 0.0;
+    for (std::size_t j = knick; j < m; ++j)
+        achse += 10.0 * std::log10(std::max(e[j], 1e-300)) - sSpaet * static_cast<double>(j) * schrittS;
+    achse /= static_cast<double>(m - knick);
+    const double a2 = std::pow(10.0, achse / 10.0);
+    const double a1 = std::max(e[0] - a2, 0.5 * e[0]);
+    double boden = 0.0;
+    const std::size_t letzte = std::max<std::size_t>(1, n / 20);
+    for (std::size_t j = n - letzte; j < n; ++j) boden += e[j];
+    boden = std::max(0.1 * boden / static_cast<double>(letzte), 1e-15 * a1);
+    if (!(a1 > 0.0) || !(a2 > 0.0)) return std::nullopt;
+    std::array<double, 5> p = {std::log(a1), sFrueh, std::log(a2), sSpaet, std::log(boden)};
+
+    std::vector<double> Ed(m);
+    for (std::size_t j = 0; j < m; ++j) Ed[j] = 10.0 * std::log10(std::max(E[j], 1e-300));
+    std::vector<double> modell(n + 1);
+    const auto reste = [&](const std::array<double, 5>& q, std::vector<double>& r) {
+        const double a1 = std::exp(q[0]);
+        const double a2 = std::exp(q[2]);
+        const double b = std::exp(q[4]);
+        const double r1 = faktor(q[1]);
+        const double r2 = faktor(q[3]);
+        // Energie je Rahmen vorwaerts, dann rueckwaerts summiert (Schroeder)
+        double x1 = a1;
+        double x2 = a2;
+        for (std::size_t j = 0; j < n; ++j, x1 *= r1, x2 *= r2) modell[j] = x1 + x2 + b;
+        modell[n] = 0.0;
+        for (std::size_t j = n; j-- > 0;) modell[j] += modell[j + 1];
+        r.resize(m);
+        double kosten = 0.0;
+        for (std::size_t j = 0; j < m; ++j)
+        {
+            r[j] = 10.0 * std::log10(std::max(modell[j], 1e-300)) - Ed[j];
+            kosten += r[j] * r[j];
+        }
+        return kosten;
+    };
+
+    std::vector<double> r;
+    std::vector<double> rh;
+    double kosten = reste(p, r);
+    double lambda = 1e-3;
+    std::vector<double> J(m * 5);
+    for (int iteration = 0; iteration < 60; ++iteration)
+    {
+        for (std::size_t k = 0; k < 5; ++k)
+        {
+            std::array<double, 5> q = p;
+            const double h = (k == 1 || k == 3) ? 1e-4 * std::max(1.0, std::abs(p[k])) : 1e-4;
+            q[k] += h;
+            reste(q, rh);
+            for (std::size_t j = 0; j < m; ++j) J[j * 5 + k] = (rh[j] - r[j]) / h;
+        }
+        std::vector<double> JtJ(25, 0.0);
+        std::vector<double> Jtr(5, 0.0);
+        for (std::size_t j = 0; j < m; ++j)
+            for (std::size_t a = 0; a < 5; ++a)
+            {
+                Jtr[a] -= J[j * 5 + a] * r[j];
+                for (std::size_t c = 0; c < 5; ++c) JtJ[a * 5 + c] += J[j * 5 + a] * J[j * 5 + c];
+            }
+        bool besser = false;
+        for (int versuch = 0; versuch < 10 && !besser; ++versuch)
+        {
+            std::vector<double> A = JtJ;
+            double groesste = 0.0;
+            for (std::size_t a = 0; a < 5; ++a) groesste = std::max(groesste, JtJ[a * 5 + a]);
+            for (std::size_t a = 0; a < 5; ++a) A[a * 5 + a] += lambda * std::max(JtJ[a * 5 + a], 1e-6 * groesste);
+            std::vector<double> d;
+            if (!loeseKlein(A, Jtr, 5, d)) break;
+            std::array<double, 5> q = p;
+            for (std::size_t a = 0; a < 5; ++a) q[a] += d[a];
+            const double neu = reste(q, rh);
+            if (std::isfinite(neu) && neu < kosten)
+            {
+                const double gewinn = kosten - neu;
+                p = q;
+                r = rh;
+                kosten = neu;
+                lambda = std::max(lambda * 0.3, 1e-9);
+                besser = true;
+                if (gewinn < 1e-10 * std::max(kosten, 1e-30)) iteration = 1000;
+            }
+            else
+                lambda *= 10.0;
+        }
+        if (!besser) break;
+    }
+
+    ZweiKomponenten z;
+    z.frueh = p[1];
+    z.spaet = p[3];
+    if (!(z.frueh < 0.0) || !(z.spaet < 0.0) || z.frueh >= 1.3 * z.spaet) return std::nullopt;
+    // gleich laut, wo 10 lg A1 + s1 t = 10 lg A2 + s2 t
+    z.knickS = 10.0 * (p[0] - p[2]) / std::log(10.0) / (z.spaet - z.frueh);
+    if (!(z.knickS > 0.0) || z.knickS >= static_cast<double>(m) * schrittS) return std::nullopt;
+    return z;
+}
+
+}  // namespace
+
 Abklingen zweiStufen(std::span<const double> pegelDb, double schrittS, std::size_t von, std::size_t bis)
 {
     Abklingen a;
@@ -276,6 +441,13 @@ Abklingen zweiStufen(std::span<const double> pegelDb, double schrittS, std::size
     a.knickS = t[knick];
     a.t60Frueh = -60.0 / frueh.steigung;
     a.t60Spaet = -60.0 / spaetSteigung;
+    // KQ32 a: die Geraden sind der Startwert, die Abklingzeiten und der Knick kommen aus den zwei Komponenten
+    if (const std::optional<ZweiKomponenten> z = zweiKomponenten(e, E, m, knick, schrittS, frueh.steigung, spaetSteigung))
+    {
+        a.t60Frueh = -60.0 / z->frueh;
+        a.t60Spaet = -60.0 / z->spaet;
+        a.knickS = t[0] + z->knickS;
+    }
     return a;
 }
 
