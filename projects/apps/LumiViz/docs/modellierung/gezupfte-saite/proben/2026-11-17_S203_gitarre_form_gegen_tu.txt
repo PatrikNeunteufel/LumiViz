@@ -1,0 +1,6 @@
+44 gemeinsame Tasten 40-83; Korrelation 0.13; Abstand Modell - TU: Effektivwert 4.0 LU
+  E2-B2 (um A0 98 Hz)         : Modell  -1.1, TU  -2.8, Modell - TU  +1.7 LU
+  C3-G3                       : Modell  +0.5, TU  -0.6, Modell - TU  +1.1 LU
+  G#3-B3 (um T1 200-225 Hz)   : Modell  +0.2, TU  +5.9, Modell - TU  -5.7 LU
+  C4-B4                       : Modell  -0.2, TU  +0.5, Modell - TU  -0.7 LU
+  C5-B5                       : Modell  +0.6, TU  -0.2, Modell - TU  +0.7 LU

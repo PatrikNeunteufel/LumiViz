@@ -1,0 +1,6 @@
+Acoustic_guitar_modern     pp voll   | 44 Toene 40-83 (doppelt 0) | Spanne  14.3 LU, 10.-90.   6.8 LU, groesster Sprung 10.0 LU, mittlerer 2.4 LU | Streuung ueber Mikrofone im Median 3.1 dB
+Acoustic_guitar_modern     ff voll   | 44 Toene 40-83 (doppelt 0) | Spanne  14.4 LU, 10.-90.   8.1 LU, groesster Sprung 10.3 LU, mittlerer 2.5 LU | Streuung ueber Mikrofone im Median 3.0 dB
+Double_action_harp_modern  pp voll   | 78 Toene 23-102 (doppelt 0) | Spanne  19.8 LU, 10.-90.   8.5 LU, groesster Sprung 17.6 LU, mittlerer 3.1 LU | Streuung ueber Mikrofone im Median 2.1 dB
+Double_action_harp_modern  pp ab D2  | 65 Toene 23-102 (doppelt 0) | Spanne  19.8 LU, 10.-90.   9.7 LU, groesster Sprung 17.6 LU, mittlerer 3.3 LU | Streuung ueber Mikrofone im Median 2.1 dB
+Double_action_harp_modern  ff voll   | 78 Toene 23-102 (doppelt 0) | Spanne  27.0 LU, 10.-90.  13.2 LU, groesster Sprung 11.1 LU, mittlerer 2.5 LU | Streuung ueber Mikrofone im Median 3.1 dB
+Double_action_harp_modern  ff ab D2  | 65 Toene 23-102 (doppelt 0) | Spanne  22.0 LU, 10.-90.  11.8 LU, groesster Sprung 11.1 LU, mittlerer 2.5 LU | Streuung ueber Mikrofone im Median 3.1 dB

@@ -9,12 +9,14 @@
 - **Lizenz:** die Dokumentation v3 S. 2 (Textebene, in S203 gelesen; Ablage `…\cmake\quellen\koerper\Weinzierl_et_al_2017_…
   _DepositOnce19858.pdf`): „The database is provided under a Creative Commons BY-NC-SA licence“ mit Verweis auf
   creativecommons.org/licenses/by-nc-sa/4.0. Die Seite von DepositOnce zeigt nur das Zeichen „In Copyright“
-  (rightsstatements.org InC 1.0) — Widerspruch vermerkt; es gilt die Doku. Nicht kommerziell, Weitergabe unter gleicher
+  (rightsstatements.org InC 1.0) — Widerspruch vermerkt; es gilt die Doku. Jede SOFA-Datei trägt selbst
+  `License = cc by-nc-sa 4.0` (in S203 mit Octave gelesen). Nicht kommerziell, Weitergabe unter gleicher
   Lizenz; nicht in ein Repo und nicht in eine Auslieferung.
 - **Inhalt:** je Note und Stärke eine SOFA-Datei (`<Instrument>_<pp|ff>_<Note>_recordings.sofa`, 32 Kanäle, 44,1 kHz,
   Note und Stärke in `GLOBAL_Description`, MIDI in `MidiNote`; Doku S. 2–3). Gitarre (Masaru Kohno 1985 „Concert“, Diskant
-  Nylon, Bass umsponnen) 88 Einträge, Umfang pp C2–B5, ff E2–B5; Doppelpedalharfe 156 Einträge, C1–F4 in pp und ff
-  (Doku Tab. 1). Aufgenommen im reflexionsarmen Raum, Mikrofone auf einer Kugel (Durchmesser 2,1 m laut Ackermann u. a.
+  Nylon, Bass umsponnen) 88 Einträge, MIDI 40–83 in pp und ff (die Doku Tab. 1 nennt pp C2–B5); Doppelpedalharfe 156
+  Einträge, **MIDI 23–102** in pp und ff (die Doku Tab. 1 nennt C1–F4 — die Dateien reichen weiter; in S203 gezählt).
+  Je Datei das einseitige komplexe Spektrum der Aufnahme (`Data.Real`, `Data.Imag`, 71 683 × 32), Dauer rund 3–4,5 s. Aufgenommen im reflexionsarmen Raum, Mikrofone auf einer Kugel (Durchmesser 2,1 m laut Ackermann u. a.
   2023; die Doku nennt S1 = 54,63 m², das sind 5,96 dB mehr als die Kugel durch die Mikrofone — für absolute Leistung
   klären).
 - **Größe:** `2_Acoustic_guitar_modern_recordings.zip` 1 095 042 381 B, `2_Double_action_harp_modern_recordings.zip`
