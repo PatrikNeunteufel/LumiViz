@@ -5,7 +5,7 @@
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_03_gitarre_fernfeld_zweite_richtung.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_03_gitarre_fernfeld_zweite_richtung/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.
-> **Abgerufene PDFs** liegen als Kopie unter `…\cmake\quellen\` (der Bericht nennt die Namen der Werkbank):
+> **Abgerufene PDFs** liegen seit S202 nur noch unter `…\cmake\quellen\` (im Archiv der Werkbank entfernt; der Bericht nennt die Namen der Werkbank):
 > - `2010_2307.pdf` → `quellen\gezupfte-saite\Bank_Karjalainen_2010_PassiveAdmittanceMatrix_DAFx10.pdf` (lag schon dort) — gleiche Datei wie aus Auftrag 01; schon vorhanden, nicht kopiert
 > - `Mores_2021_SymmetryAsymmetryGuitarBracings.pdf` → `quellen\gezupfte-saite\Mores_2021_SymmetryAsymmetryGuitarBracings_DAGA2021.pdf`
 > - `2006_Kma38Ocr.pdf` → `quellen\gezupfte-saite\Jansson_1983_FunctionConstructionQualityGuitar_KMA38.pdf` — Sammelband, Royal Swedish Academy of Music No. 38 (Hg. E. V. Jansson); Name der Werkbank: 2006_Kma38Ocr.pdf

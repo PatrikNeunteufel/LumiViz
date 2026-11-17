@@ -4,7 +4,7 @@
 > **Unverändert abgelegt in S201** — nur dieser Kopf ist dazugekommen. Die zwei abgerufenen PDFs liegen in der Werkbank
 > unter `ergebnisse/2026-11-16_01_umlauf_filter_saite_steg/abrufe/`.
 > **Seit S202:** der Auftrag liegt im Archiv der Werkbank (`archiv/auftraege/`, `archiv/ergebnisse/`, `archiv/laeufe/`);
-> die zwei PDFs liegen als Kopie unter `…\cmake\quellen\gezupfte-saite\` (`Bank_Valimaki_2003_RobustLossFilter_SPL10.pdf`,
+> die zwei PDFs liegen nur noch unter `…\cmake\quellen\gezupfte-saite\` (im Archiv entfernt) (`Bank_Valimaki_2003_RobustLossFilter_SPL10.pdf`,
 > `Bank_Karjalainen_2010_PassiveAdmittanceMatrix_DAFx10.pdf`).
 >
 > **Gegengelesen in S201 (LumiViz-Sitzung, an den Seitenbildern):**

@@ -5,7 +5,7 @@
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_04_cembalo_kiel_stoss_register.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_04_cembalo_kiel_stoss_register/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.
-> **Abgerufene PDFs** liegen als Kopie unter `…\cmake\quellen\` (der Bericht nennt die Namen der Werkbank):
+> **Abgerufene PDFs** liegen seit S202 nur noch unter `…\cmake\quellen\` (im Archiv der Werkbank entfernt; der Bericht nennt die Namen der Werkbank):
 > - `ICSV30_2024_HarpsichordMechanicalNoise_Bologna.pdf` → `quellen\gezupfte-saite\Thwaites_Fletcher_1981_NotesOnClavichord.pdf` — Name der Werkbank war falsch (ICSV30_2024_…); Inhalt Thwaites & Fletcher, Clavichord
 > - `webfetch-1794858809204-t8epq1.pdf` → `quellen\gezupfte-saite\Law_2008_HarpsichordRegulation_HFP13-1.pdf` — CC BY-NC 4.0 (PDF-S. 1)
 > - `webfetch-1794859017570-veug06.pdf` → `quellen\gezupfte-saite\Fletcher_Beebe_2010_HarpsichordClavichord_Kap8.pdf` — Buchkapitel 8 (Buch laut Bericht nicht geprueft)

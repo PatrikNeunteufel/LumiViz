@@ -5,7 +5,7 @@
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_16_einzeltoene_messgrundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_16_einzeltoene_messgrundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.
-> **Abgerufene PDFs** liegen als Kopie unter `…\cmake\quellen\` (der Bericht nennt die Namen der Werkbank):
+> **Abgerufene PDFs** liegen seit S202 nur noch unter `…\cmake\quellen\` (im Archiv der Werkbank entfernt; der Bericht nennt die Namen der Werkbank):
 > - `Itu_2023_RecommendationITU17702023.pdf` → `quellen\messung\ITU_2023_BS1770-5_ProgrammeLoudness.pdf`
 > - `Ebu_2023_Tech3341Pdf.pdf` → `quellen\messung\EBU_2023_Tech3341_LoudnessMetering.pdf`
 > - `Ebu_2023_Tech3342Pdf.pdf` → `quellen\messung\EBU_2023_Tech3342_LoudnessRange.pdf`
