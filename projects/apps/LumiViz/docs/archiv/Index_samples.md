@@ -9,7 +9,7 @@
 <!-- SYSTEM:ANFANG -->
 ## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\samples`
 
-*Stand 2026-11-12.*
+*Stand 2026-11-17.*
 
 **Gesamt:** 2321 Dateien, 3.1 GB.
 
@@ -81,9 +81,9 @@
 <!-- WECHSEL:ANFANG -->
 ## Wechselplatte: `E:\samples`
 
-*Stand 2026-11-12.*
+*Stand 2026-11-17.*
 
-**Gesamt:** 44757 Dateien, 24.3 GB.
+**Gesamt:** 44757 Dateien, 24.3 GB (ohne das Archiv der Quellen in `quellen`).
 
 | Quelle | Dateien | Größe | Endungen |
 |---|---|---|---|

@@ -1,0 +1,396 @@
+
+### Gitarre Saite 6 Bund 0: f1 82.40 Hz, L 0.650 m, T 71.6 N, EI 5.7e-05 N m2, B 1.86e-05, Umlauf 583.2 Takte, Teiltoene bis 20 kHz 188, davon mit sigma <= 100 1/s 98 (bis 8767 Hz), sigma_1 0.605 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00     2.3    52.4    436.3 |  25/188 |  11.66 /  340.19 |   141.8  25/ 98
+    K8 5k       |    8 |  -0.00     0.6    16.5    358.8 |  51/188 |   3.64 /  269.62 |    85.4  51/ 98
+    K16 5k      |   16 |  +0.00     0.4    11.6    325.9 |  56/188 |   2.55 /  238.86 |    69.7  56/ 98
+    K16 20k     |   16 |  +0.00     0.4    11.6    325.9 |  56/188 |   2.55 /  238.86 |    69.7  56/ 98
+    K32 5k      |   32 |  -0.00     0.2     7.7    284.0 |  61/188 |   1.67 /  201.23 |    52.9  61/ 98
+    Rauhala M8  |    8 |  -0.00     1.6     7.9    346.7 |  60/188 |   1.82 /  259.40 |    74.6  60/ 98
+    adf 5k      |  3bq |  -0.00     0.2     3.0    336.1 |  66/188 |   0.52 /  251.15 |    63.5  66/ 98
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.992698          |    +0.0     3.5    74.2     95.8 |  12/188 | 4.35e+00 |    87.1  12/ 98
+    pol1p  | 0.992698          |    +0.0     3.5    74.2     95.8 |  12/188 | 4.35e+00 |    87.1  12/ 98
+    iir2   | 0.992697          |    -0.0     0.7     9.3     78.6 |  48/188 | 2.87e+00 |    28.6  48/ 98
+    iir4   | 0.992729          |    -0.0     0.1     4.7     54.1 |  59/188 | 9.63e-01 |    22.0  59/ 98
+    iir8   | 0.992735          |    +0.0     0.1     5.0     55.0 |  57/188 | 1.30e-01 |    21.3  57/ 98
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.000 /  -0.000 |    69.8    22.0 | 0
+    thiran   3 |   +0.000 /  +0.000 |    69.7    22.0 | 0
+    lagrange 1 |   -0.000 /  -0.000 |    69.8    33.0 | 0
+    lagrange 3 |   -0.000 /  +0.000 |    69.6    22.4 | 0
+    lagrange 5 |   +0.000 /  +0.000 |    69.6    21.8 | 0
+
+### Gitarre Saite 3 Bund 0: f1 195.79 Hz, L 0.650 m, T 58.3 N, EI 0.00031 N m2, B 0.000124, Umlauf 245.4 Takte, Teiltoene bis 20 kHz 77, davon mit sigma <= 100 1/s 38 (bis 8079 Hz), sigma_1 0.938 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  -0.00    15.2    59.5    476.7 |   9/ 77 |   5.70 /  155.33 |   142.3   9/ 38
+    K8 5k       |    8 |  +0.00     3.1     6.2    335.0 |  25/ 77 |   0.64 /  100.90 |    53.8  25/ 38
+    K16 5k      |   16 |  +0.00     1.8     3.6    284.9 |  28/ 77 |   0.38 /   82.26 |    38.2  28/ 38
+    K16 20k     |   16 |  +0.00     6.6    11.2    252.9 |  28/ 77 |   0.86 /   72.10 |    15.6  28/ 38
+    K32 5k      |   32 |  +0.00     0.9     1.5    213.2 |  31/ 77 |   0.16 /   57.40 |    21.9  31/ 38
+    Rauhala M8  |    8 |  +0.00     0.5    15.3    350.6 |  21/ 77 |   1.46 /  106.11 |    66.7  21/ 38
+    adf 5k      |  1bq |  +0.00     1.4    23.4    405.3 |  19/ 77 |   2.25 /  127.66 |    90.2  19/ 38
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.995333          |    +0.0     9.2    43.0     88.7 |  10/ 77 | 1.68e+00 |    64.9  10/ 38
+    pol1p  | 0.995333          |    +0.0     9.2    43.0     88.7 |  10/ 77 | 1.68e+00 |    64.9  10/ 38
+    iir2   | 0.995133          |    +3.7     4.8    15.0     67.5 |  18/ 77 | 6.00e-01 |    38.3  18/ 38
+    iir4   | 0.995638          |    -0.0     0.3     0.5     55.8 |  31/ 77 | 1.75e-01 |    13.5  31/ 38
+    iir8   | 0.995627          |    +0.0     0.4     2.2     50.2 |  28/ 77 | 2.54e-02 |    13.3  28/ 38
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   +0.000 /  +0.000 |    37.3    13.5 | 0
+    thiran   3 |   +0.000 /  +0.000 |    37.9    13.6 | 0
+    lagrange 1 |   -0.000 /  -0.000 |    38.2    13.3 | 0
+    lagrange 3 |   -0.000 /  +0.000 |    37.9    13.4 | 0
+    lagrange 5 |   +0.000 /  +0.000 |    37.9    14.0 | 0
+
+### Gitarre Saite 3 Bund 2: f1 219.77 Hz, L 0.579 m, T 58.3 N, EI 0.00031 N m2, B 0.000156, Umlauf 218.6 Takte, Teiltoene bis 20 kHz 68, davon mit sigma <= 100 1/s 34 (bis 8119 Hz), sigma_1 0.949 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00    19.1    57.3    469.1 |   8/ 68 |   5.06 /  137.80 |   143.1   8/ 34
+    K8 5k       |    8 |  -0.00     2.7     5.4    324.1 |  23/ 68 |   0.56 /   88.25 |    52.9  23/ 34
+    K16 5k      |   16 |  +0.00     1.6     2.9    268.8 |  25/ 68 |   0.31 /   69.78 |    36.2  25/ 34
+    K16 20k     |   16 |  -0.00     9.0    14.8    229.8 |  19/ 68 |   1.09 /   59.21 |    14.8  19/ 34
+    K32 5k      |   32 |  +0.00     0.8     1.2    195.5 |  29/ 68 |   0.14 /   47.29 |    20.0  29/ 34
+    Rauhala M8  |    8 |  +0.00     1.9    15.3    342.0 |  18/ 68 |   1.37 /   93.51 |    67.5  18/ 34
+    adf 5k      |  1bq |  +0.00     5.4    26.3    403.3 |  15/ 68 |   2.35 /  115.09 |    95.5  15/ 34
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.995819          |    +0.0    12.4    40.6     87.7 |   9/ 68 | 1.48e+00 |    63.7   9/ 34
+    pol1p  | 0.995819          |    +0.0    12.4    40.6     87.7 |   9/ 68 | 1.48e+00 |    63.7   9/ 34
+    iir2   | 0.995655          |    +3.1     4.3    14.0     63.4 |  16/ 68 | 3.86e-01 |    36.9  16/ 34
+    iir4   | 0.996117          |    -0.0     0.3     0.4     53.6 |  27/ 68 | 1.19e-01 |    13.4  27/ 34
+    iir8   | 0.996102          |    +0.0     0.3     2.0     49.2 |  25/ 68 | 2.32e-02 |    13.0  25/ 34
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.000 /  -0.000 |    36.5    13.4 | 0
+    thiran   3 |   -0.000 /  +0.000 |    36.2    13.3 | 0
+    lagrange 1 |   -0.000 /  -0.000 |    36.4    49.0 | 0
+    lagrange 3 |   -0.000 /  +0.000 |    36.1    16.0 | 0
+    lagrange 5 |   -0.000 /  +0.000 |    36.1    13.9 | 0
+
+### Gitarre Saite 3 Bund 12: f1 391.66 Hz, L 0.325 m, T 58.3 N, EI 0.00031 N m2, B 0.000497, Umlauf 122.7 Takte, Teiltoene bis 20 kHz 38, davon mit sigma <= 100 1/s 19 (bis 8079 Hz), sigma_1 1.034 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00    58.6    58.6    462.8 |   4/ 38 |   2.80 /   76.55 |   140.6   4/ 19
+    K8 5k       |    8 |  +0.00     2.6     2.6    270.7 |  14/ 38 |   0.14 /   39.99 |    35.9  14/ 19
+    K16 5k      |   16 |  +0.00     1.5     1.5    206.4 |  15/ 38 |   0.08 /   28.70 |    21.8  15/ 19
+    K16 20k     |   16 |  -0.00    36.6    36.6     95.9 |   8/ 38 |   1.53 /   13.31 |    48.8   5/ 19
+    K32 5k      |   32 |  +0.00     0.5     0.5    106.3 |  21/ 38 |   0.02 /   13.39 |     5.8  19/ 19
+    Rauhala M8  |    8 |  -0.00    19.1    19.1    315.1 |   9/ 38 |   0.88 /   47.45 |    64.1   9/ 19
+    adf 5k      |  0bq |  +0.00    58.6    58.6    462.8 |   4/ 38 |   2.80 /   76.55 |   140.6   4/ 19
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.997652          |    +0.0    24.5    24.5     80.9 |   2/ 38 | 7.45e-01 |    49.8   2/ 19
+    pol1p  | 0.997652          |    +0.0    24.5    24.5     80.9 |   2/ 38 | 7.45e-01 |    49.8   2/ 19
+    iir2   | 0.997536          |    +0.6     7.8     7.8     42.6 |  10/ 38 | 6.60e-02 |    20.1  10/ 19
+    iir4   | 0.997742          |    -0.0     0.9     0.9     43.0 |  16/ 38 | 4.16e-02 |     8.6  16/ 19
+    iir8   | 0.997788          |    +0.0     1.2     1.2     41.8 |  16/ 38 | 5.79e-03 |     8.5  16/ 19
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.001 /  -0.000 |    22.2     8.6 | 0
+    thiran   3 |   -0.000 /  +0.000 |    21.6     8.5 | 0
+    lagrange 1 |   -0.000 /  -0.000 |    21.8    76.8 | 0
+    lagrange 3 |   -0.000 /  -0.000 |    21.6    13.2 | 0
+    lagrange 5 |   -0.000 /  +0.000 |    21.5     9.0 | 0
+
+### Gitarre Saite 1 Bund 12: f1 661.77 Hz, L 0.325 m, T 70.3 N, EI 0.00013 N m2, B 0.000173, Umlauf 72.6 Takte, Teiltoene bis 20 kHz 28, davon mit sigma <= 100 1/s 20 (bis 13684 Hz), sigma_1 1.590 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00    17.9     5.9     99.5 |   9/ 28 |   0.19 /   10.72 |    50.7   9/ 20
+    K8 5k       |    8 |  +0.00     0.8     0.7     38.3 |  19/ 28 |   0.02 /    3.98 |    10.2  19/ 20
+    K16 5k      |   16 |  -0.00     2.0     0.3     39.6 |  18/ 28 |   0.01 /    4.08 |    12.8  18/ 20
+    K16 20k     |   16 |  -0.00     4.9     2.3     17.2 |  25/ 28 |   0.07 /    1.80 |     5.4  20/ 20
+    K32 5k      |   32 |  +0.00     1.0     0.6     20.2 |  24/ 28 |   0.02 /    2.06 |     3.1  20/ 20
+    Rauhala M8  |    8 |  +0.00    13.2     4.3     80.8 |  10/ 28 |   0.14 /    8.55 |    39.3  10/ 20
+    adf 5k      |  0bq |  +0.00    17.9     5.9     99.5 |   9/ 28 |   0.19 /   10.72 |    50.7   9/ 20
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.997853          |    -0.0    15.8    15.8     64.0 |   7/ 28 | 1.78e-01 |    38.4   7/ 20
+    pol1p  | 0.997853          |    -0.0    15.8    15.8     64.0 |   7/ 28 | 1.78e-01 |    38.4   7/ 20
+    iir2   | 0.998496          |    -0.2     1.7     1.2     16.9 |  15/ 28 | 1.53e-02 |     8.8  15/ 20
+    iir4   | 0.998667          |    +0.0     1.1     0.1     17.9 |  20/ 28 | 2.17e-02 |     4.8  20/ 20
+    iir8   | 0.998743          |    +0.0     1.0     0.1     13.1 |  19/ 28 | 9.97e-04 |     5.1  19/ 20
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.003 /  -0.000 |    14.2     4.8 | 0
+    thiran   3 |   -0.000 /  +0.000 |    13.0     4.6 | 0
+    lagrange 1 |   +0.003 /  +0.000 |    15.2   157.7 | 35055
+    lagrange 3 |   -0.000 /  -0.000 |    13.3    50.6 | 0
+    lagrange 5 |   -0.000 /  +0.000 |    12.7    17.2 | 0
+
+### Harfe Taste 27 (Metall): f1 39.29 Hz, L 1.314 m, T 548.7 N, EI 0.028 N m2, B 0.000292, Umlauf 1228.1 Takte, Teiltoene bis 20 kHz 167, davon mit sigma <= 100 1/s 50 (bis 2584 Hz), sigma_1 0.557 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  -0.00    35.3   868.1   1912.8 |   6/167 | 314.65 / 2137.60 |   473.4   6/ 50
+    K8 5k       |    8 |  +0.00    39.5   563.0   1563.5 |   7/167 | 177.47 / 1518.81 |   208.5   7/ 50
+    K16 5k      |   16 |  +0.00    21.1   479.3   1438.0 |  10/167 | 141.46 / 1310.71 |   159.1  10/ 50
+    K16 20k     |   16 |  +0.00    21.1   479.3   1438.0 |  10/167 | 141.46 / 1310.71 |   159.1  10/ 50
+    K32 5k      |   32 |  -0.00     8.1   352.8   1225.9 |  21/167 |  92.92 /  998.46 |    97.4  21/ 50
+    Rauhala M8  |    8 |  +0.00     6.2   685.7   1689.7 |  13/167 | 225.31 / 1712.53 |   325.3  13/ 50
+    adf 5k      | 43bq |  -0.00   280.4  2194.5   2241.9 |   3/ 81 | 156.55 /  542.85 |  1611.7   3/ 50
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.986083          |    +0.0    15.6    88.8     96.5 |   6/167 | 7.48e+00 |    79.4   6/ 50
+    pol1p  | 0.986083          |    +0.0    15.6    88.8     96.5 |   6/167 | 7.48e+00 |    79.4   6/ 50
+    iir2   | 0.986160          |    -0.9     3.1    75.4     95.2 |  17/167 | 7.47e+00 |    42.5  17/ 50
+    iir4   | 0.986014          |    -0.0     5.3    64.1     89.7 |  20/167 | 4.81e+00 |    36.3  20/ 50
+    iir8   | 0.986074          |    +0.0     5.1    62.9     86.2 |  19/167 | 3.35e+00 |    37.6  19/ 50
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.000 /  -0.000 |   157.3    36.3 | 0
+    thiran   3 |   -0.000 /  -0.000 |   157.3    36.3 | 0
+    lagrange 1 |   +0.000 /  +0.000 |   157.3    36.6 | 0
+    lagrange 3 |   -0.000 /  +0.000 |   157.3    36.3 | 0
+    lagrange 5 |   -0.000 /  -0.000 |   157.3    36.3 | 0
+
+### Harfe Taste 46 (Darm): f1 116.75 Hz, L 0.983 m, T 301.4 N, EI 0.00898 N m2, B 0.000305, Umlauf 412.0 Takte, Teiltoene bis 20 kHz 91, davon mit sigma <= 100 1/s 27 (bis 3484 Hz), sigma_1 0.640 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  -0.00    36.6   285.8   1085.4 |   6/ 91 |  41.20 /  500.45 |   172.0   6/ 27
+    K8 5k       |    8 |  +0.00    32.1    72.4    780.1 |   8/ 91 |   9.29 /  313.59 |    37.8   7/ 27
+    K16 5k      |   16 |  +0.00    17.2    47.2    681.9 |  12/ 91 |   5.78 /  256.71 |    23.7   9/ 27
+    K16 20k     |   16 |  -0.00    22.0    32.7    663.7 |  10/ 91 |   3.92 /  248.71 |    32.7   7/ 27
+    K32 5k      |   32 |  -0.00     6.5    22.8    525.8 |  27/ 91 |   2.64 /  176.37 |    10.7  22/ 27
+    Rauhala M8  |    8 |  -0.00     6.2   164.5    887.5 |  13/ 91 |  21.69 /  370.63 |    79.1  13/ 27
+    adf 5k      | 12bq |  -0.00     6.2   127.7    258.2 |  22/ 91 |  11.77 /   80.89 |    54.3  20/ 27
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.994982          |    +0.0    12.5    69.8     94.0 |   8/ 91 | 6.87e+00 |    55.8   8/ 27
+    pol1p  | 0.994982          |    +0.0    12.5    69.8     94.0 |   8/ 91 | 6.87e+00 |    55.8   8/ 27
+    iir2   | 0.997972          |    +2.1    14.6    83.5     98.2 |   5/ 91 | 7.90e+00 |    70.2   5/ 27
+    iir4   | 1.011148 skaliert |  +202.4   202.4   202.4    202.4 |   4/ 91 | 5.27e+00 |   202.4   2/ 27
+    iir8   | 1.002556 skaliert |   -56.9    56.9    56.9     65.5 |  10/ 91 | 3.06e+00 |    56.9   4/ 27
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.000 /  -0.000 |    22.9   202.4 | 0
+    thiran   3 |   +0.000 /  +0.000 |    22.9   202.4 | 0
+    lagrange 1 |   +0.000 /  +0.000 |    21.6     9.1 | 0
+    lagrange 3 |   -0.000 /  +0.000 |    22.9   335.7 | 0
+    lagrange 5 |   -0.000 /  +0.000 |    22.9   282.1 | 0
+
+### Harfe Taste 60 (Darm): f1 261.72 Hz, L 0.558 m, T 204.2 N, EI 0.00157 N m2, B 0.000244, Umlauf 183.6 Takte, Teiltoene bis 20 kHz 57, davon mit sigma <= 100 1/s 22 (bis 6088 Hz), sigma_1 1.003 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  -0.00    29.4    65.2    502.8 |   7/ 57 |   4.60 /  120.76 |    95.7   7/ 22
+    K8 5k       |    8 |  -0.00     3.0     5.8    336.2 |  19/ 57 |   0.43 /   73.54 |    18.9  19/ 22
+    K16 5k      |   16 |  +0.00     1.8     2.7    269.9 |  21/ 57 |   0.21 /   55.38 |    10.7  21/ 22
+    K16 20k     |   16 |  +0.00    16.8    25.5    201.1 |  12/ 57 |   1.58 /   40.10 |    26.3   8/ 22
+    K32 5k      |   32 |  -0.00     0.7     1.3    186.9 |  25/ 57 |   0.09 /   35.23 |     5.1  22/ 22
+    Rauhala M8  |    8 |  +0.00     5.4    19.4    360.3 |  14/ 57 |   1.33 /   79.15 |    35.5  14/ 22
+    adf 5k      |  1bq |  -0.00    12.1    33.8    433.2 |  11/ 57 |   2.35 /  100.59 |    56.7  11/ 22
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.996522          |    +0.0    17.4    40.5     89.0 |   7/ 57 | 2.61e+00 |    51.5   7/ 22
+    pol1p  | 0.996522          |    +0.0    17.4    40.5     89.0 |   7/ 57 | 2.61e+00 |    51.5   7/ 22
+    iir2   | 0.998429          |    +1.2    18.2    40.4     87.2 |   8/ 57 | 2.48e+00 |    50.8   8/ 22
+    iir4   | 0.999379          |    +0.0     0.4     1.9     60.6 |  25/ 57 | 7.28e-01 |     1.9  22/ 22
+    iir8   | 1.000241 skaliert |    +6.3     6.3     6.3     48.2 |  21/ 57 | 4.68e-02 |     6.3  21/ 22
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   +0.001 /  +0.000 |    10.9     1.9 | 0
+    thiran   3 |   +0.000 /  +0.000 |    11.2     1.8 | 0
+    lagrange 1 |   +0.000 /  +0.000 |    11.2    10.5 | 0
+    lagrange 3 |   +0.000 /  +0.000 |    11.2     1.7 | 0
+    lagrange 5 |   +0.000 /  +0.000 |    11.2     1.6 | 0
+
+### Harfe Taste 96 (Nylon): f1 2095.05 Hz, L 0.099 m, T 53.8 N, EI 7.94e-05 N m2, B 0.00148, Umlauf 22.9 Takte, Teiltoene bis 20 kHz 9, davon mit sigma <= 100 1/s 7 (bis 15177 Hz), sigma_1 4.251 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  -0.00   101.5     4.0    101.5 |   2/  9 |   0.05 /    3.46 |    62.4   2/  7
+    K8 5k       |    8 |  -0.00    39.4     0.4     39.4 |   5/  9 |   0.01 /    1.27 |    18.1   5/  7
+    K16 5k      |   16 |  -0.00    39.0     0.5     39.0 |   5/  9 |   0.01 /    1.26 |    17.9   5/  7
+    K16 20k     |   16 |  +0.00    30.9     3.2     30.9 |   3/  8 |   0.04 /    0.88 |    29.1   3/  7
+    K32 5k      |   16 |  -0.00    39.0     0.5     39.0 |   5/  9 |   0.01 /    1.26 |    17.9   5/  7
+    Rauhala M8  |    8 |  +0.00   182.3     6.3    182.3 |   2/  9 |   0.09 /    7.14 |   109.2   2/  7
+    adf 5k      |  0bq |  -0.00   101.5     4.0    101.5 |   2/  9 |   0.05 /    3.46 |    62.4   2/  7
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.999098          |    -0.0    78.5    53.6     78.5 |   1/  9 | 1.65e-02 |    78.5   1/  7
+    pol1p  | 0.999098          |    -0.0    78.5    53.6     78.5 |   1/  9 | 1.65e-02 |    78.5   1/  7
+    iir2   | 1.000054 skaliert |    +2.7    16.8     2.7     16.8 |   4/  9 | 3.39e-03 |    11.7   4/  7
+    iir4   | 0.999145          |    -0.0    14.6     0.2     14.6 |   6/  9 | 2.21e-03 |     5.8   6/  7
+    iir8   | 0.999396          |    -0.0    12.9     0.2     12.9 |   6/  9 | 5.88e-04 |     6.5   6/  7
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.171 /  -0.000 |    18.7     5.8 | 0
+    thiran   3 |   -0.000 /  -0.000 |    11.6     4.1 | 0
+    lagrange 1 |   -0.077 /  -0.000 |    13.5  1259.6 | 38325
+    lagrange 3 |   +0.000 /  +0.000 |    39.2   599.6 | 29197
+    lagrange 5 |   -0.000 /  -0.000 |     9.0   215.1 | 18623
+
+### Harfe Taste 103 (Nylon): f1 3139.67 Hz, L 0.067 m, T 40.1 N, EI 4.26e-05 N m2, B 0.00233, Umlauf 15.3 Takte, Teiltoene bis 20 kHz 6, davon mit sigma <= 100 1/s 5 (bis 16131 Hz), sigma_1 5.633 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00    41.5     0.0     41.5 |   3/  6 |   0.01 /    0.96 |    26.2   3/  5
+    K8 5k       |    8 |  -0.00    39.2     0.0     39.2 |   3/  6 |   0.00 /    0.92 |    23.3   3/  5
+    K16 5k      |    8 |  -0.00    39.2     0.0     39.2 |   3/  6 |   0.00 /    0.92 |    23.3   3/  5
+    K16 20k     |    8 |  -0.00    35.2     0.0     35.2 |   4/  6 |   0.00 /    0.84 |    18.4   4/  5
+    K32 5k      |    8 |  -0.00    39.2     0.0     39.2 |   3/  6 |   0.00 /    0.92 |    23.3   3/  5
+    Rauhala M8  |    8 |  -0.00   245.7     0.0    245.7 |   1/  6 |   0.06 /    8.09 |   171.2   1/  5
+    adf 5k      |  0bq |  +0.00    41.5     0.0     41.5 |   3/  6 |   0.01 /    0.96 |    26.2   3/  5
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.999804          |    -0.1    88.2     0.1     88.2 |   1/  6 | 8.28e-03 |    88.2   1/  5
+    pol1p  | 0.999804          |    -0.1    88.2     0.1     88.2 |   1/  6 | 8.28e-03 |    88.2   1/  5
+    iir2   | 1.004133 skaliert |  +230.2   230.2   230.2    230.2 |   0/  6 | 4.42e-03 |   230.2   0/  5
+    iir4   | 1.161782 skaliert | +8372.7  8372.7  8372.7   8372.7 |   0/  6 | 1.51e-01 |  8372.7   0/  5
+    iir8   | 0.999267          |    -0.1    12.4     0.1     12.4 |   4/  6 | 7.21e-04 |     8.0   4/  5
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.569 /  -0.000 |    23.7  8372.7 | 0
+    thiran   3 |   -0.001 /  -0.000 |    13.4  8378.3 | 0
+    lagrange 1 |   -0.281 /  +0.000 |     0.0 56719.4 | 38643
+    lagrange 3 |   -0.010 /  -0.000 |    13.6  1076.7 | 30798
+    lagrange 5 |   -0.000 /  -0.000 |    14.1   497.9 | 22917
+
+### Cembalo Taste 29: f1 43.65 Hz, L 1.765 m, T 62.4 N, EI 0.000834 N m2, B 4.24e-05, Umlauf 1108.2 Takte, Teiltoene bis 20 kHz 244, davon mit sigma <= 100 1/s 244 (bis 19991 Hz), sigma_1 0.102 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00     5.2   284.8   1088.4 |  16/244 | 110.63 / 1341.37 |  1088.4  16/244
+    K8 5k       |    8 |  +0.00     2.3   188.8    958.7 |  41/244 |  69.70 / 1117.44 |   958.7  41/244
+    K16 5k      |   16 |  -0.00     1.3   160.1    901.8 |  44/244 |  57.52 / 1018.78 |   901.8  44/244
+    K16 20k     |   16 |  -0.00     1.3   160.1    901.8 |  44/244 |  57.52 / 1018.78 |   901.8  44/244
+    K32 5k      |   32 |  -0.00     0.7   123.6    813.3 |  48/244 |  42.59 /  870.93 |   813.3  48/244
+    Rauhala M8  |    8 |  +0.00     1.5   194.7    965.3 |  38/244 |  72.02 / 1127.80 |   965.3  38/244
+    adf 5k      | 32bq |  -0.00     2.1   152.3    210.6 |  40/244 |  36.14 /  172.73 |   210.6  40/244
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.997722          |    +0.0    40.1   300.8    300.8 |  13/244 | 6.60e-01 |   300.8  13/244
+    pol1p  | 0.997722          |    +0.0    40.1   300.8    300.8 |  13/244 | 6.60e-01 |   300.8  13/244
+    iir2   | 0.998313          |    -6.1     8.1    33.4     78.5 |  45/244 | 7.02e-02 |    78.5  45/244
+    iir4   | 1.000708 skaliert |   +30.4    30.4    39.7     78.1 |  15/244 | 2.04e-02 |    78.1  15/244
+    iir8   | 0.999768          |    +0.0     0.2    36.5     78.7 |  45/244 | 5.94e-02 |    78.7  45/244
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   +0.000 /  +0.000 |   903.5    78.1 | 0
+    thiran   3 |   +0.000 /  +0.000 |   903.5    78.1 | 0
+    lagrange 1 |   +0.000 /  +0.000 |   903.5    72.0 | 0
+    lagrange 3 |   +0.000 /  +0.000 |   903.5    77.9 | 0
+    lagrange 5 |   +0.000 /  +0.000 |   903.5    78.8 | 0
+
+### Cembalo Taste 36: f1 65.41 Hz, L 1.681 m, T 88.7 N, EI 0.000406 N m2, B 1.6e-05, Umlauf 734.9 Takte, Teiltoene bis 20 kHz 226, davon mit sigma <= 100 1/s 226 (bis 19930 Hz), sigma_1 0.129 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00     2.0    70.5    515.9 |  27/226 |  19.34 /  495.79 |   515.9  27/226
+    K8 5k       |    8 |  -0.00     0.5    30.3    439.3 |  53/226 |   8.10 /  407.32 |   439.3  53/226
+    K16 5k      |   16 |  +0.00     0.3    23.0    406.4 |  58/226 |   6.06 /  368.53 |   406.4  58/226
+    K16 20k     |   16 |  +0.00     0.3    23.0    406.4 |  58/226 |   6.06 /  368.53 |   406.4  58/226
+    K32 5k      |   32 |  -0.00     0.2    15.8    360.3 |  64/226 |   4.12 /  315.82 |   360.3  64/226
+    Rauhala M8  |    8 |  +0.00     1.6    19.4    424.9 |  64/226 |   5.18 /  391.90 |   424.9  64/226
+    adf 5k      |  6bq |  +0.00     0.3     3.6    359.0 |  88/226 |   0.76 /  321.17 |   359.0  88/226
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.998065          |    +0.0    41.0   483.6    483.6 |   2/226 | 4.69e-01 |   483.6   2/226
+    pol1p  | 0.998065          |    +0.0    41.0   483.6    483.6 |   2/226 | 4.69e-01 |   483.6   2/226
+    iir2   | 0.998443          |    -5.4     8.8     8.8     61.5 |  47/226 | 3.13e-02 |    61.5  47/226
+    iir4   | 0.999365          |    +0.0     0.4     9.5     60.5 |  63/226 | 9.01e-03 |    60.5  63/226
+    iir8   | 0.999500          |    +0.0     0.1     7.9     60.5 |  63/226 | 7.77e-03 |    60.5  63/226
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.000 /  -0.000 |   408.6    60.5 | 0
+    thiran   3 |   +0.000 /  +0.000 |   408.4    60.5 | 0
+    lagrange 1 |   -0.000 /  -0.000 |   407.5  1191.0 | 28610
+    lagrange 3 |   -0.000 /  +0.000 |   408.4    71.5 | 0
+    lagrange 5 |   +0.000 /  +0.000 |   408.4    66.2 | 0
+
+### Cembalo Taste 60: f1 261.63 Hz, L 0.711 m, T 61.4 N, EI 4.37e-05 N m2, B 1.39e-05, Umlauf 183.7 Takte, Teiltoene bis 20 kHz 73, davon mit sigma <= 100 1/s 73 (bis 19794 Hz), sigma_1 0.358 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00     1.5     3.8     58.2 |  30/ 73 |   0.27 /   16.12 |    58.2  30/ 73
+    K8 5k       |    8 |  -0.00     0.0     0.2     33.4 |  49/ 73 |   0.02 /    9.16 |    33.4  49/ 73
+    K16 5k      |   16 |  -0.00     0.0     0.1     26.5 |  54/ 73 |   0.01 /    7.21 |    26.5  54/ 73
+    K16 20k     |   16 |  +0.00     0.4     0.9     18.2 |  63/ 73 |   0.06 /    4.97 |    18.2  63/ 73
+    K32 5k      |   32 |  +0.00     0.1     0.1     19.3 |  61/ 73 |   0.01 /    5.23 |    19.3  61/ 73
+    Rauhala M8  |    8 |  -0.00     0.6     1.2     25.1 |  57/ 73 |   0.08 /    6.89 |    25.1  57/ 73
+    adf 5k      |  0bq |  +0.00     1.5     3.8     58.2 |  30/ 73 |   0.27 /   16.12 |    58.2  30/ 73
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.998660          |    +0.0    40.1   126.6    325.8 |   2/ 73 | 5.62e-02 |   325.8   2/ 73
+    pol1p  | 0.998660          |    +0.0    40.1   126.6    325.8 |   2/ 73 | 5.62e-02 |   325.8   2/ 73
+    iir2   | 0.998905          |    -4.2     6.9     6.9     18.9 |  38/ 73 | 3.35e-03 |    18.9  38/ 73
+    iir4   | 0.999214          |    -0.0     0.2     0.2     12.8 |  59/ 73 | 1.45e-03 |    12.8  59/ 73
+    iir8   | 0.999340          |    +0.0     0.0     0.1      8.5 |  61/ 73 | 6.25e-04 |     8.5  61/ 73
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   +0.000 /  +0.000 |    26.7    12.8 | 0
+    thiran   3 |   +0.000 /  -0.000 |    26.9    12.8 | 0
+    lagrange 1 |   +0.000 /  +0.000 |    26.7   406.8 | 35284
+    lagrange 3 |   -0.000 /  -0.000 |    26.6   925.4 | 23401
+    lagrange 5 |   -0.000 /  -0.000 |    26.0  1428.0 | 15822
+
+### Cembalo Taste 84: f1 1046.56 Hz, L 0.186 m, T 42.1 N, EI 1.72e-05 N m2, B 0.000116, Umlauf 45.9 Takte, Teiltoene bis 20 kHz 18, davon mit sigma <= 100 1/s 18 (bis 19189 Hz), sigma_1 0.698 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  -0.00    16.0     1.7     35.5 |   9/ 18 |   0.04 /    2.65 |    35.5   9/ 18
+    K8 5k       |    8 |  +0.00     0.5     0.2      6.3 |  18/ 18 |   0.01 /    0.51 |     6.3  18/ 18
+    K16 5k      |   16 |  +0.00     0.8     0.1      6.6 |  18/ 18 |   0.00 /    0.52 |     6.6  18/ 18
+    K16 20k     |   16 |  -0.00     0.4     0.2      6.3 |  18/ 18 |   0.00 /    0.51 |     6.3  18/ 18
+    K32 5k      |   32 |  +0.00     1.0     0.1      6.7 |  18/ 18 |   0.00 /    0.53 |     6.7  18/ 18
+    Rauhala M8  |    8 |  -0.00    44.0     4.5     99.7 |   5/ 18 |   0.11 /    8.26 |    99.7   5/ 18
+    adf 5k      |  0bq |  -0.00    16.0     1.7     35.5 |   9/ 18 |   0.04 /    2.65 |    35.5   9/ 18
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.999352          |    +0.0    21.6    21.6     21.6 |   4/ 18 | 6.36e-04 |    21.6   4/ 18
+    pol1p  | 0.999352          |    +0.0    21.6    21.6     21.6 |   4/ 18 | 6.36e-04 |    21.6   4/ 18
+    iir2   | 0.999547          |    -1.9     3.2     3.1      6.0 |  17/ 18 | 4.41e-04 |     6.0  17/ 18
+    iir4   | 0.999622          |    -0.1     0.4     0.3      5.1 |  17/ 18 | 3.67e-04 |     5.1  17/ 18
+    iir8   | 0.999716          |    +0.0     0.4     0.0      2.6 |  18/ 18 | 2.73e-04 |     2.6  18/ 18
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   +0.014 /  +0.000 |     6.5     5.1 | 0
+    thiran   3 |   +0.000 /  +0.000 |     7.5     5.1 | 0
+    lagrange 1 |   +0.004 /  +0.000 |     6.6   816.8 | 38186
+    lagrange 3 |   +0.000 /  +0.000 |     7.2  2225.2 | 30101
+    lagrange 5 |   +0.000 /  +0.000 |    18.3 12185.8 | 23864
+
+### Laute Chor 1 (F) leer: f1 73.45 Hz, L 0.625 m, T 30.5 N, EI 0.00123 N m2, B 0.00102, Umlauf 653.9 Takte, Teiltoene bis 20 kHz 89, davon mit sigma <= 100 1/s 20 (bis 1742 Hz), sigma_1 0.421 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  -0.00   116.2   856.6   1898.2 |   3/ 89 | 166.60 / 1135.11 |   292.0   3/ 20
+    K8 5k       |    8 |  -0.00   169.0   270.9   1225.3 |   3/ 89 |  40.83 /  563.13 |   176.7   2/ 20
+    K16 5k      |   16 |  -0.00    86.6   191.9   1060.8 |   4/ 89 |  26.26 /  443.76 |   109.0   3/ 20
+    K16 20k     |   16 |  -0.00    86.6   191.9   1060.8 |   4/ 89 |  26.26 /  443.76 |   109.0   3/ 20
+    K32 5k      |   32 |  +0.00    17.0    86.2    768.3 |  12/ 89 |  10.02 /  268.47 |    35.0   9/ 20
+    Rauhala M8  |    8 |  +0.00    33.7   597.1   1563.3 |   8/ 89 |  99.64 /  801.62 |   137.5   8/ 20
+    adf 5k      | 23bq |  +0.00   916.5  1995.3   2076.5 |   1/ 45 |  80.73 /  275.40 |  1347.0   1/ 20
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.995571          |    +0.1    30.1    80.5     94.9 |   3/ 89 | 9.54e+00 |    43.3   3/ 20
+    pol1p  | 0.995571          |    +0.1    30.1    80.5     94.9 |   3/ 89 | 9.54e+00 |    43.3   3/ 20
+    iir2   | 0.994786          |    -0.3    46.2    95.4     99.2 |   4/ 89 | 1.16e+01 |    76.0   4/ 20
+    iir4   | 0.997479          |    +0.1    26.6    61.4     92.4 |   6/ 89 | 9.01e+00 |    29.3   4/ 20
+    iir8   | 1.001828 skaliert |   +32.1    32.1    44.2     84.8 |   3/ 89 | 7.04e+00 |    32.1   0/ 20
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.000 /  -0.000 |   103.8    29.3 | 0
+    thiran   3 |   +0.000 /  +0.000 |   103.8    29.3 | 0
+    lagrange 1 |   -0.000 /  -0.000 |   103.8    28.9 | 0
+    lagrange 3 |   -0.000 /  +0.000 |   103.8    29.2 | 0
+    lagrange 5 |   +0.000 /  +0.000 |   103.8    29.3 | 0
+
+### Laute Chor 7 (N) Bund 5: f1 392.01 Hz, L 0.468 m, T 30.6 N, EI 3.63e-05 N m2, B 5.34e-05, Umlauf 122.6 Takte, Teiltoene bis 20 kHz 48, davon mit sigma <= 100 1/s 37 (bis 15025 Hz), sigma_1 2.049 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00     6.0     6.0     95.3 |  15/ 48 |   0.31 /   17.16 |    57.3  15/ 37
+    K8 5k       |    8 |  +0.00     0.2     0.2     46.4 |  30/ 48 |   0.01 /    8.04 |    20.1  30/ 37
+    K16 5k      |   16 |  +0.00     0.4     0.4     35.1 |  34/ 48 |   0.02 /    6.00 |    13.4  34/ 37
+    K16 20k     |   16 |  +0.00     2.3     2.3     21.5 |  42/ 48 |   0.11 /    3.66 |     4.6  37/ 37
+    K32 5k      |   32 |  -0.00     0.2     0.2     35.3 |  33/ 48 |   0.01 /    6.03 |    14.4  33/ 37
+    Rauhala M8  |    8 |  +0.00     1.7     1.7     59.4 |  24/ 48 |   0.09 /   10.38 |    30.4  24/ 37
+    adf 5k      |  0bq |  +0.00     6.0     6.0     95.3 |  15/ 48 |   0.31 /   17.16 |    57.3  15/ 37
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.994949          |    +0.0    23.2    23.2     59.9 |   5/ 48 | 2.47e-01 |    34.8   5/ 37
+    pol1p  | 0.994949          |    +0.0    23.2    23.2     59.9 |   5/ 48 | 2.47e-01 |    34.8   5/ 37
+    iir2   | 0.996609          |    -1.6     3.5     3.5     18.8 |  23/ 48 | 1.98e-02 |    14.3  23/ 37
+    iir4   | 0.997388          |    +0.0     0.3     0.3     20.1 |  31/ 48 | 3.40e-02 |     7.8  31/ 37
+    iir8   | 0.997970          |    +0.0     0.2     0.2     14.9 |  31/ 48 | 1.98e-03 |     7.9  31/ 37
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   -0.001 /  -0.000 |    23.4     7.8 | 0
+    thiran   3 |   -0.000 /  +0.000 |    22.6     7.6 | 0
+    lagrange 1 |   +0.000 /  -0.000 |    36.6   247.2 | 27797
+    lagrange 3 |   -0.000 /  +0.000 |    22.8    46.7 | 0
+    lagrange 5 |   -0.000 /  +0.000 |    22.4    19.5 | 0
+
+### Oud Chor 1 (umsp.) leer: f1 65.41 Hz, L 0.600 m, T 35.9 N, EI 5e-05 N m2, B 3.82e-05, Umlauf 734.9 Takte, Teiltoene bis 20 kHz 195, davon mit sigma <= 100 1/s 83 (bis 6101 Hz), sigma_1 0.560 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00     4.7   148.2    775.3 |  17/195 |  39.52 /  693.02 |   201.8  17/ 83
+    K8 5k       |    8 |  +0.00     1.9    74.3    658.4 |  42/195 |  18.84 /  557.90 |   119.1  42/ 83
+    K16 5k      |   16 |  +0.00     1.1    58.3    609.5 |  45/195 |  14.46 /  500.96 |    97.5  45/ 83
+    K16 20k     |   16 |  +0.00     1.1    58.3    609.5 |  45/195 |  14.46 /  500.96 |    97.5  45/ 83
+    K32 5k      |   32 |  -0.00     0.6    40.9    537.5 |  49/195 |   9.86 /  420.29 |    72.1  49/ 83
+    Rauhala M8  |    8 |  +0.00     1.6    76.4    660.9 |  40/195 |  19.40 /  560.50 |   121.3  40/ 83
+    adf 5k      | 12bq |  -0.00     0.8    35.8    395.6 |  56/195 |   7.73 /  296.61 |    36.0  47/ 83
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.991505          |    +0.0     3.8    78.9     96.0 |  12/195 | 6.50e+00 |    83.3  12/ 83
+    pol1p  | 0.991505          |    +0.0     3.8    78.9     96.0 |  12/195 | 6.50e+00 |    83.3  12/ 83
+    iir2   | 0.991449          |    +0.6     0.9    10.7     84.1 |  46/195 | 4.27e+00 |    26.1  46/ 83
+    iir4   | 0.991568          |    -0.1     0.3    19.4     84.6 |  49/195 | 4.81e+00 |    31.0  49/ 83
+    iir8   | 0.991602          |    +0.0     0.2    18.8     69.2 |  45/195 | 2.54e+00 |    27.0  45/ 83
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   +0.000 /  +0.000 |    96.9    31.0 | 0
+    thiran   3 |   +0.000 /  -0.000 |    96.9    31.0 | 0
+    lagrange 1 |   +0.000 /  +0.000 |    96.9    29.8 | 0
+    lagrange 3 |   +0.000 /  +0.000 |    96.9    30.9 | 0
+    lagrange 5 |   -0.000 /  +0.000 |    96.9    31.0 | 0
+
+### Oud Chor 5 (N) Bund 5: f1 261.65 Hz, L 0.449 m, T 28.8 N, EI 0.000128 N m2, B 0.000218, Umlauf 183.7 Takte, Teiltoene bis 20 kHz 58, davon mit sigma <= 100 1/s 23 (bis 6354 Hz), sigma_1 1.471 1/s
+  A Dispersion (Verlust pol1p, Thiran 1, nachgestimmt) | K | Cent: Grundton, 1-12, <=5k, <=20k | in +-10 Cent alle | dphi rad <=5k / <=20k | hoerbar: Cent max, in +-10
+    ohne        |    0 |  +0.00    26.3    58.2    472.5 |   7/ 58 |   4.16 /  114.45 |    93.3   7/ 23
+    K8 5k       |    8 |  -0.00     2.5     4.9    316.0 |  20/ 58 |   0.38 /   69.96 |    19.9  20/ 23
+    K16 5k      |   16 |  -0.00     1.4     2.7    257.6 |  22/ 58 |   0.21 /   53.98 |    12.2  22/ 23
+    K16 20k     |   16 |  -0.00    14.2    21.5    199.2 |  14/ 58 |   1.35 /   40.90 |    22.1   9/ 23
+    K32 5k      |   32 |  +0.00     0.6     1.0    176.5 |  25/ 58 |   0.08 /   33.97 |     5.4  23/ 23
+    Rauhala M8  |    8 |  -0.00     4.5    16.5    338.2 |  15/ 58 |   1.15 /   75.31 |    34.8  15/ 23
+    adf 5k      |  1bq |  -0.00    13.2    33.5    412.2 |  10/ 58 |   2.35 /   96.86 |    60.2  10/ 23
+  B Verlust (Dispersion K16 5k, Thiran 1) | max|H_loss| (vor Skalierung) | Abklingen %: Grundton, 1-12, <=5k, <=20k | in 5 % alle | max |d ln|H|| <=20k | hoerbar: % max, in 5 %
+    pol1   | 0.994738          |    +0.0    14.4    32.0     87.6 |   6/ 58 | 2.28e+00 |    46.5   6/ 23
+    pol1p  | 0.994738          |    +0.0    14.4    32.0     87.6 |   6/ 58 | 2.28e+00 |    46.5   6/ 23
+    iir2   | 0.997133          |    +1.2     8.7    29.7     82.0 |  11/ 58 | 1.96e+00 |    43.0  11/ 23
+    iir4   | 0.997944          |    +0.0     0.4     0.4     55.7 |  25/ 58 | 3.85e-01 |     2.4  23/ 23
+    iir8   | 0.998175          |    +0.0     0.3     1.8     47.2 |  22/ 58 | 2.24e-02 |     5.5  22/ 23
+  C Bruchteil-Verzug (Verlust iir4 mit Ausgleich des Betrags, K16 5k) | Grundton Cent ohne / mit Nachstimmen | hoerbar: Cent max, Abklingen % max | Raster-Frequenzen <=20k, an denen der Verlust > 1 sein muesste
+    thiran   1 |   +0.000 /  +0.000 |    12.5     2.4 | 0
+    thiran   3 |   +0.000 /  -0.000 |    12.5     2.4 | 0
+    lagrange 1 |   +0.000 /  +0.000 |    12.5     6.2 | 0
+    lagrange 3 |   +0.000 /  +0.000 |    12.5     2.3 | 0
+    lagrange 5 |   +0.000 /  -0.000 |    12.5     2.5 | 0

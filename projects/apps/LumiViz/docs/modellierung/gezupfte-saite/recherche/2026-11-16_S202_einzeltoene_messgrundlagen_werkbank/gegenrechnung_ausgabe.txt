@@ -1,0 +1,172 @@
+== A  Lautheit nach BS.1770: Bezugswert und abklingende Toene ==
+K-Filter bei 48 kHz gegen BS.1770-5 Tab. 1/2: groesste Abweichung Stufe 1 8.9e-16, Stufe 2 2.2e-16
+  fs 48000: Sinus 997 Hz 0 dBFS in einem Kanal: M-max -3.008, S-max -3.010, I -3.010 LUFS (Soll -3.01); derselbe Ton in beiden Kanaelen (Mono als Stereo): +0.002
+  fs 44100: Sinus 997 Hz 0 dBFS in einem Kanal: M-max -3.005, S-max -3.007, I -3.008 LUFS (Soll -3.01); derselbe Ton in beiden Kanaelen (Mono als Stereo): +0.005
+  fs 96000: Sinus 997 Hz 0 dBFS in einem Kanal: M-max -3.026, S-max -3.028, I -3.028 LUFS (Soll -3.01); derselbe Ton in beiden Kanaelen (Mono als Stereo): -0.015
+Abklingender Sinus 1 kHz (Anfangsamplitude 1, Einsatz 5 ms), Abfall D in dB/s, Datei 12 s, danach Stille:
+  D dB/s | M-max  S-max  I(gated) | M-max - Dauerton | Formel 10lg[(1-10^(-DW/10))/(DW ln10/10)], W=0,4 s
+       1 |  -3.21  -4.43   -7.77   |  -0.20           |  -0.20
+       3 |  -3.61  -6.77   -9.96   |  -0.60           |  -0.59
+      10 |  -4.90 -11.44  -11.45   |  -1.89           |  -1.85
+      30 |  -7.81 -16.27  -13.23   |  -4.80           |  -4.70
+      60 | -10.65 -19.38  -15.38   |  -7.64           |  -7.44
+     150 | -14.91 -23.66  -17.77   | -11.90           | -11.40
+Integrierte Lautheit haengt an der Dateilaenge (D = 10 dB/s):
+  Datei   1 s: I  -7.41, M-max  -4.86
+  Datei   2 s: I -10.14, M-max  -4.86
+  Datei   4 s: I -10.83, M-max  -4.86
+  Datei   8 s: I -11.44, M-max  -4.86
+
+== B  Gang ueber den Umfang: Spanne, Paare bis 4 Halbtoene, Glaettung ==
+Vorgabe ohne Streuung, alle Tasten: Spanne 16.08 (Gang 6,0 + Stoerungen), mittlerer Sprung 0.25, groesster 8.33 LU, 278 Paare
+  nach gleitendem Median ueber 7 Tasten: Abweichung an Taste 56 +0.25, an Taste 80 -0.08 LU (Vorgabe +6 bzw. -8: beide Stoerungen entfernt)
+  Stoerung +6 LU ueber 3 Nachbartasten: nach der Glaettung an Taste 56 +0.25 LU
+  Stoerung +6 LU ueber 4 Nachbartasten: nach der Glaettung an Taste 56 +5.83 LU
+  Stoerung +6 LU ueber 5 Nachbartasten: nach der Glaettung an Taste 56 +5.83 LU
+Mit Streuung sigma je Ton (Spieler, Raum), 2000 Laeufe: Mittel und 95-%-Quantil
+  sigma | Auswahl        | Spanne       | mittlerer Sprung | groesster Sprung | Theorie mittl. = 0,954 sigma (nur Streuung)
+   0.0  | jede Taste     |  16.1 /  16.1 |   0.2 /   0.2    |   8.3 /   8.3    | 0.00
+   0.0  | jede 3. Taste  |  16.0 /  16.0 |   0.2 /   0.2    |   8.2 /   8.2    | 0.00
+   1.0  | jede Taste     |  16.9 /  19.0 |   1.1 /   1.3    |   9.6 /  11.4    | 0.95
+   1.0  | jede 3. Taste  |  16.0 /  18.3 |   1.2 /   1.8    |   8.7 /  10.7    | 0.95
+   2.0  | jede Taste     |  18.0 /  22.0 |   2.1 /   2.5    |  11.9 /  15.1    | 1.91
+   2.0  | jede 3. Taste  |  16.5 /  20.8 |   2.4 /   3.4    |  10.0 /  13.7    | 1.91
+   3.0  | jede Taste     |  20.0 /  24.9 |   3.1 /   3.7    |  14.8 /  18.8    | 2.86
+   3.0  | jede 3. Taste  |  17.8 /  23.4 |   3.4 /   4.9    |  11.6 /  16.4    | 2.86
+   4.0  | jede Taste     |  23.3 /  29.2 |   4.0 /   4.8    |  18.2 /  23.2    | 3.82
+   4.0  | jede 3. Taste  |  20.3 /  27.0 |   4.3 /   6.2    |  14.3 /  20.3    | 3.82
+Reine Streuung ohne Gang, 72 Tasten, mittlerer Sprung Paare <=4 HT (Pruefung der Theorie):
+  sigma 1.0: gemessen 0.960, Theorie 0.954
+  sigma 3.0: gemessen 2.882, Theorie 2.862
+
+== C  Raum: Streuung des Pegels je Ton und Teilton bei Direkt-zu-Hall-Verhaeltnis DRR ==
+Ein Teilton (stationaer), |d + r|^2 mit r komplex normal, E|r|^2 = 10^(-DRR/10):
+  DRR dB | Std 10lg|H|^2 | Std Differenz zweier Toene | Theorie diffus 5,57 / 7,88 dB
+      20 |          0.62 |          0.87
+      10 |          2.00 |          2.83
+       5 |          3.66 |          5.16
+       0 |          5.09 |          7.19
+      -5 |          5.49 |          7.77
+     -10 |          5.56 |          7.84
+    -100 |          5.56 |          7.88
+Ganzer Ton mit K Teiltoenen (Amplitude 1/k), Lautheit ~ 10lg Summe |a_k H_k|^2, H_k unabhaengig je Teilton:
+  DRR dB | K=1   K=3   K=10  K=30   (Std des Tonpegels in dB) | groesster Sprung erwartet bei 72 Tasten, Paare<=4 HT, K=10
+      10 | 2.01  1.42  1.22  1.18   | groesster  5.2 (95 %:  6.6), mittlerer 1.2, Spanne  5.8 LU
+       5 | 3.61  2.29  1.94  1.84   | groesster  8.0 (95 %:  9.8), mittlerer 1.9, Spanne  8.9 LU
+       0 | 5.14  3.06  2.48  2.36   | groesster 10.2 (95 %: 12.6), mittlerer 2.4, Spanne 11.5 LU
+      -5 | 5.53  3.29  2.72  2.56   | groesster 11.1 (95 %: 13.5), mittlerer 2.6, Spanne 12.5 LU
+    -100 | 5.55  3.37  2.76  2.59   | groesster 11.2 (95 %: 13.7), mittlerer 2.7, Spanne 12.7 LU
+
+== D  Doppelabklingen je Teilton: Vorgabe gegen Messung, ohne und mit Raum und Rauschen ==
+-- Gitarre mittel: Vorgabe frueh 40.0 dB/s, spaet 4.0 dB/s, Knick 0.556 s (Pegel -22.2 dB)
+   Fall                               | Pegel-Geraden frueh/spaet/Knick | Schroeder frueh/spaet/Knick | Zwei Komponenten (Modell passend) frueh/spaet/Knick
+   ohne Raum, Rauschen -90 dB         |   26.1    4.0  0.825          |   26.0    4.2  0.536       |   40.3    4.0  0.530   (Bereich 56 dB)
+   ohne Raum, Rauschen -60 dB         |   26.1    4.0  0.825          |   26.0    4.2  0.536       |   40.2    4.0  0.533   (Bereich 55 dB)
+   zwei Polarisationen df = 0,7 Hz    |   55.5    4.0  0.439          |   24.8    4.2  0.320       |   63.3    3.9  0.401   (Bereich 56 dB)
+   Raum T=1,5 s, DRR +10 dB           |   24.6    4.0  0.884          |   31.4    4.2  0.608       |   38.0    4.0  0.561   (Bereich 56 dB)
+   Raum T=1,5 s, DRR 0 dB             |   24.2    4.0  0.919          |   34.7    4.2  0.628       |   35.5    4.0  0.608   (Bereich 56 dB)
+   Raum T=3,0 s, DRR 0 dB             |   16.8    4.0  1.380          |   23.0    4.2  1.031       |   25.5    4.0  0.871   (Bereich 55 dB)
+   Raum T=0,4 s (Studio), DRR +5 dB   |   25.9    4.0  0.834          |   26.1    4.2  0.543       |   40.0    4.0  0.536   (Bereich 55 dB)
+-- Harfe Diskant: Vorgabe frueh 150.0 dB/s, spaet 20.0 dB/s, Knick 0.192 s (Pegel -28.8 dB)
+   Fall                               | Pegel-Geraden frueh/spaet/Knick | Schroeder frueh/spaet/Knick | Zwei Komponenten (Modell passend) frueh/spaet/Knick
+   ohne Raum, Rauschen -90 dB         |  107.5   20.1  0.254          |  112.8   20.3  0.187       |  149.5   20.0  0.182   (Bereich 86 dB)
+   ohne Raum, Rauschen -60 dB         |  109.6   20.3  0.248          |  140.3   19.7  0.196       |  154.6   20.5  0.173   (Bereich 72 dB)
+   zwei Polarisationen df = 0,7 Hz    |  122.2   20.0  0.227          |  136.5   20.2  0.166       |  138.3   20.1  0.203   (Bereich 86 dB)
+   Raum T=1,5 s, DRR +10 dB           |   89.2   19.9  0.322          |   46.1   20.5  0.268       |  126.4   19.9  0.223   (Bereich 88 dB)
+   Raum T=1,5 s, DRR 0 dB             |   39.1   20.5  0.922          |   42.3   20.5  0.853       |   53.9   19.7  0.620   (Bereich 90 dB)
+   Raum T=3,0 s, DRR 0 dB             |   18.4    2.3  3.345          |   19.6   17.9  5.705       |   19.9   19.9 -2375.664   (Bereich 74 dB)
+   Raum T=0,4 s (Studio), DRR +5 dB   |   92.8   20.1  0.286          |  106.4   20.2  0.223       |  130.0   20.0  0.199   (Bereich 83 dB)
+Messbarer Bereich eines einstufigen Teiltons im Raum (Direktanteil bis zum Schnitt mit dem Hall, Energie):
+  Formel dL = a/(a-b) * (DRR + 10lg(a/b)) fuer a > b; a, b Abklingraten Teilton und Raum (Erwartungswert,
+  inkohaerent); Rechnung: 30 Raeume, Stelle, an der die Huellkurve 3 dB ueber dem Direktanteil liegt
+  Teilton T60 | Raum T60 | DRR | Formel dB | Rechnung Median (10.-90. Perzentil) dB
+          0.4 |      1.5 |  10 |      21.5 |  18.7 (  9.4 …  29.2)
+          0.4 |      1.5 |   0 |       7.8 |   6.7 (  2.1 …  15.6)
+          1.0 |      2.0 |   0 |       6.0 |   4.9 (  0.6 …  10.8)
+          0.3 |      0.4 |   5 |      25.0 |  12.0 (  1.0 …  29.3)
+          0.5 |      2.0 |   5 |      14.7 |  14.8 (  6.0 …  20.8)
+Teilton langsamer als der Raum (a < b): Steigung ueber 0..-40 dB, 30 Raeume
+  Teilton T60 3.0 s (20 dB/s), Raum 1.5 s, DRR +0: gemessen 19.3 dB/s (17.6 … 23.3)
+  Teilton T60 6.0 s (10 dB/s), Raum 2.0 s, DRR +0: gemessen 10.0 dB/s (9.4 … 10.8)
+  Teilton T60 2.0 s (30 dB/s), Raum 1.5 s, DRR -5: gemessen 27.5 dB/s (24.0 … 34.2)
+
+== E  Warum Huellkurve und Teilton ein anderes Vorzeichen geben ==
+Modell: jeder Teilton faellt 25 % schneller als in der Aufnahme. Huellkurve wie S195 (-5..-25 dB, 20-ms-Bloecke).
+  Aufnahme Amplitude / Abfall je k | Modell Amplitude | Huellkurve Aufnahme / Modell dB/s | Huellkurve sagt
+  1/k^0.3 / 4 k^1.0 dB/s            | 1/k^2.0          |    4.7 /    5.0                   | Modell faellt schneller (richtig)
+  1/k^0.0 / 4 k^1.5 dB/s            | 1/k^2.0          |    4.8 /    5.0                   | Modell faellt schneller (richtig)
+  1/k^0.0 / 4 k^1.5 dB/s            | 1/k^1.0          |    4.8 /    5.0                   | Modell faellt schneller (richtig)
+  1/k^1.0 / 4 k^1.0 dB/s            | 1/k^1.0          |    4.1 /    5.1                   | Modell faellt schneller (richtig)
+Mechanismus 1 — schwacher Grundton in der Aufnahme (Abstrahlung unter der tiefsten Koerpermode), D = 4 k dB/s:
+  Grundton der Aufnahme  +0.0 dB: Huellkurve Aufnahme   4.4, Modell   5.1 dB/s -> richtig
+  Grundton der Aufnahme -10.5 dB: Huellkurve Aufnahme   6.9, Modell   5.1 dB/s -> FALSCHES Vorzeichen
+  Grundton der Aufnahme -20.0 dB: Huellkurve Aufnahme   8.9, Modell   5.1 dB/s -> FALSCHES Vorzeichen
+  Grundton der Aufnahme -30.5 dB: Huellkurve Aufnahme   9.2, Modell   5.1 dB/s -> FALSCHES Vorzeichen
+Mechanismus 2 — Raum an der Aufnahme (Modell trocken), ein Teilton 440 Hz:
+  Aufnahme trocken 40 dB/s, Raum T 2.0 s DRR +0 dB, Modell 34 dB/s (langsamer): Huellkurve Aufnahme  18.7, Modell  34.0 -> FALSCHES Vorzeichen
+  Aufnahme trocken 40 dB/s, Raum T 2.0 s DRR +10 dB, Modell 34 dB/s (langsamer): Huellkurve Aufnahme  38.0, Modell  34.0 -> richtig
+  Aufnahme trocken 15 dB/s, Raum T 2.0 s DRR +0 dB, Modell 13 dB/s (langsamer): Huellkurve Aufnahme  15.4, Modell  13.0 -> richtig
+  Aufnahme trocken 15 dB/s, Raum T 1.0 s DRR +0 dB, Modell 13 dB/s (langsamer): Huellkurve Aufnahme  14.8, Modell  13.0 -> richtig
+
+== F  Tonhoehe und Inharmonizitaet B: Vorgabe gegen Schaetzung ==
+Abweichung Teilton n gegen harmonisch: 1200 log2 sqrt(1 + B n^2) Cent ~ 866 B n^2
+  B = 1e-05: n=5 0.22, n=10 0.87, n=20 3.46, n=30 7.76 Cent
+  B = 0.0001: n=5 2.16, n=10 8.61, n=20 33.95, n=30 74.60 Cent
+Synthetischer Ton f0 110 Hz, Teiltoene 1/k, Abfall 3 + 0,8k dB/s, 20 Laeufe (Phasen zufaellig); dazu je Teilton
+ein zufaelliger Frequenzversatz sigma_c Cent (Kopplung an Steg und Koerper, die das Gesetz nicht kennt).
+Theorie (nur Versatz): Std(B) = 2 ln2/1200 * sigma_c / sqrt(Summe (k^2 - Mittel k^2)^2)
+  B Vorgabe | Rauschen dB | sigma_c | Fenster s | Teiltoene | B Mittel   B Std     Theorie  | f0 Fehler Cent Mittel/Std
+      1e-05 |         -70 |     0.0 |      0.50 |         5 |  1.00e-05   8.1e-09  0.0e+00 | -0.000 / 0.000
+      1e-05 |         -70 |     0.0 |      0.50 |        10 |  1.00e-05   1.7e-09  0.0e+00 | -0.000 / 0.000
+      1e-05 |         -70 |     0.0 |      0.50 |        20 |  1.00e-05   4.6e-10  0.0e+00 | -0.000 / 0.000
+      1e-05 |         -70 |     0.0 |      0.50 |        30 |  1.00e-05   1.4e-10  0.0e+00 | -0.000 / 0.000
+      1e-05 |         -40 |     0.0 |      0.25 |         5 |  1.00e-05   4.4e-07  0.0e+00 | -0.000 / 0.006
+      1e-05 |         -40 |     0.0 |      0.25 |        10 |  1.00e-05   1.4e-07  0.0e+00 | -0.000 / 0.005
+      1e-05 |         -40 |     0.0 |      0.25 |        20 |  1.00e-05   3.1e-08  0.0e+00 | -0.001 / 0.003
+      1e-05 |         -40 |     0.0 |      0.25 |        30 |  1.00e-05   1.2e-08  0.0e+00 | -0.000 / 0.004
+      1e-05 |         -40 |     0.0 |      0.50 |         5 |  1.00e-05   2.9e-07  0.0e+00 | -0.000 / 0.003
+      1e-05 |         -40 |     0.0 |      0.50 |        10 |  9.99e-06   5.8e-08  0.0e+00 | +0.000 / 0.002
+      1e-05 |         -40 |     0.0 |      0.50 |        20 |  1.00e-05   1.0e-08  0.0e+00 | +0.000 / 0.002
+      1e-05 |         -40 |     0.0 |      0.50 |        30 |  1.00e-05   5.2e-09  0.0e+00 | +0.000 / 0.001
+      1e-05 |         -70 |     1.0 |      0.50 |         5 | -1.44e-05   4.9e-05  6.0e-05 | +0.210 / 0.649
+      1e-05 |         -70 |     1.0 |      0.50 |        10 |  1.49e-05   7.9e-06  1.1e-05 | -0.241 / 0.399
+      1e-05 |         -70 |     1.0 |      0.50 |        20 |  1.01e-05   2.7e-06  2.1e-06 | +0.057 / 0.424
+      1e-05 |         -70 |     1.0 |      0.50 |        30 |  9.92e-06   6.3e-07  7.6e-07 | +0.055 / 0.286
+      1e-05 |         -70 |     3.0 |      0.50 |         5 |  4.55e-05   2.0e-04  1.8e-04 | -0.868 / 2.661
+      1e-05 |         -70 |     3.0 |      0.50 |        10 |  1.82e-05   3.0e-05  3.4e-05 | -0.010 / 1.736
+      1e-05 |         -70 |     3.0 |      0.50 |        20 |  8.90e-06   6.5e-06  6.2e-06 | -0.052 / 1.271
+      1e-05 |         -70 |     3.0 |      0.50 |        30 |  9.86e-06   1.9e-06  2.3e-06 | +0.304 / 0.894
+      1e-04 |         -70 |     0.0 |      0.50 |         5 |  1.00e-04   6.1e-09  0.0e+00 | +0.000 / 0.000
+      1e-04 |         -70 |     0.0 |      0.50 |        10 |  1.00e-04   1.6e-09  0.0e+00 | -0.000 / 0.000
+      1e-04 |         -70 |     0.0 |      0.50 |        20 |  1.00e-04   2.1e-10  0.0e+00 | -0.000 / 0.000
+      1e-04 |         -70 |     0.0 |      0.50 |        30 |  1.00e-04   2.3e-10  0.0e+00 | -0.000 / 0.000
+      1e-04 |         -40 |     0.0 |      0.25 |         5 |  9.97e-05   5.5e-07  0.0e+00 | +0.004 / 0.006
+      1e-04 |         -40 |     0.0 |      0.25 |        10 |  1.00e-04   1.4e-07  0.0e+00 | +0.001 / 0.006
+      1e-04 |         -40 |     0.0 |      0.25 |        20 |  1.00e-04   2.7e-08  0.0e+00 | +0.003 / 0.004
+      1e-04 |         -40 |     0.0 |      0.25 |        30 |  1.00e-04   1.2e-08  0.0e+00 | -0.002 / 0.004
+      1e-04 |         -40 |     0.0 |      0.50 |         5 |  1.00e-04   3.4e-07  0.0e+00 | +0.001 / 0.003
+      1e-04 |         -40 |     0.0 |      0.50 |        10 |  1.00e-04   6.3e-08  0.0e+00 | +0.000 / 0.002
+      1e-04 |         -40 |     0.0 |      0.50 |        20 |  1.00e-04   1.4e-08  0.0e+00 | -0.000 / 0.002
+      1e-04 |         -40 |     0.0 |      0.50 |        30 |  1.00e-04   5.6e-09  0.0e+00 | +0.001 / 0.001
+      1e-04 |         -70 |     1.0 |      0.50 |         5 |  7.66e-05   6.2e-05  6.0e-05 | +0.047 / 0.745
+      1e-04 |         -70 |     1.0 |      0.50 |        10 |  1.01e-04   1.1e-05  1.1e-05 | -0.080 / 0.494
+      1e-04 |         -70 |     1.0 |      0.50 |        20 |  1.00e-04   2.6e-06  2.1e-06 | -0.036 / 0.386
+      1e-04 |         -70 |     1.0 |      0.50 |        30 |  1.00e-04   7.2e-07  7.6e-07 | -0.060 / 0.239
+      1e-04 |         -70 |     3.0 |      0.50 |         5 |  1.15e-04   1.4e-04  1.8e-04 | -0.325 / 2.250
+      1e-04 |         -70 |     3.0 |      0.50 |        10 |  1.09e-04   4.0e-05  3.4e-05 | -0.595 / 1.671
+      1e-04 |         -70 |     3.0 |      0.50 |        20 |  1.00e-04   7.0e-06  6.2e-06 | +0.084 / 0.986
+      1e-04 |         -70 |     3.0 |      0.50 |        30 |  1.01e-04   3.2e-06  2.3e-06 | -0.142 / 0.979
+
+== G  Spektrum: Teiltonpegel relativ zum Grundton und spektraler Schwerpunkt bei Raum (DRR) ==
+Vorgabe: 20 Teiltoene 1/k, Schwerpunkt 2.254 (in Vielfachen von f0)
+  DRR dB | Std Pegel Teilton k gegen Teilton 1 dB | Schwerpunkt Mittel / Std (relativ)
+      20 |   0.88                                  | 1.004 / 0.052
+      10 |   2.81                                  | 1.040 / 0.165
+       0 |   7.23                                  | 1.168 / 0.383
+     -10 |   7.79                                  | 1.196 / 0.418
+    -100 |   7.89                                  | 1.207 / 0.431
+
+== H  Einschwinggeraeusch: Trennung vom harmonischen Teil durch Abzug der Teiltoene ==
+  Geraeusch -10 dB: Energie der ersten 50 ms wahr +12.46 dB, Rest nach Abzug +12.64 dB, Verhaeltnis Geraeusch/Ton wahr -19.68, gemessen -19.61 dB
+  Geraeusch -20 dB: Energie der ersten 50 ms wahr +2.39 dB, Rest nach Abzug +4.14 dB, Verhaeltnis Geraeusch/Ton wahr -29.75, gemessen -28.11 dB
+  Geraeusch -30 dB: Energie der ersten 50 ms wahr -7.35 dB, Rest nach Abzug +0.26 dB, Verhaeltnis Geraeusch/Ton wahr -39.49, gemessen -31.99 dB

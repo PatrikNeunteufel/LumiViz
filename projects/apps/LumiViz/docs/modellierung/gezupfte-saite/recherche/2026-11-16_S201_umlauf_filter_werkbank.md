@@ -3,6 +3,9 @@
 > Haltepunkt, 19:51–19:59 fortgesetzt; claude-opus-5-5, 26 + 45 Runden, regulär beendet, 0,70 + 3,00 USD).
 > **Unverändert abgelegt in S201** — nur dieser Kopf ist dazugekommen. Die zwei abgerufenen PDFs liegen in der Werkbank
 > unter `ergebnisse/2026-11-16_01_umlauf_filter_saite_steg/abrufe/`.
+> **Seit S202:** der Auftrag liegt im Archiv der Werkbank (`archiv/auftraege/`, `archiv/ergebnisse/`, `archiv/laeufe/`);
+> die zwei PDFs liegen als Kopie unter `…\cmake\quellen\gezupfte-saite\` (`Bank_Valimaki_2003_RobustLossFilter_SPL10.pdf`,
+> `Bank_Karjalainen_2010_PassiveAdmittanceMatrix_DAFx10.pdf`).
 >
 > **Gegengelesen in S201 (LumiViz-Sitzung, an den Seitenbildern):**
 > - **Bank & Välimäki 2003, S. 19** — Gl. (1), Gl. (2), f′(g_k), das frühere Gewicht 1/(1 − g_k), Glättung
