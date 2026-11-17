@@ -1,7 +1,29 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_02_harfe_besaitet_admittanz` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 20:23–20:35, claude-opus-5-5, 66 Runden, success, 2.74 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Quellen unter `…\cmake\quellen\gezupfte-saite\`):
+> - **Wörtliche Zitate in der Textebene gefunden** (normalisiert): Le Carrou 2006 S. 48–50 (Papier, Punkt 34 zwischen
+>   A♭ und B♭ 103,8 / 116,5 Hz, „6-mm-thick semi-conical shell“, 0,029 m³, Mode 1 „connections to the arm …“, „it seems
+>   difficult to extract these two similar mode shapes“ — Ligatur „ﬃ“ fehlt in der Textebene, `pdf_suche.py` findet
+>   „difficult“ deshalb nicht); Bell S. 147 (Plastikbänder, Winkel, Firth), S. 150 (am **Seitenbild**: „more even and in
+>   general slowly increases“ — die OCR-Textebene verliest „even“), S. 155 (85 / 92 Hz), S. 157 („rarely exceed ±3dB“),
+>   S. 158 (Hochfläche 1–1,5 kHz); Waltham 2008 S. 52 (Maße, 11–12 → 2–2,5 mm, Hammer und 0,2-g-Aufnehmer); Le Carrou
+>   2010 S. 3204–3205 (70 Hz–20 kHz, 2,35 m, „below 220 Hz … non-directional“).
+> - **Le Carrou 2006 Abb. 3.4 am Seitenbild:** f und ζ aller sechs Moden stimmen (54,8 / 5,5 % … 168,5 / 1,4 %), Q =
+>   1/(2ζ) richtig gerechnet.
+> - **Le Carrou 2006 Abb. 3.5 am Seitenbild (graue Kurve, rechte Achse = linke × 2):** die Werte bis 168 Hz stimmen in
+>   der Ablesegenauigkeit (Tal 100 Hz 0,4–0,5, Saiten A♭ / B♭ 0,6 / 1,0, Mode 4 6,6–6,8 · 10⁻³ s/kg). **Die Spitze bei
+>   207 Hz liegt höher als im Bericht: rund 7,1 statt 5,8 · 10⁻³ s/kg, also 73 statt 71 dB in Bells Maß.** Der
+>   Widerspruch zu Bell an den Saiten 33 / 32 (28 / 33 dB) bleibt; an der Spitze 5–13 statt 7–15 dB.
+> - **Le Carrou 2010 Abb. 2 am Seitenbild:** stimmt bis auf den ersten Einbruch (bei rund 275 Hz auf rund 30 dB, nicht
+>   290 Hz / 26 dB); Spitze 62–63 dB um 200 Hz bestätigt.
+> - **Folge für KQ29 a (Güte der Luft der Harfe 5,5, Moden 192 / 208 Hz Q 13):** an der **besaiteten** Camac sind T1 und
+>   A0 nach Abb. 3.4 deutlich schwächer gedämpft — Q 22 (152 Hz) und 36 (168,5 Hz); KQ29 a stützt sich auf Bells
+>   **unbesaitete** Salvi (Q 11 / 16). Für die Spitze um 207 Hz gibt Le Carrou kein ζ. Gehört in die Nacharbeit zur
+>   Harfe (Auftrag 22).
+> - **Nicht gegengelesen:** Bell Abb. 7.21 (relative Kurve, PDF 308), Le Carrou Abb. 3.3 / 3.8 und Tab. 3.2, der
+>   Camac-Blog (`[Werkzeug]`), die Ladeliste.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_02_harfe_besaitet_admittanz.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_02_harfe_besaitet_admittanz/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.

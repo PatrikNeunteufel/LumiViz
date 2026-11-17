@@ -1,7 +1,25 @@
 > **Herkunft:** Bericht der Research-Werkbank `…\cmake\LumiViz_Research`, Auftrag `2026-11-16_12_harfe_grundlagen` (gestellt in LumiViz
 > S201), 1 Segment(e): 2026-11-16 22:21–22:45, claude-opus-5-5, 114 Runden, success, 7.58 USD; Status `fertig` (regulär beendet).
-> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen. **Nicht gegengelesen:** keine Formel,
-> Tabelle oder Zahl dieses Berichts ist bisher an der Quelle nachgelesen; die Marken der Belegkraft sind die des Laufs.
+> **Unverändert abgelegt in S202** — nur dieser Kopf ist dazugekommen.
+>
+> **Gegengelesen in S202** (Seitenbilder des Laufs im Archiv der Werkbank, `seiten/`):
+> - **Bell Abb. 7.22 (PDF 309) am Seitenbild:** die Achse heißt nur „Input admittance level (dB)“, **kein Bezug** —
+>   bestätigt. Die 24 Werte selbst abgelesen (±1 dB) und regressiert: **6,03 dB/Oktave**; eine Reihenfeder k =
+>   5,2·10⁴ N/m trifft sie im Mittel auf +0,7 dB, Streuung 3,4 dB (Bericht +0,9 / 3,5). Die Steigung ist damit
+>   belegt; dass sie aus dem Messweg stammt, bleibt **Hypothese** (kein Satz bei Bell, §6.3 nicht gelesen).
+>   **Folge für S201:** die Prüfung „Admittanz an Saite 26 bei 207 Hz 87,3 gegen 86,1 dB“ (KQ29 a) setzt für Abb. 7.22
+>   den Bezug 116 dB = 1 s/kg aus Kap. 6 voraus — er ist dort nicht angegeben.
+> - **Bell S. 76 (PDF 134) am Seitenbild:** Helmholtz-Moden je einzelner Öffnung 75 / 87 / 94 / 88 / 86 Hz mit **Q 10 /
+>   9 / 9 / 11 / 10** — bestätigt. Die Bedingung „starre, eingegrabene Wände“ steht auf dieser Seite nicht (nicht
+>   nachgeprüft). S. 77: Volumina mit Trennwänden, ±5 % — stimmt.
+> - **Le Carrou 2006 S. 104 (PDF 115) am Seitenbild:** Gl. (6.9)–(6.16) und Abb. 6.2 stimmen; α_i ist der Winkel
+>   zwischen Saite und Bodenachse, also bei 30° **Querterm cos² = 0,75, Längsterm sin² = 0,25** — die Herleitung (S5) und
+>   der Befund „S198 nahm 0,25 für den Querwiderstand“ sind damit richtig begründet (S198 selbst nicht nachgesehen).
+> - **Nicht gegengelesen:** Bell Tab. 2.1 / 2.2, Abb. 2.10 (Züge), Le Carrou Gl. (4.16)–(4.21) und die 2-FHG-Matrizen,
+>   Waltham Abb. 4, die Rechnungen r1–r10 Zahl für Zahl, Abschnitte 3–6 im Einzelnen.
+> - **Nacharbeit:** Auftrag `2026-11-17_22_harfe_nacharbeit` der Werkbank (Messweg bei Bell, besaitete Güten, offene
+>   Quellen der Ladelisten 02 / 12). Für die LumiViz-Seite: Winkelfaktor der Saitenlast (0,75 statt 0,25), Ziel Z1 ohne
+>   Bell 7.22, Güten besaitet gegen KQ29 a.
 > Der Auftrag liegt seit S202 im Archiv der Werkbank: `archiv/auftraege/2026-11-16_12_harfe_grundlagen.md`, Ergebnisordner
 > `archiv/ergebnisse/2026-11-16_12_harfe_grundlagen/` (darin `seiten/` — Seitenbilder der Quellen — und Textauszüge aus PDFs, die nicht ins
 > Repo gehören), Protokolle unter `archiv/laeufe/`. Wo der Bericht `ergebnisse/…` nennt, ist `archiv/ergebnisse/…` gemeint.
