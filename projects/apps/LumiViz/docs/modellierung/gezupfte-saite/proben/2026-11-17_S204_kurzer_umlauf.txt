@@ -1,0 +1,72 @@
+
+### Gitarre S1 B12: f1 661.8 Hz, Umlauf 72.4 Takte, zaehlend 20 bis 13684 Hz, Verlust Ordnung 8
+  M 1: | N 69:  48.60 Cent (1-12 16.44), Abkl. 20/20, r max 0.177 | N 68:  30.11 Cent (1-12  5.52), Abkl. 20/20, r max 0.323 | N 67:   7.34 Cent (1-12  7.00), Abkl. 20/20, r max 0.514
+  M 2: | N 67:   7.27 Cent (1-12  7.00), Abkl. 20/20, r max 0.980 | N 66:  15.99 Cent (1-12  3.50), Abkl. 20/20, r max 0.917 | N 65:  17.60 Cent (1-12  3.70), Abkl. 20/20, r max 0.558
+  M 3: | N 65:  17.63 Cent (1-12  3.73), Abkl. 20/20, r max 0.980 | N 64:   4.08 Cent (1-12  0.70), Abkl. 20/20, r max 0.980 | N 63:   0.71 Cent (1-12  0.33), Abkl. 20/20, r max 0.919
+  M 4: | N 63:   0.71 Cent (1-12  0.33), Abkl. 20/20, r max 0.980 | N 62:   1.14 Cent (1-12  0.48), Abkl. 20/20, r max 0.980 | N 61:   0.26 Cent (1-12  0.06), Abkl. 20/20, r max 0.980
+
+### Gitarre S1 B17: f1 883.4 Hz, Umlauf 54.3 Takte, zaehlend 15 bis 13701 Hz, Verlust Ordnung 8
+  M 1: | N 51:  48.79 Cent (1-12 30.43), Abkl. 15/15, r max 0.153 | N 50:  24.96 Cent (1-12 11.16), Abkl. 15/15, r max 0.306 | N 49:   5.93 Cent (1-12  2.92), Abkl. 15/15, r max 0.512
+  M 2: | N 49:   6.00 Cent (1-12  2.99), Abkl. 15/15, r max 0.980 | N 48:   4.70 Cent (1-12  2.70), Abkl. 15/15, r max 0.669 | N 47:   5.83 Cent (1-12  2.39), Abkl. 15/15, r max 0.488
+  M 3: | N 47:   5.53 Cent (1-12  2.69), Abkl. 15/15, r max 0.980 | N 46:   0.55 Cent (1-12  0.26), Abkl. 15/15, r max 0.980 | N 45:   0.50 Cent (1-12  0.28), Abkl. 15/15, r max 0.592
+  M 4: | N 45:   0.50 Cent (1-12  0.28), Abkl. 15/15, r max 0.980 | N 44:   0.40 Cent (1-12  0.15), Abkl. 15/15, r max 0.980 | N 43:   0.03 Cent (1-12  0.02), Abkl. 15/15, r max 0.804
+
+### Harfe T96: f1 2095.0 Hz, Umlauf 22.9 Takte, zaehlend 7 bis 15177 Hz, Verlust Ordnung 8
+  M 1: | N 19:   4.50 Cent (1-12 29.44), Abkl. 7/7, r max 0.355 | N 18:  26.41 Cent (1-12 30.73), Abkl. 7/7, r max 0.472 | N 17:  99.96 Cent (1-12 112.58), Abkl. 5/7, r max 0.640
+  M 2: | N 17:   2.98 Cent (1-12 28.34), Abkl. 7/7, r max 0.356 | N 16:   2.19 Cent (1-12 10.11), Abkl. 7/7, r max 0.474 | N 15:  35.67 Cent (1-12 71.76), Abkl. 7/7, r max 0.700
+  M 3: | N 15:   0.24 Cent (1-12 18.52), Abkl. 7/7, r max 0.449 | N 14:   0.09 Cent (1-12  3.83), Abkl. 7/7, r max 0.457 | N 13:   3.04 Cent (1-12 38.71), Abkl. 7/7, r max 0.691
+  M 4: | N 13:   0.00 Cent (1-12 13.38), Abkl. 7/7, r max 0.536 | N 12:   0.00 Cent (1-12  2.23), Abkl. 7/7, r max 0.452 | N 11:   0.00 Cent (1-12 26.92), Abkl. 7/7, r max 0.655
+
+### Harfe T100: f1 2639.3 Hz, Umlauf 18.2 Takte, zaehlend 6 bis 16301 Hz, Verlust Ordnung 4
+  M 1: | N 15:  24.53 Cent (1-12 42.49), Abkl. 6/6, r max 0.147 | N 14:  14.71 Cent (1-12 19.83), Abkl. 6/6, r max 0.353 | N 13: 100.87 Cent (1-12 100.87), Abkl. 5/6, r max 0.583
+  M 2: | N 13:   3.28 Cent (1-12 21.51), Abkl. 6/6, r max 0.432 | N 12:   1.22 Cent (1-12  8.35), Abkl. 6/6, r max 0.401 | N 11:  36.41 Cent (1-12 36.41), Abkl. 5/6, r max 0.687
+  M 3: | N 11:   0.23 Cent (1-12 10.75), Abkl. 6/6, r max 0.566 | N 10:   0.00 Cent (1-12  4.70), Abkl. 6/6, r max 0.418 | N 9:   0.00 Cent (1-12 63.76), Abkl. 6/6, r max 0.708
+  M 4: | N 9:   0.00 Cent (1-12  8.65), Abkl. 6/6, r max 0.625 | N 8:   0.00 Cent (1-12  3.96), Abkl. 6/6, r max 0.416 | N 7:   0.00 Cent (1-12 63.77), Abkl. 6/6, r max 0.708
+
+### Harfe T101: f1 2796.2 Hz, Umlauf 17.2 Takte, zaehlend 6 bis 17272 Hz, Verlust Ordnung 4
+  M 1: | N 14:  24.03 Cent (1-12 24.03), Abkl. 6/6, r max 0.144 | N 13:  24.08 Cent (1-12 24.08), Abkl. 6/6, r max 0.376 | N 12: 125.28 Cent (1-12 125.28), Abkl. 5/6, r max 0.595
+  M 2: | N 12:   4.26 Cent (1-12  4.26), Abkl. 6/6, r max 0.416 | N 11:   3.29 Cent (1-12  3.29), Abkl. 6/6, r max 0.468 | N 10:  64.02 Cent (1-12 64.02), Abkl. 5/6, r max 0.722
+  M 3: | N 10:   0.45 Cent (1-12  0.45), Abkl. 6/6, r max 0.548 | N 9:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.497 | N 8:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.789
+  M 4: | N 8:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.590 | N 7:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.490 | N 6:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.750
+
+### Harfe T102: f1 2962.8 Hz, Umlauf 16.2 Takte, zaehlend 6 bis 18364 Hz, Verlust Ordnung 4
+  M 1: | N 13:  25.75 Cent (1-12 25.75), Abkl. 6/6, r max 0.151 | N 12:  35.48 Cent (1-12 35.48), Abkl. 6/6, r max 0.400 | N 11: 113.50 Cent (1-12 113.50), Abkl. 3/5, r max 0.610
+  M 2: | N 11:   6.89 Cent (1-12  6.89), Abkl. 6/6, r max 0.409 | N 10:   9.53 Cent (1-12  9.53), Abkl. 6/6, r max 0.521 | N 9: 104.78 Cent (1-12 104.78), Abkl. 4/6, r max 0.735
+  M 3: | N 9:   1.03 Cent (1-12  1.03), Abkl. 6/6, r max 0.548 | N 8:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.569 | N 7:   0.00 Cent (1-12  0.00), Abkl. 0/6, r max 0.912
+  M 4: | N 7:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.596 | N 6:   0.00 Cent (1-12  0.00), Abkl. 6/6, r max 0.558 | N 5:   0.00 Cent (1-12  0.00), Abkl. 4/6, r max 0.871
+
+### Harfe T103: f1 3139.7 Hz, Umlauf 15.3 Takte, zaehlend 5 bis 16131 Hz, Verlust Ordnung 4
+  M 1: | N 12:   8.95 Cent (1-12 28.35), Abkl. 5/5, r max 0.183 | N 11:  34.25 Cent (1-12 34.25), Abkl. 5/5, r max 0.417 | N 10: 148.66 Cent (1-12 148.66), Abkl. 3/5, r max 0.621
+  M 2: | N 10:   2.91 Cent (1-12 21.20), Abkl. 5/5, r max 0.326 | N 9:   3.02 Cent (1-12 31.27), Abkl. 5/5, r max 0.507 | N 8:  60.76 Cent (1-12 60.76), Abkl. 4/5, r max 0.720
+  M 3: | N 8:   0.00 Cent (1-12 13.92), Abkl. 5/5, r max 0.466 | N 7:   0.00 Cent (1-12 24.24), Abkl. 5/5, r max 0.504 | N 6:   0.00 Cent (1-12  0.00), Abkl. 5/5, r max 0.754
+  M 4: | N 6:   0.00 Cent (1-12 12.69), Abkl. 5/5, r max 0.478 | N 5:   0.00 Cent (1-12 22.70), Abkl. 5/5, r max 0.494 | N 4:   0.00 Cent (1-12  0.00), Abkl. 5/5, r max 0.707
+
+### Harfe T104: f1 3326.8 Hz, Umlauf 14.4 Takte, zaehlend 5 bis 17148 Hz, Verlust Ordnung 4
+  M 1: | N 11:   3.98 Cent (1-12  3.98), Abkl. 5/5, r max 0.292 | N 10:  60.98 Cent (1-12 60.98), Abkl. 5/5, r max 0.468 | N 9: 200.11 Cent (1-12 200.11), Abkl. 3/5, r max 0.655
+  M 2: | N 9:   3.19 Cent (1-12  3.19), Abkl. 5/5, r max 0.304 | N 8:  13.32 Cent (1-12 13.32), Abkl. 5/5, r max 0.585 | N 7: 114.33 Cent (1-12 114.33), Abkl. 4/5, r max 0.800
+  M 3: | N 7:   0.00 Cent (1-12  0.00), Abkl. 5/5, r max 0.402 | N 6:   0.00 Cent (1-12  0.00), Abkl. 5/5, r max 0.596 | N 5:   0.00 Cent (1-12  0.00), Abkl. 2/5, r max 0.899
+  M 4: | N 5:   0.00 Cent (1-12  0.00), Abkl. 5/5, r max 0.396 | N 4:   0.00 Cent (1-12  0.00), Abkl. 5/5, r max 0.596 | N 3:   0.00 Cent (1-12  0.00), Abkl. 3/5, r max 0.875
+
+### Cembalo T83: f1 987.8 Hz, Umlauf 48.6 Takte, zaehlend 19 bis 19123 Hz, Verlust Ordnung 8
+  M 1: | N 45:  16.62 Cent (1-12 13.89), Abkl. 19/19, r max 0.263 | N 44:  13.90 Cent (1-12 11.07), Abkl. 19/19, r max 0.440 | N 43:  20.93 Cent (1-12 20.08), Abkl. 19/19, r max 0.609
+  M 2: | N 43:   6.58 Cent (1-12  2.40), Abkl. 19/19, r max 0.379 | N 42:   4.84 Cent (1-12  1.41), Abkl. 19/19, r max 0.512 | N 41:  21.33 Cent (1-12 21.33), Abkl. 19/19, r max 0.731
+  M 3: | N 41:   1.79 Cent (1-12  0.69), Abkl. 19/19, r max 0.547 | N 40:   1.34 Cent (1-12  0.38), Abkl. 19/19, r max 0.538 | N 39:  21.40 Cent (1-12  4.77), Abkl. 19/19, r max 0.768
+  M 4: | N 39:   0.38 Cent (1-12  0.17), Abkl. 19/19, r max 0.639 | N 38:   0.26 Cent (1-12  0.10), Abkl. 19/19, r max 0.561 | N 37:  10.70 Cent (1-12  2.22), Abkl. 19/19, r max 0.781
+
+### Cembalo T85: f1 1108.8 Hz, Umlauf 43.3 Takte, zaehlend 17 bis 19184 Hz, Verlust Ordnung 8
+  M 1: | N 40:  15.93 Cent (1-12  2.65), Abkl. 17/17, r max 0.165 | N 39:   9.17 Cent (1-12  4.35), Abkl. 17/17, r max 0.381 | N 38:  20.44 Cent (1-12 20.44), Abkl. 17/17, r max 0.580
+  M 2: | N 38:   6.79 Cent (1-12  3.13), Abkl. 17/17, r max 0.443 | N 37:   3.00 Cent (1-12  1.08), Abkl. 17/17, r max 0.455 | N 36:  33.40 Cent (1-12  9.38), Abkl. 17/17, r max 0.712
+  M 3: | N 36:   1.62 Cent (1-12  0.71), Abkl. 17/17, r max 0.605 | N 35:   0.69 Cent (1-12  0.30), Abkl. 17/17, r max 0.491 | N 34:  19.94 Cent (1-12  4.59), Abkl. 17/17, r max 0.754
+  M 4: | N 34:   0.38 Cent (1-12  0.16), Abkl. 17/17, r max 0.682 | N 33:   0.15 Cent (1-12  0.06), Abkl. 17/17, r max 0.523 | N 32:   9.13 Cent (1-12  2.03), Abkl. 17/17, r max 0.770
+
+### Cembalo T88: f1 1318.6 Hz, Umlauf 36.4 Takte, zaehlend 14 bis 18733 Hz, Verlust Ordnung 8
+  M 1: | N 33:   5.25 Cent (1-12  1.24), Abkl. 14/14, r max 0.274 | N 32:  24.42 Cent (1-12 17.79), Abkl. 14/14, r max 0.442 | N 31:  34.69 Cent (1-12 31.47), Abkl. 14/14, r max 0.605
+  M 2: | N 31:   3.96 Cent (1-12  1.78), Abkl. 14/14, r max 0.311 | N 30:  11.14 Cent (1-12  3.82), Abkl. 14/14, r max 0.575 | N 29:  52.35 Cent (1-12 24.28), Abkl. 14/14, r max 0.747
+  M 3: | N 29:   0.93 Cent (1-12  0.68), Abkl. 14/14, r max 0.441 | N 28:   3.26 Cent (1-12  1.73), Abkl. 14/14, r max 0.622 | N 27:  32.53 Cent (1-12  9.54), Abkl. 14/14, r max 0.790
+  M 4: | N 27:   0.24 Cent (1-12  0.15), Abkl. 14/14, r max 0.531 | N 26:   0.71 Cent (1-12  0.35), Abkl. 14/14, r max 0.643 | N 25:  15.28 Cent (1-12  4.59), Abkl. 14/14, r max 0.804
+
+### Cembalo T89: f1 1397.0 Hz, Umlauf 34.4 Takte, zaehlend 14 bis 19866 Hz, Verlust Ordnung 8
+  M 1: | N 31:   7.39 Cent (1-12  1.50), Abkl. 14/14, r max 0.265 | N 30:  25.71 Cent (1-12 21.80), Abkl. 13/13, r max 0.444 | N 29:  37.18 Cent (1-12 35.42), Abkl. 13/13, r max 0.606
+  M 2: | N 29:   5.75 Cent (1-12  2.37), Abkl. 14/14, r max 0.318 | N 28:   9.67 Cent (1-12  5.54), Abkl. 13/13, r max 0.599 | N 27:  52.72 Cent (1-12 36.60), Abkl. 13/13, r max 0.759
+  M 3: | N 27:   1.89 Cent (1-12  1.27), Abkl. 14/14, r max 0.459 | N 26:   8.08 Cent (1-12  3.49), Abkl. 14/14, r max 0.662 | N 25:  28.53 Cent (1-12 10.81), Abkl. 13/13, r max 0.810
+  M 4: | N 25:   0.60 Cent (1-12  0.34), Abkl. 14/14, r max 0.551 | N 24:   2.56 Cent (1-12  1.28), Abkl. 14/14, r max 0.694 | N 23:  10.29 Cent (1-12 10.29), Abkl. 13/13, r max 0.836

@@ -1,0 +1,60 @@
+
+### Gitarre Saite 6: Abel-Smith-Zahl ueber die Buende 4-13, feste Zahl M = 15
+  unabhaengig: an den Buenden groesster Fehler  2.00 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel    1209 Hz, Radius 0.268
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   0.84, groesster   16.25 (zwischen Bund 14 und 15) | Abklingen groesster Fehler  17.61 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 0.997462
+  fortgesetzt: an den Buenden groesster Fehler  1.23 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel     746 Hz, Radius 0.269
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   0.52, groesster    6.90 (zwischen Bund 14 und 15) | Abklingen groesster Fehler  17.93 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 0.997462
+  gebunden Grad 2 (90 Zahlen je Saite): an den Buenden Cent Median  0.23, groesster   1.33 (Bund 17) | auf halbem Weg Median  0.26, groesster   0.94 (nach Bund 9) | Abklingen groesster Fehler 18.55 %, ausserhalb der Schwelle 0/39
+  gebunden Grad 3 (120 Zahlen je Saite): an den Buenden Cent Median  0.25, groesster   0.93 (Bund 10) | auf halbem Weg Median  0.21, groesster   1.24 (nach Bund 15) | Abklingen groesster Fehler 18.55 %, ausserhalb der Schwelle 0/39
+
+### Gitarre Saite 5: Abel-Smith-Zahl ueber die Buende 2-8, feste Zahl M = 10
+  unabhaengig: an den Buenden groesster Fehler  2.91 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel    1073 Hz, Radius 0.189
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   1.87, groesster    3.39 (zwischen Bund 16 und 17) | Abklingen groesster Fehler  12.50 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 0.998426
+  fortgesetzt: an den Buenden groesster Fehler  2.43 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel     557 Hz, Radius 0.059
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   0.38, groesster    1.72 (zwischen Bund 17 und 18) | Abklingen groesster Fehler  12.45 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 0.998426
+  gebunden Grad 2 (60 Zahlen je Saite): an den Buenden Cent Median  0.58, groesster   1.71 (Bund 19) | auf halbem Weg Median  0.56, groesster   2.25 (nach Bund 16) | Abklingen groesster Fehler 12.45 %, ausserhalb der Schwelle 0/39
+  gebunden Grad 3 (80 Zahlen je Saite): an den Buenden Cent Median  0.84, groesster   2.66 (Bund 18) | auf halbem Weg Median  0.65, groesster   2.99 (nach Bund 15) | Abklingen groesster Fehler 12.47 %, ausserhalb der Schwelle 0/39
+C:\Users\patri\source\repos\Visuals_Project\cmake\LumiViz\projects\apps\LumiViz\docs\modellierung\gezupfte-saite\proben\2026-11-17_S204_dispersion_biquads.py:67: RuntimeWarning: divide by zero encountered in divide
+  p0 = np.concatenate([np.log(r0 / (RMAX - r0)), np.log(th0 / (np.pi - th0)), [D0]])
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:424: RuntimeWarning: invalid value encountered in subtract
+  upper_dist = ub - x
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:113: RuntimeWarning: invalid value encountered in divide
+  p_norm = norm(suf / denom)
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:115: RuntimeWarning: invalid value encountered in divide
+  phi_prime = -np.sum(suf ** 2 / denom**3) / p_norm
+
+### Gitarre Saite 4: Abel-Smith-Zahl ueber die Buende 2-8, feste Zahl M = 10
+  unabhaengig: an den Buenden groesster Fehler  4.54 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel   16412 Hz, Radius 0.609
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   1.60, groesster   53.86 (zwischen Bund 17 und 18) | Abklingen groesster Fehler  13.71 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 0.998662
+  fortgesetzt: an den Buenden groesster Fehler  5.52 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel     497 Hz, Radius 0.040
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   1.25, groesster    3.84 (zwischen Bund 16 und 17) | Abklingen groesster Fehler   8.32 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 0.998662
+  gebunden Grad 2 (60 Zahlen je Saite): an den Buenden Cent Median  1.14, groesster   4.50 (Bund 0) | auf halbem Weg Median  1.02, groesster   2.25 (nach Bund 14) | Abklingen groesster Fehler  8.29 %, ausserhalb der Schwelle 0/39
+  gebunden Grad 3 (80 Zahlen je Saite): an den Buenden Cent Median  0.81, groesster   3.81 (Bund 15) | auf halbem Weg Median  0.62, groesster   2.04 (nach Bund 16) | Abklingen groesster Fehler  8.32 %, ausserhalb der Schwelle 0/39
+
+### Gitarre Saite 3: Abel-Smith-Zahl ueber die Buende 1-5, feste Zahl M = 8
+  unabhaengig: an den Buenden groesster Fehler  3.27 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel    1958 Hz, Radius 0.560
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   6.18, groesster   62.82 (zwischen Bund 13 und 14) | Abklingen groesster Fehler  16.22 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 1.000000
+  fortgesetzt: an den Buenden groesster Fehler  3.58 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel     682 Hz, Radius 0.204
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   1.05, groesster   14.11 (zwischen Bund 12 und 13) | Abklingen groesster Fehler  16.64 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 1.000000
+  gebunden Grad 2 (48 Zahlen je Saite): an den Buenden Cent Median  0.60, groesster   3.51 (Bund 19) | auf halbem Weg Median  0.65, groesster   3.56 (nach Bund 18) | Abklingen groesster Fehler 16.21 %, ausserhalb der Schwelle 0/39
+  gebunden Grad 3 (64 Zahlen je Saite): an den Buenden Cent Median  0.44, groesster   1.22 (Bund 4) | auf halbem Weg Median  0.75, groesster 110.15 (nach Bund 0) | Abklingen groesster Fehler 21.93 %, ausserhalb der Schwelle 0/39
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:115: RuntimeWarning: divide by zero encountered in divide
+  phi_prime = -np.sum(suf ** 2 / denom**3) / p_norm
+
+### Gitarre Saite 2: Abel-Smith-Zahl ueber die Buende 1-4, feste Zahl M = 8
+  unabhaengig: an den Buenden groesster Fehler  5.69 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel   16362 Hz, Radius 0.765
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   8.27, groesster   80.28 (zwischen Bund 14 und 15) | Abklingen groesster Fehler  15.94 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 1.000000
+  fortgesetzt: an den Buenden groesster Fehler  6.33 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel     602 Hz, Radius 0.052
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   0.81, groesster    5.11 (zwischen Bund 14 und 15) | Abklingen groesster Fehler   4.16 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 1.000000
+  gebunden Grad 2 (48 Zahlen je Saite): an den Buenden Cent Median  0.83, groesster   5.15 (Bund 12) | auf halbem Weg Median  0.87, groesster  23.33 (nach Bund 0) | Abklingen groesster Fehler  5.96 %, ausserhalb der Schwelle 0/39
+  gebunden Grad 3 (64 Zahlen je Saite): an den Buenden Cent Median  1.15, groesster   3.59 (Bund 17) | auf halbem Weg Median  1.40, groesster   2.40 (nach Bund 7) | Abklingen groesster Fehler  4.16 %, ausserhalb der Schwelle 0/39
+C:\Users\patri\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\optimize\_lsq\common.py:156: RuntimeWarning: invalid value encountered in scalar add
+  alpha -= (phi + Delta) * ratio / Delta
+
+### Gitarre Saite 1: Abel-Smith-Zahl ueber die Buende 0-2, feste Zahl M = 8
+  unabhaengig: an den Buenden groesster Fehler  8.01 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel   19130 Hz, Radius 0.989
+     auf halbem Weg (gemittelte Beiwerte): Cent Median  19.57, groesster   92.59 (zwischen Bund 3 und 4) | Abklingen groesster Fehler  25.26 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 1.000000
+  fortgesetzt: an den Buenden groesster Fehler 11.13 Cent | groesster Sprung zwischen Nachbarbuenden: Winkel    5896 Hz, Radius 0.293
+     auf halbem Weg (gemittelte Beiwerte): Cent Median   3.34, groesster   11.62 (zwischen Bund 13 und 14) | Abklingen groesster Fehler   4.27 %, Stellen ausserhalb der Schwelle 0/19 | groesster Betrag des Verlusts 1.000000
+  gebunden Grad 2 (48 Zahlen je Saite): an den Buenden Cent Median  2.43, groesster  13.04 (Bund 17) | auf halbem Weg Median  2.88, groesster  18.62 (nach Bund 15) | Abklingen groesster Fehler  4.93 %, ausserhalb der Schwelle 0/39
+  gebunden Grad 3 (64 Zahlen je Saite): an den Buenden Cent Median  3.45, groesster  11.78 (Bund 17) | auf halbem Weg Median  2.86, groesster   9.42 (nach Bund 11) | Abklingen groesster Fehler  3.71 %, ausserhalb der Schwelle 0/39
