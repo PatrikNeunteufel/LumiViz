@@ -1,0 +1,31 @@
+École Doctorale Sciences Pour l'Ingénieur, Géophysique et
+                           Architecture
+
+       Thèse de doctorat
+
+           Discipline : Acoustique
+
+                                           présentée par
+
+                Benjamin Elie
+
+Caractérisation vibratoire et acoustique des instruments à
+                 cordes
+
+   Application à l'aide à la facture instrumentale
+
+               Gautier dirigée par François
+                    David et Bertrand
+
+Soutenue le lundi 26 novembre 2012, devant le jury composé de :
+
+Chaigne M. Antoine       ENSTA ParisTech, Palaiseau                        rapporteur
+M. Jose Antunes          Instituto Tecnológico e Nuclear, Lisbonne         rapporteur
+Le Carrou M. Jean-Loïc   Université Pierre et Marie Curie, Paris           examinateur
+Daudet M. Laurent        Université Paris Diderot, Paris                   examinateur
+Doutaut M. Vincent       ITEMM, Le Mans                                    examinateur
+Gautier M. François      Université du Maine, Le Mans                      directeur de thèse
+David M. Bertrand        Institut Mines-Télécom, Télécom ParisTech, Paris  directeur de thèse
+Fouilleul M. Jean-Marie  Luthier guitare, Cuguen                           invité
+Démarais M. Nicolas      Luthier violon, Grenoble                          invité
+

@@ -1,0 +1,405 @@
+Analysis of bridge admittance of plucked string
+instruments in the high frequency range
+
+Benjamin Elie, François Gautier
+LAUM, UMR CNRS 6613, Avenue Olivier Messiaen 72085 Le Mans Cedex 9, France
+
+Bertrand David
+Institut Télécom, Télécom ParisTech, CNRS LTCI 46 rue Barrault 75634 Paris Cedex 13, France
+
+Marthe Curtit
+Itemm, Pôle national d'innovation des métiers de la musique, 71 avenue Olivier Messiaen 72000 Le
+Mans, France
+
+Abstract
+The differences of assessment between musical instruments of the same kind (e.g classical guitars)
+covers aspects linked to sounds, expressibility, or even manufacturing process. How to extract rele-
+vant information related to these aspects by measuring well chosen physical (acoustical, vibratory)
+parameters ? The aim of the proposed study is to identify criteria enabling the clustering of string
+instruments in different classes. The plucked instruments will be our application. The knowledge
+of these parameters would then allow to give an help to the instrument maker in the adjustments
+and settings likely to be made on an instrument. The modal parameters (frequency, and damping
+coefficient) can be estimated accurately on a large frequency range from impulse responses by using
+the high-resolution ESPRIT method, associated with the ESTER criterion to enumerate the signal
+components. Global parameters, such as the modal density, loss factors and modal overlap factor can
+be determined and used to estimate average mobility, derived from Skudrzyk's mean-value theorem.
+The application on guitars and ukulele shows a common behavior of their average mobility: it re-
+mains constant in the mid and high frequency domains. The corresponding value is used as one of
+the parameters enabling the characterization.
+
+PACS no. 43.75.Gh, 43.75.Yy
+
+1. Introduction                                          times difficult to be transferable to the instrument
+                                                         makers. The aim of our study is to propose a mechani-
+The differences of assessment between musical in-        cal characterization of string instruments using meth-
+struments of a same kind covers aspects linked to        ods which requires tools affordable, easily manipula-
+the resulting sound, expressibility, or even quality of  ble by the instrument maker, and also transferable to
+the manufacturing process. The measurement of some       their workshop. Among all the different ways of inves-
+physical parameters, acoustical or vibratory could de-   tigation available for the study of string instruments,
+brief, in a way, these properties. The knowledge of      we chose to focus on the coupling between the string
+relevant parameters eventually could give an help to     and the soundboard of plucked string instruments
+the instrument maker in the adjustments and settings     (guitars and ukulele in this case). When the string
+likely to be made on an instrument.                      is excited (plucked) by the musician, the vibration of
+                                                         the string is transmitted to the soundboard via the
+   String instruments are complex assemblies and the     bridge. The measurement of the mobility (or mechan-
+sound produced is the result of several coupled inter-   ical admittance) gives information about the coupling
+acting parts. It is therefore delicate to characterize   between the string and the soundboard. The level of
+string instruments. Furthermore, scientific studies en-  that coupling on plucked instruments acts on both the
+able a better understanding of the physics of string     sound level and the sound duration: when it is strong
+instruments, but they are mostly published for scien-    (i.e. large mobility), the energy of the string is trans-
+tists, so the knowledges and the technologies are some-  fered more suddenly to the soundboard. It results
+                                                         in a more powerful sound, but with a faster decay.
+(c) European Acoustics Association                       The trade-off between sound level and sound duration
+                                                         is frequently encountered by instrument makers. We
+FORUM ACUSTICUM 2011                                    Elie et al.: Analysis of plucked instruments in the HF range
+27. June - 1. July, Aalborg
+
+propose in this study global parameters, deduced from   Figure 1. Modal overlap factor (M OF ) and mobility of a
+bridge mobility measurements, which could quantify      synthetic plate. The plate is a thin rectangular isotropic
+this trade-off. The method is based on an estimation    plate, having the following dimensions: Lx = 0.3 m, Ly =
+of modal parameters to estimate average mobility, de-   0.4 m, and h = 2.5 mm. The Young modulus is 15 GPa.
+rived from Skudrzyk's mean-value theorem.               The value of the modal loss factor  is 2% and is the
+                                                        same for all modes. The limits of the three main frequency
+   After a short definition of mobility, the section 2  domains are defined with the values of the modal overlap
+introduces the global descriptors used to characterize  factor.
+the bridge mobility of plucked instruments, as well as
+the modal identification techniques used to compute
+them. Then, a few examples of experimental applica-
+tions are presented in section 3. In that section, we
+apply the method of modal identification to guitars.
+Then, an example of application to the lutherie assis-
+tance is presented. It consists in comparing the aver-
+age mobility of the same ukulele, first without bridge
+and then with bridges of different weights.
+
+2. Bridge mobility measurements                         2.2. Global descriptors
+
+2.1. Bridge mobility of guitars : definition            2.2.1. Mean value of mobility
+
+The mobility of a structure (or mechanical admit-       In the low frequency domain, the mobility is stud-
+tance, usually denoted Y ()) is defined as the ratio,   ied through the parameters of each individual mode,
+in the frequency domain, of the velocity V () at a      since they are well-separated and easily identifiable. In
+point of the structure to the applied excitation force  higher frequency ranges, we will consider that study-
+F (). It can be written as a superimposition of modal   ing each individual mode is no longer relevant, since
+contributions. When the observation point and the ex-   they are very fluctuating. A way to analyze mobility
+citation point coincide, Y () is written as follows:    curves in the high frequency range could be to high-
+                                                        light their underlying tendency, without the disturb-
+YA()  =  j  +    mk (k2      |k (A)|2  -  2) ,  (1)     ing individual modal contributions. This synthetic de-
+            k=1              + jkk                      scriptor is called the mean-value.
+
+where A denotes the point of observation, k, k, mk         Skudrzyk [2] presented a method to compute the
+and k are respectively the pulsation, the loss factor,  mean-value of mobility. In a physical sense, it cor-
+the modal mass and the mode shape associated to the     responds to the mobility of the structure if this lat-
+mode k, k being the order of the mode.                  ter had infinite dimensions, and so without any reso-
+                                                        nances. The main idea of Skudrzyk is to change the
+   The frequency response of a structure is commonly    expression of the mechanical admittance from a dis-
+divided into three main frequency ranges: the low,      crete sum to an integral. However, the calculation of
+middle and high frequency domains The boundaries        this integral is based on several assumptions:
+of these domains are defined with the value of the      · the structure is supposed to be homogeneous (the
+modal overlap factor (or MOF). It is denoted by the
+symbol µ, and represents the ratio of the half power       surface density S is constant over the whole struc-
+bandwidth to the difference of the eigenfrequencies        ture),
+of two successive modes. In the low frequency range,    · the local mean value of mode shapes over the whole
+peaks are well-separated, therefore the modal over-        structure is supposed to be barely dependent on the
+lap is small. The MOF tends to increase in higher          mode order,
+frequency ranges. The boundaries of the frequency       · the structure is supposed to verify the Basile hy-
+ranges are defined as follows [1]:                         pothesis,
+                                                        then, the characteristic admittance, as defined by Sku-
+· low frequency range : µ < 30%                         drzyk [2], writes:
+
+· mid frequency range : 30% < µ < 100%                        YC = GC + jBC ,   (2)
+
+· high frequency range : µ > 100%                       with
+
+   The figure 1 shows the frequency response, as well         GC  =  n(f )      (3)
+as the modal overlap factor of a synthetic plate.                            ,
+                                                                     4MEq
+FORUM ACUSTICUM 2011                                                 Elie et al.: Analysis of plucked instruments in the HF range
+27. June - 1. July, Aalborg
+
+where n(f ) denotes the local modal density, i.e. the                of the material. The plate elastic constant is deter-
+invert of the local average frequency difference be-                 mined by searching the value of  which minimizes
+tween two successive modes, and MEq is a quantity                    the euclidean norm of n(f ) - p + q /f . Hence:
+with the same dimension as a mass, so it is called the
+equivalent mass of the system.                                                                   2
+
+   The imaginary part BC vanishes when the modal                      = argmin n(f ) - p + q        ,             (7)
+density is constant [3] (e. g. for plates), therefore it is
+of less interest.                                                                             f  2
+
+2.2.2. Plate elastic constant                                        where n(f ) is the vector containing the experimental
+                                                                     modal density, namely the invert of the difference of
+The modal density profile of instruments gives infor-                eigenfrequencies.
+mation about its global behavior in a given frequency
+range. We propose a method to characterize the modal                    The parameter  gives an indication of the effective
+density profile of instruments through one parameter,                mass to stiffness ratio.
+called the plate elastic constant. The method is based
+on the assumption that the modal density profile of                  2.3. Experimental modal identification
+the instrument is similar to the one of a rectangular
+thin plate.                                                          In practice, the computation of these global descrip-
+                                                                     tors requires an estimation of modal parameters. In
+   The expression giving the modal density of thin                   the low-frequency range, Fourier based modal identi-
+rectangular plates has been estimated by Courant [4].                fication techniques [6] are sufficient to estimate modal
+It is given by:                                                      parameters. However, in the mid and high frequency
+                                                                     ranges, the modal identification is much more diffi-
+                      S h                                      (4)   cult, since the modal overlap becomes large [3, 1].
+n(f )  n     =                  ,                                    Nevertheless, the subspace methods [7, 8, 9] enable
+                      2      D                                       to extend the limits of performance of modal estima-
+         f                                                           tion, due to the large modal overlap in mid and high
+                                                                     frequency ranges. We propose to apply the subspace
+where S is the area of the plate,  and h denote re-                  method ESPRIT (Estimation of Signal Parameters
+spectively the density and the thickness of the plate,               via Rotational Invariance Techniques) [9], since it has
+and D is the flexural rigidity modulus of the mate-                  been shown to be efficient in mid and high frequency
+rial. Basically, it is an asymptotic value toward which              ranges to estimate modal parameters of mechanical
+the modal density tends, independently of the bound-                 structures [10].
+ary conditions. The boundary conditions changes the
+eigenfrquencies in the low frequency domains. The in-                   To apply ESPRIT, the impulse response signal
+fluence of boundary conditions on the modal density                  s(A, t) must be modeled as a sum of a finite number
+has been studied by Xie et al. [5] and are given by the              of exponentially damped sinusoids disturbed by an
+following expressions:                                               additive white Gaussian noise. Each sinusoidal com-
+                                                                     ponent corresponding to the temporal response of a
+· free:                                                              single mode.
+
+                                      1
+
+                      1          h    4                  -  1                   K
+                                 D                          2
+n(f )  =  n  +                           (Lx  +  Ly  )f        ,(5)  s(A, t) =       ak (A)e-k t ej (2fk t+k ) ,  (8)
+                        2
+
+                                                                                k=1
+
+· simply supported :
+
+                                      1                              where k, K, and A are respectively the mode order,
+                                                                     the signal modeling order and the observation point,
+                      1          h    4                  -  1        ak, k, fk and k denote respectively, the modal am-
+                                 D                          2        plitude, the modal damping, the modal frequency and
+n(f )  =  n  -                           (Lx  +  Ly  )f        ,(6)  the modal phase of the mode k.
+                        8
+                                                                        The ESPRIT algorithm will estimate the signal pa-
+The term n is the asymptotic value of the modal                      rameters corresponding to modal parameters of the K
+density, independent of the boundary conditions, and                 sinusoidal components residing in the signal.
+Lx and Ly are the dimensions of the plate. When
+the plate has free vibrations, the modal density tends                  An important issue when applying subspace meth-
+towards n by upper values, while it tends by lower                   ods to composite signals is the tuning of the modeling
+values when its four edges are simply supported.                     order. The number of single components is indeed a
+                                                                     priori unknown. A wrong signal modeling order can
+   Expressions 5 and 6 can be written n(f ) = p +                    bias the estimation [11]. The ESTER (ESTimation of
+q /f , where p = S/2, q is a constant coefficient de-                ERror ) criterion, based on the assessment of the rota-
+pending on boundary conditions and on the geometry                   tional invariance property that characterizes the sig-
+                                                                     nal subspace, has been designed by Badeau et al. [11]
+of the plate, and  =  h      is  the  so-called  plate      elas-
+                      D
+
+tic constant, depending on the mechanical properties
+FORUM ACUSTICUM 2011                                             Elie et al.: Analysis of plucked instruments in the HF range
+27. June - 1. July, Aalborg
+
+and used by Ege [10] in the context of mechanical ex-            in output. A smoothing, which consists in averag-
+periments. We thus chose to apply this technique of              ing each modal parameters with the values of its 2
+signal enumeration since it proves reliable and also for         l closest neighbors, is applied to the modal parame-
+its compatibility with the ESPRIT algorithm which                ters k. This step aims to reduce the important local
+relies on the rotational invariance property.                    variations that might occur in the values of modal
+                                                                 parameters. For instance, since the study focuses on
+3. Experimental applications                                     two-dimensional structures, double modes might oc-
+                                                                 cur and locally increase the modal density. One get
+3.1. Analysis process                                            thus the local averaged modal parameters ¯ k. Finally,
+                                                                 the values of modal parameters are used to compute
+The figure 2 represents in a bloc-diagram the analysis           the global descriptors defined in section 2.
+process applied in this study to compute the global
+parameters defined in the section 2.                             3.2. Analysis of guitar frequency responses
+
+       a(t)                    l                                 Mobility, modal density and averaged mobility are
+                                                                 presented in figure 4 for two classical guitars. The
+f (t)             s(t)      k             ¯k             GC , .  modal density is growing in the low-frequency do-
+                                                                 main, then it becomes constant in the mid frequency
+       Data acq.        HR     smoothing      HF Param.          domain. In the high-frequency domain, it slightly de-
+                                                                 creases. The behavior of the estimated modal den-
+Figure 2. Bloc diagram of the process .                          sity in the mid and high frequency ranges is proper
+                                                                 to rectangular plates with four free edges. This re-
+   The signal s(t) of the impulse response is obtained           sult suggests that the guitar can be assimilated to an
+by a simultaneous measurement of the excitation                  equivalent rectangular thin plate in these frequency
+signal, by means of a small impact hammer (PCB                   domains. Since the dimensions of every classical gui-
+086E80), and the acceleration signal, by means of a              tar are very similar, the dimensions of the equivalent
+small accelerometer (PCB 352C23). The instruments                plate are set to the same value for every guitar. The
+are hanged by their headstock and the strings are                equivalent plate is thus a square plate (0.3 × 0.3 m2),
+damped. The accelerometer is put on the bridge, in               since it roughly corresponds to the dimensions of the
+the vicinity of the base of the lowest string. The force         lower bout of the soundboard, which is the most mo-
+is applied just next to the observation point, as shown          bile part. The values of parameters p and q in expres-
+in figure 3.                                                     sion 7 are p = 9.0 × 10-2 m2 and q = 0.24 m. The
+                                                                 theoretical modal density of the equivalent plate is
+Figure 3. Experimental set-up .                                  plotted in figure 4 (a).
+
+   Then s(t) is analyzed with the subspace technique                The interest of such a result for the characterization
+ESPRIT . This allows us to estimate the signal pa-               of guitars is to reduce their characteristics to those of
+rameters k, corresponding to the modal parameters                a rectangular thin plate which would be equivalent to
+                                                                 the guitar. These parameters define the character of
+                                                                 the instrument. It is helpful for the luthier, notably
+                                                                 to objectively quantify the performance of the instru-
+                                                                 ment wished by the musician.
+
+                                                                 3.3. Influence of the bridge on the ukulele
+                                                                         frequency response
+
+                                                                 This section gives an example of application of this
+                                                                 study to problematics encountered by luthiers. The
+                                                                 bridge of guitars, or ukulele in this case, is known to
+                                                                 have a large influence on the frequency response, in
+                                                                 particular because of its mass which is in the same
+                                                                 range than the one of the soundboard. The choice of
+                                                                 the material used to make the bridge is one of the
+                                                                 problematics encountered by the luthier. This part
+                                                                 of the study aims to compare the parameters defined
+                                                                 in section 2.2 for different configurations of the same
+                                                                 ukulele. First, the admittance without the bridge is
+                                                                 measured, then it is measured with bridges, made
+                                                                 with different woods (mahogany and rosewood). The
+                                                                 configuration with the rosewood bridge is first ana-
+                                                                 lyzed in its normal configuration, then the rosewood
+FORUM ACUSTICUM 2011                                        Elie et al.: Analysis of plucked instruments in the HF range
+27. June - 1. July, Aalborg
+
+                                                            Elements    Mass (g) Picture
+                                                            Soundboard      42
+
+                                                            Mahogany                  3
+                                                            bridge
+
+                                                            Rosewood                  7
+                                                            bridge
+
+                                                            Modified
+
+                                                            rosewood                  6
+
+(a)                                                         bridge
+
+                                                            Saddle                    1
+
+                                                            Table I. Masses and pictures of the different elements of
+                                                            the ukulele
+
+                                                            roughly to the dimensions of the lower bout of the
+
+                                                            soundboard. The values of parameters p and q in ex-
+                                                            pression 7 are p = 9.1 × 10-3 m2 and q = -0.054 m.
+
+                                                            The figure 5 shows the modal density of the equivalent
+
+                                                            plates, and the mean-value of mobility of the ukulele
+
+                                                            for the different configurations.
+
+                                                            Since the bridge adds effective mass to the system,
+
+(b)                                                         the mobility of the instrument with bridge should
+
+                                                            be less than the mobility of the instrument without
+
+                                                            bridge. The figure 5 confirms such a tendency. One
+
+                                                            can notice that the heavier the bridge, the less the mo-
+
+                                                            bility. However, the modal density profiles are similar
+
+                                                            and do not change a lot. It means that the added mass,
+
+                                                            due to the bridge, is compensated by the added stiff-
+
+                                                            ness, the mass to stiffness ratio for the different con-
+
+                                                            figurations remaining in the same range. The choice of
+
+                                                            the wood used for the bridge is therefore more influent
+
+                                                            on the average mobility.
+
+                                         (c)                4. Conclusions
+
+Figure 4. Bridge mobility measurements of two differ-       The developed approach for this study enables the
+ent classical guitars. The guitar represented by the black  global description of the mechanical behavior, in the
+line is a basic industrial guitar. The red line represents  middle and high frequency domains, of guitar and
+an high quality guitar from a luthier. (a) Bridge mobil-    ukulele soundboards. The ESPRIT method, when as-
+ity without processing. (b) Modal density estimation and    sociated with the signal enumeration technique ES-
+modal density of the equivalent plate. Lx = Ly = 0.3 m,     TER enables the estimation of modal parameters with
+p = 9.0 × 10-2 m2 and q = 0.24 m. (c) mean-value of the     good precision in the mid and high frequency ranges.
+mobilty in the mid and high frequency ranges computed
+for both guitars.                                              Applications on guitars showed a common feature
+                                                            of their average mobility, this latter presenting a plate-
+is sawn-off in order to make the bridge less rigid. The     like behavior in the mid and high frequency domains.
+masses of the bridges and the soundboard are pre-           Thus, the guitar soundboard can be considered as a
+sented in table I                                           plate. From the values of modal parameters estimated
+                                                            by ESPRIT and some geometrical assumptions, it is
+   The modal density profile is similar to the one of       possible to determine the mechanical properties of an
+the plate, but in this case, the equivalent plate has       equivalent plate (rigidity, surface density, ...), allow-
+its four edges simply-supported. The equivalent plate       ing a simple characterization of guitars through these
+is a square plate (0.135 × 0.135 m2), corresponding         parameters.
+FORUM ACUSTICUM 2011                                        Elie et al.: Analysis of plucked instruments in the HF range
+27. June - 1. July, Aalborg
+
+                                    (a)                     to be determined from a large corpus of instruments
+                                                            to allow a clustering of instruments.
+                                    (b)
+                                                            Acknowledgement
+                                    (c)
+Figure 5. (a) Modal density of the equivalent plate. Lx =   The authors would like to acknowledge the Agence
+Ly = 0.135 m, p = 9.1 × 10-3 m2 and q = -0.054 m.           Nationale pour la Recherche for the financial support
+(b) Mean-value of mobility in the mid and high frequency    of projet PAFI (Plateforme d'aide à la facture in-
+ranges and (c) comparison of the values of plate elastic    strumentale). The authors would also like to thank
+constant and average mobility for the different configura-  La Guitarreria, and ITEMM (Institut technologique
+tions of the ukulele.                                       européen des metiers de la musique) for the loan of
+                                                            guitars, and Dominque Chevalier for the loan of the
+   Applications on ukulele highlighted the same be-         ukulele.
+havior, except the fact that the plate has now its four
+edges simply supported. However, the parameters are         References
+still relevant to characterize the instrument. A study
+via these parameters on different configurations of an       [1] J. Berthaut, M. N. Ichchou, and L. Jézéquel, "Pi-
+ukulele permitted to show the influence of the bridge             ano soundboard: Structural behaviorand numerical
+on the frequency response of the instrument.                      and experimental study in the modal range", Applied
+                                                                  Acoustics 64, 1113­1136 (2003).
+   Thus, the luthier has the possibility to objectively
+check the adjustments and the settings made on his           [2] E. Skudrzyk, "The mean value method of predict-
+instrument. These parameters are, in fine, intended               ing the dynamic response of complex vibrators", J.
+                                                                  Acoust. Soc. Am. 67(4), 1105­1135 (1980).
+
+                                                             [3] R. H. Lyon, Statistical Energy Analysis of Dynam-
+                                                                  ical Systems: Theory and Applications (MIT Press,
+                                                                  Cambridge) (1975).
+
+                                                             [4] R. Courant and D. Hilbert, Methods of Mathematicals
+                                                                  Physics and Vol. 1 (Wiley Classic edition) (1989).
+
+                                                             [5] G. Xie, D. J. Thompson, and C. J. C. Jones, "Mode
+                                                                  count and modal density of structural systems : Rela-
+                                                                  tionships with boundary conditions", J. of Sound and
+                                                                  Vibration 274(3), 621­651 (2004).
+
+                                                             [6] N. M. M. Maia and J. M. M. Silva, "Modal analysis
+                                                                  identification techniques", Phil. Trans. R. Soc. Lond.
+                                                                  359, 29­40 (2001).
+
+                                                             [7] R. O. Smith, "Multiple emitter location and signal
+                                                                  parameter estimation", in Proc. RADC Spectrum Es-
+                                                                  timation Workshop, 243­258 (1979).
+
+                                                             [8] Y. Hua and T. K. Sarkar, "Matrix pencil method
+                                                                  for estimating parameters of exponentially
+                                                                  damped/undamped sinusoids in noise", IEEE
+                                                                  Trans. Acoust. Speech Sig. Process. 38(5), 814­824
+                                                                  (1990).
+
+                                                             [9] R. Roy and T. Kailath, "Esprit ­ estimation of sig-
+                                                                  nal parameters via rotational invariance techniques",
+                                                                  IEEE Transactions on Acoustics Speech and Signal
+                                                                  Processing 37(7), 984­995 (1989).
+
+                                                            [10] K. Ege, D. Boutillon, and B. David, "High-resolution
+                                                                  modal analysis", J. of Sound and Vibration 325, 852­
+                                                                  869 (2009).
+
+                                                            [11] R. Badeau, B. David, and G. Richard, "A new pertu-
+                                                                  bation analysis for signal enumeration in rotational
+                                                                  invariance techniques", IEEE Transactions on Signal
+                                                                  Proceeding 54(2) (2006).
+

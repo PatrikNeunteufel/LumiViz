@@ -1,0 +1,113 @@
+ Fig. 2: Absorption coefficient derived from ISO 354 measurements for the absorber of size 4 m²,
+consisting of 10 cm high corrugated paper arranged on the floor, and four layers of Molton curtain,
+
+                                        mA = 160 g/m² (nominal), on top.
+
+2b Vibro-acoustical signals
+
+A light-weight impulse hammer (9 grams) is used to induce mechanical impulses at three
+alternative positions at the bridge. The positions are located at the inlay of the bridge to
+represent the application of string-enforced excitement. The positions are labelled
+
+treble: between strings si and mi, B3 and E4
+central: between strings re and sol, D3 and G3
+bass: between strings mi and la, E2 and A2
+
+Two signals are taken at the bridge with the help
+of acceleration sensors (1 gram). The two signals
+at the bass and the treble side taken together
+allow to trace two of the degrees of freedom of
+the bridge.
+
+                                                       Fig. 3: Positions of hammer impact and sensors.
+
+2c Near-field microphones
+
+Three sound pressure microphones are used to capture
+near-field radiation 10 cm above the top plate.
+Two microphones are located above the bridge,
+20 cm apart, and another one at the upper part of the guitar top,
+again 20 cm away from the treble side microphone, where
+flamenco guitarists usually place their stage microphone. This
+minimum set is very sparse and does not allow near-field
+reconstruction, but it can serve to estimate radiation efficiency.
+
+The microphone positions are labelled (in MATLAB files):
+
+treble: 10 cm from the bridge center to the treble side
+bass: 10 cm from the bridge center to the bass side
+upper east: 20 cm away from the treble position
+
+all of them 10 cm above the surface of the top plate.
+
+                                                                    Fig. 4: Positions of microphones.
+2d Far-field microphones
+
+The sound field is also captured at the beginning of the far-field, at 1 m above the top plate,
+centrally between the sound hole and the bridge. The related data is not part of this data set.
+The data is used to reference to standard sound pressure measurements.
+
+2e Instrumentation
+
+The equipment used for data capturing is (find separate data sheets in the documenting files):
+
+Impulse hammer       DYTRAN 5800SL, DYTRAN Inc., Chatsworth, CA
+Acceleration sensor  8778A500, Kistler Instrumente GmbH, Sindelfingen, Germany
+Microphones          ¼" MI-17, ROGA Instruments, Nentershausen, Germany
+Signal capturing     DATaRec DIC6, Zodiac Data Systems, Bergisch-Gladbach, Germany
+
+2f Example instrumentation setup
+
+Fig. 5 illustrates the in-situ setup, using the floor absorber, with the guitar placed on the
+ground on top of the absorber. The microphone rig uses an aluminium bar with a diameter of
+only 8 mm, and otherwise rods with a diameter of only 3 mm, so that reflections from the rig
+are minimized. The guitar rests on two points only, the lower block and the neck, so the body
+vibrates freely, including the back plate.
+
+Fig. 5: Instrumentation setup with reflection-free microphone rig and floor absorber, in the Centro de
+Documentación Musical de Andalucía, in Granada, while measuring a contemporary Bellido guitar.
+3 Processing flow
+
+The total flow of capturing, normalization, and processing to obtain vibro-acoustical and near-
+field transfer-functions is as shown in the diagramm.
+
+                                   Fig. 6: Signal capturing, normalization and processing.
+
+The total size of raw data is 3 Gbyte, holding 3 to 12 samples of each impulse position, times
+three impact positions, times 6 channels, sampled at 48 kHz.
+The raw data holds enough good examples to do statistics.
+But for the purpose of documentation, only one good example for each impulse position is
+selected and cut to a length of 1 second, yielding a resolution of 1 Hz in the transfer functions.
+There are two selection criteria: avoiding the `second impulse', and minimum impact force.
+In rare cases, the induced hammer impulse is followed by a secondary impulse caused by the
+refleting impulses in the device under test. The qualification procedure rejects samples with
+such secondary impulses, if they have a level of more than -30dB with reference to the
+intended impact impulse. The only exception is for guitar g05, where the level reaches -22.5
+dB and -27.5 dB, for the bass and treble side, respectively.
+Another criterion of selection is the minimum impact force. Only impulses with more than 10
+Newton force are taken. There are few exceptions to this, as this criterion has not been
+checked during instrumentation: g04 worked with 8.6 N on the bass side impact, g24 with 5 N
+on the treble side impact, and g55 with 7,8 N on the bass side impact.
+This publication finally holds the `qualified but not yet normalized' selected raw data,
+31 Mbyte. The related MATLAB files contain the steps of normalization and reference to
+physical SI units, while respecting the data sheets and calibration issues for the sensors.
+
+4 Data organisation
+
+The MATLAB file qualified_selected_impulses.mat contains the matrix labelled:
+qualified_selected_impulses, which is organized as follows
+
+qualified_selected_impulses(guitar_number, signal, channel)
+guitar number 1:65, see reference list in the documentation
+signal 1:144000, 3 x 1 second of sound @ 48 ksamples, bass/center/treble
+channels:
+1 = impulse hammer
+2 = sensor treble side
+3 = sensor bass side
+4 = mic upper east
+5 = mic treble side
+6 = mic bass side
+Example: to get the one second (= 48000 samples) of the impulse signal when the impulse
+hammer is tapping the treble side of the bridge on guitar g65 use
+>> len=48000; qualified_selected_impulses(65, len*2+1:len*3, 1)
+

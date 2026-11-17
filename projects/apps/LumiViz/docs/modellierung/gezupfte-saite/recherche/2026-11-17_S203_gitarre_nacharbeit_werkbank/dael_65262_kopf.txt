@@ -1,0 +1,34 @@
+COVER PAGE
+Document downloaded by @DAEL Tue Nov 17 12:51:06 2026 For personal use
+When automatic English translation is provided, only the original document is authentic.
+The EAA cannot be held responsible of any translation error
+Bibliographical reference A Frequency Error Model for Fretted String Instruments, John Lane and
+Takis Kasparis, Acta Acustica vol. 98 (Number 6), 2012, pp. 936-944
+DOI https://doi.org/10.3813/AAA.918577
+
+ACTA ACUSTICA UNITED WITH ACUSTICA
+Vol. 98 (2012) 936 ­ 944
+
+DOI 10.3813/AAA.918577
+
+A Frequency Error Model for Fretted String Instruments
+
+John Lane1), Takis Kasparis2) 1) University of Central Florida, Orlando, Florida, USA. jlane162@gmail.com 2) Cyprus University of Technology, Lemesos, Cyprus
+
+Summary A mathematical model, quantifying frequency error due to string displacement and the process of fretting a note on a string instrument, is presented. The model is developed starting with the standard relationship between length, tension, density, and frequency of a perfect string. The change in string length, as a result of displacing the string to a point behind a fret, is modeled by a set of parameters approximating the resulting shape of the fretted string. The string length model is then combined with an inharmonicity model which approximates the frequency deviation of the series of partials contained in the string's frequency spectrum. Inharmonicity is weakly dependent on the change in string tension due to fretting, but to first order, inharmonicity frequency errors of a string with finite bending stiffness are independent of the process of fretting a string.
+PACS no. 43.75.Gh
+
+1. Introduction
+The principal motivation behind this work was a desire to quantitatively, or at least qualitatively, explain why there is a strong correlation between the sale price of a guitar and the overall quality of its sound and playability, specifically related to tuning and the characteristic frequencies of notes making up a chord. In this context, tunability of a guitar is a property that rates the frequency precision of individual notes of a chord, perhaps best revealed by open chords consisting of open and fretted strings near the nut, as opposed to bar chords usually consisting of fretted notes higher up on the neck.
+Understanding this correlation between guitar price and quality may logically be approached by considering the statistics associated with manufacturing and quality control procedures versus labor hours and cost of raw materials. The guitar is composed of many sub-systems such as the body, neck, bridge, tuning keys, and electronics (in the case of an electric guitar). If the ideal configuration parameter for each sub-system is modeled as a probability distribution representing the chance of achieving that ideal value, the width of the distribution is then inversely proportional to the time invested in quality control (which can be defined as due to labor and materials). Since the final system quality is dependent on some combination of all sub-system probability distributions, it is not difficult
+Received 10 December 2010, accepted 11 October 2012.  Current address: ESC-Easi, MS:ESC-58, Kennedy Space Center, Florida, USA. John.E.Lane@nasa.gov
+
+to conclude that all distributions must be narrow in order to achieve a high quality instrument, which corresponds to more expense in fabrication and final sale price. This realization is neither surprising nor profound. However, it has also been observed that the tunability of a guitar is also correlated to its sale price, and it would seem that fewer parameters affect this property (see Figure 1). The ability of a guitar to hold its tuning is related to its ability to maintain proper tension on the string. This is largely dependent on the quality of the tuning keys and possibly the character of the bridge support and tail-piece. But there is another characteristic of tunability that is independent of maintaining proper string tension. This property of tunability is due to the fundamental physics which relate string tension, geometry, and mass to frequency of vibration. Two aspects of the physics of the vibrating string have been discussed at length in the literature, the effect of stretching the string when it is plucked, and the finite stiffness of the string leading to a phenomenon known as inharmonicity. Additional string stretching leads to a sharpening of the pitch. This sharpening effect can often be observed when using a digital tuner. When the string is first plucked, the tuner will read sharp and as the amplitude decays, the pitch of the string vibration will decay to a nominal value. This effect may not be strongly correlated to quality and price of the guitar, but is simply dependent on how hard the string is plucked.
+Another string stretching effect is due to bending the string from its initial position to a position making contact with the fret and/or fingerboard. This effect seems like a prime candidate in correlating instrument price to its ability of maintaining a proper pitch. However, previous work
+
+936
+Document downloaded by @DAEL, 2026-11-17 12:51:09 - personal use only
+
+© S. Hirzel Verlag · EAA
+
+

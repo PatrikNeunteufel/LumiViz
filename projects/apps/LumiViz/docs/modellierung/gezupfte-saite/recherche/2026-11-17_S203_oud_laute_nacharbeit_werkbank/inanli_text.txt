@@ -1,0 +1,164 @@
+                                                                       DAGA 2018 München
+
+                                 Vibroacoustics of Oud
+
+                                      Sinan Inanli1, Ercan Altinsoy1
+
+1 Institut für Akustik und Haptik TU Dresden, 01062 Dresden, E-Mail: ercan.altinsoy@tu-dresden.de
+
+Introduction                                                           they adjust the thickness of the soundboard and the fan brace
+                                                                       dimensions to tune it inherently.
+Oud is a plucked musical instrument played in many regions,
+especially in Greece, Turkey and Arabic countries. Its origin,         There are many studies on acoustics of musical instruments
+with the earliest depictions found, is dating back to 700 AD.          in the literature. Their main focus is the determination of the
+Two main oud types that commonly used today are the                    resonance frequencies of the soundboard, the body air cavity
+Arabian and Turkish ouds. Arabian ouds have larger body                and the coupled modes of both. Experimental studies [1]-[4]
+than their Turkish counterparts where they have a scale                are mainly based on the modal testing and the finite element
+length of 610 - 620 mm in comparison to the 585 mm scale               method (FEM) has been widely used in numerical studies
+length for Turkish ones. The scope of this study involves              [5]-[8]. This study is one of the initials with [9] to reveal the
+only the Turkish ouds from the acoustical point of view.               vibroacoustic behaviour of oud.
+Commonly, this instrument has 11 strings grouped in 6
+courses. It has a short neck, fretless keyboard and lute-like          Experimental Set-up
+body. There are three sound holes on the soundboard
+arranged in triangular position. Its soundboard has a                  Experimental modal analysis technique was used to
+thickness varying between 1.5-2.0 mm and seven fan braces              determine the dynamic behaviour of the soundboard. The
+are placed on the inner side parallel to each other and                experimental set-up consists of a DEWESoft SIRIUSm
+perpendicular to the string alignment to withstand the force           4xACC four-channel data acquisition unit together with a
+created by the string tension. Walnut, mahogany, maple,                PCB 352A21 one-axis accelerometer (miniature &
+rosewood family and wenge are some of the most common                  lightweight with frequency range of 1Hz to10 kHz,
+hard woods used in the body of the instrument whereas                  sensitivity of 1 mV/(m/s2) and a weight of 0.6 g) and a
+spruce and cedar are the tone woods used to construct the              Dytran 5800 SL impact hammer (50 lbf range and 100
+soundboard. A Turkish oud and its soundboard (traditionally            mV/lbf sensitivity). Two channels of DAQ unit were
+with seven fan-braces) are shown in Figure 1.                          allocated for impact hammer and accelerometer during the
+This study aims at giving insight into the vibration                   measurements. The soundboard was put into vibration at 317
+characteristics of an oud soundboard. FRF (frequency                   excitation points by the impact hammer and the responses
+response function) measurements were performed by                      were measured by one-axis accelerometer at a fixed point
+experimental modal analysis technique for an oud                       which is called revolving hammer method. The excitations
+soundboard. Resonance frequencies and mode shapes were                 and the measured responses were perpendicular to the
+obtained for free-free boundary conditions.                            soundboard which is the most important direction in terms of
+                                                                       radiated sound from the final instrument. The accelerometer
+    Figure 1: A Turkish Oud and Its Soundboard                         was attached to the surface by a thin wax layer. The
+                                                                       frequency range considered was between 0 to 350 Hz with a
+Motivation                                                             resolution of 1.22 Hz. Resonance frequencies, coherence
+                                                                       factors and mode shapes were obtained by means of FRF
+This historical musical instrument involves many structural            technique. The postprocess of the data was performed by
+parts effecting its vibration characteristics and sound quality.       DEWESoftx3 software.
+Similar to many plucked instruments, soundboard of the oud
+is the most crucial part to get the desired sound quality.             The soundboard and fan braces were manufactured from
+Since the material properties of the wood can vary in a large          Borçka spruce (from North-eastern of Turkey). The
+range, there is no standard geometric dimensional set that             soundboard has a uniform thickness of 2.0 mm. Depending
+oud makers can use for every instrument they build, instead            on the mechanical properties of the wood, the thickness can
+                                                                       decrease around to 1.5 mm. Decreasing thickness profile
+                                                                       may also be applicable from bridge location to the edge of
+                                                                       soundboard. The geometric details are presented in Figure 2.
+                                                                       The soundboard has a length of 490 mm and width of 360
+                                                                       mm. The geometric parameters defining the fan-braces are
+                                                                       given in Figure 3 and their values are presented in Table 1.
+                                                                       Most of the oud makers use seven parallel fan brace
+                                                                       arrangement but they have some minor variations in the inter
+                                                                       distance and the geometric dimensions.
+
+                                                                  923
+DAGA 2018 München
+
+Figure 2: Conventional Oud Soundboard                                   Figure 4: Excitation Points
+
+Figure 3: Fan Brace Geometric Parameters                            Results and Discussions
+
+       Table 1: Fan-Brace Dimensions                                Results of the measurements are presented as resonance
+                                                                    frequencies and vibration modes. Frequency response
+L1                 L2   L3  h1            h2  w                     functions were calculated by average of three taps. Figure 5
+                                                                    shows the normalized FRFs for the frequency range of 0-350
+(mm) (mm) (mm) (mm) (mm) (mm)                                       Hz. This frequency range is considered to make the strongest
+                                                                    contribution to the sound radiation of the instrument. Totally
+1 300 200               50  12            6   5                     eight peaks were observed corresponding to different
+                                                                    resonance frequencies; 31 Hz, 51 Hz, 69 Hz, 115 Hz, 123
+2 355 255               50  12            6   6                     Hz, 198 Hz, 292 Hz and 347 Hz. Coherence is presented in
+                                                                    Figure 6 for the frequency range of measurement to quantify
+3 355              255  50  5             6   5                     the quality of measurement.
+
+4 344 244               50  12            6   5                         Figure 5: FRF
+
+5 118              48   35  12            6   5
+
+6 278 178               50  12            6   6
+
+7 222 122               50  12            6   6
+
+The soundboard was supposed to be in free boundary                      Figure 6: Coherence
+conditions during the measurements. It was supported by
+three soft foam elements underside. The excitation points           The modes were denoted as (m, n), where "m" is the number
+and the response point are presented in Figure 4. The               of transverse half-waves and "n" is the number of
+distance between each excitation point is 20 mm in both             longitudinal half-waves on the soundboard. Figure 7 shows
+direction and they are distributed all over the soundboard          the lowest eight mode shapes corresponding to each
+surface. The response point was placed at the coordinate of -       resonance frequency.
+40 mm (x), +180 mm (y). Prior to the experiments,
+simulations were carried out by FEM to ensure the adequacy
+and suitability of the excitation points.
+
+                                                               924
+(0,2) 31 Hz   (1,1) 51 Hz                                                                                                DAGA 2018 München
+
+(0,3) 69 Hz   (1,2) 115 Hz                                           References
+
+(0,4) 123 Hz  (1,3) 198 Hz                                           [1] M.J. Elejabarrieta, E. Ezcurra, C. Santamaria, Evolution
+                                                                           of the Vibrational Behavior of a Guitar Soundboard
+                                                                           along Successive Construction Phases by Means of the
+                                                                           Modal Analysis Technique, The Journal of Acoustical
+                                                                           Society of America, August 2000
+
+                                                                     [2] Jesus Alejandro Torres, Ricardo R. Boullosa, Influence
+                                                                           of the Bridge on the Vibrations of the Top Plate of a
+                                                                           Classical Guitar, Applied Acoustics 70 (2009) 1371-
+                                                                           1377
+
+                                                                     [3] I. Perry and B. Richardson, Radiation Efficiency and
+                                                                           Sound Field Measurements on Stringed Musical
+                                                                           Instruments, ISMA 2014, Le Mans, France
+
+                                                                     [4] Howart Wright, The Acoustics and Psychoacoustics of
+                                                                           the Guitar, PhD Thesis, University of Wales, College of
+                                                                           Cardiff, September 1996
+
+                                                                     [5] M.J. Elejabarrieta, A. Ezcurra, C. Santamaria, Coupled
+                                                                           Modes of the Resonance Box of the Guitar
+
+                                                                     [6] Eliane Be´cache, Antoine Chaigne, Gregoire Derveaux,
+                                                                           Patrick Joly, Numecical Simulation of a Guitar,
+                                                                           Computers and Structures 83 (2005) 107­126
+
+                                                                     [7] G. Paiva and J.M.C. Dos Santos, Modal Analysis of a
+                                                                           Brazilian Guitar Body, ISMA 2014, Le Mans, France
+
+                                                                     [8] Ioan Curtu, Mariana D. Stanciu, Nicolae C. Cretu, Calin
+                                                                           I. Roca, Modal Analysis of Different Types of
+                                                                           Classical Guitar Bodies, Proceedings of the 10th Wseas
+                                                                           International Conference on Acoustics & Music:
+                                                                           Theory & Applications
+
+                                                                     [9] E. Degirmenli, Akustik Ölçüm Teknikleri Kullanilarak
+                                                                           Üretilen Ud Ses Tablasinin Titreim Özelliklerinin
+                                                                           Kontrolü Üzerine Yeni Bir Yöntem Önerisi, PhD
+                                                                           Thesis, Gazi University, May 2014
+
+(0,5) 292 Hz  (2,3) 347 Hz
+
+Figure 7: Mode Shapes Corresponding to Each Resonance
+Frequency
+
+Conclusion
+
+Dynamic behaviour of an oud soundboard was investigated
+by experimental modal analysis technique. Resonance
+frequencies and mode shapes were obtained by FRF
+measurements. The content of this study involves only the
+vibrational behaviour of the soundboard itself. Next step will
+be the investigation of the coupled modes of the soundboard
+and the air cavity of body after completing the instrument
+assembly. Further step is the correlation of the resonance
+frequencies of the soundboard with the sound quality of the
+final instrument by defining and measuring some
+psychoacoustic parameters.
+
+                                                                925
+
