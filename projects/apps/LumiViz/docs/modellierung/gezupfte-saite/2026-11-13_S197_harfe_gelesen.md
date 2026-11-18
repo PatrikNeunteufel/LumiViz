@@ -628,7 +628,7 @@ Stelle der Tasten 55–57 aus §14 ist weg. Die Güte der Luft 5,5 (KQ29 a) und 
 (KQ21 a) waren am Bauplan ohne Zugleiste gestellt und sind am neuen nicht nachgestellt; der Prüfstand rechnet ohne die
 Last der übrigen Saiten (besaitet misst Bell ab S(1,5) die halbe Güte).
 
-**Stand:** zwei Ursachen gefunden, der Körper im Repo ist unverändert. Offen zur Entscheidung: wie die Zugleiste in die
-Rechnung kommt (KQ31-1) und woran die Harfe danach gemessen wird (KQ31-2) — das Ziel „3 dB je Terzband an Ort 17“ misst
+**Stand:** zwei Ursachen gefunden, der Körper im Repo ist unverändert. Entschieden (Patrik S205): **KQ31-1 a** — der Bauplan sagt, wie Leisten
+übereinander zählen (Fassung 8, die Harfe „addieren“); **KQ31-2 a** — gemessen wird an den Moden (Lage 7 %, Zahl und Lage der Bäuche, Höhe der übrigen Bäuche gegen den stärksten 6 dB), die Höhe des stärksten Bauchs ist bekannte Abweichung; das Ziel „3 dB je Terzband an Ort 17“ misst
 ohne die Feder die Messkette und hängt an der Lage eines Knotens. Danach: Körper neu, Güte der Luft und Diskantkante
 nachstellen, KQ19 a und KQ34 a neu messen. Offen ohne Weg: die Höhe der Spitzen (−4 … −9 dB).

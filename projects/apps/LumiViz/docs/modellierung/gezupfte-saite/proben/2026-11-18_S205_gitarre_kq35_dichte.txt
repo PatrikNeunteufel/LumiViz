@@ -1,0 +1,20 @@
+Koerper heute: 75 Moden, statistisch ab 5 kHz mit 0,0104 /Hz
+  Terzpegel p/F Modell - Messung, 2,5 / 3,15 / 4 / 5 / 6,3 / 8 / 10 kHz:
+    left :  -0.4  +0.2  +0.1  +3.1  -0.4  +1.2  -0.8
+    right:  -0.5  +0.3  -0.1  +2.2  -1.3  +1.2  +0.1
+  Stegkurven, rms dB in 1-2,2 / 2,2-3 / 3-4 / 4-5 / 2,5-5 kHz: 2.67 / 2.36 / 2.80 / 2.64 / 2.72
+
+Auffuellen 2,2-5 kHz:
+  2200-3000 Hz: 13 gefittet von 21.6 (r = 0.60), t = 0.52, fehlender Energieanteil 3.5 % (+0.15 dB), Formwert² der gezogenen gegen die gefitteten -12.6 dB
+  3000-4000 Hz: 7 gefittet von 26.0 (r = 0.27), t = 1.10, fehlender Energieanteil 25.2 % (+1.26 dB), Formwert² der gezogenen gegen die gefitteten -9.1 dB
+  4000-5000 Hz: 11 gefittet von 23.5 (r = 0.47), t = 0.73, fehlender Energieanteil 8.7 % (+0.40 dB), Formwert² der gezogenen gegen die gefitteten -10.8 dB
+  statistischer Teil: Dichte 0.0215 /Hz, Streuung am Steg mal 0.685 (r = 0.41, m = 12.0 %)
+  Betrag der Abstrahlung der gezogenen Moden gegen die gefitteten, je Band (Median ueber die Samen, dB): -8.7 / -29.7 / +0.4
+
+Aufgefuellt (8 Samen ab 1; gezogene Moden 2,2-5 kHz: 34-44):
+  Terzpegel p/F Modell - Messung, 2,5 / 3,15 / 4 / 5 / 6,3 / 8 / 10 kHz (Mittel, in Klammern die Streuung):
+    left :  -0.3  +0.1  +2.1  +2.7  -0.2  +0.9  -0.7   (0.1 0.3 2.6 0.2 0.4 0.3 0.4)
+    right:  -0.4  +0.2  +1.6  +2.2  -0.9  +0.9  +0.0   (0.1 0.4 2.4 0.1 0.5 0.3 0.4)
+  Stegkurven, rms dB in 1-2,2 / 2,2-3 / 3-4 / 4-5 / 2,5-5 kHz: 2.68 / 2.29 / 2.68 / 2.47 / 2.60   (groesster Lauf 2.68 / 2.33 / 2.87 / 2.65 / 2.68)
+
+<zielordner>/classical_guitar.lvinstbody: 117 Moden bis 5 kHz (42 gezogen), statistisch 0.0215 /Hz, Streuung am Steg 0.83 / 1.63 / 2.10 / 2.10 / 1.64 / 0.77, Abstrahlung 0.00260 / 0.00197
