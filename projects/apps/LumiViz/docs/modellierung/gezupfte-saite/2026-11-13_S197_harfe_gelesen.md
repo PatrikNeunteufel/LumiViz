@@ -515,3 +515,120 @@ hält die Harfe den größten Sprung nach GZ14 a (≤ 12 LU); die Spanne bleibt 
 **Offen:** das Diskantende (§12) — an ihm hängt jetzt die Spanne; warum Bells
 besaitete Harfe eben ist (Le Carrou 2006, Thèse, auf Mobilitäten an den Saitenorten durchsehen); der schnelle Abfall
 an Taste 56 (81 dB/s) gegen eine Aufnahme dieser Taste.
+
+
+## 15 KQ31 a: die Admittanz ohne Saiten über 200 Hz — zwei Ursachen (S205)
+
+Auftrag (KQ31 a): an Bells Ort 17 liegt das Modell über 200 Hz 6–10 dB unter Abb. 7.6 — bis zur Ursache untersuchen.
+Proben: `proben/2026-11-18_S205_harfe_ort17_kurve.py` (die ganze Kurve statt 23 Stützstellen), `…_harfe_profile.py`,
+`…_harfe_bauplan_zugleiste.py`, `…_harfe_bewegte_masse.py`, `…_harfe_je_taste.py`, Ausgaben und Bilder daneben. Gelesen am
+Seitenbild: Bell Abb. 7.6 (PDF 293, neu abgegriffen, deckt sich mit Bericht 22), Abb. 6.6 (PDF 260), die Profile
+Abb. 7.10–7.17 (PDF 296–303), RT-0425 §2.1 (PDF 7).
+
+**Ausgangslage, ganze Kurve** (mitgelieferter Körper, Ösen 20 / 21 gegen Abb. 7.6 Feld 2): je Terzband 200 / 250 / 315 /
+400 / 500 / 630 / 800 Hz +1,9 / −13,4 / −2,2 / −5,4 / −7,6 / −12,9 / −14,0 dB; 200–790 Hz energetisch −8,4 dB, Median
+−11,9 dB, 10. Perzentil −12,3 dB.
+
+### 15.1 Ursache im Bauplan: die Zugleiste fehlt in der Rechnung
+
+- **Befund am Code:** `steifeBei` (`InstrumentBody/Platte.hpp` Z. 135–157) nimmt an einem Punkt die erste Leiste, auf
+  der er liegt, Stege vor Rippen („der Steg geht vor“). Im Bauplan der Harfe liegen die Deckleiste (Steg, 33 → 18 mm
+  breit, 5 → 3 mm hoch) und die Zugleiste (Rippe, 32–39 mm breit, 20–25 mm hoch) auf derselben Linie. Gerechnet wird in
+  der Breite der Deckleiste also Platte + 5 mm Buche; von der Zugleiste bleiben nur die Streifen, die sie breiter ist
+  (1,5–6 mm je Seite).
+- **Beleg an der Masse:** das Werkzeug meldet für den mitgelieferten Bauplan 1,764 kg, mit beiden Leisten übereinander
+  2,179 kg — der Unterschied 0,415 kg ist die Zugleiste (aus den Maßen 0,49 kg, abzüglich der Streifen).
+- **Die übrigen Baupläne** (`proben/2026-11-18_S205_leisten_uebereinander.py`, Ausgabe daneben): an der Harfe verdeckt die Deckleiste 551 cm³ Zugleiste (0,41 kg Buche); am Steinway D liegen 157 cm² von 988 cm² Stegfläche über Rippen, 278 cm³ Rippe sind dort nicht gerechnet (auch an den beiden Glasböden); am Cembalo 0,5 cm², an Laute und Oud nichts. RT-0425 §2.1 nennt vier Zonen („each point belonging to a rib or not, and to a bridge or not“), gibt die Dicke aber nur für drei an (Platte 6–9 mm, Steg 29–69 mm, Rippen 9–35 mm).
+- **Probe-Bauplan** (`…_harfe_bauplan_zugleiste.py`: die Deckleiste trägt in ihrer Breite die Höhe Deck- plus Zugleiste,
+  die Zugleiste bleibt für die Streifen; sonst unverändert, Körper bis 5 kHz in 47–150 s; eine zweite Fassung mit einer
+  einzigen Leiste in der Breite der Zugleiste liegt auf 1 Hz und 0,3 dB gleich):
+
+| Mode (Bell, G in der Harfe ohne Saiten) | mitgeliefert: Hz, Lage | mit Zugleiste: Hz, Lage |
+|---|---|---|
+| S(1,1)− 170 Hz (lose 153) | 129,0 | 134,2 (−21 %; lose −12 %) |
+| S(1,1)+ 216 Hz (lose 200) | 191,8 / 208,4 (zwei Moden teilen sich die Luft) | 198,3 (−8 %; lose −1 %) |
+| S(1,2) 249 Hz | 274,8, +10,4 % | 233,0, −6,4 % |
+| S(1,3) 316 Hz | 346,7, +9,7 % | 328,5, +4,0 % |
+| S(1,4) 432 Hz | 430,8, −0,3 % | 433,4, +0,3 % |
+| S(1,5) 545 Hz | 526,8, −3,3 % | 553,7 / 559,2, +1,6 % |
+| S(1,6) 709 Hz | 640,7, −9,6 % | 698,5, −1,5 % |
+
+- **Zahl und Lage aller Bäuche stimmen jetzt** (Ort, vom Diskant; Bell am losen Kasten und in der Harfe, ±1 Ort):
+
+| Mode | Bell | mitgeliefert | mit Zugleiste |
+|---|---|---|---|
+| S(1,2) | 12, 30; Knoten 23 | 13, 24, 34; Knoten 19,5 und 29,5 | 15, 31; Knoten 25 |
+| S(1,3) | 8, 18,5–20,5, 31–32 | 9, 19, 27, 35 | 9, 20,5, 33 |
+| S(1,4) | 5, 14, 23, 32–35 | 6, 13, 20,5, 28, 36 | 6, 14,5, 24, 34 |
+| S(1,5) | 3, 10, 18, 25, 35 | 4, 10, 16, 22, 28, 35 | 3, 10, 17,5, 25,5, 35 |
+| S(1,6) | 3, 8, 14, 21, 26 | 3, 8, 13, 19, 24, 30, 35 | 3, 8,5, 14, 21, 28,5, 35,5 |
+
+  Der mitgelieferte Körper hat im Bassdrittel bei jeder Mode einen Bauch zu viel — das ist „n + 1 Bäuche“ aus §11. Dort
+  galt der überzählige Bauch als Schulter am Rand der Messorte; die Profile zeigen ihn nicht (bei S(1,3) liegt Bells
+  Bauch 31–32 auf dem Knoten des Modells). **Die Zuordnung in §11 stimmte am stärksten Bauch und an der Frequenz, nicht
+  an den übrigen Bäuchen.** Der Rand bleibt gestützt: mit der Zugleiste stimmen Zahl, Lage und Frequenz zugleich.
+- **Die Höhen am stärksten Bauch liegen mit der Zugleiste tiefer:** S(1,2)–S(1,6) 91,8 / 95,5 / 96,1 / 94,7 / 92,4 dB
+  gegen 96 / 104 / 105,5 / 101,5 / 100,5 dB: −4,2 / −8,5 / −9,4 / −6,8 / −8,1 dB (mitgeliefert +1,6 / −4,6 / −5,5 /
+  −2,6 dB — mit einer um 0,4 kg zu leichten Mitte). Die Schwelle von KQ19 a (6 dB ohne Saiten) hält damit nur S(1,2).
+  Mode 328,5 Hz zerlegt (`…_bewegte_masse_327.txt`): wirksame Masse am Bauch 216 g; 58 % der Bewegungsenergie im
+  Diskantbauch, 38 % in Mitte und Bass; rund 70 % auf den Leisten. Aus Bells Pegel und Güte folgen 90 g
+  (Q / (ω Y) = 45 / (1985 · 0,25)). Die Verhältnisse der Bäuche untereinander stimmen (Bell −15 / −20 dB, Modell
+  −16,8 / −19,7 dB); es fehlt ein Faktor 2,4 in der Masse bei gleicher Frequenz, also auch in der Steife. Ein
+  Überschlag aus Bells eigenen Maßen (Platte und Leisten am Diskantbauch, halbe Sinuswelle quer) gibt rund 190 g —
+  **Bells Pegel an den Spitzen liegt rund 6 dB über dem, was seine Maße erlauben. Ursache offen** (Eichung, Güte, Maße
+  am Diskant; „12 mm at the bass to 2 mm at the treble“ bei Bell & Firth gegen 10 → 3 mm in Abb. 2.4).
+
+### 15.2 Ursache in der Messung: ein federartiger Untergrund bei Bell
+
+- **Muster:** bei Bell liegt jedes Tal knapp **über** einer Spitze, danach steigt die Kurve langsam zur nächsten (Ort 17:
+  Spitzen 251 / 319 / 436 / 564 Hz, Täler 290 / 385 / 454 / 606 Hz; ebenso an den Orten 2, 5 und 10 des losen Kastens,
+  Abb. 6.6). So sieht ein Untergrund aus, der wie eine Feder wirkt (Y = i ω / k dazu). Im Modell liegen die Täler knapp
+  **unter** den Spitzen (258 / 318 / 477 / 608 / 722 Hz) — der Untergrund ist dort die Masse der tieferen Moden. Bell
+  S. 134 selbst: die Admittanz steige an allen Orten mit der Frequenz, „dominated by stiffness elements“.
+- **Die Feder unabhängig abgelesen:** in den Profilen des losen Kastens (Feld 1 der Abb. 7.10–7.16) ist der Pegel an den
+  Orten 37–40 waagrecht. Die Orte 39 und 40 liegen nach Abb. 6.3 nicht mehr auf dem Boden, sondern auf dem Bodenblock;
+  dort bewegt sich nichts. Abgelesen (±1 dB): 221 Hz 70,5 dB · 320 Hz 73,8 · 420 Hz 76,0 · 557 Hz 79,5 · 702 Hz 80,0 ·
+  768 Hz 80,5–82 dB. Das sind 6 dB je Oktave, und aus jedem Wert folgt dieselbe Feder: k = ω / Y = 2,6 / 2,6 / 2,6 /
+  2,3 / 2,8 / 2,6 · 10⁵ N/m. (S(1,8) bei 912 Hz passt nicht: 94 dB, das ganze Profil liegt dort bei 89–100 dB.)
+- **Mit dieser Feder, ohne Anpassung** (Ort 17, 200–790 Hz, Modell minus Bell):
+
+| | Terzbänder 200 / 250 / 315 / 400 / 500 / 630 / 800 Hz | energetisch | Median | 10. Perzentil |
+|---|---|---|---|---|
+| mitgeliefert, ohne Feder | +1,9 / −13,4 / −2,2 / −5,4 / −7,6 / −12,9 / −14,0 | −8,4 | −11,9 | −12,3 |
+| mitgeliefert, Feder 2,6 · 10⁵ N/m | +2,5 / −12,5 / −0,8 / −1,7 / 0,0 / +1,7 / +3,4 | −2,4 | +1,4 | +0,4 |
+| mit Zugleiste, ohne Feder | −4,5 / −5,8 / −15,0 / −9,4 / −12,8 / −12,7 / −28,8 | −7,5 | −17,2 | −20,4 |
+| mit Zugleiste, Feder 2,6 · 10⁵ N/m | −0,4 / −6,1 / −7,2 / +1,3 / +0,1 / +1,4 / +3,5 | −1,9 | +1,2 | +2,4 |
+
+  Die Hochfläche 600–800 Hz in Abb. 7.6 (73 → 79 dB) ist die Feder. Es bleiben die Bänder 250 Hz (S(1,2): Lage −6 %,
+  Höhe −4 dB) und 315 Hz: Ort 17 liegt im Modell fast auf dem Knoten von S(1,3) (Ort 16,5), bei Bell in der Harfe
+  2–3 Orte daneben (Knoten bei 14–14,5) — ein Unterschied von 7 cm in der Lage eines Knotens macht dort 20 dB.
+- **Woher die Feder kommt, ist nicht belegt.** Bell regt mit einem „small pin“ an einem Impedanzkopf B&K 8001 an und
+  nennt weder Maße noch Befestigung (Bericht 22 §1.1). Eine Stiftspitze auf Holz quer zur Faser gibt nach
+  k ≈ 2 a E / (1 − ν²) mit E ≈ 1–2 GPa und einem Kontaktradius von 0,1 mm 2–4 · 10⁵ N/m — eigene Abschätzung, keine
+  Quelle. Dass der Wert an Orten über 14 cm, auf Block und Boden, gleich ist, spricht für die Messkette und gegen den
+  Bau. Bericht 22 hatte die Reihenfeder verworfen, weil die kleinsten Werte der Profile unter der Federlinie liegen;
+  das gilt nur ohne Auslöschung, und die Täler knapp über den Spitzen sind Auslöschungen.
+- **Bells Pegel abseits der Resonanzen sind untereinander nicht stimmig:** an Ort 17 in der Harfe ohne Saiten lesen
+  sich Profil und Abb. 7.6 bei 249 / 316 / 545 / 709 / 757 Hz zu 92 / 88 / 77 / 85 / 85 gegen 93 / 84 / 83 / 77,5 /
+  79,5 dB (von Auge, ±2 dB) — bis 7 dB Unterschied, an der Resonanz 1 dB.
+- **Für den Klang zählt die Feder nicht:** sie ist ein Blindanteil und nimmt der Saite keine Energie. Säße sie auch an
+  der Öse, verlängerte sie die Saite um T / k (Saite 00: 43 N, 0,12 mm auf 71 mm, 2,9 Cent, in der Stimmung enthalten).
+
+### 15.3 Zielgrößen mit der Zugleiste (Prüfstand je Taste, `…_harfe_je_taste_zugleiste.txt`)
+
+| | mitgeliefert (S201) | mit Zugleiste | Schwelle KQ34 a |
+|---|---|---|---|
+| Spanne ab D2 | 19,6 LU | 21,7 LU (leiseste Taste 90, lauteste 64) | ≤ 22 LU |
+| größter Sprung (Paare bis 4 Halbtöne) | 11,0 LU (56 / 60) | **14,6 LU (78 / 80)** | ≤ 12 LU |
+| mittlerer Sprung | 2,9 LU | 3,0 LU | ≤ 3 LU |
+| Moden unter 300 Hz (Hz / Q) | 129 / 13, 192 / 13, 208 / 13, 275 / 35 | 134 / 14, 198 / 8, 232 / 34 | Bell: 170 / 11, 216 / 16, 249 / 39 |
+
+Die Taste 58 (233 Hz) liegt jetzt auf S(1,2) (−5,8 LUFS, früher Abfall 57 dB/s; Nachbarn −11 … −13 LUFS); die laute
+Stelle der Tasten 55–57 aus §14 ist weg. Die Güte der Luft 5,5 (KQ29 a) und die Feder der Diskantkante 3 · 10⁶ N/m²
+(KQ21 a) waren am Bauplan ohne Zugleiste gestellt und sind am neuen nicht nachgestellt; der Prüfstand rechnet ohne die
+Last der übrigen Saiten (besaitet misst Bell ab S(1,5) die halbe Güte).
+
+**Stand:** zwei Ursachen gefunden, der Körper im Repo ist unverändert. Offen zur Entscheidung: wie die Zugleiste in die
+Rechnung kommt (KQ31-1) und woran die Harfe danach gemessen wird (KQ31-2) — das Ziel „3 dB je Terzband an Ort 17“ misst
+ohne die Feder die Messkette und hängt an der Lage eines Knotens. Danach: Körper neu, Güte der Luft und Diskantkante
+nachstellen, KQ19 a und KQ34 a neu messen. Offen ohne Weg: die Höhe der Spitzen (−4 … −9 dB).

@@ -1,0 +1,23 @@
+Bell ohne Saiten: 620 Spalten, lose: 616 Spalten; Modell an 2 Stegpunkten (Oesen 20 / 21)
+Terzband | Bell ohne Saiten | Bell lose | Modell | Modell - Bell ohne (energetisch, dB)
+   125 Hz (  111-  140) |  81.5 |  78.9 |  68.7 | -12.7
+   160 Hz (  143-  180) |  69.7 |  78.4 |  72.5 |  +2.8
+   200 Hz (  178-  224) |  77.9 |  80.9 |  79.8 |  +1.9
+   250 Hz (  223-  281) |  88.3 |  87.8 |  74.9 | -13.4
+   315 Hz (  281-  354) |  78.4 |  75.1 |  76.1 |  -2.2
+   400 Hz (  356-  449) |  74.4 |  77.9 |  69.0 |  -5.4
+   500 Hz (  445-  561) |  77.9 |  78.2 |  70.3 |  -7.6
+   630 Hz (  561-  707) |  77.4 |  77.9 |  64.5 | -12.9
+   800 Hz (  713-  795) |  77.7 |  77.3 |  63.7 | -14.0
+Band 140-200 Hz: energetisch Bell  73.1 / Modell  76.4 ( +3.3) | Median  71.6 /  73.8 ( +2.2) | 10. Perz.  65.5 /  67.1 ( +1.7) | 90. Perz.  76.6 /  80.5 ( +4.0)
+Band 200-400 Hz: energetisch Bell  83.7 / Modell  76.0 ( -7.7) | Median  78.2 /  70.8 ( -7.4) | 10. Perz.  67.3 /  61.5 ( -5.8) | 90. Perz.  88.7 /  81.2 ( -7.5)
+Band 400-790 Hz: energetisch Bell  77.5 / Modell  66.9 (-10.6) | Median  76.0 /  62.2 (-13.9) | 10. Perz.  69.0 /  54.9 (-14.1) | 90. Perz.  80.9 /  70.4 (-10.6)
+Band 200-790 Hz: energetisch Bell  80.7 / Modell  72.3 ( -8.4) | Median  76.5 /  64.6 (-11.9) | 10. Perz.  68.5 /  56.2 (-12.3) | 90. Perz.  83.6 /  76.9 ( -6.7)
+
+Feder in Reihe am Messpunkt (Y + i w / k): Abstand Modell - Bell ohne Saiten
+  k N/m   | Terzbaender 200 250 315 400 500 630 800 (energetisch) | 200-790 Hz: energetisch, Median, 10. Perz., 90. Perz. | Taeler Hz
+  2.60e+05 |  +2.5 -12.5  -0.8  -1.7  -0.0  +1.7  +3.4 |  -2.4  +1.4  +0.4  -2.4 | 234 289 364 434 538
+  4.00e+05 |  +2.2 -13.3  -1.7  -6.5  -3.1  -2.4  -0.4 |  -5.2  -2.4  -3.7  -5.4 | 240 295 373 435 542
+  Bell: Taeler bei 289 290 385 454 606 Hz; Spitzen bei 251 319 340 341 342 344 436 563 564 Hz
+Moden der Datei 100-800 Hz: 129 192 208 275 347 431 522 527 612 641 715 767
+Bild: 2026-11-18_S205_harfe_ort17_kurve_mitgeliefert.png

@@ -1,0 +1,14 @@
+concert_harp.lvinstbodyplan: 1 Stege, 3 Rippen; verdecktes Volumen 550.6 cm³
+    Steg 'cover bar':   328.5 cm² von   331.5 cm² verdecken eine weitere Leiste, deren Volumen dort   550.6 cm³
+harpsichord.lvinstbodyplan: 2 Stege, 6 Rippen; verdecktes Volumen 0.9 cm³
+    Rippe 'cutoff bar':     0.5 cm² von   142.8 cm² verdecken eine weitere Leiste, deren Volumen dort     0.9 cm³
+lute.lvinstbodyplan: 1 Stege, 8 Rippen; verdecktes Volumen 0.0 cm³
+    keine Leisten uebereinander
+oud.lvinstbodyplan: 0 Stege, 7 Rippen; verdecktes Volumen 0.0 cm³
+    keine Leisten uebereinander
+steinway_d.lvinstbodyplan: 1 Stege, 16 Rippen; verdecktes Volumen 277.9 cm³
+    Steg 'bridge':   157.0 cm² von   988.2 cm² verdecken eine weitere Leiste, deren Volumen dort   277.9 cm³
+steinway_d_glass.lvinstbodyplan: 1 Stege, 16 Rippen; verdecktes Volumen 277.9 cm³
+    Steg 'bridge':   157.0 cm² von   988.2 cm² verdecken eine weitere Leiste, deren Volumen dort   277.9 cm³
+steinway_d_glass_same_mass.lvinstbodyplan: 1 Stege, 16 Rippen; verdecktes Volumen 277.9 cm³
+    Steg 'bridge':   157.0 cm² von   988.2 cm² verdecken eine weitere Leiste, deren Volumen dort   277.9 cm³

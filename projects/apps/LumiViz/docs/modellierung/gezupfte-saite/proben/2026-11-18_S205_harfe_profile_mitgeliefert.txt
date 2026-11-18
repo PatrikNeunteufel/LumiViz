@@ -1,0 +1,13 @@
+46 Oesen, Ort 2.7714285714285793 36.628571428571426
+ 129.0 Hz: Ort 17  70.1 dB, max  83.4 an Ort 29
+ 191.8 Hz: Ort 17  81.1 dB, max  81.1 an Ort 17
+ 208.4 Hz: Ort 17  81.2 dB, max  83.6 an Ort 20
+ 274.8 Hz: Ort 17  84.6 dB, max  96.4 an Ort 13
+ 346.7 Hz: Ort 17  83.9 dB, max  99.4 an Ort 9
+ 430.8 Hz: Ort 17  61.2 dB, max 100.0 an Ort 6
+ 522.5 Hz: Ort 17  77.8 dB, max  97.6 an Ort 4
+ 526.8 Hz: Ort 17  79.5 dB, max  98.9 an Ort 4
+ 612.2 Hz: Ort 17  57.0 dB, max  86.7 an Ort 3
+ 640.7 Hz: Ort 17  66.0 dB, max  96.8 an Ort 3
+ 715.0 Hz: Ort 17  52.3 dB, max  78.5 an Ort 4
+ 767.4 Hz: Ort 17  70.7 dB, max  94.0 an Ort 3
