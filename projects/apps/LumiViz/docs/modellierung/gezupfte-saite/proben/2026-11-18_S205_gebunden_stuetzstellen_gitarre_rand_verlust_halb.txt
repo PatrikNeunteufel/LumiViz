@@ -1,0 +1,25 @@
+Gitarre: Stuetzstellen an Buenden und auf halbem Weg, geprueft auch an sechs Stellen je Bund dazwischen; RMAX 0.99, REG 0.05, RAND 1.5, Verlustfilter entworfen an Buenden und auf halbem Weg
+
+### Gitarre Saite 6: f1 82.4-246.9 Hz, zaehlend bis 10249 Hz (112-37 Teiltoene), Abel-Smith 5-18, M = 20
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.01, groesster   0.06 (Lage  0.06), Abklingen groesster Fehler  7.52 %, ausserhalb 0/152
+  T5 Grad 3 (160 Zahlen, 1 Runden,  304 s): Buende Median  0.01, groesster   0.06 (Lage  0.00) | halb Median  0.01, groesster   0.04 (Lage  0.50) | dazwischen Median  0.01, groesster   0.05 (Lage  0.12) | Abklingen groesster Fehler  7.25 %, ausserhalb 0/153
+
+### Gitarre Saite 5: f1 110.1-329.8 Hz, zaehlend bis 12733 Hz (108-36 Teiltoene), Abel-Smith 4-12, M = 14
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.02, groesster   0.09 (Lage  0.06), Abklingen groesster Fehler  3.70 %, ausserhalb 0/152
+  T5 Grad 3 (112 Zahlen, 1 Runden,  356 s): Buende Median  0.02, groesster   0.08 (Lage  0.00) | halb Median  0.02, groesster   0.07 (Lage  0.50) | dazwischen Median  0.02, groesster   0.08 (Lage 17.88) | Abklingen groesster Fehler  3.76 %, ausserhalb 0/153
+
+### Gitarre Saite 4: f1 147.0-440.5 Hz, zaehlend bis 15160 Hz (96-32 Teiltoene), Abel-Smith 3-11, M = 13
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.13, groesster   0.45 (Lage 17.69), Abklingen groesster Fehler  3.91 %, ausserhalb 0/152
+  T5 Grad 3 (104 Zahlen, 12 Runden,  355 s): Buende Median  0.15, groesster   0.32 (Lage 11.00) | halb Median  0.12, groesster   0.30 (Lage 15.50) | dazwischen Median  0.14, groesster   0.37 (Lage 12.12) | Abklingen groesster Fehler  3.88 %, ausserhalb 0/153
+
+### Gitarre Saite 3: f1 195.8-587.0 Hz, zaehlend bis 9594 Hz (44-14 Teiltoene), Abel-Smith 2-7, M = 9
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.02, groesster   0.12 (Lage  0.19), Abklingen groesster Fehler  4.29 %, ausserhalb 0/152
+  T5 Grad 3 ( 72 Zahlen, 2 Runden,   68 s): Buende Median  0.02, groesster   0.13 (Lage  0.00) | halb Median  0.03, groesster   0.11 (Lage  0.50) | dazwischen Median  0.02, groesster   0.12 (Lage  0.25) | Abklingen groesster Fehler  4.54 %, ausserhalb 0/153
+
+### Gitarre Saite 2: f1 246.5-738.9 Hz, zaehlend bis 12751 Hz (48-16 Teiltoene), Abel-Smith 2-6, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.1); an fremden Stellen: fremd Median  0.08, groesster   0.23 (Lage 12.94), Abklingen groesster Fehler  3.55 %, ausserhalb 0/152
+  T5 Grad 3 ( 64 Zahlen, 12 Runden,  196 s): Buende Median  0.08, groesster   0.18 (Lage 19.00) | halb Median  0.07, groesster   0.10 (Lage 15.50) | dazwischen Median  0.08, groesster   0.21 (Lage 15.62) | Abklingen groesster Fehler  3.55 %, ausserhalb 0/153
+
+### Gitarre Saite 1: f1 330.9-991.6 Hz, zaehlend bis 16653 Hz (48-16 Teiltoene), Abel-Smith 1-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.1); an fremden Stellen: fremd Median  0.67, groesster   1.59 (Lage 14.56), Abklingen groesster Fehler  4.42 %, ausserhalb 0/152
+  T5 Grad 3 ( 64 Zahlen, 11 Runden,  218 s): Buende Median  0.69, groesster   1.11 (Lage 17.00) | halb Median  0.58, groesster   1.07 (Lage 18.50) | dazwischen Median  0.64, groesster   1.45 (Lage 12.62) | Abklingen groesster Fehler  4.35 %, ausserhalb 0/153

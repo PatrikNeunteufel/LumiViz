@@ -1,7 +1,14 @@
 """S205 - UL3 a: gebundene Anpassung der Biquad-Kette je Saite, mit Stuetzstellen zwischen den Buenden und dem
 gebrochenen Verzug IN der Anpassung (Fortsetzung von `2026-11-17_S204_verlauf_buende.py`, Weg "gebunden").
 
-Aufruf: python -X utf8 -B <dieses Skript> <Instrument> [glied=T1,T3,L5] [grad=2,3] [saiten=1,2]
+Aufruf: python -X utf8 -B <dieses Skript> <Instrument> [glied=T1,T3,L5] [grad=2,3] [saiten=1,2] [reg=0.05] [rand=2] [verlust=halb]
+        rand=     die Anpassung nimmt Teiltoene bis rand * 100 1/s mit (gezaehlt wird weiter bis 100 1/s)
+        verlust=  halb: der Verlustfilter wird auch auf halbem Weg entworfen statt dort gemittelt
+        starts=   4: vier Anpassungen (Startwert nach Abel-Smith bis 1,02 oder 1,3 * Grenze, REG 0,05 oder 0,1); es zaehlt
+                  die mit dem kleinsten groessten Fehler an Buenden, halben und Achtel-Stellen; dazu eine Zeile "fremd":
+                  acht Stellen je Bund (ungerade Sechzehntel), die weder Anpassung noch Auswahl kennen. Grund: die
+                  Anpassung endet je nach Startwert und REG in verschiedenen Nebenminima (Laute Chor 1.1, 2.1)
+        bis=      nur zur Eingrenzung: ausgewertet werden Teiltoene bis zu dieser Frequenz
         Instrument: Gitarre | Laute | Oud        -> Konsole (in eine .txt umleiten)
 
 Was gegen S204 anders ist:
@@ -39,6 +46,8 @@ FS, F, W = uu.FS, uu.F, uu.W
 bq.RMAX = 0.99
 KF = 1200 / np.log(2)
 REG = 0.05                             # Gewicht der Daempfung der Polynom-Beiwerte ab Grad 1 (in Cent je Einheit)
+BIS = 1e9                              # nur zur Eingrenzung: ausgewertet werden Teiltoene bis BIS Hz (bis=)
+RAND = 1.0                           # die Anpassung nimmt Teiltoene bis RAND * 100 1/s mit (rand=; Laute Chor 1.1: 1,5)
 
 
 # ------------------------------------------------------------------ das Glied fuer den gebrochenen Verzug
@@ -60,7 +69,8 @@ def stelle(sa, mens, u, nb, bund):
     Gt, ph = ue.ziel(sa, mens * 2 ** (-u / 12))
     fn, sg = ue.teiltoene(Gt, ph)
     m = fn < 0.45 * FS
-    fz = fn[m][sg[m] <= ue.SIG_REL]
+    # angepasst wird bis RAND * Grenze (die Zugabe nur bis 19,5 kHz - das Raster F endet bei 20 kHz), gezaehlt (werte) bis zur Grenze
+    fz = fn[m][(sg[m] <= ue.SIG_REL) | ((sg[m] <= RAND * ue.SIG_REL) & (fn[m] <= 19500.0))]
     if bund is None:
         b = a = None
         for N in (8, 4, 2):
@@ -68,8 +78,9 @@ def stelle(sa, mens, u, nb, bund):
                 b, a, _ = uu.verlust(Gt, fn, sg, N, "R")
                 break
     else:
-        k = min(int(np.floor(u)), nb - 1)
-        t = u - k
+        uk = [s["u"] for s in bund]                # Entwurfsstellen des Verlustfilters (Buende oder auch halbe)
+        k = min(int(np.searchsorted(uk, u, side="right")) - 1, len(uk) - 2)
+        t = (u - uk[k]) / (uk[k + 1] - uk[k])
         b = (1 - t) * bund[k]["b"] + t * bund[k + 1]["b"]
         a = (1 - t) * bund[k]["a"] + t * bund[k + 1]["a"]
     hl = ue.antwort_ba(b, a)
@@ -99,7 +110,7 @@ def werte(s, r, th, g):
     if v is None:
         return None
     fe, se, c, p = v
-    h = se <= ue.SIG_REL
+    h = (se <= ue.SIG_REL) & (fe <= BIS)
     return uu.mx(c[h]), int(np.sum((p[h] >= uu.P_LO) & (p[h] <= uu.P_HI))), int(h.sum()), uu.mx(p[h])
 
 
@@ -212,23 +223,48 @@ if __name__ == "__main__":
     GRAD = [int(x) for x in opts.get("grad", "2,3").split(",")]
     NUR = opts.get("saiten")
     REG = float(opts.get("reg", "0.05"))
-    print(f"{inst}: Stuetzstellen an Buenden und auf halbem Weg, geprueft auch an sechs Stellen je Bund dazwischen; RMAX {bq.RMAX}, REG {REG}")
+    RAND = float(opts.get("rand", "1"))
+    BIS = float(opts.get("bis", "1e9"))
+    STARTS = int(opts.get("starts", "1"))
+    VHALB = opts.get("verlust", "bund") == "halb"     # Verlustfilter auch auf halbem Weg entworfen (Laute Chor 1.1)
+    print(f"{inst}: Stuetzstellen an Buenden und auf halbem Weg, geprueft auch an sechs Stellen je Bund dazwischen; RMAX {bq.RMAX}, REG {REG}, "
+          f"RAND {RAND}, Verlustfilter entworfen an {'Buenden und auf halbem Weg' if VHALB else 'den Buenden'}")
     for nr, (name, sa, mens, nb) in enumerate(saiten(inst)):
         if NUR and str(nr + 1) not in NUR.split(","):
             continue
         bund = [stelle(sa, mens, float(k), nb, None) for k in range(nb + 1)]
-        halb = [stelle(sa, mens, k + 0.5, nb, bund) for k in range(nb)]
-        viertel = [stelle(sa, mens, k + q, nb, bund) for k in range(nb) for q in (0.125, 0.25, 0.375, 0.625, 0.75, 0.875)]
+        halb = [stelle(sa, mens, k + 0.5, nb, None if VHALB else bund) for k in range(nb)]
         st = sorted(bund + halb, key=lambda s: s["u"])
+        viertel = [stelle(sa, mens, k + q, nb, st if VHALB else bund) for k in range(nb) for q in (0.125, 0.25, 0.375, 0.625, 0.75, 0.875)]
         nap = [len(uu.as_biquads(t["rest"], min(t["fz"][-1] * 1.02, 19500.0))[0]) for t in bund]
         M = max(8, max(nap) + 2)
         print(f"\n### {inst} {name}: f1 {bund[0]['fn'][0]:.1f}-{bund[-1]['fn'][0]:.1f} Hz, zaehlend bis {bund[0]['fz'][-1]:.0f} Hz "
               f"({len(bund[0]['fz'])}-{len(bund[-1]['fz'])} Teiltoene), Abel-Smith {min(nap)}-{max(nap)}, M = {M}", flush=True)
         r0, th0 = bq.start(bund[0]["rest"], min(bund[0]["fz"][-1] * 1.02, 19500.0), M)
+        if STARTS > 1:
+            # Stellen, die weder die Anpassung noch die Auswahl unter den Starts kennt
+            fremd = [stelle(sa, mens, k + q / 16, nb, st if VHALB else bund) for k in range(nb) for q in (1, 3, 5, 7, 9, 11, 13, 15)]
         for g in GL:
             for P in GRAD:
                 t0 = time.perf_counter()
-                f, runden = gebunden(st, M, P, r0, th0, g)
+                if STARTS > 1:
+                    best = None
+                    for fak, reg in ((1.02, 0.05), (1.02, 0.1), (1.3, 0.05), (1.3, 0.1))[:STARTS]:
+                        REG = reg
+                        ra, tha = bq.start(bund[0]["rest"], min(bund[0]["fz"][-1] * fak, 19500.0), M)
+                        fk, rk = gebunden(st, M, P, ra, tha, g)
+                        ek = [zeile(x, fk, g) for x in (bund, halb, viertel)]
+                        guete = np.inf if any(x is None for x in ek) else max(x[1] for x in ek)
+                        if best is None or guete < best[0]:
+                            best = (guete, fk, rk, fak, reg)
+                    _, f, runden, fak, reg = best
+                    ef = zeile(fremd, f, g)
+                    print(f"  {g[0]}{g[1]} Grad {P}: bester von {STARTS} Starts (Startwert bis {fak} * Grenze, REG {reg}); an fremden Stellen: "
+                          + ("nicht auswertbar" if ef is None else
+                             f"fremd Median {ef[0]:5.2f}, groesster {ef[1]:6.2f} (Lage {ef[2]:5.2f}), Abklingen groesster Fehler {ef[3]:5.2f} %, ausserhalb {ef[4]}/{ef[5]}"),
+                          flush=True)
+                else:
+                    f, runden = gebunden(st, M, P, r0, th0, g)
                 e = [zeile(x, f, g) for x in (bund, halb, viertel)]
                 kopf = f"  {g[0]}{g[1]} Grad {P} ({2 * M * (P + 1):3d} Zahlen, {runden} Runden, {time.perf_counter() - t0:4.0f} s):"
                 if any(x is None for x in e):

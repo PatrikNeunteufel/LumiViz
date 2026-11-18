@@ -1,0 +1,45 @@
+Laute: Stuetzstellen an Buenden und auf halbem Weg, geprueft auch an sechs Stellen je Bund dazwischen; RMAX 0.99, REG 0.05, RAND 1.5, Verlustfilter entworfen an Buenden und auf halbem Weg
+
+### Laute Chor 1.1: f1 73.5-147.1 Hz, zaehlend bis 2095 Hz (23-11 Teiltoene), Abel-Smith 2-5, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.1); an fremden Stellen: fremd Median  0.05, groesster   0.37 (Lage 10.31), Abklingen groesster Fehler 12.09 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 1 Runden,   73 s): Buende Median  0.04, groesster   0.09 (Lage  0.00) | halb Median  0.04, groesster   0.09 (Lage  0.50) | dazwischen Median  0.05, groesster   0.37 (Lage 10.25) | Abklingen groesster Fehler 12.10 %, ausserhalb 0/97
+
+### Laute Chor 1.2: f1 146.8-293.8 Hz, zaehlend bis 5013 Hz (31-15 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.01, groesster   0.04 (Lage  0.19), Abklingen groesster Fehler  2.65 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 1 Runden,   75 s): Buende Median  0.01, groesster   0.02 (Lage  0.00) | halb Median  0.01, groesster   0.01 (Lage  0.50) | dazwischen Median  0.01, groesster   0.04 (Lage  0.25) | Abklingen groesster Fehler  2.76 %, ausserhalb 0/97
+
+### Laute Chor 2.1: f1 87.3-174.8 Hz, zaehlend bis 2684 Hz (26-13 Teiltoene), Abel-Smith 2-5, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.1); an fremden Stellen: fremd Median  0.04, groesster   0.15 (Lage 10.31), Abklingen groesster Fehler  7.73 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 11 Runden,   71 s): Buende Median  0.02, groesster   0.09 (Lage  0.00) | halb Median  0.02, groesster   0.08 (Lage  0.50) | dazwischen Median  0.04, groesster   0.16 (Lage 10.25) | Abklingen groesster Fehler  7.57 %, ausserhalb 0/97
+
+### Laute Chor 2.2: f1 174.6-349.3 Hz, zaehlend bis 6443 Hz (34-17 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.02, groesster   0.10 (Lage 10.94), Abklingen groesster Fehler  3.46 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 1 Runden,   49 s): Buende Median  0.02, groesster   0.10 (Lage 11.00) | halb Median  0.02, groesster   0.07 (Lage 10.50) | dazwischen Median  0.02, groesster   0.09 (Lage 10.88) | Abklingen groesster Fehler  3.38 %, ausserhalb 0/97
+
+### Laute Chor 3.1: f1 98.0-196.2 Hz, zaehlend bis 3279 Hz (29-14 Teiltoene), Abel-Smith 2-5, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.04, groesster   0.13 (Lage  3.31), Abklingen groesster Fehler  8.65 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 1 Runden,   28 s): Buende Median  0.02, groesster   0.11 (Lage  0.00) | halb Median  0.02, groesster   0.09 (Lage  0.50) | dazwischen Median  0.04, groesster   0.13 (Lage  3.25) | Abklingen groesster Fehler  8.73 %, ausserhalb 0/97
+
+### Laute Chor 3.2: f1 196.0-392.1 Hz, zaehlend bis 7985 Hz (38-19 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.1); an fremden Stellen: fremd Median  0.02, groesster   0.11 (Lage  7.94), Abklingen groesster Fehler  2.77 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 12 Runden,  132 s): Buende Median  0.03, groesster   0.11 (Lage  8.00) | halb Median  0.02, groesster   0.07 (Lage  6.50) | dazwischen Median  0.02, groesster   0.10 (Lage  7.88) | Abklingen groesster Fehler  2.77 %, ausserhalb 0/97
+
+### Laute Chor 4.1: f1 130.8-261.7 Hz, zaehlend bis 5791 Hz (40-20 Teiltoene), Abel-Smith 3-6, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.01, groesster   0.13 (Lage  0.06), Abklingen groesster Fehler  1.91 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 1 Runden,   67 s): Buende Median  0.01, groesster   0.13 (Lage  0.00) | halb Median  0.01, groesster   0.11 (Lage  0.50) | dazwischen Median  0.01, groesster   0.12 (Lage  0.12) | Abklingen groesster Fehler  1.93 %, ausserhalb 0/97
+
+### Laute Chor 5.1: f1 174.6-349.3 Hz, zaehlend bis 6252 Hz (33-16 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.01, groesster   0.05 (Lage 11.44), Abklingen groesster Fehler  2.30 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 1 Runden,   50 s): Buende Median  0.01, groesster   0.04 (Lage 12.00) | halb Median  0.01, groesster   0.05 (Lage 11.50) | dazwischen Median  0.02, groesster   0.04 (Lage 11.38) | Abklingen groesster Fehler  2.30 %, ausserhalb 0/97
+
+### Laute Chor 6.1: f1 220.0-440.1 Hz, zaehlend bis 9859 Hz (42-21 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.10, groesster   0.27 (Lage  1.44), Abklingen groesster Fehler  3.30 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 1 Runden,   34 s): Buende Median  0.09, groesster   0.16 (Lage  8.00) | halb Median  0.11, groesster   0.30 (Lage  1.50) | dazwischen Median  0.10, groesster   0.25 (Lage  1.38) | Abklingen groesster Fehler  3.23 %, ausserhalb 0/97
+
+### Laute Chor 7.1: f1 293.7-587.4 Hz, zaehlend bis 17535 Hz (57-28 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.1); an fremden Stellen: fremd Median  0.56, groesster   2.22 (Lage 11.81), Abklingen groesster Fehler  3.41 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 7 Runden,  111 s): Buende Median  0.53, groesster   1.13 (Lage  5.00) | halb Median  0.51, groesster   0.73 (Lage  2.50) | dazwischen Median  0.65, groesster   1.83 (Lage  7.88) | Abklingen groesster Fehler  3.80 %, ausserhalb 0/97
+
+### Laute Chor 8.1: f1 392.0-784.0 Hz, zaehlend bis 19667 Hz (49-24 Teiltoene), Abel-Smith 1-2, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.05); an fremden Stellen: fremd Median  3.55, groesster  12.17 (Lage  9.81), Abklingen groesster Fehler 21.88 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 8 Runden,  127 s): Buende Median  2.90, groesster   7.51 (Lage  7.00) | halb Median  2.82, groesster   9.45 (Lage  4.50) | dazwischen Median  4.03, groesster  10.32 (Lage  4.12) | Abklingen groesster Fehler 20.36 %, ausserhalb 0/97

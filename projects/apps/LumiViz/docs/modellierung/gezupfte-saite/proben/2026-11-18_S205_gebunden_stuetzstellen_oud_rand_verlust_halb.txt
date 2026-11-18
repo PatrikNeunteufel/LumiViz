@@ -1,0 +1,25 @@
+Oud: Stuetzstellen an Buenden und auf halbem Weg, geprueft auch an sechs Stellen je Bund dazwischen; RMAX 0.99, REG 0.05, RAND 1.5, Verlustfilter entworfen an Buenden und auf halbem Weg
+
+### Oud Chor 1.1: f1 65.4-130.8 Hz, zaehlend bis 7206 Hz (95-47 Teiltoene), Abel-Smith 9-19, M = 21
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.01, groesster   0.10 (Lage  0.19), Abklingen groesster Fehler  3.07 %, ausserhalb 0/96
+  T5 Grad 3 (168 Zahlen, 1 Runden,  252 s): Buende Median  0.01, groesster   0.10 (Lage  0.00) | halb Median  0.01, groesster   0.06 (Lage  0.50) | dazwischen Median  0.01, groesster   0.10 (Lage  0.12) | Abklingen groesster Fehler  3.04 %, ausserhalb 0/97
+
+### Oud Chor 2.1: f1 87.3-174.6 Hz, zaehlend bis 7879 Hz (79-39 Teiltoene), Abel-Smith 7-15, M = 17
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.01, groesster   0.07 (Lage  0.19), Abklingen groesster Fehler  1.34 %, ausserhalb 0/96
+  T5 Grad 3 (136 Zahlen, 1 Runden,   90 s): Buende Median  0.00, groesster   0.07 (Lage  0.00) | halb Median  0.00, groesster   0.05 (Lage  0.50) | dazwischen Median  0.01, groesster   0.07 (Lage  0.12) | Abklingen groesster Fehler  1.37 %, ausserhalb 0/97
+
+### Oud Chor 3.1: f1 110.0-220.0 Hz, zaehlend bis 9492 Hz (77-38 Teiltoene), Abel-Smith 6-13, M = 15
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.01, groesster   0.08 (Lage  0.06), Abklingen groesster Fehler  3.67 %, ausserhalb 0/96
+  T5 Grad 3 (120 Zahlen, 5 Runden,  140 s): Buende Median  0.01, groesster   0.08 (Lage  0.00) | halb Median  0.00, groesster   0.05 (Lage  0.50) | dazwischen Median  0.01, groesster   0.08 (Lage  0.12) | Abklingen groesster Fehler  3.88 %, ausserhalb 0/97
+
+### Oud Chor 4.1: f1 146.8-293.7 Hz, zaehlend bis 12038 Hz (75-37 Teiltoene), Abel-Smith 5-10, M = 12
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.1); an fremden Stellen: fremd Median  0.03, groesster   0.13 (Lage  0.06), Abklingen groesster Fehler  1.04 %, ausserhalb 0/96
+  T5 Grad 3 ( 96 Zahlen, 3 Runden,  124 s): Buende Median  0.02, groesster   0.13 (Lage  0.00) | halb Median  0.02, groesster   0.10 (Lage  0.50) | dazwischen Median  0.02, groesster   0.13 (Lage  0.12) | Abklingen groesster Fehler  1.09 %, ausserhalb 0/97
+
+### Oud Chor 5.1: f1 196.0-392.1 Hz, zaehlend bis 7594 Hz (36-18 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.3 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.02, groesster   0.09 (Lage  9.56), Abklingen groesster Fehler  3.99 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 2 Runden,   84 s): Buende Median  0.02, groesster   0.10 (Lage  8.00) | halb Median  0.03, groesster   0.10 (Lage  9.50) | dazwischen Median  0.02, groesster   0.08 (Lage  8.88) | Abklingen groesster Fehler  4.22 %, ausserhalb 0/97
+
+### Oud Chor 6.1: f1 261.6-523.3 Hz, zaehlend bis 12479 Hz (45-22 Teiltoene), Abel-Smith 2-4, M = 8
+  T5 Grad 3: bester von 4 Starts (Startwert bis 1.02 * Grenze, REG 0.05); an fremden Stellen: fremd Median  0.06, groesster   0.17 (Lage  0.06), Abklingen groesster Fehler  3.65 %, ausserhalb 0/96
+  T5 Grad 3 ( 64 Zahlen, 11 Runden,  100 s): Buende Median  0.06, groesster   0.19 (Lage  0.00) | halb Median  0.07, groesster   0.11 (Lage  1.50) | dazwischen Median  0.06, groesster   0.16 (Lage  0.12) | Abklingen groesster Fehler  3.67 %, ausserhalb 0/97

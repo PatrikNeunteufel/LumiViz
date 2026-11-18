@@ -1,0 +1,14 @@
+Laute Chor 1.1, Entwurf im Abstand 1.0 Buende; groesster Polradius je Entwurf:
+  0.9317 0.9281 0.9250 0.9186 0.9243 0.9569 0.9494 0.9390 0.9245 0.9247 0.9597 0.9955 0.9988
+  Lage 10.438: +26.8 % (Teilton 1), |H| max 0.996212
+  Lage 10.500: +31.0 % (Teilton 1), |H| max 0.996159
+  Lage 10.562: +34.8 % (Teilton 1), |H| max 0.996094
+  Lage 10.625: +37.9 % (Teilton 1), |H| max 0.996012
+  Lage 10.688: +39.8 % (Teilton 1), |H| max 0.995906
+  Lage 10.750: +39.7 % (Teilton 1), |H| max 0.995764
+  Lage 10.812: +36.5 % (Teilton 1), |H| max 0.995564
+  Lage 10.875: +29.4 % (Teilton 1), |H| max 0.995303
+  groesster Fehler 39.8 %, ausserhalb 8/193
+Laute Chor 1.1, Entwurf im Abstand 0.5 Buende; groesster Polradius je Entwurf:
+  0.9317 0.9280 0.9281 0.9253 0.9250 0.9219 0.9186 0.9297 0.9243 0.9493 0.9569 0.9549 0.9494 0.9437 0.9390 0.9246 0.9245 0.9286 0.9247 0.9413 0.9597 0.9870 0.9955 0.9991 0.9988
+  groesster Fehler 12.1 %, ausserhalb 0/193
