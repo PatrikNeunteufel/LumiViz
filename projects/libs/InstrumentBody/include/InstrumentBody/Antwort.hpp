@@ -40,7 +40,7 @@ namespace lumi::koerper
     {
         if (stegpunkt >= m.amStegpunkt.size() || hoerort >= m.abstrahlung.size()) continue;
         const double wn = 2.0 * std::numbers::pi * m.frequenzHz;
-        summe += m.amStegpunkt[stegpunkt] * m.abstrahlung[hoerort] * (-w * w) /
+        summe += m.senkrechtAm(stegpunkt) * m.abstrahlung[hoerort] * (-w * w) /
                  std::complex<double>(wn * wn - w * w, m.verlustfaktor * wn * w);
     }
     return summe;
@@ -67,7 +67,7 @@ namespace lumi::koerper
     for (const ModeImKoerper& m : moden)
     {
         if (stegpunkt >= m.amStegpunkt.size() || hoerort >= m.abstrahlung.size()) continue;
-        const std::complex<double> a = m.amStegpunkt[stegpunkt] * m.abstrahlung[hoerort];
+        const std::complex<double> a = m.senkrechtAm(stegpunkt) * m.abstrahlung[hoerort];
         const double ar = a.real(), ai = a.imag();
         const double wn = 2.0 * std::numbers::pi * m.frequenzHz;
         const double wn2 = wn * wn;
@@ -128,7 +128,7 @@ struct RasterAntwort
     for (const ModeImKoerper& m : moden)
     {
         if (stegpunkt >= m.amStegpunkt.size() || hoerort >= m.abstrahlung.size()) continue;
-        const std::complex<double> a = m.amStegpunkt[stegpunkt] * m.abstrahlung[hoerort];
+        const std::complex<double> a = m.senkrechtAm(stegpunkt) * m.abstrahlung[hoerort];
         const double ar = a.real(), ai = a.imag();
         const double wn = 2.0 * std::numbers::pi * m.frequenzHz;
         const double wn2 = wn * wn;

@@ -33,13 +33,19 @@ namespace lumi::koerper
 /// Fassung 4 (S199, KQ25 a): `origin` — woraus der Koerper stammt, `plan` (gerechnet aus einem Bauplan) oder
 /// `measurement` (Modalfit an einer Messung, etwa die Gitarre nach dem Archiv Mores 2021); dazu `measurement` mit
 /// Datei, Abdruck und Fassung des Fits. Beides immer geschrieben. Fassung 3 liest sich als `plan`.
-inline constexpr int kKoerperFassung = 4;
+/// Fassung 5 (S206, KQ35-2 a): die Richtung am Steg — je Mode `bridgeAngle` (Winkel gegen die Senkrechte der Decke,
+/// Grad; `bridge` ist der Formwert laengs dieser Richtung), im statistischen Teil `bridgeAngle` (Betrag fuer die
+/// gezogenen Moden, Vorzeichen gezogen) und `parallelFactor` (KQ35-1 a: Moden nur parallel zur Decke). Alles immer
+/// geschrieben; ein Koerper aus einem Bauplan schreibt 0. Fassung 4 liest sich mit 0.
+inline constexpr int kKoerperFassung = 5;
 
 /// Die Fassung des Modalfits fuer gemessene Koerper (`asset/loop/instrument_bodies/make_gitarre.py` traegt dieselbe
 /// Zahl). Hochzaehlen, wenn sich bei gleicher Messung und gleicher Beschreibung ein anderer Koerper ergaebe.
 /// 2 (KQ26 a, S199): ueber den gefitteten Moden ein statistischer Teil, seine Groessen an der Messung bestimmt.
 /// 3 (KQ28 a, S201): die Form je Mode laengs des Stegs an Steg- und Schallkurven gemeinsam gestellt.
-inline constexpr int kFitFassung = 3;
+/// 4 (KQ35-1 a, KQ35-2 a, S206): die Modendichte 2,2–5 kHz und darueber nach Elie 2011 aufgefuellt, die Richtung am
+/// Steg je Mode nach Elie 2012 und je Mode eine zweite nur parallel zur Decke.
+inline constexpr int kFitFassung = 4;
 
 /// Woraus ein Koerper stammt (KQ25 a).
 enum class Herkunft

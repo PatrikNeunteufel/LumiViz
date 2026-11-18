@@ -33,6 +33,10 @@ Aufruf (vom Projekt-Root):
   python -X utf8 -B <dieses Skript> ton <koerperordner> <scherrer|elie|elie-y> [winkel=30]
       Der Pruefstand `2026-11-15_S199_pruefstand_zupf.py gitarre --je-taste --winkel` an dieser Koerperdatei mit dieser
       Richtung, dazu die Kennzahlen nach KQ34 a.
+  python -X utf8 -B <dieses Skript> ton <koerperordner> datei [winkel=30]
+      (S206) Dasselbe mit der Richtung, die der Pruefstand selbst nimmt: seit KQ35-2 a die der Koerperdatei, wenn sie
+      eine traegt. Die Fassungen `elie` und `elie-y` gelten fuer einen Koerper ohne Richtung (Stand S205); an einem
+      Koerper der Fassung 5 mit Richtung legen sie eine zweite darueber.
 Schreibt nur die Koerperdatei in den Zielordner.
 """
 import contextlib
@@ -121,7 +125,7 @@ def dichte(mat, ziel, samen, laeufe, strahl):
         return [terz(np.mean([np.abs(B @ (phi[:, i] * g[:, h])) ** 2 for i in range(6)], axis=0)) for h in range(2)]
 
     def mit_statistik(fa, sa, qa, ga, st):
-        fz, sz, stegz, gz = mg.ziehe(st)
+        fz, sz, stegz, gz = mg.ziehe(st)[:4]                                   # seit S206 gibt `ziehe` auch den Winkel
         return (np.concatenate([fa, fz]), np.concatenate([sa, sz]),
                 np.concatenate([form(qa, xs), stegz]), np.concatenate([ga, gz]))
 
@@ -299,7 +303,7 @@ def richtung(ordner):
 def ton(ordner, welche, winkel):
     ps = modul(P / "2026-11-15_S199_pruefstand_zupf.py", "pruefstand")
     ps.KOERPER = pathlib.Path(ordner)
-    if welche != "scherrer":
+    if welche not in ("scherrer", "datei"):                                    # `datei`: der Pruefstand, wie er ist
         lade = ps.lade_koerper
         zustand = {}
 

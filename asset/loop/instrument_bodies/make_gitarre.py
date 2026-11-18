@@ -1,5 +1,6 @@
 """Schreibt den gemessenen Koerper der klassischen Gitarre: `classical_guitar.lvinstbodyfit` (Beschreibung) und
-`classical_guitar.lvinstbody` (Stufe 34k-5, S199; KQ3 a, KQ23 a, KQ24 a, KQ25 a, KQ26 a; Schritt 4 nach KQ28 a, S201).
+`classical_guitar.lvinstbody` (Stufe 34k-5, S199; KQ3 a, KQ23 a, KQ24 a, KQ25 a, KQ26 a; Schritt 4 nach KQ28 a, S201;
+Schritte 7 und 8 nach KQ35-1 a und KQ35-2 a, S206).
 
 Aufruf (vom Projekt-Root; braucht numpy und scipy):
     python -B asset/loop/instrument_bodies/make_gitarre.py <qualified_selected_impulses.mat> [--ziel <ordner>]
@@ -14,7 +15,7 @@ guitars - bridge mobility“, Zenodo 4604577 (2021), CC BY 4.0 — Gitarre g34 (
 Weg nach Ducceschi, Russo & Webb, DAFx26 (2026) Par. 3.4, mit Abweichungen. Herleitung und Zahlen:
 `projects/apps/LumiViz/docs/modellierung/gezupfte-saite/2026-11-15_S199_gitarre_modalfit.md`.
 
-Der Fit in sechs Schritten (FIT_FASSUNG = `kFitFassung` in `InstrumentBody/Koerper.hpp`; hochzaehlen, wenn sich bei
+Der Fit in acht Schritten (FIT_FASSUNG = `kFitFassung` in `InstrumentBody/Koerper.hpp`; hochzaehlen, wenn sich bei
 gleicher Messung ein anderer Koerper ergaebe):
   1 Kurven       Accelerance A/F und Druck P/F je Schlagort aus 1 s, Exponentialfenster 3 1/s ab dem Schlag (wird von
                  der Daempfung abgezogen), die Kraft nur 5 ms um den Schlag
@@ -33,13 +34,34 @@ gleicher Messung ein anderer Koerper ergaebe):
                  Gewicht je Mode aus dem Fit an P/F fuer alle drei Schlagorte; darueber ein Betrag je Terzband mit
                  gezogenem Vorzeichen (Samen 1), so gestellt, dass der Terzpegel im Mittel ueber die Schlagorte stimmt
                  (KQ24 a). Die Grenze (500 Hz oder 1 kHz) nach dem kleineren Fehler ueber beide Hoerorte.
-  6 Statistik    der statistische Teil 5-20 kHz (KQ26 a), Groessen an der Messung: das Daempfungsgesetz
-                 alpha(f) = a f^2 + b f + c aus dem Abklingen der Mikrofone je Terzband 2,5-10 kHz (Schroeder-Kurve,
-                 -5 ... -25 dB); Dichte und Streuung am Steg aus den Polen 2,5-5 kHz wie `schaetze` in
-                 `InstrumentBody/Statistik.hpp`; der Betrag der Abstrahlung je Hoerort so gestellt, dass der Terzpegel
-                 6,3 / 8 / 10 kHz im Mittel stimmt - gerechnet mit den Moden, die `ziehe` daraus zieht (hier
-                 nachgebaut: SplitMix64, Rayleigh, Box-Muller; Samen 1). Die Messung traegt bis rund 10 kHz
-                 (Stoerabstand an den Mikrofonen 11-16 dB); darueber ist das Gesetz fortgesetzt, nicht geprueft.
+  6 Daempfung    das Daempfungsgesetz alpha(f) = a f^2 + b f + c aus dem Abklingen der Mikrofone je Terzband
+                 2,5-10 kHz (Schroeder-Kurve, -5 ... -25 dB) - fuer die gezogenen Moden (KQ26 a)
+  7 Dichte       (KQ35 a, S205/S206) ESPRIT findet ueber 2,2 kHz nur die Moden, die an den Messpunkten stark sind.
+                 2,2-5 kHz: die gefitteten Moden bleiben; dazu gezogene Moden bis zur Dichte der Gitarre vom
+                 Gitarrenbauer nach Elie u. a. 2011 Abb. 4b (0,027 / 0,026 / 0,0235 /Hz bis 3 / 4 / 5 kHz; Samen 1).
+                 Sind die Formwerte normalverteilt und ist nur der Anteil r der Moden gefunden, fehlen die mit
+                 |z| < t, P(|z| > t) = r; ihr Anteil an der Energie ist m = erf(t / sqrt 2) - t sqrt(2 / pi)
+                 exp(-t^2 / 2). Eine gezogene Mode ist eine zufaellig gewaehlte gefittete Mode desselben Bands (Form
+                 laengs der Stegeinlage und Abstrahlgewicht bleiben beisammen), ihr Formwert mal
+                 sqrt((m / (1 - r)) / ((1 - m) / r)), Vorzeichen gezogen, Daempfung nach dem Gesetz; die Phase des
+                 Abstrahlgewichts gezogen, sein Betrag je Band so gestellt, dass der Terzpegel Druck je Kraft wieder
+                 liegt wie mit den gefitteten Moden allein (hoechstens der Betrag der kopierten Mode).
+                 Ab 5 kHz der statistische Teil bis 20 kHz: Dichte 0,0215 /Hz (Elie 5-6 kHz, darueber fortgesetzt -
+                 Annahme), Streuung am Steg = die der gefitteten Moden 2,5-5 kHz mal sqrt(r / (1 - m)) (die mittlere
+                 Admittanz bleibt); der Betrag der Abstrahlung je Hoerort so gestellt, dass der Terzpegel 6,3 / 8 /
+                 10 kHz im Mittel stimmt - gerechnet mit den Moden, die `ziehe` daraus zieht (hier nachgebaut:
+                 SplitMix64, Rayleigh, Box-Muller; Samen 1). Die Messung traegt bis rund 10 kHz (Stoerabstand an den
+                 Mikrofonen 11-16 dB); darueber ist das Gesetz fortgesetzt, nicht geprueft.
+  8 Richtung     (KQ35-1 a, KQ35-2 a) die Messung gibt nur die Bewegung senkrecht zur Decke. Je Mode ein Winkel
+                 gegen die Senkrechte: |tan| = 10^((Yzy - Yzz) / 20) des Bands nach Elie 2012 Abb. 3.17 (Yamaha
+                 CG131S, 183 Hz - 4 kHz; unter 150 Hz die Werte von 150-300 Hz, ueber 4 kHz die von 1-4 kHz - Annahme),
+                 Vorzeichen gezogen (Samen 7). Dazu je Mode eine zweite, die den Steg nur parallel zur Decke bewegt
+                 (Winkel 90 Grad): auf halbem Weg zur naechsten Mode, Daempfung wie die Mode, ohne Abstrahlung,
+                 Formwert = kappa^(1/4) mal der senkrechte Formwert der Mode, kappa = 10^(dYyy / 10) -
+                 10^(2 dYzy / 10) des Bands - sie traegt, was Yyy ueber einem Winkel je Mode liegt. Zahl, Lage und
+                 Daempfung dieser Moden sind Annahme. Der statistische Teil traegt Winkel und Anteil fuer die
+                 gezogenen Moden. In der Datei steht je Mode der Formwert laengs ihrer Richtung (`bridge`) und der
+                 Winkel (`bridgeAngle`): senkrecht bridge cos, parallel bridge sin.
 """
 import hashlib
 import json
@@ -53,7 +75,8 @@ import scipy.io as sio
 import scipy.signal as sig
 from scipy.optimize import least_squares, minimize, nnls
 
-FIT_FASSUNG = 3
+FIT_FASSUNG = 4
+KOERPER_FASSUNG = 5                      # `kKoerperFassung` in InstrumentBody/Koerper.hpp
 GITARRE = 34
 MAT_SHA256 = "8a016fab0b3f086a49b2e740c2588fc61938fd09251aab5314413ea4bab72fb6"
 FS = 48000
@@ -66,6 +89,24 @@ VON, BIS = 60.0, 5000.0
 STAT_BIS = 20000.0                       # Ende des statistischen Teils
 STAT_BAND = (2500.0, 5000.0)             # woraus Dichte und Streuung am Steg geschaetzt werden
 STAT_SAMEN = 1
+# Schritt 7 (KQ35 a): Soll der Modendichte nach Elie u. a. 2011 Abb. 4b (Gitarre vom Gitarrenbauer; abgelesen in
+# Bericht 23 der Research-Werkbank): von, bis, Moden je Hz; ab 5 kHz der Wert von 5-6 kHz
+SOLL_DICHTE = [(2200.0, 3000.0, 0.027), (3000.0, 4000.0, 0.026), (4000.0, 5000.0, 0.0235)]
+SOLL_DICHTE_AB_5K = 0.0215
+FUELL_SAMEN = 1
+# Betrag der Abstrahlung der gezogenen Moden: je Auffuellband die Terzbaender (2,5; 3,15; 4; 5 kHz), an denen er haengt
+# - das Band 4 kHz reicht in zwei Auffuellbaender -, Schritt je Runde in dB mal FUELL_RELAX, hoechstens der Betrag der
+# kopierten Mode. S206 ueber acht Samen verglichen: mit ([0], [1, 2], [3]), 3 und ohne Deckel (Probe S205) liegt das
+# Band 4 kHz je Samen bis 8,6 dB ueber der Messung, so hoechstens 1,3 dB.
+FUELL_TERZ = ([0], [1, 2], [2, 3])
+FUELL_RELAX = 1.0
+FUELL_MAX = 1.0
+# Schritt 8 (KQ35-1 a): Elie 2012 Abb. 3.17 (Bericht 23 Tab. 2.2): von, bis, Yzy - Yzz, Yyy - Yzz in dB
+ELIE = [(150, 300, -14.2, -22.1), (300, 500, -18.3, -23.7), (500, 1000, -13.5, -10.4), (1000, 1500, -19.3, -19.2),
+        (1500, 2000, -9.5, -11.7), (2000, 2500, -13.5, -15.1), (2500, 3000, -16.9, -16.2), (3000, 3500, -12.9, -18.9),
+        (3500, 4000, -9.2, -14.2)]
+ELIE_GESAMT = (-12.9, -15.6)             # 1-4 kHz
+RICHTUNG_SAMEN = 7
 PAARE = [("bass", "bass"), ("bass", "treble"), ("center", "bass"), ("center", "treble"), ("treble", "bass"),
          ("treble", "treble")]
 SAITENABSTAND = 0.0116
@@ -446,10 +487,13 @@ class Zufall:
 
 
 def ziehe(st):
-    """Wie `lumi::koerper::ziehe`: f, sigma, Formwerte (Moden x Saiten), Gewichte (Moden x Hoerorte)."""
+    """Wie `lumi::koerper::ziehe`: f, sigma, Formwerte laengs der Richtung (Moden x Saiten), Gewichte (Moden x
+    Hoerorte), Winkel in Grad. Mit `bridgeAngle` traegt jede Mode den Winkel mit gezogenem Vorzeichen; mit
+    `parallelFactor` kommt je Mode eine zweite nur parallel zur Decke dazu (KQ35-1 a, KQ35-2 a)."""
     z = Zufall(st["seed"])
     a, b, c = st["damping"]
-    f, fs_, ss_, steg, G = st["fromHz"], [], [], [], []
+    winkel0, anteil = st.get("bridgeAngle", 0.0), st.get("parallelFactor", 0.0)
+    f, fs_, ss_, steg, G, wi = st["fromHz"], [], [], [], [], []
     while True:
         f += z.rayleigh() / (st["density"] + st["rise"] * (f - st["fromHz"]))
         if f >= st["toHz"]:
@@ -462,7 +506,16 @@ def ziehe(st):
             phase = 2.0 * math.pi * z.gleich()
             zeile.append(complex(betrag * math.cos(phase), betrag * math.sin(phase)))
         G.append(zeile)
-    return np.array(fs_), np.array(ss_), np.array(steg), np.array(G)
+        wi.append(0.0 if winkel0 == 0.0 else (winkel0 if z.gleich() < 0.5 else -winkel0))
+    fs_, ss_, steg, G, wi = np.array(fs_), np.array(ss_), np.array(steg), np.array(G), np.array(wi)
+    if not anteil > 0.0 or len(fs_) < 2:
+        return fs_, ss_, steg, G, wi
+    n = len(fs_)
+    fy = 0.5 * (fs_[:-1] + fs_[1:])
+    alle = lambda eigen, dazu: np.concatenate([eigen, dazu])[np.argsort(np.concatenate([2 * np.arange(n), 2 * np.arange(n - 1) + 1]))]  # noqa: E731
+    return (alle(fs_, fy), alle(ss_, ss_[:-1] * fy / fs_[:-1]),                 # derselbe Verlustfaktor wie die Mode
+            alle(steg, anteil * steg[:-1] * np.cos(np.radians(wi[:-1]))[:, None]),
+            alle(G, np.zeros_like(G[:-1])), alle(wi, np.full(n - 1, 90.0)))
 
 
 def abklingen(x, ip, mitte):
@@ -477,8 +530,9 @@ def abklingen(x, ip, mitte):
     return float(-np.polyfit((np.arange(n) / FS)[:ende][m], db[:ende][m], 1)[0] / (10 * np.log10(np.e)))
 
 
-def statistik(daten, hz, H, f, s, steg, G):
-    mitten = [1000 * 2 ** (k / 3) for k in range(4, 11)]                 # 2,5 ... 10 kHz
+def daempfungsgesetz(daten):
+    """Schritt 6: alpha(f) = a f^2 + b f + c aus dem Abklingen an den Mikrofonen je Terzband 2,5 ... 10 kHz."""
+    mitten = [1000 * 2 ** (k / 3) for k in range(4, 11)]
     alpha = []
     for m in mitten:
         werte = []
@@ -488,53 +542,218 @@ def statistik(daten, hz, H, f, s, steg, G):
         alpha.append(float(np.median(werte)))
     fm, al = np.array(mitten), np.array(alpha)
     gesetz = nnls(np.stack([fm ** 2, fm, np.ones(len(fm))], axis=1) / al[:, None], np.ones(len(fm)))[0]
+    return mitten, alpha, [float(v) for v in gesetz]
 
-    # Dichte und Streuung am Steg wie `schaetze`: zehn Stuecke, eine Gerade durch die Mitten
-    von, bis = STAT_BAND
-    band = (f >= von) & (f < bis)
-    breite = (bis - von) / 10
-    x = von + (np.arange(10) + 0.5) * breite
-    y = np.array([np.sum((f >= von + i * breite) & (f < von + (i + 1) * breite)) for i in range(10)]) / breite
-    steigung, achse = np.polyfit(x, y, 1)
-    st = {"fromHz": BIS, "toHz": STAT_BIS,
-          "density": float(achse + steigung * BIS if steigung > 0 else y.mean()), "rise": float(max(0.0, steigung)),
-          "bridgeSpread": [float(v) for v in np.sqrt(np.mean(steg[band] ** 2, axis=0))],
-          "radiation": [float(v) for v in np.sqrt(np.mean(np.abs(G[band]) ** 2, axis=0))],
-          "seed": STAT_SAMEN, "bandFromHz": von, "bandToHz": bis, "bandModes": int(band.sum()),
-          "damping": [float(v) for v in gesetz]}
 
-    # Betrag der Abstrahlung: der Terzpegel 6,3 / 8 / 10 kHz im Mittel wie gemessen
-    ziel = mitten[4:]
-    sel = (hz >= ziel[0] / 2 ** (1 / 6)) & (hz < ziel[-1] * 2 ** (1 / 6))
+def abgeschnitten(r):
+    """t mit P(|z| > t) = r und der Energieanteil m der Moden mit |z| < t (z normalverteilt)."""
+    lo, hi = 0.0, 8.0
+    for _ in range(60):
+        t = 0.5 * (lo + hi)
+        lo, hi = (t, hi) if math.erfc(t / math.sqrt(2)) > r else (lo, t)
+    return t, math.erf(t / math.sqrt(2)) - t * math.sqrt(2 / math.pi) * math.exp(-t * t / 2)
+
+
+def form(q, x):
+    """phi(x) = a + b x + c x^2 je Mode (Zeilen von q) an den Orten x."""
+    return q[:, 0:1] + q[:, 1:2] * x[None, :] + q[:, 2:3] * x[None, :] ** 2
+
+
+def stegfehler(hz, mob, fa, sa, qa, von, bis):
+    """rms von 20 lg |Modell / Messung| ueber die sechs Stegkurven im Band, mit zwei Resttermen je Kurve."""
+    sel = (hz >= von) & (hz < bis)
     w = 2 * np.pi * hz[sel]
+    B = basis(hz[sel], fa, sa)
+    rest = np.stack([1 / (1j * w), 1j * w * 1e-8], axis=1)
+    xh = np.array([X_SCHLAG[p[0]] for p in PAARE])
+    xa = np.array([X_AUFN[p[1]] for p in PAARE])
+    aus = []
+    for q, y in enumerate(mob):
+        yf = B @ (form(qa, xh[q:q + 1])[:, 0] * form(qa, xa[q:q + 1])[:, 0])
+        gew = 1.0 / np.maximum(np.abs(y[sel]), 1e-6)
+        A = np.concatenate([(rest * gew[:, None]).real, (rest * gew[:, None]).imag])
+        r = np.concatenate([((y[sel] - yf) * gew).real, ((y[sel] - yf) * gew).imag])
+        yf = yf + rest @ np.linalg.lstsq(A, r, rcond=None)[0]
+        aus.append(20 * np.log10(np.abs(yf) / np.abs(y[sel])))
+    return float(np.sqrt(np.mean(np.concatenate(aus) ** 2)))
+
+
+def elie_band(x):
+    """Yzy - Yzz, Yyy - Yzz in dB fuer eine Mode bei x Hz."""
+    return next(((a, b) for lo, hi, a, b in ELIE if lo <= x < hi), ELIE[0][2:] if x < 150 else ELIE_GESAMT)
+
+
+def parallel_anteil(dzy, dyy):
+    """Formwert der Mode nur parallel zur Decke gegen den senkrechten Formwert ihrer Mode (KQ35-1 a)."""
+    return max(0.0, 10 ** (dyy / 10) - 10 ** (2 * dzy / 10)) ** 0.25
+
+
+def dichte_und_statistik(hz, H, mob, f, s, abc, G, mitten, alpha, gesetz):
+    """Schritt 7: fuellt 2,2-5 kHz auf und stellt den statistischen Teil. -> f, sigma, abc, G je Mode (gefittete
+    zuerst, dann die gezogenen), der statistische Teil, die Pruefzahlen."""
+    xs = np.array(X_SAITEN)
+    steg = form(abc, xs)
+    w = 2 * np.pi * np.maximum(hz, 1e-9)
+    selp = (hz >= mitten[0] / 2 ** (1 / 6)) & (hz < mitten[-1] * 2 ** (1 / 6))
 
     def terz(p):
-        return np.array([10 * np.log10(np.mean(p[(hz[sel] >= m / 2 ** (1 / 6)) & (hz[sel] < m * 2 ** (1 / 6))])) for m in ziel])
+        return np.array([10 * np.log10(np.mean(p[(hz[selp] >= m / 2 ** (1 / 6)) & (hz[selp] < m * 2 ** (1 / 6))])) for m in mitten])
 
-    mess = [terz(np.mean([np.abs(H[(o, mik)][sel]) ** 2 for o in ORTE], axis=0)) for _, mik in MIKROFONE]
+    mess = [terz(np.mean([np.abs(H[(o, mik)][selp]) ** 2 for o in ORTE], axis=0)) for _, mik in MIKROFONE]
 
-    def modell():
-        fz, sz, stegz, gz = ziehe(st)
-        fa, sa = np.concatenate([f, fz]), np.concatenate([s, sz])
-        B = basis(hz[sel], fa, sa) * (1j * w[:, None])
-        phi, g = np.concatenate([steg, stegz]), np.concatenate([G, gz])
-        return [terz(np.mean([np.abs(B @ (phi[:, k] * g[:, h])) ** 2 for k in range(len(TASTEN))], axis=0))
-                for h in range(len(MIKROFONE))], len(fz), fz
+    def pegel(fa, sa, phi, g):
+        B = basis(hz[selp], fa, sa) * (1j * w[selp, None])
+        return [terz(np.mean([np.abs(B @ (phi[:, i] * g[:, h])) ** 2 for i in range(len(TASTEN))], axis=0))
+                for h in range(len(MIKROFONE))]
 
-    for _ in range(8):
-        syn, _, _ = modell()
+    def mit_statistik(fa, sa, qa, ga, st):
+        fz, sz, stegz, gz, wz = ziehe(st)
+        return (np.concatenate([fa, fz]), np.concatenate([sa, sz]),
+                np.concatenate([form(qa, xs), stegz * np.cos(np.radians(wz))[:, None]]), np.concatenate([ga, gz]))
+
+    baender = (("1000-2200", 1000, 2200), ("2200-3000", 2200, 3000), ("3000-4000", 3000, 4000), ("4000-5000", 4000, 5000),
+               ("2500-5000", 2500, 5000))
+    fehler_vorher = {n: round(stegfehler(hz, mob, f, s, abc, lo, hi), 2) for n, lo, hi in baender}
+
+    # 2,2-5 kHz: je Band der Anteil r der gefundenen Moden und der Formwert der fehlenden
+    plan = []
+    for lo, hi, soll in SOLL_DICHTE:
+        im = np.where((f >= lo) & (f < hi))[0]
+        r = len(im) / (soll * (hi - lo))
+        t, m = abgeschnitten(r)
+        plan.append((lo, hi, soll, im, r, m, (m / (1 - r)) / ((1 - m) / r)))
+    z = Zufall(FUELL_SAMEN)
+    fn, sn, qn, gn, bn = [], [], [], [], []
+    for nr, (lo, hi, soll, im, r, m, rho) in enumerate(plan):
+        x = lo
+        zus = soll - len(im) / (hi - lo)
+        while True:
+            x += z.rayleigh() / zus
+            if x >= hi:
+                break
+            j = im[int(z.gleich() * len(im)) % len(im)]
+            vz = 1.0 if z.gleich() < 0.5 else -1.0
+            fn.append(x)
+            sn.append(0.5 * (gesetz[0] * x * x + gesetz[1] * x + gesetz[2]))
+            qn.append(abc[j] * vz * math.sqrt(rho))
+            ph = 2 * math.pi * z.gleich()
+            gn.append(G[j] * complex(math.cos(ph), math.sin(ph)))
+            bn.append(nr)
+    fa, sa = np.concatenate([f, fn]), np.concatenate([s, sn])
+    qa, gn, bn = np.concatenate([abc, np.array(qn)]), np.array(gn), np.array(bn)
+    # der Betrag der Abstrahlung der gezogenen Moden je Band: der Terzpegel wie mit den gefitteten allein
+    nur = pegel(f, s, steg, G)
+    skala = np.ones(len(plan))
+    for _ in range(12):
+        syn = pegel(fa, sa, form(qa, xs), np.concatenate([G, gn * skala[bn][:, None]]))
+        ab = np.mean([syn[h] - nur[h] for h in range(len(MIKROFONE))], axis=0)
+        for b, tb in enumerate(FUELL_TERZ):
+            skala[b] = min(FUELL_MAX, max(0.02, skala[b] * 10 ** (-FUELL_RELAX * np.mean(ab[tb]) / 20)))
+    ga = np.concatenate([G, gn * skala[bn][:, None]])
+
+    # ab 5 kHz: Dichte nach Elie, Streuung am Steg so, dass die mittlere Admittanz bleibt
+    von, bis = STAT_BAND
+    band = (f >= von) & (f < bis)
+    r_st = band.sum() / sum(soll * (min(hi, bis) - max(lo, von)) for lo, hi, soll in SOLL_DICHTE)
+    _, m_st = abgeschnitten(r_st)
+    faktor = math.sqrt(r_st / (1 - m_st))
+    winkel = math.degrees(math.atan(10 ** (ELIE_GESAMT[0] / 20)))
+    st = {"fromHz": BIS, "toHz": STAT_BIS, "density": SOLL_DICHTE_AB_5K, "rise": 0.0,
+          # in der Datei der Formwert laengs der Richtung: senkrecht ist er um cos kleiner
+          "bridgeSpread": [float(v) for v in np.sqrt(np.mean(steg[band] ** 2, axis=0)) * faktor / math.cos(math.radians(winkel))],
+          "bridgeAngle": winkel, "parallelFactor": parallel_anteil(*ELIE_GESAMT),
+          "radiation": [float(v) for v in np.sqrt(np.mean(np.abs(G[band]) ** 2, axis=0))],
+          "seed": STAT_SAMEN, "bandFromHz": von, "bandToHz": bis, "bandModes": int(band.sum()),
+          "damping": list(gesetz)}
+    ziel_b = slice(4, 7)                                                       # 6,3 / 8 / 10 kHz
+    for _ in range(12):
+        syn = pegel(*mit_statistik(fa, sa, qa, ga, st))
         for h in range(len(MIKROFONE)):
-            st["radiation"][h] *= float(10 ** (np.mean(mess[h] - syn[h]) / 20))
-    syn, zahl, fz = modell()
-    pruefung = {"decayBandsHz": [round(m) for m in mitten], "decayAlphaMeasured": [round(a, 1) for a in alpha],
-                "decayAlphaLaw": [round(float(gesetz[0] * m * m + gesetz[1] * m + gesetz[2]), 1) for m in mitten],
-                "levelBandsHz": [round(m) for m in ziel],
-                "levelErrorDb": {name: [round(float(v), 2) for v in syn[h] - mess[h]] for h, (name, _) in enumerate(MIKROFONE)},
-                "drawnModes": zahl, "drawnFirstHz": [float(v) for v in fz[:3]], "drawnLastHz": float(fz[-1]),
-                "note": "level: third-octave level of pressure per force, model (mean over the six strings) minus "
-                        "measured (mean over the three strikes); alpha in 1/s, energy ~ exp(-alpha t); drawnFirstHz "
-                        "and drawnLastHz are the modes `ziehe` of InstrumentBody draws from the statistical part"}
-    return st, pruefung
+            st["radiation"][h] *= float(10 ** (np.mean((mess[h] - syn[h])[ziel_b]) / 20))
+    syn = pegel(*mit_statistik(fa, sa, qa, ga, st))
+    fz = ziehe(st)[0]
+    pruefung = {
+        "decayBandsHz": [round(m) for m in mitten], "decayAlphaMeasured": [round(a, 1) for a in alpha],
+        "decayAlphaLaw": [round(float(gesetz[0] * m * m + gesetz[1] * m + gesetz[2]), 1) for m in mitten],
+        "fill": {"seed": FUELL_SAMEN,
+                 "bands": [{"fromHz": lo, "toHz": hi, "targetPerHz": soll, "fitted": int(len(im)), "drawn": int((bn == nr).sum()),
+                            "foundShare": round(r, 3), "missingEnergyShare": round(m, 4),
+                            "shapeSquaredDrawnDb": round(10 * math.log10(rho), 1),
+                            "radiationDrawnDb": round(20 * math.log10(skala[nr]), 1)}
+                           for nr, (lo, hi, soll, im, r, m, rho) in enumerate(plan)],
+                 "note": "drawn: modes added up to the target density; shapeSquaredDrawnDb: squared bridge value of a drawn "
+                         "mode against the fitted mode it copies; radiationDrawnDb: magnitude of its radiation weight "
+                         "against that mode (at most 0 dB), set so that the third-octave level stays as with the fitted "
+                         "modes alone"},
+        "bridgeErrorDb": {"fitted": fehler_vorher,
+                          "filled": {n: round(stegfehler(hz, mob, fa, sa, qa, lo, hi), 2) for n, lo, hi in baender},
+                          "note": "rms of 20 lg |model / measured| over the six bridge mobilities with two residual terms "
+                                  "per curve; fitted modes alone and with the drawn modes"},
+        "bridgeSpreadFactor": round(faktor, 3),
+        "levelBandsHz": [round(m) for m in mitten],
+        "levelErrorDb": {name: [round(float(v), 2) for v in syn[h] - mess[h]] for h, (name, _) in enumerate(MIKROFONE)},
+        "drawnModes": int(len(fz)), "drawnFirstHz": [float(v) for v in fz[:3]], "drawnLastHz": float(fz[-1]),
+        "note": "level: third-octave level of pressure per force, model (mean over the six strings, all modes) minus "
+                "measured (mean over the three strikes); the radiation of the statistical part is set on the bands "
+                "6.3 / 8 / 10 kHz; alpha in 1/s, energy ~ exp(-alpha t); drawnModes, drawnFirstHz and drawnLastHz are "
+                "the modes `ziehe` of InstrumentBody draws from the statistical part, including the in-plane modes"}
+    return fa, sa, qa, ga, len(f), st, pruefung
+
+
+def richtung(fa, sa, qa, ga, gefittet, st):
+    """Schritt 8: je Mode der Winkel und die Moden nur parallel zur Decke. -> die Moden der Datei (aufsteigend), die
+    Pruefzahlen. `gefittet`: so viele Moden am Anfang sind gefittet, die uebrigen gezogen."""
+    xs = np.array(X_SAITEN)
+    ordnung = np.argsort(fa, kind="stable")
+    f, s, senkrecht, g = fa[ordnung], sa[ordnung], form(qa, xs)[ordnung], ga[ordnung]
+    herkunft = np.where(ordnung < gefittet, "fitted", "drawn")
+    eta = s / (np.pi * f)
+    z = Zufall(RICHTUNG_SAMEN)
+    tan = np.array([(1.0 if z.gleich() < 0.5 else -1.0) * 10 ** (elie_band(x)[0] / 20) for x in f])
+    winkel = np.degrees(np.arctan(tan))
+    moden = [{"f": float(f[j]), "eta": float(eta[j]), "airShare": 0.0, "materialShares": [],
+              "bridge": [float(v) for v in senkrecht[j] / math.cos(math.radians(winkel[j]))], "bridgeAngle": float(winkel[j]),
+              "radiation": [[float(v.real), float(v.imag)] for v in g[j]]} for j in range(len(f))]
+    # je Mode eine zweite nur parallel zur Decke, auf halbem Weg zur naechsten; die letzte gegen die erste gezogene
+    # Mode des statistischen Teils, wenn sie noch im Fenster liegt
+    naechste = np.append(f[1:], ziehe(st)[0][0])
+    parallel = 0
+    for j in range(len(f)):
+        fy = 0.5 * (f[j] + naechste[j])
+        if fy >= BIS:
+            continue
+        moden.append({"f": float(fy), "eta": float(eta[j]), "airShare": 0.0, "materialShares": [],
+                      "bridge": [float(v) for v in parallel_anteil(*elie_band(f[j])) * senkrecht[j]], "bridgeAngle": 90.0,
+                      "radiation": [[0.0, 0.0] for _ in MIKROFONE]})
+        parallel += 1
+    moden.sort(key=lambda m: m["f"])
+
+    # Pruefung an der Saite 1 (E4) gegen Elie: Yzy - Yzz und Yyy - Yzz je Band, alle Moden (auch die gezogenen)
+    fz, sz, stegz, _, wz = ziehe(st)
+    fn = np.concatenate([[m["f"] for m in moden], fz])
+    en = np.concatenate([[m["eta"] for m in moden], sz / (np.pi * fz)])
+    phi = np.concatenate([[m["bridge"][-1] for m in moden], stegz[:, -1]])
+    wi = np.radians(np.concatenate([[m["bridgeAngle"] for m in moden], wz]))
+    pz, py = phi * np.cos(wi), phi * np.sin(wi)
+    hz = np.arange(150.0, 4000.0, 0.5)
+    w = 2 * np.pi * hz[:, None]
+    wn = 2 * np.pi * fn[None, :]
+    kern = 1j * w / (wn ** 2 - w ** 2 + 1j * en[None, :] * wn * w)
+    Yzz, Yzy, Yyy = kern @ (pz * pz), kern @ (pz * py), kern @ (py * py)
+    e = lambda y, m: 10 * np.log10(np.mean(np.abs(y[m]) ** 2))                # noqa: E731
+    zeilen = []
+    for lo, hi, dzy, dyy in ELIE + [(1000, 4000) + ELIE_GESAMT]:
+        m = (hz >= lo) & (hz < hi)
+        zeilen.append({"fromHz": lo, "toHz": hi, "elieDb": [dzy, dyy],
+                       "bodyDb": [round(float(e(Yzy, m) - e(Yzz, m)), 1), round(float(e(Yyy, m) - e(Yzz, m)), 1)]})
+    pruefung = {"modesFitted": int((herkunft == "fitted").sum()), "modesDrawn": int((herkunft == "drawn").sum()),
+                "modesInPlane": parallel, "seed": RICHTUNG_SAMEN,
+                "statisticalAngleDeg": round(st["bridgeAngle"], 3), "statisticalParallelFactor": round(st["parallelFactor"], 4),
+                "string1Bands": zeilen,
+                "note": "string1Bands: band levels of the cross term and of the in-plane admittance against the normal "
+                        "admittance at string 1 (E4), in dB: [Yzy - Yzz, Yyy - Yzz]; elieDb after Elie 2012 Fig. 3.17 "
+                        "(Yamaha CG131S), bodyDb from all modes of this body including the drawn ones"}
+    return moden, pruefung
 
 
 # ---------------------------------------------------------------- Dateien
@@ -578,12 +797,38 @@ def beschreibung(pruefung):
                 "statistical": f"statistical part {BIS:.0f}-{STAT_BIS:.0f} Hz (KQ26 a), quantities from the measurement: "
                                "damping law alpha(f) = a f^2 + b f + c from the decay at the microphones per "
                                "third-octave band 2.5-10 kHz (Schroeder curve, -5 to -25 dB); density and bridge "
-                               "spread from the poles 2.5-5 kHz as for the bodies from a plan; radiation magnitude "
+                               "spread see `density`; radiation magnitude "
                                "per listening point set so that the third-octave level at 6.3 / 8 / 10 kHz matches "
                                "on average. The measurement carries up to about 10 kHz (signal to noise at the "
                                "microphones 11-16 dB at 10 kHz, below 10 dB above); above that the law is continued "
                                "and not checked. Only the product of bridge value and radiation weight is determined "
-                               "by the measurement there, not their split."},
+                               "by the measurement there, not their split.",
+                "density": "KQ35 a: ESPRIT finds above 2.2 kHz only the modes that are strong at the measuring points. "
+                           "2.2-5 kHz: the fitted modes stay; modes are drawn (seed 1) up to the modal density of the "
+                           "luthier's guitar in Elie, Gautier & David, Acta Acustica united with Acustica 97 (2011) "
+                           "Fig. 4b (0.027 / 0.026 / 0.0235 per Hz up to 3 / 4 / 5 kHz, read off the figure). A drawn "
+                           "mode copies a fitted mode of its band (shape along the saddle and radiation weight stay "
+                           "together) with a smaller bridge value: with normally distributed shape values and the "
+                           "share r of the modes found, the missing ones are those with |z| < t, P(|z| > t) = r; "
+                           "damping after the law, phase of the radiation drawn, its magnitude per band set so that "
+                           "the third-octave level of pressure per force stays as with the fitted modes alone (at most "
+                           "the magnitude of the copied mode). From "
+                           "5 kHz the statistical part with 0.0215 per Hz (Elie 5-6 kHz, continued above - "
+                           "assumption) and the bridge spread of the fitted modes 2.5-5 kHz times sqrt(r / (1 - m)) "
+                           "(the mean admittance stays).",
+                "direction": "KQ35-1 a, KQ35-2 a: the measurement gives the motion normal to the top plate only. Per "
+                             "mode an angle against the normal with |tan| = 10^((Yzy - Yzz) / 20) of its band after "
+                             "B. Elie, thesis Universite du Maine 2012, Fig. 3.17 (Yamaha CG131S at the E4 string, "
+                             "183 Hz - 4 kHz; below 150 Hz the values of 150-300 Hz, above 4 kHz those of 1-4 kHz - "
+                             "assumption), sign drawn (seed 7). In addition per mode a second one that moves the bridge "
+                             "in the plane of the top only (angle 90): halfway to the next mode, damping of the mode, "
+                             "no radiation, bridge value = kappa^(1/4) times the normal bridge value of the mode with "
+                             "kappa = 10^(dYyy / 10) - 10^(2 dYzy / 10) of the band - it carries what Yyy exceeds one "
+                             "angle per mode. Number, place and damping of these modes are assumptions. The "
+                             "statistical part carries the angle and the factor of 1-4 kHz for the drawn modes. In "
+                             "the body file `bridge` is the value along the direction of `bridgeAngle`.",
+                "directionBandsDb": [{"fromHz": lo, "toHz": hi, "YzyMinusYzz": a, "YyyMinusYzz": b} for lo, hi, a, b in ELIE]
+                                    + [{"fromHz": 1000, "toHz": 4000, "YzyMinusYzz": ELIE_GESAMT[0], "YyyMinusYzz": ELIE_GESAMT[1]}]},
         "bridgePoints": [{"key": t, "x": round(x, 5),
                           "source": f"open string {n}: phi at its place on the saddle from the fitted shape; the key is "
                                     "the open string (fretted notes use the played string)"}
@@ -593,30 +838,31 @@ def beschreibung(pruefung):
                             {"name": "right", "source": "microphone 'treble': 10 cm above the top plate, 10 cm from the "
                                                         "bridge centre towards the treble side - near field"}],
         "assumptions": ["scale of the guitar 662 mm; the strings after Woodhouse et al. 2012 are for 650 mm",
-                        "only the motion normal to the top plate is measured; the second direction at the bridge is an assumption elsewhere",
+                        "only the motion normal to the top plate is measured on this guitar; the direction at the bridge "
+                        "follows band levels of another guitar (Elie 2012), the in-plane modes are assumed in number, "
+                        "place and damping",
+                        "the modal density above 2.2 kHz follows another guitar (Elie 2011); the modes drawn for it are not measured",
                         "the listening points lie in the near field (10 cm); the other bodies listen at about 1 m",
                         "left = bass side, right = treble side: assigned"],
         "check": pruefung,
     }
 
 
-def koerper(f, s, a, b, c, G, st, fit_datei, abdruck, sekunden):
-    moden = []
-    for j in range(len(f)):
-        moden.append({"f": float(f[j]), "eta": float(2 * s[j] / (2 * np.pi * f[j])), "airShare": 0.0, "materialShares": [],
-                      "bridge": [float(a[j] + b[j] * x + c[j] * x * x) for x in X_SAITEN],
-                      "radiation": [[float(g[j].real), float(g[j].imag)] for g in G]})
+def koerper(moden, st, fit_datei, abdruck, sekunden):
     return {
         "format": "lumiviz-instrument-body",
-        "version": 4,
+        "version": KOERPER_FASSUNG,
         "title": "Classical guitar",
         "description": "Measured body: modal fit to guitar g34 of the Mores archive (Manuel Contreras, Madrid 1971, "
                        "cedar / Rio palisander, scale 662 mm). Six bridge points, one per open string; two listening "
                        "points 10 cm above the top plate (near field); above 5 kHz a statistical part fitted to the "
-                       "measurement. See classical_guitar.lvinstbodyfit.",
-        "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass 1/value^2); "
-                 "radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (fitted to "
-                 "the measured pressure per force)",
+                       "measurement. Above 2.2 kHz modes are drawn up to the modal density after Elie 2011; the "
+                       "direction at the bridge and the in-plane modes follow Elie 2012. See classical_guitar.lvinstbodyfit.",
+        "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point along the direction of bridgeAngle, "
+                 "1/sqrt(kg) (modal mass 1/value^2); bridgeAngle: direction in which the mode moves the bridge, degrees "
+                 "from the normal of the top plate, across the strings (normal component bridge * cos, in-plane "
+                 "component bridge * sin; 90 = in-plane only); radiation: complex pressure per modal acceleration at "
+                 "the listening point, sqrt(kg)/m^2 (fitted to the measured pressure per force)",
         "origin": "measurement",
         "plan": {"file": "", "fingerprint": ""},
         "measurement": {"file": fit_datei, "fingerprint": abdruck, "fitVersion": FIT_FASSUNG},
@@ -633,7 +879,8 @@ def koerper(f, s, a, b, c, G, st, fit_datei, abdruck, sekunden):
         "materials": [],
         "modes": moden,
         "statistical": {"fromHz": st["fromHz"], "toHz": st["toHz"], "density": st["density"], "rise": st["rise"],
-                        "bridgeSpread": st["bridgeSpread"], "radiation": st["radiation"], "seed": str(st["seed"]),
+                        "bridgeSpread": st["bridgeSpread"], "bridgeAngle": st["bridgeAngle"],
+                        "parallelFactor": st["parallelFactor"], "radiation": st["radiation"], "seed": str(st["seed"]),
                         "bandFromHz": st["bandFromHz"], "bandToHz": st["bandToHz"], "bandModes": st["bandModes"],
                         "materialShares": [],
                         "damping": {"a": st["damping"][0], "b": st["damping"][1], "c": st["damping"][2]}},
@@ -669,13 +916,15 @@ if __name__ == "__main__":
     a, b, c, fits_allein = stegfit(hz, mob, f, s, sel, R, rest)
     a, b, c, fits_steg, verlauf = gemeinsam(hz, H, mob, f, s, sel, a, b, c)
     grenze, G, strahl = abstrahlung(hz, H, f, s, a, b, c, sel)
-    steg = np.array([a + b * x + c * x * x for x in X_SAITEN]).T
-    st, st_pruefung = statistik(daten, hz, H, f, s, steg, np.array(G).T)
+    mitten, alpha, gesetz = daempfungsgesetz(daten)
+    fa, sa, qa, ga, gefittet, st, st_pruefung = dichte_und_statistik(hz, H, mob, f, s, np.stack([a, b, c], axis=1),
+                                                                     np.array(G).T, mitten, alpha, gesetz)
+    moden, richtung_pruefung = richtung(fa, sa, qa, ga, gefittet, st)
     bereiche = (("60-400", 60, 400), ("400-1000", 400, 1000), ("1000-2500", 1000, 2500), ("2500-5000", 2500, 5000))
     m6 = (f > 85) & (f < 240)
     phi6 = a + b * X_SAITEN[0] + c * X_SAITEN[0] ** 2
     pruefung = {
-        "modes": int(len(f)), "modesAbove1kHz": int((f > 1000).sum()),
+        "modes": len(moden), "modesFitted": int(len(f)), "modesAbove1kHz": int((f > 1000).sum()),
         "bridgeErrorDb": {"free": {n: round(fehler(hz, sel, mob, fits_frei, lo, hi), 2) for n, lo, hi in bereiche},
                           "normalModesBridgeOnly": {n: round(fehler(hz, sel, mob, fits_allein, lo, hi), 2) for n, lo, hi in bereiche},
                           "normalModes": {n: round(fehler(hz, sel, mob, fits_steg, lo, hi), 2) for n, lo, hi in bereiche},
@@ -690,14 +939,16 @@ if __name__ == "__main__":
         "radiation": {"splitHz": grenze, "thirdOctaveErrorDb": strahl,
                       "note": "rms error of the third-octave level over bands and the three strikes, per split frequency"},
         "statistical": st_pruefung,
+        "direction": richtung_pruefung,
     }
     ziel.mkdir(parents=True, exist_ok=True)
     fit_datei = ziel / "classical_guitar.lvinstbodyfit"
     inhalt = (json.dumps(beschreibung(pruefung), indent=1) + "\n").encode("utf-8")
     fit_datei.write_bytes(inhalt)
-    k = koerper(f, s, a, b, c, G, st, fit_datei.name, abdruck_von(inhalt), time.time() - start)
+    k = koerper(moden, st, fit_datei.name, abdruck_von(inhalt), time.time() - start)
     (ziel / "classical_guitar.lvinstbody").write_bytes((json.dumps(k, indent=4) + "\n").encode("utf-8"))
     print(json.dumps(pruefung, indent=1))
-    print(f"{fit_datei} und classical_guitar.lvinstbody: {len(f)} Moden bis {BIS:.0f} Hz, Grenze der Abstrahlung "
+    print(f"{fit_datei} und classical_guitar.lvinstbody: {len(moden)} Moden bis {BIS:.0f} Hz ({len(f)} gefittet, "
+          f"{richtung_pruefung['modesDrawn']} gezogen, {richtung_pruefung['modesInPlane']} nur parallel zur Decke), Grenze der Abstrahlung "
           f"{grenze:.0f} Hz, statistisch bis {STAT_BIS:.0f} Hz ({st_pruefung['drawnModes']} gezogene Moden), "
           f"{time.time() - start:.0f} s")

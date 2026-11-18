@@ -68,6 +68,7 @@ kp::Koerper kleinerKoerper()
         m.werkstoffAnteil = {1.0 / 3.0, 2.0 / 3.0};
         m.amStegpunkt = {1.0 / 7.0, -2.5, 3.0e-9};
         m.abstrahlung = {{0.1, -0.2}, {1.0 / 3.0, 2.0e-12}};
+        m.stegWinkelGrad = i == 0 ? -12.0 - 1.0 / 3.0 : 90.0;  // KQ35-2 a
         k.moden.push_back(m);
     }
     k.statistik.vonHz = 5000.0;
@@ -76,6 +77,8 @@ kp::Koerper kleinerKoerper()
     k.statistik.anstieg = 2.1e-5;
     k.statistik.stegStreuung = {0.1, 0.2, 0.3};
     k.statistik.hoerBetrag = {0.0067, 0.0069};
+    k.statistik.stegWinkelGrad = 12.0 + 2.0 / 3.0;  // KQ35-2 a
+    k.statistik.parallelAnteil = 0.4 + 1.0 / 300.0;  // KQ35-1 a
     k.statistik.samen = 0x8000000000000005ull;  // passt nicht in eine JSON-Zahl
     k.statistik.bandVonHz = 2500.0;
     k.statistik.bandBisHz = 5000.0;
@@ -136,6 +139,45 @@ TEST_CASE("Loop Koerper 31c-5d Datei")
     kp::Koerper zurueck;
     REQUIRE(ausJson(json, zurueck));
     CHECK(zurueck == k);
+
+    // KQ35-2 a (Fassung 5): die Richtung am Steg steht immer in der Datei, je Mode und im statistischen Teil
+    {
+        const QJsonObject stJson = json.value(QStringLiteral("statistical")).toObject();
+        CHECK(stJson.contains(QStringLiteral("bridgeAngle")));
+        CHECK(stJson.contains(QStringLiteral("parallelFactor")));
+        QJsonArray ohne;
+        for (const QJsonValue& e : json.value(QStringLiteral("modes")).toArray())
+        {
+            QJsonObject o = e.toObject();
+            CHECK(o.contains(QStringLiteral("bridgeAngle")));
+            o.remove(QStringLiteral("bridgeAngle"));
+            ohne.append(o);
+        }
+        // Fassung 4: ohne die Felder — jede Mode senkrecht, keine Moden parallel zur Decke
+        QJsonObject vier = json;
+        vier[QStringLiteral("version")] = 4;
+        vier[QStringLiteral("modes")] = ohne;
+        QJsonObject stOhne = stJson;
+        stOhne.remove(QStringLiteral("bridgeAngle"));
+        stOhne.remove(QStringLiteral("parallelFactor"));
+        vier[QStringLiteral("statistical")] = stOhne;
+        kp::Koerper ausVier;
+        REQUIRE(ausJson(vier, ausVier));
+        kp::Koerper senkrecht = k;
+        for (kp::ModeImKoerper& m : senkrecht.moden) m.stegWinkelGrad = 0.0;
+        senkrecht.statistik.stegWinkelGrad = 0.0;
+        senkrecht.statistik.parallelAnteil = 0.0;
+        CHECK(ausVier == senkrecht);
+        // ein Winkel ueber 90 Grad macht die Datei unlesbar
+        QJsonArray schief = json.value(QStringLiteral("modes")).toArray();
+        QJsonObject erste = schief[0].toObject();
+        erste[QStringLiteral("bridgeAngle")] = 91.0;
+        schief[0] = erste;
+        QJsonObject kaputterWinkel = json;
+        kaputterWinkel[QStringLiteral("modes")] = schief;
+        kp::Koerper nicht;
+        CHECK_FALSE(ausJson(kaputterWinkel, nicht));
+    }
 
     // ein leerer Koerper geht auch hin und zurueck
     kp::Koerper leer;
@@ -291,6 +333,9 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
                 falsch += (i == 0 || m.frequenzHz >= k.moden[i - 1].frequenzHz) ? 0 : 1;
                 falsch += (m.verlustfaktor > 0.0 && m.verlustfaktor < 0.5) ? 0 : 1;
                 falsch += (m.werkstoffAnteil.empty() && m.luftAnteil == 0.0) ? 0 : 1;
+                // KQ35-1 a: eine Mode nur parallel zur Decke strahlt nicht ab
+                if (std::abs(m.stegWinkelGrad) == 90.0)
+                    for (const std::complex<double>& g : m.abstrahlung) falsch += g == std::complex<double>{0.0, 0.0} ? 0 : 1;
             }
             CHECK(falsch == 0);
             // KQ26 a: ein statistischer Teil schliesst an, seine Groessen stammen aus der Messung. Die Beschreibung

@@ -15,6 +15,7 @@
 #include <QJsonDocument>
 #include <QSaveFile>
 
+#include <cmath>
 #include <complex>
 
 namespace lumi::loop
@@ -91,6 +92,7 @@ QJsonObject alsJson(const Koerper& k)
             {QStringLiteral("airShare"), m.luftAnteil},
             {QStringLiteral("materialShares"), zahlenAlsJson(m.werkstoffAnteil)},
             {QStringLiteral("bridge"), zahlenAlsJson(m.amStegpunkt)},
+            {QStringLiteral("bridgeAngle"), m.stegWinkelGrad},  // KQ35-2 a (Fassung 5): immer geschrieben
             {QStringLiteral("radiation"), komplexAlsJson(m.abstrahlung)},
         });
     }
@@ -107,12 +109,17 @@ QJsonObject alsJson(const Koerper& k)
         {QStringLiteral("description"), text(k.beschreibung)},
         {QStringLiteral("units"),
          k.herkunft == koerper::Herkunft::Messung
-             ? QStringLiteral("f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) (modal mass "
-                              "1/value^2); radiation: complex pressure per modal acceleration at the listening point, "
-                              "sqrt(kg)/m^2 (fitted to the measured pressure per force)")
-             : QStringLiteral("f in Hz; eta loss factor; bridge: mode shape at the bridge point, 1/sqrt(kg) "
-                              "(modal mass 1/value^2); radiation: complex pressure per modal acceleration at "
-                              "the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)")},
+             ? QStringLiteral("f in Hz; eta loss factor; bridge: mode shape at the bridge point along the direction of "
+                              "bridgeAngle, 1/sqrt(kg) (modal mass 1/value^2); bridgeAngle: direction in which the mode "
+                              "moves the bridge, degrees from the normal of the top plate, across the strings (normal "
+                              "component bridge * cos, in-plane component bridge * sin; 90 = in-plane only); radiation: "
+                              "complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (fitted to "
+                              "the measured pressure per force)")
+             : QStringLiteral("f in Hz; eta loss factor; bridge: mode shape at the bridge point along the direction of "
+                              "bridgeAngle, 1/sqrt(kg) (modal mass 1/value^2); bridgeAngle: direction in which the mode "
+                              "moves the bridge, degrees from the normal of the plate (0 for a body from a plan); "
+                              "radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 "
+                              "(Rayleigh, baffled plate)")},
         // KQ25 a (Fassung 4): woraus der Koerper stammt — beides immer geschrieben
         {QStringLiteral("origin"), k.herkunft == koerper::Herkunft::Messung ? QStringLiteral("measurement") : QStringLiteral("plan")},
         {QStringLiteral("plan"),
@@ -157,6 +164,9 @@ QJsonObject alsJson(const Koerper& k)
              {QStringLiteral("density"), s.dichte},
              {QStringLiteral("rise"), s.anstieg},
              {QStringLiteral("bridgeSpread"), zahlenAlsJson(s.stegStreuung)},
+             // KQ35-2 a, KQ35-1 a (Fassung 5): beides immer geschrieben
+             {QStringLiteral("bridgeAngle"), s.stegWinkelGrad},
+             {QStringLiteral("parallelFactor"), s.parallelAnteil},
              {QStringLiteral("radiation"), zahlenAlsJson(s.hoerBetrag)},
              {QStringLiteral("seed"), QString::number(s.samen)},
              {QStringLiteral("bandFromHz"), s.bandVonHz},
@@ -228,6 +238,8 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
         m.luftAnteil = o.value(QStringLiteral("airShare")).toDouble();  // seit Fassung 3 (F-K1 a); davor 0
         if (!zahlenAusJson(o.value(QStringLiteral("materialShares")), m.werkstoffAnteil)) return false;
         if (!zahlenAusJson(o.value(QStringLiteral("bridge")), m.amStegpunkt)) return false;
+        m.stegWinkelGrad = o.value(QStringLiteral("bridgeAngle")).toDouble();  // seit Fassung 5 (KQ35-2 a); davor 0
+        if (!(std::abs(m.stegWinkelGrad) <= 90.0)) return false;
         if (!komplexAusJson(o.value(QStringLiteral("radiation")), m.abstrahlung)) return false;
         // je Mode so viele Werte, wie es Stegpunkte und Hoerorte gibt — und Werkstoffe, wenn sie Anteile traegt
         if (m.amStegpunkt.size() != neu.stegTasten.size() || m.abstrahlung.size() != neu.hoerorte.size()) return false;
@@ -242,6 +254,10 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
     st.anstieg = s.value(QStringLiteral("rise")).toDouble();
     if (!zahlenAusJson(s.value(QStringLiteral("bridgeSpread")), st.stegStreuung)) return false;
     if (!zahlenAusJson(s.value(QStringLiteral("radiation")), st.hoerBetrag)) return false;
+    // seit Fassung 5 (KQ35-2 a, KQ35-1 a); davor 0
+    st.stegWinkelGrad = s.value(QStringLiteral("bridgeAngle")).toDouble();
+    st.parallelAnteil = s.value(QStringLiteral("parallelFactor")).toDouble();
+    if (!(st.stegWinkelGrad >= 0.0 && st.stegWinkelGrad < 90.0) || !(st.parallelAnteil >= 0.0)) return false;
     bool samenGut = false;
     st.samen = s.value(QStringLiteral("seed")).toString().toULongLong(&samenGut);
     if (!samenGut && st.dichte > 0.0) return false;

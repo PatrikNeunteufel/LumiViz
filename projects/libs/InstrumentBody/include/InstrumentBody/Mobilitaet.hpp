@@ -44,7 +44,7 @@ inline constexpr int kDiskantAb = 41;
     {
         if (stegpunkt >= m.amStegpunkt.size()) continue;
         const double wn = 2.0 * std::numbers::pi * m.frequenzHz;
-        const double phi = m.amStegpunkt[stegpunkt];
+        const double phi = m.senkrechtAm(stegpunkt);  // die Mobilitaet senkrecht zur Decke (KQ35-2 a)
         summe += phi * phi / std::complex<double>(wn * wn - w * w, m.verlustfaktor * wn * w);
     }
     return std::complex<double>(0.0, w) * summe;

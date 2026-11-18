@@ -52,6 +52,13 @@ struct StatistischerTeil
     std::vector<double> werkstoffVerlust;  ///< je Werkstoff sein Verlustfaktor, 0 = das Gesetz
     std::vector<double> stegStreuung;  ///< je Stegpunkt das quadratische Mittel der Formwerte, 1/√kg
     std::vector<double> hoerBetrag;    ///< je Hoerort das quadratische Mittel von |G|, √kg/m²
+    /// KQ35-2 a (S206): der Betrag des Winkels, um den jede gezogene Mode den Steg gegen die Senkrechte bewegt, Grad;
+    /// das Vorzeichen wird je Mode gezogen. 0 = senkrecht — dann wird nichts gezogen (Bit fuer Bit wie vorher).
+    double stegWinkelGrad = 0.0;
+    /// KQ35-1 a (S206): > 0 — zu jeder gezogenen Mode kommt eine zweite, die den Steg nur parallel zur Decke bewegt:
+    /// auf halbem Weg zur naechsten gezogenen Mode, Daempfung wie die Mode, ohne Abstrahlung, Formwert = dieser Anteil
+    /// mal der senkrechte Formwert der Mode. 0 = keine.
+    double parallelAnteil = 0.0;
     std::uint64_t samen = 0;
     double bandVonHz = 0.0;  ///< woraus geschaetzt wurde (zur Auskunft)
     double bandBisHz = 0.0;
@@ -184,9 +191,28 @@ private:
             const double phase = 2.0 * std::numbers::pi * zufall.gleich();
             m.abstrahlung.push_back(std::polar(b, phase));
         }
+        // KQ35-2 a: die Richtung am Steg, Vorzeichen gezogen — nur mit einem Winkel, sonst bleibt die Folge wie vorher
+        if (st.stegWinkelGrad != 0.0) m.stegWinkelGrad = zufall.gleich() < 0.5 ? st.stegWinkelGrad : -st.stegWinkelGrad;
         moden.push_back(std::move(m));
     }
-    return moden;
+    if (!(st.parallelAnteil > 0.0) || moden.size() < 2) return moden;
+    // KQ35-1 a: je Mode eine zweite nur parallel zur Decke, auf halbem Weg zur naechsten; nichts wird dafuer gezogen
+    std::vector<ModeImKoerper> alle;
+    alle.reserve(2 * moden.size() - 1);
+    for (std::size_t i = 0; i < moden.size(); ++i)
+    {
+        alle.push_back(moden[i]);
+        if (i + 1 == moden.size()) break;
+        ModeImKoerper p;
+        p.frequenzHz = 0.5 * (moden[i].frequenzHz + moden[i + 1].frequenzHz);
+        p.verlustfaktor = moden[i].verlustfaktor;
+        p.werkstoffAnteil = moden[i].werkstoffAnteil;
+        for (std::size_t j = 0; j < moden[i].amStegpunkt.size(); ++j) p.amStegpunkt.push_back(st.parallelAnteil * moden[i].senkrechtAm(j));
+        p.abstrahlung.assign(moden[i].abstrahlung.size(), std::complex<double>{0.0, 0.0});
+        p.stegWinkelGrad = 90.0;
+        alle.push_back(std::move(p));
+    }
+    return alle;
 }
 
 }  // namespace lumi::koerper

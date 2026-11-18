@@ -182,6 +182,63 @@ TEST_CASE("Loop Koerper 31c-5c Ziehung")
     CHECK(kp::ziehe(verkehrt).empty());
 }
 
+TEST_CASE("Loop Koerper KQ35 Ziehung mit Richtung am Steg")
+{
+    const kp::StatistischerTeil ohne = teil(0.02, 0.0);
+    const auto senkrecht = kp::ziehe(ohne);
+    REQUIRE(senkrecht.size() > 100);
+    int schief = 0;
+    for (const kp::ModeImKoerper& m : senkrecht) schief += m.stegWinkelGrad == 0.0 ? 0 : 1;
+    CHECK(schief == 0);
+
+    // KQ35-2 a: mit einem Winkel traegt jede gezogene Mode ihn, Vorzeichen gezogen (etwa je zur Haelfte)
+    kp::StatistischerTeil mit = ohne;
+    mit.stegWinkelGrad = 12.75;
+    const auto gedreht = kp::ziehe(mit);
+    REQUIRE(gedreht.size() > 100);
+    int plus = 0, falsch = 0;
+    for (const kp::ModeImKoerper& m : gedreht)
+    {
+        falsch += std::abs(std::abs(m.stegWinkelGrad) - 12.75) < 1e-15 ? 0 : 1;
+        plus += m.stegWinkelGrad > 0.0 ? 1 : 0;
+    }
+    CHECK(falsch == 0);
+    CHECK(static_cast<double>(plus) / static_cast<double>(gedreht.size()) == doctest::Approx(0.5).epsilon(0.2));
+    // senkrecht und parallel: φ cos, φ sin
+    const kp::ModeImKoerper& erste = gedreht.front();
+    const double rad = erste.stegWinkelGrad * std::numbers::pi / 180.0;
+    CHECK(erste.senkrechtAm(1) == doctest::Approx(erste.amStegpunkt[1] * std::cos(rad)).epsilon(1e-15));
+    CHECK(erste.parallelAm(1) == doctest::Approx(erste.amStegpunkt[1] * std::sin(rad)).epsilon(1e-15));
+    CHECK(senkrecht.front().senkrechtAm(1) == senkrecht.front().amStegpunkt[1]);  // Winkel 0: Bit fuer Bit
+    CHECK(senkrecht.front().parallelAm(1) == 0.0);
+
+    // KQ35-1 a: dazu je Mode eine zweite nur parallel zur Decke — zwischen ihr und der naechsten, Daempfung wie sie,
+    // ohne Abstrahlung, Formwert = Anteil mal ihr senkrechter Formwert; die uebrigen Moden bleiben, wie sie waren
+    kp::StatistischerTeil doppelt = mit;
+    doppelt.parallelAnteil = 0.4;
+    const auto alle = kp::ziehe(doppelt);
+    REQUIRE(alle.size() == 2 * gedreht.size() - 1);
+    int daneben = 0;
+    for (std::size_t i = 0; i < gedreht.size(); ++i)
+    {
+        daneben += alle[2 * i] == gedreht[i] ? 0 : 1;
+        if (i + 1 == gedreht.size()) break;
+        const kp::ModeImKoerper& p = alle[2 * i + 1];
+        daneben += p.stegWinkelGrad == 90.0 ? 0 : 1;
+        daneben += p.frequenzHz == 0.5 * (gedreht[i].frequenzHz + gedreht[i + 1].frequenzHz) ? 0 : 1;
+        daneben += p.verlustfaktor == gedreht[i].verlustfaktor ? 0 : 1;
+        daneben += (p.abstrahlung.size() == 2 && p.abstrahlung[0] == std::complex<double>{0.0, 0.0}) ? 0 : 1;
+        daneben += (p.amStegpunkt.size() == 3 && p.amStegpunkt[1] == 0.4 * gedreht[i].senkrechtAm(1)) ? 0 : 1;
+        daneben += std::abs(p.senkrechtAm(1)) < 1e-14 * std::abs(p.amStegpunkt[1]) + 1e-300 ? 0 : 1;
+    }
+    CHECK(daneben == 0);
+    // ohne Winkel und ohne Anteil: dieselben Moden wie immer
+    kp::StatistischerTeil nurParallel = ohne;
+    nurParallel.parallelAnteil = 0.4;
+    CHECK(kp::ziehe(nurParallel).size() == 2 * senkrecht.size() - 1);
+    CHECK(kp::ziehe(nurParallel).front() == senkrecht.front());
+}
+
 TEST_CASE("Loop Koerper 31c-5c Schaetzung")
 {
     // gerechnete Moden 0 … 5 kHz mit n(f) = 0,1 + 2·10⁻⁵ (f − 2500) im Band, Formwerte ±0,8, |G| = 0,02

@@ -58,6 +58,13 @@ TEST_CASE("Loop Koerper 31c-6 Mobilitaet: ein Einmassenschwinger")
     CHECK(kp::mobilitaetDb(resonanz) == doctest::Approx(20.0 * std::log10(4.0 / (0.02 * w0))).epsilon(1e-12));
     // ein Stegpunkt, den die Mode nicht kennt, hat keine Mobilitaet
     CHECK(kp::mobilitaet(moden, 1, 100.0) == std::complex<double>(0.0, 0.0));
+    // KQ35-2 a: bewegt die Mode den Steg um 60 Grad gegen die Senkrechte, traegt senkrecht nur φ cos 60° = φ / 2 —
+    // die Mobilitaet senkrecht zur Decke ist ein Viertel; eine Mode nur parallel zur Decke traegt nichts
+    kp::ModeImKoerper schraeg = m;
+    schraeg.stegWinkelGrad = 60.0;
+    CHECK(std::abs(kp::mobilitaet({schraeg}, 0, 100.0)) == doctest::Approx(std::abs(resonanz) / 4.0).epsilon(1e-12));
+    schraeg.stegWinkelGrad = -90.0;
+    CHECK(std::abs(kp::mobilitaet({schraeg}, 0, 100.0)) < 1e-30 * std::abs(resonanz));
 }
 
 TEST_CASE("Loop Koerper 31c-6 Mobilitaet: Terzbaender, Mittel und Dichte")

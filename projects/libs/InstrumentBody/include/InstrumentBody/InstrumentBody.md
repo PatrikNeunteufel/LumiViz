@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.23.0  
+> **Version:** 0.24.0  
 > **Datum:** 2026-11-18  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -332,7 +332,17 @@ Reihenfolge der Werte, Luft, Dämpfung, die gerechneten Moden (`ModeImKoerper`) 
   `materialShares`, im statistischen Teil deren Mittel; Fassung 1 bleibt lesbar, ohne Anteile; **3 seit S196**
   (F-K1 a): je Mode `airShare` = `ModeImKoerper::luftAnteil`, der Anteil der Bewegungsenergie in der Luft der
   Löcher, immer geschrieben, 0 ohne Hohlraum — die Dämpfung einer gekoppelten Mode ist die der Platte mal ihrem
-  Anteil plus Anteil der Luft / Güte, und der Wächter rechnet sie so nach; Fassung 2 bleibt lesbar, Anteil 0).
+  Anteil plus Anteil der Luft / Güte, und der Wächter rechnet sie so nach; Fassung 2 bleibt lesbar, Anteil 0);
+  **5 seit S206** (KQ35-2 a, KQ35-1 a): je Mode `bridgeAngle` = `ModeImKoerper::stegWinkelGrad`, der Winkel, um den
+  die Mode den Steg gegen die Senkrechte der Decke bewegt (Grad, quer zu den Saiten; ±90 = nur parallel). `bridge`
+  (`amStegpunkt`) ist der Formwert längs dieser Richtung: `senkrechtAm(i)` = φ · cos, `parallelAm(i)` = φ · sin; bei
+  Winkel 0 ist `senkrechtAm` Bit für Bit `amStegpunkt`. `antwort`, `antwortSpektrum*` und `mobilitaet` rechnen mit dem
+  senkrechten Formwert. Im statistischen Teil `bridgeAngle` (`stegWinkelGrad`: Betrag für die gezogenen Moden, `ziehe`
+  zieht das Vorzeichen — nur mit einem Winkel, sonst bleibt die Zufallsfolge wie vorher) und `parallelFactor`
+  (`parallelAnteil`: zu jeder gezogenen Mode eine zweite mit Winkel 90° auf halbem Weg zur nächsten, Dämpfung wie die
+  Mode, ohne Abstrahlung, Formwert = Anteil mal ihr senkrechter Formwert; nichts wird dafür gezogen). Alles immer
+  geschrieben, ein Körper aus einem Bauplan schreibt 0; Fassung 4 liest sich mit 0; ein Winkel über 90° macht die
+  Datei unlesbar.
 - **`kRechenFassung`** — die Fassung der Rechnung (2 seit S149, DM1 a). Hochzählen, wenn sich bei gleichem Bauplan ein anderer Körper
   ergäbe; dann meldet der Wächter (`test_LoopKoerperDatei`, „Waechter“) jeden mitgelieferten Körper als veraltet, bis
   `InstrumentBodyTool` ihn neu rechnet. Ebenso, wenn sich der Bauplan ändert (der Abdruck passt nicht mehr).
@@ -435,6 +445,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.24.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ35-2 a, KQ35-1 a: die Richtung am Steg — `ModeImKoerper::stegWinkelGrad` mit `senkrechtAm` / `parallelAm`, `StatistischerTeil::stegWinkelGrad` und `::parallelAnteil`, `ziehe` mit gezogenem Vorzeichen und Moden nur parallel zur Decke; `antwort`, `antwortSpektrum*`, `mobilitaet` mit dem senkrechten Formwert (Winkel 0: Bit für Bit wie vorher). **`.lvinstbody` Fassung 5** (`bridgeAngle` je Mode, `bridgeAngle` und `parallelFactor` im statistischen Teil, immer geschrieben; Fassung 4 liest sich mit 0). **`kFitFassung` 4**: `make_gitarre.py` füllt die Modendichte über 2,2 kHz nach Elie 2011 auf und schreibt die Richtung nach Elie 2012. Tests „KQ35 Ziehung mit Richtung am Steg“, Mobilität mit Winkel, Datei Fassung 5. `kRechenFassung` bleibt 2. |
 | 0.23.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ31-1 a: Leisten übereinander — `LeistenUebereinander` (`NurDieErste` / `Addieren`) in `Bauplan::leistenUebereinander`, **`.lvinstbodyplan` Fassung 8** mit `barOverlap` (`first` / `add`, immer geschrieben, Fassung 7 lesbar als `first`); `steifeBei` addiert mit `Addieren` die Höhen aller Leisten am Punkt (Werkstoff und Richtung der ersten); `Ueberlagerung`, `ueberlagerungen(plan)`. Werkzeug: meldet je Paar von Leisten übereinander Fläche und Volumen — mit `first` als Warnung (das Volumen fehlt in der Rechnung), mit `add` als Hinweis, bei verschiedenen Werkstoffen mit Vermerk. Die Harfe trägt `add` (Masse der Rechnung 2,179 statt 1,764 kg), alle übrigen Baupläne `first`. `kRechenFassung` bleibt 2 — ein Bauplan mit `first` rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ31-1 Leisten uebereinander“ in `test_LoopKoerperPlatte`. |
 | 0.22.2 | 2026-11-16 | Session 201, Stufe 34k-6, KQ28 a: `kFitFassung` 3 — die Form je Mode längs des Stegs wird an den Stegkurven und den Schallkurven gemeinsam gestellt (`make_gitarre.py` Schritt 4). Die zwei Aufnehmer an den Enden der Stegeinlage legen die Form zwischen 500 und 1000 Hz nicht fest: an fünf Moden widersprach sie dem, was die Mikrofone an den drei Schlagorten zeigen, und der Körper lag an der ersten Saite bei 780–880 Hz rund 10 dB unter der Messung. Am Format und an der Bibliothek sonst nichts; der Körper der Gitarre ist neu geschrieben (Pole und gezogene Moden unverändert). |
 | 0.22.1 | 2026-11-15 | Session 199, Stufe 34k-5, KQ26 a: `kFitFassung` 2 — ein gemessener Körper darf über seinen gefitteten Moden einen statistischen Teil tragen, dessen Größen an der Messung bestimmt sind (Dämpfungsgesetz aus dem gemessenen Abklingen, Betrag der Abstrahlung aus dem gemessenen Pegel) statt mit `schaetze` aus den Moden; `ziehe` und das Format bleiben. An gefitteten Polen überschätzt `schaetze` das Produkt aus Formwert und Abstrahlgewicht (Gitarre: 10–14 dB), weil beide gegenläufig sind und das Gesetz unter der Dämpfung der Pole liegt. Am Code der Bibliothek sonst nichts. |

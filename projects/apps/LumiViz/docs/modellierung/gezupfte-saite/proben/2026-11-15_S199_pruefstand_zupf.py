@@ -29,6 +29,9 @@ Mode des Koerpers bewegt den Steg in einer Richtung theta_n gegen die Senkrechte
 H_n d_n d_n^T, wie im Kern). Der Koerper gibt nur die Senkrechte; tan(theta_n) ist eine ANNAHME, abgelesen an Scherrer
 2013 Abb. A.11 (andere Gitarre): 0,03 bis 200 Hz (Yyy 30 dB unter den tiefen Spitzen von Yzz), steigend auf 0,4 ab
 rund 1,5 kHz (Yyy 5-10 dB unter Yzz), Vorzeichen gezogen (Samen 7).
+Seit S206 (KQ35-2 a) steht die Richtung in der Koerperdatei (`bridgeAngle` je Mode, im statistischen Teil
+`bridgeAngle` und `parallelFactor`): traegt ein Koerper eine (die Gitarre nach Elie 2012), nimmt der Pruefstand sie
+(`richtung_von`); die Annahme nach Scherrer gilt nur noch fuer Koerper ohne Richtung (alle aus einem Bauplan).
 
 --steg-neu: Formwert und Abstrahlgewicht des Gitarrenkoerpers ab 2 kHz nach `teile_neu` geteilt.
 
@@ -93,12 +96,19 @@ class Zufall:
         return math.sqrt(-2.0 * math.log(u)) * math.cos(2.0 * math.pi * v)
 
 
+EPS_PARALLEL = 1e-4
+
+
 def lade_koerper(name):
-    """Alle Moden wie `alleModen` in loop/Boden.cpp: die der Datei und die aus dem statistischen Teil gezogenen."""
+    """Alle Moden wie `alleModen` in loop/Boden.cpp: die der Datei und die aus dem statistischen Teil gezogenen.
+    `steg` ist der Formwert senkrecht zur Decke. Traegt die Datei eine Richtung am Steg (KQ35-2 a, Fassung 5), steht
+    in `tan` je Mode der Tangens ihres Winkels gegen die Senkrechte, sonst None. Eine Mode nur parallel zur Decke
+    (Winkel 90 Grad) steht als Mode mit senkrechtem Formwert EPS_PARALLEL * phi und tan = 1 / EPS_PARALLEL."""
     k = json.loads((KOERPER / f"{name}.lvinstbody").read_text(encoding="utf-8"))
     f = [m["f"] for m in k["modes"]]
     eta = [m["eta"] for m in k["modes"]]
     steg = [m["bridge"] for m in k["modes"]]
+    winkel = [m.get("bridgeAngle", 0.0) for m in k["modes"]]
     G = [[complex(*g) for g in m["radiation"]] for m in k["modes"]]
     st = k["statistical"]
     if st["density"] > 0:
@@ -117,8 +127,24 @@ def lade_koerper(name):
             steg.append([s * z.normal() for s in st["bridgeSpread"]])
             G.append([b * complex(math.cos(p), math.sin(p)) for b in st["radiation"]
                       for p in [2.0 * math.pi * z.gleich()]])
+            w0 = st.get("bridgeAngle", 0.0)                               # wie `ziehe`: Vorzeichen nur mit Winkel gezogen
+            winkel.append(0.0 if w0 == 0.0 else (w0 if z.gleich() < 0.5 else -w0))
+        n0 = len(k["modes"])
+        for j in range(n0, len(f) - 1 if st.get("parallelFactor", 0.0) > 0 else n0):   # je gezogener Mode eine nur parallel
+            f.append(0.5 * (f[j] + f[j + 1]))
+            eta.append(eta[j])
+            steg.append([st["parallelFactor"] * v * math.cos(math.radians(winkel[j])) for v in steg[j]])
+            G.append([0j for _ in st["radiation"]])
+            winkel.append(90.0)
+    steg, winkel = np.array(steg), np.array(winkel)
+    tan = None
+    if np.any(winkel != 0.0):
+        quer = np.abs(winkel) == 90.0
+        rad = np.radians(np.where(quer, 0.0, winkel))
+        tan = np.where(quer, np.sign(winkel) / EPS_PARALLEL, np.tan(rad))
+        steg = steg * np.where(quer, EPS_PARALLEL, np.cos(rad))[:, None]
     return {"tasten": k["bridgePoints"], "orte": k["listeningPoints"], "f": np.array(f), "eta": np.array(eta),
-            "steg": np.array(steg), "G": np.array(G)}
+            "steg": steg, "G": np.array(G), "tan": tan}
 
 
 def koerper_kurven(kp, punkt, w):
@@ -165,6 +191,11 @@ def richtung_tan(f, samen=7):
     z = Zufall(samen)
     betrag = np.clip(0.03 * (f / 200.0) ** 1.27, 0.03, 0.4)
     return betrag * np.array([1.0 if z.gleich() < 0.5 else -1.0 for _ in f])
+
+
+def richtung_von(kp):
+    """tan(theta_n) je Mode: aus der Koerperdatei, wenn sie eine Richtung traegt (KQ35-2 a), sonst die Annahme."""
+    return kp["tan"] if kp.get("tan") is not None else richtung_tan(kp["f"])
 
 
 def koerper_kurven2(kp, punkt, w, tan):
@@ -406,7 +437,7 @@ def gitarre(je_taste, steg_neu, winkel=None):
             continue
         punkt = kp["tasten"].index(GITARRE[s]["taste"])
         if s not in kurven:
-            kurven[s] = koerper_kurven(kp, punkt, w) if winkel is None else koerper_kurven2(kp, punkt, w, richtung_tan(kp["f"]))
+            kurven[s] = koerper_kurven(kp, punkt, w) if winkel is None else koerper_kurven2(kp, punkt, w, richtung_von(kp))
         laenge = MENSUR * 2 ** (-bund / 12)
         if winkel is None:
             x = zeit(ton(GITARRE[s], laenge, min(ZUPFORT, 0.5 * laenge), 0.002, *kurven[s], w))
@@ -438,7 +469,7 @@ def rms_db(x, von, bis):
 def gitarre_mit(je_taste):
     kp = lade_koerper("classical_guitar")
     w = frequenzen()
-    Y, H = koerper_matrix(kp, w, richtung_tan(kp["f"]))
+    Y, H = koerper_matrix(kp, w, richtung_von(kp))
     zeilen = []
     print("Taste Saite Bund | Lautheit ohne / mit (LUFS), Unterschied | Pegel 1-2 s gegen 0-0,4 s: ohne, mit, nur die uebrigen Saiten (dB)")
     for taste in range(40, 84, 1 if je_taste else 3):
@@ -502,7 +533,7 @@ def chor_instrument(name, je_taste, hoechster_bund=12):
     datei = len(json.loads((KOERPER / f"{ {'laute': 'lute', 'oud': 'oud'}[name] }.lvinstbody").read_text(encoding="utf-8"))["modes"])
     nur = {"f": kp["f"][:datei], "eta": kp["eta"][:datei], "steg": kp["steg"][:datei], "G": kp["G"][:datei]}
     w = frequenzen()
-    tan = richtung_tan(kp["f"])
+    tan = richtung_von(kp)
     ch, mensur, cent = choere(name)
     print(f"{name}: {len(ch)} Choere, Mensur {mensur} m; Zug je Saite in N: " +
           " | ".join(" / ".join(f"{s['T']:.1f}" for s in saiten) for _, saiten in ch))
@@ -615,7 +646,7 @@ def tasten_instrument(name, je_taste):
     datei = len(json.loads((KOERPER / f"{koerper}.lvinstbody").read_text(encoding="utf-8"))["modes"])
     nur = {"f": kp["f"][:datei], "eta": kp["eta"][:datei], "steg": kp["steg"][:datei], "G": kp["G"][:datei]}
     w = frequenzen()
-    tan = richtung_tan(kp["f"])
+    tan = richtung_von(kp)
     print(f"{name}: Koerper {koerper}, {datei} Moden in der Datei, {len(kp['f'])} mit dem statistischen Teil")
     print("Taste | Laenge m, Zug N, Zupfort m | Lautheit alle Moden / Moden der Datei (LUFS) | Pegel 1-2 s gegen den Anfang: alle / Datei (dB) "
           "| Abfall frueh dB/s")

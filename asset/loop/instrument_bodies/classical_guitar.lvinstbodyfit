@@ -1,7 +1,7 @@
 {
  "format": "lumiviz-instrument-body-fit",
  "version": 1,
- "fitVersion": 3,
+ "fitVersion": 4,
  "title": "Classical guitar",
  "description": "Modal fit to the measured bridge mobility and near-field sound pressure of a classical Spanish guitar from the Mores archive (KQ3 a, KQ23 a to KQ25 a). The body file carries, per mode, the frequency, the loss factor, the mode shape at each of the six strings and a radiation weight for two listening points. Method after Ducceschi, Russo & Webb (DAFx26, 2026, Sec. 3.4) with the full one-second response instead of 62.5 ms, poles from ESPRIT over all six bridge responses, and normal modes with one shape along the saddle (rigid bar with bending).",
  "source": "R. Mores, Archive for the acoustical documentation of classical Spanish guitars, flamenco guitars and romantic guitars - bridge mobility, Zenodo 4604577 (2021), CC BY 4.0; guitar g34: Manuel Contreras, Madrid 1971, classical Spanish, cedar / Rio palisander, scale 662 mm, 1670 g, measured in the free-field laboratory of the Hamburg University of Applied Sciences on 3 Dec. 2018",
@@ -37,7 +37,71 @@
   "pairs": "below 300 Hz a pair closer than its mean width becomes one pole (frequency and damping re-fitted) if the error in its band rises by at most 0.2 dB",
   "bridge": "normal modes with one shape phi(x) = a + b x + c x^2 along the saddle: first Gauss-Newton on the six mobilities alone (residue(strike, sensor) = phi(x_strike) phi(x_sensor)), then together with the nine curves of sound pressure per force (three strikes, three microphones: sum of phi(x_strike) G), equal weight, error weighted by 1/|Y|, alternating between the weights per microphone and the shape, eight rounds (KQ28 a)",
   "radiation": "per listening point one complex weight per mode up to the split frequency, fitted to the pressure per force of all three strikes; above it one magnitude per third-octave band with a drawn sign (seed 1), set so that the band level matches on average over the strikes",
-  "statistical": "statistical part 5000-20000 Hz (KQ26 a), quantities from the measurement: damping law alpha(f) = a f^2 + b f + c from the decay at the microphones per third-octave band 2.5-10 kHz (Schroeder curve, -5 to -25 dB); density and bridge spread from the poles 2.5-5 kHz as for the bodies from a plan; radiation magnitude per listening point set so that the third-octave level at 6.3 / 8 / 10 kHz matches on average. The measurement carries up to about 10 kHz (signal to noise at the microphones 11-16 dB at 10 kHz, below 10 dB above); above that the law is continued and not checked. Only the product of bridge value and radiation weight is determined by the measurement there, not their split."
+  "statistical": "statistical part 5000-20000 Hz (KQ26 a), quantities from the measurement: damping law alpha(f) = a f^2 + b f + c from the decay at the microphones per third-octave band 2.5-10 kHz (Schroeder curve, -5 to -25 dB); density and bridge spread see `density`; radiation magnitude per listening point set so that the third-octave level at 6.3 / 8 / 10 kHz matches on average. The measurement carries up to about 10 kHz (signal to noise at the microphones 11-16 dB at 10 kHz, below 10 dB above); above that the law is continued and not checked. Only the product of bridge value and radiation weight is determined by the measurement there, not their split.",
+  "density": "KQ35 a: ESPRIT finds above 2.2 kHz only the modes that are strong at the measuring points. 2.2-5 kHz: the fitted modes stay; modes are drawn (seed 1) up to the modal density of the luthier's guitar in Elie, Gautier & David, Acta Acustica united with Acustica 97 (2011) Fig. 4b (0.027 / 0.026 / 0.0235 per Hz up to 3 / 4 / 5 kHz, read off the figure). A drawn mode copies a fitted mode of its band (shape along the saddle and radiation weight stay together) with a smaller bridge value: with normally distributed shape values and the share r of the modes found, the missing ones are those with |z| < t, P(|z| > t) = r; damping after the law, phase of the radiation drawn, its magnitude per band set so that the third-octave level of pressure per force stays as with the fitted modes alone (at most the magnitude of the copied mode). From 5 kHz the statistical part with 0.0215 per Hz (Elie 5-6 kHz, continued above - assumption) and the bridge spread of the fitted modes 2.5-5 kHz times sqrt(r / (1 - m)) (the mean admittance stays).",
+  "direction": "KQ35-1 a, KQ35-2 a: the measurement gives the motion normal to the top plate only. Per mode an angle against the normal with |tan| = 10^((Yzy - Yzz) / 20) of its band after B. Elie, thesis Universite du Maine 2012, Fig. 3.17 (Yamaha CG131S at the E4 string, 183 Hz - 4 kHz; below 150 Hz the values of 150-300 Hz, above 4 kHz those of 1-4 kHz - assumption), sign drawn (seed 7). In addition per mode a second one that moves the bridge in the plane of the top only (angle 90): halfway to the next mode, damping of the mode, no radiation, bridge value = kappa^(1/4) times the normal bridge value of the mode with kappa = 10^(dYyy / 10) - 10^(2 dYzy / 10) of the band - it carries what Yyy exceeds one angle per mode. Number, place and damping of these modes are assumptions. The statistical part carries the angle and the factor of 1-4 kHz for the drawn modes. In the body file `bridge` is the value along the direction of `bridgeAngle`.",
+  "directionBandsDb": [
+   {
+    "fromHz": 150,
+    "toHz": 300,
+    "YzyMinusYzz": -14.2,
+    "YyyMinusYzz": -22.1
+   },
+   {
+    "fromHz": 300,
+    "toHz": 500,
+    "YzyMinusYzz": -18.3,
+    "YyyMinusYzz": -23.7
+   },
+   {
+    "fromHz": 500,
+    "toHz": 1000,
+    "YzyMinusYzz": -13.5,
+    "YyyMinusYzz": -10.4
+   },
+   {
+    "fromHz": 1000,
+    "toHz": 1500,
+    "YzyMinusYzz": -19.3,
+    "YyyMinusYzz": -19.2
+   },
+   {
+    "fromHz": 1500,
+    "toHz": 2000,
+    "YzyMinusYzz": -9.5,
+    "YyyMinusYzz": -11.7
+   },
+   {
+    "fromHz": 2000,
+    "toHz": 2500,
+    "YzyMinusYzz": -13.5,
+    "YyyMinusYzz": -15.1
+   },
+   {
+    "fromHz": 2500,
+    "toHz": 3000,
+    "YzyMinusYzz": -16.9,
+    "YyyMinusYzz": -16.2
+   },
+   {
+    "fromHz": 3000,
+    "toHz": 3500,
+    "YzyMinusYzz": -12.9,
+    "YyyMinusYzz": -18.9
+   },
+   {
+    "fromHz": 3500,
+    "toHz": 4000,
+    "YzyMinusYzz": -9.2,
+    "YyyMinusYzz": -14.2
+   },
+   {
+    "fromHz": 1000,
+    "toHz": 4000,
+    "YzyMinusYzz": -12.9,
+    "YyyMinusYzz": -15.6
+   }
+  ]
  },
  "bridgePoints": [
   {
@@ -83,12 +147,14 @@
  ],
  "assumptions": [
   "scale of the guitar 662 mm; the strings after Woodhouse et al. 2012 are for 650 mm",
-  "only the motion normal to the top plate is measured; the second direction at the bridge is an assumption elsewhere",
+  "only the motion normal to the top plate is measured on this guitar; the direction at the bridge follows band levels of another guitar (Elie 2012), the in-plane modes are assumed in number, place and damping",
+  "the modal density above 2.2 kHz follows another guitar (Elie 2011); the modes drawn for it are not measured",
   "the listening points lie in the near field (10 cm); the other bodies listen at about 1 m",
   "left = bass side, right = treble side: assigned"
  ],
  "check": {
-  "modes": 75,
+  "modes": 233,
+  "modesFitted": 75,
   "modesAbove1kHz": 52,
   "bridgeErrorDb": {
    "free": {
@@ -231,31 +297,231 @@
     230.6,
     252.5
    ],
+   "fill": {
+    "seed": 1,
+    "bands": [
+     {
+      "fromHz": 2200.0,
+      "toHz": 3000.0,
+      "targetPerHz": 0.027,
+      "fitted": 13,
+      "drawn": 7,
+      "foundShare": 0.602,
+      "missingEnergyShare": 0.0348,
+      "shapeSquaredDrawnDb": -12.6,
+      "radiationDrawnDb": -5.3
+     },
+     {
+      "fromHz": 3000.0,
+      "toHz": 4000.0,
+      "targetPerHz": 0.026,
+      "fitted": 7,
+      "drawn": 24,
+      "foundShare": 0.269,
+      "missingEnergyShare": 0.2519,
+      "shapeSquaredDrawnDb": -9.1,
+      "radiationDrawnDb": -13.2
+     },
+     {
+      "fromHz": 4000.0,
+      "toHz": 5000.0,
+      "targetPerHz": 0.0235,
+      "fitted": 11,
+      "drawn": 11,
+      "foundShare": 0.468,
+      "missingEnergyShare": 0.087,
+      "shapeSquaredDrawnDb": -10.8,
+      "radiationDrawnDb": -3.6
+     }
+    ],
+    "note": "drawn: modes added up to the target density; shapeSquaredDrawnDb: squared bridge value of a drawn mode against the fitted mode it copies; radiationDrawnDb: magnitude of its radiation weight against that mode (at most 0 dB), set so that the third-octave level stays as with the fitted modes alone"
+   },
+   "bridgeErrorDb": {
+    "fitted": {
+     "1000-2200": 2.67,
+     "2200-3000": 2.36,
+     "3000-4000": 2.8,
+     "4000-5000": 2.64,
+     "2500-5000": 2.72
+    },
+    "filled": {
+     "1000-2200": 2.68,
+     "2200-3000": 2.33,
+     "3000-4000": 2.85,
+     "4000-5000": 2.33,
+     "2500-5000": 2.63
+    },
+    "note": "rms of 20 lg |model / measured| over the six bridge mobilities with two residual terms per curve; fitted modes alone and with the drawn modes"
+   },
+   "bridgeSpreadFactor": 0.685,
    "levelBandsHz": [
+    2520,
+    3175,
+    4000,
+    5040,
     6350,
     8000,
     10079
    ],
    "levelErrorDb": {
     "left": [
-     -0.37,
-     1.18,
-     -0.81
+     -0.07,
+     0.59,
+     0.63,
+     2.72,
+     0.25,
+     0.72,
+     -0.97
     ],
     "right": [
-     -1.28,
-     1.18,
-     0.11
+     -0.15,
+     0.9,
+     0.73,
+     1.86,
+     -0.8,
+     0.63,
+     0.17
     ]
    },
-   "drawnModes": 161,
+   "drawnModes": 653,
    "drawnFirstHz": [
-    5081.782556485089,
-    5226.924815402291,
-    5304.742295511863
+    5039.559934299764,
+    5056.926616390005,
+    5074.293298480246
    ],
-   "drawnLastHz": 19930.424082695547,
-   "note": "level: third-octave level of pressure per force, model (mean over the six strings) minus measured (mean over the three strikes); alpha in 1/s, energy ~ exp(-alpha t); drawnFirstHz and drawnLastHz are the modes `ziehe` of InstrumentBody draws from the statistical part"
+   "drawnLastHz": 19948.375466420955,
+   "note": "level: third-octave level of pressure per force, model (mean over the six strings, all modes) minus measured (mean over the three strikes); the radiation of the statistical part is set on the bands 6.3 / 8 / 10 kHz; alpha in 1/s, energy ~ exp(-alpha t); drawnModes, drawnFirstHz and drawnLastHz are the modes `ziehe` of InstrumentBody draws from the statistical part, including the in-plane modes"
+  },
+  "direction": {
+   "modesFitted": 75,
+   "modesDrawn": 42,
+   "modesInPlane": 116,
+   "seed": 7,
+   "statisticalAngleDeg": 12.76,
+   "statisticalParallelFactor": 0.3973,
+   "string1Bands": [
+    {
+     "fromHz": 150,
+     "toHz": 300,
+     "elieDb": [
+      -14.2,
+      -22.1
+     ],
+     "bodyDb": [
+      -14.0,
+      -21.4
+     ]
+    },
+    {
+     "fromHz": 300,
+     "toHz": 500,
+     "elieDb": [
+      -18.3,
+      -23.7
+     ],
+     "bodyDb": [
+      -21.8,
+      -21.0
+     ]
+    },
+    {
+     "fromHz": 500,
+     "toHz": 1000,
+     "elieDb": [
+      -13.5,
+      -10.4
+     ],
+     "bodyDb": [
+      -14.2,
+      -11.1
+     ]
+    },
+    {
+     "fromHz": 1000,
+     "toHz": 1500,
+     "elieDb": [
+      -19.3,
+      -19.2
+     ],
+     "bodyDb": [
+      -21.5,
+      -14.7
+     ]
+    },
+    {
+     "fromHz": 1500,
+     "toHz": 2000,
+     "elieDb": [
+      -9.5,
+      -11.7
+     ],
+     "bodyDb": [
+      -10.5,
+      -10.8
+     ]
+    },
+    {
+     "fromHz": 2000,
+     "toHz": 2500,
+     "elieDb": [
+      -13.5,
+      -15.1
+     ],
+     "bodyDb": [
+      -14.8,
+      -13.4
+     ]
+    },
+    {
+     "fromHz": 2500,
+     "toHz": 3000,
+     "elieDb": [
+      -16.9,
+      -16.2
+     ],
+     "bodyDb": [
+      -17.9,
+      -14.1
+     ]
+    },
+    {
+     "fromHz": 3000,
+     "toHz": 3500,
+     "elieDb": [
+      -12.9,
+      -18.9
+     ],
+     "bodyDb": [
+      -18.0,
+      -16.1
+     ]
+    },
+    {
+     "fromHz": 3500,
+     "toHz": 4000,
+     "elieDb": [
+      -9.2,
+      -14.2
+     ],
+     "bodyDb": [
+      -12.9,
+      -12.5
+     ]
+    },
+    {
+     "fromHz": 1000,
+     "toHz": 4000,
+     "elieDb": [
+      -12.9,
+      -15.6
+     ],
+     "bodyDb": [
+      -14.6,
+      -13.3
+     ]
+    }
+   ],
+   "note": "string1Bands: band levels of the cross term and of the in-plane admittance against the normal admittance at string 1 (E4), in dB: [Yzy - Yzz, Yyy - Yzz]; elieDb after Elie 2012 Fig. 3.17 (Yamaha CG131S), bodyDb from all modes of this body including the drawn ones"
   }
  }
 }

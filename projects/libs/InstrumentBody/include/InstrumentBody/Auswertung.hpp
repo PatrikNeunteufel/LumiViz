@@ -161,6 +161,22 @@ struct ModeImKoerper
     std::vector<double> werkstoffAnteil;             ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
     std::vector<double> amStegpunkt;                 ///< φ je Stegpunkt (Reihenfolge des Bauplans), 1/√kg
     std::vector<std::complex<double>> abstrahlung;  ///< G je Hoerort (Reihenfolge des Bauplans), √kg/m²
+    /// KQ35-2 a (S206): die Richtung, in der die Mode den Steg bewegt — Winkel gegen die Senkrechte der Decke in Grad,
+    /// in der Ebene quer zu den Saiten; 0 = senkrecht (jeder Koerper aus einem Bauplan), ±90 = nur parallel zur Decke.
+    /// `amStegpunkt` ist der Formwert laengs dieser Richtung: senkrecht φ·cos, parallel φ·sin.
+    double stegWinkelGrad = 0.0;
+
+    /// Der Formwert senkrecht zur Decke am Stegpunkt `i` — was eine Kraft senkrecht zur Decke anregt. Bei Winkel 0
+    /// Bit fuer Bit `amStegpunkt[i]`.
+    [[nodiscard]] double senkrechtAm(std::size_t i) const
+    {
+        return stegWinkelGrad == 0.0 ? amStegpunkt[i] : amStegpunkt[i] * std::cos(stegWinkelGrad * std::numbers::pi / 180.0);
+    }
+    /// Der Formwert parallel zur Decke (quer zu den Saiten) am Stegpunkt `i`.
+    [[nodiscard]] double parallelAm(std::size_t i) const
+    {
+        return stegWinkelGrad == 0.0 ? 0.0 : amStegpunkt[i] * std::sin(stegWinkelGrad * std::numbers::pi / 180.0);
+    }
 
     [[nodiscard]] bool operator==(const ModeImKoerper&) const = default;
 };
