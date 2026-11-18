@@ -632,3 +632,73 @@ Last der übrigen Saiten (besaitet misst Bell ab S(1,5) die halbe Güte).
 übereinander zählen (Fassung 8, die Harfe „addieren“); **KQ31-2 a** — gemessen wird an den Moden (Lage 7 %, Zahl und Lage der Bäuche, Höhe der übrigen Bäuche gegen den stärksten 6 dB), die Höhe des stärksten Bauchs ist bekannte Abweichung; das Ziel „3 dB je Terzband an Ort 17“ misst
 ohne die Feder die Messkette und hängt an der Lage eines Knotens. Danach: Körper neu, Güte der Luft und Diskantkante
 nachstellen, KQ19 a und KQ34 a neu messen. Offen ohne Weg: die Höhe der Spitzen (−4 … −9 dB).
+
+## 16 S206: die Harfe mit beiden Leisten gebaut und nach KQ31-2 a gemessen
+
+Probe `proben/2026-11-18_S206_harfe_kq31_2.py` (Ausgabe `…_harfe_kq31_2.txt`); Prüfstand je Taste wie in §15.3
+(Ausgabe `proben/2026-11-18_S206_harfe_je_taste.txt`). Bells Bäuche aus Abb. 7.10–7.14 Feld 2 (Kasten G in der Harfe
+ohne Saiten; PDF 296–301) in S206 am Seitenbild von Auge gelesen, ±1 Ort, ±2 dB.
+
+### 16.1 Bau (KQ31-1 a)
+
+`.lvinstbodyplan` Fassung 8 trägt `barOverlap` (`first` / `add`), die Harfe `add`: an einem Punkt zählen die Höhen
+aller Leisten zusammen, Werkstoff und Faserrichtung sind die der ersten (an der Harfe beide Buche, gleiche Richtung).
+Der Körper rechnet wie der Probekörper aus §15.1: Masse der Rechnung 2,179 kg, 131 Moden bis 5 kHz, die ersten bei
+134,2 / 198,3 / 233,0 / 328,5 / 433,3 / 553,4 Hz, Luftanteil 0,28 (134 Hz) und 0,67 (198 Hz). Das Werkzeug meldet
+die Zugleiste unter der Deckleiste als Hinweis mit Fläche und Volumen.
+
+### 16.2 Diskantkante (KQ21 a) nachgestellt: 3 · 10⁶ N/m² bleibt
+
+| Wegfeder der Kante N/m² | S(1,5) Lage | S(1,6) Lage |
+|---|---|---|
+| gehalten | +5,2 % | +3,7 % |
+| 10⁷ | +4,1 % | +1,6 % |
+| **3 · 10⁶** | **+2,5 %** | **−1,5 %** |
+| 10⁶ | −0,1 % | −5,6 % |
+| 3 · 10⁵ | −2,6 % | −8,3 % |
+
+S(1,2)–S(1,4) ändern sich mit der Feder nicht.
+
+### 16.3 Güte der Luft (KQ29-1 a): 8,5
+
+Mit der Zugleiste teilen sich die zwei Moden die Luft ungleich; ein Wert kann nicht beide Güten des Kastens in der
+Harfe treffen (Bell Abb. 7.8, 7.9: 170 Hz Q 11, 216 Hz Q 16 — im Modell ist die Reihenfolge umgekehrt).
+
+| Güte der Luft | Q bei 134 / 198 Hz | Spanne ab D2 (≤ 22) | größter Sprung (≤ 12) | mittlerer Sprung (≤ 3) |
+|---|---|---|---|---|
+| 5,5 (KQ29 a) | 13,7 / 7,7 | 21,9 LU | 14,6 LU (78 / 80) | 3,0 LU |
+| **8,5** | **18,2 / 11,5** | **21,9 LU** | **14,5 LU (78 / 80)** | **3,3 LU** |
+| 12,4 | 22,6 / 16,0 | 22,1 LU | 15,5 LU (43 / 47) | 3,5 LU |
+
+Entschieden (Patrik S206): **KQ29-1 a** — 8,5, der Wert mit der kleinsten gemeinsamen Abweichung von beiden Güten im
+Logarithmus (Faktor 1,65 und 1,39). Der Prüfstand rechnet ohne die Last der übrigen Saiten. **Der größte und der
+mittlere Sprung liegen über den Schwellen von KQ34 a** (14,5 gegen 12 LU, 3,3 gegen 3 LU) — offen.
+
+### 16.4 Messung nach KQ31-2 a (Güte 8,5, Kante 3 · 10⁶, ohne Feder im Messweg)
+
+| Mode | Hz (Bell) | Lage | Bäuche | Lage der Bäuche gegen Bell in Messorten | Höhe der übrigen Bäuche gegen Bell in dB | stärkster Bauch |
+|---|---|---|---|---|---|---|
+| S(1,2) | 233,1 (249) | −6,4 % | 2 / 2 | **+2,1** / +1,6 | +2,5 | −3,5 dB |
+| S(1,3) | 328,6 (316) | +4,0 % | 3 / 3 | +1,5 / **+2,5** / +1,2 | −1,8 / +0,1 | −8,3 dB |
+| S(1,4) | 433,4 (432) | +0,3 % | 4 / 4 | −0,4 / +0,2 / +1,3 / +1,7 | +0,1 / −1,3 / −2,4 | −9,4 dB |
+| S(1,5) | 558,9 (545) | +2,5 % | 5 / 5 | −0,6 / +0,2 / +1,5 / +1,0 / +1,0 | −4,0 / +0,2 / **−9,1 / −11,2** | −6,7 dB |
+| S(1,6) | 698,7 (709) | −1,5 % | 6 / 6 | −0,7 / −0,3 / +0,1 / +0,7 / +0,4 / +1,1 | −5,8 / **−6,5 / −8,2 / −15,4 / −16,5** | −8,6 dB |
+
+Frequenz und Zahl der Bäuche stimmen an allen fünf Moden. Über der Schwelle liegen zwei Lagen knapp (fett) und sechs
+Höhen: die schwachen Bäuche von S(1,5) (Orte 25, 34) und S(1,6) (Orte 14–34). Als Bericht: über S(1,6) hat das Modell
+Moden bei 683 / 698 / 809 / 841 / 940 Hz, alle schwach am Diskantende; S(1,8) liegt 16 dB unter Bell (bekannt, §12).
+
+### 16.5 Die schwachen Bäuche und die Feder aus §15.2
+
+Bells schwache Bäuche liegen nur 6–9 dB über der Linie der Feder 2,6 · 10⁵ N/m (bei 545 Hz 78,4 dB). Mit der Feder in
+Reihe trifft das Modell Bells Pegel an diesen Orten relativ zum stärksten Bauch auf rund 4–6 dB — aber nur, weil sein
+stärkster Bauch 7–9 dB zu tief liegt; und mit der Feder verschwinden die schwachen Bäuche im Modell als Maxima. Die
+Feder allein erklärt sie also nicht.
+
+Entschieden (Patrik S206): **KQ31-3 a** — die Schwellen von KQ31-2 a bleiben; die zwei Lagen und die sechs Höhen stehen
+als bekannte Abweichungen mit ihren Werten im Test „Luftraum die mitgelieferte Harfe“ (rot, wenn eine wächst oder
+verschwindet). Ursache offen, zusammen mit der Höhe der Spitzen.
+
+**Stand:** der Körper der Harfe im Repo ist der neue (Fassung 8, `add`, Güte 8,5). Offen ohne Weg: die Höhe der
+stärksten Bäuche (−3,5 … −9,4 dB), die schwachen Bäuche von S(1,5) / S(1,6) (−6,5 … −16,5 dB), die Sprünge je Taste
+über KQ34 a.

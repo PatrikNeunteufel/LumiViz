@@ -1,6 +1,6 @@
 {
  "format": "lumiviz-instrument-body-plan",
- "version": 7,
+ "version": 8,
  "title": "Lute",
  "description": "Substitute plan of a Renaissance lute soundboard with its air cavity (KQ6 a, KQ11 a, KQ12 a). Outline, rose, bridge position and length and the volume of the bowl from the measured drawing of the Rauwolf lute of 1598, all lengths scaled by 625/677.4 to the string length of the lute whose bridge admittance was measured (Woodhouse 2021 Fig. 1). Assumptions: plate thickness 1.8 mm, seven transverse bars reaching the bowl, rose 85 % open, bridge bar of 7 g, wood, rim clamped and bowl rigid, spacing of the courses. Set so that the computed bridge admittance between courses 1 and 2, loaded with the damped strings (2.47 N s/m), meets the measured peaks at 132 / 277 / 341 / 476 Hz within 5 % and 6 dB; the measured peaks at 150 and 378 Hz have no counterpart.",
  "source": "Shape: J. Santa Maria Bouquet, measured drawing of the lute by Sixtus Rauwolf 1598 (CL.93), Musikmuseet Copenhagen, 2020, scaled by 625/677.4. Targets: J. Woodhouse, The acoustics of double decays, JASA 150 (2021), Fig. 1 (bridge admittance of an 8-course Renaissance lute, CC BY 4.0), read from the figure",
@@ -988,5 +988,6 @@
   "rotationalStiffness": 0.0,
   "source": "assumed: rim clamped (every plan up to version 5 was computed this way)",
   "sections": []
- }
+ },
+ "barOverlap": "first"
 }

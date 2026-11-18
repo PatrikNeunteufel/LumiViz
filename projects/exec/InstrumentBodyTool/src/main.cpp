@@ -266,6 +266,21 @@ int main(int argc, char* argv[])
         return 1;
     }
     std::printf("Plan: %s\n", qPrintable(parser.positionalArguments().front()));
+    // KQ31-1 a (S206): Leisten uebereinander — der Bauplan sagt, wie sie zaehlen; was verdeckt ist, wird gemeldet
+    {
+        const bool addieren = plan.leistenUebereinander == kp::LeistenUebereinander::Addieren;
+        for (const kp::Ueberlagerung& u : kp::ueberlagerungen(plan))
+        {
+            if (addieren)
+                std::printf("Bars on top of each other (KQ31-1 a, plan: add): '%s' over '%s' on %.1f cm2, heights add (%.1f cm3)%s\n",
+                            u.oben.c_str(), u.unten.c_str(), u.flaeche * 1e4, u.volumen * 1e6,
+                            u.gleicherWerkstoff ? "" : "; DIFFERENT MATERIALS: material and grain of the first count");
+            else
+                std::printf("WARNING, bars on top of each other (KQ31-1 a, plan: first): '%s' hides '%s' on %.1f cm2 — %.1f cm3 of it "
+                            "are not in the computation\n",
+                            u.oben.c_str(), u.unten.c_str(), u.flaeche * 1e4, u.volumen * 1e6);
+        }
+    }
 
     auto t = std::chrono::steady_clock::now();
     const kp::Netz netz = geber->vernetze(kp::netzAuftrag(plan, netzHz));

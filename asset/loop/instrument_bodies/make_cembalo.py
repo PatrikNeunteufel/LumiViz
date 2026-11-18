@@ -151,7 +151,7 @@ def baue(geo, dicke, tiefe, offen):
     punkte = unten + punkte + oben
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 7,
+        "version": 8,
         "title": "Harpsichord (soundboard of the Dulcken 1755)",
         "description": "Soundboard of the harpsichord by Johann Daniel Dulcken, Antwerp 1755 (MK&G Hamburg), with its air "
                        "cavity (KQ13 a): outline, both bridges with their pins, the 4' hitchpin rail, cutoff bar and "
@@ -188,6 +188,7 @@ def baue(geo, dicke, tiefe, offen):
                              "to the soundboard lies 14 % lower (KQ15 a: known deviation)",
                    "openings": []},
         "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "assumed: rim clamped (every plan up to version 5 was computed this way)", "sections": []},
+        "barOverlap": "first",
     }
 
 

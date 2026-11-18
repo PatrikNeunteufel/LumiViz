@@ -1,7 +1,7 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.22.2  
-> **Datum:** 2026-11-16  
+> **Version:** 0.23.0  
+> **Datum:** 2026-11-18  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
@@ -60,6 +60,14 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   und Rechenzeit).
 - **Leisten** (Rippen, Stege): Mittellinie, je Punkt Höhe über der Platte und Breite. Die Rechnung nimmt sie
   als dickere Stellen der Platte (BM1 a, wie MAESSTRO und Chabassier).
+- **Leisten übereinander** (`Bauplan::leistenUebereinander`, `LeistenUebereinander`; seit Fassung 8, KQ31-1 a, S206):
+  liegen an einem Punkt mehrere Leisten, zählt mit `NurDieErste` (die Vorgabe — die Rechnung bis Fassung 7) nur die
+  erste des Bauplans, Stege vor Rippen; eine weitere dort ist verdeckt, ihre Höhe fehlt in Steife und Masse der
+  Rechnung. Mit `Addieren` zählen die Höhen aller Leisten an dem Punkt zusammen, Werkstoff und Faserrichtung sind
+  die der ersten — so liegen bei der Harfe Deck- und Zugleiste beidseits des Bodens auf derselben Linie (bis S205
+  fehlten dort 0,41 kg Buche in der Rechnung). `steifeBei` rechnet danach; `ueberlagerungen(plan)` (in `Platte.hpp`)
+  tastet jede Leiste ab (2 mm längs, 1 mm quer) und nennt je Paar die gemeinsame Fläche, das Volumen der unteren
+  Leiste dort und ob beide denselben Werkstoff haben. `masse(plan)` zählt wie bisher jede Leiste nach ihren Maßen.
 - **Stegpunkte**: je Taste (MIDI) der Ort, an dem die Saiten den Steg treffen, mit Quelle.
 - **Hörorte** (`Hoerort`, seit Fassung 2; BM6 a): Name, Lage (x, y) und Höhe z über der Mittelfläche der Platte, mit
   Quelle. Je Hörort trägt der Körper ein Abstrahlgewicht je Mode (die Ausgänge nach KB1 a). Steinway D (BM6-1 a):
@@ -100,7 +108,9 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   summiert, Leisten als Länge mal mittlerer Querschnitt), `naechsterRandpunkt` (der nächste Punkt auf den Kanten
   des Umrisses und sein Abstand).
 
-Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 6) schreibt jedes Feld, auch leere;
+Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 8) schreibt jedes Feld, auch leere;
+`barOverlap` (`first` oder `add` — ein anderes Wort macht die Datei unlesbar; seit Fassung 8) sagt, wie Leisten
+übereinander zählen, Fassung 7 ohne das Feld liest sich als `first`;
 der Rand steht in `rim` (`support`: `clamped` oder `elastic` — ein anderes Wort macht die Datei unlesbar —,
 `rotationalStiffness`, `source`); Fassung 5 ohne den Block bleibt lesbar (eingespannt);
 die Löcher stehen in `plate.holes` (je Loch eine Liste von Punkten), der Hohlraum in `cavity` (`volume`,
@@ -425,6 +435,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.23.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ31-1 a: Leisten übereinander — `LeistenUebereinander` (`NurDieErste` / `Addieren`) in `Bauplan::leistenUebereinander`, **`.lvinstbodyplan` Fassung 8** mit `barOverlap` (`first` / `add`, immer geschrieben, Fassung 7 lesbar als `first`); `steifeBei` addiert mit `Addieren` die Höhen aller Leisten am Punkt (Werkstoff und Richtung der ersten); `Ueberlagerung`, `ueberlagerungen(plan)`. Werkzeug: meldet je Paar von Leisten übereinander Fläche und Volumen — mit `first` als Warnung (das Volumen fehlt in der Rechnung), mit `add` als Hinweis, bei verschiedenen Werkstoffen mit Vermerk. Die Harfe trägt `add` (Masse der Rechnung 2,179 statt 1,764 kg), alle übrigen Baupläne `first`. `kRechenFassung` bleibt 2 — ein Bauplan mit `first` rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ31-1 Leisten uebereinander“ in `test_LoopKoerperPlatte`. |
 | 0.22.2 | 2026-11-16 | Session 201, Stufe 34k-6, KQ28 a: `kFitFassung` 3 — die Form je Mode längs des Stegs wird an den Stegkurven und den Schallkurven gemeinsam gestellt (`make_gitarre.py` Schritt 4). Die zwei Aufnehmer an den Enden der Stegeinlage legen die Form zwischen 500 und 1000 Hz nicht fest: an fünf Moden widersprach sie dem, was die Mikrofone an den drei Schlagorten zeigen, und der Körper lag an der ersten Saite bei 780–880 Hz rund 10 dB unter der Messung. Am Format und an der Bibliothek sonst nichts; der Körper der Gitarre ist neu geschrieben (Pole und gezogene Moden unverändert). |
 | 0.22.1 | 2026-11-15 | Session 199, Stufe 34k-5, KQ26 a: `kFitFassung` 2 — ein gemessener Körper darf über seinen gefitteten Moden einen statistischen Teil tragen, dessen Größen an der Messung bestimmt sind (Dämpfungsgesetz aus dem gemessenen Abklingen, Betrag der Abstrahlung aus dem gemessenen Pegel) statt mit `schaetze` aus den Moden; `ziehe` und das Format bleiben. An gefitteten Polen überschätzt `schaetze` das Produkt aus Formwert und Abstrahlgewicht (Gitarre: 10–14 dB), weil beide gegenläufig sind und das Gesetz unter der Dämpfung der Pole liegt. Am Code der Bibliothek sonst nichts. |
 | 0.22.0 | 2026-11-15 | Session 199, Stufe 34k-5, KQ25 a: ein Körper nennt seine Herkunft — `Herkunft::Bauplan` (gerechnet) oder `Herkunft::Messung` (Modalfit an einer Messung), dazu `Koerper::messung`, `messungAbdruck`, `fitFassung` und `kFitFassung` (1; `make_gitarre.py` trägt dieselbe Zahl). **`.lvinstbody` Fassung 4**: `origin` (`plan` / `measurement`) und `measurement` (`file`, `fingerprint`, `fitVersion`), beides immer geschrieben; Fassung 3 liest sich als `plan`, eine unbekannte Herkunft macht die Datei unlesbar. Ein gemessener Körper trägt keinen Bauplan, keine Werkstoffe und kein Dämpfungsgesetz (η je Mode gemessen); seine Quelle ist die Beschreibung `.lvinstbodyfit` (Abdruck über die Bytes ohne Wagenrücklauf, `loop/Koerper`: `messungAbdruck`). `InstrumentBodyTool <körper> --rewrite` schreibt einen Körper in der heutigen Fassung neu, ohne zu rechnen. Erster gemessener Körper: `classical_guitar` (KQ23 a, KQ24 a). `kRechenFassung` bleibt 2. |

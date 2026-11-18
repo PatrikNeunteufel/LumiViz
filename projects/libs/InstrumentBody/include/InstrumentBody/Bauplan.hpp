@@ -48,7 +48,9 @@ namespace lumi::koerper
 /// Fassung 1 bis 5 bleiben lesbar (der Rand eingespannt).
 /// 7 (S198, KQ20 a): Abschnitte des Rands (`rim.sections`) — Stuecke des Umrisses mit eigener Weg- und
 /// Drehfeder. Fassung 6 bleibt lesbar (keine Abschnitte).
-inline constexpr int kBauplanFassung = 7;
+/// 8 (S206, KQ31-1 a): wie Leisten uebereinander zaehlen (`barOverlap`). Fassung 1 bis 7 bleiben lesbar
+/// (nur die erste Leiste zaehlt, wie die Rechnung bis dahin).
+inline constexpr int kBauplanFassung = 8;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -328,6 +330,18 @@ struct Rand
     [[nodiscard]] bool operator==(const Rand&) const = default;
 };
 
+/// Wie Leisten zaehlen, die an einem Punkt uebereinander liegen (seit Fassung 8; KQ31-1 a, S206). Die
+/// Reihenfolge ist die des Bauplans: erst die Stege, dann die Rippen, je in ihrer Folge.
+/// `NurDieErste`: an dem Punkt zaehlt nur die erste Leiste (der Steg geht vor) — die Rechnung bis Fassung 7;
+/// eine weitere Leiste dort ist verdeckt, ihre Hoehe fehlt in Steife und Masse der Rechnung.
+/// `Addieren`: die Hoehen aller Leisten an dem Punkt zaehlen zusammen; Werkstoff und Faserrichtung sind die
+/// der ersten (so liegen bei der Harfe Deck- und Zugleiste beidseits des Bodens auf derselben Linie).
+enum class LeistenUebereinander : int
+{
+    NurDieErste = 0,
+    Addieren,
+};
+
 struct Bauplan
 {
     std::string titel;
@@ -343,6 +357,8 @@ struct Bauplan
     Daempfung daempfung;                ///< seit Fassung 3; Vorgabe RT-0425 Gl. 1 (c = 0)
     Hohlraum hohlraum;                  ///< seit Fassung 4; Vorgabe aus (die Platte allein)
     Rand rand;                          ///< seit Fassung 6; Vorgabe eingespannt
+    /// seit Fassung 8; Vorgabe nur die erste (wie bis Fassung 7)
+    LeistenUebereinander leistenUebereinander = LeistenUebereinander::NurDieErste;
 
     [[nodiscard]] bool operator==(const Bauplan&) const = default;
 };

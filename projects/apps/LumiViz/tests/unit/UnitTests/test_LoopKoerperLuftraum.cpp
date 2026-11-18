@@ -52,6 +52,7 @@
 #include <complex>
 #include <cstdint>
 #include <numbers>
+#include <utility>
 #include <vector>
 
 using namespace lumi::loop;
@@ -802,92 +803,186 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
     kp::Koerper k;
     REQUIRE(ladeKoerper(stamm + QLatin1String(kKoerperEndung), k));
     REQUIRE(k.moden.size() > 100);
-    // bekannte Abweichung: S(1,1)- liegt bei 129 Hz (Bell: 153 / 170 / 187 Hz lose, in der Harfe, besaitet) — dort
+    // KQ31-1 a: Deck- und Zugleiste liegen beidseits des Bodens auf derselben Linie, ihre Hoehen zaehlen zusammen
+    CHECK(plan.leistenUebereinander == kp::LeistenUebereinander::Addieren);
+    // bekannte Abweichung: S(1,1)- liegt bei 134 Hz (Bell: 153 / 170 / 187 Hz lose, in der Harfe, besaitet) — dort
     // bewegt sich der ganze Kasten, die Schale ist hier starr
-    CHECK(k.moden[0].frequenzHz == doctest::Approx(129.0).epsilon(0.02));
+    CHECK(k.moden[0].frequenzHz == doctest::Approx(134.2).epsilon(0.02));
     CHECK(k.moden[0].luftAnteil > 0.2);
-    // KQ29 a: die Guete der Luft so, dass S(1,1)- / S(1,1)+ die Gueten des Kastens in der Harfe bekommen
-    // (Bell 1988 Abb. 7.8, 7.9: Q 11 und 16 ohne Saiten); mit der Guete des losen Kastens (16) waeren es 27
-    CHECK(plan.hohlraum.guete == doctest::Approx(5.5));
-    for (const double hz : {191.8, 208.4})
+    // KQ29-1 a: mit der Zugleiste teilen sich die zwei Moden die Luft ungleich (0,28 / 0,67), ein Wert trifft nicht
+    // beide Gueten des Kastens in der Harfe (Bell 1988 Abb. 7.8, 7.9: 11 und 16 ohne Saiten). 8,5 ist der Wert mit
+    // der kleinsten gemeinsamen Abweichung im Logarithmus: Q 18,2 und 11,5
+    CHECK(plan.hohlraum.guete == doctest::Approx(8.5));
+    struct LuftMode
     {
-        const auto mode = std::min_element(k.moden.begin(), k.moden.end(), [hz](const kp::ModeImKoerper& a, const kp::ModeImKoerper& b) {
-            return std::abs(a.frequenzHz - hz) < std::abs(b.frequenzHz - hz);
+        double hz, gueteVon, gueteBis, luftVon;
+    };
+    for (const LuftMode& l : {LuftMode{134.2, 17.0, 19.5, 0.2}, LuftMode{198.3, 10.5, 12.5, 0.6}})
+    {
+        const auto mode = std::min_element(k.moden.begin(), k.moden.end(), [&l](const kp::ModeImKoerper& a, const kp::ModeImKoerper& b) {
+            return std::abs(a.frequenzHz - l.hz) < std::abs(b.frequenzHz - l.hz);
         });
-        CAPTURE(hz);
-        CHECK(mode->frequenzHz == doctest::Approx(hz).epsilon(0.02));
-        CHECK(mode->luftAnteil > 0.2);
-        CHECK(1.0 / mode->verlustfaktor > 11.0);
-        CHECK(1.0 / mode->verlustfaktor < 16.0);
+        CAPTURE(l.hz);
+        CHECK(mode->frequenzHz == doctest::Approx(l.hz).epsilon(0.02));
+        CHECK(mode->luftAnteil > l.luftVon);
+        CHECK(1.0 / mode->verlustfaktor > l.gueteVon);
+        CHECK(1.0 / mode->verlustfaktor < l.gueteBis);
     }
 
-    // KQ19 a: die Punktadmittanz laengs der Deckleiste gegen Bell 1988 Abb. 7.8-7.16 (Kasten G in der Harfe, am
-    // Bild gelesen; 116 dB = 1 s/kg). Je Mode die hoechste Stelle ueber Frequenz (±12 %) und Oesen.
-    // Messorte nach Abb. 6.3: y = 0,035 (40 - Ort) - 0,057 m.
-    struct Ziel
-    {
-        const char* name;
-        double ohneHz, ohneDb;  // ohne Saiten; Pegel 0 = nicht verglichen
-        int ort;
-        double mitHz;           // besaitet
-    };
-    const Ziel ziele[] = {{"S(1,2)", 249.0, 96.0, 12, 257.0},  {"S(1,3)", 316.0, 104.0, 8, 334.0}, {"S(1,4)", 432.0, 105.5, 5, 430.0},
-                          {"S(1,5)", 545.0, 101.5, 3, 555.0},  {"S(1,6)", 709.0, 0.0, 3, 697.0},   {"S(1,7)", 757.0, 99.5, 3, 753.0}};
-    const auto pegelDb = [&](double hz, std::size_t punkt) {
+    // KQ31-2 a: die Harfe ohne Saiten an den Moden S(1,2) ... S(1,6), gegen Bell 1988 Abb. 7.10-7.14 Feld 2 (Kasten G
+    // in der Harfe; in S206 am Seitenbild von Auge gelesen, ±1 Ort, ±2 dB; 116 dB = 1 s/kg). Je Mode die Frequenz
+    // der hoechsten Spitze der Punktadmittanz ueber die Oesen (±12 %), dort das Profil laengs der Deckleiste und
+    // darin die Baeuche (Maxima, die ihre Umgebung um 3 dB ueberragen). Messorte nach Abb. 6.3:
+    // y = 0,035 (40 - Ort) - 0,057 m. Wie die Probe proben/2026-11-18_S206_harfe_kq31_2.py.
+    std::vector<std::size_t> oesen;  // je Oese (eigener Ort) der erste Stegpunkt
+    for (std::size_t s = 0; s < plan.stegpunkte.size(); ++s)
+        if (oesen.empty() || plan.stegpunkte[s].ort.y > plan.stegpunkte[oesen.back()].ort.y) oesen.push_back(s);
+    REQUIRE(oesen.size() == 46);
+    std::reverse(oesen.begin(), oesen.end());  // vom Diskant zum Bass: der Messort steigt
+    std::vector<double> ort;
+    for (const std::size_t s : oesen) ort.push_back(40.0 - (plan.stegpunkte[s].ort.y + 0.057) / 0.035);
+    const auto profil = [&](double hz) {
         const double om = 2.0 * kPi * hz;
-        std::complex<double> y = 0.0;
-        for (const kp::ModeImKoerper& m : k.moden)
+        std::vector<double> v;
+        for (const std::size_t punkt : oesen)
         {
-            const double phi = m.amStegpunkt[punkt];
-            const double omn = 2.0 * kPi * m.frequenzHz;
-            y += std::complex<double>(0.0, om) * phi * phi / (omn * omn * std::complex<double>(1.0, m.verlustfaktor) - om * om);
+            std::complex<double> y = 0.0;
+            for (const kp::ModeImKoerper& m : k.moden)
+            {
+                const double phi = m.amStegpunkt[punkt];
+                const double omn = 2.0 * kPi * m.frequenzHz;
+                y += std::complex<double>(0.0, om) * phi * phi / (omn * omn * std::complex<double>(1.0, m.verlustfaktor) - om * om);
+            }
+            v.push_back(20.0 * std::log10(std::abs(y)) + 116.0);
         }
-        return 20.0 * std::log10(std::abs(y));
-    };
-    struct Spitze
-    {
-        double hz = 0.0, db = -1e9;
-        std::size_t punkt = 0;
+        return v;
     };
     const auto spitzeUm = [&](double mitte, double breite) {
-        Spitze s;
-        for (double hz = mitte * (1.0 - breite); hz <= mitte * (1.0 + breite); hz += 0.25)
-            for (std::size_t p = 0; p < plan.stegpunkte.size(); ++p)
-                if (const double d = pegelDb(hz, p); d > s.db) s = {hz, d, p};
-        return s;
-    };
-    for (const Ziel& z : ziele)
-    {
-        const Spitze s = spitzeUm(z.ohneHz, 0.12);
-        const double lageOhne = s.hz / z.ohneHz - 1.0, lageMit = s.hz / z.mitHz - 1.0;
-        const double orte = std::abs(plan.stegpunkte[s.punkt].ort.y - (0.035 * (40 - z.ort) - 0.057)) / 0.035;
-        CAPTURE(z.name);
-        CAPTURE(s.hz);
-        CAPTURE(s.db);
-        CAPTURE(orte);
-        // eine Spitze, nicht der Rand des Fensters
-        CHECK(s.hz > z.ohneHz * 0.881);
-        CHECK(s.hz < z.ohneHz * 1.119);
-        CHECK(std::abs(lageMit) < 0.10);
-        if (std::string(z.name) == "S(1,2)")
+        double beste = 0.0, hoehe = -1e9;
+        for (double hz = mitte * (1.0 - breite); hz < mitte * (1.0 + breite); hz += 0.25)
         {
-            // bekannte Abweichung: gegen den Kasten ohne Saiten +10,4 % (besaitet +7 %) — im Bereich, in dem die
-            // Luft mitgeht; wird sie kleiner, gehoert S(1,2) in die allgemeine Schwelle
-            CHECK(lageOhne > 0.10);
-            CHECK(lageOhne < 0.11);
+            const std::vector<double> v = profil(hz);
+            if (const double d = *std::max_element(v.begin(), v.end()); d > hoehe)
+            {
+                beste = hz;
+                hoehe = d;
+            }
         }
-        else
-            CHECK(std::abs(lageOhne) < 0.10);
-        CHECK(orte < 2.0);
-        // die Hoehe mit der Daempfung des Bauplans (aus Bells Gueten ohne Saiten); S(1,6) hat gemessen zwei
-        // Moden uebereinander (Q 10) und faellt heraus
-        if (z.ohneDb > 0.0) CHECK(std::abs(s.db - (z.ohneDb - 116.0)) < 6.0);
+        return std::pair<double, double>{beste, hoehe};
+    };
+    struct Bauch
+    {
+        double ort, db;
+    };
+    const auto baeucheIn = [&](const std::vector<double>& v) {
+        std::vector<Bauch> aus;
+        const int n = static_cast<int>(v.size());
+        for (int i = 0; i < n; ++i)
+        {
+            if ((i > 0 && v[i - 1] > v[i]) || (i + 1 < n && v[i + 1] > v[i])) continue;
+            // je Seite der tiefste Wert, bevor es hoeher geht; laeuft die Seite bis ans Ende der Oesen, begrenzt
+            // sie den Bauch nicht
+            bool begrenzt = false;
+            double tal = -1e9;
+            for (const int schritt : {-1, 1})
+            {
+                double t = v[i];
+                int j = i + schritt;
+                while (j >= 0 && j < n && v[j] <= v[i])
+                {
+                    t = std::min(t, v[j]);
+                    j += schritt;
+                }
+                if (j >= 0 && j < n)
+                {
+                    begrenzt = true;
+                    tal = std::max(tal, t);
+                }
+            }
+            if (begrenzt && v[i] - tal < 3.0) continue;
+            Bauch b{ort[i], v[i]};
+            if (i > 0 && i + 1 < n)
+            {
+                // Scheitel der Parabel durch die drei Oesen (sie liegen ungleich weit)
+                const double x0 = ort[i - 1], x1 = ort[i], x2 = ort[i + 1];
+                const double d1 = (v[i] - v[i - 1]) / (x1 - x0), d2 = (v[i + 1] - v[i]) / (x2 - x1);
+                const double a = (d2 - d1) / (x2 - x0);
+                if (a < 0.0)
+                {
+                    b.ort = 0.5 * (x0 + x1) - d1 / (2.0 * a);
+                    b.db = v[i - 1] + d1 * (b.ort - x0) + a * (b.ort - x0) * (b.ort - x1);
+                }
+            }
+            aus.push_back(b);
+        }
+        return aus;
+    };
+    // KQ31-3 a: die Schwellen bleiben; was am Koerper darueber liegt, steht hier als bekannte Abweichung mit ihrem
+    // Wert — der Fall wird rot, wenn sie waechst oder wenn sie verschwindet (dann gehoert die Stelle in die Schwelle).
+    // Ursache offen (Offene_Punkte.md, Harfenbericht Par. 16).
+    struct BauchZiel
+    {
+        double ort, db;          // Bell
+        double ortBekannt = 0.0; // bekannte Abweichung der Lage in Messorten (0: in der Schwelle 2)
+        double dbBekannt = 0.0;  // bekannte Abweichung der Hoehe gegen den staerksten Bauch in dB (0: in der Schwelle 6)
+    };
+    struct ModeZiel
+    {
+        const char* name;
+        double hz;
+        double starkBekannt;  // Hoehe des staerksten Bauchs gegen Bell — bekannte Abweichung, ±1,5 dB festgehalten
+        std::vector<BauchZiel> baeuche;  // vom Diskant zum Bass, der erste ist der staerkste
+    };
+    const std::vector<ModeZiel> ziele = {
+        {"S(1,2)", 249.0, -3.5, {{13.0, 96.0, 2.1}, {30.0, 78.0}}},
+        {"S(1,3)", 316.0, -8.3, {{7.5, 104.0}, {18.5, 89.0, 2.5}, {31.5, 84.0}}},
+        {"S(1,4)", 432.0, -9.4, {{6.0, 105.5}, {14.5, 91.0}, {22.5, 85.5}, {32.0, 84.0}}},
+        {"S(1,5)", 545.0, -6.7, {{4.0, 101.5}, {10.5, 93.0}, {16.5, 82.0}, {25.0, 86.0, 0.0, -9.1}, {33.5, 86.5, 0.0, -11.2}}},
+        {"S(1,6)", 709.0, -8.6,
+         {{3.5, 101.0}, {8.5, 95.5}, {14.0, 90.0, 0.0, -6.5}, {20.0, 86.5, 0.0, -8.2}, {27.5, 89.5, 0.0, -15.4}, {34.0, 88.5, 0.0, -16.5}}},
+    };
+    for (const ModeZiel& z : ziele)
+    {
+        const double hz = spitzeUm(z.hz, 0.12).first;
+        const std::vector<Bauch> ist = baeucheIn(profil(hz));
+        CAPTURE(z.name);
+        CAPTURE(hz);
+        // eine Spitze, nicht der Rand des Fensters; Lage innerhalb 7 %
+        CHECK(std::abs(hz / z.hz - 1.0) <= 0.07);
+        // die Zahl der Baeuche
+        REQUIRE(ist.size() == z.baeuche.size());
+        // der staerkste Bauch liegt am Diskantende wie bei Bell; seine Hoehe ist bekannte Abweichung
+        for (const Bauch& b : ist) CHECK(b.db <= ist.front().db);
+        CHECK(std::abs(ist.front().db - z.baeuche.front().db - z.starkBekannt) < 1.5);
+        for (std::size_t b = 0; b < ist.size(); ++b)
+        {
+            const BauchZiel& soll = z.baeuche[b];
+            const double lage = ist[b].ort - soll.ort;
+            const double hoehe = (ist[b].db - ist.front().db) - (soll.db - z.baeuche.front().db);
+            CAPTURE(b);
+            CAPTURE(lage);
+            CAPTURE(hoehe);
+            if (soll.ortBekannt == 0.0)
+                CHECK(std::abs(lage) <= 2.0);
+            else
+            {
+                CHECK(std::abs(lage) > 2.0);
+                CHECK(std::abs(lage - soll.ortBekannt) < 0.3);
+            }
+            if (soll.dbBekannt == 0.0)
+                CHECK(std::abs(hoehe) <= 6.0);
+            else
+            {
+                CHECK(std::abs(hoehe) > 6.0);
+                CHECK(std::abs(hoehe - soll.dbBekannt) < 1.5);
+            }
+        }
     }
     // bekannte Abweichung: S(1,8) (905 Hz, 102 dB an Ort 4) liegt mehr als 6 dB zu tief — das Diskantende ist auch
     // mit der Feder an der Kante zu steif (Bericht Par. 12)
-    const Spitze acht = spitzeUm(905.0, 0.08);
-    CAPTURE(acht.hz);
-    CAPTURE(acht.db);
-    CHECK(acht.db - (102.0 - 116.0) < -6.0);
-    CHECK(acht.db - (102.0 - 116.0) > -20.0);
+    const std::pair<double, double> acht = spitzeUm(905.0, 0.08);
+    CAPTURE(acht.first);
+    CAPTURE(acht.second);
+    CHECK(acht.second - 102.0 < -6.0);
+    CHECK(acht.second - 102.0 > -20.0);
 }

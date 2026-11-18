@@ -124,7 +124,7 @@ def baue(saiten):
     assert len({p["y"] for p in punkte}) == len(saiten), "80 Tasten an 46 Orten"
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 7,
+        "version": 8,
         "title": "Concert harp",
         "description": "Soundboard of the Salvi Orchestra concert harp with the air of its soundbox (Bell 1988; KQ1 a, "
                        "KQ17 a to KQ21 a). Spruce board 131 cm, 41 to 10 cm wide, 10 to 3 mm thick, grain across, "
@@ -162,11 +162,13 @@ def baue(saiten):
                     "source": "fit to the Q of soundbox G in the harp without strings (Bell 1988 Figs. 7.10-7.16: 249 / 316 / "
                               "432 / 545 / 757 / 905 Hz with Q 39 / 45 / 43 / 31 / 33 / 18; S(1,6) with Q 10 left out); "
                               "extrapolated above 1 kHz"},
-        "cavity": {"volume": 0.027, "endCorrection": 2.6, "q": 5.5,
+        "cavity": {"volume": 0.027, "endCorrection": 2.6, "q": 8.5,
                    "source": "volume and apertures: Bell 1988 Table 4.1; end correction set so that the Helmholtz mode with "
                              "rigid walls lies at 185 Hz (Bell: 190 Hz; the apertures lie close together); Q of the air "
-                             "fitted so that S(1,1)-/+ get Q 13 in the harp (Bell 1988 Figs. 7.8, 7.9: 11 and 16 on "
-                             "soundbox G fitted to the harp, without strings; KQ29 a) - it also stands for losses in the "
+                             "fitted to both Q of soundbox G fitted to the harp, without strings (Bell 1988 Figs. 7.8, "
+                             "7.9: 11 and 16) in the least-squares sense of the logarithm - with both bars on the centre "
+                             "line (KQ31-1 a) the two modes share the air unequally (0.28 / 0.67) and one value cannot "
+                             "give both: the model has 18.2 and 11.5 (KQ29-1 a) - it also stands for losses in the "
                              "frame of the harp; the isolated box F has 18 and 14 (Table 6.1)",
                    "openings": [{"x": 0.0, "y": round(anteil * LAENGE, 4), "z": round(-breite(anteil * LAENGE) / 2, 4),
                                  "area": flaeche, "lipLength": lippe,
@@ -183,6 +185,7 @@ def baue(saiten):
                                         "(-5.4 instead of -7.4 dB) and the level at Bell's testing position 2 rises by "
                                         "5 to 10 dB towards the measurement (Bell 1988 Fig. 6.6); the edge sits on the "
                                         "top block of the shell"}]},
+        "barOverlap": "add",
     }
 
 

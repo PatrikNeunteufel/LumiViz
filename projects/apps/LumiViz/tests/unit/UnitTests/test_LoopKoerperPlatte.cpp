@@ -663,3 +663,106 @@ TEST_CASE("Loop Koerper 31c-3 Steinway D")
         if (s.k.wert(i, i) <= 0.0 || s.m.wert(i, i) <= 0.0) ++nichtPositiv;
     CHECK(nichtPositiv == 0);
 }
+
+TEST_CASE("Loop Koerper KQ31-1 Leisten uebereinander")
+{
+    const double a = 0.3, b = 0.4, h = 0.003;
+    kp::Material buche = fichte();
+    buche.name = "beech";
+    buche.dichte = 700.0;
+    buche.ex = 14.0e9;
+    kp::Bauplan plan;
+    plan.titel = "Test";
+    plan.materialien = {fichte(), buche};
+    plan.platte.material = "spruce";
+    plan.platte.umriss = {{0.0, 0.0}, {a, 0.0}, {a, b}, {0.0, b}};
+    plan.platte.dicke = h;
+    // Deckleiste (Steg, 5 mm hoch, 20 mm breit) und Zugleiste (Rippe, 20 mm hoch, 40 mm breit) auf derselben Linie
+    const std::vector<kp::Punkt2> linie = {{0.15, 0.05}, {0.15, 0.35}};
+    plan.stege = {{"cover bar", "beech", linie, {0.005, 0.005}, {0.02, 0.02}}};
+    plan.rippen = {{"straining bar", "beech", linie, {0.02, 0.02}, {0.04, 0.04}}};
+    REQUIRE(kp::pruefe(plan).empty());
+    const kp::Punkt2 mitte{0.15, 0.2}, daneben{0.165, 0.2}, frei{0.05, 0.2};
+
+    // die Vorgabe: nur die erste zaehlt (der Steg geht vor) — wie bis Fassung 7
+    CHECK(plan.leistenUebereinander == kp::LeistenUebereinander::NurDieErste);
+    CHECK(kp::steifeBei(plan, mitte).h == doctest::Approx(h + 0.005).epsilon(1e-12));
+    CHECK(kp::steifeBei(plan, daneben).h == doctest::Approx(h + 0.02).epsilon(1e-12));
+    CHECK(kp::steifeBei(plan, frei).h == h);
+    CHECK(kp::steifeBei(plan, mitte).werkstoff == 1);
+
+    // addieren: die Hoehen zaehlen zusammen, Werkstoff und Richtung der ersten; daneben und frei wie vorher
+    kp::Bauplan summe = plan;
+    summe.leistenUebereinander = kp::LeistenUebereinander::Addieren;
+    CHECK(kp::steifeBei(summe, mitte).h == doctest::Approx(h + 0.025).epsilon(1e-12));
+    CHECK(kp::steifeBei(summe, mitte).werkstoff == 1);
+    CHECK(kp::steifeBei(summe, mitte).q == kp::steifeBei(plan, mitte).q);
+    CHECK(kp::steifeBei(summe, daneben).h == kp::steifeBei(plan, daneben).h);
+    CHECK(kp::steifeBei(summe, frei).h == h);
+    // ohne Ueberdeckung aendert das Feld nichts
+    kp::Bauplan einzeln = plan;
+    einzeln.rippen.clear();
+    kp::Bauplan einzelnSumme = einzeln;
+    einzelnSumme.leistenUebereinander = kp::LeistenUebereinander::Addieren;
+    for (const kp::Punkt2 p : {mitte, daneben, frei}) CHECK(kp::steifeBei(einzelnSumme, p).h == kp::steifeBei(einzeln, p).h);
+
+    // die Rechnung: mit „addieren“ dieselbe Platte wie ein Bauplan, dessen Deckleiste die Summe traegt
+    // (so die Probe der S205); schwerer und steifer als mit „nur die erste“
+    const kp::Netz netz = rechteckNetz(a, b, 0.04);  // grob: die dichte Eigenwertaufgabe bleibt klein
+    REQUIRE(netz.fehler.empty());
+    const kp::LagrangeDreieck element(3);
+    kp::Bauplan vonHand = plan;
+    vonHand.stege[0].hoehe = {0.025, 0.025};
+    const kp::PlattenSystem sErste = kp::baueSystem(netz, element, plan);
+    const kp::PlattenSystem sSumme = kp::baueSystem(netz, element, summe);
+    const kp::PlattenSystem sHand = kp::baueSystem(netz, element, vonHand);
+    CHECK(sSumme.masse == doctest::Approx(sHand.masse).epsilon(1e-12));
+    CHECK(sSumme.masse > sErste.masse);
+    const auto fErste = frequenzen(sErste, 3), fSumme = frequenzen(sSumme, 3), fHand = frequenzen(sHand, 3);
+    for (std::size_t i = 0; i < fSumme.size(); ++i) CHECK(fSumme[i] == doctest::Approx(fHand[i]).epsilon(1e-9));
+    CHECK(std::abs(fSumme[0] - fErste[0]) > 0.01 * fErste[0]);
+
+    // die Meldung: was liegt uebereinander
+    const auto paare = kp::ueberlagerungen(plan);
+    REQUIRE(paare.size() == 1);
+    CHECK(paare[0].oben == "cover bar");
+    CHECK(paare[0].unten == "straining bar");
+    CHECK(paare[0].gleicherWerkstoff);
+    CHECK(paare[0].flaeche == doctest::Approx(0.3 * 0.02).epsilon(0.02));
+    CHECK(paare[0].volumen == doctest::Approx(0.3 * 0.02 * 0.02).epsilon(0.02));
+    CHECK(kp::ueberlagerungen(einzeln).empty());
+    kp::Bauplan gemischt = plan;
+    gemischt.rippen[0].material = "spruce";
+    CHECK_FALSE(kp::ueberlagerungen(gemischt).at(0).gleicherWerkstoff);
+    // eine dritte Leiste unter den beiden zaehlt gegen die erste, nicht gegen die zweite
+    kp::Bauplan drei = plan;
+    drei.rippen.push_back({"third", "beech", linie, {0.01, 0.01}, {0.01, 0.01}});
+    const auto paareDrei = kp::ueberlagerungen(drei);
+    REQUIRE(paareDrei.size() == 2);
+    CHECK(paareDrei[1].oben == "cover bar");
+    CHECK(paareDrei[1].unten == "third");
+    drei.leistenUebereinander = kp::LeistenUebereinander::Addieren;
+    CHECK(kp::steifeBei(drei, mitte).h == doctest::Approx(h + 0.035).epsilon(1e-12));
+
+    // die Datei: `barOverlap` immer geschrieben (Fassung 8), Hin- und Rueckweg; Fassung 7 ohne das Feld
+    CHECK(kp::kBauplanFassung >= 8);
+    CHECK(alsJson(plan).value(QStringLiteral("barOverlap")).toString() == QStringLiteral("first"));
+    const QJsonObject json = alsJson(summe);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
+    CHECK(json.value(QStringLiteral("barOverlap")).toString() == QStringLiteral("add"));
+    kp::Bauplan zurueck;
+    REQUIRE(ausJson(json, zurueck));
+    CHECK(zurueck == summe);
+    QJsonObject sieben = json;
+    sieben.remove(QStringLiteral("barOverlap"));
+    sieben[QStringLiteral("version")] = 7;
+    kp::Bauplan alt;
+    REQUIRE(ausJson(sieben, alt));
+    CHECK(alt.leistenUebereinander == kp::LeistenUebereinander::NurDieErste);
+    // eine unbekannte Art wird nicht geraten
+    QJsonObject fremd = json;
+    fremd[QStringLiteral("barOverlap")] = QStringLiteral("max");
+    CHECK_FALSE(ausJson(fremd, alt));
+    // der Abdruck haengt am Feld
+    CHECK(bauplanAbdruck(summe) != bauplanAbdruck(plan));
+}

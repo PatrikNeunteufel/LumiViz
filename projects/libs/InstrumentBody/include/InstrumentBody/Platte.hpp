@@ -131,10 +131,15 @@ struct AufLeiste
 
 /// Was die Platte am Punkt `p` traegt: auf einem Steg dessen Material mit der Faser
 /// laengs des Stegs, auf einer Rippe ebenso, sonst die Platte mit ihrer Faser; die
-/// Dicke ist die der Platte plus die Hoehe der Leiste (der Steg geht vor).
+/// Dicke ist die der Platte plus die Hoehe der Leiste (der Steg geht vor). Liegen an `p` mehrere
+/// Leisten uebereinander, entscheidet `plan.leistenUebereinander` (KQ31-1 a): nur die erste zaehlt, oder
+/// die Hoehen aller zaehlen zusammen mit Werkstoff und Richtung der ersten.
 [[nodiscard]] inline Steife steifeBei(const Bauplan& plan, Punkt2 p)
 {
     const double platte = plan.platte.dickeBei(p);
+    const bool addieren = plan.leistenUebereinander == LeistenUebereinander::Addieren;
+    bool gefunden = false;
+    Steife s;
     for (const auto* leisten : {&plan.stege, &plan.rippen})
     {
         for (const Leiste& l : *leisten)
@@ -143,17 +148,93 @@ struct AufLeiste
             if (!a.drauf) continue;
             const Material* m = findeMaterial(plan, l.material);
             if (!m) continue;
-            Steife s = gedreht(*m, a.richtungGrad);
+            if (gefunden)
+            {
+                s.h += a.hoehe;
+                continue;
+            }
+            s = gedreht(*m, a.richtungGrad);
             s.h = platte + a.hoehe;
             s.werkstoff = werkstoffPlatz(plan, m);
-            return s;
+            if (!addieren) return s;
+            gefunden = true;
         }
     }
+    if (gefunden) return s;
     const Material* m = findeMaterial(plan, plan.platte.material);
-    Steife s = m ? gedreht(*m, plan.platte.faserWinkelGrad) : Steife{};
+    s = m ? gedreht(*m, plan.platte.faserWinkelGrad) : Steife{};
     s.h = platte;
     s.werkstoff = werkstoffPlatz(plan, m);
     return s;
+}
+
+/// Zwei Leisten, die sich ueberdecken (KQ31-1 a): `oben` ist an der Stelle die erste des Bauplans (Stege
+/// vor Rippen), `unten` eine weitere dort. Mit `NurDieErste` fehlt `volumen` in der Rechnung, mit
+/// `Addieren` zaehlt es mit dem Werkstoff von `oben`.
+struct Ueberlagerung
+{
+    std::string oben;
+    std::string unten;
+    double flaeche = 0.0;  ///< m², auf der beide liegen
+    double volumen = 0.0;  ///< m³ von `unten` auf dieser Flaeche
+    bool gleicherWerkstoff = true;
+
+    [[nodiscard]] bool operator==(const Ueberlagerung&) const = default;
+};
+
+/// Wo im Bauplan Leisten uebereinander liegen: jede Leiste wird laengs ihrer Linie abgetastet (`laengs`
+/// Meter laengs, `quer` Meter quer); gezaehlt wird, wo sie die erste ist und eine weitere Leiste mit Hoehe
+/// dort liegt. Leer = keine Leiste liegt auf einer anderen. Die Flaechen sind auf das Raster genau.
+[[nodiscard]] inline std::vector<Ueberlagerung> ueberlagerungen(const Bauplan& plan, double laengs = 0.002, double quer = 0.001)
+{
+    std::vector<const Leiste*> alle;
+    for (const auto* leisten : {&plan.stege, &plan.rippen})
+        for (const Leiste& l : *leisten)
+            if (l.hoehe.size() == l.linie.size() && l.breite.size() == l.linie.size()) alle.push_back(&l);
+    std::vector<Ueberlagerung> aus;
+    if (laengs <= 0.0 || quer <= 0.0) return aus;
+    const double zelle = laengs * quer;
+    for (std::size_t i = 0; i < alle.size(); ++i)
+    {
+        const Leiste& l = *alle[i];
+        std::vector<Ueberlagerung> paare(alle.size());
+        for (std::size_t k = 0; k + 1 < l.linie.size(); ++k)
+        {
+            const Punkt2 a = l.linie[k], b = l.linie[k + 1];
+            const double lang = std::hypot(b.x - a.x, b.y - a.y);
+            if (lang <= 0.0) continue;
+            const double ex = (b.x - a.x) / lang, ey = (b.y - a.y) / lang;
+            for (double s = laengs / 2.0; s < lang; s += laengs)
+            {
+                const double w = l.breite[k] + s / lang * (l.breite[k + 1] - l.breite[k]);
+                for (double q = -w / 2.0 + quer / 2.0; q < w / 2.0; q += quer)
+                {
+                    const Punkt2 p{a.x + s * ex - q * ey, a.y + s * ey + q * ex};
+                    // nur wo `l` hier selbst gilt (naechstes Stueck seiner Linie) und keine fruehere davor liegt
+                    if (!aufLeiste(l, p).drauf) continue;
+                    bool verdeckt = false;
+                    for (std::size_t v = 0; v < i && !verdeckt; ++v) verdeckt = aufLeiste(*alle[v], p).drauf;
+                    if (verdeckt) continue;
+                    for (std::size_t j = i + 1; j < alle.size(); ++j)
+                    {
+                        const AufLeiste u = aufLeiste(*alle[j], p);
+                        if (!u.drauf || u.hoehe <= 0.0) continue;
+                        paare[j].flaeche += zelle;
+                        paare[j].volumen += zelle * u.hoehe;
+                    }
+                }
+            }
+        }
+        for (std::size_t j = i + 1; j < alle.size(); ++j)
+        {
+            if (paare[j].flaeche <= 0.0) continue;
+            paare[j].oben = l.name;
+            paare[j].unten = alle[j]->name;
+            paare[j].gleicherWerkstoff = l.material == alle[j]->material;
+            aus.push_back(std::move(paare[j]));
+        }
+    }
+    return aus;
 }
 
 // --- Integration -----------------------------------------------------------------

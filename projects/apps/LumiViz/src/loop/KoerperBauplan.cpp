@@ -296,6 +296,9 @@ QJsonObject alsJson(const Bauplan& plan)
              // seit Fassung 7 (KQ20 a), immer geschrieben
              {QStringLiteral("sections"), abschnitte},
          }},
+        // seit Fassung 8 (KQ31-1 a), immer geschrieben
+        {QStringLiteral("barOverlap"), plan.leistenUebereinander == koerper::LeistenUebereinander::Addieren ? QStringLiteral("add")
+                                                                                                           : QStringLiteral("first")},
     };
 }
 
@@ -405,6 +408,13 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
             a.quelle = text(o.value(QStringLiteral("source")));
             neu.rand.abschnitte.push_back(std::move(a));
         }
+    }
+    // seit Fassung 8 (KQ31-1 a); fehlt das Feld, zaehlt nur die erste Leiste wie bis Fassung 7
+    if (wurzel.contains(QStringLiteral("barOverlap")))
+    {
+        const QString art = wurzel.value(QStringLiteral("barOverlap")).toString();
+        if (art == QLatin1String("add")) neu.leistenUebereinander = koerper::LeistenUebereinander::Addieren;
+        else if (art != QLatin1String("first")) return false;  // eine unbekannte Art: nicht raten
     }
     plan = std::move(neu);
     return true;
