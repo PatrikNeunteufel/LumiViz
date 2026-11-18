@@ -1,0 +1,7 @@
+Cembalo: Tafel je Taste, Glieder der Reihe nach T5 T3 T1, Ziel 3.0 Cent, RMAX 0.99, RAND 1.5
+Cembalo T72  : f1   523.26 Hz, Umlauf   91.7, zaehlend  37 (mit Zugabe) bis  19948 Hz, Verlust Ordnung 8, Abel-Smith   1 | T5, M   8:   0.01 Cent, Abklingen   0.58 % in der Schwelle, r max 0.595 | ok |    6 s
+Cembalo T73  : f1   554.38 Hz, Umlauf   86.6, zaehlend  35 (mit Zugabe) bis  19993 Hz, Verlust Ordnung 8, Abel-Smith   1 | T5, M   8:   0.01 Cent, Abklingen   0.21 % in der Schwelle, r max 0.977 | ok |   13 s
+Cembalo T89  : f1  1397.03 Hz, Umlauf   34.4, zaehlend  14 (mit Zugabe) bis  19866 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   8:   0.00 Cent, Abklingen   0.30 % in der Schwelle, r max 0.672 | ok |   15 s
+
+===== Cembalo: 3 Tasten, in 3 Cent und Abklingen in der Schwelle: 3
+  T5: 3 Tasten (T72 bis T89), Biquads Median 8, hoechstens 8, groesster Fehler 0.01 Cent, Abklingen groesster Fehler 0.58 %

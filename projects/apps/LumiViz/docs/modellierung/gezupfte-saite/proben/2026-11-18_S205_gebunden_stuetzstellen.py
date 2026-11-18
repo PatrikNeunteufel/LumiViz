@@ -123,7 +123,7 @@ def gebunden(st, M, P, r0, th0, g):
     off = np.concatenate([[0], np.cumsum(nres)])
     nk = M * (P + 1)
     npar = 2 * nk + K
-    idx = np.array([i for i in range(2 * nk) if i % (P + 1)])      # Beiwerte ab Grad 1: gedaempft (REG)
+    idx = np.array([i for i in range(2 * nk) if i % (P + 1)], dtype=int)      # Beiwerte ab Grad 1: gedaempft (REG)
     lo = unten(g)
     kf = [KF / (2 * np.pi * s["n"]) * np.where(s["n"] == 1, 10.0, 1.0) for s in st]
     Nint = np.zeros(K)

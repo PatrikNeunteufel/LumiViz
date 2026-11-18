@@ -1,0 +1,67 @@
+Cembalo: Tafel je Taste, Glieder der Reihe nach T5 T3 T1, Ziel 3.0 Cent, RMAX 0.99, RAND 1.5
+Cembalo T29  : f1    43.65 Hz, Umlauf 1099.5, zaehlend 244 (mit Zugabe) bis  19991 Hz, Verlust Ordnung 8, Abel-Smith  99 | T5, M  99:   1.47 Cent, Abklingen   5.74 % in der Schwelle, r max 0.990 | ok |   36 s
+Cembalo T30  : f1    46.25 Hz, Umlauf 1037.8, zaehlend 240 (mit Zugabe) bis  19966 Hz, Verlust Ordnung 8, Abel-Smith  96 | T5, M  96:   1.15 Cent, Abklingen   5.00 % in der Schwelle, r max 0.990 | ok |   19 s
+Cembalo T31  : f1    49.00 Hz, Umlauf  979.6, zaehlend 236 (mit Zugabe) bis  19964 Hz, Verlust Ordnung 8, Abel-Smith  92 | T5, M  92:   1.17 Cent, Abklingen   4.57 % in der Schwelle, r max 0.990 | ok |   22 s
+Cembalo T32  : f1    51.91 Hz, Umlauf  924.6, zaehlend 239 (mit Zugabe) bis  19943 Hz, Verlust Ordnung 8, Abel-Smith  88 | T5, M  88:   1.23 Cent, Abklingen   4.11 % in der Schwelle, r max 0.990 | ok |   35 s
+Cembalo T33  : f1    55.00 Hz, Umlauf  872.7, zaehlend 234 (mit Zugabe) bis  19899 Hz, Verlust Ordnung 8, Abel-Smith  84 | T5, M  84:   1.15 Cent, Abklingen   3.81 % in der Schwelle, r max 0.990 | ok |   25 s
+Cembalo T34  : f1    58.27 Hz, Umlauf  823.7, zaehlend 237 (mit Zugabe) bis  19878 Hz, Verlust Ordnung 8, Abel-Smith  79 | T5, M  79:   1.31 Cent, Abklingen   3.18 % in der Schwelle, r max 0.990 | ok |   25 s
+Cembalo T35  : f1    61.74 Hz, Umlauf  777.5, zaehlend 232 (mit Zugabe) bis  19953 Hz, Verlust Ordnung 8, Abel-Smith  73 | T5, M  73:   1.21 Cent, Abklingen   3.73 % in der Schwelle, r max 0.990 | ok |   21 s
+Cembalo T36  : f1    65.41 Hz, Umlauf  733.9, zaehlend 226 (mit Zugabe) bis  19930 Hz, Verlust Ordnung 8, Abel-Smith  68 | T5, M  68:   1.32 Cent, Abklingen   3.33 % in der Schwelle, r max 0.982 | ok |   17 s
+Cembalo T37  : f1    69.30 Hz, Umlauf  692.7, zaehlend 224 (mit Zugabe) bis  19915 Hz, Verlust Ordnung 8, Abel-Smith  61 | T5, M  61:   1.12 Cent, Abklingen   3.40 % in der Schwelle, r max 0.978 | ok |    2 s
+Cembalo T38  : f1    73.42 Hz, Umlauf  653.8, zaehlend 215 (mit Zugabe) bis  19961 Hz, Verlust Ordnung 8, Abel-Smith  56 | T5, M  56:   1.13 Cent, Abklingen   3.35 % in der Schwelle, r max 0.975 | ok |    9 s
+Cembalo T39  : f1    77.78 Hz, Umlauf  617.1, zaehlend 206 (mit Zugabe) bis  19898 Hz, Verlust Ordnung 8, Abel-Smith  51 | T5, M  51:   1.40 Cent, Abklingen   3.33 % in der Schwelle, r max 0.974 | ok |    2 s
+Cembalo T40  : f1    82.41 Hz, Umlauf  582.5, zaehlend 197 (mit Zugabe) bis  19876 Hz, Verlust Ordnung 8, Abel-Smith  47 | T5, M  47:   1.14 Cent, Abklingen   3.28 % in der Schwelle, r max 0.963 | ok |   31 s
+Cembalo T41  : f1    87.31 Hz, Umlauf  549.8, zaehlend 194 (mit Zugabe) bis  19912 Hz, Verlust Ordnung 8, Abel-Smith  40 | T5, M  40:   1.10 Cent, Abklingen   3.28 % in der Schwelle, r max 0.955 | ok |   40 s
+Cembalo T42  : f1    92.50 Hz, Umlauf  518.9, zaehlend 186 (mit Zugabe) bis  20000 Hz, Verlust Ordnung 8, Abel-Smith  36 | T5, M  36:   1.48 Cent, Abklingen   3.19 % in der Schwelle, r max 0.962 | ok |    1 s
+Cembalo T43  : f1    98.00 Hz, Umlauf  489.8, zaehlend 177 (mit Zugabe) bis  19916 Hz, Verlust Ordnung 8, Abel-Smith  33 | T5, M  33:   1.14 Cent, Abklingen   3.12 % in der Schwelle, r max 0.956 | ok |    1 s
+Cembalo T44  : f1   103.83 Hz, Umlauf  462.3, zaehlend 172 (mit Zugabe) bis  20000 Hz, Verlust Ordnung 8, Abel-Smith  27 | T5, M  27:   1.47 Cent, Abklingen   3.00 % in der Schwelle, r max 0.950 | ok |    0 s
+Cembalo T45  : f1   110.00 Hz, Umlauf  436.4, zaehlend 163 (mit Zugabe) bis  19872 Hz, Verlust Ordnung 8, Abel-Smith  24 | T5, M  26:   0.61 Cent, Abklingen   2.94 % in der Schwelle, r max 0.938 | ok |    5 s
+Cembalo T46  : f1   116.54 Hz, Umlauf  411.9, zaehlend 158 (mit Zugabe) bis  19948 Hz, Verlust Ordnung 8, Abel-Smith  19 | T5, M  19:   1.12 Cent, Abklingen   2.73 % in der Schwelle, r max 0.926 | ok |    1 s
+Cembalo T47  : f1   123.47 Hz, Umlauf  388.8, zaehlend 150 (mit Zugabe) bis  19918 Hz, Verlust Ordnung 8, Abel-Smith  17 | T5, M  17:   1.11 Cent, Abklingen   2.61 % in der Schwelle, r max 0.918 | ok |    1 s
+Cembalo T48  : f1   130.81 Hz, Umlauf  366.9, zaehlend 138 (mit Zugabe) bis  19966 Hz, Verlust Ordnung 8, Abel-Smith  20 | T5, M  20:   1.78 Cent, Abklingen   2.49 % in der Schwelle, r max 0.936 | ok |    1 s
+Cembalo T49  : f1   138.59 Hz, Umlauf  346.3, zaehlend 131 (mit Zugabe) bis  19949 Hz, Verlust Ordnung 8, Abel-Smith  18 | T5, M  18:   1.61 Cent, Abklingen   3.06 % in der Schwelle, r max 0.928 | ok |    0 s
+Cembalo T50  : f1   146.83 Hz, Umlauf  326.9, zaehlend 124 (mit Zugabe) bis  19873 Hz, Verlust Ordnung 8, Abel-Smith  16 | T5, M  16:   1.69 Cent, Abklingen   3.11 % in der Schwelle, r max 0.921 | ok |    0 s
+Cembalo T51  : f1   155.56 Hz, Umlauf  308.6, zaehlend 118 (mit Zugabe) bis  19929 Hz, Verlust Ordnung 8, Abel-Smith  14 | T5, M  14:   1.49 Cent, Abklingen   2.78 % in der Schwelle, r max 0.908 | ok |    0 s
+Cembalo T52  : f1   164.81 Hz, Umlauf  291.2, zaehlend 113 (mit Zugabe) bis  19817 Hz, Verlust Ordnung 8, Abel-Smith  11 | T5, M  11:   1.70 Cent, Abklingen   2.73 % in der Schwelle, r max 0.885 | ok |    0 s
+Cembalo T53  : f1   174.62 Hz, Umlauf  274.9, zaehlend 108 (mit Zugabe) bis  19997 Hz, Verlust Ordnung 8, Abel-Smith  10 | T5, M  10:   1.72 Cent, Abklingen   2.60 % in der Schwelle, r max 0.868 | ok |    0 s
+Cembalo T54  : f1   185.00 Hz, Umlauf  259.5, zaehlend 102 (mit Zugabe) bis  19960 Hz, Verlust Ordnung 8, Abel-Smith   9 | T5, M   9:   1.54 Cent, Abklingen   2.04 % in der Schwelle, r max 0.867 | ok |    0 s
+Cembalo T55  : f1   196.00 Hz, Umlauf  244.9, zaehlend  96 (mit Zugabe) bis  19849 Hz, Verlust Ordnung 8, Abel-Smith   8 | T5, M   8:   2.13 Cent, Abklingen   1.86 % in der Schwelle, r max 0.859 | ok |    0 s
+Cembalo T56  : f1   207.65 Hz, Umlauf  231.2, zaehlend  91 (mit Zugabe) bis  19897 Hz, Verlust Ordnung 8, Abel-Smith   7 | T5, M   7:   1.78 Cent, Abklingen   2.45 % in der Schwelle, r max 0.848 | ok |    0 s
+Cembalo T57  : f1   220.00 Hz, Umlauf  218.2, zaehlend  87 (mit Zugabe) bis  19942 Hz, Verlust Ordnung 8, Abel-Smith   5 | T5, M   7:   1.36 Cent, Abklingen   1.01 % in der Schwelle, r max 0.757 | ok |    1 s
+Cembalo T58  : f1   233.08 Hz, Umlauf  205.9, zaehlend  82 (mit Zugabe) bis  19876 Hz, Verlust Ordnung 8, Abel-Smith   5 | T5, M   7:   0.57 Cent, Abklingen   1.20 % in der Schwelle, r max 0.771 | ok |    0 s
+Cembalo T59  : f1   246.94 Hz, Umlauf  194.4, zaehlend  77 (mit Zugabe) bis  19732 Hz, Verlust Ordnung 8, Abel-Smith   4 | T5, M   4:   2.21 Cent, Abklingen   2.70 % in der Schwelle, r max 0.764 | ok |    1 s
+Cembalo T60  : f1   261.63 Hz, Umlauf  183.5, zaehlend  73 (mit Zugabe) bis  19794 Hz, Verlust Ordnung 8, Abel-Smith   4 | T5, M   4:   2.97 Cent, Abklingen   2.86 % in der Schwelle, r max 0.746 | ok |    0 s
+Cembalo T61  : f1   277.18 Hz, Umlauf  173.2, zaehlend  69 (mit Zugabe) bis  19821 Hz, Verlust Ordnung 8, Abel-Smith   4 | T5, M   4:   2.52 Cent, Abklingen   2.52 % in der Schwelle, r max 0.727 | ok |    1 s
+Cembalo T62  : f1   293.67 Hz, Umlauf  163.5, zaehlend  65 (mit Zugabe) bis  19777 Hz, Verlust Ordnung 8, Abel-Smith   4 | T5, M   4:   2.38 Cent, Abklingen   3.00 % in der Schwelle, r max 0.738 | ok |    0 s
+Cembalo T63  : f1   311.13 Hz, Umlauf  154.3, zaehlend  62 (mit Zugabe) bis  19998 Hz, Verlust Ordnung 8, Abel-Smith   3 | T5, M   3:   2.92 Cent, Abklingen   2.99 % in der Schwelle, r max 0.709 | ok |    1 s
+Cembalo T64  : f1   329.63 Hz, Umlauf  145.6, zaehlend  58 (mit Zugabe) bis  19806 Hz, Verlust Ordnung 8, Abel-Smith   3 | T5, M   5:   1.73 Cent, Abklingen   2.05 % in der Schwelle, r max 0.643 | ok |    1 s
+Cembalo T65  : f1   349.23 Hz, Umlauf  137.4, zaehlend  55 (mit Zugabe) bis  19781 Hz, Verlust Ordnung 8, Abel-Smith   2 | T5, M   4:   2.32 Cent, Abklingen   1.99 % in der Schwelle, r max 0.662 | ok |    2 s
+Cembalo T66  : f1   370.00 Hz, Umlauf  129.7, zaehlend  52 (mit Zugabe) bis  19816 Hz, Verlust Ordnung 8, Abel-Smith   2 | T5, M   4:   0.69 Cent, Abklingen   1.64 % in der Schwelle, r max 0.632 | ok |    1 s
+Cembalo T67  : f1   392.00 Hz, Umlauf  122.4, zaehlend  49 (mit Zugabe) bis  19781 Hz, Verlust Ordnung 8, Abel-Smith   2 | T5, M   4:   0.62 Cent, Abklingen   1.47 % in der Schwelle, r max 0.625 | ok |    1 s
+Cembalo T68  : f1   415.31 Hz, Umlauf  115.6, zaehlend  46 (mit Zugabe) bis  19668 Hz, Verlust Ordnung 8, Abel-Smith   2 | T5, M   4:   2.19 Cent, Abklingen   1.37 % in der Schwelle, r max 0.552 | ok |    4 s
+Cembalo T69  : f1   440.01 Hz, Umlauf  109.1, zaehlend  44 (mit Zugabe) bis  19947 Hz, Verlust Ordnung 8, Abel-Smith   2 | T5, M   4:   0.42 Cent, Abklingen   1.28 % in der Schwelle, r max 0.589 | ok |    1 s
+Cembalo T70  : f1   466.17 Hz, Umlauf  103.0, zaehlend  41 (mit Zugabe) bis  19678 Hz, Verlust Ordnung 8, Abel-Smith   2 | T5, M   4:   0.14 Cent, Abklingen   1.11 % in der Schwelle, r max 0.529 | ok |    1 s
+Cembalo T71  : f1   493.89 Hz, Umlauf   97.2, zaehlend  39 (mit Zugabe) bis  19840 Hz, Verlust Ordnung 8, Abel-Smith   2 | T5, M   4:   2.05 Cent, Abklingen   2.32 % in der Schwelle, r max 0.570 | ok |    3 s
+Cembalo T72  : f1   523.26 Hz, Umlauf   91.7, zaehlend  37 (mit Zugabe) bis  19948 Hz, Verlust Ordnung 8, Abel-Smith   1 | T1, M   4:   2.56 Cent, Abklingen   2.88 % in der Schwelle, r max 0.863 | ok |   21 s
+Cembalo T73  : f1   554.38 Hz, Umlauf   86.6, zaehlend  35 (mit Zugabe) bis  19993 Hz, Verlust Ordnung 8, Abel-Smith   1 | T3, M   4:   3.48 Cent, Abklingen   1.00 % in der Schwelle, r max 0.513 | AUSNAHME |   22 s
+Cembalo T74  : f1   587.35 Hz, Umlauf   81.7, zaehlend  33 (mit Zugabe) bis  19969 Hz, Verlust Ordnung 8, Abel-Smith   1 | T5, M   3:   1.13 Cent, Abklingen   1.90 % in der Schwelle, r max 0.564 | ok |    1 s
+Cembalo T75  : f1   622.27 Hz, Umlauf   77.1, zaehlend  31 (mit Zugabe) bis  19868 Hz, Verlust Ordnung 8, Abel-Smith   1 | T5, M   4:   2.88 Cent, Abklingen   0.89 % in der Schwelle, r max 0.513 | ok |    9 s
+Cembalo T76  : f1   659.27 Hz, Umlauf   72.8, zaehlend  29 (mit Zugabe) bis  19548 Hz, Verlust Ordnung 8, Abel-Smith   1 | T5, M   2:   1.60 Cent, Abklingen   1.88 % in der Schwelle, r max 0.466 | ok |    1 s
+Cembalo T77  : f1   698.48 Hz, Umlauf   68.7, zaehlend  27 (mit Zugabe) bis  19270 Hz, Verlust Ordnung 8, Abel-Smith   1 | T5, M   2:   1.27 Cent, Abklingen   1.59 % in der Schwelle, r max 0.447 | ok |    1 s
+Cembalo T78  : f1   740.01 Hz, Umlauf   64.9, zaehlend  26 (mit Zugabe) bis  19667 Hz, Verlust Ordnung 8, Abel-Smith   1 | T5, M   2:   0.42 Cent, Abklingen   0.54 % in der Schwelle, r max 0.344 | ok |    1 s
+Cembalo T79  : f1   784.02 Hz, Umlauf   61.2, zaehlend  24 (mit Zugabe) bis  19207 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   2:   1.71 Cent, Abklingen   2.13 % in der Schwelle, r max 0.394 | ok |    1 s
+Cembalo T80  : f1   830.64 Hz, Umlauf   57.8, zaehlend  23 (mit Zugabe) bis  19505 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   4:   1.45 Cent, Abklingen   0.51 % in der Schwelle, r max 0.990 | ok |   16 s
+Cembalo T81  : f1   880.04 Hz, Umlauf   54.5, zaehlend  22 (mit Zugabe) bis  19768 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   2:   0.23 Cent, Abklingen   0.14 % in der Schwelle, r max 0.313 | ok |    1 s
+Cembalo T82  : f1   932.37 Hz, Umlauf   51.5, zaehlend  21 (mit Zugabe) bis  19991 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   2:   2.99 Cent, Abklingen   0.63 % in der Schwelle, r max 0.269 | ok |    7 s
+Cembalo T83  : f1   987.82 Hz, Umlauf   48.6, zaehlend  19 (mit Zugabe) bis  19123 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   4:   0.94 Cent, Abklingen   1.51 % in der Schwelle, r max 0.490 | ok |   11 s
+Cembalo T84  : f1  1046.56 Hz, Umlauf   45.9, zaehlend  18 (mit Zugabe) bis  19189 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   2:   0.70 Cent, Abklingen   1.38 % in der Schwelle, r max 0.383 | ok |    1 s
+Cembalo T85  : f1  1108.80 Hz, Umlauf   43.3, zaehlend  17 (mit Zugabe) bis  19184 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   4:   1.67 Cent, Abklingen   1.46 % in der Schwelle, r max 0.393 | ok |   13 s
+Cembalo T86  : f1  1174.74 Hz, Umlauf   40.9, zaehlend  16 (mit Zugabe) bis  19112 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   1:   1.48 Cent, Abklingen   1.08 % in der Schwelle, r max 0.251 | ok |    0 s
+Cembalo T87  : f1  1244.60 Hz, Umlauf   38.6, zaehlend  15 (mit Zugabe) bis  18964 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   1:   2.60 Cent, Abklingen   2.28 % in der Schwelle, r max 0.270 | ok |    0 s
+Cembalo T88  : f1  1318.61 Hz, Umlauf   36.4, zaehlend  14 (mit Zugabe) bis  18733 Hz, Verlust Ordnung 8, Abel-Smith   0 | T5, M   1:   2.42 Cent, Abklingen   2.39 % in der Schwelle, r max 0.260 | ok |    0 s
+Cembalo T89  : f1  1397.03 Hz, Umlauf   34.4, zaehlend  14 (mit Zugabe) bis  19866 Hz, Verlust Ordnung 8, Abel-Smith   0 | T1, M   3:   1.52 Cent, Abklingen   3.69 % in der Schwelle, r max 0.820 | ok |   29 s
+
+===== Cembalo: 61 Tasten, in 3 Cent und Abklingen in der Schwelle: 60
+  T5: 58 Tasten (T29 bis T88), Biquads Median 7, hoechstens 99, groesster Fehler 2.99 Cent, Abklingen groesster Fehler 5.74 %
+  T1: 2 Tasten (T72 bis T89), Biquads Median 4, hoechstens 4, groesster Fehler 2.56 Cent, Abklingen groesster Fehler 3.69 %
+  AUSNAHME T73: T3, M 4, 3.48 Cent, Abklingen 1.00 % in der Schwelle
