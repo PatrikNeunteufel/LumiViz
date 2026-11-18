@@ -1,0 +1,43 @@
+Gitarre: Stuetzstellen an Buenden und auf halbem Weg, geprueft auch an sechs Stellen je Bund dazwischen; RMAX 0.99, REG 0.05
+
+### Gitarre Saite 6: f1 82.4-246.9 Hz, zaehlend bis 8767 Hz (98-33 Teiltoene), Abel-Smith 4-13, M = 15
+  T1 Grad 3 (120 Zahlen, 1 Runden,   68 s): Buende Median  0.32, groesster   1.13 (Lage 16.00) | halb Median  0.18, groesster   0.97 (Lage 14.50) | dazwischen Median  0.31, groesster   1.69 (Lage 18.25) | Abklingen groesster Fehler 19.10 %, ausserhalb 0/153
+  T3 Grad 3 (120 Zahlen, 1 Runden,   69 s): Buende Median  0.05, groesster   0.18 (Lage  0.00) | halb Median  0.02, groesster   0.22 (Lage  0.50) | dazwischen Median  0.03, groesster   0.24 (Lage  0.12) | Abklingen groesster Fehler 19.10 %, ausserhalb 0/153
+  T4 Grad 3 (120 Zahlen, 1 Runden,   70 s): Buende Median  0.02, groesster   0.19 (Lage  0.00) | halb Median  0.01, groesster   0.24 (Lage  0.50) | dazwischen Median  0.02, groesster   0.28 (Lage  0.12) | Abklingen groesster Fehler 19.10 %, ausserhalb 0/153
+  T5 Grad 3 (120 Zahlen, 1 Runden,   70 s): Buende Median  0.01, groesster   0.19 (Lage  0.00) | halb Median  0.01, groesster   0.25 (Lage  0.50) | dazwischen Median  0.01, groesster   0.29 (Lage  0.12) | Abklingen groesster Fehler 19.10 %, ausserhalb 0/153
+  L5 Grad 3 (120 Zahlen, 1 Runden,   69 s): Buende Median  0.01, groesster   0.19 (Lage  0.00) | halb Median  0.01, groesster   0.25 (Lage  0.50) | dazwischen Median  0.01, groesster   0.29 (Lage  0.12) | Abklingen groesster Fehler 19.10 %, ausserhalb 0/153
+
+### Gitarre Saite 5: f1 110.1-329.8 Hz, zaehlend bis 10908 Hz (94-31 Teiltoene), Abel-Smith 2-8, M = 10
+  T1 Grad 3 ( 80 Zahlen, 5 Runden,   57 s): Buende Median  0.49, groesster   2.26 (Lage 18.00) | halb Median  0.59, groesster   3.42 (Lage 18.50) | dazwischen Median  0.61, groesster   3.96 (Lage 18.62) | Abklingen groesster Fehler 12.52 %, ausserhalb 0/153
+  T3 Grad 3 ( 80 Zahlen, 2 Runden,   56 s): Buende Median  0.05, groesster   0.29 (Lage  1.00) | halb Median  0.07, groesster   0.41 (Lage  0.50) | dazwischen Median  0.08, groesster   0.48 (Lage  0.12) | Abklingen groesster Fehler 12.51 %, ausserhalb 0/153
+  T4 Grad 3 ( 80 Zahlen, 1 Runden,   57 s): Buende Median  0.03, groesster   0.24 (Lage  1.00) | halb Median  0.03, groesster   0.36 (Lage  0.50) | dazwischen Median  0.04, groesster   0.41 (Lage  0.12) | Abklingen groesster Fehler 12.51 %, ausserhalb 0/153
+  T5 Grad 3 ( 80 Zahlen, 1 Runden,   48 s): Buende Median  0.02, groesster   0.25 (Lage  0.00) | halb Median  0.02, groesster   0.35 (Lage  0.50) | dazwischen Median  0.02, groesster   0.40 (Lage  0.12) | Abklingen groesster Fehler 12.51 %, ausserhalb 0/153
+  L5 Grad 3 ( 80 Zahlen, 1 Runden,   44 s): Buende Median  0.03, groesster   0.29 (Lage  0.00) | halb Median  0.03, groesster   0.36 (Lage  0.50) | dazwischen Median  0.03, groesster   0.40 (Lage  0.12) | Abklingen groesster Fehler 12.51 %, ausserhalb 0/153
+
+### Gitarre Saite 4: f1 147.0-440.5 Hz, zaehlend bis 13055 Hz (84-28 Teiltoene), Abel-Smith 2-8, M = 10
+  T1 Grad 3 ( 80 Zahlen, 12 Runden,  124 s): Buende Median  2.12, groesster   5.86 (Lage  7.00) | halb Median  2.58, groesster   7.01 (Lage 18.50) | dazwischen Median  2.18, groesster   5.88 (Lage  6.75) | Abklingen groesster Fehler  8.64 %, ausserhalb 0/153
+  T3 Grad 3 ( 80 Zahlen, 12 Runden,  140 s): Buende Median  0.37, groesster   1.62 (Lage  9.00) | halb Median  0.37, groesster   1.51 (Lage 10.50) | dazwischen Median  0.45, groesster   1.93 (Lage 16.75) | Abklingen groesster Fehler  8.61 %, ausserhalb 0/153
+  T4 Grad 3 ( 80 Zahlen, 12 Runden,  187 s): Buende Median  0.23, groesster   1.15 (Lage 19.00) | halb Median  0.21, groesster   1.29 (Lage 18.50) | dazwischen Median  0.22, groesster   1.12 (Lage 15.75) | Abklingen groesster Fehler  8.63 %, ausserhalb 0/153
+  T5 Grad 3 ( 80 Zahlen, 10 Runden,  245 s): Buende Median  0.12, groesster   0.35 (Lage  9.00) | halb Median  0.12, groesster   0.29 (Lage 10.50) | dazwischen Median  0.12, groesster   0.56 (Lage 18.88) | Abklingen groesster Fehler  8.61 %, ausserhalb 0/153
+  L5 Grad 3 ( 80 Zahlen, 5 Runden,  136 s): Buende Median  0.08, groesster   0.18 (Lage  0.00) | halb Median  0.07, groesster   0.19 (Lage  0.50) | dazwischen Median  0.10, groesster   0.35 (Lage 18.75) | Abklingen groesster Fehler 40.41 %, ausserhalb 26/153
+
+### Gitarre Saite 3: f1 195.8-587.0 Hz, zaehlend bis 8079 Hz (38-12 Teiltoene), Abel-Smith 1-5, M = 8
+  T1 Grad 3 ( 64 Zahlen, 12 Runden,  182 s): Buende Median  0.71, groesster   2.68 (Lage 18.00) | halb Median  0.31, groesster   3.73 (Lage 17.50) | dazwischen Median  0.67, groesster   3.22 (Lage 15.12) | Abklingen groesster Fehler 16.24 %, ausserhalb 0/153
+  T3 Grad 3 ( 64 Zahlen, 12 Runden,  258 s): Buende Median  0.04, groesster   0.16 (Lage 14.00) | halb Median  0.05, groesster   0.29 (Lage 17.50) | dazwischen Median  0.05, groesster   0.26 (Lage 13.25) | Abklingen groesster Fehler 16.26 %, ausserhalb 0/153
+  T4 Grad 3 ( 64 Zahlen, 12 Runden,  219 s): Buende Median  0.03, groesster   0.10 (Lage 13.00) | halb Median  0.03, groesster   0.09 (Lage 11.50) | dazwischen Median  0.04, groesster   0.19 (Lage  0.38) | Abklingen groesster Fehler 16.26 %, ausserhalb 0/153
+  T5 Grad 3 ( 64 Zahlen, 11 Runden,  171 s): Buende Median  0.03, groesster   0.10 (Lage 13.00) | halb Median  0.03, groesster   0.09 (Lage 11.50) | dazwischen Median  0.03, groesster   0.19 (Lage  0.38) | Abklingen groesster Fehler 16.26 %, ausserhalb 0/153
+  L5 Grad 3 ( 64 Zahlen, 10 Runden,  132 s): Buende Median  0.03, groesster   0.09 (Lage 13.00) | halb Median  0.03, groesster   0.09 (Lage 11.50) | dazwischen Median  0.03, groesster   0.16 (Lage  0.38) | Abklingen groesster Fehler 16.26 %, ausserhalb 0/153
+
+### Gitarre Saite 2: f1 246.5-738.9 Hz, zaehlend bis 10974 Hz (42-14 Teiltoene), Abel-Smith 1-4, M = 8
+  T1 Grad 3 ( 64 Zahlen, 12 Runden,  180 s): Buende Median  0.72, groesster   5.97 (Lage 16.00) | halb Median  0.92, groesster   5.44 (Lage 14.50) | dazwischen Median  1.35, groesster   7.01 (Lage 16.25) | Abklingen groesster Fehler  5.47 %, ausserhalb 0/153
+  T3 Grad 3 ( 64 Zahlen, 12 Runden,  121 s): Buende Median  0.24, groesster   1.02 (Lage 16.00) | halb Median  0.15, groesster   1.10 (Lage 15.50) | dazwischen Median  0.27, groesster   1.42 (Lage 15.75) | Abklingen groesster Fehler  4.16 %, ausserhalb 0/153
+  T4 Grad 3 ( 64 Zahlen, 12 Runden,  137 s): Buende Median  0.11, groesster   0.51 (Lage  9.00) | halb Median  0.09, groesster   0.33 (Lage  9.50) | dazwischen Median  0.12, groesster   0.49 (Lage  7.75) | Abklingen groesster Fehler  4.16 %, ausserhalb 0/153
+  T5 Grad 3 ( 64 Zahlen, 12 Runden,   99 s): Buende Median  0.05, groesster   0.15 (Lage  1.00) | halb Median  0.05, groesster   0.15 (Lage 18.50) | dazwischen Median  0.05, groesster   0.30 (Lage 16.75) | Abklingen groesster Fehler  4.16 %, ausserhalb 0/153
+  L5 Grad 3 ( 64 Zahlen, 2 Runden,   30 s): Buende Median  0.06, groesster   0.16 (Lage  1.00) | halb Median  0.05, groesster   0.11 (Lage  6.50) | dazwischen Median  0.07, groesster   0.25 (Lage 18.88) | Abklingen groesster Fehler 24.54 %, ausserhalb 0/153
+
+### Gitarre Saite 1: f1 330.9-991.6 Hz, zaehlend bis 14049 Hz (41-13 Teiltoene), Abel-Smith 0-2, M = 8
+  T1 Grad 3 ( 64 Zahlen, 12 Runden,  113 s): Buende Median  4.13, groesster  12.27 (Lage  4.00) | halb Median  4.11, groesster  14.69 (Lage 17.50) | dazwischen Median  4.30, groesster  24.79 (Lage 18.75) | Abklingen groesster Fehler 42.14 %, ausserhalb 5/153
+  T3 Grad 3 ( 64 Zahlen, 12 Runden,   84 s): Buende Median  0.74, groesster   2.49 (Lage 19.00) | halb Median  0.76, groesster   4.93 (Lage 14.50) | dazwischen Median  0.74, groesster   4.66 (Lage 18.75) | Abklingen groesster Fehler 19.94 %, ausserhalb 0/153
+  T4 Grad 3 ( 64 Zahlen, 12 Runden,   87 s): Buende Median  0.39, groesster   1.30 (Lage  8.00) | halb Median  0.39, groesster   1.77 (Lage 14.50) | dazwischen Median  0.47, groesster   2.99 (Lage 16.62) | Abklingen groesster Fehler  7.58 %, ausserhalb 0/153
+  T5 Grad 3 ( 64 Zahlen, 12 Runden,  104 s): Buende Median  0.28, groesster   1.01 (Lage 16.00) | halb Median  0.29, groesster   1.44 (Lage 14.50) | dazwischen Median  0.36, groesster   2.69 (Lage 16.62) | Abklingen groesster Fehler  5.37 %, ausserhalb 0/153
+  L5 Grad 3 ( 64 Zahlen, 2 Runden,   24 s): Buende Median  0.09, groesster   0.54 (Lage 15.00) | halb Median  0.08, groesster   0.51 (Lage 15.50) | dazwischen Median  0.30, groesster   0.92 (Lage 18.75) | Abklingen groesster Fehler 123.25 %, ausserhalb 113/153
