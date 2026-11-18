@@ -53,22 +53,17 @@ def versuche(s, M, g, rng):
         v = gs.werte(s, r, th, g)
         if v is None:
             continue
-        e = (v[0], v[3], v[1] == v[2], float(r.max()))
+        e = (v[0], v[3], v[1] == v[2], float(r.max()), r, th)
         if best is None or (not best[2], best[0]) > (not e[2], e[0]):
             best = e
     return best
 
 
-def taste(inst, name, sa, L, GL):
-    s = gs.stelle(sa, L, 0.0, 1, None)
-    if s["b"] is None or len(s["fz"]) == 0:
-        print(f"{inst} {name}: nicht rechenbar (zu wenige Teiltoene)", flush=True)
-        return None
+def suche(s, GL):
+    """-> (Glied, M, (Cent, Abklingen %, in der Schwelle, r max, r, th)) oder None; dazu die Abel-Smith-Zahl"""
     nap = len(uu.as_biquads(s["rest"], min(s["fz"][-1] * 1.02, 19500.0))[0])
     leiter = [1, 2, 3, 4, 6, 8] if nap <= 1 else sorted({nap, nap + 2, int(np.ceil(1.5 * (nap + 2))), 2 * (nap + 2)})
-    umlauf = FS / s["fn"][0]
     rng = np.random.default_rng(205)
-    t0 = time.perf_counter()
     bestes = None
     for g in GL:
         for M in leiter:
@@ -81,6 +76,38 @@ def taste(inst, name, sa, L, GL):
                 break
         if bestes is not None and bestes[2][0] <= ZIEL and bestes[2][2]:
             break
+    return bestes, nap
+
+
+def entwurf(sa, L, GL=(("T", 5), ("T", 3), ("T", 1))):
+    """Die Tafel einer Taste zum Einsetzen in einen Pruefstand: b, a (Verlust), r, th (Kette), N (ganzzahliger Verzug),
+    bt, at (Glied), dazu Glied, Cent am starren Steg."""
+    s = gs.stelle(sa, L, 0.0, 1, None)
+    bestes, _ = suche(s, GL)
+    g, M, e = bestes
+    r, th = e[4], e[5]
+    rest2 = s["rest"] - ue.phase_von(ue.biquads(-r, np.cos(th)))
+    f1 = s["fn"][0]
+    w1 = 2 * np.pi * f1 / FS
+    tot = np.interp(f1, gs.F, rest2)
+    N = int(np.floor(tot / w1 - gs.unten(g)))
+    soll = tot - w1 * N
+    Dl = tot / w1 - N
+    pf = lambda D: ue.phase_von(ue.antwort_ba(*gs.glied(g, D), np.array([1e-6, w1])))[1]  # noqa: E731
+    for _ in range(8):
+        Dl -= (pf(Dl) - soll) / ((pf(Dl + 1e-6) - pf(Dl - 1e-6)) / 2e-6)
+    bt, at = gs.glied(g, Dl)
+    return dict(b=s["b"], a=s["a"], r=r, th=th, N=N, bt=bt, at=at, glied=g, cent=e[0], abkl=e[1], stelle=s)
+
+
+def taste(inst, name, sa, L, GL):
+    s = gs.stelle(sa, L, 0.0, 1, None)
+    if s["b"] is None or len(s["fz"]) == 0:
+        print(f"{inst} {name}: nicht rechenbar (zu wenige Teiltoene)", flush=True)
+        return None
+    umlauf = FS / s["fn"][0]
+    t0 = time.perf_counter()
+    bestes, nap = suche(s, GL)
     if bestes is None:
         print(f"{inst} {name}: f1 {s['fn'][0]:8.2f} Hz, Umlauf {umlauf:6.1f} | passt mit keinem Glied in den Umlauf", flush=True)
         return None

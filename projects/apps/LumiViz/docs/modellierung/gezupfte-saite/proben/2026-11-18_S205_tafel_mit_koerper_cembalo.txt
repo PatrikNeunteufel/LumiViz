@@ -1,0 +1,15 @@
+Cembalo: je Taste und Fassung gegen den genauen Umlauf: Lautheit LU | Pegel 1-2 s dB | Teiltoene: groesster Betrag Cent (Grundton) | Abfall frueh->spaet groesster Betrag dB
+  Taste 29                     | UL3: -0.04  +0.04   0.0 (-0.0)   0.1 | UL31: -0.00  -0.00   0.0 (-0.0)   0.1
+  Taste 36                     | UL3: -0.04  -0.01   0.0 (+0.0)   0.3 | UL31: -0.01  -0.01   0.0 (-0.0)   0.1
+  Taste 43                     | UL3: +0.01  +0.05   0.1 (-0.0)   0.1 | UL31: +0.01  +0.05   0.0 (-0.0)   0.1
+  Taste 50                     | UL3: +0.06  -0.02   0.2 (-0.0)   0.1 | UL31: -0.02  +0.02   0.1 (-0.0)   0.1
+  Taste 57                     | UL3: +0.00  +0.00   0.1 (-0.0)   0.0 | UL31: +0.01  -0.00   0.0 (-0.0)   0.0
+  Taste 64                     | UL3: -0.01  -0.04   0.0 (-0.0)   0.1 | UL31: -0.02  -0.04   0.0 (-0.0)   0.1
+  Taste 71                     | UL3: +0.34  -0.13   1.4 (-0.0)   3.9 | UL31: -0.06  -0.01   0.2 (-0.0)   0.9
+  Taste 76                     | UL3: +0.07  -0.05   0.1 (-0.0)   0.2 | UL31: -0.03  +0.03   0.4 (-0.0)   0.6
+  Taste 78                     | UL3: +0.12  -0.04   0.5 (-0.0)   0.3 | UL31: -0.01  +0.01   0.0 (-0.0)   0.0
+  Taste 84                     | UL3: -0.07  -0.05   0.1 (-0.0)   0.1 | UL31: -0.14  +0.16   0.3 (-0.0)   0.1
+  Taste 89                     | UL3: +0.36  +0.10   0.2 (-0.0)   0.1 | UL31: -0.00  -0.00   0.0 (-0.0)   0.0
+  groesster Betrag je Fassung: Lautheit LU / Pegel 1-2 s dB / Teiltoene Cent / Grundton Cent / Abfall dB
+    UL3     :  0.36 /  0.13 /   1.4 /  0.0 /   3.9
+    UL31    :  0.14 /  0.16 /   0.4 /  0.0 /   0.9
