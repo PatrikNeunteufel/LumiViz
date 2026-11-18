@@ -1,0 +1,55 @@
+Slide Bund 5 -> 7 -> 5; Stoerung = Band ueber 1,15 * hoechstem zaehlendem Teilton, dB gegen das ganze Signal im Fenster der Rampe
+
+### Gitarre Saite 1: f1 441.7 -> 495.8 Hz, Kette 8 Biquads, Band ueber 16316 Hz
+  Glied Art     | ms je Halbton | Spruenge von M | Stoerung in den Rampen: Mittel / groesster 1-ms-Wert dB | ohne Slide (Boden) dB | Pegel nach dem Slide gegen ohne Slide dB
+  (T1: Anpassung 112 s)
+  T1    einfach |    50 |  22 |   -87.8 /   -74.7 |  -157.2 /  -150.7 |  -0.19 | Einschwingen ganzes Band   -90.8 /   -74.9 dB
+  T1    doppelt |    50 |  22 |  -119.0 /  -102.3 |  -157.2 /  -150.7 |  -0.19
+  T1    einfach |    10 |  22 |   -80.1 /   -73.0 |  -155.0 /  -151.4 |  -0.16 | Einschwingen ganzes Band   -83.5 /   -75.3 dB
+  T1    doppelt |    10 |  22 |  -101.6 /   -90.8 |  -155.0 /  -151.4 |  -0.15
+  (T3: Anpassung 98 s)
+  T3    einfach |    50 |  22 |  -108.3 /   -95.6 |  -157.2 /  -151.6 |  -0.24 | Einschwingen ganzes Band  -110.5 /   -95.0 dB
+  T3    doppelt |    50 |  22 |  -121.4 /  -104.0 |  -157.2 /  -151.6 |  -0.24
+  T3    einfach |    10 |  22 |   -89.8 /   -82.9 |  -155.1 /  -152.2 |  -0.23 | Einschwingen ganzes Band   -91.8 /   -83.2 dB
+  T3    doppelt |    10 |  22 |  -106.7 /   -97.3 |  -155.1 /  -152.2 |  -0.23
+  (T5: Anpassung 110 s)
+  T5    einfach |    50 |  22 |  -106.5 /   -96.1 |  -157.2 /  -151.9 |  -0.24 | Einschwingen ganzes Band  -108.2 /   -94.9 dB
+  T5    doppelt |    50 |  22 |  -122.4 /  -105.1 |  -157.2 /  -151.9 |  -0.24
+  T5    einfach |    10 |  22 |   -88.2 /   -79.9 |  -155.1 /  -152.5 |  -0.24 | Einschwingen ganzes Band   -89.7 /   -79.9 dB
+  T5    doppelt |    10 |  22 |  -103.0 /   -92.4 |  -155.1 /  -152.5 |  -0.24
+
+### Gitarre Saite 4: f1 196.2 -> 220.2 Hz, Kette 10 Biquads, Band ueber 15033 Hz
+  Glied Art     | ms je Halbton | Spruenge von M | Stoerung in den Rampen: Mittel / groesster 1-ms-Wert dB | ohne Slide (Boden) dB | Pegel nach dem Slide gegen ohne Slide dB
+  (T1: Anpassung 67 s)
+  T1    einfach |    50 |  52 |   -88.0 /   -76.0 |  -140.6 /  -135.3 |  -0.12 | Einschwingen ganzes Band   -85.1 /   -71.9 dB
+  T1    doppelt |    50 |  52 |  -113.8 /   -97.2 |  -140.7 /  -135.2 |  -0.12
+  T1    einfach |    10 |  52 |   -76.8 /   -68.8 |  -138.7 /  -135.4 |  -0.13 | Einschwingen ganzes Band   -73.9 /   -64.4 dB
+  T1    doppelt |    10 |  52 |   -96.2 /   -83.9 |  -138.7 /  -135.3 |  -0.13
+  (T3: Anpassung 83 s)
+  T3    einfach |    50 |  50 |  -102.1 /   -91.9 |  -140.7 /  -136.3 |  -0.11 | Einschwingen ganzes Band   -98.0 /   -86.5 dB
+  T3    doppelt |    50 |  50 |  -111.6 /   -93.5 |  -140.7 /  -136.3 |  -0.11
+  T3    einfach |    10 |  50 |   -84.3 /   -77.2 |  -138.7 /  -136.4 |  -0.11 | Einschwingen ganzes Band   -80.2 /   -71.5 dB
+  T3    doppelt |    10 |  50 |   -92.9 /   -80.0 |  -138.7 /  -136.4 |  -0.11
+  (T5: Anpassung 122 s)
+  T5    einfach |    50 |  50 |  -101.1 /   -87.4 |  -140.7 /  -136.5 |  -0.11 | Einschwingen ganzes Band   -96.5 /   -83.3 dB
+  T5    doppelt |    50 |  50 |  -115.2 /   -97.5 |  -140.7 /  -136.5 |  -0.11
+  T5    einfach |    10 |  50 |   -80.8 /   -71.0 |  -138.7 /  -136.6 |  -0.11 | Einschwingen ganzes Band   -76.9 /   -67.3 dB
+  T5    doppelt |    10 |  50 |   -96.5 /   -84.3 |  -138.7 /  -136.6 |  -0.11
+
+### Gitarre Saite 6: f1 110.0 -> 123.5 Hz, Kette 15 Biquads, Band ueber 10187 Hz
+  Glied Art     | ms je Halbton | Spruenge von M | Stoerung in den Rampen: Mittel / groesster 1-ms-Wert dB | ohne Slide (Boden) dB | Pegel nach dem Slide gegen ohne Slide dB
+  (T1: Anpassung 26 s)
+  T1    einfach |    50 |  84 |   -94.2 /   -83.3 |  -109.2 /  -103.6 |  -0.09 | Einschwingen ganzes Band   -85.8 /   -74.3 dB
+  T1    doppelt |    50 |  84 |  -104.7 /   -92.3 |  -109.3 /  -103.6 |  -0.09
+  T1    einfach |    10 |  84 |   -80.5 /   -76.0 |  -106.8 /  -103.9 |  -0.05 | Einschwingen ganzes Band   -72.2 /   -66.5 dB
+  T1    doppelt |    10 |  84 |   -93.2 /   -81.7 |  -106.8 /  -103.9 |  -0.05
+  (T3: Anpassung 27 s)
+  T3    einfach |    50 |  84 |  -102.7 /   -91.1 |  -109.2 /  -103.6 |  -0.09 | Einschwingen ganzes Band   -94.0 /   -84.0 dB
+  T3    doppelt |    50 |  84 |  -104.9 /   -92.9 |  -109.2 /  -103.6 |  -0.09
+  T3    einfach |    10 |  84 |   -83.3 /   -79.1 |  -106.8 /  -103.9 |  -0.05 | Einschwingen ganzes Band   -72.9 /   -67.6 dB
+  T3    doppelt |    10 |  84 |   -94.1 /   -81.7 |  -106.8 /  -103.9 |  -0.05
+  (T5: Anpassung 27 s)
+  T5    einfach |    50 |  84 |  -102.6 /   -91.2 |  -109.2 /  -103.6 |  -0.09 | Einschwingen ganzes Band   -93.3 /   -83.3 dB
+  T5    doppelt |    50 |  84 |  -104.9 /   -92.9 |  -109.2 /  -103.6 |  -0.09
+  T5    einfach |    10 |  84 |   -83.4 /   -79.2 |  -106.8 /  -103.9 |  -0.05 | Einschwingen ganzes Band   -72.5 /   -67.2 dB
+  T5    doppelt |    10 |  84 |   -94.1 /   -81.7 |  -106.8 /  -103.9 |  -0.05
