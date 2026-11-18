@@ -61,6 +61,8 @@ Entscheide GZ1 a–GZ4 a, GZ1-1 a und der Teilplan 34k-1 bis 34k-11 stehen in `d
 46 Saiten, Bauplan), Cembalo Taskin 1769, Gitarre mit Modalfit am Archiv Mores, Laute und Oud mit Ersatz-Bauplan;
 `InstrumentBody` bekommt Löcher (KQ7 a).
 
+**Herleitung des Kerns, Rechenfassung 2 (34k-6):** [2026-11-18_S205_herleitung.md](2026-11-18_S205_herleitung.md) — der Rechenweg vom Zupf bis zum Hörort mit Gleichung, Wert, Belegkraft und Probe je Schritt (Saite, Zupf, Steg, Ausgang, Mitschwingen, Cembalo, Zeitschritt, Umlauf-Filter, Bend), der Stand der Zielgrößen und die offenen Stellen vor 34k-7. Entscheide bleiben im Konzept §6.
+
 ## Aus InstrumentsCalculation (S182)
 
 - [ic/](ic/) — die Vorarbeiten aus IC zu Klasse 2 (Cembalo, Harfe, Gitarre, Laute, Oud; Stufe 34k) (Auflösung von IC, AU1 a / AU1-1 a): Wortlaut unverändert, nur die Links gerichtet.
