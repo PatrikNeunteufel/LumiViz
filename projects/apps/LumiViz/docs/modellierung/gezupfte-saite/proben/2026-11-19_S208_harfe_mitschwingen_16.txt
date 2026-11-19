@@ -1,0 +1,68 @@
+1393 Moden, 17 Hoerorte, 46 Saiten
+ 38 Saite  37+1  keine  -26.5  O+Q (20)  -27.9  Unterschied -1.40 LU   53 s
+ 39 Saite  37+2  keine  -24.7  O+Q (20)  -24.7  Unterschied -0.03 LU   59 s
+ 40 Saite  39+1  keine  -21.3  O+Q (19)  -21.6  Unterschied -0.32 LU   48 s
+ 41 Saite  40+1  keine  -23.3  O+Q (19)  -23.8  Unterschied -0.50 LU   51 s
+ 42 Saite  40+2  keine  -20.2  O+Q (19)  -20.6  Unterschied -0.44 LU   54 s
+ 43 Saite  42+1  keine  -16.8  O+Q (20)  -18.7  Unterschied -1.90 LU   55 s
+ 44 Saite  42+2  keine  -17.2  O+Q (20)  -17.2  Unterschied +0.05 LU   48 s
+ 45 Saite  44+1  keine  -26.3  O+Q (20)  -26.4  Unterschied -0.10 LU   49 s
+ 46 Saite  44+2  keine  -24.8  O+Q (20)  -24.8  Unterschied +0.04 LU   47 s
+ 47 Saite  46+1  keine  -29.6  O+Q (20)  -30.5  Unterschied -0.97 LU   49 s
+ 48 Saite  47+1  keine  -27.3  O+Q (20)  -29.3  Unterschied -1.96 LU   50 s
+ 49 Saite  47+2  keine  -24.3  O+Q (20)  -24.3  Unterschied +0.01 LU   49 s
+ 50 Saite  49+1  keine  -25.5  O+Q (20)  -24.9  Unterschied +0.63 LU   59 s
+ 51 Saite  49+2  keine  -24.4  O+Q (20)  -24.4  Unterschied +0.02 LU   52 s
+ 52 Saite  51+1  keine  -19.0  O+Q (19)  -20.7  Unterschied -1.67 LU   53 s
+ 53 Saite  52+1  keine  -20.9  O+Q (19)  -20.8  Unterschied +0.12 LU   56 s
+ 54 Saite  52+2  keine  -17.3  O+Q (19)  -17.6  Unterschied -0.23 LU   49 s
+ 55 Saite  54+1  keine  -13.5  O+Q (20)  -14.4  Unterschied -0.82 LU   54 s
+ 56 Saite  54+2  keine  -14.7  O+Q (20)  -14.5  Unterschied +0.19 LU   50 s
+ 57 Saite  56+1  keine  -15.6  O+Q (20)  -14.2  Unterschied +1.38 LU   52 s
+ 58 Saite  56+2  keine   -9.6  O+Q (20)   -9.7  Unterschied -0.07 LU   51 s
+ 59 Saite  58+1  keine  -14.9  O+Q (20)  -14.6  Unterschied +0.24 LU   48 s
+ 60 Saite  59+1  keine  -19.0  O+Q (20)  -18.9  Unterschied +0.09 LU   46 s
+ 61 Saite  59+2  keine  -20.0  O+Q (20)  -20.0  Unterschied -0.04 LU   45 s
+ 62 Saite  61+1  keine  -21.5  O+Q (20)  -21.7  Unterschied -0.22 LU   44 s
+ 63 Saite  61+2  keine  -19.9  O+Q (20)  -20.0  Unterschied -0.13 LU   52 s
+ 64 Saite  63+1  keine  -12.1  O+Q (19)  -14.7  Unterschied -2.55 LU   48 s
+ 65 Saite  64+1  keine  -21.1  O+Q (19)  -21.0  Unterschied +0.11 LU   51 s
+ 66 Saite  64+2  keine  -22.4  O+Q (19)  -22.0  Unterschied +0.40 LU   44 s
+ 67 Saite  66+1  keine  -22.6  O+Q (20)  -22.7  Unterschied -0.10 LU   44 s
+ 68 Saite  66+2  keine  -18.6  O+Q (20)  -18.8  Unterschied -0.18 LU   43 s
+ 69 Saite  68+1  keine  -14.6  O+Q (20)  -15.9  Unterschied -1.34 LU   44 s
+ 70 Saite  68+2  keine  -20.3  O+Q (20)  -20.3  Unterschied +0.04 LU   45 s
+ 71 Saite  70+1  keine  -21.1  O+Q (20)  -21.6  Unterschied -0.57 LU   44 s
+ 72 Saite  71+1  keine  -23.9  O+Q (20)  -24.0  Unterschied -0.03 LU   43 s
+ 73 Saite  71+2  keine  -22.4  O+Q (20)  -22.5  Unterschied -0.06 LU   44 s
+ 74 Saite  73+1  keine  -23.9  O+Q (20)  -24.2  Unterschied -0.37 LU   44 s
+ 75 Saite  73+2  keine  -23.7  O+Q (20)  -23.7  Unterschied -0.03 LU   42 s
+ 76 Saite  75+1  keine  -20.5  O+Q (19)  -20.6  Unterschied -0.17 LU   42 s
+ 77 Saite  76+1  keine  -15.8  O+Q (19)  -16.0  Unterschied -0.28 LU   41 s
+ 78 Saite  76+2  keine  -21.3  O+Q (19)  -21.6  Unterschied -0.24 LU   42 s
+ 79 Saite  78+1  keine  -20.6  O+Q (20)  -20.6  Unterschied -0.00 LU   43 s
+ 80 Saite  78+2  keine  -14.4  O+Q (20)  -14.4  Unterschied -0.04 LU   42 s
+ 81 Saite  80+1  keine  -18.5  O+Q (20)  -19.1  Unterschied -0.59 LU   43 s
+ 82 Saite  80+2  keine  -20.4  O+Q (20)  -20.4  Unterschied -0.02 LU   43 s
+ 83 Saite  82+1  keine  -15.5  O+Q (20)  -16.5  Unterschied -1.03 LU   43 s
+ 84 Saite  83+1  keine  -21.1  O+Q (20)  -21.1  Unterschied -0.03 LU   43 s
+ 85 Saite  83+2  keine  -17.1  O+Q (20)  -17.2  Unterschied -0.07 LU   43 s
+ 86 Saite  85+1  keine  -17.8  O+Q (20)  -17.8  Unterschied -0.03 LU   44 s
+ 87 Saite  85+2  keine  -16.7  O+Q (20)  -16.7  Unterschied -0.01 LU   44 s
+ 88 Saite  87+1  keine  -17.7  O+Q (19)  -18.1  Unterschied -0.34 LU   42 s
+ 89 Saite  88+1  keine  -16.6  O+Q (19)  -16.9  Unterschied -0.32 LU   42 s
+ 90 Saite  88+2  keine  -16.2  O+Q (19)  -16.3  Unterschied -0.08 LU   41 s
+ 91 Saite  90+1  keine  -16.1  O+Q (20)  -16.5  Unterschied -0.41 LU   44 s
+ 92 Saite  90+2  keine  -14.9  O+Q (20)  -14.9  Unterschied +0.00 LU   45 s
+ 93 Saite  92+1  keine  -13.7  O+Q (20)  -14.1  Unterschied -0.38 LU   45 s
+ 94 Saite  92+2  keine  -14.4  O+Q (20)  -14.4  Unterschied -0.01 LU   43 s
+ 95 Saite  94+1  keine  -15.6  O+Q (20)  -15.9  Unterschied -0.29 LU   43 s
+ 96 Saite  95+1  keine  -18.3  O+Q (20)  -18.4  Unterschied -0.14 LU   44 s
+ 97 Saite  95+2  keine  -18.6  O+Q (20)  -18.6  Unterschied -0.00 LU   44 s
+ 98 Saite  97+1  keine  -21.5  O+Q (20)  -21.5  Unterschied +0.04 LU   43 s
+ 99 Saite  97+2  keine  -22.0  O+Q (20)  -22.0  Unterschied -0.01 LU   43 s
+100 Saite  99+1  keine  -15.3  O+Q (19)  -15.4  Unterschied -0.05 LU   42 s
+101 Saite 100+1  keine  -13.8  O+Q (19)  -13.9  Unterschied -0.07 LU   41 s
+102 Saite 100+2  keine  -15.2  O+Q (19)  -15.2  Unterschied -0.01 LU   42 s
+103 Saite 102+1  keine  -16.8  O+Q (20)  -16.9  Unterschied -0.06 LU   43 s
+104 Saite 102+2  keine  -18.6  O+Q (20)  -18.6  Unterschied -0.00 LU   43 s

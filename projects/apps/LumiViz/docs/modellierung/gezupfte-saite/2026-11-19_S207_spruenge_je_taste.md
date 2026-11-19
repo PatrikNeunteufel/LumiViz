@@ -2,7 +2,7 @@
 
 > **Sitzung:** S207 (2026-11-19, Fable 5.2). Auftrag: Handover S206 Punkt (1) — Harfe größter Sprung 14,5 LU (78 / 80)
 > und mittlerer 3,3 LU, Gitarre größter Sprung 12,7 LU (68 / 71), alle über KQ34 a (12 / 3 LU).
-> **Version:** 1.3.0
+> **Version:** 1.4.0 (S208: §10 Harfe am Übergang Metall / Darm)
 > **Proben:** `proben/2026-11-19_S207_*` (Kopf jedes Skripts sagt, was es rechnet; Ausgaben daneben). Messungen: g34
 > des Archivs Mores (`E:\samples\Klasse 2 - Gezupfte Saite\Mores_2021_Zenodo4604577\qualified_selected_impulses.mat`),
 > TU Berlin (`…\TU_Berlin_Weinzierl_DepositOnce19858\`, nur die ff-Aufnahmen, CC BY-NC-SA 4.0 — im Repo liegen nur
@@ -215,10 +215,71 @@ arabischen Oud mit Zuordnung der Moden, Zupf des Basschors, Zug je Saite).
 
 ## 9 Offen
 
-- Harfe: größter Sprung 12,8 LU an 43 / 47 (Schwelle 12) — am Registerübergang, mit der Auswahl der Harfensaiten
-  (Herleitung §12) und den Güten der besaiteten Moden zu prüfen; das Modell rund 2 LU über der echten Harfe bei
-  jeder Zahl von Orten.
+- Harfe: größter Sprung 12,8 LU an 43 / 47 (Schwelle 12), mit Mitschwingen 13,3 LU (44 / 47) — untersucht in §10:
+  die Abstrahlung der Moden S(1,1)− und S(1,2) gegen Bell Abb. 7.23 und Le Carrou 2007 Abb. 7; KQ39 a, KQ40 a.
 - Oud: Spanne 18,8 LU und größter Sprung 14,7 LU (40 / 44). **KQ38 a (Patrik S207):** den Bauplan neu suchen, mit
   zwei weiteren Zielen (am Antwortpunkt 3 die Spitze um 203 Hz die stärkste unter 400 Hz; Hauptspitze der
   Abstrahlung beim 1,7- bis 2,0-Fachen der Luftmode), über Deckendicke (auch als Verlauf), Balkenenden, Stegleiste,
   Hohlraum und Rand — nach dem Gegenlesen des Berichts zu Auftrag 35 der Werkbank.
+
+## 10 S208: die Harfe am Übergang Metall / Darm (43 / 47)
+
+Proben `proben/2026-11-19_S208_*` (Ausgaben daneben), Prüfkörper mit 16 Hörorten wie §5 neu gerechnet (163 s).
+**Kein Programmcode, kein Körper, kein Test geändert.**
+
+**Die Saiten am Übergang.** Die oberste Metallsaite ist das G (Bell Tab. 2.2: 92 Hz leer); die Tasten 43 (G2) und 44
+(G♯2, Pedal oben) spielen sie, 45–47 die zwei tiefsten Darmsaiten (104 / 116 Hz leer). Das ist der Bau jeder
+Konzertharfe: Camac 2022 (Saitentabelle, Textebene) besaitet bis A 33 mit Darm, ab G 34 mit Metall. Die „Auswahl der
+Harfensaiten“ aus dem Handover S207 ist die Auswahl der mitschwingenden Saiten und mit GZ8 a entschieden.
+
+**Zerlegung** (`…_harfe_uebergang.py`, Mittel der 16 Orte):
+
+| | 43 Metall | 44 Metall | 45 Darm | 47 Darm |
+|---|---|---|---|---|
+| Zug / Kraft der Kraftstufe | 634 N / 10,1 N | 634 N / 10,8 N | 301 N / 5,0 N | 299 N / 5,2 N |
+| Lautheit | −16,8 LUFS | −17,2 | −26,3 | −29,6 |
+| Teilton mit dem größten Anteil, \|p/F\| | 2. (195 Hz) −17,0 dB, 99 % | 2. (206 Hz) −18,6 dB, 98 % | 2. (220 Hz) −23,2 dB, 84 % | 1. / 2. (123 / 246 Hz) −38 / −29 dB |
+
+Gegenproben, Tasten 38–56: die Taste 44 auf der As-Saite (Darm) statt auf dem Gis — größter Sprung 12,8 LU (43 / 47),
+unverändert; Metallsaiten mit 80 % der Masse eines vollen Kupferrings (Zug 517–552 N) — 11,8 LU; gleiche Kraft je Taste
+— 8,5 LU an 43 / 47, größter dann 10,6 LU (51 / 55), aber das Metallregister wird noch leiser (unten).
+
+**Gegen die echte Harfe** (TU ff, Leistungsmittel der 32 Mikrofone): 41–43 −8,5 / −8,9 / −11,6, 45 −8,7, 48–51
+−19,9 … −17,9, 54–56 −10,6 … −7,8 LUFS. Die echte Harfe hat keine Stufe zwischen Metall und Darm; ihre Senke liegt bei
+48–51 (131–156 Hz). Gegen die Darmsaiten 52–56 ist das Metallregister 38–44 in der Aufnahme 1,6 LU lauter, im Modell
+4,5 LU leiser — **die Kraft der Metallsaiten ist nicht zu groß**; zu leise sind im Modell die Tasten 45–51 gegen beide
+Seiten.
+
+**Mitschwingen nach GZ8 a** (`…_harfe_mitschwingen_16.py`, 20 Saiten, Pedale in der Mitte, die gespielte Saite mit
+ihrem Pedal; rund 50 s je Taste): Spanne / größter / mittlerer Sprung **20,9 / 13,3 (44 / 47) / 3,1 LU** gegen 20,0 /
+12,8 (43 / 47) / 3,0 ohne. Weitere Paare 44 / 48 12,1, 58 / 62 12,0, 43 / 47 11,8 LU. Das Mitschwingen ändert nur
+Tasten, deren Grundton auf einer Saite in der Mitte liegt (43 −1,9, 48 −2,0, 52 −1,7, 57 +1,4 LU), die Tasten mit Pedal
+oben kaum (≤ 0,2 LU). Die Last der Saiten gleicht also nichts aus.
+
+**Die Abstrahlung der tiefen Moden** (`…_harfe_gegen_bell_723.py`; \|p/F\| an der Öse jeder Saite bei ihrer leeren
+Frequenz, gegen Saite 26 = 207 Hz):
+
+| Saite | 33 | 32 | 31 | 30 | 29 | 28 | 27 | 26 | 25 | 24 | 23 | 22 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Hz | 104 | 116 | 123 | 139 | 155 | 165 | 185 | 207 | 233 | 247 | 277 | 311 |
+| Bell Abb. 7.23 (besaitet, dB) | −18 | −16 | −23 | −24 | −26 | −20,5 | −2 | 0 | −8 | −4 | +2,5 | 0 |
+| Modell, 16 Orte | −27,6 | −22,6 | −17,7 | −7,7 | −11,2 | −9,8 | −2,9 | 0 | +11,7 | +0,6 | −6,4 | −7,1 |
+| Modell − Bell | −9,6 | −6,6 | +5,3 | **+16,3** | **+14,8** | **+10,7** | −0,9 | 0 | **+19,7** | +4,6 | −8,9 | −7,1 |
+
+Bell Abb. 7.23 (PDF 309) und Le Carrou, Gautier & Foltête 2007 Abb. 7 (S. 564, Camac, \|p/F\| an Punkt C in 2,35 m)
+in S208 am Seitenbild von Auge gelesen (±1 dB bzw. ±0,5 · 10⁻³ Pa/N). Über alle 24 Saiten liegt das Modell im
+Median +0,2 dB neben Bell (Streuung 8,0 dB), ab Saite 24 ohne Muster. Le Carrou gegen 204 Hz, Modell an der Öse der
+Saite 21: 110 / 125 / 130 Hz −39 / −39 / −25 gegen −19 / −12 / −8 dB; 225 / 240 / 250 Hz −13 / −17 / −17 gegen
++10 / +12 / +5 dB.
+
+Beide Messungen an zwei Harfen sagen dasselbe: **an der echten Harfe strahlt der Körper unter rund 170 Hz 16–26 dB
+schwächer ab als um 200 Hz, im Modell nur 8–11 dB; und die Mode S(1,2) strahlt im Modell um 20 dB zu stark.** Die
+Lage der drei Moden passt dazu: Modell 134 / 198 / 233 Hz, Bell in der besaiteten Harfe 187 / 207 / 257 Hz (S(1,1)−
+−28 %, S(1,1)+ −4 %, S(1,2) −9 %; Bell lose → eingebaut → besaitet 153 → 170 → 187 Hz, §8 des Harfenberichts). Die
+Güte der Mode S(1,2) besaitet ist gemessen (Bell Q 32) und liegt beim Modell (34) — eine kleinere Güte wäre eine
+Anpassung gegen diese Messung. **Ursache im Bauplan offen**: das Modell liegt mit 134 Hz noch unter Bells losem Kasten
+(153 Hz), obwohl es die Schale starr rechnet; Kandidaten sind der Luftraum (Volumen, Öffnungen, Mündungskorrektur, die
+die Kopplung der Helmholtz-Luft mit der ersten Bodenmode bestimmen), der Halt am Rand (gestützt, Feder 0, aus S198) und
+die Last aller 46 Saiten als Steife an den Ösen — keiner gerechnet.
+
+**KQ39 a (Patrik S208):** KQ34 a misst die Harfe mit Mitschwingen nach GZ8 a am Prüfkörper mit 16 Hörorten (`…_harfe_mitschwingen_16.py`). **KQ40 a (Patrik S208):** der Harfenkörper bekommt die Lage von S(1,1)− und S(1,1)+ (Bell in der Harfe ohne Saiten 170 / 216 Hz, 7 %) und die Abstrahlung an den Saiten 33–22 gegen Bell Abb. 7.23 (6 dB, Bezug Saite 26) als Ziele; die Ursache wird im Bauplan gesucht (Luftraum, Halt am Rand, Last der Saiten), mit Fable; danach Körper neu, KQ31-2 a und KQ34 a neu.
