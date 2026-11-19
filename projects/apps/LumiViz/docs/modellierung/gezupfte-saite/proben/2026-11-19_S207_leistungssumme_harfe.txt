@@ -1,0 +1,69 @@
+ 38  Hoerort  -19.1   Leistungssumme  -19.3   Unterschied  -0.2
+ 39  Hoerort  -17.7   Leistungssumme  -17.8   Unterschied  -0.1
+ 40  Hoerort  -13.3   Leistungssumme  -13.4   Unterschied  -0.1
+ 41  Hoerort  -17.0   Leistungssumme  -16.4   Unterschied  +0.6
+ 42  Hoerort  -13.7   Leistungssumme  -13.4   Unterschied  +0.3
+ 43  Hoerort  -10.1   Leistungssumme  -10.2   Unterschied  -0.1
+ 44  Hoerort  -10.3   Leistungssumme  -10.2   Unterschied  +0.0
+ 45  Hoerort  -19.4   Leistungssumme  -19.3   Unterschied  +0.1
+ 46  Hoerort  -21.5   Leistungssumme  -17.3   Unterschied  +4.2
+ 47  Hoerort  -24.0   Leistungssumme  -20.1   Unterschied  +3.9
+ 48  Hoerort  -18.8   Leistungssumme  -18.0   Unterschied  +0.8
+ 49  Hoerort  -15.4   Leistungssumme  -16.5   Unterschied  -1.1
+ 50  Hoerort  -16.4   Leistungssumme  -18.8   Unterschied  -2.4
+ 51  Hoerort  -16.1   Leistungssumme  -18.0   Unterschied  -2.0
+ 52  Hoerort  -11.2   Leistungssumme  -12.0   Unterschied  -0.8
+ 53  Hoerort  -12.9   Leistungssumme  -15.2   Unterschied  -2.3
+ 54  Hoerort   -9.8   Leistungssumme  -11.5   Unterschied  -1.8
+ 55  Hoerort   -6.9   Leistungssumme   -7.9   Unterschied  -1.1
+ 56  Hoerort   -9.7   Leistungssumme   -9.0   Unterschied  +0.7
+ 57  Hoerort  -13.9   Leistungssumme  -11.4   Unterschied  +2.6
+ 58  Hoerort   -5.8   Leistungssumme   -6.6   Unterschied  -0.9
+ 59  Hoerort  -10.3   Leistungssumme  -10.9   Unterschied  -0.6
+ 60  Hoerort  -14.9   Leistungssumme  -14.5   Unterschied  +0.4
+ 61  Hoerort  -14.2   Leistungssumme  -14.1   Unterschied  +0.2
+ 62  Hoerort  -18.7   Leistungssumme  -15.2   Unterschied  +3.4
+ 63  Hoerort  -16.4   Leistungssumme  -11.9   Unterschied  +4.5
+ 64  Hoerort   -5.0   Leistungssumme   -4.8   Unterschied  +0.2
+ 65  Hoerort  -14.5   Leistungssumme  -16.4   Unterschied  -1.9
+ 66  Hoerort  -16.3   Leistungssumme  -18.6   Unterschied  -2.2
+ 67  Hoerort  -17.9   Leistungssumme  -19.8   Unterschied  -1.9
+ 68  Hoerort  -15.6   Leistungssumme  -17.2   Unterschied  -1.6
+ 69  Hoerort  -18.2   Leistungssumme  -17.6   Unterschied  +0.6
+ 70  Hoerort  -23.0   Leistungssumme  -19.3   Unterschied  +3.7
+ 71  Hoerort  -23.3   Leistungssumme  -18.3   Unterschied  +5.0
+ 72  Hoerort  -25.9   Leistungssumme  -20.3   Unterschied  +5.6
+ 73  Hoerort  -19.9   Leistungssumme  -17.3   Unterschied  +2.6
+ 74  Hoerort  -25.4   Leistungssumme  -19.7   Unterschied  +5.7
+ 75  Hoerort  -25.0   Leistungssumme  -20.0   Unterschied  +5.0
+ 76  Hoerort  -20.6   Leistungssumme  -18.2   Unterschied  +2.3
+ 77  Hoerort  -16.9   Leistungssumme  -16.3   Unterschied  +0.6
+ 78  Hoerort  -26.4   Leistungssumme  -18.2   Unterschied  +8.2
+ 79  Hoerort  -19.8   Leistungssumme  -16.7   Unterschied  +3.1
+ 80  Hoerort  -11.9   Leistungssumme  -11.3   Unterschied  +0.6
+ 81  Hoerort  -17.1   Leistungssumme  -14.5   Unterschied  +2.6
+ 82  Hoerort  -22.2   Leistungssumme  -15.9   Unterschied  +6.3
+ 83  Hoerort  -18.4   Leistungssumme  -13.1   Unterschied  +5.3
+ 84  Hoerort  -24.1   Leistungssumme  -17.1   Unterschied  +7.0
+ 85  Hoerort  -24.8   Leistungssumme  -17.1   Unterschied  +7.7
+ 86  Hoerort  -22.5   Leistungssumme  -17.4   Unterschied  +5.0
+ 87  Hoerort  -22.4   Leistungssumme  -17.3   Unterschied  +5.0
+ 88  Hoerort  -26.9   Leistungssumme  -16.1   Unterschied +10.8
+ 89  Hoerort  -25.4   Leistungssumme  -18.4   Unterschied  +7.0
+ 90  Hoerort  -26.9   Leistungssumme  -17.5   Unterschied  +9.3
+ 91  Hoerort  -25.4   Leistungssumme  -15.3   Unterschied +10.0
+ 92  Hoerort  -20.5   Leistungssumme  -15.9   Unterschied  +4.6
+ 93  Hoerort  -22.4   Leistungssumme  -15.9   Unterschied  +6.5
+ 94  Hoerort  -20.3   Leistungssumme  -16.4   Unterschied  +3.9
+ 95  Hoerort  -19.6   Leistungssumme  -17.1   Unterschied  +2.5
+ 96  Hoerort  -20.7   Leistungssumme  -18.6   Unterschied  +2.1
+ 97  Hoerort  -17.4   Leistungssumme  -17.7   Unterschied  -0.3
+ 98  Hoerort  -20.4   Leistungssumme  -19.4   Unterschied  +0.9
+ 99  Hoerort  -19.2   Leistungssumme  -19.2   Unterschied  +0.0
+100  Hoerort  -20.7   Leistungssumme  -18.0   Unterschied  +2.7
+101  Hoerort  -18.0   Leistungssumme  -18.8   Unterschied  -0.8
+102  Hoerort  -16.9   Leistungssumme  -18.9   Unterschied  -2.0
+103  Hoerort  -15.5   Leistungssumme  -18.7   Unterschied  -3.1
+104  Hoerort  -14.9   Leistungssumme  -18.5   Unterschied  -3.6
+Summe am Hoerort (Modell)   : Spanne  21.9 LU, groesster Sprung  14.6 LU (78/80), mittlerer 3.3 LU
+Leistungssumme ueber Moden  : Spanne  15.5 LU, groesster Sprung  15.0 LU (64/67), mittlerer 1.9 LU

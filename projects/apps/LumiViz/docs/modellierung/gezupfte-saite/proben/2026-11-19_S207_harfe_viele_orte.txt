@@ -1,0 +1,68 @@
+Hoerorte: ['front', 'k01', 'k02', 'k03', 'k04', 'k05', 'k06', 'k07', 'k08', 'k09', 'k10', 'k11', 'k12', 'k13', 'k14', 'k15', 'k16']
+ 38  front  -19.1   Mittel der 16  -26.5   je Ort  -29.4 ...  -23.3
+ 39  front  -17.7   Mittel der 16  -24.7   je Ort  -26.5 ...  -21.0
+ 40  front  -13.3   Mittel der 16  -21.3   je Ort  -24.4 ...  -17.2
+ 41  front  -17.0   Mittel der 16  -23.3   je Ort  -27.5 ...  -21.5
+ 42  front  -13.7   Mittel der 16  -20.2   je Ort  -23.8 ...  -18.9
+ 43  front  -10.1   Mittel der 16  -16.8   je Ort  -19.7 ...  -15.5
+ 44  front  -10.3   Mittel der 16  -17.2   je Ort  -19.2 ...  -15.8
+ 45  front  -19.4   Mittel der 16  -26.3   je Ort  -32.3 ...  -24.7
+ 46  front  -21.5   Mittel der 16  -24.8   je Ort  -29.4 ...  -21.0
+ 47  front  -24.0   Mittel der 16  -29.6   je Ort  -36.6 ...  -26.8
+ 48  front  -18.8   Mittel der 16  -27.3   je Ort  -33.7 ...  -24.3
+ 49  front  -15.4   Mittel der 16  -24.3   je Ort  -29.3 ...  -19.9
+ 50  front  -16.4   Mittel der 16  -25.5   je Ort  -28.9 ...  -23.4
+ 51  front  -16.1   Mittel der 16  -24.4   je Ort  -27.7 ...  -23.0
+ 52  front  -11.2   Mittel der 16  -19.0   je Ort  -22.7 ...  -16.9
+ 53  front  -12.9   Mittel der 16  -20.9   je Ort  -22.4 ...  -20.0
+ 54  front   -9.8   Mittel der 16  -17.3   je Ort  -19.7 ...  -16.0
+ 55  front   -6.9   Mittel der 16  -13.5   je Ort  -17.0 ...  -11.9
+ 56  front   -9.7   Mittel der 16  -14.7   je Ort  -20.2 ...  -12.9
+ 57  front  -13.9   Mittel der 16  -15.6   je Ort  -20.1 ...  -13.7
+ 58  front   -5.8   Mittel der 16   -9.6   je Ort  -10.5 ...   -8.7
+ 59  front  -10.3   Mittel der 16  -14.9   je Ort  -16.0 ...  -13.7
+ 60  front  -14.9   Mittel der 16  -19.0   je Ort  -20.4 ...  -17.8
+ 61  front  -14.2   Mittel der 16  -20.0   je Ort  -22.4 ...  -15.9
+ 62  front  -18.7   Mittel der 16  -21.5   je Ort  -24.2 ...  -16.5
+ 63  front  -16.4   Mittel der 16  -19.9   je Ort  -26.0 ...  -14.5
+ 64  front   -5.0   Mittel der 16  -12.1   je Ort  -18.4 ...   -9.2
+ 65  front  -14.5   Mittel der 16  -21.1   je Ort  -25.6 ...  -19.6
+ 66  front  -16.4   Mittel der 16  -22.4   je Ort  -25.1 ...  -20.8
+ 67  front  -17.9   Mittel der 16  -22.6   je Ort  -28.8 ...  -18.4
+ 68  front  -15.6   Mittel der 16  -18.6   je Ort  -28.1 ...  -11.9
+ 69  front  -18.2   Mittel der 16  -14.6   je Ort  -22.9 ...   -8.6
+ 70  front  -23.0   Mittel der 16  -20.3   je Ort  -27.8 ...  -15.4
+ 71  front  -23.3   Mittel der 16  -21.1   je Ort  -26.3 ...  -14.6
+ 72  front  -25.8   Mittel der 16  -23.9   je Ort  -29.1 ...  -20.2
+ 73  front  -19.9   Mittel der 16  -22.4   je Ort  -30.3 ...  -17.7
+ 74  front  -25.5   Mittel der 16  -23.9   je Ort  -32.7 ...  -17.0
+ 75  front  -25.2   Mittel der 16  -23.7   je Ort  -31.2 ...  -18.2
+ 76  front  -20.6   Mittel der 16  -20.5   je Ort  -27.8 ...  -11.8
+ 77  front  -16.9   Mittel der 16  -15.8   je Ort  -25.3 ...   -7.1
+ 78  front  -26.4   Mittel der 16  -21.3   je Ort  -31.2 ...  -13.2
+ 79  front  -19.8   Mittel der 16  -20.6   je Ort  -29.5 ...  -11.0
+ 80  front  -11.9   Mittel der 16  -14.4   je Ort  -25.2 ...   -4.5
+ 81  front  -17.1   Mittel der 16  -18.5   je Ort  -29.9 ...   -9.6
+ 82  front  -22.2   Mittel der 16  -20.4   je Ort  -30.4 ...  -12.4
+ 83  front  -18.5   Mittel der 16  -15.5   je Ort  -30.6 ...   -4.8
+ 84  front  -24.6   Mittel der 16  -21.1   je Ort  -34.5 ...  -10.8
+ 85  front  -24.4   Mittel der 16  -17.1   je Ort  -33.3 ...   -6.4
+ 86  front  -22.3   Mittel der 16  -17.8   je Ort  -32.6 ...   -7.9
+ 87  front  -22.3   Mittel der 16  -16.6   je Ort  -33.8 ...   -6.1
+ 88  front  -26.9   Mittel der 16  -17.7   je Ort  -32.6 ...   -7.1
+ 89  front  -25.4   Mittel der 16  -16.6   je Ort  -29.6 ...   -6.7
+ 90  front  -26.8   Mittel der 16  -16.2   je Ort  -30.6 ...   -5.1
+ 91  front  -25.6   Mittel der 16  -16.1   je Ort  -30.9 ...   -5.0
+ 92  front  -20.6   Mittel der 16  -15.0   je Ort  -29.4 ...   -3.7
+ 93  front  -22.0   Mittel der 16  -13.7   je Ort  -32.4 ...   -3.3
+ 94  front  -20.2   Mittel der 16  -14.5   je Ort  -30.0 ...   -4.0
+ 95  front  -19.4   Mittel der 16  -15.6   je Ort  -31.9 ...   -5.5
+ 96  front  -20.8   Mittel der 16  -18.3   je Ort  -33.5 ...   -8.4
+ 97  front  -17.7   Mittel der 16  -18.6   je Ort  -34.1 ...  -11.2
+ 98  front  -20.7   Mittel der 16  -21.5   je Ort  -37.6 ...  -10.9
+ 99  front  -18.8   Mittel der 16  -22.3   je Ort  -36.7 ...  -13.3
+100  front  -20.4   Mittel der 16  -15.3   je Ort  -37.9 ...   -4.6
+101  front  -18.2   Mittel der 16  -13.8   je Ort  -35.0 ...   -3.6
+102  front  -16.7   Mittel der 16  -15.4   je Ort  -36.6 ...   -5.1
+103  front  -15.0   Mittel der 16  -16.8   je Ort  -36.4 ...   -6.6
+104  front  -14.7   Mittel der 16  -18.5   je Ort  -36.1 ...   -8.8
