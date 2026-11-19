@@ -2,7 +2,7 @@
 
 > **Sitzung:** S207 (2026-11-19, Fable 5.2). Auftrag: Handover S206 Punkt (1) — Harfe größter Sprung 14,5 LU (78 / 80)
 > und mittlerer 3,3 LU, Gitarre größter Sprung 12,7 LU (68 / 71), alle über KQ34 a (12 / 3 LU).
-> **Version:** 1.2.0
+> **Version:** 1.3.0
 > **Proben:** `proben/2026-11-19_S207_*` (Kopf jedes Skripts sagt, was es rechnet; Ausgaben daneben). Messungen: g34
 > des Archivs Mores (`E:\samples\Klasse 2 - Gezupfte Saite\Mores_2021_Zenodo4604577\qualified_selected_impulses.mat`),
 > TU Berlin (`…\TU_Berlin_Weinzierl_DepositOnce19858\`, nur die ff-Aufnahmen, CC BY-NC-SA 4.0 — im Repo liegen nur
@@ -189,6 +189,26 @@ nicht verglichen** (Messort und Schlagort von Abb. 6 sind nicht der Stegpunkt; d
 nur ein Hinweis). Verdacht: die Grundmode der Decke liegt im Modell bei 168,6 statt 139–142 Hz, und die Zuordnung
 der Moden um 200 Hz stimmt nicht; dann fehlt dem Basschor Abstrahlung bei 130–250 Hz.
 
+**Formen der Moden** (`…_oud_formen_bild.py`, Bild `…_oud_formen.png`; Bauplan im Repo, `InstrumentBodyTool --to 450
+--shapes`). Auslenkung gegen den größten Betrag der Mode, und das verdrängte Volumen gegen das Integral des Betrags:
+
+| Mode | Steg Mitte | Antwortpunkt 3 | Bauch bei y | Volumen | Form |
+|---|---|---|---|---|---|
+| 100,4 Hz | +0,80 | +0,90 | 13 cm | +1,00 | alles gleichsinnig, Bauch im Feld des Stegs (Luftmode) |
+| 169,1 Hz | −0,61 | −0,57 | 29 cm | −0,02 | Stegfeld gegen das Feld am großen Loch |
+| 208,8 Hz | **−0,28** | −0,41 | **19,5 cm** | −0,85 | gleichsinnig, Bauch zwischen den kleinen Löchern, nicht am Steg |
+| 270,2 Hz | −0,91 | −0,51 | 31 cm | −0,61 | Stegfeld und Lochfeld gleichsinnig, Mitte dagegen |
+| 352,2 Hz | +1,00 | −0,21 | 9 cm | −0,22 | drei Bäuche quer im Stegfeld |
+
+Die Mode bei 209 Hz ist die gleichsinnige Deckenmode, hat ihren Bauch aber im mittleren Feld (zwischen Balken 2 und
+3) und am Steg nur 28 % ihres größten Werts; den Steg trägt die Mode 270 Hz. An echten Ouds ist die Spitze um
+200 Hz die stärkste — am Antwortpunkt 3 von Abdallah (203 Hz: 6,5 gegen 2,8 m/s² je N bei 280 Hz, +7 dB) und in der
+Abstrahlung (Değirmenli). Am selben Antwortpunkt rechnete S196 (Bericht S196 §8, Mittel über das Anregungsraster)
+209 Hz zu 0,23 gegen 1,0 bei 276 Hz (−13 dB) und vermerkte die Höhen als Grenze. **Der Abstand zwischen Messung und
+Modell an dieser einen Größe ist rund 20 dB**; keine der in S196 gerechneten Fassungen (Decke 1,3–1,6 mm, Balken
+wie gezeichnet oder am Rand) macht die Spitze um 200 Hz zur stärksten. Der Bauplan trifft die Lagen der Spitzen und
+verfehlt, welche Mode der Steg treibt.
+
 **KQ37 a (Patrik S207):** die Oud bleibt bekannte Abweichung mit Ursache; Auftrag an die Research-Werkbank
 `2026-11-19_35_oud_basschor_einzeltoene` (Pegel einzelner Töne je Chor, Abstrahlung oder Stegadmittanz einer
 arabischen Oud mit Zuordnung der Moden, Zupf des Basschors, Zug je Saite).
@@ -198,6 +218,7 @@ arabischen Oud mit Zuordnung der Moden, Zupf des Basschors, Zug je Saite).
 - Harfe: größter Sprung 12,8 LU an 43 / 47 (Schwelle 12) — am Registerübergang, mit der Auswahl der Harfensaiten
   (Herleitung §12) und den Güten der besaiteten Moden zu prüfen; das Modell rund 2 LU über der echten Harfe bei
   jeder Zahl von Orten.
-- Oud: Spanne 18,8 LU und größter Sprung 14,7 LU (40 / 44). Den Bauplan gegen Abdallah Abb. 6 und Tab. 3 in Höhe
-  und Form prüfen (`InstrumentBodyTool --shapes`; am Messort der Quelle rechnen, nicht am Stegpunkt), dann den
-  Bericht der Werkbank zu Auftrag 35.
+- Oud: Spanne 18,8 LU und größter Sprung 14,7 LU (40 / 44). **KQ38 a (Patrik S207):** den Bauplan neu suchen, mit
+  zwei weiteren Zielen (am Antwortpunkt 3 die Spitze um 203 Hz die stärkste unter 400 Hz; Hauptspitze der
+  Abstrahlung beim 1,7- bis 2,0-Fachen der Luftmode), über Deckendicke (auch als Verlauf), Balkenenden, Stegleiste,
+  Hohlraum und Rand — nach dem Gegenlesen des Berichts zu Auftrag 35 der Werkbank.
