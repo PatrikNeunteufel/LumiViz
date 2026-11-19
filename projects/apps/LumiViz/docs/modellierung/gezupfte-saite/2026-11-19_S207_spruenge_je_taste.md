@@ -2,7 +2,7 @@
 
 > **Sitzung:** S207 (2026-11-19, Fable 5.2). Auftrag: Handover S206 Punkt (1) — Harfe größter Sprung 14,5 LU (78 / 80)
 > und mittlerer 3,3 LU, Gitarre größter Sprung 12,7 LU (68 / 71), alle über KQ34 a (12 / 3 LU).
-> **Version:** 1.0.0
+> **Version:** 1.1.0
 > **Proben:** `proben/2026-11-19_S207_*` (Kopf jedes Skripts sagt, was es rechnet; Ausgaben daneben). Messungen: g34
 > des Archivs Mores (`E:\samples\Klasse 2 - Gezupfte Saite\Mores_2021_Zenodo4604577\qualified_selected_impulses.mat`),
 > TU Berlin (`…\TU_Berlin_Weinzierl_DepositOnce19858\`, nur die ff-Aufnahmen, CC BY-NC-SA 4.0 — im Repo liegen nur
@@ -115,9 +115,39 @@ Punkte §6 (22)).
   Instrument) bei gleicher Zahl von Mikrofonen, im Nahfeld gegen 2 m.
 - Die Höhe der Bäuche an der Harfe (Harfenbericht §16) ist nicht untersucht.
 
-## 7 Offen
+## 7 Laute, Oud, Cembalo nach KQ36 a
+
+Prüfkörper je Instrument mit `…_viele_orte_plan.py <name> <ordner>` (16 Orte in 2,06 m um die Mitte des Umrisses,
+der bisherige Ort als erster) und `InstrumentBodyTool … --to 5000` (53 / 97 / 367 s); Prüfstand je Taste und Ort
+`…_viele_orte.py` (Saiten, Zupf und Tasten wie `chor_instrument` / `tasten_instrument`), Tabellen
+`…_kq36_<name>_mik.tsv`, Auswertung `…_kq36_<name>_auswertung.txt`. Die Moden der vier Prüfkörper sind die der
+mitgelieferten Körper (`…_koerper_gleich.py`: Frequenz, Verlustfaktor, Formwerte, Abstrahlgewicht des ersten Orts und
+statistischer Teil gleich).
+
+Spanne / größter / mittlerer Sprung in LU:
+
+| | nach KQ36 a (Mittel der 16 Orte) | bisheriger Ort | KQ34 a | |
+|---|---|---|---|---|
+| Laute (38–79) | 12,9 / 8,4 (61 / 63) / 2,4 | 15,2 / 11,7 / 2,6 (`front`, 0,5 m) | 15 / 12 / 3 | hält |
+| Oud (36–72) | **18,8 / 14,7 (40 / 44)** / 1,8 | 15,8 / 11,2 / 2,7 (`front`, 0,5 m) | 15 / 12 / 3 | Spanne und größter Sprung verfehlt |
+| Cembalo (29–89), mit GZ13 a | 5,8 / 3,0 (83 / 84) / 0,6 | 7,1 / 6,1 / 1,4 (`above`, 1 m) | 15 / 12 / 3 | hält |
+| Harfe ab D2 | 20,0 / 12,8 (43 / 47) / 3,0 | 21,9 / 14,5 / 3,3 (`front`, 1 m) | 22 / 12 / 3 | größter Sprung 0,8 darüber |
+
+- **Cembalo:** der Prüfstand rechnet mit fester Ablösekraft; GZ13 a (2,8 dB je Oktave fallend, Bezug C4) ist
+  nachträglich aufgelegt (`…_cembalo_gz13.py`, der Prüfstand ist in der Kraft linear). Ohne GZ13 a: Spanne 18,8 LU,
+  Sprünge 3,6 / 0,9 LU.
+- **Oud:** an den 16 Orten streut die Lautheit je Ton nur um 0,4 dB (Laute ebenso) — die Decke strahlt in 2 m fast
+  ungerichtet; der Unterschied zum bisherigen Ort ist der Abstand, nicht die Richtung. In 2 m fällt der einzelne
+  Basschor stärker ab als in 0,5 m: Taste 40 liegt 14,6 LU unter Taste 44 (in 0,5 m 11,2 LU), Taste 40 gegen 41
+  8,0 LU (in 0,5 m 3,2 LU). Die Spanne verfehlte schon am bisherigen Ort (15,8 LU, KQ34 a).
+- **Grenze:** mit 17 Hörorten zieht `lade_koerper` den statistischen Teil anders (je Hörort eine Phase aus derselben
+  Folge): die gezogenen Moden über 5 kHz sind eine andere Ziehung als im mitgelieferten Körper. Am bisherigen Ort
+  ändert das die Laute an Chor 8 um bis 2,1 LU (Taste 79), die übrigen Tasten und die Harfe um höchstens 0,4 LU.
+
+## 8 Offen
 
 - Harfe: größter Sprung 12,8 LU an 43 / 47 (Schwelle 12) — am Registerübergang, mit der Auswahl der Harfensaiten
   (Herleitung §12) und den Güten der besaiteten Moden zu prüfen; das Modell rund 2 LU über der echten Harfe bei
   jeder Zahl von Orten.
-- Die übrigen Körper mit Bauplan (Laute, Oud, Cembalo) nach KQ36 a mit 16 Hörorten messen.
+- Oud: Spanne 18,8 LU und größter Sprung 14,7 LU (40 / 44) — der einzelne Basschor in 2 m; Ursache nicht untersucht
+  (Kandidaten: Abstrahlung unter der Luftmode 101 Hz, Saite und Zupf des Basschors).
