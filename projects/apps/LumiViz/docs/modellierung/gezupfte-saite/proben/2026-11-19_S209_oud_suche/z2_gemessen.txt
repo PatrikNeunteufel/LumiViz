@@ -1,0 +1,8 @@
+ohne Aufnehmer: Moden 141.2 / 214.8 / 274.7 / 378.3 / 389.5 / 450.0
+   Raster alle         Z2  -5.4 dB   Spitzen rel.: 141:0.19  215:1.00  378:1.86   Tal 145-200: 0.02, Tal 225-270: 0.09
+   Raster Mittellinie  Z2 +14.3 dB   Spitzen rel.: 141:0.19  215:1.00   Tal 145-200: 0.01, Tal 225-270: 0.09
+   am Punkt            Z2  -5.0 dB   Spitzen rel.: 141:0.18  215:1.00  378:1.77   Tal 145-200: 0.01, Tal 225-270: 0.04
+mit Aufnehmer 5,8 g: Moden 139.5 / 204.3 / 274.7 / 358.5 / 389.5 / 450.0
+   Raster alle         Z2  -4.4 dB   Spitzen rel.: 140:0.26  204:1.00  358:1.65   Tal 145-200: 0.02, Tal 225-270: 0.09
+   Raster Mittellinie  Z2 +10.9 dB   Spitzen rel.: 140:0.26  204:1.00  358:0.29   Tal 145-200: 0.01, Tal 225-270: 0.09
+   am Punkt            Z2  -2.4 dB   Spitzen rel.: 139:0.23  204:1.00  359:1.33   Tal 145-200: 0.01, Tal 225-270: 0.04

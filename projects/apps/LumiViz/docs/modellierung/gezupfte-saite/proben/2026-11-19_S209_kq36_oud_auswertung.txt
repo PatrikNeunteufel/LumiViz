@@ -1,0 +1,16 @@
+37 Toene 36-72, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 0.3 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  19.8  groesster  14.3  mittlerer  2.9
+dasselbe aus den Maxima je Mikrofon         : Spanne  19.8  groesster  14.3  mittlerer  2.9   (prueft die Naeherung)
+ 1 Mikrofon(e),  16 Auswahlen: Spanne Median  19.9 | groesster Sprung Median  14.4 (5.-95. 13.8-14.7, kleinster 13.7) | mittlerer Median  3.1 (5.-95. 2.8-3.4) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 38 %
+ 2 Mikrofon(e), 120 Auswahlen: Spanne Median  19.9 | groesster Sprung Median  14.3 (5.-95. 14.0-14.6, kleinster 13.8) | mittlerer Median  3.0 (5.-95. 2.9-3.3) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 38 %
+ 4 Mikrofon(e), 500 Auswahlen: Spanne Median  19.8 | groesster Sprung Median  14.3 (5.-95. 14.1-14.5, kleinster 14.0) | mittlerer Median  3.0 (5.-95. 2.9-3.2) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 47 %
+ 8 Mikrofon(e), 500 Auswahlen: Spanne Median  19.8 | groesster Sprung Median  14.3 (5.-95. 14.2-14.4, kleinster 14.1) | mittlerer Median  3.0 (5.-95. 2.9-3.1) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 57 %
+16 Mikrofon(e), 500 Auswahlen: Spanne Median  19.8 | groesster Sprung Median  14.3 (5.-95. 14.3-14.3, kleinster 14.3) | mittlerer Median  2.9 (5.-95. 2.9-2.9) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 100 %
+32 Toene 41-72, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 0.3 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  16.6  groesster  13.5  mittlerer  2.7
+dasselbe aus den Maxima je Mikrofon         : Spanne  16.6  groesster  13.5  mittlerer  2.7   (prueft die Naeherung)
+ 1 Mikrofon(e),  16 Auswahlen: Spanne Median  16.6 | groesster Sprung Median  13.6 (5.-95. 13.2-13.8, kleinster 13.1) | mittlerer Median  2.9 (5.-95. 2.5-3.1) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 75 %
+ 2 Mikrofon(e), 120 Auswahlen: Spanne Median  16.6 | groesster Sprung Median  13.5 (5.-95. 13.3-13.7, kleinster 13.2) | mittlerer Median  2.8 (5.-95. 2.5-3.1) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 90 %
+ 4 Mikrofon(e), 500 Auswahlen: Spanne Median  16.6 | groesster Sprung Median  13.5 (5.-95. 13.4-13.7, kleinster 13.3) | mittlerer Median  2.7 (5.-95. 2.5-2.9) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 98 %
+ 8 Mikrofon(e), 500 Auswahlen: Spanne Median  16.6 | groesster Sprung Median  13.5 (5.-95. 13.4-13.6, kleinster 13.4) | mittlerer Median  2.7 (5.-95. 2.5-2.8) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 100 %
+16 Mikrofon(e), 500 Auswahlen: Spanne Median  16.6 | groesster Sprung Median  13.5 (5.-95. 13.5-13.5, kleinster 13.5) | mittlerer Median  2.7 (5.-95. 2.7-2.7) | Anteil mit groesstem Sprung <= 12 LU: 0 %, mit mittlerem <= 3 LU: 100 %

@@ -1,0 +1,41 @@
+== steg_130x20x12_650_d1.6
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 96 (0.50|+0.66/+0.94|14|1.00|20)  149 (0.16|-0.58/-0.62|29|0.04|28)  207 (0.33|+0.10/+0.32|26|0.93|76)  245 (0.01|+0.35/-0.06|31|0.17|13)  260 (0.00|+0.01/+0.73|10|0.01|1)  294 (0.00|-0.00/-0.02|30|0.00|0)  353 (0.01|-0.28/+0.32|34|0.45|28)  410 (0.00|+0.00/-0.08|12|0.02|1)  420 (0.00|-0.08/+0.06|11|0.07|4)
+   Z1 NEIN Lagen 96 (-5.0 %) / 207 (+1.8 %) / 260 (-7.2 %) / 353 (-2.6 %)
+   Z2 NEIN Spitze um 203 Hz gegen die staerkste andere: -13.7 dB (Raster), -23.2 dB (am Punkt)   Spitzen: 96:128.60 150:212.70 207:121.88 260:590.27 353:295.15
+   Z3 NEIN Abstrahlung 1 m: Luftmode 96 Hz, Hauptspitze 142 Hz, Verhaeltnis 1.48   Luftmode -6.1 dB, Tal -12.8 dB; Basschor T2 -5.1 / T3 -2.8 dB unter Max < 300 Hz   Spitzen: 96 142 224 380
+   Anregung am Steg (Mitte): 96:0.62 150:1.00 209:0.18 244:0.21 352:0.71
+   Anregung Mittellinie y 6-41 cm: 96:0.70 150:0.79 207:0.51 246:0.22 353:1.00
+   Anregung am Steg, Antwort am Steg: 96:0.46 150:0.98 245:1.00 353:0.65
+== steg_130x25x8_650_d1.5
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 95 (0.51|+0.86/+0.96|14|1.00|20)  148 (0.13|-0.65/-0.59|29|0.05|24)  207 (0.34|+0.25/+0.41|26|0.91|77)  238 (0.01|+0.31/-0.03|31|0.21|17)  258 (0.00|-0.00/+0.64|11|0.00|0)  280 (0.00|-0.00/-0.03|30|0.00|0)  342 (0.01|-0.09/+0.36|34|0.41|27)  405 (0.00|-0.05/+0.07|11|0.03|2)  409 (0.00|+0.05/+0.01|11|0.03|2)
+   Z1 NEIN Lagen 95 (-6.2 %) / 207 (+2.0 %) / 258 (-7.7 %) / 342 (-5.5 %)
+   Z2 NEIN Spitze um 203 Hz gegen die staerkste andere: -11.8 dB (Raster), -18.5 dB (am Punkt)   Spitzen: 95:139.01 148:241.35 207:150.26 258:584.00 342:333.77
+   Z3 NEIN Abstrahlung 1 m: Luftmode 92 Hz, Hauptspitze 220 Hz, Verhaeltnis 2.40   Luftmode -6.5 dB, Tal -13.8 dB; Basschor T2 -4.6 / T3 -1.4 dB unter Max < 300 Hz   Spitzen: 92 142 220 366
+   Anregung am Steg (Mitte): 95:0.67 148:1.00 208:0.27 341:0.22
+   Anregung Mittellinie y 6-41 cm: 95:0.65 148:0.74 207:0.57 342:1.00
+   Anregung am Steg, Antwort am Steg: 95:0.55 148:1.00 208:0.15 238:0.53 344:0.11
+== steg_130x25x12_650_d1.6
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 95 (0.46|+0.86/+0.95|14|1.00|19)  146 (0.20|-0.64/-0.55|29|0.09|30)  208 (0.33|+0.16/+0.27|26|0.96|77)  245 (0.00|+0.22/-0.14|31|0.15|11)  253 (0.00|+0.01/+0.63|11|0.01|1)  294 (0.00|+0.00/+0.01|30|0.00|0)  354 (0.01|-0.05/+0.36|34|0.46|29)  415 (0.00|-0.02/+0.02|12|0.03|2)
+   Z1 NEIN Lagen 94 (-6.4 %) / 208 (+2.3 %) / 253 (-9.7 %) / 354 (-2.3 %)
+   Z2 NEIN Spitze um 203 Hz gegen die staerkste andere: -12.6 dB (Raster), -21.5 dB (am Punkt)   Spitzen: 94:128.51 146:175.03 208:109.22 253:463.45 354:325.96
+   Z3 ja   Abstrahlung 1 m: Luftmode 94 Hz, Hauptspitze 142 Hz, Verhaeltnis 1.52   Luftmode -6.4 dB, Tal -12.8 dB; Basschor T2 -1.5 / T3 -3.4 dB unter Max < 300 Hz   Spitzen: 94 142 224 376
+   Anregung am Steg (Mitte): 94:0.88 146:1.00 209:0.23 244:0.27 352:0.18
+   Anregung Mittellinie y 6-41 cm: 94:0.63 146:0.55 208:0.38 245:0.40 354:1.00
+   Anregung am Steg, Antwort am Steg: 94:0.69 146:1.00 209:0.13 246:0.36
+== steg_130x25x12_650_d1.6_ab3
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 112 (0.50|+0.87/+0.87|13|1.00|28)  176 (0.45|+0.94/+0.79|12|0.65|64)  260 (0.05|-0.14/+0.21|21|0.79|47)  289 (0.00|+0.00/+0.71|9|0.00|0)  354 (0.00|+0.11/-0.29|27|0.21|12)
+   Z1 NEIN Lagen 112 (+11.1 %) / 176 (-13.2 %) / 289 (+3.2 %) / 354 (-2.3 %)
+   Z2 NEIN Spitze um 203 Hz gegen die staerkste andere: +nan dB (Raster), +nan dB (am Punkt)   Spitzen: 112:125.18 176:136.91 260:147.21 289:558.58 354:346.89
+   Z3 NEIN Abstrahlung 1 m: Luftmode 114 Hz, Hauptspitze 170 Hz, Verhaeltnis 1.49   Luftmode -9.8 dB, Tal -15.3 dB; Basschor T2 -15.0 / T3 -2.0 dB unter Max < 300 Hz   Spitzen: 114 170 240 319
+   Anregung am Steg (Mitte): 112:0.78 176:1.00 258:0.20 353:0.35
+   Anregung Mittellinie y 6-41 cm: 112:0.64 176:0.67 260:0.70 289:0.21 354:1.00
+   Anregung am Steg, Antwort am Steg: 112:0.65 176:1.00 262:0.14 356:0.14
+== steg_130x20x10_650_d1.5_gestuetzt
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 73 (0.43|+0.78/+0.93|12|1.00|11)  125 (0.13|-0.49/-0.33|29|0.19|17)  191 (0.23|-0.12/+0.56|20|0.41|54)  199 (0.00|+0.02/-0.52|11|0.06|7)  207 (0.18|+0.38/+0.04|31|0.57|56)  251 (0.00|-0.00/-0.01|30|0.00|0)  288 (0.02|-0.25/+0.55|35|0.49|39)  320 (0.00|-0.03/+0.05|15|0.03|2)  326 (0.00|-0.12/+0.03|11|0.13|9)  347 (0.01|+0.07/-0.32|45|0.54|40)  390 (0.00|-0.00/-0.25|9|0.01|0)
+   Z1 NEIN Lagen 125 (+23.8 %) / 199 (-2.1 %) / 288 (+2.8 %) / 347 (-4.1 %)
+   Z2 ja   Spitze um 203 Hz gegen die staerkste andere: +1.0 dB (Raster), +5.0 dB (am Punkt)   Spitzen: 73:122.76 125:129.32 199:451.16 288:357.03 347:402.24 390:363.81
+   Z3 NEIN Abstrahlung 1 m: Luftmode 73 Hz, Hauptspitze 200 Hz, Verhaeltnis 2.74   Luftmode -16.2 dB, Tal -25.2 dB; Basschor T2 -10.8 / T3 -0.0 dB unter Max < 300 Hz   Spitzen: 73 118 200 319
+   Anregung am Steg (Mitte): 73:1.00 125:0.85 190:0.39 287:1.00 325:0.16 347:0.49
+   Anregung Mittellinie y 6-41 cm: 73:0.39 125:0.26 192:0.71 288:0.92 348:1.00
+   Anregung am Steg, Antwort am Steg: 73:0.52 125:0.77 207:1.00 288:0.31 327:0.37 350:0.21
+gemessen (Abb. 6): 101:0.18 139:0.51 203:1.00 280:0.43 362:0.37

@@ -1,0 +1,12 @@
+Netz fuer 450 Hz:
+   ohne Rosetten:                  140.9 /  223.9 /  308.8 /  378.9 /  445.3 /  551.2
+   Massen im Modenraum (genau):    140.7 /  223.1 /  276.5 /  378.9 /  387.4 /  456.4
+   weiche Leisten um die Loecher:  140.7 /  222.9 /  275.1 /  379.8 /  384.2 /  445.9
+Netz fuer 2500 Hz:
+   ohne Rosetten:                  140.8 /  222.7 /  308.6 /  375.9 /  444.8 /  551.1
+   Massen im Modenraum (genau):    140.5 /  221.9 /  276.4 /  375.9 /  387.1 /  456.4
+   weiche Leisten um die Loecher:  140.6 /  222.0 /  275.0 /  373.2 /  383.7 /  445.8
+Netz fuer 5000 Hz:
+   ohne Rosetten:                  140.7 /  222.6 /  308.5 /  372.3 /  444.3 /  551.1
+   Massen im Modenraum (genau):    140.4 /  221.8 /  271.1 /  372.2 /  392.2 /  464.7
+   weiche Leisten um die Loecher:  140.5 /  221.5 /  275.0 /  371.2 /  383.6 /  445.8

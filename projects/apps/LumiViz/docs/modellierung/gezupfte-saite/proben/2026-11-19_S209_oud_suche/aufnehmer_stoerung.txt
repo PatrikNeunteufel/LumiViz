@@ -1,0 +1,18 @@
+beste_R
+   138.0 Hz: wirksame Masse am Antwortpunkt    210.9 g, am Steg    382.2 g; 5,8 g am Antwortpunkt: -1.4 %
+   207.2 Hz: wirksame Masse am Antwortpunkt     53.2 g, am Steg     80.5 g; 5,8 g am Antwortpunkt: -5.5 %
+   303.0 Hz: wirksame Masse am Antwortpunkt   2190.6 g, am Steg    422.2 g; 5,8 g am Antwortpunkt: -0.1 %
+   350.9 Hz: wirksame Masse am Antwortpunkt     48.0 g, am Steg 1089311.3 g; 5,8 g am Antwortpunkt: -6.0 %
+  Anregung Raster, alle Punkte (52): Z2 -5.3 dB; 138:0.12 207:0.55 303:0.16 351:1.00
+  Anregung Raster, nur Mittellinie x = 0 (7): Z2 +11.6 dB; 138:0.23 207:1.00 303:0.26
+  Anregung Raster, nur die Seite des Aufnehmers x > 0 (22): Z2 -6.8 dB; 138:0.11 207:0.46 303:0.14 351:1.00
+  Anregung am Steg (Mitte) (1): Z2 +14.2 dB; 138:0.20 207:1.00
+  gemessen (Abb. 6): 101:0.18 139:0.51 203:1.00 280:0.43 362:0.37
+Traceback (most recent call last):
+  File "C:\Users\patri\source\repos\Visuals_Project\cmake\LumiViz\.claude\handover\s209_oud_suche\oud_aufnehmer_stoerung.py", line 11, in <module>
+    knoten, dreiecke, hz, w = s.formen(s.HIER / f"{name}_formen.txt")
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\patri\source\repos\Visuals_Project\cmake\LumiViz\.claude\handover\s209_oud_suche\oud_suche.py", line 33, in formen
+    z = open(datei, encoding="utf-8").read().split("\n")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\patri\\source\\repos\\Visuals_Project\\cmake\\LumiViz\\.claude\\handover\\s209_oud_suche\\oud\\basis_formen.txt'

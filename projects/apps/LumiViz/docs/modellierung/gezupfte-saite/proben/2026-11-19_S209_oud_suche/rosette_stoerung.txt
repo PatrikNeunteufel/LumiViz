@@ -1,0 +1,5 @@
+fein2_mit_bestes - Knoten am Rand: grosses Loch 48, kleine Loecher 48
+   141.9 Hz: je 1 g am grossen Loch -0.01 %, je 1 g an den kleinen (zusammen) -0.04 %   -> 7 g + 2 g: -0.1 %
+   213.1 Hz: je 1 g am grossen Loch -0.02 %, je 1 g an den kleinen (zusammen) -0.03 %   -> 7 g + 2 g: -0.2 %
+   305.1 Hz: je 1 g am grossen Loch -0.84 %, je 1 g an den kleinen (zusammen) -0.72 %   -> 7 g + 2 g: -7.3 %
+   358.6 Hz: je 1 g am grossen Loch -0.00 %, je 1 g an den kleinen (zusammen) -0.00 %   -> 7 g + 2 g: -0.0 %

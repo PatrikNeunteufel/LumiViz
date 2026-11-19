@@ -1,0 +1,30 @@
+1. Netz
+   Netz fuer 450 Hz (1568 Knoten): 141.9 / 218.0 / 302.7 / 351.7 / 418.3
+      Mesh (CDT 2.0.1, for 450 Hz): 1568 nodes, 2797 triangles, 0.01 s
+      Plate (Lagrange P3): 37074 unknowns, 919680 entries per matrix, mass 0.174 kg, 0.17 s, peak 37 MB
+   Netz fuer 2500 Hz (2796 Knoten): 141.7 / 217.0 / 302.5 / 346.5 / 417.5
+      Mesh (CDT 2.0.1, for 2500 Hz): 2796 nodes, 5231 triangles, 0.01 s
+      Plate (Lagrange P3): 69834 unknowns, 1766796 entries per matrix, mass 0.174 kg, 0.33 s, peak 58 MB
+   Netz fuer 5000 Hz (4849 Knoten): 141.7 / 217.0 / 302.5 / 345.4 / 417.3
+      Mesh (CDT 2.0.1, for 5000 Hz): 4849 nodes, 9299 triangles, 0.02 s
+      Plate (Lagrange P3): 124671 unknowns, 3185268 entries per matrix, mass 0.174 kg, 0.63 s, peak 96 MB
+2. Massen im Modenraum (Netz und Moden bis 2500 Hz)
+   68 Moden bis 2485 Hz
+   Aufnehmer 5,8 g:
+      ohne Masse:         141.0 /  216.2 /  302.3 /  346.5 /  417.5 /  525.2
+      erste Ordnung:      138.3 /  202.0 /  302.3 /  307.6 /  414.1 /  516.5
+      Modenraum bis  450:  138.0 /  202.6 /  302.2 /  319.4 /  415.7
+      Modenraum bis 1000:  137.9 /  202.0 /  302.2 /  316.8 /  415.4 /  517.9
+      Modenraum bis 2500:  137.8 /  200.5 /  302.0 /  310.7 /  414.7 /  508.7
+   Rosetten 7 + 1 + 1 g:
+      ohne Masse:         141.0 /  216.2 /  302.3 /  346.5 /  417.5 /  525.2
+      erste Ordnung:      140.8 /  215.5 /  279.9 /  346.4 /  366.7 /  442.7
+      Modenraum bis  450:  140.8 /  215.4 /  280.1 /  346.4 /  380.3
+      Modenraum bis 1000:  140.8 /  215.4 /  279.9 /  346.4 /  376.4 /  455.1
+      Modenraum bis 2500:  140.8 /  215.4 /  279.1 /  346.4 /  373.9 /  447.6
+   Rosetten und Aufnehmer:
+      ohne Masse:         141.0 /  216.2 /  302.3 /  346.5 /  417.5 /  525.2
+      erste Ordnung:      138.2 /  201.3 /  279.9 /  307.6 /  363.3 /  434.1
+      Modenraum bis  450:  137.9 /  201.9 /  280.0 /  319.2 /  379.5
+      Modenraum bis 1000:  137.8 /  201.3 /  279.8 /  316.6 /  376.1 /  452.1
+      Modenraum bis 2500:  137.6 /  199.9 /  279.0 /  310.3 /  373.6 /  443.7

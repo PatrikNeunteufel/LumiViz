@@ -1,0 +1,18 @@
+   1 Kosten   154.2  Decke 1.55 mm, Steghoehe 10.0 mm, Volumen 20.6 l, Muendung 1.70  Lagen -5.0 +8.1 +2.0 -6.6 -4.1
+   4 Kosten   150.8  Decke 1.55 mm, Steghoehe 10.0 mm, Volumen 22.6 l, Muendung 1.70  Lagen -5.7 +7.6 -0.7 -6.6 -4.1
+  10 Kosten   148.5  Decke 1.58 mm, Steghoehe 11.6 mm, Volumen 21.4 l, Muendung 1.53  Lagen -3.2 +7.9 +2.5 -7.7 -3.2
+  13 Kosten   138.4  Decke 1.59 mm, Steghoehe 9.8 mm, Volumen 21.8 l, Muendung 1.62  Lagen -3.0 +10.1 +1.1 -4.6 -2.5
+  14 Kosten   134.8  Decke 1.62 mm, Steghoehe 10.8 mm, Volumen 22.8 l, Muendung 1.59  Lagen -2.7 +9.9 +0.6 -5.2 -1.5
+  15 Kosten   133.5  Decke 1.66 mm, Steghoehe 11.3 mm, Volumen 23.8 l, Muendung 1.53  Lagen -1.5 +10.8 -0.2 -3.8 -0.3
+  21 Kosten   133.2  Decke 1.59 mm, Steghoehe 11.0 mm, Volumen 21.9 l, Muendung 1.57  Lagen -3.0 +8.8 +1.4 -6.2 -2.6
+  22 Kosten   122.8  Decke 1.60 mm, Steghoehe 10.8 mm, Volumen 23.4 l, Muendung 1.52  Lagen -2.7 +9.0 +0.0 -5.4 -2.4
+  29 Kosten   122.0  Decke 1.60 mm, Steghoehe 10.8 mm, Volumen 23.1 l, Muendung 1.56  Lagen -3.0 +8.8 +0.0 -5.4 -2.4
+  42 Kosten   121.7  Decke 1.60 mm, Steghoehe 10.9 mm, Volumen 23.4 l, Muendung 1.54  Lagen -3.0 +8.8 -0.2 -5.4 -2.3
+  56 Kosten   121.7  Decke 1.60 mm, Steghoehe 10.9 mm, Volumen 23.3 l, Muendung 1.54  Lagen -3.0 +8.8 -0.1 -5.4 -2.3
+  58 Kosten   120.8  Decke 1.60 mm, Steghoehe 10.8 mm, Volumen 23.4 l, Muendung 1.54  Lagen -3.0 +8.8 -0.2 -5.4 -2.3
+Ende: [ 1.60277958 10.84513085 23.37361095  1.54206182] 120.7638070994497 95 Auswertungen
+== fein_F_bestes
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 98 (0.51|+0.66/+0.94|14|1.00|23)  151 (0.16|-0.60/-0.66|29|0.01|30)  203 (0.32|+0.10/+0.31|27|0.94|78)  247 (0.00|+0.37/-0.03|31|0.19|14)  265 (0.00|+0.00/+0.74|10|0.01|1)  295 (0.00|-0.00/-0.03|30|0.00|0)  353 (0.00|-0.29/+0.31|34|0.44|27)  414 (0.00|-0.00/-0.10|12|0.02|1)
+   Z1 NEIN Lagen 98 (-3.0 %) / 202 (-0.2 %) / 265 (-5.4 %) / 354 (-2.3 %)
+   Z2 NEIN Spitze um 203 Hz gegen die staerkste andere: -14.4 dB (Raster), -24.5 dB (am Punkt)   Spitzen: 98:131.72 151:228.92 202:119.84 265:627.16 354:279.49
+   Z3 ja   Abstrahlung 1 m: Luftmode 96 Hz, Hauptspitze 146 Hz, Verhaeltnis 1.53   Luftmode -6.1 dB, Tal -12.6 dB; Basschor T2 -7.0 / T3 -3.9 dB unter Max < 300 Hz   Spitzen: 96 146 223 384

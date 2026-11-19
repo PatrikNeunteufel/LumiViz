@@ -1,0 +1,16 @@
+   1 Kosten   126.1  Decke 1.90 mm, Steghoehe 10.0 mm, Volumen 20.6 l, Muendung 1.70  Lagen -4.9 +0.4 +8.0 -6.1
+   8 Kosten   117.1  Decke 1.98 mm, Steghoehe 10.2 mm, Volumen 20.9 l, Muendung 1.73  Lagen -5.2 +1.2 +8.6 -3.9
+  11 Kosten    97.1  Decke 1.96 mm, Steghoehe 9.2 mm, Volumen 22.3 l, Muendung 1.57  Lagen -3.4 +2.3 +8.5 -2.8
+  12 Kosten    93.5  Decke 1.98 mm, Steghoehe 8.8 mm, Volumen 23.1 l, Muendung 1.40  Lagen +0.0 +3.9 +8.7 -1.2
+  23 Kosten    92.4  Decke 1.96 mm, Steghoehe 10.3 mm, Volumen 22.1 l, Muendung 1.47  Lagen -0.9 +1.4 +8.3 -4.6
+  27 Kosten    90.4  Decke 1.97 mm, Steghoehe 9.8 mm, Volumen 22.5 l, Muendung 1.40  Lagen +0.5 +2.6 +8.5 -3.4
+  30 Kosten    86.3  Decke 1.96 mm, Steghoehe 9.1 mm, Volumen 23.4 l, Muendung 1.42  Lagen -1.1 +2.7 +8.5 -2.4
+  40 Kosten    84.0  Decke 1.96 mm, Steghoehe 9.1 mm, Volumen 23.9 l, Muendung 1.39  Lagen -0.9 +2.3 +8.4 -2.7
+  52 Kosten    83.7  Decke 1.95 mm, Steghoehe 9.3 mm, Volumen 23.9 l, Muendung 1.37  Lagen -0.5 +2.1 +8.3 -3.2
+  60 Kosten    82.8  Decke 1.95 mm, Steghoehe 9.2 mm, Volumen 23.9 l, Muendung 1.38  Lagen -0.7 +2.2 +8.3 -2.9
+Ende: [ 1.9534416   9.19591877 23.91013889  1.37882939] 82.79404985131184 91 Auswertungen
+== fein_R_bestes
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 138 (0.79|+0.67/+0.90|12|1.00|56)  207 (0.19|+0.71/+0.87|12|0.89|62)  303 (0.01|-0.23/+0.10|23|0.72|35)  351 (0.00|+0.00/-0.58|11|0.01|0)
+   Z1 NEIN Lagen 138 (+36.6 %) / 208 (+2.2 %) / 303 (+8.3 %) / 352 (-2.9 %)
+   Z2 NEIN Spitze um 203 Hz gegen die staerkste andere: -5.3 dB (Raster), -4.0 dB (am Punkt)   Spitzen: 138:58.25 208:258.29 303:74.70 352:473.13
+   Z3 NEIN Abstrahlung 1 m: Luftmode 137 Hz, Hauptspitze 200 Hz, Verhaeltnis 1.46   Luftmode -8.7 dB, Tal -14.3 dB; Basschor T2 -8.8 / T3 -0.0 dB unter Max < 300 Hz   Spitzen: 137 200 277

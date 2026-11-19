@@ -20,9 +20,11 @@
  * - An einer gerechneten Platte mit Loch: `Auswertung::volumen`; ein riesiger Hohlraum laesst die
  *   Moden der Platte, wie sie sind; ein kleiner hebt die Moden mit Volumen und laesst die ohne; die
  *   Summe der Eigenwerte stimmt (Spur).
- * - Die mitgelieferte Oud (KQ10 a; vom Arbeitsordner aus): der Bauplan mit drei Loechern, Hohlraum und
- *   sechs Stegpunkten, der Koerper mit seinen Moden an den Spitzen der gemessenen Kurve (Abdallah u. a.
- *   2026, Abb. 6: 101 / 203 / 280 / 362 Hz innerhalb von 3 %), die unterste ist die Mode der Luft.
+ * - Die mitgelieferte Oud (KQ10 a, neu gesucht nach KQ42 a–KQ45 a; vom Arbeitsordner aus): der Bauplan mit
+ *   drei Loechern samt Rosetten, Steg, Hohlraum und sechs Stegpunkten; der Koerper mit den ersten fuenf Moden
+ *   des Instruments ohne den Aufnehmer der Messung (mit ihm treffen sie die Spitzen von Abdallah u. a. 2026,
+ *   Abb. 6: 139 / 203 / 280 / 362 / 385 Hz innerhalb von 3 %), Luft- und Deckenmode bewegen den Steg, die
+ *   Hauptspitze der Abstrahlung liegt beim 1,5- bis 2,0-Fachen der Luftmode (KQ41 a).
  * - Die mitgelieferte Laute (KQ11 a, KQ12 a): die Form der Rauwolf-Laute im Massstab 625/677,4, acht
  *   Stegpunkte; die Stegadmittanz zwischen Chor 1 und 2 mit der Last der gedaempften Saiten trifft die
  *   Spitzen der gemessenen Kurve (Woodhouse 2021, Abb. 1: 132 / 277 / 341 / 476 Hz) in Lage (5 %) und
@@ -504,7 +506,7 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum an der gerechneten Platte")
     for (std::size_t k = 0; k < ml.moden.size(); ++k) CHECK(ml.moden[k].luftAnteil == ml.luftAnteil[k]);
 }
 
-TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Oud (KQ10 a)")
+TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Oud (KQ10 a, KQ42 a bis KQ45 a)")
 {
     const QString stamm = QStringLiteral("asset/loop/instrument_bodies/oud");
     kp::Bauplan plan;
@@ -519,26 +521,72 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Oud (KQ10 a)")
     CHECK(holz->dichte == doctest::Approx(460.0));
     CHECK(holz->ex == doctest::Approx(10.34e9));
     CHECK(plan.platte.faserWinkelGrad == doctest::Approx(90.0));
-    CHECK(plan.rippen.size() == 7);
-    CHECK(plan.stege.empty());
+    // sieben Balken (Tab. 2) und drei Ringe, die die Masse der Rosetten tragen (KQ44 a)
+    REQUIRE(plan.rippen.size() == 10);
+    CHECK(plan.platte.dicke == doctest::Approx(0.00223));
     REQUIRE(plan.platte.loecher.size() == 3);
     const double soll[3] = {kPi * 0.053 * 0.053, kPi * 0.02 * 0.02, kPi * 0.02 * 0.02};
     for (std::size_t j = 0; j < 3; ++j) CHECK(std::abs(kp::flaeche(plan.platte.loecher[j])) == doctest::Approx(soll[j]).epsilon(1e-4));
-    // KQ10 a: die Balken enden vor dem Rand (wie Abb. 3 sie zeichnet), keiner beruehrt den Umriss
-    for (const kp::Leiste& r : plan.rippen)
+    // KQ42 a: die Balken reichen bis 2 mm vor den Rand (Abb. 3 zeichnet 10–16,5 mm; so gebaut liegt der Bauch der
+    // strahlenden Mode im Lochfeld statt am Steg), keiner beruehrt den Umriss
+    const auto zumUmriss = [&plan](const kp::Punkt2& p) {
+        double naechster = 1.0;
+        const std::size_t n = plan.platte.umriss.size();
+        for (std::size_t j = 0; j < n; ++j)
+        {
+            const kp::Punkt2& a = plan.platte.umriss[j];
+            const kp::Punkt2& b = plan.platte.umriss[(j + 1) % n];
+            const double dx = b.x - a.x, dy = b.y - a.y;
+            const double l2 = dx * dx + dy * dy;
+            const double t = l2 > 0.0 ? std::clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / l2, 0.0, 1.0) : 0.0;
+            naechster = std::min(naechster, std::hypot(p.x - a.x - t * dx, p.y - a.y - t * dy));
+        }
+        return naechster;
+    };
+    for (std::size_t j = 0; j < 7; ++j)
+    {
+        const kp::Leiste& r = plan.rippen[j];
+        CAPTURE(r.name);
+        CHECK(r.material == "sitka");
         for (const kp::Punkt2& ende : {r.linie.front(), r.linie.back()})
         {
             if (std::abs(ende.x) < 0.08) continue;  // die inneren Enden der Balken 4 und 5 am grossen Loch
-            double naechster = 1.0;
-            for (const kp::Punkt2& u : plan.platte.umriss) naechster = std::min(naechster, std::hypot(u.x - ende.x, u.y - ende.y));
-            CHECK(naechster > 0.008);
-            CHECK(naechster < 0.03);
+            CHECK(zumUmriss(ende) > 0.0005);
+            CHECK(zumUmriss(ende) < 0.0021);
         }
+    }
+    // KQ44 a: die Rosetten als Masse am Lochrand — je Loch ein weicher Ring mit eigenem Werkstoff, 11,4 / 1 / 1 g,
+    // fast ohne Steife (E 10 MPa gegen 10 GPa des Holzes)
+    const double rosetteGramm[3] = {11.4, 1.0, 1.0};
+    for (std::size_t j = 0; j < 3; ++j)
+    {
+        const kp::Leiste& r = plan.rippen[7 + j];
+        CAPTURE(r.name);
+        const kp::Material* werkstoff = kp::findeMaterial(plan, r.material);
+        REQUIRE(werkstoff);
+        CHECK(werkstoff->ex == doctest::Approx(1.0e7));
+        CHECK_FALSE(werkstoff->quelle.empty());
+        double laenge = 0.0;
+        for (std::size_t q = 0; q + 1 < r.linie.size(); ++q) laenge += std::hypot(r.linie[q + 1].x - r.linie[q].x, r.linie[q + 1].y - r.linie[q].y);
+        CHECK(1000.0 * werkstoff->dichte * laenge * r.breite.front() * r.hoehe.front() == doctest::Approx(rosetteGramm[j]).epsilon(0.01));
+    }
+    // der Steg: 17 cm lang (Abb. 3), Querschnitt und Holz angenommen und angepasst, 24,5 g
+    REQUIRE(plan.stege.size() == 1);
+    {
+        const kp::Leiste& steg = plan.stege[0];
+        const kp::Material* werkstoff = kp::findeMaterial(plan, steg.material);
+        REQUIRE(werkstoff);
+        const double laenge = steg.linie.back().x - steg.linie.front().x;
+        CHECK(laenge == doctest::Approx(0.17));
+        CHECK(steg.linie.front().y == doctest::Approx(0.09));
+        CHECK(1000.0 * werkstoff->dichte * laenge * steg.breite.front() * steg.hoehe.front() == doctest::Approx(24.5).epsilon(0.01));
+    }
     // der Hohlraum: die Schale 21 cm tief, 20,6 l
     REQUIRE(plan.hohlraum.an());
     CHECK(plan.hohlraum.volumen == doctest::Approx(0.0206).epsilon(0.005));
     const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, kp::Luft{}.dichte, kp::Luft{}.schall);
-    CHECK(g.helmholtzHz() == doctest::Approx(154.0).epsilon(0.01));
+    CHECK(plan.hohlraum.muendung == doctest::Approx(1.52));
+    CHECK(g.helmholtzHz() == doctest::Approx(161.4).epsilon(0.01));
     // sechs Choere, arabische Stimmung C2 F2 A2 D3 G3 C4, am Steg 9 cm vom unteren Ende
     REQUIRE(plan.stegpunkte.size() == 6);
     const int tasten[6] = {36, 41, 45, 50, 55, 60};
@@ -551,26 +599,71 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Oud (KQ10 a)")
     CHECK(plan.stegpunkte[5].ort.x - plan.stegpunkte[0].ort.x == doctest::Approx(0.055));
     CHECK_FALSE(plan.daempfung.quelle.empty());
 
-    // der Koerper: Moden an den Spitzen der gemessenen Kurve (Abb. 6), jede innerhalb von 3 %
+    // der Koerper: die ersten fuenf Moden des Instruments. Der Bauplan beschreibt die Oud OHNE den Aufnehmer der
+    // Messung (KQ43 a); mit ihm (5,8 g am Antwortpunkt 3, als Massenaenderung im Modenraum gerechnet:
+    // `…/proben/2026-11-19_S209_oud_suche/oud_kopie_pruefen.py`) liegen sie bei 139,4 / 203,4 / 274,7 / 351,2 / 389,1 Hz —
+    // gegen die Spitzen der gemessenen Kurve (Abdallah u. a. 2026 Abb. 6) 139 / 203 / 280 / 362 / 385 Hz sind das
+    // +0,3 / +0,2 / −1,9 / −3,0 / +1,1 %. Die Spitze bei 101 Hz hat kein Gegenstueck (KQ42 a). Hier festgehalten
+    // sind die Lagen des Instruments, je auf 1 %.
     kp::Koerper k;
     REQUIRE(ladeKoerper(stamm + QLatin1String(kKoerperEndung), k));
     REQUIRE(k.moden.size() > 100);
-    for (const double spitze : {101.0, 203.0, 280.0, 362.0})
+    const double lagen[5] = {141.1, 214.1, 274.7, 372.5, 389.2};
+    for (std::size_t j = 0; j < 5; ++j)
     {
-        double naechste = 0.0;
-        for (const kp::ModeImKoerper& m : k.moden)
-            if (std::abs(m.frequenzHz - spitze) < std::abs(naechste - spitze)) naechste = m.frequenzHz;
-        CAPTURE(spitze);
-        CAPTURE(naechste);
-        CHECK(std::abs(naechste / spitze - 1.0) < 0.03);
+        CAPTURE(j);
+        CHECK(k.moden[j].frequenzHz == doctest::Approx(lagen[j]).epsilon(0.01));
     }
-    // die unterste ist die Mode der Luft, die erste Deckenmode traegt den Rest
-    CHECK(k.moden[0].luftAnteil > 0.6);
-    CHECK(k.moden[0].luftAnteil < 0.7);
-    CHECK(k.moden[2].luftAnteil > 0.25);
-    // die gegengleiche Mode dazwischen (169 Hz) hat kein Volumen und keine Luft
-    CHECK(k.moden[1].luftAnteil < 0.01);
-    CHECK(k.moden[1].frequenzHz == doctest::Approx(169.0).epsilon(0.02));
+    // KQ42 a: die unterste ist die Mode der Luft (139 Hz gemessen), die zweite die erste Deckenmode (203 Hz); beide
+    // bewegen den Steg, alle sechs Stegpunkte gleichsinnig
+    CHECK(k.moden[0].luftAnteil > 0.7);
+    CHECK(k.moden[0].luftAnteil < 0.9);
+    CHECK(k.moden[1].luftAnteil > 0.1);
+    CHECK(k.moden[1].luftAnteil < 0.25);
+    for (std::size_t j = 0; j < 2; ++j)
+    {
+        CAPTURE(j);
+        CHECK(k.moden[j].amStegpunkt[0] * k.moden[j].amStegpunkt[5] > 0.0);
+        CHECK(std::abs(k.moden[j].amStegpunkt[2]) > 1.0);
+    }
+    CHECK(std::abs(k.moden[1].amStegpunkt[2]) > std::abs(k.moden[0].amStegpunkt[2]));
+    // die gegengleiche Mode (373 Hz) hat keine Luft und bewegt die beiden Enden des Stegs gegeneinander
+    CHECK(k.moden[3].luftAnteil < 0.01);
+    CHECK(k.moden[3].amStegpunkt[0] * k.moden[3].amStegpunkt[5] < 0.0);
+
+    // KQ41 a (Ziel 3 von KQ38 a): die Hauptspitze der Abstrahlung liegt beim 1,5- bis 2,0-Fachen der Luftmode
+    // (Degirmenli 2017: 1,7; Degirmenli 2023: 1,5–1,6; vor S209: 2,7). Schalldruck am Hoerort je Kraft am Steg,
+    // quadratisches Mittel ueber die Stegpunkte der Choere 6, 3 und 1.
+    REQUIRE(k.stegTasten.size() == 6);
+    REQUIRE_FALSE(k.hoerorte.empty());
+    auto druckDb = [&k](double hz) {
+        const double om = 2.0 * kPi * hz;
+        double summe = 0.0;
+        for (const std::size_t s : {std::size_t{0}, std::size_t{3}, std::size_t{5}})
+        {
+            std::complex<double> p = 0.0;
+            for (const kp::ModeImKoerper& m : k.moden)
+            {
+                const double omn = 2.0 * kPi * m.frequenzHz;
+                p += -om * om * m.amStegpunkt[s] * m.abstrahlung[0] / (omn * omn * std::complex<double>(1.0, m.verlustfaktor) - om * om);
+            }
+            summe += std::norm(p);
+        }
+        return 10.0 * std::log10(summe / 3.0);
+    };
+    double luftHz = 0.0, luftDb = -1e9, hauptHz = 0.0, hauptDb = -1e9;
+    for (double hz = 120.0; hz <= 160.0; hz += 0.5)
+        if (const double d = druckDb(hz); d > luftDb) luftDb = d, luftHz = hz;
+    for (double hz = 170.0; hz <= 400.0; hz += 0.5)
+        if (const double d = druckDb(hz); d > hauptDb) hauptDb = d, hauptHz = hz;
+    CAPTURE(luftHz);
+    CAPTURE(hauptHz);
+    CHECK(hauptHz / luftHz > 1.5);
+    CHECK(hauptHz / luftHz < 2.0);
+    CHECK(hauptDb > luftDb);
+    // Bekannte Abweichungen, die die Koerperdatei nicht traegt und die deshalb im Bericht stehen
+    // (`…/2026-11-19_S207_spruenge_je_taste.md` §12, KQ45 a): Ziel 2 von KQ38 a (am Antwortpunkt 3 gewinnt die
+    // gegengleiche Mode um 4,4 dB) und die Schwellen von KQ36 a (Spanne 19,9 LU, groesster Sprung 14,3 LU).
 }
 
 TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Laute (KQ11 a, KQ12 a)")

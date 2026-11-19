@@ -1,0 +1,8 @@
+== kopie
+   Moden Hz (Luft | Steg rel. / AP3 rel. | Bauch y cm | Volumen | |G| 1 m): 141 (0.80|+0.72/+0.91|14|1.00|53)  214 (0.18|+0.77/+0.89|13|0.85|57)  275 (0.02|-0.11/-0.01|26|0.75|34)  372 (0.00|-0.02/+0.65|10|0.00|0)  389 (0.00|+0.20/-0.05|33|0.25|10)
+   Z1 NEIN Lagen 141 (+39.6 %) / 214 (+5.4 %) / 214 (-23.6 %) / 372 (+2.8 %)
+   Z2 NEIN Spitze um 203 Hz gegen die staerkste andere: -5.4 dB (Raster), -5.4 dB (am Punkt)   Spitzen: 141:51.65 214:260.14 372:484.61
+   Z3 ja   Abstrahlung 1 m: Luftmode 137 Hz, Hauptspitze 206 Hz, Verhaeltnis 1.50   Luftmode -9.2 dB, Tal -15.2 dB; Basschor T2 -9.4 / T3 -0.3 dB unter Max < 300 Hz   Spitzen: 137 206 351
+Instrument: 141.1 / 213.9 / 274.7 / 372.1 / 389.1 / 450.1
+wie gemessen: 139.4 / 203.6 / 274.7 / 351.8 / 389.1 / 450.1
+Lagen wie gemessen gegen 139 / 203 / 280 / 362 / 385: +0.3 % / +0.3 % / -1.9 % / -2.8 % / +1.1 %

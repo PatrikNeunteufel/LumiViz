@@ -2,7 +2,7 @@
 
 > **Sitzung:** S207 (2026-11-19, Fable 5.2). Auftrag: Handover S206 Punkt (1) — Harfe größter Sprung 14,5 LU (78 / 80)
 > und mittlerer 3,3 LU, Gitarre größter Sprung 12,7 LU (68 / 71), alle über KQ34 a (12 / 3 LU).
-> **Version:** 1.5.0 (S208: §10 Harfe am Übergang Metall / Darm, §11 Bericht zu Auftrag 35 der Werkbank)
+> **Version:** 1.6.0 (S208: §10 Harfe am Übergang Metall / Darm, §11 Bericht zu Auftrag 35 der Werkbank; S209: §12 der Bauplan der Oud neu — hier sind Bauplan, Körper und Test der Oud geändert)
 > **Proben:** `proben/2026-11-19_S207_*` (Kopf jedes Skripts sagt, was es rechnet; Ausgaben daneben). Messungen: g34
 > des Archivs Mores (`E:\samples\Klasse 2 - Gezupfte Saite\Mores_2021_Zenodo4604577\qualified_selected_impulses.mat`),
 > TU Berlin (`…\TU_Berlin_Weinzierl_DepositOnce19858\`, nur die ff-Aufnahmen, CC BY-NC-SA 4.0 — im Repo liegen nur
@@ -332,3 +332,78 @@ Değirmenli sind türkisch (kleiner, Stimmung nicht genannt). Nach dem Wortlaut 
 Suche kann beginnen. **KQ41 a (Patrik S208):** Ziel 2 von KQ38 a gilt im Band 1,5–2,0 (Değirmenli 2017 1,7, Değirmenli 2023 1,5–1,6,
 Abdallah am Antwortpunkt 3 2,0); Formen und Güten aus Değirmenli 2023 Abb. 1 prüft die Suche nur als Bericht. Für eine Zahl zum Pegel des Basschors an einer echten Oud bliebe die Dissertation Değirmenli 2018
 (Ladeliste im Bericht, Handle 20.500.12812/581867), von einem anderen Netz aus vielleicht erreichbar.
+
+## 12 S209: der Bauplan der Oud neu gesucht (KQ38 a, KQ41 a → KQ42 a–KQ45 a)
+
+Suchgerüst und alle Ausgaben: `proben/2026-11-19_S209_oud_suche/` (`oud_suche.py` rechnet eine Fassung mit
+`InstrumentBodyTool` und misst die Ziele; Basis ist der Bauplan vor S209, `oud_ausgang_s196.lvinstbodyplan`).
+Ziele nach KQ38 a / KQ41 a: Z1 Lagen auf 3 %, Z2 am Antwortpunkt 3 die Spitze um 203 Hz die stärkste unter 400 Hz,
+Z3 Hauptspitze der Abstrahlung beim 1,5- bis 2,0-Fachen der Luftmode.
+
+**Ausgang.** Der Bauplan aus S196 hält Z1 in der alten Lesart (−0,5 / +3,0 / −1,4 / +0,2 % gegen 101 / 203 / 280 /
+362 Hz), Z2 −16,9 dB, Z3 2,72; die strahlende Mode bewegt den Steg nur mit 0,28 ihres Bauchs.
+
+**Einzelne Stellgrößen** (`abtasten1.txt`, `kombi1.txt`, `steg_raster.tsv`): Deckendicke, Halt am Rand, Balkenhöhen,
+Hohlraum, Mündung und die Lage der Stegpunkte erfüllen Z2 und Z3 nicht, auch nicht paarweise.
+
+**Die Messung neu gelesen** (Abdallah 2026 S. 6–8 am Seitenbild; `oud_abb6_taeler.py`, `oud_balkenenden.py`): Spitzen
+101 / 139 / 197·203·210 / 280 / 362 / 385 Hz mit Höhen 0,18 / 0,51 / 1,00 / 0,43 / 0,37; zwischen 101 und 139 Hz kein
+Tal (kleinster Wert 0,87 der Spitze bei 101 Hz), zwischen 139 und 203 Hz 0,42–0,49, bei 251 Hz 0,12. Der Aufnehmer
+(5,8 g) sitzt fest am Antwortpunkt 3, der Hammer wandert über ein 5-cm-Raster. Abb. 3 zeichnet einen Steg von rund
+17 cm, Abb. 4 und 5 a Rosetten in allen drei Löchern; die Balkenlängen aus Tab. 2 enden 10–16,5 mm vor dem aus Abb. 3
+gelesenen Umriss. Die FE-Rechnung der Quelle hat einen Steg.
+
+**Zwei Familien** (`raster_b.tsv`, `fein_R.txt`, `fein_F.txt`):
+
+| | Familie F: Balken wie gezeichnet, Steg 14–25 g | Familie R: Balkenenden 2 mm vor dem Rand, Steg |
+|---|---|---|
+| Moden | 98 / 151 / 203 / 247 / 265 / 353 Hz | 141 / 216 / 302 / 347 Hz |
+| Bauch der strahlenden Mode | im Lochfeld, Steg 0,10 | am Steg, 0,72–0,79 |
+| Z2 (Raster) | −14,4 dB | −5 dB |
+
+**KQ42 a:** Lesart 139 Hz = Luft, 203 Hz = Decke, Familie R; 101 Hz bleibt ohne Gegenstück. In R muss der Abstand der
+Balkenenden bei 2 mm bleiben (3 mm: 128 / 197 Hz). Hebel (`r_hebel.tsv`): die Balken 6 und 7 wirken nicht, Balken 3 und
+4 / 5 stellen nur die Mode um 303 Hz, Balken 1, Steg und Dicke die gegengleiche Mode.
+
+**KQ43 a — der Aufnehmer** (`aufnehmer_stoerung.txt`, `gegenprobe.txt`): als Massenänderung im Modenraum (genau;
+die Störungsrechnung erster Ordnung stimmt auf rund 1 %). Eine 1-cm-Leiste im Bauplan gibt −13 % statt −5,5 % und
+taugt nicht. **KQ44 a — die Rosetten** (`rosette_stoerung.txt`, `rosette_leiste.txt`): Masse am Lochrand, als weicher
+Ring im Bauplan; trifft die genaue Rechnung auf rund 1 % und ist über drei Netze stabil.
+
+**Feinsuche** (`fein4.txt` … `fein6.txt`; Nelder–Mead, Netz für 2,5 kHz, Moden bis 1 kHz, die ersten fünf Moden mit
+Aufnehmer gegen die fünf Spitzen). Mit freiem Hohlraum läuft die Suche an den Rand (Volumen und Mündung gleichen sich
+aus), deshalb der Hohlraum fest bei 20,61 l. Ergebnis `fein6`: Decke 2,233 mm, Steg 17 cm × 25,8 × 8,6 mm, Mündung
+1,522, Rosette groß 11,45 g. **Am Netz für 5 kHz, mit dem der Körper gerechnet wird, liegt die gegengleiche Mode bei
+372,5 statt 378,3 Hz** (Netz für 10 kHz: 372,1 Hz, `netz10000.txt`) — die Suche zeigte dort −0,9 %, der Körper hat −3,0 %.
+
+**Gebaut (KQ45 a)** — `make_oud.py`, Körper mit `InstrumentBodyTool oud.lvinstbodyplan --to 5000` (194 Moden, 84 s):
+
+| Zielgröße | Bauplan vor S209 | neu |
+|---|---|---|
+| Moden des Instruments | 99,9 / 168,6 / 207,8 / 269,4 Hz | 141,1 / 214,1 / 274,7 / 372,5 / 389,2 Hz |
+| mit Aufnehmer gegen 139 / 203 / 280 / 362 / 385 Hz | — | 139,4 / 203,4 / 274,7 / 351,2 / 389,1 Hz: +0,3 / +0,2 / −1,9 / −3,0 / +1,1 % |
+| Steg in Luft- und Deckenmode (rel. zum Bauch) | 0,28 in der strahlenden Mode | 0,73 / 0,79 |
+| Z3 (1 m, Terzmittel; im Test am Hörort `front` ungeglättet 1,51) | 2,72 | 1,50 (137 → 206 Hz) |
+| Basschor T2 / T3 unter dem Maximum unter 300 Hz | −32,8 / −11,6 dB | −9,4 / −0,3 dB |
+| Z2, Rastermittel mit Aufnehmer (`z2_gemessen.txt`) | −16,9 dB (ohne Aufnehmer) | **−4,4 dB — verfehlt** |
+| KQ36 a: Spanne / größter / mittlerer Sprung (`proben/2026-11-19_S209_kq36_oud*`) | 18,8 / 14,7 / 1,8 LU | **19,8 / 14,3 / 2,9 LU — verfehlt** |
+| KQ36 a ab Taste 41 | 11,4 / 10,3 / 1,6 LU | 16,6 / 13,5 / 2,7 LU |
+
+**Bekannte Abweichungen, mit dem, was über die Ursache bekannt ist.**
+
+- *Z2.* Am Antwortpunkt 3 ist die gegengleiche Mode im Modell 1,65-mal so hoch wie die Spitze um 203 Hz, gemessen
+  0,37 (rund 13 dB zu stark); nur über die Mittellinie angeregt hält Z2 mit +10,9 dB. Die Luftmode steht bei 0,26
+  gegen 0,51. Das Tal zwischen 139 und 203 Hz ist im Modell 0,02, in Abb. 6 0,42–0,49 — mit der Dämpfung aus den
+  Halbwertsbreiten derselben Kurve ist das keine Summe zweier Moden; wie Abb. 6 gemittelt ist, ist nicht bekannt.
+  Höhen aus Abb. 6 sind deshalb keine Ziele geworden (KQ45, Option b verworfen).
+- *KQ36 a.* Bessere Lagen geben keine bessere Lautheit (`kq36_reihe.txt`): Steg 14 g ohne Rosetten 16,7 / 10,7 LU,
+  mit Rosetten 18,7 / 12,8; Steg 25 g ohne 17,7 / 12,5, mit 19,9 / 14,3. Die Spanne entsteht in jeder Fassung zwischen
+  den Tasten 39–42 (−28 bis −35 LUFS) und Taste 57 (rund −15 LUFS): die Grundtöne dort liegen bei 78–92 Hz, weit unter
+  der Luftmode, die nach KQ42 a bei 139 Hz sitzt und nicht mehr bei 100 Hz. Ob eine echte Oud dort so viel leiser ist,
+  ist nicht belegt (§11: Pegel je Chor nicht gefunden) — KQ37 a bleibt. Was fehlt, ist die Mode bei 101 Hz (gemessen
+  0,18 am Antwortpunkt), die Hals oder Schale trägt und die das Modell mit starrer Schale nicht hat.
+
+**Test.** „Luftraum die mitgelieferte Oud (KQ10 a, KQ42 a bis KQ45 a)“ hält Bauplan (Balkenenden, Steg, Rosetten,
+Mündung), die fünf Lagen des Instruments auf 1 %, Luft- und Deckenmode mit gleichsinnig bewegtem Steg, die
+gegengleiche Mode und Z3. Z2 und KQ36 a trägt die Körperdatei nicht (kein Antwortpunkt, keine Saite) — sie stehen
+hier. `*Loop Koerper*` ohne `*KQ18 Drehfeder*,*KQ20*` 75 / 75 unter Release-clang und Testing-MSVC.
