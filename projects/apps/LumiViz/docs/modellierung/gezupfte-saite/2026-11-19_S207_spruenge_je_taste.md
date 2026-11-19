@@ -2,7 +2,7 @@
 
 > **Sitzung:** S207 (2026-11-19, Fable 5.2). Auftrag: Handover S206 Punkt (1) — Harfe größter Sprung 14,5 LU (78 / 80)
 > und mittlerer 3,3 LU, Gitarre größter Sprung 12,7 LU (68 / 71), alle über KQ34 a (12 / 3 LU).
-> **Version:** 1.4.0 (S208: §10 Harfe am Übergang Metall / Darm)
+> **Version:** 1.5.0 (S208: §10 Harfe am Übergang Metall / Darm, §11 Bericht zu Auftrag 35 der Werkbank)
 > **Proben:** `proben/2026-11-19_S207_*` (Kopf jedes Skripts sagt, was es rechnet; Ausgaben daneben). Messungen: g34
 > des Archivs Mores (`E:\samples\Klasse 2 - Gezupfte Saite\Mores_2021_Zenodo4604577\qualified_selected_impulses.mat`),
 > TU Berlin (`…\TU_Berlin_Weinzierl_DepositOnce19858\`, nur die ff-Aufnahmen, CC BY-NC-SA 4.0 — im Repo liegen nur
@@ -220,7 +220,7 @@ arabischen Oud mit Zuordnung der Moden, Zupf des Basschors, Zug je Saite).
 - Oud: Spanne 18,8 LU und größter Sprung 14,7 LU (40 / 44). **KQ38 a (Patrik S207):** den Bauplan neu suchen, mit
   zwei weiteren Zielen (am Antwortpunkt 3 die Spitze um 203 Hz die stärkste unter 400 Hz; Hauptspitze der
   Abstrahlung beim 1,7- bis 2,0-Fachen der Luftmode), über Deckendicke (auch als Verlauf), Balkenenden, Stegleiste,
-  Hohlraum und Rand — nach dem Gegenlesen des Berichts zu Auftrag 35 der Werkbank.
+  Hohlraum und Rand — der Bericht zu Auftrag 35 ist in S208 gegengelesen (§11), Ziel 2 nach KQ41 a im Band 1,5–2,0.
 
 ## 10 S208: die Harfe am Übergang Metall / Darm (43 / 47)
 
@@ -283,3 +283,52 @@ die Kopplung der Helmholtz-Luft mit der ersten Bodenmode bestimmen), der Halt am
 die Last aller 46 Saiten als Steife an den Ösen — keiner gerechnet.
 
 **KQ39 a (Patrik S208):** KQ34 a misst die Harfe mit Mitschwingen nach GZ8 a am Prüfkörper mit 16 Hörorten (`…_harfe_mitschwingen_16.py`). **KQ40 a (Patrik S208):** der Harfenkörper bekommt die Lage von S(1,1)− und S(1,1)+ (Bell in der Harfe ohne Saiten 170 / 216 Hz, 7 %) und die Abstrahlung an den Saiten 33–22 gegen Bell Abb. 7.23 (6 dB, Bezug Saite 26) als Ziele; die Ursache wird im Bauplan gesucht (Luftraum, Halt am Rand, Last der Saiten), mit Fable; danach Körper neu, KQ31-2 a und KQ34 a neu.
+
+
+## 11 S208: der Bericht zu Auftrag 35 (Oud) gegen KQ37 a und KQ38 a
+
+Abgelegt unter `recherche/2026-11-19_S208_oud_basschor_werkbank.md`, der Kopf sagt, was gegengelesen ist (Değirmenli
+2023 S. 527–531 am Seitenbild, Abb. 3 in 300 dpi, D'Addario im HTML). PDFs unter `…\cmake\quellen\gezupfte-saite\`.
+
+**Pegel je Chor: nicht gefunden.** Die einzige bekannte Messreihe (leere Saiten von zehn Ouds, mechanisch gezupft,
+Mikrofon in 30 cm) steht in der Dissertation Değirmenli 2018, die der Lauf nicht erreicht hat (YÖK Açık Bilim nicht
+auflösbar); die Arbeit von 2023 wertet sie nur als Hörversuch aus. **KQ37 a bleibt** — seine Kippbedingung (der tiefe
+Chor echter Ouds fällt um 10 LU oder mehr ab) ist nicht belegt, und die Abstrahlkurven unten sprechen dagegen.
+
+**Zug:** D'Addario EJ95A (arabisch, CFADGC, einzelnes C2): C2 8,0 lbs = 35,6 N gegen den F2-Chor 2 × 6,3 lbs = 56,0 N,
+also −3,9 dB Kraft bei gleichem Winkel — die erste Ursache aus §8 (Modell 4–5 dB) der Größe nach bestätigt. Mensur
+nennt die Seite nicht.
+
+**Abstrahlung** (Değirmenli 2023 Abb. 3, drei türkische Ouds, Schalldruck je Kraft nach Hammerschlag am Steg, über 36
+Richtungen gemittelt, Abstand und Bezug ungenannt, ungeglättet; in 300 dpi nachgelesen): an den zwei lauten Ouds (Ud 2,
+Ud 6) liegt die erste Spitze bei 125–140 Hz (rund 92 dB), ein Tal bei 140–160 Hz (Ud 6 bis 57 dB bei 155 Hz), das
+Maximum breit bei 170–225 Hz (96–103 dB). Der zweite und dritte Teilton des Basschors liegen dort 0 … −8 dB unter dem
+Maximum unter 300 Hz, **im Modell −27 / −18 dB** unter der Spitze 262–277 Hz. Verhältnis der zwei stärksten Spitzen
+unter 300 Hz: Değirmenli 2023 rund 1,5–1,6 (130–135 → 200–205 Hz), Değirmenli 2017 1,7 (123 → 205 Hz), Modell 2,7
+(96 → 257 Hz in 1 m). Die leise Oud (Ud 7) ist flacher (120–250 Hz 73–82 dB).
+
+**Moden einer fertigen, besaiteten Oud** (Değirmenli 2023 Abb. 1, Ud 2, Saiten gestimmt und gedämpft; „Sönüm %“ als
+Dämpfungsgrad gelesen, Q = 1/(2ζ), die Quelle definiert es nicht) gegen den Körper `oud.lvinstbody` (Q = 1/η; Formen
+aus §8):
+
+| gemessen | Form am Bild | Modell | Form |
+|---|---|---|---|
+| 72,7 Hz, Q 15 | großflächig, mit dem Hals | — | Schale und Hals starr gerechnet |
+| 117,7 Hz, Q 25 | ein Bauch im unteren Feld | 99,9 Hz, Q 26 | Luftmode, gleichsinnig, Bauch im Stegfeld |
+| 177,8 Hz, Q 64 | Bauch um die Rosette, Knotenlinie quer darunter | 168,6 Hz, Q 32 | Stegfeld gegen das Feld am großen Loch |
+| 206,0 Hz, Q 15 | ein Bauch im unteren Feld, Lage wie 117,7 Hz | 207,8 Hz, Q 35 | gleichsinnig, Bauch zwischen den kleinen Löchern |
+| 260,8 Hz, Q 45 | zwei Bäuche übereinander | 269,4 Hz, Q 42 | Steg- und Lochfeld gleichsinnig, Mitte dagegen |
+
+Lesart: die Folge der Formen stimmt (zwei einbäuchige Moden, dazwischen eine mit querer Knotenlinie, die schmal ist
+und kaum abstrahlt — gemessen Q 64, im Modell strahlt 168,6 Hz kaum). Das Verhältnis der beiden einbäuchigen Moden ist
+gemessen 1,75 (Abdallah am Antwortpunkt 3: 203 / 101 = 2,0), im Modell 2,08. Die Mode um 206 Hz ist gemessen breit
+(Q 15), im Modell schmal (Q 35) — das hinge an der Lesart von „Sönüm“. **Die Lage der Bäuche gegen den Steg ist am Bild
+nicht bezifferbar** (Steg nicht eingezeichnet, kein Maßstab); den Verdacht aus §8 (die Mode 207,8 Hz hat am Steg nur
+28 %) bestätigt das Bild weder, noch widerlegt es ihn — ihn prüft weiter nur Ziel 1 von KQ38 a (Abdallah,
+Antwortpunkt 3).
+
+**Für KQ38 a:** Formen oder eine Stegadmittanz einer **arabischen** Oud bringt der Bericht nicht; die Ouds bei
+Değirmenli sind türkisch (kleiner, Stimmung nicht genannt). Nach dem Wortlaut von KQ38 a kommt damit kein Ziel dazu, die
+Suche kann beginnen. **KQ41 a (Patrik S208):** Ziel 2 von KQ38 a gilt im Band 1,5–2,0 (Değirmenli 2017 1,7, Değirmenli 2023 1,5–1,6,
+Abdallah am Antwortpunkt 3 2,0); Formen und Güten aus Değirmenli 2023 Abb. 1 prüft die Suche nur als Bericht. Für eine Zahl zum Pegel des Basschors an einer echten Oud bliebe die Dissertation Değirmenli 2018
+(Ladeliste im Bericht, Handle 20.500.12812/581867), von einem anderen Netz aus vielleicht erreichbar.

@@ -1,0 +1,25 @@
+Fırat Üniv. Müh. Bil. Dergisi 30 (1), 329-343, 2018
+
+Science and Eng. J of Fırat Univ. 30 (1), 329-343, 2018
+
+Adli Bilişim Açısından Ses İncelemeleri
+
+Yunus KORKMAZ1, Aytuğ BOYACI2
+1,2Fırat Üniversitesi Teknoloji Fakültesi Adli Bilişim Mühendisliği Bölümü, Elazığ, Türkiye 1ykorkmaz@firat.edu.tr, 2aytugboyaci@firat.edu.tr
+(Geliş/Received: 16.11.2017; Kabul/Accepted: 23.02.2018)
+
+Özet
+Geçmişte fiziksel araçlar ve yollarla işlenen suçlar dijitalleşmenin artmasıyla giderek yerini elektronik araçlarla işlenen suçlara bırakmaktadır. Elektronik araçlarla işlenen bu suçlar arkasında, bilgisayarlar, taşınabilir cihazlar, ağ cihazları ve depolama aygıtları gibi elektronik deliller bırakmaktadır. Ses delillerinin incelenmesi ya da ses adli bilişimi (audio forensic), elektronik delilleri ve içlerinde bulunan verileri kullanarak suçların aydınlatılmasına katkıda bulunan Adli Bilişim disiplininin bir alt dalı olarak bilinmektedir. Ses adli bilişimi için halihazırda kullanılabilecek birçok ses analiz yazılımı mevcuttur. Sayısal ses işleme teknikleri tabanlı yöntemleri kullanan bu yazılımların, ses kayıtlarında kurgu/montaj tespiti (kayıt bütünlüğünün doğrulanması), spektrum analizi, bozuk kayıtların anlaşılabilirliğinin arttırılması (kayıt iyileştirme), konuşmacı profili (yaş, cinsiyet vs.) belirleme, ortam gürültüleriyle maskelenmiş ses analizi, adli takiplerde gerçek zamanlı ses analizi ve konuşmacının etnik yapısı ile ilgili olan dil ve aksan öğelerini belirleme gibi ses adli bilişimi işlemlerini otomatik olarak gerçekleştirebilmesi beklenmektedir. Bu makalede, konuşma üretimi ve ses bilimi, ses incelemede kullanılan temel konuşma işleme teknikleri, adli bilişim açıdan ses incelemeleri ve bu incelemelerde kullanılan yazılımların teknik ve performans kriterleri göz önünde bulundurularak karşılaştırılması yapılmıştır.
+Anahtar Kelimeler: Adli Bilişim; Ses İnceleme; Konuşma İşleme; Ses Analiz Araçları; Ses Adli Bilişimi.
+
+Audio Analysis in Terms of Digital Forensics
+Abstract
+Day by day, the crimes committed by physical means in the past give way to the crimes committed by electronic means with the increase of digitization. These crimes committed by electronic devices leave electronic evidences such as computers, mobile devices, network tools, storage devices behind. The job of examining audio evidences, mostly called as “audio forensic”, is a sub-branch of digital forensic area which contributes clarification of crimes by using electronic devices and data included in these devices. There are already plenty of audio analysis tools that can be used for audio forensic. These tools, which basically use DSP-based methods, are expected to automatically implement audio forensic tasks such as verification of audio integrity (editing and montage detection), spectrum analysis, speech enhancement (increasing the intelligibility of distorted records), speaker profile (age, sex, etc.) identification, analysis of audio masked by ambient noise, real-time audio analysis in judicial tracking and identification of ethnic items like language and accent. In this article, speech production and phonetics, fundamental digital speech processing methods used for audio analysis, audio examinations in terms of digital forensics and technical and performance comparisons of audio analysis tools used in these examinations are covered in detail.
+Keywords: Digital Forensics; Audio Examination; Digital Speech Processing; Audio Analysis Tools; Audio Forensics.
+
+1. Giriş
+Dijital çağ olarak adlandırılan günümüzde yaşamı kolaylaştıran teknolojilerin kullanımı giderek yaygınlaşmaktadır. Hızla gelişen teknoloji sayesinde her yeni gün hayatımıza farklı cihazlar entegre olmaktadır. Geçmişte fiziksel temas yoluyla işlenen suçlar günümüzde teknolojinin bu denli hızlı gelişimi sayesinde üretilen cihazlar yoluyla dijital olarak işlenmeye
+
+başlanmıştır. Dijital yollarla işlenen suçlarda kullanılan cihazlar ve bu cihazlar içerisinde bulunan verilere “dijital delil” adı verilmektedir. Adli bilişim (digital forensics), teknoloji ile hayatımıza giren dijital cihazlarla işlenen suçların dijital deliller kullanılarak aydınlatılması disiplinidir. Adli bilişim, incelenen cihazın türüne göre kendi içerisinde bilgisayar, mobil cihaz, ağ (network), veritabanı, RAM (Random Access Memory), görüntü ve ses adli bilişimi
+
+

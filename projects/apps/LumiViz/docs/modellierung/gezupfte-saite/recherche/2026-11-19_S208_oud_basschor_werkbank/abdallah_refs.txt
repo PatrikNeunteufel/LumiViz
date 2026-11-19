@@ -1,0 +1,169 @@
+89 Page 26 of 28  https://doi.org/10.1007/s11012-026-02151-1
+
+mechanism rather than a favorable choice of thresholds. This robustness indicates that the proposed evaluation
+framework captures intrinsic physical advantages rather than artifacts of parameter tuning.
+
+   This investigation evaluates structural­acoustic indicators and excludes psychoacoustic listening tests. There-
+fore, the conclusions address physical performance metrics rather than subjective preference. Integrating player-
+based evaluation is an important next step.
+
+Author contributions Conceptualization: S. Sassi formulated the research idea, defined the scientific objectives, and estab-
+lished the overall methodological framework. Methodology: S. Sassi and M. Roshun designed the experimental and analytical
+procedures, including the vibration measurement strategy and modal assessment approach. Finite Elements: Model drawing
+on SW and Analysis on ANSYS were conducted by M. Al-Awad and A. Sassi. Experimental Investigation: Data acquisi-
+tion, experimental setup preparation, and testing were carried out by E. Dreik, with primary supervision by S. Sassi and M.
+Roshun. Data Curation and Formal Analysis: Data interpretation, and mechanical­acoustical analysis were performed by
+M. Al-Awad and A. Sassi, with support from the co-authors in validation and cross-checking. Writing ­ Original Draft: The
+first draft of the manuscript was prepared by S. Sassi. Writing ­ Review & Editing: All authors contributed to manuscript
+revision, technical refinement, and improvement of scientific clarity. Supervision: S. Sassi and M. Roshun supervised the
+research activities and guided the scientific direction of the study. Project Administration: Coordination of tasks and timeline
+management were handled by S. Sassi and M. Roshun. All authors reviewed and approved the final version of the manuscript.
+Funding Open Access funding provided by the Qatar National Library.
+Data availability No datasets were generated or analysed during the current study.
+
+Declarations
+
+Conflict of interest The authors declare no competing interests.
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use,
+sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the
+original author(s) and the source, provide a link to the Creative Commons licence, and indicate if changes were made. The
+images or other third party material in this article are included in the article's Creative Commons licence, unless indicated
+otherwise in a credit line to the material. If material is not included in the article's Creative Commons licence and your
+intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly
+from the copyright holder. To view a copy of this licence, visit http://creativecommons.org/licenses/by/4.0/.
+
+References
+
+1. Lozano, E. Understanding acoustic guitar bracing systems. Available at https://guitarspace.org/acoustic-guitars/acous
+     tic-guitar-bracing-systems (last viewed 31 August 2025).
+
+2. Dumond, P. and N. Baddour 2012 "Effects of a scalloped and rectangular brace on the modeshapes of a brace-plate
+     system." Int. J. Mech. Eng. Mechatron. 1(2), 1­8 https://doi.org/10.11159/ijmem.2012.001
+
+3. Mihlcic M, Stanciu MD, Vlase S (2020) Frequency response evaluation of guitar bodies with different bracing systems.
+     Symmetry 12(5):795. https://doi.org/10.3390/sym12050795
+
+4. Skrodzka E, Lapa A, Linde BBJ, Rosenfeld E (2011) Modal parameters of two incomplete and complete guitars differing
+     in the bracing pattern of the soundboard. J Acoust Soc Am 130(4):2186­2194. https://doi.org/10.1121/1.3626194
+
+5. VandeStadt, A. Acoustic bracing types explained. Available at https://www.sweetwater.com/insync/acoustic-bracing-
+     types-explained/ (last viewed 31 August 2025).
+
+6. Giro, Y., et al. "Predicting the effects of bracing pattern modifications on acoustic guitar soundboards," in Forum Acus-
+     ticum (2023). https://doi.org/10.61782/fa.2023.0627
+
+7. Shellhammer, H.M., Suspended Bracing System for Acoustic Musical Instruments (Google Patents, 2008). https://paten
+     ts.google.com/patent/WO2008019174A2/en
+
+8. Dickinson, M., Acoustic guitar bracing science. Available at https://portlandguitar.com/blogs/features/acoustic-guitar-
+     bracing-science (last viewed 31 August 2025).
+
+9. Inside-guitar.com. How bracing affects sound. Available at https://i nside-g uitar.c om/i nside-t he-g uitar-h ow-b racin g-a ffec
+     ts-sound/ (last viewed 31 August 2025).
+
+10. Papadakis NM, Nikolidakis N, Stavroulakis GE (2023) FEM investigation of the air resonance in a cretan lyra. Vibration
+     6(4):945­959. https://doi.org/10.3390/vibration6040056
+                                                                                                                          Meccanica (2026) 61:89
+https://doi.org/10.1007/s11012-026-02151-1  Page 27 of 28 89
+
+11. Stanciu MD, Curtu I, Mocanu T (2014) Mechanical behavior of guitar neck under simple bending stress analyzed with
+     finite elements method. Appl Mech Mater 658:225­230
+
+12. Kaselouris E et al (2023) FEM-BEM vibroacoustic simulations of motion driven cymbal­drumstick interactions. Acous-
+     tics 31(9­10):1733­1747. https://doi.org/10.1177/10775463241249577
+
+13. Ray T, Kaljun J, Dolsak B (2021) Numerical model application to predict the sound quality of an instrument. Int J Simul
+     Model 20(4):696­706. https://doi.org/10.2507/IJSIMM20-4-580
+
+14. Bécache E, Chaigne A, Derveaux G, Patrick JP (2005) Numerical simulation of a guitar. Comp Struct 83(2­3):107­126.
+     https://doi.org/10.1016/j.compstruc.2004.04.018
+
+15. Derveaux G, Chaigne A, Joly P, Bécache E (2003) Time-domain simulation of a guitar: Model and method. J Acoust
+     Soc Am 114(6):3368­3383. https://doi.org/10.1121/1.1629302
+
+16. Viala R, Pérez MA, Placet V, Manjón A, Foltête E, Cogan S (2021) Towards model-based approaches for musical instru-
+     ments making: validation of the model of a Spanish guitar soundboard and characterization features proposal. Appl
+     Acoust 172:107591. https://doi.org/10.1016/j.apacoust.2020.107591
+
+17. Viala R, Placet V, Cogan S (2021) Model-based evidence of the dominance of the guitar brace design over material and
+     climatic variability for dynamic behaviors. Appl Acoust 182:108275. https://doi.org/10.1016/j.apacoust.2021.108275
+
+18. Kaselouris E, Bakarezos M, Tatarakis M, Papadogiannis NA, Dimitriou V (2022) A review of finite element studies in
+     string musical instruments. Acoustics 4(1):183­202. https://doi.org/10.3390/acoustics4010012
+
+19. Lee MK, Hosseini Fouladi M, Namasivayam SN (2016) Mathematical modelling and acoustical analysis of classical
+     guitars and their soundboards. Adv. Acoust. Vib. 2016(1):6084230. https://doi.org/10.1155/2016/1234567
+
+20. Bielski, P., M. Kujawa, and I. Lubowiecka 2019 "Modelling and measurement of folk guitar: Truss rod and strings in
+     numerical analysis of tone." Arch. Acoust., 44(1), 35­49 https://doi.org/10.24425/aoa.2019.126350
+
+21. Torres JA, Boullosa RR (2009) Influence of the bridge on the vibrations of the top plate of a classical guitar. App Acoust
+     70(11­12):1371­1377
+
+22. Werner, B. Bracing styles for classical guitars. Available at https://www.thisisclassicalguitar.com/bracing-styles-for-
+     classical-guitars/ (last viewed 31 August 2025)
+
+23. Acar, T., M. Karaka, and A. Oktav, "Tuning the structural eigenfrequencies of an oud guitar by using different brace
+     patterns on the soundboard," in 4th International New York Conference on Evolving Trends in Interdisciplinary Research
+     & Practices, Manhattan, New York City (May 2­4, 2021). https://www.researchgate.net/publication/351335073
+
+24. Inanli, S. and E. Altinsoy. "Vibroacoustics of oud," in 18th Conference on Digital Audio Effects (DAGA), Munich, Ger-
+     many (September 18­21, 2018). https://api.semanticscholar.org/CorpusID:236323099
+
+25. Degirmenli, E. Soundboard & brace tuning. Available at https://www.emirdegirmenli.com/en/oud-workshop/sound
+     board-brace-tuning/ (last viewed 31 August 2025)
+
+26. School-of-Oud-Online. School of Oud Online. Available at https://schoolofoudonline.com/ (last viewed 16 September
+     2025)
+
+27. Zappas KR (2007) The science of sound: examining the role of materials in musical instruments. JOM 59(8):13. https://
+     doi.org/10.1007/s11837-007-0098-0
+
+28. Torres JA, Torres-Martínez R (2015) Evaluation of guitars and violins made using alternative woods through mobility
+     measurements. Arch Acoust 40(3):351­358. https://doi.org/10.1515/aoa-2015-0038
+
+29. Paiva GO, Ablitzer F, Gautier F, Dos Santos J (2019) Collisions in double string plucked instruments: physical model-
+     ling and sound synthesis of the viola caipira. J Sound Vib 443:178­197. https://doi.org/10.1016/j.jsv.2018.11.012
+
+30. Paiva, G. and J. Dos Santos. "Modal analysis of a Brazilian guitar body" in Proceedings of the ISMA International
+     Symposium on Music Acoustics. 2014
+
+31. Sali, S. and J. Kopac 2000 "Measuring a frequency response of a guitar" in Proceedings of IMAC, Society for Experi-
+     mental Mechanics, San Antonio, Texas, USA. p. 1375­1379. https://doi.org/10.1007/BF02327495
+
+32. Richardson, B., Johnson, H., Joslin, A., and Perry I. "The three-mass model for the classical guitar revisited." Acoustics
+     2012, 23­27 Apr 2012, Nantes, France
+
+33. Richardson BE (1994) The acoustical development of the guitar. Catgut Acoustical Soci J 2(5):1­10
+34. Wright, H., The Acoustics and Psychoacoustics of the Guitar (Cardiff, 1998). PhD thesis. University of Wales. College
+
+     of Cardiff
+35. Perry, I., Sound Radiation Measurements on Guitars and Other Stringed Musical Instruments (Cardiff, 2014). PhD
+
+     thesis. University of Wales. College of Cardiff
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional
+affiliations.
+
+Meccanica (2026) 61:89
+89 Page 28 of 28          https://doi.org/10.1007/s11012-026-02151-1
+
+Authors and Affiliations
+
+Mohamed Abdallah1 · Elias Dreik1 · Amine Sassi2 · Mohammad Paurobally1 · Sadok Sassi1
+
+* Sadok Sassi
+    sadok.sassi@qu.edu.qa
+    Mohamed Abdallah
+    ma2110600@student.qu.edu.qa
+    Elias Dreik
+    ed2401283@student.qu.edu.qa
+    Amine Sassi
+    amine.sadok7@gmail.com
+    Mohammad Paurobally
+    mpaurobally@qu.edu.qa
+
+1 Department. of Mechanical and Industrial Engineering, Qatar University, 2713 Doha, Qatar
+2 Department. of Mechanical Engineering, McMaster University, Hamilton, ON, Canada
+
+                          Meccanica (2026) 61:89
+
