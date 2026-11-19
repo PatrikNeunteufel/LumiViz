@@ -1,0 +1,29 @@
+Hoerort: m1
+Stelle                           | Messung Hz, dB (sieben Ouds), gegen die Hauptspitze | Modell Hz, dB, gegen die Hauptspitze
+unter der Luftmode, 0,65 f_Luft  |   80  53-59   -41.0 |   62.4   70.7   -38.1
+Luftmode (erste Spitze)          |  123  81-87   -13.0 |   96.0   92.5   -16.4
+Tal dahinter                     |  145  70-72   -26.0 |  130.5   76.2   -32.7
+Hauptspitze                      |  205  93-101    +0.0 |  256.5  108.8    +0.0
+Plateau 300-450 Hz               |  375  84-92    -9.0 |  461.7   98.5   -10.3
+
+Modell, Terzglaettung, dB re 20 uPa/N in 1 m (in Klammern ungeglaettet):
+     50 Hz   65.6  ( 65.1)
+     66 Hz   72.2  ( 71.6)
+     82 Hz   80.9  ( 78.8)
+    100 Hz   92.3  ( 98.7)
+    115 Hz   84.6  ( 79.5)
+    131 Hz   76.2  ( 74.5)
+    147 Hz   82.7  ( 79.0)
+    165 Hz   88.0  ( 90.6)
+    185 Hz   94.7  ( 86.6)
+    208 Hz   96.8  (103.9)
+    233 Hz   99.5  ( 92.7)
+    262 Hz  108.8  (108.3)
+    294 Hz  108.1  (100.9)
+    330 Hz  101.7  ( 96.8)
+    370 Hz  101.3  (100.3)
+    415 Hz   96.8  ( 98.1)
+    466 Hz   99.2  ( 95.9)
+    523 Hz   97.9  ( 94.7)
+    700 Hz   95.1  ( 90.9)
+   1000 Hz   98.4  ( 97.9)

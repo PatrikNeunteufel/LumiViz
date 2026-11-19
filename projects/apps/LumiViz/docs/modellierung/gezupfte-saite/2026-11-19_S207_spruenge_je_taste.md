@@ -2,7 +2,7 @@
 
 > **Sitzung:** S207 (2026-11-19, Fable 5.2). Auftrag: Handover S206 Punkt (1) — Harfe größter Sprung 14,5 LU (78 / 80)
 > und mittlerer 3,3 LU, Gitarre größter Sprung 12,7 LU (68 / 71), alle über KQ34 a (12 / 3 LU).
-> **Version:** 1.1.0
+> **Version:** 1.2.0
 > **Proben:** `proben/2026-11-19_S207_*` (Kopf jedes Skripts sagt, was es rechnet; Ausgaben daneben). Messungen: g34
 > des Archivs Mores (`E:\samples\Klasse 2 - Gezupfte Saite\Mores_2021_Zenodo4604577\qualified_selected_impulses.mat`),
 > TU Berlin (`…\TU_Berlin_Weinzierl_DepositOnce19858\`, nur die ff-Aufnahmen, CC BY-NC-SA 4.0 — im Repo liegen nur
@@ -144,10 +144,60 @@ Spanne / größter / mittlerer Sprung in LU:
   Folge): die gezogenen Moden über 5 kHz sind eine andere Ziehung als im mitgelieferten Körper. Am bisherigen Ort
   ändert das die Laute an Chor 8 um bis 2,1 LU (Taste 79), die übrigen Tasten und die Harfe um höchstens 0,4 LU.
 
-## 8 Offen
+## 8 Die Oud am Basschor (KQ37 a)
+
+**Zerlegung** (`…_oud_zerlegung.py`, Tasten 36–48, Mittel der 16 Orte): ohne den Basschor (ab Taste 41) liegt die
+Oud bei 11,4 / 10,3 / 1,6 LU; der Basschor liegt 12,9 LU unter dem Median der übrigen.
+
+- Eine Saite statt zwei: bei gleicher Auslenkung (2 mm je Saite) ist die Kraft am Steg je Teilton 4–5 dB kleiner
+  als an Chor 2.
+- |p/F| in 2 m: 66 Hz −35 dB, 131 Hz −19 dB, 165–196 Hz −10 dB gegen +3 dB bei 208 Hz und +8 dB bei 262–277 Hz —
+  der zweite und dritte Teilton des Basschors liegen im Tal zwischen der Luftmode (99,9 Hz) und den Moden 208 /
+  269 Hz. Taste 43 trifft mit dem Grundton die Luftmode (70 % der Energie), Taste 44 mit dem zweiten Teilton die
+  Mode 208 Hz (72 %), Taste 41 mit dem dritten die Mode 269 Hz (80 %).
+- Die Tasten 38–40 treffen mit dem fünften Teilton die Moden 351 / 362 / 415 Hz, die den Steg stark bewegen
+  (Formwert 7,8 / 3,6 / 9,3) und kaum abstrahlen; mit Körper sind die Tasten 4–9 LU leiser als mit starrem Steg.
+
+**Zupf mit gleicher Kraft** (`…_oud_gleiche_kraft.py`, Pegel je Chor nachträglich verschoben): je Chor
+14,1 / 13,1 (52 / 56) / 1,9 LU, je Saite 20,1 / 16,8 / 2,1 LU — keine der beiden Setzungen hält.
+
+**Gegen die Messung der Abstrahlung** (`…_oud_gegen_degirmenli.py`; Değirmenli 2017, GU J Sci Part C 5(2), Abb. 7,
+S. 29, in S207 am Seitenbild abgelesen auf rund ±10 Hz und ±1,5 dB: sieben türkische Ouds, Schalldruck je Kraft in
+1 m, Hammer am Steg an drei Stellen, Terzglättung). Modell: Prüfkörper mit einem Hörort 1 m vor der Mitte der Decke
+(`…_oud_plan_1m.py`), Mittel über die Stegpunkte der Chöre 1, 4 und 6, Terzglättung:
+
+| Stelle | Messung: Hz, dB re 20 µPa/N, gegen die Hauptspitze | Modell: Hz, dB, gegen die Hauptspitze |
+|---|---|---|
+| unter der Luftmode (0,65 f_Luft) | 80, 53–59, −41 | 62, 70,7, −38 |
+| Luftmode (erste Spitze) | 123, 81–87, −13 | 96, 92,5, −16 |
+| Tal dahinter | 145, 70–72, −26 | 131, 76,2, −33 |
+| Hauptspitze | 205, 93–101, 0 | 257, 108,8, 0 |
+| Plateau | 300–450, 84–92, −9 | 370–560, 98,5, −10 |
+
+Die Form stimmt auf 3–7 dB; das Tal ist gemessen. Zwei Abweichungen: **die Hauptspitze liegt im Modell beim
+2,7-Fachen der Luftmode (257 Hz), an den gemessenen Ouds beim 1,7-Fachen (205 Hz)**, und das Modell liegt absolut
+8–12 dB höher (bis 6 dB davon trägt die Schallwand der Rechnung; andere Instrumente).
+
+**Gegen die Quelle des Bauplans** (Abdallah u. a. 2026, Abb. 6 S. 8 und Tab. 3 S. 10, am Seitenbild): die gemessene
+Antwort hat Spitzen bei rund 100 / 139 / 197–210 / 280 / 360 Hz mit 1,2 / 3,3 / 6,5 / 2,8 / 2,4 m/s² je N — die
+stärkste bei 204 Hz; Tab. 3 nennt als erste gemessene Mode 142 Hz mit einem Bauch in der Mitte der Decke. Im Modell
+ist am Steg (Chor 1, Formwert² · Q) die Mode 207,8 Hz die schwächste unter 420 Hz (40 gegen 185 / 664 / 1877 /
+3005 bei 99,9 / 168,6 / 269,4 / 351,3 Hz), sie trägt aber das größte Abstrahlgewicht (0,143 an `front`); die Mode
+168,6 Hz bewegt den Steg stark und strahlt kaum (0,010). Der Bauplan wurde in S196 an der Lage der Spitzen
+101 / 203 / 280 / 362 Hz ausgerichtet, die Spitze bei 139 Hz blieb ohne Gegenstück — **die Höhen und Formen sind
+nicht verglichen** (Messort und Schlagort von Abb. 6 sind nicht der Stegpunkt; der Vergleich der Höhen ist deshalb
+nur ein Hinweis). Verdacht: die Grundmode der Decke liegt im Modell bei 168,6 statt 139–142 Hz, und die Zuordnung
+der Moden um 200 Hz stimmt nicht; dann fehlt dem Basschor Abstrahlung bei 130–250 Hz.
+
+**KQ37 a (Patrik S207):** die Oud bleibt bekannte Abweichung mit Ursache; Auftrag an die Research-Werkbank
+`2026-11-19_35_oud_basschor_einzeltoene` (Pegel einzelner Töne je Chor, Abstrahlung oder Stegadmittanz einer
+arabischen Oud mit Zuordnung der Moden, Zupf des Basschors, Zug je Saite).
+
+## 9 Offen
 
 - Harfe: größter Sprung 12,8 LU an 43 / 47 (Schwelle 12) — am Registerübergang, mit der Auswahl der Harfensaiten
   (Herleitung §12) und den Güten der besaiteten Moden zu prüfen; das Modell rund 2 LU über der echten Harfe bei
   jeder Zahl von Orten.
-- Oud: Spanne 18,8 LU und größter Sprung 14,7 LU (40 / 44) — der einzelne Basschor in 2 m; Ursache nicht untersucht
-  (Kandidaten: Abstrahlung unter der Luftmode 101 Hz, Saite und Zupf des Basschors).
+- Oud: Spanne 18,8 LU und größter Sprung 14,7 LU (40 / 44). Den Bauplan gegen Abdallah Abb. 6 und Tab. 3 in Höhe
+  und Form prüfen (`InstrumentBodyTool --shapes`; am Messort der Quelle rechnen, nicht am Stegpunkt), dann den
+  Bericht der Werkbank zu Auftrag 35.
