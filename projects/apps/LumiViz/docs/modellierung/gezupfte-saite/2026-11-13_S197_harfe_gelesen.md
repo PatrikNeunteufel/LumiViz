@@ -702,3 +702,67 @@ verschwindet). Ursache offen, zusammen mit der Höhe der Spitzen.
 **Stand:** der Körper der Harfe im Repo ist der neue (Fassung 8, `add`, Güte 8,5). Offen ohne Weg: die Höhe der
 stärksten Bäuche (−3,5 … −9,4 dB), die schwachen Bäuche von S(1,5) / S(1,6) (−6,5 … −16,5 dB), die Sprünge je Taste
 über KQ34 a.
+
+## 17 S209: Suche am Bauplan nach KQ40 a — Kandidat, Saiten als Federn (KQ46 a–KQ48 a)
+
+Suchgerüst und Ausgaben: `proben/2026-11-19_S209_harfe_suche/` (`harfe_suche.py` rechnet eine Fassung mit 16 Hörorten
+in 2,06 m bis 1,2 kHz in 18 s und misst L1 = Lage der zwei Moden mit Luft gegen 170 / 216 Hz, L2 = Lage S(1,2)–S(1,6),
+A = \|p/F\| an der Öse der Saiten 33–22 gegen Bell Abb. 7.23; Basis `harfe_ausgang.lvinstbodyplan`). **Am Repo ist
+nichts geändert** — der Körper der Harfe ist der aus S206.
+
+**Ausgang:** 134,2 / 198,3 Hz (−21 / −8 %), L2 −6,4 / +4,0 / +0,3 / +2,5 / −1,4 %, A 4 / 12 (größte 19,6 dB) — wie S208.
+
+**Einzelne Stellgrößen** (`abtasten1.txt`, `abtasten2.txt`):
+
+| Stellgröße | Moden mit Luft | L2 S(1,2)–S(1,6) | A |
+|---|---|---|---|
+| Bassende eingespannt | 148 / 204 | +0,9 / +10,5 / +5,7 / +7,1 / +2,0 % | 6 / 12 |
+| Deck- und Zugleiste bis an die Bassenkante | wie Ausgang | wie Ausgang | 4 / 12 |
+| Mündung 2,2 / 3,0 | 137 / 209 · 131 / 190 | unverändert | 3 / 12 · 6 / 12 |
+| Hohlraum 23 / 31 l | 136 / 211 · 133 / 188 | unverändert | 2 / 12 · 5 / 12 |
+| Drehfeder am ganzen Seitenrand 300 / 1000 / 3000 N | 138 / 200 · 145 / 202 · 158 / 209 | bis +12 % | 3–6 / 12 |
+| ohne Luft | 146 (Platte allein) | −7,2 / +3,3 / +0,3 / +2,5 / −1,4 % | — |
+| Boden 12 → 2 mm | 145 / 201 | −4,6 / +0,3 / −4,9 / −1,5 / −3,1 % | 5 / 12 |
+| Boden 12 → 3 / 11 → 3 / 13 → 3 mm | 150 / 204 · 143 / 201 · 157 / 208 | bis +12 % | 3–6 / 12 |
+| Drehfeder nur an den unteren 60 cm der Seiten, 10⁴ N | 163 / 219 | −2,3 / +7,1 / +2,8 / +4,4 / +0,7 % | 2 / 12 |
+
+Die Platte ist im Bassteil zu weich und stimmt am Diskant: was nur den Bass versteift (Dicke 12 → 2 mm, Feder am
+Bassteil), hebt S(1,1)−, ohne die höheren Moden zu verschieben.
+
+**Die Saiten als Federn an den Ösen** (`harfe_saiten.py`, `saiten1.txt`; im Modenraum: K = diag(ω²) + Σ k φφᵀ, die
+Formen sind samt Luft massennormiert). k je Saite = c · E·A/L; E Nylon 4, Darm 5,5, Stahlkern 200 GPa (Annahmen),
+Durchmesser und Längen Bell Tab. 2.1 / 2.2; Summe E·A/L: Nylon 1,1 · 10⁵, Darm 4,1 · 10⁵, Metall 1,3 · 10⁶ N/m. Mit
+c = 0,2 am Ausgang: 134,2 → 146,1 Hz (+9 %), S(1,2) 233 → 243 (+4 %), S(1,3) +2,4 %, S(1,4) +1,5 %, S(1,5) +0,9 %.
+Bell beim Besaiten: S(1,1)− 170 → 187 (+10 %), S(1,2) 249 → 257 (+3 %), S(1,3) +5,7 %, S(1,4) −0,5 %, S(1,5) +1,8 %.
+Ein Faktor gibt die zwei tiefsten Verschiebungen wieder. **Das Ziel der Lagen (KQ40 a) gilt ohne Saiten, das der
+Abstrahlung besaitet — ein Körper ohne Saiten kann nicht an beiden liegen.**
+
+**Raster** (`raster1.txt`: Dicke am Bass 12 / 13 / 14 mm bei 2 mm am Diskant × Mündung 1,7 / 2,0 / 2,3 × Bassende
+gestützt / eingespannt, je ohne und mit Saiten c = 0,2). **Kandidat: Boden 12 → 2 mm, Mündung 2,0, Bassende
+eingespannt.**
+
+| Zielgröße | Bauplan heute | Kandidat | Kandidat mit Saiten |
+|---|---|---|---|
+| Moden mit Luft gegen 170 / 216 Hz (7 %) | 134 / 198 (−21 / −8 %) | 164 / 222 (−4 / +3 %) | 171 / 225 |
+| S(1,2)–S(1,6) (7 %) | −6,4 / +4,0 / +0,3 / +2,5 / −1,4 % | +1,7 / +5,9 / +0,3 / +3,2 / +0,7 % | +5,1 / +8,5 / +1,8 / +4,1 / +1,1 % (gegen Bell ohne Saiten) |
+| KQ31-2 a (bis 1,2 kHz gerechnet) | 2 Lagen der Bäuche, 6 Höhen außerhalb | 4 Höhen außerhalb (S(1,5): −9,8 / −11,5; S(1,6): −13,4 / −13,2 dB) | nicht gemessen |
+| stärkster Bauch S(1,2)–S(1,6) gegen Bell | −3,5 / −8,3 / −9,4 / −6,7 / −8,6 dB | −2,4 / −6,1 / −7,4 / −5,1 / −9,6 dB | — |
+| A Saiten 33–22 (6 dB) | 4 / 12, größte 19,6 dB | 6 / 12, größte 16,3 dB | 6 / 12, größte 13,8 dB |
+| Lautheit 38–104, 16 Hörorte, ohne Mitschwingen (`lautheit1.txt`; ≤ 22 / 12 / 3 LU) | 20,0 / 12,8 / 3,0 | 16,8 / 13,0 / 2,7 | **17,8 / 10,5 / 2,8** |
+
+Der heutige Bauplan mit Saiten: 19,2 / 14,1 / 2,9 LU. Im Kandidaten ist die Stufe 43 / 47 weg (43 −23,2, 45 −21,4,
+47 −23,6 LUFS).
+
+**A hält in keiner Fassung mehr als 6 von 12.** Der Überschuss bei 155 / 165 Hz und um 233 Hz bleibt 10–15 dB. Bells
+Wert an Saite 26 (207 Hz) liegt an der besaiteten Harfe auf einer Mode (187 / 207 Hz); im Modell liegen die beiden
+Moden mit Luft 50–60 Hz auseinander, 207 Hz fällt zwischen sie. Mit zwei gekoppelten Schwingern gerechnet: der Ausgang
+(Platte 146, Helmholtz 185 → 134 / 198 Hz) hat eine Kopplung κ ≈ 4600 Hz²; Bells Paar ohne Saiten 170 / 216 Hz verlangt
+damit Platte ≈ 174 und Helmholtz ≈ 213 Hz, sein Paar besaitet 187 / 207 Hz verlangt κ ≤ 3900 Hz² — die beiden Paare
+passen nicht zu einer festen Kopplung. Bell nennt für S(1,1)− besaitet keine Güte („unbestimmbar“).
+
+**Entschieden (Patrik S209):** KQ46 a (Federn an Punkten im Bauplan, Fassung 9, der Körper ist die besaitete Harfe),
+KQ47 a (der Kandidat, nach neuer Eichung des Holzes fein gesucht), KQ48 a (A bekannte Abweichung mit Wert).
+
+**Offen vor dem Bau:** die Eichung des Holzes am freien Boden mit 12 → 2 mm (§7.1 eichte mit 10 → 3 mm); die Feinsuche
+am Netz des Körpers gegenprüfen (an der Oud lag eine Mode am feinen Netz 1,5 % tiefer); der Faktor der Saiten am
+neuen Bauplan neu stellen; die Lautheit mit Mitschwingen (KQ39 a).
