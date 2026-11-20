@@ -16,7 +16,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 82.0241186,
+        "seconds": 109.3874983,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 182100,
@@ -5305,7 +5305,7 @@
     "origin": "plan",
     "plan": {
         "file": "oud.lvinstbodyplan",
-        "fingerprint": "2938f2208fdd3655a3353c42db758c2b5e7db2c6106e328e49c572f4b4f33b38"
+        "fingerprint": "eb0ce9d2d60cd5ccffb7676f745d383d36d9c6d70e67e2b4dae86126a889a5b0"
     },
     "statistical": {
         "bandFromHz": 2500,

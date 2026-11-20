@@ -560,7 +560,7 @@ def baue(pdf, bildpfad=None):
     faser = round(rippenwinkel + 90.0, 1)
     plan = {
         "format": "lumiviz-instrument-body-plan",
-        "version": 8,
+        "version": 9,
         "title": "Steinway D (RT-0425)",
         "description": "Soundboard of a Steinway D after Chabassier & Durufle, RT-0425 (2012): outline, plate "
                        "thickness, ribs and bridge read from Fig. 2, bridge points from Appendix A.",
@@ -612,6 +612,7 @@ def baue(pdf, bildpfad=None):
                    "source": "none: a piano soundboard closes no cavity", "openings": []},
         "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "assumed: rim clamped (every plan up to version 5 was computed this way)", "sections": []},
         "barOverlap": "first",
+        "pointSprings": [],
     }
 
     # Pruefung: jeder Stegpunkt auf dem Steg (halbe Breite), Bericht der Zahlen

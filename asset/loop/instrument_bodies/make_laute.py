@@ -106,7 +106,7 @@ def baue(masse):
     mitte = (len(LEERE_SAITEN) - 1) / 2.0
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 8,
+        "version": 9,
         "title": "Lute",
         "description": "Substitute plan of a Renaissance lute soundboard with its air cavity (KQ6 a, KQ11 a, KQ12 a). "
                        "Outline, rose, bridge position and length and the volume of the bowl from the measured drawing "
@@ -149,6 +149,7 @@ def baue(masse):
                    "openings": []},
         "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "assumed: rim clamped (every plan up to version 5 was computed this way)", "sections": []},
         "barOverlap": "first",
+        "pointSprings": [],
     }
 
 

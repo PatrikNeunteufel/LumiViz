@@ -50,7 +50,9 @@ namespace lumi::koerper
 /// Drehfeder. Fassung 6 bleibt lesbar (keine Abschnitte).
 /// 8 (S206, KQ31-1 a): wie Leisten uebereinander zaehlen (`barOverlap`). Fassung 1 bis 7 bleiben lesbar
 /// (nur die erste Leiste zaehlt, wie die Rechnung bis dahin).
-inline constexpr int kBauplanFassung = 8;
+/// 9 (S210, KQ46 a, KQ49 a): Federn an Punkten der Platte (`pointSprings`). Fassung 1 bis 8 bleiben lesbar
+/// (keine Federn).
+inline constexpr int kBauplanFassung = 9;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -342,6 +344,20 @@ enum class LeistenUebereinander : int
     Addieren,
 };
 
+/// Eine Feder an einem Punkt der Platte gegen ihre Auslenkung w (seit Fassung 9; KQ46 a, S210) — etwa die
+/// Laengssteife einer Saite an ihrer Oese (Harfe: der Koerper ist die besaitete Harfe). Die Feder haelt den
+/// Punkt gegen festen Grund; sie hat keine Masse. `verlustfaktor` (KQ49 a): der Anteil der Verformungsenergie
+/// einer Mode, der in der Feder steckt, traegt diesen Verlustfaktor statt den der Platte; 0 = ohne Verlust.
+struct Punktfeder
+{
+    Punkt2 ort;                  ///< m, im Umriss und in keinem Loch
+    double steife = 0.0;         ///< N/m
+    double verlustfaktor = 0.0;  ///< η der Feder; 0 = ohne Verlust
+    std::string quelle;          ///< wie die Werte zustande kamen
+
+    [[nodiscard]] bool operator==(const Punktfeder&) const = default;
+};
+
 struct Bauplan
 {
     std::string titel;
@@ -359,6 +375,7 @@ struct Bauplan
     Rand rand;                          ///< seit Fassung 6; Vorgabe eingespannt
     /// seit Fassung 8; Vorgabe nur die erste (wie bis Fassung 7)
     LeistenUebereinander leistenUebereinander = LeistenUebereinander::NurDieErste;
+    std::vector<Punktfeder> punktfedern;  ///< seit Fassung 9; leer = keine
 
     [[nodiscard]] bool operator==(const Bauplan&) const = default;
 };
@@ -730,6 +747,15 @@ struct Randpunkt
         }
         if (kanten > 0 && std::all_of(belegt.begin(), belegt.end(), [](char b) { return b != 0; }))
             befunde.push_back("rim: the sections must leave a part of the rim held");
+    }
+    for (std::size_t k = 0; k < plan.punktfedern.size(); ++k)
+    {
+        const Punktfeder& f = plan.punktfedern[k];
+        const std::string wer = "point spring " + std::to_string(k + 1) + ": ";
+        if (!(f.steife >= 0.0)) befunde.push_back(wer + "stiffness must not be negative");
+        if (!(f.verlustfaktor >= 0.0)) befunde.push_back(wer + "loss factor must not be negative");
+        if (plan.platte.umriss.size() >= 3 && !innen(plan.platte.umriss, f.ort)) befunde.push_back(wer + "must lie inside the outline");
+        else if (imLoch(plan.platte.loecher, f.ort)) befunde.push_back(wer + "lies in a hole");
     }
     return befunde;
 }

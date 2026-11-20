@@ -766,3 +766,39 @@ KQ47 a (der Kandidat, nach neuer Eichung des Holzes fein gesucht), KQ48 a (A bek
 **Offen vor dem Bau:** die Eichung des Holzes am freien Boden mit 12 → 2 mm (§7.1 eichte mit 10 → 3 mm); die Feinsuche
 am Netz des Körpers gegenprüfen (an der Oud lag eine Mode am feinen Netz 1,5 % tiefer); der Faktor der Saiten am
 neuen Bauplan neu stellen; die Lautheit mit Mitschwingen (KQ39 a).
+
+## 18 S210: Federn an Punkten gebaut (KQ46 a), ihr Verlust (KQ49 a)
+
+**Gebaut:** `.lvinstbodyplan` Fassung 9 mit `pointSprings` (je Feder `x`, `y`, `stiffness` in N/m, `lossFactor`,
+`source`; immer geschrieben). Die Rechnung setzt je Feder k · N Nᵀ auf die Auslenkungen des Elements, in dem der Punkt
+liegt (`setzePunktfedern`, `baueSystem(netz, element, plan)`); `InstrumentBody` 0.25.0. Der Bauplan der Harfe im Repo
+hat noch keine Federn — er bekommt sie mit dem Kandidaten (KQ47 a), nach der Eichung des Holzes.
+
+**Geprüft** (Test „KQ46 Punktfedern“, frei aufliegende Prüfplatte 50 × 40 cm, 3 mm, eine Feder, die die erste Mode von
+36,7 auf 43,6 Hz hebt): gegen die Reihe nach Navier 43,637 gegen 43,593 Hz (0,1 %), zweite Mode 67,220 gegen 67,142 Hz;
+gegen die Rechnung im Modenraum, wie `harfe_saiten.py` sie führt (K = diag(λ) + k φ φᵀ), mit allen Moden des Netzes
+gleich, mit den ersten 60 Moden 43,652 Hz (0,03 %); am feineren Netz (4,5 statt 7 cm) 43,616 Hz (0,05 % tiefer — die
+Punktnachgiebigkeit der schubweichen Platte wächst mit dem Netz langsam). **Die Zahlen der Suche aus §17, im Modenraum
+gerechnet, gelten damit für die Rechnung im Netz bis auf Zehntelprozent in der Lage** — mit dem Unterschied, dass
+`harfe_saiten.py` die Federn nach der Kopplung mit der Luft setzt und das Werkzeug davor; das zeigt erst der Bau des
+Kandidaten.
+
+**KQ49 a (Patrik S210) — der Verlust der Federn:** der Anteil der Verformungsenergie einer Mode, der in den Federn
+steckt, trägt deren Verlustfaktor (`lossFactor`, 0 = ohne Verlust), der Rest den der Platte:
+η = (1 − Anteil) · η_Platte + Σ a_f η_f. Die Harfe schreibt 0 (Annahme: die Längssteife der Saite verliert nichts; so
+rechnete die Probe aus S209). Verworfen: die Energie der Federn in der Dämpfung nicht zählen (die Mode bekäme das
+Gesetz des Holzes an ihrer neuen Frequenz). Am Kandidaten mit Saiten c = 0,2 gerechnet
+(`proben/2026-11-20_S210_kq49_federverlust.py`, `.txt`):
+
+| Zielgröße | a Federn ohne Verlust | b nicht gezählt |
+|---|---|---|
+| Lagen | gleich | gleich |
+| η der Moden 170,8 / 225,3 / 261,6 Hz | 0,0521 / 0,0801 / 0,0251 | 0,0559 / 0,0826 / 0,0268 |
+| größter Unterschied in η (129 Moden) | — | +7,2 % (0,6 dB an der Spitze) |
+| Lautheit 38–104, 16 Hörorte, ohne Mitschwingen | 17,8 / 10,5 / 2,8 LU | 17,6 / 10,7 / 2,7 LU |
+
+Größter Unterschied an einer Taste 0,5 LU (48). Kippen würde a zu einem Wert größer 0, wenn eine Messung der Güte
+besaiteter Moden vorläge; Bell nennt für S(1,1)− besaitet keine.
+
+**Offen wie in §17:** Eichung des Holzes mit 12 → 2 mm, Feinsuche (am Netz für 5 kHz gegengeprüft), Faktor der Saiten,
+`make_harfe.py` mit den Federn, Körper, Test, Lautheit mit Mitschwingen (KQ39 a).

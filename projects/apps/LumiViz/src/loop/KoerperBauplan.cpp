@@ -240,6 +240,17 @@ QJsonObject alsJson(const Bauplan& plan)
             {QStringLiteral("source"), text(a.quelle)},
         });
     }
+    QJsonArray punktfedern;
+    for (const koerper::Punktfeder& f : plan.punktfedern)
+    {
+        punktfedern.append(QJsonObject{
+            {QStringLiteral("x"), f.ort.x},
+            {QStringLiteral("y"), f.ort.y},
+            {QStringLiteral("stiffness"), f.steife},
+            {QStringLiteral("lossFactor"), f.verlustfaktor},
+            {QStringLiteral("source"), text(f.quelle)},
+        });
+    }
     return QJsonObject{
         {QStringLiteral("format"), QLatin1String(kBauplanFormat)},
         {QStringLiteral("version"), koerper::kBauplanFassung},
@@ -299,6 +310,8 @@ QJsonObject alsJson(const Bauplan& plan)
         // seit Fassung 8 (KQ31-1 a), immer geschrieben
         {QStringLiteral("barOverlap"), plan.leistenUebereinander == koerper::LeistenUebereinander::Addieren ? QStringLiteral("add")
                                                                                                            : QStringLiteral("first")},
+        // seit Fassung 9 (KQ46 a, KQ49 a), immer geschrieben: Federn an Punkten, N/m gegen w
+        {QStringLiteral("pointSprings"), punktfedern},
     };
 }
 
@@ -415,6 +428,17 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
         const QString art = wurzel.value(QStringLiteral("barOverlap")).toString();
         if (art == QLatin1String("add")) neu.leistenUebereinander = koerper::LeistenUebereinander::Addieren;
         else if (art != QLatin1String("first")) return false;  // eine unbekannte Art: nicht raten
+    }
+    // seit Fassung 9 (KQ46 a, KQ49 a); fehlt die Liste, gibt es keine Federn an Punkten
+    for (const QJsonValue& e : wurzel.value(QStringLiteral("pointSprings")).toArray())
+    {
+        const QJsonObject o = e.toObject();
+        koerper::Punktfeder f;
+        f.ort = {o.value(QStringLiteral("x")).toDouble(), o.value(QStringLiteral("y")).toDouble()};
+        f.steife = o.value(QStringLiteral("stiffness")).toDouble();
+        f.verlustfaktor = o.value(QStringLiteral("lossFactor")).toDouble();
+        f.quelle = text(o.value(QStringLiteral("source")));
+        neu.punktfedern.push_back(std::move(f));
     }
     plan = std::move(neu);
     return true;

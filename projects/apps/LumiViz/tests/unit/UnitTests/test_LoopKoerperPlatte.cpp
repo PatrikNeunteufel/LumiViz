@@ -26,8 +26,10 @@
 
 #include <doctest.h>
 
+#include "InstrumentBody/Auswertung.hpp"
 #include "InstrumentBody/NetzCdt.hpp"
 #include "InstrumentBody/Platte.hpp"
+#include "InstrumentBody/Verformungsenergie.hpp"
 #include "loop/Koerper.hpp"
 #include "loop/KoerperBauplan.hpp"
 
@@ -765,4 +767,271 @@ TEST_CASE("Loop Koerper KQ31-1 Leisten uebereinander")
     CHECK_FALSE(ausJson(fremd, alt));
     // der Abdruck haengt am Feld
     CHECK(bauplanAbdruck(summe) != bauplanAbdruck(plan));
+}
+
+namespace
+{
+
+/// K und M dicht, und alle Eigenpaare (Formen bezueglich M normiert, aufsteigend).
+struct DichteModen
+{
+    Eigen::VectorXd lambda;
+    Eigen::MatrixXd formen;
+};
+
+DichteModen dichteModen(const kp::PlattenSystem& s)
+{
+    const int n = s.k.n;
+    Eigen::MatrixXd k = Eigen::MatrixXd::Zero(n, n), m = Eigen::MatrixXd::Zero(n, n);
+    for (int i = 0; i < n; ++i)
+    {
+        for (std::int64_t e = s.k.start[i]; e < s.k.start[i + 1]; ++e)
+        {
+            const int j = s.k.spalten[static_cast<std::size_t>(e)];
+            k(i, j) = k(j, i) = s.k.werte[static_cast<std::size_t>(e)];
+            m(i, j) = m(j, i) = s.m.werte[static_cast<std::size_t>(e)];
+        }
+    }
+    Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> loeser(k, m);
+    return {loeser.eigenvalues(), loeser.eigenvectors()};
+}
+
+/// Navier, Mindlin, frei aufliegend, Faser laengs x: je (m, n) bis `bis` alle drei Aeste als (λ, φ(p)²) — φ der Wert
+/// der bezueglich der Masse normierten Form am Punkt `p`.
+std::vector<std::array<double, 2>> navierAmPunkt(const kp::Material& mat, double a, double b, double h, kp::Punkt2 p, int bis)
+{
+    const kp::Steife s = kp::gedreht(mat, 0.0);
+    const double h3 = h * h * h / 12.0;
+    const double d11 = h3 * s.q[0], d12 = h3 * s.q[1], d22 = h3 * s.q[3], d66 = h3 * s.q[5];
+    const double sx = kp::kSchubKorrektur * h * s.g[0], sy = kp::kSchubKorrektur * h * s.g[2];
+    std::vector<std::array<double, 2>> aus;
+    for (int mm = 1; mm <= bis; ++mm)
+    {
+        for (int nn = 1; nn <= bis; ++nn)
+        {
+            const double al = mm * std::numbers::pi / a, be = nn * std::numbers::pi / b;
+            Eigen::Matrix3d k, m = Eigen::Matrix3d::Zero();
+            k << sx * al * al + sy * be * be, -sx * al, -sy * be,  //
+                -sx * al, d11 * al * al + d66 * be * be + sx, (d12 + d66) * al * be,  //
+                -sy * be, (d12 + d66) * al * be, d66 * al * al + d22 * be * be + sy;
+            m(0, 0) = s.rho * h;
+            m(1, 1) = m(2, 2) = s.rho * h3;
+            Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::Matrix3d> l(k, m);
+            const double ort = std::sin(al * p.x) * std::sin(be * p.y);
+            // vᵀ M v = 1 je Flaeche; ueber die Platte integriert sin² · sin² = a b / 4
+            for (int ast = 0; ast < 3; ++ast)
+                aus.push_back({l.eigenvalues()(ast), l.eigenvectors()(0, ast) * l.eigenvectors()(0, ast) * ort * ort * 4.0 / (a * b)});
+        }
+    }
+    std::sort(aus.begin(), aus.end());
+    return aus;
+}
+
+/// Die Eigenwerte λ mit einer Feder `steife` am Punkt: die Nullstellen von 1 + k Σ φ_r² / (λ_r − λ), je eine
+/// zwischen zwei Polen; die ersten `wieviele`.
+std::vector<double> mitFederNachReihe(const std::vector<std::array<double, 2>>& reihe, double steife, int wieviele)
+{
+    const auto g = [&](double lambda) {
+        double summe = 0.0;
+        for (const auto& [l, phi2] : reihe) summe += phi2 / (l - lambda);
+        return 1.0 + steife * summe;
+    };
+    std::vector<double> aus;
+    for (int r = 0; r < wieviele; ++r)
+    {
+        double unten = reihe[static_cast<std::size_t>(r)][0], oben = reihe[static_cast<std::size_t>(r) + 1][0];
+        const double spanne = oben - unten;
+        unten += 1e-12 * spanne;
+        oben -= 1e-12 * spanne;
+        for (int schritt = 0; schritt < 200; ++schritt)
+        {
+            const double mitte = 0.5 * (unten + oben);
+            (g(mitte) < 0.0 ? unten : oben) = mitte;  // g steigt von −∞ nach +∞ zwischen zwei Polen
+        }
+        aus.push_back(0.5 * (unten + oben));
+    }
+    return aus;
+}
+
+}  // namespace
+
+TEST_CASE("Loop Koerper KQ46 Punktfedern")
+{
+    const double a = 0.5, b = 0.4, h = 0.003;
+    const kp::Material mat = fichte();
+    const kp::Punkt2 ort{0.37 * a, 0.41 * b};  // kein Knoten einer Mode, kein Knoten des Netzes
+    const auto steife = [&](kp::Punkt2) {
+        kp::Steife s = kp::gedreht(mat, 0.0);
+        s.h = h;
+        s.werkstoff = 0;
+        return s;
+    };
+    const kp::LagrangeDreieck element(3);
+    const auto hz = [](double lambda) { return std::sqrt(std::max(0.0, lambda)) / (2.0 * std::numbers::pi); };
+
+    // --- gegen die Reihe nach Navier: frei aufliegende Platte, eine Feder am Punkt ---------------------
+    const auto reihe = navierAmPunkt(mat, a, b, h, ort, 40);
+    const double f1 = hz(reihe[0][0]);
+    // eine Feder, die die erste Mode deutlich hebt: k φ₁² ≈ 0,5 λ₁
+    const double feder = 0.5 * reihe[0][0] / reihe[0][1];
+    const auto soll = mitFederNachReihe(reihe, feder, 2);
+    CHECK(hz(soll[0]) > 1.1 * f1);
+    // die Reihe haengt kaum an ihrer Laenge (die Punktnachgiebigkeit der schubweichen Platte waechst nur langsam)
+    const auto sollKurz = mitFederNachReihe(navierAmPunkt(mat, a, b, h, ort, 20), feder, 2);
+    CHECK(sollKurz[0] == doctest::Approx(soll[0]).epsilon(0.005));
+
+    const kp::Netz netz = rechteckNetz(a, b, 0.07);  // grob: die dichten Eigenwertaufgaben bleiben klein
+    REQUIRE(netz.fehler.empty());
+    const kp::PlattenSystem ohne = kp::baueSystem(netz, element, steife, kp::Auflager::GelenkigAchsparallel);
+    REQUIRE(ohne.fehler.empty());
+    kp::PlattenSystem mit = ohne;
+    kp::setzePunktfedern(mit, element, {{ort, feder, 0.0, "test"}});
+    const DichteModen mo = dichteModen(ohne), mm = dichteModen(mit);
+    MESSAGE("KQ46: f1 ohne Feder " << hz(mo.lambda(0)) << " Hz (Navier " << f1 << "), mit Feder " << hz(mm.lambda(0)) << " / "
+                                   << hz(mm.lambda(1)) << " Hz, Reihe " << hz(soll[0]) << " / " << hz(soll[1]) << " Hz");
+    CHECK(hz(mo.lambda(0)) == doctest::Approx(f1).epsilon(0.01));
+    CHECK(hz(mm.lambda(0)) == doctest::Approx(hz(soll[0])).epsilon(0.01));
+    CHECK(hz(mm.lambda(1)) == doctest::Approx(hz(soll[1])).epsilon(0.01));
+    // M bleibt, K waechst nur um die Feder: die Spur von K steigt um k Σ N²
+    const kp::Abtastung ab = kp::abtastung(ohne, element, ort);
+    REQUIRE(ab.imNetz);
+    double n2 = 0.0;
+    for (const double gw : ab.gewichte) n2 += gw * gw;
+    double spurOhne = 0.0, spurMit = 0.0;
+    for (int i = 0; i < ohne.k.n; ++i)
+    {
+        spurOhne += ohne.k.wert(i, i);
+        spurMit += mit.k.wert(i, i);
+    }
+    CHECK(spurMit - spurOhne == doctest::Approx(feder * n2).epsilon(1e-6));
+    CHECK(mit.m.werte == ohne.m.werte);
+
+    // --- gegen die Rechnung im Modenraum (wie `harfe_saiten.py`): K = diag(λ) + k φ φᵀ ---------------
+    // mit allen Moden des Netzes dasselbe System; mit den ersten 60 nahe daran
+    for (const int zahl : {static_cast<int>(mo.lambda.size()), 60})
+    {
+        Eigen::VectorXd phi(zahl);
+        for (int r = 0; r < zahl; ++r)
+        {
+            const Eigen::VectorXd spalte = mo.formen.col(r);
+            phi(r) = kp::wertBei(ab, std::vector<double>(spalte.data(), spalte.data() + spalte.size()));
+        }
+        Eigen::MatrixXd km = feder * phi * phi.transpose();
+        for (int r = 0; r < zahl; ++r) km(r, r) += mo.lambda(r);
+        const Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> l(km, Eigen::EigenvaluesOnly);
+        CAPTURE(zahl);
+        MESSAGE("KQ46 Modenraum mit " << zahl << " Moden: " << hz(l.eigenvalues()(0)) << " / " << hz(l.eigenvalues()(1)) << " Hz");
+        const double grenze = zahl == static_cast<int>(mo.lambda.size()) ? 1e-6 : 0.005;
+        CHECK(hz(l.eigenvalues()(0)) == doctest::Approx(hz(mm.lambda(0))).epsilon(grenze));
+        CHECK(hz(l.eigenvalues()(1)) == doctest::Approx(hz(mm.lambda(1))).epsilon(grenze));
+    }
+
+    // --- am feineren Netz: die Feder wird nur wenig weicher ----------------------------------------
+    {
+        const kp::Netz fein = rechteckNetz(a, b, 0.045);
+        REQUIRE(fein.fehler.empty());
+        kp::PlattenSystem sf = kp::baueSystem(fein, element, steife, kp::Auflager::GelenkigAchsparallel);
+        kp::setzePunktfedern(sf, element, {{ort, feder, 0.0, "test"}});
+        const double feinHz = frequenzen(sf, 1)[0];
+        MESSAGE("KQ46 Netz 7 cm (" << ohne.k.n << " Groessen) " << hz(mm.lambda(0)) << " Hz, 4,5 cm (" << sf.k.n << ") " << feinHz << " Hz");
+        CHECK(feinHz == doctest::Approx(hz(mm.lambda(0))).epsilon(0.005));
+    }
+
+    // --- die Daempfung (KQ49 a): die Energie in der Feder traegt deren Verlustfaktor ----------------
+    {
+        const kp::Verformungsenergie energie(mit, element, steife, 1);
+        kp::Daempfung gesetz;
+        gesetz.c = 3.0;
+        kp::Mode mode;
+        mode.frequenzHz = hz(mm.lambda(0));
+        const Eigen::VectorXd spalte = mm.formen.col(0);
+        mode.form.assign(spalte.data(), spalte.data() + spalte.size());
+        const double w = kp::wertBei(ab, mode.form);
+        const double anteil = feder * w * w / mm.lambda(0);  // U_F / U bei einer bezueglich M normierten Form
+        CHECK(anteil > 0.1);
+        CHECK(anteil < 0.6);
+        const double etaGesetz = gesetz.verlustfaktor(mode.frequenzHz);
+
+        kp::Auswertung aus(mit, element, {}, {}, {}, gesetz, &energie, {0.0});
+        // ohne Federn in der Auswertung: wie bisher das Gesetz
+        CHECK(aus.werte(mode).verlustfaktor == etaGesetz);
+        CHECK(aus.werte(mode).federAnteil == 0.0);
+        aus.setzePunktfedern(mit, element, {{ort, feder, 0.0, "test"}});
+        const kp::ModeImKoerper ohneVerlust = aus.werte(mode);
+        CHECK(ohneVerlust.federAnteil == doctest::Approx(anteil).epsilon(1e-6));
+        CHECK(ohneVerlust.verlustfaktor == doctest::Approx((1.0 - anteil) * etaGesetz).epsilon(1e-6));
+        REQUIRE(ohneVerlust.werkstoffAnteil.size() == 1);
+        CHECK(ohneVerlust.werkstoffAnteil[0] == doctest::Approx(1.0).epsilon(1e-12));  // auf die Werkstoffe normiert
+        aus.setzePunktfedern(mit, element, {{ort, feder, 0.5, "test"}});
+        CHECK(aus.werte(mode).verlustfaktor == doctest::Approx((1.0 - anteil) * etaGesetz + anteil * 0.5).epsilon(1e-6));
+        // eine Feder mit dem Verlust des Gesetzes aendert nichts
+        aus.setzePunktfedern(mit, element, {{ort, feder, etaGesetz, "test"}});
+        CHECK(aus.werte(mode).verlustfaktor == doctest::Approx(etaGesetz).epsilon(1e-9));
+        // ohne die Verformungsenergie: derselbe Anteil aus ½ (2πf)²
+        kp::Auswertung schlicht(mit, element, {}, {}, {}, gesetz);
+        schlicht.setzePunktfedern(mit, element, {{ort, feder, 0.0, "test"}});
+        CHECK(schlicht.werte(mode).federAnteil == doctest::Approx(anteil).epsilon(1e-6));
+    }
+
+    // --- der Bauplan: `baueSystem` setzt seine Federn ------------------------------------------------
+    kp::Bauplan plan;
+    plan.titel = "Test";
+    plan.materialien = {mat};
+    plan.platte.material = "spruce";
+    plan.platte.umriss = {{0.0, 0.0}, {a, 0.0}, {a, b}, {0.0, b}};
+    plan.platte.dicke = h;
+    REQUIRE(kp::pruefe(plan).empty());
+    const kp::PlattenSystem planOhne = kp::baueSystem(netz, element, plan);
+    kp::Bauplan gefedert = plan;
+    gefedert.punktfedern = {{ort, feder, 0.0, "test"}, {{0.1, 0.1}, 0.25 * feder, 0.01, "test"}, {{0.2, 0.3}, 0.0, 0.0, "off"}};
+    REQUIRE(kp::pruefe(gefedert).empty());
+    const kp::PlattenSystem planMit = kp::baueSystem(netz, element, gefedert);
+    REQUIRE(planMit.fehler.empty());
+    // ohne Federn Bit fuer Bit die Platte wie bisher; `baueSystemOhnePunktfedern` laesst sie weg
+    CHECK(kp::baueSystemOhnePunktfedern(netz, element, gefedert).k.werte == planOhne.k.werte);
+    kp::PlattenSystem vonHand = planOhne;
+    kp::setzePunktfedern(vonHand, element, gefedert.punktfedern);
+    CHECK(planMit.k.werte == vonHand.k.werte);
+    CHECK(planMit.m.werte == planOhne.m.werte);
+    CHECK(planMit.masse == planOhne.masse);  // eine Feder wiegt nichts
+    CHECK(frequenzen(planMit, 1)[0] > 1.05 * frequenzen(planOhne, 1)[0]);
+
+    // was `pruefe` abweist
+    {
+        kp::Bauplan p = gefedert;
+        p.punktfedern[0].steife = -1.0;
+        CHECK_FALSE(kp::pruefe(p).empty());
+        p = gefedert;
+        p.punktfedern[0].verlustfaktor = -0.1;
+        CHECK_FALSE(kp::pruefe(p).empty());
+        p = gefedert;
+        p.punktfedern[0].ort = {a + 0.1, 0.1};
+        CHECK_FALSE(kp::pruefe(p).empty());
+        p = gefedert;
+        p.platte.loecher = {{{0.16, 0.14}, {0.21, 0.14}, {0.21, 0.19}, {0.16, 0.19}}};  // um die erste Feder
+        CHECK_FALSE(kp::pruefe(p).empty());
+    }
+
+    // die Datei: `pointSprings` immer geschrieben (Fassung 9), Hin- und Rueckweg; Fassung 8 ohne das Feld
+    CHECK(kp::kBauplanFassung >= 9);
+    REQUIRE(alsJson(plan).contains(QStringLiteral("pointSprings")));
+    CHECK(alsJson(plan).value(QStringLiteral("pointSprings")).toArray().isEmpty());
+    const QJsonObject json = alsJson(gefedert);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
+    const QJsonArray liste = json.value(QStringLiteral("pointSprings")).toArray();
+    REQUIRE(liste.size() == 3);
+    for (const char* feld : {"x", "y", "stiffness", "lossFactor", "source"}) CHECK(liste.at(1).toObject().contains(QLatin1String(feld)));
+    CHECK(liste.at(1).toObject().value(QStringLiteral("lossFactor")).toDouble() == 0.01);
+    kp::Bauplan zurueck;
+    REQUIRE(ausJson(json, zurueck));
+    CHECK(zurueck == gefedert);
+    QJsonObject acht = json;
+    acht.remove(QStringLiteral("pointSprings"));
+    acht[QStringLiteral("version")] = 8;
+    kp::Bauplan alt;
+    REQUIRE(ausJson(acht, alt));
+    CHECK(alt.punktfedern.empty());
+    CHECK(alt == plan);
+    // der Abdruck haengt an den Federn
+    CHECK(bauplanAbdruck(gefedert) != bauplanAbdruck(plan));
 }

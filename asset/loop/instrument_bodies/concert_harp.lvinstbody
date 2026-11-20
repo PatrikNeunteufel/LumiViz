@@ -90,7 +90,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 110.2913992,
+        "seconds": 104.8840248,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 290516,
@@ -12967,7 +12967,7 @@
     "origin": "plan",
     "plan": {
         "file": "concert_harp.lvinstbodyplan",
-        "fingerprint": "088749935db405e575e4c8368feadccbf35dc05e9f6a775e34b0d0969f4b40f3"
+        "fingerprint": "861db985bdeaa187c497503d99013c54ef46bace7fa372af95ce7f697a6ecefa"
     },
     "statistical": {
         "bandFromHz": 2500,

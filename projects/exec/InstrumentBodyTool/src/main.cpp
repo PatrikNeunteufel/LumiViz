@@ -344,8 +344,21 @@ int main(int argc, char* argv[])
     for (const kp::Material& m : plan.materialien) werkstoffVerlust.push_back(m.verlustfaktor);
     const kp::Verformungsenergie energie(s, element, [&](kp::Punkt2 p) { return kp::steifeBei(plan, p); },
                                          static_cast<int>(plan.materialien.size()));
-    const kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte, {}, plan.daempfung, &energie, werkstoffVerlust,
-                                    plan.platte.umriss, plan.rueckseite);
+    kp::Auswertung auswertung(s, element, plan.stegpunkte, plan.hoerorte, {}, plan.daempfung, &energie, werkstoffVerlust,
+                              plan.platte.umriss, plan.rueckseite);
+    // KQ46 a, KQ49 a (S210): Federn an Punkten — in K gesetzt von `baueSystem`, hier ihr Anteil an der Daempfung
+    if (!probeRand && !plan.punktfedern.empty())
+    {
+        auswertung.setzePunktfedern(s, element, plan.punktfedern);
+        double summe = 0.0, mitVerlust = 0.0;
+        for (const kp::Punktfeder& f : plan.punktfedern)
+        {
+            summe += f.steife;
+            if (f.verlustfaktor > 0.0) mitVerlust += 1.0;
+        }
+        std::printf("Point springs (KQ46 a): %zu, %.4g N/m in sum, %.0f with a loss factor of their own (KQ49 a)\n",
+                    plan.punktfedern.size(), summe, mitVerlust);
+    }
     std::printf("Damping law (plan): alpha = %g f^2 + %g f + %g 1/s (eta %.2f %% at 40 Hz, %.2f %% at 1 kHz)\n", plan.daempfung.a,
                 plan.daempfung.b, plan.daempfung.c, 100.0 * plan.daempfung.verlustfaktor(40.0), 100.0 * plan.daempfung.verlustfaktor(1000.0));
     int ausserhalb = 0;
@@ -461,6 +474,7 @@ int main(int argc, char* argv[])
         std::printf("  %8.2f Hz  eta %.4f", m.frequenzHz, m.verlustfaktor);
         for (std::size_t w = 0; w < m.werkstoffAnteil.size(); ++w)
             std::printf("  %s %.3f", plan.materialien[w].name.c_str(), m.werkstoffAnteil[w]);
+        if (m.federAnteil > 0.0) std::printf("  springs %.3f", m.federAnteil);
         for (std::size_t h = 0; h < m.abstrahlung.size(); ++h)
             std::printf("  |G| %s %.4g", plan.hoerorte[h].name.c_str(), std::abs(m.abstrahlung[h]));
         std::printf("\n");

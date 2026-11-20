@@ -124,7 +124,7 @@ def baue(saiten):
     assert len({p["y"] for p in punkte}) == len(saiten), "80 Tasten an 46 Orten"
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 8,
+        "version": 9,
         "title": "Concert harp",
         "description": "Soundboard of the Salvi Orchestra concert harp with the air of its soundbox (Bell 1988; KQ1 a, "
                        "KQ17 a to KQ21 a). Spruce board 131 cm, 41 to 10 cm wide, 10 to 3 mm thick, grain across, "
@@ -186,6 +186,7 @@ def baue(saiten):
                                         "5 to 10 dB towards the measurement (Bell 1988 Fig. 6.6); the edge sits on the "
                                         "top block of the shell"}]},
         "barOverlap": "add",
+        "pointSprings": [],
     }
 
 

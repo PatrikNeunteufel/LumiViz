@@ -1,6 +1,6 @@
 {
  "format": "lumiviz-instrument-body-plan",
- "version": 8,
+ "version": 9,
  "title": "Concert harp",
  "description": "Soundboard of the Salvi Orchestra concert harp with the air of its soundbox (Bell 1988; KQ1 a, KQ17 a to KQ21 a). Spruce board 131 cm, 41 to 10 cm wide, 10 to 3 mm thick, grain across, with the beech cover bar outside, the beech straining bar and two spruce bars inside. The wood of the board is calibrated on the free board without bars (Tables 3.1 and 3.2). Cavity of 27 l with six apertures in the back of the shell. The rim is supported (deflection held, rotation free): checked on the position of the antinodes along the cover bar (Figs. 7.8 to 7.16). The treble edge is held by a spring only (fitted, not measured). Targets, soundbox G in the harp, S(1,2) to S(1,7): frequency within 10 % without and with strings, the strongest antinode within two testing positions, height within 6 dB without strings. Known deviations: S(1,1)- lies at 129 Hz (measured 153 / 170 / 187 Hz isolated, in the harp, strung: the whole soundbox moves), S(1,8) is 10 dB too low. The shell is rigid; only the Helmholtz mode of the air is computed.",
  "source": "A. J. Bell, An Acoustical Investigation of the Concert Harp, PhD thesis, University of St Andrews 1988 (Salvi Orchestra, 46 strings); all numbers read from the figures and tables",
@@ -6303,5 +6303,6 @@
    }
   ]
  },
- "barOverlap": "add"
+ "barOverlap": "add",
+ "pointSprings": []
 }

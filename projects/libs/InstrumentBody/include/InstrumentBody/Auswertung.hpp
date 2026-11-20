@@ -70,87 +70,8 @@ struct Luft
     return aus;
 }
 
-/// Wo ein Punkt im System liegt: welche freien Groessen w ihn mit welchem Gewicht tragen.
-struct Abtastung
-{
-    int element = -1;            ///< −1 = kein Element
-    bool imNetz = false;         ///< false = ausserhalb, auf das naechste Element geklemmt
-    double abstand = 0.0;        ///< m, vom Punkt zum Netz (0 im Netz)
-    std::vector<int> groessen;   ///< Plaetze in K und M (nur w, nur freie)
-    std::vector<double> gewichte;
-};
-
-/// Die Lage von `p` im Dreieck mit diesen Ecken in Bezugskoordinaten (ξ, η).
-[[nodiscard]] inline std::array<double, 2> bezug(const std::array<Punkt2, 3>& e, Punkt2 p)
-{
-    const double j11 = e[1].x - e[0].x, j12 = e[2].x - e[0].x, j21 = e[1].y - e[0].y, j22 = e[2].y - e[0].y;
-    const double det = j11 * j22 - j12 * j21;
-    const double dx = p.x - e[0].x, dy = p.y - e[0].y;
-    return {(j22 * dx - j12 * dy) / det, (-j21 * dx + j11 * dy) / det};
-}
-
-/// Wie `p` aus den freien Groessen w des Systems folgt. Liegt `p` in keinem Element, gilt das
-/// naechste (der Punkt auf seinen Rand geklemmt; `imNetz` = false, `abstand` > 0).
-[[nodiscard]] inline Abtastung abtastung(const PlattenSystem& s, const Plattenelement& element, Punkt2 p)
-{
-    Abtastung a;
-    double bestAbstand = std::numeric_limits<double>::infinity();
-    std::array<double, 2> bestXiEta{};
-    for (std::size_t t = 0; t < s.elemente.size(); ++t)
-    {
-        const auto& ek = s.elemente[t];
-        const std::array<Punkt2, 3> e{s.knoten[ek[0]], s.knoten[ek[1]], s.knoten[ek[2]]};
-        auto [xi, eta] = bezug(e, p);
-        constexpr double kSpiel = 1e-12;
-        if (xi >= -kSpiel && eta >= -kSpiel && xi + eta <= 1.0 + kSpiel)
-        {
-            a.element = static_cast<int>(t);
-            bestAbstand = 0.0;
-            bestXiEta = {xi, eta};
-            break;
-        }
-        // geklemmt in das Dreieck, dann der Abstand
-        xi = std::max(0.0, xi);
-        eta = std::max(0.0, eta);
-        if (xi + eta > 1.0)
-        {
-            const double summe = xi + eta;
-            xi /= summe;
-            eta /= summe;
-        }
-        const Punkt2 q{e[0].x + (e[1].x - e[0].x) * xi + (e[2].x - e[0].x) * eta,
-                       e[0].y + (e[1].y - e[0].y) * xi + (e[2].y - e[0].y) * eta};
-        const double d = std::hypot(q.x - p.x, q.y - p.y);
-        if (d < bestAbstand)
-        {
-            bestAbstand = d;
-            bestXiEta = {xi, eta};
-            a.element = static_cast<int>(t);
-        }
-    }
-    if (a.element < 0) return a;
-    a.imNetz = bestAbstand == 0.0;
-    a.abstand = bestAbstand;
-    std::vector<double> n, dxi, deta;
-    element.basis(bestXiEta[0], bestXiEta[1], n, dxi, deta);
-    const auto& ek = s.elemente[static_cast<std::size_t>(a.element)];
-    for (std::size_t i = 0; i < ek.size(); ++i)
-    {
-        const int g = s.frei[static_cast<std::size_t>(3 * ek[i])];  // w des Knotens
-        if (g < 0 || n[i] == 0.0) continue;
-        a.groessen.push_back(g);
-        a.gewichte.push_back(n[i]);
-    }
-    return a;
-}
-
-/// Der Wert einer Form (nummeriert wie K und M) an der abgetasteten Stelle.
-[[nodiscard]] inline double wertBei(const Abtastung& a, const std::vector<double>& form)
-{
-    double w = 0.0;
-    for (std::size_t i = 0; i < a.groessen.size(); ++i) w += a.gewichte[i] * form[static_cast<std::size_t>(a.groessen[i])];
-    return w;
-}
+// `Abtastung`, `bezug`, `abtastung` und `wertBei` stehen seit KQ46 a (S210) in `Platte.hpp`: auch die Punktfedern
+// des Bauplans brauchen sie.
 
 /// Was der Koerper je Mode traegt (KB1 a).
 struct ModeImKoerper
@@ -159,6 +80,9 @@ struct ModeImKoerper
     double verlustfaktor = 0.0;                      ///< η
     double luftAnteil = 0.0;                         ///< Anteil der Bewegungsenergie in der Luft der Loecher (F-K1 a); 0 = ohne Hohlraum
     std::vector<double> werkstoffAnteil;             ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
+    /// Anteil der Verformungsenergie in den Federn an Punkten (KQ49 a, S210), 0 … 1; 0 = keine Federn. Nur aus der
+    /// Rechnung, nicht in der Koerperdatei. `werkstoffAnteil` bleibt auf die Werkstoffe normiert (Summe 1).
+    double federAnteil = 0.0;
     std::vector<double> amStegpunkt;                 ///< φ je Stegpunkt (Reihenfolge des Bauplans), 1/√kg
     std::vector<std::complex<double>> abstrahlung;  ///< G je Hoerort (Reihenfolge des Bauplans), √kg/m²
     /// KQ35-2 a (S206): die Richtung, in der die Mode den Steg bewegt — Winkel gegen die Senkrechte der Decke in Grad,
@@ -257,6 +181,18 @@ public:
         }
     }
 
+    /// Die Federn an Punkten des Bauplans (KQ49 a, S210): danach traegt jede Mode `federAnteil`, und ihr
+    /// Verlustfaktor ist η = (1 − Σ a_f) · η_Platte + Σ a_f η_f, mit a_f = U_f / (U_Platte + Σ U_f) und
+    /// U_f = ½ k w(p)². U_Platte kommt aus `energie`; ohne sie gilt ½ (2πf)² abzueglich der Federn — das stimmt
+    /// nur fuer eine bezueglich M normierte Form der Platte allein. Ohne Federn rechnet `werte` wie bisher,
+    /// Bit fuer Bit.
+    void setzePunktfedern(const PlattenSystem& s, const Plattenelement& element, const std::vector<Punktfeder>& federn)
+    {
+        m_federn.clear();
+        for (const Punktfeder& f : federn)
+            if (f.steife > 0.0) m_federn.push_back({abtastung(s, element, f.ort), f.steife, f.verlustfaktor});
+    }
+
     /// Die Abtastung jedes Stegpunkts (Reihenfolge des Bauplans) — zur Pruefung, ob er im Netz liegt.
     [[nodiscard]] const std::vector<Abtastung>& stegpunkte() const { return m_steg; }
 
@@ -284,6 +220,31 @@ public:
         aus.frequenzHz = mode.frequenzHz;
         if (m_energie != nullptr) aus.werkstoffAnteil = m_energie->anteile(mode.form);
         aus.verlustfaktor = verlustfaktorAusAnteilen(m_daempfung, mode.frequenzHz, aus.werkstoffAnteil, m_werkstoffVerlust);
+        if (!m_federn.empty())
+        {
+            // KQ49 a: die Energie in den Federn traegt deren Verlustfaktor, der Rest den der Platte
+            double uFedern = 0.0, verlust = 0.0;
+            for (const Feder& f : m_federn)
+            {
+                const double w = wertBei(f.ort, mode.form);
+                const double u = 0.5 * f.steife * w * w;
+                uFedern += u;
+                verlust += u * f.verlustfaktor;
+            }
+            double uPlatte = 0.0;
+            if (m_energie != nullptr)
+                for (const double u : m_energie->jeWerkstoff(mode.form)) uPlatte += u;
+            else
+            {
+                const double omega = 2.0 * std::numbers::pi * mode.frequenzHz;
+                uPlatte = std::max(0.0, 0.5 * omega * omega - uFedern);
+            }
+            if (const double summe = uPlatte + uFedern; summe > 0.0)
+            {
+                aus.federAnteil = uFedern / summe;
+                aus.verlustfaktor = (1.0 - aus.federAnteil) * aus.verlustfaktor + verlust / summe;
+            }
+        }
         for (const Abtastung& a : m_steg) aus.amStegpunkt.push_back(wertBei(a, mode.form));
 
         const double k = 2.0 * std::numbers::pi * mode.frequenzHz / m_luft.schall;
@@ -326,7 +287,14 @@ private:
     std::vector<double> m_werkstoffVerlust;
     int m_nk = 0;
     std::vector<Abtastung> m_steg;
-    std::vector<int> m_groesse;                 ///< je Gauss-Punkt nk Plaetze von w (−1 = gehalten)
+    struct Feder
+    {
+        Abtastung ort;
+        double steife = 0.0;
+        double verlustfaktor = 0.0;
+    };
+    std::vector<Feder> m_federn;                ///< die Federn an Punkten (KQ49 a); leer = keine
+    std::vector<int> m_groesse;                ///< je Gauss-Punkt nk Plaetze von w (−1 = gehalten)
     std::vector<double> m_ansatz;               ///< je Gauss-Punkt nk Ansatzwerte
     std::vector<double> m_flaeche;              ///< je Gauss-Punkt Gewicht · |det J| (seine Flaeche)
     std::vector<std::vector<double>> m_abstand;  ///< je Hoerort je Gauss-Punkt R

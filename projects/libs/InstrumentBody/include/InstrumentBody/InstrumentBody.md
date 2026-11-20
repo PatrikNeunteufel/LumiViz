@@ -1,7 +1,7 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.24.0  
-> **Datum:** 2026-11-18  
+> **Version:** 0.25.0  
+> **Datum:** 2026-11-20  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
@@ -99,6 +99,17 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   (Harfe: Bell 1988 Abb. 2.6). Der Rand eines Lochs bleibt frei. `pruefe`: Feder nicht negativ, eine Feder nur mit
   dem Halt elastisch. Eine Wegfeder und ein Verlauf längs des Rands sind nicht im Format (Entscheid Patrik S198:
   die Messung an der Harfe trägt beides nicht).
+- **Federn an Punkten** (`Punktfeder`, `Bauplan::punktfedern`; seit Fassung 9, KQ46 a, KQ49 a, S210): je Feder Ort,
+  Steife in N/m gegen die Auslenkung w, Verlustfaktor und Quelle — etwa die Längssteife einer Saite an ihrer Öse
+  (Harfe: der Körper ist die besaitete Harfe). Die Feder hält den Punkt gegen festen Grund und wiegt nichts.
+  `setzePunktfedern(system, element, federn)` (in `Platte.hpp`) setzt je Feder k · N Nᵀ auf die w-Größen des
+  Elements, in dem der Punkt liegt (N = die Ansatzwerte dort, über `abtastung`); `baueSystem(netz, element, plan)`
+  ruft es, `baueSystemOhnePunktfedern` lässt die Federn weg. Ohne Federn ist K Bit für Bit wie vorher. **Dämpfung
+  (KQ49 a):** der Anteil der Verformungsenergie einer Mode in den Federn trägt deren Verlustfaktor (0 = ohne
+  Verlust), der Rest den der Platte — §5.3. **Grenze:** an einer schubweichen Platte wächst die Auslenkung unter
+  einer Punktkraft mit feinerem Netz langsam, die Feder wird also etwas weicher; an der Prüfplatte des Tests
+  0,05 % in der Frequenz zwischen 7 und 4,5 cm Kante. `pruefe`: Steife und Verlustfaktor nicht negativ, der Ort im
+  Umriss und in keinem Loch.
 - **Prüfen**: `pruefe(plan)` nennt je Befund einen Satz (Material fehlt oder doppelt, Werte nicht positiv,
   Querzahl außerhalb der Stabilität — isotrop 0 ≤ ν < 0,5, orthotrop 1 − ν_xy·ν_yx > 0 —, Umriss ohne Fläche,
   Leiste ohne Höhe je Punkt, Stegpunkte nicht aufsteigend, Hörort ohne oder mit doppeltem Namen, nicht über der
@@ -108,7 +119,9 @@ Bauplan fest (Steinway D nach RT-0425: untere linke Ecke des Bodens).
   summiert, Leisten als Länge mal mittlerer Querschnitt), `naechsterRandpunkt` (der nächste Punkt auf den Kanten
   des Umrisses und sein Abstand).
 
-Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 8) schreibt jedes Feld, auch leere;
+Die Datei `.lvinstbodyplan` (Format `lumiviz-instrument-body-plan`, Fassung 9) schreibt jedes Feld, auch leere;
+`pointSprings` (je Feder `x`, `y`, `stiffness` in N/m, `lossFactor`, `source`; seit Fassung 9) trägt die Federn an
+Punkten, Fassung 8 ohne die Liste liest sich ohne Federn;
 `barOverlap` (`first` oder `add` — ein anderes Wort macht die Datei unlesbar; seit Fassung 8) sagt, wie Leisten
 übereinander zählen, Fassung 7 ohne das Feld liest sich als `first`;
 der Rand steht in `rim` (`support`: `clamped` oder `elastic` — ein anderes Wort macht die Datei unlesbar —,
@@ -252,6 +265,13 @@ vor, `werte(mode)` gibt ein `ModeImKoerper`.
   trägt c = 4,5 1/s, damit die tiefsten Moden die gemessenen Werte erreichen (η 3,0 % bei 38 Hz, 2,3 % bei 61 Hz,
   1,5 % bei 300 Hz bis 1 kHz; Ege, Boutillon & Rébillat 2013: 1–3 %, Mittel 2,3 %) — mit c = 0 lagen sie bei 1,1 %.
   Ein Bauplan ohne den Block rechnet mit c = 0 wie bisher.
+- **Federn an Punkten** (KQ49 a, S210): nach `Auswertung::setzePunktfedern(system, element, federn)` trägt jede Mode
+  `federAnteil` = Σ U_f / (U_Platte + Σ U_f) mit U_f = ½ k w(p)², und ihr Verlustfaktor ist
+  η = (1 − Anteil) · η_Platte + Σ a_f η_f. U_Platte kommt aus der `Verformungsenergie`; ohne sie gilt ½ (2πf)²
+  abzüglich der Federn (nur für eine bezüglich M normierte Form der Platte allein). `werkstoffAnteil` bleibt auf
+  die Werkstoffe normiert; `federAnteil` steht nicht in der Körperdatei. Mit Luftraum mischt `mitLuftraum` danach
+  wie bisher den Anteil der Luft dazu. Ohne Federn rechnet `werte` Bit für Bit wie vorher. `Abtastung`, `bezug`,
+  `abtastung` und `wertBei` stehen seit S210 in `Platte.hpp`.
 - **Abstrahlung** je Hörort nach Rayleigh, die Platte in einer Schallwand: G = ρa/(2π) ∫ φ e^{−iωR/c}/R dS bei der
   Frequenz der Mode, komplex, Einheit √kg/m² (der Druck ist p = q̈ · G); integriert über die Gauss-Punkte aller
   Elemente (k + 1 je Richtung), R von der Mittelfläche (z = 0) zum Hörort; Luft nach RT-0425 §2.2 (1,29 kg/m³,
@@ -393,6 +413,10 @@ Prüfplatten rechnet dort der dichte Löser von Eigen (nur im Test): Ansatz (Kro
 (Monome genau), Werkstoff gedreht, Navier mit Konvergenz in k, Locking an 2 mm und 1 mm, Drehung (Netz und Faser um
 30° gedreht: dieselben Frequenzen), Steinway D grob (bis 1 kHz, k = 2: Masse gegen den Bauplan);
 `LUMIVIZ_PLATTE_MESSUNG=1` baut ihn bis 5 kHz mit k = 3 und meldet Größe und Zeit.
+„KQ46 Punktfedern“ (S210): eine Feder an der frei aufliegenden Prüfplatte gegen die Reihe nach Navier
+(1 + k Σ φ_r²/(λ_r − λ) = 0, alle drei Äste je (m, n) bis 40), gegen die Rechnung im Modenraum
+(K = diag(λ) + k φ φᵀ), am feineren Netz; die Dämpfung nach KQ49 a; `baueSystem` mit den Federn des Bauplans,
+`pruefe`, die Datei mit `pointSprings`.
 
 `projects/apps/LumiViz/tests/unit/UnitTests/test_LoopKoerperDatei.cpp` — ohne Qt-Anwendung: die Datei `.lvinstbody`
 (Hin- und Rückweg genau, Felder, Samen mit 64 Bit, Fehler), der Abdruck des Bauplans, der **Wächter** über jeden
@@ -445,6 +469,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.25.0 | 2026-11-20 | Session 210, Stufe 34k-6, KQ46 a, KQ49 a: Federn an Punkten — `Punktfeder` (Ort, Steife N/m, Verlustfaktor, Quelle) in `Bauplan::punktfedern`, **`.lvinstbodyplan` Fassung 9** mit `pointSprings` (`x`, `y`, `stiffness`, `lossFactor`, `source`; immer geschrieben, Fassung 8 lesbar ohne Federn); `setzePunktfedern` (k · N Nᵀ auf K), `baueSystem(netz, element, plan)` setzt sie, `baueSystemOhnePunktfedern`; `Abtastung`, `bezug`, `abtastung`, `wertBei` von `Auswertung.hpp` nach `Platte.hpp`. Dämpfung: `Auswertung::setzePunktfedern`, `ModeImKoerper::federAnteil` (nicht in der Körperdatei), η = (1 − Anteil) · η_Platte + Σ a_f η_f. `pruefe`: Steife und Verlustfaktor nicht negativ, Ort im Umriss und in keinem Loch. Werkzeug: meldet Zahl und Summe der Federn und je Mode ihren Anteil. `kRechenFassung` bleibt 2 — ein Bauplan ohne Federn rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ46 Punktfedern“ in `test_LoopKoerperPlatte`: gegen die Reihe nach Navier 0,1 %, gegen den Modenraum mit allen Moden 10⁻⁶ und mit 60 Moden 0,03 %, am feineren Netz 0,05 %. |
 | 0.24.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ35-2 a, KQ35-1 a: die Richtung am Steg — `ModeImKoerper::stegWinkelGrad` mit `senkrechtAm` / `parallelAm`, `StatistischerTeil::stegWinkelGrad` und `::parallelAnteil`, `ziehe` mit gezogenem Vorzeichen und Moden nur parallel zur Decke; `antwort`, `antwortSpektrum*`, `mobilitaet` mit dem senkrechten Formwert (Winkel 0: Bit für Bit wie vorher). **`.lvinstbody` Fassung 5** (`bridgeAngle` je Mode, `bridgeAngle` und `parallelFactor` im statistischen Teil, immer geschrieben; Fassung 4 liest sich mit 0). **`kFitFassung` 4**: `make_gitarre.py` füllt die Modendichte über 2,2 kHz nach Elie 2011 auf und schreibt die Richtung nach Elie 2012. Tests „KQ35 Ziehung mit Richtung am Steg“, Mobilität mit Winkel, Datei Fassung 5. `kRechenFassung` bleibt 2. |
 | 0.23.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ31-1 a: Leisten übereinander — `LeistenUebereinander` (`NurDieErste` / `Addieren`) in `Bauplan::leistenUebereinander`, **`.lvinstbodyplan` Fassung 8** mit `barOverlap` (`first` / `add`, immer geschrieben, Fassung 7 lesbar als `first`); `steifeBei` addiert mit `Addieren` die Höhen aller Leisten am Punkt (Werkstoff und Richtung der ersten); `Ueberlagerung`, `ueberlagerungen(plan)`. Werkzeug: meldet je Paar von Leisten übereinander Fläche und Volumen — mit `first` als Warnung (das Volumen fehlt in der Rechnung), mit `add` als Hinweis, bei verschiedenen Werkstoffen mit Vermerk. Die Harfe trägt `add` (Masse der Rechnung 2,179 statt 1,764 kg), alle übrigen Baupläne `first`. `kRechenFassung` bleibt 2 — ein Bauplan mit `first` rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ31-1 Leisten uebereinander“ in `test_LoopKoerperPlatte`. |
 | 0.22.2 | 2026-11-16 | Session 201, Stufe 34k-6, KQ28 a: `kFitFassung` 3 — die Form je Mode längs des Stegs wird an den Stegkurven und den Schallkurven gemeinsam gestellt (`make_gitarre.py` Schritt 4). Die zwei Aufnehmer an den Enden der Stegeinlage legen die Form zwischen 500 und 1000 Hz nicht fest: an fünf Moden widersprach sie dem, was die Mikrofone an den drei Schlagorten zeigen, und der Körper lag an der ersten Saite bei 780–880 Hz rund 10 dB unter der Messung. Am Format und an der Bibliothek sonst nichts; der Körper der Gitarre ist neu geschrieben (Pole und gezogene Moden unverändert). |

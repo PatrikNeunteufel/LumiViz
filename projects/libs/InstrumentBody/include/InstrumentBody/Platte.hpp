@@ -767,9 +767,124 @@ struct RandFedern
     return sys;
 }
 
+// --- ein Punkt im System --------------------------------------------------------------
+
+/// Wo ein Punkt im System liegt: welche freien Groessen w ihn mit welchem Gewicht tragen.
+struct Abtastung
+{
+    int element = -1;            ///< −1 = kein Element
+    bool imNetz = false;         ///< false = ausserhalb, auf das naechste Element geklemmt
+    double abstand = 0.0;        ///< m, vom Punkt zum Netz (0 im Netz)
+    std::vector<int> groessen;   ///< Plaetze in K und M (nur w, nur freie)
+    std::vector<double> gewichte;
+};
+
+/// Die Lage von `p` im Dreieck mit diesen Ecken in Bezugskoordinaten (ξ, η).
+[[nodiscard]] inline std::array<double, 2> bezug(const std::array<Punkt2, 3>& e, Punkt2 p)
+{
+    const double j11 = e[1].x - e[0].x, j12 = e[2].x - e[0].x, j21 = e[1].y - e[0].y, j22 = e[2].y - e[0].y;
+    const double det = j11 * j22 - j12 * j21;
+    const double dx = p.x - e[0].x, dy = p.y - e[0].y;
+    return {(j22 * dx - j12 * dy) / det, (-j21 * dx + j11 * dy) / det};
+}
+
+/// Wie `p` aus den freien Groessen w des Systems folgt. Liegt `p` in keinem Element, gilt das
+/// naechste (der Punkt auf seinen Rand geklemmt; `imNetz` = false, `abstand` > 0).
+[[nodiscard]] inline Abtastung abtastung(const PlattenSystem& s, const Plattenelement& element, Punkt2 p)
+{
+    Abtastung a;
+    double bestAbstand = std::numeric_limits<double>::infinity();
+    std::array<double, 2> bestXiEta{};
+    for (std::size_t t = 0; t < s.elemente.size(); ++t)
+    {
+        const auto& ek = s.elemente[t];
+        const std::array<Punkt2, 3> e{s.knoten[ek[0]], s.knoten[ek[1]], s.knoten[ek[2]]};
+        auto [xi, eta] = bezug(e, p);
+        constexpr double kSpiel = 1e-12;
+        if (xi >= -kSpiel && eta >= -kSpiel && xi + eta <= 1.0 + kSpiel)
+        {
+            a.element = static_cast<int>(t);
+            bestAbstand = 0.0;
+            bestXiEta = {xi, eta};
+            break;
+        }
+        // geklemmt in das Dreieck, dann der Abstand
+        xi = std::max(0.0, xi);
+        eta = std::max(0.0, eta);
+        if (xi + eta > 1.0)
+        {
+            const double summe = xi + eta;
+            xi /= summe;
+            eta /= summe;
+        }
+        const Punkt2 q{e[0].x + (e[1].x - e[0].x) * xi + (e[2].x - e[0].x) * eta,
+                       e[0].y + (e[1].y - e[0].y) * xi + (e[2].y - e[0].y) * eta};
+        const double d = std::hypot(q.x - p.x, q.y - p.y);
+        if (d < bestAbstand)
+        {
+            bestAbstand = d;
+            bestXiEta = {xi, eta};
+            a.element = static_cast<int>(t);
+        }
+    }
+    if (a.element < 0) return a;
+    a.imNetz = bestAbstand == 0.0;
+    a.abstand = bestAbstand;
+    std::vector<double> n, dxi, deta;
+    element.basis(bestXiEta[0], bestXiEta[1], n, dxi, deta);
+    const auto& ek = s.elemente[static_cast<std::size_t>(a.element)];
+    for (std::size_t i = 0; i < ek.size(); ++i)
+    {
+        const int g = s.frei[static_cast<std::size_t>(3 * ek[i])];  // w des Knotens
+        if (g < 0 || n[i] == 0.0) continue;
+        a.groessen.push_back(g);
+        a.gewichte.push_back(n[i]);
+    }
+    return a;
+}
+
+/// Der Wert einer Form (nummeriert wie K und M) an der abgetasteten Stelle.
+[[nodiscard]] inline double wertBei(const Abtastung& a, const std::vector<double>& form)
+{
+    double w = 0.0;
+    for (std::size_t i = 0; i < a.groessen.size(); ++i) w += a.gewichte[i] * form[static_cast<std::size_t>(a.groessen[i])];
+    return w;
+}
+
+/// Setzt Federn an Punkten auf K (KQ46 a, S210): je Feder k · N Nᵀ auf den w-Groessen des Elements, in dem der
+/// Punkt liegt (N = die Ansatzwerte dort, `abtastung`) — die Energie ½ k w(p)² mit dem w des Ansatzes. Ein Punkt
+/// ausserhalb des Netzes gilt am naechsten Element. Die Plaetze stehen schon im Muster von K (ein Element koppelt
+/// alle seine Groessen). Eine Feder an gehaltenen Groessen wirkt nicht.
+///
+/// An einer schubweichen Platte (Reissner-Mindlin) gibt eine Punktkraft unter sich eine Auslenkung, die mit
+/// feinerem Netz langsam waechst: die Feder wird mit dem Netz etwas weicher. An den Netzen der Koerper ist das
+/// klein (der Test „KQ46 Punktfedern“ misst es gegen die Rechnung im Modenraum).
+inline void setzePunktfedern(PlattenSystem& s, const Plattenelement& element, const std::vector<Punktfeder>& federn)
+{
+    for (const Punktfeder& f : federn)
+    {
+        if (!(f.steife > 0.0)) continue;
+        const Abtastung a = abtastung(s, element, f.ort);
+        for (std::size_t i = 0; i < a.groessen.size(); ++i)
+            for (std::size_t j = 0; j < a.groessen.size(); ++j)
+                if (a.groessen[j] >= a.groessen[i]) s.k.addiere(a.groessen[i], a.groessen[j], f.steife * a.gewichte[i] * a.gewichte[j]);
+    }
+}
+
+[[nodiscard]] inline PlattenSystem baueSystemOhnePunktfedern(const Netz& netz, const Plattenelement& element, const Bauplan& plan);
+
 /// K und M der Platte eines Bauplans, mit seinem Rand (`Bauplan::rand`, KQ18 a): eingespannt, oder in w
-/// gehalten mit der Drehfeder des Bauplans; die Abschnitte des Rands (KQ20 a) mit ihren eigenen Federn.
+/// gehalten mit der Drehfeder des Bauplans; die Abschnitte des Rands (KQ20 a) mit ihren eigenen Federn; dazu
+/// die Federn an Punkten (`Bauplan::punktfedern`, KQ46 a).
 [[nodiscard]] inline PlattenSystem baueSystem(const Netz& netz, const Plattenelement& element, const Bauplan& plan)
+{
+    PlattenSystem sys = baueSystemOhnePunktfedern(netz, element, plan);
+    if (sys.fehler.empty() && !plan.punktfedern.empty()) setzePunktfedern(sys, element, plan.punktfedern);
+    return sys;
+}
+
+/// Wie `baueSystem(netz, element, plan)`, ohne die Federn an Punkten — fuer Vergleiche und Proben.
+[[nodiscard]] inline PlattenSystem baueSystemOhnePunktfedern(const Netz& netz, const Plattenelement& element, const Bauplan& plan)
 {
     const auto steife = [&plan](Punkt2 p) { return steifeBei(plan, p); };
     std::function<std::optional<RandFedern>(Punkt2)> abschnitt;
