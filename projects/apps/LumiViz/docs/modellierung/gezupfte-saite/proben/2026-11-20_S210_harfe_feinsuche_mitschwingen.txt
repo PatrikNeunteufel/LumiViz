@@ -1,0 +1,319 @@
+##### F1 mu 2,15, Feder bis 0,6 m, 7000 N, Saiten 0,2
+1468 Moden, 17 Hoerorte, 46 Saiten
+ 38 Saite  37+1  keine  -26.1  O+Q (20)  -26.8  Unterschied -0.71 LU   274 s
+ 39 Saite  37+2  keine  -25.2  O+Q (20)  -25.2  Unterschied +0.02 LU   269 s
+ 40 Saite  39+1  keine  -24.8  O+Q (19)  -25.0  Unterschied -0.17 LU   288 s
+ 41 Saite  40+1  keine  -21.3  O+Q (19)  -23.0  Unterschied -1.76 LU   271 s
+ 42 Saite  40+2  keine  -23.5  O+Q (19)  -24.1  Unterschied -0.57 LU   152 s
+ 43 Saite  42+1  keine  -22.2  O+Q (20)  -22.9  Unterschied -0.68 LU   192 s
+ 44 Saite  42+2  keine  -19.3  O+Q (20)  -19.4  Unterschied -0.05 LU   212 s
+ 45 Saite  44+1  keine  -20.4  O+Q (20)  -23.6  Unterschied -3.18 LU   255 s
+ 46 Saite  44+2  keine  -18.8  O+Q (20)  -18.7  Unterschied +0.04 LU   133 s
+ 47 Saite  46+1  keine  -21.8  O+Q (20)  -25.9  Unterschied -4.16 LU   86 s
+ 48 Saite  47+1  keine  -25.7  O+Q (20)  -27.5  Unterschied -1.79 LU   77 s
+ 49 Saite  47+2  keine  -26.8  O+Q (20)  -26.7  Unterschied +0.02 LU   79 s
+ 50 Saite  49+1  keine  -26.6  O+Q (20)  -26.1  Unterschied +0.43 LU   79 s
+ 51 Saite  49+2  keine  -26.6  O+Q (20)  -26.6  Unterschied +0.00 LU   77 s
+ 52 Saite  51+1  keine  -24.3  O+Q (19)  -25.1  Unterschied -0.85 LU   73 s
+ 53 Saite  52+1  keine  -19.4  O+Q (19)  -20.7  Unterschied -1.28 LU   75 s
+ 54 Saite  52+2  keine  -21.1  O+Q (19)  -21.2  Unterschied -0.07 LU   74 s
+ 55 Saite  54+1  keine  -19.3  O+Q (20)  -19.4  Unterschied -0.11 LU   79 s
+ 56 Saite  54+2  keine  -15.4  O+Q (20)  -15.4  Unterschied -0.03 LU   77 s
+ 57 Saite  56+1  keine  -10.8  O+Q (20)  -12.1  Unterschied -1.39 LU   77 s
+ 58 Saite  56+2  keine   -8.7  O+Q (20)   -8.6  Unterschied +0.05 LU   78 s
+ 59 Saite  58+1  keine  -11.1  O+Q (20)  -10.5  Unterschied +0.51 LU   81 s
+ 60 Saite  59+1  keine  -13.5  O+Q (20)  -13.2  Unterschied +0.26 LU   82 s
+ 61 Saite  59+2  keine  -16.8  O+Q (20)  -16.8  Unterschied -0.03 LU   98 s
+ 62 Saite  61+1  keine  -18.3  O+Q (20)  -18.5  Unterschied -0.18 LU   166 s
+ 63 Saite  61+2  keine  -19.4  O+Q (20)  -19.4  Unterschied -0.01 LU   172 s
+ 64 Saite  63+1  keine  -18.2  O+Q (19)  -18.3  Unterschied -0.09 LU   292 s
+ 65 Saite  64+1  keine  -13.7  O+Q (19)  -15.1  Unterschied -1.39 LU   220 s
+ 66 Saite  64+2  keine  -19.1  O+Q (19)  -18.6  Unterschied +0.48 LU   278 s
+ 67 Saite  66+1  keine  -21.2  O+Q (20)  -21.2  Unterschied +0.04 LU   275 s
+ 68 Saite  66+2  keine  -20.5  O+Q (20)  -20.5  Unterschied -0.02 LU   273 s
+ 69 Saite  68+1  keine  -15.5  O+Q (20)  -16.7  Unterschied -1.21 LU   268 s
+ 70 Saite  68+2  keine  -17.4  O+Q (20)  -17.3  Unterschied +0.10 LU   272 s
+ 71 Saite  70+1  keine  -20.1  O+Q (20)  -20.2  Unterschied -0.15 LU   257 s
+ 72 Saite  71+1  keine  -22.0  O+Q (20)  -22.2  Unterschied -0.19 LU   188 s
+ 73 Saite  71+2  keine  -22.0  O+Q (20)  -22.1  Unterschied -0.03 LU   189 s
+ 74 Saite  73+1  keine  -22.6  O+Q (20)  -23.3  Unterschied -0.68 LU   94 s
+ 75 Saite  73+2  keine  -23.0  O+Q (20)  -23.1  Unterschied -0.01 LU   95 s
+ 76 Saite  75+1  keine  -20.7  O+Q (19)  -20.9  Unterschied -0.19 LU   96 s
+ 77 Saite  76+1  keine  -17.5  O+Q (19)  -17.8  Unterschied -0.30 LU   156 s
+ 78 Saite  76+2  keine  -18.9  O+Q (19)  -19.4  Unterschied -0.54 LU   124 s
+ 79 Saite  78+1  keine  -21.9  O+Q (20)  -21.8  Unterschied +0.12 LU   127 s
+ 80 Saite  78+2  keine  -17.8  O+Q (20)  -17.8  Unterschied -0.04 LU   126 s
+ 81 Saite  80+1  keine  -14.3  O+Q (20)  -15.7  Unterschied -1.36 LU   125 s
+ 82 Saite  80+2  keine  -19.5  O+Q (20)  -19.5  Unterschied -0.01 LU   129 s
+ 83 Saite  82+1  keine  -16.8  O+Q (20)  -17.0  Unterschied -0.29 LU   127 s
+ 84 Saite  83+1  keine  -18.6  O+Q (20)  -19.2  Unterschied -0.58 LU   129 s
+ 85 Saite  83+2  keine  -20.1  O+Q (20)  -20.1  Unterschied -0.04 LU   137 s
+ 86 Saite  85+1  keine  -15.5  O+Q (20)  -16.2  Unterschied -0.66 LU   137 s
+ 87 Saite  85+2  keine  -18.8  O+Q (20)  -18.8  Unterschied +0.00 LU   322 s
+ 88 Saite  87+1  keine  -15.6  O+Q (19)  -16.1  Unterschied -0.49 LU   222 s
+ 89 Saite  88+1  keine  -17.7  O+Q (19)  -18.0  Unterschied -0.27 LU   129 s
+ 90 Saite  88+2  keine  -14.6  O+Q (19)  -14.7  Unterschied -0.10 LU   105 s
+ 91 Saite  90+1  keine  -15.4  O+Q (20)  -15.7  Unterschied -0.29 LU   113 s
+ 92 Saite  90+2  keine  -13.7  O+Q (20)  -13.7  Unterschied +0.00 LU   85 s
+ 93 Saite  92+1  keine  -14.5  O+Q (20)  -14.7  Unterschied -0.21 LU   85 s
+ 94 Saite  92+2  keine  -15.0  O+Q (20)  -15.0  Unterschied -0.00 LU   84 s
+ 95 Saite  94+1  keine  -17.6  O+Q (20)  -17.9  Unterschied -0.26 LU   192 s
+ 96 Saite  95+1  keine  -21.3  O+Q (20)  -21.5  Unterschied -0.12 LU   237 s
+ 97 Saite  95+2  keine  -21.2  O+Q (20)  -21.2  Unterschied -0.01 LU   281 s
+ 98 Saite  97+1  keine  -21.1  O+Q (20)  -21.1  Unterschied +0.01 LU   282 s
+ 99 Saite  97+2  keine  -19.5  O+Q (20)  -19.5  Unterschied -0.01 LU   260 s
+100 Saite  99+1  keine  -17.6  O+Q (19)  -17.6  Unterschied -0.03 LU   286 s
+101 Saite 100+1  keine  -16.6  O+Q (19)  -16.7  Unterschied -0.08 LU   290 s
+102 Saite 100+2  keine  -19.1  O+Q (19)  -19.1  Unterschied +0.01 LU   288 s
+103 Saite 102+1  keine  -20.2  O+Q (20)  -20.3  Unterschied -0.09 LU   212 s
+104 Saite 102+2  keine  -22.0  O+Q (20)  -22.0  Unterschied -0.01 LU   287 s
+=== mu215_bis06_dreh7000_saiten0.2: nur die gespielte Saite
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.8 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  18.1  groesster  12.5  mittlerer  2.7
+dasselbe aus den Maxima je Mikrofon         : Spanne  18.1  groesster  12.5  mittlerer  2.7   (prueft die Naeherung)
+=== mu215_bis06_dreh7000_saiten0.2: mit Mitschwingen (O+Q, GZ8 a)
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.7 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  18.9  groesster  12.6  mittlerer  2.4
+dasselbe aus den Maxima je Mikrofon         : Spanne  18.9  groesster  12.6  mittlerer  2.4   (prueft die Naeherung)
+Tasten mit Mitschwingen:
+38	-26.803 39	-25.222 40	-24.969 41	-23.038 42	-24.104 43	-22.918 44	-19.379 45	-23.570 46	-18.726 47	-25.926 48	-27.511 49	-26.749 50	-26.136 51	-26.564 52	-25.111 53	-20.669 54	-21.211 55	-19.435 56	-15.382 57	-12.139 58	-8.625 59	-10.542 60	-13.214 61	-16.808 62	-18.501 63	-19.409 64	-18.338 65	-15.129 66	-18.623 67	-21.150 68	-20.502 69	-16.690 70	-17.310 71	-20.235 72	-22.241 73	-22.059 74	-23.277 75	-23.061 76	-20.913 77	-17.820 78	-19.438 79	-21.827 80	-17.820 81	-15.685 82	-19.464 83	-17.045 84	-19.182 85	-20.138 86	-16.171 87	-18.826 88	-16.111 89	-17.970 90	-14.706 91	-15.715 92	-13.681 93	-14.699 94	-15.034 95	-17.852 96	-21.452 97	-21.228 98	-21.092 99	-19.478 100	-17.608 101	-16.730 102	-19.142 103	-20.297 104	-21.992
+
+##### F2 mu 2,0, Feder bis 0,6 m, 5000 N, Saiten 0,2
+1547 Moden, 17 Hoerorte, 46 Saiten
+ 38 Saite  37+1  keine  -26.9  O+Q (20)  -27.5  Unterschied -0.63 LU   359 s
+ 39 Saite  37+2  keine  -25.8  O+Q (20)  -25.8  Unterschied +0.00 LU   372 s
+ 40 Saite  39+1  keine  -24.9  O+Q (19)  -25.1  Unterschied -0.20 LU   376 s
+ 41 Saite  40+1  keine  -21.8  O+Q (19)  -23.6  Unterschied -1.84 LU   270 s
+ 42 Saite  40+2  keine  -23.5  O+Q (19)  -24.1  Unterschied -0.64 LU   287 s
+ 43 Saite  42+1  keine  -22.4  O+Q (20)  -23.2  Unterschied -0.78 LU   250 s
+ 44 Saite  42+2  keine  -19.7  O+Q (20)  -19.7  Unterschied -0.03 LU   289 s
+ 45 Saite  44+1  keine  -21.0  O+Q (20)  -23.7  Unterschied -2.72 LU   308 s
+ 46 Saite  44+2  keine  -19.3  O+Q (20)  -19.2  Unterschied +0.02 LU   296 s
+ 47 Saite  46+1  keine  -22.4  O+Q (20)  -26.4  Unterschied -4.00 LU   302 s
+ 48 Saite  47+1  keine  -27.1  O+Q (20)  -28.5  Unterschied -1.40 LU   301 s
+ 49 Saite  47+2  keine  -27.6  O+Q (20)  -27.6  Unterschied +0.01 LU   132 s
+ 50 Saite  49+1  keine  -27.4  O+Q (20)  -27.2  Unterschied +0.24 LU   144 s
+ 51 Saite  49+2  keine  -27.4  O+Q (20)  -27.4  Unterschied -0.01 LU   133 s
+ 52 Saite  51+1  keine  -24.2  O+Q (19)  -25.4  Unterschied -1.11 LU   170 s
+ 53 Saite  52+1  keine  -19.2  O+Q (19)  -20.2  Unterschied -0.97 LU   168 s
+ 54 Saite  52+2  keine  -20.8  O+Q (19)  -20.7  Unterschied +0.01 LU   148 s
+ 55 Saite  54+1  keine  -19.5  O+Q (20)  -19.3  Unterschied +0.23 LU   138 s
+ 56 Saite  54+2  keine  -15.9  O+Q (20)  -15.9  Unterschied -0.01 LU   174 s
+ 57 Saite  56+1  keine  -11.5  O+Q (20)  -12.9  Unterschied -1.36 LU   164 s
+ 58 Saite  56+2  keine   -9.3  O+Q (20)   -9.2  Unterschied +0.09 LU   182 s
+ 59 Saite  58+1  keine  -10.3  O+Q (20)  -10.5  Unterschied -0.13 LU   166 s
+ 60 Saite  59+1  keine  -13.6  O+Q (20)  -13.4  Unterschied +0.22 LU   149 s
+ 61 Saite  59+2  keine  -17.0  O+Q (20)  -17.0  Unterschied -0.03 LU   83 s
+ 62 Saite  61+1  keine  -18.7  O+Q (20)  -18.9  Unterschied -0.17 LU   81 s
+ 63 Saite  61+2  keine  -19.9  O+Q (20)  -19.9  Unterschied -0.02 LU   89 s
+ 64 Saite  63+1  keine  -18.3  O+Q (19)  -18.4  Unterschied -0.08 LU   173 s
+ 65 Saite  64+1  keine  -14.6  O+Q (19)  -15.6  Unterschied -1.02 LU   161 s
+ 66 Saite  64+2  keine  -19.4  O+Q (19)  -19.0  Unterschied +0.48 LU   172 s
+ 67 Saite  66+1  keine  -21.4  O+Q (20)  -21.4  Unterschied +0.02 LU   166 s
+ 68 Saite  66+2  keine  -20.4  O+Q (20)  -20.4  Unterschied -0.03 LU   167 s
+ 69 Saite  68+1  keine  -14.9  O+Q (20)  -16.2  Unterschied -1.34 LU   154 s
+ 70 Saite  68+2  keine  -17.9  O+Q (20)  -17.8  Unterschied +0.09 LU   83 s
+ 71 Saite  70+1  keine  -20.3  O+Q (20)  -20.6  Unterschied -0.28 LU   82 s
+ 72 Saite  71+1  keine  -22.7  O+Q (20)  -22.8  Unterschied -0.15 LU   82 s
+ 73 Saite  71+2  keine  -22.5  O+Q (20)  -22.5  Unterschied -0.04 LU   115 s
+ 74 Saite  73+1  keine  -22.9  O+Q (20)  -23.6  Unterschied -0.69 LU   165 s
+ 75 Saite  73+2  keine  -23.5  O+Q (20)  -23.5  Unterschied -0.02 LU   158 s
+ 76 Saite  75+1  keine  -20.8  O+Q (19)  -21.0  Unterschied -0.21 LU   154 s
+ 77 Saite  76+1  keine  -17.2  O+Q (19)  -17.5  Unterschied -0.31 LU   152 s
+ 78 Saite  76+2  keine  -19.4  O+Q (19)  -19.8  Unterschied -0.47 LU   155 s
+ 79 Saite  78+1  keine  -21.8  O+Q (20)  -21.7  Unterschied +0.10 LU   149 s
+ 80 Saite  78+2  keine  -17.1  O+Q (20)  -17.2  Unterschied -0.05 LU   150 s
+ 81 Saite  80+1  keine  -15.1  O+Q (20)  -16.3  Unterschied -1.18 LU   151 s
+ 82 Saite  80+2  keine  -19.8  O+Q (20)  -19.8  Unterschied -0.01 LU   141 s
+ 83 Saite  82+1  keine  -16.0  O+Q (20)  -16.5  Unterschied -0.48 LU   180 s
+ 84 Saite  83+1  keine  -19.3  O+Q (20)  -19.7  Unterschied -0.41 LU   240 s
+ 85 Saite  83+2  keine  -19.7  O+Q (20)  -19.8  Unterschied -0.06 LU   139 s
+ 86 Saite  85+1  keine  -15.8  O+Q (20)  -16.3  Unterschied -0.52 LU   140 s
+ 87 Saite  85+2  keine  -18.6  O+Q (20)  -18.6  Unterschied +0.00 LU   136 s
+ 88 Saite  87+1  keine  -15.8  O+Q (19)  -16.3  Unterschied -0.52 LU   139 s
+ 89 Saite  88+1  keine  -17.8  O+Q (19)  -18.1  Unterschied -0.26 LU   130 s
+ 90 Saite  88+2  keine  -14.8  O+Q (19)  -14.9  Unterschied -0.10 LU   145 s
+ 91 Saite  90+1  keine  -15.9  O+Q (20)  -16.2  Unterschied -0.31 LU   140 s
+ 92 Saite  90+2  keine  -14.3  O+Q (20)  -14.3  Unterschied +0.00 LU   136 s
+ 93 Saite  92+1  keine  -14.4  O+Q (20)  -14.6  Unterschied -0.23 LU   139 s
+ 94 Saite  92+2  keine  -15.0  O+Q (20)  -15.0  Unterschied -0.00 LU   130 s
+ 95 Saite  94+1  keine  -17.1  O+Q (20)  -17.4  Unterschied -0.27 LU   135 s
+ 96 Saite  95+1  keine  -20.6  O+Q (20)  -20.7  Unterschied -0.12 LU   131 s
+ 97 Saite  95+2  keine  -20.8  O+Q (20)  -20.8  Unterschied -0.01 LU   126 s
+ 98 Saite  97+1  keine  -21.0  O+Q (20)  -21.0  Unterschied +0.02 LU   135 s
+ 99 Saite  97+2  keine  -19.6  O+Q (20)  -19.6  Unterschied -0.01 LU   130 s
+100 Saite  99+1  keine  -17.0  O+Q (19)  -17.0  Unterschied -0.04 LU   139 s
+101 Saite 100+1  keine  -15.8  O+Q (19)  -15.9  Unterschied -0.08 LU   136 s
+102 Saite 100+2  keine  -18.3  O+Q (19)  -18.3  Unterschied +0.00 LU   135 s
+103 Saite 102+1  keine  -19.6  O+Q (20)  -19.7  Unterschied -0.08 LU   140 s
+104 Saite 102+2  keine  -21.8  O+Q (20)  -21.8  Unterschied -0.01 LU   105 s
+=== mu20_bis06_dreh5000_saiten0.2: nur die gespielte Saite
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.8 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  18.3  groesster  11.4  mittlerer  2.7
+dasselbe aus den Maxima je Mikrofon         : Spanne  18.3  groesster  11.4  mittlerer  2.7   (prueft die Naeherung)
+=== mu20_bis06_dreh5000_saiten0.2: mit Mitschwingen (O+Q, GZ8 a)
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.7 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  19.3  groesster  11.5  mittlerer  2.7
+dasselbe aus den Maxima je Mikrofon         : Spanne  19.3  groesster  11.5  mittlerer  2.7   (prueft die Naeherung)
+Tasten mit Mitschwingen:
+38	-27.491 39	-25.840 40	-25.111 41	-23.603 42	-24.124 43	-23.184 44	-19.724 45	-23.718 46	-19.226 47	-26.409 48	-28.546 49	-27.613 50	-27.189 51	-27.404 52	-25.357 53	-20.157 54	-20.741 55	-19.270 56	-15.906 57	-12.870 58	-9.239 59	-10.473 60	-13.380 61	-17.040 62	-18.882 63	-19.949 64	-18.395 65	-15.643 66	-18.950 67	-21.373 68	-20.403 69	-16.208 70	-17.832 71	-20.566 72	-22.811 73	-22.490 74	-23.625 75	-23.489 76	-21.037 77	-17.473 78	-19.830 79	-21.682 80	-17.175 81	-16.266 82	-19.838 83	-16.520 84	-19.741 85	-19.757 86	-16.311 87	-18.618 88	-16.283 89	-18.075 90	-14.883 91	-16.177 92	-14.281 93	-14.591 94	-14.985 95	-17.352 96	-20.733 97	-20.841 98	-21.005 99	-19.638 100	-17.001 101	-15.892 102	-18.308 103	-19.716 104	-21.839
+
+##### F3 mu 2,0, Feder bis 0,7 m, 3000 N, Saiten 0,2
+1652 Moden, 17 Hoerorte, 46 Saiten
+ 38 Saite  37+1  keine  -26.5  O+Q (20)  -27.3  Unterschied -0.73 LU   274 s
+ 39 Saite  37+2  keine  -26.0  O+Q (20)  -26.0  Unterschied +0.01 LU   269 s
+ 40 Saite  39+1  keine  -24.8  O+Q (19)  -24.9  Unterschied -0.13 LU   288 s
+ 41 Saite  40+1  keine  -21.4  O+Q (19)  -23.4  Unterschied -2.04 LU   271 s
+ 42 Saite  40+2  keine  -22.8  O+Q (19)  -23.5  Unterschied -0.73 LU   152 s
+ 43 Saite  42+1  keine  -21.7  O+Q (20)  -22.5  Unterschied -0.77 LU   192 s
+ 44 Saite  42+2  keine  -18.8  O+Q (20)  -18.9  Unterschied -0.02 LU   213 s
+ 45 Saite  44+1  keine  -20.1  O+Q (20)  -23.1  Unterschied -2.97 LU   256 s
+ 46 Saite  44+2  keine  -20.0  O+Q (20)  -20.0  Unterschied +0.02 LU   139 s
+ 47 Saite  46+1  keine  -23.8  O+Q (20)  -26.1  Unterschied -2.30 LU   83 s
+ 48 Saite  47+1  keine  -28.2  O+Q (20)  -29.5  Unterschied -1.35 LU   78 s
+ 49 Saite  47+2  keine  -28.0  O+Q (20)  -28.0  Unterschied -0.00 LU   81 s
+ 50 Saite  49+1  keine  -27.6  O+Q (20)  -27.6  Unterschied -0.00 LU   79 s
+ 51 Saite  49+2  keine  -27.1  O+Q (20)  -27.1  Unterschied -0.03 LU   77 s
+ 52 Saite  51+1  keine  -23.2  O+Q (19)  -24.8  Unterschied -1.62 LU   74 s
+ 53 Saite  52+1  keine  -18.5  O+Q (19)  -19.4  Unterschied -0.89 LU   75 s
+ 54 Saite  52+2  keine  -20.6  O+Q (19)  -20.5  Unterschied +0.09 LU   75 s
+ 55 Saite  54+1  keine  -19.7  O+Q (20)  -19.3  Unterschied +0.34 LU   80 s
+ 56 Saite  54+2  keine  -16.0  O+Q (20)  -16.0  Unterschied -0.01 LU   78 s
+ 57 Saite  56+1  keine  -11.7  O+Q (20)  -13.8  Unterschied -2.09 LU   78 s
+ 58 Saite  56+2  keine  -10.9  O+Q (20)  -10.7  Unterschied +0.18 LU   79 s
+ 59 Saite  58+1  keine  -10.5  O+Q (20)  -10.3  Unterschied +0.14 LU   81 s
+ 60 Saite  59+1  keine  -11.7  O+Q (20)  -11.5  Unterschied +0.14 LU   86 s
+ 61 Saite  59+2  keine  -16.1  O+Q (20)  -16.1  Unterschied -0.03 LU   99 s
+ 62 Saite  61+1  keine  -18.2  O+Q (20)  -18.4  Unterschied -0.20 LU   183 s
+ 63 Saite  61+2  keine  -19.7  O+Q (20)  -19.7  Unterschied -0.02 LU   203 s
+ 64 Saite  63+1  keine  -18.4  O+Q (19)  -18.5  Unterschied -0.16 LU   270 s
+ 65 Saite  64+1  keine  -14.3  O+Q (19)  -15.7  Unterschied -1.34 LU   234 s
+ 66 Saite  64+2  keine  -19.1  O+Q (19)  -18.6  Unterschied +0.48 LU   280 s
+ 67 Saite  66+1  keine  -20.9  O+Q (20)  -21.0  Unterschied -0.08 LU   277 s
+ 68 Saite  66+2  keine  -19.7  O+Q (20)  -19.7  Unterschied -0.04 LU   272 s
+ 69 Saite  68+1  keine  -14.2  O+Q (20)  -15.7  Unterschied -1.47 LU   267 s
+ 70 Saite  68+2  keine  -18.3  O+Q (20)  -18.2  Unterschied +0.08 LU   272 s
+ 71 Saite  70+1  keine  -20.1  O+Q (20)  -20.5  Unterschied -0.38 LU   242 s
+ 72 Saite  71+1  keine  -22.7  O+Q (20)  -22.8  Unterschied -0.10 LU   188 s
+ 73 Saite  71+2  keine  -22.4  O+Q (20)  -22.4  Unterschied -0.04 LU   174 s
+ 74 Saite  73+1  keine  -23.0  O+Q (20)  -23.6  Unterschied -0.60 LU   93 s
+ 75 Saite  73+2  keine  -23.5  O+Q (20)  -23.5  Unterschied -0.02 LU   94 s
+ 76 Saite  75+1  keine  -20.9  O+Q (19)  -21.1  Unterschied -0.21 LU   141 s
+ 77 Saite  76+1  keine  -17.0  O+Q (19)  -17.3  Unterschied -0.32 LU   128 s
+ 78 Saite  76+2  keine  -19.6  O+Q (19)  -20.0  Unterschied -0.45 LU   130 s
+ 79 Saite  78+1  keine  -21.5  O+Q (20)  -21.4  Unterschied +0.07 LU   131 s
+ 80 Saite  78+2  keine  -16.3  O+Q (20)  -16.3  Unterschied -0.05 LU   132 s
+ 81 Saite  80+1  keine  -16.0  O+Q (20)  -16.9  Unterschied -0.95 LU   134 s
+ 82 Saite  80+2  keine  -20.0  O+Q (20)  -20.0  Unterschied -0.01 LU   136 s
+ 83 Saite  82+1  keine  -15.4  O+Q (20)  -16.1  Unterschied -0.65 LU   134 s
+ 84 Saite  83+1  keine  -20.0  O+Q (20)  -20.2  Unterschied -0.24 LU   141 s
+ 85 Saite  83+2  keine  -19.0  O+Q (20)  -19.1  Unterschied -0.06 LU   144 s
+ 86 Saite  85+1  keine  -16.3  O+Q (20)  -16.7  Unterschied -0.38 LU   281 s
+ 87 Saite  85+2  keine  -18.5  O+Q (20)  -18.5  Unterschied -0.00 LU   273 s
+ 88 Saite  87+1  keine  -16.3  O+Q (19)  -16.8  Unterschied -0.52 LU   131 s
+ 89 Saite  88+1  keine  -18.9  O+Q (19)  -19.2  Unterschied -0.24 LU   111 s
+ 90 Saite  88+2  keine  -16.6  O+Q (19)  -16.7  Unterschied -0.07 LU   117 s
+ 91 Saite  90+1  keine  -16.5  O+Q (20)  -16.8  Unterschied -0.27 LU   87 s
+ 92 Saite  90+2  keine  -15.1  O+Q (20)  -15.1  Unterschied +0.00 LU   86 s
+ 93 Saite  92+1  keine  -14.5  O+Q (20)  -14.8  Unterschied -0.26 LU   86 s
+ 94 Saite  92+2  keine  -15.3  O+Q (20)  -15.3  Unterschied -0.00 LU   171 s
+ 95 Saite  94+1  keine  -17.3  O+Q (20)  -17.6  Unterschied -0.28 LU   237 s
+ 96 Saite  95+1  keine  -20.3  O+Q (20)  -20.4  Unterschied -0.12 LU   282 s
+ 97 Saite  95+2  keine  -20.6  O+Q (20)  -20.6  Unterschied -0.01 LU   282 s
+ 98 Saite  97+1  keine  -21.2  O+Q (20)  -21.2  Unterschied +0.02 LU   263 s
+ 99 Saite  97+2  keine  -20.1  O+Q (20)  -20.1  Unterschied -0.01 LU   283 s
+100 Saite  99+1  keine  -16.5  O+Q (19)  -16.6  Unterschied -0.05 LU   292 s
+101 Saite 100+1  keine  -15.4  O+Q (19)  -15.4  Unterschied -0.07 LU   292 s
+102 Saite 100+2  keine  -17.6  O+Q (19)  -17.6  Unterschied -0.00 LU   231 s
+103 Saite 102+1  keine  -19.0  O+Q (20)  -19.1  Unterschied -0.07 LU   274 s
+104 Saite 102+2  keine  -21.1  O+Q (20)  -21.1  Unterschied -0.01 LU   68 s
+=== mu20_bis07_dreh3000_saiten0.2: nur die gespielte Saite
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.7 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  17.7  groesster   9.7  mittlerer  2.7
+dasselbe aus den Maxima je Mikrofon         : Spanne  17.7  groesster   9.7  mittlerer  2.7   (prueft die Naeherung)
+=== mu20_bis07_dreh3000_saiten0.2: mit Mitschwingen (O+Q, GZ8 a)
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.6 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  19.2  groesster  10.7  mittlerer  2.5
+dasselbe aus den Maxima je Mikrofon         : Spanne  19.2  groesster  10.7  mittlerer  2.5   (prueft die Naeherung)
+Tasten mit Mitschwingen:
+38	-27.265 39	-26.010 40	-24.944 41	-23.435 42	-23.543 43	-22.453 44	-18.864 45	-23.095 46	-19.972 47	-26.116 48	-29.525 49	-28.037 50	-27.632 51	-27.141 52	-24.839 53	-19.384 54	-20.460 55	-19.325 56	-16.029 57	-13.755 58	-10.680 59	-10.336 60	-11.537 61	-16.096 62	-18.354 63	-19.683 64	-18.536 65	-15.652 66	-18.609 67	-20.960 68	-19.706 69	-15.675 70	-18.212 71	-20.509 72	-22.790 73	-22.394 74	-23.590 75	-23.498 76	-21.099 77	-17.291 78	-20.025 79	-21.385 80	-16.328 81	-16.931 82	-19.970 83	-16.079 84	-20.195 85	-19.073 86	-16.685 87	-18.472 88	-16.821 89	-19.192 90	-16.699 91	-16.783 92	-15.052 93	-14.804 94	-15.333 95	-17.558 96	-20.399 97	-20.608 98	-21.193 99	-20.136 100	-16.586 101	-15.429 102	-17.585 103	-19.079 104	-21.131
+
+##### F4 mu 2,3, Feder bis 0,6 m, 7000 N, Saiten 0,2
+1468 Moden, 17 Hoerorte, 46 Saiten
+ 38 Saite  37+1  keine  -25.5  O+Q (20)  -26.4  Unterschied -0.96 LU   359 s
+ 39 Saite  37+2  keine  -25.2  O+Q (20)  -25.1  Unterschied +0.04 LU   372 s
+ 40 Saite  39+1  keine  -24.6  O+Q (19)  -24.7  Unterschied -0.13 LU   376 s
+ 41 Saite  40+1  keine  -21.2  O+Q (19)  -22.9  Unterschied -1.72 LU   270 s
+ 42 Saite  40+2  keine  -23.4  O+Q (19)  -23.9  Unterschied -0.45 LU   287 s
+ 43 Saite  42+1  keine  -21.8  O+Q (20)  -22.4  Unterschied -0.62 LU   250 s
+ 44 Saite  42+2  keine  -18.5  O+Q (20)  -18.6  Unterschied -0.07 LU   289 s
+ 45 Saite  44+1  keine  -19.1  O+Q (20)  -22.7  Unterschied -3.64 LU   308 s
+ 46 Saite  44+2  keine  -19.3  O+Q (20)  -19.2  Unterschied +0.05 LU   297 s
+ 47 Saite  46+1  keine  -22.1  O+Q (20)  -26.2  Unterschied -4.15 LU   302 s
+ 48 Saite  47+1  keine  -25.6  O+Q (20)  -27.4  Unterschied -1.77 LU   301 s
+ 49 Saite  47+2  keine  -26.6  O+Q (20)  -26.6  Unterschied +0.02 LU   132 s
+ 50 Saite  49+1  keine  -26.2  O+Q (20)  -25.9  Unterschied +0.38 LU   141 s
+ 51 Saite  49+2  keine  -26.0  O+Q (20)  -26.0  Unterschied -0.00 LU   133 s
+ 52 Saite  51+1  keine  -23.6  O+Q (19)  -24.6  Unterschied -1.03 LU   162 s
+ 53 Saite  52+1  keine  -19.7  O+Q (19)  -20.7  Unterschied -1.03 LU   165 s
+ 54 Saite  52+2  keine  -21.1  O+Q (19)  -21.2  Unterschied -0.07 LU   147 s
+ 55 Saite  54+1  keine  -18.7  O+Q (20)  -19.1  Unterschied -0.38 LU   137 s
+ 56 Saite  54+2  keine  -14.3  O+Q (20)  -14.4  Unterschied -0.05 LU   167 s
+ 57 Saite  56+1  keine   -9.6  O+Q (20)  -11.5  Unterschied -1.90 LU   157 s
+ 58 Saite  56+2  keine   -9.0  O+Q (20)   -8.9  Unterschied +0.06 LU   183 s
+ 59 Saite  58+1  keine  -11.3  O+Q (20)  -10.9  Unterschied +0.31 LU   168 s
+ 60 Saite  59+1  keine  -13.7  O+Q (20)  -13.5  Unterschied +0.30 LU   147 s
+ 61 Saite  59+2  keine  -16.9  O+Q (20)  -17.0  Unterschied -0.03 LU   94 s
+ 62 Saite  61+1  keine  -18.4  O+Q (20)  -18.6  Unterschied -0.18 LU   81 s
+ 63 Saite  61+2  keine  -19.3  O+Q (20)  -19.3  Unterschied -0.01 LU   83 s
+ 64 Saite  63+1  keine  -18.1  O+Q (19)  -18.2  Unterschied -0.11 LU   153 s
+ 65 Saite  64+1  keine  -13.9  O+Q (19)  -15.2  Unterschied -1.32 LU   163 s
+ 66 Saite  64+2  keine  -19.2  O+Q (19)  -18.7  Unterschied +0.49 LU   163 s
+ 67 Saite  66+1  keine  -21.2  O+Q (20)  -21.2  Unterschied +0.04 LU   168 s
+ 68 Saite  66+2  keine  -20.5  O+Q (20)  -20.5  Unterschied -0.02 LU   164 s
+ 69 Saite  68+1  keine  -15.5  O+Q (20)  -16.7  Unterschied -1.20 LU   166 s
+ 70 Saite  68+2  keine  -17.4  O+Q (20)  -17.3  Unterschied +0.10 LU   96 s
+ 71 Saite  70+1  keine  -20.0  O+Q (20)  -20.1  Unterschied -0.15 LU   80 s
+ 72 Saite  71+1  keine  -21.9  O+Q (20)  -22.1  Unterschied -0.19 LU   81 s
+ 73 Saite  71+2  keine  -21.9  O+Q (20)  -21.9  Unterschied -0.03 LU   85 s
+ 74 Saite  73+1  keine  -22.5  O+Q (20)  -23.1  Unterschied -0.66 LU   163 s
+ 75 Saite  73+2  keine  -22.9  O+Q (20)  -22.9  Unterschied -0.01 LU   158 s
+ 76 Saite  75+1  keine  -20.6  O+Q (19)  -20.8  Unterschied -0.19 LU   154 s
+ 77 Saite  76+1  keine  -17.5  O+Q (19)  -17.8  Unterschied -0.31 LU   147 s
+ 78 Saite  76+2  keine  -18.9  O+Q (19)  -19.5  Unterschied -0.54 LU   151 s
+ 79 Saite  78+1  keine  -22.0  O+Q (20)  -21.8  Unterschied +0.12 LU   150 s
+ 80 Saite  78+2  keine  -17.8  O+Q (20)  -17.8  Unterschied -0.04 LU   149 s
+ 81 Saite  80+1  keine  -14.3  O+Q (20)  -15.7  Unterschied -1.35 LU   145 s
+ 82 Saite  80+2  keine  -19.4  O+Q (20)  -19.5  Unterschied -0.01 LU   148 s
+ 83 Saite  82+1  keine  -16.8  O+Q (20)  -17.1  Unterschied -0.29 LU   138 s
+ 84 Saite  83+1  keine  -18.6  O+Q (20)  -19.2  Unterschied -0.59 LU   282 s
+ 85 Saite  83+2  keine  -20.1  O+Q (20)  -20.1  Unterschied -0.04 LU   135 s
+ 86 Saite  85+1  keine  -15.5  O+Q (20)  -16.2  Unterschied -0.67 LU   139 s
+ 87 Saite  85+2  keine  -18.9  O+Q (20)  -18.9  Unterschied +0.00 LU   139 s
+ 88 Saite  87+1  keine  -15.6  O+Q (19)  -16.1  Unterschied -0.50 LU   132 s
+ 89 Saite  88+1  keine  -17.7  O+Q (19)  -18.0  Unterschied -0.27 LU   132 s
+ 90 Saite  88+2  keine  -14.6  O+Q (19)  -14.7  Unterschied -0.10 LU   136 s
+ 91 Saite  90+1  keine  -15.4  O+Q (20)  -15.7  Unterschied -0.29 LU   148 s
+ 92 Saite  90+2  keine  -13.7  O+Q (20)  -13.7  Unterschied +0.00 LU   134 s
+ 93 Saite  92+1  keine  -14.5  O+Q (20)  -14.7  Unterschied -0.20 LU   134 s
+ 94 Saite  92+2  keine  -15.0  O+Q (20)  -15.0  Unterschied -0.00 LU   131 s
+ 95 Saite  94+1  keine  -17.6  O+Q (20)  -17.9  Unterschied -0.26 LU   132 s
+ 96 Saite  95+1  keine  -21.4  O+Q (20)  -21.5  Unterschied -0.12 LU   133 s
+ 97 Saite  95+2  keine  -21.3  O+Q (20)  -21.3  Unterschied -0.01 LU   123 s
+ 98 Saite  97+1  keine  -21.1  O+Q (20)  -21.1  Unterschied +0.01 LU   134 s
+ 99 Saite  97+2  keine  -19.5  O+Q (20)  -19.5  Unterschied -0.01 LU   134 s
+100 Saite  99+1  keine  -17.6  O+Q (19)  -17.6  Unterschied -0.03 LU   121 s
+101 Saite 100+1  keine  -16.7  O+Q (19)  -16.7  Unterschied -0.08 LU   142 s
+102 Saite 100+2  keine  -19.2  O+Q (19)  -19.2  Unterschied +0.01 LU   135 s
+103 Saite 102+1  keine  -20.2  O+Q (20)  -20.3  Unterschied -0.09 LU   137 s
+104 Saite 102+2  keine  -22.0  O+Q (20)  -22.0  Unterschied -0.01 LU   138 s
+=== mu23_bis06_dreh7000_saiten0.2: nur die gespielte Saite
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.8 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  17.6  groesster  12.1  mittlerer  2.7
+dasselbe aus den Maxima je Mikrofon         : Spanne  17.6  groesster  12.1  mittlerer  2.7   (prueft die Naeherung)
+=== mu23_bis06_dreh7000_saiten0.2: mit Mitschwingen (O+Q, GZ8 a)
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 3.5 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  18.4  groesster  12.2  mittlerer  2.5
+dasselbe aus den Maxima je Mikrofon         : Spanne  18.4  groesster  12.2  mittlerer  2.5   (prueft die Naeherung)
+Tasten mit Mitschwingen:
+38	-26.449 39	-25.140 40	-24.705 41	-22.925 42	-23.887 43	-22.387 44	-18.565 45	-22.742 46	-19.238 47	-26.214 48	-27.373 49	-26.575 50	-25.862 51	-25.980 52	-24.601 53	-20.699 54	-21.158 55	-19.100 56	-14.388 57	-11.544 58	-8.950 59	-10.941 60	-13.450 61	-16.972 62	-18.551 63	-19.322 64	-18.196 65	-15.184 66	-18.742 67	-21.211 68	-20.533 69	-16.686 70	-17.262 71	-20.145 72	-22.135 73	-21.948 74	-23.142 75	-22.913 76	-20.822 77	-17.782 78	-19.455 79	-21.831 80	-17.832 81	-15.688 82	-19.454 83	-17.056 84	-19.193 85	-20.128 86	-16.183 87	-18.875 88	-16.121 89	-17.994 90	-14.707 91	-15.702 92	-13.671 93	-14.686 94	-15.047 95	-17.892 96	-21.525 97	-21.280 98	-21.099 99	-19.474 100	-17.633 101	-16.748 102	-19.162 103	-20.305 104	-21.992

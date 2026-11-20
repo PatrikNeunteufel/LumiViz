@@ -802,3 +802,153 @@ besaiteter Moden vorläge; Bell nennt für S(1,1)− besaitet keine.
 
 **Offen wie in §17:** Eichung des Holzes mit 12 → 2 mm, Feinsuche (am Netz für 5 kHz gegengeprüft), Faktor der Saiten,
 `make_harfe.py` mit den Federn, Körper, Test, Lautheit mit Mitschwingen (KQ39 a).
+
+## 19 S210: Eichung des Holzes mit 12 → 2 mm — der Kandidat aus §17 hält nicht (KQ50 a)
+
+Proben: `proben/2026-11-20_S210_harfe_eichung.py` (freier Boden ohne Leisten, Basis eingefroren in
+`…_harfe_eichung_basis.lvinstbodyplan`), `…_harfe_kandidat_geeicht.py`, `…_harfe_raster2.py`; Ausgaben je `.txt`,
+dazu `…_harfe_raster2_lautheit_kq31_2.txt`. **Am Repo ist nichts geändert** — Bauplan und Körper der Harfe sind die
+aus S206 (auf Fassung 9).
+
+**19.1 Zuordnung der (2,n)-Moden.** Gerechnet hat die Familie mit zwei Knotenlinien längs 0 / 1 / 2 / 3 / 4
+Knotenlinien quer bei 279 / 346 / 400 / 451 / 502 Hz (10 → 3 mm, Holz aus §7.1; an den Vorzeichenbildern der Formen
+gelesen). Bell Tab. 3.2 nennt (2,0) 277, (2,2) 345, (2,3) 394, (2,4) 440 Hz und (2,1) „nicht gefunden“. §7.1 hat die
+vier Werte der Reihe nach zugeordnet, also Bells (2,2) auf die gerechnete (2,1). Nach Bells Zählung lägen (2,2)–(2,4)
++16 / +15 / +14 % daneben, während (2,0) auf 1 % stimmt; die Abstände (gemessen 68 / 49 / 46 Hz, gerechnet 67 / 54 /
+51 Hz) passen nur der Reihe nach. **Annahme, wie §7.1: der Reihe nach** — nicht belegt, Bells Chladni-Bilder dieser
+Moden sind nicht gegengelesen. Die Moden sitzen am Bassende.
+
+**19.2 Eichung.** Elf Moden (Tab. 3.1 (0,6)–(0,12), Tab. 3.2), angepasst E quer zum Boden, E längs, G; am Netz für
+520 / 1500 / 5000 Hz gleich.
+
+| Dicke (+ 1 mm Furnier) | Dichte (Masse) | E quer / längs / G in GPa | größte Abweichung | Wurzel aus dem Mittel der Quadrate |
+|---|---|---|---|---|
+| 10 → 3 mm, Holz aus §7.1 | 500 (1,371 kg) | 7,3 / 0,855 / 0,45 | 2,6 % | 1,35 % |
+| 10 → 3 mm, neu angepasst | 500 (1,371 kg) | 7,33 / 0,865 / 0,368 | 2,0 % | 0,94 % |
+| 12 → 2 mm, Holz aus §7.1 | 456,7 (1,375 kg) | 7,3 / 0,855 / 0,45 | 23 % ((2,n) +19 … +23 %, (0,n) +4 … +7 %) | 12,2 % |
+| **12 → 2 mm, neu angepasst** | 456,7 (1,375 kg = Mittel der drei Böden) | **4,77 / 0,768 / 0,387** | 1,8 % | 0,83 % |
+| 12 → 2 mm, neu angepasst | 500 (1,505 kg) | 5,23 / 0,844 / 0,429 | 1,7 % | 0,79 % |
+
+**Der freie Boden unterscheidet die beiden Dicken nicht** (0,94 gegen 0,83 %) — das Holz gleicht aus. Mit 12 → 2 mm
+ist E quer zum Boden 35 % kleiner; die Biegesteife quer am Bassende (E h³) liegt damit nur 8 % über der des heutigen
+Bauplans, nicht 65 % wie im Kandidaten aus §17, der 12 → 2 mm mit dem Holz für 10 → 3 mm rechnete.
+
+**19.3 Der Kandidat mit geeichtem Holz** (Mündung 2,0, Bassende eingespannt; Lagen ohne Saiten):
+
+| Fassung | Moden mit Luft gegen 170 / 216 Hz | S(1,2)–S(1,6) | A ohne / mit Saiten |
+|---|---|---|---|
+| heute (10 → 3, Mündung 2,6, Bassende gestützt) | 134 / 198 (−21 / −8 %) | −6,4 / +4,0 / +0,3 / +2,5 / −1,4 % | 4 / 4 von 12 |
+| Kandidat §17 (Holz für 10 → 3) | 164 / 222 (−4 / +3 %) | +1,7 / +5,9 / +0,3 / +3,2 / +0,7 % | 6 / 6 |
+| **Kandidat, Holz geeicht** | **145 / 214 (−15 / −1 %)** | −7,9 / −3,0 / −5,0 / −0,1 / −1,8 % | 4 / 5 |
+| Kandidat, Holz geeicht, die zwei Fichtenleisten mit dem Holz aus §7.1 | 145 / 214 | −7,9 / −2,9 / −4,8 / +0,3 / −1,4 % | 4 / 5 |
+| Kandidat, Holz geeicht mit 500 kg/m³ | 148 / 215 | −7,1 / −2,4 / −5,2 / −0,8 / −2,9 % | 3 / 5 |
+| 10 → 3 mm, Mündung 2,0, Bassende eingespannt | 154 / 220 (−10 / +2 %) | +1,1 / +10,5 / +5,7 / +7,1 / +2,0 % | 4 / — |
+
+Der Gewinn des Kandidaten an S(1,1)− kam aus dem ungeeicht steiferen Holz. Mit Saiten (c = 0,2) liegt die geeichte
+Fassung bei 154 / 219 Hz.
+
+**19.4 Raster nach der Eichung** (`…_harfe_raster2.txt`: Dicke mit ihrem Holz × Mündung 2,0 / 2,6 × Bassende
+gestützt / eingespannt × Drehfeder an den unteren 60 cm der Seiten 0 / 10³ / 3 · 10³ / 10⁴ N). Ohne die Drehfeder
+kommt keine Fassung an S(1,1)− über 154 Hz. Vier Fassungen bis 5 kHz gerechnet, mit Lautheit je Taste (16 Hörorte,
+ohne Mitschwingen; Grenzen 22 / 12 / 3 LU) und der Messung nach KQ31-2 a:
+
+| Zielgröße | A: 12 → 2 geeicht, eingespannt, ohne Feder (KQ47 a wörtlich) | B: 12 → 2 geeicht, eingespannt, Feder 10⁴ N | C: 10 → 3, gestützt, Feder 10⁴ N, Mündung 2,0 | D: wie C, Mündung 2,6 |
+|---|---|---|---|---|
+| Moden mit Luft (7 %) | 145 / 214 (−15 / −1 %) | 169 / 226 (−1 / +5 %) | 174 / 229 (+2 / +6 %) | 163 / 218 (−4 / +1 %) |
+| Güte der zwei Moden (Bell 11 / 16) | 21 / 14 | 16 / 13 | 15 / 14 | 12 / 18 |
+| S(1,2)–S(1,6) (7 %) | −7,9 / −3,0 / −5,0 / −0,1 / −1,8 | −4,0 / −0,3 / −2,7 / +2,2 / +0,4 | −2,1 / +7,1 / +2,8 / +4,4 / +0,6 | −2,3 / +7,1 / +2,8 / +4,4 / +0,6 |
+| KQ31-2 a: Bäuche in der Lage außerhalb (2 Orte) | 3 | 5 (alle zum Diskant verschoben, bis 3,5 Orte) | 0 | 0 |
+| KQ31-2 a: Höhen außerhalb (6 dB) | 4 | 4 | 6 | 7 |
+| stärkster Bauch S(1,2)–S(1,6) gegen Bell | −7,5 / −4,7 / −6,7 / −4,9 / −10,1 dB | −0,1 / −5,1 / −6,7 / −5,2 / −10,5 | −3,8 / −8,3 / −9,6 / −6,9 / −8,6 | −2,9 / −8,2 / −9,6 / −6,9 / −8,6 |
+| A Saiten 33–22 ohne / mit Saiten (6 dB) | 4 / 5, größte 16,4 / 24,2 dB | 4 / 6, 16,4 / 18,1 | 7 / 5, 18,1 / 20,8 | 2 / 4, 14,5 / 16,9 |
+| Lautheit ohne Saiten | 20,6 / 12,8 / 2,7 LU | 16,8 / 13,8 / 2,3 | 17,6 / 13,9 / 2,6 | 18,0 / 14,5 / 2,5 |
+| Lautheit mit Saiten c = 0,2 | 20,7 / 12,7 / 2,9 | 18,2 / 13,4 / 2,4 | 18,4 / 13,2 / 2,7 | 17,6 / 14,0 / 2,7 |
+
+(Heute: 20,0 / 12,8 / 3,0 LU, mit Saiten 19,2 / 14,1 / 2,9; der Kandidat aus §17 mit Saiten 17,8 / 10,5 / 2,8.)
+
+**Befunde.** (1) Die Lage der Bäuche trennt die Dicken, wo der freie Boden es nicht tut: mit 12 → 2 mm sitzen die
+Bäuche von S(1,2)–S(1,4) in jeder Fassung 1–3,5 Messorte zu weit am Diskant, mit 10 → 3 mm alle innerhalb von
+2 Orten. (2) Die fehlende Steife im Bass liefert in diesem Raster nur die Drehfeder an den Bassseiten — ein
+angepasster Wert ohne Quelle (wie die Diskantkante, KQ21 a). (3) Den größten Sprung ≤ 12 LU hält keine der vier
+Fassungen; die 10,5 LU des Kandidaten aus §17 gehörten zum ungeeichten Holz. (4) Die Feinsuche (Länge und Wert der
+Feder, Mündung, Bassende, Faktor der Saiten) steht aus.
+
+**KQ50 a (Patrik S210; hebt KQ47 a auf):** der Boden bleibt 10 → 3 mm (Abb. 2.4 a) mit dem Holz aus §7.1; die Steife
+im Bass kommt aus einer Drehfeder an den Bassseiten als Randabschnitt (angepasst, ohne Quelle, wie die Diskantkante);
+Feinsuche ab den Fassungen C / D. Verworfen: 12 → 2 mm geeicht mit Feder (B), KQ47 a wörtlich (A).
+
+## 20 S210: Feinsuche nach KQ50 a
+
+Probe `proben/2026-11-20_S210_harfe_feinsuche.py`; Ausgaben `…_feinsuche1.txt` (27 Fassungen; der Lauf brach an einer
+Fassung ohne zwei Moden mit Luft ab), `…_feinsuche2.txt` (36), `…_feinsuche_lautheit_kq31_2.txt`,
+`…_feinsuche_saitenfaktor.txt`. Boden 10 → 3 mm, Holz aus §7.1, Bassende gestützt (eingespannt lägen S(1,3)–S(1,5)
++7 … +12 %, §19.4). Stellgrößen: Drehfeder an den Seiten vom Bassende bis y = `bis`, ihr Wert, die Mündung. **Am Repo
+ist nichts geändert.**
+
+**20.1 Raster.** Maß = Wurzel aus dem Mittel der Quadrate der sieben Lagen ohne Saiten (zwei Moden mit Luft, S(1,2)–
+S(1,6)). Das Feld ist flach: `bis` 0,6–0,7 m, Feder 3 000–7 000 N, Mündung 2,0–2,3 liegen bei 3,4–3,7 %, alle sieben
+Lagen innerhalb 7 %. Außerhalb davon: Feder nur bis 0,35 m hebt S(1,1)− auch mit 10⁵ N nicht über 159 Hz; Feder bis
+0,85 m und länger verschiebt S(1,2) um +10 % und mehr; Mündung 2,6 lässt S(1,1)− bei 146–164 Hz. S(1,3) liegt in
+allen Fassungen +5 … +8 % (ohne Feder +4,0 %) — die Feder kostet dort rund 2 %.
+
+**20.2 Vier Fassungen bis 5 kHz** (die Lagen am Netz für 5 kHz gleich denen am Netz für 1,2 kHz, auf 0,1 Hz):
+
+| Zielgröße | F1: Mündung 2,15, bis 0,6 m, 7 000 N | F2: 2,0, 0,6 m, 5 000 N | F3: 2,0, 0,7 m, 3 000 N | F4: 2,3, 0,6 m, 7 000 N |
+|---|---|---|---|---|
+| Moden mit Luft gegen 170 / 216 Hz (7 %) | 166,7 / 222,1 (−1,9 / +2,8 %) | 164,1 / 223,0 (−3,5 / +3,2 %) | 161,5 / 220,1 (−5,0 / +1,9 %) | 164,4 / 218,9 (−3,3 / +1,3 %) |
+| Güte der zwei Moden (Bell 11 / 16) | 15 / 14 | 17 / 13 | 18 / 13 | 14 / 15 |
+| S(1,2)–S(1,6) (7 %) | −3,0 / +6,5 / +2,3 / +4,1 / +0,2 | −3,4 / +6,0 / +1,9 / +3,7 / −0,1 | −1,9 / +6,2 / +1,4 / +3,6 / −0,3 | −3,1 / +6,5 / +2,3 / +4,1 / +0,2 |
+| KQ31-2 a: Bäuche in der Lage außerhalb | 0 | 1 (S(1,3), +2,1 Orte) | 1 (S(1,3), +2,2 Orte) | 0 |
+| KQ31-2 a: Höhen außerhalb (6 dB) | 6 | 6 | 6 | 6 |
+| stärkster Bauch S(1,2)–S(1,6) gegen Bell | −3,6 / −8,3 / −9,6 / −6,8 / −8,6 dB | −5,0 / −8,4 / −9,5 / −6,8 / −8,6 | −5,5 / −8,6 / −9,5 / −6,7 / −8,7 | −3,2 / −8,2 / −9,6 / −6,8 / −8,6 |
+| A Saiten 33–22 ohne / mit Saiten 0,2 (6 dB) | 4 / 5 | 5 / 6 | 6 / 6 | 2 / 6 |
+| Lautheit ohne Saiten, ohne Mitschwingen (22 / 12 / 3 LU) | 17,2 / 12,4 / 2,5 | 18,1 / 11,4 / 2,7 | 20,1 / 12,5 / 2,7 | 17,8 / 13,1 / 2,6 |
+| Lautheit mit Saiten 0,2, ohne Mitschwingen | 18,1 / 12,5 / 2,7 | 18,3 / 11,4 / 2,8 | 17,7 / 9,7 / 2,7 | 17,6 / 12,1 / 2,7 |
+
+Die sechs Höhen außerhalb sind in allen vier dieselben: die zwei bassseitigen Bäuche von S(1,5) (−8 / −10 dB) und
+die vier von S(1,6) (−6 … −15 dB) — wie §16.5 (die Feder im Messweg bei Bell). **Der größte Sprung der Lautheit
+schwankt zwischen Nachbarn des Rasters um 3 LU** und trennt die Fassungen ohne Mitschwingen nicht.
+
+**20.3 Faktor der Saiten** (k = c · E·A/L, im Modenraum; Bell beim Besaiten: S(1,1)− +10 %, S(1,2) +3 %, S(1,3)
++5,7 %). An F2:
+
+| c | S(1,1)− | S(1,2) | S(1,3) | Moden mit Luft (Bell besaitet 187 / 207 Hz) | A |
+|---|---|---|---|---|---|
+| 0,2 | +5,3 % | +3,8 % | +2,5 % | 172,8 / 228,8 | 6 / 12 |
+| 0,3 | +7,4 % | +6,1 % | +3,6 % | 176,3 / 231,4 | 6 / 12 |
+| 0,4 | +9,3 % | +8,3 % | +4,8 % | 179,4 / 233,9 | 6 / 12 |
+| 0,5 | +10,9 % | +10,3 % | ≥ +5,6 % (Rand des Suchfensters) | 182,0 / 236,5 | 6 / 12 |
+
+Am Bauplan aus S206 gab c = 0,2 beide tiefen Verschiebungen wieder (+9 / +4 %, §17). Mit der Feder am Bass
+verschiebt sich S(1,1)− beim Besaiten weniger: ein Faktor trifft nicht mehr beide (kleinste Summe der Quadrate über
+die drei Verschiebungen bei c ≈ 0,3). F3 und F4 verhalten sich gleich.
+
+**20.4 Lautheit mit Mitschwingen** (KQ39 a, O+Q nach GZ8 a; 67 Tasten 38–104, 16 Hörorte, Saiten 0,2;
+`proben/2026-11-19_S208_harfe_mitschwingen_16.py`, Ausgabe `proben/2026-11-20_S210_harfe_feinsuche_mitschwingen.txt`).
+Spanne / größter Sprung / mittlerer Sprung gegen 22 / 12 / 3 LU:
+
+| Fassung | nur die gespielte Saite | mit Mitschwingen |
+|---|---|---|
+| F1 (Mündung 2,15, Feder bis 0,6 m, 7 000 N) | 18,1 / 12,5 / 2,7 | 18,9 / **12,6** / 2,4 |
+| F2 (Mündung 2,0, Feder bis 0,6 m, 5 000 N) | 18,3 / 11,4 / 2,7 | 19,3 / 11,5 / 2,7 |
+| F3 (Mündung 2,0, Feder bis 0,7 m, 3 000 N) | 17,7 / 9,7 / 2,7 | 19,2 / 10,7 / 2,5 |
+| F4 (Mündung 2,3, Feder bis 0,6 m, 7 000 N) | 17,6 / 12,1 / 2,7 | 18,4 / **12,2** / 2,5 |
+
+F2 und F3 halten alle drei Grenzen, F1 und F4 verfehlen den größten Sprung um 0,6 / 0,2 LU — weniger als die 3 LU,
+um die er zwischen Nachbarn des Rasters schwankt (§20.2). Das Mitschwingen ändert die Lautheit je Taste im Median um
+−0,1 LU, an einzelnen Tasten um +0,5 bis −4,2 LU (über 1 LU leiser in allen vier: 41, 45, 47, 48, 57, 65, 69; am
+stärksten 47 mit −4,2 / −4,0 / −2,3 / −4,2 LU und 45 mit −3,2 / −2,7 / −3,0 / −3,6 LU). Es
+hebt die Spanne um 0,8 / 1,0 / 1,5 / 0,8 LU (F1–F4) und senkt den mittleren Sprung um 0,3 / 0,0 / 0,2 / 0,2 LU.
+Der größte Sprung liegt in F1, F2, F4 zwischen den Tasten 54 und 58 (F1 −21,2 → −8,6, F2 −20,7 → −9,2, F4 −21,2 →
+−9,0 LUFS; F3 dort 9,8 LU), in F3 zwischen 44 und 48 (−18,9 → −29,5 LUFS; F1 / F2 / F4 dort 8,1 / 8,8 / 8,8 LU). Der
+leiseste Bereich liegt in allen vier an den Tasten 47–52, der lauteste an 58–59. Die Messung gilt für den Faktor 0,2
+der Saiten; für 0,3 und 0,4 ist die Lautheit nicht gerechnet.
+Die Wahl der Fassung (KQ51) und des Faktors der Saiten (KQ52) ist offen.
+
+**20.5 Stand der Vorlage** (Ende S210). KQ51 ist Patrik vorgelegt und nicht beantwortet: a F4, b F3, c F2, d F1.
+Empfohlen F4 — die Lage der Bäuche folgt der Feder (beide Fassungen mit 7 000 N treffen alle Profile, beide schwächeren
+verfehlen S(1,3)), der größte Sprung schwankt zwischen Nachbarn um 3 LU und trennt nicht; gegen F1 liegt F4 an zweiter
+Mode, Güte, Sprung und Abstrahlung näher. Kipppunkte: die Grenze 12 LU ohne bekannte Abweichung (dann F3); ein Sprung
+von F4 deutlich über 12 mit dem Faktor 0,3 / 0,4. Für KQ52 liegt an F4 die Lautheit ohne Mitschwingen vor
+(Spanne / größter / mittlerer Sprung): Faktor 0,2 17,6 / 12,1 / 2,7, Faktor 0,3 18,4 / 12,7 / 2,9, Faktor 0,4 19,1 /
+12,7 / 2,8 LU. Mit Mitschwingen ist für 0,3 / 0,4 nichts gerechnet (ein Lauf wurde bei 4 von 67 Tasten abgebrochen).

@@ -1,0 +1,140 @@
+== mu2.15 bis0.6 dreh7000: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  17.2  groesster  12.4  mittlerer  2.5
+   38:-25.7 39:-25.1 40:-23.4 41:-24.1 42:-24.4 43:-22.1 44:-18.4 45:-19.2 46:-20.5 47:-25.5 48:-27.4 49:-26.9 50:-26.0 51:-24.8 52:-21.6 53:-22.5 54:-22.6 55:-19.8 56:-14.8 57:-10.2 58:-11.5 59:-10.2 60:-15.4 61:-17.7 62:-19.1 63:-19.5 64:-14.9 65:-17.2 66:-20.0 67:-21.5 68:-20.3 69:-13.8 70:-18.7 71:-20.5 72:-22.3 73:-21.7 74:-22.7 75:-23.0 76:-20.6 77:-16.8 78:-19.3 79:-21.9 80:-17.5 81:-14.6 82:-19.6 83:-16.7 84:-18.7 85:-20.1 86:-15.6 87:-18.8 88:-15.6 89:-17.7 90:-14.6 91:-15.4 92:-13.7 93:-14.5 94:-15.1 95:-17.6 96:-21.3 97:-21.0 98:-21.1 99:-19.8 100:-17.6 101:-16.7 102:-19.0 103:-20.2 104:-22.1
+== mu2.15 bis0.6 dreh7000 + Saiten 0.2: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  18.1  groesster  12.5  mittlerer  2.7
+   38:-26.1 39:-25.2 40:-24.8 41:-21.3 42:-23.5 43:-22.2 44:-19.3 45:-20.4 46:-18.8 47:-21.8 48:-25.7 49:-26.8 50:-26.6 51:-26.6 52:-24.3 53:-19.4 54:-21.1 55:-19.3 56:-15.4 57:-10.8 58:-8.7 59:-11.1 60:-13.5 61:-16.8 62:-18.3 63:-19.4 64:-18.2 65:-13.7 66:-19.1 67:-21.2 68:-20.5 69:-15.5 70:-17.4 71:-20.1 72:-22.0 73:-22.0 74:-22.6 75:-23.1 76:-20.7 77:-17.5 78:-18.9 79:-21.9 80:-17.8 81:-14.3 82:-19.5 83:-16.8 84:-18.6 85:-20.1 86:-15.5 87:-18.8 88:-15.6 89:-17.7 90:-14.6 91:-15.4 92:-13.7 93:-14.5 94:-15.0 95:-17.6 96:-21.3 97:-21.0 98:-21.1 99:-19.9 100:-17.6 101:-16.6 102:-18.9 103:-20.2 104:-22.1
+-- KQ31-2 a: mu2.15 bis0.6 dreh7000
+concert_harp.lvinstbody: 129 Moden, 46 Oesen (Ort 2.8 ... 36.6); ohne Feder
+Moden mit Luft (Bell Abb. 7.8, 7.9: 170 Hz Q 11, 216 Hz Q 16): 166.7 Hz Q 14.9 Luft 0.45; 222.1 Hz Q 14.0 Luft 0.51
+S(1,2):  241.6 Hz (Bell 249, -3.0 %), 2 Baeuche (Bell 2), staerkster 92.4 dB (Bell 96.0, -3.6 — bekannte Abweichung)  in der Schwelle
+      Ort  14.4 (Bell 13.0, +1.4)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  31.0 (Bell 30.0, +1.0)  rel  -13.9 dB (Bell  -18.0, +4.1)
+S(1,3):  336.6 Hz (Bell 316, +6.5 %), 3 Baeuche (Bell 3), staerkster 95.7 dB (Bell 104.0, -8.3 — bekannte Abweichung)  in der Schwelle
+      Ort   8.7 (Bell  7.5, +1.2)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  20.5 (Bell 18.5, +2.0)  rel  -16.2 dB (Bell  -15.0, -1.2)
+      Ort  32.6 (Bell 31.5, +1.1)  rel  -20.0 dB (Bell  -20.0, +0.0)
+S(1,4):  441.9 Hz (Bell 432, +2.3 %), 4 Baeuche (Bell 4), staerkster 95.9 dB (Bell 105.5, -9.6 — bekannte Abweichung)  in der Schwelle
+      Ort   5.4 (Bell  6.0, -0.6)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  14.3 (Bell 14.5, -0.2)  rel  -14.3 dB (Bell  -14.5, +0.2)
+      Ort  23.5 (Bell 22.5, +1.0)  rel  -20.0 dB (Bell  -20.0, -0.0)
+      Ort  33.6 (Bell 32.0, +1.6)  rel  -23.2 dB (Bell  -21.5, -1.7)
+S(1,5):  567.1 Hz (Bell 545, +4.1 %), 5 Baeuche (Bell 5), staerkster 94.7 dB (Bell 101.5, -6.8 — bekannte Abweichung)  AUSSERHALB
+      Ort   3.3 (Bell  4.0, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  10.5 (Bell 10.5, +0.0)  rel  -12.5 dB (Bell   -8.5, -4.0)
+      Ort  17.7 (Bell 16.5, +1.2)  rel  -19.2 dB (Bell  -19.5, +0.3)
+      Ort  25.7 (Bell 25.0, +0.7)  rel  -23.4 dB (Bell  -15.5, -7.9)   <-- ausserhalb
+      Ort  34.4 (Bell 33.5, +0.9)  rel  -25.2 dB (Bell  -15.0, -10.2)   <-- ausserhalb
+S(1,6):  710.7 Hz (Bell 709, +0.2 %), 6 Baeuche (Bell 6), staerkster 92.4 dB (Bell 101.0, -8.6 — bekannte Abweichung)  AUSSERHALB
+      Ort   2.8 (Bell  3.5, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort   8.0 (Bell  8.5, -0.5)  rel  -11.0 dB (Bell   -5.5, -5.5)
+      Ort  13.9 (Bell 14.0, -0.1)  rel  -17.2 dB (Bell  -11.0, -6.2)   <-- ausserhalb
+      Ort  20.4 (Bell 20.0, +0.4)  rel  -22.2 dB (Bell  -14.5, -7.7)   <-- ausserhalb
+      Ort  27.6 (Bell 27.5, +0.1)  rel  -26.0 dB (Bell  -11.5, -14.5)   <-- ausserhalb
+      Ort  35.0 (Bell 34.0, +1.0)  rel  -27.8 dB (Bell  -12.5, -15.3)   <-- ausserhalb
+S(1,7) (Bericht):  710.7 Hz (Bell 757, -6.1 %), staerkster 92.4 dB an Ort 2.8 (Bell 99.5 an Ort 3, -7.1)
+S(1,8) (Bericht):  867.9 Hz (Bell 905, -4.1 %), staerkster 85.0 dB an Ort 2.8 (Bell 102.0 an Ort 4, -17.0)
+KQ31-2 a: nicht alle Moden in der Schwelle
+== mu2.0 bis0.6 dreh5000: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  18.1  groesster  11.4  mittlerer  2.7
+   38:-26.6 39:-25.5 40:-23.4 41:-24.7 42:-24.8 43:-22.7 44:-19.2 45:-20.2 46:-21.2 47:-27.3 48:-28.2 49:-27.5 50:-26.9 51:-25.3 52:-21.4 53:-22.7 54:-22.9 55:-20.6 56:-16.0 57:-11.5 58:-11.6 59:-10.1 60:-15.4 61:-17.9 62:-19.4 63:-19.8 64:-14.2 65:-17.7 66:-20.3 67:-21.6 68:-20.1 69:-13.6 70:-19.1 71:-20.6 72:-22.9 73:-22.0 74:-23.0 75:-23.4 76:-20.6 77:-16.5 78:-19.7 79:-21.7 80:-16.9 81:-15.3 82:-19.9 83:-16.0 84:-19.4 85:-19.7 86:-15.9 87:-18.6 88:-15.8 89:-17.8 90:-14.8 91:-15.9 92:-14.3 93:-14.4 94:-15.0 95:-17.1 96:-20.6 97:-20.7 98:-21.0 99:-20.0 100:-17.0 101:-15.8 102:-18.3 103:-19.6 104:-21.8
+== mu2.0 bis0.6 dreh5000 + Saiten 0.2: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  18.3  groesster  11.4  mittlerer  2.8
+   38:-26.9 39:-25.8 40:-24.9 41:-21.8 42:-23.5 43:-22.4 44:-19.7 45:-21.0 46:-19.2 47:-22.4 48:-27.1 49:-27.6 50:-27.4 51:-27.4 52:-24.2 53:-19.2 54:-20.8 55:-19.5 56:-15.9 57:-11.5 58:-9.3 59:-10.3 60:-13.6 61:-17.0 62:-18.7 63:-19.9 64:-18.3 65:-14.6 66:-19.4 67:-21.4 68:-20.4 69:-14.9 70:-17.9 71:-20.3 72:-22.7 73:-22.5 74:-22.9 75:-23.5 76:-20.8 77:-17.2 78:-19.4 79:-21.8 80:-17.1 81:-15.1 82:-19.9 83:-16.0 84:-19.3 85:-19.7 86:-15.8 87:-18.6 88:-15.8 89:-17.8 90:-14.8 91:-15.9 92:-14.3 93:-14.4 94:-15.0 95:-17.1 96:-20.6 97:-20.7 98:-21.0 99:-20.0 100:-17.0 101:-15.8 102:-18.3 103:-19.6 104:-21.8
+-- KQ31-2 a: mu2.0 bis0.6 dreh5000
+concert_harp.lvinstbody: 130 Moden, 46 Oesen (Ort 2.8 ... 36.6); ohne Feder
+Moden mit Luft (Bell Abb. 7.8, 7.9: 170 Hz Q 11, 216 Hz Q 16): 164.1 Hz Q 17.3 Luft 0.34; 223.0 Hz Q 13.0 Luft 0.57
+S(1,2):  240.6 Hz (Bell 249, -3.4 %), 2 Baeuche (Bell 2), staerkster 91.0 dB (Bell 96.0, -5.0 — bekannte Abweichung)  in der Schwelle
+      Ort  14.7 (Bell 13.0, +1.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  31.2 (Bell 30.0, +1.2)  rel  -15.2 dB (Bell  -18.0, +2.8)
+S(1,3):  335.1 Hz (Bell 316, +6.0 %), 3 Baeuche (Bell 3), staerkster 95.6 dB (Bell 104.0, -8.4 — bekannte Abweichung)  AUSSERHALB
+      Ort   8.7 (Bell  7.5, +1.2)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  20.6 (Bell 18.5, +2.1)  rel  -16.3 dB (Bell  -15.0, -1.3)   <-- ausserhalb
+      Ort  32.6 (Bell 31.5, +1.1)  rel  -20.0 dB (Bell  -20.0, +0.0)
+S(1,4):  440.2 Hz (Bell 432, +1.9 %), 4 Baeuche (Bell 4), staerkster 96.0 dB (Bell 105.5, -9.5 — bekannte Abweichung)  in der Schwelle
+      Ort   5.4 (Bell  6.0, -0.6)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  14.4 (Bell 14.5, -0.1)  rel  -14.3 dB (Bell  -14.5, +0.2)
+      Ort  23.5 (Bell 22.5, +1.0)  rel  -20.3 dB (Bell  -20.0, -0.3)
+      Ort  33.7 (Bell 32.0, +1.7)  rel  -23.4 dB (Bell  -21.5, -1.9)
+S(1,5):  565.4 Hz (Bell 545, +3.7 %), 5 Baeuche (Bell 5), staerkster 94.7 dB (Bell 101.5, -6.8 — bekannte Abweichung)  AUSSERHALB
+      Ort   3.3 (Bell  4.0, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  10.6 (Bell 10.5, +0.1)  rel  -12.5 dB (Bell   -8.5, -4.0)
+      Ort  17.7 (Bell 16.5, +1.2)  rel  -19.3 dB (Bell  -19.5, +0.2)
+      Ort  25.8 (Bell 25.0, +0.8)  rel  -23.6 dB (Bell  -15.5, -8.1)   <-- ausserhalb
+      Ort  34.4 (Bell 33.5, +0.9)  rel  -25.4 dB (Bell  -15.0, -10.4)   <-- ausserhalb
+S(1,6):  708.2 Hz (Bell 709, -0.1 %), 6 Baeuche (Bell 6), staerkster 92.4 dB (Bell 101.0, -8.6 — bekannte Abweichung)  AUSSERHALB
+      Ort   2.8 (Bell  3.5, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort   8.1 (Bell  8.5, -0.4)  rel  -11.1 dB (Bell   -5.5, -5.6)
+      Ort  13.9 (Bell 14.0, -0.1)  rel  -17.2 dB (Bell  -11.0, -6.2)   <-- ausserhalb
+      Ort  20.5 (Bell 20.0, +0.5)  rel  -22.3 dB (Bell  -14.5, -7.8)   <-- ausserhalb
+      Ort  27.7 (Bell 27.5, +0.2)  rel  -26.2 dB (Bell  -11.5, -14.7)   <-- ausserhalb
+      Ort  35.0 (Bell 34.0, +1.0)  rel  -28.0 dB (Bell  -12.5, -15.5)   <-- ausserhalb
+S(1,7) (Bericht):  708.2 Hz (Bell 757, -6.4 %), staerkster 92.4 dB an Ort 2.8 (Bell 99.5 an Ort 3, -7.1)
+S(1,8) (Bericht):  863.1 Hz (Bell 905, -4.6 %), staerkster 85.1 dB an Ort 2.8 (Bell 102.0 an Ort 4, -16.9)
+KQ31-2 a: nicht alle Moden in der Schwelle
+== mu2.0 bis0.7 dreh3000: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  20.1  groesster  12.5  mittlerer  2.7
+   38:-26.4 39:-25.7 40:-23.4 41:-24.6 42:-24.3 43:-22.0 44:-18.3 45:-20.2 46:-22.8 47:-28.5 48:-28.4 49:-27.6 50:-26.8 51:-24.4 52:-21.3 53:-22.6 54:-23.0 55:-20.9 56:-16.2 57:-12.4 58:-13.2 59:-8.5 60:-14.0 61:-17.2 62:-19.0 63:-19.7 64:-14.6 65:-17.4 66:-20.0 67:-21.1 68:-19.3 69:-13.7 70:-19.4 71:-20.4 72:-22.9 73:-21.9 74:-23.1 75:-23.4 76:-20.7 77:-16.3 78:-19.9 79:-21.4 80:-16.0 81:-16.2 82:-20.0 83:-15.4 84:-20.0 85:-19.0 86:-16.4 87:-18.4 88:-16.3 89:-19.0 90:-16.9 91:-16.6 92:-15.1 93:-14.5 94:-15.3 95:-17.3 96:-20.3 97:-20.4 98:-21.2 99:-20.5 100:-16.6 101:-15.4 102:-17.8 103:-19.0 104:-21.2
+== mu2.0 bis0.7 dreh3000 + Saiten 0.2: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  17.7  groesster   9.7  mittlerer  2.7
+   38:-26.5 39:-26.0 40:-24.8 41:-21.4 42:-22.8 43:-21.7 44:-18.8 45:-20.1 46:-20.0 47:-23.8 48:-28.2 49:-28.0 50:-27.6 51:-27.1 52:-23.2 53:-18.5 54:-20.6 55:-19.7 56:-16.0 57:-11.7 58:-10.9 59:-10.5 60:-11.7 61:-16.1 62:-18.2 63:-19.7 64:-18.4 65:-14.3 66:-19.1 67:-20.9 68:-19.7 69:-14.2 70:-18.3 71:-20.1 72:-22.7 73:-22.4 74:-23.0 75:-23.5 76:-20.9 77:-17.0 78:-19.6 79:-21.5 80:-16.3 81:-16.0 82:-20.0 83:-15.4 84:-20.0 85:-19.0 86:-16.3 87:-18.4 88:-16.3 89:-18.9 90:-16.7 91:-16.5 92:-15.1 93:-14.5 94:-15.3 95:-17.3 96:-20.3 97:-20.4 98:-21.2 99:-20.5 100:-16.5 101:-15.4 102:-17.8 103:-19.0 104:-21.2
+-- KQ31-2 a: mu2.0 bis0.7 dreh3000
+concert_harp.lvinstbody: 131 Moden, 46 Oesen (Ort 2.8 ... 36.6); ohne Feder
+Moden mit Luft (Bell Abb. 7.8, 7.9: 170 Hz Q 11, 216 Hz Q 16): 161.5 Hz Q 18.0 Luft 0.31; 220.1 Hz Q 12.9 Luft 0.57; 244.2 Hz Q 30.1 Luft 0.10
+S(1,2):  244.4 Hz (Bell 249, -1.9 %), 2 Baeuche (Bell 2), staerkster 90.5 dB (Bell 96.0, -5.5 — bekannte Abweichung)  in der Schwelle
+      Ort  14.8 (Bell 13.0, +1.8)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  31.5 (Bell 30.0, +1.5)  rel  -19.1 dB (Bell  -18.0, -1.1)
+S(1,3):  335.6 Hz (Bell 316, +6.2 %), 3 Baeuche (Bell 3), staerkster 95.4 dB (Bell 104.0, -8.6 — bekannte Abweichung)  AUSSERHALB
+      Ort   8.7 (Bell  7.5, +1.2)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  20.7 (Bell 18.5, +2.2)  rel  -15.4 dB (Bell  -15.0, -0.4)   <-- ausserhalb
+      Ort  32.7 (Bell 31.5, +1.2)  rel  -19.6 dB (Bell  -20.0, +0.4)
+S(1,4):  438.2 Hz (Bell 432, +1.4 %), 4 Baeuche (Bell 4), staerkster 96.0 dB (Bell 105.5, -9.5 — bekannte Abweichung)  in der Schwelle
+      Ort   5.4 (Bell  6.0, -0.6)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  14.5 (Bell 14.5, -0.0)  rel  -14.3 dB (Bell  -14.5, +0.2)
+      Ort  23.6 (Bell 22.5, +1.1)  rel  -20.3 dB (Bell  -20.0, -0.3)
+      Ort  33.7 (Bell 32.0, +1.7)  rel  -23.4 dB (Bell  -21.5, -1.9)
+S(1,5):  564.6 Hz (Bell 545, +3.6 %), 5 Baeuche (Bell 5), staerkster 94.8 dB (Bell 101.5, -6.7 — bekannte Abweichung)  AUSSERHALB
+      Ort   3.3 (Bell  4.0, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  10.6 (Bell 10.5, +0.1)  rel  -12.5 dB (Bell   -8.5, -4.0)
+      Ort  17.8 (Bell 16.5, +1.3)  rel  -19.1 dB (Bell  -19.5, +0.4)
+      Ort  25.9 (Bell 25.0, +0.9)  rel  -24.4 dB (Bell  -15.5, -8.9)   <-- ausserhalb
+      Ort  34.4 (Bell 33.5, +0.9)  rel  -26.1 dB (Bell  -15.0, -11.1)   <-- ausserhalb
+S(1,6):  706.9 Hz (Bell 709, -0.3 %), 6 Baeuche (Bell 6), staerkster 92.3 dB (Bell 101.0, -8.7 — bekannte Abweichung)  AUSSERHALB
+      Ort   2.8 (Bell  3.5, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort   8.1 (Bell  8.5, -0.4)  rel  -11.1 dB (Bell   -5.5, -5.6)
+      Ort  13.9 (Bell 14.0, -0.1)  rel  -17.3 dB (Bell  -11.0, -6.3)   <-- ausserhalb
+      Ort  20.5 (Bell 20.0, +0.5)  rel  -21.9 dB (Bell  -14.5, -7.4)   <-- ausserhalb
+      Ort  27.8 (Bell 27.5, +0.3)  rel  -26.2 dB (Bell  -11.5, -14.7)   <-- ausserhalb
+      Ort  35.1 (Bell 34.0, +1.1)  rel  -28.1 dB (Bell  -12.5, -15.6)   <-- ausserhalb
+S(1,7) (Bericht):  706.9 Hz (Bell 757, -6.6 %), staerkster 92.3 dB an Ort 2.8 (Bell 99.5 an Ort 3, -7.2)
+S(1,8) (Bericht):  857.6 Hz (Bell 905, -5.2 %), staerkster 85.3 dB an Ort 2.8 (Bell 102.0 an Ort 4, -16.7)
+KQ31-2 a: nicht alle Moden in der Schwelle
+== mu2.3 bis0.6 dreh7000: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  17.8  groesster  13.1  mittlerer  2.6
+   38:-25.2 39:-24.9 40:-23.2 41:-24.0 42:-23.9 43:-21.2 44:-17.1 45:-18.6 46:-21.0 47:-25.3 48:-27.3 49:-26.6 50:-25.5 51:-24.0 52:-21.5 53:-22.6 54:-22.0 55:-18.6 56:-13.2 57:-9.5 58:-12.1 59:-10.7 60:-15.8 61:-17.9 62:-19.1 63:-19.4 64:-14.8 65:-17.3 66:-20.1 67:-21.5 68:-20.3 69:-13.8 70:-18.6 71:-20.4 72:-22.2 73:-21.6 74:-22.6 75:-22.9 76:-20.5 77:-16.8 78:-19.3 79:-21.9 80:-17.5 81:-14.6 82:-19.6 83:-16.7 84:-18.7 85:-20.1 86:-15.6 87:-18.9 88:-15.6 89:-17.7 90:-14.6 91:-15.4 92:-13.7 93:-14.5 94:-15.1 95:-17.6 96:-21.4 97:-21.1 98:-21.1 99:-19.8 100:-17.6 101:-16.7 102:-19.0 103:-20.2 104:-22.1
+== mu2.3 bis0.6 dreh7000 + Saiten 0.2: Leistungssumme aller 32 (wie KQ34 a)       : Spanne  17.6  groesster  12.1  mittlerer  2.7
+   38:-25.5 39:-25.2 40:-24.6 41:-21.2 42:-23.4 43:-21.8 44:-18.5 45:-19.1 46:-19.3 47:-22.1 48:-25.6 49:-26.6 50:-26.2 51:-26.0 52:-23.6 53:-19.7 54:-21.1 55:-18.7 56:-14.3 57:-9.6 58:-9.0 59:-11.3 60:-13.7 61:-16.9 62:-18.4 63:-19.3 64:-18.1 65:-13.9 66:-19.2 67:-21.2 68:-20.5 69:-15.5 70:-17.4 71:-20.0 72:-21.9 73:-21.9 74:-22.5 75:-22.9 76:-20.6 77:-17.5 78:-18.9 79:-22.0 80:-17.8 81:-14.3 82:-19.5 83:-16.8 84:-18.6 85:-20.1 86:-15.5 87:-18.8 88:-15.6 89:-17.7 90:-14.6 91:-15.4 92:-13.7 93:-14.5 94:-15.0 95:-17.6 96:-21.4 97:-21.1 98:-21.1 99:-19.9 100:-17.6 101:-16.7 102:-18.9 103:-20.2 104:-22.1
+-- KQ31-2 a: mu2.3 bis0.6 dreh7000
+concert_harp.lvinstbody: 129 Moden, 46 Oesen (Ort 2.8 ... 36.6); ohne Feder
+Moden mit Luft (Bell Abb. 7.8, 7.9: 170 Hz Q 11, 216 Hz Q 16): 164.4 Hz Q 13.9 Luft 0.50; 218.9 Hz Q 14.7 Luft 0.47
+S(1,2):  241.4 Hz (Bell 249, -3.1 %), 2 Baeuche (Bell 2), staerkster 92.8 dB (Bell 96.0, -3.2 — bekannte Abweichung)  in der Schwelle
+      Ort  14.3 (Bell 13.0, +1.3)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  31.0 (Bell 30.0, +1.0)  rel  -13.6 dB (Bell  -18.0, +4.4)
+S(1,3):  336.6 Hz (Bell 316, +6.5 %), 3 Baeuche (Bell 3), staerkster 95.8 dB (Bell 104.0, -8.2 — bekannte Abweichung)  in der Schwelle
+      Ort   8.7 (Bell  7.5, +1.2)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  20.5 (Bell 18.5, +2.0)  rel  -16.1 dB (Bell  -15.0, -1.1)
+      Ort  32.6 (Bell 31.5, +1.1)  rel  -20.0 dB (Bell  -20.0, +0.0)
+S(1,4):  441.9 Hz (Bell 432, +2.3 %), 4 Baeuche (Bell 4), staerkster 95.9 dB (Bell 105.5, -9.6 — bekannte Abweichung)  in der Schwelle
+      Ort   5.4 (Bell  6.0, -0.6)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  14.3 (Bell 14.5, -0.2)  rel  -14.3 dB (Bell  -14.5, +0.2)
+      Ort  23.5 (Bell 22.5, +1.0)  rel  -20.0 dB (Bell  -20.0, -0.0)
+      Ort  33.6 (Bell 32.0, +1.6)  rel  -23.2 dB (Bell  -21.5, -1.7)
+S(1,5):  567.1 Hz (Bell 545, +4.1 %), 5 Baeuche (Bell 5), staerkster 94.7 dB (Bell 101.5, -6.8 — bekannte Abweichung)  AUSSERHALB
+      Ort   3.3 (Bell  4.0, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort  10.5 (Bell 10.5, +0.0)  rel  -12.5 dB (Bell   -8.5, -4.0)
+      Ort  17.7 (Bell 16.5, +1.2)  rel  -19.2 dB (Bell  -19.5, +0.3)
+      Ort  25.7 (Bell 25.0, +0.7)  rel  -23.4 dB (Bell  -15.5, -7.9)   <-- ausserhalb
+      Ort  34.4 (Bell 33.5, +0.9)  rel  -25.2 dB (Bell  -15.0, -10.2)   <-- ausserhalb
+S(1,6):  710.7 Hz (Bell 709, +0.2 %), 6 Baeuche (Bell 6), staerkster 92.4 dB (Bell 101.0, -8.6 — bekannte Abweichung)  AUSSERHALB
+      Ort   2.8 (Bell  3.5, -0.7)  rel    0.0 dB (Bell    0.0, +0.0)
+      Ort   8.0 (Bell  8.5, -0.5)  rel  -11.0 dB (Bell   -5.5, -5.5)
+      Ort  13.9 (Bell 14.0, -0.1)  rel  -17.2 dB (Bell  -11.0, -6.2)   <-- ausserhalb
+      Ort  20.4 (Bell 20.0, +0.4)  rel  -22.2 dB (Bell  -14.5, -7.7)   <-- ausserhalb
+      Ort  27.6 (Bell 27.5, +0.1)  rel  -26.0 dB (Bell  -11.5, -14.5)   <-- ausserhalb
+      Ort  35.0 (Bell 34.0, +1.0)  rel  -27.8 dB (Bell  -12.5, -15.3)   <-- ausserhalb
+S(1,7) (Bericht):  710.7 Hz (Bell 757, -6.1 %), staerkster 92.4 dB an Ort 2.8 (Bell 99.5 an Ort 3, -7.1)
+S(1,8) (Bericht):  867.9 Hz (Bell 905, -4.1 %), staerkster 85.0 dB an Ort 2.8 (Bell 102.0 an Ort 4, -17.0)
+KQ31-2 a: nicht alle Moden in der Schwelle
