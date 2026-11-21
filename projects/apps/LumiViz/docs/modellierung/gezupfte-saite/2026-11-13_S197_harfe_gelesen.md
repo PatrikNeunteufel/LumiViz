@@ -995,4 +995,12 @@ Formen, Frequenzen und Werte an den Ösen sind gleich; verschieden sind Luftante
 führt Luftanteil und Dämpfung nur auf der Diagonale (die Kreuzglieder zwischen den Moden fehlen); mit 409 statt 129
 Moden ändert sich nichts (Gegenprobe). Die volle Rechnung gilt. **Folge:** Die Lautheit je Taste mit Saiten in §20.2,
 §20.4 und §20.6 (auch die 12,8 LU von KQ51 a / KQ52 a) ist am Modenraum gemessen; die Verschiebungen beim Besaiten und
-alles ohne Saiten nicht betroffen. Die Lautheit am gebauten Körper steht aus.
+alles ohne Saiten nicht betroffen.
+
+**Lautheit am gebauten Körper** (S211, KQ39 a, 67 Tasten 38–104, 16 Hörorte, 55 min; Ausgabe lokal
+`.claude/handover/s211_gebaut.log`): nur die gespielte Saite 17,6 / 15,6 / 2,7 LU, mit Mitschwingen 18,1 / **15,7** / 2,3 LU
+(im Modenraum 18,4 / 12,7 / 2,8 und 19,2 / 12,8 / 2,5). Der größte Sprung liegt wie dort zwischen den Tasten 54 und
+58: −23,4 → −7,7 LUFS (Modenraum −20,7 → −8,0) — Taste 54 (185 Hz) liegt zwischen den beiden Moden mit Luft und wird
+mit der richtigen Verteilung der Luft 2,7 LU leiser. **Damit greift der Kipppunkt von KQ51 a** (der Sprung von F4 mit
+dem Faktor nach KQ52 deutlich über 12 LU): KQ51 ist neu vorzulegen, und die Lautheit der übrigen Fassungen F1–F3 ist
+ebenfalls am Modenraum gemessen.
