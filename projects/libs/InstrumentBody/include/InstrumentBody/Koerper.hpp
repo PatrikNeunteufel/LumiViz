@@ -37,7 +37,10 @@ namespace lumi::koerper
 /// Grad; `bridge` ist der Formwert laengs dieser Richtung), im statistischen Teil `bridgeAngle` (Betrag fuer die
 /// gezogenen Moden, Vorzeichen gezogen) und `parallelFactor` (KQ35-1 a: Moden nur parallel zur Decke). Alles immer
 /// geschrieben; ein Koerper aus einem Bauplan schreibt 0. Fassung 4 liest sich mit 0.
-inline constexpr int kKoerperFassung = 5;
+/// Fassung 6 (S211, KQ53 a): je Mode `springShare`, der Anteil der Verformungsenergie in den Federn an Punkten
+/// (KQ49 a; immer geschrieben, 0 = ohne Federn) — damit laesst sich die Daempfung eines Koerpers mit Federn
+/// nachrechnen. Fassung 5 liest sich mit 0.
+inline constexpr int kKoerperFassung = 6;
 
 /// Die Fassung des Modalfits fuer gemessene Koerper (`asset/loop/instrument_bodies/make_gitarre.py` traegt dieselbe
 /// Zahl). Hochzaehlen, wenn sich bei gleicher Messung und gleicher Beschreibung ein anderer Koerper ergaebe.

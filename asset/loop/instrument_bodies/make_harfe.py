@@ -1,5 +1,5 @@
 """Schreibt den Bauplan der Konzertharfe `concert_harp.lvinstbodyplan` (Stufe 34k-5, S198; KQ1 a, KQ17 a, KQ18 a, KQ19 a, KQ20 a,
-KQ21 a; S199: KQ22 a).
+KQ21 a; S199: KQ22 a; S211: KQ46 a, KQ49 a, KQ50 a, KQ51 a, KQ52 a).
 
 Aufruf (vom Projekt-Root):
     python -I -B asset/loop/instrument_bodies/make_harfe.py [--saiten <saitenorte.json>] [--ziel <ordner>]
@@ -22,10 +22,17 @@ Was woher kommt:
   zwei Leisten      Abb. 2.4 c: Fichte, 105 cm, 15 -> 7 mm hoch, 11,5 -> 5 mm breit, auf halbem Weg zum Rand
   Buche             Chabassier, Joly & Chaigne 2013 Tab. I — Annahme
   Hohlraum          Tab. 4.1: 27 l, sechs Oeffnungen in der Rueckseite der Schale (Flaeche, Lippe); Lage laengs aus
-                    Abb. 2.8 (grob); Muendungskorrektur 2,6 Radien, damit die Helmholtz-Mode bei starrer Wand bei
-                    185 Hz liegt (Bell: 190 Hz); Guete der Luft 16 aus S(1,1)-/+ (Tab. 6.1: 18, 14)
+                    Abb. 2.8 (grob); Muendungskorrektur 2,3 Radien (Feinsuche S210, Fassung F4, KQ51 a); Guete der
+                    Luft 8,5 (KQ29-1 a)
   Rand              gestuetzt (elastisch mit Feder 0): die Auslenkung gehalten, die Drehung frei — an der Lage der
                     Baeuche laengs der Deckleiste geprueft (Abb. 7.8-7.16; Bericht Par. 11)
+  Bassseiten        KQ50 a, KQ51 a: die beiden Seiten vom Bassende bis y = 0,6 m als eigene Abschnitte des Rands mit
+                    Drehfeder 7000 N, die Auslenkung gehalten (Wegfeder 1e12 N/m2, wie in der Feinsuche) — angepasst,
+                    ohne Quelle: der Boden ist im Bassteil sonst zu weich (S(1,1)- ohne Luft 146 Hz; Bericht Par. 19-20)
+  Saiten            KQ46 a, KQ49 a, KQ52 a: je Saite eine Feder an ihrer Oese, k = 0,3 E A / L, ohne Verlust;
+                    Durchmesser und Laengen Bell Tab. 2.1 / 2.2, E Nylon 4, Darm 5,5, Stahlkern 200 GPa (Annahmen);
+                    0,3 gibt die fuenf Verschiebungen beim Besaiten (Abb. 7.8-7.16) mit der kleinsten Summe der
+                    Quadrate wieder (Bericht Par. 20.6)
   Diskantkante      ein Abschnitt des Rands (KQ20 a, KQ21 a): die Auslenkung nicht gehalten, Wegfeder 3e6 N/m2 —
                     angepasst, nicht gemessen: damit liegt S(1,7) an den Oesen in der Schwelle (-5,4 statt
                     -7,4 dB), der Pegel an Bells Messort 2 steigt um 5-10 dB (Abb. 6.6; Bericht Par. 12)
@@ -39,9 +46,9 @@ Was woher kommt:
                     Taste an der Oese der Saite darunter (Pedal unten), die Taste 25 an der tiefsten Saite (Pedal
                     oben); der Koerper gibt damit jeder Taste, die eine der 46 Saiten erreicht, eine Antwort.
                     Benachbarte Oesen unterscheiden sich im Mittel um 1,5 dB je Terzband, 0,4 dB breitbandig
-Zielgroessen nach KQ19 a (S(1,2) ... S(1,7), Kasten G in der Harfe): Lage <= 10 % ohne Saiten und besaitet, Ort des
-staerksten Bauchs <= 2 Messorte, Hoehe <= 6 dB ohne Saiten. Bekannte Abweichungen: S(1,1)-, S(1,8) und die Lage von
-S(1,2) gegen den Kasten ohne Saiten (+10,4 %). Messorte nach Abb. 6.3: y = 0,035 (40 - Ort) - 0,057 m.
+Zielgroessen nach KQ40 a und KQ31-2 a (ohne Saiten, Kasten G in der Harfe): beide Moden mit Luft und S(1,2) ... S(1,6)
+in der Lage <= 7 %, Ort des staerksten Bauchs <= 2 Messorte, Hoehe der Baeuche <= 6 dB; die bekannten Abweichungen
+haelt der Test „Luftraum die mitgelieferte Harfe“ mit Wert. Messorte nach Abb. 6.3: y = 0,035 (40 - Ort) - 0,057 m.
 """
 import json
 import math
@@ -68,6 +75,34 @@ SAITEN_HZ = [2960, 2637, 2489, 2218, 1976, 1864, 1661, 1480, 1318, 1244, 1109, 9
              415, 370, 330, 311, 277, 247, 233, 207, 185, 165, 155, 139, 123, 116, 104, 92, 82, 77, 69, 61, 58, 52, 46, 41, 39,
              35]
 NAMEN = ["00", "0"] + [str(k) for k in range(1, 45)]
+# Saiten (Tab. 2.1 / 2.2, am Bild gelesen, S198), Saite 00 ... 34: Durchmesser mm, Laenge m (00 ... 8 Nylon, ab 9 Darm);
+# Saite 35 ... 44: Durchmesser des Stahlkerns mm, Laenge m
+DARM_AB = 10
+SAITEN_MONO = [(0.52, 0.071), (0.52, 0.082), (0.56, 0.088), (0.56, 0.095), (0.61, 0.105), (0.62, 0.113), (0.65, 0.123),
+               (0.69, 0.132), (0.70, 0.143), (0.69, 0.154), (0.70, 0.164), (0.73, 0.177), (0.76, 0.192), (0.80, 0.208),
+               (0.85, 0.225), (0.90, 0.242), (0.95, 0.265), (1.00, 0.285), (1.06, 0.327), (1.12, 0.354), (1.18, 0.385),
+               (1.24, 0.421), (1.30, 0.455), (1.36, 0.498), (1.44, 0.542), (1.52, 0.591), (1.60, 0.644), (1.68, 0.699),
+               (1.76, 0.753), (1.84, 0.813), (1.92, 0.880), (2.00, 0.945), (2.10, 0.999), (2.20, 1.053), (2.35, 1.103)]
+SAITEN_METALL = [(0.80, 1.150), (0.80, 1.180), (0.80, 1.222), (0.85, 1.257), (0.90, 1.299), (0.95, 1.330), (1.00, 1.359),
+                 (1.10, 1.397), (1.10, 1.421), (1.25, 1.445), (1.30, 1.475)]
+E_NYLON, E_DARM, E_STAHL = 4.0e9, 5.5e9, 200.0e9
+FAKTOR_SAITEN = 0.3
+# Bassseiten (KQ50 a, KQ51 a)
+BASSSEITEN_BIS = 0.6
+BASSSEITEN_DREHFEDER = 7000.0
+GEHALTEN = 1.0e12
+
+
+def saitenfedern():
+    """E A / L in N/m je Saite 00 ... 44 und der Werkstoff."""
+    aus = []
+    for i, (d, L) in enumerate(SAITEN_MONO):
+        e, art = (E_NYLON, "nylon, E 4 GPa") if i < DARM_AB else (E_DARM, "gut, E 5.5 GPa")
+        aus.append((e * math.pi * (d / 2000) ** 2 / L, f"{art}, {d} mm, {L} m"))
+    for kern, L in SAITEN_METALL:
+        aus.append((E_STAHL * math.pi * (kern / 2000) ** 2 / L, f"steel core, E 200 GPa, core {kern} mm, {L} m"))
+    assert len(aus) == len(SAITEN_HZ)
+    return aus
 WEISS = {0, 2, 4, 5, 7, 9, 11}
 
 
@@ -89,7 +124,10 @@ def tasten():
 
 def baue(saiten):
     assert [s["name"] for s in saiten] == NAMEN
-    umriss = [[-BREITE_BASS / 2, 0.0], [BREITE_BASS / 2, 0.0], [BREITE_DISKANT / 2, LAENGE], [-BREITE_DISKANT / 2, LAENGE]]
+    # Kanten: 0 Bassende, 1 rechte Bassseite, 2 rechte Seite, 3 Diskantkante, 4 linke Seite, 5 linke Bassseite
+    xb = round(breite(BASSSEITEN_BIS) / 2, 5)
+    umriss = [[-BREITE_BASS / 2, 0.0], [BREITE_BASS / 2, 0.0], [xb, BASSSEITEN_BIS], [BREITE_DISKANT / 2, LAENGE],
+              [-BREITE_DISKANT / 2, LAENGE], [-xb, BASSSEITEN_BIS]]
     nx, ny = int(round(BREITE_BASS / SCHRITT)) + 1, int(round(LAENGE / SCHRITT)) + 1
     werte = []
     for j in range(ny):
@@ -132,12 +170,13 @@ def baue(saiten):
                        "of the board is calibrated on the free board without bars (Tables 3.1 and 3.2). Cavity of 27 l "
                        "with six apertures in the back of the shell. The rim is supported (deflection held, rotation "
                        "free): checked on the position of the antinodes along the cover bar (Figs. 7.8 to 7.16). "
-                       "The treble edge is held by a spring only (fitted, not measured). "
-                       "Targets, soundbox G in the harp, S(1,2) to S(1,7): frequency within 10 % without and with "
-                       "strings, the strongest antinode within two testing positions, height within 6 dB without "
-                       "strings. Known deviations: S(1,1)- lies at 129 Hz (measured 153 / 170 / 187 Hz isolated, in the "
-                       "harp, strung: the whole soundbox moves), S(1,8) is 10 dB too low. The shell is rigid; only the "
-                       "Helmholtz mode of the air is computed.",
+                       "The treble edge is held by a spring only, the bass sides up to 0.6 m carry a rotational "
+                       "spring (both fitted, not measured; KQ50 a, KQ51 a). The body is the strung harp (KQ46 a): each "
+                       "string is a spring at its eyelet, 0.3 E A / L (KQ52 a). "
+                       "Targets without strings (KQ40 a, KQ31-2 a): both modes with air within 7 % of 170 / 216 Hz, "
+                       "S(1,2) to S(1,6) within 7 %, the strongest antinode within two testing positions, the "
+                       "antinodes within 6 dB; known deviations are held with their values in the test. The shell is "
+                       "rigid; only the Helmholtz mode of the air is computed.",
         "source": QUELLE,
         "units": "SI: m, kg/m^3, Pa",
         "materials": [
@@ -162,9 +201,9 @@ def baue(saiten):
                     "source": "fit to the Q of soundbox G in the harp without strings (Bell 1988 Figs. 7.10-7.16: 249 / 316 / "
                               "432 / 545 / 757 / 905 Hz with Q 39 / 45 / 43 / 31 / 33 / 18; S(1,6) with Q 10 left out); "
                               "extrapolated above 1 kHz"},
-        "cavity": {"volume": 0.027, "endCorrection": 2.6, "q": 8.5,
-                   "source": "volume and apertures: Bell 1988 Table 4.1; end correction set so that the Helmholtz mode with "
-                             "rigid walls lies at 185 Hz (Bell: 190 Hz; the apertures lie close together); Q of the air "
+        "cavity": {"volume": 0.027, "endCorrection": 2.3, "q": 8.5,
+                   "source": "volume and apertures: Bell 1988 Table 4.1; end correction 2.3 from the fine search S210 "
+                             "(version F4, KQ51 a: both modes with air and S(1,2) to S(1,6) within 7 %); Q of the air "
                              "fitted to both Q of soundbox G fitted to the harp, without strings (Bell 1988 Figs. 7.8, "
                              "7.9: 11 and 16) in the least-squares sense of the logarithm - with both bars on the centre "
                              "line (KQ31-1 a) the two modes share the air unequally (0.28 / 0.67) and one value cannot "
@@ -179,14 +218,28 @@ def baue(saiten):
                 "source": "supported: the board sits between the holding bar and the rim bar (Bell 1988 Fig. 2.6); with a "
                           "rotational spring or a clamped rim the antinodes lie 6-9 testing positions too far towards the "
                           "bass (Figs. 7.8-7.16)",
-                "sections": [{"name": "treble edge", "edges": [2, 2], "translationalStiffness": 3.0e6,
+                "sections": [{"name": "treble edge", "edges": [3, 3], "translationalStiffness": 3.0e6,
                               "rotationalStiffness": 0.0,
                               "source": "fitted, not measured: with this spring S(1,7) lies within 6 dB at the eyelets "
                                         "(-5.4 instead of -7.4 dB) and the level at Bell's testing position 2 rises by "
                                         "5 to 10 dB towards the measurement (Bell 1988 Fig. 6.6); the edge sits on the "
-                                        "top block of the shell"}]},
+                                        "top block of the shell"}] + [
+                    {"name": name, "edges": [kante, kante], "translationalStiffness": GEHALTEN,
+                     "rotationalStiffness": BASSSEITEN_DREHFEDER,
+                     "source": f"fitted, without a source (KQ50 a, KQ51 a): the side from the bass end to y = "
+                               f"{BASSSEITEN_BIS} m held (deflection held by a stiff spring of {GEHALTEN:g} N/m2, as in "
+                               f"the fine search) with a rotational spring of {BASSSEITEN_DREHFEDER:g} N; without it "
+                               f"the board is too soft in the bass (S(1,1)- without air at 146 Hz); version F4 of "
+                               f"the fine search S210, checked against all targets"}
+                    for name, kante in (("right bass side", 1), ("left bass side", 5))]},
         "barOverlap": "add",
-        "pointSprings": [],
+        "pointSprings": [
+            {"x": 0.0, "y": s["ort"], "stiffness": round(FAKTOR_SAITEN * ea_l, 3), "lossFactor": 0.0,
+             "source": f"string {s['name']} as a spring at its eyelet (KQ46 a, KQ52 a): k = {FAKTOR_SAITEN} E A / L, "
+                       f"{text} (Bell 1988 Table 2.1 / 2.2; E assumed); the factor fits the five shifts on stringing "
+                       f"(Figs. 7.8-7.16) with the least sum of squares; without loss (KQ49 a: assumed, as the probe "
+                       f"S209)"}
+            for s, (ea_l, text) in zip(saiten, saitenfedern())],
     }
 
 

@@ -69,6 +69,7 @@ kp::Koerper kleinerKoerper()
         m.amStegpunkt = {1.0 / 7.0, -2.5, 3.0e-9};
         m.abstrahlung = {{0.1, -0.2}, {1.0 / 3.0, 2.0e-12}};
         m.stegWinkelGrad = i == 0 ? -12.0 - 1.0 / 3.0 : 90.0;  // KQ35-2 a
+        m.federAnteil = i == 0 ? 0.25 + 1.0 / 300.0 : 0.0;     // KQ53 a
         k.moden.push_back(m);
     }
     k.statistik.vonHz = 5000.0;
@@ -177,6 +178,36 @@ TEST_CASE("Loop Koerper 31c-5d Datei")
         kaputterWinkel[QStringLiteral("modes")] = schief;
         kp::Koerper nicht;
         CHECK_FALSE(ausJson(kaputterWinkel, nicht));
+    }
+
+    // KQ53 a (Fassung 6): der Anteil der Federn steht immer in der Datei, je Mode
+    {
+        QJsonArray ohne;
+        for (const QJsonValue& e : json.value(QStringLiteral("modes")).toArray())
+        {
+            QJsonObject o = e.toObject();
+            CHECK(o.contains(QStringLiteral("springShare")));
+            o.remove(QStringLiteral("springShare"));
+            ohne.append(o);
+        }
+        // Fassung 5: ohne das Feld — keine Federn
+        QJsonObject fuenf = json;
+        fuenf[QStringLiteral("version")] = 5;
+        fuenf[QStringLiteral("modes")] = ohne;
+        kp::Koerper ausFuenf;
+        REQUIRE(ausJson(fuenf, ausFuenf));
+        kp::Koerper ohneFedern = k;
+        for (kp::ModeImKoerper& m : ohneFedern.moden) m.federAnteil = 0.0;
+        CHECK(ausFuenf == ohneFedern);
+        // ein Anteil ueber 1 macht die Datei unlesbar
+        QJsonArray zuViel = json.value(QStringLiteral("modes")).toArray();
+        QJsonObject erste = zuViel[0].toObject();
+        erste[QStringLiteral("springShare")] = 1.5;
+        zuViel[0] = erste;
+        QJsonObject kaputterAnteil = json;
+        kaputterAnteil[QStringLiteral("modes")] = zuViel;
+        kp::Koerper nicht;
+        CHECK_FALSE(ausJson(kaputterAnteil, nicht));
     }
 
     // ein leerer Koerper geht auch hin und zurueck
@@ -391,7 +422,16 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
         // Moden aufsteigend im Fenster, je Mode Anteile je Werkstoff (Summe 1), die Daempfung daraus
         // (DM1 a); der statistische Teil schliesst an
         REQUIRE_FALSE(k.moden.empty());
-        int falsch = 0;
+        // KQ49 a, KQ53 a: mit Federn an Punkten traegt jede Mode den Anteil der Federn; deren Verlust liegt zwischen
+        // dem kleinsten und dem groessten Verlustfaktor der Federn (genau, wenn alle denselben tragen)
+        double federVerlustVon = 0.0, federVerlustBis = 0.0;
+        for (std::size_t f = 0; f < plan.punktfedern.size(); ++f)
+        {
+            const double v = plan.punktfedern[f].verlustfaktor;
+            federVerlustVon = f == 0 ? v : std::min(federVerlustVon, v);
+            federVerlustBis = f == 0 ? v : std::max(federVerlustBis, v);
+        }
+        int falsch = 0, mitFedern = 0;
         double luftSumme = 0.0;
         for (std::size_t i = 0; i < k.moden.size(); ++i)
         {
@@ -401,14 +441,25 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
             double summe = 0.0;
             for (const double a : m.werkstoffAnteil) summe += a;
             falsch += m.werkstoffAnteil.size() == k.werkstoffe.size() && std::abs(summe - 1.0) < 1e-9 ? 0 : 1;
-            double eta = kp::verlustfaktorAusAnteilen(k.daempfung, m.frequenzHz, m.werkstoffAnteil, k.werkstoffVerlust);
-            // mit Hohlraum (F-K1 a): die Platte mal ihrem Anteil plus Anteil der Luft / Guete
+            const double etaPlatte = kp::verlustfaktorAusAnteilen(k.daempfung, m.frequenzHz, m.werkstoffAnteil, k.werkstoffVerlust);
+            falsch += m.federAnteil >= 0.0 && m.federAnteil < 1.0 && (!plan.punktfedern.empty() || m.federAnteil == 0.0) ? 0 : 1;
+            mitFedern += m.federAnteil > 0.0 ? 1 : 0;
+            // mit Federn (KQ49 a): die Platte mal ihrem Anteil plus der Verlust der Federn; mit Hohlraum (F-K1 a): das
+            // mal dem Anteil der Platte plus Anteil der Luft / Guete
+            double etaVon = (1.0 - m.federAnteil) * etaPlatte + m.federAnteil * federVerlustVon;
+            double etaBis = (1.0 - m.federAnteil) * etaPlatte + m.federAnteil * federVerlustBis;
             falsch += m.luftAnteil >= 0.0 && m.luftAnteil <= 1.0 && (plan.hohlraum.an() || m.luftAnteil == 0.0) ? 0 : 1;
-            if (plan.hohlraum.an()) eta = (1.0 - m.luftAnteil) * eta + m.luftAnteil / plan.hohlraum.guete;
+            if (plan.hohlraum.an())
+            {
+                etaVon = (1.0 - m.luftAnteil) * etaVon + m.luftAnteil / plan.hohlraum.guete;
+                etaBis = (1.0 - m.luftAnteil) * etaBis + m.luftAnteil / plan.hohlraum.guete;
+            }
             luftSumme += m.luftAnteil;
-            falsch += std::abs(m.verlustfaktor - eta) < 1e-12 ? 0 : 1;
+            falsch += m.verlustfaktor > etaVon - 1e-12 && m.verlustfaktor < etaBis + 1e-12 ? 0 : 1;
         }
         CHECK(falsch == 0);
+        // ein Bauplan mit Federn gibt (fast) jeder Mode einen Anteil — sonst ist der Koerper ohne sie gerechnet
+        if (!plan.punktfedern.empty()) CHECK(mitFedern > static_cast<int>(k.moden.size()) / 2);
         // die Luft in den Loechern ist ein Freiheitsgrad: ueber alle Moden hoechstens 1, im Fenster fast alles
         if (plan.hohlraum.an())
         {

@@ -33,6 +33,11 @@
  *   der gemessenen Dicke als Raster, 61 Stegpunkte (die neun Tasten ausserhalb des Dulcken am Rand),
  *   Helmholtz bei starrer Wand 37 Hz, die Daempfung aus der gemessenen Abklingzeit; die gekoppelte Mode
  *   der Luft als bekannte Abweichung festgehalten.
+ * - Die mitgelieferte Harfe (KQ19 a–KQ22 a, KQ46 a, KQ48 a, KQ50 a–KQ54 a): der Bauplan mit Drehfeder an den Bassseiten
+ *   und den Saiten als Federn an den Oesen; die Verschiebung beim Besaiten gegen den Koerper ohne Saiten. Die Ziele
+ *   von KQ31-2 a und KQ40 a gelten ohne Saiten: der Fall rechnet die Platte ohne Federn bis 1,5 kHz selbst (rund
+ *   15 s), Lage und Hoehe der Baeuche gegen Bell 1988 mit den bekannten Abweichungen; die Abstrahlung an den Saiten
+ *   33–22 an der besaiteten Platte mit 16 Hoerorten nach KQ36 a (KQ54 a, rund 15 s mehr).
  ****************************************************************************************
  */
 
@@ -41,6 +46,7 @@
 #include "InstrumentBody/Luftraum.hpp"
 #include "InstrumentBody/NetzCdt.hpp"
 #include "InstrumentBody/Platte.hpp"
+#include "InstrumentBody/Umsetzungen.hpp"
 #include "loop/Koerper.hpp"
 #include "loop/KoerperBauplan.hpp"
 
@@ -835,7 +841,7 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum das mitgelieferte Cembalo (KQ13 a, KQ15 a
     }
 }
 
-TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)")
+TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, KQ46 a, KQ48 a, KQ50 a bis KQ54 a)")
 {
     const QString stamm = QStringLiteral("asset/loop/instrument_bodies/concert_harp");
     kp::Bauplan plan;
@@ -844,25 +850,40 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
     for (const std::string& b : befunde) MESSAGE(b);
     CHECK(befunde.empty());
 
-    // der Boden der Salvi „Orchestra“ nach Bell 1988: 131 cm, 41 -> 10 cm
-    REQUIRE(plan.platte.umriss.size() == 4);
-    CHECK(plan.platte.umriss[2].y == doctest::Approx(1.31));
+    // der Boden der Salvi „Orchestra“ nach Bell 1988: 131 cm, 41 -> 10 cm; der Umriss mit einer Ecke je Seite bei
+    // y = 0,6 m, wo die Drehfeder der Bassseiten endet (KQ50 a, KQ51 a)
+    REQUIRE(plan.platte.umriss.size() == 6);
     CHECK(plan.platte.umriss[1].x - plan.platte.umriss[0].x == doctest::Approx(0.41));
-    CHECK(plan.platte.umriss[2].x - plan.platte.umriss[3].x == doctest::Approx(0.10));
-    // der Hohlraum mit sechs Oeffnungen in der Rueckseite der Schale (KQ17 a)
+    CHECK(plan.platte.umriss[3].y == doctest::Approx(1.31));
+    CHECK(plan.platte.umriss[3].x - plan.platte.umriss[4].x == doctest::Approx(0.10));
+    CHECK(plan.platte.umriss[2].y == doctest::Approx(0.6));
+    CHECK(plan.platte.umriss[5].y == doctest::Approx(0.6));
+    CHECK(plan.platte.umriss[2].x == doctest::Approx(-plan.platte.umriss[5].x));
+    // der Hohlraum mit sechs Oeffnungen in der Rueckseite der Schale (KQ17 a), Muendung 2,3 (Fassung F4, KQ51 a)
     REQUIRE(plan.hohlraum.an());
     CHECK(plan.hohlraum.volumen == doctest::Approx(0.027));
     CHECK(plan.hohlraum.oeffnungen.size() == 6);
+    CHECK(plan.hohlraum.muendung == doctest::Approx(2.3));
     CHECK(plan.platte.loecher.empty());
-    // der Rand gestuetzt (KQ18 a, Feder 0), die Diskantkante als Abschnitt mit Wegfeder (KQ20 a, KQ21 a)
+    // der Rand gestuetzt (KQ18 a, Feder 0); die Diskantkante mit Wegfeder (KQ20 a, KQ21 a); die beiden Bassseiten
+    // gehalten mit Drehfeder 7 000 N (KQ50 a, KQ51 a)
     CHECK(plan.rand.elastisch());
     CHECK(plan.rand.drehfeder == 0.0);
-    REQUIRE(plan.rand.abschnitte.size() == 1);
-    CHECK(plan.rand.abschnitte[0].kanteVon == 2);
-    CHECK(plan.rand.abschnitte[0].kanteBis == 2);
+    REQUIRE(plan.rand.abschnitte.size() == 3);
+    CHECK(plan.rand.abschnitte[0].kanteVon == 3);
+    CHECK(plan.rand.abschnitte[0].kanteBis == 3);
     CHECK(plan.rand.abschnitte[0].wegfeder == doctest::Approx(3.0e6));
     CHECK(plan.rand.abschnitte[0].drehfeder == 0.0);
-    CHECK_FALSE(plan.rand.abschnitte[0].quelle.empty());
+    for (std::size_t a = 1; a < 3; ++a)
+    {
+        const kp::Randabschnitt& r = plan.rand.abschnitte[a];
+        CAPTURE(r.name);
+        CHECK(r.kanteVon == (a == 1 ? 1 : 5));
+        CHECK(r.kanteBis == r.kanteVon);
+        CHECK(r.wegfeder >= 1.0e12);
+        CHECK(r.drehfeder == doctest::Approx(7000.0));
+    }
+    for (const kp::Randabschnitt& r : plan.rand.abschnitte) CHECK_FALSE(r.quelle.empty());
     // 46 Saiten, je eine Oese auf der Mittellinie; mit dem Pedal in der Mitte die weissen Tasten D1 ... G7.
     // KQ22 a: je chromatischer Taste 25 ... 104 ein Stegpunkt, 80 Punkte an 46 Orten — die schwarze Taste an der
     // Oese der Saite darunter (Pedal unten), die Taste 25 an der tiefsten Saite (Pedal oben)
@@ -892,34 +913,157 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
     }
     CHECK(saiten == 46);
     CHECK_FALSE(plan.daempfung.quelle.empty());
+    // KQ46 a, KQ52 a: der Koerper ist die besaitete Harfe — je Saite eine Feder an ihrer Oese, 0,3 E A / L
+    // (Summe 1,80 · 10^6 N/m fuer E A / L), ohne eigenen Verlust (KQ49 a)
+    REQUIRE(plan.punktfedern.size() == 46);
+    double summeFedern = 0.0;
+    for (const kp::Punktfeder& f : plan.punktfedern)
+    {
+        CAPTURE(f.ort.y);
+        CHECK(f.ort.x == 0.0);
+        CHECK(std::any_of(plan.stegpunkte.begin(), plan.stegpunkte.end(), [&f](const kp::Stegpunkt& p) { return p.ort == f.ort; }));
+        CHECK(f.steife > 0.0);
+        CHECK(f.verlustfaktor == 0.0);
+        CHECK_FALSE(f.quelle.empty());
+        summeFedern += f.steife;
+    }
+    CHECK(summeFedern == doctest::Approx(5.394e5).epsilon(1e-3));
 
     kp::Koerper k;
     REQUIRE(ladeKoerper(stamm + QLatin1String(kKoerperEndung), k));
     REQUIRE(k.moden.size() > 100);
     // KQ31-1 a: Deck- und Zugleiste liegen beidseits des Bodens auf derselben Linie, ihre Hoehen zaehlen zusammen
     CHECK(plan.leistenUebereinander == kp::LeistenUebereinander::Addieren);
-    // bekannte Abweichung: S(1,1)- liegt bei 134 Hz (Bell: 153 / 170 / 187 Hz lose, in der Harfe, besaitet) — dort
-    // bewegt sich der ganze Kasten, die Schale ist hier starr
-    CHECK(k.moden[0].frequenzHz == doctest::Approx(134.2).epsilon(0.02));
-    CHECK(k.moden[0].luftAnteil > 0.2);
-    // KQ29-1 a: mit der Zugleiste teilen sich die zwei Moden die Luft ungleich (0,28 / 0,67), ein Wert trifft nicht
-    // beide Gueten des Kastens in der Harfe (Bell 1988 Abb. 7.8, 7.9: 11 und 16 ohne Saiten). 8,5 ist der Wert mit
-    // der kleinsten gemeinsamen Abweichung im Logarithmus: Q 18,2 und 11,5
     CHECK(plan.hohlraum.guete == doctest::Approx(8.5));
+
+    // Die Platte eines Bauplans am Netz des Koerpers (5 kHz), bis 1,5 kHz gerechnet wie `InstrumentBodyTool` — S211:
+    // dieselben Moden und Profile wie bis 5 kHz, auf 0,1 dB; mit Federn an Punkten auch deren Anteil (KQ49 a)
+    const auto geber = kp::netzgeber();
+    const auto loeser = kp::eigenloeser();
+    const kp::Netz netz = geber.front()->vernetze(kp::netzAuftrag(plan, 5000.0));
+    REQUIRE_MESSAGE(netz.fehler.empty(), netz.fehler);
+    const kp::LagrangeDreieck element(3);
+    const auto rechneBis1500 = [&](const kp::Bauplan& p) {
+        const kp::PlattenSystem system = kp::baueSystem(netz, element, p);
+        REQUIRE_MESSAGE(system.fehler.empty(), system.fehler);
+        std::vector<double> werkstoffVerlust;
+        for (const kp::Material& m : p.materialien) werkstoffVerlust.push_back(m.verlustfaktor);
+        const kp::Verformungsenergie energie(system, element, [&](kp::Punkt2 q) { return kp::steifeBei(p, q); },
+                                             static_cast<int>(p.materialien.size()));
+        kp::Auswertung auswertung(system, element, p.stegpunkte, p.hoerorte, {}, p.daempfung, &energie, werkstoffVerlust, p.platte.umriss,
+                                  p.rueckseite);
+        if (!p.punktfedern.empty()) auswertung.setzePunktfedern(system, element, p.punktfedern);
+        std::vector<kp::Mode> plattenModen;
+        kp::EigenAuftrag auftrag;
+        auftrag.k = &system.k;
+        auftrag.m = &system.m;
+        auftrag.bisHz = 1500.0;
+        auftrag.jeMode = [&](const kp::Mode& mode) { plattenModen.push_back(mode); };
+        const kp::EigenErgebnis erg = loeser.front()->loese(auftrag);
+        REQUIRE_MESSAGE(erg.fehler.empty(), erg.fehler);
+        std::sort(plattenModen.begin(), plattenModen.end(), [](const kp::Mode& a, const kp::Mode& b) { return a.frequenzHz < b.frequenzHz; });
+        return kp::mitLuftraum(auswertung, p, kp::Luft{}, plattenModen).moden;
+    };
+    // KQ31-2 a, KQ40 a: die Ziele gelten ohne Saiten — die Platte ohne die Federn
+    kp::Bauplan ohneSaiten = plan;
+    ohneSaiten.punktfedern.clear();
+    const std::vector<kp::ModeImKoerper> ohne = rechneBis1500(ohneSaiten);
+    REQUIRE(ohne.size() > 15);
+
+    const auto naechste = [](const std::vector<kp::ModeImKoerper>& moden, double hz) {
+        return *std::min_element(moden.begin(), moden.end(), [hz](const kp::ModeImKoerper& a, const kp::ModeImKoerper& b) {
+            return std::abs(a.frequenzHz - hz) < std::abs(b.frequenzHz - hz);
+        });
+    };
+    // KQ40 a: die zwei Moden mit Luft ohne Saiten innerhalb von 7 % von Bells 170 / 216 Hz (Abb. 7.8, 7.9); das
+    // Modell liegt bei 164,4 / 218,9 Hz. KQ29-1 a: ein Wert der Guete der Luft trifft nicht beide Gueten der
+    // Messung (11 / 16) — das Modell hat 13,9 / 14,7, hier festgehalten
     struct LuftMode
     {
-        double hz, gueteVon, gueteBis, luftVon;
+        double hz, bell, gueteVon, gueteBis;
     };
-    for (const LuftMode& l : {LuftMode{134.2, 17.0, 19.5, 0.2}, LuftMode{198.3, 10.5, 12.5, 0.6}})
+    for (const LuftMode& l : {LuftMode{164.4, 170.0, 13.0, 15.0}, LuftMode{218.9, 216.0, 13.8, 15.6}})
     {
-        const auto mode = std::min_element(k.moden.begin(), k.moden.end(), [&l](const kp::ModeImKoerper& a, const kp::ModeImKoerper& b) {
-            return std::abs(a.frequenzHz - l.hz) < std::abs(b.frequenzHz - l.hz);
-        });
+        const kp::ModeImKoerper m = naechste(ohne, l.hz);
         CAPTURE(l.hz);
-        CHECK(mode->frequenzHz == doctest::Approx(l.hz).epsilon(0.02));
-        CHECK(mode->luftAnteil > l.luftVon);
-        CHECK(1.0 / mode->verlustfaktor > l.gueteVon);
-        CHECK(1.0 / mode->verlustfaktor < l.gueteBis);
+        CHECK(m.frequenzHz == doctest::Approx(l.hz).epsilon(0.01));
+        CHECK(std::abs(m.frequenzHz / l.bell - 1.0) <= 0.07);
+        CHECK(m.luftAnteil > 0.4);
+        CHECK(1.0 / m.verlustfaktor > l.gueteVon);
+        CHECK(1.0 / m.verlustfaktor < l.gueteBis);
+    }
+    // KQ52 a: mit den Saiten verschieben sich die Moden wie beim Besaiten — Bell 1988 (Abb. 7.8-7.14): S(1,1)- +10,
+    // S(1,2) +3, S(1,3) +5,7, S(1,4) -0,5, S(1,5) +1,8 %. Der Faktor 0,3 gibt +5,3 / +6,5 / +3,6 / +2,1 / +1,2 %,
+    // die kleinste Summe der Quadrate; hier mit dem Wert festgehalten (±0,3 Prozentpunkte)
+    struct Verschiebung
+    {
+        double hz, prozent;
+    };
+    for (const Verschiebung& v : {Verschiebung{164.4, 5.3}, Verschiebung{241.4, 6.5}, Verschiebung{336.6, 3.6}, Verschiebung{441.9, 2.1},
+                                  Verschiebung{567.1, 1.2}})
+    {
+        const double vorher = naechste(ohne, v.hz).frequenzHz;
+        const double nachher = naechste(k.moden, vorher * (1.0 + v.prozent / 100.0)).frequenzHz;
+        CAPTURE(vorher);
+        CAPTURE(nachher);
+        CHECK(std::abs(100.0 * (nachher / vorher - 1.0) - v.prozent) < 0.3);
+    }
+
+    // KQ48 a, KQ54 a: die Abstrahlung der besaiteten Harfe an den Saiten 33 ... 22 gegen Bell 1988 Abb. 7.23 (am
+    // Seitenbild gelesen, S208): |p/F| an der Oese bei der Frequenz der leeren Saite, Kraft senkrecht zum Boden,
+    // Leistungsmittel ueber 16 Hoerorte in 2,06 m wie KQ36 a (nur hier im Test, der Bauplan traegt sie nicht), gegen
+    // Saite 26 bezogen; eine Saite haelt, wenn sie innerhalb von 6 dB liegt. Wie proben/2026-11-19_S209_harfe_suche.
+    // Bekannte Abweichung: 6 von 12 halten (S211), rot, wenn es weniger werden.
+    {
+        kp::Bauplan mitOrten = plan;
+        const double z0 = std::sin(10.0 * kPi / 180.0);
+        for (int i = 0; i < 16; ++i)
+        {
+            const double z = z0 + (1.0 - z0) * (i + 0.5) / 16.0;
+            const double a = i * kPi * (3.0 - std::sqrt(5.0));
+            const double r = std::sqrt(1.0 - z * z);
+            mitOrten.hoerorte.push_back({"k" + std::to_string(i + 1), {2.06 * r * std::cos(a), 0.655 + 2.06 * r * std::sin(a)}, 2.06 * z,
+                                         "KQ36 a"});
+        }
+        const std::vector<kp::ModeImKoerper> besaitet = rechneBis1500(mitOrten);
+        REQUIRE(besaitet.size() > 15);
+        CHECK(std::any_of(besaitet.begin(), besaitet.end(), [](const kp::ModeImKoerper& m) { return m.federAnteil > 0.1; }));
+        const auto pfDb = [&](int taste, double hz) {
+            const std::size_t punkt = static_cast<std::size_t>(taste - plan.stegpunkte.front().taste);
+            REQUIRE(plan.stegpunkte[punkt].taste == taste);
+            const double om = 2.0 * kPi * hz;
+            double leistung = 0.0;
+            for (std::size_t h = 1; h < mitOrten.hoerorte.size(); ++h)
+            {
+                std::complex<double> p = 0.0;
+                for (const kp::ModeImKoerper& m : besaitet)
+                {
+                    const double omn = 2.0 * kPi * m.frequenzHz;
+                    p += m.amStegpunkt[punkt] * (-om * om) / (omn * omn * std::complex<double>(1.0, m.verlustfaktor) - om * om) * m.abstrahlung[h];
+                }
+                leistung += std::norm(p) / 16.0;
+            }
+            return 10.0 * std::log10(leistung);
+        };
+        struct SaiteBell
+        {
+            int saite;
+            double hz, db;
+        };
+        const SaiteBell bell[] = {{33, 104, -26}, {32, 116, -24}, {31, 123, -31}, {30, 139, -32},   {29, 155, -34}, {28, 165, -28.5},
+                                  {27, 185, -10}, {26, 207, -8},  {25, 233, -16}, {24, 247, -12}, {23, 277, -5.5}, {22, 311, -8}};
+        const auto tasteVon = [](double hz) { return static_cast<int>(std::lround(69.0 + 12.0 * std::log2(hz / 440.0))) + 1; };
+        const double bezug = pfDb(tasteVon(207.0), 207.0);
+        int halten = 0;
+        std::string zeile;
+        for (const SaiteBell& s : bell)
+        {
+            const double abw = (pfDb(tasteVon(s.hz), s.hz) - bezug) - (s.db - -8.0);
+            halten += std::abs(abw) <= 6.0 ? 1 : 0;
+            zeile += " " + std::to_string(s.saite) + ":" + std::to_string(std::lround(10.0 * abw) / 10.0).substr(0, 5);
+        }
+        MESSAGE("Abstrahlung Saite 33 ... 22, Modell - Bell in dB (Bezug Saite 26):", zeile, "; halten ", halten, " / 12");
+        CHECK(halten >= 6);
     }
 
     // KQ31-2 a: die Harfe ohne Saiten an den Moden S(1,2) ... S(1,6), gegen Bell 1988 Abb. 7.10-7.14 Feld 2 (Kasten G
@@ -940,7 +1084,7 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
         for (const std::size_t punkt : oesen)
         {
             std::complex<double> y = 0.0;
-            for (const kp::ModeImKoerper& m : k.moden)
+            for (const kp::ModeImKoerper& m : ohne)
             {
                 const double phi = m.amStegpunkt[punkt];
                 const double omn = 2.0 * kPi * m.frequenzHz;
@@ -1012,7 +1156,8 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
     };
     // KQ31-3 a: die Schwellen bleiben; was am Koerper darueber liegt, steht hier als bekannte Abweichung mit ihrem
     // Wert — der Fall wird rot, wenn sie waechst oder wenn sie verschwindet (dann gehoert die Stelle in die Schwelle).
-    // Ursache offen (Offene_Punkte.md, Harfenbericht Par. 16).
+    // Mit der Fassung F4 (KQ51 a) liegen alle Baeuche in der Lage innerhalb von 2 Messorten; ausserhalb bleiben die
+    // Hoehe des staerksten Bauchs je Mode und sechs Hoehen an S(1,5) / S(1,6) (Harfenbericht Par. 16, Par. 20).
     struct BauchZiel
     {
         double ort, db;          // Bell
@@ -1027,12 +1172,12 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
         std::vector<BauchZiel> baeuche;  // vom Diskant zum Bass, der erste ist der staerkste
     };
     const std::vector<ModeZiel> ziele = {
-        {"S(1,2)", 249.0, -3.5, {{13.0, 96.0, 2.1}, {30.0, 78.0}}},
-        {"S(1,3)", 316.0, -8.3, {{7.5, 104.0}, {18.5, 89.0, 2.5}, {31.5, 84.0}}},
-        {"S(1,4)", 432.0, -9.4, {{6.0, 105.5}, {14.5, 91.0}, {22.5, 85.5}, {32.0, 84.0}}},
-        {"S(1,5)", 545.0, -6.7, {{4.0, 101.5}, {10.5, 93.0}, {16.5, 82.0}, {25.0, 86.0, 0.0, -9.1}, {33.5, 86.5, 0.0, -11.2}}},
+        {"S(1,2)", 249.0, -3.2, {{13.0, 96.0}, {30.0, 78.0}}},
+        {"S(1,3)", 316.0, -8.3, {{7.5, 104.0}, {18.5, 89.0}, {31.5, 84.0}}},
+        {"S(1,4)", 432.0, -9.6, {{6.0, 105.5}, {14.5, 91.0}, {22.5, 85.5}, {32.0, 84.0}}},
+        {"S(1,5)", 545.0, -6.8, {{4.0, 101.5}, {10.5, 93.0}, {16.5, 82.0}, {25.0, 86.0, 0.0, -7.9}, {33.5, 86.5, 0.0, -10.2}}},
         {"S(1,6)", 709.0, -8.6,
-         {{3.5, 101.0}, {8.5, 95.5}, {14.0, 90.0, 0.0, -6.5}, {20.0, 86.5, 0.0, -8.2}, {27.5, 89.5, 0.0, -15.4}, {34.0, 88.5, 0.0, -16.5}}},
+         {{3.5, 101.0}, {8.5, 95.5}, {14.0, 90.0, 0.0, -6.1}, {20.0, 86.5, 0.0, -7.7}, {27.5, 89.5, 0.0, -14.5}, {34.0, 88.5, 0.0, -15.3}}},
     };
     for (const ModeZiel& z : ziele)
     {
@@ -1071,8 +1216,8 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a)"
             }
         }
     }
-    // bekannte Abweichung: S(1,8) (905 Hz, 102 dB an Ort 4) liegt mehr als 6 dB zu tief — das Diskantende ist auch
-    // mit der Feder an der Kante zu steif (Bericht Par. 12)
+    // bekannte Abweichung: S(1,8) (905 Hz, 102 dB an Ort 4) liegt ohne Saiten 17 dB zu tief — das Diskantende ist
+    // auch mit der Feder an der Kante zu steif (Bericht Par. 12)
     const std::pair<double, double> acht = spitzeUm(905.0, 0.08);
     CAPTURE(acht.first);
     CAPTURE(acht.second);

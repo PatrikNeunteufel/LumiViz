@@ -80,8 +80,9 @@ struct ModeImKoerper
     double verlustfaktor = 0.0;                      ///< η
     double luftAnteil = 0.0;                         ///< Anteil der Bewegungsenergie in der Luft der Loecher (F-K1 a); 0 = ohne Hohlraum
     std::vector<double> werkstoffAnteil;             ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
-    /// Anteil der Verformungsenergie in den Federn an Punkten (KQ49 a, S210), 0 … 1; 0 = keine Federn. Nur aus der
-    /// Rechnung, nicht in der Koerperdatei. `werkstoffAnteil` bleibt auf die Werkstoffe normiert (Summe 1).
+    /// Anteil der Verformungsenergie in den Federn an Punkten (KQ49 a, S210), 0 … 1; 0 = keine Federn. Seit Fassung 6
+    /// der Koerperdatei dort als `springShare` (KQ53 a, S211). `werkstoffAnteil` bleibt auf die Werkstoffe normiert
+    /// (Summe 1).
     double federAnteil = 0.0;
     std::vector<double> amStegpunkt;                 ///< φ je Stegpunkt (Reihenfolge des Bauplans), 1/√kg
     std::vector<std::complex<double>> abstrahlung;  ///< G je Hoerort (Reihenfolge des Bauplans), √kg/m²

@@ -945,10 +945,54 @@ leiseste Bereich liegt in allen vier an den Tasten 47–52, der lauteste an 58�
 der Saiten; für 0,3 und 0,4 ist die Lautheit nicht gerechnet.
 Die Wahl der Fassung (KQ51) und des Faktors der Saiten (KQ52) ist offen.
 
-**20.5 Stand der Vorlage** (Ende S210). KQ51 ist Patrik vorgelegt und nicht beantwortet: a F4, b F3, c F2, d F1.
+**20.5 Stand der Vorlage** (Ende S210; **S211: KQ51 a — F4, KQ52 a — Faktor 0,3**, der größte Sprung 12,8 LU wird bekannte Abweichung).
+KQ51 war Patrik vorgelegt: a F4, b F3, c F2, d F1.
 Empfohlen F4 — die Lage der Bäuche folgt der Feder (beide Fassungen mit 7 000 N treffen alle Profile, beide schwächeren
 verfehlen S(1,3)), der größte Sprung schwankt zwischen Nachbarn um 3 LU und trennt nicht; gegen F1 liegt F4 an zweiter
 Mode, Güte, Sprung und Abstrahlung näher. Kipppunkte: die Grenze 12 LU ohne bekannte Abweichung (dann F3); ein Sprung
 von F4 deutlich über 12 mit dem Faktor 0,3 / 0,4. Für KQ52 liegt an F4 die Lautheit ohne Mitschwingen vor
 (Spanne / größter / mittlerer Sprung): Faktor 0,2 17,6 / 12,1 / 2,7, Faktor 0,3 18,4 / 12,7 / 2,9, Faktor 0,4 19,1 /
 12,7 / 2,8 LU. Mit Mitschwingen ist für 0,3 / 0,4 nichts gerechnet (ein Lauf wurde bei 4 von 67 Tasten abgebrochen).
+
+**20.6 Faktor der Saiten an F4** (S211; Lauf wie §20.4 mit 0,3 und 0,4, je rund 65 min; Ausgaben lokal
+`.claude/handover/s211_kq52_f4_<c>.log`). Verschiebung beim Besaiten gegen den Körper ohne Saiten (164,4 / 218,9 Hz,
+S(1,2)–S(1,5) 241,4 / 336,6 / 441,9 / 567,1 Hz), Bell in Klammern:
+
+| c | S(1,1)− (+10) | S(1,2) (+3) | S(1,3) (+5,7) | S(1,4) (−0,5) | S(1,5) (+1,8) | Σ Quadrate (5 / 3) | Moden mit Luft (Bell 187 / 207) | Lautheit mit Mitschwingen |
+|---|---|---|---|---|---|---|---|---|
+| 0,2 | +3,8 % | +4,3 % | +2,4 % | +1,4 % | +0,8 % | 56 / 51 | 170,7 / 225,6 | 18,4 / 12,2 / 2,5 |
+| 0,3 | +5,3 % | +6,5 % | +3,6 % | +2,1 % | +1,2 % | 46 / 39 | 173,1 / 228,7 | 19,2 / 12,8 / 2,5 |
+| 0,4 | +6,5 % | +8,7 % | +4,8 % | +2,8 % | +1,6 % | 57 / 46 | 175,1 / 231,9 | 19,6 / 12,8 / 2,5 |
+
+Ohne Mitschwingen: 17,6 / 12,1 / 2,7 · 18,4 / 12,7 / 2,8 · 19,1 / 12,7 / 2,8 LU. Der größte Sprung liegt in allen
+drei zwischen den Tasten 54 und 58. Zwischen 0,3 und 0,4 ändern sich die Orte der Bäuche um höchstens 0,2, die Höhen um
+höchstens 0,6 dB. Abstrahlung an den Saiten 33–22 gegen Bell Abb. 7.23 (KQ48 a, nachgerechnet nach dem Entscheid):
+ohne Saiten 2 / 12, mit 0,2 / 0,3 / 0,4 je 6 / 12; die größte Abweichung wächst mit dem Faktor, 15,3 / 18,5 / 21,0 dB
+(an Saite 25). Die Zahl, die KQ48 a festhält, ist für alle drei gleich.
+
+**KQ52 a (Patrik S211): Faktor 0,3** — die kleinste Summe der Quadrate gegen Bells fünf Verschiebungen; der
+Unterschied im größten Sprung (12,8 gegen 12,2 LU bei 0,2) liegt unter der Schwankung zwischen Nachbarn. Verworfen: 0,2, 0,4.
+
+**20.7 Der Bau** (S211; KQ51 a–KQ54 a). `make_harfe.py` schreibt F4: Umriss mit einer Ecke je Seite bei y = 0,6 m,
+die Bassseiten als Randabschnitte (Auslenkung gehalten mit 10¹² N/m², wie in der Suche; Drehfeder 7 000 N), Mündung
+2,3, 46 `pointSprings` mit 0,3 · E·A/L (Summe 5,394 · 10⁵ N/m), ohne Verlust. Gegen den Bauplan der Suche gleich bis
+auf Quellen, Hörorte und die Federn. Der Körper (85 s, 129 Moden): mit den Federn in der Platte 173,08 / 228,74 /
+257,12 / 348,54 / 451,39 / 574,05 Hz, die Suche im Modenraum 173,1 / 228,7 / 257,1 / 348,6 / 451,4 / 574,1 Hz.
+
+Der Fall „Luftraum die mitgelieferte Harfe“ rechnet die Platte ohne Federn bis 1,5 kHz am Netz für 5 kHz (13 s;
+gegen bis 5 kHz auf 0,1 dB gleich) und misst daran KQ31-2 a und KQ40 a: Moden mit Luft 164,4 / 218,9 Hz (Q 13,9 /
+14,7), S(1,2)–S(1,6) −3,1 / +6,5 / +2,3 / +4,1 / +0,2 %, alle Bäuche in der Lage innerhalb von 2 Messorten (knapp:
+der zweite Bauch von S(1,3) mit +1,99), bekannte Abweichungen die Höhe des stärksten Bauchs je Mode (−3,2 / −8,3 /
+−9,6 / −6,8 / −8,6 dB) und sechs Höhen an S(1,5) / S(1,6) (−7,9 / −10,2; −6,1 / −7,7 / −14,5 / −15,3 dB), S(1,8)
+−16,9 dB. Mit den Federn: die Verschiebung beim Besaiten (+5,3 / +6,5 / +3,6 / +2,1 / +1,2 %) und die Abstrahlung an
+den Saiten 33–22 mit den 16 Hörorten von KQ36 a (KQ54 a).
+
+**Volle Rechnung gegen Modenraum.** Die Abstrahlung am gebauten Körper weicht an den Basssaiten bis 5 dB von der Suche
+ab (Saite 33 … 22, Modell − Bell): −5,1 / −4,0 / +5,0 / +10,0 / +16,8 / +15,2 / −6,9 / 0 / +20,3 / +9,6 / −1,4 / −2,8 dB
+gegen −9,2 / −8,3 / +0,7 / +5,3 / +11,5 / +10,3 / −3,9 / 0 / +18,5 / +8,6 / −3,3 / −5,0 dB; beide halten 6 / 12.
+Formen, Frequenzen und Werte an den Ösen sind gleich; verschieden sind Luftanteil und Güte der beiden Moden mit Luft:
+0,65 / 0,34 und Q 11,9 / 19,0 mit den Federn in der Platte, 0,50 / 0,45 und Q 15,1 / 16,7 im Modenraum. Der Modenraum
+führt Luftanteil und Dämpfung nur auf der Diagonale (die Kreuzglieder zwischen den Moden fehlen); mit 409 statt 129
+Moden ändert sich nichts (Gegenprobe). Die volle Rechnung gilt. **Folge:** Die Lautheit je Taste mit Saiten in §20.2,
+§20.4 und §20.6 (auch die 12,8 LU von KQ51 a / KQ52 a) ist am Modenraum gemessen; die Verschiebungen beim Besaiten und
+alles ohne Saiten nicht betroffen. Die Lautheit am gebauten Körper steht aus.

@@ -1,7 +1,7 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.25.0  
-> **Datum:** 2026-11-20  
+> **Version:** 0.26.0  
+> **Datum:** 2026-11-21  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
@@ -362,7 +362,10 @@ Reihenfolge der Werte, Luft, Dämpfung, die gerechneten Moden (`ModeImKoerper`) 
   (`parallelAnteil`: zu jeder gezogenen Mode eine zweite mit Winkel 90° auf halbem Weg zur nächsten, Dämpfung wie die
   Mode, ohne Abstrahlung, Formwert = Anteil mal ihr senkrechter Formwert; nichts wird dafür gezogen). Alles immer
   geschrieben, ein Körper aus einem Bauplan schreibt 0; Fassung 4 liest sich mit 0; ein Winkel über 90° macht die
-  Datei unlesbar.
+  Datei unlesbar; **6 seit S211** (KQ53 a): je Mode `springShare` = `ModeImKoerper::federAnteil`, der Anteil der
+  Verformungsenergie in den Federn an Punkten (KQ49 a), immer geschrieben, 0 ohne Federn — der Wächter rechnet die Dämpfung
+  damit nach (genau, wenn alle Federn denselben Verlustfaktor tragen, sonst zwischen dem kleinsten und dem größten);
+  Fassung 5 liest sich mit 0, ein Anteil außerhalb 0 … 1 macht die Datei unlesbar.
 - **`kRechenFassung`** — die Fassung der Rechnung (2 seit S149, DM1 a). Hochzählen, wenn sich bei gleichem Bauplan ein anderer Körper
   ergäbe; dann meldet der Wächter (`test_LoopKoerperDatei`, „Waechter“) jeden mitgelieferten Körper als veraltet, bis
   `InstrumentBodyTool` ihn neu rechnet. Ebenso, wenn sich der Bauplan ändert (der Abdruck passt nicht mehr).
@@ -469,6 +472,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.26.0 | 2026-11-21 | Session 211, Stufe 34k-6, KQ53 a: **`.lvinstbody` Fassung 6** — je Mode `springShare` (`ModeImKoerper::federAnteil`, immer geschrieben, Fassung 5 liest sich mit 0). Der Wächter über die mitgelieferten Körper rechnet die Dämpfung mit dem Anteil der Federn nach. Die sieben Körper mit `--rewrite` neu geschrieben, die Harfe (der erste Körper mit Federn, KQ52 a) neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.25.0 | 2026-11-20 | Session 210, Stufe 34k-6, KQ46 a, KQ49 a: Federn an Punkten — `Punktfeder` (Ort, Steife N/m, Verlustfaktor, Quelle) in `Bauplan::punktfedern`, **`.lvinstbodyplan` Fassung 9** mit `pointSprings` (`x`, `y`, `stiffness`, `lossFactor`, `source`; immer geschrieben, Fassung 8 lesbar ohne Federn); `setzePunktfedern` (k · N Nᵀ auf K), `baueSystem(netz, element, plan)` setzt sie, `baueSystemOhnePunktfedern`; `Abtastung`, `bezug`, `abtastung`, `wertBei` von `Auswertung.hpp` nach `Platte.hpp`. Dämpfung: `Auswertung::setzePunktfedern`, `ModeImKoerper::federAnteil` (nicht in der Körperdatei), η = (1 − Anteil) · η_Platte + Σ a_f η_f. `pruefe`: Steife und Verlustfaktor nicht negativ, Ort im Umriss und in keinem Loch. Werkzeug: meldet Zahl und Summe der Federn und je Mode ihren Anteil. `kRechenFassung` bleibt 2 — ein Bauplan ohne Federn rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ46 Punktfedern“ in `test_LoopKoerperPlatte`: gegen die Reihe nach Navier 0,1 %, gegen den Modenraum mit allen Moden 10⁻⁶ und mit 60 Moden 0,03 %, am feineren Netz 0,05 %. |
 | 0.24.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ35-2 a, KQ35-1 a: die Richtung am Steg — `ModeImKoerper::stegWinkelGrad` mit `senkrechtAm` / `parallelAm`, `StatistischerTeil::stegWinkelGrad` und `::parallelAnteil`, `ziehe` mit gezogenem Vorzeichen und Moden nur parallel zur Decke; `antwort`, `antwortSpektrum*`, `mobilitaet` mit dem senkrechten Formwert (Winkel 0: Bit für Bit wie vorher). **`.lvinstbody` Fassung 5** (`bridgeAngle` je Mode, `bridgeAngle` und `parallelFactor` im statistischen Teil, immer geschrieben; Fassung 4 liest sich mit 0). **`kFitFassung` 4**: `make_gitarre.py` füllt die Modendichte über 2,2 kHz nach Elie 2011 auf und schreibt die Richtung nach Elie 2012. Tests „KQ35 Ziehung mit Richtung am Steg“, Mobilität mit Winkel, Datei Fassung 5. `kRechenFassung` bleibt 2. |
 | 0.23.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ31-1 a: Leisten übereinander — `LeistenUebereinander` (`NurDieErste` / `Addieren`) in `Bauplan::leistenUebereinander`, **`.lvinstbodyplan` Fassung 8** mit `barOverlap` (`first` / `add`, immer geschrieben, Fassung 7 lesbar als `first`); `steifeBei` addiert mit `Addieren` die Höhen aller Leisten am Punkt (Werkstoff und Richtung der ersten); `Ueberlagerung`, `ueberlagerungen(plan)`. Werkzeug: meldet je Paar von Leisten übereinander Fläche und Volumen — mit `first` als Warnung (das Volumen fehlt in der Rechnung), mit `add` als Hinweis, bei verschiedenen Werkstoffen mit Vermerk. Die Harfe trägt `add` (Masse der Rechnung 2,179 statt 1,764 kg), alle übrigen Baupläne `first`. `kRechenFassung` bleibt 2 — ein Bauplan mit `first` rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ31-1 Leisten uebereinander“ in `test_LoopKoerperPlatte`. |
