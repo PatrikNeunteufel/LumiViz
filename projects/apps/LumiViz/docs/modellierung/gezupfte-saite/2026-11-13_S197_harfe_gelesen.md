@@ -1043,3 +1043,71 @@ gegen Bell) und S(1,3) (+9 bis +11 %).
 **KQ56 a (Patrik S212): der Bauplan wird in einer eigenen Sitzung mit Fable neu gedacht**, gesucht an der vollen
 Rechnung (Federn in der Platte), mit den Zielen zweite Mode mit Luft bei 216 Hz, S(1,3) auf 7 % und das Paar 54–58
 unter 12 LU; F4 bleibt bis dahin gebaut. Verworfen: Faktor 0,2 an F3 voll rechnen.
+
+## 21 S213: die Prämissen von KQ56 a geprüft — Ziele gegen den falschen Zustand, Kopplung an die Luft zu stark
+
+Proben `proben/2026-11-22_S213_harfe_kopplung.py`, `…_harfe_bauch.py`; Ausgaben lokal `.claude/handover/s213/`
+(`raster1.txt`, `raster2.txt`, `bauch1.txt`, `b035_mu23.log`). **Am Repo ist außer den zwei Proben und diesem Abschnitt
+nichts geändert**; gebaut bleibt F4. **KQ57 a (Patrik S213):** die Lagen des gebauten Körpers gelten gegen Bell
+besaitet (187 / 207 / 257 / 334 / 430 / 555 / 697 Hz, je 7 %), die Werte ohne Saiten bleiben Bericht. **KQ58 a
+(Patrik S213):** erst die Ursache an den Quellen klären (Bell Kap. 5 und 7, Le Carrou 2006 Kap. 3–4; drei Kandidaten
+je mit Probe), dann das Modell erweitern; verworfen: ein Kopplungsfaktor ohne Ursache, F4 mit bekannter Abweichung.
+
+**21.1 Die Ziele aus §20.8 vergleichen die besaitete Rechnung mit Bells Werten ohne Saiten.** `harfe_suche.py` misst
+L1 / L2 gegen 170 / 216 / 249 / 316 / 432 / 545 / 709 Hz (Kasten G in der Harfe **ohne** Saiten, §8) — auch an Körpern
+mit Federn. Gegen Bells besaitete Werte (187 / 207 / 257 / 334 / 430 / 555 / 697 Hz) liegt der gebaute Körper (F4,
+173,1 / 228,7 / 257,1 / 348,5 / 451,4 / 574,1 Hz) bei **−7,4 / +10,5 / 0,0 / +4,4 / +4,9 / +3,4 / +2,6 %**: S(1,2)–S(1,6)
+halten 7 %, „S(1,3) +10 %“ war der Vergleich mit 316 statt 334 Hz. Daneben liegt allein das Paar mit Luft, und zwar
+nach außen: Verhältnis 1,32 gegen 1,11.
+
+**21.2 Das Paar liegt an zwei besaiteten Harfen dicht beisammen.** Bell (Salvi, Kasten G besaitet) 187 / 207 Hz;
+Le Carrou, Gautier & Foltête 2007 (Camac Atlantide, besaitet, Tab. II, Textebene) T1 153,5 und A0 172 Hz, mit
+verschlossenen Öffnungen 156 Hz und A0 verschwunden. Als zwei gekoppelte Schwinger gelesen (f₊² − f₋² =
+√(Δ² + 4κ²), κ = f_c · f_Helmholtz, f_c = Versteifung des Bodens durch die eingeschlossene Luft):
+
+| Fall | Paar | f_c |
+|---|---|---|
+| Bell ohne Saiten (170 / 216 Hz, Helmholtz 190 Hz nach Bell S. 85) | 1,27 | 46 Hz |
+| Bell besaitet (187 / 207 Hz, Helmholtz 190 Hz) | 1,11 | 14,5 Hz |
+| Le Carrou besaitet (153,5 / 172 Hz, Boden bei verschlossenen Öffnungen 156–158 Hz) | 1,12 | 12–15 Hz |
+| Le Carrou 2006 S. 71, Matrizen des 2-FHG-Modells (§1.4 D4 des Werkbank-Berichts) | 1,10 | 14 Hz |
+| Modell F4 besaitet (Platte im Vakuum 204,1 Hz, a₁ = 0,148 m³/√kg, Helmholtz 195,6 Hz) | 1,32 | 49 Hz (erste Mode allein 55 Hz) |
+
+Das Modell trifft Bells Harfe ohne Saiten und koppelt gegenüber beiden besaiteten Harfen drei- bis viermal zu stark
+(im Volumen je Wurzel der Modalmasse; a² also rund zehnfach). Kein Hebel des Bauplans stellt diese Größe: sie ist
+ρc²/V mal a₁², und V ist gemessen. Mündung, Güte der Luft und Faktor der Saiten (KQ55 a) verschieben nur, wo das Paar
+liegt. Dazu passt der Werkbank-Bericht S202 (R6 / R7): wirksame Fläche je Schnelle am Saitenpunkt 0,05–0,09 m² bei
+Le Carrou, 0,3–1,1 m² im Modell. §17 hatte den Widerspruch notiert („die beiden Paare passen nicht zu einer festen
+Kopplung“) und nicht weiterverfolgt.
+
+**21.3 Probe: die Kopplung abgeschwächt** (P = −α (β Σ a_k q_k + u); die Probe rechnet `Luftraum.hpp` aus den Moden
+der Platte im Vakuum nach und trifft den gebauten Körper bei β = 1 auf 0,012 % in der Frequenz, Luftanteil, Dämpfung
+und Abstrahlung auf 1–2 %):
+
+| β, Mündung | Paar gegen 187 / 207 Hz | S(1,2)–S(1,6) | Abstrahlung 33–22 (Bezug Saite 26) | Lautheit 50–62 mit Mitschwingen |
+|---|---|---|---|---|
+| 1, 2,3 (gebaut) | −7,4 / +10,5 % | 0,0 / +4,4 / +4,9 / +3,4 / +2,6 | 6 / 12, 20,3 dB | größter Sprung 15,7 LU (54 → 58) |
+| 0,7, 2,3 | −3,4 / +6,4 % | 0,0 / +4,0 / … | 5 / 12, 12,2 dB | nicht gerechnet |
+| 0,5, 2,3 | −0,7 / +3,7 % | 0,0 / +3,8 / … | 6 / 12, 17,5 dB | nicht gerechnet |
+| **0,35, 2,3** | **+1,3 / +1,7 %** | 0,0 / +3,8 / +4,9 / +3,4 / +2,6 | 3 / 12, 21,5 dB | **19,0 LU (52 → 56: −26,9 → −8,0 LUFS)** |
+| 0,3, 2,6 | −2,6 / +0,2 % | wie oben | 1 / 12, 25,9 dB | nicht gerechnet |
+
+Die schwächere Kopplung bringt alle sieben Lagen auf 5 %, **macht Abstrahlung und Sprung aber schlechter**: die
+obere Mode (210 Hz, Luftanteil 0,27, Q 21,5) ragt an Taste 56 noch weiter heraus. Dasselbe, wenn nur die erste
+Bodenmode in Kopplung und Abstrahlung abgeschwächt wird (`raster2.txt`: 3 / 12). Bell misst S(1,1)+ besaitet als
+schwach (Abb. 7.9, S. 152) und die Saiten 27 und 26 gleich laut wie 23–21 (Abb. 7.23); im Modell liegt das Paar
+10–15 dB über dem Bereich 277–330 Hz. **Die Lage ist damit erklärt, die Höhe nicht.**
+
+**21.4 Probe: der Boden als flache Schale unter dem Saitenzug — trägt nicht.** Annahme: der Zug wölbt den Boden,
+die Kraft in der Ebene je Querstreifen bestraft das Volumen der Form (U = ½ ∫ (E h / b) κ₀² (∫ w dx)² dy). Mit einem
+Stich von 1–6 mm steigt die erste Mode 204 → 226 Hz, ihr Volumen bleibt 0,148 → 0,147: das Paar rückt weiter
+auseinander (`bauch1.txt`). Diese Erklärung der schwachen Kopplung ist verworfen.
+
+**21.5 Bells Abb. 7.23 am Seitenbild (PDF 309):** die echte Harfe steigt zwischen den Saiten 28 und 27 (165 → 185 Hz)
+um 18 dB („a sharp rise between string positions 28 and 26“, S. 159) und strahlt die Grundtöne darunter 16–26 dB
+schwächer ab als das Plateau ab Saite 27. Ein großer Schritt im Schalldruck des Grundtons an dieser Stelle gehört zum
+Instrument; die Schwelle 12 LU gilt der Lautheit des ganzen Tons.
+
+**Offen:** warum die besaitete Harfe so viel schwächer koppelt (mitbewegte Schale — Bell S. 121, 155 f., Le Carrou
+2007 S. 563: „displacements of the soundbox have the same order of magnitude as those of the soundboard“ —, die Luft
+des 1,3 m langen Kastens als ein Druck, Dämpfung der Mode durch die Saiten) und warum die obere Mode real schwach ist.
