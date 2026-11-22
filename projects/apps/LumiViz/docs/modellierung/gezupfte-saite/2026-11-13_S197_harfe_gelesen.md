@@ -1004,3 +1004,42 @@ alles ohne Saiten nicht betroffen.
 mit der richtigen Verteilung der Luft 2,7 LU leiser. **Damit greift der Kipppunkt von KQ51 a** (der Sprung von F4 mit
 dem Faktor nach KQ52 deutlich über 12 LU): KQ51 ist neu vorzulegen, und die Lautheit der übrigen Fassungen F1–F3 ist
 ebenfalls am Modenraum gemessen.
+
+**20.8 F1–F3 an der vollen Rechnung, Probe an den Tasten 50–62** (S212; Saiten mit 0,3 als Federn in der Platte,
+16 Hörorte, KQ39 a; Läufe lokal `.claude/handover/s211_fassung_lauf.sh`, `s212_varianten_lauf.sh`, Ausgaben
+`s211_voll_*.log`, `s212_var_*.log`). Je Fassung rund 70 min, 67 Tasten 38–104:
+
+| Fassung | Moden mit Luft (Bell 170 / 216 mit Saiten) | S(1,2) / S(1,3) / S(1,4) / S(1,5) / S(1,6) | Abstrahlung 33–22 | ohne Mitschwingen | mit Mitschwingen |
+|---|---|---|---|---|---|
+| F1 | 176,3 / 231,2 Hz (Q 13 / 17) | +3,3 / +10,3 / +4,5 / +5,3 / +0,9 % | 7 / 12, größte 21,8 dB | 17,7 / 15,1 / 2,7 | 18,3 / 15,2 / 2,4 |
+| F2 | 176,3 / 231,3 Hz (Q 15 / 15) | +2,5 / +9,8 / +4,1 / +5,0 / +0,5 % | 7 / 12, 20,2 dB | 17,5 / 14,0 / 2,8 | 18,1 / 14,0 / 2,4 |
+| F3 | 175,3 / 229,6 Hz (Q 15 / 15) | +3,1 / +9,9 / +3,6 / +4,9 / +0,3 % | 7 / 12, 18,6 dB | 17,1 / 13,2 / 2,7 | 18,4 / 13,2 / 2,4 |
+| F4 (§20.7) | 173,1 / 228,7 Hz | | 6 / 12 | 17,6 / 15,6 / 2,7 | 18,1 / 15,7 / 2,3 |
+
+Alle vier verfehlen den größten Sprung 12 LU, immer zwischen den Tasten 54 (−22,4 bis −23,4 LUFS) und 58 (−7,7 bis
+−9,2 LUFS). Taste 58 (233 Hz) sitzt auf der zweiten Mode mit Luft; Bell misst diese Mode bei 216 Hz, an Taste 57.
+**An der vollen Rechnung liegt S(1,3) in allen Fassungen 9,8–10,3 % zu hoch** — die Suche im Modenraum hielt alle
+Lagen auf 7 %.
+
+**Probe KQ55 a** (Patrik S212): F3, je ein Hebel, Lautheit nur an den Tasten 50–62 (je rund 13 min). Größter Sprung
+mit Mitschwingen im Fenster (F3 selbst 13,2 LU, 54 → 58):
+
+| Hebel | Moden mit Luft | S(1,2) / S(1,3) | Abstrahlung | Sprung 54 → 58 | größter im Fenster |
+|---|---|---|---|---|---|
+| Saiten 0,2 | 171,4 / 226,4 Hz (+1 / +5 %, Q 16 / 14) | +1,4 / +8,7 % | 7 / 12, 17,2 dB | 12,02 | 12,0 |
+| Saiten 0,4 | 178,7 / 232,7 Hz (+5 / +8 %) | +4,9 / +11,2 % | 6 / 12, 21,3 dB | 13,3 | 13,5 (55 → 58) |
+| Güte der Luft 5,5 | 175,3 / 229,6 Hz (Q 10 / 10) | +3,1 / +9,9 % | 6 / 12, 17,7 dB | 12,6 | 12,6 |
+| Güte der Luft 12 | 175,3 / 229,6 Hz (Q 20 / 20) | +3,1 / +9,9 % | 7 / 12, 20,0 dB | 13,6 | 13,6 |
+| Mündung 1,8 | 178,8 / 235,0 Hz (+5 / +9 %) | +3,3 / +10,0 % | 6 / 12, 19,6 dB | 11,8 | 12,3 (55 → 59) |
+| Mündung 2,2 | 171,6 / 225,3 Hz (+1 / +4 %) | +3,0 / +9,9 % | 6 / 12, 16,5 dB | 13,0 | 13,0 |
+
+Kein Hebel bringt das Paar unter 12 LU, jeder verschiebt den Sprung um höchstens 1,2 LU. Am nächsten kommt der Faktor
+0,2 mit 12,02 LU. Er verbessert dabei auch die Lagen und die Abstrahlung, verfehlt aber Bells Verschiebung beim
+Besaiten deutlicher (KQ52 a, §20.6). Die Mündung 1,8 verschiebt den Sprung nur auf das Paar 55 → 59 und legt die zweite
+Mode mit Luft 9 % zu hoch. Eine kleinere Güte der Luft ebnet die Kurve, nimmt aber KQ29-1 a zurück. Damit trägt kein
+Hebel am Bauplan F1–F4 die Schwelle. Ursachen in der Struktur sind die Lage der zweiten Mode mit Luft (+4 bis +9 %
+gegen Bell) und S(1,3) (+9 bis +11 %).
+
+**KQ56 a (Patrik S212): der Bauplan wird in einer eigenen Sitzung mit Fable neu gedacht**, gesucht an der vollen
+Rechnung (Federn in der Platte), mit den Zielen zweite Mode mit Luft bei 216 Hz, S(1,3) auf 7 % und das Paar 54–58
+unter 12 LU; F4 bleibt bis dahin gebaut. Verworfen: Faktor 0,2 an F3 voll rechnen.
