@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument-body",
-    "version": 6,
+    "version": 7,
     "title": "Classical guitar",
     "description": "Measured body: modal fit to guitar g34 of the Mores archive (Manuel Contreras, Madrid 1971, cedar / Rio palisander, scale 662 mm). Six bridge points, one per open string; two listening points 10 cm above the top plate (near field); above 5 kHz a statistical part fitted to the measurement. Above 2.2 kHz modes are drawn up to the modal density after Elie 2011; the direction at the bridge and the in-plane modes follow Elie 2012. See classical_guitar.lvinstbodyfit.",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point along the direction of bridgeAngle, 1/sqrt(kg) (modal mass 1/value^2); bridgeAngle: direction in which the mode moves the bridge, degrees from the normal of the top plate, across the strings (normal component bridge * cos, in-plane component bridge * sin; 90 = in-plane only); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (fitted to the measured pressure per force)",
@@ -56,6 +56,7 @@
             "eta": 0.050771123689997075,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.4385109443024601,
@@ -82,6 +83,7 @@
             "eta": 0.050771123689997075,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.11281712660118155,
@@ -108,6 +110,7 @@
             "eta": 0.04310065394841604,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.5453258576191864,
@@ -134,6 +137,7 @@
             "eta": 0.04310065394841604,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.39757097327735985,
@@ -160,6 +164,7 @@
             "eta": 0.0788344984663885,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 4.034925320309975,
@@ -186,6 +191,7 @@
             "eta": 0.0788344984663885,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.038078266009585,
@@ -212,6 +218,7 @@
             "eta": 0.08291607840567565,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.0665576507844388,
@@ -238,6 +245,7 @@
             "eta": 0.08291607840567565,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.274396730753002,
@@ -264,6 +272,7 @@
             "eta": 0.03484386025958235,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5499702220254007,
@@ -290,6 +299,7 @@
             "eta": 0.03484386025958235,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.14149261488516848,
@@ -316,6 +326,7 @@
             "eta": 0.02605865564366697,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2941775550390465,
@@ -342,6 +353,7 @@
             "eta": 0.02605865564366697,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.0756840094900226,
@@ -368,6 +380,7 @@
             "eta": 0.018533376902493893,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.8883023787832957,
@@ -394,6 +407,7 @@
             "eta": 0.018533376902493893,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.22241102686705982,
@@ -420,6 +434,7 @@
             "eta": 0.024042643960427573,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.8337056069225445,
@@ -446,6 +461,7 @@
             "eta": 0.024042643960427573,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.20874121759579747,
@@ -472,6 +488,7 @@
             "eta": 0.06974132676088741,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3163846364938386,
@@ -498,6 +515,7 @@
             "eta": 0.06974132676088741,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.16917043461508083,
@@ -524,6 +542,7 @@
             "eta": 0.021378985296582775,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.0840531269982834,
@@ -550,6 +569,7 @@
             "eta": 0.021378985296582775,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5796417318882943,
@@ -576,6 +596,7 @@
             "eta": 0.029945147888006035,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.8206864697926068,
@@ -602,6 +623,7 @@
             "eta": 0.029945147888006035,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.9735185779117653,
@@ -628,6 +650,7 @@
             "eta": 0.014532494266773359,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5620080952792079,
@@ -654,6 +677,7 @@
             "eta": 0.014532494266773359,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.30050496379721936,
@@ -680,6 +704,7 @@
             "eta": 0.016125809897241276,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.18904736279702322,
@@ -706,6 +731,7 @@
             "eta": 0.016125809897241276,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.10108336764269558,
@@ -732,6 +758,7 @@
             "eta": 0.016256230535693892,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.11188966601725141,
@@ -758,6 +785,7 @@
             "eta": 0.016256230535693892,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.059827252166346205,
@@ -784,6 +812,7 @@
             "eta": 0.04780343129970933,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2537106795280834,
@@ -810,6 +839,7 @@
             "eta": 0.04780343129970933,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.13565875510863884,
@@ -836,6 +866,7 @@
             "eta": 0.06001436750825609,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.14417277661932473,
@@ -862,6 +893,7 @@
             "eta": 0.06001436750825609,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.07708898747625853,
@@ -888,6 +920,7 @@
             "eta": 0.02317671614078877,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.05445896116539985,
@@ -914,6 +947,7 @@
             "eta": 0.02317671614078877,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.029119132430489927,
@@ -940,6 +974,7 @@
             "eta": 0.021123742564946108,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.1916918756470891,
@@ -966,6 +1001,7 @@
             "eta": 0.021123742564946108,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6371960243221386,
@@ -992,6 +1028,7 @@
             "eta": 0.05876616450218474,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.075907140604677,
@@ -1018,6 +1055,7 @@
             "eta": 0.05876616450218474,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5752860840482268,
@@ -1044,6 +1082,7 @@
             "eta": 0.028300191922749577,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5009047400993554,
@@ -1070,6 +1109,7 @@
             "eta": 0.028300191922749577,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2678330829285141,
@@ -1096,6 +1136,7 @@
             "eta": 0.14566066603452665,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 2.0426877806080905,
@@ -1122,6 +1163,7 @@
             "eta": 0.14566066603452665,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.092222376718078,
@@ -1148,6 +1190,7 @@
             "eta": 0.02950463568092994,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.4205796223146292,
@@ -1174,6 +1217,7 @@
             "eta": 0.02950463568092994,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.22488335175086155,
@@ -1200,6 +1244,7 @@
             "eta": 0.019278846484707686,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5192448674799661,
@@ -1226,6 +1271,7 @@
             "eta": 0.019278846484707686,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.277639524082727,
@@ -1252,6 +1298,7 @@
             "eta": 0.04110913743626582,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.4906817530953431,
@@ -1278,6 +1325,7 @@
             "eta": 0.04110913743626582,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.16106816761472148,
@@ -1304,6 +1352,7 @@
             "eta": 0.04134905262891612,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.2211672313679613,
@@ -1330,6 +1379,7 @@
             "eta": 0.04134905262891612,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.40085282786001947,
@@ -1356,6 +1406,7 @@
             "eta": 0.017241892968029148,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.115969630624375,
@@ -1382,6 +1433,7 @@
             "eta": 0.017241892968029148,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.03806747608973081,
@@ -1408,6 +1460,7 @@
             "eta": 0.04468600843172315,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.141607570468035,
@@ -1434,6 +1487,7 @@
             "eta": 0.04468600843172315,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3747370639940055,
@@ -1460,6 +1514,7 @@
             "eta": 0.027504395584992153,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.4811081475339814,
@@ -1486,6 +1541,7 @@
             "eta": 0.027504395584992153,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.15792559486668814,
@@ -1512,6 +1568,7 @@
             "eta": 0.05580253140356952,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 2.0022920835075015,
@@ -1538,6 +1595,7 @@
             "eta": 0.05580253140356952,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6572600568200687,
@@ -1564,6 +1622,7 @@
             "eta": 0.03938419010875582,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.8393226833989117,
@@ -1590,6 +1649,7 @@
             "eta": 0.03938419010875582,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.27551089030666615,
@@ -1616,6 +1676,7 @@
             "eta": 0.023646011385933523,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.04398313930344331,
@@ -1642,6 +1703,7 @@
             "eta": 0.023646011385933523,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.014437634187249108,
@@ -1668,6 +1730,7 @@
             "eta": 0.026245682492731275,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.563836722905248,
@@ -1694,6 +1757,7 @@
             "eta": 0.026245682492731275,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.1850815670632682,
@@ -1720,6 +1784,7 @@
             "eta": 0.021854920297139535,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.6415132984339742,
@@ -1746,6 +1811,7 @@
             "eta": 0.021854920297139535,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.7538429169686703,
@@ -1772,6 +1838,7 @@
             "eta": 0.025181895436455864,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.5788178310328287,
@@ -1798,6 +1865,7 @@
             "eta": 0.025181895436455864,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.7250508663215736,
@@ -1824,6 +1892,7 @@
             "eta": 0.01794837833505664,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6074271373877552,
@@ -1850,6 +1919,7 @@
             "eta": 0.01794837833505664,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.27895274776705237,
@@ -1876,6 +1946,7 @@
             "eta": 0.023105597616139267,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.46166131118882653,
@@ -1902,6 +1973,7 @@
             "eta": 0.023105597616139267,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2120117514796754,
@@ -1928,6 +2000,7 @@
             "eta": 0.00973955898554672,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.02254275358451671,
@@ -1954,6 +2027,7 @@
             "eta": 0.00973955898554672,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.010352456562411185,
@@ -1980,6 +2054,7 @@
             "eta": 0.01736124798408621,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.16629314333113643,
@@ -2006,6 +2081,7 @@
             "eta": 0.01736124798408621,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07636789075070373,
@@ -2032,6 +2108,7 @@
             "eta": 0.02097572531196935,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.1984483652696256,
@@ -2058,6 +2135,7 @@
             "eta": 0.02097572531196935,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.550371302122916,
@@ -2084,6 +2162,7 @@
             "eta": 0.024774154240344532,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.7467008135377902,
@@ -2110,6 +2189,7 @@
             "eta": 0.024774154240344532,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.34291231141241224,
@@ -2136,6 +2216,7 @@
             "eta": 0.031491343081270336,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6192452521172856,
@@ -2162,6 +2243,7 @@
             "eta": 0.031491343081270336,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2843800580966604,
@@ -2188,6 +2270,7 @@
             "eta": 0.02640843195913997,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.8531790326992187,
@@ -2214,6 +2297,7 @@
             "eta": 0.02640843195913997,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.34419480260575747,
@@ -2240,6 +2324,7 @@
             "eta": 0.019451923433303684,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.9247232226097778,
@@ -2266,6 +2351,7 @@
             "eta": 0.019451923433303684,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.37305760558152523,
@@ -2292,6 +2378,7 @@
             "eta": 0.021743835198183552,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.8533258348906834,
@@ -2318,6 +2405,7 @@
             "eta": 0.021743835198183552,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.34425402646074765,
@@ -2344,6 +2432,7 @@
             "eta": 0.022802555546804187,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.21500522072890893,
@@ -2370,6 +2459,7 @@
             "eta": 0.022802555546804187,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.08673874611506482,
@@ -2396,6 +2486,7 @@
             "eta": 0.02093729942246466,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3089971823702068,
@@ -2422,6 +2513,7 @@
             "eta": 0.02093729942246466,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.12465756906281501,
@@ -2448,6 +2540,7 @@
             "eta": 0.011907981338740967,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.2794029953180264,
@@ -2474,6 +2567,7 @@
             "eta": 0.011907981338740967,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.1127184976835326,
@@ -2500,6 +2594,7 @@
             "eta": 0.0178803277374435,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.4733241925480676,
@@ -2526,6 +2621,7 @@
             "eta": 0.0178803277374435,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5943776278983486,
@@ -2552,6 +2648,7 @@
             "eta": 0.011500255883186374,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.2794029953180264,
@@ -2578,6 +2675,7 @@
             "eta": 0.011500255883186374,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.1127184976835326,
@@ -2604,6 +2702,7 @@
             "eta": 0.024617401328565863,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6441378380984412,
@@ -2630,6 +2729,7 @@
             "eta": 0.024617401328565863,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.25986210108066965,
@@ -2656,6 +2756,7 @@
             "eta": 0.03964717951142875,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.3084597442823336,
@@ -2682,6 +2783,7 @@
             "eta": 0.03964717951142875,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5278669847007482,
@@ -2708,6 +2810,7 @@
             "eta": 0.011036608111007387,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.05224433842099052,
@@ -2734,6 +2837,7 @@
             "eta": 0.011036608111007387,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.02107673660613822,
@@ -2760,6 +2864,7 @@
             "eta": 0.023428027249577772,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.2066157896737884,
@@ -2786,6 +2891,7 @@
             "eta": 0.023428027249577772,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.46803324288043247,
@@ -2812,6 +2918,7 @@
             "eta": 0.009193033274770447,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.7845198494893516,
@@ -2838,6 +2945,7 @@
             "eta": 0.009193033274770447,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.30430678299000086,
@@ -2864,6 +2972,7 @@
             "eta": 0.010699048368983215,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.18324001853018107,
@@ -2890,6 +2999,7 @@
             "eta": 0.010699048368983215,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07107682564085895,
@@ -2916,6 +3026,7 @@
             "eta": 0.012661625547780395,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.783918129470121,
@@ -2942,6 +3053,7 @@
             "eta": 0.012661625547780395,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3040733822883718,
@@ -2968,6 +3080,7 @@
             "eta": 0.01046274681114146,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.05163437646551475,
@@ -2994,6 +3107,7 @@
             "eta": 0.01046274681114146,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.020028417386944233,
@@ -3020,6 +3134,7 @@
             "eta": 0.03373265063426293,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6543582088014864,
@@ -3046,6 +3161,7 @@
             "eta": 0.03373265063426293,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.25381848728632117,
@@ -3072,6 +3188,7 @@
             "eta": 0.03000999830734146,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.182263739506193,
@@ -3098,6 +3215,7 @@
             "eta": 0.03000999830734146,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.45858734543050106,
@@ -3124,6 +3242,7 @@
             "eta": 0.009924526991044468,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07132973537112142,
@@ -3150,6 +3269,7 @@
             "eta": 0.009924526991044468,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.027668034551888866,
@@ -3176,6 +3296,7 @@
             "eta": 0.03912188298726941,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.22106630188170473,
@@ -3202,6 +3323,7 @@
             "eta": 0.03912188298726941,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.08574923272738816,
@@ -3228,6 +3350,7 @@
             "eta": 0.015029075238040424,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.0535667090590302,
@@ -3254,6 +3377,7 @@
             "eta": 0.015029075238040424,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.40866715623295047,
@@ -3280,6 +3404,7 @@
             "eta": 0.009595755596647465,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.04963237975299195,
@@ -3306,6 +3431,7 @@
             "eta": 0.009595755596647465,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.019251864467931524,
@@ -3332,6 +3458,7 @@
             "eta": 0.03696828719175532,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.7787586019563093,
@@ -3358,6 +3485,7 @@
             "eta": 0.03696828719175532,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3020720572479685,
@@ -3384,6 +3512,7 @@
             "eta": 0.009440975083521411,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.0717278560074272,
@@ -3410,6 +3539,7 @@
             "eta": 0.009440975083521411,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.022260347493634907,
@@ -3436,6 +3566,7 @@
             "eta": 0.009304012490446269,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.5608179096629389,
@@ -3462,6 +3593,7 @@
             "eta": 0.009304012490446269,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.1740467685031362,
@@ -3488,6 +3620,7 @@
             "eta": 0.009224979422756832,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.20634956639017457,
@@ -3514,6 +3647,7 @@
             "eta": 0.009224979422756832,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.06403945842924036,
@@ -3540,6 +3674,7 @@
             "eta": 0.024976596740046358,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6236464151866385,
@@ -3566,6 +3701,7 @@
             "eta": 0.024976596740046358,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.1935452512867077,
@@ -3592,6 +3728,7 @@
             "eta": 0.009140620828739805,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.5608179096629389,
@@ -3618,6 +3755,7 @@
             "eta": 0.009140620828739805,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.1740467685031362,
@@ -3644,6 +3782,7 @@
             "eta": 0.009081659363572405,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2290898780389766,
@@ -3670,6 +3809,7 @@
             "eta": 0.009081659363572405,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07109678967532515,
@@ -3696,6 +3836,7 @@
             "eta": 0.009039651787007455,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2290898780389766,
@@ -3722,6 +3863,7 @@
             "eta": 0.009039651787007455,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07109678967532515,
@@ -3748,6 +3890,7 @@
             "eta": 0.023997534415976147,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.5920670267146801,
@@ -3774,6 +3917,7 @@
             "eta": 0.023997534415976147,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.49408928721021866,
@@ -3800,6 +3944,7 @@
             "eta": 0.009005487397334734,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2290898780389766,
@@ -3826,6 +3971,7 @@
             "eta": 0.009005487397334734,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07109678967532515,
@@ -3852,6 +3998,7 @@
             "eta": 0.008823338543360646,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -1.0825557096807956,
@@ -3878,6 +4025,7 @@
             "eta": 0.008823338543360646,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.3359652388915371,
@@ -3904,6 +4052,7 @@
             "eta": 0.011695007030654975,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6503473492833864,
@@ -3930,6 +4079,7 @@
             "eta": 0.011695007030654975,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2018317400301703,
@@ -3956,6 +4106,7 @@
             "eta": 0.008616259689065035,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.20634956639017457,
@@ -3982,6 +4133,7 @@
             "eta": 0.008616259689065035,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.06403945842924036,
@@ -4008,6 +4160,7 @@
             "eta": 0.02206569430830166,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.1816991745105863,
@@ -4034,6 +4187,7 @@
             "eta": 0.02206569430830166,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3667338705177994,
@@ -4060,6 +4214,7 @@
             "eta": 0.008480444345233169,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.21968426772551733,
@@ -4086,6 +4241,7 @@
             "eta": 0.008480444345233169,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.06817780999822955,
@@ -4112,6 +4268,7 @@
             "eta": 0.00831284202747832,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.5789143506191474,
@@ -4138,6 +4295,7 @@
             "eta": 0.00831284202747832,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.21430196623147418,
@@ -4164,6 +4322,7 @@
             "eta": 0.008245290310368665,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.4296946037822686,
@@ -4190,6 +4349,7 @@
             "eta": 0.008245290310368665,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.15906394161953383,
@@ -4216,6 +4376,7 @@
             "eta": 0.008202871661976812,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2130080426623809,
@@ -4242,6 +4403,7 @@
             "eta": 0.008202871661976812,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.0788511155697652,
@@ -4268,6 +4430,7 @@
             "eta": 0.008072084808720494,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.23648213741615842,
@@ -4294,6 +4457,7 @@
             "eta": 0.008072084808720494,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.08754073374188047,
@@ -4320,6 +4484,7 @@
             "eta": 0.008046436325459098,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2130080426623809,
@@ -4346,6 +4511,7 @@
             "eta": 0.008046436325459098,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.0788511155697652,
@@ -4372,6 +4538,7 @@
             "eta": 0.00798993434502723,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2130080426623809,
@@ -4398,6 +4565,7 @@
             "eta": 0.00798993434502723,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.0788511155697652,
@@ -4424,6 +4592,7 @@
             "eta": 0.08742678205086565,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.21019373344180334,
@@ -4450,6 +4619,7 @@
             "eta": 0.08742678205086565,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07780931724690775,
@@ -4476,6 +4646,7 @@
             "eta": 0.007967689953226302,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07404236645509456,
@@ -4502,6 +4673,7 @@
             "eta": 0.007967689953226302,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.027408933115560086,
@@ -4528,6 +4700,7 @@
             "eta": 0.007926378440842955,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.2267730273949296,
@@ -4554,6 +4727,7 @@
             "eta": 0.007926378440842955,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.08394662458621391,
@@ -4580,6 +4754,7 @@
             "eta": 0.007854738015568376,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07404236645509456,
@@ -4606,6 +4781,7 @@
             "eta": 0.007854738015568376,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.027408933115560086,
@@ -4632,6 +4808,7 @@
             "eta": 0.007845145381667697,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07404236645509456,
@@ -4658,6 +4835,7 @@
             "eta": 0.007845145381667697,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.027408933115560086,
@@ -4684,6 +4862,7 @@
             "eta": 0.007815453462858717,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.23648213741615842,
@@ -4710,6 +4889,7 @@
             "eta": 0.007815453462858717,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.08754073374188047,
@@ -4736,6 +4916,7 @@
             "eta": 0.011038396853744959,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.6046937433785401,
@@ -4762,6 +4943,7 @@
             "eta": 0.011038396853744959,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.22384495743679284,
@@ -4788,6 +4970,7 @@
             "eta": 0.007747260048783234,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5789143506191474,
@@ -4814,6 +4997,7 @@
             "eta": 0.007747260048783234,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.21430196623147418,
@@ -4840,6 +5024,7 @@
             "eta": 0.10111558054522178,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 3.1723578389543055,
@@ -4866,6 +5051,7 @@
             "eta": 0.10111558054522178,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.174340421429609,
@@ -4892,6 +5078,7 @@
             "eta": 0.007659273174073562,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.4296946037822686,
@@ -4918,6 +5105,7 @@
             "eta": 0.007659273174073562,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.15906394161953383,
@@ -4944,6 +5132,7 @@
             "eta": 0.0076096326115586465,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.1174875567999776,
@@ -4970,6 +5159,7 @@
             "eta": 0.0076096326115586465,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.41367048580730187,
@@ -4996,6 +5186,7 @@
             "eta": 0.028949845941448785,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.935161043617021,
@@ -5022,6 +5213,7 @@
             "eta": 0.028949845941448785,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3623499199289952,
@@ -5048,6 +5240,7 @@
             "eta": 0.007308460840018472,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.8411029079558461,
@@ -5074,6 +5267,7 @@
             "eta": 0.007308460840018472,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.3259049052888698,
@@ -5100,6 +5294,7 @@
             "eta": 0.023035949785822792,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.485409199109883,
@@ -5126,6 +5321,7 @@
             "eta": 0.023035949785822792,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.5755563793348999,
@@ -5152,6 +5348,7 @@
             "eta": 0.01809208616534614,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.1676565865980095,
@@ -5178,6 +5375,7 @@
             "eta": 0.01809208616534614,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.45243573130664544,
@@ -5204,6 +5402,7 @@
             "eta": 0.007165749518812469,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.22954930562422315,
@@ -5230,6 +5429,7 @@
             "eta": 0.007165749518812469,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.08894422311581819,
@@ -5256,6 +5456,7 @@
             "eta": 0.058608477009119996,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 1.9110972086746358,
@@ -5282,6 +5483,7 @@
             "eta": 0.058608477009119996,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.7404991100371116,
@@ -5308,6 +5510,7 @@
             "eta": 0.00706470970384975,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.2707446538657333,
@@ -5334,6 +5537,7 @@
             "eta": 0.00706470970384975,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.10490631995319612,
@@ -5360,6 +5564,7 @@
             "eta": 0.015089963423521239,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -2.905197432202561,
@@ -5386,6 +5591,7 @@
             "eta": 0.015089963423521239,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -1.1256863875176932,
@@ -5412,6 +5618,7 @@
             "eta": 0.006893398810855165,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.8411029079558461,
@@ -5438,6 +5645,7 @@
             "eta": 0.006893398810855165,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3259049052888698,
@@ -5464,6 +5672,7 @@
             "eta": 0.01269513181430275,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.792870939994875,
@@ -5490,6 +5699,7 @@
             "eta": 0.01269513181430275,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.3072163063058768,
@@ -5516,6 +5726,7 @@
             "eta": 0.006817474942188874,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.1884552598152904,
@@ -5542,6 +5753,7 @@
             "eta": 0.006817474942188874,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.07302137826459132,
@@ -5568,6 +5780,7 @@
             "eta": 0.0067726989909584635,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.22954930562422315,
@@ -5594,6 +5807,7 @@
             "eta": 0.0067726989909584635,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.08894422311581819,
@@ -5620,6 +5834,7 @@
             "eta": 0.026931454552894037,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.6509307383457404,
@@ -5646,6 +5861,7 @@
             "eta": 0.026931454552894037,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.2522182703490535,
@@ -5672,6 +5888,7 @@
             "eta": 0.0066560915058374885,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.22954930562422315,
@@ -5698,6 +5915,7 @@
             "eta": 0.0066560915058374885,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.08894422311581819,
@@ -5724,6 +5942,7 @@
             "eta": 0.01737443498108197,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.32026734208815216,
@@ -5750,6 +5969,7 @@
             "eta": 0.01737443498108197,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.12409503855363746,
@@ -5776,6 +5996,7 @@
             "eta": 0.024549456703819906,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.7045088627584766,
@@ -5802,6 +6023,7 @@
             "eta": 0.024549456703819906,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.2729783621251298,
@@ -5828,6 +6050,7 @@
             "eta": 0.006542389823397044,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.553294382607199,
@@ -5854,6 +6077,7 @@
             "eta": 0.006542389823397044,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.2143867910273934,
@@ -5880,6 +6104,7 @@
             "eta": 0.0036068211680425834,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.41899883791853,
@@ -5906,6 +6131,7 @@
             "eta": 0.0036068211680425834,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.16235085540228977,
@@ -5932,6 +6158,7 @@
             "eta": 0.0064212240872538505,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.277324452156181,
@@ -5958,6 +6185,7 @@
             "eta": 0.0064212240872538505,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.10745581599985678,
@@ -5984,6 +6212,7 @@
             "eta": 0.04523658174937772,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.9578878858583306,
@@ -6010,6 +6239,7 @@
             "eta": 0.04523658174937772,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 0.37115596410992663,
@@ -6036,6 +6266,7 @@
             "eta": 0.0063719518655454555,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.2039670166917265,
@@ -6062,6 +6293,7 @@
             "eta": 0.0063719518655454555,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.079031769630334,
@@ -6088,6 +6320,7 @@
             "eta": 0.006338734679867537,
             "airShare": 0.0,
             "springShare": 0.0,
+            "tubeShare": 0.0,
             "materialShares": [],
             "bridge": [
                 -0.8411029079558461,

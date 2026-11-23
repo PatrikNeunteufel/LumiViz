@@ -151,7 +151,7 @@ def baue(geo, dicke, tiefe, offen):
     punkte = unten + punkte + oben
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 9,
+        "version": 10,
         "title": "Harpsichord (soundboard of the Dulcken 1755)",
         "description": "Soundboard of the harpsichord by Johann Daniel Dulcken, Antwerp 1755 (MK&G Hamburg), with its air "
                        "cavity (KQ13 a): outline, both bridges with their pins, the 4' hitchpin rail, cutoff bar and "
@@ -186,7 +186,7 @@ def baue(geo, dicke, tiefe, offen):
                              "Q of the air assumed. Measured air resonance: 37 Hz (Bader et al. 2025, Sect. 3.2); with this "
                              "depth the rigid-wall Helmholtz frequency is 37 Hz as the source computes it, the mode coupled "
                              "to the soundboard lies 14 % lower (KQ15 a: known deviation)",
-                   "openings": []},
+                   "openings": [], "kind": "singlePressure", "tube": {"sections": [], "q": 30.0, "source": ""}},
         "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "assumed: rim clamped (every plan up to version 5 was computed this way)", "sections": []},
         "barOverlap": "first",
         "pointSprings": [],

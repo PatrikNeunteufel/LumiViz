@@ -52,7 +52,9 @@ namespace lumi::koerper
 /// (nur die erste Leiste zaehlt, wie die Rechnung bis dahin).
 /// 9 (S210, KQ46 a, KQ49 a): Federn an Punkten der Platte (`pointSprings`). Fassung 1 bis 8 bleiben lesbar
 /// (keine Federn).
-inline constexpr int kBauplanFassung = 9;
+/// 10 (S215, KQ59 a, KQ61 a, KQ63 a): die Luft im Hohlraum als Rohr laengs y (`cavity.kind`, `cavity.tube` mit
+/// Querschnitten und der Guete der Luft laengs). Fassung 1 bis 9 bleiben lesbar (ein Druck fuer den ganzen Hohlraum).
+inline constexpr int kBauplanFassung = 10;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -250,6 +252,64 @@ struct Oeffnung
     [[nodiscard]] bool operator==(const Oeffnung&) const = default;
 };
 
+/// Wie die Luft im Hohlraum gerechnet wird (seit Fassung 10; KQ59 a, S215).
+enum class HohlraumArt : int
+{
+    EinDruck = 0,  ///< ein Druck fuer den ganzen Hohlraum (Helmholtz) — wie bis Fassung 9
+    Rohr,          ///< der Druck laengs y wie in einem Rohr mit veraenderlichem Querschnitt, beide Enden zu
+};
+
+/// Ein Querschnitt des Rohrs an der Stelle y (seit Fassung 10; KQ61 a).
+struct Querschnitt
+{
+    double y = 0.0;        ///< m, im Bezugssystem der Platte
+    double flaeche = 0.0;  ///< m²
+
+    [[nodiscard]] bool operator==(const Querschnitt&) const = default;
+};
+
+/// Die Luft des Hohlraums als Rohr laengs y (seit Fassung 10; KQ59 a, KQ61 a, KQ63 a, S215). Zwischen zwei
+/// Querschnitten linear; das Rohr reicht vom ersten bis zum letzten, beide Enden sind zu. Das Integral der Flaeche
+/// ueber y ist das Volumen des Hohlraums (auf 1 %). Ein Rohr kennt keine Quermoden: es gilt, solange die Wellenlaenge
+/// gross gegen die Breite ist.
+struct Rohr
+{
+    std::vector<Querschnitt> querschnitte;  ///< nach y aufsteigend, mindestens zwei
+    /// Guete der Luft laengs im Rohr (Reibung und Waerme an den Waenden): ihr Anteil am Verlustfaktor einer Mode ist
+    /// Anteil der Bewegungsenergie der Luft laengs / Guete (KQ63 a); die Luft in den Oeffnungen traegt `Hohlraum::guete`.
+    double guete = 30.0;
+    std::string quelle;  ///< wie die Werte zustande kamen
+
+    [[nodiscard]] bool operator==(const Rohr&) const = default;
+
+    /// Das Volumen aus den Querschnitten (Trapez).
+    [[nodiscard]] double volumen() const
+    {
+        double v = 0.0;
+        for (std::size_t k = 1; k < querschnitte.size(); ++k)
+            v += 0.5 * (querschnitte[k].flaeche + querschnitte[k - 1].flaeche) * (querschnitte[k].y - querschnitte[k - 1].y);
+        return v;
+    }
+
+    /// Die Flaeche an der Stelle y (linear; vor dem ersten und nach dem letzten Querschnitt dessen Flaeche).
+    [[nodiscard]] double flaecheBei(double y) const
+    {
+        if (querschnitte.empty()) return 0.0;
+        if (y <= querschnitte.front().y) return querschnitte.front().flaeche;
+        for (std::size_t k = 1; k < querschnitte.size(); ++k)
+        {
+            if (y <= querschnitte[k].y)
+            {
+                const Querschnitt& a = querschnitte[k - 1];
+                const Querschnitt& b = querschnitte[k];
+                const double t = (y - a.y) / (b.y - a.y);
+                return a.flaeche + t * (b.flaeche - a.flaeche);
+            }
+        }
+        return querschnitte.back().flaeche;
+    }
+};
+
 /// Der Hohlraum hinter der Platte (seit Fassung 4; F-K1 a, KQ8 a, S196): die Luft im Kasten oder in
 /// der Schale, die ueber die Loecher der Platte und ueber die `oeffnungen` (seit Fassung 5) nach aussen
 /// tritt. `volumen` 0 = keiner — dann rechnet die Platte allein wie bis Fassung 3. Die Rechnung steht in
@@ -260,14 +320,18 @@ struct Hohlraum
     /// Muendungskorrektur je Loch in Radien des flaechengleichen Kreises, innen und aussen zusammen
     /// (ein Loch in einer duennen grossen Wand: 2 · 8/(3π) ≈ 1,7).
     double muendung = 1.7;
-    /// Guete der Luft in den Loechern (Verlust durch Reibung und Abstrahlung): ihr Anteil am
-    /// Verlustfaktor einer Mode ist Anteil der Bewegungsenergie in der Luft / Guete.
+    /// Guete der Luft in den Loechern und Oeffnungen (Verlust durch Reibung und Abstrahlung): ihr Anteil am
+    /// Verlustfaktor einer Mode ist Anteil der Bewegungsenergie in dieser Luft / Guete.
     double guete = 30.0;
     std::string quelle;     ///< wie die Werte zustande kamen
     /// Oeffnungen ausserhalb der Platte (seit Fassung 5, KQ17 a); dieselbe Muendungskorrektur wie die Loecher.
     std::vector<Oeffnung> oeffnungen;
+    /// seit Fassung 10 (KQ59 a); Vorgabe ein Druck wie bis Fassung 9
+    HohlraumArt art = HohlraumArt::EinDruck;
+    Rohr rohr;  ///< seit Fassung 10; gilt nur mit `art` Rohr
 
     [[nodiscard]] bool an() const { return volumen > 0.0; }
+    [[nodiscard]] bool alsRohr() const { return an() && art == HohlraumArt::Rohr; }
     [[nodiscard]] bool operator==(const Hohlraum&) const = default;
 };
 
@@ -725,6 +789,29 @@ struct Randpunkt
         if (o.lippe < 0.0) befunde.push_back("cavity: the lip length of an opening must not be negative");
     }
     if (!plan.hohlraum.an() && !plan.hohlraum.oeffnungen.empty()) befunde.push_back("cavity: openings need a volume");
+    if (plan.hohlraum.art == HohlraumArt::Rohr)
+    {
+        // KQ59 a, KQ61 a: das Rohr laengs y
+        const Rohr& r = plan.hohlraum.rohr;
+        if (!plan.hohlraum.an()) befunde.push_back("cavity: a tube needs a volume");
+        if (!(r.guete > 0.0)) befunde.push_back("cavity tube: quality factor must be positive");
+        if (r.querschnitte.size() < 2) befunde.push_back("cavity tube: needs two sections");
+        bool gut = true;
+        for (std::size_t k = 0; k < r.querschnitte.size(); ++k)
+        {
+            if (!(r.querschnitte[k].flaeche > 0.0)) gut = false;
+            if (k > 0 && !(r.querschnitte[k].y > r.querschnitte[k - 1].y)) gut = false;
+        }
+        if (!gut) befunde.push_back("cavity tube: sections need ascending y and a positive area");
+        else if (r.querschnitte.size() >= 2 && plan.hohlraum.an() && std::abs(r.volumen() / plan.hohlraum.volumen - 1.0) > 0.01)
+            befunde.push_back("cavity tube: the sections must hold the volume of the cavity (within 1 %)");
+        if (gut && r.querschnitte.size() >= 2)
+        {
+            const double von = r.querschnitte.front().y, bis = r.querschnitte.back().y;
+            for (const Oeffnung& o : plan.hohlraum.oeffnungen)
+                if (o.ort.y < von || o.ort.y > bis) befunde.push_back("cavity tube: an opening lies outside the tube");
+        }
+    }
     if (plan.rand.drehfeder < 0.0) befunde.push_back("rim: rotational stiffness must not be negative");
     if (!plan.rand.elastisch() && plan.rand.drehfeder != 0.0) befunde.push_back("rim: a rotational stiffness needs the support 'elastic'");
     {

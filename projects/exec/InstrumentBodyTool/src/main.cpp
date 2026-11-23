@@ -428,13 +428,20 @@ int main(int argc, char* argv[])
         t = std::chrono::steady_clock::now();
         std::sort(plattenModen.begin(), plattenModen.end(), [](const kp::Mode& a, const kp::Mode& b) { return a.frequenzHz < b.frequenzHz; });
         const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, kp::Luft{}.dichte, kp::Luft{}.schall);
-        kp::MitLuftraum ml = kp::mitLuftraum(auswertung, plan, kp::Luft{}, plattenModen);
-        std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu holes and openings, Helmholtz with rigid walls %.1f Hz; plate modes in vacuo:",
+        kp::MitLuftraum ml = kp::mitLuftraum(auswertung, plan, kp::Luft{}, plattenModen, bisHz);
+        std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu holes and openings, Helmholtz with rigid walls %.1f Hz (single pressure)",
                     plan.hohlraum.volumen, g.loecher.size(), g.helmholtzHz());
+        if (plan.hohlraum.alsRohr())
+            std::printf("; as a tube along y (KQ59 a) with %d longitudinal modes up to %.0f Hz", ml.rohrModen, bisHz);
+        std::printf("; plate modes in vacuo:");
         for (std::size_t i = 0; i < std::min<std::size_t>(plattenModen.size(), 5); ++i) std::printf(" %.1f", plattenModen[i].frequenzHz);
         std::printf(" Hz; coupled %zu modes, %.2f s\n", ml.moden.size(), seit(t));
         for (std::size_t i = 0; i < std::min<std::size_t>(ml.moden.size(), 6); ++i)
-            std::printf("  coupled %8.2f Hz  air share %.3f\n", ml.moden[i].frequenzHz, ml.luftAnteil[i]);
+        {
+            std::printf("  coupled %8.2f Hz  air share %.3f", ml.moden[i].frequenzHz, ml.luftAnteil[i]);
+            if (i < ml.rohrAnteil.size()) std::printf(" (along the tube %.3f)", ml.rohrAnteil[i]);
+            std::printf("\n");
+        }
         moden = std::move(ml.moden);
         if (mitFormen)
         {

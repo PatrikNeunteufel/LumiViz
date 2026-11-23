@@ -183,13 +183,6 @@
         "public_headers": "projects/libs/HlslTranspiler/include"
       },
       {
-        "name": "InstrumentBody",
-        "skip": false,
-        "version": "0.1.0",
-        "type": "INTERFACE",
-        "public_headers": "projects/libs/InstrumentBody/include"
-      },
-      {
         "name": "InstrumentCore",
         "//description": "Die Qt-freie Bibliothek der Rechenkerne (Instrumente_IC_Konzept.md KN1 a, Stufe 34c): Tonkern, Fabrik, Auskunft, Parametertafel, Tonauftrag; Eigenzerlegung, Fft mit pocketfft, Kurve, Modal, Pool, SHA-256, Anschlagstufe. STATIC mit den Schaltern nach E1 a (IK2-5 a, PRIVATE: gerechnet wird in den .cpp-Dateien; MSVC kontrahiert unter /fp:precise seit VS 2022 17.0 nicht mehr, nur mit /fp:contract — ein /fp:contract- wie in IC kennt cl nicht, D9002). Als Quellpaket nach IC (TP1 a, packages: instrumentcore)",
         "skip": false,
@@ -203,6 +196,15 @@
           "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-ffp-contract=off>",
           "$<$<CXX_COMPILER_ID:Clang,AppleClang,GNU>:-fno-fast-math>"
         ]
+      },
+      {
+        "name": "InstrumentBody",
+        "skip": false,
+        "version": "0.1.0",
+        "type": "INTERFACE",
+        "public_headers": "projects/libs/InstrumentBody/include",
+        "//dependencies": "KQ65 a (S215): die dichte Eigenzerlegung des Rohrs (Luftraum.hpp) aus InstrumentCore - deshalb nach InstrumentCore",
+        "dependencies": [ "InstrumentCore" ]
       },
       {
         "name": "InstrumentModels",

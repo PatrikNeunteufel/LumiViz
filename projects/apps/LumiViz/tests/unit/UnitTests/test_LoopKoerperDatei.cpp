@@ -449,21 +449,28 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
             double etaVon = (1.0 - m.federAnteil) * etaPlatte + m.federAnteil * federVerlustVon;
             double etaBis = (1.0 - m.federAnteil) * etaPlatte + m.federAnteil * federVerlustBis;
             falsch += m.luftAnteil >= 0.0 && m.luftAnteil <= 1.0 && (plan.hohlraum.an() || m.luftAnteil == 0.0) ? 0 : 1;
+            // KQ59 a, KQ63 a: im Rohr ist ein Teil der Luft laengs, mit eigener Guete; sonst 0
+            falsch += m.rohrAnteil >= 0.0 && m.rohrAnteil <= m.luftAnteil + 1e-12 && (plan.hohlraum.alsRohr() || m.rohrAnteil == 0.0) ? 0 : 1;
             if (plan.hohlraum.an())
             {
-                etaVon = (1.0 - m.luftAnteil) * etaVon + m.luftAnteil / plan.hohlraum.guete;
-                etaBis = (1.0 - m.luftAnteil) * etaBis + m.luftAnteil / plan.hohlraum.guete;
+                const double luftVerlust = (m.luftAnteil - m.rohrAnteil) / plan.hohlraum.guete +
+                                           (plan.hohlraum.alsRohr() ? m.rohrAnteil / plan.hohlraum.rohr.guete : 0.0);
+                etaVon = (1.0 - m.luftAnteil) * etaVon + luftVerlust;
+                etaBis = (1.0 - m.luftAnteil) * etaBis + luftVerlust;
             }
-            luftSumme += m.luftAnteil;
+            luftSumme += m.luftAnteil - m.rohrAnteil;
             falsch += m.verlustfaktor > etaVon - 1e-12 && m.verlustfaktor < etaBis + 1e-12 ? 0 : 1;
         }
         CHECK(falsch == 0);
         // ein Bauplan mit Federn gibt (fast) jeder Mode einen Anteil — sonst ist der Koerper ohne sie gerechnet
         if (!plan.punktfedern.empty()) CHECK(mitFedern > static_cast<int>(k.moden.size()) / 2);
-        // die Luft in den Loechern ist ein Freiheitsgrad: ueber alle Moden hoechstens 1, im Fenster fast alles
+        // die Luft in den Loechern ist ein Freiheitsgrad: ueber alle Moden hoechstens 1, im Fenster fast alles; im Rohr
+        // (KQ59 a) ist es einer je Loch und Oeffnung, ohne die Moden der Frequenz 0 (Durchfluss ohne Druck)
         if (plan.hohlraum.an())
         {
-            CHECK(luftSumme <= 1.0 + 1e-9);
+            const double grenze =
+                plan.hohlraum.alsRohr() ? static_cast<double>(plan.platte.loecher.size() + plan.hohlraum.oeffnungen.size()) : 1.0;
+            CHECK(luftSumme <= grenze + 1e-9);
             CHECK(luftSumme > 0.9);
         }
         if (k.statistik.dichte > 0.0)

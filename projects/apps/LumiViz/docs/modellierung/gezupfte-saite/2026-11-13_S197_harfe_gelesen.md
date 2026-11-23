@@ -1220,3 +1220,90 @@ am Bauplan. **KQ60 a (Patrik S214):** Luft auf Helmholtz 190 ± 1,5 Hz, ohne Sai
 Öffnungen und Helmholtz-Mode auf 3 % beieinander, 170 / 216 Hz bleibt Bericht; Abstrahlung 33–22 gegen den Ausgleich
 über alle zwölf Saiten und mit den Saiten als Dämpfer; Profil von S(1,1)− als Zielgröße (Bauch bei y = 0,45 m auf zwei
 Messorte, Knoten bei Ort 14–16). **Offen:** der Bau des Rohrs und die Harfe damit.
+
+## 23 S215: was der Bau des Rohrs festlegen muss (KQ59 a, vor dem Bau)
+
+> **Sitzung:** S215 (2026-11-23), Opus. Probe `proben/2026-11-23_S215_harfe_rohr_wahl.py` (`rohr`, `profile`,
+> `volumen`, `gekoppelt`; Platte im Vakuum aus S213, Bauplan F4); Ausgaben lokal `.claude/handover/s215_rohr_*.txt`.
+> Kein Programmcode. Die Mündung ist in jeder Variante so gestellt, dass die Helmholtz-Mode mit allen Öffnungen bei
+> 190 Hz liegt (KQ60 a).
+
+**23.1 Gelesen am Seitenbild.** Bell Abb. 2.7 (PDF 65): der Kasten ist ein Halbkegel, Querschnitt halbrund; in der
+Seitenansicht ist die Tiefe über die ganze Länge rund die halbe Breite des Bodens (am Bass rund 0,21 m bei 0,41 m
+Breite, am Diskant rund 0,05 m bei 0,10 m; aus der Zeichnung ohne Maßstab, auf die Länge 1,31 m bezogen). Damit ist
+S ∝ Breite² belegt; das Volumen mit Halbkreis aus den Außenmaßen wäre 38 l, Bell misst 27 ± 2 l (Tab. 4.1) — Wände,
+Leisten, Streben und Blöcke. Bell Abb. 4.8 und 4.11–4.15 (PDF 160 f., 165–169), Kasten A im Sand, Frequenz und Güte:
+
+| Zustand | Helmholtz | A1 | A2 | A3 | A4 | A5 |
+|---|---|---|---|---|---|---|
+| nur Öffnung 6 offen | 75 Hz, Q 10 | 168, Q 10 | 283, Q 12 | 414, Q 23 | 545, Q 30 | 680, Q 36 |
+| alle offen | 190 Hz, Q 6 | 292, Q 6 | 423, Q 7 | 530, Q 10 | 620, Q 15 | 720, Q 30 |
+
+Die Helmholtz-Mode mit allen Öffnungen fällt zum Diskant um rund 18 dB (Abb. 4.8 vi), die mit Öffnung 6 allein
+steigt dorthin um rund 12 dB (Abb. 4.8 i).
+
+**23.2 Rohr allein gegen diese zwölf Moden** (Lage; die Zuordnung über die Zahl der Vorzeichenwechsel des Drucks
+längs, 0 bis 5):
+
+| Querschnitt | nur 6 offen | alle offen | rms / größte |
+|---|---|---|---|
+| S ∝ w² | −9 / 0 / 0 / −2 / −2 / −3 % | 0 / +3 / −12 / −13 / −9 / −6 % | 6,6 / 13 % |
+| S ∝ w | −21 / −5 / −2 / −3 / −3 / −4 % | 0 / −16 / −23 / −18 / −11 / −7 % | 12,1 / 23 % |
+| S konstant | −30 / −3 / −1 / −2 / −3 / −3 % | 0 / −18 / −23 / −17 / −11 / −6 % | 13,6 / 30 % |
+
+Ab 5 Längsmoden ändert sich nichts mehr (5 / 10 / 20 / 40 / alle bis 5 kHz = 38). Der Druck längs der Helmholtz-Mode
+fällt im Modell mit allen Öffnungen zum Diskant um 19 dB, mit Öffnung 6 allein steigt er um 6 dB. **Mit allen
+Öffnungen liegen A2–A4 um 9–13 % zu tief** (in S214 war nur „Öffnung 6 offen“ geprüft). Nicht die Ursache: das
+Volumen (23–29 l, Mündung gleicht aus, Abweichung gleich), die Länge der Öffnungen längs (Druck über 11,5–18,4 cm
+gemittelt, gleich). Ursache offen.
+
+**23.3 Güte.** Eine Güte für die ganze Luftenergie trifft Bells zwölf Güten am besten mit 13,4 (log-Abweichung 0,62,
+Faktor 1,9; Helmholtz 13 statt 6, A5 13 statt 30). Getrennt nach dem Anteil der Bewegungsenergie in den Pfropfen der
+Öffnungen und in der Luft längs: Q_Öffnung 4,4, Q_längs 28 (log-Abweichung 0,29, Faktor 1,3; Q 6 14 20 24 25 26 /
+5 6 8 13 17 21 gegen 10 10 12 23 30 36 / 6 6 7 10 15 30).
+
+**23.4 An der Platte (F4, Saiten 0,3; S ∝ w², 38 Längsmoden, Mündung 1,83):** Paar 172,9 / 215,6 Hz (−7,5 / +4,1 %
+gegen besaitet), S(1,2)–S(1,6) −4,0 / −2,1 / +0,1 / +9,2 / +5,3 %, A 33–22 6 / 12, größte 11,3 dB; mit 10 Längsmoden
+173,2 / 215,1 Hz, S(1,2) −3,7 %, A gleich. Güten der Moden bis 330 Hz (172,9 / 215,6 / 246,8 S(1,2) / 312,8 Hz):
+eine Güte 8,5 — 11,4 / 17,5 / 24,6 / 12,6; eine Güte 13,4 — 17,2 / 24,5 / 31,6 / 18,7; getrennt 4,4 / 28 — 6,6 / 13,1 /
+18,0 / 9,5 (Bell besaitet S(1,2) Q 32, S(1,2)′ 284 Hz Q 30). Mit S ∝ w liegen S(1,2)–S(1,6) bei +7 / +8 / +9 / +7 / +4 %
+und A größte 15,4 dB.
+
+**23.5 Gebaut (KQ61 a–KQ66 a).** `InstrumentBody` 0.27.0: das Rohr in `Luftraum.hpp`, Bauplan-Fassung 10, Körperdatei
+Fassung 7, der statistische Teil ohne Moden mit mehr als halber Luft. Die Harfe: Mündung 1,83, Güten 4,4 / 28, 167 Moden
+(Kopplung 11 s). Das Werkzeug trifft die Probe auf 0,1 Hz (173,0 / 215,6 / 246,8 / 312,9 Hz).
+
+| Am gebauten Körper | Wert | Ziel | |
+|---|---|---|---|
+| Rohr allein, Öffnung 6: A1–A5 | −0,3 / +0,1 / −2,0 / −2,5 / −3,2 % | 3 % | A5 bekannte Abweichung |
+| Rohr allein, alle offen: Helmholtz, Abfall zum Diskant | 190,1 Hz, 18,9 dB | 190 ± 1,5 Hz, rund 18 dB | hält |
+| ohne Saiten, Öffnungen zu: Bodenmode gegen Helmholtz | 191,4 / 191,7 Hz | 3 % (KQ60 a) | hält |
+| besaitet: Lagen gegen Bell (KQ57 a) | −7,5 / +4,2 / −4,0 / −1,9 / +0,5 / +8,8 / +5,0 % | 7 % | S(1,1)−, S(1,5) bekannt |
+| Verschiebung beim Besaiten | +5,2 / +6,8 / +1,7 / +1,1 / +0,6 % | Bell +10 / +3 / +5,7 / −0,5 / +1,8 % | festgehalten |
+| Abstrahlung 33–22, Saiten als Dämpfer, gegen den Median | 4 / 12, größte 11,4 dB | 12 / 12 auf 6 dB | bekannt |
+| S(1,1)− ohne Saiten: Bauch / Knoten | Ort 23,9 / keiner | Ort 25,5 ± 2 / Ort 14–16 | Bauch hält |
+| S(1,2)–S(1,6) ohne Saiten: stärkster Bauch gegen Bell | −14,5 / −23,4 / −20,3 / −15,6 / −11,5 dB | – | vorher −3,2 / −8,3 / −9,6 / −6,8 / −8,6 |
+| Zahl der Bäuche S(1,3) / S(1,4) / S(1,5) | 2 / 3 / 3 | 3 / 4 / 5 | bekannt |
+
+**Befund:** mit dem Rohr mischen sich die Plattenmoden S(1,2)–S(1,5) mit den Längsmoden der Luft — ohne Saiten 21–65 %
+Luft je Mode, zum größeren Teil in den Pfropfen der Öffnungen (Q 4,4): ihre Güte fällt auf 11–21 (Bell ohne Saiten
+39 / 45 / 43 / 31), die Bäuche liegen 11–23 dB unter Bell, zum Bass hin fehlen Bäuche. Die Probe aus S214 zeigte die
+Mischung schon (312,8 Hz mit 0,60 Luft), sie war aber nicht an den Profilen gemessen. Die Längsmoden mit allen Öffnungen
+liegen 6–13 % unter Bell (§23.2) und damit auf den Plattenmoden.
+
+**23.6 Lautheit und Güten am gebauten Körper — Gegenrechnung KQ63 a gegen b** (Körper mit 16 Hörorten aus dem
+Werkzeug; `proben/2026-11-19_S208_harfe_mitschwingen_16.py … von=50 bis=62`, `proben/2026-11-23_S215_harfe_abstrahlung_q.py`;
+lokal `.claude/handover/s215/laut/`, `laut_q134/`):
+
+| | Güten 4,4 / 28 (KQ63 a, gebaut) | eine Güte 13,4 (KQ63 b) | Ziel / Bell |
+|---|---|---|---|
+| Tasten 50–62 mit Mitschwingen: Spanne / größter / mittlerer Sprung | 13,8 / **13,8** (53 → 57) / 2,9 LU | 13,8 / **10,5** / 3,3 LU | größter ≤ 12 LU (F4: 15,7; Probe S214 mit 8,5: 10,9) |
+| nur die gespielte Saite | 14,8 / 14,8 / 3,6 LU | 16,1 / 10,4 / 4,6 LU | – |
+| Abstrahlung 33–22 (Median, Saiten als Dämpfer) | 4 / 12, größte 11,3 dB | 6 / 12, größte 11,5 dB | 12 / 12 auf 6 dB |
+| Q ohne Saiten: Paar, S(1,2), S(1,3), S(1,4), S(1,5) | 8 / 10, 17, 13, 17, 23 | 19 / 20, 29, 19, 20, 19 | 11 / 16, 39, 45, 43, 31 |
+| Q besaitet: S(1,2), S(1,3), S(1,4), S(1,5) | 18, 15, 17, 24 | 32, 20, 19, 20 | 32, 27, 28, 19 |
+| Q der Luft allein (Kap. 4, zwölf Moden) | Faktor 1,3 | Faktor 1,9 (Helmholtz 13 statt 6) | – |
+
+Die Tasten 52–54 liegen auf S(1,1)− (173 Hz): mit Q 6,6 statt 17 sind sie 2,5–5 LU leiser, der Sprung zu 56/57 wächst.
+Mit einer Güte trifft die Harfe ihre eigenen Güten besser (Faktor 1,8 ohne, 1,3 mit Saiten gegen 2,1 / 1,7), die Luft
+allein schlechter — die eine Güte gleicht aus, dass die Plattenmoden zu viel Luft tragen (§23.5).

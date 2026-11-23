@@ -146,7 +146,7 @@ def baue(masse):
     steg_g = STEG[0] * STEG[1] * STEG[2] * STEG_DICHTE * 1000.0
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 9,
+        "version": 10,
         "title": "Oud",
         "description": "Substitute plan of an Arabic oud soundboard with its air cavity (KQ6 a; searched anew in S209: "
                        "KQ42 a-KQ45 a). Outline, brace positions, sound holes, bowl depth, bridge position and length "
@@ -193,7 +193,7 @@ def baue(masse):
                    "source": "bowl 21 cm deep (Abdallah et al. 2026 Fig. 3, side view); assumed: every cross-section half "
                              "an ellipse with its depth proportional to the width of the soundboard there; end correction "
                              "fitted to the measured air mode at 139 Hz (the holes carry rosettes), Q of the air assumed",
-                   "openings": []},
+                   "openings": [], "kind": "singlePressure", "tube": {"sections": [], "q": 30.0, "source": ""}},
         "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "rim clamped and bowl rigid, as in the FE model of the source (Abdallah et al. 2026); assumed", "sections": []},
         "barOverlap": "first",
         "pointSprings": [],

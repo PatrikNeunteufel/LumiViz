@@ -98,7 +98,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 1194.4827658,
+        "seconds": 1509.1595222,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 568515,
@@ -243,7 +243,8 @@
                     -0.05684058413543767
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -354,7 +355,8 @@
                     0.014770192785931151
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -465,7 +467,8 @@
                     0.0007328806945697678
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -576,7 +579,8 @@
                     0.0348133323564114
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -687,7 +691,8 @@
                     0.0010627640929305997
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -798,7 +803,8 @@
                     -0.015440076930448837
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -909,7 +915,8 @@
                     0.04043253547501734
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1020,7 +1027,8 @@
                     0.0021848000591333425
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1131,7 +1139,8 @@
                     -0.008396295537234772
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1242,7 +1251,8 @@
                     -0.03827292171489258
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1353,7 +1363,8 @@
                     0.02263359579367606
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1464,7 +1475,8 @@
                     -0.006672068209924938
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1575,7 +1587,8 @@
                     0.0006944187431878249
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1686,7 +1699,8 @@
                     -0.011161263815383566
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1797,7 +1811,8 @@
                     -0.021895026405053506
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -1908,7 +1923,8 @@
                     -0.013855535157220905
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2019,7 +2035,8 @@
                     -0.016107436651762418
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2130,7 +2147,8 @@
                     0.013239579835188326
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2241,7 +2259,8 @@
                     0.022376045642279217
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2352,7 +2371,8 @@
                     0.0046989931338550575
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2463,7 +2483,8 @@
                     -0.009129015009899237
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2574,7 +2595,8 @@
                     -0.0032078511579234385
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2685,7 +2707,8 @@
                     -0.0016062705242155361
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2796,7 +2819,8 @@
                     0.00933106979588226
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -2907,7 +2931,8 @@
                     0.0105398680684847
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3018,7 +3043,8 @@
                     -0.00842763717404803
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3129,7 +3155,8 @@
                     -0.012286629207714454
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3240,7 +3267,8 @@
                     0.022550821997073527
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3351,7 +3379,8 @@
                     0.00473137218358684
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3462,7 +3491,8 @@
                     -0.013013222625872959
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3573,7 +3603,8 @@
                     -0.00022392369589319648
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3684,7 +3715,8 @@
                     0.007452902762643542
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3795,7 +3827,8 @@
                     -0.0052401526726141645
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -3906,7 +3939,8 @@
                     0.016561300788578044
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4017,7 +4051,8 @@
                     -0.0049365108950001815
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4128,7 +4163,8 @@
                     -0.0015133209969109527
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4239,7 +4275,8 @@
                     -0.0034746333999129474
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4350,7 +4387,8 @@
                     0.0065633973061451235
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4461,7 +4499,8 @@
                     0.0030215294332540223
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4572,7 +4611,8 @@
                     -0.0144098153725682
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4683,7 +4723,8 @@
                     0.0030422731101790797
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4794,7 +4835,8 @@
                     -0.008644768236552094
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -4905,7 +4947,8 @@
                     -0.003568936409855647
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5016,7 +5059,8 @@
                     -0.02382245873110143
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5127,7 +5171,8 @@
                     0.0016961442900249812
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5238,7 +5283,8 @@
                     0.0017009060014477205
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5349,7 +5395,8 @@
                     0.004860573160456527
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5460,7 +5507,8 @@
                     0.011487004609243387
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5571,7 +5619,8 @@
                     -0.0008774626004652978
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5682,7 +5731,8 @@
                     -0.019923171570886973
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5793,7 +5843,8 @@
                     -0.018649569034991858
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -5904,7 +5955,8 @@
                     -0.0027345513473926533
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6015,7 +6067,8 @@
                     -0.0011506382945825047
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6126,7 +6179,8 @@
                     -0.0010584624750684933
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6237,7 +6291,8 @@
                     0.00984919849956389
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6348,7 +6403,8 @@
                     0.018311558290913223
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6459,7 +6515,8 @@
                     -0.015175248826844148
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6570,7 +6627,8 @@
                     -0.011034606469329347
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6681,7 +6739,8 @@
                     0.004651636638496335
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6792,7 +6851,8 @@
                     -0.015058837797211023
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -6903,7 +6963,8 @@
                     0.007677978875634073
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7014,7 +7075,8 @@
                     -0.004540735913465946
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7125,7 +7187,8 @@
                     -0.018013135370425284
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7236,7 +7299,8 @@
                     0.020088023571111033
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7347,7 +7411,8 @@
                     -0.012513861414997112
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7458,7 +7523,8 @@
                     0.01570730515259007
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7569,7 +7635,8 @@
                     0.011241230811610053
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7680,7 +7747,8 @@
                     0.01256368696204567
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7791,7 +7859,8 @@
                     -0.0046977572109202816
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -7902,7 +7971,8 @@
                     0.015254671663159742
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8013,7 +8083,8 @@
                     0.0077936541446462825
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8124,7 +8195,8 @@
                     0.00038681098985175673
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8235,7 +8307,8 @@
                     0.007502926696539471
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8346,7 +8419,8 @@
                     0.008945750841644862
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8457,7 +8531,8 @@
                     -0.017886159447244747
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8568,7 +8643,8 @@
                     0.00029772221268390683
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8679,7 +8755,8 @@
                     -0.0012755906582439702
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8790,7 +8867,8 @@
                     0.008575781813683118
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -8901,7 +8979,8 @@
                     -0.015726718691565146
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9012,7 +9091,8 @@
                     -0.004716004178922475
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9123,7 +9203,8 @@
                     -0.018109951267288326
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9234,7 +9315,8 @@
                     0.01137072639358215
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9345,7 +9427,8 @@
                     -0.010504649975980164
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9456,7 +9539,8 @@
                     -0.0011144898978795554
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9567,7 +9651,8 @@
                     0.005726545799639091
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9678,7 +9763,8 @@
                     -0.013901682633984737
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9789,7 +9875,8 @@
                     0.0204213296616529
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -9900,7 +9987,8 @@
                     -0.005117734169742115
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10011,7 +10099,8 @@
                     0.01374113944863117
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10122,7 +10211,8 @@
                     -0.0033220829004434425
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10233,7 +10323,8 @@
                     3.1031470442031185e-06
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10344,7 +10435,8 @@
                     0.008093276526465094
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10455,7 +10547,8 @@
                     0.008656605984172571
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10566,7 +10659,8 @@
                     0.013690877497329543
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10677,7 +10771,8 @@
                     -0.00019144019670327934
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10788,7 +10883,8 @@
                     0.00029229247629013156
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -10899,7 +10995,8 @@
                     -0.0028409392943338756
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11010,7 +11107,8 @@
                     -0.015017456307544872
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11121,7 +11219,8 @@
                     -0.0196459525680406
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11232,7 +11331,8 @@
                     -0.007132737170622654
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11343,7 +11443,8 @@
                     -0.009471555544502401
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11454,7 +11555,8 @@
                     -0.01057682738370932
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11565,7 +11667,8 @@
                     0.017834321066686205
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11676,7 +11779,8 @@
                     0.010379786202119531
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11787,7 +11891,8 @@
                     0.002834383957685177
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -11898,7 +12003,8 @@
                     -0.0028018307525384725
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12009,7 +12115,8 @@
                     -0.0030133575888223255
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12120,7 +12227,8 @@
                     -0.006325287263317161
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12231,7 +12339,8 @@
                     0.021364945443930628
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12342,7 +12451,8 @@
                     -0.0066056080370921
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12453,7 +12563,8 @@
                     -0.016893848437974087
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12564,7 +12675,8 @@
                     0.019069871162053012
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12675,7 +12787,8 @@
                     0.00598488690340161
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12786,7 +12899,8 @@
                     0.00703658983371874
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -12897,7 +13011,8 @@
                     -0.0024545665259660494
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13008,7 +13123,8 @@
                     0.001920338600958721
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13119,7 +13235,8 @@
                     -0.004506602248524517
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13230,7 +13347,8 @@
                     0.009082920897042731
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13341,7 +13459,8 @@
                     0.012853529035805712
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13452,7 +13571,8 @@
                     -0.014103042822984323
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13563,7 +13683,8 @@
                     0.006935052835219584
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13674,7 +13795,8 @@
                     -0.011058058216127648
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13785,7 +13907,8 @@
                     -0.01308545593847631
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -13896,7 +14019,8 @@
                     -0.004010020021705654
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14007,7 +14131,8 @@
                     -0.015296868432708196
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14118,7 +14243,8 @@
                     0.01569277852488206
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14229,7 +14355,8 @@
                     -2.0803054676261847e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14340,7 +14467,8 @@
                     -0.017905146194435076
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14451,7 +14579,8 @@
                     -0.0007980790156925934
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14562,7 +14691,8 @@
                     -0.011098770409334798
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14673,7 +14803,8 @@
                     0.0038502051479754823
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14784,7 +14915,8 @@
                     -0.012874984879558444
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -14895,7 +15027,8 @@
                     0.00801957066361246
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15006,7 +15139,8 @@
                     0.002118851988668213
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15117,7 +15251,8 @@
                     0.008010911422997102
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15228,7 +15363,8 @@
                     -0.01273622772342132
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15339,7 +15475,8 @@
                     -0.011824246884507204
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15450,7 +15587,8 @@
                     -0.007168644343660257
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15561,7 +15699,8 @@
                     0.006059692614074416
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15672,7 +15811,8 @@
                     -0.027426465527940813
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15783,7 +15923,8 @@
                     -0.0016867010907480108
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -15894,7 +16035,8 @@
                     0.013531330903334594
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16005,7 +16147,8 @@
                     -0.01617239262309747
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16116,7 +16259,8 @@
                     0.016883984039087356
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16227,7 +16371,8 @@
                     0.0056255088308852196
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16338,7 +16483,8 @@
                     -0.004983803112891484
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16449,7 +16595,8 @@
                     -0.004406988731413539
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16560,7 +16707,8 @@
                     0.02150996505953831
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16671,7 +16819,8 @@
                     0.006673432555984583
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16782,7 +16931,8 @@
                     -0.004802235105470805
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -16893,7 +17043,8 @@
                     -0.012313281386539227
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17004,7 +17155,8 @@
                     0.004170250386522188
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17115,7 +17267,8 @@
                     -0.011265102232103412
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17226,7 +17379,8 @@
                     0.014009302379831251
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17337,7 +17491,8 @@
                     0.0017871794737008076
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17448,7 +17603,8 @@
                     -0.005513274599132731
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17559,7 +17715,8 @@
                     -0.013810039874682295
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17670,7 +17827,8 @@
                     -0.027814514232927703
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17781,7 +17939,8 @@
                     -0.008626335383619082
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -17892,7 +18051,8 @@
                     0.0017944135940650887
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18003,7 +18163,8 @@
                     -0.0007996115917641666
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18114,7 +18275,8 @@
                     0.008219705234274628
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18225,7 +18387,8 @@
                     -0.001313099746684805
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18336,7 +18499,8 @@
                     -0.007310220980357042
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18447,7 +18611,8 @@
                     -0.0003023261850645218
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18558,7 +18723,8 @@
                     0.023830881424560767
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18669,7 +18835,8 @@
                     -0.008178350353496485
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18780,7 +18947,8 @@
                     0.01309433663055795
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -18891,7 +19059,8 @@
                     -0.009097991752822172
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19002,7 +19171,8 @@
                     0.006207249357650024
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19113,7 +19283,8 @@
                     -0.005137754648286021
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19224,7 +19395,8 @@
                     -0.0054186813977970755
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19335,7 +19507,8 @@
                     0.0025526096320678602
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19446,7 +19619,8 @@
                     -0.0069759705399655945
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19557,7 +19731,8 @@
                     -0.003352499763711509
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19668,7 +19843,8 @@
                     0.015162333652997483
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19779,7 +19955,8 @@
                     0.0049239904477982295
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -19890,7 +20067,8 @@
                     -0.010314412140485575
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20001,7 +20179,8 @@
                     -0.0025601294834953713
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20112,7 +20291,8 @@
                     0.010799282004489347
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20223,7 +20403,8 @@
                     0.008446368927912238
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20334,7 +20515,8 @@
                     -0.009709750176735765
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20445,7 +20627,8 @@
                     -0.0032929331722673155
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20556,7 +20739,8 @@
                     0.002561748698526729
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20667,7 +20851,8 @@
                     0.02008577170219478
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20778,7 +20963,8 @@
                     -0.021660853276025013
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -20889,7 +21075,8 @@
                     0.006136144542836087
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21000,7 +21187,8 @@
                     0.016961312320176062
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21111,7 +21299,8 @@
                     -0.004240610448453397
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21222,7 +21411,8 @@
                     0.023851267235206166
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21333,7 +21523,8 @@
                     -0.0032623120879048863
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21444,7 +21635,8 @@
                     0.006817345093557349
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21555,7 +21747,8 @@
                     -0.0044385009344524535
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21666,7 +21859,8 @@
                     -0.005851627131848066
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21777,7 +21971,8 @@
                     -0.0010157381110335784
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21888,7 +22083,8 @@
                     -0.002797205905135304
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -21999,7 +22195,8 @@
                     -0.015310839958644218
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22110,7 +22307,8 @@
                     -0.001523250774441702
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22221,7 +22419,8 @@
                     0.010418342835038
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22332,7 +22531,8 @@
                     -0.0073630239036857744
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22443,7 +22643,8 @@
                     0.01574582796842138
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22554,7 +22755,8 @@
                     -0.008718680494870365
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22665,7 +22867,8 @@
                     -0.009833033887723112
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22776,7 +22979,8 @@
                     0.0013117610410199314
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22887,7 +23091,8 @@
                     -0.011674554834140396
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -22998,7 +23203,8 @@
                     -0.0011364327375834602
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23109,7 +23315,8 @@
                     0.0007069445610008756
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23220,7 +23427,8 @@
                     -0.0002893670465640102
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23331,7 +23539,8 @@
                     0.003013338115412338
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23442,7 +23651,8 @@
                     -0.01059310436241647
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23553,7 +23763,8 @@
                     0.0037119116325878307
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23664,7 +23875,8 @@
                     0.018067591246854423
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23775,7 +23987,8 @@
                     0.000735723556389735
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23886,7 +24099,8 @@
                     0.00417229202311053
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -23997,7 +24211,8 @@
                     0.0048177428231708464
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24108,7 +24323,8 @@
                     -0.0011260746321343116
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24219,7 +24435,8 @@
                     0.004425794815191193
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24330,7 +24547,8 @@
                     -0.0044810735013822356
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24441,7 +24659,8 @@
                     0.012262313722427793
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24552,7 +24771,8 @@
                     -0.0013938622125573266
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24663,7 +24883,8 @@
                     8.335656976323574e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24774,7 +24995,8 @@
                     0.005796489910450177
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24885,7 +25107,8 @@
                     -0.005137261918128115
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -24996,7 +25219,8 @@
                     -0.0011447818246223768
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25107,7 +25331,8 @@
                     0.0032111672795686816
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25218,7 +25443,8 @@
                     -0.009487167380460262
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25329,7 +25555,8 @@
                     0.009145338886164967
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25440,7 +25667,8 @@
                     0.01677352272394664
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25551,7 +25779,8 @@
                     -0.008988009964596292
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25662,7 +25891,8 @@
                     0.0013433887367559003
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25773,7 +26003,8 @@
                     0.008242845023264299
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25884,7 +26115,8 @@
                     -0.003836947710670669
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -25995,7 +26227,8 @@
                     -0.007244456642144563
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26106,7 +26339,8 @@
                     0.000829029761378787
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26217,7 +26451,8 @@
                     -0.0059661659682389645
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26328,7 +26563,8 @@
                     -0.003379854809666796
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26439,7 +26675,8 @@
                     0.009940979898001358
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26550,7 +26787,8 @@
                     -0.00207510083309915
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26661,7 +26899,8 @@
                     0.000677146663814968
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26772,7 +27011,8 @@
                     0.020239281799091957
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26883,7 +27123,8 @@
                     -0.0004921090147625787
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -26994,7 +27235,8 @@
                     0.0027200024227585183
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27105,7 +27347,8 @@
                     0.0005036014644955896
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27216,7 +27459,8 @@
                     -0.0018293878226686622
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27327,7 +27571,8 @@
                     -0.00020897687581766363
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27438,7 +27683,8 @@
                     -0.003095847565759552
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27549,7 +27795,8 @@
                     -0.0032666861011324422
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27660,7 +27907,8 @@
                     0.002463390108614975
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27771,7 +28019,8 @@
                     0.0011135732865988506
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27882,7 +28131,8 @@
                     -0.00312910552694879
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -27993,7 +28243,8 @@
                     0.008110978885409943
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28104,7 +28355,8 @@
                     -0.0012253135216558758
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28215,7 +28467,8 @@
                     -0.00331975055189035
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28326,7 +28579,8 @@
                     -0.0033839534710061324
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28437,7 +28691,8 @@
                     0.004825787400856538
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28548,7 +28803,8 @@
                     0.004339543529828431
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28659,7 +28915,8 @@
                     5.202996264209403e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28770,7 +29027,8 @@
                     -0.004936519064063431
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28881,7 +29139,8 @@
                     -0.00019375882223651744
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -28992,7 +29251,8 @@
                     0.0029389826237746224
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29103,7 +29363,8 @@
                     0.0065050535552036845
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29214,7 +29475,8 @@
                     0.009241243295751319
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29325,7 +29587,8 @@
                     0.0021476196993753384
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29436,7 +29699,8 @@
                     -0.014077523636234561
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29547,7 +29811,8 @@
                     0.009922341451337486
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29658,7 +29923,8 @@
                     0.004824623183564727
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29769,7 +30035,8 @@
                     -0.008017879272299099
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29880,7 +30147,8 @@
                     0.004968787721036093
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -29991,7 +30259,8 @@
                     -0.0036887942548703995
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30102,7 +30371,8 @@
                     0.010443428212318511
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30213,7 +30483,8 @@
                     0.007090348753101346
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30324,7 +30595,8 @@
                     -0.00040173485327708365
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30435,7 +30707,8 @@
                     0.0005324584616115243
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30546,7 +30819,8 @@
                     0.0015715958492839622
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30657,7 +30931,8 @@
                     0.006913806778848696
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30768,7 +31043,8 @@
                     -0.010956429053873491
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30879,7 +31155,8 @@
                     -0.001736586118330093
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -30990,7 +31267,8 @@
                     -0.0032585937792652285
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31101,7 +31379,8 @@
                     -0.0006194445535215279
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31212,7 +31491,8 @@
                     -0.0020620393980711332
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31323,7 +31603,8 @@
                     -0.0019622537339796567
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31434,7 +31715,8 @@
                     0.002044016484353711
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31545,7 +31827,8 @@
                     0.004272089179129618
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31656,7 +31939,8 @@
                     -0.0008318885829712299
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31767,7 +32051,8 @@
                     -0.0019675043116037095
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31878,7 +32163,8 @@
                     0.00150993785069525
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -31989,7 +32275,8 @@
                     -0.011370919990248042
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32100,7 +32387,8 @@
                     0.0009222550540907049
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32211,7 +32499,8 @@
                     0.004195015793662802
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32322,7 +32611,8 @@
                     -0.009725844852386117
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32433,7 +32723,8 @@
                     2.0605057941799254e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32544,7 +32835,8 @@
                     -0.006411073006245945
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32655,7 +32947,8 @@
                     -0.0018024023991297104
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32766,7 +33059,8 @@
                     -0.006627802234003524
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32877,7 +33171,8 @@
                     0.003462246628966768
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -32988,7 +33283,8 @@
                     -0.002395386115933389
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33099,7 +33395,8 @@
                     -0.0022182709908899804
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33210,7 +33507,8 @@
                     0.007475661617647054
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33321,7 +33619,8 @@
                     -0.009377676938743015
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33432,7 +33731,8 @@
                     0.004539448240607976
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33543,7 +33843,8 @@
                     0.004453477278878941
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33654,7 +33955,8 @@
                     0.006337096848024816
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33765,7 +34067,8 @@
                     -0.007912401896637871
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33876,7 +34179,8 @@
                     0.0037166664753963538
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -33987,7 +34291,8 @@
                     -0.008358843253707558
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34098,7 +34403,8 @@
                     0.010744562887432939
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34209,7 +34515,8 @@
                     -0.003311338444025199
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34320,7 +34627,8 @@
                     0.0038106233870291496
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34431,7 +34739,8 @@
                     -1.7770807685912087e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34542,7 +34851,8 @@
                     0.001711316396000489
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34653,7 +34963,8 @@
                     -0.001162136990391367
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34764,7 +35075,8 @@
                     -0.0029335282810465965
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34875,7 +35187,8 @@
                     -0.007530850284177651
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -34986,7 +35299,8 @@
                     0.007007582946564972
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35097,7 +35411,8 @@
                     0.000781790942049843
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35208,7 +35523,8 @@
                     0.004795937717401684
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35319,7 +35635,8 @@
                     -0.0004264406521451182
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35430,7 +35747,8 @@
                     -0.0017679687346434608
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35541,7 +35859,8 @@
                     -0.00010929037457649198
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35652,7 +35971,8 @@
                     0.010954134158767306
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35763,7 +36083,8 @@
                     0.000248614629061242
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35874,7 +36195,8 @@
                     0.003277162898023111
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -35985,7 +36307,8 @@
                     -0.008806751557149934
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36096,7 +36419,8 @@
                     -0.0035754145820481717
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36207,7 +36531,8 @@
                     0.009997556238935949
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36318,7 +36643,8 @@
                     0.0019540142279529664
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36429,7 +36755,8 @@
                     0.006574030555282099
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36540,7 +36867,8 @@
                     0.0038412623174434585
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36651,7 +36979,8 @@
                     -0.001545906570056399
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36762,7 +37091,8 @@
                     -0.009680968955517032
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36873,7 +37203,8 @@
                     0.00010782216773795021
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -36984,7 +37315,8 @@
                     0.006850824635365585
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37095,7 +37427,8 @@
                     -0.006554443408107721
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37206,7 +37539,8 @@
                     -0.004170553455913582
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37317,7 +37651,8 @@
                     0.007026579317596139
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37428,7 +37763,8 @@
                     0.0029414435260033153
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37539,7 +37875,8 @@
                     0.004657119965185692
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37650,7 +37987,8 @@
                     -0.004780378676849154
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37761,7 +38099,8 @@
                     7.942334572488354e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37872,7 +38211,8 @@
                     0.006757525535399221
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -37983,7 +38323,8 @@
                     0.0012739157297049133
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38094,7 +38435,8 @@
                     0.007297102324184302
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38205,7 +38547,8 @@
                     0.00734999924345461
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38316,7 +38659,8 @@
                     0.00019718812798388035
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38427,7 +38771,8 @@
                     -0.0032453861326614724
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38538,7 +38883,8 @@
                     -0.0007502512703128169
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38649,7 +38995,8 @@
                     0.004964794755920516
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38760,7 +39107,8 @@
                     0.0007567369164287157
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38871,7 +39219,8 @@
                     -0.0037274392852641213
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -38982,7 +39331,8 @@
                     0.004703237075408819
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39093,7 +39443,8 @@
                     0.003977420618446728
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39204,7 +39555,8 @@
                     0.005802618056287561
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39315,7 +39667,8 @@
                     -0.00858844496363274
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39426,7 +39779,8 @@
                     0.0025402651606655476
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39537,7 +39891,8 @@
                     0.0032002479088478735
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39648,7 +40003,8 @@
                     0.005928836952519815
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39759,7 +40115,8 @@
                     0.006386602069752505
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39870,7 +40227,8 @@
                     0.003908457126308042
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -39981,7 +40339,8 @@
                     -0.0008404931455888957
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40092,7 +40451,8 @@
                     0.0010321910716241198
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40203,7 +40563,8 @@
                     0.002715452370824066
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40314,7 +40675,8 @@
                     0.0037815951623029094
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40425,7 +40787,8 @@
                     -0.004168081953668914
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40536,7 +40899,8 @@
                     0.0040740988840299395
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40647,7 +41011,8 @@
                     -0.00014193659640094407
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40758,7 +41123,8 @@
                     -0.001907590124293081
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40869,7 +41235,8 @@
                     -0.0013150551102079611
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -40980,7 +41347,8 @@
                     -0.005462422488161038
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41091,7 +41459,8 @@
                     -0.0028976946411117294
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41202,7 +41571,8 @@
                     -0.005130225675605943
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41313,7 +41683,8 @@
                     -0.005587205678381467
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41424,7 +41795,8 @@
                     -0.0038979263405005187
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41535,7 +41907,8 @@
                     -0.01414917064738901
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41646,7 +42019,8 @@
                     0.008207628169737129
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41757,7 +42131,8 @@
                     0.0024008409506440062
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41868,7 +42243,8 @@
                     0.0024311058037881895
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -41979,7 +42355,8 @@
                     -0.0037716559937845634
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42090,7 +42467,8 @@
                     0.001006137120149768
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42201,7 +42579,8 @@
                     -0.004641109355226435
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42312,7 +42691,8 @@
                     -0.014152383638105132
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42423,7 +42803,8 @@
                     0.004927548360433398
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42534,7 +42915,8 @@
                     -0.0036469359365967832
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42645,7 +43027,8 @@
                     -0.0011744136379561866
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42756,7 +43139,8 @@
                     0.015891750705041674
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42867,7 +43251,8 @@
                     -0.008063812383201006
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -42978,7 +43363,8 @@
                     -0.003110382023770086
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43089,7 +43475,8 @@
                     0.005745009353369088
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43200,7 +43587,8 @@
                     0.00042407354633980187
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43311,7 +43699,8 @@
                     -0.0034704081840098073
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43422,7 +43811,8 @@
                     -0.007110803304770569
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43533,7 +43923,8 @@
                     0.002826217770063339
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43644,7 +44035,8 @@
                     0.007340394815652731
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43755,7 +44147,8 @@
                     -0.0030399503999968018
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43866,7 +44259,8 @@
                     0.006125322889238312
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -43977,7 +44371,8 @@
                     0.0017993718939221684
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44088,7 +44483,8 @@
                     0.00022070531118701997
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44199,7 +44595,8 @@
                     -0.0067937115945575464
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44310,7 +44707,8 @@
                     0.0036839293613096236
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44421,7 +44819,8 @@
                     0.0019286590021781052
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44532,7 +44931,8 @@
                     0.0049491415035667055
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44643,7 +45043,8 @@
                     0.008038100723193733
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44754,7 +45155,8 @@
                     0.0006530055627059641
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44865,7 +45267,8 @@
                     -0.0020871690067236956
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -44976,7 +45379,8 @@
                     -0.004092102126506096
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45087,7 +45491,8 @@
                     0.0018098390308571757
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45198,7 +45603,8 @@
                     -0.0038502751176784067
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45309,7 +45715,8 @@
                     -0.0005867793025454774
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45420,7 +45827,8 @@
                     0.006164454757336179
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45531,7 +45939,8 @@
                     0.005316056538953791
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45642,7 +46051,8 @@
                     0.0024637317089937186
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45753,7 +46163,8 @@
                     -0.004125928588830066
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45864,7 +46275,8 @@
                     0.0029876141552083652
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -45975,7 +46387,8 @@
                     -0.0027789268747459785
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46086,7 +46499,8 @@
                     -0.00024125840478349082
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46197,7 +46611,8 @@
                     -0.003090027935602579
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46308,7 +46723,8 @@
                     0.007532199925955562
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46419,7 +46835,8 @@
                     0.001969654644708322
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46530,7 +46947,8 @@
                     0.006415844585986359
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46641,7 +47059,8 @@
                     0.00142943653521031
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46752,7 +47171,8 @@
                     -0.0034640308671744216
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46863,7 +47283,8 @@
                     0.0005276498039825012
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -46974,7 +47395,8 @@
                     -0.0037863648642311363
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47085,7 +47507,8 @@
                     -0.0036661428075830684
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47196,7 +47619,8 @@
                     0.008314274958937693
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47307,7 +47731,8 @@
                     -0.006322791964356423
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47418,7 +47843,8 @@
                     0.007898582538015033
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47529,7 +47955,8 @@
                     -0.001250101393189727
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47640,7 +48067,8 @@
                     0.002111456288729263
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47751,7 +48179,8 @@
                     -0.00012033272260475537
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47862,7 +48291,8 @@
                     0.0054486294356793806
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -47973,7 +48403,8 @@
                     -0.004040213291934203
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48084,7 +48515,8 @@
                     0.005439065292142647
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48195,7 +48627,8 @@
                     -0.0069171045273406515
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48306,7 +48739,8 @@
                     0.003046292439644529
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48417,7 +48851,8 @@
                     -0.007450345949437461
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48528,7 +48963,8 @@
                     -0.002486169454392854
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48639,7 +49075,8 @@
                     -0.00039171670830305777
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48750,7 +49187,8 @@
                     -0.005067979475283884
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48861,7 +49299,8 @@
                     0.008188164838244217
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -48972,7 +49411,8 @@
                     0.0010597088662510103
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49083,7 +49523,8 @@
                     0.004188651951837299
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49194,7 +49635,8 @@
                     0.005582671172741175
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49305,7 +49747,8 @@
                     -0.0004179748312822162
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49416,7 +49859,8 @@
                     -0.012522697019135417
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49527,7 +49971,8 @@
                     -0.0018209572293434945
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49638,7 +50083,8 @@
                     0.008505777761192004
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49749,7 +50195,8 @@
                     0.0016187566401135525
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49860,7 +50307,8 @@
                     -0.007943977706398582
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -49971,7 +50419,8 @@
                     -0.009429926562743761
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50082,7 +50531,8 @@
                     -0.002900387638825296
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50193,7 +50643,8 @@
                     -0.0017407062306173807
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50304,7 +50755,8 @@
                     -0.0031052787928868356
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50415,7 +50867,8 @@
                     -0.001751967063666371
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50526,7 +50979,8 @@
                     -0.000373743179946718
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50637,7 +51091,8 @@
                     0.007957596421548422
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50748,7 +51203,8 @@
                     0.013188124529317719
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50859,7 +51315,8 @@
                     0.016744879637253334
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -50970,7 +51427,8 @@
                     -0.0034868177847959857
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51081,7 +51539,8 @@
                     0.001909405806268934
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51192,7 +51651,8 @@
                     0.0016127932864778906
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51303,7 +51763,8 @@
                     -0.004046869136333693
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51414,7 +51875,8 @@
                     -0.0038890621250461054
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51525,7 +51987,8 @@
                     0.007341230212645311
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51636,7 +52099,8 @@
                     0.005541404563733424
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51747,7 +52211,8 @@
                     0.004022529699709895
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51858,7 +52323,8 @@
                     -0.0034934433845307633
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -51969,7 +52435,8 @@
                     -0.004771223551726779
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52080,7 +52547,8 @@
                     0.0010370138727746109
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52191,7 +52659,8 @@
                     0.0004216171242135157
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52302,7 +52771,8 @@
                     -0.003709730301614046
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52413,7 +52883,8 @@
                     -0.00011198724319435532
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52524,7 +52995,8 @@
                     -0.0030426292821363423
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52635,7 +53107,8 @@
                     -0.0015187571473239264
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52746,7 +53219,8 @@
                     -0.0029943138612790058
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52857,7 +53331,8 @@
                     0.006026568719119798
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -52968,7 +53443,8 @@
                     0.0028887737003516884
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53079,7 +53555,8 @@
                     0.0059254888357706224
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53190,7 +53667,8 @@
                     -0.0030582445064475812
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53301,7 +53779,8 @@
                     -0.0011643161149597649
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53412,7 +53891,8 @@
                     -0.009412585040713921
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53523,7 +54003,8 @@
                     -0.0042948785570676015
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53634,7 +54115,8 @@
                     0.001363714802378662
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53745,7 +54227,8 @@
                     -0.0009673352987426781
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53856,7 +54339,8 @@
                     0.006251192333637998
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -53967,7 +54451,8 @@
                     -0.008032711279209038
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54078,7 +54563,8 @@
                     -0.0028326044803369055
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54189,7 +54675,8 @@
                     0.0018944332564026056
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54300,7 +54787,8 @@
                     -0.0007731301065735752
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54411,7 +54899,8 @@
                     -0.008211699011727719
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54522,7 +55011,8 @@
                     0.001608178315742498
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54633,7 +55123,8 @@
                     -0.0042574522252715645
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54744,7 +55235,8 @@
                     -0.0015295559619242756
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54855,7 +55347,8 @@
                     -0.01065239558531005
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -54966,7 +55459,8 @@
                     -0.003966819924951879
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55077,7 +55571,8 @@
                     -8.349171478626828e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55188,7 +55683,8 @@
                     -0.0028663145213186038
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55299,7 +55795,8 @@
                     0.0046009222107743514
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55410,7 +55907,8 @@
                     -0.002463123434079702
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55521,7 +56019,8 @@
                     0.005185201611750275
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55632,7 +56131,8 @@
                     -0.0028143769009001834
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55743,7 +56243,8 @@
                     -0.009301683120180057
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55854,7 +56355,8 @@
                     0.00414407427874588
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -55965,7 +56467,8 @@
                     -0.012740259878491964
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56076,7 +56579,8 @@
                     -0.0010501484762933677
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56187,7 +56691,8 @@
                     -0.0011987562365858367
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56298,7 +56803,8 @@
                     0.0015755930406219326
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56409,7 +56915,8 @@
                     0.004272925379033521
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56520,7 +57027,8 @@
                     -0.0004124658552293978
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56631,7 +57139,8 @@
                     0.006090184065632498
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56742,7 +57251,8 @@
                     -0.0025942003604256646
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56853,7 +57363,8 @@
                     0.0023256695711072477
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -56964,7 +57475,8 @@
                     0.00903968816638266
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57075,7 +57587,8 @@
                     0.0069733158418143525
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57186,7 +57699,8 @@
                     0.003338318373650013
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57297,7 +57811,8 @@
                     0.004986091208584241
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57408,7 +57923,8 @@
                     -0.0033049737710621036
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57519,7 +58035,8 @@
                     0.0025105620055928574
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57630,7 +58147,8 @@
                     -0.007002334461186547
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57741,7 +58259,8 @@
                     -0.0025592909047452506
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57852,7 +58371,8 @@
                     0.0020793842674533187
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -57963,7 +58483,8 @@
                     0.0032186536813811175
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58074,7 +58595,8 @@
                     -0.006670186555738426
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58185,7 +58707,8 @@
                     -0.00098362955104305
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58296,7 +58819,8 @@
                     0.0019453811801311985
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58407,7 +58931,8 @@
                     0.005547149612288416
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58518,7 +59043,8 @@
                     0.00380546114120856
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58629,7 +59155,8 @@
                     -0.001047838007247554
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58740,7 +59267,8 @@
                     -0.007717581234526122
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58851,7 +59379,8 @@
                     -0.00416797889597489
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -58962,7 +59491,8 @@
                     0.007962412303671127
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59073,7 +59603,8 @@
                     -0.0005354968389744565
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59184,7 +59715,8 @@
                     -0.003443169462866838
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59295,7 +59827,8 @@
                     -0.0007138559383218035
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59406,7 +59939,8 @@
                     0.007495848961324477
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59517,7 +60051,8 @@
                     -0.0075688597896416765
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59628,7 +60163,8 @@
                     0.004861899182455148
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59739,7 +60275,8 @@
                     -0.009365157700784502
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59850,7 +60387,8 @@
                     0.002543305099777702
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -59961,7 +60499,8 @@
                     -0.005408326803401288
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60072,7 +60611,8 @@
                     -0.0032026544173481253
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60183,7 +60723,8 @@
                     -0.0057108918468972945
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60294,7 +60835,8 @@
                     -0.0030672977243757322
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60405,7 +60947,8 @@
                     0.0040369200189835615
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60516,7 +61059,8 @@
                     0.008576026543531425
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60627,7 +61171,8 @@
                     0.003991065516476199
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60738,7 +61283,8 @@
                     -0.014394153213223583
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60849,7 +61395,8 @@
                     -0.0004140453956355609
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -60960,7 +61507,8 @@
                     0.0027685509098410157
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61071,7 +61619,8 @@
                     0.004346373574790958
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61182,7 +61731,8 @@
                     -9.648769043037958e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61293,7 +61843,8 @@
                     0.0009587507630071309
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61404,7 +61955,8 @@
                     0.002655339226954967
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61515,7 +62067,8 @@
                     -0.007557979744139992
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61626,7 +62179,8 @@
                     0.009208438598899195
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61737,7 +62291,8 @@
                     -0.00050285727647925
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61848,7 +62403,8 @@
                     -0.003325530044757221
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -61959,7 +62515,8 @@
                     0.005173934583283336
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62070,7 +62627,8 @@
                     0.00019913605267931215
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62181,7 +62739,8 @@
                     0.001112606695017468
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62292,7 +62851,8 @@
                     6.335176445850036e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62403,7 +62963,8 @@
                     -0.004120496647999138
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62514,7 +63075,8 @@
                     -0.00047625431162913126
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62625,7 +63187,8 @@
                     -0.005898276475327883
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62736,7 +63299,8 @@
                     -0.002476647374450961
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62847,7 +63411,8 @@
                     -0.0020355234545109025
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -62958,7 +63523,8 @@
                     -0.003965702398818005
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63069,7 +63635,8 @@
                     -0.01172160375858325
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63180,7 +63747,8 @@
                     -0.002500733378705182
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63291,7 +63859,8 @@
                     0.0020355721092339034
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63402,7 +63971,8 @@
                     -0.0010707772299787732
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63513,7 +64083,8 @@
                     -0.004118305872174023
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63624,7 +64195,8 @@
                     -0.0007067818641572154
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63735,7 +64307,8 @@
                     0.0021442588313698397
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63846,7 +64419,8 @@
                     0.0043418761450280535
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -63957,7 +64531,8 @@
                     -0.0021006836757885205
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64068,7 +64643,8 @@
                     0.004465355624060169
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64179,7 +64755,8 @@
                     0.009898843010990642
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64290,7 +64867,8 @@
                     0.0026494844563027787
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64401,7 +64979,8 @@
                     -0.0018759325896651304
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64512,7 +65091,8 @@
                     0.002303891829597577
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64623,7 +65203,8 @@
                     0.004722246178552312
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64734,7 +65315,8 @@
                     -0.0025899351223182673
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64845,7 +65427,8 @@
                     -0.0021981333152872543
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -64956,7 +65539,8 @@
                     0.0022116059207493363
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65067,7 +65651,8 @@
                     -0.002835384117696098
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65178,7 +65763,8 @@
                     0.0020892832173267607
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65289,7 +65875,8 @@
                     0.006270590258377483
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65400,7 +65987,8 @@
                     -0.0011979456258585132
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65511,7 +66099,8 @@
                     0.00012388751562026403
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65622,7 +66211,8 @@
                     -0.005298951229492722
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65733,7 +66323,8 @@
                     -0.006761707964915141
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65844,7 +66435,8 @@
                     0.00045134580277353663
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -65955,7 +66547,8 @@
                     -0.007572763644183861
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66066,7 +66659,8 @@
                     -0.00011107120952698635
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66177,7 +66771,8 @@
                     0.005517141233427829
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66288,7 +66883,8 @@
                     0.004040721649054074
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66399,7 +66995,8 @@
                     0.0031998275050710836
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66510,7 +67107,8 @@
                     0.005653364626416781
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66621,7 +67219,8 @@
                     0.003520639686863966
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66732,7 +67331,8 @@
                     0.004125238119629519
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66843,7 +67443,8 @@
                     0.0013010238422210372
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -66954,7 +67555,8 @@
                     0.0011299748551043996
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67065,7 +67667,8 @@
                     0.0026874917149472405
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67176,7 +67779,8 @@
                     0.0007176387493870315
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67287,7 +67891,8 @@
                     -3.039483755461684e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67398,7 +68003,8 @@
                     -0.005968370114829741
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67509,7 +68115,8 @@
                     -0.0014689860694902363
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67620,7 +68227,8 @@
                     -0.000850153530635548
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67731,7 +68339,8 @@
                     0.0065217292019476335
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67842,7 +68451,8 @@
                     -0.00014514887888992706
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -67953,7 +68563,8 @@
                     0.005097653235006717
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68064,7 +68675,8 @@
                     -0.0006605947749314363
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68175,7 +68787,8 @@
                     0.005491647373651622
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68286,7 +68899,8 @@
                     -0.001757725024233305
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68397,7 +69011,8 @@
                     0.0025259371265813546
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68508,7 +69123,8 @@
                     0.00014714933719889737
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68619,7 +69235,8 @@
                     0.007646540519036232
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68730,7 +69347,8 @@
                     -0.002522583838036091
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68841,7 +69459,8 @@
                     0.005252419448243604
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -68952,7 +69571,8 @@
                     0.007575236579374828
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69063,7 +69683,8 @@
                     0.0005725418537177217
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69174,7 +69795,8 @@
                     -0.0025714121372128465
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69285,7 +69907,8 @@
                     0.0006198108490280801
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69396,7 +70019,8 @@
                     0.00446681588698882
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69507,7 +70131,8 @@
                     0.0005449238592088344
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69618,7 +70243,8 @@
                     0.001284958023585079
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69729,7 +70355,8 @@
                     0.005524464453825784
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69840,7 +70467,8 @@
                     -0.0015642785553259785
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -69951,7 +70579,8 @@
                     -0.003286611847138463
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70062,7 +70691,8 @@
                     0.009356761305670917
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70173,7 +70803,8 @@
                     -0.000646507962997492
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70284,7 +70915,8 @@
                     -0.002022457978030039
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70395,7 +71027,8 @@
                     -0.002118158077996054
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70506,7 +71139,8 @@
                     -0.0016796676900223716
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70617,7 +71251,8 @@
                     -0.002054170360204167
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70728,7 +71363,8 @@
                     0.0053217951290417675
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70839,7 +71475,8 @@
                     0.006291888544126651
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -70950,7 +71587,8 @@
                     0.004842989604897834
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71061,7 +71699,8 @@
                     -0.0017471442270492723
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71172,7 +71811,8 @@
                     0.0031417502065903572
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71283,7 +71923,8 @@
                     -0.005122674274127065
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71394,7 +72035,8 @@
                     0.0009511257294254884
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71505,7 +72147,8 @@
                     -0.005029939702827972
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71616,7 +72259,8 @@
                     0.006057544483747869
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71727,7 +72371,8 @@
                     -0.0013656074410771856
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71838,7 +72483,8 @@
                     -0.0032746117519395312
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -71949,7 +72595,8 @@
                     0.010574240059781522
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72060,7 +72707,8 @@
                     0.004695850230011973
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72171,7 +72819,8 @@
                     0.00136378884137288
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72282,7 +72931,8 @@
                     0.0031761992314241674
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72393,7 +73043,8 @@
                     0.007533722685504492
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72504,7 +73155,8 @@
                     0.005028358655616004
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72615,7 +73267,8 @@
                     -0.005494915984026102
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72726,7 +73379,8 @@
                     0.0068768678540625265
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72837,7 +73491,8 @@
                     0.004436587802762718
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -72948,7 +73603,8 @@
                     -0.0009919337910568498
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73059,7 +73715,8 @@
                     -0.011641657995408547
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73170,7 +73827,8 @@
                     0.0007252452141551295
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73281,7 +73939,8 @@
                     0.002611393166693423
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73392,7 +74051,8 @@
                     -0.013790203999991313
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73503,7 +74163,8 @@
                     -0.002576820358109407
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73614,7 +74275,8 @@
                     -0.00754526268339758
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73725,7 +74387,8 @@
                     0.004787688903851893
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73836,7 +74499,8 @@
                     -0.004668047119621634
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -73947,7 +74611,8 @@
                     0.005366780498674977
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74058,7 +74723,8 @@
                     -0.001639079708758233
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74169,7 +74835,8 @@
                     -0.0023884266896589115
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74280,7 +74947,8 @@
                     0.001886292330636051
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74391,7 +75059,8 @@
                     0.004335661979907165
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74502,7 +75171,8 @@
                     -0.0043185222151008945
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74613,7 +75283,8 @@
                     -0.008695474747639771
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74724,7 +75395,8 @@
                     -0.0004927528632105328
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74835,7 +75507,8 @@
                     -0.016888342727233285
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -74946,7 +75619,8 @@
                     0.0029367154020568872
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75057,7 +75731,8 @@
                     -0.006184699293919478
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75168,7 +75843,8 @@
                     0.002288713299968866
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75279,7 +75955,8 @@
                     0.012176020589746445
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75390,7 +76067,8 @@
                     0.005465648385960315
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75501,7 +76179,8 @@
                     0.0076034587930191785
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75612,7 +76291,8 @@
                     0.002197823707337481
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75723,7 +76403,8 @@
                     0.005431445916407965
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75834,7 +76515,8 @@
                     0.0012964320757684054
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -75945,7 +76627,8 @@
                     -0.008176714956625973
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76056,7 +76739,8 @@
                     -0.0005224351267888119
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76167,7 +76851,8 @@
                     0.004045721455761487
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76278,7 +76963,8 @@
                     0.008046946563693423
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76389,7 +77075,8 @@
                     -0.006979603463030845
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76500,7 +77187,8 @@
                     0.0030534245510772215
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76611,7 +77299,8 @@
                     0.001284517804451558
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76722,7 +77411,8 @@
                     -0.005876915784621041
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76833,7 +77523,8 @@
                     0.0018924304635984258
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -76944,7 +77635,8 @@
                     -0.010119685805677573
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77055,7 +77747,8 @@
                     0.003531486670868891
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77166,7 +77859,8 @@
                     0.0017430697593962988
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77277,7 +77971,8 @@
                     0.005665908118961113
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77388,7 +78083,8 @@
                     -0.0012633521983386243
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77499,7 +78195,8 @@
                     0.002890671888233681
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77610,7 +78307,8 @@
                     0.00558559580648973
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77721,7 +78419,8 @@
                     -0.0061897246726576125
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77832,7 +78531,8 @@
                     0.00808786179854689
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -77943,7 +78643,8 @@
                     -0.0033346888911309136
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78054,7 +78755,8 @@
                     0.0002760419453698568
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78165,7 +78867,8 @@
                     -0.005444660616846928
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78276,7 +78979,8 @@
                     0.006834382499141021
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78387,7 +79091,8 @@
                     -0.004089288525250021
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78498,7 +79203,8 @@
                     -0.001073330929568188
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78609,7 +79315,8 @@
                     -0.0013623622996472829
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78720,7 +79427,8 @@
                     0.0036039685511442894
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78831,7 +79539,8 @@
                     -0.010050933398773915
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -78942,7 +79651,8 @@
                     0.01065126840057404
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79053,7 +79763,8 @@
                     -0.004000395131043225
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79164,7 +79875,8 @@
                     0.0006178275453919535
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79275,7 +79987,8 @@
                     -0.0002580104660559549
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79386,7 +80099,8 @@
                     0.0017745031691118057
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79497,7 +80211,8 @@
                     -0.004117467126761582
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79608,7 +80323,8 @@
                     0.0019388005047957138
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79719,7 +80435,8 @@
                     -0.0023840423073421967
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79830,7 +80547,8 @@
                     -0.0006606378182137694
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -79941,7 +80659,8 @@
                     0.0008404409445563826
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80052,7 +80771,8 @@
                     0.001890119556094785
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80163,7 +80883,8 @@
                     0.008166270927892386
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80274,7 +80995,8 @@
                     0.002422620997990631
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80385,7 +81107,8 @@
                     -0.0012473122973286912
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80496,7 +81219,8 @@
                     0.0029987072452415837
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80607,7 +81331,8 @@
                     -0.0005271159263585134
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80718,7 +81443,8 @@
                     0.0008419857865099346
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80829,7 +81555,8 @@
                     0.0017195992424773557
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -80940,7 +81667,8 @@
                     0.0008689380838933214
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81051,7 +81779,8 @@
                     0.0008618949030510224
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81162,7 +81891,8 @@
                     -0.004546991283196362
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81273,7 +82003,8 @@
                     0.0030359888777218595
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81384,7 +82115,8 @@
                     0.00251919831250616
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81495,7 +82227,8 @@
                     -0.00016096533587270625
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81606,7 +82339,8 @@
                     -0.0035650146205832888
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81717,7 +82451,8 @@
                     0.00012277714587295233
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81828,7 +82563,8 @@
                     -0.0011044987358348243
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -81939,7 +82675,8 @@
                     -0.005958622950810109
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82050,7 +82787,8 @@
                     0.0020810137717574436
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82161,7 +82899,8 @@
                     -0.003861891214374032
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82272,7 +83011,8 @@
                     0.0025206462567004344
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82383,7 +83123,8 @@
                     0.004577331951625257
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82494,7 +83235,8 @@
                     -0.0010241558874685285
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82605,7 +83347,8 @@
                     0.003373083715352452
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82716,7 +83459,8 @@
                     0.004454847824065863
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82827,7 +83571,8 @@
                     0.00567371378365541
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -82938,7 +83683,8 @@
                     -0.0030641478603430413
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83049,7 +83795,8 @@
                     -0.00011314537265529855
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83160,7 +83907,8 @@
                     -0.003998427700316015
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83271,7 +84019,8 @@
                     -0.0042003225178283855
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83382,7 +84131,8 @@
                     0.0027843944167798337
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83493,7 +84243,8 @@
                     0.0031308519657238785
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83604,7 +84355,8 @@
                     0.0008720614360850895
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83715,7 +84467,8 @@
                     -0.0036178821957706486
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83826,7 +84579,8 @@
                     7.330667856832538e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -83937,7 +84691,8 @@
                     0.0010986640649245586
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84048,7 +84803,8 @@
                     -0.0032880299425223913
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84159,7 +84915,8 @@
                     -0.0033416809157773013
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84270,7 +85027,8 @@
                     -0.002896571425589806
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84381,7 +85139,8 @@
                     -0.0035926670067053367
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84492,7 +85251,8 @@
                     -0.0009762560934883542
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84603,7 +85363,8 @@
                     0.005087339577539559
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84714,7 +85475,8 @@
                     5.630562731002353e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84825,7 +85587,8 @@
                     0.001722182604926213
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -84936,7 +85699,8 @@
                     0.0033071199787503645
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85047,7 +85811,8 @@
                     -0.000860370614067496
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85158,7 +85923,8 @@
                     0.0031463598444361907
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85269,7 +86035,8 @@
                     -0.002770882058316104
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85380,7 +86147,8 @@
                     -0.003457900524359631
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85491,7 +86259,8 @@
                     0.006125409342631516
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85602,7 +86371,8 @@
                     0.0005772201792760999
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85713,7 +86483,8 @@
                     -0.00502517583008095
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85824,7 +86595,8 @@
                     0.0028444247640548783
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -85935,7 +86707,8 @@
                     -0.0016314657125442468
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86046,7 +86819,8 @@
                     0.0025954290025539187
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86157,7 +86931,8 @@
                     0.00033494175816624106
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86268,7 +87043,8 @@
                     0.0029268129374632446
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86379,7 +87155,8 @@
                     0.005480457147676704
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86490,7 +87267,8 @@
                     0.002444835564244416
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86601,7 +87379,8 @@
                     -0.003661638267413434
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86712,7 +87491,8 @@
                     0.0060350721636930615
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86823,7 +87603,8 @@
                     -0.00036843348274258374
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -86934,7 +87715,8 @@
                     0.0025822860573653083
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87045,7 +87827,8 @@
                     -0.0007019305176233297
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87156,7 +87939,8 @@
                     0.0005327435160650313
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87267,7 +88051,8 @@
                     0.0024321656656664976
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87378,7 +88163,8 @@
                     -0.0004469756453041365
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87489,7 +88275,8 @@
                     0.000126162204156955
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87600,7 +88387,8 @@
                     0.005713867190260819
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87711,7 +88499,8 @@
                     -0.0008537935627463441
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87822,7 +88611,8 @@
                     0.00379757524998125
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -87933,7 +88723,8 @@
                     3.738095606960557e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88044,7 +88835,8 @@
                     0.0013994883971576218
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88155,7 +88947,8 @@
                     0.002275405044832036
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88266,7 +89059,8 @@
                     0.0009479376895766937
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88377,7 +89171,8 @@
                     0.003690783728782157
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88488,7 +89283,8 @@
                     -0.0033794453231416007
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88599,7 +89395,8 @@
                     0.002040087124210728
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88710,7 +89507,8 @@
                     0.0037951599860238713
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88821,7 +89619,8 @@
                     -0.0031233899831014027
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -88932,7 +89731,8 @@
                     -0.001781720694830831
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89043,7 +89843,8 @@
                     0.0038675224352295026
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89154,7 +89955,8 @@
                     0.0005346854726193931
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89265,7 +90067,8 @@
                     -0.005706506073856739
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89376,7 +90179,8 @@
                     0.00321248369242753
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89487,7 +90291,8 @@
                     0.0033141123679654703
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89598,7 +90403,8 @@
                     0.00501378049197135
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89709,7 +90515,8 @@
                     -0.0010629835517774891
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89820,7 +90627,8 @@
                     0.004485004528210657
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -89931,7 +90739,8 @@
                     -0.002268150422080114
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90042,7 +90851,8 @@
                     -0.00026745136029409625
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90153,7 +90963,8 @@
                     -0.0052612858894511725
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90264,7 +91075,8 @@
                     -0.00015821462583761014
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90375,7 +91187,8 @@
                     -0.004743444346142829
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90486,7 +91299,8 @@
                     -0.0020393637523210906
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90597,7 +91411,8 @@
                     0.003654004972453592
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90708,7 +91523,8 @@
                     0.0006348709597177232
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90819,7 +91635,8 @@
                     0.0010060228915043383
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -90930,7 +91747,8 @@
                     0.0030315606224328535
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -91041,7 +91859,8 @@
                     -0.0016976333352297873
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0,
@@ -91152,13 +91971,14 @@
                     0.0006674014056495768
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         }
     ],
     "origin": "plan",
     "plan": {
         "file": "steinway_d.lvinstbodyplan",
-        "fingerprint": "a5d9ce25d9470caec165dc12686ac1291c38bb004809bc1b01bc304c2fdaaf73"
+        "fingerprint": "2611fc6af1732393f57398643a5fd53d364a78a0d120ad232dd15bbb6d35f516"
     },
     "statistical": {
         "bandFromHz": 2500,
@@ -91277,5 +92097,5 @@
     },
     "title": "Steinway D (RT-0425)",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point along the direction of bridgeAngle, 1/sqrt(kg) (modal mass 1/value^2); bridgeAngle: direction in which the mode moves the bridge, degrees from the normal of the plate (0 for a body from a plan); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 6
+    "version": 7
 }

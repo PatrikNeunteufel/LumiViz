@@ -226,6 +226,9 @@ QJsonObject alsJson(const Bauplan& plan)
             {QStringLiteral("source"), text(o.quelle)},
         });
     }
+    QJsonArray querschnitte;
+    for (const koerper::Querschnitt& q : plan.hohlraum.rohr.querschnitte)
+        querschnitte.append(QJsonObject{{QStringLiteral("y"), q.y}, {QStringLiteral("area"), q.flaeche}});
     QJsonArray abschnitte;
     for (const koerper::Randabschnitt& a : plan.rand.abschnitte)
     {
@@ -297,6 +300,14 @@ QJsonObject alsJson(const Bauplan& plan)
              {QStringLiteral("source"), text(plan.hohlraum.quelle)},
              // seit Fassung 5 (KQ17 a), immer geschrieben
              {QStringLiteral("openings"), oeffnungen},
+             // seit Fassung 10 (KQ59 a, KQ61 a, KQ63 a), immer geschrieben
+             {QStringLiteral("kind"), plan.hohlraum.art == koerper::HohlraumArt::Rohr ? QStringLiteral("tube") : QStringLiteral("singlePressure")},
+             {QStringLiteral("tube"),
+              QJsonObject{
+                  {QStringLiteral("sections"), querschnitte},
+                  {QStringLiteral("q"), plan.hohlraum.rohr.guete},
+                  {QStringLiteral("source"), text(plan.hohlraum.rohr.quelle)},
+              }},
          }},
         // seit Fassung 6 (KQ18 a), immer geschrieben
         {QStringLiteral("rim"),
@@ -395,6 +406,18 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
             oe.lippe = o.value(QStringLiteral("lipLength")).toDouble();
             oe.quelle = text(o.value(QStringLiteral("source")));
             neu.hohlraum.oeffnungen.push_back(std::move(oe));
+        }
+        // seit Fassung 10 (KQ59 a); fehlt das Feld, ein Druck wie bis Fassung 9. Eine unbekannte Art: nicht raten
+        const QString art = c.value(QStringLiteral("kind")).toString(QStringLiteral("singlePressure"));
+        if (art == QLatin1String("tube")) neu.hohlraum.art = koerper::HohlraumArt::Rohr;
+        else if (art != QLatin1String("singlePressure")) return false;
+        const QJsonObject rohr = c.value(QStringLiteral("tube")).toObject();
+        neu.hohlraum.rohr.guete = rohr.value(QStringLiteral("q")).toDouble(vorgabe.rohr.guete);
+        neu.hohlraum.rohr.quelle = text(rohr.value(QStringLiteral("source")));
+        for (const QJsonValue& e : rohr.value(QStringLiteral("sections")).toArray())
+        {
+            const QJsonObject o = e.toObject();
+            neu.hohlraum.rohr.querschnitte.push_back({o.value(QStringLiteral("y")).toDouble(), o.value(QStringLiteral("area")).toDouble()});
         }
     }
     // seit Fassung 6 (KQ18 a); fehlt der Block, ist der Rand eingespannt wie bis Fassung 5

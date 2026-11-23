@@ -1,13 +1,13 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.26.0  
-> **Datum:** 2026-11-21  
+> **Version:** 0.27.0  
+> **Datum:** 2026-11-23  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
 > **Dateien:** Bauplan.hpp, Luftraum.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Antwort.hpp, Statistik.hpp, Koerper.hpp  
 > **Namespace:** lumi::koerper  
-> **Abhängigkeiten:** kein Qt, keine App-Teile; CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
+> **Abhängigkeiten:** kein Qt, keine App-Teile; `InstrumentCore` (seit 0.27.0, KQ65 a: `zerlegeSymmetrisch` für das Rohr in `Luftraum.hpp`); CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
 
@@ -400,6 +400,21 @@ auf den gerechneten Moden der Platte **im Vakuum** (M-orthonormal, modale Masse 
   Hörorten dicht über einem Loch grob), der statistische Teil über den gerechneten Moden ohne Luftraum.
 - **Gemessen** (S196): Rest von `eigenRangEins` gegen Eigen 2·10⁻¹⁶; eine Prüfdecke 0,4 m × 0,3 m mit Loch über 12 l:
   Helmholtz 131 Hz und erste Deckenmode 116 Hz werden 77 und 189 Hz.
+- **Das Rohr** (seit 0.27.0, Bauplan-Fassung 10; KQ59 a, KQ61 a–KQ66 a): mit `cavity.kind` `tube` hängt der Druck von y
+  ab. `rohrModen(rohr, volumen, schall, bisHz)` rechnet die Moden des beidseitig geschlossenen Rohrs mit dem Querschnitt
+  der Tabelle `cavity.tube.sections` aus finiten Volumen (`kRohrAbschnitteJeWelle` 20 je Wellenlänge an der Grenze,
+  64–600 Abschnitte; dort rund 0,4 % zu tief), alle bis `bisHz` (KQ62 a). `koppleRohr` koppelt die Plattenmoden über
+  ihr Volumen je Abschnitt (`Auswertung::volumenLaengs`) mit den Rohrmoden und je Loch und Öffnung einem eigenen
+  Luftpfropfen an seinem Ort; gerechnet dicht mit `kern::zerlegeSymmetrisch` aus `InstrumentCore` (KQ65 a). Moden der
+  Frequenz 0 (Durchfluss ohne Druck) fallen weg. Je Mode `luftAnteil` (Pfropfen und Luft längs) und `rohrAnteil`
+  (davon längs, in der Körperdatei `tubeShare`, Fassung 7); Verlustfaktor der Luft = Anteil in den Pfropfen /
+  `cavity.q` + Anteil längs / `cavity.tube.q` (KQ63 a). Die Pfropfen strahlen je für sich (`lochAbstrahlungJeLoch`).
+  `mitLuftraum` wählt den Weg nach der Art; der eine Druck rechnet Bit für Bit wie vorher. **Grenzen:** keine
+  Quermoden; der Druck an einem Loch an seinem Schwerpunkt. Gemessen an der Harfe (S215): Bell 1988 Kap. 4 mit Öffnung
+  6 allein A1–A4 auf 3 %, Helmholtz mit allen Öffnungen 190,1 Hz, ihr Druckabfall zum Diskant 18,9 dB (Bell rund 18);
+  mit allen Öffnungen A2–A5 −6 bis −13 % (Ursache offen). Kopplung der Harfe 11 s.
+- **Statistischer Teil** (KQ66 a): `schaetze` zählt nur Moden mit `luftAnteil` unter `kStatistikLuftGrenze` (0,5) — er
+  setzt den Boden fort, nicht die Längsmoden des Rohrs.
 
 ### 5.6 Eine eigene Umsetzung dazu
 
@@ -472,6 +487,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.27.0 | 2026-11-23 | Session 215, Stufe 34k-5, KQ59 a, KQ61 a–KQ66 a: **die Luft als Rohr** — `.lvinstbodyplan` **Fassung 10** (`HohlraumArt`, `Querschnitt`, `Rohr`, `Hohlraum::art`, `rohr`, `alsRohr`; `cavity.kind`, `cavity.tube`, immer geschrieben; Prüfung der Querschnitte gegen das Volumen), `rohrModen`, `koppleRohr`, `lochAbstrahlungJeLoch`, `mitLuftraumRohr`, `mitLuftraum(…, bisHz)`, `Auswertung::volumenLaengs`, `ModeImKoerper::rohrAnteil`; **`.lvinstbody` Fassung 7** (`tubeShare`); `schaetze` ohne Moden mit mehr als halber Luft (`kStatistikLuftGrenze`). Abhängigkeit zu `InstrumentCore` (in `Solution.json` danach). Neuer Test `test_LoopKoerperRohr`. Ein Druck Bit für Bit wie vorher; alle sieben Körper mit Bauplan neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.26.0 | 2026-11-21 | Session 211, Stufe 34k-6, KQ53 a: **`.lvinstbody` Fassung 6** — je Mode `springShare` (`ModeImKoerper::federAnteil`, immer geschrieben, Fassung 5 liest sich mit 0). Der Wächter über die mitgelieferten Körper rechnet die Dämpfung mit dem Anteil der Federn nach. Die sieben Körper mit `--rewrite` neu geschrieben, die Harfe (der erste Körper mit Federn, KQ52 a) neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.25.0 | 2026-11-20 | Session 210, Stufe 34k-6, KQ46 a, KQ49 a: Federn an Punkten — `Punktfeder` (Ort, Steife N/m, Verlustfaktor, Quelle) in `Bauplan::punktfedern`, **`.lvinstbodyplan` Fassung 9** mit `pointSprings` (`x`, `y`, `stiffness`, `lossFactor`, `source`; immer geschrieben, Fassung 8 lesbar ohne Federn); `setzePunktfedern` (k · N Nᵀ auf K), `baueSystem(netz, element, plan)` setzt sie, `baueSystemOhnePunktfedern`; `Abtastung`, `bezug`, `abtastung`, `wertBei` von `Auswertung.hpp` nach `Platte.hpp`. Dämpfung: `Auswertung::setzePunktfedern`, `ModeImKoerper::federAnteil` (nicht in der Körperdatei), η = (1 − Anteil) · η_Platte + Σ a_f η_f. `pruefe`: Steife und Verlustfaktor nicht negativ, Ort im Umriss und in keinem Loch. Werkzeug: meldet Zahl und Summe der Federn und je Mode ihren Anteil. `kRechenFassung` bleibt 2 — ein Bauplan ohne Federn rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ46 Punktfedern“ in `test_LoopKoerperPlatte`: gegen die Reihe nach Navier 0,1 %, gegen den Modenraum mit allen Moden 10⁻⁶ und mit 60 Moden 0,03 %, am feineren Netz 0,05 %. |
 | 0.24.0 | 2026-11-18 | Session 206, Stufe 34k-6, KQ35-2 a, KQ35-1 a: die Richtung am Steg — `ModeImKoerper::stegWinkelGrad` mit `senkrechtAm` / `parallelAm`, `StatistischerTeil::stegWinkelGrad` und `::parallelAnteil`, `ziehe` mit gezogenem Vorzeichen und Moden nur parallel zur Decke; `antwort`, `antwortSpektrum*`, `mobilitaet` mit dem senkrechten Formwert (Winkel 0: Bit für Bit wie vorher). **`.lvinstbody` Fassung 5** (`bridgeAngle` je Mode, `bridgeAngle` und `parallelFactor` im statistischen Teil, immer geschrieben; Fassung 4 liest sich mit 0). **`kFitFassung` 4**: `make_gitarre.py` füllt die Modendichte über 2,2 kHz nach Elie 2011 auf und schreibt die Richtung nach Elie 2012. Tests „KQ35 Ziehung mit Richtung am Steg“, Mobilität mit Winkel, Datei Fassung 5. `kRechenFassung` bleibt 2. |

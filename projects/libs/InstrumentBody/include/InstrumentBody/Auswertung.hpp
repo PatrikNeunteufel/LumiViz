@@ -78,7 +78,10 @@ struct ModeImKoerper
 {
     double frequenzHz = 0.0;
     double verlustfaktor = 0.0;                      ///< η
-    double luftAnteil = 0.0;                         ///< Anteil der Bewegungsenergie in der Luft der Loecher (F-K1 a); 0 = ohne Hohlraum
+    double luftAnteil = 0.0;                         ///< Anteil der Bewegungsenergie in der Luft (F-K1 a); 0 = ohne Hohlraum
+    /// Davon der Anteil der Luft laengs im Rohr (KQ59 a, KQ63 a, S215); 0 = ein Druck. Der Rest von `luftAnteil` ist
+    /// die Luft in den Loechern und Oeffnungen. Seit Fassung 7 der Koerperdatei dort als `tubeShare`.
+    double rohrAnteil = 0.0;
     std::vector<double> werkstoffAnteil;             ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
     /// Anteil der Verformungsenergie in den Federn an Punkten (KQ49 a, S210), 0 … 1; 0 = keine Federn. Seit Fassung 6
     /// der Koerperdatei dort als `springShare` (KQ53 a, S211). `werkstoffAnteil` bleibt auf die Werkstoffe normiert
@@ -162,6 +165,7 @@ public:
                 }
                 const Punkt2 p{e0.x + (e1.x - e0.x) * xi + (e2.x - e0.x) * eta, e0.y + (e1.y - e0.y) * xi + (e2.y - e0.y) * eta};
                 m_flaeche.push_back(w * det);
+                m_y.push_back(p.y);
                 const Randpunkt rand = m_rueck ? naechsterRandpunkt(umriss, p) : Randpunkt{};
                 for (std::size_t h = 0; h < hoerorte.size(); ++h)
                 {
@@ -213,6 +217,28 @@ public:
             summe += w * m_flaeche[p];
         }
         return summe;
+    }
+
+    /// Das Volumen einer Form je Abschnitt laengs y (KQ59 a, fuer das Rohr in `Luftraum.hpp`): Abschnitt z reicht
+    /// von `von` + z · `schritt` bis eins weiter; ein Gauss-Punkt davor oder dahinter zaehlt zum ersten bzw. letzten.
+    /// Die Summe ist `volumen(form)` bis auf die Rundung.
+    [[nodiscard]] std::vector<double> volumenLaengs(const std::vector<double>& form, double von, double schritt, int abschnitte) const
+    {
+        std::vector<double> aus(static_cast<std::size_t>(std::max(abschnitte, 0)), 0.0);
+        if (aus.empty() || !(schritt > 0.0)) return aus;
+        for (std::size_t p = 0; p < m_flaeche.size(); ++p)
+        {
+            double w = 0.0;
+            const std::size_t basis = p * static_cast<std::size_t>(m_nk);
+            for (int i = 0; i < m_nk; ++i)
+            {
+                const int g = m_groesse[basis + static_cast<std::size_t>(i)];
+                if (g >= 0) w += m_ansatz[basis + static_cast<std::size_t>(i)] * form[static_cast<std::size_t>(g)];
+            }
+            const int z = std::clamp(static_cast<int>(std::floor((m_y[p] - von) / schritt)), 0, abschnitte - 1);
+            aus[static_cast<std::size_t>(z)] += w * m_flaeche[p];
+        }
+        return aus;
     }
 
     [[nodiscard]] ModeImKoerper werte(const Mode& mode) const
@@ -298,6 +324,7 @@ private:
     std::vector<int> m_groesse;                ///< je Gauss-Punkt nk Plaetze von w (−1 = gehalten)
     std::vector<double> m_ansatz;               ///< je Gauss-Punkt nk Ansatzwerte
     std::vector<double> m_flaeche;              ///< je Gauss-Punkt Gewicht · |det J| (seine Flaeche)
+    std::vector<double> m_y;                    ///< je Gauss-Punkt seine Lage y (KQ59 a: das Rohr laengs y)
     std::vector<std::vector<double>> m_abstand;  ///< je Hoerort je Gauss-Punkt R
     std::vector<std::vector<double>> m_gewicht;  ///< je Hoerort je Gauss-Punkt Gewicht · |det J| / R
     Rueckseite m_rueckseite;

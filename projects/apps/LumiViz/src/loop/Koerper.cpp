@@ -91,6 +91,7 @@ QJsonObject alsJson(const Koerper& k)
             {QStringLiteral("eta"), m.verlustfaktor},
             {QStringLiteral("airShare"), m.luftAnteil},
             {QStringLiteral("springShare"), m.federAnteil},  // KQ53 a (Fassung 6): immer geschrieben
+            {QStringLiteral("tubeShare"), m.rohrAnteil},     // KQ59 a, KQ63 a (Fassung 7): immer geschrieben
             {QStringLiteral("materialShares"), zahlenAlsJson(m.werkstoffAnteil)},
             {QStringLiteral("bridge"), zahlenAlsJson(m.amStegpunkt)},
             {QStringLiteral("bridgeAngle"), m.stegWinkelGrad},  // KQ35-2 a (Fassung 5): immer geschrieben
@@ -239,6 +240,8 @@ bool ausJson(const QJsonObject& wurzel, Koerper& koerper, bool* zuNeu)
         m.luftAnteil = o.value(QStringLiteral("airShare")).toDouble();  // seit Fassung 3 (F-K1 a); davor 0
         m.federAnteil = o.value(QStringLiteral("springShare")).toDouble();  // seit Fassung 6 (KQ53 a); davor 0
         if (!(m.federAnteil >= 0.0 && m.federAnteil <= 1.0)) return false;
+        m.rohrAnteil = o.value(QStringLiteral("tubeShare")).toDouble();  // seit Fassung 7 (KQ59 a); davor 0
+        if (!(m.rohrAnteil >= 0.0 && m.rohrAnteil <= m.luftAnteil + 1e-12)) return false;
         if (!zahlenAusJson(o.value(QStringLiteral("materialShares")), m.werkstoffAnteil)) return false;
         if (!zahlenAusJson(o.value(QStringLiteral("bridge")), m.amStegpunkt)) return false;
         m.stegWinkelGrad = o.value(QStringLiteral("bridgeAngle")).toDouble();  // seit Fassung 5 (KQ35-2 a); davor 0

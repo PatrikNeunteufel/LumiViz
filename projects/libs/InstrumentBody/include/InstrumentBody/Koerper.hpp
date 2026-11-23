@@ -40,7 +40,11 @@ namespace lumi::koerper
 /// Fassung 6 (S211, KQ53 a): je Mode `springShare`, der Anteil der Verformungsenergie in den Federn an Punkten
 /// (KQ49 a; immer geschrieben, 0 = ohne Federn) — damit laesst sich die Daempfung eines Koerpers mit Federn
 /// nachrechnen. Fassung 5 liest sich mit 0.
-inline constexpr int kKoerperFassung = 6;
+/// Fassung 7 (S215, KQ59 a, KQ63 a): je Mode `tubeShare`, der Anteil der Bewegungsenergie in der Luft laengs eines
+/// Rohrs (Bauplan-Fassung 10; immer geschrieben, 0 = ein Druck), ein Teil von `airShare` — damit laesst sich die
+/// Daempfung nachrechnen: η = (1 − airShare) · η der Platte + (airShare − tubeShare) / Guete der Oeffnungen +
+/// tubeShare / Guete des Rohrs. Fassung 6 liest sich mit 0.
+inline constexpr int kKoerperFassung = 7;
 
 /// Die Fassung des Modalfits fuer gemessene Koerper (`asset/loop/instrument_bodies/make_gitarre.py` traegt dieselbe
 /// Zahl). Hochzaehlen, wenn sich bei gleicher Messung und gleicher Beschreibung ein anderer Koerper ergaebe.

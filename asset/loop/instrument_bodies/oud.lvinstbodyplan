@@ -1,6 +1,6 @@
 {
  "format": "lumiviz-instrument-body-plan",
- "version": 9,
+ "version": 10,
  "title": "Oud",
  "description": "Substitute plan of an Arabic oud soundboard with its air cavity (KQ6 a; searched anew in S209: KQ42 a-KQ45 a). Outline, brace positions, sound holes, bowl depth, bridge position and length from Abdallah et al. 2026 Fig. 3; brace sizes Table 2; wood Table 1. Assumptions: plate thickness 2.23 mm, braces ending 2 mm before the rim (Fig. 3 draws 10-16.5 mm), cross-section and wood of the bridge, mass of the rosettes in the three holes (carried as soft rings at the rims of the holes), cross-section of the bowl, end correction of the holes, rim clamped and bowl rigid (as in the source's FE), spacing of the courses at the bridge. Set so that the first five modes meet the peaks of the measured response (Fig. 6: 139 / 203 / 280 / 362 / 385 Hz) within 3 % when the accelerometer of the measurement (5.8 g at response point 3) is added; the plan describes the instrument without it (141 / 214 / 275 / 373 / 389 Hz). 139 Hz is the air mode, 203 Hz the first mode of the soundboard; the measured peak at 101 Hz has no counterpart (neck and bowl are rigid here).",
  "source": "M. Abdallah, E. Dreik, A. Sassi, M. Paurobally, S. Sassi, Vibroacoustic sensitivity of an oud soundboard to bracing geometry, Meccanica 61:89 (2026), CC BY 4.0",
@@ -2482,7 +2482,13 @@
   "endCorrection": 1.52,
   "q": 30.0,
   "source": "bowl 21 cm deep (Abdallah et al. 2026 Fig. 3, side view); assumed: every cross-section half an ellipse with its depth proportional to the width of the soundboard there; end correction fitted to the measured air mode at 139 Hz (the holes carry rosettes), Q of the air assumed",
-  "openings": []
+  "openings": [],
+  "kind": "singlePressure",
+  "tube": {
+   "sections": [],
+   "q": 30.0,
+   "source": ""
+  }
  },
  "rim": {
   "support": "clamped",

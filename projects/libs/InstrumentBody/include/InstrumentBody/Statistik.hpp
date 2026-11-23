@@ -102,9 +102,13 @@ private:
     std::uint64_t m_zustand;
 };
 
-/// Schaetzt die Groessen aus den gerechneten Moden (aufsteigend) im Band [bandVon, bandBis);
-/// der Teil beginnt bei `vonHz` (der oberen Grenze des gerechneten Fensters) und endet bei `bisHz`.
-/// Leer (dichte = 0), wenn im Band weniger als zehn Moden liegen.
+/// Ab diesem Anteil der Bewegungsenergie in der Luft zaehlt eine Mode nicht zur Schaetzung (KQ66 a, S215): der
+/// statistische Teil setzt die Moden des Bodens fort, nicht die Laengsmoden eines Rohrs, das dort nicht mehr gilt.
+inline constexpr double kStatistikLuftGrenze = 0.5;
+
+/// Schaetzt die Groessen aus den gerechneten Moden (aufsteigend) im Band [bandVon, bandBis), ohne die Moden mit
+/// `luftAnteil` ab `kStatistikLuftGrenze` (KQ66 a); der Teil beginnt bei `vonHz` (der oberen Grenze des gerechneten
+/// Fensters) und endet bei `bisHz`. Leer (dichte = 0), wenn im Band weniger als zehn Moden liegen.
 [[nodiscard]] inline StatistischerTeil schaetze(const std::vector<ModeImKoerper>& gerechnet, double bandVon, double bandBis,
                                                 double vonHz, double bisHz, Daempfung daempfung, std::uint64_t samen,
                                                 std::vector<double> werkstoffVerlust = {})
@@ -119,7 +123,7 @@ private:
     st.bandBisHz = bandBis;
     std::vector<const ModeImKoerper*> band;
     for (const ModeImKoerper& m : gerechnet)
-        if (m.frequenzHz >= bandVon && m.frequenzHz < bandBis) band.push_back(&m);
+        if (m.frequenzHz >= bandVon && m.frequenzHz < bandBis && m.luftAnteil < kStatistikLuftGrenze) band.push_back(&m);
     st.bandModen = static_cast<int>(band.size());
     if (band.size() < 10 || !(bandBis > bandVon)) return st;
 

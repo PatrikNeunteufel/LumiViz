@@ -22,8 +22,11 @@ Was woher kommt:
   zwei Leisten      Abb. 2.4 c: Fichte, 105 cm, 15 -> 7 mm hoch, 11,5 -> 5 mm breit, auf halbem Weg zum Rand
   Buche             Chabassier, Joly & Chaigne 2013 Tab. I — Annahme
   Hohlraum          Tab. 4.1: 27 l, sechs Oeffnungen in der Rueckseite der Schale (Flaeche, Lippe); Lage laengs aus
-                    Abb. 2.8 (grob); Muendungskorrektur 2,3 Radien (Feinsuche S210, Fassung F4, KQ51 a); Guete der
-                    Luft 8,5 (KQ29-1 a)
+                    Abb. 2.8 (grob). S215 (KQ59 a, KQ61 a, KQ63 a): die Luft als Rohr laengs y — Querschnitt halbrund,
+                    Tiefe gleich halbe Breite (Abb. 2.7, Halbkegel), also S ~ Breite^2, auf das Volumen gestellt;
+                    Muendungskorrektur so, dass die Helmholtz-Mode mit allen Oeffnungen bei 190 Hz liegt (Kap. 4,
+                    KQ60 a); Guete der Luft in den Oeffnungen 4,4 und laengs 28 aus Bells zwoelf Gueten der Luftmoden
+                    (Abb. 4.8, 4.11-4.15; Bericht Par. 23)
   Rand              gestuetzt (elastisch mit Feder 0): die Auslenkung gehalten, die Drehung frei — an der Lage der
                     Baeuche laengs der Deckleiste geprueft (Abb. 7.8-7.16; Bericht Par. 11)
   Bassseiten        KQ50 a, KQ51 a: die beiden Seiten vom Bassende bis y = 0,6 m als eigene Abschnitte des Rands mit
@@ -110,6 +113,25 @@ def breite(y):
     return BREITE_BASS + (BREITE_DISKANT - BREITE_BASS) * y / LAENGE
 
 
+# S215 (KQ59 a, KQ61 a, KQ63 a, KQ60 a): die Luft als Rohr laengs y
+VOLUMEN = 0.027              # Bell Tab. 4.1
+ROHR_SCHRITT = 0.05          # m zwischen zwei Querschnitten (S ~ w^2 ist zwischen ihnen fast linear)
+MUENDUNG = 1.83              # Helmholtz mit allen Oeffnungen 190 Hz am Rohr (Waechter im Test)
+GUETE_OEFFNUNGEN = 4.4       # Bell Abb. 4.8, 4.11-4.15: zwoelf Gueten, kleinste Quadrate des Logarithmus
+GUETE_LAENGS = 28.0
+
+
+def querschnitte():
+    """Halbkreis mit dem Radius der halben Breite (Abb. 2.7), auf das Volumen gestellt (Trapez wie die Bibliothek)."""
+    ys = [round(i * ROHR_SCHRITT, 4) for i in range(int(LAENGE / ROHR_SCHRITT) + 1)]
+    if ys[-1] < LAENGE:
+        ys.append(LAENGE)
+    s = [breite(y) ** 2 for y in ys]
+    v = sum(0.5 * (s[i] + s[i - 1]) * (ys[i] - ys[i - 1]) for i in range(1, len(ys)))
+    k = VOLUMEN / v
+    return [{"y": y, "area": round(k * w, 8)} for y, w in zip(ys, s)], k
+
+
 def tasten():
     """Taste je Saite: die Grundstellung (Bell) plus ein Halbton — das Pedal in der Mitte."""
     aus = []
@@ -162,7 +184,7 @@ def baue(saiten):
     assert len({p["y"] for p in punkte}) == len(saiten), "80 Tasten an 46 Orten"
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 9,
+        "version": 10,
         "title": "Concert harp",
         "description": "Soundboard of the Salvi Orchestra concert harp with the air of its soundbox (Bell 1988; KQ1 a, "
                        "KQ17 a to KQ21 a). Spruce board 131 cm, 41 to 10 cm wide, 10 to 3 mm thick, grain across, "
@@ -201,14 +223,22 @@ def baue(saiten):
                     "source": "fit to the Q of soundbox G in the harp without strings (Bell 1988 Figs. 7.10-7.16: 249 / 316 / "
                               "432 / 545 / 757 / 905 Hz with Q 39 / 45 / 43 / 31 / 33 / 18; S(1,6) with Q 10 left out); "
                               "extrapolated above 1 kHz"},
-        "cavity": {"volume": 0.027, "endCorrection": 2.3, "q": 8.5,
-                   "source": "volume and apertures: Bell 1988 Table 4.1; end correction 2.3 from the fine search S210 "
-                             "(version F4, KQ51 a: both modes with air and S(1,2) to S(1,6) within 7 %); Q of the air "
-                             "fitted to both Q of soundbox G fitted to the harp, without strings (Bell 1988 Figs. 7.8, "
-                             "7.9: 11 and 16) in the least-squares sense of the logarithm - with both bars on the centre "
-                             "line (KQ31-1 a) the two modes share the air unequally (0.28 / 0.67) and one value cannot "
-                             "give both: the model has 18.2 and 11.5 (KQ29-1 a) - it also stands for losses in the "
-                             "frame of the harp; the isolated box F has 18 and 14 (Table 6.1)",
+        "cavity": {"volume": VOLUMEN, "endCorrection": MUENDUNG, "q": GUETE_OEFFNUNGEN,
+                   "source": "volume and apertures: Bell 1988 Table 4.1; end correction such that the Helmholtz mode "
+                             "with all apertures open and rigid walls lies at 190 Hz (Bell 1988 Ch. 4, Fig. 4.8 vi; "
+                             "KQ60 a) with the air as a tube; Q of the air in the apertures and Q of the air along the "
+                             "tube fitted together to the twelve Q of the air modes of soundbox A in sand (Figs. 4.8, "
+                             "4.11-4.15: Helmholtz and A1-A5 with aperture 6 only and with all apertures open, Q 6-36) "
+                             "in the least-squares sense of the logarithm (KQ63 a, S215)",
+                   "kind": "tube",
+                   "tube": {"sections": querschnitte()[0], "q": GUETE_LAENGS,
+                            "source": "the soundbox is a half cone with a semicircular section, its depth about half "
+                                      "the width of the board along the whole length (Bell 1988 Fig. 2.7) - so the "
+                                      "section goes with the width squared, scaled to the volume of Table 4.1 "
+                                      f"(factor {querschnitte()[1]:.4f} on the width squared; the outer half circle "
+                                      "would give 0.393, the bars, struts and blocks take the rest); with this "
+                                      "section the longitudinal air modes with aperture 6 open lie within 0 / -2 / -2 / "
+                                      "-3 % of Bell (283 / 414 / 545 / 680 Hz, Figs. 4.12-4.15; KQ59 a, KQ61 a, S215)"},
                    "openings": [{"x": 0.0, "y": round(anteil * LAENGE, 4), "z": round(-breite(anteil * LAENGE) / 2, 4),
                                  "area": flaeche, "lipLength": lippe,
                                  "source": f"aperture {nr} (Bell 1988 Table 4.1; position along the box from Fig. 2.8, "

@@ -18,7 +18,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 65.6895197,
+        "seconds": 63.8754804,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 98424,
@@ -78,7 +78,8 @@
                     0.07388162114742289
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0.06620481641334877,
@@ -105,7 +106,8 @@
                     0.04700450113632611
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0.009385497938175866,
@@ -132,7 +134,8 @@
                     0.003058324817367457
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0.002215702405214022,
@@ -159,7 +162,8 @@
                     -0.04587211582335307
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.1586863813799903e-07,
@@ -186,7 +190,8 @@
                     -0.0004941469300696224
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 0.00030243590075226,
@@ -213,7 +218,8 @@
                     -0.023583852459174146
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.1234563630576066e-08,
@@ -240,7 +246,8 @@
                     -8.465255408246427e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 6.191792760137206e-12,
@@ -267,7 +274,8 @@
                     5.3753726293402175e-06
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.7582200562344372e-05,
@@ -294,7 +302,8 @@
                     0.010719397233777283
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.8471797889511124e-05,
@@ -321,7 +330,8 @@
                     0.019609124731217908
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.9322172312321696e-08,
@@ -348,7 +358,8 @@
                     -0.007206173001710058
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.8184162457798835e-09,
@@ -375,7 +386,8 @@
                     -0.00012526692327750392
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.6036542282637713e-10,
@@ -402,7 +414,8 @@
                     -9.251806530499672e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.9588334880900835e-05,
@@ -429,7 +442,8 @@
                     -0.02312187156166176
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.874397070549596e-06,
@@ -456,7 +470,8 @@
                     -0.011007967040839695
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.07740960918417e-09,
@@ -483,7 +498,8 @@
                     -0.00016775460579151859
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.9540479557173505e-05,
@@ -510,7 +526,8 @@
                     -0.016341031380841246
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.2401845378750147e-11,
@@ -537,7 +554,8 @@
                     3.231306788798108e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.450891008246231e-10,
@@ -564,7 +582,8 @@
                     0.00010776303631557616
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.114355697224077e-06,
@@ -591,7 +610,8 @@
                     0.01158810049350859
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.293632390282851e-07,
@@ -618,7 +638,8 @@
                     0.004023267382177773
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.1686302909412318e-06,
@@ -645,7 +666,8 @@
                     0.0051429697864016684
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.5766447535020837e-10,
@@ -672,7 +694,8 @@
                     -1.0464278402010821e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.192026843685295e-06,
@@ -699,7 +722,8 @@
                     0.00544207868243206
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 9.457020921852162e-12,
@@ -726,7 +750,8 @@
                     -0.00023993598297578623
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.324570755132693e-08,
@@ -753,7 +778,8 @@
                     -0.0045770946619594745
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 8.467655344965192e-11,
@@ -780,7 +806,8 @@
                     -0.00013944054334291014
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.874531150438967e-10,
@@ -807,7 +834,8 @@
                     -0.00014499859114700683
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.267167827969133e-08,
@@ -834,7 +862,8 @@
                     -0.0008726220821270929
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.330083888198175e-07,
@@ -861,7 +890,8 @@
                     -0.008016721136944483
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.0479006717521115e-11,
@@ -888,7 +918,8 @@
                     -4.283925302669815e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.785715978620157e-08,
@@ -915,7 +946,8 @@
                     0.0015263252223126887
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.0360630905872806e-06,
@@ -942,7 +974,8 @@
                     0.011033900646869946
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.0431608065854256e-09,
@@ -969,7 +1002,8 @@
                     0.0005019305307018192
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.1840166816216393e-10,
@@ -996,7 +1030,8 @@
                     0.00018949658297718632
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.009251926067872e-07,
@@ -1023,7 +1058,8 @@
                     0.018964526301233655
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.2447081295708604e-09,
@@ -1050,7 +1086,8 @@
                     0.000967669499603333
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.506572789159531e-07,
@@ -1077,7 +1114,8 @@
                     0.0018497595920243862
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.9687684380674796e-11,
@@ -1104,7 +1142,8 @@
                     -1.8008046995545785e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 6.052967439287662e-09,
@@ -1131,7 +1170,8 @@
                     -0.0019833223758485823
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.7835232117084976e-08,
@@ -1158,7 +1198,8 @@
                     0.011423643031364337
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.2225095674489875e-10,
@@ -1185,7 +1226,8 @@
                     0.000791238489950611
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 9.274643255155697e-08,
@@ -1212,7 +1254,8 @@
                     -0.006743842788982049
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.763143025867524e-13,
@@ -1239,7 +1282,8 @@
                     -1.323514021785048e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.9551341071234546e-11,
@@ -1266,7 +1310,8 @@
                     -8.013955068797227e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.080243748726712e-08,
@@ -1293,7 +1338,8 @@
                     -0.004587672566949622
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.596372716148388e-13,
@@ -1320,7 +1366,8 @@
                     -1.0752906082417705e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.217301822162169e-08,
@@ -1347,7 +1394,8 @@
                     -0.0030946864419461742
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.533453563134148e-08,
@@ -1374,7 +1422,8 @@
                     -0.0026138752072673876
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.957288495674541e-10,
@@ -1401,7 +1450,8 @@
                     0.006644138767922282
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.41181199368649e-14,
@@ -1428,7 +1478,8 @@
                     4.81012864917662e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.5427997029246552e-08,
@@ -1455,7 +1506,8 @@
                     2.1858871002174715e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.2387098406874434e-08,
@@ -1482,7 +1534,8 @@
                     0.003731679563400846
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.4441774754064217e-13,
@@ -1509,7 +1562,8 @@
                     6.0868970990046526e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.459355193317807e-08,
@@ -1536,7 +1590,8 @@
                     0.004113441147531032
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.283329568582161e-09,
@@ -1563,7 +1618,8 @@
                     0.0017459295104725113
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.337063735344704e-10,
@@ -1590,7 +1646,8 @@
                     0.00028243680442278555
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.444250511666705e-12,
@@ -1617,7 +1674,8 @@
                     6.555845714631534e-06
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.038545630740411e-12,
@@ -1644,7 +1702,8 @@
                     1.728769513612605e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.5930772615698162e-07,
@@ -1671,7 +1730,8 @@
                     -0.002879052193011406
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.145136492962501e-11,
@@ -1698,7 +1758,8 @@
                     0.0003873287562849968
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.534060956585499e-12,
@@ -1725,7 +1786,8 @@
                     -6.960366127596898e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 8.847299954812395e-17,
@@ -1752,7 +1814,8 @@
                     6.106919291639046e-06
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.3593283946284008e-10,
@@ -1779,7 +1842,8 @@
                     0.0032822502123239267
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.8501460683417846e-12,
@@ -1806,7 +1870,8 @@
                     -0.00014943617486318553
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.462883787696703e-09,
@@ -1833,7 +1898,8 @@
                     -0.002766870411026103
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.2086672852707608e-11,
@@ -1860,7 +1926,8 @@
                     -0.0011210243090110142
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.449601541733471e-09,
@@ -1887,7 +1954,8 @@
                     0.008865657057522023
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.925090240892652e-08,
@@ -1914,7 +1982,8 @@
                     0.0012334764098083889
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.842585188766611e-10,
@@ -1941,7 +2010,8 @@
                     -0.002762651686460801
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.9064212965041154e-08,
@@ -1968,7 +2038,8 @@
                     0.004916536199861682
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.036102640131133e-10,
@@ -1995,7 +2066,8 @@
                     0.0004526908957145495
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.2576322670427396e-12,
@@ -2022,7 +2094,8 @@
                     2.6989968461626014e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 9.350495693346426e-12,
@@ -2049,7 +2122,8 @@
                     -9.555526994552974e-07
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 9.140391971214535e-15,
@@ -2076,7 +2150,8 @@
                     -2.8796825834931906e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.1892945248954156e-09,
@@ -2103,7 +2178,8 @@
                     -0.00010375448411312154
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.671187034655813e-08,
@@ -2130,7 +2206,8 @@
                     0.008581841589379975
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.4434239668180495e-09,
@@ -2157,7 +2234,8 @@
                     0.0016798508562852095
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.3240711762790017e-10,
@@ -2184,7 +2262,8 @@
                     0.00041653537636123536
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 6.6497893095646975e-09,
@@ -2211,7 +2290,8 @@
                     0.0019136317147392028
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.8284513204759447e-08,
@@ -2238,7 +2318,8 @@
                     -0.0015684903572173296
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.8794009737502715e-11,
@@ -2265,7 +2346,8 @@
                     -0.0001819631443695834
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.266918714312211e-09,
@@ -2292,7 +2374,8 @@
                     -0.0008001141646672391
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.121039950877708e-09,
@@ -2319,7 +2402,8 @@
                     0.003969706775625339
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.977565107412195e-12,
@@ -2346,7 +2430,8 @@
                     0.0002044651268592446
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.6074480461243607e-13,
@@ -2373,7 +2458,8 @@
                     -8.386131675907045e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.749595431732793e-09,
@@ -2400,7 +2486,8 @@
                     0.00224000857018606
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.873320908412993e-12,
@@ -2427,7 +2514,8 @@
                     6.381495366346094e-06
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.8452024811277082e-09,
@@ -2454,7 +2542,8 @@
                     0.0002577939591745422
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.085016470795732e-13,
@@ -2481,7 +2570,8 @@
                     -6.8804333771713315e-06
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.938018305752207e-09,
@@ -2508,7 +2598,8 @@
                     -0.0010942322817322219
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.8366303953333796e-12,
@@ -2535,7 +2626,8 @@
                     2.9119072710851063e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.6823576908720775e-11,
@@ -2562,7 +2654,8 @@
                     1.7109139240556292e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.818180429813595e-08,
@@ -2589,7 +2682,8 @@
                     -0.0014835996811695823
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.826051131130934e-10,
@@ -2616,7 +2710,8 @@
                     0.005717760818198473
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.540321521604602e-11,
@@ -2643,7 +2738,8 @@
                     0.0006006576347930942
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.434242042136466e-10,
@@ -2670,7 +2766,8 @@
                     -0.001568731649295327
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 8.95784906355214e-10,
@@ -2697,7 +2794,8 @@
                     -0.0018815089696032317
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.6861349899753163e-11,
@@ -2724,7 +2822,8 @@
                     -0.00012263049447416545
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.128131442503734e-09,
@@ -2751,7 +2850,8 @@
                     -0.0005627526746525887
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.2332997913080722e-12,
@@ -2778,7 +2878,8 @@
                     0.00031835971494920134
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.36318438517639e-09,
@@ -2805,7 +2906,8 @@
                     0.0011362634344144048
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 8.444133451723801e-12,
@@ -2832,7 +2934,8 @@
                     -0.00011007396787443936
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.229208940632909e-12,
@@ -2859,7 +2962,8 @@
                     -0.00011206247870427838
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 9.588137250602298e-10,
@@ -2886,7 +2990,8 @@
                     -0.000868088265661386
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.4619584214576875e-12,
@@ -2913,7 +3018,8 @@
                     1.7385037835660068e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.1165496981609194e-12,
@@ -2940,7 +3046,8 @@
                     4.811569095600737e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.063016779617501e-10,
@@ -2967,7 +3074,8 @@
                     -0.0004555106433721952
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.427308860582549e-13,
@@ -2994,7 +3102,8 @@
                     1.4751444742073916e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.730532789134696e-10,
@@ -3021,7 +3130,8 @@
                     0.0054148971256271
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.244175187490804e-11,
@@ -3048,7 +3158,8 @@
                     0.0015174788473362782
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.2269770296035751e-12,
@@ -3075,7 +3186,8 @@
                     0.00031514532069302294
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.68406928774381e-10,
@@ -3102,7 +3214,8 @@
                     0.0019114749857109647
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 8.250462907132176e-10,
@@ -3129,7 +3242,8 @@
                     0.0024083187658702565
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 9.97486596484312e-09,
@@ -3156,7 +3270,8 @@
                     0.005129377439269411
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.2922104929454375e-11,
@@ -3183,7 +3298,8 @@
                     0.00019093291507706566
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 6.468472953504886e-09,
@@ -3210,7 +3326,8 @@
                     0.0030443522841999576
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 5.575379563631638e-13,
@@ -3237,7 +3354,8 @@
                     2.09053545681373e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 7.06358926491843e-10,
@@ -3264,7 +3382,8 @@
                     9.785409084508523e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 2.135867075875722e-16,
@@ -3291,7 +3410,8 @@
                     -5.271763320314517e-07
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 6.291265628653414e-13,
@@ -3318,7 +3438,8 @@
                     9.959035282985992e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.062770898466377e-13,
@@ -3345,7 +3466,8 @@
                     9.96900392031107e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 3.863543302593398e-12,
@@ -3372,7 +3494,8 @@
                     -0.000330911265333853
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 8.618129171995794e-15,
@@ -3399,7 +3522,8 @@
                     1.5536630106168345e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 9.576542594562533e-13,
@@ -3426,7 +3550,8 @@
                     -4.56922390701201e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 4.616162704527237e-09,
@@ -3453,7 +3578,8 @@
                     0.003056296705743191
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.0458705838843073e-09,
@@ -3480,7 +3606,8 @@
                     0.004666733684626657
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         },
         {
             "airShare": 1.3755756810280108e-13,
@@ -3507,13 +3634,14 @@
                     -8.669577547672616e-05
                 ]
             ],
-            "springShare": 0
+            "springShare": 0,
+            "tubeShare": 0
         }
     ],
     "origin": "plan",
     "plan": {
         "file": "lute.lvinstbodyplan",
-        "fingerprint": "602353db5221238c9e2a1d69564bb9b91353881a7196cc852af0687851774e66"
+        "fingerprint": "073331e513573d5fac4af8ca4bec963cce6740d75892e613cc8161fbf0430808"
     },
     "statistical": {
         "bandFromHz": 2500,
@@ -3551,5 +3679,5 @@
     },
     "title": "Lute",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point along the direction of bridgeAngle, 1/sqrt(kg) (modal mass 1/value^2); bridgeAngle: direction in which the mode moves the bridge, degrees from the normal of the plate (0 for a body from a plan); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 6
+    "version": 7
 }
