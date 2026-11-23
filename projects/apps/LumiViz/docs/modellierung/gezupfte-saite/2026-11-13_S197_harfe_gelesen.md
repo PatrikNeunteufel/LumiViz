@@ -1394,6 +1394,9 @@ gehalten ändert unter 10 Hz (Bell +16 Hz). Ein Querschnitt, der sich als Ganzes
 nicht; was Bell bei S(1,1)+ zeichnet (Boden und Rückseite beide nach innen), ist eine Verformung des Querschnitts.
 Die Probe ist grob (Steife und Masse des Kastens angenommen, dünnes Diskantende mit eigenen Balkenmoden) — sie
 verwirft diese eine Form, nicht die Bewegung der Schale.
+**Berichtigung S217 (§25.2):** die Probe hat die Biegesteife an einer hohen Mode gestellt — der Balken mit „250 Hz“
+hatte seine erste Biegemode bei 2,3 Hz, die Steife war rund 10⁴-mal zu klein. Der Befund dieses Abschnitts gilt nur für
+einen schlaffen Kasten und ist als Aussage über die Harfe hinfällig.
 
 **24.7 Stand.** Belegt: (1) der Luftanteil der Plattenmoden hängt an der Stärke der Kopplung, nicht an der Lage der
 Luftmoden; nötig ist in der Energie rund ein Drittel, in allen Moden S(1,1)–S(1,5); (2) Bells Paar gibt 25 Hz
@@ -1407,3 +1410,121 @@ aus Boden und Schale, gegen Bells Hologramme (Phase von Boden und Rückseite je 
 25 Hz, das Paar lose / in der Harfe und die Güten; danach die Vorlage, ob und wie die Schale in `InstrumentBody` kommt.
 Die Harfe bleibt gebaut. **KQ69 a (Patrik S216):** die Massenmatrix der Öffnungen (24.2) bleibt Probe und wird mit dem
 Ergebnis von KQ68 vorgelegt; bis dahin gilt KQ64 a.
+
+## 25 S217: KQ68 a geprüft — die Schale schwächt die Kopplung nicht; der lose Kasten biegt sich, und „zu stark“ gilt nicht für den Zustand des Modells
+
+> **Sitzung:** S217 (2026-11-23), Fable. Proben `proben/2026-11-23_S217_harfe_ring.py`,
+> `…_harfe_kasten_balken.py` (`raster`, `formen`), `…_harfe_daempfung_komplex.py` (ohne Wort: Anteile gegen komplexe
+> Eigenwerte; `strahlung`), `…_harfe_hals.py`. Platte im Vakuum mit Saiten aus S213, **ohne Saiten neu gerechnet**
+> (lokal `.claude/handover/s217/vak_ohne/`, Werkzeug aus S215, 98 s: 186,2 / 240,3 / 334,5 / 441,9 / 566,6 Hz).
+> Ausgaben lokal `.claude/handover/s217_*.txt`. Kein Programmcode. Gelesen am Seitenbild: Bell Abb. 5.2–5.21
+> (PDF 201–220), S. 105–108 (PDF 181–184), Abb. 2.5–2.8 (PDF 64–66).
+
+**25.1 Ring-Probe (KQ68 a): die Verformung des Querschnitts ändert das eingeschlossene Volumen nicht.** Eine Scheibe
+des Kastens als ebener Rahmen — Boden quer (7 mm, 7,3 GPa, Leisten als Masse in der Mitte), Schale als Halbellipse
+(3 mm, E 2 / 5 / 10 GPa), Rand- und Innenleisten als Massen —, ohne jeden Halt längs (keine Spanten, keine Blöcke):
+die weichste denkbare Schale. Breite 0,40 / 0,30 / 0,20 m:
+
+| | Versteifung der Bodenmode durch die Luft f_a | Volumen² je Masse der Bodenmode gegen starr |
+|---|---|---|
+| Schale starr, Boden gelenkig (heute) | 48 / 51 / 54 Hz | 1 |
+| Schale starr, Boden biegesteif am Rand | 41 / 43 / 45 Hz | 0,7 |
+| Schale elastisch, Ränder gehalten, gelenkig | 48 / 51 / 54 Hz | 1,00 (alle neun Fälle) |
+| Schale elastisch, Ränder gehalten, biegesteif | 41–52 Hz | 0,75–1,44 gegen biegesteif-starr |
+| Ring frei | 54–68 Hz | 1,0–2,2 (Rückstoß) |
+| Helmholtz-Mode durch die nachgiebige Schale | × 0,995–0,999 | – |
+
+Der Grund ist kinematisch: die Schale ist ein Bogen, dessen Enden der Boden in seiner Ebene festhält (Faser quer);
+eine Biegung ohne Dehnung ändert die Fläche unter einem solchen Bogen in erster Ordnung nicht. Die Schale trägt kein
+Volumen und sieht den Druck nicht (deckt sich mit §22.6: Helmholtz 187 gegen 190 Hz). Übrig bleibt, wie der Boden am
+Rand sitzt (gelenkig gegen biegesteif: in der Energie × 0,7) — das ist der bekannte Hebel `rim` (§11: gestützt).
+Die Summe der Volumen² über alle Moden ist durch die Massenverteilung festgelegt (Σ a² = Aᵀ M⁻¹ A); eine elastische
+Schale verteilt sie nur um. **KQ68 a kippt in der gefragten Form: die Schale schwächt die Kopplung nicht.**
+
+**25.2 Die Balken-Probe aus S216 war fehlerhaft.** `balken()` stellte die Steife so, dass „die erste Biegemode“ bei
+150 … 5000 Hz liegt, und griff dabei den ersten Eigenwert über 10⁻⁶ des größten — eine hohe Mode. Nachgerechnet
+(4 kg, „250 Hz“): die Moden des leeren Balkens liegen bei 2,3 / 6,9 / 14 / 25 / 38 / 54 Hz. Daher war das Paar in
+§24.6 von der Steife unabhängig (jeder Querschnitt stieß für sich zurück). §24.6 ist berichtigt.
+
+**25.3 Der Kasten als Balken mit der Biegesteife aus der Geometrie.** Jeder Querschnitt bewegt sich als Ganzes;
+EI(y) aus Schale (Halbkreis, 3 mm, 6 GPa längs), Rand- und Halteleisten (Buche, zusammen 16 cm², angenommen),
+Innenleisten (4 cm², angenommen), Boden und Zugleiste als Gurt; Masse 4,1 kg ohne Boden (Blöcke 1,2 und 0,15 kg,
+angenommen); der Boden mit 128 Formen relativ dazu, Flächenmasse aus dem Bauplan (modale Massen 0,84–0,94 statt 1 —
+die Wirkung ist eher unterschätzt); Luft: Rohr mit Massenmatrix (§24.2). Der leere freie Kasten mit dem Boden als Masse
+hat seine erste Biegemode bei 260 Hz (Steife × 1), 217 Hz (× 0,7), 221 Hz (Masse × 1,5). **Platte ohne Saiten:**
+
+| | Moden bis 300 Hz | Öffnungen zu | „Versteifung“ nach Bells Rechnung (S. 114 f.) |
+|---|---|---|---|
+| Bell Kasten A lose | 176 / 201 / 250 | 191 | 26 Hz |
+| Bell Kasten F lose | 185 / 204 / 250, S(1,2)′ 284 | 196 | 24 Hz |
+| starrer Rahmen (heute) | 165,2 / 210,8 / 232,9 | 191 | 46 Hz |
+| frei, Steife × 1 | 170,0 / 207,7 / 239,9 / 288,6 | 195 | 37 Hz |
+| frei, Steife × 0,7 | 167,2 / 197,2 / 238,7 / 264,6 | 183 | 30 Hz |
+| frei, Masse × 1,5 | 166,8 / 199,4 / 237,1 / 257,4 | 185 | 32 Hz |
+| frei, starrer Kasten (× 1000) | 172,6 / 222,0 / 242,3 | 209 | 47 Hz |
+
+Liegt die erste Biegemode des losen Kastens knapp über dem Paar, drückt sie dessen obere Mode nach unten: der Abstand
+fällt von 46 auf 30–33 Hz (Bell 25 und 19 Hz), **ohne dass sich an der Luft etwas ändert**. Bells Zwei-Massen-Rechnung
+liest das als schwache Kopplung; es sind drei Schwinger. Dazu passt, was das starre Modell nicht hat: eine weitere
+Mode bei 257–289 Hz mit Kasten und erster Plattenform (Bell F: S(1,2)′ 284 Hz, Q 30; §22.3 „fehlt dem Modell“); bei
+der unteren Mode bewegen sich Mitte des Kastens und Boden in dieselbe Richtung, die Enden dagegen (Abb. 5.7); der
+Boden hat auf der Mittellinie einen Knoten bei y ≈ 1,02 m (Abb. 5.4 vorn: Grenze des Bauchs bei rund 0,94 m, dahinter
+Bewegung; Bell S. 108: „a bending motion of the box“). Nicht getroffen: Abb. 5.8 zeichnet bei S(1,1)+ die Mitte der
+Rückseite gegen den Boden, die Probe hat sie mit dem Boden (der Text S. 107 sagt „move in unison“; die Hologramme
+tragen keine Phase). Mit Saiten als Federn (Platte aus S213) trifft „frei, Steife × 0,7“ zufällig genau: 174,2 /
+198,5 Hz, zu 189, 24 Hz — der lose Kasten trug aber keine Saiten. Steife und Masse des Kastens sind angenommen
+(ein freier Wert, an 217–260 Hz); die Probe belegt Richtung und Größe, keinen Bauplan.
+
+**25.4 Für den Zustand, den das Modell rechnet, stimmt die Kopplung.** `InstrumentBody` rechnet einen gehaltenen
+Kasten. Der passende Zustand bei Bell ist Kasten G in der Harfe ohne Saiten: 170 / 216 / 249 / 316 Hz. Das Modell
+ohne Saiten, starrer Rahmen, Rohr mit Massenmatrix (kein angepasster Wert an der Luft): **165,2 / 210,8 / 232,9 /
+319,7 Hz (−2,8 / −2,4 / −6,5 / +1,2 %)**, Abstand des Paars 46 gegen 46 Hz, Bodenmode bei verschlossenen Öffnungen
+191 Hz (Bell an A: 191 ± 2 Hz). Die vier Bestimmungen „12–25 Hz“ aus §22.2 stammen aus zwei anderen Zuständen: lose
+Kästen (25.3) und besaitete Harfen. §22.2 hatte 170 / 216 Hz als Ausreißer an einem schwachen Gipfel abgetan; mit der
+Massenmatrix trifft das Modell ihn ohne Anpassung. **Die Prämisse seit S213 „das Modell koppelt drei- bis viermal zu
+stark“ ist damit für den gehaltenen Kasten ohne Saiten nicht belegt.** Offen ist, was das Besaiten ändert: bei Bell
+steigt die untere Mode um 17 Hz und die obere fällt um 9 Hz (187 / 207); Federn gegen einen festen Punkt können keine
+Mode senken (Modell: 174,3 / 217,5).
+
+**25.5 Probe „Hals als ein Schwinger hinter den Saiten“ — so nicht bestätigt.** Die 46 Federn zwischen Öse und einem
+Freiheitsgrad (1 / 3 kg, eigene Frequenz 200–400 Hz, Federn × 1 / 2 / 3,33): die untere Mode bleibt bei 171–183 Hz,
+die obere bei 207–234 Hz; 187 / 207 Hz erreicht kein Fall. Ein Freiheitsgrad für Hals, Säule und Sockel ist grob —
+verworfen ist diese Form, nicht der Rahmen der Harfe (Le Carrou 2007 S. 563).
+
+**25.6 Güten der Plattenmoden — zwei Vermutungen geprüft.** (1) *Verlust nach Energieanteilen der ungedämpften Moden
+statt komplexer Eigenwerte* (die Partner sind sehr ungleich gedämpft): dieselben drei Verluste als Dämpfungsmatrix,
+komplexe Eigenwerte — die Güten bleiben (ohne Saiten 8 / 9, 19, 20, 11–15, 19–25 gegen 8 / 9, 19, 17, 11–15, 19–22);
+nur wo zwei ungedämpfte Moden fast aufeinanderliegen, ändert es etwas (S(1,3) besaitet 9 / 15 → 21). Die Mischung ist
+echt, kein Rechenartefakt. (2) *Die tiefe Güte der Luftmoden ist Abstrahlung.* Strahlungswiderstand der Öffnungen als
+Matrix R_ij = ρ c k² / 2π · sin(k d_ij) / (k d_ij) (Wand; freier Raum die Hälfte), dazu der innere Verlust aus Bells
+Güten mit nur Öffnung 6 offen (10 / 10 / 12 / 23 / 30 / 36) — **kein angepasster Wert**:
+
+| Luft allein, alle offen | Helmholtz | A1 | A2 | A3 | A4 | A5 |
+|---|---|---|---|---|---|---|
+| Bell (Abb. 4.8, 4.11–4.15) | 6 | 6 | 7 | 10 | 15 | 30 |
+| Matrix, Wand | 4,5 | 5,9 | 7,7 | 13,1 | 20,9 | 26,9 |
+| Matrix, freier Raum | 6,3 | 8,4 | 11,4 | 17,5 | 24,9 | 30,6 |
+| gebaut (zwei angepasste Güten 4,4 / 28, §23.3) | 5 | 6 | 8 | 13 | 17 | 21 |
+
+Die Güten der Luftmoden sind damit erklärt (Wand: Faktor 1,25 über sechs Werte). Die Plattenmoden hebt das wenig:
+ohne Saiten S(1,2)–S(1,5) 19–22 / 21–24 / 12–19 / 19–29 (Bell 39 / 45 / 43 / 31), besaitet (freier Raum) 25 / 25 /
+16–21 / 23–30 (Bell 32 / 27 / 28 / 19; gebaut 18 / 15 / 17 / 24). **Offen bleibt:** ohne Saiten tragen S(1,2)–S(1,5)
+im Modell 15–50 % Luft, bei Bell haben sie die Güte der Platte allein.
+
+**25.7 Stand.** Belegt: (1) eine elastische Schale ändert die Kopplung nicht (25.1); (2) §24.6 war ein Rechenfehler
+(25.2); (3) der lose Kasten biegt sich bei 220–260 Hz, das erklärt den engen Abstand des Paars an den losen Kästen zum
+größeren Teil und die Mode S(1,2)′ (25.3); (4) für den gehaltenen Kasten ohne Saiten trifft das Modell Bells Paar auf
+3 % ohne angepassten Wert an der Luft (25.4); (5) die Güten der Luftmoden folgen aus der Abstrahlung der Öffnungen
+(25.6). Nicht belegt: was das Besaiten am Paar ändert (187 / 207 Hz), und warum die Plattenmoden ohne Saiten keine
+Luft tragen. Verworfen: Schale als elastischer Ring (25.1), Hals als ein Schwinger (25.5), Verlust nach Anteilen als
+Rechenartefakt (25.6). Lautheit der Tasten 50–62, Abstrahlung 33–22 und Profile sind für keine der Proben gerechnet.
+**KQ70 a (Patrik S217):** die Prämisse „Kopplung zu stark“ entfällt, die Kopplung Platte–Luft bleibt wie gerechnet.
+Die Harfe wird in zwei Zuständen gemessen: ohne Saiten gegen Bell Kasten G in der Harfe ohne Saiten (170 / 216 / 249 /
+316 Hz), besaitet weiter nach KQ57 a. Die Abweichung des Paars im besaiteten Zustand heißt „Wirkung des Besaitens“ und
+wird als eigene Frage geprüft (Rahmen der Harfe aus Sockel, Säule und Hals mit mehr als einem Freiheitsgrad, Le Carrou
+2007; Saiten zwischen Boden und Hals) — als Probe, mit Lautheit, Abstrahlung und Profilen vor jeder Vorlage. Die Harfe
+bleibt gebaut. Verworfen: b (Kopplung × 0,6 im Bauplan), c (Kasten als Balken in `InstrumentBody`).
+**KQ71 a (Patrik S217; löst KQ69 a ab):** für Massen- und Strahlungsmatrix der Öffnungen werden zuerst die Zielgrößen
+gerechnet — ein Körper aus der Probe, daran Lautheit der Tasten 50–62 mit Mitschwingen, Abstrahlung 33–22, Güten ohne
+und mit Saiten, Wächter gegen alle 36 Werte aus Bell Kap. 4 —, dann wird der Bau vorgelegt. KQ63 a und KQ64 a gelten
+bis dahin. Verworfen: b (jetzt bauen), c (auf Dauer Probe).
