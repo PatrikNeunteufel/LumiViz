@@ -1111,3 +1111,112 @@ Instrument; die Schwelle 12 LU gilt der Lautheit des ganzen Tons.
 **Offen:** warum die besaitete Harfe so viel schwächer koppelt (mitbewegte Schale — Bell S. 121, 155 f., Le Carrou
 2007 S. 563: „displacements of the soundbox have the same order of magnitude as those of the soundboard“ —, die Luft
 des 1,3 m langen Kastens als ein Druck, Dämpfung der Mode durch die Saiten) und warum die obere Mode real schwach ist.
+
+## 22 S214: KQ58 a — die Ursache an den Quellen gelesen, drei Kandidaten geprüft
+
+Gelesen am Seitenbild: Bell S. 106–108 (PDF 182–184), S. 114–117 (PDF 190–193), S. 147 (PDF 273), S. 150–156
+(PDF 276–282), Abb. 7.8–7.10 (PDF 294–296); Textebene: Le Carrou, Gautier & Foltête 2007 ganz, Le Carrou 2006 §4.4
+(S. 67–73). Proben `proben/2026-11-23_S214_harfe_rohr.py`, `…_harfe_saitendaempfung.py`; Ausgaben lokal
+`.claude/handover/s214_rohr_raster1.txt`, `s214_rohr_rest.txt`, `s214/rohr_mu185/`. **Am Repo sind nur die zwei Proben
+und dieser Abschnitt neu; gebaut bleibt F4.**
+
+**22.1 Der Zustand „besaitet“ heißt in beiden Quellen: Saiten stark gedämpft.** Bell S. 147: „the strings being heavily
+damped by ribbons of plastic being woven between the strings“ (ebenso S. 163 für die Abstrahlung, also auch Abb. 7.23);
+Le Carrou 2007 S. 560: „strings are damped with paper“. Die Ziele nach KQ57 a tragen diesen Zustand.
+
+**22.2 Die schwache Kopplung ist keine Wirkung der Saiten — Bell rechnet sie an zwei losen Kästen ohne Saiten selbst
+aus (S. 106, 114 f.).** Kasten A, lose: S(1,1)− 176 ± 1 Hz, S(1,1)+ 201 ± 1 Hz; „blocking the apertures on the back of
+the soundbox removed the S(1,1)− mode and lowered the frequency of the S(1,1)+ mode“. Aus dem Paar die Helmholtz-Mode
+ohne Kopplung 187 ± 1,5 Hz (im Sand gemessen 190 ± 1,5 Hz), die Bodenmode bei verschlossenen Öffnungen 191 ± 2 Hz. Ein
+zweiter Kasten (im Text „Soundbox G“ mit 185 / 204 Hz — das sind die Werte von Kasten F in Tab. 6.1; Kasten G lose hat
+in Kap. 7 153 / 200 Hz): 194 und 196 Hz. Luft und Boden liegen also aufeinander, dann ist f₊² − f₋² = 2 f_c f_H:
+
+| Fall | Paar | f_c |
+|---|---|---|
+| Bell Kasten A, lose, ohne Saiten (S. 115) | 176 / 201 | 25 Hz |
+| Bell Kasten F, lose, ohne Saiten (S. 115, Tab. 6.1) | 185 / 204 | 19 Hz |
+| Bell Kasten G in der Harfe, Saiten gedämpft (§21.2) | 187 / 207 | 14,5 Hz |
+| Le Carrou 2007, Saiten gedämpft (§21.2) | 153,5 / 172 | 12–15 Hz |
+| Bell Kasten G lose / in der Harfe ohne Saiten (mit Helmholtz 190 Hz) | 153 / 200, 170 / 216 | 34 / 46 Hz |
+| Modell F4 (ein Druck) | 173,1 / 228,7 | 49 Hz (erste Mode allein 55 Hz) |
+
+Vier Bestimmungen an drei Kästen und einer zweiten Harfe geben 12–25 Hz. Die zwei Ausreißer hängen an je einem
+schwachen oberen Gipfel von Kasten G: lose „insufficient readings to show the profile“ (Abb. 7.9, 1), in der Harfe ohne
+Saiten ein Profil von 70–82 dB mit Einbruch bei Ort 19, 16 dB unter S(1,2) daneben (Abb. 7.9, 2). **Auf diesen einen
+Gipfel (216 Hz) sind Mündung und Güte der Luft des Bauplans gestellt (KQ29-1 a, KQ51 a); der Satz aus §21.2 „das Modell
+trifft Bells Harfe ohne Saiten“ gilt nur für ihn.** In der Reihenfolge stimmt das Modell: die untere Mode des Paars
+trägt die Luft (Bell: sie verschwindet beim Verschließen). Bei Le Carrou liegt die Luftmode oben (A0 172 Hz über T1).
+
+**22.3 An den Bäuchen strahlt das Paar im Modell nicht zu stark.** Bell Abb. 7.8–7.10, Harfe mit gedämpften Saiten, am
+Bauch: Admittanz 78 / 85 / 92 dB und Schalldruck 33 / 40 / 45 dB für 187 / 207 / 257 Hz — Schall je Kraft gegen S(1,2)
+−12 / −5 dB. Gebauter Körper (Leistungsmittel der 16 Hörorte, an der Spitze): −15,6 / −4,0 dB. „10–15 dB zu stark“ aus
+§21.3 ist an den Moden selbst nicht zu sehen. Die Abweichung je Saite (Zielgröße A) entsteht aus drei Dingen: das Paar
+liegt falsch (die Saiten 27 und 26, 185 und 208 Hz, sitzen bei Bell auf den beiden Moden, im Modell im Tal dazwischen),
+zwischen 257 und 348 Hz fehlt dem Modell eine Mode (Bell: S(1,2)′ 284 Hz, Q 30 — Saite 23 mit 277 Hz), und der Bezug
+der Zielgröße ist die eine Saite 26: rückt das Paar an die richtige Stelle, steht der Bezug auf einem Gipfel und alle
+anderen Saiten erscheinen zu leise (§21.3: 3 / 12).
+
+**22.4 Kandidat „Luft als Rohr mit Öffnungen längs“ — trägt ein Drittel und ist an Bell Kap. 4 belegt.** Die erste
+Längsmode der eingeschlossenen Luft liegt bei geschlossenen Öffnungen bei 150 Hz, unter dem Paar; ein einziger Druck
+für 1,3 m Kasten gilt dort nicht mehr. Probe: Rohr mit S(y) ∝ Breite², Volumen 27 l, 40 Längsmoden, je Öffnung ein
+Luftpfropfen an seinem Ort, getrieben vom Volumen der Plattenmoden je Länge (Platte im Vakuum aus S213).
+
+| Prüfung des Rohrs allein (starre Wände) | Bell Kap. 4 (Sand) | Rohr |
+|---|---|---|
+| nur Öffnung 6 offen: A2 / A3 / A4 / A5 | 283 / 414 / 545 / 680 Hz | 283 / 406 / 532 / 659 Hz (0 / −2 / −2 / −3 %) |
+| alle offen: Helmholtz | 190 ± 1,5 Hz | 189,4 Hz mit Mündungskorrektur 1,85 (ein Druck: 2,3 für 195,6 Hz) |
+
+Die Mündungskorrektur fällt damit von dem angepassten Wert 2,3 auf einen üblichen (1,7 für beidseitig Flansch).
+Gekoppelt, Mündung 1,85, sonst F4 unverändert:
+
+| | ein Druck (gebaut) | Rohr | Ziel |
+|---|---|---|---|
+| Paar | 173,1 / 228,7 (−7,4 / +10,5 %) | 172,5 / 215,4 (−7,7 / +4,0 %) | 187 / 207 |
+| Abstand des Paars | 56 Hz | 43 Hz | 20 Hz |
+| Öffnungen zu | – | untere Mode weg, obere 215,4 → 207,3 Hz | Bell S. 106: so |
+| Versteifung der ersten Bodenmode durch die Luft | 55 Hz | 36,5 Hz | 19–25 Hz (22.2) |
+| S(1,2) … S(1,6) | 0,0 / +4,4 / +4,9 / +3,4 / +2,6 % | −4,1 / −2,2 / 0,0 / +9,2 / +5,3 % | je 7 % |
+| Mode zwischen S(1,2) und S(1,3) | keine | 312 Hz (Luft 0,60) | S(1,2)′ 284 Hz |
+| A, Saiten 33–22 (Bezug 26) | 6 / 12, größte 20,3 dB | 6 / 12, größte 11,2 dB | 12 / 12 auf 6 dB |
+| Lautheit Tasten 50–62 mit Mitschwingen: Spanne / größter / mittlerer Sprung | 15,7 LU größter (54 → 58) | 12,6 / **10,9** / 2,8 LU (54 → 57: −22,1 → −12,7 LUFS) | größter ≤ 12 LU |
+| dasselbe, nur die gespielte Saite | 15,6 LU größter | 14,8 / 11,2 / 3,8 LU | – |
+
+Die Lautheit ist an einem Körper aus der Probe gemessen (Platte im Vakuum aus der vollen Rechnung, die Luft in der
+Probe dazu; bei einem Druck trifft dieser Weg den gebauten Körper auf 1–2 %, §21.3) — sie gilt erst, wenn das Rohr im
+Werkzeug gerechnet ist.
+
+Ein Volumenfaktor auf dem Rohr-Modell zeigt den Rest: mit 0,5 liegt das Paar bei 183,0 / 209,5 Hz (−2,1 / +1,2 %).
+
+**22.5 Kandidat „Dämpfung durch die Saiten“ — gehört zum Messzustand, verschiebt das Paar nicht.** Eine Saite, deren
+Welle im Band stirbt, wirkt an der Öse quer zu sich wie ein Dämpfer Z₀ = √(T m′) (Summe über 46 Saiten 62,7 kg/s;
+Anteil cos² 35° = 0,67). Zuwachs des Verlustfaktors in erster Ordnung: 0,0075 / 0,0111 / 0,0147 / 0,0088 / 0,0062 für
+die Moden 173 / 229 / 257 / 349 / 451 Hz — Güte 11,9 → 10,9, 19,0 → 15,7, 48,8 → 28,4, 44,2 → 31,9, 40,3 → 32,2. Bell
+misst beim Besaiten an S(1,2) / S(1,3) / S(1,4) Zuwächse 0,0056 / 0,0148 / 0,0125 (Q 39 → 32, 45 → 27, 43 → 28): dieselbe
+Größe. Um das Paar zusammenzuziehen, bräuchte es das Zehn- bis Zwanzigfache. Für den Vergleich mit Bells besaiteten
+Höhen und Güten gehört dieser Verlust an die Federn (KQ49 a kann ihn tragen); im Spiel sind die Saiten nicht gedämpft.
+
+**22.6 Kandidat „mitbewegte Schale“ — als nachgiebige Wand verworfen; offen bleibt die Form der ersten Mode.** Gäbe
+die Schale unter dem Innendruck nach, fielen Helmholtz-Mode und Kopplung im selben Maß; Bell findet die Helmholtz-Mode
+am freien Kasten aus dem Paar bei 187 Hz und im Sand bei 190 Hz — die Wand gibt nicht nach. Was die Quellen sonst
+beschreiben (Bell S. 107: bei S(1,1)+ „the front and back of the box move in unison“; S. 151: am losen Kasten bewegt
+sich das Diskantende gegen die Mitte; Le Carrou 2007 S. 563) ist eine Bewegung des Kastens als Ganzes, die das
+eingeschlossene Volumen nicht ändert. Messbar ist dagegen die Form: Bells Profil von S(1,1)− (Abb. 7.8, 1 und 2, Orte
+nach §11) hat einen Bauch von rund 0,40 m Halbwertsbreite um y ≈ 0,45 m und in der Harfe ein Minimum bei Ort 15
+(y ≈ 0,82 m) mit einem zweiten Bereich am Diskant; die Schalldruckprofile der besaiteten Harfe haben dort eine
+Nullstelle (Ort 14–16). Das Modell hat einen Bauch von 0,74 m um y ≈ 0,55 m ohne Knoten. Ein halb so langer Bauch
+trägt bei gleicher Belegung rund 0,74-mal so viel Volumen je Wurzel der Modalmasse (geschätzt, nicht gerechnet); mit
+dem Rohr gäbe das rund 27 Hz. Die Form der ersten Mode war bisher keine Zielgröße (KQ31-2 a beginnt bei S(1,2)).
+
+**22.7 Stand.** Die Ursache ist mehrteilig: (1) der Druck längs des Kastens — belegt, 55 → 36,5 Hz, bringt den größten
+Sprung in der Probe unter 12 LU; (2) die Form der ersten Bodenmode (Bauch zu lang, kein Knoten bei y ≈ 0,82 m) —
+gemessen, Wirkung geschätzt, eine Sache des Bauplans; (3) der Bezug der Luft im Bauplan auf den einen Gipfel bei 216 Hz
+statt auf Bells Helmholtz-Mode 190 Hz und sein „Luft und Boden liegen aufeinander“ (S. 115: 187–190 / 191 Hz, 194 /
+196 Hz; Rohr-Modell besaitet 189 / 207 Hz); (4) die Saiten als Dämpfer nur im Messzustand. Mit einem Volumenfaktor
+rückt das Paar zwar an seinen Ort, die obere Mode steht dann aber als fast reine Bodenmode mit Q 24 rund 12 dB über dem
+Ausgleich der zwölf Saiten (Bell: Saite 26 2 dB über 27) — solange Boden und Luft nicht aufeinander liegen.
+**KQ59 a (Patrik S214):** die Luft der Harfe wird in `InstrumentBody` als Rohr mit Öffnungen längs gerechnet
+(Bauplan-Fassung 10, Wächter gegen Bell Kap. 4), die Harfe damit neu; die Form der ersten Mode danach als eigene Suche
+am Bauplan. **KQ60 a (Patrik S214):** Luft auf Helmholtz 190 ± 1,5 Hz, ohne Saiten Bodenmode bei verschlossenen
+Öffnungen und Helmholtz-Mode auf 3 % beieinander, 170 / 216 Hz bleibt Bericht; Abstrahlung 33–22 gegen den Ausgleich
+über alle zwölf Saiten und mit den Saiten als Dämpfer; Profil von S(1,1)− als Zielgröße (Bauch bei y = 0,45 m auf zwei
+Messorte, Knoten bei Ort 14–16). **Offen:** der Bau des Rohrs und die Harfe damit.
