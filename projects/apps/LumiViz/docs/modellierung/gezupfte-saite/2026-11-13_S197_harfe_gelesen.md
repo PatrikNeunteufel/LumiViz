@@ -1307,3 +1307,103 @@ lokal `.claude/handover/s215/laut/`, `laut_q134/`):
 Die Tasten 52–54 liegen auf S(1,1)− (173 Hz): mit Q 6,6 statt 17 sind sie 2,5–5 LU leiser, der Sprung zu 56/57 wächst.
 Mit einer Güte trifft die Harfe ihre eigenen Güten besser (Faktor 1,8 ohne, 1,3 mit Saiten gegen 2,1 / 1,7), die Luft
 allein schlechter — die eine Güte gleicht aus, dass die Plattenmoden zu viel Luft tragen (§23.5).
+
+## 24 S216: warum die Plattenmoden zu viel Luft tragen (KQ67 a) — nicht die Lage der Luftmoden, die Stärke der Kopplung
+
+> **Sitzung:** S216 (2026-11-23), Fable. Proben `proben/2026-11-23_S216_harfe_oeffnungen_gegenseitig.py` (`rohr`,
+> `raster`), `proben/2026-11-23_S216_harfe_kasten_balken.py` (`raster`); Platte im Vakuum aus S213 (mit den Saiten als
+> Federn), Bauplan F4; Ausgabe lokal `.claude/handover/s216_kasten_balken.txt`. Kein Programmcode. Gelesen am
+> Seitenbild: Bell Abb. 2.7, 2.8 (PDF 65, 66), Tab. 4.2 und Abb. 4.3 (PDF 154, 156), Abb. 4.8, 4.11–4.15 (PDF 160 f.,
+> 165–169), Abb. 5.4, 5.7, 5.8 (PDF 204, 207); Textebene S. 104–121.
+
+**24.1 Bell misst je Luftmode sechs Zustände, nicht zwei** (Abb. 4.8, 4.11–4.15: die Öffnungen vom Diskant her eine
+nach der anderen geöffnet; Öffnung 6 sitzt in der schrägen Stirnfläche am Bass, 5 am Diskant):
+
+| offen | Helmholtz | A1 | A2 | A3 | A4 | A5 |
+|---|---|---|---|---|---|---|
+| 6 | 75 | 168 | 283 | 414 | 545 | 680 |
+| 5, 6 | 92,5 | 220 | 364 | 474 | 593 | 691 |
+| 4–6 | 100 | 250 | 400 | 490 | 600 | 690 |
+| 3–6 | 123 | 29? (am Bild nicht sicher, 290 angesetzt) | 403 | 507 | 617 | 707 |
+| 2–6 | 164 | 277 | 422 | 520 | 610 | 717 |
+| alle | 190 | 292 | 423 | 530 | 620 | 720 |
+
+Dazu Tab. 4.2 (Helmholtz-Mode mit je einer verschlossenen Öffnung: 164 / 168 / 178 / 181 Hz für 1–4, 162 Hz für 6, und
+mit veränderten Flächen). Das gebaute Rohr (jeder Pfropfen für sich, Mündung 1,83) gegen diese 36 Werte: rms 7,2 %;
+schon „5 und 6 offen“ weicht ab (A2–A4 −6 / −9 / −10 %; A4 bleibt im Modell bei 532 Hz, Bell 545 → 593 Hz).
+
+**24.2 Die Pfropfen belasten sich gegenseitig — erklärt einen Teil der Lagen, ohne angepasste Mündung.** Die
+Öffnungen 1–5 sind 16,5–18,4 cm lang im Abstand von 22 cm. Die mitbewegte Luft außen als Matrix
+M_ij = ρ / (2π A_i A_j) ∬∬ dS dS′ / |r − r′| (Kolben in einer Wand; Öffnungen als Rechtecke Länge × Fläche / Länge),
+innen je Öffnung dieselbe eigene Korrektur, der Druck über die Länge der Öffnung gemittelt — **kein freier Wert**:
+eigene Korrektur außen 0,71–0,80 r (Kreis 0,85 r), die Nachbarn tragen gleichphasig 13–25 % dazu. Rohr allein:
+
+| | nur 6 offen | alle offen | 12 Werte rms / größte | 36 Werte rms |
+|---|---|---|---|---|
+| gebaut (Mündung 1,83) | −8 / 0 / 0 / −2 / −2 / −3 % | 0 / +3 / −12 / −13 / −9 / −6 % | 6,6 / 13 % | 7,2 % |
+| Matrix, Wand (κ = 1) | −4 / +1 / 0 / −2 / −3 / −3 % | +1 / +8 / −4 / −9 / −8 / −6 % | 5,1 / 9 % | 6,0 % |
+| Matrix, freier Raum (κ = 0,5, eigene außen 0,72) | −1 / +2 / +1 / −2 / −2 / −3 % | +10 / +14 / 0 / −8 / −8 / −6 % | 6,3 / 14 % | – |
+
+Die Helmholtz-Mode mit allen Öffnungen liegt mit der Matrix ohne Anpassung bei 192 Hz (Bell 190), die der Öffnung 6
+allein bei 72 statt 69 Hz (Bell 75), A2 rückt von −12 auf −4 %. A3–A5 bleiben 6–9 % zu tief; sie hängen an den Massen
+(halbe Massen: +3 / −2 / −3 %), aber nicht so, dass ein Wert alle trifft. Ursache des Rests offen (Kandidaten: die
+Öffnung 5 ist so groß wie der Querschnitt des Rohrs dort; vier Spanten zwischen den Öffnungen, Abb. 2.7 C; die
+Luftsäule ist um die Blöcke kürzer als der Boden — „nur 6 offen“ liegt oben gleichmäßig 2–3 % zu tief).
+
+**24.3 Die Lage der Luftmoden ist nicht der Grund für die Luft in den Plattenmoden.** Gekoppelt (Platte im Vakuum
+204 / 257 / 346 / 451 / 574 Hz, Güten 4,4 / 28), je Plattenmode die Mode mit ihrem größten Anteil — Luftanteil und Güte:
+
+| | S(1,1)+ | S(1,2) | S(1,3) | S(1,4) | S(1,5) |
+|---|---|---|---|---|---|
+| gebaut | 0,38, Q 13 | 0,21, Q 18 | 0,52, Q 15 | 0,48, Q 21 | 0,44, Q 24 |
+| Matrix | 0,38, Q 12 | 0,16, Q 20 | 0,46, Q 15 | 0,56, Q 15 | 0,47, Q 23 |
+| Matrix, alle Rohrmoden × 1,10 | 0,38, Q 12 | 0,14, Q 22 | 0,30, Q 14 | 0,53, Q 14 | 0,36, Q 22 |
+| Matrix, Kopplung Platte–Luft × 0,6 | 0,30, Q 14 | 0,08, Q 30 | 0,12, Q 28 | 0,30, Q 22 | 0,44, Q 23 |
+| Bell besaitet (ohne Saiten) | – (16) | Q 32 (39) | Q 27 (45) | Q 28 (43) | Q 19 (31) |
+
+Die Luftmoden liegen alle 70–100 Hz und sind breit; wohin man sie schiebt (× 1,05 … 1,15), die Plattenmoden mischen
+sich. Erst die schwächere Kopplung löst sie: mit × 0,6 liegt das Paar bei 183 / 212 Hz (−2,1 / +2,4 % gegen 187 / 207).
+Auch bei Bell liegen Luft- und Plattenmoden aufeinander (A2 423 Hz auf S(1,4) 421 Hz, A3 530 auf S(1,5) 535 Hz, Tab. 6.1),
+und die Plattenmoden behalten Q 30–45.
+
+**24.4 Die Größe aus Bells eigenen Zahlen.** Aus dem Paar nach Bells Zwei-Massen-Rechnung (S. 114 f.) folgt die
+Versteifung der Bodenmode durch die eingeschlossene Luft f_a = √(f₊² + f₋² − f_H² − (f₊ f₋ / f_H)²): Kasten A lose
+(176 / 201 Hz, f_H 190 Hz) 25 Hz, mit ±1 Hz an beiden und ±3 Hz an f_H 22–27 Hz. Die erste Plattenmode des Modells hat
+im Vakuum a = 0,148 m³/√kg, das sind 54 Hz (ein Druck); dieselbe Formel am Paar des Rohrs gibt 42 Hz (Matrix) — in der
+Energie das 2,8- bis 4,7-fache. Am Volumen der Formen: die Bäuche am Bass tragen je Länge so viel Volumen wie der
+stärkste am Diskant (Mode 5: 0,58 / 0,91 gegen 1,00), weil der Boden dort viermal so breit ist, bei 0,13–0,23 der
+Auslenkung auf der Mittellinie.
+
+**24.5 Was Bell an der Schale sieht (Kap. 5, Kasten A lose, Hologramme vorn und hinten).** „On each of these modes,
+the back of the soundbox was also in motion“ (S. 106, ebenso S. 121). S(1,1)− (Abb. 5.4, 5.7): der Bauch des Bodens
+reicht über rund 0,85 m; Boden und Rückseite bewegen sich in der Mitte in dieselbe Richtung (Bell: „out of phase“ —
+einer nach innen, einer nach außen), Bass- und Diskantende dagegen, zwei Knotenbereiche quer durch den Kasten.
+S(1,1)+ (Abb. 5.8): Boden und Rückseite in der Mitte beide nach innen („in phase“), die Enden dagegen. S(1,2): „a
+bending motion of the box as well as the dipolar mode“; ab S(1,3) „confined to the board“ (S. 108), die Rückseite
+bewegt sich dennoch (um die Öffnungen, „air-driven“; Bänder längs bei S(1,5), S(1,6)). S. 119: die tiefen Moden sind
+„whole body resonances … not just modes of a held board“. Dazu Kap. 7: das Paar hängt an der Halterung (G lose
+153 / 200, in der Harfe 170 / 216, besaitet 187 / 207 Hz); über S(1,2)′ ändert sich wenig (S. 155). `InstrumentBody`
+hält den Rand des Bodens auf einem ruhenden, starren Rahmen und rechnet die Wände starr — die Schale ist 3 mm
+Fichtenlaminat mit etwa der Fläche und der Masse des Bodens.
+
+**24.6 Probe „Kasten als Balken mit starren Querschnitten“ — so nicht bestätigt.** Der Kasten als freier oder an den
+Enden gehaltener Balken (Masse 2 / 4 / 8 kg ∝ Breite, Biegesteife ∝ Breite³, erste Biegefrequenz des leeren Kastens
+150 … 5000 Hz), der Boden mit seinen ersten zehn Moden relativ dazu, Flächenmasse des Bodens geschätzt (1,8 kg): die
+obere Mode des Paars steigt durch den Rückstoß von 217 auf 235–270 Hz, die Versteifung bleibt bei 46–51 Hz, frei gegen
+gehalten ändert unter 10 Hz (Bell +16 Hz). Ein Querschnitt, der sich als Ganzes verschiebt, schwächt die Kopplung
+nicht; was Bell bei S(1,1)+ zeichnet (Boden und Rückseite beide nach innen), ist eine Verformung des Querschnitts.
+Die Probe ist grob (Steife und Masse des Kastens angenommen, dünnes Diskantende mit eigenen Balkenmoden) — sie
+verwirft diese eine Form, nicht die Bewegung der Schale.
+
+**24.7 Stand.** Belegt: (1) der Luftanteil der Plattenmoden hängt an der Stärke der Kopplung, nicht an der Lage der
+Luftmoden; nötig ist in der Energie rund ein Drittel, in allen Moden S(1,1)–S(1,5); (2) Bells Paar gibt 25 Hz
+Versteifung gegen 42–54 Hz im Modell; (3) die gegenseitige Belastung der Öffnungen ersetzt die angepasste Mündung und
+hebt A2 und die Helmholtz-Mode der Öffnung 6. Nicht belegt: die Ursache der zu starken Kopplung. Übrig bleibt die
+Prämisse der starren Wände — nach Bell bewegt sich die Schale in jeder Mode, bei den tiefen als Teil der Mode. Verworfen
+bisher: Schale als nachgiebige Wand unter dem Druck allein (§22.6, Helmholtz 187 gegen 190 Hz), Saiten als Dämpfer
+(§22.5), Lage der Luftmoden (24.3), Kasten als Balken mit starren Querschnitten (24.6).
+**KQ68 a (Patrik S216):** die Schale wird als elastisches Bauteil geprüft, zuerst als Probe — der Querschnitt als Ring
+aus Boden und Schale, gegen Bells Hologramme (Phase von Boden und Rückseite je Mode, Abb. 5.3–5.19), die Versteifung
+25 Hz, das Paar lose / in der Harfe und die Güten; danach die Vorlage, ob und wie die Schale in `InstrumentBody` kommt.
+Die Harfe bleibt gebaut. **KQ69 a (Patrik S216):** die Massenmatrix der Öffnungen (24.2) bleibt Probe und wird mit dem
+Ergebnis von KQ68 vorgelegt; bis dahin gilt KQ64 a.
