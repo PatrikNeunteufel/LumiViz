@@ -44,7 +44,11 @@ namespace lumi::koerper
 /// Rohrs (Bauplan-Fassung 10; immer geschrieben, 0 = ein Druck), ein Teil von `airShare` — damit laesst sich die
 /// Daempfung nachrechnen: η = (1 − airShare) · η der Platte + (airShare − tubeShare) / Guete der Oeffnungen +
 /// tubeShare / Guete des Rohrs. Fassung 6 liest sich mit 0.
-inline constexpr int kKoerperFassung = 7;
+/// Fassung 8 (S218, KQ71 a): je Mode `airLoss`, der Verlustfaktor, den die Luft der Mode gibt (immer geschrieben,
+/// 0 = ohne Hohlraum): η = (1 − airShare) · η der Platte + airLoss. Mit den Oeffnungen aus ihrer Geometrie
+/// (Bauplan-Fassung 11) haengt er an der Abstrahlung je Mode und laesst sich aus den Anteilen nicht nachrechnen.
+/// Fassung 7 liest sich mit 0.
+inline constexpr int kKoerperFassung = 8;
 
 /// Die Fassung des Modalfits fuer gemessene Koerper (`asset/loop/instrument_bodies/make_gitarre.py` traegt dieselbe
 /// Zahl). Hochzaehlen, wenn sich bei gleicher Messung und gleicher Beschreibung ein anderer Koerper ergaebe.

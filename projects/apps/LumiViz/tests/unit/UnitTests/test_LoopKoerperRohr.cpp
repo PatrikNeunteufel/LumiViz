@@ -15,12 +15,14 @@
  *   Mode der Frequenz 0 (Durchfluss ohne Druck), die wegfaellt.
  * - Der Bauplan: `cavity.kind` und `cavity.tube` immer geschrieben, Hin- und Rueckweg, Fassung 9 liest sich als ein
  *   Druck, eine unbekannte Art macht die Datei unlesbar; die Pruefung (Querschnitte, Volumen, Oeffnungen im Rohr).
- * - KQ64 a: die Luft der mitgelieferten Harfe bei starren Waenden gegen Bell 1988 Kap. 4 (Kasten A im Sand; Abb. 4.8,
- *   4.11–4.15, am Seitenbild gelesen S215): mit allen Oeffnungen die Helmholtz-Mode bei 190 ± 1,5 Hz und ihr Abfall
- *   zum Diskant (Bell rund 18 dB von 10 bis 120 cm, auf 3 dB); mit Oeffnung 6 allein A2–A5 auf 3 %; die zwoelf Gueten
- *   auf den Faktor 1,5. Was darueber liegt, steht als bekannte Abweichung mit Wert — rot, wenn sie waechst oder
- *   verschwindet: mit allen Oeffnungen A2–A5 (Ursache offen, Harfenbericht §23.2), die Helmholtz-Mode mit Oeffnung 6
- *   allein und eine Guete.
+ * - KQ71 a (S218): die Oeffnungen aus ihrer Geometrie — die Flaechenintegrale, die Massenmatrix (Wand, frei), die
+ *   Guete eines Helmholtz-Resonators aus der Abstrahlung (ω M / R), der innere Verlust aus einer gemessenen Guete;
+ *   Bauplan-Fassung 11 (`openingModel`, `surroundings`, `innerLoss`, je Oeffnung `length`) im Hin- und Rueckweg.
+ * - KQ71 a (loest KQ64 a ab): die Luft der mitgelieferten Harfe bei starren Waenden gegen Bell 1988 Kap. 4 (Kasten A im
+ *   Sand; Abb. 4.8, 4.11–4.15, am Seitenbild gelesen S215 / S216): alle 36 Lagen (sechs Zustaende) auf 3 %, rms unter
+ *   6,5 %; die zwoelf Gueten auf den Faktor 1,5; die Helmholtz-Mode mit allen Oeffnungen bei 190 ± 3 Hz ohne angepassten
+ *   Wert und ihr Abfall zum Diskant (Bell rund 18 dB von 10 bis 120 cm, auf 3 dB). Was darueber liegt, steht als
+ *   bekannte Abweichung mit Wert — rot, wenn sie waechst oder verschwindet (Ursache offen, Harfenbericht §24.2).
  ****************************************************************************************
  */
 
@@ -29,6 +31,7 @@
 #include "InstrumentBody/Luftraum.hpp"
 #include "loop/KoerperBauplan.hpp"
 
+#include <QJsonArray>
 #include <QJsonObject>
 
 #include <algorithm>
@@ -75,10 +78,10 @@ double druckBei(const kp::LuftraumMode& m, const kp::RohrModen& r, double y)
     return p;
 }
 
-/// Die Guete einer Luftmode bei starren Waenden (KQ63 a).
-double gueteVon(const kp::LuftraumMode& m, const kp::Bauplan& plan)
+/// Die Guete einer Luftmode bei starren Waenden (KQ63 a; KQ71 a: Abstrahlung und innerer Verlust).
+double gueteVon(const kp::LuftraumMode& m)
 {
-    return 1.0 / ((m.luftAnteil - m.rohrAnteil) / plan.hohlraum.guete + m.rohrAnteil / plan.hohlraum.rohr.guete);
+    return 1.0 / m.luftVerlust;
 }
 
 }  // namespace
@@ -218,7 +221,196 @@ TEST_CASE("Loop Koerper KQ59 Rohr im Bauplan und in der Datei")
     CHECK_FALSE(ausJson(fremd, nichts));
 }
 
-TEST_CASE("Loop Koerper KQ64 die Luft der mitgelieferten Harfe gegen Bell 1988 Kap. 4")
+TEST_CASE("Loop Koerper KQ71 die Oeffnungen aus ihrer Geometrie: Integrale, Massen, Abstrahlung")
+{
+    // die Zelle mit sich selbst: ∬∬ dS dS′ / r ueber das Einheitsquadrat, geschlossen
+    CHECK(kp::kEigenQuadrat == doctest::Approx(2.9732095).epsilon(1e-7));
+    const auto oeffnung = [](double y, double laenge, double breite, double lippe) {
+        kp::Oeffnung o;
+        o.ort = {0.0, y};
+        o.flaeche = laenge * breite;
+        o.laenge = laenge;
+        o.lippe = lippe;
+        return o;
+    };
+    // ein Quadrat 10 cm: das Integral ueber die Zellen gegen 2,9732 a³ (die Zellen naehern die Nachbarn)
+    {
+        const std::vector<double> g = kp::oeffnungsIntegrale({oeffnung(0.5, 0.10, 0.10, 0.0)});
+        CHECK(g[0] == doctest::Approx(kp::kEigenQuadrat * 1e-3).epsilon(0.005));
+    }
+    // zwei kleine Quadrate weit auseinander: G_12 → A1 A2 / d
+    {
+        const std::vector<double> g = kp::oeffnungsIntegrale({oeffnung(0.0, 0.01, 0.01, 0.0), oeffnung(1.0, 0.02, 0.01, 0.0)});
+        CHECK(g[1] == doctest::Approx(1e-4 * 2e-4 / 1.0).epsilon(1e-4));
+        CHECK(g[1] == g[2]);
+    }
+    // die Massen: eigene Korrektur innen und aussen, Nachbarn in der Wand ganz, frei halb und aussen 0,72
+    {
+        const double rho = 1.2;
+        const std::vector<kp::Oeffnung> oe = {oeffnung(0.2, 0.16, 0.05, 0.015), oeffnung(0.42, 0.18, 0.05, 0.012)};
+        const std::vector<double> g = kp::oeffnungsIntegrale(oe);
+        const std::vector<double> wand = kp::oeffnungsMassen(oe, kp::OeffnungsUmgebung::Wand, rho);
+        const std::vector<double> frei = kp::oeffnungsMassen(oe, kp::OeffnungsUmgebung::Frei, rho);
+        for (std::size_t i = 0; i < 2; ++i)
+        {
+            const double eigen = rho * g[i * 2 + i] / (2.0 * kPi * oe[i].flaeche * oe[i].flaeche);
+            CHECK(wand[i * 2 + i] == doctest::Approx(rho * oe[i].lippe / oe[i].flaeche + 2.0 * eigen));
+            CHECK(frei[i * 2 + i] == doctest::Approx(rho * oe[i].lippe / oe[i].flaeche + 1.72 * eigen));
+            // die eigene Korrektur aussen eines Rechtecks 16 x 5 cm in Radien des flaechengleichen Kreises: unter
+            // 0,85 (Kreis), der Harfenbericht §24.2 nennt 0,71–0,80 fuer die Oeffnungen der Harfe
+            const double r = std::sqrt(oe[i].flaeche / kPi);
+            CHECK(eigen * oe[i].flaeche / rho / r > 0.6);
+            CHECK(eigen * oe[i].flaeche / rho / r < 0.85);
+        }
+        CHECK(wand[1] == doctest::Approx(rho * g[1] / (2.0 * kPi * oe[0].flaeche * oe[1].flaeche)));
+        CHECK(frei[1] == doctest::Approx(0.5 * wand[1]));
+        CHECK(wand[1] == wand[2]);
+    }
+
+    // ein Helmholtz-Resonator mit einer Oeffnung (nur j = 0): die Guete aus der Abstrahlung ist ω M / R mit
+    // R = ρ c k² / 2π (Wand), frei das Doppelte; ohne inneren Verlust
+    {
+        const kp::Luft luft;
+        kp::Bauplan plan;
+        plan.platte.umriss = {{-0.1, 0.0}, {0.1, 0.0}, {0.1, 1.0}, {-0.1, 1.0}};
+        plan.hohlraum.volumen = 0.01;
+        plan.hohlraum.art = kp::HohlraumArt::Rohr;
+        plan.hohlraum.rohr = gerade();
+        plan.hohlraum.oeffnungen = {oeffnung(0.5, 0.08, 0.05, 0.01)};
+        plan.hohlraum.modell = kp::OeffnungsModell::Geometrie;
+        plan.hohlraum.innen = {{0}, {{100.0, 50.0}}, "Test"};
+        kp::RohrModen r = kp::rohrModen(plan.hohlraum.rohr, plan.hohlraum.volumen, luft.schall, 2000.0);
+        r.omega.resize(1);
+        r.psi.resize(1);
+        for (const kp::OeffnungsUmgebung u : {kp::OeffnungsUmgebung::Wand, kp::OeffnungsUmgebung::Frei})
+        {
+            plan.hohlraum.umgebung = u;
+            kp::LuftraumGroessen g = kp::luftraumGroessen(plan, luft.dichte, luft.schall);
+            REQUIRE(g.geometrie);
+            REQUIRE(g.massen.size() == 1);
+            CHECK(g.loecher[0].feld == doctest::Approx(u == kp::OeffnungsUmgebung::Wand ? std::sqrt(2.0) : 1.0));
+            const auto moden = kp::koppleRohr({}, {}, g, r, luft.dichte);
+            REQUIRE(moden.size() == 1);
+            const double f = moden[0].frequenzHz;
+            CHECK(f == doctest::Approx(std::sqrt(g.alpha / g.massen[0]) / (2.0 * kPi)).epsilon(1e-9));
+            const double k = 2.0 * kPi * f / luft.schall;
+            const double widerstand = (u == kp::OeffnungsUmgebung::Wand ? 1.0 : 0.5) * luft.dichte * luft.schall * k * k / (2.0 * kPi);
+            CHECK(moden[0].luftAnteil == doctest::Approx(1.0));
+            CHECK(1.0 / moden[0].luftVerlust == doctest::Approx(2.0 * kPi * f * g.massen[0] / widerstand).epsilon(1e-9));
+            // der innere Verlust: die gemessene Guete 50 bei 100 Hz minus die Abstrahlung an der Mode
+            const kp::LuftraumGroessen mitInnen = kp::rohrGroessen(plan, luft, r);
+            REQUIRE(mitInnen.innenHz.size() == 1);
+            CHECK(mitInnen.innenKehrwert[0] == doctest::Approx(std::max(0.0, 1.0 / 50.0 - moden[0].luftVerlust)));
+            CHECK(mitInnen.innenBei(30.0) == mitInnen.innenKehrwert[0]);
+            CHECK(mitInnen.innenBei(3000.0) == mitInnen.innenKehrwert[0]);
+            const auto mitVerlust = kp::koppleRohr({}, {}, mitInnen, r, luft.dichte);
+            CHECK(mitVerlust[0].luftVerlust == doctest::Approx(moden[0].luftVerlust + mitInnen.innenKehrwert[0]));
+        }
+    }
+    // die Tafel des inneren Verlusts: linear ueber f, an den Enden gehalten
+    {
+        kp::LuftraumGroessen g;
+        g.innenHz = {100.0, 300.0};
+        g.innenKehrwert = {0.1, 0.02};
+        CHECK(g.innenBei(50.0) == 0.1);
+        CHECK(g.innenBei(200.0) == doctest::Approx(0.06));
+        CHECK(g.innenBei(400.0) == 0.02);
+        CHECK(kp::LuftraumGroessen{}.innenBei(200.0) == 0.0);
+    }
+}
+
+TEST_CASE("Loop Koerper KQ71 die Oeffnungen aus ihrer Geometrie im Bauplan und in der Datei")
+{
+    kp::Bauplan plan;
+    plan.titel = "Kasten";
+    plan.platte.umriss = {{-0.1, 0.0}, {0.1, 0.0}, {0.1, 1.0}, {-0.1, 1.0}};
+    plan.hohlraum.volumen = 0.01;
+    plan.hohlraum.oeffnungen = {{{0.0, 0.3}, -0.05, 0.004, 0.01, "Test", 0.08}, {{0.0, 0.7}, -0.05, 0.003, 0.01, "Test", 0.06}};
+    plan.hohlraum.art = kp::HohlraumArt::Rohr;
+    plan.hohlraum.rohr = gerade();
+    plan.hohlraum.modell = kp::OeffnungsModell::Geometrie;
+    plan.hohlraum.umgebung = kp::OeffnungsUmgebung::Frei;
+    plan.hohlraum.innen = {{1}, {{80.0, 10.0}, {300.0, 20.0}}, "Test"};
+    CHECK(plan.hohlraum.ausGeometrie());
+
+    const auto befundMit = [](const kp::Bauplan& p, const char* stueck) {
+        for (const std::string& b : kp::pruefe(p))
+            if (b.find(stueck) != std::string::npos) return true;
+        return false;
+    };
+    CHECK_FALSE(befundMit(plan, "cavity"));
+    kp::Bauplan falsch = plan;
+    falsch.hohlraum.art = kp::HohlraumArt::EinDruck;
+    CHECK(befundMit(falsch, "the opening model 'geometry' needs a tube"));
+    falsch = plan;
+    falsch.platte.loecher = {{{-0.02, 0.4}, {0.02, 0.4}, {0.02, 0.44}, {-0.02, 0.44}}};
+    CHECK(befundMit(falsch, "takes no holes in the plate"));
+    falsch = plan;
+    falsch.hohlraum.oeffnungen[1].laenge = 0.0;
+    CHECK(befundMit(falsch, "needs the length of each opening"));
+    falsch = plan;
+    falsch.hohlraum.oeffnungen[1].laenge = -0.1;
+    CHECK(befundMit(falsch, "the length of an opening must not be negative"));
+    falsch = plan;
+    falsch.hohlraum.innen.offen = {2};
+    CHECK(befundMit(falsch, "an open opening does not exist"));
+    falsch = plan;
+    falsch.hohlraum.innen.punkte = {};
+    CHECK(befundMit(falsch, "needs open openings and measured points"));
+    falsch = plan;
+    falsch.hohlraum.innen.punkte[1].hz = 50.0;
+    CHECK(befundMit(falsch, "points need ascending frequency"));
+
+    // die Datei: alles immer geschrieben, Hin- und Rueckweg
+    const QJsonObject json = alsJson(plan);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kp::kBauplanFassung);
+    const QJsonObject c = json.value(QStringLiteral("cavity")).toObject();
+    CHECK(c.value(QStringLiteral("openingModel")).toString() == QStringLiteral("geometry"));
+    CHECK(c.value(QStringLiteral("surroundings")).toString() == QStringLiteral("free"));
+    CHECK(c.value(QStringLiteral("innerLoss")).toObject().value(QStringLiteral("points")).toArray().size() == 2);
+    CHECK(c.value(QStringLiteral("openings")).toArray().at(0).toObject().value(QStringLiteral("length")).toDouble() == 0.08);
+    kp::Bauplan zurueck;
+    REQUIRE(ausJson(json, zurueck));
+    CHECK(zurueck == plan);
+    const QJsonObject ohne = alsJson(kp::Bauplan{}).value(QStringLiteral("cavity")).toObject();
+    CHECK(ohne.value(QStringLiteral("openingModel")).toString() == QStringLiteral("endCorrection"));
+    CHECK(ohne.value(QStringLiteral("surroundings")).toString() == QStringLiteral("wall"));
+    CHECK(ohne.contains(QStringLiteral("innerLoss")));
+    // Fassung 10 ohne die Felder: Muendungskorrektur und Gueten, Laenge 0
+    QJsonObject zehn = json;
+    QJsonObject c10 = c;
+    c10.remove(QStringLiteral("openingModel"));
+    c10.remove(QStringLiteral("surroundings"));
+    c10.remove(QStringLiteral("innerLoss"));
+    QJsonArray oe10;
+    for (const QJsonValue& v : c.value(QStringLiteral("openings")).toArray())
+    {
+        QJsonObject o = v.toObject();
+        o.remove(QStringLiteral("length"));
+        oe10.append(o);
+    }
+    c10[QStringLiteral("openings")] = oe10;
+    zehn[QStringLiteral("cavity")] = c10;
+    zehn[QStringLiteral("version")] = 10;
+    kp::Bauplan alt;
+    REQUIRE(ausJson(zehn, alt));
+    CHECK(alt.hohlraum.modell == kp::OeffnungsModell::Muendung);
+    CHECK(alt.hohlraum.umgebung == kp::OeffnungsUmgebung::Wand);
+    CHECK(alt.hohlraum.innen == kp::InnererVerlust{});
+    CHECK(alt.hohlraum.oeffnungen[0].laenge == 0.0);
+    // unbekannte Werte: nicht raten
+    for (const char* feld : {"openingModel", "surroundings"})
+    {
+        QJsonObject fremd = json;
+        QJsonObject cf = c;
+        cf[QLatin1String(feld)] = QStringLiteral("baffle");
+        fremd[QStringLiteral("cavity")] = cf;
+        kp::Bauplan nichts;
+        CHECK_FALSE(ausJson(fremd, nichts));
+    }
+}
+
+TEST_CASE("Loop Koerper KQ71 die Luft der mitgelieferten Harfe gegen Bell 1988 Kap. 4")
 {
     kp::Bauplan plan;
     REQUIRE_MESSAGE(ladeBauplan(QStringLiteral("asset/loop/instrument_bodies/concert_harp") + QLatin1String(kBauplanEndung), plan),
@@ -226,30 +418,52 @@ TEST_CASE("Loop Koerper KQ64 die Luft der mitgelieferten Harfe gegen Bell 1988 K
     REQUIRE(kp::pruefe(plan).empty());
     REQUIRE(plan.hohlraum.alsRohr());
     REQUIRE(plan.hohlraum.oeffnungen.size() == 6);
-    // KQ61 a: Querschnitt ~ Breite² (Bell Abb. 2.7), auf Bells 27 l gestellt; KQ63 a: zwei Gueten
+    // KQ61 a: Querschnitt ~ Breite² (Bell Abb. 2.7), auf Bells 27 l gestellt; KQ71 a: die Oeffnungen aus ihrer Geometrie
+    // als Kolben in der Wand, der innere Verlust aus Bells Gueten mit nur Oeffnung 6 offen
     CHECK(plan.hohlraum.rohr.volumen() == doctest::Approx(0.027).epsilon(1e-6));
-    CHECK(plan.hohlraum.guete == doctest::Approx(4.4));
-    CHECK(plan.hohlraum.rohr.guete == doctest::Approx(28.0));
+    CHECK(plan.hohlraum.ausGeometrie());
+    CHECK(plan.hohlraum.umgebung == kp::OeffnungsUmgebung::Wand);
+    CHECK(plan.hohlraum.innen.offen == std::vector<int>{5});
+    CHECK(plan.hohlraum.innen.punkte.size() == 6);
+    for (const kp::Oeffnung& o : plan.hohlraum.oeffnungen) CHECK(o.laenge > 0.1);
     CHECK_FALSE(plan.hohlraum.rohr.quelle.empty());
+    CHECK_FALSE(plan.hohlraum.innen.quelle.empty());
 
     const kp::Luft luft;
     const kp::RohrModen r = kp::rohrModen(plan.hohlraum.rohr, plan.hohlraum.volumen, luft.schall, 5000.0);
     REQUIRE(r.vollstaendig);
     MESSAGE("Rohr: ", r.abschnitte, " Abschnitte, ", r.omega.size() - 1, " Laengsmoden bis 5 kHz");
     CHECK(r.omega.size() - 1 >= 30);
+    const kp::LuftraumGroessen gAlle = kp::rohrGroessen(plan, luft, r);
+    REQUIRE(gAlle.geometrie);
+    REQUIRE(gAlle.innenHz.size() == 6);
+    {
+        // der innere Verlust: Bells Gueten mit nur Oeffnung 6 offen ohne deren Abstrahlung (Probe S218: Q 11,0 / 10,8 /
+        // 12,7 / 24,8 / 32,1 / 38,0)
+        std::string zeile;
+        for (std::size_t i = 0; i < gAlle.innenHz.size(); ++i)
+        {
+            CHECK(gAlle.innenKehrwert[i] > 0.0);
+            CHECK(1.0 / gAlle.innenKehrwert[i] > plan.hohlraum.innen.punkte[i].q);
+            CHECK(1.0 / gAlle.innenKehrwert[i] < 1.15 * plan.hohlraum.innen.punkte[i].q);
+            zeile += " " + std::to_string(std::lround(10.0 / gAlle.innenKehrwert[i]) / 10.0).substr(0, 4);
+        }
+        MESSAGE("innerer Verlust, Q:", zeile);
+    }
 
-    // starre Waende: keine Plattenmoden
-    const auto luftmoden = [&](const kp::Bauplan& p) {
-        const kp::LuftraumGroessen g = kp::luftraumGroessen(p, luft.dichte, luft.schall);
+    // starre Waende: keine Plattenmoden; je Zustand die offenen Oeffnungen mit der Tafel des inneren Verlusts
+    const auto luftmoden = [&](const std::vector<int>& offen) {
+        kp::Bauplan p = plan;
+        p.hohlraum.oeffnungen.clear();
+        for (const int i : offen) p.hohlraum.oeffnungen.push_back(plan.hohlraum.oeffnungen[static_cast<std::size_t>(i)]);
+        p.hohlraum.innen.offen = {0};
+        kp::LuftraumGroessen g = kp::luftraumGroessen(p, luft.dichte, luft.schall);
+        g.innenHz = gAlle.innenHz;
+        g.innenKehrwert = gAlle.innenKehrwert;
         std::vector<kp::LuftraumMode> m = kp::koppleRohr({}, {}, g, r, luft.dichte);
         m.erase(std::remove_if(m.begin(), m.end(), [](const kp::LuftraumMode& x) { return x.frequenzHz < 20.0; }), m.end());
         return m;
     };
-    kp::Bauplan nurSechs = plan;
-    nurSechs.hohlraum.oeffnungen = {plan.hohlraum.oeffnungen[5]};  // Oeffnung 6 im Bodenblock
-    const std::vector<kp::LuftraumMode> sechs = luftmoden(nurSechs), alle = luftmoden(plan);
-    REQUIRE(sechs.size() >= 6);
-    REQUIRE(alle.size() >= 6);
 
     struct Ziel
     {
@@ -258,30 +472,46 @@ TEST_CASE("Loop Koerper KQ64 die Luft der mitgelieferten Harfe gegen Bell 1988 K
         double lageBekannt = 0.0;   // bekannte Abweichung der Lage in % (0: in der Schwelle 3 %)
         double gueteBekannt = 0.0;  // bekannte Abweichung der Guete als Verhaeltnis (0: in der Schwelle 1,5)
     };
-    // Bell Abb. 4.8 i, 4.11-4.15 i (nur Oeffnung 6) und 4.8 vi, 4.11-4.15 vi (alle offen)
-    // bekannte Abweichungen (S215): mit Oeffnung 6 allein die Helmholtz-Mode −8,4 % mit Q 6,3 statt 10, A2 mit Q 20
-    // statt 12, A5 −3,2 %; mit allen Oeffnungen A2–A5 −11,5 / −13,2 / −8,9 / −5,9 % (Harfenbericht §23.2)
-    const Ziel zielSechs[] = {{"6: Helmholtz", 75.0, 10.0, -8.4, 0.63},
-                              {"6: A1", 168.0, 10.0},
-                              {"6: A2", 283.0, 12.0, 0.0, 1.66},
-                              {"6: A3", 414.0, 23.0},
-                              {"6: A4", 545.0, 30.0},
-                              {"6: A5", 680.0, 36.0, -3.2}};
-    const Ziel zielAlle[] = {{"alle: Helmholtz", 190.0, 6.0},
-                             {"alle: A1", 292.0, 6.0},
-                             {"alle: A2", 423.0, 7.0, -11.5},
-                             {"alle: A3", 530.0, 10.0, -13.2},
-                             {"alle: A4", 620.0, 15.0, -8.9},
-                             {"alle: A5", 720.0, 30.0, -5.9}};
-    const auto pruefe = [&](const std::vector<kp::LuftraumMode>& moden, const Ziel* ziele) {
+    // Bell Abb. 4.8, 4.11-4.15 (am Seitenbild gelesen S216, Harfenbericht §24.1): die Oeffnungen vom Diskant her eine
+    // nach der anderen geoeffnet, je Zustand Helmholtz und A1-A5; Gueten nur fuer „6“ und „alle“ (q 0: keine)
+    // bekannte Abweichungen (Probe S218, Wand): Lagen ausserhalb 3 % mit ihrem Wert
+    const std::vector<std::pair<std::vector<int>, std::vector<Ziel>>> zustaende = {
+        {{5},
+         {{"6: H", 75.0, 10.0, -4.4}, {"6: A1", 168.0, 10.0}, {"6: A2", 283.0, 12.0}, {"6: A3", 414.0, 23.0}, {"6: A4", 545.0, 30.0},
+          {"6: A5", 680.0, 36.0, -3.2}}},
+        {{4, 5},
+         {{"5-6: H", 92.5, 0.0, 3.8}, {"5-6: A1", 220.0, 0.0}, {"5-6: A2", 364.0, 0.0}, {"5-6: A3", 474.0, 0.0, -3.3},
+          {"5-6: A4", 593.0, 0.0, -9.9}, {"5-6: A5", 691.0, 0.0, -4.4}}},
+        {{3, 4, 5},
+         {{"4-6: H", 100.0, 0.0, 11.5}, {"4-6: A1", 250.0, 0.0, 6.2}, {"4-6: A2", 400.0, 0.0}, {"4-6: A3", 490.0, 0.0, -6.0},
+          {"4-6: A4", 600.0, 0.0, -7.2}, {"4-6: A5", 690.0, 0.0, -4.3}}},
+        {{2, 3, 4, 5},
+         {{"3-6: H", 123.0, 0.0, 6.7}, {"3-6: A1", 290.0, 0.0, 4.7}, {"3-6: A2", 403.0, 0.0}, {"3-6: A3", 507.0, 0.0, -6.8},
+          {"3-6: A4", 617.0, 0.0, -8.5}, {"3-6: A5", 707.0, 0.0, -6.0}}},
+        {{1, 2, 3, 4, 5},
+         {{"2-6: H", 164.0, 0.0}, {"2-6: A1", 277.0, 0.0, 13.3}, {"2-6: A2", 422.0, 0.0, -3.7}, {"2-6: A3", 520.0, 0.0, -8.1},
+          {"2-6: A4", 610.0, 0.0, -7.5}, {"2-6: A5", 717.0, 0.0, -6.5}}},
+        {{0, 1, 2, 3, 4, 5},
+         {{"alle: H", 190.0, 6.0}, {"alle: A1", 292.0, 6.0, 8.2}, {"alle: A2", 423.0, 7.0, -3.8}, {"alle: A3", 530.0, 10.0, -9.5},
+          {"alle: A4", 620.0, 15.0, -8.1}, {"alle: A5", 720.0, 30.0, -6.1}}},
+    };
+    std::vector<kp::LuftraumMode> sechs, alle;
+    double summe = 0.0;
+    for (const auto& [offen, ziele] : zustaende)
+    {
+        const std::vector<kp::LuftraumMode> moden = luftmoden(offen);
+        REQUIRE(moden.size() >= 6);
+        if (offen.size() == 1) sechs = moden;
+        if (offen.size() == 6) alle = moden;
         std::string zeile;
         for (std::size_t i = 0; i < 6; ++i)
         {
             const kp::LuftraumMode& m = moden[i];
             const Ziel& z = ziele[i];
             const double lage = 100.0 * (m.frequenzHz / z.hz - 1.0);
-            const double guete = gueteVon(m, plan);
-            const double verhaeltnis = std::max(guete / z.q, z.q / guete);
+            summe += lage * lage;
+            const double guete = gueteVon(m);
+            const double verhaeltnis = z.q > 0.0 ? std::max(guete / z.q, z.q / guete) : 1.0;
             // die Zuordnung ueber die Zahl der Vorzeichenwechsel des Drucks laengs (Helmholtz 0, A1 1, ...)
             int wechsel = 0;
             double vorher = druckBei(m, r, 0.0);
@@ -300,7 +530,7 @@ TEST_CASE("Loop Koerper KQ64 die Luft der mitgelieferten Harfe gegen Bell 1988 K
             else
             {
                 CHECK(std::abs(lage) > 3.0);
-                CHECK(std::abs(lage - z.lageBekannt) < 1.5);
+                CHECK(std::abs(lage - z.lageBekannt) < 1.0);
             }
             if (z.gueteBekannt == 0.0)
                 CHECK(verhaeltnis <= 1.5);
@@ -310,15 +540,25 @@ TEST_CASE("Loop Koerper KQ64 die Luft der mitgelieferten Harfe gegen Bell 1988 K
                 CHECK(std::abs(guete / z.q - z.gueteBekannt) < 0.15);
             }
             zeile += std::string(" ") + z.name + " " + std::to_string(std::lround(10.0 * m.frequenzHz) / 10.0).substr(0, 5) + " Hz (" +
-                     std::to_string(std::lround(10.0 * lage) / 10.0).substr(0, 5) + " %) Q " + std::to_string(std::lround(guete)) + ";";
+                     std::to_string(std::lround(10.0 * lage) / 10.0).substr(0, 5) + " %)" +
+                     (z.q > 0.0 ? " Q " + std::to_string(std::lround(10.0 * guete) / 10.0).substr(0, 4) : std::string()) + ";";
         }
         MESSAGE(zeile);
-    };
-    pruefe(sechs, zielSechs);
-    pruefe(alle, zielAlle);
+    }
+    // die 36 Lagen zusammen (Probe S218, Wand: rms 6,1 %; gebaut S215 mit Muendung 1,83: 7,2 %)
+    const double rms = std::sqrt(summe / 36.0);
+    MESSAGE("36 Lagen gegen Bell: rms ", rms, " %");
+    CHECK(rms < 6.5);
+    // mit nur Oeffnung 6 offen traegt jede Mode Bells Guete (der innere Verlust ist an ihnen gestellt; die Tafel liegt
+    // an Bells Frequenzen, die Moden auf wenigen Prozent daneben)
+    for (std::size_t i = 0; i < 6; ++i)
+    {
+        CAPTURE(i);
+        CHECK(gueteVon(sechs[i]) == doctest::Approx(zustaende[0].second[i].q).epsilon(0.1));
+    }
 
-    // KQ60 a: die Helmholtz-Mode mit allen Oeffnungen bei 190 ± 1,5 Hz (Bell S. 85, Abb. 4.8 vi)
-    CHECK(std::abs(alle[0].frequenzHz - 190.0) <= 1.5);
+    // KQ60 a: die Helmholtz-Mode mit allen Oeffnungen bei 190 ± 3 Hz (Bell S. 85, Abb. 4.8 vi), ohne angepassten Wert
+    CHECK(std::abs(alle[0].frequenzHz - 190.0) <= 3.0);
     // ihr Druck faellt zum Diskant (Bell Abb. 4.8 vi: rund 18 dB von 10 bis 120 cm); mit Oeffnung 6 allein steigt er
     const double abfall = 20.0 * std::log10(std::abs(druckBei(alle[0], r, 0.1) / druckBei(alle[0], r, 1.2)));
     const double anstieg = 20.0 * std::log10(std::abs(druckBei(sechs[0], r, 1.2) / druckBei(sechs[0], r, 0.1)));

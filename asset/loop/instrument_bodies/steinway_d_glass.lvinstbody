@@ -98,7 +98,7 @@
         "meshForHz": 5000,
         "mesher": "CDT 2.0.1",
         "order": 3,
-        "seconds": 203.9736573,
+        "seconds": 122.8639814,
         "solver": "Spectra 1.2.0 + Eigen SimplicialLDLT",
         "toHz": 5000,
         "unknowns": 160347,
@@ -139,6 +139,7 @@
     },
     "modes": [
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04626071416841514,
@@ -252,6 +253,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1846942686822469,
@@ -365,6 +367,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.3299200394927927,
@@ -478,6 +481,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07741644832303796,
@@ -591,6 +595,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.3462970320288304,
@@ -704,6 +709,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.046885538606545686,
@@ -817,6 +823,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.243511714123401,
@@ -930,6 +937,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.005191257913469671,
@@ -1043,6 +1051,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.30044043844378426,
@@ -1156,6 +1165,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.22647843441151272,
@@ -1269,6 +1279,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05951561325437535,
@@ -1382,6 +1393,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09924600741444677,
@@ -1495,6 +1507,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.23739590180319392,
@@ -1608,6 +1621,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04660929845135019,
@@ -1721,6 +1735,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.021999619416957914,
@@ -1834,6 +1849,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.13008547609618729,
@@ -1947,6 +1963,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.14340261493204118,
@@ -2060,6 +2077,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03243841051310433,
@@ -2173,6 +2191,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.15484567821060177,
@@ -2286,6 +2305,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0663696578930238,
@@ -2399,6 +2419,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09862211583419814,
@@ -2512,6 +2533,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08396033539193723,
@@ -2625,6 +2647,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.14973057877622506,
@@ -2738,6 +2761,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.01861514779579904,
@@ -2851,6 +2875,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04214735459908621,
@@ -2964,6 +2989,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04413284401876715,
@@ -3077,6 +3103,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1812048085646022,
@@ -3190,6 +3217,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09542568476152974,
@@ -3303,6 +3331,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.01656780436899325,
@@ -3416,6 +3445,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06531539251710122,
@@ -3529,6 +3559,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09904913806274335,
@@ -3642,6 +3673,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.20723813173825456,
@@ -3755,6 +3787,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.05764997867243194,
@@ -3868,6 +3901,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06077774308900153,
@@ -3981,6 +4015,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.2198721170221641,
@@ -4094,6 +4129,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1946233591988154,
@@ -4207,6 +4243,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10668492771920518,
@@ -4320,6 +4357,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09078520728662746,
@@ -4433,6 +4471,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09388403359250047,
@@ -4546,6 +4585,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09519219176122004,
@@ -4659,6 +4699,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1840188490303785,
@@ -4772,6 +4813,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05914341880721643,
@@ -4885,6 +4927,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.11508798196400344,
@@ -4998,6 +5041,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07875604999839689,
@@ -5111,6 +5155,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04651362187743388,
@@ -5224,6 +5269,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.2387946271532097,
@@ -5337,6 +5383,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0009637371387375683,
@@ -5450,6 +5497,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.057766497831331094,
@@ -5563,6 +5611,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08216942961876231,
@@ -5676,6 +5725,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.015464019285044784,
@@ -5789,6 +5839,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06059426682320695,
@@ -5902,6 +5953,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08970984844516787,
@@ -6015,6 +6067,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.2762215120334015,
@@ -6128,6 +6181,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08174150442326508,
@@ -6241,6 +6295,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.061857366728072405,
@@ -6354,6 +6409,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.22841958750130603,
@@ -6467,6 +6523,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.10712543876925248,
@@ -6580,6 +6637,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.14289821984670487,
@@ -6693,6 +6751,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0007099516320644391,
@@ -6806,6 +6865,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10307067017619438,
@@ -6919,6 +6979,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1660899102453078,
@@ -7032,6 +7093,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1488851760674592,
@@ -7145,6 +7207,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09295326968246691,
@@ -7258,6 +7321,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06673160220358827,
@@ -7371,6 +7435,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.05782691665516791,
@@ -7484,6 +7549,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.10255279192538216,
@@ -7597,6 +7663,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08901328629543019,
@@ -7710,6 +7777,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.030358785908201773,
@@ -7823,6 +7891,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0017496919613240803,
@@ -7936,6 +8005,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1813149562120397,
@@ -8049,6 +8119,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.15377948766977856,
@@ -8162,6 +8233,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.15313903484159283,
@@ -8275,6 +8347,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.18662243319109448,
@@ -8388,6 +8461,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11048830775515091,
@@ -8501,6 +8575,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09609246046711076,
@@ -8614,6 +8689,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05526410689021989,
@@ -8727,6 +8803,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0690887074781677,
@@ -8840,6 +8917,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.011711675469464292,
@@ -8953,6 +9031,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09469912572296699,
@@ -9066,6 +9145,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09883383063080631,
@@ -9179,6 +9259,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1307796021529631,
@@ -9292,6 +9373,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1118816230582815,
@@ -9405,6 +9487,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.032035551214253326,
@@ -9518,6 +9601,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.12876874392409152,
@@ -9631,6 +9715,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06775111324273428,
@@ -9744,6 +9829,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09993188927670804,
@@ -9857,6 +9943,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.048569046113889465,
@@ -9970,6 +10057,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.004567336490911643,
@@ -10083,6 +10171,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.00480234266276502,
@@ -10196,6 +10285,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0031734764979679227,
@@ -10309,6 +10399,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1656816096821321,
@@ -10422,6 +10513,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.009015300861463894,
@@ -10535,6 +10627,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.16728178215956202,
@@ -10648,6 +10741,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.02346767902722696,
@@ -10761,6 +10855,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10555415433726957,
@@ -10874,6 +10969,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08850663607294404,
@@ -10987,6 +11083,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.003072979513845026,
@@ -11100,6 +11197,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.016579237287234677,
@@ -11213,6 +11311,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10388459910846008,
@@ -11326,6 +11425,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.012778563300251948,
@@ -11439,6 +11539,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.14526503336097887,
@@ -11552,6 +11653,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11668665062736165,
@@ -11665,6 +11767,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.008154281375499917,
@@ -11778,6 +11881,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09743924167311105,
@@ -11891,6 +11995,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.15554938076714314,
@@ -12004,6 +12109,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.2421744578353428,
@@ -12117,6 +12223,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.17623230451031208,
@@ -12230,6 +12337,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04147021547857933,
@@ -12343,6 +12451,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.011442318158761828,
@@ -12456,6 +12565,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06435851380634602,
@@ -12569,6 +12679,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.02351550920238129,
@@ -12682,6 +12793,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.021499873580925016,
@@ -12795,6 +12907,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.060979940359184,
@@ -12908,6 +13021,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0981907973705696,
@@ -13021,6 +13135,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.040058126182102194,
@@ -13134,6 +13249,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.03327676012574406,
@@ -13247,6 +13363,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05611390259773993,
@@ -13360,6 +13477,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10663158431096018,
@@ -13473,6 +13591,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1354401657273312,
@@ -13586,6 +13705,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0368191530788244,
@@ -13699,6 +13819,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.00012253337122302668,
@@ -13812,6 +13933,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03631682208903208,
@@ -13925,6 +14047,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.13329613914750704,
@@ -14038,6 +14161,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0553814280006282,
@@ -14151,6 +14275,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.047509294383074434,
@@ -14264,6 +14389,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.11214122969999535,
@@ -14377,6 +14503,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04407427087136019,
@@ -14490,6 +14617,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1504021662239177,
@@ -14603,6 +14731,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0070318864893675875,
@@ -14716,6 +14845,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08586724498528515,
@@ -14829,6 +14959,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07026169756904968,
@@ -14942,6 +15073,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08071728699427295,
@@ -15055,6 +15187,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.15226282738162936,
@@ -15168,6 +15301,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1245677272304187,
@@ -15281,6 +15415,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.047195913266275404,
@@ -15394,6 +15529,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06431782931567671,
@@ -15507,6 +15643,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.15068722250595404,
@@ -15620,6 +15757,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06419847988995711,
@@ -15733,6 +15871,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.25149356940768386,
@@ -15846,6 +15985,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0776849909603894,
@@ -15959,6 +16099,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.019059071296238905,
@@ -16072,6 +16213,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.034516587013493874,
@@ -16185,6 +16327,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06591026317092216,
@@ -16298,6 +16441,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06227754674882841,
@@ -16411,6 +16555,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04012172115430227,
@@ -16524,6 +16669,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06603192350262144,
@@ -16637,6 +16783,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.10556457536894676,
@@ -16750,6 +16897,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08736747169533049,
@@ -16863,6 +17011,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05697868043964864,
@@ -16976,6 +17125,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.10966350479367235,
@@ -17089,6 +17239,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07571371135258807,
@@ -17202,6 +17353,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0475173708024698,
@@ -17315,6 +17467,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.11034090915557503,
@@ -17428,6 +17581,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.010990568549339184,
@@ -17541,6 +17695,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.05250011784533625,
@@ -17654,6 +17809,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09568588371339647,
@@ -17767,6 +17923,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0034563607608879485,
@@ -17880,6 +18037,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04593932502086142,
@@ -17993,6 +18151,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0715279810583467,
@@ -18106,6 +18265,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.033594230400290095,
@@ -18219,6 +18379,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13150263642881146,
@@ -18332,6 +18493,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.005875042548508014,
@@ -18445,6 +18607,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07239493795167064,
@@ -18558,6 +18721,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0468334588023027,
@@ -18671,6 +18835,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.20978419939435075,
@@ -18784,6 +18949,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.12645437796336198,
@@ -18897,6 +19063,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.10021080274992003,
@@ -19010,6 +19177,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08625402970783287,
@@ -19123,6 +19291,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07276630854880915,
@@ -19236,6 +19405,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10944375760218533,
@@ -19349,6 +19519,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0319133803505146,
@@ -19462,6 +19633,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.008342361687353476,
@@ -19575,6 +19747,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.18489090131530211,
@@ -19688,6 +19861,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.144668597923334,
@@ -19801,6 +19975,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.011269695695834912,
@@ -19914,6 +20089,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0439306601535902,
@@ -20027,6 +20203,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.23853497886442845,
@@ -20140,6 +20317,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1397343365020479,
@@ -20253,6 +20431,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.034269136168563086,
@@ -20366,6 +20545,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.11880139192199968,
@@ -20479,6 +20659,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04171135574317643,
@@ -20592,6 +20773,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.12279498210363987,
@@ -20705,6 +20887,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.021950006272857703,
@@ -20818,6 +21001,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.2406313599547266,
@@ -20931,6 +21115,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04114139489917836,
@@ -21044,6 +21229,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06767404454798265,
@@ -21157,6 +21343,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11574123699650517,
@@ -21270,6 +21457,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.059616164525679416,
@@ -21383,6 +21571,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0027955847830573176,
@@ -21496,6 +21685,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04073469842720294,
@@ -21609,6 +21799,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07908125266627625,
@@ -21722,6 +21913,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06985274996051895,
@@ -21835,6 +22027,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.2804212038672103,
@@ -21948,6 +22141,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04705253135064852,
@@ -22061,6 +22255,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.062116732185303156,
@@ -22174,6 +22369,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.05434930256304608,
@@ -22287,6 +22483,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.071689913967638,
@@ -22400,6 +22597,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07025141834954873,
@@ -22513,6 +22711,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04047004624546608,
@@ -22626,6 +22825,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09402579094609845,
@@ -22739,6 +22939,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0661049943420686,
@@ -22852,6 +23053,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07176340274434927,
@@ -22965,6 +23167,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.03852779920610454,
@@ -23078,6 +23281,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.030442124664727063,
@@ -23191,6 +23395,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07736676389006854,
@@ -23304,6 +23509,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09761581773379852,
@@ -23417,6 +23623,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.00403919828567088,
@@ -23530,6 +23737,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06811387979418831,
@@ -23643,6 +23851,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.11534939096019362,
@@ -23756,6 +23965,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0009707309164341798,
@@ -23869,6 +24079,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03380673410149273,
@@ -23982,6 +24193,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.12584558029868853,
@@ -24095,6 +24307,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08371399479726764,
@@ -24208,6 +24421,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10479626321574499,
@@ -24321,6 +24535,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.051927959045038385,
@@ -24434,6 +24649,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.01379119486275394,
@@ -24547,6 +24763,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.11284478927762116,
@@ -24660,6 +24877,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.023433114553722243,
@@ -24773,6 +24991,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0646507491451207,
@@ -24886,6 +25105,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.15039212445398353,
@@ -24999,6 +25219,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13023794414536138,
@@ -25112,6 +25333,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09898859606998178,
@@ -25225,6 +25447,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.31020638552548613,
@@ -25338,6 +25561,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.13560833905671132,
@@ -25451,6 +25675,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04794661333097885,
@@ -25564,6 +25789,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.021775930121925597,
@@ -25677,6 +25903,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.18878863965650958,
@@ -25790,6 +26017,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.16218577540563273,
@@ -25903,6 +26131,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06907925317169984,
@@ -26016,6 +26245,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.10160677756768732,
@@ -26129,6 +26359,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06092492903732043,
@@ -26242,6 +26473,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.05817438458586392,
@@ -26355,6 +26587,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.019690396712527005,
@@ -26468,6 +26701,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.036811829342430304,
@@ -26581,6 +26815,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11975484571110617,
@@ -26694,6 +26929,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09579566862102712,
@@ -26807,6 +27043,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.059245398258275815,
@@ -26920,6 +27157,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11113623197031962,
@@ -27033,6 +27271,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.010242669376645136,
@@ -27146,6 +27385,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.011722564114272629,
@@ -27259,6 +27499,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08474081206887621,
@@ -27372,6 +27613,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11427058488896488,
@@ -27485,6 +27727,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.2276398722129343,
@@ -27598,6 +27841,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0016502630067442244,
@@ -27711,6 +27955,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.00749951986901335,
@@ -27824,6 +28069,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07859971765631898,
@@ -27937,6 +28183,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.008728400701161855,
@@ -28050,6 +28297,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.023675904034351103,
@@ -28163,6 +28411,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08807101946394637,
@@ -28276,6 +28525,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08092802410708107,
@@ -28389,6 +28639,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.059712948507809206,
@@ -28502,6 +28753,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.042023446853334215,
@@ -28615,6 +28867,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03158830145060634,
@@ -28728,6 +28981,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.062169803558336685,
@@ -28841,6 +29095,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05778704920669128,
@@ -28954,6 +29209,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0460263035054128,
@@ -29067,6 +29323,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.15409872863938767,
@@ -29180,6 +29437,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1702159109255644,
@@ -29293,6 +29551,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.17483886460455275,
@@ -29406,6 +29665,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.040652738911652525,
@@ -29519,6 +29779,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04878152753896758,
@@ -29632,6 +29893,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08731413725717192,
@@ -29745,6 +30007,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.055288052093259786,
@@ -29858,6 +30121,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07156297580302763,
@@ -29971,6 +30235,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.01604815342607251,
@@ -30084,6 +30349,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.14909336112023228,
@@ -30197,6 +30463,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.12322278694104709,
@@ -30310,6 +30577,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.12046475995900158,
@@ -30423,6 +30691,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13249250811588362,
@@ -30536,6 +30805,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.00941986605914932,
@@ -30649,6 +30919,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08864171707828025,
@@ -30762,6 +31033,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13039406383579052,
@@ -30875,6 +31147,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0546223795738081,
@@ -30988,6 +31261,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06704133542888817,
@@ -31101,6 +31375,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.15150768249110733,
@@ -31214,6 +31489,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13407390828834367,
@@ -31327,6 +31603,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.002900415056884919,
@@ -31440,6 +31717,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03942654552621587,
@@ -31553,6 +31831,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06738826322518036,
@@ -31666,6 +31945,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07542330223064447,
@@ -31779,6 +32059,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.011017026235678327,
@@ -31892,6 +32173,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.030860947542018048,
@@ -32005,6 +32287,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.13058051690933886,
@@ -32118,6 +32401,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.17344233100210668,
@@ -32231,6 +32515,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.029885808521022475,
@@ -32344,6 +32629,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07685764411496744,
@@ -32457,6 +32743,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08907019982288708,
@@ -32570,6 +32857,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1051579325410385,
@@ -32683,6 +32971,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.2119919698906026,
@@ -32796,6 +33085,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.015412265468216153,
@@ -32909,6 +33199,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.12773401166418366,
@@ -33022,6 +33313,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.23031812318200687,
@@ -33135,6 +33427,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.20683559826630282,
@@ -33248,6 +33541,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03242529940752721,
@@ -33361,6 +33655,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.2227906644630314,
@@ -33474,6 +33769,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.006112427958773123,
@@ -33587,6 +33883,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.05613665905520623,
@@ -33700,6 +33997,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11393410928005804,
@@ -33813,6 +34111,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1390366438917805,
@@ -33926,6 +34225,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11800305331855492,
@@ -34039,6 +34339,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03101445464383485,
@@ -34152,6 +34453,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.013854275787623663,
@@ -34265,6 +34567,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.049698001711352455,
@@ -34378,6 +34681,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.036520804541040654,
@@ -34491,6 +34795,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.003605872995096446,
@@ -34604,6 +34909,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.031567859816430226,
@@ -34717,6 +35023,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07300593779823135,
@@ -34830,6 +35137,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.034988225517525326,
@@ -34943,6 +35251,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.02033517359198827,
@@ -35056,6 +35365,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.007174192447491998,
@@ -35169,6 +35479,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11493097214336334,
@@ -35282,6 +35593,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.19075288167638496,
@@ -35395,6 +35707,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07030063401736415,
@@ -35508,6 +35821,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06161777254914043,
@@ -35621,6 +35935,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04092132161172238,
@@ -35734,6 +36049,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04583210517364335,
@@ -35847,6 +36163,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13537268400358202,
@@ -35960,6 +36277,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06228181189703973,
@@ -36073,6 +36391,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.11142177402177772,
@@ -36186,6 +36505,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06354806533917558,
@@ -36299,6 +36619,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07964275346231328,
@@ -36412,6 +36733,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09784894203418058,
@@ -36525,6 +36847,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.3971882213343835,
@@ -36638,6 +36961,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.02051198767779526,
@@ -36751,6 +37075,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07504683405801138,
@@ -36864,6 +37189,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.14283613338016984,
@@ -36977,6 +37303,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05492231581855411,
@@ -37090,6 +37417,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.10633332420744553,
@@ -37203,6 +37531,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.252426298233193,
@@ -37316,6 +37645,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1298942860304492,
@@ -37429,6 +37759,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.14885750279030127,
@@ -37542,6 +37873,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07628164384532554,
@@ -37655,6 +37987,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.19775560853549642,
@@ -37768,6 +38101,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.15687014164041743,
@@ -37881,6 +38215,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09793845468689172,
@@ -37994,6 +38329,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.15209264972283687,
@@ -38107,6 +38443,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.15944666814265157,
@@ -38220,6 +38557,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09769933138356757,
@@ -38333,6 +38671,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08696299984900777,
@@ -38446,6 +38785,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.004607957901084963,
@@ -38559,6 +38899,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.28912767797298583,
@@ -38672,6 +39013,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1190748695438226,
@@ -38785,6 +39127,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13443980457199073,
@@ -38898,6 +39241,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.13344414136078842,
@@ -39011,6 +39355,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.0829871194600539,
@@ -39124,6 +39469,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08988167886613038,
@@ -39237,6 +39583,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03279624671084514,
@@ -39350,6 +39697,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06540147285731268,
@@ -39463,6 +39811,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.023550920016633555,
@@ -39576,6 +39925,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.056749020175486185,
@@ -39689,6 +40039,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.018350008037103124,
@@ -39802,6 +40153,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.09020022415537987,
@@ -39915,6 +40267,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.039179310810168816,
@@ -40028,6 +40381,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.1731376812562818,
@@ -40141,6 +40495,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.059860095828811764,
@@ -40254,6 +40609,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.2962555699771761,
@@ -40367,6 +40723,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.06036099663192079,
@@ -40480,6 +40837,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.017539608987720966,
@@ -40593,6 +40951,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.09994562445791422,
@@ -40706,6 +41065,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.030295152083699043,
@@ -40819,6 +41179,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0028101777866543693,
@@ -40932,6 +41293,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.03136258179710605,
@@ -41045,6 +41407,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.026468584497402338,
@@ -41158,6 +41521,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08161422463983206,
@@ -41271,6 +41635,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.0016167345936771048,
@@ -41384,6 +41749,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04233299176628108,
@@ -41497,6 +41863,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.04444935557608028,
@@ -41610,6 +41977,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.012424137784829323,
@@ -41723,6 +42091,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.06289666071797612,
@@ -41836,6 +42205,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.018436915348346766,
@@ -41949,6 +42319,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.027428549374321837,
@@ -42062,6 +42433,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1545871010014011,
@@ -42175,6 +42547,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.07845476015851183,
@@ -42288,6 +42661,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.04481336837738132,
@@ -42401,6 +42775,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.046612144160203206,
@@ -42514,6 +42889,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08900607888275723,
@@ -42627,6 +43003,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.2460580453640406,
@@ -42740,6 +43117,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.1691174656282455,
@@ -42853,6 +43231,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.05053847473911405,
@@ -42966,6 +43345,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.022427574172800613,
@@ -43079,6 +43459,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.28611383255681716,
@@ -43192,6 +43573,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.018268246142452822,
@@ -43305,6 +43687,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.004096748704111282,
@@ -43418,6 +43801,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.02293760123337249,
@@ -43531,6 +43915,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.029012534036560185,
@@ -43644,6 +44029,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.01775860843129055,
@@ -43757,6 +44143,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.012917201731380251,
@@ -43870,6 +44257,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.08652681364307954,
@@ -43983,6 +44371,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.08698351790868239,
@@ -44096,6 +44485,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.16756619083229551,
@@ -44209,6 +44599,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 0.030013614614775107,
@@ -44322,6 +44713,7 @@
             "tubeShare": 0
         },
         {
+            "airLoss": 0,
             "airShare": 0,
             "bridge": [
                 -0.07254870300640688,
@@ -44438,7 +44830,7 @@
     "origin": "plan",
     "plan": {
         "file": "steinway_d_glass.lvinstbodyplan",
-        "fingerprint": "03f30c1a3fc813af0c92cf589a8a8c131fdb8fa0186f711dc94fb36f4b8781f1"
+        "fingerprint": "b80691031308a7dbe5e2b4654226a0d65093793b05607f9e8aa9cd24497ea622"
     },
     "statistical": {
         "bandFromHz": 2500,
@@ -44558,5 +44950,5 @@
     },
     "title": "Steinway D with a glass soundboard",
     "units": "f in Hz; eta loss factor; bridge: mode shape at the bridge point along the direction of bridgeAngle, 1/sqrt(kg) (modal mass 1/value^2); bridgeAngle: direction in which the mode moves the bridge, degrees from the normal of the plate (0 for a body from a plan); radiation: complex pressure per modal acceleration at the listening point, sqrt(kg)/m^2 (Rayleigh, baffled plate)",
-    "version": 7
+    "version": 8
 }

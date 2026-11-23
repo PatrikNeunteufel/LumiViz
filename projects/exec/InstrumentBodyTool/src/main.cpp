@@ -429,8 +429,15 @@ int main(int argc, char* argv[])
         std::sort(plattenModen.begin(), plattenModen.end(), [](const kp::Mode& a, const kp::Mode& b) { return a.frequenzHz < b.frequenzHz; });
         const kp::LuftraumGroessen g = kp::luftraumGroessen(plan, kp::Luft{}.dichte, kp::Luft{}.schall);
         kp::MitLuftraum ml = kp::mitLuftraum(auswertung, plan, kp::Luft{}, plattenModen, bisHz);
-        std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu holes and openings, Helmholtz with rigid walls %.1f Hz (single pressure)",
-                    plan.hohlraum.volumen, g.loecher.size(), g.helmholtzHz());
+        if (plan.hohlraum.ausGeometrie())
+            // KQ71 a: die Massen der Oeffnungen sind eine Matrix — die Helmholtz-Frequenz aus ihrer Diagonale saege nichts
+            std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu openings from their geometry (KQ71 a: pistons in a %s, mass and "
+                        "radiation as matrices, inner loss from %zu measured points)",
+                        plan.hohlraum.volumen, g.loecher.size(), plan.hohlraum.umgebung == kp::OeffnungsUmgebung::Frei ? "free field" : "wall",
+                        plan.hohlraum.innen.punkte.size());
+        else
+            std::printf("Cavity (F-K1 a): volume %.4g m^3, %zu holes and openings, Helmholtz with rigid walls %.1f Hz (single pressure)",
+                        plan.hohlraum.volumen, g.loecher.size(), g.helmholtzHz());
         if (plan.hohlraum.alsRohr())
             std::printf("; as a tube along y (KQ59 a) with %d longitudinal modes up to %.0f Hz", ml.rohrModen, bisHz);
         std::printf("; plate modes in vacuo:");

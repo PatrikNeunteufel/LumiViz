@@ -1,6 +1,6 @@
 {
  "format": "lumiviz-instrument-body-plan",
- "version": 10,
+ "version": 11,
  "title": "Harpsichord (soundboard of the Dulcken 1755)",
  "description": "Soundboard of the harpsichord by Johann Daniel Dulcken, Antwerp 1755 (MK&G Hamburg), with its air cavity (KQ13 a): outline, both bridges with their pins, the 4' hitchpin rail, cutoff bar and four ribs from Fig. 2 of Bader, Plath & Kontopidis 2025, the measured thickness from Fig. 1 as a grid. Assumptions: widths of the bars, cross-sections and wood of the bridges, shear moduli, open share of the rose, depth of the cavity, rim clamped and case rigid. The strings of the instrument `harpsichord` are those of the Taskin 1769 (KQ2 a): another instrument.",
  "source": "R. Bader, N. Plath, K. Kontopidis, Dulcken 1755 harpsichord, arXiv 2511.09037 (2025), CC BY 4.0: Fig. 2 (geometry), Fig. 1 (measured thickness), both read from the figures; overall size from the online collection of the Museum fuer Kunst und Gewerbe Hamburg (2000.526)",
@@ -4697,6 +4697,13 @@
   "tube": {
    "sections": [],
    "q": 30.0,
+   "source": ""
+  },
+  "openingModel": "endCorrection",
+  "surroundings": "wall",
+  "innerLoss": {
+   "openings": [],
+   "points": [],
    "source": ""
   }
  },

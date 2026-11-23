@@ -1,6 +1,6 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.27.0  
+> **Version:** 0.28.0  
 > **Datum:** 2026-11-23  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
@@ -413,6 +413,23 @@ auf den gerechneten Moden der Platte **im Vakuum** (M-orthonormal, modale Masse 
   Quermoden; der Druck an einem Loch an seinem Schwerpunkt. Gemessen an der Harfe (S215): Bell 1988 Kap. 4 mit Öffnung
   6 allein A1–A4 auf 3 %, Helmholtz mit allen Öffnungen 190,1 Hz, ihr Druckabfall zum Diskant 18,9 dB (Bell rund 18);
   mit allen Öffnungen A2–A5 −6 bis −13 % (Ursache offen). Kopplung der Harfe 11 s.
+- **Die Öffnungen aus ihrer Geometrie** (seit 0.28.0, Bauplan-Fassung 11; KQ71 a, S218; Harfenbericht §24.2, §25.6,
+  §26; Probe `proben/2026-11-23_S218_harfe_matrix_koerper.py`): mit `cavity.openingModel` `geometry` (nur im Rohr, nur
+  Öffnungen außerhalb der Platte, jede mit `length`) ist jede Öffnung ein Rechteck `length` × `area` / `length`, und
+  drei angepasste Werte (`endCorrection`, `q`, `tube.q`) entfallen. `oeffnungsIntegrale` rechnet ∬∬ dS dS′ / r je Paar
+  in Zellen von 5 mm (die Zelle mit sich selbst geschlossen, `kEigenQuadrat`; alle Öffnungen in einer Ebene),
+  `oeffnungsMassen` daraus die Massenmatrix: Lippe plus eigene Korrektur innen und außen, die Nachbarn außen ganz
+  (`surroundings` `wall`) oder halb (`free`, eigene außen × 0,72). Im Rohr gilt der Druck über die Länge der Öffnung
+  gemittelt. `koppleRohr` zerlegt die Massen der Pfropfen mit Cholesky (für eine Diagonale Bit für Bit wie bis
+  Fassung 10). Je Mode `LuftraumMode::luftVerlust`: Abstrahlung der Öffnungen in erster Ordnung uᵀ R u / ω mit
+  R_ij = ρ c k² / 2π · sin(k d)/(k d) (frei die Hälfte) plus Anteil der Luft × innerer Verlust. Der innere Verlust
+  (`cavity.innerLoss`) sind gemessene Güten mit nur den Öffnungen `openings` offen; `rohrGroessen` zieht davon die
+  Abstrahlung dieser Öffnungen im Modell ab (1/Q linear über f, an den Enden gehalten). An den Hörorten strahlt eine
+  Öffnung in der Wand mit √2 · ρ / 4π (`LochLuft::feld`: die Leistung passt zum Widerstand, die Richtung ist unbekannt).
+  Die Güte erster Ordnung trifft die komplexen Eigenwerte auf wenige Prozent, außer wo zwei ungedämpfte Moden fast
+  aufeinanderliegen (S218). Je Mode steht der Verlust der Luft in der Körperdatei (`airLoss`, Fassung 8,
+  `ModeImKoerper::luftVerlust`). **Grenzen:** die Lage `z` und die Krümmung der Schale gehen in die Massen nicht ein;
+  Bells 36 Lagen der Harfe rms 6,1 %, A3–A5 mit allen Öffnungen 6–10 % zu tief (Ursache offen).
 - **Statistischer Teil** (KQ66 a): `schaetze` zählt nur Moden mit `luftAnteil` unter `kStatistikLuftGrenze` (0,5) — er
   setzt den Boden fort, nicht die Längsmoden des Rohrs.
 
@@ -487,6 +504,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.28.0 | 2026-11-23 | Session 218, Stufe 34k-5, KQ71 a: **die Öffnungen aus ihrer Geometrie** — `.lvinstbodyplan` **Fassung 11** (`OeffnungsModell`, `OeffnungsUmgebung`, `GuetePunkt`, `InnererVerlust`, `Oeffnung::laenge`, `Hohlraum::modell`, `umgebung`, `innen`, `ausGeometrie`; `cavity.openingModel`, `cavity.surroundings`, `cavity.innerLoss`, je Öffnung `length`, alles immer geschrieben; Fassung 10 liest sich mit Mündungskorrektur und Güten), `oeffnungsIntegrale`, `oeffnungsMassen`, `rohrGroessen`, `kEigenQuadrat`, `kAussenFreiGegenWand`; in `LuftraumGroessen` Güten, Massenmatrix, Strahlung und Tafel des inneren Verlusts (`innenBei`), in `LochLuft` `laengs` und `feld`; `koppleRohr` mit Massenmatrix (Cholesky) und dem Druck über die Länge der Öffnung; `LuftraumMode::luftVerlust`; **`.lvinstbody` Fassung 8** (`airLoss`, `ModeImKoerper::luftVerlust`). Ohne Geometrie Bit für Bit wie vorher. Die Harfe mit Öffnungen in der Wand neu; alle Körper mit Bauplan neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.27.0 | 2026-11-23 | Session 215, Stufe 34k-5, KQ59 a, KQ61 a–KQ66 a: **die Luft als Rohr** — `.lvinstbodyplan` **Fassung 10** (`HohlraumArt`, `Querschnitt`, `Rohr`, `Hohlraum::art`, `rohr`, `alsRohr`; `cavity.kind`, `cavity.tube`, immer geschrieben; Prüfung der Querschnitte gegen das Volumen), `rohrModen`, `koppleRohr`, `lochAbstrahlungJeLoch`, `mitLuftraumRohr`, `mitLuftraum(…, bisHz)`, `Auswertung::volumenLaengs`, `ModeImKoerper::rohrAnteil`; **`.lvinstbody` Fassung 7** (`tubeShare`); `schaetze` ohne Moden mit mehr als halber Luft (`kStatistikLuftGrenze`). Abhängigkeit zu `InstrumentCore` (in `Solution.json` danach). Neuer Test `test_LoopKoerperRohr`. Ein Druck Bit für Bit wie vorher; alle sieben Körper mit Bauplan neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.26.0 | 2026-11-21 | Session 211, Stufe 34k-6, KQ53 a: **`.lvinstbody` Fassung 6** — je Mode `springShare` (`ModeImKoerper::federAnteil`, immer geschrieben, Fassung 5 liest sich mit 0). Der Wächter über die mitgelieferten Körper rechnet die Dämpfung mit dem Anteil der Federn nach. Die sieben Körper mit `--rewrite` neu geschrieben, die Harfe (der erste Körper mit Federn, KQ52 a) neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.25.0 | 2026-11-20 | Session 210, Stufe 34k-6, KQ46 a, KQ49 a: Federn an Punkten — `Punktfeder` (Ort, Steife N/m, Verlustfaktor, Quelle) in `Bauplan::punktfedern`, **`.lvinstbodyplan` Fassung 9** mit `pointSprings` (`x`, `y`, `stiffness`, `lossFactor`, `source`; immer geschrieben, Fassung 8 lesbar ohne Federn); `setzePunktfedern` (k · N Nᵀ auf K), `baueSystem(netz, element, plan)` setzt sie, `baueSystemOhnePunktfedern`; `Abtastung`, `bezug`, `abtastung`, `wertBei` von `Auswertung.hpp` nach `Platte.hpp`. Dämpfung: `Auswertung::setzePunktfedern`, `ModeImKoerper::federAnteil` (nicht in der Körperdatei), η = (1 − Anteil) · η_Platte + Σ a_f η_f. `pruefe`: Steife und Verlustfaktor nicht negativ, Ort im Umriss und in keinem Loch. Werkzeug: meldet Zahl und Summe der Federn und je Mode ihren Anteil. `kRechenFassung` bleibt 2 — ein Bauplan ohne Federn rechnet wie vorher, alle Körper mit Bauplan neu (Abdruck). Test „KQ46 Punktfedern“ in `test_LoopKoerperPlatte`: gegen die Reihe nach Navier 0,1 %, gegen den Modenraum mit allen Moden 10⁻⁶ und mit 60 Moden 0,03 %, am feineren Netz 0,05 %. |

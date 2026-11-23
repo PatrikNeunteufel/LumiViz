@@ -67,9 +67,13 @@ BREITE_BASS, BREITE_DISKANT = 0.41, 0.10
 DICKE_BASS, DICKE_DISKANT = 0.010, 0.003
 FURNIER = 0.001
 SCHRITT = 0.01
-# Oeffnungen (Tab. 4.1): Nr., Flaeche m2, Lippe m; Lage laengs (Anteil der Laenge vom Bassende, Abb. 2.8)
-OEFFNUNGEN = [(1, 91e-4, 0.016, 0.19), (2, 93e-4, 0.015, 0.356), (3, 77e-4, 0.015, 0.524), (4, 68e-4, 0.013, 0.694),
-              (5, 58e-4, 0.012, 0.87), (6, 67e-4, 0.021, 0.03)]
+# Oeffnungen (Tab. 4.1): Nr., Flaeche m2, Lippe m; Lage laengs (Anteil der Laenge vom Bassende, Abb. 2.8); Laenge laengs
+# des Kastens m (Abb. 2.8, Mass A; Nr. 6 oval im Bodenblock)
+OEFFNUNGEN = [(1, 91e-4, 0.016, 0.19, 0.165), (2, 93e-4, 0.015, 0.356, 0.180), (3, 77e-4, 0.015, 0.524, 0.184),
+              (4, 68e-4, 0.013, 0.694, 0.184), (5, 58e-4, 0.012, 0.87, 0.172), (6, 67e-4, 0.021, 0.03, 0.115)]
+# S218 (KQ71 a): der innere Verlust der Luft aus Bells Gueten mit nur Oeffnung 6 offen (Abb. 4.8, 4.11-4.15 i, Kasten A im
+# Sand): Helmholtz und A1-A5, Hz und Q
+INNEN_NUR_6 = [(75.0, 10.0), (168.0, 10.0), (283.0, 12.0), (414.0, 23.0), (545.0, 30.0), (680.0, 36.0)]
 # Zugleiste (Abb. 2.4 d): y vom Bassende m, Hoehe m, Breite m
 ZUGLEISTE = [(0.0, 0.020, 0.032), (0.29, 0.025, 0.036), (0.55, 0.019, 0.039), (0.80, 0.013, 0.034), (1.05, 0.0072, 0.027),
              (1.28, 0.0056, 0.020)]
@@ -116,9 +120,11 @@ def breite(y):
 # S215 (KQ59 a, KQ61 a, KQ63 a, KQ60 a): die Luft als Rohr laengs y
 VOLUMEN = 0.027              # Bell Tab. 4.1
 ROHR_SCHRITT = 0.05          # m zwischen zwei Querschnitten (S ~ w^2 ist zwischen ihnen fast linear)
-MUENDUNG = 1.83              # Helmholtz mit allen Oeffnungen 190 Hz am Rohr (Waechter im Test)
-GUETE_OEFFNUNGEN = 4.4       # Bell Abb. 4.8, 4.11-4.15: zwoelf Gueten, kleinste Quadrate des Logarithmus
-GUETE_LAENGS = 28.0
+# S218 (KQ71 a): die Oeffnungen aus ihrer Geometrie - Muendungskorrektur und Gueten gelten dann nicht; geschrieben werden
+# die Vorgaben der Bibliothek
+MUENDUNG = 1.7
+GUETE_OEFFNUNGEN = 30.0
+GUETE_LAENGS = 30.0
 
 
 def querschnitte():
@@ -184,7 +190,7 @@ def baue(saiten):
     assert len({p["y"] for p in punkte}) == len(saiten), "80 Tasten an 46 Orten"
     return {
         "format": "lumiviz-instrument-body-plan",
-        "version": 10,
+        "version": 11,
         "title": "Concert harp",
         "description": "Soundboard of the Salvi Orchestra concert harp with the air of its soundbox (Bell 1988; KQ1 a, "
                        "KQ17 a to KQ21 a). Spruce board 131 cm, 41 to 10 cm wide, 10 to 3 mm thick, grain across, "
@@ -198,7 +204,8 @@ def baue(saiten):
                        "Targets without strings (KQ40 a, KQ31-2 a): both modes with air within 7 % of 170 / 216 Hz, "
                        "S(1,2) to S(1,6) within 7 %, the strongest antinode within two testing positions, the "
                        "antinodes within 6 dB; known deviations are held with their values in the test. The shell is "
-                       "rigid; only the Helmholtz mode of the air is computed.",
+                       "rigid; the air is a tube along the box (KQ59 a) with the apertures as pistons in a wall from "
+                       "their geometry - mass and radiation as matrices, the inner loss from Bell (KQ71 a).",
         "source": QUELLE,
         "units": "SI: m, kg/m^3, Pa",
         "materials": [
@@ -224,12 +231,8 @@ def baue(saiten):
                               "432 / 545 / 757 / 905 Hz with Q 39 / 45 / 43 / 31 / 33 / 18; S(1,6) with Q 10 left out); "
                               "extrapolated above 1 kHz"},
         "cavity": {"volume": VOLUMEN, "endCorrection": MUENDUNG, "q": GUETE_OEFFNUNGEN,
-                   "source": "volume and apertures: Bell 1988 Table 4.1; end correction such that the Helmholtz mode "
-                             "with all apertures open and rigid walls lies at 190 Hz (Bell 1988 Ch. 4, Fig. 4.8 vi; "
-                             "KQ60 a) with the air as a tube; Q of the air in the apertures and Q of the air along the "
-                             "tube fitted together to the twelve Q of the air modes of soundbox A in sand (Figs. 4.8, "
-                             "4.11-4.15: Helmholtz and A1-A5 with aperture 6 only and with all apertures open, Q 6-36) "
-                             "in the least-squares sense of the logarithm (KQ63 a, S215)",
+                   "source": "volume and apertures: Bell 1988 Table 4.1; the apertures from their geometry (KQ71 a, "
+                             "S218): the end correction and the Q of the air are not used",
                    "kind": "tube",
                    "tube": {"sections": querschnitte()[0], "q": GUETE_LAENGS,
                             "source": "the soundbox is a half cone with a semicircular section, its depth about half "
@@ -240,10 +243,19 @@ def baue(saiten):
                                       "section the longitudinal air modes with aperture 6 open lie within 0 / -2 / -2 / "
                                       "-3 % of Bell (283 / 414 / 545 / 680 Hz, Figs. 4.12-4.15; KQ59 a, KQ61 a, S215)"},
                    "openings": [{"x": 0.0, "y": round(anteil * LAENGE, 4), "z": round(-breite(anteil * LAENGE) / 2, 4),
-                                 "area": flaeche, "lipLength": lippe,
-                                 "source": f"aperture {nr} (Bell 1988 Table 4.1; position along the box from Fig. 2.8, "
-                                           "depth assumed as half the width of the board)"}
-                                for nr, flaeche, lippe, anteil in OEFFNUNGEN]},
+                                 "area": flaeche, "lipLength": lippe, "length": laenge,
+                                 "source": f"aperture {nr} (Bell 1988 Table 4.1; position and length along the box "
+                                           "from Fig. 2.8, a rectangle of that length; depth assumed as half the width "
+                                           "of the board)"}
+                                for nr, flaeche, lippe, anteil, laenge in OEFFNUNGEN],
+                   # S218 (KQ71 a, Harfenbericht 24.2, 25.6): the apertures as pistons in a wall from their geometry
+                   "openingModel": "geometry",
+                   "surroundings": "wall",
+                   "innerLoss": {"openings": [5], "points": [{"f": f, "q": q} for f, q in INNEN_NUR_6],
+                                 "source": "Q of the air modes of soundbox A in sand with aperture 6 only open (Bell 1988 "
+                                           "Figs. 4.8, 4.11-4.15 i: Helmholtz and A1-A5); the computation takes off the "
+                                           "radiation of aperture 6. Choice of a wall: Bell finds the Helmholtz mode of "
+                                           "the free box at 187 Hz and in sand at 190 Hz (pp. 85, 114 f.)"}},
         "rim": {"support": "elastic", "rotationalStiffness": 0.0,
                 "source": "supported: the board sits between the holding bar and the rim bar (Bell 1988 Fig. 2.6); with a "
                           "rotational spring or a clamped rim the antinodes lie 6-9 testing positions too far towards the "

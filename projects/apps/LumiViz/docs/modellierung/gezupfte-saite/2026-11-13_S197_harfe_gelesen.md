@@ -1528,3 +1528,57 @@ bleibt gebaut. Verworfen: b (Kopplung × 0,6 im Bauplan), c (Kasten als Balken i
 gerechnet — ein Körper aus der Probe, daran Lautheit der Tasten 50–62 mit Mitschwingen, Abstrahlung 33–22, Güten ohne
 und mit Saiten, Wächter gegen alle 36 Werte aus Bell Kap. 4 —, dann wird der Bau vorgelegt. KQ63 a und KQ64 a gelten
 bis dahin. Verworfen: b (jetzt bauen), c (auf Dauer Probe).
+
+## 26 S218: KQ71 a gerechnet, KQ72 a gebaut — die Öffnungen aus ihrer Geometrie, als Kolben in der Wand
+
+> **Sitzung:** S218 (2026-11-23), Opus. Probe `proben/2026-11-23_S218_harfe_matrix_koerper.py` (`rohr`, `guete`,
+> `schreibe <vak> <gebaut> <ziel> wand|frei`); Platte im Vakuum mit Saiten aus S213, ohne Saiten aus S217, gebauter
+> Körper S215 mit 16 Hörorten zum Vergleich. Ausgaben lokal `.claude/handover/s218_*.txt`, Körper unter
+> `.claude/handover/s218/`. Dann gebaut (KQ72 a): `InstrumentBody` 0.28.0, Bauplan-Fassung 11, Körperdatei Fassung 8.
+
+**26.1 Was gerechnet wird — kein angepasster Wert an der Luft.** Massenmatrix der Öffnungen aus der Geometrie
+(§24.2: Rechtecke Länge × Fläche / Länge in einer Ebene, eigene Korrektur innen und außen, die Nachbarn außen), der
+Druck über die Länge der Öffnung gemittelt; Verlust je Mode in erster Ordnung: Abstrahlung uᵀ R(ω) u / ω mit
+R_ij = ρ c k² / 2π · sin(k d)/(k d) (§25.6) plus Anteil der Luft × innerer Verlust. Der innere Verlust kommt aus Bells
+Güten mit nur Öffnung 6 offen **ohne die Abstrahlung der Öffnung 6** (S217 hatte sie ganz als inneren Verlust
+genommen): Wand Q 11,0 / 10,8 / 12,7 / 24,8 / 32,1 / 38,0 gegen Bell 10 / 10 / 12 / 23 / 30 / 36. Zwei Fälle, je in sich
+gleich: Wand (κ 1, Widerstand ganz, Schall an den Hörorten √2 · ρ/4π, damit die Leistung zum Widerstand passt) und frei
+(κ 1/2, eigene außen × 0,72, Widerstand halb, Schall ρ/4π). Ein erster Lauf mit Feld 2 · ρ/4π gab die vierfache
+Leistung und war um 3 dB zu laut an den Öffnungen (Lautheit 10,1 / 10,1 / 2,0 LU) — berichtigt.
+
+**26.2 Güte erster Ordnung gegen komplexe Eigenwerte.** Luft allein: auf 0,1 gleich. Plattenmoden: auf wenige Prozent,
+außer wo zwei ungedämpfte Moden fast aufeinanderliegen (S(1,3) besaitet 9 / 14 gegen komplex 7 / 21; ohne Saiten 17
+gegen 21). `Luftraum.hpp` bleibt bei reellen Moden.
+
+**26.3 Die Zielgrößen** (besaitet, wenn nicht anders gesagt; Lautheit Tasten 50–62 mit Mitschwingen, 16 Hörorte):
+
+| Zielgröße | Bezug | Wand | frei | gebaut S215 |
+|---|---|---|---|---|
+| Bells 36 Lagen der Luft, rms / größte | – | 6,1 / 13 % | 7,4 / 20 % | 7,2 / 13 % |
+| Helmholtz alle offen | 190 Hz (freier Kasten 187) | 192 Hz | 209 Hz | 190 Hz (angepasst) |
+| Güten der Luft alle offen | 6 / 6 / 7 / 10 / 15 / 30 | 4,7 / 5,9 / 7,8 / 13 / 22 / 28 | 6,0 / 7,9 / 11 / 17 / 25 / 31 | 5 / 6 / 8 / 13 / 17 / 21 |
+| Paar besaitet | 187 / 207 | −6,8 / +5,1 % | −1,8 / +8,0 % | −7,5 / +4,1 % |
+| Paar ohne Saiten | 170 / 216 | −2,8 / −2,4 % | +0,9 / +1,3 % | – |
+| Güten S(1,2) / S(1,3) / S(1,4) / S(1,5) | 32 / 27 / 28 / 19 | 20 / 9–14 / 13–19 / 22–27 | 23 / 27 / 16–22 / 24–29 | 18 / 15 / 21 / 24 |
+| Abstrahlung 33–22 | halten ≤ 6 dB | 6 / 12, 14,6 dB | 6 / 12, 12,9 dB | 6 / 12, 10,9 dB |
+| Lautheit Spanne / größter / mittlerer | ≤ 15 / ≤ 12 / ≤ 4 LU | **11,6 / 11,6 / 2,6** | 13,1 / 12,3 / 3,4 | 13,8 / 13,8 / 2,9 |
+
+Nur die Wand hält die Schwellen der Lautheit nach GZ14 a. Bell findet die Helmholtz-Mode am freien Kasten bei 187 Hz
+und im Sand bei 190 Hz (§22.2): der Kasten wirkt für seine Öffnungen wie eine Wand; der freie Raum liegt 10 % daneben.
+
+**26.4 KQ72 a (Patrik S218): gebaut mit Wand.** `cavity.openingModel` `geometry`, `cavity.surroundings` `wall`,
+`cavity.innerLoss` (Öffnung 6, sechs Punkte aus Abb. 4.8, 4.11–4.15 i), je Öffnung `length` (Abb. 2.8: 16,5 / 18,0 /
+18,4 / 18,4 / 17,2 / 11,5 cm); Mündungskorrektur und die Güten 4,4 / 28 entfallen (löst KQ63 a ab), der Wächter prüft
+alle 36 Lagen (löst KQ64 a ab). Der gebaute Körper trifft die Probe auf 0,1 Hz (174,2 / 217,4 / 249,3 / 328,1 /
+332,9 Hz, η 0,156 / 0,078 / 0,050 / 0,112 / 0,070). Am Körper (Test „Luftraum die mitgelieferte Harfe“): besaitet
+S(1,1)− 174,2 (−6,8 %, jetzt in der Schwelle), S(1,1)+ 217,4, S(1,2)–S(1,6) −3,0 / −1,8 / +1,9 / +9,4 / +4,9 %;
+ohne Saiten gegen Bell G (KQ70 a) 165,2 / 210,7 / 232,9 / 319,7 / 434,0 / 542,7 gegen 170 / 216 / 249 / 316 / 432 /
+545 Hz, alle in 7 %; Abstrahlung 33–22 mit den Saiten als Dämpfer 6 / 12, größte 14,9 dB an Saite 29 (bekannte
+Abweichung); S(1,3) ohne Saiten mit drei Bäuchen wie Bell, die stärksten Bäuche 11–24 dB unter Bell. Wächter der Luft:
+36 Lagen rms 6,14 %, Helmholtz 192,1 Hz, Abfall zum Diskant 18,0 dB (Bell rund 18), mit Öffnung 6 allein jede Güte
+auf 10 % an Bell.
+
+**26.5 Stand.** Belegt: die Öffnungen der Harfe sind ohne angepassten Wert aus Geometrie und Bells Messung mit
+Öffnung 6 beschrieben; Lautheit in den Schwellen. Offen: A3–A5 mit allen Öffnungen 6–10 % zu tief (Kandidaten §24.2);
+die Abstrahlung an Saite 29 (+14,9 dB); die Güten der Plattenmoden ohne Saiten (Modell 17–21 gegen Bell 39–45, sie
+tragen 17–54 % Luft); die Wirkung des Besaitens (KQ70 a).

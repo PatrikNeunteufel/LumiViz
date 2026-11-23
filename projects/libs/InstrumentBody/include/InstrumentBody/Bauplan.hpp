@@ -54,7 +54,10 @@ namespace lumi::koerper
 /// (keine Federn).
 /// 10 (S215, KQ59 a, KQ61 a, KQ63 a): die Luft im Hohlraum als Rohr laengs y (`cavity.kind`, `cavity.tube` mit
 /// Querschnitten und der Guete der Luft laengs). Fassung 1 bis 9 bleiben lesbar (ein Druck fuer den ganzen Hohlraum).
-inline constexpr int kBauplanFassung = 10;
+/// 11 (S218, KQ71 a): die Oeffnungen aus ihrer Geometrie (`cavity.openingModel`, `cavity.surroundings`,
+/// `cavity.innerLoss`, je Oeffnung `length`) — Massenmatrix, Strahlungswiderstand als Matrix und ein gemessener
+/// innerer Verlust statt Muendungskorrektur und Gueten. Fassung 10 bleibt lesbar (Muendungskorrektur und Gueten).
+inline constexpr int kBauplanFassung = 11;
 
 /// Ein Punkt der Ebene in Metern.
 struct Punkt2
@@ -248,8 +251,52 @@ struct Oeffnung
     double flaeche = 0.0;   ///< m²
     double lippe = 0.0;     ///< m: Laenge der Oeffnung durch die Wand (ohne Muendungskorrektur)
     std::string quelle;
+    /// m: Ausdehnung laengs y (seit Fassung 11, KQ71 a); die Oeffnung ist dann ein Rechteck `laenge` × `flaeche` /
+    /// `laenge` (quer). 0 = nicht angegeben (das Modell `Geometrie` braucht sie; im Rohr gilt der Druck dann an ihrem Ort).
+    double laenge = 0.0;
 
     [[nodiscard]] bool operator==(const Oeffnung&) const = default;
+};
+
+/// Wie die Luft in den Oeffnungen gerechnet wird (seit Fassung 11; KQ71 a, S218).
+enum class OeffnungsModell : int
+{
+    /// je Loch und Oeffnung eine eigene Masse mit `Hohlraum::muendung`, Verlust nach Anteilen mit `Hohlraum::guete`
+    /// und `Rohr::guete` (KQ63 a) — wie bis Fassung 10
+    Muendung = 0,
+    /// die Oeffnungen als Kolben aus ihrer Geometrie: die mitbewegte Luft aussen als Matrix (sie belasten sich
+    /// gegenseitig), der Strahlungswiderstand als Matrix, dazu `Hohlraum::innen` (Harfenbericht §24.2, §25.6; Probe
+    /// `proben/2026-11-23_S218_harfe_matrix_koerper.py`). Nur im Rohr und nur mit Oeffnungen ausserhalb der Platte.
+    Geometrie,
+};
+
+/// Wohin die Oeffnungen strahlen, im Modell `Geometrie` (seit Fassung 11; KQ71 a).
+enum class OeffnungsUmgebung : int
+{
+    Wand = 0,  ///< Kolben in einer grossen Wand (der Kasten selbst; Bell 1988: Helmholtz frei 187, im Sand 190 Hz)
+    Frei,      ///< Kolben im freien Raum (ohne Schallwand)
+};
+
+/// Eine gemessene Guete (seit Fassung 11).
+struct GuetePunkt
+{
+    double hz = 0.0;
+    double q = 0.0;
+
+    [[nodiscard]] bool operator==(const GuetePunkt&) const = default;
+};
+
+/// Der innere Verlust der Luft (Reibung, Waerme, nachgiebige Waende) im Modell `Geometrie` (seit Fassung 11; KQ71 a):
+/// gemessene Gueten der Luftmoden mit nur den Oeffnungen `offen` (Indizes in `Hohlraum::oeffnungen`) offen. Die
+/// Rechnung zieht davon die Abstrahlung dieser Oeffnungen im Modell ab; der Rest (1/Q, linear ueber f, an den Enden
+/// gehalten) traegt jede Mode mit ihrem Anteil der Luft.
+struct InnererVerlust
+{
+    std::vector<int> offen;
+    std::vector<GuetePunkt> punkte;  ///< nach f aufsteigend
+    std::string quelle;
+
+    [[nodiscard]] bool operator==(const InnererVerlust&) const = default;
 };
 
 /// Wie die Luft im Hohlraum gerechnet wird (seit Fassung 10; KQ59 a, S215).
@@ -329,9 +376,15 @@ struct Hohlraum
     /// seit Fassung 10 (KQ59 a); Vorgabe ein Druck wie bis Fassung 9
     HohlraumArt art = HohlraumArt::EinDruck;
     Rohr rohr;  ///< seit Fassung 10; gilt nur mit `art` Rohr
+    /// seit Fassung 11 (KQ71 a); Vorgabe die Muendungskorrektur wie bis Fassung 10. Mit `Geometrie` gelten
+    /// `muendung`, `guete` und `rohr.guete` nicht.
+    OeffnungsModell modell = OeffnungsModell::Muendung;
+    OeffnungsUmgebung umgebung = OeffnungsUmgebung::Wand;  ///< seit Fassung 11; gilt nur mit `Geometrie`
+    InnererVerlust innen;                                  ///< seit Fassung 11; gilt nur mit `Geometrie`
 
     [[nodiscard]] bool an() const { return volumen > 0.0; }
     [[nodiscard]] bool alsRohr() const { return an() && art == HohlraumArt::Rohr; }
+    [[nodiscard]] bool ausGeometrie() const { return alsRohr() && modell == OeffnungsModell::Geometrie; }
     [[nodiscard]] bool operator==(const Hohlraum&) const = default;
 };
 
@@ -811,6 +864,25 @@ struct Randpunkt
             for (const Oeffnung& o : plan.hohlraum.oeffnungen)
                 if (o.ort.y < von || o.ort.y > bis) befunde.push_back("cavity tube: an opening lies outside the tube");
         }
+    }
+    for (const Oeffnung& o : plan.hohlraum.oeffnungen)
+        if (o.laenge < 0.0) befunde.push_back("cavity: the length of an opening must not be negative");
+    if (plan.hohlraum.modell == OeffnungsModell::Geometrie)
+    {
+        // KQ71 a: Kolben aus der Geometrie — nur im Rohr, nur Oeffnungen ausserhalb der Platte, jede mit Laenge
+        const Hohlraum& h = plan.hohlraum;
+        if (h.art != HohlraumArt::Rohr) befunde.push_back("cavity: the opening model 'geometry' needs a tube");
+        if (!plan.platte.loecher.empty()) befunde.push_back("cavity: the opening model 'geometry' takes no holes in the plate");
+        if (h.oeffnungen.empty()) befunde.push_back("cavity: the opening model 'geometry' needs openings");
+        for (const Oeffnung& o : h.oeffnungen)
+            if (!(o.laenge > 0.0)) befunde.push_back("cavity: the opening model 'geometry' needs the length of each opening");
+        const InnererVerlust& v = h.innen;
+        if (v.offen.empty() || v.punkte.empty()) befunde.push_back("cavity inner loss: needs open openings and measured points");
+        for (const int i : v.offen)
+            if (i < 0 || i >= static_cast<int>(h.oeffnungen.size())) befunde.push_back("cavity inner loss: an open opening does not exist");
+        for (std::size_t k = 0; k < v.punkte.size(); ++k)
+            if (!(v.punkte[k].hz > 0.0 && v.punkte[k].q > 0.0) || (k > 0 && !(v.punkte[k].hz > v.punkte[k - 1].hz)))
+                befunde.push_back("cavity inner loss: points need ascending frequency and a positive Q");
     }
     if (plan.rand.drehfeder < 0.0) befunde.push_back("rim: rotational stiffness must not be negative");
     if (!plan.rand.elastisch() && plan.rand.drehfeder != 0.0) befunde.push_back("rim: a rotational stiffness needs the support 'elastic'");

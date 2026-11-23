@@ -1,8 +1,8 @@
 {
  "format": "lumiviz-instrument-body-plan",
- "version": 10,
+ "version": 11,
  "title": "Concert harp",
- "description": "Soundboard of the Salvi Orchestra concert harp with the air of its soundbox (Bell 1988; KQ1 a, KQ17 a to KQ21 a). Spruce board 131 cm, 41 to 10 cm wide, 10 to 3 mm thick, grain across, with the beech cover bar outside, the beech straining bar and two spruce bars inside. The wood of the board is calibrated on the free board without bars (Tables 3.1 and 3.2). Cavity of 27 l with six apertures in the back of the shell. The rim is supported (deflection held, rotation free): checked on the position of the antinodes along the cover bar (Figs. 7.8 to 7.16). The treble edge is held by a spring only, the bass sides up to 0.6 m carry a rotational spring (both fitted, not measured; KQ50 a, KQ51 a). The body is the strung harp (KQ46 a): each string is a spring at its eyelet, 0.3 E A / L (KQ52 a). Targets without strings (KQ40 a, KQ31-2 a): both modes with air within 7 % of 170 / 216 Hz, S(1,2) to S(1,6) within 7 %, the strongest antinode within two testing positions, the antinodes within 6 dB; known deviations are held with their values in the test. The shell is rigid; only the Helmholtz mode of the air is computed.",
+ "description": "Soundboard of the Salvi Orchestra concert harp with the air of its soundbox (Bell 1988; KQ1 a, KQ17 a to KQ21 a). Spruce board 131 cm, 41 to 10 cm wide, 10 to 3 mm thick, grain across, with the beech cover bar outside, the beech straining bar and two spruce bars inside. The wood of the board is calibrated on the free board without bars (Tables 3.1 and 3.2). Cavity of 27 l with six apertures in the back of the shell. The rim is supported (deflection held, rotation free): checked on the position of the antinodes along the cover bar (Figs. 7.8 to 7.16). The treble edge is held by a spring only, the bass sides up to 0.6 m carry a rotational spring (both fitted, not measured; KQ50 a, KQ51 a). The body is the strung harp (KQ46 a): each string is a spring at its eyelet, 0.3 E A / L (KQ52 a). Targets without strings (KQ40 a, KQ31-2 a): both modes with air within 7 % of 170 / 216 Hz, S(1,2) to S(1,6) within 7 %, the strongest antinode within two testing positions, the antinodes within 6 dB; known deviations are held with their values in the test. The shell is rigid; the air is a tube along the box (KQ59 a) with the apertures as pistons in a wall from their geometry - mass and radiation as matrices, the inner loss from Bell (KQ71 a).",
  "source": "A. J. Bell, An Acoustical Investigation of the Concert Harp, PhD thesis, University of St Andrews 1988 (Salvi Orchestra, 46 strings); all numbers read from the figures and tables",
  "units": "SI: m, kg/m^3, Pa",
  "materials": [
@@ -6240,9 +6240,9 @@
  },
  "cavity": {
   "volume": 0.027,
-  "endCorrection": 1.83,
-  "q": 4.4,
-  "source": "volume and apertures: Bell 1988 Table 4.1; end correction such that the Helmholtz mode with all apertures open and rigid walls lies at 190 Hz (Bell 1988 Ch. 4, Fig. 4.8 vi; KQ60 a) with the air as a tube; Q of the air in the apertures and Q of the air along the tube fitted together to the twelve Q of the air modes of soundbox A in sand (Figs. 4.8, 4.11-4.15: Helmholtz and A1-A5 with aperture 6 only and with all apertures open, Q 6-36) in the least-squares sense of the logarithm (KQ63 a, S215)",
+  "endCorrection": 1.7,
+  "q": 30.0,
+  "source": "volume and apertures: Bell 1988 Table 4.1; the apertures from their geometry (KQ71 a, S218): the end correction and the Q of the air are not used",
   "kind": "tube",
   "tube": {
    "sections": [
@@ -6359,7 +6359,7 @@
      "area": 0.0028212
     }
    ],
-   "q": 28.0,
+   "q": 30.0,
    "source": "the soundbox is a half cone with a semicircular section, its depth about half the width of the board along the whole length (Bell 1988 Fig. 2.7) - so the section goes with the width squared, scaled to the volume of Table 4.1 (factor 0.2821 on the width squared; the outer half circle would give 0.393, the bars, struts and blocks take the rest); with this section the longitudinal air modes with aperture 6 open lie within 0 / -2 / -2 / -3 % of Bell (283 / 414 / 545 / 680 Hz, Figs. 4.12-4.15; KQ59 a, KQ61 a, S215)"
   },
   "openings": [
@@ -6369,7 +6369,8 @@
     "z": -0.1755,
     "area": 0.0091,
     "lipLength": 0.016,
-    "source": "aperture 1 (Bell 1988 Table 4.1; position along the box from Fig. 2.8, depth assumed as half the width of the board)"
+    "length": 0.165,
+    "source": "aperture 1 (Bell 1988 Table 4.1; position and length along the box from Fig. 2.8, a rectangle of that length; depth assumed as half the width of the board)"
    },
    {
     "x": 0.0,
@@ -6377,7 +6378,8 @@
     "z": -0.1498,
     "area": 0.0093,
     "lipLength": 0.015,
-    "source": "aperture 2 (Bell 1988 Table 4.1; position along the box from Fig. 2.8, depth assumed as half the width of the board)"
+    "length": 0.18,
+    "source": "aperture 2 (Bell 1988 Table 4.1; position and length along the box from Fig. 2.8, a rectangle of that length; depth assumed as half the width of the board)"
    },
    {
     "x": 0.0,
@@ -6385,7 +6387,8 @@
     "z": -0.1238,
     "area": 0.0077,
     "lipLength": 0.015,
-    "source": "aperture 3 (Bell 1988 Table 4.1; position along the box from Fig. 2.8, depth assumed as half the width of the board)"
+    "length": 0.184,
+    "source": "aperture 3 (Bell 1988 Table 4.1; position and length along the box from Fig. 2.8, a rectangle of that length; depth assumed as half the width of the board)"
    },
    {
     "x": 0.0,
@@ -6393,7 +6396,8 @@
     "z": -0.0974,
     "area": 0.0068,
     "lipLength": 0.013,
-    "source": "aperture 4 (Bell 1988 Table 4.1; position along the box from Fig. 2.8, depth assumed as half the width of the board)"
+    "length": 0.184,
+    "source": "aperture 4 (Bell 1988 Table 4.1; position and length along the box from Fig. 2.8, a rectangle of that length; depth assumed as half the width of the board)"
    },
    {
     "x": 0.0,
@@ -6401,7 +6405,8 @@
     "z": -0.0702,
     "area": 0.0058,
     "lipLength": 0.012,
-    "source": "aperture 5 (Bell 1988 Table 4.1; position along the box from Fig. 2.8, depth assumed as half the width of the board)"
+    "length": 0.172,
+    "source": "aperture 5 (Bell 1988 Table 4.1; position and length along the box from Fig. 2.8, a rectangle of that length; depth assumed as half the width of the board)"
    },
    {
     "x": 0.0,
@@ -6409,9 +6414,44 @@
     "z": -0.2004,
     "area": 0.0067,
     "lipLength": 0.021,
-    "source": "aperture 6 (Bell 1988 Table 4.1; position along the box from Fig. 2.8, depth assumed as half the width of the board)"
+    "length": 0.115,
+    "source": "aperture 6 (Bell 1988 Table 4.1; position and length along the box from Fig. 2.8, a rectangle of that length; depth assumed as half the width of the board)"
    }
-  ]
+  ],
+  "openingModel": "geometry",
+  "surroundings": "wall",
+  "innerLoss": {
+   "openings": [
+    5
+   ],
+   "points": [
+    {
+     "f": 75.0,
+     "q": 10.0
+    },
+    {
+     "f": 168.0,
+     "q": 10.0
+    },
+    {
+     "f": 283.0,
+     "q": 12.0
+    },
+    {
+     "f": 414.0,
+     "q": 23.0
+    },
+    {
+     "f": 545.0,
+     "q": 30.0
+    },
+    {
+     "f": 680.0,
+     "q": 36.0
+    }
+   ],
+   "source": "Q of the air modes of soundbox A in sand with aperture 6 only open (Bell 1988 Figs. 4.8, 4.11-4.15 i: Helmholtz and A1-A5); the computation takes off the radiation of aperture 6. Choice of a wall: Bell finds the Helmholtz mode of the free box at 187 Hz and in sand at 190 Hz (pp. 85, 114 f.)"
+  }
  },
  "rim": {
   "support": "elastic",

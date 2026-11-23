@@ -560,7 +560,7 @@ def baue(pdf, bildpfad=None):
     faser = round(rippenwinkel + 90.0, 1)
     plan = {
         "format": "lumiviz-instrument-body-plan",
-        "version": 10,
+        "version": 11,
         "title": "Steinway D (RT-0425)",
         "description": "Soundboard of a Steinway D after Chabassier & Durufle, RT-0425 (2012): outline, plate "
                        "thickness, ribs and bridge read from Fig. 2, bridge points from Appendix A.",
@@ -609,7 +609,9 @@ def baue(pdf, bildpfad=None):
         # Fassung 4 (S196, F-K1 a): der Hohlraum hinter der Platte — der Boden des Fluegels schliesst keinen ab
         # Fassung 5 (S197, KQ17 a): `openings` — Oeffnungen des Hohlraums ausserhalb der Platte, hier keine
         "cavity": {"volume": 0.0, "endCorrection": 1.7, "q": 30.0,
-                   "source": "none: a piano soundboard closes no cavity", "openings": [], "kind": "singlePressure", "tube": {"sections": [], "q": 30.0, "source": ""}},
+                   "source": "none: a piano soundboard closes no cavity", "openings": [], "kind": "singlePressure", "tube": {"sections": [], "q": 30.0, "source": ""},
+                   "openingModel": "endCorrection", "surroundings": "wall",
+                   "innerLoss": {"openings": [], "points": [], "source": ""}},
         "rim": {"support": "clamped", "rotationalStiffness": 0.0, "source": "assumed: rim clamped (every plan up to version 5 was computed this way)", "sections": []},
         "barOverlap": "first",
         "pointSprings": [],

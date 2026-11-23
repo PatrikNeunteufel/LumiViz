@@ -863,13 +863,14 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
     CHECK(plan.platte.umriss[5].y == doctest::Approx(0.6));
     CHECK(plan.platte.umriss[2].x == doctest::Approx(-plan.platte.umriss[5].x));
     // der Hohlraum mit sechs Oeffnungen in der Rueckseite der Schale (KQ17 a), als Rohr laengs (KQ59 a, KQ61 a); die
-    // Muendung stellt die Helmholtz-Mode auf 190 Hz (KQ60 a, Waechter in test_LoopKoerperRohr), zwei Gueten (KQ63 a)
+    // Oeffnungen aus ihrer Geometrie als Kolben in der Wand mit dem inneren Verlust aus Bell (KQ71 a; Waechter in
+    // test_LoopKoerperRohr)
     REQUIRE(plan.hohlraum.an());
     REQUIRE(plan.hohlraum.alsRohr());
     CHECK(plan.hohlraum.volumen == doctest::Approx(0.027));
     CHECK(plan.hohlraum.oeffnungen.size() == 6);
-    CHECK(plan.hohlraum.muendung == doctest::Approx(1.83));
-    CHECK(plan.hohlraum.rohr.guete == doctest::Approx(28.0));
+    CHECK(plan.hohlraum.ausGeometrie());
+    CHECK(plan.hohlraum.umgebung == kp::OeffnungsUmgebung::Wand);
     CHECK(plan.platte.loecher.empty());
     // der Rand gestuetzt (KQ18 a, Feder 0); die Diskantkante mit Wegfeder (KQ20 a, KQ21 a); die beiden Bassseiten
     // gehalten mit Drehfeder 7 000 N (KQ50 a, KQ51 a)
@@ -940,7 +941,6 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
     REQUIRE(k.moden.size() > 100);
     // KQ31-1 a: Deck- und Zugleiste liegen beidseits des Bodens auf derselben Linie, ihre Hoehen zaehlen zusammen
     CHECK(plan.leistenUebereinander == kp::LeistenUebereinander::Addieren);
-    CHECK(plan.hohlraum.guete == doctest::Approx(4.4));
 
     // Die Platte eines Bauplans am Netz des Koerpers (5 kHz), bis 1,5 kHz gerechnet wie `InstrumentBodyTool` — S211:
     // dieselben Moden und Profile wie bis 5 kHz, auf 0,1 dB; mit Federn an Punkten auch deren Anteil (KQ49 a)
@@ -1023,15 +1023,28 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
     // KQ57 a: die Lagen der besaiteten Harfe gegen Bell besaitet (Abb. 7.8-7.14: S(1,1)- 187, S(1,1)+ 207, S(1,2) 257,
     // S(1,3) 334, S(1,4) 430, S(1,5) 555, S(1,6) 697 Hz) auf 7 % (KQ40 a). Die Mode im Koerper ist mit ihrer Frequenz
     // festgehalten (±1 %): mit dem Rohr liegen Laengsmoden mit Luft dazwischen. Bekannte Abweichungen mit Wert.
+    // KQ70 a (S218): dazu die Lagen ohne Saiten gegen Kasten G in der Harfe ohne Saiten (Abb. 7.8-7.13: 170 / 216 / 249 /
+    // 316 / 432 / 545 Hz) — die Moden aus der Rechnung ohne Federn oben
     struct Lage
     {
         const char* name;
         double modell, bell;
         double bekannt = 0.0;  // in %; 0 = in der Schwelle
     };
-    for (const Lage& l : {Lage{"S(1,1)-", 173.0, 187.0, -7.5}, Lage{"S(1,1)+", 215.6, 207.0}, Lage{"S(1,2)", 246.8, 257.0},
-                          Lage{"S(1,3)", 327.7, 334.0}, Lage{"S(1,4)", 432.1, 430.0}, Lage{"S(1,5)", 603.8, 555.0, 8.8},
-                          Lage{"S(1,6)", 731.9, 697.0}})
+    for (const Lage& l : {Lage{"ohne S(1,1)-", 165.2, 170.0}, Lage{"ohne S(1,1)+", 210.7, 216.0}, Lage{"ohne S(1,2)", 232.9, 249.0},
+                          Lage{"ohne S(1,3)", 319.7, 316.0}, Lage{"ohne S(1,4)", 434.0, 432.0}, Lage{"ohne S(1,5)", 542.7, 545.0}})
+    {
+        const kp::ModeImKoerper m = naechste(ohne, l.modell);
+        const double abw = 100.0 * (m.frequenzHz / l.bell - 1.0);
+        CAPTURE(l.name);
+        CAPTURE(abw);
+        CHECK(m.frequenzHz == doctest::Approx(l.modell).epsilon(0.01));
+        CHECK(std::abs(abw) <= 7.0);
+    }
+    // S218 (KQ71 a): mit den Oeffnungen aus ihrer Geometrie liegt das Paar besaitet in der Schwelle (−6,8 / +5,0 %)
+    for (const Lage& l : {Lage{"S(1,1)-", 174.2, 187.0}, Lage{"S(1,1)+", 217.4, 207.0}, Lage{"S(1,2)", 249.3, 257.0},
+                          Lage{"S(1,3)", 328.1, 334.0}, Lage{"S(1,4)", 438.2, 430.0}, Lage{"S(1,5)", 607.1, 555.0, 9.4},
+                          Lage{"S(1,6)", 731.0, 697.0}})
     {
         const kp::ModeImKoerper m = naechste(k.moden, l.modell);
         const double abw = 100.0 * (m.frequenzHz / l.bell - 1.0);
@@ -1047,14 +1060,14 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
         }
     }
     // KQ52 a: mit den Saiten verschieben sich die Moden wie beim Besaiten — Bell 1988 (Abb. 7.8-7.14): S(1,1)- +10,
-    // S(1,2) +3, S(1,3) +5,7, S(1,4) -0,5, S(1,5) +1,8 %. Mit dem Rohr (S215) je Paar ohne -> mit Saiten festgehalten
-    // (±0,3 Prozentpunkte)
+    // S(1,2) +3, S(1,3) +5,7, S(1,4) -0,5, S(1,5) +1,8 %. Mit dem Rohr und den Oeffnungen aus ihrer Geometrie (S218) je
+    // Paar ohne -> mit Saiten festgehalten (±0,3 Prozentpunkte)
     struct Verschiebung
     {
         double ohne, mit;
     };
-    for (const Verschiebung& v : {Verschiebung{164.4, 173.0}, Verschiebung{231.0, 246.8}, Verschiebung{322.0, 327.7}, Verschiebung{427.2, 432.1},
-                                  Verschiebung{600.4, 603.8}})
+    for (const Verschiebung& v : {Verschiebung{165.2, 174.2}, Verschiebung{232.9, 249.3}, Verschiebung{319.7, 328.1}, Verschiebung{434.0, 438.2},
+                                  Verschiebung{604.0, 607.1}})
     {
         const double vorher = naechste(ohne, v.ohne).frequenzHz;
         const double nachher = naechste(k.moden, v.mit).frequenzHz;
@@ -1148,9 +1161,10 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
         }
         MESSAGE("Abstrahlung Saite 33 ... 22 mit den Saiten als Daempfer, Modell - Bell - Median in dB:", zeile, "; halten ", halten,
                 " / 12, groesste ", groesste);
-        // bekannte Abweichung (S215, Rohr): 4 / 12 halten, groesste 11,4 dB — rot, wenn es weniger werden
-        CHECK(halten >= 4);
-        CHECK(groesste < 12.0);
+        // bekannte Abweichung (S218, Oeffnungen aus ihrer Geometrie in der Wand, KQ71 a): 6 / 12 halten, groesste 14,9 dB
+        // an Saite 29 (S215 mit Muendung und Gueten: 4 / 12, 11,4 dB) — rot, wenn es weniger werden oder sie waechst
+        CHECK(halten >= 6);
+        CHECK(groesste < 15.5);
     }
 
     // KQ31-2 a: die Harfe ohne Saiten an den Moden S(1,2) ... S(1,6), gegen Bell 1988 Abb. 7.10-7.14 Feld 2 (Kasten G
@@ -1261,14 +1275,15 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
         std::size_t baeucheBekannt = 0;  // bekannte Zahl der Baeuche (0: wie Bell); dann nur der staerkste geprueft
     };
     // S215 (Rohr, KQ59 a, KQ63 a): ohne Saiten tragen S(1,2)-S(1,5) 21-60 % Luft, zum groessten Teil in den
-    // Oeffnungen, ihre Guete faellt auf 11-21 (Bell 31-45) — die Baeuche liegen 11-23 dB unter Bell, an S(1,3)-S(1,5)
-    // fehlen Baeuche zum Bass hin (Harfenbericht §23.5)
+    // Oeffnungen, ihre Guete faellt auf 11-21 (Bell 31-45) — die Baeuche liegen 11-23 dB unter Bell, an S(1,4) und S(1,5)
+    // fehlen Baeuche zum Bass hin (Harfenbericht §23.5). S218 (KQ71 a): S(1,3) hat drei Baeuche wie Bell, die Hoehen
+    // der staerksten 11-24 dB unter Bell (Harfenbericht §26)
     const std::vector<ModeZiel> ziele = {
-        {"S(1,2)", 249.0, -14.5, {{13.0, 96.0}, {30.0, 78.0, 0.0, 12.9}}, -7.2},
-        {"S(1,3)", 316.0, -23.4, {{7.5, 104.0}, {18.5, 89.0}, {31.5, 84.0}}, 0.0, 2},
-        {"S(1,4)", 432.0, -20.3, {{6.0, 105.5}, {14.5, 91.0}, {22.5, 85.5}, {32.0, 84.0}}, 0.0, 3},
-        {"S(1,5)", 545.0, -15.6, {{4.0, 101.5}, {10.5, 93.0}, {16.5, 82.0}, {25.0, 86.0}, {33.5, 86.5}}, 0.0, 3},
-        {"S(1,6)", 709.0, -11.5,
+        {"S(1,2)", 249.0, -13.2, {{13.0, 96.0}, {30.0, 78.0, 0.0, 12.0}}},
+        {"S(1,3)", 316.0, -18.0, {{7.5, 104.0}, {18.5, 89.0}, {31.5, 84.0}}},
+        {"S(1,4)", 432.0, -23.5, {{6.0, 105.5}, {14.5, 91.0}, {22.5, 85.5}, {32.0, 84.0}}, 0.0, 3},
+        {"S(1,5)", 545.0, -15.4, {{4.0, 101.5}, {10.5, 93.0}, {16.5, 82.0}, {25.0, 86.0}, {33.5, 86.5}}, 0.0, 3},
+        {"S(1,6)", 709.0, -10.6,
          {{3.5, 101.0}, {8.5, 95.5, 0.0, -6.0}, {14.0, 90.0, 0.0, -8.2}, {20.0, 86.5, 0.0, -10.9}, {27.5, 89.5, 0.0, -18.5}, {34.0, 88.5, 0.0, -20.6}}},
     };
     for (const ModeZiel& z : ziele)

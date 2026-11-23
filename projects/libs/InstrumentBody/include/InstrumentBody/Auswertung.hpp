@@ -82,7 +82,10 @@ struct ModeImKoerper
     /// Davon der Anteil der Luft laengs im Rohr (KQ59 a, KQ63 a, S215); 0 = ein Druck. Der Rest von `luftAnteil` ist
     /// die Luft in den Loechern und Oeffnungen. Seit Fassung 7 der Koerperdatei dort als `tubeShare`.
     double rohrAnteil = 0.0;
-    std::vector<double> werkstoffAnteil;             ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
+    /// Der Verlustfaktor, den die Luft der Mode gibt (KQ71 a, S218): η = (1 − luftAnteil) · η der Platte + luftVerlust.
+    /// Seit Fassung 8 der Koerperdatei dort als `airLoss`; 0 = ohne Hohlraum.
+    double luftVerlust = 0.0;
+    std::vector<double> werkstoffAnteil;            ///< U_m / U je Werkstoff (Reihenfolge des Bauplans), DM1 a; leer = nicht gerechnet
     /// Anteil der Verformungsenergie in den Federn an Punkten (KQ49 a, S210), 0 … 1; 0 = keine Federn. Seit Fassung 6
     /// der Koerperdatei dort als `springShare` (KQ53 a, S211). `werkstoffAnteil` bleibt auf die Werkstoffe normiert
     /// (Summe 1).

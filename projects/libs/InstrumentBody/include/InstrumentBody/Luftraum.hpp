@@ -48,6 +48,17 @@
  * die Breite), der Druck an einem Loch der an seinem Schwerpunkt; mit allen Oeffnungen der Harfe liegen die
  * Laengsmoden A2–A4 um 9–13 % unter Bell 1988 Kap. 4 (Ursache offen, KQ64 a).
  *
+ * **Die Oeffnungen aus ihrer Geometrie** (seit Bauplan-Fassung 11; KQ71 a, S218; Harfenbericht §24.2, §25.6; Probe
+ * `proben/2026-11-23_S218_harfe_matrix_koerper.py`): statt Muendungskorrektur und Gueten ist jede Oeffnung ein Rechteck
+ * (Laenge laengs y, Flaeche / Laenge quer). Die mitbewegte Luft aussen ist eine Matrix M_ij = κ ρ ∬∬ dS dS′/|r − r′| /
+ * (2π A_i A_j) — die Oeffnungen belasten sich gegenseitig —, dazu je Oeffnung Lippe und eigene Korrektur innen; der
+ * Druck am Pfropfen ueber die Laenge der Oeffnung gemittelt. Der Verlust je Mode in erster Ordnung: Abstrahlung
+ * uᵀ R(ω) u / ω mit dem Strahlungswiderstand als Matrix R_ij = ρ c k² / 2π · sin(k d)/(k d) (Wand; frei die Haelfte)
+ * plus Anteil der Luft × innerer Verlust, dieser aus gemessenen Gueten ohne die Abstrahlung der dabei offenen
+ * Oeffnungen (`rohrGroessen`). Die erste Ordnung trifft die komplexen Eigenwerte auf wenige Prozent, ausser wo zwei
+ * ungedaempfte Moden fast aufeinanderliegen. Mit allen Oeffnungen der Harfe trifft das ohne angepassten Wert Bells
+ * Helmholtz-Mode (192 gegen 190 Hz) und die 36 Lagen auf rms 6,1 %.
+ *
  * Reines C++ ohne Qt; die Eigenzerlegung aus `InstrumentCore`.
  */
 #pragma once
@@ -205,6 +216,12 @@ struct LochLuft
     /// Ein Loch der Platte liegt in der Schallwand der Platte und strahlt in den Halbraum (ρ/2π); eine
     /// Oeffnung ausserhalb strahlt frei in den ganzen Raum (ρ/4π) — die Schale schattet nicht ab.
     bool frei = false;
+    /// m: Ausdehnung laengs y (Bauplan-Fassung 11, KQ71 a); im Rohr gilt der Druck dann gemittelt ueber diese Laenge.
+    /// 0 = der Druck an ihrem Ort.
+    double laengs = 0.0;
+    /// Faktor auf den Schall an den Hoerorten (KQ71 a): im Modell `Geometrie` mit Wand √2 — ein Kolben in der Wand
+    /// strahlt die doppelte Leistung, die Richtung ist unbekannt, also gleichmaessig; sonst 1.
+    double feld = 1.0;
 };
 
 /// Was die Kopplung braucht: α = ρ c² / V und die akustische Masse der Loecher zusammen.
@@ -213,6 +230,28 @@ struct LuftraumGroessen
     double alpha = 0.0;            ///< Pa/m³
     double akustischeMasse = 0.0;  ///< kg/m⁴; 0 = kein Loch (der Hohlraum ist zu)
     std::vector<LochLuft> loecher;
+    // der Verlust der Luft (KQ63 a; mit `Geometrie` KQ71 a)
+    double guete = 0.0;      ///< der Luft in den Loechern (`Hohlraum::guete`); 0 = kein Verlust
+    double rohrGuete = 0.0;  ///< der Luft laengs (`Rohr::guete`); 0 = kein Verlust
+    /// KQ71 a: die Oeffnungen aus ihrer Geometrie — Massenmatrix, Strahlungswiderstand als Matrix, innerer Verlust
+    bool geometrie = false;
+    std::vector<double> massen;        ///< kg/m⁴, je Paar von Oeffnungen (zeilenweise); leer = je Loch ρ L / A
+    double strahlung = 1.0;            ///< Faktor auf ρ c k² / 2π (Wand 1, frei 1/2)
+    std::vector<double> innenHz;       ///< der innere Verlust: Stuetzstellen
+    std::vector<double> innenKehrwert; ///< 1/Q je Stuetzstelle (linear ueber f, an den Enden gehalten)
+    double dichte = 0.0;
+    double schall = 0.0;
+
+    /// 1/Q des inneren Verlusts bei f; 0 ohne Tafel.
+    [[nodiscard]] double innenBei(double hz) const
+    {
+        if (innenHz.empty()) return 0.0;
+        if (hz <= innenHz.front()) return innenKehrwert.front();
+        for (std::size_t k = 1; k < innenHz.size(); ++k)
+            if (hz <= innenHz[k])
+                return innenKehrwert[k - 1] + (hz - innenHz[k - 1]) / (innenHz[k] - innenHz[k - 1]) * (innenKehrwert[k] - innenKehrwert[k - 1]);
+        return innenKehrwert.back();
+    }
 
     /// Die Helmholtz-Frequenz bei starren Waenden in Hz; 0 ohne Loch.
     [[nodiscard]] double helmholtzHz() const
@@ -239,11 +278,123 @@ struct LuftraumGroessen
     return {sx / (3.0 * doppelt), sy / (3.0 * doppelt)};
 }
 
+// --- die Oeffnungen aus ihrer Geometrie (KQ71 a) --------------------------------------------
+
+/// Seitenlaenge der Zellen, in die eine Oeffnung fuer die Flaechenintegrale geteilt wird (m).
+inline constexpr double kOeffnungZelle = 0.005;
+/// ∬∬ dS dS′ / |r − r′| ueber das Einheitsquadrat: 4 ln(1 + √2) − 4 (√2 − 1) / 3.
+inline const double kEigenQuadrat = 4.0 * std::log(1.0 + std::numbers::sqrt2) - 4.0 * (std::numbers::sqrt2 - 1.0) / 3.0;
+/// Die mitbewegte Luft aussen im freien Raum (ohne Schallwand) gegen die in der Wand: Kreiskolben 0,6133 r gegen
+/// 0,8488 r (Levine & Schwinger 1948; Kinsler et al.) — 0,72.
+inline constexpr double kAussenFreiGegenWand = 0.72;
+
+/// G_ij = ∬∬ dS dS′ / |r − r′| ueber die Oeffnungen i und j, je als Rechteck `laenge` (laengs y) × `flaeche` /
+/// `laenge` (quer x) um ihren Ort, alle in einer Ebene (die Lage `hoehe` und die Kruemmung der Schale sind nicht
+/// nachgebildet — wie die Probe S216). In Zellen von `kOeffnungZelle`; die Zelle mit sich selbst geschlossen.
+[[nodiscard]] inline std::vector<double> oeffnungsIntegrale(const std::vector<Oeffnung>& oe)
+{
+    struct Zellen
+    {
+        std::vector<Punkt2> mitte;
+        double flaeche = 0.0, hx = 0.0, hy = 0.0;
+    };
+    std::vector<Zellen> z;
+    for (const Oeffnung& o : oe)
+    {
+        Zellen c;
+        const double br = o.flaeche / o.laenge;
+        const int ny = std::max(1, static_cast<int>(std::lround(o.laenge / kOeffnungZelle)));
+        const int nx = std::max(1, static_cast<int>(std::lround(br / kOeffnungZelle)));
+        c.hy = o.laenge / ny;
+        c.hx = br / nx;
+        c.flaeche = c.hx * c.hy;
+        for (int j = 0; j < ny; ++j)
+            for (int i = 0; i < nx; ++i)
+                c.mitte.push_back({o.ort.x - br / 2.0 + (i + 0.5) * c.hx, o.ort.y - o.laenge / 2.0 + (j + 0.5) * c.hy});
+        z.push_back(std::move(c));
+    }
+    const std::size_t n = z.size();
+    std::vector<double> g(n * n, 0.0);
+    for (std::size_t i = 0; i < n; ++i)
+        for (std::size_t j = i; j < n; ++j)
+        {
+            double s = 0.0;
+            for (std::size_t a = 0; a < z[i].mitte.size(); ++a)
+                for (std::size_t b = 0; b < z[j].mitte.size(); ++b)
+                {
+                    if (i == j && a == b) continue;
+                    s += 1.0 / std::hypot(z[i].mitte[a].x - z[j].mitte[b].x, z[i].mitte[a].y - z[j].mitte[b].y);
+                }
+            s *= z[i].flaeche * z[j].flaeche;
+            if (i == j)
+            {
+                const double h = std::sqrt(z[i].hx * z[i].hy);
+                s += static_cast<double>(z[i].mitte.size()) * kEigenQuadrat * h * h * h;
+            }
+            g[i * n + j] = g[j * n + i] = s;
+        }
+    return g;
+}
+
+/// Die Massenmatrix der Luft in den Oeffnungen (kg/m⁴; Volumen nach aussen als Koordinate; Harfenbericht §24.2):
+/// M_ii = ρ Lippe / A_i + innen ρ G_ii / (2π A_i²) + aussen dasselbe (frei × 0,72), M_ij = κ ρ G_ij / (2π A_i A_j) mit
+/// κ = 1 in der Wand, 1/2 im freien Raum. Innen traegt die Wechselwirkung laengs das Rohr selbst; als Nahfeld bleibt
+/// je Oeffnung ihre eigene Korrektur.
+[[nodiscard]] inline std::vector<double> oeffnungsMassen(const std::vector<Oeffnung>& oe, OeffnungsUmgebung umgebung, double dichte)
+{
+    const std::vector<double> g = oeffnungsIntegrale(oe);
+    const std::size_t n = oe.size();
+    const bool frei = umgebung == OeffnungsUmgebung::Frei;
+    const double kappa = frei ? 0.5 : 1.0, aussen = frei ? kAussenFreiGegenWand : 1.0;
+    std::vector<double> m(n * n, 0.0);
+    for (std::size_t i = 0; i < n; ++i)
+        for (std::size_t j = i; j < n; ++j)  // oben gerechnet, gespiegelt: genau symmetrisch
+        {
+            const double teil = dichte * g[i * n + j] / (2.0 * std::numbers::pi * oe[i].flaeche * oe[j].flaeche);
+            m[i * n + j] = m[j * n + i] = i == j ? dichte * oe[i].lippe / oe[i].flaeche + (1.0 + aussen) * teil : kappa * teil;
+        }
+    return m;
+}
+
 [[nodiscard]] inline LuftraumGroessen luftraumGroessen(const Bauplan& plan, double dichte, double schall)
 {
     LuftraumGroessen g;
     if (!plan.hohlraum.an()) return g;
     g.alpha = dichte * schall * schall / plan.hohlraum.volumen;
+    g.dichte = dichte;
+    g.schall = schall;
+    g.guete = plan.hohlraum.guete;
+    g.rohrGuete = plan.hohlraum.alsRohr() ? plan.hohlraum.rohr.guete : 0.0;
+    if (plan.hohlraum.ausGeometrie())
+    {
+        // KQ71 a: die Oeffnungen aus ihrer Geometrie; der innere Verlust kommt mit `rohrGroessen`
+        const Hohlraum& h = plan.hohlraum;
+        g.geometrie = true;
+        g.massen = oeffnungsMassen(h.oeffnungen, h.umgebung, dichte);
+        g.strahlung = h.umgebung == OeffnungsUmgebung::Frei ? 0.5 : 1.0;
+        const std::size_t n = h.oeffnungen.size();
+        double leitwert = 0.0;
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            const Oeffnung& o = h.oeffnungen[i];
+            LochLuft l;
+            l.mitte = o.ort;
+            l.hoehe = o.hoehe;
+            l.frei = true;
+            l.flaeche = o.flaeche;
+            l.laengs = o.laenge;
+            l.feld = h.umgebung == OeffnungsUmgebung::Frei ? 1.0 : std::numbers::sqrt2;
+            l.laenge = g.massen[i * n + i] * o.flaeche / dichte;  // die eigene Masse als wirksame Laenge
+            l.anteil = l.flaeche / l.laenge;
+            leitwert += l.flaeche / (dichte * l.laenge);
+            g.loecher.push_back(l);
+        }
+        double summe = 0.0;
+        for (const LochLuft& l : g.loecher) summe += l.anteil;
+        for (LochLuft& l : g.loecher) l.anteil /= summe;
+        g.akustischeMasse = leitwert > 0.0 ? 1.0 / leitwert : 0.0;
+        return g;
+    }
     double leitwert = 0.0;  // Σ A / (ρ L)
     for (const auto& loch : plan.platte.loecher)
     {
@@ -267,6 +418,7 @@ struct LuftraumGroessen
         l.flaeche = o.flaeche;
         const double radius = std::sqrt(std::max(0.0, l.flaeche) / std::numbers::pi);
         l.laenge = o.lippe + plan.hohlraum.muendung * radius;
+        l.laengs = o.laenge;
         if (l.flaeche <= 0.0 || l.laenge <= 0.0) continue;
         l.anteil = l.flaeche / l.laenge;
         leitwert += l.flaeche / (dichte * l.laenge);
@@ -288,6 +440,9 @@ struct LuftraumMode
     std::vector<double> platte;  ///< je Mode der Platte ihr Anteil (die Form ist Σ platte_k · Form_k)
     double oeffnung = 0.0;       ///< u je Einheit der Mode: das Volumen, das durch alle Loecher nach aussen tritt
     double luftAnteil = 0.0;     ///< Anteil der Bewegungsenergie in der Luft (Loecher und, im Rohr, laengs), 0 … 1
+    /// Der Verlustfaktor, den die Luft der Mode gibt (KQ63 a: Anteile / Gueten; KQ71 a: Abstrahlung der Oeffnungen
+    /// uᵀ R u / ω plus Anteil der Luft × innerer Verlust) — η der Mode = (1 − luftAnteil) η der Platte + luftVerlust.
+    double luftVerlust = 0.0;
     // nur im Rohr (KQ59 a):
     double rohrAnteil = 0.0;          ///< davon der Anteil der Luft laengs
     std::vector<double> jeOeffnung;   ///< u_i je Loch und Oeffnung (Reihenfolge `LuftraumGroessen::loecher`)
@@ -326,6 +481,7 @@ struct LuftraumMode
             const double y = e.vektoren[m][n];
             mode.oeffnung = y / std::sqrt(g.akustischeMasse);
             mode.luftAnteil = y * y;
+            mode.luftVerlust = g.guete > 0.0 ? mode.luftAnteil / g.guete : 0.0;
         }
         aus.push_back(std::move(mode));
     }
@@ -452,20 +608,78 @@ inline constexpr double kRohrDurchflussHz = 1.0;
     std::vector<double> masse(gesamt, 1.0);
     for (std::size_t i = 0; i < no; ++i)
     {
-        const int z = r.abschnittBei(g.loecher[i].mitte.y);
-        for (std::size_t j = 0; j < nj; ++j) psiLoch[j][i] = r.psi[j][static_cast<std::size_t>(z)];
-        masse[n + i] = dichte * g.loecher[i].laenge / g.loecher[i].flaeche;
+        const LochLuft& l = g.loecher[i];
+        if (l.laengs > 0.0)
+        {
+            // KQ71 a: der Druck ueber die Laenge der Oeffnung gemittelt (die Abschnitte, deren Mitte darin liegt)
+            int zahl = 0;
+            for (int z = 0; z < r.abschnitte; ++z)
+            {
+                if (std::abs(r.von + (z + 0.5) * r.schritt - l.mitte.y) > l.laengs / 2.0 + 1e-12) continue;
+                ++zahl;
+                for (std::size_t j = 0; j < nj; ++j) psiLoch[j][i] += r.psi[j][static_cast<std::size_t>(z)];
+            }
+            if (zahl > 0)
+                for (std::size_t j = 0; j < nj; ++j) psiLoch[j][i] /= zahl;
+            else
+                for (std::size_t j = 0; j < nj; ++j) psiLoch[j][i] = r.psi[j][static_cast<std::size_t>(r.abschnittBei(l.mitte.y))];
+        }
+        else
+        {
+            const int z = r.abschnittBei(l.mitte.y);
+            for (std::size_t j = 0; j < nj; ++j) psiLoch[j][i] = r.psi[j][static_cast<std::size_t>(z)];
+        }
+        masse[n + i] = dichte * l.laenge / l.flaeche;
     }
     for (std::size_t j = 1; j < nj; ++j) masse[n + no + j - 1] = g.alpha / (r.omega[j] * r.omega[j]);
 
-    // A = M^{-1/2} (diag(ω_k²) + α Σ_j c_j c_jᵀ) M^{-1/2}
+    // die Masse der Pfropfen: je Loch ρ L / A oder (KQ71 a) die Matrix; zerlegt M_o = L Lᵀ (Cholesky). Fuer eine
+    // Diagonale ist L_ii = √M_ii — Bit fuer Bit wie bis Fassung 10.
+    std::vector<double> chol(no * no, 0.0);
+    {
+        std::vector<double> mo(no * no, 0.0);
+        const bool matrix = g.massen.size() == no * no;
+        for (std::size_t i = 0; i < no; ++i)
+            for (std::size_t k = 0; k < no; ++k) mo[i * no + k] = matrix ? g.massen[i * no + k] : (i == k ? masse[n + i] : 0.0);
+        for (std::size_t i = 0; i < no; ++i)
+        {
+            for (std::size_t k = 0; k <= i; ++k)
+            {
+                double s = mo[i * no + k];
+                for (std::size_t p = 0; p < k; ++p) s -= chol[i * no + p] * chol[k * no + p];
+                chol[i * no + k] = i == k ? std::sqrt(std::max(s, 0.0)) : s / chol[k * no + k];
+            }
+        }
+    }
+    // L⁻¹ v (vorwaerts) und L⁻ᵀ v (rueckwaerts)
+    const auto vorwaerts = [&](std::vector<double> v) {
+        for (std::size_t i = 0; i < no; ++i)
+        {
+            double s = v[i];
+            for (std::size_t p = 0; p < i; ++p) s -= chol[i * no + p] * v[p];
+            v[i] = s / chol[i * no + i];
+        }
+        return v;
+    };
+    const auto rueckwaerts = [&](std::vector<double> v) {
+        for (std::size_t i = no; i-- > 0;)
+        {
+            double s = v[i];
+            for (std::size_t p = i + 1; p < no; ++p) s -= chol[p * no + i] * v[p];
+            v[i] = s / chol[i * no + i];
+        }
+        return v;
+    };
+
+    // A = M^{-1/2} (diag(ω_k²) + α Σ_j c_j c_jᵀ) M^{-1/2}; fuer die Pfropfen M^{-1/2} = L⁻¹
     std::vector<double> wurzel(gesamt);
     for (std::size_t i = 0; i < gesamt; ++i) wurzel[i] = std::sqrt(masse[i]);
     std::vector<std::vector<double>> c(nj, std::vector<double>(gesamt, 0.0));
     for (std::size_t j = 0; j < nj; ++j)
     {
         for (std::size_t k = 0; k < n; ++k) c[j][k] = b[j][k] / wurzel[k];
-        for (std::size_t i = 0; i < no; ++i) c[j][n + i] = psiLoch[j][i] / wurzel[n + i];
+        const std::vector<double> cp = vorwaerts(psiLoch[j]);
+        for (std::size_t i = 0; i < no; ++i) c[j][n + i] = cp[i];
         if (j >= 1) c[j][n + no + j - 1] = -1.0 / wurzel[n + no + j - 1];
     }
     const int dim = static_cast<int>(gesamt);
@@ -495,6 +709,11 @@ inline constexpr double kRohrDurchflussHz = 1.0;
             y[i] = e.vektoren[i * gesamt + m];
             x[i] = y[i] / wurzel[i];
         }
+        {
+            const std::vector<double> u = rueckwaerts(std::vector<double>(y.begin() + static_cast<std::ptrdiff_t>(n),
+                                                                          y.begin() + static_cast<std::ptrdiff_t>(n + no)));
+            for (std::size_t i = 0; i < no; ++i) x[n + i] = u[i];
+        }
         mode.platte.assign(y.begin(), y.begin() + static_cast<std::ptrdiff_t>(n));
         double pfropfen = 0.0, laengs = 0.0;
         for (std::size_t i = 0; i < no; ++i)
@@ -506,6 +725,30 @@ inline constexpr double kRohrDurchflussHz = 1.0;
         for (std::size_t s = 0; s < ns; ++s) laengs += y[n + no + s] * y[n + no + s];
         mode.luftAnteil = pfropfen + laengs;
         mode.rohrAnteil = laengs;
+        if (g.geometrie)
+        {
+            // KQ71 a: Abstrahlung der Oeffnungen in erster Ordnung, uᵀ R u / ω mit R_ij = ρ c k² / 2π · sin(k d) / (k d)
+            // (Wand; frei die Haelfte), dazu der innere Verlust mit dem Anteil der Luft
+            const double omega = 2.0 * std::numbers::pi * mode.frequenzHz;
+            const double k = omega / g.schall;
+            const double r0 = g.strahlung * g.dichte * g.schall * k * k / (2.0 * std::numbers::pi);
+            double abstrahlung = 0.0;
+            for (std::size_t i = 0; i < no; ++i)
+                for (std::size_t q = 0; q < no; ++q)
+                {
+                    const LochLuft& a = g.loecher[i];
+                    const LochLuft& bq = g.loecher[q];
+                    const double d = std::sqrt((a.mitte.x - bq.mitte.x) * (a.mitte.x - bq.mitte.x) + (a.mitte.y - bq.mitte.y) * (a.mitte.y - bq.mitte.y) +
+                                               (a.hoehe - bq.hoehe) * (a.hoehe - bq.hoehe));
+                    const double kd = k * d;
+                    abstrahlung += x[n + i] * x[n + q] * r0 * (kd > 1e-12 ? std::sin(kd) / kd : 1.0);
+                }
+            mode.luftVerlust = abstrahlung / omega + mode.luftAnteil * g.innenBei(mode.frequenzHz);
+        }
+        else
+            // KQ63 a, in derselben Rechnung wie bis Fassung 10 (Bit fuer Bit)
+            mode.luftVerlust = (g.guete > 0.0 ? (mode.luftAnteil - mode.rohrAnteil) / g.guete : 0.0) +
+                               (g.rohrGuete > 0.0 ? mode.rohrAnteil / g.rohrGuete : 0.0);
         for (std::size_t j = 0; j < nj; ++j)
         {
             double d = 0.0;
@@ -533,12 +776,41 @@ inline constexpr double kRohrDurchflussHz = 1.0;
             const LochLuft& l = g.loecher[i];
             const double dz = l.frei ? o.hoehe - l.hoehe : o.hoehe;
             const double r = std::sqrt((l.mitte.x - o.ort.x) * (l.mitte.x - o.ort.x) + (l.mitte.y - o.ort.y) * (l.mitte.y - o.ort.y) + dz * dz);
-            // ein Loch der Platte strahlt in den Halbraum (ρ/2π), eine Oeffnung ausserhalb in den ganzen Raum (ρ/4π)
-            const double faktor = luft.dichte / ((l.frei ? 4.0 : 2.0) * std::numbers::pi);
+            // ein Loch der Platte strahlt in den Halbraum (ρ/2π), eine Oeffnung ausserhalb in den ganzen Raum (ρ/4π);
+            // KQ71 a: in der Wand mit √2 (`LochLuft::feld`), damit die Leistung zum Strahlungswiderstand passt
+            const double faktor = luft.dichte / ((l.frei ? 4.0 : 2.0) * std::numbers::pi) * l.feld;
             aus[h] += faktor * jeLoch[i] / r * std::complex<double>(std::cos(-k * r), std::sin(-k * r));
         }
     }
     return aus;
+}
+
+/// Die Groessen fuer das Rohr: wie `luftraumGroessen`, im Modell `Geometrie` (KQ71 a) dazu der innere Verlust. Er
+/// kommt aus den gemessenen Gueten mit nur den Oeffnungen `Hohlraum::innen.offen` offen: das Rohr mit diesen bei starren
+/// Waenden, je Messpunkt die Mode naechster Frequenz, 1/Q_innen = 1/Q_gemessen − ihre Abstrahlung (nicht unter 0).
+[[nodiscard]] inline LuftraumGroessen rohrGroessen(const Bauplan& plan, Luft luft, const RohrModen& r)
+{
+    LuftraumGroessen g = luftraumGroessen(plan, luft.dichte, luft.schall);
+    if (!g.geometrie) return g;
+    const InnererVerlust& v = plan.hohlraum.innen;
+    Bauplan teil = plan;
+    teil.hohlraum.oeffnungen.clear();
+    for (const int i : v.offen) teil.hohlraum.oeffnungen.push_back(plan.hohlraum.oeffnungen[static_cast<std::size_t>(i)]);
+    const LuftraumGroessen gt = luftraumGroessen(teil, luft.dichte, luft.schall);  // ohne inneren Verlust
+    const std::vector<LuftraumMode> moden = koppleRohr({}, {}, gt, r, luft.dichte);
+    for (const GuetePunkt& p : v.punkte)
+    {
+        double abstrahlung = 0.0, abstand = -1.0;
+        for (const LuftraumMode& m : moden)
+            if (abstand < 0.0 || std::abs(m.frequenzHz - p.hz) < abstand)
+            {
+                abstand = std::abs(m.frequenzHz - p.hz);
+                abstrahlung = m.luftVerlust;
+            }
+        g.innenHz.push_back(p.hz);
+        g.innenKehrwert.push_back(std::max(0.0, 1.0 / p.q - abstrahlung));
+    }
+    return g;
 }
 
 // --- der Koerper mit Luftraum ----------------------------------------------------------
@@ -587,11 +859,11 @@ struct MitLuftraum
                                                  double bisHz)
 {
     MitLuftraum aus;
-    const LuftraumGroessen g = luftraumGroessen(plan, luft.dichte, luft.schall);
     double bis = bisHz;
     if (!(bis > 0.0))
         for (const Mode& m : platte) bis = std::max(bis, m.frequenzHz);
     const RohrModen r = rohrModen(plan.hohlraum.rohr, plan.hohlraum.volumen, luft.schall, bis);
+    const LuftraumGroessen g = rohrGroessen(plan, luft, r);
     aus.rohrModen = static_cast<int>(r.omega.size()) - 1;
     std::vector<double> hz;
     std::vector<std::vector<double>> laengs;
@@ -612,11 +884,12 @@ struct MitLuftraum
             for (std::size_t i = 0; i < mode.form.size(); ++i) mode.form[i] += c * platte[k].form[i];
         }
         ModeImKoerper mk = auswertung.werte(mode);
-        // KQ63 a: die Luft in den Pfropfen traegt die Guete der Oeffnungen, die Luft laengs die des Rohrs
-        mk.verlustfaktor = (1.0 - lm.luftAnteil) * mk.verlustfaktor + (lm.luftAnteil - lm.rohrAnteil) / plan.hohlraum.guete +
-                           lm.rohrAnteil / plan.hohlraum.rohr.guete;
+        // KQ63 a: die Luft in den Pfropfen traegt die Guete der Oeffnungen, die Luft laengs die des Rohrs; KQ71 a:
+        // Abstrahlung der Oeffnungen und innerer Verlust (`LuftraumMode::luftVerlust`)
+        mk.verlustfaktor = (1.0 - lm.luftAnteil) * mk.verlustfaktor + lm.luftVerlust;
         mk.luftAnteil = lm.luftAnteil;
         mk.rohrAnteil = lm.rohrAnteil;
+        mk.luftVerlust = lm.luftVerlust;
         const auto loch = lochAbstrahlungJeLoch(g, plan.hoerorte, luft, lm.frequenzHz, lm.jeOeffnung);
         for (std::size_t h = 0; h < mk.abstrahlung.size() && h < loch.size(); ++h) mk.abstrahlung[h] += loch[h];
         aus.moden.push_back(std::move(mk));
@@ -656,8 +929,9 @@ struct MitLuftraum
             for (std::size_t i = 0; i < mode.form.size(); ++i) mode.form[i] += c * platte[k].form[i];
         }
         ModeImKoerper mk = auswertung.werte(mode);
-        mk.verlustfaktor = (1.0 - lm.luftAnteil) * mk.verlustfaktor + lm.luftAnteil / plan.hohlraum.guete;
+        mk.verlustfaktor = (1.0 - lm.luftAnteil) * mk.verlustfaktor + lm.luftVerlust;
         mk.luftAnteil = lm.luftAnteil;
+        mk.luftVerlust = lm.luftVerlust;
         const auto loch = lochAbstrahlung(g, plan.hoerorte, luft, lm.frequenzHz, lm.oeffnung);
         for (std::size_t h = 0; h < mk.abstrahlung.size() && h < loch.size(); ++h) mk.abstrahlung[h] += loch[h];
         aus.moden.push_back(std::move(mk));

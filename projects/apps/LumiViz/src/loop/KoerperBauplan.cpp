@@ -223,12 +223,18 @@ QJsonObject alsJson(const Bauplan& plan)
             {QStringLiteral("z"), o.hoehe},
             {QStringLiteral("area"), o.flaeche},
             {QStringLiteral("lipLength"), o.lippe},
+            {QStringLiteral("length"), o.laenge},  // seit Fassung 11 (KQ71 a), immer geschrieben
             {QStringLiteral("source"), text(o.quelle)},
         });
     }
     QJsonArray querschnitte;
     for (const koerper::Querschnitt& q : plan.hohlraum.rohr.querschnitte)
         querschnitte.append(QJsonObject{{QStringLiteral("y"), q.y}, {QStringLiteral("area"), q.flaeche}});
+    // seit Fassung 11 (KQ71 a): der innere Verlust, gemessen mit den Oeffnungen `openings` offen
+    QJsonArray innenOffen, innenPunkte;
+    for (const int i : plan.hohlraum.innen.offen) innenOffen.append(i);
+    for (const koerper::GuetePunkt& g : plan.hohlraum.innen.punkte)
+        innenPunkte.append(QJsonObject{{QStringLiteral("f"), g.hz}, {QStringLiteral("q"), g.q}});
     QJsonArray abschnitte;
     for (const koerper::Randabschnitt& a : plan.rand.abschnitte)
     {
@@ -307,6 +313,17 @@ QJsonObject alsJson(const Bauplan& plan)
                   {QStringLiteral("sections"), querschnitte},
                   {QStringLiteral("q"), plan.hohlraum.rohr.guete},
                   {QStringLiteral("source"), text(plan.hohlraum.rohr.quelle)},
+              }},
+             // seit Fassung 11 (KQ71 a), immer geschrieben
+             {QStringLiteral("openingModel"),
+              plan.hohlraum.modell == koerper::OeffnungsModell::Geometrie ? QStringLiteral("geometry") : QStringLiteral("endCorrection")},
+             {QStringLiteral("surroundings"),
+              plan.hohlraum.umgebung == koerper::OeffnungsUmgebung::Frei ? QStringLiteral("free") : QStringLiteral("wall")},
+             {QStringLiteral("innerLoss"),
+              QJsonObject{
+                  {QStringLiteral("openings"), innenOffen},
+                  {QStringLiteral("points"), innenPunkte},
+                  {QStringLiteral("source"), text(plan.hohlraum.innen.quelle)},
               }},
          }},
         // seit Fassung 6 (KQ18 a), immer geschrieben
@@ -404,6 +421,7 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
             oe.hoehe = o.value(QStringLiteral("z")).toDouble();
             oe.flaeche = o.value(QStringLiteral("area")).toDouble();
             oe.lippe = o.value(QStringLiteral("lipLength")).toDouble();
+            oe.laenge = o.value(QStringLiteral("length")).toDouble();  // seit Fassung 11 (KQ71 a); davor 0
             oe.quelle = text(o.value(QStringLiteral("source")));
             neu.hohlraum.oeffnungen.push_back(std::move(oe));
         }
@@ -419,6 +437,22 @@ bool ausJson(const QJsonObject& wurzel, Bauplan& plan, bool* zuNeu)
             const QJsonObject o = e.toObject();
             neu.hohlraum.rohr.querschnitte.push_back({o.value(QStringLiteral("y")).toDouble(), o.value(QStringLiteral("area")).toDouble()});
         }
+        // seit Fassung 11 (KQ71 a); fehlen die Felder, Muendungskorrektur und Gueten wie bis Fassung 10. Unbekannte
+        // Werte: nicht raten
+        const QString modell = c.value(QStringLiteral("openingModel")).toString(QStringLiteral("endCorrection"));
+        if (modell == QLatin1String("geometry")) neu.hohlraum.modell = koerper::OeffnungsModell::Geometrie;
+        else if (modell != QLatin1String("endCorrection")) return false;
+        const QString umgebung = c.value(QStringLiteral("surroundings")).toString(QStringLiteral("wall"));
+        if (umgebung == QLatin1String("free")) neu.hohlraum.umgebung = koerper::OeffnungsUmgebung::Frei;
+        else if (umgebung != QLatin1String("wall")) return false;
+        const QJsonObject innen = c.value(QStringLiteral("innerLoss")).toObject();
+        for (const QJsonValue& e : innen.value(QStringLiteral("openings")).toArray()) neu.hohlraum.innen.offen.push_back(e.toInt());
+        for (const QJsonValue& e : innen.value(QStringLiteral("points")).toArray())
+        {
+            const QJsonObject o = e.toObject();
+            neu.hohlraum.innen.punkte.push_back({o.value(QStringLiteral("f")).toDouble(), o.value(QStringLiteral("q")).toDouble()});
+        }
+        neu.hohlraum.innen.quelle = text(innen.value(QStringLiteral("source")));
     }
     // seit Fassung 6 (KQ18 a); fehlt der Block, ist der Rand eingespannt wie bis Fassung 5
     if (wurzel.contains(QStringLiteral("rim")))

@@ -76,7 +76,7 @@ import scipy.signal as sig
 from scipy.optimize import least_squares, minimize, nnls
 
 FIT_FASSUNG = 4
-KOERPER_FASSUNG = 7                      # `kKoerperFassung` in InstrumentBody/Koerper.hpp
+KOERPER_FASSUNG = 8                      # `kKoerperFassung` in InstrumentBody/Koerper.hpp
 GITARRE = 34
 MAT_SHA256 = "8a016fab0b3f086a49b2e740c2588fc61938fd09251aab5314413ea4bab72fb6"
 FS = 48000
@@ -711,7 +711,8 @@ def richtung(fa, sa, qa, ga, gefittet, st):
     z = Zufall(RICHTUNG_SAMEN)
     tan = np.array([(1.0 if z.gleich() < 0.5 else -1.0) * 10 ** (elie_band(x)[0] / 20) for x in f])
     winkel = np.degrees(np.arctan(tan))
-    moden = [{"f": float(f[j]), "eta": float(eta[j]), "airShare": 0.0, "springShare": 0.0, "tubeShare": 0.0, "materialShares": [],
+    moden = [{"f": float(f[j]), "eta": float(eta[j]), "airShare": 0.0, "springShare": 0.0, "tubeShare": 0.0, "airLoss": 0.0,
+              "materialShares": [],
               "bridge": [float(v) for v in senkrecht[j] / math.cos(math.radians(winkel[j]))], "bridgeAngle": float(winkel[j]),
               "radiation": [[float(v.real), float(v.imag)] for v in g[j]]} for j in range(len(f))]
     # je Mode eine zweite nur parallel zur Decke, auf halbem Weg zur naechsten; die letzte gegen die erste gezogene
@@ -722,7 +723,8 @@ def richtung(fa, sa, qa, ga, gefittet, st):
         fy = 0.5 * (f[j] + naechste[j])
         if fy >= BIS:
             continue
-        moden.append({"f": float(fy), "eta": float(eta[j]), "airShare": 0.0, "springShare": 0.0, "tubeShare": 0.0, "materialShares": [],
+        moden.append({"f": float(fy), "eta": float(eta[j]), "airShare": 0.0, "springShare": 0.0, "tubeShare": 0.0, "airLoss": 0.0,
+                      "materialShares": [],
                       "bridge": [float(v) for v in parallel_anteil(*elie_band(f[j])) * senkrecht[j]], "bridgeAngle": 90.0,
                       "radiation": [[0.0, 0.0] for _ in MIKROFONE]})
         parallel += 1

@@ -451,12 +451,22 @@ TEST_CASE("Loop Koerper 31c-5d Waechter")
             falsch += m.luftAnteil >= 0.0 && m.luftAnteil <= 1.0 && (plan.hohlraum.an() || m.luftAnteil == 0.0) ? 0 : 1;
             // KQ59 a, KQ63 a: im Rohr ist ein Teil der Luft laengs, mit eigener Guete; sonst 0
             falsch += m.rohrAnteil >= 0.0 && m.rohrAnteil <= m.luftAnteil + 1e-12 && (plan.hohlraum.alsRohr() || m.rohrAnteil == 0.0) ? 0 : 1;
+            // KQ71 a (Fassung 8): der Verlust der Luft steht je Mode in der Datei; mit Muendungskorrektur und Gueten
+            // (KQ63 a) muss er zu den Anteilen passen, mit den Oeffnungen aus ihrer Geometrie mindestens den inneren
+            // Verlust tragen (positiv mit Luft)
+            falsch += plan.hohlraum.an() || m.luftVerlust == 0.0 ? 0 : 1;
             if (plan.hohlraum.an())
             {
-                const double luftVerlust = (m.luftAnteil - m.rohrAnteil) / plan.hohlraum.guete +
-                                           (plan.hohlraum.alsRohr() ? m.rohrAnteil / plan.hohlraum.rohr.guete : 0.0);
-                etaVon = (1.0 - m.luftAnteil) * etaVon + luftVerlust;
-                etaBis = (1.0 - m.luftAnteil) * etaBis + luftVerlust;
+                if (!plan.hohlraum.ausGeometrie())
+                {
+                    const double luftVerlust = (m.luftAnteil - m.rohrAnteil) / plan.hohlraum.guete +
+                                               (plan.hohlraum.alsRohr() ? m.rohrAnteil / plan.hohlraum.rohr.guete : 0.0);
+                    falsch += std::abs(m.luftVerlust - luftVerlust) <= 1e-12 + 1e-9 * luftVerlust ? 0 : 1;
+                }
+                else
+                    falsch += m.luftAnteil <= 1e-9 || m.luftVerlust > 0.0 ? 0 : 1;
+                etaVon = (1.0 - m.luftAnteil) * etaVon + m.luftVerlust;
+                etaBis = (1.0 - m.luftAnteil) * etaBis + m.luftVerlust;
             }
             luftSumme += m.luftAnteil - m.rohrAnteil;
             falsch += m.verlustfaktor > etaVon - 1e-12 && m.verlustfaktor < etaBis + 1e-12 ? 0 : 1;
