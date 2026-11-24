@@ -1,0 +1,8 @@
+67 Toene 38-104, 16 Mikrofone; Streuung ueber die Mikrofone je Ton: Median 4.1 dB
+Leistungssumme aller 32 (wie KQ34 a)       : Spanne  12.4  groesster  11.6  mittlerer  1.6
+dasselbe aus den Maxima je Mikrofon         : Spanne  12.4  groesster  11.6  mittlerer  1.6   (prueft die Naeherung)
+ 1 Mikrofon(e),  16 Auswahlen: Spanne Median  19.3 | groesster Sprung Median  13.7 (5.-95. 12.0-15.6, kleinster 11.9) | mittlerer Median  2.3 (5.-95. 1.9-2.8) | Anteil mit groesstem Sprung <= 12 LU: 6 %, mit mittlerem <= 3 LU: 100 %
+ 2 Mikrofon(e), 120 Auswahlen: Spanne Median  15.7 | groesster Sprung Median  12.4 (5.-95. 11.1-14.7, kleinster 10.7) | mittlerer Median  1.9 (5.-95. 1.6-2.3) | Anteil mit groesstem Sprung <= 12 LU: 32 %, mit mittlerem <= 3 LU: 100 %
+ 4 Mikrofon(e), 500 Auswahlen: Spanne Median  13.6 | groesster Sprung Median  12.0 (5.-95. 11.3-13.1, kleinster 11.0) | mittlerer Median  1.8 (5.-95. 1.5-2.1) | Anteil mit groesstem Sprung <= 12 LU: 52 %, mit mittlerem <= 3 LU: 100 %
+ 8 Mikrofon(e), 500 Auswahlen: Spanne Median  12.5 | groesster Sprung Median  11.7 (5.-95. 11.2-12.2, kleinster 10.9) | mittlerer Median  1.8 (5.-95. 1.4-1.9) | Anteil mit groesstem Sprung <= 12 LU: 87 %, mit mittlerem <= 3 LU: 100 %
+16 Mikrofon(e), 500 Auswahlen: Spanne Median  12.4 | groesster Sprung Median  11.6 (5.-95. 11.6-11.6, kleinster 11.6) | mittlerer Median  1.6 (5.-95. 1.6-1.6) | Anteil mit groesstem Sprung <= 12 LU: 100 %, mit mittlerem <= 3 LU: 100 %

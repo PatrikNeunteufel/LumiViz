@@ -10,6 +10,12 @@
 namespace lumi::kern
 {
 
+void Tonkern::rechneAmSteg(const Tonauftrag& auftrag, std::vector<Stegkraft>& kraefte, Innere* innere) const
+{
+    kraefte.assign(1, Stegkraft{});
+    rechne(auftrag, kraefte.front().kraft, innere);
+}
+
 std::vector<std::string> Fabrik::registriere(KernTyp typ)
 {
     std::vector<std::string> fehler = pruefeTafel(typ.tafel);

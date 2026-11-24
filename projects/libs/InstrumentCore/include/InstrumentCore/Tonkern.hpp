@@ -58,6 +58,10 @@ struct KernAuskunft
     /// Pegel. Die App gibt ihm die Spuren von Muster und Clip ueber die Zeit in den Auftrag und legt die Expression nicht
     /// als Pegel hinter den Ton (34j-7; `bar` mit Bogen nennt `expression` und bleibt beim Pegel)
     bool anregungDauernd = false;
+    /// Seit 0.7.0 (34k-7b, GZ5 a, GZ7 a): der Kern rechnet den Koerper am Steg in seiner Saitenschleife — er will den
+    /// `Steg` im Auftrag und gibt mit `rechneAmSteg` die Kraft je Stegpunkt aus; die App faltet jede mit der Antwort des
+    /// Koerpers an ihrem Stegpunkt und legt sie zusammen (die gezupfte Saite ab Rechenfassung 2)
+    bool stegImAuftrag = false;
 
     [[nodiscard]] bool operator==(const KernAuskunft&) const = default;
 };
@@ -77,6 +81,17 @@ struct Innere
     std::vector<InnereGroesse> ergebnis;
 };
 
+/// Was ein Kern an einem Stegpunkt ausgibt (34k-7b, GZ5 a).
+struct Stegkraft
+{
+    /// die Taste des Stegpunkts (`Steg::Punkt::taste`); −1 = kein Stegpunkt: `kraft` ist der fertige Ton (die Vorgabe von
+    /// `rechneAmSteg` fuer Kerne ohne `stegImAuftrag`)
+    int taste = -1;
+    /// je Frame die Kraft senkrecht zur Decke (`Tonauftrag::frames` Werte), im Massstab des Kerns — die App bringt den Ton
+    /// nach der Faltung mit dem Bezug des Kerns auf seinen Pegel
+    std::vector<float> kraft;
+};
+
 /// Ein Kern, vorbereitet fuer ein Instrument.
 class Tonkern
 {
@@ -89,6 +104,11 @@ public:
     /// Den Ton rechnen: `ton` hat danach `auftrag.frames` Werte Mono (Spitze um 0,5 bei der Bezugsnote und Stufe 0,
     /// `normiere`). Mit `innere` die gewuenschten inneren Groessen dazu, soweit der Kern sie kennt.
     virtual void rechne(const Tonauftrag& auftrag, std::vector<float>& ton, Innere* innere = nullptr) const = 0;
+
+    /// Seit 0.7.0 (34k-7b): die Kraft je Stegpunkt, an dem der Ton den Koerper anregt — die gespielte Saite und die
+    /// mitschwingenden, je eine `Stegkraft`. Die Vorgabe ruft `rechne` und gibt den fertigen Ton als eine Kraft ohne
+    /// Stegpunkt (Taste −1) zurueck; ein Kern mit `stegImAuftrag` ueberschreibt sie.
+    virtual void rechneAmSteg(const Tonauftrag& auftrag, std::vector<Stegkraft>& kraefte, Innere* innere = nullptr) const;
 };
 
 /// Die Art eines Kerns.

@@ -1,9 +1,9 @@
 # InstrumentCore — die Bibliothek der Rechenkerne
 
-> **Version:** 0.5.0
-> **Datum:** 2026-11-12
+> **Version:** 0.6.0
+> **Datum:** 2026-11-24
 > **Typ:** CppModuleDoc
-> **Status:** gebaut (Stufe 34c; 34g: Umfang je Instrument, gestimmte Werte in Reihenfolge; QM1 a: Quellen am Wert); die Kerne in `InstrumentModels` (34d, BK1 a)
+> **Status:** gebaut (Stufe 34c; 34g: Umfang je Instrument, gestimmte Werte in Reihenfolge; QM1 a: Quellen am Wert; 34k-7b: Steg im Auftrag, Saite und Bund, Kraft je Stegpunkt); die Kerne in `InstrumentModels` (34d, BK1 a)
 > **Modul:** InstrumentCore (STATIC, `projects/libs/InstrumentCore`)
 > **Namespace:** `lumi::kern`
 > **Abhängigkeiten:** Standardbibliothek, pocketfft (`externals/pocketfft`, PRIVATE); kein Qt, kein `windows.h`
@@ -34,8 +34,9 @@ Die Bausteine kommen je aus der reicheren Fassung von IC oder LumiViz; jede Übe
 
 | Kopf | Inhalt |
 |---|---|
-| `Tonkern.hpp` | `Tonkern` (`nachklang`, `rechne` → Mono `float`, auf Wunsch innere Größen), `KernTyp` (Tafel, Auskunft, `erzeuge`), `KernAuskunft` (Rechenweg Note/Kette/Clip, Stufe im Namen, Spuren, innere Größen, Vorbereitung teuer, seit 34g `koerperAnDerSchicht`: der Körper liegt an der Schicht, nicht im Kern — CK1 a), `Fabrik` (je Name; `erzeuge` richtet die Werte und baut; die eingebauten Kerne kennt `kerne()` in `InstrumentModels`, BK1 a), `normiere` (Bezug des Ausgangs, IK2-10 a); `bezugsProbe` (mittlere Note des Instruments, Stufe 0, 1 s; seit 34g mit den Werten, KS1 a) und `normiereNachTafel` (34f-3, IK2-10 a) |
-| `Tonauftrag.hpp` | `Frames`, `KettenNote {beginn, ende, note, hz, gleitet}`, `Spur` mit `SpurPunkt`, feste Namen `spur::kExpression`/`kPitch`/`kVibrato`, `Tonauftrag {rate, noten, stufe, frames, spuren}`, `spurWert`, `einzelnote`, `pruefeAuftrag` |
+| `Tonkern.hpp` | `Tonkern` (`nachklang`, `rechne` → Mono `float`, auf Wunsch innere Größen), `KernTyp` (Tafel, Auskunft, `erzeuge`), `KernAuskunft` (Rechenweg Note/Kette/Clip, Stufe im Namen, Spuren, innere Größen, Vorbereitung teuer, seit 34g `koerperAnDerSchicht`: der Körper liegt an der Schicht, nicht im Kern — CK1 a; seit 34j-7 `anregungDauernd`; seit 34k-7b `stegImAuftrag`: der Kern rechnet den Körper am Steg in seiner Saitenschleife), `Stegkraft` und `rechneAmSteg` (34k-7b: die Kraft je Stegpunkt; die Vorgabe ruft `rechne` und gibt den fertigen Ton als eine Kraft mit Taste −1), `Fabrik` (je Name; `erzeuge` richtet die Werte und baut; die eingebauten Kerne kennt `kerne()` in `InstrumentModels`, BK1 a), `normiere` (Bezug des Ausgangs, IK2-10 a); `bezugsProbe` (mittlere Note des Instruments, Stufe 0, 1 s; seit 34g mit den Werten, KS1 a) und `normiereNachTafel` (34f-3, IK2-10 a) |
+| `Tonauftrag.hpp` | `Frames`, `KettenNote {beginn, ende, note, hz, gleitet, saite, bund}` (Saite und Bund seit 34k-7b, ZK2 a; −1 = ohne Angabe), `Spur` mit `SpurPunkt`, feste Namen `spur::kExpression`/`kPitch`/`kVibrato`, `Tonauftrag {rate, noten, stufe, frames, spuren, steg}` (`steg` seit 34k-7b: `shared_ptr<const Steg>`, `nullptr` = starrer Steg), `spurWert`, `einzelnote`, `pruefeAuftrag` (prüft seit 34k-7b auch Saite, Bund und den Steg) |
+| `Steg.hpp` | 34k-7b (GZ5 a, GZ5-1 a, GZ7 a): der Körper am Steg — `Steg::Mode {hz, verlust, winkelGrad}` (gemeinsam für alle Stegpunkte), `Steg::Punkt {taste, form, streuung}` (Formwert je Mode längs ihrer Richtung, φ_rms des statistischen Teils), `Steg::Dichte {vonHz, bisHz, dichte, anstieg}` mit `bei(f)` (für den Dämpfer Re Y = n(f) φ_rms² / 4), `Steg` mit allen Stegpunkten des Körpers und `punktZu(taste)` (genau gesucht, KQ22 a); `pruefeSteg`. Der Kern wählt, welche Punkte ein Ton braucht (gespielte, freie Saiten, Chöre) |
 | `Parametertafel.hpp` | `Wert` (Zahl, Ganzzahl, Schalter, Wahl, Kurve, Liste), `Werte` (seit QM1 a mit `quellen` je Wert ohne Kurve — `QuellenJeWert`, `quellenVon`, `setzeQuellen`; nicht im Vergleich und nicht im Abdruck, nur an den Werten eines Instruments, nicht an Einträgen einer Liste; `vorgaben` setzt die der Angaben, `richteWerte` ordnet sie nach der Tafel und füllt fehlende aus der Angabe), `ParameterAngabe` (Gruppe, Art, Darstellung, Einheit, Grenzen, Skala, Wahlen, Felder einer Liste, Vorgabe, Belegkraft, Herkunft, klangbestimmend, gestimmt mit Abhängigkeiten), `Parametertafel` (Kern, Titel, Fassung der Rechnung, Tastenumfang, Gruppen, Werte); `pruefeTafel`, `vorgaben`, `richteWerte`, `eingabenAbdruck`, `veralteteGestimmte`, `ungemessen`, `wertAlsText`, `belegkraftName`; an der Tafel `bezugWert`/`bezugRunden` (der Bezug zählt nicht zum Abdruck gestimmter Werte), an der Angabe `quellen` (34f, WZ1 a); seit 34g `umfangVon`/`umfangBis` und `tastenumfang` (ein Kern, viele Instrumente: der Umfang ist ein Wert des Instruments, KS1 a; seit 34i richten sich die Kurven nur nach dem Umfang der Tafel, KL4-1 a) und gestimmte Werte in der Reihenfolge der Tafel (ein späterer darf an einem früheren hängen, sein Abdruck enthält ihn — KS2 a) |
 | `Anschlag.hpp` | `anschlagStufe`, `anschlagFaktor`, `anschlagRest`, `kAnschlagStufeMin` (−40), `kAnschlagSchrittDb` (1) |
 | `Kurve.hpp` | `Kurve` über den Tonumfang (Stützpunkte, Abweichungen, Belegkraft, Herkunft), `wertAn` (monoton kubisch; bis 34d Bit für Bit gegen `Tastenkurve` der App geprüft, seither rechnet der Flügel selbst damit), `richteKurve` mit Umfang (seit 34g wird auch der Ersatz einer leeren Kurve gerichtet und trägt seine Quellen mit — Abweichung von IC), `kurveAusPunkten`, `kurveKonstant`, `kurveAlsText`; `quellen`: die Schlüssel des Registers `asset/loop/instrument_quellen.json` (34f-1, WZ1 a; zählen nicht zum Klang) |
@@ -60,7 +61,8 @@ näher, meldet die Zerlegung `entartet` (L11) — die Vektoren des Paars sind da
 - `tests/unit/UnitTests/test_InstrumentCore.cpp` — `*InstrumentCore*`: Fft gegen die direkte DFT, Eigenzerlegung
   (Entartung, 20 × 20), Anschlagstufe, SHA-256 (FIPS 180-2 B.1/B.2), Pool, Kurve (Grenzen, Ersatz),
   Modal gegen die geschlossene Impulsantwort, Tonauftrag, Parametertafel (Prüfung, Richten, gestimmte Werte,
-  ungemessen), Fabrik und `normiere` an einem Prüfkern.
+  ungemessen), Fabrik und `normiere` an einem Prüfkern; seit 34k-7b Saite und Bund in der Note, der Körper am Steg
+  (`pruefeSteg`, `punktZu`, Dichte im Band), Kraft je Stegpunkt (Vorgabe Bit für Bit wie `rechne`, ein Prüfkern mit Steg).
 - `test_LoopFft.cpp` (jede Umsetzung aus `fftUmsetzungen()`), `test_LoopKleinEigen.cpp` (gegen Eigen).
 - Wächter der Bits: `*Loop Werte*`, `*Klangfassung*`, Flügel-Bezug in `test_LoopHammerTon`.
 
@@ -68,6 +70,7 @@ näher, meldet die Zerlegung `entartet` (L11) — die Vektoren des Paars sind da
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.6.0 | 2026-11-24 | Session 220 (Bibliothek 0.7.0). 34k-7b (GZ5 a, GZ7 a, ZK2 a): `Steg.hpp` (der Körper am Steg: Moden mit Richtung, Stegpunkte mit Formwert und Streuung, Dichte des statistischen Teils), `Tonauftrag::steg`, `KettenNote::saite` / `bund`, `KernAuskunft::stegImAuftrag`, `Stegkraft` und `Tonkern::rechneAmSteg` (Vorgabe ruft `rechne`). Kein Kern liest das Neue — alle bisherigen Kerne Bit für Bit wie vorher (Journal J79). |
 | 0.5.0 | 2026-11-12 | Session 191 (Bibliothek 0.6.0). 34j-7 (ZV3 a, SK4 a): `KernAuskunft::anregungDauernd` — ein Kern, der dauernd anregt (Wind), bekommt die Expression als Stärke der Anregung über die Zeit; die App legt sie dann nicht als Pegel hinter den Ton (Journal J71). Alle bisherigen Kerne melden `false`, Bit für Bit wie vorher. |
 | 0.4.0 | 2026-11-09 | Session 181 (Bibliothek 0.5.0). KL4-1 a: `richteWerte` richtet die Kurven nur auf den Umfang der Tafel — der Umfang des Instruments verschiebt keine Stützpunkte mehr (er begrenzt Spiel, Bezugsprobe und Ansicht); vorher änderte ein kleinerer Umfang den Klang der Tasten darin (am CP-70 der Ton an Taste 60 um −36 dB). Die Abdrücke von `bar`, `membrane` und Flügel bleiben Bit für Bit (Journal J55). |
 | 0.3.0 | 2026-11-08 | Session 180 (Bibliothek 0.4.0). QM1 a: Quellen am Wert für alle Werte ohne Kurve (`Werte::quellen`, `QuellenJeWert`), `vorgaben` und `richteWerte` mit Quellen, der Vergleich ohne sie (Journal J50). |

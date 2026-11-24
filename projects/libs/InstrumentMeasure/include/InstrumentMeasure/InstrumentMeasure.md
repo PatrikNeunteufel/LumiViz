@@ -1,7 +1,7 @@
 # InstrumentMeasure — Messkette und Setzen
 
-> **Version:** 0.4.0
-> **Datum:** 2026-11-08
+> **Version:** 0.5.0
+> **Datum:** 2026-11-24
 > **Typ:** CppModuleDoc
 > **Status:** gebaut (Stufe 34e; 34f Stimmen; 34g der Stimmer der Klasse 4; 34j der Stimmer der Klasse 10)
 > **Modul:** InstrumentMeasure (STATIC, `projects/libs/InstrumentMeasure`)
@@ -50,6 +50,7 @@ Setzen sein `Modell` (ME3 a). Jede Übernahme steht im
 | `Samples.hpp` | aus IC, allgemein: die Wurzel lokaler Aufnahmen aus einer Umgebungsvariable (Name vom Aufrufer), `SHA256SUMS` lesen, Dateien prüfen |
 | `StabStimmen.hpp` | 34g (KS2 a, KS3 a), aus IC: der Stimmer des Kerns `bar` — `stabPartnerPegel` (IC `setzePartnerAbstrahl`), `stabBogenFenster` (IC `stimmeBogen`), `stabSpielHz` (die Tonhöhe des gestrichenen Tons, YIN; in IC im Kern gemessen) |
 | `ZungeStimmen.hpp` | 34j: der Stimmer des Kerns `freeReed` — je Taste f₀ am mittleren Druck an den Nulldurchgängen der Auslenkung (`messeZungenTaste`, `stimmeZunge`, ZV5 a), der Bend über das Ventil (`messeBend`, ZV8 a), der Windbereich als Prüfgröße (`messeWindbereich`), die Stärke je Stufe (`tonLautheit`, `messeDynamik`; auf 0,05 LU eingegabelt, ZV10 a) und der Nachklang (`messeNachklang` über `kNachklangHalten` × `kNachklangStaerken`, ZV13 a), in einer zweiten Runde mit der gestimmten f₀ aller Noten; `zungenStimmung`, `zungeStimmer()` (in `stimmer()`) |
+| `UmlaufEntwurf.hpp` | 34k-7c (UL1 a–UL3-1 a, ZK1 a): der Entwurf des Umlauf-Filters — `entwirfJeTaste` (Harfe, Cembalo: Glieder Thiran 5, 3, 1, Biquads der Reihe nach, bis UL2 a hält) und `entwirfJeSaite` (Gitarre, Laute, Oud: Kette als Legendre-Reihe 3. Grades in der Lage, Stützstellen an Bünden und auf halbem Weg, vier Starts, Prüfung an fremden Stellen), `bewerte`, `filterAn`. Verlust nach Bank & Välimäki (Cepstrum, Gleichungsfehler, Zähler über LSI → LDP → NNLS mit Betrag ≤ 1, Spektralfaktor), Kette nach Abel & Smith, angepasst wie scipy `least_squares` (trf, `x_scale="jac"`). Übertragen aus den Proben S204 / S205; Abweichungen: eigene SVD (einseitiges Jacobi-Verfahren), die Nebenbedingung |H| ≤ 1 auch zwischen den 4097 Stellen (Austausch auf 65 537 Stellen; eine doppelte Nullstelle am Einheitskreis im Spektralfaktor zusammengelegt), im LDP Spalten auf Länge 1 und die Schwelle je Nebenbedingung in Einheiten von |H|² (an Polen nahe am Einheitskreis sonst |H| 1,0028 bis 17), eigener Zufall statt numpy; bei Rangverlust (ein Logit-Parameter an der Grenze) der Schritt kleinster Norm mit α = 0 und die Logit-Parameter auf ±40 gehalten (TK2 a; scipy rechnet dort α < 0, S220 Cembalo T73) |
 | `Stimmen.hpp` | 34f-3 (IK2-10 a, IK2-11 a): `Stimmer` je Kern (seit 34g mit den Namen der zu stimmenden Werte, in Reihenfolge — KS2 a), `stimmer()` (die eingebauten; seit 34g `bar`), `stimmeUndNormiere` (die veralteten gestimmten Werte neu, Abdrücke merken, Bezug über `normiereNachTafel`), `veralteteWerte` (ohne Rechnen), `bezugVeraltet`; das Programm `InstrumentTuneTool` schreibt die Datei |
 | `Setzen.hpp` | aus IC: `setzen::setze` (Gruppen, Messgrößen, `Modell`; L7–L18), `schnitt`, `welligkeit`, `glaette`, `setzeMehrfach`, `eindeutig`, `probe`, `alsTasten`; innen das LM je Block; Schritt und Ende je Parameter, Beobachter je Iteration und Startzustand (ME3 a) |
 
@@ -79,7 +80,8 @@ Das Ergebnis ist ein Vorschlag (L18).
 
 | Version | Datum | Änderung |
 |---|---|---|
-| (nächste) | 2026-11-17 | Session 203. KQ32 a: `Teiltonmessung` — zwei Stufen aus zwei abklingenden Komponenten mit Boden an der Kurve nach Schroeder (die Geraden mit Knick nur als Startwert); bei flachem Knick vorher +10 … +20 % auf T60 früh. Fälle „flacher Knick“ in `test_Teiltonmessung.cpp`. Fassungsnummer mit dem Ende von 34k. |
+| 0.5.0 | 2026-11-24 | Session 220 (Bibliothek 0.5.0). 34k-7c: `UmlaufEntwurf` (Journal J80); getestet in `test_InstrumentMeasureUmlauf.cpp`. **Lücke der Doku:** `ZupfStimmen` und `Grundton` (34k-3) stehen hier noch nicht — kommen mit dem Abschluss der Stufe. Dazu der Eintrag aus S203 darunter. |
+| 0.5.0 (S203) | 2026-11-17 | Session 203. KQ32 a: `Teiltonmessung` — zwei Stufen aus zwei abklingenden Komponenten mit Boden an der Kurve nach Schroeder (die Geraden mit Knick nur als Startwert); bei flachem Knick vorher +10 … +20 % auf T60 früh. Fälle „flacher Knick“ in `test_Teiltonmessung.cpp`. Fassungsnummer mit dem Ende von 34k. |
 | 0.4.0 | 2026-11-12 | Session 192. 34j: `ZungeStimmen` — S189 aus IC (J69), S191 neu für Rechenfassung 2 (J70), S192 Stärke je Stufe und Nachklang (J72); S183: `StabStimmen` stimmt den Partner auch bei Abnahme `bridge` (J61). Getestet in `test_InstrumentModelsZunge.cpp`. |
 | 0.3.0 | 2026-11-08 | Session 178. 34g: `StabStimmen` (der Stimmer `bar`, KS2 a, KS3 a), `Stimmer` mit den Namen der zu stimmenden Werte und Ketten in Reihenfolge (KS2 a), Abhängigkeit von `InstrumentModels`; B6 am Modell (Journal J34, J38, J41). |
 | 0.2.0 | 2026-11-08 | Session 177. 34f-3: `Stimmen` (IK2-10 a, IK2-11 a). |

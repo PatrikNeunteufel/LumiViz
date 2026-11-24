@@ -23,6 +23,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Parametertafel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Pool.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Pruefsumme.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Steg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Tonauftrag.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Tonkern.cpp"
 )
@@ -35,6 +36,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Parametertafel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Pool.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Pruefsumme.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Steg.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Tonauftrag.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Tonkern.hpp"
 )

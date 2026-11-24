@@ -755,3 +755,144 @@ TEST_CASE("InstrumentCore 34c Fabrik und normiere")
     CHECK(normiere(fabrik, "testSine", v, "waveform", probe, 1, &fehler) == 0.0);
     CHECK(fehler.size() == 1);
 }
+
+// --- 34k-7b: Saite und Bund, der Koerper am Steg, die Kraft je Stegpunkt ------------------------------------------------
+
+namespace
+{
+/// Ein kleiner Steg: drei Moden, zwei Stegpunkte, ein statistischer Teil.
+Steg pruefSteg()
+{
+    Steg s;
+    s.moden = {{100.0, 0.02, 0.0}, {250.0, 0.015, 30.0}, {400.0, 0.01, -90.0}};
+    s.punkte = {{40, {0.5, -0.2, 0.1}, 0.3}, {45, {0.4, 0.3, -0.05}, 0.25}};
+    s.dichte = {5000.0, 20000.0, 0.02, 1e-6};
+    return s;
+}
+
+/// Ein Kern, der den Steg liest: je Note eine Kraft am Stegpunkt ihrer Taste, so gross wie der Formwert der ersten Mode.
+class Stegkern final : public Tonkern
+{
+public:
+    [[nodiscard]] Frames nachklang(const Tonauftrag&, Frames) const override { return 0; }
+    void rechne(const Tonauftrag& auftrag, std::vector<float>& ton, Innere*) const override
+    {
+        ton.assign(static_cast<std::size_t>(auftrag.frames), 0.0f);
+    }
+    void rechneAmSteg(const Tonauftrag& auftrag, std::vector<Stegkraft>& kraefte, Innere*) const override
+    {
+        kraefte.clear();
+        for (const KettenNote& n : auftrag.noten)
+        {
+            const Steg::Punkt* p = auftrag.steg ? auftrag.steg->punktZu(n.note) : nullptr;
+            if (p == nullptr) continue;
+            kraefte.push_back(Stegkraft{p->taste, std::vector<float>(static_cast<std::size_t>(auftrag.frames),
+                                                                    static_cast<float>(p->form.front()))});
+        }
+    }
+};
+}  // namespace
+
+TEST_CASE("InstrumentCore 34k-7b Saite und Bund in der Note (ZK2 a)")
+{
+    Tonauftrag a = einzelnote(52, 164.8, 0, 4800, 9600, 48000.0);
+    REQUIRE(a.noten.size() == 1);
+    CHECK(a.noten[0].saite == -1);  // ohne Angabe
+    CHECK(a.noten[0].bund == -1);
+    CHECK(a.steg == nullptr);
+    CHECK(pruefeAuftrag(a).empty());
+
+    a.noten[0].saite = 4;
+    a.noten[0].bund = 0;  // leer
+    CHECK(pruefeAuftrag(a).empty());
+    a.noten[0].bund = 7;
+    CHECK(pruefeAuftrag(a).empty());
+    KettenNote b = a.noten[0];
+    CHECK(b == a.noten[0]);
+    b.bund = 8;
+    CHECK_FALSE(b == a.noten[0]);  // der Bund gehoert zum Vergleich
+
+    a.noten[0].saite = -1;  // Bund ohne Saite
+    CHECK(pruefeAuftrag(a).size() == 1);
+    a.noten[0].saite = -2;
+    a.noten[0].bund = -3;
+    CHECK(pruefeAuftrag(a).size() == 2);
+}
+
+TEST_CASE("InstrumentCore 34k-7b der Koerper am Steg")
+{
+    const Steg s = pruefSteg();
+    CHECK(pruefeSteg(s).empty());
+    REQUIRE(s.punktZu(45) != nullptr);
+    CHECK(s.punktZu(45)->form[1] == 0.3);
+    CHECK(s.punktZu(44) == nullptr);  // genau gesucht, kein naechster Punkt (KQ22 a)
+
+    // die Dichte nur im Band
+    CHECK(s.dichte.bei(4999.0) == 0.0);
+    CHECK(s.dichte.bei(5000.0) == 0.02);
+    CHECK(s.dichte.bei(15000.0) == doctest::Approx(0.02 + 1e-6 * 10000.0));
+    CHECK(s.dichte.bei(20000.0) == 0.0);
+    CHECK(Steg::Dichte{}.bei(1000.0) == 0.0);  // keiner
+
+    Steg falsch = s;
+    falsch.moden[0].hz = 0.0;              // Frequenz
+    falsch.moden[1].verlust = -0.1;        // Verlust
+    falsch.moden[2].winkelGrad = 91.0;     // Winkel
+    falsch.moden[2].hz = 90.0;             // nicht aufsteigend
+    falsch.punkte[1].taste = 40;           // doppelt
+    falsch.punkte[0].form.pop_back();      // zu wenige Formwerte
+    falsch.punkte[1].streuung = -1.0;      // Streuung
+    falsch.dichte.bisHz = 1000.0;          // Band leer
+    CHECK(pruefeSteg(falsch).size() == 8);
+
+    // im Auftrag mit „steg: “ davor
+    Tonauftrag a = einzelnote(40, 82.4, 0, 4800, 9600, 48000.0);
+    a.steg = std::make_shared<const Steg>(s);
+    CHECK(pruefeAuftrag(a).empty());
+    a.steg = std::make_shared<const Steg>(falsch);
+    const std::vector<std::string> f = pruefeAuftrag(a);
+    REQUIRE(f.size() == 8);
+    for (const std::string& t : f) CHECK(t.rfind("steg: ", 0) == 0);
+}
+
+TEST_CASE("InstrumentCore 34k-7b Kraft je Stegpunkt")
+{
+    // die Vorgabe: ein Kern ohne Steg gibt den fertigen Ton als eine Kraft ohne Stegpunkt, Bit fuer Bit wie `rechne`
+    Fabrik fabrik;
+    REQUIRE(fabrik.registriere(pruefTyp()).empty());
+    CHECK_FALSE(fabrik.typ("testSine")->auskunft.stegImAuftrag);
+    const std::shared_ptr<const Tonkern> k = fabrik.erzeuge("testSine", vorgaben(pruefTafel()));
+    REQUIRE(k);
+    Tonauftrag probe = einzelnote(66, 440.0, -6, 24000, 24000, 48000.0);
+    std::vector<float> ton;
+    k->rechne(probe, ton);
+    std::vector<Stegkraft> kraefte{Stegkraft{7, {1.0f}}, Stegkraft{}};  // wird ersetzt
+    Innere innere;
+    innere.gewuenscht = {"envelope"};
+    k->rechneAmSteg(probe, kraefte, &innere);
+    REQUIRE(kraefte.size() == 1);
+    CHECK(kraefte[0].taste == -1);
+    CHECK(kraefte[0].kraft == ton);
+    CHECK(innere.ergebnis.size() == 1);  // innere Groessen gehen durch
+
+    // ein Steg im Auftrag aendert an einem Kern, der ihn nicht liest, nichts
+    probe.steg = std::make_shared<const Steg>(pruefSteg());
+    k->rechneAmSteg(probe, kraefte);
+    REQUIRE(kraefte.size() == 1);
+    CHECK(kraefte[0].kraft == ton);
+
+    // ein Kern mit Steg: je Note die Kraft an ihrem Stegpunkt; eine Taste ohne Punkt gibt keine
+    const Stegkern stegkern;
+    const Tonkern& sk = stegkern;  // ueber die Schnittstelle, wie die App ihn ruft
+    Tonauftrag zwei = einzelnote(40, 82.4, 0, 480, 960, 48000.0);
+    zwei.noten.push_back(KettenNote{0, 480, 45, 110.0, false});
+    zwei.noten.push_back(KettenNote{0, 480, 50, 146.8, false});
+    zwei.steg = std::make_shared<const Steg>(pruefSteg());
+    CHECK(pruefeAuftrag(zwei).empty());
+    sk.rechneAmSteg(zwei, kraefte);
+    REQUIRE(kraefte.size() == 2);
+    CHECK(kraefte[0].taste == 40);
+    CHECK(kraefte[1].taste == 45);
+    CHECK(kraefte[1].kraft.size() == 960);
+    CHECK(kraefte[1].kraft.front() == 0.4f);
+}

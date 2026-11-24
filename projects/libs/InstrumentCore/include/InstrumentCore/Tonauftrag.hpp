@@ -16,7 +16,10 @@
  */
 #pragma once
 
+#include "InstrumentCore/Steg.hpp"
+
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -35,6 +38,11 @@ struct KettenNote
     int note = 60;         ///< MIDI 0 … 127
     double hz = 261.6255653005986;
     bool gleitet = false;  ///< aus der vorigen Note gebunden (Legato, Slide) statt neu angesetzt
+    /// Seit 0.7.0 (34k-7b, ZK2 a): die Saite des Saitensatzes, auf der die Note klingt (0 … , die Stelle in
+    /// `Saitensatz::leer` der App; ein Chor ist eine Saite), und der Bund darauf (0 = leer, gezaehlt ab dem Capo).
+    /// −1 = ohne Angabe — dann waehlt der Kern wie bisher; Kerne ohne Saitensatz lesen beides nicht.
+    int saite = -1;
+    int bund = -1;
 
     [[nodiscard]] bool operator==(const KettenNote&) const = default;
 };
@@ -77,6 +85,10 @@ struct Tonauftrag
     /// so viele Werte rechnet der Kern (Ende der letzten Note plus Nachklang, von der App bestimmt)
     Frames frames = 0;
     std::vector<Spur> spuren;
+    /// Seit 0.7.0 (34k-7b, GZ7 a): der Koerper am Steg, fuer einen Kern, der ihn in seiner Saitenschleife rechnet
+    /// (`KernAuskunft::stegImAuftrag`); die App laedt ihn je Instrument einmal und teilt ihn ueber alle Auftraege.
+    /// `nullptr` = ohne Koerper (starrer Steg). Der Vergleich der Auftraege vergleicht den Zeiger.
+    std::shared_ptr<const Steg> steg;
 
     [[nodiscard]] bool operator==(const Tonauftrag&) const = default;
 };
@@ -93,7 +105,8 @@ struct Tonauftrag
 
 /// Was an einem Auftrag nicht stimmt (leer = gut): Rate ≤ 0, Stufe ausserhalb, `frames` < 0, eine Note mit
 /// `ende` ≤ `beginn` oder ausserhalb 0 … 127, Noten nicht nach `beginn` geordnet, Spurpunkte nicht nach Frame
-/// geordnet, ein Spurname doppelt.
+/// geordnet, ein Spurname doppelt; seit 0.7.0 Saite oder Bund unter −1, ein Bund ohne Saite, und was `pruefeSteg` am
+/// Steg findet (mit „steg: “ davor).
 [[nodiscard]] std::vector<std::string> pruefeAuftrag(const Tonauftrag& auftrag);
 
 }  // namespace lumi::kern

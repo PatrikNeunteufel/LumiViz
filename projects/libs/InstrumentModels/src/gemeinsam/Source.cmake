@@ -16,11 +16,13 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Balken.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Reibung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Membran.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Umlauf.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/gemeinsam/Balken.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/gemeinsam/Reibung.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/gemeinsam/Membran.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/gemeinsam/Umlauf.hpp"
 )
 set(_local_templates
     # (templates - *.t; *.tpp)

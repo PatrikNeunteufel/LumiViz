@@ -57,7 +57,12 @@ std::vector<std::string> pruefeAuftrag(const Tonauftrag& auftrag)
         if (n.note < 0 || n.note > 127) fehler.push_back(wo + ": note outside 0 ... 127");
         if (!(n.hz > 0.0) || !std::isfinite(n.hz)) fehler.push_back(wo + ": hz must be positive");
         if (i > 0 && n.beginn < auftrag.noten[i - 1].beginn) fehler.push_back(wo + ": not ordered by beginn");
+        if (n.saite < -1) fehler.push_back(wo + ": string below -1");
+        if (n.bund < -1) fehler.push_back(wo + ": fret below -1");
+        if (n.bund >= 0 && n.saite < 0) fehler.push_back(wo + ": fret without string");
     }
+    if (auftrag.steg)
+        for (const std::string& f : pruefeSteg(*auftrag.steg)) fehler.push_back("steg: " + f);
     for (std::size_t i = 0; i < auftrag.spuren.size(); ++i)
     {
         const Spur& s = auftrag.spuren[i];
