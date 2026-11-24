@@ -35,7 +35,9 @@
  *   der Luft als bekannte Abweichung festgehalten.
  * - Die mitgelieferte Harfe (KQ19 a–KQ22 a, KQ46 a, KQ48 a, KQ50 a–KQ54 a; seit S215 die Luft als Rohr, KQ57 a,
  *   KQ59 a–KQ64 a): der Bauplan mit Drehfeder an den Bassseiten und den Saiten als Federn an den Oesen; die Lagen der
- *   besaiteten Harfe gegen Bell besaitet (KQ57 a); die Verschiebung beim Besaiten gegen den Koerper ohne Saiten. Der
+ *   besaiteten Harfe gegen Bell besaitet (KQ57 a; seit KQ74 a, S219, als Schwelle ab S(1,2), das Paar S(1,1) nur
+ *   als Bericht, der Gipfel bei 217 Hz am Messort 17 als bekannte Abweichung); die Verschiebung beim Besaiten gegen
+ *   den Koerper ohne Saiten. Der
  *   Fall rechnet die Platte bis 1,5 kHz selbst (die Laengsmoden des Rohrs bis 5 kHz): ohne Saiten die Bodenmode bei
  *   verschlossenen Oeffnungen gegen die Helmholtz-Mode (KQ60 a, 3 %), Lage und Hoehe der Baeuche gegen Bell 1988
  *   (KQ31-2 a) und das Profil von S(1,1)- (KQ60 a) mit den bekannten Abweichungen; die Abstrahlung an den Saiten
@@ -1020,8 +1022,8 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
         MESSAGE("ohne Saiten, Oeffnungen zu: Bodenmode ", boden->frequenzHz, " Hz (Luft ", boden->luftAnteil, "); Helmholtz ", helmholtz, " Hz");
         CHECK(std::abs(boden->frequenzHz / helmholtz - 1.0) <= 0.03);
     }
-    // KQ57 a: die Lagen der besaiteten Harfe gegen Bell besaitet (Abb. 7.8-7.14: S(1,1)- 187, S(1,1)+ 207, S(1,2) 257,
-    // S(1,3) 334, S(1,4) 430, S(1,5) 555, S(1,6) 697 Hz) auf 7 % (KQ40 a). Die Mode im Koerper ist mit ihrer Frequenz
+    // KQ57 a: die Lagen der besaiteten Harfe gegen Bell besaitet (Abb. 7.10-7.14: S(1,2) 257, S(1,3) 334, S(1,4) 430,
+    // S(1,5) 555, S(1,6) 697 Hz) auf 7 % (KQ40 a); das Paar S(1,1) nach KQ74 a weiter unten. Die Mode im Koerper ist mit ihrer Frequenz
     // festgehalten (±1 %): mit dem Rohr liegen Laengsmoden mit Luft dazwischen. Bekannte Abweichungen mit Wert.
     // KQ70 a (S218): dazu die Lagen ohne Saiten gegen Kasten G in der Harfe ohne Saiten (Abb. 7.8-7.13: 170 / 216 / 249 /
     // 316 / 432 / 545 Hz) — die Moden aus der Rechnung ohne Federn oben
@@ -1041,8 +1043,19 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
         CHECK(m.frequenzHz == doctest::Approx(l.modell).epsilon(0.01));
         CHECK(std::abs(abw) <= 7.0);
     }
-    // S218 (KQ71 a): mit den Oeffnungen aus ihrer Geometrie liegt das Paar besaitet in der Schwelle (−6,8 / +5,0 %)
-    for (const Lage& l : {Lage{"S(1,1)-", 174.2, 187.0}, Lage{"S(1,1)+", 217.4, 207.0}, Lage{"S(1,2)", 249.3, 257.0},
+    // KQ74 a (S219): das Paar S(1,1)- / S(1,1)+ ist besaitet keine Schwelle mehr. Bell liest 187 / 207 Hz an Kurven
+    // ohne trennbare Gipfel (Abb. 7.8 / 7.9: flache Profile, Guete "indeterminate"; Abb. 7.6: am Messort 17 zwischen
+    // 120 und 250 Hz kein Gipfel; Harfenbericht Par. 27.1). Die Moden des Koerpers bleiben mit ihrer Frequenz
+    // festgehalten (±1 %), die Abweichung ist Bericht mit Wert (S218: −6,8 / +5,0 %)
+    for (const Lage& l : {Lage{"S(1,1)-", 174.2, 187.0}, Lage{"S(1,1)+", 217.4, 207.0}})
+    {
+        const kp::ModeImKoerper m = naechste(k.moden, l.modell);
+        CAPTURE(l.name);
+        CHECK(m.frequenzHz == doctest::Approx(l.modell).epsilon(0.01));
+        MESSAGE(std::string(l.name), " besaitet ", m.frequenzHz, " Hz, gegen Bells Ablesung ", l.bell, " Hz ",
+                100.0 * (m.frequenzHz / l.bell - 1.0), " % (Bericht, bei Bell ohne trennbare Gipfel)");
+    }
+    for (const Lage& l : {Lage{"S(1,2)", 249.3, 257.0},
                           Lage{"S(1,3)", 328.1, 334.0}, Lage{"S(1,4)", 438.2, 430.0}, Lage{"S(1,5)", 607.1, 555.0, 9.4},
                           Lage{"S(1,6)", 731.0, 697.0}})
     {
@@ -1365,6 +1378,42 @@ TEST_CASE("Loop Koerper 34k-5 Luftraum die mitgelieferte Harfe (KQ19 a, KQ21 a, 
         // der Bauch haelt mit dem Rohr (Ort 23,9); der Knoten fehlt — bekannte Abweichung, rot, wenn er erscheint
         CHECK(std::abs(ort[oben] - 25.5) <= 2.0);
         CHECK_FALSE((tiefst < 1e9 && tiefstOrt >= 14.0 && tiefstOrt <= 16.0 && v[oben] - tiefst > 6.0));
+    }
+    // KQ74 a (S219): bekannte Abweichung — besaitet zeigt das Modell am Messort 17 einen Gipfel der Punktadmittanz bei
+    // S(1,1)+ (217 Hz), der seine Taeler bei 175-245 Hz um rund 10 dB ueberragt; Bells Kurve dort (Abb. 7.6, dritte
+    // Kurve) hat zwischen 120 und 250 Hz keinen Gipfel. Rot, wenn der Gipfel wandert oder verschwindet
+    // (Probe proben/2026-11-24_S219_harfe_gipfel.py; Harfenbericht Par. 27.2)
+    {
+        std::size_t i17 = 0;
+        for (std::size_t i = 0; i < ort.size(); ++i)
+            if (std::abs(ort[i] - 17.0) < std::abs(ort[i17] - 17.0)) i17 = i;
+        const auto besaitetDb = [&](double hz) {
+            const double om = 2.0 * kPi * hz;
+            std::complex<double> y = 0.0;
+            for (const kp::ModeImKoerper& m : k.moden)
+            {
+                const double phi = m.amStegpunkt[oesen[i17]];
+                const double omn = 2.0 * kPi * m.frequenzHz;
+                y += std::complex<double>(0.0, om) * phi * phi / (omn * omn * std::complex<double>(1.0, m.verlustfaktor) - om * om);
+            }
+            return 20.0 * std::log10(std::abs(y)) + 116.0;
+        };
+        double gipfelHz = 0.0, gipfel = -1e9;
+        for (double hz = 205.0; hz <= 230.0; hz += 0.25)
+            if (const double d = besaitetDb(hz); d > gipfel)
+            {
+                gipfel = d;
+                gipfelHz = hz;
+            }
+        double talLinks = 1e9, talRechts = 1e9;
+        for (double hz = 175.0; hz < gipfelHz; hz += 0.25) talLinks = std::min(talLinks, besaitetDb(hz));
+        for (double hz = gipfelHz; hz <= 245.0; hz += 0.25) talRechts = std::min(talRechts, besaitetDb(hz));
+        const double ueber = gipfel - std::max(talLinks, talRechts);
+        MESSAGE("besaitet am Messort ", ort[i17], ": Gipfel bei ", gipfelHz, " Hz mit ", gipfel, " dB, ", ueber,
+                " dB ueber dem hoeheren Tal (Bell Abb. 7.6: kein Gipfel)");
+        CHECK(gipfelHz == doctest::Approx(217.4).epsilon(0.015));
+        CHECK(ueber > 6.0);
+        CHECK(ueber < 14.0);
     }
     // bekannte Abweichung: S(1,8) (905 Hz, 102 dB an Ort 4) liegt ohne Saiten 17 dB zu tief — das Diskantende ist
     // auch mit der Feder an der Kante zu steif (Bericht Par. 12)

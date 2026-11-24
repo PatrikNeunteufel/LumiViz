@@ -1582,3 +1582,129 @@ auf 10 % an Bell.
 Öffnung 6 beschrieben; Lautheit in den Schwellen. Offen: A3–A5 mit allen Öffnungen 6–10 % zu tief (Kandidaten §24.2);
 die Abstrahlung an Saite 29 (+14,9 dB); die Güten der Plattenmoden ohne Saiten (Modell 17–21 gegen Bell 39–45, sie
 tragen 17–54 % Luft); die Wirkung des Besaitens (KQ70 a).
+
+## 27 S219: KQ70 a geprüft — die Wirkung des Besaitens: 187 / 207 Hz sind schwach belegt, Messkette und Rahmen erklären sie nicht
+
+> **Sitzung:** S219 (2026-11-24), Fable. Proben `proben/2026-11-24_S219_harfe_gipfel.py` (die Harfe gemessen wie bei
+> Bell: Gipfel der Eingangsadmittanz je Messort), `…_harfe_rahmen.py` (ebener Rahmen aus Kasten, Sockel, Säule, Hals,
+> Saiten zwischen Öse und Hals, Saitenzug als Vorspannung). Körper besaitet aus S218 (`.claude/handover/s218/wand`), ohne
+> Saiten neu aus der Probe S218 (`.claude/handover/s219/ohne_wand`); Ausgaben lokal `.claude/handover/s219_*.txt`. Kein
+> Programmcode. Gelesen: Bell S. 148–160 a als Text, Abb. 7.4, 7.6, 7.8–7.10, 7.17, 7.18 am Seitenbild (PDF 291,
+> 293–296, 304, 305); Le Carrou, Gautier, Foltête 2007 ganz, Abb. 3 und 4 am Seitenbild.
+
+**27.1 Was die Quellen zum besaiteten Paar wirklich tragen.**
+
+- *Bell, Abb. 7.8 / 7.9, S. 152:* besaitet ist das Profil der Admittanz bei 187 Hz flach (76–78 dB über die Messorte
+  28–2, Lücke bei 17–13: „masked by the input admittance peak of the S(1,2) mode“), bei 207 Hz flach und zum Diskant
+  steigend (81–85 dB); beide Güten „indeterminate“. Die Kurve am Messort 17 (Abb. 7.6, dritte Kurve) hat zwischen 120
+  und 250 Hz **keinen Gipfel**. Die Schallprofile bei 187 und 207 Hz haben dieselbe Form: ein Bauch über die Messorte
+  34–20, eine scharfe Nullstelle bei 14–15, ein zweiter Bauch 12–4. S(1,1)+ nennt Bell selbst „considerably weaker“.
+  Die Lagen 187 / 207 Hz sind damit Ablesungen an einer Kurve ohne trennbare Gipfel — keine Lagen wie bei S(1,2) aufwärts
+  (Q 32 / 27 / 28).
+- *Bell, Abb. 7.17 / 7.18, 7.6:* die Rahmenmode B2 liegt ohne Saiten bei 135 Hz und besaitet bei rund 110 Hz (Abb. 7.18,
+  am Bild; in Abb. 7.6 ein scharfer Gipfel bei rund 105–110 Hz, so hoch wie die Plattenmoden), B1 85 → 92 Hz. In beiden
+  bewegt sich der Kasten in einer Phase (S. 155). Die Tabelle in §8 nennt B2 nicht mit Wert.
+- *Le Carrou 2007 (Camac Atlantide, besaitet, Saiten mit Papier gedämpft; Modalanalyse, Abb. 4):* 54,8 / 80,9 / 123,4 Hz
+  Bewegungen des ganzen Kastens (Mode 2 und 3 wie ein gestützt-freier Balken), T1 152,2 Hz (Dämpfung 2,3 %, Q 22),
+  eine Kippmode 161,9 Hz, A0 168,5 Hz (1,4 %, **Q 36**); mit verschlossenen Öffnungen T1 +2,5 Hz und A0 weg (Tab. II);
+  „the displacements of the soundbox have the same order of magnitude as those of the soundboard“ (S. 563). Eine Mode
+  mit Q 36 kann nur wenig Luft tragen (die Luft allein hat bei Bell Q 6): in dieser besaiteten Harfe ist das Paar
+  schwach gekoppelt (Zwei-Schwinger-Rechnung: 11 Hz, §22.2).
+- Bell und Le Carrou (S. 560) halten fest, dass eine der beiden Moden beim Besaiten schwächer wird; „the reason for
+  that is not clear“.
+
+**27.2 Das Modell gemessen wie bei Bell — die Messkette ist es nicht.** Eingangsadmittanz an den 46 Ösen, Gipfel je
+Messort (Tiefe ≥ 1 dB), 120–360 Hz:
+
+| Zustand | Eigenfrequenzen (Q) | Gipfel je Messort | Messort 17 |
+|---|---|---|---|
+| ohne Saiten | 165,2 (8) / 210,8 (9) / 232,9 (18) / 319,7 | 162–164 / 210–212 / 230–234 / 316–323 | 162 / 210 / 234 / 322 |
+| besaitet | 174,3 (6) / 217,5 (13) / 249,3 (20) / 328–333 | 169–171 / 214–218 / 246–251 / 330–337 | 217 (78 dB, 20 dB tief) / 250 / 334 |
+| besaitet, Saiten als Dämpfer (§22) | wie oben | 168–171 / 215–218 / 246–252 / 329–338 | 217 (77 dB, 19 dB tief) / 250 / 334 |
+| dazu S(1,2) auf Bells Höhe (+12 dB, Q 32) | wie oben | 170–171 (nur 12 Orte) / 216–218 / 248–251 | 216 (79 dB, 4 dB tief) / 250 |
+
+Die Gipfel liegen höchstens 4 Hz neben den Eigenfrequenzen; auch unter einer S(1,2) von Bells Höhe bleibt 217 Hz an den
+Messorten 19–22 ein 19 dB tiefer Gipfel. **Verworfen: 187 / 207 Hz als Ablesefehler an überlappenden, gedämpften Moden
+des Modells.** Das Modell hat besaitet eine ausgeprägte Mode bei 217 Hz, die Bells besaitete Harfe am Messort 17 nicht
+zeigt; die Schallprofile des Modells bei 187 / 207 Hz haben keine Nullstelle bei Messort 14–15 (erst bei 3–6).
+
+**27.3 Rahmenprobe.** Kasten als Balken mit EI(y) aus der Geometrie (§25.3) samt Dehnsteife, Sockel, Säule (Rohr
+65 / 30 mm), Hals (40 × 90 mm, durch die Stimmnägel), Schichtholz 12 GPa — **Querschnitte und Massen angenommen**, Bell
+nennt nur das Material (S. 30). Boden mit den Moden im Vakuum ohne Saiten relativ zum Kasten, Luft wie §25.3; Saiten als
+Federn E A / L längs und T / L quer zwischen Öse und Nagel; Saitenzug als statische Last, daraus die geometrische
+Steife; die Harfe frei hängend. Raster über Steife des Kastens (× 0,7 / 1,4 / starr), E des Rahmens (× 0,5 / 2),
+Hals (× 0,25 / 4), Säule (50 / 80 mm), Sockel, Nägel, Federn × 2:
+
+- **Die Vorspannung durch den Saitenzug ändert keine Mode um mehr als 3 Hz** (meist unter 1,5 Hz; größter Druck Säule
+  5,5–6,3 kN, Kasten 4,3–5,1 kN). Verworfen als Ursache der Verschiebungen — auch für B2 (135 → 110 Hz), das die Probe
+  nicht erklärt.
+- Der Rahmen bringt mit jeder Annahme drei bis fünf Moden zwischen 70 und 300 Hz dazu; ihre Lage hängt ganz an den
+  angenommenen Querschnitten (tiefste Mode 68–133 Hz).
+- **Kein Fall hält beide Zustände.** Mit biegsamem Kasten zerfällt das Paar schon ohne Saiten (erste Plattenform bei
+  141–162 Hz, eine Luftmode bei 184–194 Hz) — gegen Bell 170 / 216 Hz; nur der starre Kasten hält sie (168 / 211 /
+  234 Hz) und gibt besaitet 175 / 214 / 230 / 246 Hz wie das heutige Modell. Mit biegsamem Kasten liegen besaitet in
+  jedem Fall eine Luftmode bei 180–192 Hz und eine Rahmenmode mit dem Kasten in einer Phase bei 193–223 Hz — nahe 187 /
+  207 Hz, aber mit einer Plattenmode bei 148–168 Hz, die Bell nicht hat, und auf einem Zustand ohne Saiten, der nicht
+  stimmt. Das ist bei dieser Modendichte kein Beleg.
+
+Ob 207 Hz besaitet eine Mode des Rahmens ist, lässt sich mit angenommenen Querschnitten weder bestätigen noch
+ausschließen.
+
+**27.4 Eine Größe, die das Modell bisher auslässt: die Wölbung des Bodens unter dem Saitenzug.** Senkrecht zum Boden
+wirken rund 9350 N · sin 33° ≈ 5,1 kN längs der Mittellinie (3,9 kN/m). Ein Streifen quer (Faser quer, 7,3 GPa, im
+Mittel 7 mm, 0,25 m breit, gestützt) biegt sich darunter linear um rund 6 mm durch — so viel wie die Dicke; die Leisten
+längs tragen das nicht (Zugleiste allein: Dezimeter). Bei Auslenkung in der Größe der Dicke gilt die lineare Platte
+nicht mehr: mit in der Ebene festgehaltenen Rändern stiege die Frequenz der Form mit einem Bauch quer um den Faktor
+√(1 + 9 (w₀/h)²) (bei w₀/h = 0,5: 1,8), und die Versteifung trifft genau den Anteil, der Volumen verdrängt (bei
+parabolischer Wölbung ist die Dehnung der Mittelfläche dem mittleren Ausschlag des Streifens proportional). Mit frei
+verschieblichen Rändern bleibt davon wenig (Abschätzung über den Schub des Bodens in seiner Ebene: wenige Prozent der
+Energie, f +4 … 13 %). Bells Zwei-Schwinger-Lesart verlangt f der Platte 193 → 204 Hz (+5,5 %) und eine schwächere
+Kopplung. **Das ist eine Abschätzung, keine Rechnung** — wie die Ränder in der Ebene gehalten sind, entscheidet, und
+das ist nicht gerechnet.
+
+**27.5 Stand.** Belegt: (1) 187 / 207 Hz besaitet sind bei Bell Ablesungen ohne trennbare Gipfel (27.1); (2) das
+Modell zeigt besaitet, auf Bells Art gemessen, ein ausgeprägtes Paar bei 170 / 217 Hz, die Messkette erklärt den
+Unterschied nicht (27.2); (3) der Saitenzug als Vorspannung des Rahmens ist ohne Wirkung (27.3); (4) in beiden Quellen
+bewegt sich der Kasten in der besaiteten Harfe unter 200 Hz so stark wie der Boden. Verworfen: Ablesefehler,
+Vorspannung des Rahmens. Offen: ob der Rahmen das Paar besaitet umordnet (nicht entscheidbar ohne Maße von Säule und
+Hals); die Wölbung des Bodens unter dem Zug (27.4); B2 135 → 110 Hz. Lautheit der Tasten 50–62, Abstrahlung 33–22 und
+Profile sind für keine der Proben gerechnet — es liegt kein Kandidat für einen Bau vor. Die Harfe bleibt gebaut
+(Fassung 8, Lautheit 11,6 / 11,6 / 2,6 LU).
+**KQ73 a (Patrik S219):** die Wölbung des Bodens unter dem Saitenzug wird als Probe gerechnet (Platte mit großer
+Auslenkung, Ränder in der Ebene frei und gehalten als Grenzfälle); KQ57 a bleibt bis dahin. Verworfen: b (Schwelle
+jetzt ändern), c (Maße des Rahmens über die Werkbank, KQ70 a ruht).
+
+**27.6 Die Wölbung gerechnet (KQ73 a) — sie ändert das Paar nicht.** Probe `proben/2026-11-24_S219_harfe_woelbung.py`:
+der Boden nach von Kármán, w in den 128 Moden im Vakuum ohne Saiten, die Verschiebung in der Ebene mit linearen
+Dreiecken auf dem Netz der Formen (10 984 Knoten), orthotrope Mittelfläche mit dem Dickenraster, die Leisten als Stäbe;
+Last je Saite T sin 33° senkrecht und T cos 33° in der Ebene, Züge auf Bells 9350 N gestellt (5,1 kN senkrecht, 7,8 kN
+in der Ebene); Gleichgewicht mit Newton, dann die Steife um den gewölbten Zustand. Geprüft: Rückstellkraft gegen die
+Energie und Steife gegen die Rückstellkraft mit Differenzen (auf 10⁻¹⁰); ohne Last kommen 165,2 / 210,8 Hz und mit
+Federn 174,3 / 217,5 Hz wie am gebauten Körper. Ausgabe lokal `.claude/handover/s219_woelbung.txt`.
+
+| Rand in der Ebene | Wölbung | erste Mode im Vakuum, ohne Federn | ihr Volumen | Paar mit Federn und Luft | f_a (Bells Rechnung) |
+|---|---|---|---|---|---|
+| ohne Last | – | 186,2 Hz | 147,8 | 174,3 / 217,5 | 40 Hz |
+| frei (lange Seiten) | 3,4 mm bei y = 0,38 m | 187,1 | 147,9 | 174,6 / 217,7 | 39 |
+| nur längs gehalten (Schale) | 3,4 mm | 186,7 | 147,8 | 174,4 / 217,7 | 40 |
+| ganz gehalten (obere Schranke) | 3,1 mm | 216,3 | 146,3 | 181,7 / 238,8 | 42 |
+
+(Volumen in 10⁻³ m³/√kg; Dicke am Ort der größten Wölbung 8 mm.) Die Wölbung ist mit 3,4 mm kleiner als die Abschätzung
+in 27.4 (die Leisten tragen mit). Mit frei oder nur längs gehaltenen Rändern ändert sie keine Mode um mehr als 1 Hz;
+mit ganz gehaltenen Rändern steigt die erste Mode um 16 %, **das verdrängte Volumen bleibt in jedem Fall auf 1 %
+gleich**, und der Abstand des Paars wird größer, nicht kleiner. Die Vermutung aus 27.4, die Versteifung treffe den
+Anteil, der Volumen verdrängt, gilt für den Streifen, nicht für den Boden: die erste Mode behält ihre Form. **Verworfen:
+die Wölbung unter dem Saitenzug als Ursache der schwachen Kopplung und der Lagen 187 / 207 Hz.** Nach dem Kipppunkt von
+KQ73 a (unter 10 % am Volumen in beiden Grenzfällen) ist b neu vorzulegen.
+
+**27.7 KQ74 a (Patrik S219): das Paar besaitet ist keine Schwelle mehr; der Rahmen geht an die Werkbank.** KQ57 a gilt
+besaitet als Schwelle ab S(1,2) (257 / 334 / 430 / 555 / 697 Hz, 7 %). Das Paar 187 / 207 Hz ist Bericht mit Wert
+(Modell 174,2 / 217,4 Hz, −6,8 / +5,0 %) mit dem Vermerk „bei Bell ohne trennbare Gipfel“; die Moden des Körpers bleiben
+mit ihrer Frequenz festgehalten. Neu als bekannte Abweichung im Fall „Luftraum die mitgelieferte Harfe“: besaitet hat
+das Modell am Messort 17 einen Gipfel der Punktadmittanz bei 216,75 Hz (77,9 dB), 10,2 dB über dem höheren Tal
+zwischen 175 und 245 Hz — Bells Kurve dort (Abb. 7.6) hat keinen; rot, wenn er wandert oder verschwindet. (Die
+„Tiefe“ in der Tabelle 27.2 zählt nach der Probe bis zum nächsten höheren Gipfel und ist deshalb größer.) Die Maße,
+Massen und Verbindungen von Säule, Hals und Sockel sind als Auftrag `2026-11-24_36_harfe_rahmen_masse` an die
+Werkbank gestellt; KQ70 a ruht bis zu deren Bericht und wird dann mit `proben/2026-11-24_S219_harfe_rahmen.py`
+wieder aufgenommen. Verworfen: b (KQ70 a schließen), c (Schwelle lassen). Geprüft: der Harfenfall unter Release-clang
+und Testing-MSVC, je 729 Prüfungen; kein anderer Fall liest die geänderte Stelle.
