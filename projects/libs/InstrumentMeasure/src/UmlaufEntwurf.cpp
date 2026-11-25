@@ -10,6 +10,7 @@
 #include "InstrumentMeasure/LevenbergMarquardt.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -1094,8 +1095,18 @@ Svd svdMit(const Matrix& A, const Vek& f)
     return out;
 }
 
+// Was ein Lauf der Anpassung mitbekommt: der Schalter fuer den Rangverlust und die Zaehler (RZ2 a).
+struct Lauf
+{
+    Rangverlust rangverlust = Rangverlust::KleinsteNorm;
+    Rechenaufwand* aufwand = nullptr;
+};
+
+using Uhr = std::chrono::steady_clock;
+double sekundenSeit(Uhr::time_point t0) { return std::chrono::duration<double>(Uhr::now() - t0).count(); }
+
 // scipy `solve_lsq_trust_region` (Moré 1977): Schritt im Vertrauensbereich Δ aus der SVD
-Vek schrittImBereich(std::size_t n, std::size_t m, const Svd& d, double Delta, double& alpha)
+Vek schrittImBereich(std::size_t n, std::size_t m, const Svd& d, double Delta, double& alpha, Rangverlust rangverlust)
 {
     const std::size_t k = d.s.size();
     Vek suf(k);
@@ -1131,7 +1142,7 @@ Vek schrittImBereich(std::size_t n, std::size_t m, const Svd& d, double Delta, d
         ableitung = -s3 / pn;
         return pn - Delta;
     };
-    if (!vollerRang)
+    if (!vollerRang && rangverlust == Rangverlust::KleinsteNorm)
     {
         // TK2 a, abweichend von scipy: bei Rangverlust (eine Spalte von J exakt null — ein Logit-Parameter an seiner
         // Grenze) liegt die Wurzel von phi unter 0, wenn der Schritt kleinster Norm schon im Bereich liegt; scipy rechnet
@@ -1278,9 +1289,41 @@ std::pair<double, double> minQuad1(double a, double b, double lo, double hi, dou
 // scipy `least_squares(method="trf", x_scale="jac")`. `logits`: so viele fuehrende Parameter gehen durch sigmoid und
 // werden nach jedem angenommenen Schritt auf ±kLogitGrenze gehalten (TK2 a, abweichend von scipy) — jenseits davon aendern
 // sie keinen Wert, liessen aber die Norm von x wachsen und damit den Abbruch nach xtol greifen (S220 Cembalo T73: 10¹²).
-Vek trf(const std::function<Vek(const Vek&)>& res, const std::function<Matrix(const Vek&)>& jac, Vek x, const Vek& lb, const Vek& ub,
-        int maxNfev, std::size_t logits)
+// Mit `Rangverlust::WieScipy` beides wie scipy (RZ2 a, nur fuer die Gegenprobe).
+Vek trf(const std::function<Vek(const Vek&)>& resRoh, const std::function<Matrix(const Vek&)>& jacRoh, Vek x, const Vek& lb,
+        const Vek& ub, int maxNfev, std::size_t logits, const Lauf& lauf)
 {
+    Rechenaufwand leer;
+    Rechenaufwand& aw = lauf.aufwand != nullptr ? *lauf.aufwand : leer;
+    ++aw.anpassungen;
+    // die Zeit auch, wenn eine Auswertung wirft (gebunden faengt das je Start)
+    struct Stoppuhr
+    {
+        double& ziel;
+        Uhr::time_point t0 = Uhr::now();
+        ~Stoppuhr() { ziel += sekundenSeit(t0); }
+    } stoppuhr{aw.sekundenAnpassung};
+    const auto res = [&](const Vek& p) {
+        const auto t0 = Uhr::now();
+        Vek out = resRoh(p);
+        aw.sekundenResiduen += sekundenSeit(t0);
+        ++aw.auswertungen;
+        return out;
+    };
+    const auto jac = [&](const Vek& p) {
+        const auto t0 = Uhr::now();
+        Matrix out = jacRoh(p);
+        aw.sekundenAbleitungen += sekundenSeit(t0);
+        ++aw.ableitungen;
+        return out;
+    };
+    const auto zerlege = [&](const Matrix& A, const Vek& b) {
+        const auto t0 = Uhr::now();
+        Svd out = svdMit(A, b);
+        aw.sekundenZerlegung += sekundenSeit(t0);
+        ++aw.zerlegungen;
+        return out;
+    };
     const std::size_t n = x.size();
     bool grenzen = false;
     for (std::size_t i = 0; i < n; ++i)
@@ -1373,10 +1416,16 @@ Vek trf(const std::function<Vek(const Vek&)>& res, const std::function<Matrix(co
             for (std::size_t j = 0; j < n; ++j) Ja(m + j, j) = std::sqrt(diagH[j]);
             Vek fa(m + n, 0.0);
             std::copy(f.begin(), f.end(), fa.begin());
-            sv = svdMit(Ja, fa);
+            sv = zerlege(Ja, fa);
         }
         else
-            sv = svdMit(Jh, f);
+            sv = zerlege(Jh, f);
+        {
+            // gleiche Regel wie in schrittImBereich
+            const std::size_t k = sv.s.size();
+            if (!(m >= n && k > 0 && sv.s[k - 1] > std::numeric_limits<double>::epsilon() * static_cast<double>(m) * sv.s[0]))
+                ++aw.rangverluste;
+        }
         const double theta = std::max(0.995, 1.0 - gNorm);
 
         double ist = -1.0, schrittNorm = 0.0;
@@ -1384,7 +1433,7 @@ Vek trf(const std::function<Vek(const Vek&)>& res, const std::function<Matrix(co
         double costNeu = cost;
         while (ist <= 0.0 && nfev < maxNfev)
         {
-            Vek ph = schrittImBereich(n, m, sv, Delta, alpha);
+            Vek ph = schrittImBereich(n, m, sv, Delta, alpha, lauf.rangverlust);
             Vek p(n), step, stepH;
             for (std::size_t i = 0; i < n; ++i) p[i] = d[i] * ph[i];
             double vorher;
@@ -1538,11 +1587,13 @@ Vek trf(const std::function<Vek(const Vek&)>& res, const std::function<Matrix(co
                 if (!std::isfinite(t)) endlich = false;
             if (!endlich)
             {
+                ++aw.verworfen;
                 Delta = 0.25 * stepHNorm;
                 continue;
             }
             costNeu = 0.5 * punkt(fNeu, fNeu);
             ist = cost - costNeu;
+            if (ist <= 0.0) ++aw.verworfen;
             double ratio = 0.0;
             const double DeltaNeu = neuerRadius(Delta, ist, vorher, stepHNorm, stepHNorm > 0.95 * Delta, ratio);
             schrittNorm = norm2(step);
@@ -1556,7 +1607,9 @@ Vek trf(const std::function<Vek(const Vek&)>& res, const std::function<Matrix(co
         }
         if (ist > 0.0)
         {
-            for (std::size_t i = 0; i < logits; ++i) xNeu[i] = std::clamp(xNeu[i], -kLogitGrenze, kLogitGrenze);
+            ++aw.schritte;
+            if (lauf.rangverlust == Rangverlust::KleinsteNorm)
+                for (std::size_t i = 0; i < logits; ++i) xNeu[i] = std::clamp(xNeu[i], -kLogitGrenze, kLogitGrenze);
             x = std::move(xNeu);
             f = std::move(fNeu);
             cost = costNeu;
@@ -1600,7 +1653,7 @@ struct Reihe
     }
 };
 
-Reihe gebunden(const std::vector<const Stelle*>& st, int M, int P, const Vek& r0, const Vek& th0, int ordnung, double reg)
+Reihe gebunden(const std::vector<const Stelle*>& st, int M, int P, const Vek& r0, const Vek& th0, int ordnung, double reg, const Lauf& lauf)
 {
     const std::size_t K = st.size();
     const std::size_t P1 = static_cast<std::size_t>(P) + 1, nk = static_cast<std::size_t>(M) * P1, npar = 2 * nk + K;
@@ -1701,7 +1754,7 @@ Reihe gebunden(const std::vector<const Stelle*>& st, int M, int P, const Vek& r0
 
     Vek unten(npar, -std::numeric_limits<double>::infinity()), oben(npar, std::numeric_limits<double>::infinity());
     const auto jac = [&](const Vek& q) { return jacobi(q, Vek{}); };
-    p = trf(residuen, jac, p, unten, oben, 600, 2 * nk);
+    p = trf(residuen, jac, p, unten, oben, 600, 2 * nk, lauf);
 
     rein = false;  // zweite Stufe: das Glied mit seiner genauen Phase
     for (std::size_t k = 0; k < K; ++k)
@@ -1714,7 +1767,7 @@ Reihe gebunden(const std::vector<const Stelle*>& st, int M, int P, const Vek& r0
     for (int runde = 1; runde <= 12; ++runde)
     {
         for (std::size_t k = 0; k < K; ++k) p[2 * nk + k] = std::clamp(p[2 * nk + k], lo - 0.24, lo + 1.24);
-        p = trf(residuen, jac, p, unten, oben, 400, 2 * nk);
+        p = trf(residuen, jac, p, unten, oben, 400, 2 * nk, lauf);
         bool fertig = true;
         for (std::size_t k = 0; k < K; ++k)
         {
@@ -1781,8 +1834,11 @@ Bewertung bewerte(const Saitenwerte& saite, double laenge, Umlauffilter& filter)
     return w->bew;
 }
 
-std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge)
+std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge, const EntwurfOptionen& optionen)
 {
+    const auto t0 = Uhr::now();
+    Rechenaufwand aufwand;
+    const Lauf lauf{optionen.rangverlust, &aufwand};
     const Stelle s = stelleVon(saite, laenge, 0.0, 1, nullptr);
     if (!s.gut) return std::nullopt;
     const int nap = abelSmithZahl(s);
@@ -1823,7 +1879,7 @@ std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge
                 Reihe reihe;
                 try
                 {
-                    reihe = gebunden(st, M, 0, r0, th0, ordnung, 0.0);
+                    reihe = gebunden(st, M, 0, r0, th0, ordnung, 0.0, lauf);
                 }
                 catch (const std::exception&)
                 {
@@ -1845,6 +1901,8 @@ std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge
     t.grundHz = s.tt.hz.front();
     t.zaehlendMitZugabe = static_cast<int>(s.fz.size());
     t.abelSmith = nap;
+    t.aufwand = aufwand;
+    t.aufwand.sekundenGesamt = sekundenSeit(t0);
     return t;
 }
 
@@ -1902,8 +1960,11 @@ std::vector<Stelle> stellenVon(const Saitenwerte& sa, double mensur, int nb, con
 }
 }  // namespace
 
-std::optional<TafelSaite> entwirfJeSaite(const Saitenwerte& saite, double mensur, int nb)
+std::optional<TafelSaite> entwirfJeSaite(const Saitenwerte& saite, double mensur, int nb, const EntwurfOptionen& optionen)
 {
+    const auto t0 = Uhr::now();
+    Rechenaufwand aufwand;
+    const Lauf lauf{optionen.rangverlust, &aufwand};
     Vek lb, lh, l8, l16;
     for (int k = 0; k <= nb; ++k) lb.push_back(k);
     for (int k = 0; k < nb; ++k) lh.push_back(k + 0.5);
@@ -1944,7 +2005,7 @@ std::optional<TafelSaite> entwirfJeSaite(const Saitenwerte& saite, double mensur
         Reihe reihe;
         try
         {
-            reihe = gebunden(zeiger, M, P, r0, th0, 5, reg);
+            reihe = gebunden(zeiger, M, P, r0, th0, 5, reg, lauf);
         }
         catch (const std::exception&)
         {
@@ -1974,6 +2035,8 @@ std::optional<TafelSaite> entwirfJeSaite(const Saitenwerte& saite, double mensur
     t.achtelBewertung = best->a;
     const std::vector<Stelle> fremd = stellenVon(saite, mensur, nb, l16, &st);
     t.fremdBewertung = zeile(fremd, best->reihe, 5);
+    t.aufwand = aufwand;
+    t.aufwand.sekundenGesamt = sekundenSeit(t0);
     return t;
 }
 

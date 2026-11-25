@@ -18,7 +18,10 @@
  * - Die gebundene Tafel je Saite an Laute Chor 1.1 und Oud Chor 5.1 (`…_gebunden_stuetzstellen_*_rand_verlust_halb.txt`):
  *   UL2 a an Buenden, halben, Achteln und an den fremden Stellen.
  * - Messfall `LUMIVIZ_34K7C_MESSUNG=<datei.md>` (`LUMIVIZ_34K7C_NUR=Harfe,Cembalo` waehlt Instrumente): jede Taste von Harfe und Cembalo, jede Saite von Gitarre, Laute und Oud
- *   mit Ergebnis und Rechenzeit (Kipppunkt ZK1 a).
+ *   mit Ergebnis und Rechenzeit (Kipppunkt ZK1 a). RZ2 a (S221): `LUMIVIZ_34K7C_TASTEN=<T32,Saite 5,…>` waehlt Tasten bzw.
+ *   Saiten, `LUMIVIZ_34K7C_RANGVERLUST=norm|scipy|beide` die Fassung (mit TK2 a, wie scipy, beide); die Datei traegt dazu
+ *   je Entwurf den Rechenaufwand.
+ * - Rechenaufwand und Schalter Rangverlust (RZ2 a): die Zaehler gehen auf; ohne Rangverlust rechnen beide Fassungen gleich.
  *
  * Die Saiten sind die des Pruefstands S199 (`proben/2026-11-15_S199_pruefstand_zupf.py`: `GITARRE`, `harfe_taste`,
  * `cembalo_taste`, `choere`); sie ziehen mit 34k-7d in die Vorgaben des Kerns.
@@ -42,6 +45,7 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace
@@ -378,6 +382,44 @@ TEST_CASE("InstrumentMeasure 34k-7c Tafel je Taste an Stichtasten von Harfe und 
     }
 }
 
+namespace
+{
+// die Zaehler gehen auf: jede Auswertung ist ein Start, ein angenommener oder ein verworfener Schritt; jede Jacobi-Matrix ein
+// Start oder ein angenommener Schritt
+void pruefeAufwand(const mu::Rechenaufwand& a)
+{
+    CHECK(a.anpassungen > 0);
+    CHECK(a.schritte > 0);
+    CHECK(a.auswertungen == a.anpassungen + a.schritte + a.verworfen);
+    CHECK(a.ableitungen == a.anpassungen + a.schritte);
+    CHECK(a.zerlegungen >= a.schritte);
+    CHECK(a.rangverluste <= a.zerlegungen);
+    CHECK(a.sekundenResiduen + a.sekundenAbleitungen + a.sekundenZerlegung <= a.sekundenAnpassung);
+    CHECK(a.sekundenAnpassung <= a.sekundenGesamt);
+}
+}  // namespace
+
+TEST_CASE("InstrumentMeasure 34k-7c Rechenaufwand und Schalter Rangverlust (RZ2 a)")
+{
+    // Harfe T46: kurz, ohne Rangverlust — dort rechnen beide Fassungen denselben Weg
+    const auto h = harfe(46);
+    REQUIRE(h);
+    const auto vorgabe = mu::entwirfJeTaste(h->first, h->second);
+    mu::EntwurfOptionen scipy;
+    scipy.rangverlust = mu::Rangverlust::WieScipy;
+    const auto ohneTk2 = mu::entwirfJeTaste(h->first, h->second, scipy);
+    REQUIRE(vorgabe);
+    REQUIRE(ohneTk2);
+    pruefeAufwand(vorgabe->aufwand);
+    pruefeAufwand(ohneTk2->aufwand);
+    MESSAGE("Harfe T46: " << vorgabe->aufwand.anpassungen << " Laeufe, " << vorgabe->aufwand.schritte << " Schritte, "
+                          << vorgabe->aufwand.verworfen << " verworfen, " << vorgabe->aufwand.rangverluste << " Rangverluste");
+    CHECK(vorgabe->aufwand.rangverluste == 0);
+    CHECK(ohneTk2->aufwand.schritte == vorgabe->aufwand.schritte);
+    CHECK(ohneTk2->aufwand.auswertungen == vorgabe->aufwand.auswertungen);
+    CHECK(ohneTk2->bewertung.centGroesster == vorgabe->bewertung.centGroesster);
+}
+
 TEST_CASE("InstrumentMeasure 34k-7c Tafel je Saite gebunden: Laute Chor 1.1, Oud Chor 5.1 (UL3-1 a)")
 {
     // die Gitarre (Saite 6: rund 5 min, Saite 1: rund 2 min) rechnet der Messfall; dort trifft sie die Probe Zahl fuer Zahl
@@ -401,6 +443,7 @@ TEST_CASE("InstrumentMeasure 34k-7c Tafel je Saite gebunden: Laute Chor 1.1, Oud
                               << " | Buende " << t->buendeBewertung.centGroesster << ", halb " << t->halbBewertung.centGroesster << ", Achtel "
                               << t->achtelBewertung.centGroesster << ", fremd " << t->fremdBewertung.centGroesster << " Cent, Abklingen fremd "
                               << t->fremdBewertung.abklingenGroesster << " % | " << sek << " s");
+        pruefeAufwand(t->aufwand);
         CHECK(static_cast<int>(t->radiusReihe.size()) == st.M);
         CHECK(t->verlust.size() == static_cast<std::size_t>(2 * st.saite.buende + 1));
         for (const mu::Bewertung* b : {&t->buendeBewertung, &t->halbBewertung, &t->achtelBewertung, &t->fremdBewertung})
@@ -430,10 +473,42 @@ TEST_CASE("InstrumentMeasure 34k-7c Messfall Umlauf-Filter (LUMIVIZ_34K7C_MESSUN
     const char* nurText = std::getenv("LUMIVIZ_34K7C_NUR");
     const std::string nur = nurText == nullptr ? std::string() : "," + std::string(nurText) + ",";
     const auto gewaehlt = [&nur](const char* inst) { return nur.empty() || nur.find("," + std::string(inst) + ",") != std::string::npos; };
+    // LUMIVIZ_34K7C_TASTEN=<T32,Saite 5,…> nur diese Tasten bzw. Saiten (Namen wie in den Tabellen, Tasten mit "T").
+    const char* tastenText = std::getenv("LUMIVIZ_34K7C_TASTEN");
+    const std::string tasten = tastenText == nullptr ? std::string() : "," + std::string(tastenText) + ",";
+    const auto tasteGewaehlt = [&tasten](const std::string& name) { return tasten.empty() || tasten.find("," + name + ",") != std::string::npos; };
+    // LUMIVIZ_34K7C_RANGVERLUST=norm|scipy|beide (RZ2 a): mit TK2 a (Vorgabe), wie scipy, oder beide je Taste nacheinander.
+    const char* rvText = std::getenv("LUMIVIZ_34K7C_RANGVERLUST");
+    const std::string rv = rvText == nullptr || std::string(rvText).empty() ? "norm" : rvText;
+    REQUIRE((rv == "norm" || rv == "scipy" || rv == "beide"));
+    std::vector<std::pair<std::string, mu::EntwurfOptionen>> fassungen;
+    if (rv != "scipy") fassungen.emplace_back("TK2 a", mu::EntwurfOptionen{});
+    if (rv != "norm")
+    {
+        mu::EntwurfOptionen e;
+        e.rangverlust = mu::Rangverlust::WieScipy;
+        fassungen.emplace_back("scipy", e);
+    }
+    const auto zeilenName = [&fassungen](const std::string& name, const std::string& fassung) {
+        return fassungen.size() > 1 || fassung != "TK2 a" ? name + " (" + fassung + ")" : name;
+    };
+    std::ostringstream aufwand;
+    aufwand << "\n## Rechenaufwand (RZ2 a)\n\n| Instrument | Taste / Saite | Fassung | Laeufe | Schritte | verworfen | Auswertungen | "
+               "Ableitungen | SVD | Rangverluste | s Residuen | s Ableitungen | s SVD | s Anpassung | s Rest | s gesamt |\n"
+               "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n";
+    const auto aufwandZeile = [&aufwand](const char* inst, const std::string& name, const std::string& fassung, const mu::Rechenaufwand& a) {
+        char zz[512];
+        std::snprintf(zz, sizeof zz, "| %s | %s | %s | %d | %d | %d | %d | %d | %d | %d | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f |\n", inst,
+                      name.c_str(), fassung.c_str(), a.anpassungen, a.schritte, a.verworfen, a.auswertungen, a.ableitungen, a.zerlegungen,
+                      a.rangverluste, a.sekundenResiduen, a.sekundenAbleitungen, a.sekundenZerlegung, a.sekundenAnpassung,
+                      a.sekundenGesamt - a.sekundenAnpassung, a.sekundenGesamt);
+        aufwand << zz;
+    };
     std::ostringstream o;
     o << "# 34k-7c Entwurf des Umlauf-Filters in C++\n\n"
          "> test_InstrumentMeasureUmlauf, `LUMIVIZ_34K7C_MESSUNG`. Saiten des Pruefstands S199; UL2 a: 3 Cent, Abklingen −30,1 … "
-         "+26,2 %. Zeit je Taste bzw. Saite auf einem Thread (Taste) bzw. mit dem Pool (Saite).\n";
+         "+26,2 %. Zeit je Taste bzw. Saite auf einem Thread (Taste) bzw. mit dem Pool (Saite). Rangverlust: "
+      << rv << (tasten.empty() ? std::string() : "; Tasten / Saiten: " + std::string(tastenText)) << ".\n";
     char z[512];
     for (const char* inst : {"Harfe", "Cembalo"})
     {
@@ -445,6 +520,8 @@ TEST_CASE("InstrumentMeasure 34k-7c Messfall Umlauf-Filter (LUMIVIZ_34K7C_MESSUN
         const int von = std::string(inst) == "Harfe" ? 25 : 29, bis = std::string(inst) == "Harfe" ? 104 : 89;
         for (int taste = von; taste <= bis; ++taste)
         {
+            const std::string name = "T" + std::to_string(taste);
+            if (!tasteGewaehlt(name)) continue;
             Saitenwerte s;
             double L = 0.0;
             if (std::string(inst) == "Harfe")
@@ -455,23 +532,28 @@ TEST_CASE("InstrumentMeasure 34k-7c Messfall Umlauf-Filter (LUMIVIZ_34K7C_MESSUN
             }
             else
                 std::tie(s, L) = cembalo(taste);
-            const auto t0 = std::chrono::steady_clock::now();
-            const auto t = mu::entwirfJeTaste(s, L);
-            const double sek = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-            summe += sek;
-            ++alle;
-            if (!t)
+            for (const auto& [fassung, optionen] : fassungen)
             {
-                std::snprintf(z, sizeof z, "| %d | — | — | — | — | — | — | — | nicht rechenbar | %.1f |\n", taste, sek);
+                const std::string zeile = zeilenName(std::to_string(taste), fassung);
+                const auto t0 = std::chrono::steady_clock::now();
+                const auto t = mu::entwirfJeTaste(s, L, optionen);
+                const double sek = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+                summe += sek;
+                ++alle;
+                if (!t)
+                {
+                    std::snprintf(z, sizeof z, "| %s | — | — | — | — | — | — | — | nicht rechenbar | %.1f |\n", zeile.c_str(), sek);
+                    o << z;
+                    continue;
+                }
+                gut += t->bewertung.haelt();
+                std::snprintf(z, sizeof z, "| %s | %.2f | %d | %d | T%d | %zu | %.2f | %.2f | %s | %.1f |\n", zeile.c_str(), t->grundHz,
+                              t->zaehlendMitZugabe, t->abelSmith, t->filter.gliedOrdnung, t->filter.kette.size(), t->bewertung.centGroesster,
+                              t->bewertung.abklingenGroesster, t->bewertung.haelt() ? "ja" : "**nein**", sek);
                 o << z;
-                continue;
+                aufwandZeile(inst, name, fassung, t->aufwand);
+                std::printf("%s %s %s %.1f s\n", inst, name.c_str(), fassung.c_str(), sek);
             }
-            gut += t->bewertung.haelt();
-            std::snprintf(z, sizeof z, "| %d | %.2f | %d | %d | T%d | %zu | %.2f | %.2f | %s | %.1f |\n", taste, t->grundHz, t->zaehlendMitZugabe,
-                          t->abelSmith, t->filter.gliedOrdnung, t->filter.kette.size(), t->bewertung.centGroesster,
-                          t->bewertung.abklingenGroesster, t->bewertung.haelt() ? "ja" : "**nein**", sek);
-            o << z;
-            std::printf("%s T%d %.1f s\n", inst, taste, sek);
         }
         std::snprintf(z, sizeof z, "\n%s: %d von %d Tasten halten UL2 a; Entwurf zusammen %.1f s.\n", inst, gut, alle, summe);
         o << z;
@@ -484,26 +566,34 @@ TEST_CASE("InstrumentMeasure 34k-7c Messfall Umlauf-Filter (LUMIVIZ_34K7C_MESSUN
         double summe = 0.0;
         for (const BenannteSaite& b : saitenVon(inst))
         {
-            const auto t0 = std::chrono::steady_clock::now();
-            const auto t = mu::entwirfJeSaite(b.saite, b.mensur, b.buende);
-            const double sek = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-            summe += sek;
-            if (!t)
+            if (!tasteGewaehlt(b.name)) continue;
+            for (const auto& [fassung, optionen] : fassungen)
             {
-                o << "| " << b.name << " | — | — | — | — | — | — | — | — | nicht rechenbar | " << sek << " |\n";
-                continue;
+                const std::string zeile = zeilenName(b.name, fassung);
+                const auto t0 = std::chrono::steady_clock::now();
+                const auto t = mu::entwirfJeSaite(b.saite, b.mensur, b.buende, optionen);
+                const double sek = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+                summe += sek;
+                if (!t)
+                {
+                    o << "| " << zeile << " | — | — | — | — | — | — | — | — | nicht rechenbar | " << sek << " |\n";
+                    continue;
+                }
+                const bool h =
+                    t->buendeBewertung.haelt() && t->halbBewertung.haelt() && t->achtelBewertung.haelt() && t->fremdBewertung.haelt();
+                std::snprintf(z, sizeof z, "| %s | %zu | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %s | %.1f |\n", zeile.c_str(),
+                              t->radiusReihe.size(), t->startFaktor, t->daempfung, t->buendeBewertung.centGroesster,
+                              t->halbBewertung.centGroesster, t->achtelBewertung.centGroesster, t->fremdBewertung.centGroesster,
+                              t->fremdBewertung.abklingenGroesster, h ? "ja" : "**nein**", sek);
+                o << z;
+                aufwandZeile(inst, b.name, fassung, t->aufwand);
+                std::printf("%s %s %s %.1f s\n", inst, b.name.c_str(), fassung.c_str(), sek);
             }
-            const bool h = t->buendeBewertung.haelt() && t->halbBewertung.haelt() && t->achtelBewertung.haelt() && t->fremdBewertung.haelt();
-            std::snprintf(z, sizeof z, "| %s | %zu | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %s | %.1f |\n", b.name.c_str(),
-                          t->radiusReihe.size(), t->startFaktor, t->daempfung, t->buendeBewertung.centGroesster, t->halbBewertung.centGroesster,
-                          t->achtelBewertung.centGroesster, t->fremdBewertung.centGroesster, t->fremdBewertung.abklingenGroesster,
-                          h ? "ja" : "**nein**", sek);
-            o << z;
-            std::printf("%s %s %.1f s\n", inst, b.name.c_str(), sek);
         }
         std::snprintf(z, sizeof z, "\n%s: Entwurf zusammen %.1f s.\n", inst, summe);
         o << z;
     }
+    o << aufwand.str();
     std::ofstream(ziel) << o.str();
-    MESSAGE("geschrieben: " << ziel);
+    MESSAGE("geschrieben: " << std::string(ziel));
 }

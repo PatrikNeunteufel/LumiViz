@@ -31,7 +31,9 @@
  * Grenze (θ = π, eine Spalte von J exakt null), nimmt der Schritt im Vertrauensbereich bei Rangverlust α ≥ 0 (den Schritt
  * kleinster Norm), und die Logit-Parameter werden auf ±40 gehalten, wo sigmoid ohnehin klemmt (TK2 a; scipy rechnet dort
  * mit α < 0, und erst Rundungen von LAPACK halten den Abbruch nach xtol offen — S220 Cembalo T73). Die Zahlen sind daher
- * nicht Bit fuer Bit die der Proben, sie werden an denselben Schwellen gemessen.
+ * nicht Bit fuer Bit die der Proben, sie werden an denselben Schwellen gemessen. Fuer die Gegenprobe laesst sich TK2 a
+ * mit `EntwurfOptionen::rangverlust = Rangverlust::WieScipy` abschalten; jeder Entwurf traegt seinen `Rechenaufwand`
+ * (RZ2 a, S221).
  *
  * Ohne Qt.
  */
@@ -75,6 +77,36 @@ struct Bewertung
     [[nodiscard]] bool haelt() const { return abklingenHaelt() && centGroesster <= kCentSchwelle; }
 };
 
+/// Was die Anpassung bei Rangverlust im Vertrauensbereich tut (RZ2 a, S221: Schalter fuer die Gegenprobe).
+enum class Rangverlust
+{
+    KleinsteNorm,  ///< TK2 a: Schritt kleinster Norm mit α = 0, Logit-Parameter auf ±40 gehalten (Vorgabe)
+    WieScipy,      ///< wie scipy `solve_lsq_trust_region`: α aus der Wurzel von φ, auch < 0; Logit-Parameter frei
+};
+
+struct EntwurfOptionen
+{
+    Rangverlust rangverlust = Rangverlust::KleinsteNorm;
+};
+
+/// Rechenaufwand eines Entwurfs (RZ2 a): Zaehler und Zeiten der Anpassung, die Zeit der Stellen und Bewertungen ist der
+/// Rest von `sekundenGesamt`.
+struct Rechenaufwand
+{
+    int anpassungen = 0;   ///< Laeufe von trf
+    int schritte = 0;      ///< angenommene Schritte
+    int verworfen = 0;     ///< verworfene Schritte (Radius verkleinert)
+    int auswertungen = 0;  ///< Residuen
+    int ableitungen = 0;   ///< Jacobi-Matrizen
+    int zerlegungen = 0;   ///< SVD
+    int rangverluste = 0;  ///< Schritte, deren SVD nicht vollen Rang hatte
+    double sekundenResiduen = 0.0;
+    double sekundenAbleitungen = 0.0;
+    double sekundenZerlegung = 0.0;
+    double sekundenAnpassung = 0.0;  ///< in trf insgesamt
+    double sekundenGesamt = 0.0;     ///< der ganze Entwurf
+};
+
 /// Misst ein Filter am Umlauf der Saite der Laenge `laenge` (wie die Vorlage `werte`: das Glied am Grundton nachgestimmt
 /// — `filter` wird dafuer gestimmt).
 [[nodiscard]] Bewertung bewerte(const Saitenwerte& saite, double laenge, Umlauffilter& filter);
@@ -87,11 +119,12 @@ struct TafelTaste
     double grundHz = 0.0;
     int zaehlendMitZugabe = 0;
     int abelSmith = 0;  ///< so viele Biquads platziert Abel & Smith
+    Rechenaufwand aufwand;
 };
 
 /// Entwirft das Filter einer Taste (`tafel_je_taste.py`): Glieder Thiran 5, 3, 1, Biquads der Reihe nach, bis UL2 a
 /// haelt; sonst das beste. `std::nullopt`, wenn die Saite zu wenige Teiltoene traegt oder kein Glied in den Umlauf passt.
-[[nodiscard]] std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge);
+[[nodiscard]] std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge, const EntwurfOptionen& optionen = {});
 
 /// Die Tafel einer Saite, gebunden ueber die Lage (Gitarre, Laute, Oud; UL3-1 a).
 struct TafelSaite
@@ -112,6 +145,7 @@ struct TafelSaite
     /// groesster Fehler je Gruppe von Stellen: an den Buenden, auf halbem Weg, an Achteln, an ungeraden Sechzehnteln
     /// (die weder Anpassung noch Auswahl kennt)
     Bewertung buendeBewertung, halbBewertung, achtelBewertung, fremdBewertung;
+    Rechenaufwand aufwand;
 
     /// Die Kette an der Lage `lage` (Buende, gebrochen).
     [[nodiscard]] std::vector<Biquad> ketteAn(double lage) const;
@@ -120,7 +154,8 @@ struct TafelSaite
 };
 
 /// Entwirft die Tafel einer Saite (`gebunden_stuetzstellen.py` mit `glied=T5 grad=3 rand=1.5 verlust=halb starts=4`).
-[[nodiscard]] std::optional<TafelSaite> entwirfJeSaite(const Saitenwerte& saite, double mensur, int buende);
+[[nodiscard]] std::optional<TafelSaite> entwirfJeSaite(const Saitenwerte& saite, double mensur, int buende,
+                                                     const EntwurfOptionen& optionen = {});
 
 /// Das Filter einer Saite an der Lage `lage`: Kette und Verlust aus der Tafel, das Glied am Grundton gestimmt; misst es
 /// zugleich (`bewertung`, wenn nicht `nullptr`).
