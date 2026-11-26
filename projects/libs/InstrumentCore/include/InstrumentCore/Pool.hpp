@@ -24,11 +24,19 @@ namespace lumi::kern
 /// Waermegrenze).
 inline constexpr unsigned kPoolHoechstens = 11;
 
-/// Die Zahl der Threads ohne Angabe: Zahl der Kerne, 1 … `kPoolHoechstens`.
+/// Seit 0.9.0 (S222): eine Grenze fuer den ganzen Prozess, 1 … `kPoolHoechstens` — ein Werkzeug setzt sie fuer lange
+/// Laeufe (der Rechner des Projekts stuerzte unter einem Entwurf auf 11 Threads ab); sie gilt dann auch fuer eine Angabe.
+/// 0 hebt sie auf (wie vor 0.9.0). Die Ergebnisse haengen nicht an der Zahl der Threads.
+void setzePoolHoechstens(unsigned threads);
+/// Die heutige Grenze (`kPoolHoechstens`, wenn keine gesetzt ist).
+[[nodiscard]] unsigned poolHoechstens();
+
+/// Die Zahl der Threads ohne Angabe: Zahl der Kerne, 1 … `poolHoechstens()`.
 [[nodiscard]] unsigned poolThreads();
 
-/// Rechnet `aufgabe(i)` fuer i = 0 … anzahl − 1 auf bis zu `threads` Threads (0 = `poolThreads()`), hoechstens so
-/// viele wie Aufgaben; mit einem Thread nacheinander auf dem rufenden. Jede Aufgabe muss fuer sich rechnen.
+/// Rechnet `aufgabe(i)` fuer i = 0 … anzahl − 1 auf bis zu `threads` Threads (0 = `poolThreads()`; mit gesetzter Grenze
+/// auch eine Angabe hoechstens sie), hoechstens so viele wie Aufgaben; mit einem Thread nacheinander auf dem rufenden. Jede
+/// Aufgabe muss fuer sich rechnen.
 void parallelJe(std::size_t anzahl, const std::function<void(std::size_t)>& aufgabe, unsigned threads = 0);
 
 }  // namespace lumi::kern

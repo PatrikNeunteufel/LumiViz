@@ -29,6 +29,9 @@
 #pragma once
 
 #include <complex>
+#include <cstddef>
+#include <numbers>
+#include <optional>
 #include <vector>
 
 namespace lumi::kern::umlauf
@@ -105,6 +108,69 @@ struct Umlauffilter
 /// Newton-Schritten an der genauen Phase des Glieds (wie die Vorlage). Falsch, wenn kein Platz bleibt
 /// (soll/ω₁ < Ordnung + ½) — dann bleibt das Filter unveraendert.
 bool stimmeGlied(Umlauffilter& filter, double omega1, double sollVerzug);
+
+// ---------------------------------------------------------------- zur Laufzeit (seit 0.9.0, 34k-7d-3)
+// Was der Kern braucht, um ein Filter aus der gestimmten Tafel zu bilden: das Glied am Grundton stimmen und die gebundene
+// Tafel einer Saite an einer Lage lesen. Der Entwurf (`InstrumentMeasure/UmlaufEntwurf`) rechnet mit denselben Funktionen.
+
+/// Der Takt des Entwurfs und des Kerns.
+inline constexpr double kRate = 48000.0;
+/// Das Raster des Entwurfs: 1 … 20 000 Hz in 0,5 Hz.
+inline constexpr std::size_t kRaster = 39999;
+/// Die Frequenz der Stelle `i` des Rasters.
+[[nodiscard]] inline double rasterHz(std::size_t i) { return 1.0 + 0.5 * static_cast<double>(i); }
+/// Hz in rad je Takt.
+[[nodiscard]] inline double omegaVon(double hz) { return 2.0 * std::numbers::pi * hz / kRate; }
+
+/// Der Verzug −unwrap(arg h) laengs einer Folge von Antworten (wie numpy; die Folge auf dem Raster).
+[[nodiscard]] std::vector<double> verzugVon(const std::vector<std::complex<double>>& h);
+
+/// Der Grundton der Saite aus ihrem Umlauf: die Stelle, an der der Verzug 2π erreicht, auf dem Raster linear (wie der
+/// Entwurf, `np.interp`). 0, wenn der Verzug bis 20 kHz 2π nicht erreicht.
+[[nodiscard]] double grundtonDerSaite(const Saitenwerte& saite, double laenge);
+
+/// Stimmt das Glied eines Filters am Grundton der Saite, wie der Entwurf es nach jeder Anpassung tut: Soll ist der Verzug
+/// des Ziels minus der des Verlusts (abgewickelt auf dem Raster) minus der der Kette, je auf dem Raster bei f₁ linear.
+/// Falsch, wenn die Saite keinen Grundton bis 20 kHz hat oder das Glied nicht passt (`stimmeGlied`).
+bool stimmeAmGrundton(Umlauffilter& filter, const Saitenwerte& saite, double laenge);
+
+/// Die obere Grenze des Polradius der Kette.
+inline constexpr double kRadiusMax = 0.99;
+/// Jenseits dieser Grenze ist sigmoid konstant (die Logit-Parameter der Kette, TK2 a).
+inline constexpr double kLogitGrenze = 40.0;
+[[nodiscard]] double sigmoid(double x);
+/// Die Legendre-Polynome P₀ … P_grad bei t.
+[[nodiscard]] std::vector<double> legendre(double t, int grad);
+
+/// Die Tafel einer Saite, gebunden ueber die Lage (Gitarre, Laute, Oud; UL3-1 a): je Biquad die Beiwerte von
+/// logit(r / kRadiusMax) und logit(θ / π) als Legendre-Reihe in 2 u / buende − 1, der Verlust an Stellen (Buende und
+/// halbe), dazwischen linear. Das Glied stimmt der Kern an der Lage selbst (`filterAn`).
+struct Saitentafel
+{
+    int buende = 0;
+    double mensur = 0.0;
+    int grad = 3;
+    std::vector<std::vector<double>> radiusReihe, winkelReihe;
+    struct Verluststelle
+    {
+        double lage = 0.0;  ///< in Buenden
+        std::vector<double> b, a;
+
+        [[nodiscard]] bool operator==(const Verluststelle&) const = default;
+    };
+    std::vector<Verluststelle> verlust;  ///< aufsteigend
+
+    /// Die Kette an der Lage `lage` (Buende, gebrochen).
+    [[nodiscard]] std::vector<Biquad> ketteAn(double lage) const;
+    /// Der Verlust an der Lage, zwischen den Nachbarstellen gemittelt.
+    void verlustAn(double lage, std::vector<double>& b, std::vector<double>& a) const;
+
+    [[nodiscard]] bool operator==(const Saitentafel&) const = default;
+};
+
+/// Das Filter einer Saite an der Lage `lage` (Buende, gebrochen; die Laenge ist mensur · 2^(−lage/12)): Kette und Verlust
+/// aus der Tafel, das Glied (Thiran 5) am Grundton gestimmt. `std::nullopt`, wenn es nicht passt.
+[[nodiscard]] std::optional<Umlauffilter> filterAn(const Saitentafel& tafel, const Saitenwerte& saite, double lage);
 
 /// Ein IIR in transponierter Direktform II (a₀ = 1), doppelt genau.
 class Iir

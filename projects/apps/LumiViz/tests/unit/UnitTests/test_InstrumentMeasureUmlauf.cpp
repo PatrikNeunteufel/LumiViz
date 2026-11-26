@@ -24,7 +24,7 @@
  * - Rechenaufwand und Schalter Rangverlust (RZ2 a): die Zaehler gehen auf; ohne Rangverlust rechnen beide Fassungen gleich.
  *
  * Die Saiten sind die des Pruefstands S199 (`proben/2026-11-15_S199_pruefstand_zupf.py`: `GITARRE`, `harfe_taste`,
- * `cembalo_taste`, `choere`); sie ziehen mit 34k-7d in die Vorgaben des Kerns.
+ * `cembalo_taste`, `choere`); seit 34k-7d-3 kommen sie aus den Vorgaben des Kerns (`InstrumentModels/zupf/Saiten`).
  ****************************************************************************************
  */
 
@@ -32,6 +32,7 @@
 
 #include "InstrumentMeasure/UmlaufEntwurf.hpp"
 #include "InstrumentModels/gemeinsam/Umlauf.hpp"
+#include "InstrumentModels/zupf/Saiten.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -51,159 +52,39 @@
 namespace
 {
 namespace ku = lumi::kern::umlauf;
+namespace kz = lumi::kern::zupf;
 namespace mu = lumi::messung::umlauf;
 using ku::Saitenwerte;
 constexpr double kPi = std::numbers::pi;
 
-// ---------------------------------------------------------------- die Saiten des Pruefstands S199
-double hzVon(int taste) { return 440.0 * std::exp2((taste - 69) / 12.0); }
-
-// Woodhouse & Lynch-Aird 2019 Tab. I: E0 GPa, Anstieg je GPa Spannung, E'' GPa, rho
-Saitenwerte monofil(double dmm, double hz, double laenge, char werkstoff)
+// ---------------------------------------------------------------- die Saiten (seit 34k-7d-3 aus den Vorgaben des Kerns)
+// `InstrumentModels/zupf/Saiten` — dieselben Zahlen wie der Pruefstand S199; hier nur die Huellen, die die Faelle lesen
+const kz::Saitensatz& gitarrenSatz()
 {
-    double e0 = 4.5, anstieg = 39.0, e2 = 0.25, rho = 1070.0;  // N
-    if (werkstoff == 'F') e0 = 3.2, anstieg = 41.0, e2 = 0.18, rho = 1800.0;
-    if (werkstoff == 'D') e0 = 6.0, anstieg = 0.0, e2 = 0.24, rho = 1320.0;
-    const double d = dmm / 1000.0, flaeche = kPi * d * d / 4.0, m = rho * flaeche;
-    const double T = 4.0 * laenge * laenge * hz * hz * m;
-    const double E = (e0 + anstieg * T / flaeche / 1e9) * 1e9;
-    Saitenwerte s;
-    s.zug = T;
-    s.masse = m;
-    s.biegesteife = E * kPi * std::pow(d, 4) / 64.0;
-    s.verlustBiegung = e2 * 1e9 / E;
-    s.durchmesser = d;
-    s.dichte = rho;
+    static const kz::Saitensatz s = kz::saitensatzGitarre();
     return s;
 }
-
-Saitenwerte umsponnen(double zug, double hz, double laenge)
-{
-    Saitenwerte s;
-    s.zug = zug;
-    s.masse = zug / (4.0 * laenge * laenge * hz * hz);
-    s.biegesteife = 50e-6;
-    s.verlustInnen = 5e-5;
-    s.verlustBiegung = 2.0e-2;
-    s.verlustLuft = 1.1;
-    return s;
-}
-
-struct Gitarrensaite
-{
-    int taste;
-    double T, m, EI, etaF, etaB, etaA;
-};
-// Woodhouse u. a. 2012 Tab. I, Satz (a) Nylon; Saite 6 … 1
-const Gitarrensaite kGitarre[6] = {{40, 71.6, 6.24e-3, 57e-6, 2e-5, 2.0e-2, 1.2}, {45, 73.9, 3.61e-3, 40e-6, 7e-5, 2.5e-2, 0.9},
-                                   {50, 71.2, 1.95e-3, 51e-6, 5e-5, 2.0e-2, 1.2},  {55, 58.3, 0.90e-3, 310e-6, 14e-5, 2.0e-2, 1.7},
-                                   {59, 53.4, 0.52e-3, 160e-6, 40e-5, 2.0e-2, 1.2}, {64, 70.3, 0.38e-3, 130e-6, 40e-5, 2.4e-2, 1.5}};
-constexpr double kGitarreMensur = 0.650;
+const double kGitarreMensur = gitarrenSatz().mensur;
+const double kLauteMensur = kz::saitensatzLaute().mensur;
+const double kOudMensur = kz::saitensatzOud().mensur;
 
 Saitenwerte gitarre(int saite)  // 6 … 1
 {
-    const Gitarrensaite& g = kGitarre[6 - saite];
-    Saitenwerte s;
-    s.zug = g.T;
-    s.masse = g.m;
-    s.biegesteife = g.EI;
-    s.verlustInnen = g.etaF;
-    s.verlustBiegung = g.etaB;
-    s.verlustLuft = g.etaA;
-    return s;
+    return gitarrenSatz().choere[static_cast<std::size_t>(6 - saite)].saiten.front().werte;
 }
-
-const double kHarfeMono[35][3] = {
-    {2960, 0.52, 0.071}, {2637, 0.52, 0.082}, {2489, 0.56, 0.088}, {2218, 0.56, 0.095}, {1976, 0.61, 0.105}, {1864, 0.62, 0.113},
-    {1661, 0.65, 0.123}, {1480, 0.69, 0.132}, {1318, 0.70, 0.143}, {1244, 0.69, 0.154}, {1109, 0.70, 0.164}, {988, 0.73, 0.177},
-    {932, 0.76, 0.192},  {830, 0.80, 0.208},  {740, 0.85, 0.225},  {659, 0.90, 0.242},  {622, 0.95, 0.265},  {554, 1.00, 0.285},
-    {494, 1.06, 0.327},  {466, 1.12, 0.354},  {415, 1.18, 0.385},  {370, 1.24, 0.421},  {330, 1.30, 0.455},  {311, 1.36, 0.498},
-    {277, 1.44, 0.542},  {247, 1.52, 0.591},  {233, 1.60, 0.644},  {207, 1.68, 0.699},  {185, 1.76, 0.753},  {165, 1.84, 0.813},
-    {155, 1.92, 0.880},  {139, 2.00, 0.945},  {123, 2.10, 0.999},  {116, 2.20, 1.053},  {104, 2.35, 1.103}};
-const double kHarfeMetall[11][4] = {{92, 0.80, 1.45, 1.150}, {82, 0.80, 1.55, 1.180}, {77, 0.80, 1.65, 1.222}, {69, 0.85, 1.75, 1.257},
-                                    {61, 0.90, 1.92, 1.299}, {58, 0.95, 2.05, 1.330}, {52, 1.00, 2.15, 1.359}, {46, 1.10, 2.30, 1.397},
-                                    {41, 1.10, 2.45, 1.421}, {39, 1.25, 2.60, 1.445}, {35, 1.30, 2.75, 1.475}};
 
 std::optional<std::pair<Saitenwerte, double>> harfe(int taste)
 {
-    std::vector<int> offen;
-    for (const auto& z : kHarfeMono) offen.push_back(static_cast<int>(std::lround(69 + 12 * std::log2(z[0] / 440.0))));
-    for (const auto& z : kHarfeMetall) offen.push_back(static_cast<int>(std::lround(69 + 12 * std::log2(z[0] / 440.0))));
-    const int tiefste = *std::min_element(offen.begin(), offen.end());
-    for (int versatz : {1, 2, 0})
-    {
-        const auto it = std::find(offen.begin(), offen.end(), taste - versatz);
-        if (it == offen.end() || !(versatz != 0 || taste == tiefste)) continue;
-        const auto i = static_cast<std::size_t>(it - offen.begin());
-        Saitenwerte sa;
-        double L = 0.0;
-        if (i < 35)
-        {
-            L = kHarfeMono[i][2];
-            sa = monofil(kHarfeMono[i][1], kHarfeMono[i][0], L, i <= 9 ? 'N' : 'D');
-        }
-        else
-        {
-            const auto& z = kHarfeMetall[i - 35];
-            const double hz = z[0], kern = z[1] / 1000.0, gesamt = z[2] / 1000.0;
-            L = z[3];
-            const double m = 7850 * kPi * kern * kern / 4 + 8900 * kPi * (gesamt * gesamt - kern * kern) / 4;
-            sa.zug = 4 * L * L * hz * hz * m;
-            sa.masse = m;
-            sa.biegesteife = 200e9 * kPi * std::pow(kern, 4) / 64;
-            sa.verlustInnen = 5e-5;
-            sa.verlustBiegung = 2.0e-2;
-            sa.verlustLuft = 1.1;
-        }
-        return std::make_pair(sa, L * std::exp2(-versatz / 12.0));
-    }
-    return std::nullopt;
+    const std::optional<kz::Tastensaite> t = kz::harfenSaite(taste);
+    if (!t) return std::nullopt;
+    return std::make_pair(t->werte, t->laenge);
 }
-
-// Taskin 1769: Taste, Laenge mm; Besaitung nach Di Veroli: bis Taste, Durchmesser mm, Dichte, E GPa
-const double kTaskin[11][2] = {{29, 1765}, {36, 1681}, {41, 1443}, {48, 1178}, {53, 982}, {60, 711},
-                               {65, 535},  {72, 357},  {77, 268},  {84, 186},  {89, 148}};
-const double kTaskinDraht[13][4] = {{31, 0.620, 8700, 115}, {33, 0.572, 8700, 115}, {36, 0.518, 8700, 115}, {38, 0.463, 8700, 115},
-                                    {40, 0.463, 8500, 110}, {43, 0.410, 8500, 110}, {45, 0.377, 8500, 110}, {47, 0.339, 8500, 110},
-                                    {51, 0.339, 7800, 170}, {56, 0.300, 7800, 170}, {64, 0.269, 7800, 170}, {75, 0.244, 7800, 170},
-                                    {89, 0.213, 7800, 170}};
 
 std::pair<Saitenwerte, double> cembalo(int taste)
 {
-    std::size_t j = 0;
-    while (j + 2 < 11 && kTaskin[j + 1][0] <= taste) ++j;
-    const double t = (taste - kTaskin[j][0]) / (kTaskin[j + 1][0] - kTaskin[j][0]);
-    const double L = std::exp((1 - t) * std::log(kTaskin[j][1]) + t * std::log(kTaskin[j + 1][1])) / 1000.0;
-    std::size_t k = 0;
-    while (taste > kTaskinDraht[k][0]) ++k;
-    const double d = kTaskinDraht[k][1] / 1000.0, rho = kTaskinDraht[k][2], e = kTaskinDraht[k][3];
-    const double m = rho * kPi * d * d / 4;
-    Saitenwerte s;
-    s.masse = m;
-    s.zug = 4 * L * L * hzVon(taste) * hzVon(taste) * m;
-    s.biegesteife = e * 1e9 * kPi * std::pow(d, 4) / 64;
-    s.verlustBiegung = 1e-3;
-    s.durchmesser = d;
-    s.dichte = rho;
-    return {s, L};
+    const kz::Tastensaite t = kz::cembaloSaite(taste);
+    return {t.werte, t.laenge};
 }
-
-constexpr double kLauteMensur = 0.625;
-struct LautenSaite
-{
-    double dmm;
-    char werkstoff;
-    int oktave;
-};
-const std::vector<std::pair<int, std::vector<LautenSaite>>> kLaute = {
-    {38, {{1.60, 'F', 0}, {0.925, 'N', 12}}}, {41, {{1.40, 'F', 0}, {0.875, 'N', 12}}}, {43, {{1.25, 'F', 0}, {0.775, 'N', 12}}},
-    {48, {{0.91, 'F', 0}, {0.91, 'F', 0}}},   {53, {{0.900, 'N', 0}, {0.900, 'N', 0}}}, {57, {{0.725, 'N', 0}, {0.725, 'N', 0}}},
-    {62, {{0.52, 'N', 0}, {0.52, 'N', 0}}},   {67, {{0.475, 'N', 0}}}};
-constexpr double kOudMensur = 0.60;
-// D'Addario EJ95A: 'u' umsponnen (Zug kg), 'n' Nylon (Durchmesser mm)
-const std::vector<std::pair<int, std::vector<std::pair<char, double>>>> kOud = {
-    {36, {{'u', 3.659}}}, {41, {{'u', 2.86}, {'u', 2.86}}}, {45, {{'u', 3.24}, {'u', 3.24}}}, {50, {{'u', 4.034}, {'u', 4.034}}},
-    {55, {{'n', 0.031 * 25.4}, {'n', 0.031 * 25.4}}}, {60, {{'n', 0.026 * 25.4}, {'n', 0.026 * 25.4}}}};
 
 struct BenannteSaite
 {
@@ -217,24 +98,19 @@ std::vector<BenannteSaite> saitenVon(const std::string& inst)
 {
     std::vector<BenannteSaite> out;
     if (inst == "Gitarre")
-        for (int s = 6; s >= 1; --s) out.push_back({"Saite " + std::to_string(s), gitarre(s), kGitarreMensur, 19});
-    if (inst == "Laute")
-        for (std::size_t c = 0; c < kLaute.size(); ++c)
-            for (std::size_t j = 0; j < kLaute[c].second.size(); ++j)
+        for (int s = 6; s >= 1; --s) out.push_back({"Saite " + std::to_string(s), gitarre(s), kGitarreMensur, gitarrenSatz().buende});
+    if (inst == "Laute" || inst == "Oud")
+    {
+        const kz::Saitensatz satz = inst == "Laute" ? kz::saitensatzLaute() : kz::saitensatzOud();
+        for (std::size_t c = 0; c < satz.choere.size(); ++c)
+            for (std::size_t j = 0; j < satz.choere[c].saiten.size(); ++j)
             {
-                const LautenSaite& z = kLaute[c].second[j];
-                if (j > 0 && z.oktave == kLaute[c].second[0].oktave && z.dmm == kLaute[c].second[0].dmm) continue;  // Einklang: einmal
-                out.push_back({"Chor " + std::to_string(c + 1) + "." + std::to_string(j + 1),
-                               monofil(z.dmm, hzVon(kLaute[c].first + z.oktave), kLauteMensur, z.werkstoff), kLauteMensur, 12});
+                const kz::Chorsaite& z = satz.choere[c].saiten[j];
+                // im Einklang: einmal (die Verstimmung ist eine Lage auf derselben Tafel)
+                if (j > 0 && z.oktave == satz.choere[c].saiten[0].oktave && z.werte == satz.choere[c].saiten[0].werte) continue;
+                out.push_back({"Chor " + std::to_string(c + 1) + "." + std::to_string(j + 1), z.werte, satz.mensur, satz.buende});
             }
-    if (inst == "Oud")
-        for (std::size_t c = 0; c < kOud.size(); ++c)
-        {
-            const auto& [art, wert] = kOud[c].second[0];
-            const double hz = hzVon(kOud[c].first);
-            out.push_back({"Chor " + std::to_string(c + 1) + ".1",
-                           art == 'u' ? umsponnen(wert * 9.80665, hz, kOudMensur) : monofil(wert, hz, kOudMensur, 'N'), kOudMensur, 12});
-        }
+    }
     return out;
 }
 
@@ -379,6 +255,14 @@ TEST_CASE("InstrumentMeasure 34k-7c Tafel je Taste an Stichtasten von Harfe und 
         const mu::Bewertung b = mu::bewerte(s, L, f);
         CHECK(b.centGroesster == doctest::Approx(t->bewertung.centGroesster).epsilon(1e-9));
         CHECK(f.verzugGanz == t->filter.verzugGanz);
+        // 34k-7d-3: der Kern stimmt das Glied zur Laufzeit selbst (die Tafel traegt N und D nicht) — Bit fuer Bit wie der
+        // Entwurf
+        ku::Umlauffilter g = t->filter;
+        g.verzugGanz = 0;
+        g.gliedVerzug = 4.5;
+        REQUIRE(ku::stimmeAmGrundton(g, s, L));
+        CHECK(g == t->filter);
+        CHECK(ku::grundtonDerSaite(s, L) == t->grundHz);
     }
 }
 
@@ -457,6 +341,16 @@ TEST_CASE("InstrumentMeasure 34k-7c Tafel je Saite gebunden: Laute Chor 1.1, Oud
         REQUIRE(f);
         CHECK(b.haelt());
         CHECK(f->gliedOrdnung == 5);
+        // 34k-7d-3: der Kern liest die Tafel ohne den Entwurf (`kern::umlauf::filterAn`) — Bit fuer Bit dasselbe Filter
+        for (const double lage : {0.0, 4.3, 7.0, 11.75})
+        {
+            CAPTURE(lage);
+            const std::optional<mu::Umlauffilter> e = mu::filterAn(*t, st.saite.saite, lage);
+            const std::optional<ku::Umlauffilter> k = ku::filterAn(*t, st.saite.saite, lage);
+            REQUIRE(e);
+            REQUIRE(k);
+            CHECK(*k == *e);
+        }
     }
 }
 

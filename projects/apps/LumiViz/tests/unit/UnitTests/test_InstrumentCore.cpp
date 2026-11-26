@@ -37,12 +37,16 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <complex>
 #include <cstdint>
+#include <mutex>
 #include <numbers>
+#include <set>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace lumi::kern;
@@ -372,6 +376,24 @@ TEST_CASE("InstrumentCore 34c Pool")
                         4),
                     std::runtime_error);
     CHECK(fertig.load() == 39);
+
+    // 0.9.0 (S222): eine Grenze fuer den Prozess gilt ohne und mit Angabe; 0 hebt sie auf
+    CHECK(poolHoechstens() == kPoolHoechstens);
+    setzePoolHoechstens(2);
+    CHECK(poolHoechstens() == 2);
+    CHECK(poolThreads() <= 2);
+    std::mutex schutz;
+    std::set<std::thread::id> threads;
+    parallelJe(64, [&](std::size_t) {
+        const std::lock_guard<std::mutex> sperre(schutz);
+        threads.insert(std::this_thread::get_id());
+        std::this_thread::sleep_for(std::chrono::microseconds(200));
+    }, 8);
+    CHECK(threads.size() <= 2);
+    setzePoolHoechstens(99);  // hoechstens kPoolHoechstens
+    CHECK(poolHoechstens() == kPoolHoechstens);
+    setzePoolHoechstens(0);
+    CHECK(poolHoechstens() == kPoolHoechstens);
 }
 
 TEST_CASE("InstrumentCore 34c Kurve: Grenzen und Ersatz")

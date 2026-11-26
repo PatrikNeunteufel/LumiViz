@@ -45,7 +45,11 @@ const Vek& rasterF()
     return f;
 }
 
-double omegaVon(double hz) { return 2.0 * kPi * hz / kRate; }
+// seit 0.7.0 in `InstrumentModels/gemeinsam/Umlauf` (der Kern rechnet zur Laufzeit damit)
+using ku::omegaVon;
+using ku::sigmoid;
+using ku::verzugVon;
+using ku::kLogitGrenze;
 
 // np.interp: xp aufsteigend (nicht fallend), ausserhalb der Randwert
 double interp(double x, const Vek& xp, const Vek& fp)
@@ -81,31 +85,8 @@ Vek gradient(const Vek& y, double h)
     return g;
 }
 
-// −unwrap(angle(h))
-Vek verzugVon(const std::vector<cplx>& h)
-{
-    Vek p(h.size());
-    double off = 0.0;
-    double vor = 0.0;
-    for (std::size_t i = 0; i < h.size(); ++i)
-    {
-        const double a = std::arg(h[i]);
-        if (i > 0)
-        {
-            const double d = a - vor;
-            if (d > kPi) off -= 2.0 * kPi * std::floor((d + kPi) / (2.0 * kPi));
-            else if (d < -kPi) off += 2.0 * kPi * std::floor((-d + kPi) / (2.0 * kPi));
-        }
-        vor = a;
-        p[i] = -(a + off);
-    }
-    return p;
-}
-
-/// Jenseits dieser Grenze ist sigmoid konstant (wie np.clip(…, −40, 40) der Vorlage); die Logit-Parameter der Kette werden
-/// in der Anpassung darauf gehalten (TK2 a).
-constexpr double kLogitGrenze = 40.0;
-double sigmoid(double x) { return 1.0 / (1.0 + std::exp(-std::clamp(x, -kLogitGrenze, kLogitGrenze))); }
+// `verzugVon` (−unwrap(angle(h))), `sigmoid` mit der Grenze ±40 (wie np.clip der Vorlage; die Logit-Parameter der Kette
+// werden in der Anpassung darauf gehalten, TK2 a) stehen in `InstrumentModels/gemeinsam/Umlauf`.
 
 // ------------------------------------------------------------------ pchip (scipy PchipInterpolator)
 struct Pchip
@@ -808,6 +789,8 @@ struct Stelle
 {
     double lage = 0.0;  // Buende
     double x = 0.0;     // lage / buende
+    Saitenwerte saite;  // fuer das Glied am Grundton (`ku::stimmeAmGrundton`)
+    double laenge = 0.0;
     Ziel ziel;
     Teiltoene tt;
     Vek fz, wn, n, restN;
@@ -836,7 +819,9 @@ Stelle stelleVon(const Saitenwerte& sa, double mensur, double u, int buende, con
     Stelle s;
     s.lage = u;
     s.x = u / buende;
-    s.ziel = zielVon(sa, mensur * std::exp2(-u / 12.0));
+    s.saite = sa;
+    s.laenge = mensur * std::exp2(-u / 12.0);
+    s.ziel = zielVon(sa, s.laenge);
     s.tt = teiltoeneVon(s.ziel.betrag, s.ziel.verzug);
     if (s.tt.hz.empty()) return s;
     for (std::size_t k = 0; k < s.tt.hz.size(); ++k)
@@ -951,14 +936,14 @@ std::optional<Werte> werteAn(const Stelle& s, const std::vector<Biquad>& kette, 
     const Vek& F = rasterF();
     Vek kv(kRaster);
     for (std::size_t i = 0; i < kRaster; ++i) kv[i] = ku::verzugKette(kette, omegaVon(F[i]));
-    const double f1 = s.tt.hz.front(), w1 = omegaVon(f1);
-    const double tot = interpF(f1, s.rest) - interpF(f1, kv);
     Werte w;
     w.filter.gliedOrdnung = ordnung;
     w.filter.kette = kette;
     w.filter.b = s.b;
     w.filter.a = s.a;
-    if (!ku::stimmeGlied(w.filter, w1, tot)) return std::nullopt;
+    // das Glied am Grundton, wie der Kern es zur Laufzeit stimmt (0.7.0: eine Rechnung fuer beide; dieselben Zahlen wie
+    // vorher interpF(f1, rest) − interpF(f1, kv) mit f1 dem ersten Teilton des Ziels)
+    if (!ku::stimmeAmGrundton(w.filter, s.saite, s.laenge)) return std::nullopt;
     // Verzug des Modells auf F: Verlust + Kette + Glied + N ω
     const Vek an = ku::thiranNenner(w.filter.gliedVerzug, ordnung);
     const Vek bn(an.rbegin(), an.rend());
@@ -1628,7 +1613,7 @@ struct Reihe
     Vek A, B;  // M × (P + 1)
     [[nodiscard]] std::vector<Biquad> an(double x) const
     {
-        const Vek v = legendre(2.0 * x - 1.0, P);
+        const Vek v = ku::legendre(2.0 * x - 1.0, P);
         std::vector<Biquad> k(static_cast<std::size_t>(M));
         for (int m = 0; m < M; ++m)
         {
@@ -1642,15 +1627,6 @@ struct Reihe
         }
         return k;
     }
-    static Vek legendre(double t, int P)
-    {
-        Vek v(static_cast<std::size_t>(P) + 1);
-        v[0] = 1.0;
-        if (P >= 1) v[1] = t;
-        for (int j = 2; j <= P; ++j)
-            v[static_cast<std::size_t>(j)] = ((2.0 * j - 1.0) * t * v[static_cast<std::size_t>(j - 1)] - (j - 1.0) * v[static_cast<std::size_t>(j - 2)]) / j;
-        return v;
-    }
 };
 
 Reihe gebunden(const std::vector<const Stelle*>& st, int M, int P, const Vek& r0, const Vek& th0, int ordnung, double reg, const Lauf& lauf)
@@ -1661,7 +1637,7 @@ Reihe gebunden(const std::vector<const Stelle*>& st, int M, int P, const Vek& r0
     std::vector<std::size_t> off(K + 1, 0);
     for (std::size_t k = 0; k < K; ++k)
     {
-        V[k] = Reihe::legendre(2.0 * st[k]->x - 1.0, P);
+        V[k] = ku::legendre(2.0 * st[k]->x - 1.0, P);
         for (double n : st[k]->n) kf[k].push_back(kKf / (2.0 * kPi * n) * (n == 1.0 ? 10.0 : 1.0));
         off[k + 1] = off[k] + st[k]->wn.size();
     }
@@ -1822,6 +1798,8 @@ bool besser(const Werte& neu, const std::optional<Werte>& alt)
 Bewertung bewerte(const Saitenwerte& saite, double laenge, Umlauffilter& filter)
 {
     Stelle s;
+    s.saite = saite;
+    s.laenge = laenge;
     s.ziel = zielVon(saite, laenge);
     s.tt = teiltoeneVon(s.ziel.betrag, s.ziel.verzug);
     if (s.tt.hz.empty()) return {};
@@ -1906,28 +1884,7 @@ std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge
     return t;
 }
 
-std::vector<Biquad> TafelSaite::ketteAn(double lage) const
-{
-    Reihe r;
-    r.M = static_cast<int>(radiusReihe.size());
-    r.P = grad;
-    for (const Vek& v : radiusReihe) r.A.insert(r.A.end(), v.begin(), v.end());
-    for (const Vek& v : winkelReihe) r.B.insert(r.B.end(), v.begin(), v.end());
-    return r.an(lage / buende);
-}
-
-void TafelSaite::verlustAn(double lage, std::vector<double>& b, std::vector<double>& a) const
-{
-    std::size_t k = 0;
-    while (k + 2 < verlust.size() && verlust[k + 1].lage <= lage) ++k;
-    const auto& v0 = verlust[k];
-    const auto& v1 = verlust[std::min(k + 1, verlust.size() - 1)];
-    const double t = v1.lage > v0.lage ? (lage - v0.lage) / (v1.lage - v0.lage) : 0.0;
-    b.assign(std::max(v0.b.size(), v1.b.size()), 0.0);
-    a.assign(std::max(v0.a.size(), v1.a.size()), 0.0);
-    for (std::size_t i = 0; i < b.size(); ++i) b[i] = (1 - t) * (i < v0.b.size() ? v0.b[i] : 0.0) + t * (i < v1.b.size() ? v1.b[i] : 0.0);
-    for (std::size_t i = 0; i < a.size(); ++i) a[i] = (1 - t) * (i < v0.a.size() ? v0.a[i] : 0.0) + t * (i < v1.a.size() ? v1.a[i] : 0.0);
-}
+// `TafelSaite::ketteAn` und `verlustAn` erbt die Tafel seit 0.7.0 von `kern::umlauf::Saitentafel`.
 
 namespace
 {

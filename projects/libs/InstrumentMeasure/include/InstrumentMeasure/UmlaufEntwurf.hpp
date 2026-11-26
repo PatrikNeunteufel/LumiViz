@@ -52,12 +52,15 @@ using kern::umlauf::Biquad;
 using kern::umlauf::Saitenwerte;
 using kern::umlauf::Umlauffilter;
 
-inline constexpr double kRate = 48000.0;
+using kern::umlauf::Saitentafel;
+
+/// Der Takt und die Grenze des Polradius stehen seit 0.7.0 in `InstrumentModels/gemeinsam/Umlauf` (der Kern braucht sie).
+inline constexpr double kRate = kern::umlauf::kRate;
 /// UL1 a: zaehlend ist ein Teilton bis zu dieser Abklingrate am starren Steg, 1/s.
 inline constexpr double kGrenzeAbklingen = 100.0;
 /// UL3-1 a nachgeschaerft (a): angepasst wird bis zu diesem Vielfachen der Grenze.
 inline constexpr double kZugabe = 1.5;
-inline constexpr double kRadiusMax = 0.99;
+inline constexpr double kRadiusMax = kern::umlauf::kRadiusMax;
 /// UL2 a.
 inline constexpr double kCentSchwelle = 3.0;
 inline constexpr double kAbklingenUnten = 100.0 * (1.0 / 1.4309 - 1.0);  ///< −30,1 %
@@ -126,31 +129,17 @@ struct TafelTaste
 /// haelt; sonst das beste. `std::nullopt`, wenn die Saite zu wenige Teiltoene traegt oder kein Glied in den Umlauf passt.
 [[nodiscard]] std::optional<TafelTaste> entwirfJeTaste(const Saitenwerte& saite, double laenge, const EntwurfOptionen& optionen = {});
 
-/// Die Tafel einer Saite, gebunden ueber die Lage (Gitarre, Laute, Oud; UL3-1 a).
-struct TafelSaite
+/// Die Tafel einer Saite, gebunden ueber die Lage (Gitarre, Laute, Oud; UL3-1 a): die Tafel selbst (`Saitentafel`, seit
+/// 0.7.0 in `InstrumentModels`, der Kern liest sie; der Verlust an den Buenden und auf halbem Weg) und was der Entwurf
+/// ueber sie weiss.
+struct TafelSaite : Saitentafel
 {
-    int buende = 0;
-    double mensur = 0.0;
-    int grad = 3;
-    /// je Biquad die Beiwerte von logit(r / kRadiusMax) und logit(θ / π) als Legendre-Reihe in 2 u / buende − 1
-    std::vector<std::vector<double>> radiusReihe, winkelReihe;
-    struct Verluststelle
-    {
-        double lage = 0.0;  ///< in Buenden
-        std::vector<double> b, a;
-    };
-    std::vector<Verluststelle> verlust;  ///< an den Buenden und auf halbem Weg, aufsteigend
     double startFaktor = 0.0;  ///< der gewaehlte Start (Abel & Smith bis zu diesem Vielfachen der Grenze)
     double daempfung = 0.0;    ///< die gewaehlte Daempfung der Beiwerte ab Grad 1
     /// groesster Fehler je Gruppe von Stellen: an den Buenden, auf halbem Weg, an Achteln, an ungeraden Sechzehnteln
     /// (die weder Anpassung noch Auswahl kennt)
     Bewertung buendeBewertung, halbBewertung, achtelBewertung, fremdBewertung;
     Rechenaufwand aufwand;
-
-    /// Die Kette an der Lage `lage` (Buende, gebrochen).
-    [[nodiscard]] std::vector<Biquad> ketteAn(double lage) const;
-    /// Der Verlust an der Lage, zwischen den Nachbarstellen gemittelt.
-    void verlustAn(double lage, std::vector<double>& b, std::vector<double>& a) const;
 };
 
 /// Entwirft die Tafel einer Saite (`gebunden_stuetzstellen.py` mit `glied=T5 grad=3 rand=1.5 verlust=halb starts=4`).

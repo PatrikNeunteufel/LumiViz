@@ -14,15 +14,37 @@
 namespace lumi::kern
 {
 
+namespace
+{
+// 0 = keine Grenze gesetzt (dann gilt `kPoolHoechstens` nur ohne Angabe, wie vor 0.9.0)
+std::atomic<unsigned>& grenze()
+{
+    static std::atomic<unsigned> g{0};
+    return g;
+}
+}  // namespace
+
+void setzePoolHoechstens(unsigned threads)
+{
+    grenze() = threads == 0 ? 0u : std::clamp(threads, 1u, kPoolHoechstens);
+}
+
+unsigned poolHoechstens()
+{
+    const unsigned g = grenze();
+    return g == 0 ? kPoolHoechstens : g;
+}
+
 unsigned poolThreads()
 {
-    return std::clamp(std::thread::hardware_concurrency(), 1u, kPoolHoechstens);
+    return std::clamp(std::thread::hardware_concurrency(), 1u, poolHoechstens());
 }
 
 void parallelJe(std::size_t anzahl, const std::function<void(std::size_t)>& aufgabe, unsigned threads)
 {
     if (anzahl == 0) return;
     if (threads == 0) threads = poolThreads();
+    if (const unsigned g = grenze(); g != 0) threads = std::min(threads, g);
     threads = static_cast<unsigned>(std::min<std::size_t>(threads, anzahl));
     if (threads <= 1)
     {
