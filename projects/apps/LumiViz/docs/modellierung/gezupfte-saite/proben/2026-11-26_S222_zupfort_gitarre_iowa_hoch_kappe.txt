@@ -1,0 +1,44 @@
+Iowa mf, Zupfstellen 16.0 cm
+Saite 1 Bund 13 Taste  77 | 16.0 cm 28.3 dB
+Saite 1 Bund 14 Taste  78 | 16.0 cm 13.1 dB
+Saite 1 Bund 15 Taste  79 | 16.0 cm 17.4 dB
+Saite 1 Bund 16 Taste  80 | 16.0 cm 31.5 dB
+Saite 1 Bund 17 Taste  81 | 16.0 cm 32.6 dB
+Saite 1 Bund 18 Taste  82 | 16.0 cm 24.8 dB
+Saite 1 Bund 19 Taste  83 | 16.0 cm 38.6 dB
+# Guitar.mf.sul_E.E4B4.mono.aif: 7 Stuecke, erwartet 8 - ausgelassen
+Saite 5 Bund 13 Taste  58 | 16.0 cm 20.3 dB
+Saite 5 Bund 14 Taste  59 | 16.0 cm 26.4 dB
+Saite 5 Bund 15 Taste  60 | 16.0 cm 26.0 dB
+Saite 5 Bund 16 Taste  61 | 16.0 cm 15.8 dB
+Saite 5 Bund 17 Taste  62 | 16.0 cm 21.5 dB
+Saite 5 Bund 18 Taste  63 | 16.0 cm 19.4 dB
+Saite 5 Bund 19 Taste  64 | 16.0 cm 20.5 dB
+Saite 2 Bund 13 Taste  72 | 16.0 cm 25.9 dB
+Saite 2 Bund 14 Taste  73 | 16.0 cm 25.8 dB
+Saite 2 Bund 15 Taste  74 | 16.0 cm 30.6 dB
+Saite 2 Bund 16 Taste  75 | 16.0 cm 31.6 dB
+Saite 2 Bund 17 Taste  76 | 16.0 cm 18.0 dB
+Saite 2 Bund 18 Taste  77 | 16.0 cm 26.2 dB
+Saite 2 Bund 19 Taste  78 | 16.0 cm 24.2 dB
+Saite 4 Bund 13 Taste  63 | 16.0 cm 14.6 dB
+Saite 4 Bund 14 Taste  64 | 16.0 cm 24.4 dB
+Saite 4 Bund 15 Taste  65 | 16.0 cm 15.5 dB
+Saite 4 Bund 16 Taste  66 | 16.0 cm 27.7 dB
+Saite 4 Bund 17 Taste  67 | 16.0 cm 19.0 dB
+Saite 4 Bund 18 Taste  68 | 16.0 cm 21.5 dB
+# Guitar.mf.sulE.C3B3.mono.aif: 11 Stuecke, erwartet 12 - ausgelassen
+Saite 3 Bund 13 Taste  68 | 16.0 cm 22.5 dB
+Saite 3 Bund 14 Taste  69 | 16.0 cm 17.3 dB
+Saite 3 Bund 15 Taste  70 | 16.0 cm 10.9 dB
+Saite 3 Bund 16 Taste  71 | 16.0 cm 23.4 dB
+Saite 3 Bund 17 Taste  72 | 16.0 cm 25.8 dB
+Saite 3 Bund 18 Taste  73 | 16.0 cm 16.7 dB
+
+33 Toene. Median |Modell - Iowa| je Teilton, ohne den Median je Ton (dB):
+Zupfstelle      alle     n 1-3     n 4-6     n 7-9   n 10-12
+  16.0 cm     22.72     23.53     30.00     17.31     14.92
+
+Mittlerer Rest je Teilton (Modell - Iowa, dB; negativ = Kerbe im Modell, die Iowa nicht hat):
+Zupfstelle       1      2      3      4      5      6      7      8      9     10     11     12
+  16.0 cm    15.4  -35.1   23.9  -33.5   24.6  -28.8   20.2  -21.9   16.9  -12.0   15.5  -10.2

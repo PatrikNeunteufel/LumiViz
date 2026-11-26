@@ -145,7 +145,8 @@ struct ParameterAngabe
     std::vector<std::string> quellen;
     /// zaehlt fuer „ungemessen“ (eine Ausstattung oder ein Bezug wie `ausgangBezug` nicht)
     bool klangbestimmend = true;
-    /// gestimmt (IK2-11 a): eine Kurve, die ein Werkzeug aus anderen Werten rechnet
+    /// gestimmt (IK2-11 a): eine Kurve oder (seit 0.8.0, ZK1 a) eine Liste, die ein Werkzeug aus anderen Werten rechnet;
+    /// die Vorgabe darf leer sein, ein leerer Wert ist beim Richten ein Fehler; in den Feldern einer Liste ist nichts gestimmt
     bool gestimmt = false;
     /// woraus ein gestimmter Wert gestimmt wird (Namen der Tafel); leer = aus allen nicht gestimmten und den gestimmten,
     /// die vor ihm in der Tafel stehen (KS2 a: gestimmt wird in der Reihenfolge der Tafel)

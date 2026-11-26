@@ -1,0 +1,15 @@
+harfe_91: L 0.1246 m, FIR 230 Werte, Spitze bei 29
+  n 1: |E| 0.997747 ->   30.72 dB/s je Umlauf-Takt n f0;  |FIR| 0.997456 ->   34.70 dB/s
+  n 2: |E| 0.996298 ->  101.02 dB/s je Umlauf-Takt n f0;  |FIR| 0.996012 ->  108.83 dB/s
+  n 3: |E| 0.994014 ->  245.29 dB/s je Umlauf-Takt n f0;  |FIR| 0.993736 ->  256.74 dB/s
+  n 4: |E| 0.990371 ->  527.12 dB/s je Umlauf-Takt n f0;  |FIR| 0.990119 ->  540.99 dB/s
+cembalo_84: L 0.1860 m, FIR 246 Werte, Spitze bei 45
+  n 1: |E| 0.999333 ->    6.07 dB/s je Umlauf-Takt n f0;  |FIR| 0.999243 ->    6.88 dB/s
+  n 2: |E| 0.999121 ->   15.99 dB/s je Umlauf-Takt n f0;  |FIR| 0.999030 ->   17.64 dB/s
+  n 3: |E| 0.998954 ->   28.55 dB/s je Umlauf-Takt n f0;  |FIR| 0.998863 ->   31.02 dB/s
+  n 4: |E| 0.998805 ->   43.47 dB/s je Umlauf-Takt n f0;  |FIR| 0.998716 ->   46.71 dB/s
+harfe_60: L 0.5578 m, FIR 381 Werte, Spitze bei 180
+  n 1: |E| 0.996175 ->    8.71 dB/s je Umlauf-Takt n f0;  |FIR| 0.996178 ->    8.70 dB/s
+  n 2: |E| 0.994524 ->   24.96 dB/s je Umlauf-Takt n f0;  |FIR| 0.994538 ->   24.89 dB/s
+  n 3: |E| 0.992851 ->   48.92 dB/s je Umlauf-Takt n f0;  |FIR| 0.992863 ->   48.83 dB/s
+  n 4: |E| 0.990819 ->   83.84 dB/s je Umlauf-Takt n f0;  |FIR| 0.990828 ->   83.76 dB/s

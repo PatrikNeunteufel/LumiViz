@@ -1,0 +1,54 @@
+Zupfstelle 6.5 cm vom Steg, Haltung d
+Taste  40  Saite 6  Bund  0     -0.6 LUFS   starrer Steg     0.7   Abfall frueh    9.0 spaet    6.6 dB/s   starr frueh    5.5
+Taste  41  Saite 6  Bund  1     -1.0 LUFS   starrer Steg     0.6   Abfall frueh    9.3 spaet    6.2 dB/s   starr frueh    5.4
+Taste  42  Saite 6  Bund  2      0.4 LUFS   starrer Steg     3.7   Abfall frueh   10.1 spaet    8.1 dB/s   starr frueh    5.4
+Taste  43  Saite 6  Bund  3      1.9 LUFS   starrer Steg     9.5   Abfall frueh   10.3 spaet    8.7 dB/s   starr frueh    5.3
+Taste  44  Saite 6  Bund  4      1.1 LUFS   starrer Steg     7.8   Abfall frueh   10.3 spaet    7.3 dB/s   starr frueh    5.3
+Taste  45  Saite 5  Bund  0      1.4 LUFS   starrer Steg     5.1   Abfall frueh    9.6 spaet    3.8 dB/s   starr frueh    4.6
+Taste  46  Saite 5  Bund  1      1.8 LUFS   starrer Steg     4.5   Abfall frueh   10.0 spaet    3.5 dB/s   starr frueh    4.6
+Taste  47  Saite 5  Bund  2      1.5 LUFS   starrer Steg     3.3   Abfall frueh   10.4 spaet    4.5 dB/s   starr frueh    4.6
+Taste  48  Saite 5  Bund  3      1.4 LUFS   starrer Steg     2.7   Abfall frueh    9.0 spaet    7.9 dB/s   starr frueh    4.6
+Taste  49  Saite 5  Bund  4      1.5 LUFS   starrer Steg     4.3   Abfall frueh    8.6 spaet    9.9 dB/s   starr frueh    4.8
+Taste  50  Saite 4  Bund  0      1.4 LUFS   starrer Steg     2.5   Abfall frueh    9.2 spaet    9.4 dB/s   starr frueh    5.9
+Taste  51  Saite 4  Bund  1      0.5 LUFS   starrer Steg     1.5   Abfall frueh    9.4 spaet    6.9 dB/s   starr frueh    5.8
+Taste  52  Saite 4  Bund  2      2.4 LUFS   starrer Steg     3.3   Abfall frueh   12.1 spaet    5.0 dB/s   starr frueh    5.8
+Taste  53  Saite 4  Bund  3      2.1 LUFS   starrer Steg     3.9   Abfall frueh    9.8 spaet    9.5 dB/s   starr frueh    5.7
+Taste  54  Saite 4  Bund  4      3.6 LUFS   starrer Steg     8.3   Abfall frueh   25.7 spaet   10.2 dB/s   starr frueh    5.7
+Taste  55  Saite 3  Bund  0      1.3 LUFS   starrer Steg     6.6   Abfall frueh   17.1 spaet   16.7 dB/s   starr frueh    8.3
+Taste  56  Saite 3  Bund  1     -1.6 LUFS   starrer Steg     4.9   Abfall frueh   17.1 spaet   13.9 dB/s   starr frueh    8.2
+Taste  57  Saite 3  Bund  2     -1.7 LUFS   starrer Steg     2.2   Abfall frueh   13.3 spaet   10.5 dB/s   starr frueh    8.5
+Taste  58  Saite 3  Bund  3     -0.4 LUFS   starrer Steg     2.6   Abfall frueh   13.2 spaet   11.4 dB/s   starr frueh    8.6
+Taste  59  Saite 2  Bund  0      0.0 LUFS   starrer Steg     1.0   Abfall frueh   13.4 spaet   13.9 dB/s   starr frueh    9.4
+Taste  60  Saite 2  Bund  1     -0.7 LUFS   starrer Steg     4.5   Abfall frueh   14.5 spaet   13.9 dB/s   starr frueh    8.2
+Taste  61  Saite 2  Bund  2      0.8 LUFS   starrer Steg     2.4   Abfall frueh   19.8 spaet   17.4 dB/s   starr frueh    9.7
+Taste  62  Saite 2  Bund  3      1.3 LUFS   starrer Steg     2.5   Abfall frueh   19.3 spaet   15.2 dB/s   starr frueh    9.3
+Taste  63  Saite 2  Bund  4     -1.3 LUFS   starrer Steg    -0.6   Abfall frueh   12.8 spaet   11.8 dB/s   starr frueh    9.5
+Taste  64  Saite 1  Bund  0     -1.4 LUFS   starrer Steg    -0.8   Abfall frueh   13.5 spaet   12.9 dB/s   starr frueh   11.9
+Taste  65  Saite 1  Bund  1     -0.9 LUFS   starrer Steg    -0.4   Abfall frueh   13.8 spaet   12.0 dB/s   starr frueh   12.0
+Taste  66  Saite 1  Bund  2     -2.1 LUFS   starrer Steg    -1.0   Abfall frueh   24.3 spaet   22.3 dB/s   starr frueh   11.5
+Taste  67  Saite 1  Bund  3      0.3 LUFS   starrer Steg     1.2   Abfall frueh   15.7 spaet   13.6 dB/s   starr frueh   11.9
+Taste  68  Saite 1  Bund  4     -5.3 LUFS   starrer Steg    -4.8   Abfall frueh   16.6 spaet   16.3 dB/s   starr frueh   13.2
+Taste  69  Saite 1  Bund  5     -2.1 LUFS   starrer Steg    -1.8   Abfall frueh   12.9 spaet   12.8 dB/s   starr frueh   11.8
+Taste  70  Saite 1  Bund  6      1.8 LUFS   starrer Steg     2.4   Abfall frueh   14.1 spaet   12.8 dB/s   starr frueh   12.5
+Taste  71  Saite 1  Bund  7      5.2 LUFS   starrer Steg     6.0   Abfall frueh   16.6 spaet   16.1 dB/s   starr frueh   12.4
+Taste  72  Saite 1  Bund  8      3.2 LUFS   starrer Steg     4.3   Abfall frueh   18.0 spaet   16.9 dB/s   starr frueh   13.6
+Taste  73  Saite 1  Bund  9      4.0 LUFS   starrer Steg     5.9   Abfall frueh   26.9 spaet   25.8 dB/s   starr frueh   12.8
+Taste  74  Saite 1  Bund 10      2.5 LUFS   starrer Steg     3.6   Abfall frueh   20.3 spaet   20.0 dB/s   starr frueh   13.3
+Taste  75  Saite 1  Bund 11      0.1 LUFS   starrer Steg     0.9   Abfall frueh   18.2 spaet   17.1 dB/s   starr frueh   14.1
+Taste  76  Saite 1  Bund 12     -1.3 LUFS   starrer Steg    -0.1   Abfall frueh   23.0 spaet   18.5 dB/s   starr frueh   14.3
+Taste  77  Saite 1  Bund 13     -1.4 LUFS   starrer Steg     0.0   Abfall frueh   26.0 spaet   21.8 dB/s   starr frueh   14.5
+Taste  78  Saite 1  Bund 14     -0.7 LUFS   starrer Steg     0.6   Abfall frueh   26.5 spaet   21.9 dB/s   starr frueh   19.5
+Taste  79  Saite 1  Bund 15      3.2 LUFS   starrer Steg     5.5   Abfall frueh   40.9 spaet   19.0 dB/s   starr frueh   23.2
+Taste  80  Saite 1  Bund 16     -3.3 LUFS   starrer Steg    -2.8   Abfall frueh   21.7 spaet   19.5 dB/s   starr frueh   18.0
+Taste  81  Saite 1  Bund 17     -0.7 LUFS   starrer Steg    -0.1   Abfall frueh   28.4 spaet   26.4 dB/s   starr frueh   20.3
+Taste  82  Saite 1  Bund 18      4.4 LUFS   starrer Steg     6.3   Abfall frueh   33.4 spaet   30.1 dB/s   starr frueh   17.3
+Taste  83  Saite 1  Bund 19      5.2 LUFS   starrer Steg     7.4   Abfall frueh   34.7 spaet   34.5 dB/s   starr frueh   17.8
+Koerper am Steg: Spanne 10.5 LU, groesster Sprung zwischen Nachbarn 6.5 LU, mittlerer Sprung 1.3 LU
+starrer Steg  : Spanne 14.3 LU, groesster Sprung zwischen Nachbarn 8.3 LU, mittlerer Sprung 1.7 LU
+Abfall frueh / spaet je Oktave (Median, dB/s); Iowa ff: C2 5,5 / 0,7 - C3 14,8 / 1,4 - C4 11,1 / 1,1 - C5 11,6 / 0,9
+   C2:  10.0 /   6.4   (starrer Steg frueh   5.3)
+   C3:  12.7 /  10.0   (starrer Steg frueh   5.8)
+   C4:  15.1 /  13.8   (starrer Steg frueh  11.9)
+   C5:  26.2 /  20.9   (starrer Steg frueh  15.9)
+KQ34 a: Spanne 10.5 LU (leiseste Taste 68, lauteste 71), groesster Sprung 10.5 LU (68/71), mittlerer 1.5 LU; Lautheit im Mittel 0.63 LUFS; Abfall frueh / spaet Median 14.3 / 13.2 dB/s
+je Taste (Lautheit LUFS, Abfall frueh, spaet): 40 -0.6 9.0 6.6; 41 -1.0 9.3 6.2; 42 0.4 10.1 8.1; 43 1.9 10.3 8.7; 44 1.1 10.3 7.3; 45 1.4 9.6 3.8; 46 1.8 10.0 3.5; 47 1.5 10.4 4.5; 48 1.4 9.0 7.9; 49 1.5 8.6 9.9; 50 1.4 9.2 9.4; 51 0.5 9.4 6.9; 52 2.4 12.1 5.0; 53 2.1 9.8 9.5; 54 3.6 25.7 10.2; 55 1.3 17.1 16.7; 56 -1.6 17.1 13.9; 57 -1.7 13.3 10.5; 58 -0.4 13.2 11.4; 59 0.0 13.4 13.9; 60 -0.7 14.5 13.9; 61 0.8 19.8 17.4; 62 1.3 19.3 15.2; 63 -1.3 12.8 11.8; 64 -1.4 13.5 12.9; 65 -0.9 13.8 12.0; 66 -2.1 24.3 22.3; 67 0.3 15.7 13.6; 68 -5.3 16.6 16.3; 69 -2.1 12.9 12.8; 70 1.8 14.1 12.8; 71 5.2 16.6 16.1; 72 3.2 18.0 16.9; 73 4.0 26.9 25.8; 74 2.5 20.3 20.0; 75 0.1 18.2 17.1; 76 -1.3 23.0 18.5; 77 -1.4 26.0 21.8; 78 -0.7 26.5 21.9; 79 3.2 40.9 19.0; 80 -3.3 21.7 19.5; 81 -0.7 28.4 26.4; 82 4.4 33.4 30.1; 83 5.2 34.7 34.5

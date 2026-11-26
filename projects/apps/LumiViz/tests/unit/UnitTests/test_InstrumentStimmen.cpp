@@ -319,3 +319,76 @@ TEST_CASE("Instrument Stimmen 34f: der Waechter ueber die mitgelieferten Instrum
     for (const std::string& v : veraltet) text += "\n  " + v;
     CHECK_MESSAGE(veraltet.empty(), "veraltet — InstrumentTuneTool <datei> --bezug, dann python asset/loop/instrument_katalog.py:" << text);
 }
+
+TEST_CASE("Instrument Stimmen 34k-7d: eine gestimmte Liste — stimmen, Abdruck, Waechter, Datei (ZK1 a)")
+{
+    // der Pruefkern mit einer gestimmten Liste nach `pitch` (wie die Tafel des Umlauf-Filters: Eintraege je Taste)
+    KernTyp t = pruefTyp();
+    ParameterAngabe tafel;
+    tafel.name = "loopTable";
+    tafel.titel = "Loop table";
+    tafel.gruppe = "Main";
+    tafel.art = WertArt::Liste;
+    tafel.darstellung = Darstellung::Dialog;
+    ParameterAngabe taste;
+    taste.name = "key";
+    taste.titel = "Key";
+    taste.art = WertArt::Ganzzahl;
+    taste.darstellung = Darstellung::Regler;
+    taste.von = 0.0;
+    taste.bis = 127.0;
+    taste.vorgabe = std::int64_t{60};
+    tafel.felder.push_back(taste);
+    tafel.felder.push_back(zahl("radius", 0.0, 1.0, 0.5));
+    tafel.eintraegeMax = 128;
+    tafel.vorgabe = Liste{};
+    tafel.gestimmt = true;
+    tafel.abhaengigVon = {"t60"};
+    t.tafel.werte.push_back(tafel);
+    REQUIRE(pruefeTafel(t.tafel).empty());
+    Fabrik fabrik;
+    REQUIRE(fabrik.registriere(t).empty());
+
+    int aufrufe = 0;
+    const Stimmer s{"testTuned", [&aufrufe](const Fabrik& f, const Werte& w, const std::vector<std::string>& namen) {
+                        GestimmteWerte g = pruefStimmer().stimme(f, w, namen);
+                        ++aufrufe;
+                        Liste l;
+                        for (std::int64_t n = 48; n <= 72; n += 12)
+                        {
+                            Werte e;
+                            e.setze("key", n);
+                            e.setze("radius", 0.9 - w.zahl("t60") / 100.0);
+                            l.eintraege.push_back(e);
+                        }
+                        g.emplace_back("loopTable", l);
+                        return g;
+                    }};
+    Werte w = anfang();
+    w.setze("loopTable", Liste{});
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", w) == std::vector<std::string>{"pitch", "loopTable"});
+    const lumi::messung::StimmBericht b = lumi::messung::stimmeUndNormiere(fabrik, {s}, "testTuned", w, false, true);
+    CHECK(b.fehler.empty());
+    CHECK(b.gestimmt == std::vector<std::string>{"pitch", "loopTable"});
+    CHECK(aufrufe == 1);
+    REQUIRE(w.liste("loopTable").eintraege.size() == 3);
+    CHECK(w.liste("loopTable").eintraege[1].ganzzahl("key") == 60);
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", w).empty());
+
+    // durch die Datei (`coreParams` der .lvinst) und zurueck: Werte und Abdruecke gleich, nichts veraltet
+    // (die Abdruecke stehen in der Datei als Objekt — sie kommen nach Namen geordnet zurueck, darum je Name verglichen)
+    const Werte zurueck = lumi::loop::werteAusJson(t.tafel, lumi::loop::werteAlsJson(t.tafel, w));
+    CHECK(zurueck.felder == w.felder);
+    CHECK(zurueck.abdruckVon("pitch") == w.abdruckVon("pitch"));
+    CHECK(zurueck.abdruckVon("loopTable") == w.abdruckVon("loopTable"));
+    CHECK(zurueck.abdruckVon("loopTable").size() == 64);
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", zurueck).empty());
+
+    // eine Eingabe der Stimmung geaendert: beide veraltet, die Liste wird neu gestimmt
+    Werte neu = w;
+    neu.setze("t60", 3.0);
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", neu) == std::vector<std::string>{"pitch", "loopTable"});
+    (void)lumi::messung::stimmeUndNormiere(fabrik, {s}, "testTuned", neu, false, false);
+    CHECK(neu.liste("loopTable").eintraege[0].zahl("radius") == doctest::Approx(0.87).epsilon(1e-12));
+    CHECK(lumi::messung::veralteteWerte(fabrik, "testTuned", neu).empty());
+}

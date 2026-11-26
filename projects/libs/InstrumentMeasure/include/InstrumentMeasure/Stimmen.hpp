@@ -3,8 +3,8 @@
  * @brief Gestimmte Werte und der Bezug des Ausgangs als Werkzeug (Instrumente_IC_Konzept.md IK2-10 a, IK2-11 a;
  *        Stufe 34f-3, S177)
  *
- * **Gestimmte Werte** sind Kurven, die ein Werkzeug aus anderen Werten rechnet — etwa f0 und die Fenster des Drucks je
- * Note einer Zunge (IC `ic_stimme_zunge`). Sie sind Daten in der `.lvinst` mit Belegkraft *Rechnung* und dem Abdruck der
+ * **Gestimmte Werte** sind Kurven oder Listen, die ein Werkzeug aus anderen Werten rechnet — etwa f0 und die Fenster des
+ * Drucks je Note einer Zunge (IC `ic_stimme_zunge`), die Tafel des Umlauf-Filters der gezupften Saite (ZK1 a, eine Liste). Sie sind Daten in der `.lvinst` mit Belegkraft *Rechnung* und dem Abdruck der
  * Eingaben, aus denen sie gestimmt wurden (`kern::eingabenAbdruck`). Gestimmt wird hier, in der Messung, weil das
  * Stimmen am gerechneten Ton misst (YIN, B2); ein Kern liefert dazu seinen `Stimmer`. Die eingebauten (`stimmer()`)
  * kommen mit ihren Klassen (34g: Klasse 4, 34j: Klasse 10, 34k: Klasse 2).
@@ -30,10 +30,10 @@
 namespace lumi::messung
 {
 
-/// Die gestimmten Werte, die ein Stimmer rechnet: je Name die neue Kurve.
-using GestimmteWerte = std::vector<std::pair<std::string, kern::Kurve>>;
+/// Die gestimmten Werte, die ein Stimmer rechnet: je Name der neue Wert — eine Kurve oder (seit 0.6.0, ZK1 a) eine Liste.
+using GestimmteWerte = std::vector<std::pair<std::string, kern::Wert>>;
 
-/// Wie ein Kern seine gestimmten Werte rechnet: aus den Werten (nach der Tafel gerichtet) die gestimmten Kurven mit den
+/// Wie ein Kern seine gestimmten Werte rechnet: aus den Werten (nach der Tafel gerichtet) die gestimmten Werte mit den
 /// Namen `namen`, in der Reihenfolge der Tafel (KS2 a) — ein gestimmter Wert davor, der nicht in `namen` steht, gilt, wie
 /// er in `werte` steht; einer in `namen` wird zuerst neu gestimmt, und die spaeteren nehmen ihn.
 struct Stimmer

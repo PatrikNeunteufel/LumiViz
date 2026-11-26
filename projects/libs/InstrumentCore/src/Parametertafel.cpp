@@ -133,11 +133,15 @@ void pruefeAngaben(const std::vector<ParameterAngabe>& angaben, const std::vecto
             if (a.felder.empty()) fehler.push_back(ort + ": list without fields");
             if (a.eintraegeMin > a.eintraegeMax) fehler.push_back(ort + ": list bounds reversed");
             const Liste& l = std::get<Liste>(a.vorgabe);
-            if (l.eintraege.size() < a.eintraegeMin || l.eintraege.size() > a.eintraegeMax)
+            // 0.8.0 (ZK1 a): eine gestimmte Liste darf leer vorgegeben sein, wie eine gestimmte Kurve
+            if (!(a.gestimmt && l.eintraege.empty()) && (l.eintraege.size() < a.eintraegeMin || l.eintraege.size() > a.eintraegeMax))
                 fehler.push_back(ort + ": default list size outside bounds");
             pruefeAngaben(a.felder, nullptr, ort + ".", noteMin, noteMax, fehler);
+            for (const ParameterAngabe& f : a.felder)
+                if (f.gestimmt || !f.abhaengigVon.empty()) fehler.push_back(ort + "." + f.name + ": tuning inside a list");
         }
-        if (a.gestimmt && a.art != WertArt::Kurve) fehler.push_back(ort + ": a tuned value must be a curve");
+        if (a.gestimmt && a.art != WertArt::Kurve && a.art != WertArt::Liste)
+            fehler.push_back(ort + ": a tuned value must be a curve or a list");
         if (!a.gestimmt && !a.abhaengigVon.empty()) fehler.push_back(ort + ": dependencies without tuning");
     }
 }
@@ -214,7 +218,9 @@ std::vector<std::string> richteAngaben(const std::vector<ParameterAngabe>& angab
         case WertArt::Liste:
         {
             Liste& l = std::get<Liste>(*w);
-            if (l.eintraege.size() < a.eintraegeMin || l.eintraege.size() > a.eintraegeMax)
+            if (a.gestimmt && l.eintraege.empty())
+                fehler.push_back(ort + ": tuned value empty");  // IK2-11 a, wie die gestimmte Kurve (0.8.0, ZK1 a)
+            else if (l.eintraege.size() < a.eintraegeMin || l.eintraege.size() > a.eintraegeMax)
                 fehler.push_back(ort + ": " + std::to_string(l.eintraege.size()) + " entries, allowed " + std::to_string(a.eintraegeMin) +
                                  " ... " + std::to_string(a.eintraegeMax));
             for (std::size_t i = 0; i < l.eintraege.size(); ++i)

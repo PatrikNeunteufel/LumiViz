@@ -1,0 +1,24 @@
+Harfe Taste 36: x_p 0.4414 m, L 1.2261 m, F_stat gemessen 5.181820 N, T d / x_p cos a 5.177541 N (Verhaeltnis 1.000826)
+  ohne   : Hoerort  -15.41 LUFS, Pegel 1-2 s -19.81 dB | Stegkraft Mittel 2,5-3,5 s -5.1818e+00 N, Spitze 1.002e+01 N | Teiltoene frueh 1-6    0.2   -7.4  -21.2  -14.7  -19.9  -21.7 dB
+  rampe  : Hoerort  -15.03 LUFS, Pegel 1-2 s -19.53 dB | Stegkraft Mittel 2,5-3,5 s +7.7122e+03 N, Spitze 9.655e+03 N | Teiltoene frueh 1-6    4.2   -6.0  -20.5  -14.3  -19.7  -21.6 dB
+  richtig: Hoerort  -14.97 LUFS, Pegel 1-2 s -19.59 dB | Stegkraft Mittel 2,5-3,5 s +4.4120e+00 N, Spitze 1.647e+01 N | Teiltoene frueh 1-6    4.2   -6.0  -20.5  -14.3  -19.7  -21.6 dB
+  impuls : Hoerort  -15.03 LUFS, Pegel 1-2 s -19.52 dB | Stegkraft Mittel 2,5-3,5 s -5.1819e+00 N, Spitze 1.470e+01 N | Teiltoene frueh 1-6    4.2   -6.0  -20.5  -14.3  -19.6  -21.6 dB
+  rampe - impuls: Hoerort +0.001 LU, Pegel 1-2 s -0.01 dB, Teiltoene frueh +0.03 +0.02 -0.02 -0.01 -0.02 +0.00 dB, spaet +0.01 +0.01 -0.04 -0.01 -0.01 +0.01 dB
+  richtig - impuls: Hoerort +0.059 LU, Pegel 1-2 s -0.06 dB, Teiltoene frueh +0.00 +0.01 -0.04 -0.02 -0.02 +0.00 dB, spaet +0.00 +0.01 -0.04 -0.01 -0.02 +0.00 dB
+  ohne - impuls: Hoerort -0.384 LU, Pegel 1-2 s -0.29 dB, Teiltoene frueh -4.00 -1.39 -0.71 -0.41 -0.28 -0.18 dB, spaet -4.00 -1.39 -0.71 -0.40 -0.28 -0.17 dB
+Harfe Taste 60: x_p 0.2008 m, L 0.5578 m, F_stat gemessen 3.685104 N, T d / x_p cos a 3.685627 N (Verhaeltnis 0.999858)
+  ohne   : Hoerort  -16.67 LUFS, Pegel 1-2 s -13.84 dB | Stegkraft Mittel 2,5-3,5 s -3.6851e+00 N, Spitze 7.170e+00 N | Teiltoene frueh 1-6   -4.2  -12.1  -26.4  -18.2  -26.3  -31.3 dB
+  rampe  : Hoerort  -16.31 LUFS, Pegel 1-2 s -13.84 dB | Stegkraft Mittel 2,5-3,5 s +5.4895e+03 N, Spitze 6.871e+03 N | Teiltoene frueh 1-6   -3.8  -12.0  -26.4  -18.2  -26.2  -31.3 dB
+  richtig: Hoerort  -16.33 LUFS, Pegel 1-2 s -13.81 dB | Stegkraft Mittel 2,5-3,5 s -1.7455e+00 N, Spitze 8.083e+00 N | Teiltoene frueh 1-6   -3.8  -12.0  -26.4  -18.2  -26.2  -31.3 dB
+  impuls : Hoerort  -16.33 LUFS, Pegel 1-2 s -13.82 dB | Stegkraft Mittel 2,5-3,5 s -3.6851e+00 N, Spitze 6.829e+00 N | Teiltoene frueh 1-6   -3.8  -12.0  -26.4  -18.2  -26.2  -31.3 dB
+  rampe - impuls: Hoerort +0.019 LU, Pegel 1-2 s -0.02 dB, Teiltoene frueh +0.00 +0.00 +0.00 +0.00 -0.00 +0.00 dB, spaet +0.00 +0.00 +0.00 -0.00 -0.00 -0.00 dB
+  richtig - impuls: Hoerort -0.008 LU, Pegel 1-2 s +0.01 dB, Teiltoene frueh -0.00 -0.00 -0.00 -0.00 -0.00 +0.00 dB, spaet -0.00 -0.00 -0.00 -0.00 -0.00 +0.00 dB
+  ohne - impuls: Hoerort -0.347 LU, Pegel 1-2 s -0.02 dB, Teiltoene frueh -0.38 -0.10 -0.04 -0.03 -0.02 -0.01 dB, spaet -0.38 -0.10 -0.04 -0.03 -0.02 -0.01 dB
+Harfe Taste 91: x_p 0.0449 m, L 0.1246 m, F_stat gemessen 4.933323 N, T d / x_p cos a 4.936831 N (Verhaeltnis 0.999289)
+  ohne   : Hoerort  -23.36 LUFS, Pegel 1-2 s -44.36 dB | Stegkraft Mittel 2,5-3,5 s -4.9333e+00 N, Spitze 9.444e+00 N | Teiltoene frueh 1-6   -8.1  -21.1  -41.3  -43.2  -64.7  -85.2 dB
+  rampe  : Hoerort  -23.33 LUFS, Pegel 1-2 s -44.37 dB | Stegkraft Mittel 2,5-3,5 s +7.3490e+03 N, Spitze 9.199e+03 N | Teiltoene frueh 1-6   -8.1  -21.1  -41.3  -43.2  -64.7  -85.2 dB
+  richtig: Hoerort  -23.35 LUFS, Pegel 1-2 s -44.35 dB | Stegkraft Mittel 2,5-3,5 s -2.4652e+00 N, Spitze 9.487e+00 N | Teiltoene frueh 1-6   -8.1  -21.1  -41.3  -43.2  -64.7  -85.2 dB
+  impuls : Hoerort  -23.35 LUFS, Pegel 1-2 s -44.35 dB | Stegkraft Mittel 2,5-3,5 s -4.9333e+00 N, Spitze 9.384e+00 N | Teiltoene frueh 1-6   -8.1  -21.1  -41.3  -43.2  -64.7  -85.2 dB
+  rampe - impuls: Hoerort +0.021 LU, Pegel 1-2 s -0.02 dB, Teiltoene frueh +0.00 +0.00 -0.00 +0.00 -0.00 -0.00 dB, spaet +0.00 +0.00 +0.59 +30.11 +63.57 +57.89 dB
+  richtig - impuls: Hoerort -0.000 LU, Pegel 1-2 s +0.00 dB, Teiltoene frueh -0.00 +0.00 -0.00 -0.00 -0.00 +0.00 dB, spaet -0.00 +0.00 +0.00 -0.03 -0.66 -2.49 dB
+  ohne - impuls: Hoerort -0.010 LU, Pegel 1-2 s -0.00 dB, Teiltoene frueh -0.01 -0.00 -0.00 -0.00 -0.00 -0.00 dB, spaet -0.01 -0.00 -0.00 -0.01 -0.14 +0.13 dB

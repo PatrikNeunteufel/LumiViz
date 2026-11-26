@@ -896,3 +896,64 @@ TEST_CASE("InstrumentCore 34k-7b Kraft je Stegpunkt")
     CHECK(kraefte[1].kraft.size() == 960);
     CHECK(kraefte[1].kraft.front() == 0.4f);
 }
+
+TEST_CASE("InstrumentCore 34k-7d gestimmte Liste (ZK1 a)")
+{
+    // die Tafel des Umlauf-Filters ist eine Liste, die ein Werkzeug stimmt: hier ein Eintrag je Taste mit einer Zahl
+    Parametertafel t = pruefTafel();
+    ParameterAngabe tafel;
+    tafel.name = "loopTable";
+    tafel.titel = tafel.name;
+    tafel.gruppe = "Tone";
+    tafel.art = WertArt::Liste;
+    tafel.darstellung = Darstellung::Dialog;
+    tafel.felder.push_back(zahlAngabe("radius", "", 0.0, 1.0, 0.5));
+    tafel.eintraegeMin = 1;
+    tafel.eintraegeMax = 200;
+    tafel.vorgabe = Liste{};  // leer vorgegeben wie eine gestimmte Kurve
+    tafel.gestimmt = true;
+    tafel.abhaengigVon = {"t60"};
+    t.werte.push_back(tafel);
+    CHECK(pruefeTafel(t).empty());
+
+    // leer ist beim Richten ein Fehler (IK2-11 a), ein Eintrag genuegt
+    Werte w = vorgaben(t);
+    std::vector<std::string> fehler = richteWerte(t, w);
+    REQUIRE(fehler.size() == 1);
+    CHECK(fehler.front() == "loopTable: tuned value empty");
+    Werte eintrag;
+    eintrag.setze("radius", 0.9);
+    w.setze("loopTable", Liste{{eintrag}});
+    CHECK(richteWerte(t, w).empty());
+
+    // Abdruck und Waechter wie bei einer Kurve: veraltet bis gemerkt, dann wieder bei einer Eingabe
+    CHECK(veralteteGestimmte(t, w) == std::vector<std::string>{"lengthTuned", "loopTable"});
+    w.merkeAbdruck("lengthTuned", eingabenAbdruck(t, w, "lengthTuned"));
+    w.merkeAbdruck("loopTable", eingabenAbdruck(t, w, "loopTable"));
+    CHECK(eingabenAbdruck(t, w, "loopTable").size() == 64);
+    CHECK(veralteteGestimmte(t, w).empty());
+    w.setze("t60", 1.5);
+    CHECK(veralteteGestimmte(t, w) == std::vector<std::string>{"lengthTuned", "loopTable"});
+    // die Liste selbst zaehlt nicht zu ihrem Abdruck (sie ist das Ergebnis), wohl aber zum Text
+    const std::string vorher = eingabenAbdruck(t, w, "loopTable");
+    eintrag.setze("radius", 0.8);
+    w.setze("loopTable", Liste{{eintrag}});
+    CHECK(eingabenAbdruck(t, w, "loopTable") == vorher);
+    CHECK(wertAlsText(*w.finde("loopTable")) == "l1[{radius:d" + std::string("3fe999999999999a") + ";}]");
+
+    // eine gestimmte Liste darf auch eine Vorgabe tragen
+    Parametertafel mitVorgabe = t;
+    mitVorgabe.werte.back().vorgabe = Liste{{eintrag}};
+    CHECK(pruefeTafel(mitVorgabe).empty());
+    // in den Feldern einer Liste ist nichts gestimmt
+    Parametertafel innen = t;
+    innen.werte.back().felder.front().gestimmt = true;
+    const std::vector<std::string> fi = pruefeTafel(innen);
+    CHECK(std::find(fi.begin(), fi.end(), "loopTable.radius: tuning inside a list") != fi.end());
+    // eine gestimmte Zahl bleibt ein Fehler
+    Parametertafel zahl = pruefTafel();
+    for (ParameterAngabe& a : zahl.werte)
+        if (a.name == "t60") a.gestimmt = true;
+    const std::vector<std::string> fz = pruefeTafel(zahl);
+    CHECK(std::find(fz.begin(), fz.end(), "t60: a tuned value must be a curve or a list") != fz.end());
+}

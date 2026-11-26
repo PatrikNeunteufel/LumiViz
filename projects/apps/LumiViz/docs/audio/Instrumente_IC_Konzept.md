@@ -1,7 +1,7 @@
 # LumiViz — Instrumente aus InstrumentsCalculation (Konzept)
 
-> **Version:** 0.89.0
-> **Datum:** 2026-11-24 (Session 220)
+> **Version:** 0.90.0
+> **Datum:** 2026-11-26 (Session 222)
 > **IC aufgelöst (S182, LP2 b):** LumiViz ist die einzige Quelle für Rechenkerne und Vorgaben; IC wird nicht mehr
 > gebaut oder geändert. Die Doku von IC liegt unter `../modellierung/<klasse>/ic/` und `../modellierung/anbindung-ic/ic/`,
 > der Code als Vorlage unter `harvest/instruments-calculation/rechnung/` (Plan
@@ -1099,6 +1099,17 @@ am gebauten Kern ohne erkennbare Ursache, ist das ein Fable-Kandidat.
 | 34k-7e App | der Körper je Note in den Auftrag (aus `BodenImKlang`, Stegpunkte der gespielten und der freien Saiten), eine Faltung je Stegpunkt, der Tonname trägt den Abdruck des Körpers; Saite und Bund aus `saitenSpielFuer` | Linearität (Clip minus Summe der Noten) unter −120 dB, `rechneZupfClip` als Bezug |
 | 34k-7f Abschluss | Stimmer neu (Filtertafel und Feinzug am Grundton), `zupf_ic.txt` mit Vermerk, Journal; Messfall `LUMIVIZ_34K_MESSUNG=<datei.md>` mit der Messkette nach KQ36 a (Lautheit aus `AudioCore`) | die Zielgrößen aus 34k-7a am gebauten Kern; Rechenzeit gemessen und berichtet; am Stufenende die engen Fälle unter beiden Compilern und der Bereich (MT1 a) |
 
+**Schnittfolge 34k-7d** (S222, mit ZB1 a, ZU1 a; Nummern fest, innerhalb von 34k-7d). Der Stimmer zieht mit dem Entwurf der Tafel aus 34k-7f nach 7d-3 vor (die Tests brauchen eine abgelegte Tafel), die Abdrücke von Rechenfassung 2 nach 7d-4 (ZB1 a); in 34k-7f bleiben Feinzug am Grundton, Wächter und Messfall.
+
+| Schritt | Inhalt | Prüfung |
+|---|---|---|
+| 7d-1 Bezug | Zupfstelle der Gitarre (16 cm gegen rund 6,5 cm, Regel an hohen Bünden) als Vorlage mit Zahlen des Prüfstands gegen alle Zielgrößen; danach schreibt ein Skript `werte/zupf_pruefstand.txt`: Stichtasten je Instrument mit Stegkraft im Zeitverlauf, Teiltönen (Lage, Abfall) und Lautheit am Hörort | der Bezug trifft den Kandidaten S200 |
+| 7d-2 Core | `InstrumentCore` 0.8.0: eine Liste darf gestimmt sein (ZK1 a), mit Abdruck und Wächter wie bei Kurven | andere Kerne Bit für Bit gleich; neue Fälle in `test_InstrumentCore` |
+| 7d-3 Tafel | Stimmer entwirft die Tafel aus den Werten der Saiten; ein Schreiber legt sie für die Tests ab (rund 2 h, angesagt) | die Tafel hält UL2 a wie die Proben S220 / S221 |
+| 7d-4 Kern | neue Tafel, Rechenweg Note für eine Saite an einem Stegpunkt: Saitenwerte mit Quelle, Zupf als Kraftstufe (ZU1 a), zwei Polarisationen, Umlauf-Filter, Steg „genau für stückweise lineare Kraft“ mit Durchgriff, Dämpfer als sieben breite Moden, Ausgabe über `rechneAmSteg`; Rechenfassung 1 geht (ZB1 a) | gegen den Bezug: Gitarre ≤ 0,01 LU, Cembalo ≤ 0,14 LU, Lage nach UL2 a |
+| 7d-5 Mitschwingen | mehrere Stegpunkte über den Körper gekoppelt (Harfe 20 Saiten nach GZ8 a; Gitarre, Laute, Oud die leeren Saiten); Probe Durchgriff je Stegpunkt (Herleitung §12) | Harfe gegen den Prüfstand mit Mitschwingen |
+| 7d-6 Cembalo, Harfe | Tastenstoß (GZ10 a, KQ75 a), Lautenzug mit Probe der Stabilität (Kipppunkt GZ11 a), Gruppe *Pedals* (PD1 a, TM2 a) | alle fünf gegen den Bezug; Rechenzeit als Anhalt |
+
 Abgeleitet: Kern nach dem Verfahren benannt (IK2-8 a); die Hörliste von LumiViz löst die von IC ab (LG1 a); Stärke über
 die Anschlagstufe (TM1 a); gestimmte Werte und Stegmoden sind Daten mit Abdruck-Wächter (IK2-11 a).
 
@@ -1577,6 +1588,14 @@ GZ13 a und GZ14 a auf „alle a“.
 
 ZK1 a und ZK2 a auf „alle nach Empfehlung“.
 
+✅ **ZB1 a** (Patrik S222; **34k-7d**): **Rechenfassung 2 ersetzt Rechenfassung 1 im Schritt 34k-7d-4: `Zupf.cpp` in der Form aus IC, der gestimmte Faktor `delayFactor`, der IC-Teil von `ZupfStimmen` und die Fälle, die Rechenfassung 1 prüfen, gehen mit dem Umstieg; `werte/zupf_ic.txt` trägt danach die Abdrücke von Rechenfassung 2, vom Kern geschrieben, mit Vermerk (wie `zunge_ic.txt`); das Journal nennt den Commit der letzten Rechenfassung 1.** Grund: nach dem Umstieg ruft kein Kern, kein Werkzeug und keine Stelle der App Rechenfassung 1; IC-Fälle bis 34k-7f prüften drei Schritte lang Code, der nichts mehr erzeugt; der Beleg der Übernahme (J77) ist abgeschlossen und bleibt in Git und unter `harvest/`; gemessen wird gegen den Prüfstand, nicht gegen IC (S182). Verworfen: b (Rechenfassung 1 bis 34k-7f aufrufbar neben dem Kern). Kippt, wenn eine Probe oder Messung bis 34k-7f Rechenfassung 1 als Gegenstück braucht.
+
+✅ **ZU1 a** (Patrik S222; **34k-7d**, Herleitung §12 „Quelle des Zupfs im Zeitschritt“): **Der Kern rechnet die Quelle g am Steg je Note genau aus der Frequenzantwort (Kraftstufe, Tiefpass der Fingerbreite, die Wege e^(−ikx_p) und e^(−ik(2L−x_p)), Neigung je Stärke) mit einer FFT über rund zwei Umläufe — wie Prüfstand und Kandidat S200.** Grund: Zielgröße von 34k-7d ist die Übereinstimmung mit dem Prüfstand; mit genauem g trug die Quelle im Kandidaten keinen eigenen Fehler (Gitarre ≤ 0,005 LU), eine Nachbildung im Takt (b) könnte nur Fehler dazugeben; die FFT je Note kostet gegen Sekunden Ton mit Hunderten Moden wenig, `kern::fft()` liegt in `InstrumentCore`. Für beide gilt: der Puls trägt die genauen Wege, die Schleife das Umlauf-Filter (≤ 3 Cent, UL2 a). Verworfen: b (Verzögerungen mit Thiran-Glied, Fingerbreite als FIR, Neigung als Filter im Takt; nicht gerechnet). Kippt, wenn 34k-8 eine Quelle braucht, die sich während der Note stetig ändert (nicht nur neu einsetzt wie Legato oder Hammer-on).
+
+ZB1 a und ZU1 a auf „alle nach Empfehlung“, mit der Schnittfolge 34k-7d-1 bis -6 (unter dem Teilplan 34k-7).
+
+✅ **ZW1 a** (Patrik S222; **34k-7d-1**, Herleitung §12 „Zupfort der Gitarre“): **Gitarre, Laute und Oud zupfen 16 cm vom Steg, für alle Bünde gleich (die Hand bleibt stehen); die Kappe auf die halbe Saite entfällt.** Grundlage (`../modellierung/gezupfte-saite/proben/2026-11-26_S222_zupfort_gitarre.py` mit den Ausgaben `…_iowa_mf.txt`, `…_iowa_hoch_*.txt`, `…_laut_*.txt`): das Teiltonprofil je Ton gegen die Iowa-Gitarre (mf, Teiltöne 1–12, ohne den Pegel je Ton; Median des Betrags) bis Bund 12 bei 16 / 10 / 6,5 cm 6,72 / 7,94 / 7,88 dB, in jeder Gruppe der Teiltöne 16 cm vorn, der Grundton im Mittel −2,8 / −6,1 / −8,9 dB; Bünde 13–19 bei 16 cm mit Kappe 22,72 dB (gerade Teiltöne −29 … −35 dB, in der Mitte gezupft), fest 8,06 dB. Lautheit nach KQ34 a: 16 cm mit Kappe 12,7 / 12,7 / 1,7 LU, fest 13,0 / 12,7 / 1,7, 10 cm 12,3 / 12,3 / 1,6, 6,5 cm 10,5 / 10,5 / 1,5 — alle im Band der TU-Gitarre (KQ36 a). Pavlidous Auslenkung (GZ6 a) ist am selben Ort gemessen. Laute und Oud spielen bis Bund 12, dort wirkt die Kappe nie. Quellen der Stellen: Traube 2004 Abschn. 3.1, 3.3, PDF-S. 156; Scherrer 2013 Abb. 3.7, Tab. 2.1. Verworfen: b (16 cm, über Bund 12 höchstens die halbe Saite), c (6,5 cm fest nach Sor und Biberian). Kippt, wenn eine zweite Aufnahme mit bekannter Spielweise (TU Berlin, Mores) ein Profil zeigt, das näher bei 6,5 oder 10 cm liegt — dann neu, oder die Stelle als Wert je Spielweise (34k-8).
+
 ✅ **TK1 a** (Patrik S220; **34k-7c**): **Cembalo T73 verfehlt im Messfall UL2 a (3,27 Cent, die Probe S205 0,01 Cent) — die Ursache wird gesucht, bevor die Taste als Ausnahme gilt.** Grund: an derselben Taste mit demselben Start trifft die Vorlage die Schwelle; eine Ausnahme ohne Ursache verdeckte einen Fehler der Übertragung, der auch andere Tasten treffen kann. Verworfen: b (T73 als bekannte Abweichung festhalten).
 
 ✅ **TK2 a** (Patrik S220; **34k-7c**, Ursache aus TK1 a): **Beide Behebungen am Entwurf — bei Rangverlust im Vertrauensbereich der Schritt kleinster Norm mit α = 0, und die Logit-Parameter der Kette nach jedem angenommenen Schritt auf ±40 gehalten; danach der Messfall über alle Tasten und Saiten neu.** Grund: läuft ein Winkel der Kette nach π, ist die Spalte von J exakt null; scipy rechnet dort α < 0 und einen Schritt, der das Modell vergrößert, und der Abbruch nach xtol hängt am gesättigten Parameter — Python kommt nur über Rundungen von LAPACK durch; beide Stellen greifen nur, wenn ein Parameter an seiner Grenze steht. Verworfen: b (nur eine der beiden Behebungen). Ergebnis S220: Harfe 80 / 80, Cembalo 61 / 61 (T73 0,01 Cent / 0,21 %), 17 Tasten mit anderer Kette, alle in der Schwelle; Gitarre, Laute, Oud mit TK2 a stehen aus (S221). Kippt, wenn eine Taste oder Saite mit TK2 a die Schwelle verliert, die sie vorher hielt.
@@ -1707,6 +1726,7 @@ mit ihren Abhängigkeiten. Die Gruppen folgen den Abschnitten in den IC-Köpfen 
 | 0.26.0 | 2026-11-12 | Session 194. §6: PD1 a (Gruppe *Pedals* mit 34k-7 statt 34k-2; Zeilen 34k-2 und 34k-7). |
 | 0.27.0 | 2026-11-12 | Session 195. §6: Haltepunkt 34k-4 mit KQ1 a bis KQ5 a (Vorbild und Weg des Körpers je Instrument; Harfe 46 Saiten nach Bell 1988; Gitarre mit Modalfit als drittem Weg zu GZ4 a); Haltepunkt 34k-5 mit KQ6 a (Ersatz-Bauplan für Cembalo, Laute, Oud; erster Fall Oud); erster Fall verfehlt, KQ7 a (Löcher in `InstrumentBody`, dann Oud neu). |
 | 0.85.0 | 2026-11-23 | Session 216. §6: KQ68 a (Schale der Harfe als elastisches Bauteil, zuerst als Probe), KQ69 a (gegenseitige Belastung der Öffnungen bleibt Probe bis KQ68). |
+| 0.90.0 | 2026-11-26 | Session 222. §6: ZB1 a (Rechenfassung 1 geht mit dem Umstieg in 34k-7d-4), ZU1 a (Quelle des Zupfs je Note genau aus der Frequenzantwort), ZW1 a (Zupfstelle 16 cm fest vom Steg für Gitarre, Laute, Oud); Schnittfolge 34k-7d-1 bis -6. |
 | 0.89.0 | 2026-11-24 | Session 220. §6: KQ75 a (Tastenstoß des Cembalos: Penttinen Abb. 6 am Seitenbild nachgelesen, GZ10 a bleibt; der Hörtest trennt Stoß und Saite nicht); Teilplan 34k-7 (34k-7a–f), ZK1 a (Tafel des Umlauf-Filters gestimmt), ZK2 a (Saite und Bund in `KettenNote` schon in 34k-7); 34k-7a, 34k-7b, 34k-7c gebaut; TK1 a, TK2 a (Entwurf bei Rangverlust, Cembalo T73). |
 | 0.88.0 | 2026-11-24 | Session 219. §6: KQ73 a (Wölbung des Bodens unter dem Saitenzug als Probe — verworfen), KQ74 a (das Paar der Harfe besaitet nur Bericht, Schwelle ab S(1,2); Rahmen an die Werkbank, KQ70 a ruht). |
 | 0.87.0 | 2026-11-23 | Session 218. §6: KQ72 a (die Öffnungen der Harfe aus ihrer Geometrie als Kolben in der Wand; löst KQ63 a und KQ64 a ab). |
