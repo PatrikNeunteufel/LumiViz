@@ -1,49 +1,49 @@
 /**
  ****************************************************************************************
  * @file   test_InstrumentModelsZupf.cpp
- * @brief  InstrumentModels, Stufe 34k: Klasse 2 (gezupfte Saite) — der Kern `pluckedString`
- *         (docs/audio/Instrumente_IC_Konzept.md 34k-2, GZ2 a)
+ * @brief  InstrumentModels, Stufe 34k: Klasse 2 (gezupfte Saite) — der Kern `pluckedString` Rechenfassung 2
+ *         (docs/audio/Instrumente_IC_Konzept.md Schnittfolge 34k-7d-4 (c), (e); ZB1 a, ZN1 a)
  *
  * @author Patrik Neunteufel
  * @date   November 2026
  *
  * @details
- * Ohne Qt-Anwendung, ohne Ton, ohne Engine.
+ * Ohne Qt-Anwendung, ohne Ton, ohne Engine. Die gestimmte Tafel des Umlauf-Filters kommt aus `werte/zupf_umlauf.json`
+ * (34k-7d-3); den Steg (Koerper) prueft `test_InstrumentModelsZupfBezug`, hier rechnet der Kern ohne `Steg` im Auftrag
+ * (starrer Steg).
  *
- * - Tafel, Fabrik, Vorlagen, Werte hin und zurueck.
- * - Die Abdruecke aus `werte/zupf_ic.txt` (IC-Vorlage, `docs/modellierung/anbindung-ic/abdruck_zupf.cpp`) Bit fuer Bit —
- *   mit der Laufzeit und dem Bezug aus derselben Datei (der Stimmer kommt mit 34k-3), ueber den direkten Aufruf, die Clips
- *   ueber `rechneZupfClip`, und bei Stufe 0 ueber den Kern.
- * - Der Bezug: die IC-Rechnung `normiere` am uebernommenen Kern gleich den Zeilen `bezug`, `kern::normiereNachTafel` gleich
- *   den Zeilen `bezugLv`.
- * - Die IC-Faelle aus `rechnung/klassen/02_zupf_saite/test_zupf.cpp` (`4409088`) mit den IC-Grenzen; gemessen wird mit
- *   `InstrumentMeasure/ZupfStimmen` (IK2-2 a). Ohne Koto (zurueckgestellt) und ohne die Rechenzeit (kommt mit 34k-10,
- *   `*34k Rechenzeit*`; ausgesetzt bis zum Tausch der Kuehlung).
- * - Der Stimmer (34k-3): die Laute ueber `stimmeUndNormiere` Bit fuer Bit gleich der Laufzeit im Beleg, mit Bezug und dem
- *   Waechter fuer veraltete Werte; alle fuenf ueber `zupfLaufzeit`.
- * - Die zweite Tonhoehenmessung (34k-3, `InstrumentMeasure/Grundton`): an gerechneten Toenen ohne bzw. mit schwachem
- *   Grundton auf ±1 Cent; an den gestimmten Toenen der fuenf nur Zahlen (die Pruefung ±10 Cent kommt mit 34k-6).
+ * - Tafel, Fabrik, Vorlagen, Werte hin und zurueck; die Saiten der Kurven gleich `zupf/Saiten`.
+ * - Staerke aus der Stufe (GZ6 a, GZ10 a, ZD1 a, ZD2 a), Nachklang, Daempfer am Notenende (ZN1 a: in `dampingTime` um
+ *   60 dB; der Leitwert gegen die Summe ueber die Umlaeufe).
+ * - Der Bezug nach der Tafel; Saite und Bund aus der Note (ZK2 a).
+ * - Die Pedale der Harfe (aus IC, ohne das Spiel), Determinismus auf Threads.
+ * - Die zweite Tonhoehenmessung (`InstrumentMeasure/Grundton`): an gerechneten Toenen ohne bzw. mit schwachem Grundton auf
+ *   ±1 Cent; an den Toenen der fuenf mit Rechenfassung 2 nur Zahlen (die Pruefung ±10 Cent kommt mit 34k-7f).
+ * - ZB1 a: die Abdruecke von Rechenfassung 2 in `werte/zupf_ic.txt`, vom Kern geschrieben (`LUMIVIZ_ZUPF_ABDRUCK_SCHREIBEN=1`),
+ *   Bit fuer Bit. Bis S224 trug die Datei die Abdruecke der IC-Vorlage (Rechenfassung 1, Beleg der Uebernahme J77).
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
-#include "InstrumentCore/Anschlag.hpp"
 #include "InstrumentCore/Pool.hpp"
 #include "InstrumentCore/Pruefsumme.hpp"
 #include "InstrumentMeasure/Bausteine.hpp"
 #include "InstrumentMeasure/Grundton.hpp"
-#include "InstrumentMeasure/ZupfStimmen.hpp"
+#include "InstrumentMeasure/Stimmen.hpp"
 #include "InstrumentModels/Kerne.hpp"
+#include "InstrumentModels/zupf/Pedale.hpp"
 #include "InstrumentModels/zupf/ZupfKern.hpp"
+#include "loop/KernDatei.hpp"
+
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
-#include <complex>
 #include <cstdint>
-#include <cstdio>
-#include <cstring>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -51,6 +51,7 @@
 #include <numbers>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 using namespace lumi::kern;
@@ -60,639 +61,75 @@ namespace
 {
 
 constexpr double kPi = std::numbers::pi;
-constexpr Frames kFrames = 28800;  // wie der Beleg: 0,6 s bei 48 kHz
+constexpr Frames kFrames = 28800;  // 0,6 s bei 48 kHz
 
 double hzVon(int n) { return 440.0 * std::exp2((n - 69) / 12.0); }
 
-double ausHex(const std::string& h)
+/// Die gestimmte Tafel des Umlauf-Filters je Instrument aus `werte/zupf_umlauf.json` (34k-7d-3).
+const std::map<std::string, Liste>& umlaufTafeln()
 {
-    const std::uint64_t b = std::stoull(h, nullptr, 16);
-    double x = 0.0;
-    std::memcpy(&x, &b, sizeof x);
-    return x;
-}
-
-std::string hexVon(double x)
-{
-    std::uint64_t b = 0;
-    std::memcpy(&b, &x, sizeof b);
-    char t[32];
-    std::snprintf(t, sizeof t, "%016llx", static_cast<unsigned long long>(b));
-    return t;
-}
-
-/// Der Beleg aus IC (`werte/zupf_ic.txt`).
-struct IcBeleg
-{
-    std::map<std::string, std::string> abdruck;
-    std::map<std::string, std::string> bezug, bezugLv;
-    /// je IC-Name des Instruments die gestimmten Laufzeitfaktoren
-    std::map<std::string, std::vector<NotenWert>> laufzeit;
-};
-
-const IcBeleg& icBeleg()
-{
-    static const IcBeleg b = [] {
-        IcBeleg r;
-        std::ifstream f(std::filesystem::path(__FILE__).parent_path() / "werte" / "zupf_ic.txt");
-        std::string zeile;
-        while (std::getline(f, zeile))
+    static const std::map<std::string, Liste> m = [] {
+        std::map<std::string, Liste> r;
+        QFile f(QString::fromStdString((std::filesystem::path(__FILE__).parent_path() / "werte" / "zupf_umlauf.json").string()));
+        if (!f.open(QIODevice::ReadOnly)) return r;
+        const QJsonObject inst = QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("instruments")).toObject();
+        for (const Vorlage& v : vorlagen())
         {
-            std::istringstream z(zeile);
-            std::string art, name;
-            z >> art >> name;
-            if (art == "abdruck" || art == "bezug" || art == "bezugLv")
-            {
-                std::string wert;
-                z >> wert;
-                (art == "abdruck" ? r.abdruck : art == "bezug" ? r.bezug : r.bezugLv)[name] = wert;
-            }
-            else if (art == "kurve")
-            {
-                std::string welche, hex;
-                int note = 0;
-                z >> welche >> note >> hex;
-                if (welche == "laufzeit") r.laufzeit[name].push_back(NotenWert{note, ausHex(hex)});
-            }
+            const QJsonObject o = inst.value(QString::fromStdString(v.name)).toObject();
+            r[v.name] = lumi::loop::werteAusJson(kernTyp().tafel, o).liste(kUmlaufTafel);
         }
         return r;
     }();
-    return b;
-}
-
-/// Der Name des Instruments im Beleg (die IC-Namen).
-std::string icName(std::string_view vorlage)
-{
-    if (vorlage == "harpsichord") return "Cembalo";
-    if (vorlage == "concert_harp") return "Harfe";
-    if (vorlage == "classical_guitar") return "Gitarre";
-    if (vorlage == "lute") return "Laute";
-    if (vorlage == "oud") return "Oud";
-    FAIL("kein IC-Name fuer " << vorlage);
-    return {};
+    return m;
 }
 
 const Vorlage& vorlage(std::string_view name)
 {
     for (const Vorlage& v : vorlagen())
         if (v.name == name) return v;
-    FAIL("keine Vorlage " << name);
+    FAIL("unbekannte Vorlage " << std::string(name));
     return vorlagen().front();
 }
 
-/// Die Werte einer Vorlage mit der Laufzeit aus dem Beleg (IC `stimme`); mit `icBezug` der IC-Bezug, sonst 1.
-Werte gestimmteWerte(const Vorlage& v, bool icBezug)
+/// Die Werte einer Vorlage mit der gestimmten Tafel, gerichtet; mit `mitBezug` der Bezug nach der Tafel.
+Werte gestimmteWerte(const Vorlage& v, bool mitBezug = true)
 {
-    Werte w = werteAus(v.spiel);
-    Kurve k;
-    k.punkte = icBeleg().laufzeit.at(icName(v.name));
-    k.belegkraft = Belegkraft::Rechnung;
-    k.herkunft = "IC stimme (werte/zupf_ic.txt)";
-    w.setze(std::string(kLaufzeit), k);
-    w.setze(std::string(kBezug), icBezug ? ausHex(icBeleg().bezug.at(icName(v.name))) : 1.0);
-    const std::vector<std::string> f = richteWerte(kernTyp().tafel, w);
-    REQUIRE_MESSAGE(f.empty(), v.name << ": " << (f.empty() ? std::string() : f.front()));
+    Werte w = werteVon(v);
+    REQUIRE(umlaufTafeln().count(v.name) == 1);
+    w.setze(std::string(kUmlaufTafel), umlaufTafeln().at(v.name));
+    REQUIRE(richteWerte(kernTyp().tafel, w).empty());
+    if (mitBezug)
+    {
+        std::vector<std::string> fehler;
+        const double b = normiereNachTafel(kerne(), kKernName, w, &fehler);
+        REQUIRE(fehler.empty());
+        w.setze(std::string(kBezug), b);
+    }
     return w;
 }
 
-/// Das Spiel wie IC (gestimmt, mit IC-Bezug) — ueber die Tafel, wie die App es baut.
-ZupfSpiel spielWieIc(std::string_view name)
+std::shared_ptr<const Tonkern> kernVon(std::string_view name, bool mitBezug = true)
 {
-    ZupfSpiel s = spielAus(gestimmteWerte(vorlage(name), true));
-    s.name = icName(name);
-    return s;
+    return kerne().erzeuge(kKernName, gestimmteWerte(vorlage(name), mitBezug));
 }
 
-const ZupfSpiel& cembalo()
+std::vector<float> ton(const Tonkern& k, int note, int stufe, Frames halten, Frames frames = kFrames, int saite = -1)
 {
-    static const ZupfSpiel c = spielWieIc("harpsichord");
-    return c;
-}
-const ZupfSpiel& harfe()
-{
-    static const ZupfSpiel h = spielWieIc("concert_harp");
-    return h;
-}
-const ZupfSpiel& gitarre()
-{
-    static const ZupfSpiel g = spielWieIc("classical_guitar");
-    return g;
-}
-
-ZupfAnschlag ton(int note, double e = 0.5, double haltenS = 0.8)
-{
-    ZupfAnschlag a;
-    a.note = note;
-    a.staerke = e;
-    a.haltenS = haltenS;
-    return a;
-}
-
-std::string abdruckVon(const ZupfSpiel& s, const ZupfAnschlag& a, std::int64_t frames = kFrames)
-{
+    Tonauftrag a = einzelnote(note, hzVon(note), stufe, halten, frames, 48000.0);
+    a.noten.front().saite = saite;
     std::vector<float> t;
-    rechneZupfTon(s, a, t, frames);
-    return abdruck(t);
-}
-
-std::string clipAbdruck(const ZupfSpiel& s, const std::vector<ClipNote>& noten, std::int64_t frames, bool mitschwingen)
-{
-    std::vector<float> t;
-    rechneZupfClip(s, noten, t, frames, mitschwingen);
-    return abdruck(t);
-}
-
-/// Ein Ton ueber den Kern (Rechenweg Note, beginn 0) mit den Werten wie IC.
-std::vector<float> kernTon(std::string_view name, int note, int stufe, Frames halten, Frames frames = kFrames)
-{
-    std::vector<std::string> fehler;
-    const std::shared_ptr<const Tonkern> k = kerne().erzeuge(kKernName, gestimmteWerte(vorlage(name), true), &fehler);
-    REQUIRE_MESSAGE(k != nullptr, (fehler.empty() ? std::string() : fehler.front()));
-    const Tonauftrag a = einzelnote(note, hzVon(note), stufe, halten, frames, 48000.0);
-    std::vector<float> t;
-    k->rechne(a, t);
+    k.rechne(a, t);
     return t;
 }
 
-double spitzeVon(const std::vector<float>& t)
+double rmsDb(const std::vector<float>& t, double von, double bis)
 {
+    const auto a = static_cast<std::size_t>(von * 48000.0), e = std::min(t.size(), static_cast<std::size_t>(bis * 48000.0));
     double s = 0.0;
-    for (const float w : t) s = std::max(s, static_cast<double>(std::abs(w)));
-    return s;
+    for (std::size_t i = a; i < e; ++i) s += double(t[i]) * t[i];
+    return 10.0 * std::log10(s / std::max<std::size_t>(1, e - a) + 1e-300);
 }
 
-double band(const std::vector<float>& t, std::size_t ab, std::size_t n, double f)
-{
-    std::complex<double> s(0.0, 0.0);
-    for (std::size_t i = 0; i < n && ab + i < t.size(); ++i)
-        s += (0.5 - 0.5 * std::cos(2.0 * kPi * i / n)) * double(t[ab + i]) * std::exp(std::complex<double>(0.0, -2.0 * kPi * f * (ab + i) / 48000.0));
-    return std::abs(s);
-}
-
-double dB(double faktor) { return 20.0 * std::log10(faktor); }
-
-}  // namespace
-
-TEST_CASE("InstrumentModels 34k-2 Kern pluckedString: Tafel, Fabrik, Vorlagen, Werte hin und zurueck")
-{
-    const KernTyp& t = kernTyp();
-    const std::vector<std::string> fehler = pruefeTafel(t.tafel);
-    CHECK_MESSAGE(fehler.empty(), (fehler.empty() ? std::string() : fehler.front()));
-    REQUIRE(kerne().typ(kKernName) != nullptr);
-    CHECK(t.tafel.bezugWert == kBezug);
-    CHECK(t.tafel.umfangVon == "noteMin");
-    CHECK(t.tafel.umfangBis == "noteMax");
-    CHECK(t.tafel.gruppen == std::vector<std::string>{"Keys", "String", "Pluck", "Bridge", "Courses", "Sympathetic strings", "Tunable", "Output"});
-    CHECK(t.auskunft.rechenweg == Rechenweg::Note);
-    CHECK_FALSE(t.auskunft.koerperAnDerSchicht);
-    CHECK_FALSE(t.auskunft.anregungDauernd);
-    CHECK(t.auskunft.spuren.empty());
-    CHECK(t.auskunft.innere.empty());
-    std::vector<std::string> gestimmt;
-    for (const ParameterAngabe& a : t.tafel.werte)
-    {
-        CAPTURE(a.name);
-        CHECK_FALSE(a.herkunft.empty());
-        if (a.art != WertArt::Kurve) CHECK_FALSE(a.quellen.empty());
-        if (a.gestimmt)
-        {
-            gestimmt.push_back(a.name);
-            // die mitschwingenden Saiten wirken nicht auf die Stimmung (nur im Clip)
-            CHECK(std::find(a.abhaengigVon.begin(), a.abhaengigVon.end(), "sympatheticStrings") == a.abhaengigVon.end());
-            CHECK(std::find(a.abhaengigVon.begin(), a.abhaengigVon.end(), "stringLength") != a.abhaengigVon.end());
-        }
-    }
-    CHECK(gestimmt == std::vector<std::string>{std::string(kLaufzeit)});
-
-    std::vector<std::string> namen;
-    for (const Vorlage& v : vorlagen())
-    {
-        namen.push_back(v.name);
-        CHECK_FALSE(v.ausgeliefert);  // die Dateien kommen mit 34k-9
-    }
-    CHECK(namen == std::vector<std::string>{"harpsichord", "concert_harp", "classical_guitar", "lute", "oud"});
-    for (const Vorlage& v : vorlagen())
-    {
-        CAPTURE(v.name);
-        // ungestimmt fehlt die Laufzeit (IK2-11 a: ein Fehler, kein stiller Ersatz)
-        Werte roh = werteAus(v.spiel);
-        CHECK(richteWerte(t.tafel, roh).size() == 1);
-        // gestimmt: die Vorgaben liegen in den Grenzen, Richten aendert nichts, zurueck ins Spiel und wieder in Werte gleich
-        Werte w = werteAus(v.spiel);
-        const Werte g = gestimmteWerte(v, true);
-        for (const std::string_view n : {kLaufzeit, kBezug}) w.setze(std::string(n), *g.finde(n));
-        const Werte vorher = w;
-        const std::vector<std::string> f = richteWerte(t.tafel, w);
-        CHECK_MESSAGE(f.empty(), (f.empty() ? std::string() : f.front()));
-        CHECK(w == vorher);
-        CHECK(werteAus(spielAus(w)) == w);
-    }
-    // Listen und Chor: Stegmoden, Doppelchor, mitschwingende Saiten
-    CHECK(cembalo().steg.size() == 10);
-    CHECK(gitarre().steg.size() == 7);
-    CHECK(gitarre().mitschwingNoten == std::vector<int>{40, 45, 50, 55, 59, 64});
-    CHECK(harfe().mitschwingNoten.size() == 47);
-    const ZupfSpiel laute = spielWieIc("lute");
-    CHECK(laute.chor.saiten == 2);
-    CHECK(laute.chor.verstimmungCent == 4.0);
-    CHECK(laute.mitschwingNoten.empty());
-    // der Zupfpunkt ist immer eine Kurve: am Cembalo 12 % → 50 %, an der Harfe flach 0,5
-    CHECK(wertAn(cembalo().zupfpunktJeNote, 29, Skala::Linear) == 0.12);
-    CHECK(wertAn(cembalo().zupfpunktJeNote, 89, Skala::Linear) == 0.5);
-    for (const int n : {24, 60, 103}) CHECK(wertAn(harfe().zupfpunktJeNote, n, Skala::Linear) == 0.5);
-}
-
-TEST_CASE("InstrumentModels 34k-2 Kern pluckedString: die Abdruecke aus werte/zupf_ic.txt Bit fuer Bit")
-{
-    const IcBeleg& b = icBeleg();
-    REQUIRE(b.abdruck.size() == 65);
-    int geprueft = 0;
-    const auto pruefe = [&](const std::string& name, const std::string& ist) {
-        CAPTURE(name);
-        REQUIRE(b.abdruck.count(name) == 1);
-        CHECK(ist == b.abdruck.at(name));
-        ++geprueft;
-    };
-    // die drei IC-Abdruecke (test_zupf.cpp:184–185, 242–247)
-    pruefe("zupf_Cembalo_m60_mf", abdruckVon(cembalo(), ton(60, 0.5, 0.8)));
-    pruefe("zupf_Gitarre_m52_mf", abdruckVon(gitarre(), ton(52, 0.5, 0.8)));
-    {
-        ZupfAnschlag c;
-        c.note = 60;
-        c.haltenS = 0.5;
-        pruefe("zupf_Harfe_clip_C4_E4", clipAbdruck(harfe(), {{0.0, c}, {0.25, ZupfAnschlag{64, 0.5, 0.5}}}, 48000, true));
-        pruefe("zupf_Harfe_clip_C4_E4_ohne", clipAbdruck(harfe(), {{0.0, c}, {0.25, ZupfAnschlag{64, 0.5, 0.5}}}, 48000, false));
-    }
-    // tief / mitte / hoch bei Staerke 0,2 / 0,5 / 1
-    const struct
-    {
-        const char* name;
-        double e;
-    } stufen[] = {{"s02", 0.2}, {"s05", 0.5}, {"s1", 1.0}};
-    for (const Vorlage& v : vorlagen())
-    {
-        const ZupfSpiel s = spielWieIc(v.name);
-        const int mitte = (s.noteMin + s.noteMax) / 2;
-        for (const int n : {s.noteMin, mitte, s.noteMax})
-            for (const auto& st : stufen) pruefe("zupf_" + s.name + "_m" + std::to_string(n) + "_" + st.name, abdruckVon(s, ton(n, st.e, 0.4)));
-    }
-    // Spielweisen an der Mitte
-    for (const ZupfSpiel* s : {&harfe(), &gitarre()})
-    {
-        const int m = (s->noteMin + s->noteMax) / 2;
-        const std::string basis = "zupf_" + s->name + "_m" + std::to_string(m);
-        ZupfAnschlag lv = ton(m, 0.5, 0.2);
-        lv.laissezVibrer = true;
-        pruefe(basis + "_laissezVibrer", abdruckVon(*s, lv));
-        for (const int w : {0, 60})
-        {
-            ZupfAnschlag p = ton(m, 0.5, 0.4);
-            p.polarisationGrad = w;
-            pruefe(basis + "_polarisation" + std::to_string(w), abdruckVon(*s, p));
-        }
-    }
-    pruefe("zupf_Harfe_m63_gedaempft", abdruckVon(harfe(), ton(63, 0.5, 0.2)));
-    {
-        ZupfAnschlag l = ton(59, 0.5, 0.4);
-        l.lautenzug = true;
-        pruefe("zupf_Cembalo_m59_lautenzug", abdruckVon(cembalo(), l));
-        ZupfSpiel ohne = cembalo();
-        ohne.tastenstoss = 0.0;
-        pruefe("zupf_Cembalo_m59_s1_ohneTastenstoss", abdruckVon(ohne, ton(59, 1.0, 0.4)));
-        pruefe("zupf_Cembalo_m59_s02_ohneTastenstoss", abdruckVon(ohne, ton(59, 0.2, 0.4)));
-    }
-    for (const std::string_view n : {"lute", "oud"})
-    {
-        ZupfSpiel ein = spielWieIc(n);
-        const int m = (ein.noteMin + ein.noteMax) / 2;
-        ein.chor = {1, 0.0};
-        pruefe("zupf_" + ein.name + "_m" + std::to_string(m) + "_einChor", abdruckVon(ein, ton(m, 0.5, 0.4)));
-    }
-    // Clips mit Mitschwingen
-    {
-        ZupfAnschlag a = ton(57, 0.7, 0.3);
-        pruefe("zupf_Gitarre_clip_A3_mit", clipAbdruck(gitarre(), {{0.0, a}}, 72000, true));
-        pruefe("zupf_Gitarre_clip_A3_ohne", clipAbdruck(gitarre(), {{0.0, a}}, 72000, false));
-        std::vector<ClipNote> akkord;
-        const int griff[] = {40, 47, 52, 56, 59, 64};
-        for (int i = 0; i < 6; ++i) akkord.push_back({0.015 * i, ton(griff[i], 0.6, 0.6)});
-        pruefe("zupf_Gitarre_clip_EDur_mit", clipAbdruck(gitarre(), akkord, 72000, true));
-    }
-    {
-        bool ok = false;
-        const Pedale d = pedaleVorschlag({62, 64, 66, 67, 69, 71, 73}, &ok);
-        REQUIRE(ok);
-        pruefe("zupf_Harfe_clip_DDur_mit",
-               clipAbdruck(harfeMitPedalen(harfe(), d), {{0.0, ton(62, 0.5, 0.5)}, {0.2, ton(66, 0.5, 0.5)}, {0.4, ton(69, 0.5, 0.5)}}, 48000, true));
-    }
-    CHECK(geprueft == 65);
-
-    // ueber den Kern bei Stufe 0 (Staerke 1): tief / mitte / hoch, 0,4 s gehalten
-    for (const Vorlage& v : vorlagen())
-    {
-        CAPTURE(v.name);
-        const int mitte = (v.spiel.noteMin + v.spiel.noteMax) / 2;
-        for (const int n : {v.spiel.noteMin, mitte, v.spiel.noteMax})
-            CHECK(abdruck(kernTon(v.name, n, 0, 19200)) == b.abdruck.at("zupf_" + icName(v.name) + "_m" + std::to_string(n) + "_s1"));
-    }
-}
-
-TEST_CASE("InstrumentModels 34k-2 Kern pluckedString: Staerke aus der Stufe, Nachklang")
-{
-    const ZupfSpiel& c = cembalo();
-    const ZupfSpiel& g = gitarre();
-    CHECK(staerkeBei(g, 0) == 1.0);
-    CHECK(staerkeBei(g, 3) == 1.0);
-    // die Kraft folgt der Stufe in dB: kraftPp · (kraftFf/kraftPp)^e = kraftFf · 10^(stufe/20)
-    for (const int stufe : {-1, -6, -12, -18})
-    {
-        CAPTURE(stufe);
-        const double e = staerkeBei(g, stufe);
-        CHECK(g.kraftPpN * std::pow(g.kraftFfN / g.kraftPpN, e) == doctest::Approx(g.kraftFfN * anschlagFaktor(stufe)).epsilon(1e-12));
-    }
-    // unter forcePp bleibt die Staerke 0 (Gitarre 0,5 … 4 N: 18,1 dB; Cembalo 0,6 … 1 N: 4,4 dB)
-    CHECK(staerkeBei(g, -19) == 0.0);
-    CHECK(staerkeBei(c, -5) == 0.0);
-    CHECK(staerkeBei(c, -4) > 0.0);
-    // ueber den Kern: Stufe −6 wie der direkte Aufruf mit staerkeBei
-    {
-        const int m = (g.noteMin + g.noteMax) / 2;
-        CHECK(abdruck(kernTon("classical_guitar", m, -6, 19200)) == abdruckVon(g, ton(m, staerkeBei(g, -6), 0.4)));
-    }
-    // der Nachklang deckt Daempfen und Stegmoden: nach dem Ende von auftrag.frames ist der Ton 60 dB unter der Spitze
-    for (const Vorlage& v : vorlagen())
-    {
-        CAPTURE(v.name);
-        std::vector<std::string> fehler;
-        const std::shared_ptr<const Tonkern> k = kerne().erzeuge(kKernName, gestimmteWerte(v, true), &fehler);
-        REQUIRE(k != nullptr);
-        const int m = (v.spiel.noteMin + v.spiel.noteMax) / 2;
-        const Frames halten = 9600;
-        const Frames rest = k->nachklang(einzelnote(m, hzVon(m), 0, halten, 0, 48000.0), 10 * 48000);
-        CHECK(rest > static_cast<Frames>(v.spiel.daempfenS * 48000.0));
-        CHECK(rest < 48000);
-        // laenger gerechnet: was nach halten + rest kommt, liegt 60 dB unter der Spitze
-        const std::vector<float> t = kernTon(v.name, m, 0, halten, halten + rest + 48000);
-        double danach = 0.0;
-        for (std::size_t i = static_cast<std::size_t>(halten + rest); i + 2400 < t.size(); ++i) danach = std::max(danach, double(std::abs(t[i])));
-        MESSAGE(v.name << ": Nachklang " << 1000.0 * rest / 48000.0 << " ms, danach " << dB(danach / spitzeVon(t)) << " dB");
-        CHECK(danach < 1e-3 * spitzeVon(t));
-    }
-}
-
-TEST_CASE("InstrumentModels 34k-2 Kern pluckedString: der Bezug nach IC und nach der Tafel")
-{
-    const IcBeleg& b = icBeleg();
-    for (const Vorlage& v : vorlagen())
-    {
-        CAPTURE(v.name);
-        // IC normiere (Vorgaben.cpp:54–67) am uebernommenen Kern: Mitte, Staerke 1, 0,5 s
-        {
-            ZupfSpiel s = spielAus(gestimmteWerte(v, false));
-            ZupfAnschlag a;
-            a.note = (s.noteMin + s.noteMax) / 2;
-            a.staerke = 1.0;
-            a.haltenS = 0.5;
-            std::vector<float> t;
-            rechneZupfTon(s, a, t, a.rate / 2);
-            const double sp = spitzeVon(t);
-            CHECK(hexVon(sp > 0.0 ? sp / 0.5 : 1.0) == b.bezug.at(icName(v.name)));
-        }
-        // die Probe von LumiViz (IK2-10 a)
-        std::vector<std::string> fehler;
-        const double bezug = normiereNachTafel(kerne(), kKernName, gestimmteWerte(v, false), &fehler);
-        CHECK(fehler.empty());
-        CHECK(hexVon(bezug) == b.bezugLv.at(icName(v.name)));
-        CHECK(b.bezugLv.at(icName(v.name)) == b.bezug.at(icName(v.name)));  // J76: bei allen fuenf gleich
-    }
-}
-
-TEST_CASE("InstrumentModels 34k-2 IC test_zupf: jede fuenfte Note aller Instrumente auf ±5 Cent (Spitze des Grundtons)")
-{
-    for (const Vorlage& v : vorlagen())
-    {
-        const ZupfSpiel s = spielWieIc(v.name);
-        for (int note = s.noteMin; note <= s.noteMax; note += 5)
-        {
-            CAPTURE(v.name);
-            CAPTURE(note);
-            const lumi::messung::ZupfTon m = lumi::messung::messeZupfTon(s, ton(note), 28800);
-            REQUIRE(m.schwingt);
-            CHECK(std::abs(1200.0 * std::log2(m.spielHz / hzVon(note))) < 5.0);
-        }
-    }
-    // die Messung liest nicht ueber das Ende hinaus (IC tat es bei weniger als 0,1 s)
-    CHECK_FALSE(lumi::messung::messeZupfTon(gitarre(), ton(52), 4000).schwingt);
-}
-
-TEST_CASE("InstrumentModels 34k-2 IC test_zupf: zwei Polarisationen am Steg — mit Kopplung zweistufiges Abklingen (Bank & Karjalainen 2010)")
-{
-    const ZupfSpiel& g = gitarre();
-    ZupfSpiel eben = g;
-    for (StegMode& m : eben.steg) m.winkelGrad = 0.0;
-    const auto raten = [](const ZupfSpiel& s, double winkel) {
-        ZupfAnschlag a = ton(55, 0.6, 3.0);
-        a.polarisationGrad = winkel;
-        std::vector<float> t;
-        rechneZupfTon(s, a, t, 144000);
-        const double f = hzVon(55);
-        const double a0 = band(t, 4800, 4800, f), a1 = band(t, 28800, 4800, f), a2 = band(t, 72000, 4800, f), a3 = band(t, 120000, 4800, f);
-        const double frueh = std::log(a0 / a1) / 0.5, spaet = std::log(a2 / a3) / 1.0;
-        return frueh / spaet;
-    };
-    const double einfach = raten(eben, 0.0), zweifach = raten(g, 45.0);
-    MESSAGE("Gitarre G3: Abklingrate frueh/spaet — eine Polarisation " << einfach << ", zwei gekoppelt " << zweifach);
-    CHECK(zweifach > 2.0 * einfach);
-}
-
-TEST_CASE("InstrumentModels 34k-2 IC test_zupf: Cembalo — Zupfpunkt (Valimaki), Lautenzug, Tastenstoss (Penttinen)")
-{
-    std::vector<float> diskant, bass;
-    rechneZupfTon(cembalo(), ton(89), diskant, 28800);
-    rechneZupfTon(cembalo(), ton(31), bass, 28800);
-    const double d = dB(band(diskant, 2400, 16384, 2.0 * hzVon(89)) / band(diskant, 2400, 16384, hzVon(89)));
-    const double b = dB(band(bass, 2400, 16384, 2.0 * hzVon(31)) / band(bass, 2400, 16384, hzVon(31)));
-    MESSAGE("Cembalo: H2/H1 Diskant f3 " << d << " dB, Bass G1 " << b << " dB");
-    CHECK(d < b - 10.0);
-
-    std::vector<float> frei, laute;
-    rechneZupfTon(cembalo(), ton(60, 0.5, 2.0), frei, 96000);
-    ZupfAnschlag l = ton(60, 0.5, 2.0);
-    l.lautenzug = true;
-    rechneZupfTon(cembalo(), l, laute, 96000);
-    CHECK(band(laute, 48000, 8192, hzVon(60)) < 0.3 * band(frei, 48000, 8192, hzVon(60)));
-    std::vector<float> pp, ff;
-    rechneZupfTon(cembalo(), ton(60, 0.0), pp, 24000);
-    rechneZupfTon(cembalo(), ton(60, 1.0), ff, 24000);
-    double ep = 0.0, ef = 0.0;
-    for (double f = 30.0; f < 300.0; f += 5.0)
-    {
-        ep += std::pow(band(pp, 0, 4800, f), 2);
-        ef += std::pow(band(ff, 0, 4800, f), 2);
-    }
-    MESSAGE("Cembalo: unter 300 Hz ff gegen pp " << 10.0 * std::log10(ef / ep) << " dB");
-    CHECK(ef > ep);
-}
-
-TEST_CASE("InstrumentModels 34k-2 IC test_zupf: Harfe laissez vibrer, sonst daempft die Hand; Laute mit Doppelchor")
-{
-    std::vector<float> gedaempft, frei;
-    rechneZupfTon(harfe(), ton(60, 0.5, 0.5), gedaempft, 48000);
-    ZupfAnschlag lv = ton(60, 0.5, 0.5);
-    lv.laissezVibrer = true;
-    rechneZupfTon(harfe(), lv, frei, 48000);
-    CHECK(band(gedaempft, 36000, 8192, hzVon(60)) < 0.1 * band(frei, 36000, 8192, hzVon(60)));
-    std::vector<float> t;
-    rechneZupfTon(spielWieIc("lute"), ton(60, 0.6, 3.0), t, 144000);
-    CHECK(t.size() == 144000u);
-    CHECK(spitzeVon(t) > 0.0);
-}
-
-TEST_CASE("InstrumentModels 34k-2 IC test_zupf: je Clip — eine Saite wie je Note, die leeren Saiten schwingen mit, Harfe mit 47 Saiten")
-{
-    const ZupfSpiel& g = gitarre();
-    const ZupfAnschlag a = ton(57, 0.7, 0.3);
-    std::vector<float> je, clip;
-    rechneZupfTon(g, a, je, 48000);
-    rechneZupfClip(g, {{0.0, a}}, clip, 48000, false);
-    double maxAbw = 0.0, maxWert = 0.0;
-    for (std::size_t i = 0; i < je.size(); ++i)
-    {
-        maxAbw = std::max(maxAbw, std::abs(double(je[i]) - clip[i]));
-        maxWert = std::max(maxWert, std::abs(double(je[i])));
-    }
-    CHECK(maxAbw < 1e-5 * maxWert);
-    std::vector<float> mit, ohne;
-    rechneZupfClip(g, {{0.0, a}}, mit, 72000, true);
-    rechneZupfClip(g, {{0.0, a}}, ohne, 72000, false);
-    const double m220 = band(mit, 33600, 24000, 220.0), o220 = band(ohne, 33600, 24000, 220.0);
-    MESSAGE("Gitarre A3 gedaempft, 0,7–1,2 s bei 220 Hz: mit leeren Saiten " << 20.0 * std::log10(m220 / std::max(1e-30, o220)) << " dB gegen ohne");
-    CHECK(m220 > 10.0 * o220);
-    const ZupfSpiel& h = harfe();
-    CHECK(h.mitschwingNoten.size() == 47u);
-    ZupfAnschlag c;
-    c.note = 60;
-    c.haltenS = 0.5;
-    std::vector<float> h1, h2;
-    rechneZupfClip(h, {{0.0, c}, {0.25, ZupfAnschlag{64, 0.5, 0.5}}}, h1, 48000);
-    rechneZupfClip(h, {{0.0, c}, {0.25, ZupfAnschlag{64, 0.5, 0.5}}}, h2, 48000);
-    CHECK(h1 == h2);
-    CHECK(spitzeVon(h1) > 0.0);
-}
-
-TEST_CASE("InstrumentModels 34k-2 IC test_zupf: Harfe Pedale — Diagramm, Vorschlag, Bisbigliando, Glissando, Spur, nicht spielbar")
-{
-    const ZupfSpiel& h = harfe();
-    const Pedale cDur{0, 0, 0, 0, 0, 0, 0};
-    CHECK(harfenSaiten(h, cDur) == h.mitschwingNoten);
-    bool ok = false;
-    const Pedale d = pedaleVorschlag({62, 64, 66, 67, 69, 71, 73}, &ok);
-    CHECK(ok);
-    CHECK(d == Pedale{1, 0, 0, 1, 0, 0, 0});
-    const Pedale eis{0, 0, 1, 0, 0, 0, 0};
-    CHECK(saitenFuer(65, eis).size() == 2u);
-    CHECK_FALSE(spielbar(64, eis));
-    const std::vector<int> gl = glissandoNoten(h, 60, 72, cDur);
-    CHECK(gl == std::vector<int>{60, 62, 64, 65, 67, 69, 71, 72});
-    CHECK(glissandoNoten(h, 72, 60, cDur).front() == 72);
-    (void)pedaleVorschlag({60, 61, 62, 63, 64, 65, 66, 67}, &ok);
-    CHECK_FALSE(ok);
-    std::vector<ClipNote> chromatisch;
-    for (int n = 60; n <= 72; ++n)
-    {
-        ZupfAnschlag a;
-        a.note = n;
-        chromatisch.push_back({0.25 * (n - 60), a});
-    }
-    const std::vector<PedalStelle> spur = pedalSpurVorschlag(chromatisch);
-    CHECK(spur.size() > 1u);
-    for (const ClipNote& cn : chromatisch)
-    {
-        const PedalStelle* gilt = &spur.front();
-        for (const PedalStelle& st : spur)
-            if (st.abS <= cn.abS) gilt = &st;
-        CAPTURE(cn.anschlag.note);
-        CHECK(spielbar(cn.anschlag.note, gilt->pedale));
-    }
-    const ZupfSpiel hd = harfeMitPedalen(h, d);
-    CHECK(std::find(hd.mitschwingNoten.begin(), hd.mitschwingNoten.end(), 66) != hd.mitschwingNoten.end());
-    CHECK(std::find(hd.mitschwingNoten.begin(), hd.mitschwingNoten.end(), 65) == hd.mitschwingNoten.end());
-}
-
-TEST_CASE("InstrumentModels 34k-2 IC test_zupf: Determinismus auf Threads")
-{
-    const ZupfSpiel& g = gitarre();
-    std::vector<float> a;
-    rechneZupfTon(g, ton(52), a, 28800);
-    std::vector<std::vector<float>> q(2);
-    parallelJe(2, [&](std::size_t i) { rechneZupfTon(g, ton(52), q[i], 28800); }, 2);
-    CHECK(a == q[0]);
-    CHECK(a == q[1]);
-    CHECK(abdruck(a) == icBeleg().abdruck.at("zupf_Gitarre_m52_mf"));
-}
-
-TEST_CASE("InstrumentModels 34k-3 Stimmer pluckedString: Laute Bit fuer Bit wie IC, Bezug, Waechter fuer veraltete Werte")
-{
-    const std::vector<std::string> eins = {std::string(kLaufzeit)};
-    REQUIRE(lumi::messung::stimmerFuer(lumi::messung::stimmer(), kKernName) != nullptr);
-    Werte w = werteAus(vorlage("lute").spiel);
-    const auto beginn = std::chrono::steady_clock::now();
-    const lumi::messung::StimmBericht b = lumi::messung::stimmeUndNormiere(kerne(), lumi::messung::stimmer(), kKernName, w, true, true);
-    const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - beginn).count();
-    MESSAGE("Laute gestimmt und normiert in " << dauer << " s auf " << poolThreads() << " Threads (13 Stuetzpunkte)");
-    CHECK_MESSAGE(b.fehler.empty(), (b.fehler.empty() ? std::string() : b.fehler.front()));
-    CHECK(b.gestimmt == eins);
-    REQUIRE(b.mitBezug);
-    CHECK(hexVon(b.bezug) == icBeleg().bezugLv.at("Laute"));
-    CHECK(w.kurve(kLaufzeit).punkte == icBeleg().laufzeit.at("Laute"));
-    CHECK(w.kurve(kLaufzeit).belegkraft == Belegkraft::Rechnung);
-    CHECK(richteWerte(kernTyp().tafel, w).empty());
-    // der Waechter (IK2-11 a): frisch gestimmt nichts veraltet, der Bezug passt
-    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, w).empty());
-    CHECK_FALSE(lumi::messung::bezugVeraltet(kerne(), kKernName, w));
-    // absichtlich veraltet: eine Eingabe der Saite geaendert
-    Werte alt = w;
-    alt.setze("stringQ", alt.zahl("stringQ") * 1.5);
-    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, alt) == eins);
-    // die mitschwingenden Saiten wirken nicht auf die Stimmung — sie veralten nichts
-    Werte mit = w;
-    Liste l;
-    Werte e;
-    e.felder.emplace_back("note", std::int64_t{55});
-    l.eintraege.push_back(e);
-    mit.setze("sympatheticStrings", l);
-    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, mit).empty());
-    // ein fremder Abdruck genuegt
-    Werte fremd = w;
-    fremd.merkeAbdruck(std::string(kLaufzeit), "0000");
-    CHECK(lumi::messung::veralteteWerte(kerne(), kKernName, fremd) == eins);
-    // ein falscher Bezug faellt auf
-    Werte bezug = w;
-    bezug.setze(std::string(kBezug), b.bezug * 1.01);
-    CHECK(lumi::messung::bezugVeraltet(kerne(), kKernName, bezug));
-}
-
-TEST_CASE("InstrumentModels 34k-3 Stimmer pluckedString: alle fuenf Bit fuer Bit wie IC stimme")
-{
-    double gesamt = 0.0;
-    for (const Vorlage& v : vorlagen())
-    {
-        CAPTURE(v.name);
-        const auto beginn = std::chrono::steady_clock::now();
-        const Kurve k = lumi::messung::zupfLaufzeit(v.spiel);
-        const double dauer = std::chrono::duration<double>(std::chrono::steady_clock::now() - beginn).count();
-        gesamt += dauer;
-        MESSAGE(v.name << ": " << k.punkte.size() << " Stuetzpunkte in " << dauer << " s");
-        CHECK(k.punkte == icBeleg().laufzeit.at(icName(v.name)));
-    }
-    MESSAGE("alle fuenf in " << gesamt << " s auf " << poolThreads() << " Threads");
-}
-
-namespace
-{
-
-/// Ein gerechneter Ton aus Teiltoenen: f_k = k·f₀·√(1 + B·k²), Amplitude a_k, Abklingzeit τ_k, Phase fest; dazu Rauschen
-/// (Gleichverteilung aus einer festen Folge) mit der Spitze `rauschen`.
 std::vector<double> teiltonTon(double f0, double steife, const std::vector<std::pair<int, double>>& teiltoene, double rauschen, double sekunden = 0.6)
 {
     const int rate = 48000;
@@ -718,7 +155,294 @@ std::vector<double> teiltonTon(double f0, double steife, const std::vector<std::
 
 double centZwischen(double ist, double soll) { return 1200.0 * std::log2(ist / soll); }
 
+/// Die Faelle der Abdruecke: je Vorlage tief / mitte / hoch, Stufe 0 / −9 / −18, 0,4 s gehalten, 0,6 s.
+struct AbdruckFall
+{
+    std::string name;
+    std::string vorlage;
+    int note, stufe;
+};
+
+std::vector<AbdruckFall> abdruckFaelle()
+{
+    std::vector<AbdruckFall> f;
+    for (const Vorlage& v : vorlagen())
+    {
+        const int lo = v.spiel.noteMin, hi = v.spiel.noteMax, mi = (lo + hi) / 2;
+        for (const int n : {lo, mi, hi})
+            for (const int s : {0, -9, -18})
+                f.push_back({"zupf2_" + v.name + "_" + std::to_string(n) + "_s" + std::to_string(-s), v.name, n, s});
+    }
+    return f;
+}
+
+std::filesystem::path abdruckDatei() { return std::filesystem::path(__FILE__).parent_path() / "werte" / "zupf_ic.txt"; }
+
 }  // namespace
+
+TEST_CASE("InstrumentModels 34k-7d-4 Kern pluckedString: Tafel, Fabrik, Vorlagen, Werte hin und zurueck")
+{
+    const KernTyp& typ = kernTyp();
+    const std::vector<std::string> pruefung = pruefeTafel(typ.tafel);
+    for (const std::string& p : pruefung) MESSAGE(p);
+    CHECK(pruefung.empty());
+    CHECK(typ.tafel.rechenFassung == 2);
+    CHECK(typ.auskunft.stegImAuftrag);
+    REQUIRE(kerne().typ(kKernName) != nullptr);
+    const ParameterAngabe* tafel = nullptr;
+    for (const ParameterAngabe& a : typ.tafel.werte)
+        if (a.name == kUmlaufTafel) tafel = &a;
+    REQUIRE(tafel != nullptr);
+    CHECK(tafel->gestimmt);
+    CHECK(vorlagen().size() == 5u);
+    for (const Vorlage& v : vorlagen())
+    {
+        CAPTURE(v.name);
+        // hin und zurueck
+        const Werte w = werteAus(v.spiel);
+        CHECK(werteAus(spielAus(w)) == w);
+        // gerichtet (mit Tafel) bleibt das Spiel, und der Kern entsteht
+        const Werte g = gestimmteWerte(v, false);
+        const ZupfSpiel s = spielAus(g);
+        CHECK(s.noteMin == v.spiel.noteMin);
+        CHECK(s.noteMax == v.spiel.noteMax);
+        CHECK(s.jeSaite() == v.spiel.jeSaite());
+        CHECK(!s.umlauf.empty());
+        REQUIRE(kerne().erzeuge(kKernName, g) != nullptr);
+        // die Saiten der Kurven sind die von `zupf/Saiten`
+        if (!s.jeSaite())
+            for (int t = s.noteMin; t <= s.noteMax; ++t)
+            {
+                CAPTURE(t);
+                const std::optional<Tastensaite> soll = v.name == "harpsichord" ? std::optional<Tastensaite>(cembaloSaite(t)) : harfenSaite(t);
+                const std::optional<Tastensaite> ist = tastensaiteAus(s, t);
+                REQUIRE(soll.has_value() == ist.has_value());
+                if (!soll) continue;
+                CHECK(ist->werte == soll->werte);
+                CHECK(ist->laenge == soll->laenge);
+                CHECK(ist->zupfort == soll->zupfort);
+                CHECK(ist->stegTaste == soll->stegTaste);
+            }
+        else
+        {
+            REQUIRE(s.satz.choere.size() == v.spiel.satz.choere.size());
+            for (std::size_t c = 0; c < s.satz.choere.size(); ++c)
+            {
+                CHECK(s.satz.choere[c].leer == v.spiel.satz.choere[c].leer);
+                REQUIRE(s.satz.choere[c].saiten.size() == v.spiel.satz.choere[c].saiten.size());
+                for (std::size_t i = 0; i < s.satz.choere[c].saiten.size(); ++i)
+                {
+                    CHECK(s.satz.choere[c].saiten[i].werte == v.spiel.satz.choere[c].saiten[i].werte);
+                    CHECK(s.satz.choere[c].saiten[i].oktave == v.spiel.satz.choere[c].saiten[i].oktave);
+                    CHECK(s.satz.choere[c].saiten[i].laengenFaktor == v.spiel.satz.choere[c].saiten[i].laengenFaktor);
+                }
+            }
+            CHECK(s.satz.mensur == v.spiel.satz.mensur);
+            CHECK(s.satz.buende == v.spiel.satz.buende);
+        }
+    }
+}
+
+TEST_CASE("InstrumentModels 34k-7d-4 Kern pluckedString: Staerke aus der Stufe, Saite und Bund, Nachklang")
+{
+    // GZ6 a: die Gitarre um 10^(Stufe/20) in der Auslenkung, Neigung 0,16; GZ10 a: das Cembalo 1 dB bis pp
+    const ZupfSpiel g = spielAus(gestimmteWerte(vorlage("classical_guitar"), false));
+    const ZupfNote ff = zupfNote(g, 57, -1, 0, 19200, 48000.0), pp = zupfNote(g, 57, -1, -18, 19200, 48000.0);
+    REQUIRE(ff.fehler.empty());
+    REQUIRE(pp.fehler.empty());
+    CHECK(ff.zupf.auslenkung == doctest::Approx(0.004).epsilon(1e-12));
+    CHECK(pp.zupf.auslenkung == doctest::Approx(0.004 * std::pow(10.0, -18.0 / 20.0)).epsilon(1e-12));
+    CHECK(pp.zupf.neigung == -18.0);
+    CHECK(pp.zupf.kipp == 0.16);
+    CHECK(ff.zupf.ort == 0.16);
+    const ZupfSpiel c = spielAus(gestimmteWerte(vorlage("harpsichord"), false));
+    const ZupfNote cff = zupfNote(c, 60, -1, 0, 19200, 48000.0), cpp = zupfNote(c, 60, -1, -18, 19200, 48000.0);
+    REQUIRE(cff.fehler.empty());
+    CHECK(20.0 * std::log10(cpp.zupf.auslenkung / cff.zupf.auslenkung) == doctest::Approx(-1.0).epsilon(1e-9));
+    CHECK(cpp.zupf.kipp == 0.0);
+    // die Kraft an C4 bei ff 1,07 N (KQ30 a)
+    const Tastensaite c4 = cembaloSaite(60);
+    CHECK(cff.zupf.auslenkung * c4.werte.zug * c4.laenge / (c4.zupfort * (c4.laenge - c4.zupfort)) == doctest::Approx(1.07).epsilon(1e-9));
+    // die Harfe: Auslenkung und Abloesetempo im selben Verhaeltnis, keine Neigung (ZD1-1 a)
+    const ZupfSpiel h = spielAus(gestimmteWerte(vorlage("concert_harp"), false));
+    const ZupfNote hp = zupfNote(h, 60, -1, -18, 19200, 48000.0);
+    REQUIRE(hp.fehler.empty());
+    CHECK(hp.zupf.tempo / hp.zupf.auslenkung == doctest::Approx(2.0 / 0.004).epsilon(1e-12));
+    CHECK(hp.zupf.kipp == 0.0);
+    // Saite und Bund aus der Note (ZK2 a): A3 (57) auf der D-Saite (Index 2, Bund 7) statt der G-Saite
+    const ZupfNote auf = zupfNote(g, 57, 2, 0, 19200, 48000.0);
+    REQUIRE(auf.fehler.empty());
+    CHECK(auf.stegTaste == 50);
+    CHECK(ff.stegTaste == 55);
+    CHECK(auf.saiten.front().laenge == doctest::Approx(0.65 * std::exp2(-7.0 / 12.0)).epsilon(1e-12));
+    CHECK_FALSE(zupfNote(g, 39, -1, 0, 19200, 48000.0).fehler.empty());  // unter der tiefsten Saite
+    CHECK_FALSE(zupfNote(g, 57, 5, 0, 19200, 48000.0).fehler.empty());   // A3 liegt nicht auf der E4-Saite
+    CHECK_FALSE(zupfNote(g, 57, -1, 0, 19200, 44100.0).fehler.empty());  // nur 48 kHz
+    // der Nachklang: Vorlauf, dampingTime, 20 ms (ohne Steg)
+    const auto k = kernVon("classical_guitar", false);
+    const Tonauftrag a = einzelnote(57, hzVon(57), 0, 19200, kFrames, 48000.0);
+    CHECK(k->nachklang(a, 1 << 20) == static_cast<Frames>(std::ceil((kVorlauf + 0.08 + 0.02) * 48000.0)));
+}
+
+TEST_CASE("InstrumentModels 34k-7d-4 Kern pluckedString: der Daempfer am Notenende (ZN1 a)")
+{
+    // der Leitwert: ueber die Rampe faellt die Saite um 60 dB — f₁ ∫₀^τ 20 lg ρ(t) dt, ρ = (1 − Z₀ G t/τ) / (1 + Z₀ G t/τ),
+    // als Summe in 10 000 Schritten gegen −60 dB
+    for (const auto [z0, f1, tau] : {std::tuple{0.6, 110.0, 0.08}, std::tuple{0.3, 440.0, 0.06}, std::tuple{1.2, 70.0, 0.15}})
+    {
+        const double G = leitwertFuerAbklingen(z0, f1, tau);
+        const int n = 10000;
+        double db = 0.0;
+        for (int i = 0; i < n; ++i)
+        {
+            const double zg = z0 * G * (i + 0.5) / n;
+            db += f1 * (tau / n) * 20.0 * std::log10((1.0 - zg) / (1.0 + zg));
+        }
+        CAPTURE(f1);
+        CHECK(db == doctest::Approx(-60.0).epsilon(0.02));
+    }
+    // zu wenige Umlaeufe: der staerkste Daempfer
+    CHECK(leitwertFuerAbklingen(1.0, 30.0, 0.1) == doctest::Approx(0.999));
+    // am Ton: nach dem Loslassen in dampingTime um rund 60 dB (die Saite allein klingt in der Zeit kaum ab)
+    for (const char* name : {"classical_guitar", "harpsichord", "lute"})
+    {
+        CAPTURE(std::string(name));
+        const auto k = kernVon(name, false);
+        const int note = std::string(name) == "harpsichord" ? 60 : 57;
+        const double daempfen = vorlage(name).spiel.daempfenS;
+        const Frames halten = 24000;  // 0,5 s
+        const std::vector<float> t = ton(*k, note, 0, halten, 72000);
+        const std::vector<float> frei = ton(*k, note, 0, 70000, 72000);
+        const double los = kVorlauf + 0.5;
+        const double vorher = rmsDb(t, los - 0.05, los), nachher = rmsDb(t, los + daempfen, los + daempfen + 0.05);
+        const double freiAbfall = rmsDb(frei, los - 0.05, los) - rmsDb(frei, los + daempfen, los + daempfen + 0.05);
+        MESSAGE(name << ": nach dem Loslassen " << vorher - nachher << " dB in " << daempfen << " s (ohne Daempfer " << freiAbfall << " dB)");
+        CHECK(vorher - nachher - freiAbfall > 50.0);
+        // vor dem Loslassen Bit fuer Bit wie ungedaempft
+        const auto bis = static_cast<std::size_t>(los * 48000.0);
+        CHECK(std::equal(t.begin(), t.begin() + static_cast<std::ptrdiff_t>(bis), frei.begin()));
+    }
+}
+
+TEST_CASE("InstrumentModels 34k-7d-4 Kern pluckedString: der Bezug nach der Tafel, Ton und Kraft am Steg")
+{
+    for (const Vorlage& v : vorlagen())
+    {
+        CAPTURE(v.name);
+        const Werte w = gestimmteWerte(v, true);
+        const double bezug = std::get<double>(*w.finde(kBezug));
+        CHECK(bezug > 0.0);
+        // die Probe des Bezugs (Mitte des Umfangs, Stufe 0, 1 s): Spitze 0,5
+        const auto k = kerne().erzeuge(kKernName, w);
+        const Tonauftrag probe = bezugsProbe(kernTyp().tafel, w);
+        std::vector<float> t;
+        k->rechne(probe, t);
+        float spitze = 0.0f;
+        for (const float x : t) spitze = std::max(spitze, std::abs(x));
+        CHECK(spitze == doctest::Approx(0.5).epsilon(1e-3));
+        // die Kraft am Steg: eine, an der Taste des Stegpunkts, gleich dem Ton
+        std::vector<Stegkraft> kr;
+        k->rechneAmSteg(probe, kr);
+        REQUIRE(kr.size() == 1u);
+        CHECK(kr.front().kraft == t);
+        CHECK(kr.front().taste >= 0);
+    }
+    // ohne Note still, Taste −1
+    const auto k = kernVon("oud", false);
+    Tonauftrag leer;
+    leer.frames = 100;
+    std::vector<Stegkraft> kr;
+    k->rechneAmSteg(leer, kr);
+    REQUIRE(kr.size() == 1u);
+    CHECK(kr.front().taste == -1);
+    CHECK(std::all_of(kr.front().kraft.begin(), kr.front().kraft.end(), [](float x) { return x == 0.0f; }));
+}
+
+TEST_CASE("InstrumentModels 34k-7d-4 Harfe Pedale — Diagramm, Vorschlag, Bisbigliando, Glissando, Spur, nicht spielbar")
+{
+    const Pedale cDur{0, 0, 0, 0, 0, 0, 0};
+    const std::vector<int> saiten = harfenSaiten(24, 103, cDur);
+    CHECK(saiten.size() == 47u);
+    CHECK(saiten.front() == 24);
+    bool ok = false;
+    const Pedale d = pedaleVorschlag({62, 64, 66, 67, 69, 71, 73}, &ok);
+    CHECK(ok);
+    CHECK(d == Pedale{1, 0, 0, 1, 0, 0, 0});
+    const Pedale eis{0, 0, 1, 0, 0, 0, 0};
+    CHECK(saitenFuer(65, eis).size() == 2u);
+    CHECK_FALSE(spielbar(64, eis));
+    const std::vector<int> gl = glissandoNoten(24, 103, 60, 72, cDur);
+    CHECK(gl == std::vector<int>{60, 62, 64, 65, 67, 69, 71, 72});
+    CHECK(glissandoNoten(24, 103, 72, 60, cDur).front() == 72);
+    (void)pedaleVorschlag({60, 61, 62, 63, 64, 65, 66, 67}, &ok);
+    CHECK_FALSE(ok);
+    std::vector<PedalNote> chromatisch;
+    for (int n = 60; n <= 72; ++n) chromatisch.push_back({0.25 * (n - 60), n});
+    const std::vector<PedalStelle> spur = pedalSpurVorschlag(chromatisch);
+    CHECK(spur.size() > 1u);
+    for (const PedalNote& cn : chromatisch)
+    {
+        const PedalStelle* gilt = &spur.front();
+        for (const PedalStelle& st : spur)
+            if (st.abS <= cn.abS) gilt = &st;
+        CAPTURE(cn.note);
+        CHECK(spielbar(cn.note, gilt->pedale));
+    }
+    const std::vector<int> mitD = harfenSaiten(24, 103, d);
+    CHECK(std::find(mitD.begin(), mitD.end(), 66) != mitD.end());
+    CHECK(std::find(mitD.begin(), mitD.end(), 65) == mitD.end());
+}
+
+TEST_CASE("InstrumentModels 34k-7d-4 Kern pluckedString: Determinismus auf Threads")
+{
+    const auto k = kernVon("classical_guitar", false);
+    const std::vector<float> a = ton(*k, 52, 0, 19200);
+    std::vector<std::vector<float>> q(2);
+    parallelJe(2, [&](std::size_t i) { q[i] = ton(*k, 52, 0, 19200); }, 2);
+    CHECK(a == q[0]);
+    CHECK(a == q[1]);
+}
+
+TEST_CASE("InstrumentModels 34k-7d-4 Kern pluckedString: die Abdruecke in werte/zupf_ic.txt (ZB1 a)")
+{
+    std::map<std::string, std::shared_ptr<const Tonkern>> kerne_;
+    for (const Vorlage& v : vorlagen()) kerne_[v.name] = kernVon(v.name, true);
+    const std::vector<AbdruckFall> faelle = abdruckFaelle();
+    std::vector<std::string> ist(faelle.size());
+    parallelJe(faelle.size(), [&](std::size_t i) {
+        const AbdruckFall& f = faelle[i];
+        ist[i] = abdruck(ton(*kerne_.at(f.vorlage), f.note, f.stufe, 19200));
+    });
+    if (const char* s = std::getenv("LUMIVIZ_ZUPF_ABDRUCK_SCHREIBEN"); s != nullptr && std::string(s) == "1")
+    {
+        std::ofstream o(abdruckDatei(), std::ios::binary);
+        o << "# Abdruecke des Kerns pluckedString, Rechenfassung 2 (34k-7d-4, S224; ZB1 a) - vom Kern geschrieben, nicht von Hand\n"
+             "# aendern: LUMIVIZ_ZUPF_ABDRUCK_SCHREIBEN=1 im Fall \"die Abdruecke in werte/zupf_ic.txt\" (test_InstrumentModelsZupf.cpp)\n"
+             "# VERMERK: bis S224 trug diese Datei die Abdruecke der IC-Vorlage (Rechenfassung 1, InstrumentsCalculation 4409088,\n"
+             "#   docs/modellierung/anbindung-ic/abdruck_zupf.cpp) - Beleg der Uebernahme J77, abgeschlossen; Rechenfassung 2 ersetzt\n"
+             "#   sie (ZB1 a, Journal J81)\n"
+             "# abdruck <name> <sha256>: je Vorlage tief / mitte / hoch, Stufe 0 / -9 / -18 (_s<betrag>), 0,4 s gehalten, 28800 Frames\n"
+             "#   bei 48 kHz, ohne Steg im Auftrag (starrer Steg), mit der Tafel aus werte/zupf_umlauf.json und dem Bezug nach der Tafel\n";
+        for (std::size_t i = 0; i < faelle.size(); ++i) o << "abdruck " << faelle[i].name << " " << ist[i] << "\n";
+        MESSAGE("geschrieben: " << abdruckDatei().string());
+        return;
+    }
+    std::map<std::string, std::string> soll;
+    std::ifstream f(abdruckDatei());
+    std::string zeile;
+    while (std::getline(f, zeile))
+    {
+        std::istringstream z(zeile);
+        std::string art, name, wert;
+        if (z >> art >> name >> wert && art == "abdruck") soll[name] = wert;
+    }
+    REQUIRE_MESSAGE(soll.size() == faelle.size(), "werte/zupf_ic.txt passt nicht - LUMIVIZ_ZUPF_ABDRUCK_SCHREIBEN=1 schreibt sie neu");
+    for (std::size_t i = 0; i < faelle.size(); ++i)
+    {
+        CAPTURE(faelle[i].name);
+        CHECK(ist[i] == soll[faelle[i].name]);
+    }
+}
 
 TEST_CASE("InstrumentModels 34k-3 zweite Tonhoehenmessung: Grundton aus den Teiltoenen ohne und mit schwachem Grundton")
 {
@@ -734,10 +458,7 @@ TEST_CASE("InstrumentModels 34k-3 zweite Tonhoehenmessung: Grundton aus den Teil
         MESSAGE("ohne Grundton: " << centZwischen(g.hz, f0) << " Cent daneben aus " << g.teiltoene << " Teiltoenen, B = " << g.steife);
         CHECK(std::abs(centZwischen(g.hz, f0)) < 1.0);
         CHECK(g.teiltoene == 9);
-        // die Messung des Stimmers (IC) sucht nur nahe der Note: ohne Grundton misst sie dort Rauschen und Nebenkeulen (nur Zahl)
-        const lumi::messung::ZupfTon ic = lumi::messung::messeZupfSumme(t, 43, 48000);
-        MESSAGE("die Messung des Stimmers am selben Ton: " << centZwischen(ic.spielHz, f0) << " Cent");
-        // und YIN (B2) als Median der stimmhaften Rahmen
+        // YIN (B2) als Median der stimmhaften Rahmen (nur Zahl)
         const lumi::messung::Tonhoehe y = lumi::messung::tonhoehe(t, 48000, 30.0, 3000.0);
         std::vector<double> hz;
         for (const double x : y.hz)
@@ -775,41 +496,40 @@ TEST_CASE("InstrumentModels 34k-3 zweite Tonhoehenmessung: Grundton aus den Teil
     CHECK_FALSE(grundtonAusTeiltoenen(std::vector<double>(2000, 0.0), 48000, 110.0).gefunden);
 }
 
-TEST_CASE("InstrumentModels 34k-3 zweite Tonhoehenmessung an den gestimmten Toenen der fuenf (nur Zahlen)")
+TEST_CASE("InstrumentModels 34k-7d-4 zweite Tonhoehenmessung an den Toenen der fuenf (nur Zahlen)")
 {
-    // die Pruefung ±10 Cent an jeder Taste kommt mit 34k-6; hier, wie weit die IC-Stimmung nach der zweiten Messung liegt
+    // die Pruefung ±10 Cent an jeder Taste kommt mit 34k-7f; hier, wie weit Rechenfassung 2 mit starrem Steg liegt
     for (const Vorlage& v : vorlagen())
     {
-        const ZupfSpiel s = spielWieIc(v.name);
-        const int n = s.noteMax - s.noteMin + 1;
+        const auto k = kernVon(v.name, false);
+        const int n = v.spiel.noteMax - v.spiel.noteMin + 1;
         std::vector<double> cent(static_cast<std::size_t>(n), 0.0);
-        std::vector<int> zahl(static_cast<std::size_t>(n), 0);
         parallelJe(static_cast<std::size_t>(n), [&](std::size_t i) {
-            const int note = s.noteMin + static_cast<int>(i);
-            std::vector<double> summe;
-            rechneZupfSumme(s, ton(note, 0.5, 0.6), summe, 28800);
-            const lumi::messung::Grundton g = lumi::messung::grundtonAusTeiltoenen(summe, 48000, hzVon(note));
+            const int note = v.spiel.noteMin + static_cast<int>(i);
+            const std::vector<float> t = ton(*k, note, 0, 28800);
+            const std::vector<double> d(t.begin(), t.end());
+            const lumi::messung::Grundton g = lumi::messung::grundtonAusTeiltoenen(d, 48000, hzVon(note));
             cent[i] = g.gefunden ? centZwischen(g.hz, hzVon(note)) : 1e9;
-            zahl[i] = g.teiltoene;
         });
         double schlimmste = 0.0;
-        int wo = s.noteMin, ueber10 = 0, ohne = 0;
+        int wo = v.spiel.noteMin, ueber10 = 0, ohne = 0;
         for (int i = 0; i < n; ++i)
         {
-            if (cent[static_cast<std::size_t>(i)] > 1e8)
+            const double c = cent[static_cast<std::size_t>(i)];
+            if (c > 1e8)
             {
                 ++ohne;
                 continue;
             }
-            if (std::abs(cent[static_cast<std::size_t>(i)]) > 10.0) ++ueber10;
-            if (std::abs(cent[static_cast<std::size_t>(i)]) > std::abs(schlimmste))
+            if (std::abs(c) > 10.0) ++ueber10;
+            if (std::abs(c) > std::abs(schlimmste))
             {
-                schlimmste = cent[static_cast<std::size_t>(i)];
-                wo = s.noteMin + i;
+                schlimmste = c;
+                wo = v.spiel.noteMin + i;
             }
         }
-        MESSAGE(v.name << ": " << n << " Tasten, schlimmste " << schlimmste << " Cent an " << wo << ", ueber 10 Cent " << ueber10 << ", ohne Ergebnis "
-                       << ohne);
+        MESSAGE(v.name << ": " << n << " Tasten, schlimmste " << schlimmste << " Cent an " << wo << ", ueber 10 Cent " << ueber10
+                       << ", ohne Ergebnis " << ohne);
         CHECK(ohne == 0);
     }
 }

@@ -25,6 +25,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/Saiten.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/UmlaufTafel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/Schleife.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/Pedale.hpp"
 )
 set(_local_templates
     # (templates - *.t; *.tpp)

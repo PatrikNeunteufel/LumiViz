@@ -1,15 +1,14 @@
 /**
  * @file ZupfKern.cpp
- * @brief InstrumentModels, Kern `pluckedString`: Tafel, Werte ↔ Spiel, Adapter, Vorlagen (34k-2; Herleitung im Kopf von
- *        `ZupfKern.hpp`)
+ * @brief InstrumentModels, Kern `pluckedString` Rechenfassung 2: Tafel, Werte ↔ Spiel, Adapter, Vorlagen (34k-7d-4 (c);
+ *        Herleitung im Kopf von `ZupfKern.hpp`). Die Fassung aus IC (Rechenfassung 1) stand hier bis S224 (ZB1 a).
  */
 #include "InstrumentModels/zupf/ZupfKern.hpp"
-
-#include "InstrumentCore/Anschlag.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <map>
 #include <memory>
 #include <numbers>
 #include <utility>
@@ -25,11 +24,13 @@ constexpr int kUmfangMax = 108;  // C8
 
 constexpr std::string_view kNameNoteMin = "noteMin";
 constexpr std::string_view kNameNoteMax = "noteMax";
-constexpr std::string_view kSteg = "bridgeModes";
-constexpr std::string_view kMitschwingen = "sympatheticStrings";
+constexpr std::string_view kSatz = "stringSet";
+constexpr std::string_view kKraftWahl = "pluckBy";
+constexpr std::string_view kWahlAuslenkung = "displacement";
+constexpr std::string_view kWahlKraft = "force";
 
 /// Die Gruppen der Tafel in ihrer Reihenfolge (`werteAus` schreibt in derselben).
-constexpr std::string_view kGruppen[] = {"Keys", "String", "Pluck", "Bridge", "Courses", "Sympathetic strings", "Tunable", "Output"};
+constexpr std::string_view kGruppen[] = {"Keys", "Strings", "Pluck", "Tunable", "Output"};
 
 ParameterAngabe angabe(std::string_view name, std::string_view titel, std::string_view gruppe, WertArt art, std::string_view einheit = {},
                        double von = 0.0, double bis = 1.0)
@@ -89,73 +90,72 @@ Feld<ZupfSpiel> kurve(std::string_view name, std::string_view titel, std::string
     return f;
 }
 
-/// Die Felder einer Stegmode (ein Eintrag der Liste `bridgeModes`).
-const std::vector<Feld<StegMode>>& stegFelder()
+/// Eine Saite des Satzes als Eintrag der Liste `stringSet`.
+struct Satzsaite
 {
-    static const std::vector<Feld<StegMode>> f = {
-        zahl<StegMode>("frequency", "Frequency", "", "Hz", 1.0, 20000.0, &StegMode::hz),
-        zahl<StegMode>("q", "Quality factor", "", "", 0.5, 1e5, &StegMode::q),
-        zahl<StegMode>("peak", "Peak admittance", "", "s/kg", 0.0, 100.0, &StegMode::spitze),
-        zahl<StegMode>("angle", "Direction", "", "°", -90.0, 90.0, &StegMode::winkelGrad),
-    };
-    return f;
-}
-
-/// Eine mitschwingende Saite (ein Eintrag der Liste `sympatheticStrings`).
-struct Mitschwinger
-{
-    int note = 60;
+    int chor = 0;
+    int leer = 40;
+    int oktave = 0;
+    double laengenFaktor = 1.0;
+    double zug = 70.0, masse = 5e-4, biegesteife = 0.0, verlustBiegung = 0.0, verlustInnen = 0.0, verlustLuft = 0.0, durchmesser = 0.0,
+           dichte = 0.0;
 };
 
-const std::vector<Feld<Mitschwinger>>& mitschwingFelder()
+const std::vector<Feld<Satzsaite>>& satzFelder()
 {
-    static const std::vector<Feld<Mitschwinger>> f = {
-        ganzzahl<Mitschwinger>("note", "Pitch of the open string", "", "MIDI", kUmfangMin, kUmfangMax, &Mitschwinger::note),
+    static const std::vector<Feld<Satzsaite>> f = {
+        ganzzahl<Satzsaite>("course", "Course (from the lowest, as the app counts strings)", "", "", 0, 31, &Satzsaite::chor),
+        ganzzahl<Satzsaite>("open", "Open string", "", "MIDI", kUmfangMin, kUmfangMax, &Satzsaite::leer),
+        ganzzahl<Satzsaite>("octave", "Above the course", "", "semitones", 0, 24, &Satzsaite::oktave),
+        zahl<Satzsaite>("lengthFactor", "Length factor (unison detuning)", "", "", 0.9, 1.1, &Satzsaite::laengenFaktor),
+        zahl<Satzsaite>("tension", "Tension", "", "N", 0.1, 5000.0, &Satzsaite::zug),
+        zahl<Satzsaite>("mass", "Mass per length", "", "kg/m", 1e-7, 1.0, &Satzsaite::masse),
+        zahl<Satzsaite>("bendingStiffness", "Bending stiffness EI", "", "N m²", 0.0, 1.0, &Satzsaite::biegesteife),
+        zahl<Satzsaite>("lossBending", "Loss factor of bending η_B", "", "", 0.0, 1.0, &Satzsaite::verlustBiegung),
+        zahl<Satzsaite>("lossInternal", "Internal loss η_F (Valette)", "", "", 0.0, 1.0, &Satzsaite::verlustInnen),
+        zahl<Satzsaite>("lossAir", "Air loss η_A (Valette)", "", "1/s", 0.0, 100.0, &Satzsaite::verlustLuft),
+        zahl<Satzsaite>("diameter", "Diameter (monofilament; 0 = Valette)", "", "m", 0.0, 0.01, &Satzsaite::durchmesser),
+        zahl<Satzsaite>("density", "Density (monofilament)", "", "kg/m³", 0.0, 30000.0, &Satzsaite::dichte),
     };
     return f;
 }
 
-template <typename E>
-ParameterAngabe listenAngabe(std::string_view name, std::string_view titel, std::string_view gruppe, const std::vector<Feld<E>>& felder,
-                             std::size_t min, std::size_t max)
-{
-    ParameterAngabe l = angabe(name, titel, gruppe, WertArt::Liste);
-    for (const Feld<E>& f : felder)
-    {
-        ParameterAngabe e = f.angabe;
-        e.vorgabe = f.lies(E{});
-        l.felder.push_back(std::move(e));
-    }
-    l.eintraegeMin = min;
-    l.eintraegeMax = max;
-    return l;
-}
-
-template <typename E>
-Liste listeAus(const std::vector<E>& eintraege, const std::vector<Feld<E>>& felder)
+Liste satzAlsListe(const Saitensatz& satz)
 {
     Liste l;
-    for (const E& x : eintraege)
-    {
-        Werte e;
-        for (const Feld<E>& f : felder) e.felder.emplace_back(f.angabe.name, f.lies(x));
-        l.eintraege.push_back(std::move(e));
-    }
+    for (std::size_t c = 0; c < satz.choere.size(); ++c)
+        for (const Chorsaite& cs : satz.choere[c].saiten)
+        {
+            const Satzsaite x{static_cast<int>(c), satz.choere[c].leer, cs.oktave, cs.laengenFaktor, cs.werte.zug, cs.werte.masse,
+                              cs.werte.biegesteife, cs.werte.verlustBiegung, cs.werte.verlustInnen, cs.werte.verlustLuft,
+                              cs.werte.durchmesser, cs.werte.dichte};
+            Werte e;
+            for (const Feld<Satzsaite>& f : satzFelder()) e.felder.emplace_back(f.angabe.name, f.lies(x));
+            l.eintraege.push_back(std::move(e));
+        }
     return l;
 }
 
-template <typename E>
-std::vector<E> eintraegeAus(const Wert& w, const std::vector<Feld<E>>& felder)
+/// Die Choere aus der Liste (nach `course`, je Chor die Saiten in der Reihenfolge der Liste); Mensur und Buende setzt der
+/// Rufer.
+std::vector<Saitenchor> choereAus(const Liste& l)
 {
-    std::vector<E> v;
-    if (const Liste* l = std::get_if<Liste>(&w))
-        for (const Werte& e : l->eintraege)
-        {
-            E x;
-            for (const Feld<E>& f : felder)
-                if (const Wert* y = e.finde(f.angabe.name)) f.setze(x, *y);
-            v.push_back(x);
-        }
+    std::map<int, Saitenchor> choere;
+    for (const Werte& e : l.eintraege)
+    {
+        Satzsaite x;
+        for (const Feld<Satzsaite>& f : satzFelder())
+            if (const Wert* w = e.finde(f.angabe.name)) f.setze(x, *w);
+        Saitenchor& c = choere[x.chor];
+        c.leer = x.leer;
+        Chorsaite cs;
+        cs.werte = {x.zug, x.masse, x.biegesteife, x.verlustBiegung, x.verlustInnen, x.verlustLuft, x.durchmesser, x.dichte};
+        cs.oktave = x.oktave;
+        cs.laengenFaktor = x.laengenFaktor;
+        c.saiten.push_back(cs);
+    }
+    std::vector<Saitenchor> v;
+    for (auto& [_, c] : choere) v.push_back(std::move(c));
     return v;
 }
 
@@ -166,54 +166,70 @@ const std::vector<Feld<ZupfSpiel>>& felder()
         std::vector<Feld<ZupfSpiel>> v = {
             ganzzahl<ZupfSpiel>(kNameNoteMin, "Lowest key", "Keys", "MIDI", kUmfangMin, kUmfangMax, &ZupfSpiel::noteMin),
             ganzzahl<ZupfSpiel>(kNameNoteMax, "Highest key", "Keys", "MIDI", kUmfangMin, kUmfangMax, &ZupfSpiel::noteMax),
-            kurve("stringLength", "String length per key", "String", "m", 0.01, 10.0, Skala::Logarithmisch, &ZupfSpiel::laengeJeNote),
-            kurve("stringTension", "String tension per key", "String", "N", 0.1, 5000.0, Skala::Logarithmisch, &ZupfSpiel::zugJeNote),
-            zahl<ZupfSpiel>("stringQ", "String quality factor", "String", "", 1.0, 1e6, &ZupfSpiel::guete),
-            kurve("pluckPoint", "Plucking point per key", "Pluck", "", 0.01, 0.99, Skala::Linear, &ZupfSpiel::zupfpunktJeNote),
-            zahl<ZupfSpiel>("pluckAngle", "Angle at release", "Pluck", "°", 0.0, 90.0, &ZupfSpiel::polarisationGrad),
-            zahl<ZupfSpiel>("pluckDuration", "Duration of the push", "Pluck", "s", 1e-5, 0.1, &ZupfSpiel::stossS),
-            zahl<ZupfSpiel>("forcePp", "Force pp", "Pluck", "N", 1e-4, 1000.0, &ZupfSpiel::kraftPpN),
-            zahl<ZupfSpiel>("forceFf", "Force ff", "Pluck", "N", 1e-4, 1000.0, &ZupfSpiel::kraftFfN),
-            zahl<ZupfSpiel>("keyThump", "Key thump", "Pluck", "", 0.0, 100.0, &ZupfSpiel::tastenstoss),
-            zahl<ZupfSpiel>("dampingTime", "Damping at the end of the note", "Pluck", "s", 1e-4, 10.0, &ZupfSpiel::daempfenS),
+            kurve("stringLength", "String length per key", "Strings", "m", 0.01, 10.0, Skala::Linear, &ZupfSpiel::laenge),
+            kurve("stringTension", "String tension per key", "Strings", "N", 0.1, 5000.0, Skala::Linear, &ZupfSpiel::zug),
+            kurve("stringMass", "Mass per length per key", "Strings", "kg/m", 1e-7, 1.0, Skala::Linear, &ZupfSpiel::masse),
+            kurve("bendingStiffness", "Bending stiffness EI per key", "Strings", "N m²", 0.0, 1.0, Skala::Linear, &ZupfSpiel::biegesteife),
+            kurve("lossBending", "Loss factor of bending η_B per key", "Strings", "", 0.0, 1.0, Skala::Linear, &ZupfSpiel::verlustBiegung),
+            kurve("lossInternal", "Internal loss η_F per key (Valette)", "Strings", "", 0.0, 1.0, Skala::Linear, &ZupfSpiel::verlustInnen),
+            kurve("lossAir", "Air loss η_A per key (Valette)", "Strings", "1/s", 0.0, 100.0, Skala::Linear, &ZupfSpiel::verlustLuft),
+            kurve("stringDiameter", "Diameter per key (monofilament; 0 = Valette)", "Strings", "m", 0.0, 0.01, Skala::Linear,
+                  &ZupfSpiel::durchmesser),
+            kurve("stringDensity", "Density per key (monofilament)", "Strings", "kg/m³", 0.0, 30000.0, Skala::Linear, &ZupfSpiel::dichte),
         };
-        Feld<ZupfSpiel> steg{listenAngabe<StegMode>(kSteg, "Bridge modes", "Bridge", stegFelder(), 0, 64),
-                             [](const ZupfSpiel& s) { return Wert{listeAus(s.steg, stegFelder())}; },
-                             [](ZupfSpiel& s, const Wert& w) { s.steg = eintraegeAus(w, stegFelder()); }};
-        v.push_back(std::move(steg));
-        Feld<ZupfSpiel> saiten{angabe("courseStrings", "Strings per course", "Courses", WertArt::Ganzzahl, "", 1, 3),
-                               [](const ZupfSpiel& s) { return Wert{static_cast<std::int64_t>(s.chor.saiten)}; },
-                               [](ZupfSpiel& s, const Wert& w) {
-                                   if (const auto* g = std::get_if<std::int64_t>(&w)) s.chor.saiten = static_cast<int>(*g);
-                               }};
-        v.push_back(std::move(saiten));
-        Feld<ZupfSpiel> verstimmung{angabe("courseDetune", "Detuning within the course", "Courses", WertArt::Zahl, "cent", -50.0, 50.0),
-                                    [](const ZupfSpiel& s) { return Wert{s.chor.verstimmungCent}; },
+        Feld<ZupfSpiel> satz{angabe(kSatz, "String set", "Strings", WertArt::Liste),
+                             [](const ZupfSpiel& s) { return Wert{satzAlsListe(s.satz)}; },
+                             [](ZupfSpiel& s, const Wert& w) {
+                                 if (const Liste* l = std::get_if<Liste>(&w)) s.satz.choere = choereAus(*l);
+                             }};
+        for (const Feld<Satzsaite>& e : satzFelder())
+        {
+            ParameterAngabe a = e.angabe;
+            a.vorgabe = e.lies(Satzsaite{});
+            satz.angabe.felder.push_back(std::move(a));
+        }
+        satz.angabe.eintraegeMin = 0;
+        satz.angabe.eintraegeMax = 64;
+        v.push_back(std::move(satz));
+        v.push_back(Feld<ZupfSpiel>{angabe("scaleLength", "Scale length", "Strings", WertArt::Zahl, "m", 0.0, 2.0),
+                                    [](const ZupfSpiel& s) { return Wert{s.satz.mensur}; },
                                     [](ZupfSpiel& s, const Wert& w) {
-                                        if (const auto* d = std::get_if<double>(&w)) s.chor.verstimmungCent = *d;
-                                    }};
-        v.push_back(std::move(verstimmung));
-        Feld<ZupfSpiel> mit{listenAngabe<Mitschwinger>(kMitschwingen, "Sympathetic strings", "Sympathetic strings", mitschwingFelder(), 0, 64),
-                            [](const ZupfSpiel& s) {
-                                std::vector<Mitschwinger> m;
-                                for (const int n : s.mitschwingNoten) m.push_back({n});
-                                return Wert{listeAus(m, mitschwingFelder())};
-                            },
-                            [](ZupfSpiel& s, const Wert& w) {
-                                s.mitschwingNoten.clear();
-                                for (const Mitschwinger& m : eintraegeAus(w, mitschwingFelder())) s.mitschwingNoten.push_back(m.note);
-                            }};
-        v.push_back(std::move(mit));
-        Feld<ZupfSpiel> laufzeit = kurve(kLaufzeit, "Delay factor per key", "Tunable", "", 0.5, 2.0, Skala::Logarithmisch, &ZupfSpiel::laufzeitJeNote);
-        v.push_back(std::move(laufzeit));
+                                        if (const auto* d = std::get_if<double>(&w)) s.satz.mensur = *d;
+                                    }});
+        v.push_back(Feld<ZupfSpiel>{angabe("frets", "Frets", "Strings", WertArt::Ganzzahl, "", 0, 36),
+                                    [](const ZupfSpiel& s) { return Wert{static_cast<std::int64_t>(s.satz.buende)}; },
+                                    [](ZupfSpiel& s, const Wert& w) {
+                                        if (const auto* g = std::get_if<std::int64_t>(&w)) s.satz.buende = static_cast<int>(*g);
+                                    }});
+        v.push_back(kurve("pluckPoint", "Plucking point per key (from the bridge)", "Pluck", "m", 0.001, 5.0, Skala::Linear, &ZupfSpiel::zupfort));
+        Feld<ZupfSpiel> wahl{angabe(kKraftWahl, "Pluck by", "Pluck", WertArt::Wahl),
+                             [](const ZupfSpiel& s) { return Wert{std::string(s.kraftGegeben ? kWahlKraft : kWahlAuslenkung)}; },
+                             [](ZupfSpiel& s, const Wert& w) {
+                                 if (const auto* t = std::get_if<std::string>(&w)) s.kraftGegeben = *t == kWahlKraft;
+                             }};
+        wahl.angabe.wahlen = {std::string(kWahlAuslenkung), std::string(kWahlKraft)};
+        v.push_back(std::move(wahl));
+        v.push_back(zahl<ZupfSpiel>("pluckDisplacement", "Displacement at release (level 0)", "Pluck", "m", 1e-6, 0.05, &ZupfSpiel::auslenkung));
+        v.push_back(kurve("pluckForce", "Force at release per key (level 0)", "Pluck", "N", 1e-4, 1000.0, Skala::Logarithmisch, &ZupfSpiel::kraft));
+        v.push_back(zahl<ZupfSpiel>("levelPerStep", "Displacement or force per level", "Pluck", "dB/dB", 0.0, 2.0, &ZupfSpiel::pegelJeStufe));
+        v.push_back(zahl<ZupfSpiel>("tiltPerStep", "Tilt per level around 1 kHz", "Pluck", "dB/oct/dB", -1.0, 1.0, &ZupfSpiel::neigungJeStufe));
+        v.push_back(zahl<ZupfSpiel>("pluckAngle", "Angle at release", "Pluck", "°", 0.0, 90.0, &ZupfSpiel::winkelGrad));
+        v.push_back(zahl<ZupfSpiel>("fingerWidth", "Width of finger or plectrum", "Pluck", "m", 0.0, 0.05, &ZupfSpiel::breite));
+        v.push_back(zahl<ZupfSpiel>("releaseSpeed", "Speed at release (level 0)", "Pluck", "m/s", 0.0, 20.0, &ZupfSpiel::tempo));
+        v.push_back(zahl<ZupfSpiel>("dampingTime", "Damping at the end of the note (−60 dB)", "Pluck", "s", 1e-3, 10.0, &ZupfSpiel::daempfenS));
+        Feld<ZupfSpiel> umlauf{umlaufTafelAngabe(),
+                               [](const ZupfSpiel& s) { return Wert{umlaufTafelListe(s.umlauf)}; },
+                               [](ZupfSpiel& s, const Wert& w) {
+                                   if (const Liste* l = std::get_if<Liste>(&w)) s.umlauf = umlaufTafelEintraege(*l);
+                               }};
+        umlauf.angabe.gruppe = "Tunable";
+        v.push_back(std::move(umlauf));
         return v;
     }();
     return f;
 }
 
-/// Belegkraft und Herkunft der Vorgaben, die keine Kurve sind (tafelweit, der Text nennt alle fuenf Instrumente; IC
-/// `Vorgaben.cpp`, `Zupf.hpp`, `modell.md`). Die Quellen der Klasse stehen noch nicht im Register (34k-4) — die
-/// Schluessel bleiben `lumiviz`. Eine Kurve traegt ihre eigene Herkunft.
+/// Belegkraft und Herkunft der Vorgaben, die keine Kurve sind (tafelweit, der Text nennt die fuenf Instrumente).
 void belege(ParameterAngabe& a)
 {
     const auto setze = [&](Belegkraft b, std::string h) {
@@ -222,34 +238,36 @@ void belege(ParameterAngabe& a)
     };
     const std::string& n = a.name;
     if (n == kNameNoteMin || n == kNameNoteMax)
-        setze(Belegkraft::Offen, "the range of each instrument as in IC Vorgaben.cpp: harpsichord FF–f3 (Taskin, report only), concert harp "
-                                 "C1–G7, classical guitar E2–B5, lute G2–G5, oud E2–F5 (open)");
-    else if (n == "stringQ")
-        setze(Belegkraft::Offen, "harpsichord 1500, harp 600 (gut), guitar 800, lute and oud 500 (open)");
+        setze(Belegkraft::Quelle, "harpsichord FF–f3 (Taskin 1769), concert harp the keys with a bridge point 25–104 (KQ22 a), guitar, lute, "
+                                  "oud from the lowest open string to the highest fret of the highest");
+    else if (n == kSatz || n == "scaleLength" || n == "frets")
+        setze(Belegkraft::Quelle, "guitar: Woodhouse et al. 2012 Tab. I set (a) nylon, scale 650 mm, 19 frets; lute: 8 courses in G after "
+                                  "Woodhouse & Lynch-Aird 2019 Tab. II, 625 mm, 12 frets, unison ±2 cent; oud: D'Addario EJ95A, 600 mm "
+                                  "(assumption), 12 frets, unison ±1.5 cent (GZ1-1 a, KQ4 a, KQ5 a); empty for harp and harpsichord");
+    else if (n == kKraftWahl)
+        setze(Belegkraft::Quelle, "the harpsichord's plectrum releases at a force, not a displacement (GZ13 a, Perng 2011); the others by "
+                                  "displacement");
+    else if (n == "pluckDisplacement")
+        setze(Belegkraft::Quelle, "guitar 4 mm at 16 cm (Pavlidou 1997 after Scherrer 2013 Tab. 2.1, GZ6 a); lute, oud 2 mm (transferred); "
+                                  "harp 4 mm (Chadefaux et al. 2012)");
+    else if (n == "levelPerStep")
+        setze(Belegkraft::Gemessen, "guitar 1 (GZ6 a, Iowa MIS); harp 1 (ZD1 a, ZD1-1 a: VCSL f against mf); lute, oud 1 (transferred, "
+                                    "ZD2 a); harpsichord 1/18 — 1 dB less down to pp (GZ10 a)");
+    else if (n == "tiltPerStep")
+        setze(Belegkraft::Gemessen, "guitar 0.16 dB per octave per dB level around 1 kHz (GZ6 a, fitted to Iowa MIS); lute, oud 0.16 "
+                                    "(transferred, ZD2 a); harp 0 (ZD1-1 a: VCSL, not separable from 0, k −0.15 … +0.06); harpsichord 0");
     else if (n == "pluckAngle")
-        setze(Belegkraft::Quelle, "harpsichord 18° (Chadefaux et al. 2013 Tab. 1: 17 ± 2° slow, 20 ± 1° fast); harp 25° (7–43°, report "
-                                  "only); guitar, lute, oud 30° (rest/free stroke after Scherrer & Depalle — open)");
-    else if (n == "pluckDuration")
-        setze(Belegkraft::Offen, "harpsichord 4 ms (interaction 12 / 7.9 ms, Chadefaux — the release faster), harp 3 ms, the others 2 ms "
-                                 "(open; a push of fixed length, cause U1 of the slope over the range, S193)");
-    else if (n == "forcePp" || n == "forceFf")
-        setze(Belegkraft::Rechnung, "harpsichord 0.6–1.0 N (T·δ·(1/x + 1/(L − x)) ≈ 0.8 N at G4 from Chadefaux Tab. 1/2), harp 1–8 N "
-                                    "(≈ 4 N at D♭2 from Chadefaux et al. 2012), guitar, lute, oud 0.5–4 N (open)");
-    else if (n == "keyThump")
-        setze(Belegkraft::Offen, "harpsichord 0.3 (Penttinen: +10 dB in the modes below 300 Hz per step — open; IC F-4 a); 0 = none");
+        setze(Belegkraft::Quelle, "harpsichord 20° (Chadefaux et al. 2013 Tab. 1: 20 ± 1° fast); harp 25° (Chadefaux et al. 2012); guitar, "
+                                  "lute, oud 30° (rest/free stroke after Scherrer & Depalle)");
+    else if (n == "fingerWidth")
+        setze(Belegkraft::Quelle, "7.5 mm (Woodhouse 2012) for guitar, lute, oud, harp; harpsichord 3 mm (plectrum, assumption)");
+    else if (n == "releaseSpeed")
+        setze(Belegkraft::Quelle, "harp 2 m/s at release (Chadefaux et al. 2012), as a distributed impulse over the triangle; the others 0");
     else if (n == "dampingTime")
-        setze(Belegkraft::Offen, "damper or hand within this time (IC F-7 a): harpsichord 60 ms, harp 150 ms, the others 80 ms (open)");
-    else if (n == kSteg)
-        setze(Belegkraft::Offen, "harpsichord: Helmholtz 37 Hz and T60 235 ms at the 8′ bridge (Bader et al. 2025, source), the other "
-                                 "frequencies and peaks open; guitar: the coupled peaks of the Classical body (Wright, TOP26 Fig. 7.1) with "
-                                 "their levels, Q, peak and direction open; harp, lute, oud open");
-    else if (n == "courseStrings" || n == "courseDetune")
-        setze(Belegkraft::Offen, "lute 2 strings 4 cent, oud 2 strings 3 cent apart (IC F-9 a, detuning open); the others one string");
-    else if (n == kMitschwingen)
-        setze(Belegkraft::Offen, "only in a clip (rechneZupfClip, IC K2 F-3 a): the guitar its six open strings E2 A2 D3 G3 B3 E4, the harp all "
-                                 "47 strings in C major (pedals in the middle — open); without effect on a single note until 34k-7 (GZ3 a)");
+        setze(Belegkraft::Offen, "a damper at the nut brings the string down by 60 dB in this time (ZN1 a): harpsichord 60 ms, harp "
+                                 "150 ms, the others 80 ms (the values of the former IC model, open)");
     else
-        setze(Belegkraft::Offen, "IC Vorgaben.cpp (open)");
+        setze(Belegkraft::Offen, "open");
 }
 
 /// QM1 a: die Quellen eines Werts ohne Kurve in einer Vorlage, sonst die eigene Vorgabe.
@@ -266,51 +284,56 @@ Parametertafel baueTafel(const Vorlage& vorlage)
     Parametertafel t;
     t.kern = std::string(kKernName);
     t.titel = "Plucked string";
-    t.rechenFassung = 1;
+    t.rechenFassung = kRechenFassung;
     t.noteMin = kUmfangMin;
     t.noteMax = kUmfangMax;
     for (const std::string_view g : kGruppen) t.gruppen.emplace_back(g);
     t.umfangVon = std::string(kNameNoteMin);
     t.umfangBis = std::string(kNameNoteMax);
-    std::vector<std::string> stimmtAus;  // woraus `delayFactor` gestimmt wird: alles ausser den mitschwingenden Saiten
+    std::vector<std::string> saitenNamen;  // woraus die Tafel des Umlauf-Filters gestimmt wird: die Saiten
     for (const std::string& gruppe : t.gruppen)
         for (const Feld<ZupfSpiel>& f : felder())
             if (f.angabe.gruppe == gruppe)
             {
                 ParameterAngabe a = f.angabe;
-                if (a.name == kLaufzeit)
+                if (a.name == kUmlaufTafel)
                 {
-                    a.vorgabe = Kurve{};
                     a.gestimmt = true;
-                    a.belegkraft = Belegkraft::Rechnung;
-                    a.herkunft = "tuned through the model: the factor on the delays so that the peak of the fundamental lies on the key "
-                                 "(IC stimme: every third key, the peak within ±60 cent in 0.1–0.5 s, at most three rounds)";
-                    a.abhaengigVon = stimmtAus;
+                    a.abhaengigVon = saitenNamen;
                 }
                 else
                 {
-                    a.vorgabe = f.lies(vorgabe);
+                    const Wert wert = f.lies(vorgabe);
+                    a.vorgabe = wert;
                     if (a.art != WertArt::Kurve) belege(a);
-                    else if (const Kurve* k = std::get_if<Kurve>(&a.vorgabe))
+                    else if (const Kurve* k = std::get_if<Kurve>(&wert))
                     {
                         a.belegkraft = k->belegkraft;
                         a.herkunft = k->herkunft;
                     }
                     a.quellen = quellenIn(vorlage, a.name);
                     a.klangbestimmend = a.name != kNameNoteMin && a.name != kNameNoteMax;
-                    if (a.name != kMitschwingen) stimmtAus.push_back(a.name);
+                    if (a.gruppe == "Strings") saitenNamen.push_back(a.name);
                 }
                 t.werte.push_back(std::move(a));
             }
     ParameterAngabe bezug = angabe(kBezug, "Output reference", "Output", WertArt::Zahl, "", 1e-12, 1e12);
     bezug.vorgabe = 1.0;
     bezug.belegkraft = Belegkraft::Rechnung;
-    bezug.herkunft = "normiere: peak 0.5 at the middle key of the instrument, level 0 (strength 1), held 1 s (IK2-10 a; IC: 0.5 s — the "
-                     "same for all five, J76)";
+    bezug.herkunft = "normiere: peak 0.5 of the force at a rigid bridge at the middle key of the instrument, level 0, held 1 s "
+                     "(IK2-10 a)";
     bezug.klangbestimmend = false;
     t.werte.push_back(std::move(bezug));
     t.bezugWert = std::string(kBezug);
     return t;
+}
+
+/// Ein starrer Steg mit einem Stegpunkt (ohne Koerper im Auftrag).
+const Steg& starrerSteg(int taste, Steg& ablage)
+{
+    ablage = Steg{};
+    ablage.punkte.push_back({taste, {}, 0.0});
+    return ablage;
 }
 
 }  // namespace
@@ -345,7 +368,8 @@ const KernTyp& kernTyp()
         t.auskunft.spuren = {};
         t.auskunft.innere = {};
         t.auskunft.vorbereitungTeuer = false;
-        t.auskunft.koerperAnDerSchicht = false;  // GZ4 a: der Steg rechnet im Kern
+        t.auskunft.koerperAnDerSchicht = false;
+        t.auskunft.stegImAuftrag = true;  // GZ5 a, GZ7 a
         t.erzeuge = [](const Werte& w) -> std::shared_ptr<const Tonkern> { return std::make_shared<const ZupfKern>(spielAus(w)); };
         return t;
     }();
@@ -372,45 +396,66 @@ ZupfSpiel spielAus(const Werte& werte)
     return s;
 }
 
-double staerkeBei(const ZupfSpiel& spiel, int stufe)
-{
-    if (stufe >= 0 || !(spiel.kraftFfN > spiel.kraftPpN) || !(spiel.kraftPpN > 0.0)) return 1.0;
-    return std::clamp(1.0 + std::log(anschlagFaktor(stufe)) / std::log(spiel.kraftFfN / spiel.kraftPpN), 0.0, 1.0);
-}
-
-ZupfAnschlag anschlagAus(const ZupfSpiel& spiel, const Tonauftrag& auftrag)
-{
-    ZupfAnschlag a;
-    a.rate = static_cast<int>(auftrag.rate);
-    a.staerke = staerkeBei(spiel, auftrag.stufe);
-    if (auftrag.noten.empty()) return a;
-    const KettenNote& n = auftrag.noten.front();
-    a.note = n.note;
-    a.haltenS = static_cast<double>(n.ende - n.beginn) / auftrag.rate;
-    return a;
-}
-
 ZupfKern::ZupfKern(ZupfSpiel spiel) : m_spiel(std::move(spiel)) {}
 
 Frames ZupfKern::nachklang(const Tonauftrag& auftrag, Frames hoechstens) const
 {
     if (auftrag.noten.empty()) return std::min<Frames>(hoechstens, 1);
-    double moden = 0.0;  // die langsamste Stegmode bis −60 dB
-    for (const StegMode& m : m_spiel.steg)
-        if (m.hz > 0.0 && m.q > 0.0) moden = std::max(moden, std::log(1000.0) * m.q / (std::numbers::pi * m.hz));
-    const double s = m_spiel.daempfenS + moden + 0.02;
+    double moden = 0.0;  // die langsamste Mode des Stegs bis −60 dB
+    if (auftrag.steg)
+        for (const Steg::Mode& m : auftrag.steg->moden)
+            if (m.hz > 0.0 && m.verlust > 0.0) moden = std::max(moden, std::log(1000.0) / (std::numbers::pi * m.hz * m.verlust));
+    const double s = kVorlauf + m_spiel.daempfenS + moden + 0.02;
     return std::clamp<Frames>(static_cast<Frames>(std::ceil(s * auftrag.rate)), 1, std::max<Frames>(1, hoechstens));
+}
+
+void ZupfKern::rechneAmSteg(const Tonauftrag& auftrag, std::vector<Stegkraft>& kraefte, Innere* innere) const
+{
+    (void)innere;  // der Kern gibt keine inneren Groessen ab
+    kraefte.clear();
+    Stegkraft k;
+    const std::size_t frames = static_cast<std::size_t>(std::max<Frames>(0, auftrag.frames));
+    k.kraft.assign(frames, 0.0f);
+    if (auftrag.noten.empty())
+    {
+        kraefte.push_back(std::move(k));
+        return;
+    }
+    const KettenNote& n = auftrag.noten.front();
+    const ZupfNote note = zupfNote(m_spiel, n.note, n.saite, auftrag.stufe, n.ende - n.beginn, auftrag.rate);
+    k.taste = note.stegTaste;
+    if (!note.fehler.empty() || n.beginn >= auftrag.frames)
+    {
+        kraefte.push_back(std::move(k));
+        return;
+    }
+    Steg starr;
+    const Steg* steg = auftrag.steg.get();
+    const Steg::Punkt* punkt = steg != nullptr ? steg->punktZu(note.stegTaste) : nullptr;
+    if (punkt == nullptr)
+    {
+        steg = &starrerSteg(note.stegTaste, starr);
+        punkt = &steg->punkte.front();
+    }
+    Schleifenauftrag a;
+    a.saiten = note.saiten;
+    a.zupf = note.zupf;
+    a.steg = steg;
+    a.punkt = punkt;
+    a.frames = static_cast<std::size_t>(auftrag.frames - n.beginn);
+    a.vorlauf = kVorlauf;
+    const Schleifenkraft kraft = rechneSchleife(a);
+    const double faktor = m_spiel.ausgangBezug > 0.0 ? 1.0 / m_spiel.ausgangBezug : 1.0;
+    for (std::size_t i = 0; i < kraft.senkrecht.size(); ++i)
+        k.kraft[static_cast<std::size_t>(n.beginn) + i] = static_cast<float>(kraft.senkrecht[i] * faktor);
+    kraefte.push_back(std::move(k));
 }
 
 void ZupfKern::rechne(const Tonauftrag& auftrag, std::vector<float>& ton, Innere* innere) const
 {
-    (void)innere;  // der Kern gibt keine inneren Groessen ab
-    if (auftrag.noten.empty())
-    {
-        ton.assign(static_cast<std::size_t>(std::max<Frames>(0, auftrag.frames)), 0.0f);
-        return;
-    }
-    rechneZupfTon(m_spiel, anschlagAus(m_spiel, auftrag), ton, auftrag.frames);
+    std::vector<Stegkraft> k;
+    rechneAmSteg(auftrag, k, innere);
+    ton = std::move(k.front().kraft);
 }
 
 }  // namespace lumi::kern::zupf

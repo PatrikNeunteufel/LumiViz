@@ -82,6 +82,20 @@ TaktMode taktMode(double hz, double eta, double senkrecht, double parallel)
 }
 }  // namespace
 
+double leitwertFuerAbklingen(double z0, double umlaeufe, double sekunden)
+{
+    const double ziel = -std::log(1000.0) / std::max(umlaeufe * sekunden, 1e-12);  // ∫₀¹ ln ρ dx
+    const auto integral = [](double a) { return -((1.0 - a) * std::log(1.0 - a) + (1.0 + a) * std::log(1.0 + a)) / a; };
+    double lo = 1e-12, hi = 0.999;
+    if (integral(hi) > ziel) return hi / z0;  // auch der staerkste Daempfer reicht nicht in der Zeit
+    for (int i = 0; i < 200; ++i)
+    {
+        const double mitte = 0.5 * (lo + hi);
+        (integral(mitte) > ziel ? lo : hi) = mitte;
+    }
+    return 0.5 * (lo + hi) / z0;
+}
+
 Daempfer daempferAn(const Steg::Dichte& dichte, double streuung)
 {
     Daempfer d;
@@ -235,8 +249,18 @@ Schleifenkraft rechneSchleife(const Schleifenauftrag& a)
     {
         for (std::size_t p = 0; p < P; ++p)
         {
+            const SchleifenSaite& sa = a.saiten[p / 2];
             const double quelle = g[p / 2][t] * (p % 2 == 0 ? cz : sz);
-            v[p] = quelle - lauf[p].schritt(ring[p][stelle[p]]);
+            double rueck = lauf[p].schritt(ring[p][stelle[p]]);
+            if (sa.daempferAb >= 0 && static_cast<long long>(t) >= sa.daempferAb)
+            {
+                const double anteil = sa.daempferRampe > 0
+                                          ? std::min(1.0, static_cast<double>(static_cast<long long>(t) - sa.daempferAb) / static_cast<double>(sa.daempferRampe))
+                                          : 1.0;
+                const double zg = z0[p] * sa.daempferLeitwert * anteil;
+                rueck *= (1.0 - zg) / (1.0 + zg);
+            }
+            v[p] = quelle - rueck;
         }
         double uf0 = 0.0, uf1 = 0.0;
         for (std::size_t n = 0; n < moden.size(); ++n)

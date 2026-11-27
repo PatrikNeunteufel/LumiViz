@@ -1,9 +1,9 @@
 /**
  * @file Pedale.cpp
  * @brief InstrumentModels, Klasse 2: die Pedale der Harfe (K2 F-6 a) — Diagramm, Saiten, Vorschlag aus den Noten, Spur, Glissando,
- *        Bisbigliando (Herleitung im Kopf von `Zupf.hpp`, Abschnitt Harfe)
+ *        Bisbigliando (Herleitung im Kopf von `Pedale.hpp`)
  */
-#include "InstrumentModels/zupf/Zupf.hpp"
+#include "InstrumentModels/zupf/Pedale.hpp"
 
 #include <algorithm>
 
@@ -26,10 +26,10 @@ int stammIndex(int note)
 
 }  // namespace
 
-std::vector<int> harfenSaiten(const ZupfSpiel& harfe, const Pedale& p)
+std::vector<int> harfenSaiten(int noteMin, int noteMax, const Pedale& p)
 {
     std::vector<int> saiten;
-    for (int n = harfe.noteMin; n <= harfe.noteMax; ++n)
+    for (int n = noteMin; n <= noteMax; ++n)
     {
         const int i = stammIndex(n);
         if (i >= 0) saiten.push_back(n + std::clamp(p[static_cast<std::size_t>(i)], -1, 1));
@@ -51,9 +51,9 @@ bool spielbar(int note, const Pedale& p)
     return !saitenFuer(note, p).empty();
 }
 
-std::vector<int> glissandoNoten(const ZupfSpiel& harfe, int von, int bis, const Pedale& p)
+std::vector<int> glissandoNoten(int noteMin, int noteMax, int von, int bis, const Pedale& p)
 {
-    std::vector<int> alle = harfenSaiten(harfe, p);
+    std::vector<int> alle = harfenSaiten(noteMin, noteMax, p);
     std::vector<int> g;
     const int lo = std::min(von, bis), hi = std::max(von, bis);
     for (const int n : alle)
@@ -96,13 +96,13 @@ Pedale pedaleVorschlag(const std::vector<int>& noten, bool* ok)
     return beste;
 }
 
-std::vector<PedalStelle> pedalSpurVorschlag(const std::vector<ClipNote>& noten)
+std::vector<PedalStelle> pedalSpurVorschlag(const std::vector<PedalNote>& noten)
 {
-    std::vector<const ClipNote*> folge;
-    for (const ClipNote& n : noten) folge.push_back(&n);
-    std::stable_sort(folge.begin(), folge.end(), [](const ClipNote* a, const ClipNote* b) { return a->abS < b->abS; });
+    std::vector<const PedalNote*> folge;
+    for (const PedalNote& n : noten) folge.push_back(&n);
+    std::stable_sort(folge.begin(), folge.end(), [](const PedalNote* a, const PedalNote* b) { return a->abS < b->abS; });
     std::vector<int> alle;
-    for (const ClipNote* n : folge) alle.push_back(n->anschlag.note);
+    for (const PedalNote* n : folge) alle.push_back(n->note);
     bool ok = false;
     std::vector<PedalStelle> spur{{0.0, pedaleVorschlag(alle, &ok)}};
     if (ok) return spur;
@@ -112,13 +112,13 @@ std::vector<PedalStelle> pedalSpurVorschlag(const std::vector<ClipNote>& noten)
     spur.clear();
     for (std::size_t i = 0; i < folge.size(); ++i)
     {
-        const int note = folge[i]->anschlag.note;
+        const int note = folge[i]->note;
         if (spur.empty())
         {
             std::vector<int> vorne;
             for (std::size_t k = i; k < folge.size(); ++k)
             {
-                vorne.push_back(folge[k]->anschlag.note);
+                vorne.push_back(folge[k]->note);
                 bool traegt = false;
                 (void)pedaleVorschlag(vorne, &traegt);
                 if (!traegt)
@@ -167,11 +167,5 @@ std::vector<PedalStelle> pedalSpurVorschlag(const std::vector<ClipNote>& noten)
     return spur;
 }
 
-ZupfSpiel harfeMitPedalen(const ZupfSpiel& harfe, const Pedale& p)
-{
-    ZupfSpiel s = harfe;
-    s.mitschwingNoten = harfenSaiten(harfe, p);
-    return s;
-}
 
 }  // namespace lumi::kern::zupf

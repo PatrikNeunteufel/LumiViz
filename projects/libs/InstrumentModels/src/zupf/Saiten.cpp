@@ -31,9 +31,10 @@ const double kHarfeMetall[11][4] = {{92, 0.80, 1.45, 1.150}, {82, 0.80, 1.55, 1.
                                     {61, 0.90, 1.92, 1.299}, {58, 0.95, 2.05, 1.330}, {52, 1.00, 2.15, 1.359}, {46, 1.10, 2.30, 1.397},
                                     {41, 1.10, 2.45, 1.421}, {39, 1.25, 2.60, 1.445}, {35, 1.30, 2.75, 1.475}};
 
-// Taskin 1769 (Edinburgh 96075): Taste, Laenge mm
-const double kTaskin[11][2] = {{29, 1765}, {36, 1681}, {41, 1443}, {48, 1178}, {53, 982}, {60, 711},
-                               {65, 535},  {72, 357},  {77, 268},  {84, 186},  {89, 148}};
+// Taskin 1769 (Edinburgh 96075): Taste, Laenge mm, Zupfpunkt mm ab Sattel (F3: 151 statt des gedruckten 51, Schreibfehler —
+// wie der Pruefstand S199)
+const double kTaskin[11][3] = {{29, 1765, 208}, {36, 1681, 191}, {41, 1443, 179}, {48, 1178, 162}, {53, 982, 151}, {60, 711, 137},
+                               {65, 535, 127},  {72, 357, 115},  {77, 268, 107},  {84, 186, 96},   {89, 148, 91}};
 // Di Veroli Tab. 7, 8: bis Taste, Durchmesser mm, Dichte kg/m³, E GPa (Dichte und E Annahme)
 const double kTaskinDraht[13][4] = {{31, 0.620, 8700, 115}, {33, 0.572, 8700, 115}, {36, 0.518, 8700, 115}, {38, 0.463, 8700, 115},
                                     {40, 0.463, 8500, 110}, {43, 0.410, 8500, 110}, {45, 0.377, 8500, 110}, {47, 0.339, 8500, 110},
@@ -140,6 +141,7 @@ std::optional<Tastensaite> harfenSaite(int taste)
             t.werte.verlustLuft = 1.1;
         }
         t.laenge = L * std::exp2(-versatz / 12.0);
+        t.zupfort = 0.36 * t.laenge;  // Chadefaux u. a. 2012 (wie der Pruefstand)
         t.stegTaste = taste;
         return t;
     }
@@ -152,6 +154,7 @@ Tastensaite cembaloSaite(int taste)
     while (j + 2 < 11 && kTaskin[j + 1][0] <= taste) ++j;
     const double t = (taste - kTaskin[j][0]) / (kTaskin[j + 1][0] - kTaskin[j][0]);
     const double L = std::exp((1 - t) * std::log(kTaskin[j][1]) + t * std::log(kTaskin[j + 1][1])) / 1000.0;
+    const double zupf = std::exp((1 - t) * std::log(kTaskin[j][2]) + t * std::log(kTaskin[j + 1][2])) / 1000.0;  // ab Sattel
     std::size_t k = 0;
     while (k + 1 < 13 && taste > kTaskinDraht[k][0]) ++k;
     const double d = kTaskinDraht[k][1] / 1000.0, rho = kTaskinDraht[k][2], e = kTaskinDraht[k][3];
@@ -164,6 +167,7 @@ Tastensaite cembaloSaite(int taste)
     s.werte.durchmesser = d;
     s.werte.dichte = rho;
     s.laenge = L;
+    s.zupfort = L - zupf;
     s.stegTaste = taste;
     return s;
 }

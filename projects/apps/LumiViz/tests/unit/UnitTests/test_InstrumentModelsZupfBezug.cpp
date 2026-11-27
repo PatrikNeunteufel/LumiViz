@@ -22,9 +22,10 @@
  *   Der Fall „Tafel aus werte/zupf_umlauf.json“ misst jede Stelle daraus nach UL2 a.
  * - 34k-7d-4 (b): der Koerper am Steg (`InstrumentBody/KoerperAmSteg`, `stegAus`) fuer alle fuenf gezupften Koerper —
  *   senkrecht wie die Datei, die Annahme nach Scherrer (SR1 a) an Stichmoden gegen den Pruefstand.
- * - 34k-7d-4 (a): die Saitenschleife (`InstrumentModels/zupf/Schleife`) an allen 17 Faellen der Bezugsdatei samt Choeren —
- *   der Koerper aus `asset/loop/instrument_bodies/<koerper>.lvinstbody` ueber `stegAus`, das Umlauf-Filter aus
- *   `werte/zupf_umlauf.json`, der Zupf aus der Zeile `zupf`; geprueft die Gewichte des Daempfers, die Teiltoene der
+ * - 34k-7d-4 (a), (c): die Saitenschleife (`InstrumentModels/zupf/Schleife`) an allen 17 Faellen der Bezugsdatei samt
+ *   Choeren — der Koerper aus `asset/loop/instrument_bodies/<koerper>.lvinstbody` ueber `stegAus`, die Note wie der Kern sie
+ *   baut (`zupfNote` aus der Vorlage mit der Tafel aus `werte/zupf_umlauf.json`; Saiten, Stegpunkt und Zupf gleich den
+ *   Zeilen `saite` und `zupf` des Bezugs); geprueft die Gewichte des Daempfers, die Teiltoene der
  *   Stegkraft senkrecht (gemessen wie `teiltoene` des Kandidaten S200; Lage, Pegel frueh, Abklingen nach UL2 a) und ihr
  *   Pegel im Band 20 Hz – 20 kHz (PK1 a, Zeile `kraftband`); der Pegel ueber das ganze Band nur als Meldung.
  *   `LUMIVIZ_34K7D4_TEILTOENE=1` meldet je Fall die Teiltoene und die Baender 1–3 s. Rund 3 s.
@@ -41,6 +42,7 @@
 #include "InstrumentModels/zupf/Saiten.hpp"
 #include "InstrumentModels/zupf/Schleife.hpp"
 #include "InstrumentModels/zupf/UmlaufTafel.hpp"
+#include "InstrumentModels/zupf/ZupfKern.hpp"
 #include "loop/KernDatei.hpp"
 #include "loop/Koerper.hpp"
 
@@ -722,7 +724,7 @@ TEST_CASE("InstrumentModels 34k-7d-4 Schleife gegen den Bezug: alle Faelle")
     REQUIRE(datei.open(QIODevice::ReadOnly));
     const QJsonObject inst = QJsonDocument::fromJson(datei.readAll()).object().value(QStringLiteral("instruments")).toObject();
     std::map<std::string, lumi::kern::Steg> stege;
-    std::map<std::string, std::vector<kz::UmlaufEintrag>> tafeln;
+    std::map<std::string, kz::ZupfSpiel> spiele;
     int gerechnet = 0;
     for (const Fall& f : liesBezug())
     {
@@ -731,54 +733,55 @@ TEST_CASE("InstrumentModels 34k-7d-4 Schleife gegen den Bezug: alle Faelle")
         if (!stege.count(koerper))
         {
             stege[koerper] = lumi::koerper::stegAus(ladeKoerperDatei(koerper));
-            tafeln[koerper] = kz::umlaufTafelEintraege(
+            // das Spiel der Vorlage mit der gestimmten Tafel (34k-7d-4 (c): der Weg des Kerns, `zupfNote`)
+            const kz::Vorlage* v = nullptr;
+            for (const kz::Vorlage& x : kz::vorlagen())
+                if (x.name == koerper) v = &x;
+            REQUIRE(v != nullptr);
+            kz::ZupfSpiel s = v->spiel;
+            s.umlauf = kz::umlaufTafelEintraege(
                 lumi::loop::werteAusJson(tafelDerListe(), inst.value(QString::fromStdString(koerper)).toObject()).liste(kz::kUmlaufTafel));
+            spiele[koerper] = s;
         }
         const lumi::kern::Steg& steg = stege[koerper];
-        const std::vector<kz::UmlaufEintrag>& tafel = tafeln[koerper];
+        const kz::ZupfSpiel& spiel = spiele[koerper];
         int stegTaste = -1;
         const std::vector<Saite> saiten = saitenVon(f, stegTaste);
         REQUIRE(saiten.size() == f.saiten.size());
 
-        // je Saite das Umlauf-Filter aus der Tafel, das Glied am Grundton gestimmt
+        // die Note, wie der Kern sie baut (gehalten ueber den ganzen Ton: ohne Daempfer); ihre Saiten, ihr Stegpunkt und ihr
+        // Zupf gleich den Eingaben des Bezugs
+        const kz::ZupfNote note = kz::zupfNote(spiel, f.taste, -1, static_cast<int>(f.stufe), static_cast<long long>(kFrames), kFs);
+        REQUIRE_MESSAGE(note.fehler.empty(), note.fehler);
+        REQUIRE(note.saiten.size() == saiten.size());
+        CHECK(note.stegTaste == stegTaste);
+        CHECK(note.stegTaste == f.stegpunkt);
+        for (std::size_t i = 0; i < saiten.size(); ++i)
+        {
+            CAPTURE(i);
+            CHECK(note.saiten[i].werte == saiten[i].werte);
+            gleich(note.saiten[i].laenge, saiten[i].laenge, "laenge");
+        }
+        gleich(note.zupf.ort, f.zupf.at("ort"), "ort");
+        gleich(note.zupf.auslenkung, f.zupf.at("auslenkung"), "auslenkung");
+        gleich(note.zupf.winkelGrad, f.zupf.at("winkel"), "winkel");
+        gleich(note.zupf.breite, f.zupf.at("breite"), "breite");
+        gleich(note.zupf.tempo, f.zupf.at("tempo"), "tempo");
+        CHECK(note.zupf.neigung == f.zupf.at("neigung"));
+        CHECK(note.zupf.kipp == f.zupf.at("kipp"));
+
         kz::Schleifenauftrag a;
+        a.saiten = note.saiten;
+        a.zupf = note.zupf;
         double verstimmung = 0.0;  // Cent zwischen den Saiten eines im Einklang verstimmten Chors
-        if (f.instrument == "harfe" || f.instrument == "cembalo")
+        if (spiel.jeSaite() && saiten.size() == 2)
         {
-            const auto eintrag = std::find_if(tafel.begin(), tafel.end(), [&](const kz::UmlaufEintrag& u) { return u.taste == f.taste; });
-            REQUIRE(eintrag != tafel.end());
-            ku::Umlauffilter filter = eintrag->filter;
-            REQUIRE(ku::stimmeAmGrundton(filter, saiten[0].werte, saiten[0].laenge));
-            a.saiten = {{saiten[0].werte, saiten[0].laenge, filter}};
-        }
-        else
-        {
-            const kz::Saitensatz satz = f.instrument == "gitarre" ? kz::saitensatzGitarre() : f.instrument == "laute" ? kz::saitensatzLaute() : kz::saitensatzOud();
             std::size_t c = 0;
-            for (std::size_t i = 0; i < satz.choere.size(); ++i)
-                if (satz.choere[i].leer <= f.taste) c = i;
-            for (std::size_t i = 0; i < saiten.size(); ++i)
-            {
-                CAPTURE(i);
-                // jede Saite hat eine Tafel, im Einklang die der ersten (34k-7d-3)
-                auto eintrag = std::find_if(tafel.begin(), tafel.end(),
-                                            [&](const kz::UmlaufEintrag& u) { return u.chor == static_cast<int>(c) && u.saite == static_cast<int>(i); });
-                if (eintrag == tafel.end())
-                    eintrag = std::find_if(tafel.begin(), tafel.end(), [&](const kz::UmlaufEintrag& u) { return u.chor == static_cast<int>(c) && u.saite == 0; });
-                REQUIRE(eintrag != tafel.end());
-                ku::Saitentafel st = eintrag->tafel;
-                st.buende = satz.buende;
-                st.mensur = satz.mensur;
-                // die Lage der Laenge: ein im Einklang verstimmter Chor liegt um −12 log₂(Faktor) Buende verschoben
-                const double lage = (f.taste - satz.choere[c].leer) - 12.0 * std::log2(satz.choere[c].saiten[i].laengenFaktor);
-                const std::optional<ku::Umlauffilter> filter = ku::filterAn(st, saiten[i].werte, lage);
-                REQUIRE(filter);
-                a.saiten.push_back({saiten[i].werte, saiten[i].laenge, *filter});
-            }
-            if (saiten.size() == 2 && satz.choere[c].saiten[1].oktave == 0)
-                verstimmung = 1200.0 * std::abs(std::log2(satz.choere[c].saiten[1].laengenFaktor / satz.choere[c].saiten[0].laengenFaktor));
+            for (std::size_t i = 0; i < spiel.satz.choere.size(); ++i)
+                if (spiel.satz.choere[i].leer <= f.taste) c = i;
+            const kz::Saitenchor& chor = spiel.satz.choere[c];
+            if (chor.saiten[1].oktave == 0) verstimmung = 1200.0 * std::abs(std::log2(chor.saiten[1].laengenFaktor / chor.saiten[0].laengenFaktor));
         }
-        a.zupf = {f.zupf.at("ort"), f.zupf.at("auslenkung"), f.zupf.at("winkel"), f.zupf.at("breite"), f.zupf.at("tempo"), f.zupf.at("neigung"), f.zupf.at("kipp")};
         a.steg = &steg;
         a.punkt = steg.punktZu(stegTaste);
         REQUIRE(a.punkt != nullptr);

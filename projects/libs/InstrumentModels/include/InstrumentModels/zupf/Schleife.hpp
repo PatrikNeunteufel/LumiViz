@@ -23,6 +23,11 @@
  *   angepasst (`daempferAn`, wie `daempfer` des Bezugs). Der **Durchgriff** B0 macht den Steg in einem Schritt loesbar:
  *   (I + M Z) u = u_frei + 2 M Z v⁺ mit M = Σ Re B0 e eᵀ und Z = diag(√(T m)) je Saite und Polarisation, dann
  *   F = Z (2 v⁺ − u).
+ * - **Notenende** (ZN1 a): ein Daempfer am Sattel — derselbe Baustein wie der Lautenzug (GZ11 a). Ein Widerstand R dicht
+ *   am Sattel (R ≫ Z₀) reflektiert die Welle mit (R − Z₀) / (R + Z₀) statt 1, fuer alle Teiltoene gleich (Herleitung §7);
+ *   hier als Leitwert G = 1/R, ab `daempferAb` ueber `daempferRampe` Frames linear von 0 auf `daempferLeitwert` gefahren,
+ *   Faktor (1 − Z₀ G) / (1 + Z₀ G) auf die zurueckkehrende Welle. `leitwertFuerAbklingen` gibt den Leitwert, mit dem die
+ *   Saite ueber die Rampe um 60 dB faellt.
  * - **Ausgang**: die Stegkraft je Saite und Polarisation; die Summe senkrecht zur Decke gibt der Kern aus (GZ5 a).
  *
  * Mehrere Saiten eines Chors haengen am selben Stegpunkt und koppeln ueber ihn. Mitschwingen ueber mehrere Stegpunkte
@@ -69,7 +74,16 @@ struct SchleifenSaite
     umlauf::Saitenwerte werte;
     double laenge = 0.0;            ///< schwingende Laenge, m
     umlauf::Umlauffilter filter;    ///< mit gestimmtem Glied (N ≥ 1)
+    long long daempferAb = -1;      ///< ZN1 a: ab diesem Frame setzt der Daempfer an; −1 = keiner
+    long long daempferRampe = 0;    ///< so viele Frames bis zum vollen Leitwert (0 = sofort)
+    double daempferLeitwert = 0.0;  ///< G = 1/R am Ende der Rampe, m/(N s)
 };
+
+/// ZN1 a: der Leitwert G, mit dem eine Saite (Wellenwiderstand `z0`, `umlaeufe` Umlaeufe je Sekunde — ihr Grundton) ueber
+/// eine lineare Rampe von 0 auf G in `sekunden` um 60 dB faellt: f₁ τ ∫₀¹ ln((1 − a x) / (1 + a x)) dx = −ln 1000 mit
+/// a = Z₀ G, geschlossen ∫ = −[(1 − a) ln(1 − a) + (1 + a) ln(1 + a)] / a, nach a halbiert. Reichen die Umlaeufe auch mit
+/// a → 1 nicht (f₁ τ < 4,98), gilt a = 0,999.
+[[nodiscard]] double leitwertFuerAbklingen(double z0, double umlaeufe, double sekunden);
 
 /// Der Daempfer an einem Stegpunkt: φ_rms senkrecht und die Gewichte φ² je Mitte.
 struct Daempfer

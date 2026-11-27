@@ -37,11 +37,13 @@ namespace lumi::kern::zupf
 
 using umlauf::Saitenwerte;
 
-/// Eine Saite einer Taste (Harfe, Cembalo): ihre Werte, ihre schwingende Laenge, die Taste ihres Stegpunkts im Koerper.
+/// Eine Saite einer Taste (Harfe, Cembalo): ihre Werte, ihre schwingende Laenge, der Zupfort, die Taste ihres Stegpunkts
+/// im Koerper.
 struct Tastensaite
 {
     Saitenwerte werte;
-    double laenge = 0.0;  ///< m
+    double laenge = 0.0;   ///< m
+    double zupfort = 0.0;  ///< m vom Steg: Harfe 0,36 der Laenge (Chadefaux u. a. 2012), Cembalo nach Taskin 1769
     int stegTaste = -1;
 };
 
