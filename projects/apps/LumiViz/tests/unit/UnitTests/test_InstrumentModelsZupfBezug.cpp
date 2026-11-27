@@ -778,7 +778,7 @@ TEST_CASE("InstrumentModels 34k-7d-4 Schleife gegen den Bezug: alle Faelle")
             if (saiten.size() == 2 && satz.choere[c].saiten[1].oktave == 0)
                 verstimmung = 1200.0 * std::abs(std::log2(satz.choere[c].saiten[1].laengenFaktor / satz.choere[c].saiten[0].laengenFaktor));
         }
-        a.zupf = {f.zupf.at("ort"), f.zupf.at("auslenkung"), f.zupf.at("winkel"), f.zupf.at("breite"), f.zupf.at("tempo"), f.zupf.at("neigung")};
+        a.zupf = {f.zupf.at("ort"), f.zupf.at("auslenkung"), f.zupf.at("winkel"), f.zupf.at("breite"), f.zupf.at("tempo"), f.zupf.at("neigung"), f.zupf.at("kipp")};
         a.steg = &steg;
         a.punkt = steg.punktZu(stegTaste);
         REQUIRE(a.punkt != nullptr);

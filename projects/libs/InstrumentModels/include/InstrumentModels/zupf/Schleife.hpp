@@ -9,7 +9,7 @@
  *
  * - **Quelle** (ZU1 a): die Welle, die der Zupf am Steg einspeist, je Saite genau aus der Frequenzantwort und mit einer FFT
  *   in den Takt gebracht (`quelleImTakt`, wie `quelle` des Bezugs): Kraftstufe F0 = T d L / (x_p (L − x_p)), Fingerbreite
- *   als Gauss-Tiefpass, Neigung je Stufe (GZ6 a), bei der Harfe die Geschwindigkeit beim Abloesen als verteilter
+ *   als Gauss-Tiefpass, Neigung je Stufe ohne Pegel 10^(Stufe k lb(f / 1 kHz) / 20) (GZ6 a; den Pegel traegt d), bei der Harfe die Geschwindigkeit beim Abloesen als verteilter
  *   Kraftstoss ueber das Dreieck; der Winkel teilt sie auf die zwei Polarisationen (senkrecht cos, parallel sin). Gerechnet
  *   auf der Geraden ω − i s₀ (s₀ = 2 1/s) wie der Pruefstand, der Ton beginnt nach `vorlauf` (was vor dem Loslassen
  *   liegt — Vorschwinger der Bandgrenze und des Tiefpasses — faellt dorthin).
@@ -60,6 +60,7 @@ struct Zupfangabe
     double breite = 0.0075;     ///< Fingerbreite, m (Gauss-Tiefpass)
     double tempo = 0.0;         ///< Geschwindigkeit beim Abloesen, m/s (Harfe; 0 = keine)
     double neigung = 0.0;       ///< Stufe in dB (≤ 0) fuer die Neigung je Oktave (GZ6 a); 0 = keine
+    double kipp = 0.0;          ///< k: dB je Oktave um 1 kHz je dB Stufe (Gitarre, Laute, Oud 0,16; Harfe, Cembalo 0)
 };
 
 /// Eine Saite in der Schleife.

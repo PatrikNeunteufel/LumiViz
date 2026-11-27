@@ -21,12 +21,13 @@ using cplx = std::complex<double>;
 constexpr double kPi = std::numbers::pi;
 constexpr cplx kI{0.0, 1.0};
 
-/// GZ6 a: die Stufe kippt das Spektrum um 1 kHz, 0,16 dB je Oktave je dB Stufe (`staerke_faktor` des Pruefstands).
-double staerkeFaktor(cplx w, double stufe)
+/// GZ6 a: die Stufe kippt das Spektrum um 1 kHz, k dB je Oktave je dB Stufe — ohne den Pegel, den traegt die Auslenkung
+/// (`neigung_faktor` des Bezugs; bis S224 mit dem Pegel wie `staerke_faktor` des Pruefstands, die Stufe zaehlte doppelt).
+double neigungFaktor(cplx w, double stufe, double kipp)
 {
-    if (stufe == 0.0) return 1.0;
+    if (stufe == 0.0 || kipp == 0.0) return 1.0;
     const double f = std::max(std::abs(w.real()) / (2.0 * kPi), 20.0);
-    return std::pow(10.0, stufe * (1.0 + 0.16 * std::log2(f / 1000.0)) / 20.0);
+    return std::pow(10.0, stufe * kipp * std::log2(f / 1000.0) / 20.0);
 }
 
 /// ∫₀ᴸ y₀(x) e^(−i κ x) dx fuer das Dreieck y₀ (Spitze d bei a, null an beiden Enden), geschlossen.
@@ -42,7 +43,7 @@ cplx quelleBei(const umlauf::Saitenwerte& sa, double L, const Zupfangabe& z, cpl
     const Welle wl = welleBei(sa, w);
     const double T = sa.zug, m = sa.masse, xp = z.ort, d = z.auslenkung;
     const cplx arg = w * z.breite / std::sqrt(T / m);
-    const cplx breit = std::exp(-(arg * arg)) * staerkeFaktor(w, z.neigung);
+    const cplx breit = std::exp(-(arg * arg)) * neigungFaktor(w, z.neigung, z.kipp);
     const cplx f = -(T * d * L / (xp * (L - xp))) / (kI * w) * breit;
     cplx g = f / (2.0 * wl.z0) * (std::exp(-kI * wl.k * xp) - std::exp(-kI * wl.k * (2.0 * L - xp)));
     if (z.tempo != 0.0)

@@ -16,6 +16,11 @@ weichen an zwei Stellen von den festen Zahlen des Pruefstands ab, deren Ausgaben
              zwei Polarisationen (ZU1 a: der Kern rechnet die Quelle genau so, mit einer FFT). Vorgaben:
                Gitarre  d = 4 mm * 10^(Stufe/20), Neigung 0,16 dB/Okt je dB Stufe um 1 kHz (GZ6 a), 16 cm fest
                         (ZW1 a), 30 Grad, Breite 7,5 mm        [der Pruefstand rechnet 2 mm und mit Kappe]
+                        Den Pegel traegt die Auslenkung, die Neigung kommt als eigener Faktor
+                        10^(Stufe k lb(f / 1 kHz) / 20) dazu (`neigung_faktor`, k je Instrument in `KIPP`: Gitarre, Laute,
+                        Oud 0,16 nach GZ6 a / ZD2 a, Harfe 0 nach ZD1-1 a, Cembalo 0). Bis S224 nahm die Quelle
+                        `staerke_faktor` des Pruefstands, der den Pegel 10^(Stufe/20) schon enthaelt - mit der geschwaechten
+                        Auslenkung zaehlte die Stufe doppelt (gitarre_57_pp: -36 statt -18 dB bei 1 kHz).
                Laute, Oud  d = 2 mm, 16 cm fest, 30 Grad, 7,5 mm
                Harfe    0,36 L, d = 4 mm, 2 m/s beim Abloesen, 25 Grad, 7,5 mm (Chadefaux u. a. 2012); die
                         Geschwindigkeit als verteilter Kraftstoss ueber das Dreieck (`quelle`, `impuls`)
@@ -78,12 +83,23 @@ def dreieck_integral(kappa, a, L, d):
     return d * (Ea - 1) / (a * kappa ** 2) - d * (EL - Ea) / ((L - a) * kappa ** 2)
 
 
-def quelle(sa, L, xp, d, breite, tempo, stufe, w, geschwindigkeit="impuls"):
+KIPP = {"gitarre": 0.16, "laute": 0.16, "oud": 0.16, "harfe": 0.0, "cembalo": 0.0}
+
+
+def neigung_faktor(w, stufe, kipp):
+    """Die Neigung je Stufe um 1 kHz ohne Pegel: 10^(Stufe k lb(f / 1 kHz) / 20), f mindestens 20 Hz (GZ6 a)."""
+    if stufe == 0.0 or kipp == 0.0:
+        return 1.0
+    f = np.maximum(np.abs(w.real) / (2 * np.pi), 20.0)
+    return 10 ** (stufe * kipp * np.log2(f / 1000.0) / 20)
+
+
+def quelle(sa, L, xp, d, breite, tempo, stufe, w, geschwindigkeit="impuls", kipp=0.16):
     """Die Quelle g einer Saite am Steg (ZU1 a: so rechnet der Kern sie, mit einer FFT): Kraftstufe am Zupfpunkt,
-    Fingerbreite, Neigung je Stufe, dazu die Geschwindigkeit beim Abloesen (siehe `stegkraft`)."""
+    Fingerbreite, Neigung je Stufe (ohne Pegel, den traegt d), dazu die Geschwindigkeit beim Abloesen (siehe `stegkraft`)."""
     k, z0 = ps.saite_wellen(sa, w)
     T, m = sa["T"], sa["m"]
-    breit = np.exp(-(w * breite / np.sqrt(T / m)) ** 2) * (ps.staerke_faktor(w, stufe) if stufe else 1.0)
+    breit = np.exp(-(w * breite / np.sqrt(T / m)) ** 2) * neigung_faktor(w, stufe, kipp)
     f = -(T * d * L / (xp * (L - xp))) / (1j * w) * breit
     if tempo and geschwindigkeit == "rampe":
         f = f * (1 - (tempo / d) / (1j * w))
@@ -94,7 +110,7 @@ def quelle(sa, L, xp, d, breite, tempo, stufe, w, geschwindigkeit="impuls"):
     return g
 
 
-def stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, stufe, Y, w, geschwindigkeit="impuls"):
+def stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, stufe, Y, w, geschwindigkeit="impuls", kipp=0.16):
     """Die Kraft am Steg je Saite und Richtung (Frequenz x 2S), wie `ton_mit` des Pruefstands, mit der Neigung je Stufe
     (`staerke_faktor`, GZ6 a) und der Kraftstufe je Saite aus derselben Auslenkung.
 
@@ -112,7 +128,7 @@ def stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, stufe, Y, w, geschw
         k, z0 = ps.saite_wellen(sa, w)
         z[:, 2 * i] = z[:, 2 * i + 1] = z0
         E[:, 2 * i] = E[:, 2 * i + 1] = np.exp(-2j * k * L)
-        gi = quelle(sa, L, xp, d, breite, tempo, stufe, w, geschwindigkeit)
+        gi = quelle(sa, L, xp, d, breite, tempo, stufe, w, geschwindigkeit, kipp)
         g[:, 2 * i], g[:, 2 * i + 1] = gi * np.cos(a), gi * np.sin(a)
     F = np.empty((n, 2 * S), dtype=complex)
     eins = np.eye(2 * S)
@@ -199,7 +215,7 @@ def rechne(name, instrument, taste, stufe, kp, roh, w, aus):
     for i in range(S):
         for j in range(S):
             Y[:, 2 * i, 2 * j] += yd
-    F = stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, neigung, Y, w)
+    F = stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, neigung, Y, w, kipp=KIPP[instrument])
     Fz = F[:, 0::2].sum(axis=1)
     _, Hz, _ = ps.koerper_kurven2(kp, punkt, w, tan)                # Abstrahlung: alle Moden, nur die Senkrechte
     kraft = ps.zeit(Fz[:, None])[:, 0]
@@ -218,7 +234,7 @@ def rechne(name, instrument, taste, stufe, kp, roh, w, aus):
         f0n = sa["T"] * d * L / (xp * (L - xp))
         aus.append(f"saite {i} laenge {zahl(L)} {werte} kraft {zahl(f0n)}")
     aus.append(f"zupf ort {zahl(xp)} auslenkung {zahl(d)} winkel {zahl(winkel)} breite {zahl(breite)} tempo {zahl(tempo)} "
-               f"neigung {zahl(neigung)}")
+               f"neigung {zahl(neigung)} kipp {zahl(KIPP[instrument])}")
     aus.append(f"daempfer streuung {zahl(streuung)} " + " ".join(zahl(x) for x in phi2))
     for n, (hz, frueh, spaet) in enumerate(tt, 1):
         aus.append(f"teilton {n} {zahl(hz)} {zahl(frueh)} {zahl(spaet)}")
@@ -257,12 +273,12 @@ def gegen_zeitschritt(namen):
         eta = np.concatenate([eta, np.full(len(DAEMPFER_MITTEN), DAEMPFER_ETA)])
         e = np.concatenate([e, np.stack([np.sqrt(phi2), 0 * phi2], axis=1)])
         # Bezug: geschlossen
-        F = stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, neigung, Y, w)
+        F = stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, neigung, Y, w, kipp=KIPP[instrument])
         bezug = ps.zeit(F[:, 0:1])[:, 0]
         # die Quelle g wie in `stegkraft`, in die Zeit
         sa, L = saiten[0], laengen[0]
         T, m = sa["T"], sa["m"]
-        g1 = quelle(sa, L, xp, d, breite, tempo, neigung, w)
+        g1 = quelle(sa, L, xp, d, breite, tempo, neigung, w, kipp=KIPP[instrument])
         a = np.radians(winkel)
         g = ps.zeit(g1[:, None] * np.array([np.cos(a), np.sin(a)])[None, :])
         h, _ = kd.umlauf_fir(sa, L)
@@ -313,7 +329,7 @@ def main():
            + " ".join(f"{m:.0f}" for m in DAEMPFER_MITTEN) + f" Hz, eta {DAEMPFER_ETA!r}",
            "# fall <name> <instrument> taste <t> stufe <dB> stegpunkt <taste> saiten <n>",
            "# saite <i> laenge <m> T m EI etaB [etaF etaA | d rho] kraft <F0 N>",
-           "# zupf ort <m> auslenkung <m> winkel <grad> breite <m> tempo <m/s> neigung <stufe dB>",
+           "# zupf ort <m> auslenkung <m> winkel <grad> breite <m> tempo <m/s> neigung <stufe dB> kipp <dB je Oktave je dB Stufe>",
            "# daempfer streuung <phi_rms senkrecht> <phi^2 je Mitte, 7 Werte>",
            "# teilton <n> <Hz> <Pegel frueh dB> <Pegel spaet dB>   (Stegkraft senkrecht)",
            "# kraft <dB re 1 N: 0-0,1 s> <0-1 s> <1-3 s>   (ab dem Vorlauf)",
