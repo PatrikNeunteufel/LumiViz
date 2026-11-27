@@ -16,6 +16,7 @@ dbg(DBG_OFTEN
 
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Anschlag.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Ausgleich.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Eigenzerlegung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Fft.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Kurve.cpp"
@@ -29,6 +30,7 @@ set(_local_sources
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Anschlag.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Ausgleich.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Eigenzerlegung.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Fft.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../include/InstrumentCore/Kurve.hpp"

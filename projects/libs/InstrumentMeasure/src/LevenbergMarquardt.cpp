@@ -16,49 +16,6 @@ double quadratsumme(const std::vector<double>& r)
     return s;
 }
 
-std::vector<double> loese(Matrix a, std::vector<double> b)
-{
-    const std::size_t n = a.zeilen;
-    std::vector<std::size_t> reihe(n);
-    for (std::size_t i = 0; i < n; ++i) reihe[i] = i;
-    std::vector<bool> frei(n, false);
-    double groesst = 0.0;
-    for (const double v : a.werte) groesst = std::max(groesst, std::abs(v));
-    const double klein = groesst * 1e-14;
-    for (std::size_t k = 0; k < n; ++k)
-    {
-        std::size_t p = k;
-        for (std::size_t i = k + 1; i < n; ++i)
-            if (std::abs(a(i, k)) > std::abs(a(p, k))) p = i;
-        if (std::abs(a(p, k)) <= klein)
-        {
-            frei[k] = true;
-            continue;
-        }
-        if (p != k)
-        {
-            for (std::size_t j = 0; j < n; ++j) std::swap(a(k, j), a(p, j));
-            std::swap(b[k], b[p]);
-        }
-        for (std::size_t i = k + 1; i < n; ++i)
-        {
-            const double f = a(i, k) / a(k, k);
-            if (f == 0.0) continue;
-            for (std::size_t j = k; j < n; ++j) a(i, j) -= f * a(k, j);
-            b[i] -= f * b[k];
-        }
-    }
-    std::vector<double> x(n, 0.0);
-    for (std::size_t k = n; k-- > 0;)
-    {
-        if (frei[k]) continue;
-        double s = b[k];
-        for (std::size_t j = k + 1; j < n; ++j) s -= a(k, j) * x[j];
-        x[k] = s / a(k, k);
-    }
-    return x;
-}
-
 std::vector<double> diagonaleJtJ(const Matrix& j)
 {
     std::vector<double> d(j.spalten, 0.0);

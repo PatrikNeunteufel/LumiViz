@@ -17,12 +17,14 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Pedale.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Saiten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/UmlaufTafel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Schleife.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/Zupf.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/ZupfKern.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/Saiten.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/UmlaufTafel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/InstrumentModels/zupf/Schleife.hpp"
 )
 set(_local_templates
     # (templates - *.t; *.tpp)

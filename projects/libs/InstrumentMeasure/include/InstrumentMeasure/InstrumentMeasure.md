@@ -1,7 +1,7 @@
 # InstrumentMeasure — Messkette und Setzen
 
-> **Version:** 0.7.0
-> **Datum:** 2026-11-26
+> **Version:** 0.8.0
+> **Datum:** 2026-11-27
 > **Typ:** CppModuleDoc
 > **Status:** gebaut (Stufe 34e; 34f Stimmen; 34g der Stimmer der Klasse 4; 34j der Stimmer der Klasse 10)
 > **Modul:** InstrumentMeasure (STATIC, `projects/libs/InstrumentMeasure`)
@@ -44,7 +44,7 @@ Setzen sein `Modell` (ME3 a). Jede Übernahme steht im
 | `Zielsumme.hpp` | Vergleich je Größe mit Untergrenze der Toleranz (UG1 a), Residuen, Summe je Taste, Berichte |
 | `Hoerschwellen.hpp` | die Hörschwellen je Größe aus `werte/hoerschwellen.txt` (HW1 a), hörbar getroffen (HW2 a) |
 | `Probe.hpp` | Berichte lesen, eindeutig über Startpunkte, Vorzeichentest mit Holm, Ausreißer (HW2 a–HW4 a; bis S176 `Probe7512`) |
-| `LevenbergMarquardt.hpp` | LM mit Grenzen, einfach und je Block (7.5.10, 7.5.12 A2/A3); Endregel nach ME4 a: auch der letzte kleine Schritt wird ausgewertet und genommen, wenn er senkt |
+| `LevenbergMarquardt.hpp` | `Matrix` und `loese` seit 0.8.0 aus `InstrumentCore/Ausgleich` (per `using`); LM mit Grenzen, einfach und je Block (7.5.10, 7.5.12 A2/A3); Endregel nach ME4 a: auch der letzte kleine Schritt wird ausgewertet und genommen, wenn er senkt |
 | `NelderMead.hpp` | Nelder–Mead (Werkzeug) |
 | `Bausteine.hpp` | aus IC: B1 Teiltonverfolgung, B2 Tonhöhe (YIN), B3 Vibrato, B4 Rest, B5 Einschwingen, B6 Modalfit (ESPRIT), B7 Bänder über der Zeit, B8 Gleiten; `amplitudenBei` (Messung an der Struktur des Bezugs, L4) |
 | `Samples.hpp` | aus IC, allgemein: die Wurzel lokaler Aufnahmen aus einer Umgebungsvariable (Name vom Aufrufer), `SHA256SUMS` lesen, Dateien prüfen |
@@ -80,6 +80,7 @@ Das Ergebnis ist ein Vorschlag (L18).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.8.0 | 2026-11-27 | Session 224 (Bibliothek 0.8.0). 34k-7d-4 (a): `Matrix`, `loese` (`LevenbergMarquardt`) und `Qr`, `kleinsteQuadrate`, `nnls` (bisher anonym im Entwurf des Umlauf-Filters) wortgleich nach `InstrumentCore/Ausgleich` (Core 0.10.0); hier per `using` in `lumi::messung` bzw. im Entwurf. Bit für Bit: der Schreiber der Tafel entwarf Cembalo T60, T84, Harfe T60 und Laute Chor 1 neu, `werte/zupf_umlauf.json` blieb unverändert; `*InstrumentMeasure*,*InstrumentCore*,*34k-7d*,*Setzen*` 71 / 71 unter Release-clang. |
 | 0.7.0 | 2026-11-26 | Session 222 (Bibliothek 0.7.0). 34k-7d-3: der Entwurf rechnet das Glied am Grundton und die gebundene Tafel mit `InstrumentModels` 0.9.0 (`TafelSaite` erbt `Saitentafel`), Bit für Bit wie vorher; `ZupfStimmen`: `entwirfUmlaufJeTaste`, `entwirfUmlaufJeSaite` (`UmlaufTafelEntwurf`: die Tafel eines Instruments mit der Bewertung je Stelle). |
 | 0.6.0 | 2026-11-26 | Session 222 (Bibliothek 0.6.0). 34k-7d-2 (ZK1 a): `GestimmteWerte` je Name ein `kern::Wert` statt einer Kurve — ein Stimmer darf eine Liste stimmen (die Tafel des Umlauf-Filters); die Stimmer von `bar`, `freeReed`, `pluckedString` geben weiter Kurven, Bit für Bit wie vorher. Neuer Fall „Instrument Stimmen 34k-7d: eine gestimmte Liste“ (stimmen, Abdruck, Wächter, durch `coreParams` und zurück). |
 | 0.5.1 | 2026-11-25 | Session 221 (Bibliothek 0.5.1). RZ2 a: `UmlaufEntwurf` mit `EntwurfOptionen` (Schalter Rangverlust für die Gegenprobe ohne TK2 a) und `Rechenaufwand` je Entwurf; die Vorgabe rechnet wie 0.5.0. Neuer Fall „Rechenaufwand und Schalter Rangverlust (RZ2 a)“, Messfall mit `LUMIVIZ_34K7C_TASTEN` und `LUMIVIZ_34K7C_RANGVERLUST`. |

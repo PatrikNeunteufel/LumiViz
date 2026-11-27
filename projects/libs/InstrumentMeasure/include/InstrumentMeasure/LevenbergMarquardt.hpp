@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include "InstrumentCore/Ausgleich.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -41,24 +43,12 @@
 namespace lumi::messung
 {
 
-/// Eine dichte Matrix, zeilenweise.
-struct Matrix
-{
-    std::size_t zeilen = 0;
-    std::size_t spalten = 0;
-    std::vector<double> werte;
-
-    Matrix() = default;
-    Matrix(std::size_t z, std::size_t s) : zeilen(z), spalten(s), werte(z * s, 0.0) {}
-    double& operator()(std::size_t i, std::size_t j) { return werte[i * spalten + j]; }
-    [[nodiscard]] double operator()(std::size_t i, std::size_t j) const { return werte[i * spalten + j]; }
-    [[nodiscard]] bool operator==(const Matrix&) const = default;
-};
+/// Eine dichte Matrix, zeilenweise; und a·x = b nach Gauss mit Spaltenpivot (eine Spalte ohne Pivot bekommt x = 0) —
+/// seit 0.8.0 in `InstrumentCore/Ausgleich` (Core 0.10.0; der Kern `pluckedString` rechnet zur Laufzeit damit, 34k-7d-4).
+using kern::Matrix;
+using kern::loese;
 
 double quadratsumme(const std::vector<double>& r);
-
-/// Loest a·x = b (Gauss mit Spaltenpivot); eine Spalte ohne Pivot (singulaer) bekommt x = 0.
-std::vector<double> loese(Matrix a, std::vector<double> b);
 
 /// Die Diagonale von JᵀJ — je Parameter, wie stark die Residuen auf ihn antworten.
 std::vector<double> diagonaleJtJ(const Matrix& j);

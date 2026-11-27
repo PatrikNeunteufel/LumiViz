@@ -20,25 +20,37 @@
  *   `werte/zupf_umlauf.json` (je Instrument die Liste wie in `coreParams`) nach jeder Taste bzw. jedem Chor, eine Zeile je
  *   Stelle ungepuffert nach stderr (S222: ein Absturz des Rechners mitten im Lauf liess nichts uebrig). Alle fuenf rund 2 h.
  *   Der Fall „Tafel aus werte/zupf_umlauf.json“ misst jede Stelle daraus nach UL2 a.
+ * - 34k-7d-4 (a): die Saitenschleife (`InstrumentModels/zupf/Schleife`) an den fuenf Gitarre-Faellen der Bezugsdatei —
+ *   der Koerper aus `asset/loop/instrument_bodies/classical_guitar.lvinstbody` (mit eigener Richtung am Steg), das
+ *   Umlauf-Filter aus `werte/zupf_umlauf.json`, der Zupf aus der Zeile `zupf`; geprueft die Gewichte des Daempfers und
+ *   die Teiltoene der Stegkraft senkrecht (gemessen wie `teiltoene` des Kandidaten S200) und ihr Pegel im Band
+ *   20 Hz – 20 kHz (PK1 a, Zeile `kraftband`); der Pegel ueber das ganze Band nur als Meldung. Rund 0,7 s.
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
+#include "InstrumentCore/Fft.hpp"
 #include "InstrumentCore/Pool.hpp"
 #include "InstrumentMeasure/UmlaufEntwurf.hpp"
 #include "InstrumentMeasure/ZupfStimmen.hpp"
 #include "InstrumentModels/zupf/Saiten.hpp"
+#include "InstrumentModels/zupf/Schleife.hpp"
 #include "InstrumentModels/zupf/UmlaufTafel.hpp"
 #include "loop/KernDatei.hpp"
 
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
 
 #include <algorithm>
+#include <array>
+#include <chrono>
 #include <cmath>
+#include <complex>
+#include <numbers>
 #include <cstdio>
 #include <cstdlib>
 #include <tuple>
@@ -63,6 +75,17 @@ struct Fall
     double stufe = 0.0;
     /// je Saite die Felder der Zeile `saite` (Name → Zahl)
     std::vector<std::map<std::string, double>> saiten;
+    /// die Zeile `zupf` (Name → Zahl)
+    std::map<std::string, double> zupf;
+    /// `daempfer`: φ_rms senkrecht und φ² je Mitte
+    double streuung = 0.0;
+    std::vector<double> daempfer;
+    /// je Teilton (Hz, Pegel frueh, Pegel spaet) der Stegkraft senkrecht
+    std::vector<std::array<double, 3>> teiltoene;
+    /// Pegel der Stegkraft 0–0,1 / 0–1 / 1–3 s ab dem Vorlauf, dB re 1 N
+    std::array<double, 3> kraft{};
+    /// dieselben im Band 20 Hz – 20 kHz (S224, PK1 a)
+    std::array<double, 3> kraftband{};
 };
 
 std::vector<Fall> liesBezug()
@@ -93,6 +116,39 @@ std::vector<Fall> liesBezug()
             double wert = 0.0;
             while (z >> name >> wert) m[name] = wert;
             faelle.back().saiten.push_back(m);
+        }
+        else if (art == "zupf")
+        {
+            REQUIRE(!faelle.empty());
+            std::string name;
+            double wert = 0.0;
+            while (z >> name >> wert) faelle.back().zupf[name] = wert;
+        }
+        else if (art == "daempfer")
+        {
+            REQUIRE(!faelle.empty());
+            std::string w;
+            z >> w >> faelle.back().streuung;
+            double x = 0.0;
+            while (z >> x) faelle.back().daempfer.push_back(x);
+        }
+        else if (art == "teilton")
+        {
+            REQUIRE(!faelle.empty());
+            int n = 0;
+            std::array<double, 3> t{};
+            z >> n >> t[0] >> t[1] >> t[2];
+            faelle.back().teiltoene.push_back(t);
+        }
+        else if (art == "kraft")
+        {
+            REQUIRE(!faelle.empty());
+            z >> faelle.back().kraft[0] >> faelle.back().kraft[1] >> faelle.back().kraft[2];
+        }
+        else if (art == "kraftband")
+        {
+            REQUIRE(!faelle.empty());
+            z >> faelle.back().kraftband[0] >> faelle.back().kraftband[1] >> faelle.back().kraftband[2];
         }
     }
     return faelle;
@@ -452,4 +508,241 @@ TEST_CASE("InstrumentModels 34k-7d-3 Tafel aus werte/zupf_umlauf.json: jede Stel
         }
         MESSAGE(i.name << ": " << eintraege.size() << " Eintraege, " << stellen << " Stellen gemessen");
     }
+}
+
+// ---------------------------------------------------------------- 34k-7d-4 (a): die Schleife gegen den Bezug
+
+namespace
+{
+constexpr double kFs = lumi::kern::zupf::kSchleifenRate;
+constexpr double kVorlauf = 0.02;                         // der Bezug beginnt den Ton bei 0,02 s (Pruefstand VORLAUF)
+constexpr std::size_t kFrames = 180000;                   // 3,75 s wie `zeit` des Pruefstands (4 s ohne das letzte Viertel)
+/// PK1 a: Pegel der Stegkraft im Band 20 Hz – 20 kHz gegen den Bezug, 0–0,1 / 0–1 / 1–3 s. Gemessen S224: ≤ 0,07 dB,
+/// nur Gitarre 57 pp 1–3 s −0,82 dB (bei −58 dB re 1 N; die Teiltoene treffen dort ≤ 0,56 dB, die Ursache ist offen —
+/// 7d-4 (d) zeigt, ob es am Hoerort zaehlt)
+constexpr std::array<double, 3> kBandGrenzeDb = {0.1, 0.1, 1.0};
+
+std::filesystem::path repoWurzel()
+{
+    std::filesystem::path p = std::filesystem::path(__FILE__).parent_path();  // tests/unit/UnitTests
+    for (int i = 0; i < 6; ++i) p = p.parent_path();
+    return p;
+}
+
+/// Der Koerper am Steg aus der Koerperdatei, wie der Bezug ihn liest: je Mode Frequenz, η, Richtung; je Stegpunkt der
+/// Formwert laengs der Richtung (`bridge`) und φ_rms senkrecht (`bridgeSpread` · cos des Winkels im statistischen Teil).
+/// Nur fuer Koerper mit eigener Richtung (Gitarre); ohne sie setzt 7d-4 (b) die Annahme nach SR1 a.
+lumi::kern::Steg stegAusDatei(const std::string& name)
+{
+    QFile f(QString::fromStdString((repoWurzel() / "asset" / "loop" / "instrument_bodies" / (name + ".lvinstbody")).string()));
+    REQUIRE(f.open(QIODevice::ReadOnly));
+    const QJsonObject k = QJsonDocument::fromJson(f.readAll()).object();
+    lumi::kern::Steg s;
+    const QJsonArray moden = k.value(QStringLiteral("modes")).toArray();
+    const QJsonArray tasten = k.value(QStringLiteral("bridgePoints")).toArray();
+    const QJsonObject st = k.value(QStringLiteral("statistical")).toObject();
+    const QJsonArray streuung = st.value(QStringLiteral("bridgeSpread")).toArray();
+    const double winkelSt = st.value(QStringLiteral("bridgeAngle")).toDouble(0.0) * std::numbers::pi / 180.0;
+    for (const QJsonValue& m : moden)
+    {
+        const QJsonObject o = m.toObject();
+        s.moden.push_back({o.value(QStringLiteral("f")).toDouble(), o.value(QStringLiteral("eta")).toDouble(),
+                           o.value(QStringLiteral("bridgeAngle")).toDouble(0.0)});
+    }
+    for (qsizetype p = 0; p < tasten.size(); ++p)
+    {
+        lumi::kern::Steg::Punkt pk;
+        pk.taste = tasten.at(p).toInt();
+        for (const QJsonValue& m : moden) pk.form.push_back(m.toObject().value(QStringLiteral("bridge")).toArray().at(p).toDouble());
+        pk.streuung = streuung.at(p).toDouble() * std::cos(winkelSt);
+        s.punkte.push_back(pk);
+    }
+    s.dichte = {st.value(QStringLiteral("fromHz")).toDouble(), st.value(QStringLiteral("toHz")).toDouble(),
+                st.value(QStringLiteral("density")).toDouble(), st.value(QStringLiteral("rise")).toDouble()};
+    REQUIRE(lumi::kern::pruefeSteg(s).empty());
+    return s;
+}
+
+/// np.hanning
+std::vector<double> hann(std::size_t m)
+{
+    std::vector<double> w(m);
+    for (std::size_t i = 0; i < m; ++i) w[i] = 0.5 - 0.5 * std::cos(2.0 * std::numbers::pi * static_cast<double>(i) / static_cast<double>(m - 1));
+    return w;
+}
+
+/// Je Teilton Frequenz (Hann-Spektrum 0,1–1,1 s auf 2²⁰ Werten, Gipfel parabolisch im Logarithmus) und Pegel frueh
+/// (0,05–0,45 s) und spaet (1–2 s) an dieser Frequenz — wie `teiltoene` des Kandidaten S200, mit dem der Bezug misst.
+std::vector<std::array<double, 3>> teiltoene(const std::vector<double>& x, double f0, int anzahl = 12)
+{
+    const std::size_t a = static_cast<std::size_t>(0.1 * kFs), e = static_cast<std::size_t>(1.1 * kFs), N = std::size_t{1} << 20;
+    const std::vector<double> w = hann(e - a);
+    std::vector<double> buf(N, 0.0);
+    for (std::size_t i = 0; i < e - a; ++i) buf[i] = x[a + i] * w[i];
+    std::vector<std::complex<double>> X(N / 2 + 1);
+    lumi::kern::fft().vorwaerts(buf, X);
+    std::vector<double> S(X.size());
+    for (std::size_t i = 0; i < X.size(); ++i) S[i] = std::abs(X[i]);
+    const double df = kFs / static_cast<double>(N);
+    std::vector<std::array<double, 3>> aus;
+    for (int n = 1; n <= anzahl; ++n)
+    {
+        if (f0 * n > 12000.0) break;
+        std::size_t best = 0;
+        double sb = -1.0;
+        for (std::size_t i = 0; i < S.size(); ++i)
+        {
+            const double hz = static_cast<double>(i) * df;
+            if (hz > f0 * (n - 0.3) && hz < f0 * (n + 0.3) && S[i] > sb)
+            {
+                sb = S[i];
+                best = i;
+            }
+        }
+        const double y0 = std::log(S[best - 1] + 1e-300), y1 = std::log(S[best] + 1e-300), y2 = std::log(S[best + 1] + 1e-300);
+        const double fn = static_cast<double>(best) * df + 0.5 * (y0 - y2) / (y0 - 2.0 * y1 + y2) * df;
+        std::array<double, 3> t{fn, 0.0, 0.0};
+        int j = 1;
+        for (const auto [von, bis] : {std::pair{0.05, 0.45}, std::pair{1.0, 2.0}})
+        {
+            const std::size_t s0 = static_cast<std::size_t>(von * kFs), s1 = static_cast<std::size_t>(bis * kFs);
+            const std::vector<double> hw = hann(s1 - s0);
+            std::complex<double> summe = 0.0;
+            for (std::size_t i = s0; i < s1; ++i)
+                summe += x[i] * std::polar(1.0, -2.0 * std::numbers::pi * fn * static_cast<double>(i) / kFs) * hw[i - s0];
+            t[static_cast<std::size_t>(j++)] = 20.0 * std::log10(std::abs(summe / static_cast<double>(s1 - s0)) + 1e-300);
+        }
+        aus.push_back(t);
+    }
+    return aus;
+}
+
+/// Der Zeitverlauf nur mit 20 Hz ≤ f ≤ 20 kHz, ueber eine FFT auf 2¹⁸ Werten, ausserhalb null (wie `im_band` des Bezugs).
+std::vector<double> imBand(const std::vector<double>& x)
+{
+    const std::size_t N = std::size_t{1} << 18;
+    std::vector<double> buf(N, 0.0);
+    std::copy(x.begin(), x.end(), buf.begin());
+    std::vector<std::complex<double>> X(N / 2 + 1);
+    lumi::kern::fft().vorwaerts(buf, X);
+    for (std::size_t k = 0; k < X.size(); ++k)
+    {
+        const double hz = static_cast<double>(k) * kFs / static_cast<double>(N);
+        if (hz < 20.0 || hz > 20000.0) X[k] = 0.0;
+    }
+    lumi::kern::fft().rueckwaerts(X, buf);
+    buf.resize(x.size());
+    return buf;
+}
+
+double rmsDb(const std::vector<double>& x, double von, double bis)
+{
+    const std::size_t a = static_cast<std::size_t>(von * kFs), e = static_cast<std::size_t>(bis * kFs);
+    double s = 0.0;
+    for (std::size_t i = a; i < e; ++i) s += x[i] * x[i];
+    return 10.0 * std::log10(s / static_cast<double>(e - a) + 1e-300);
+}
+}  // namespace
+
+TEST_CASE("InstrumentModels 34k-7d-4 Schleife einer Saite gegen den Bezug: Gitarre")
+{
+    const lumi::kern::Steg steg = stegAusDatei("classical_guitar");
+    QFile datei(QString::fromStdString(umlaufDatei().string()));
+    REQUIRE(datei.open(QIODevice::ReadOnly));
+    const QJsonObject inst = QJsonDocument::fromJson(datei.readAll()).object().value(QStringLiteral("instruments")).toObject();
+    const std::vector<kz::UmlaufEintrag> tafel =
+        kz::umlaufTafelEintraege(lumi::loop::werteAusJson(tafelDerListe(), inst.value(QStringLiteral("classical_guitar")).toObject()).liste(kz::kUmlaufTafel));
+    const kz::Saitensatz satz = kz::saitensatzGitarre();
+    int gerechnet = 0;
+    for (const Fall& f : liesBezug())
+    {
+        if (f.instrument != "gitarre") continue;
+        CAPTURE(f.name);
+        int stegTaste = -1;
+        const std::vector<Saite> saiten = saitenVon(f, stegTaste);
+        REQUIRE(saiten.size() == 1);
+        std::size_t c = 0;
+        for (std::size_t i = 0; i < satz.choere.size(); ++i)
+            if (satz.choere[i].leer <= f.taste) c = i;
+        const auto eintrag = std::find_if(tafel.begin(), tafel.end(), [&](const kz::UmlaufEintrag& u) { return u.chor == static_cast<int>(c) && u.saite == 0; });
+        REQUIRE(eintrag != tafel.end());
+        ku::Saitentafel st = eintrag->tafel;
+        st.buende = satz.buende;
+        st.mensur = satz.mensur;
+        const double lage = f.taste - satz.choere[c].leer;
+        const std::optional<ku::Umlauffilter> filter = ku::filterAn(st, saiten[0].werte, lage);
+        REQUIRE(filter);
+
+        kz::Schleifenauftrag a;
+        a.saiten = {{saiten[0].werte, saiten[0].laenge, *filter}};
+        a.zupf = {f.zupf.at("ort"), f.zupf.at("auslenkung"), f.zupf.at("winkel"), f.zupf.at("breite"), f.zupf.at("tempo"), f.zupf.at("neigung")};
+        a.steg = &steg;
+        a.punkt = steg.punktZu(stegTaste);
+        REQUIRE(a.punkt != nullptr);
+        a.frames = kFrames;
+        a.vorlauf = kVorlauf;
+        const auto t0 = std::chrono::steady_clock::now();
+        const kz::Schleifenkraft k = kz::rechneSchleife(a);
+        const double sek = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+
+        // der Daempfer: dieselben Gewichte wie der Bezug (scipy nnls)
+        CHECK(k.daempfer.streuung == doctest::Approx(f.streuung).epsilon(1e-12));
+        REQUIRE(f.daempfer.size() == k.daempfer.gewichte.size());
+        double groesstesGewicht = 0.0;
+        for (double x : f.daempfer) groesstesGewicht = std::max(groesstesGewicht, x);
+        for (std::size_t j = 0; j < f.daempfer.size(); ++j)
+        {
+            CAPTURE(j);
+            CHECK(std::abs(k.daempfer.gewichte[j] - f.daempfer[j]) <= 1e-9 * groesstesGewicht);
+        }
+
+        // die Teiltoene der Stegkraft senkrecht
+        const double f0 = 440.0 * std::exp2((f.taste - 69) / 12.0);
+        const std::vector<std::array<double, 3>> tt = teiltoene(k.senkrecht, f0);
+        REQUIRE(tt.size() == f.teiltoene.size());
+        // gezaehlt werden Teiltoene bis 60 dB unter dem staerksten (frueh) — darunter liegt der Rauschboden der Messung
+        // (Gitarre 83: Teilton 12 bei −168 dB, 156 dB unter dem Grundton); spaet nur, wo der Bezug spaet nicht mehr als 60 dB
+        // unter frueh liegt (wie `gegen_zeitschritt` des Bezugs). Bis 40 dB unter dem staerksten ≤ 1 dB, darunter ≤ 2 dB:
+        // der Kandidat S200 mit genauem Umlauf traf die Gitarre pp an Teilton 11 (51 dB darunter) auf 1,53 dB.
+        // Die Lage ≤ 1 Cent (UL2 a erlaubt 3; gemessen S224 ≤ 0,37).
+        double staerkster = -1e300;
+        for (const auto& t : f.teiltoene) staerkster = std::max(staerkster, t[1]);
+        double cent = 0.0, frueh = 0.0, spaet = 0.0;
+        for (std::size_t n = 0; n < tt.size(); ++n)
+        {
+            if (f.teiltoene[n][1] < staerkster - 60.0) continue;
+            CAPTURE(n + 1);
+            const double dc = std::abs(1200.0 * std::log2(tt[n][0] / f.teiltoene[n][0]));
+            const double df = std::abs(tt[n][1] - f.teiltoene[n][1]);
+            const double grenze = f.teiltoene[n][1] >= staerkster - 40.0 ? 1.0 : 2.0;
+            CHECK(dc <= 1.0);
+            CHECK(df <= grenze);
+            cent = std::max(cent, dc);
+            frueh = std::max(frueh, df);
+            if (f.teiltoene[n][2] > f.teiltoene[n][1] - 60.0)
+            {
+                const double ds = std::abs(tt[n][2] - f.teiltoene[n][2]);
+                CHECK(ds <= grenze);
+                spaet = std::max(spaet, ds);
+            }
+        }
+        // Der Pegel der Kraft (PK1 a, S224): ueber das ganze Band traegt ihn im Bezug die statische Last unter 20 Hz (die
+        // Gerade ω − i s₀; an der Gitarre 1–3 s 21–40 dB ueber dem Band 20 Hz – 20 kHz), auch der Kandidat S200 lag dort 2–13 dB
+        // daneben bei gleicher Lautheit am Hoerort — nur als Meldung. Geprueft wird der Pegel im Band.
+        const double v = kVorlauf;
+        const std::array<double, 3> kraft = {rmsDb(k.senkrecht, v, v + 0.1), rmsDb(k.senkrecht, v, v + 1.0), rmsDb(k.senkrecht, 1.0, 3.0)};
+        const std::vector<double> band = imBand(k.senkrecht);
+        const std::array<double, 3> kraftband = {rmsDb(band, v, v + 0.1), rmsDb(band, v, v + 1.0), rmsDb(band, 1.0, 3.0)};
+        for (std::size_t j = 0; j < 3; ++j)
+        {
+            CAPTURE(j);
+            CHECK(std::abs(kraftband[j] - f.kraftband[j]) <= kBandGrenzeDb[j]);
+        }
+        MESSAGE(f.name << ": " << tt.size() << " Teiltoene, gezaehlt groesster Betrag " << cent << " Cent, Pegel frueh " << frueh << " dB, spaet "
+                       << spaet << " dB | Pegel der Kraft im Band gegen den Bezug " << kraftband[0] - f.kraftband[0] << " / "
+                       << kraftband[1] - f.kraftband[1] << " / " << kraftband[2] - f.kraftband[2] << " dB (ganzes Band "
+                       << kraft[0] - f.kraft[0] << " / " << kraft[1] - f.kraft[1] << " / " << kraft[2] - f.kraft[2] << ") | " << sek << " s");
+        ++gerechnet;
+    }
+    CHECK(gerechnet == 5);
 }

@@ -34,8 +34,9 @@ weichen an zwei Stellen von den festen Zahlen des Pruefstands ab, deren Ausgaben
 
 Je Fall stehen in der Datei: die Eingaben (zum Pruefen der Vorgaben des Kerns), die Gewichte des Daempfers, je Teilton
 1-12 der Stegkraft Frequenz und Pegel frueh (0,05-0,45 s) / spaet (1-2 s) wie der Kandidat (`teiltoene`), der Pegel der
-Stegkraft in 0-0,1 / 0-1 / 1-3 s (dB re 1 N, Effektivwert), die Lautheit am Hoerort (Momentary-Maximum, BS.1770) und der
-Pegel 1-2 s gegen 0-0,4 s. Zahlen mit 17 Stellen.
+Stegkraft in 0-0,1 / 0-1 / 1-3 s (dB re 1 N, Effektivwert), derselbe Pegel im Band 20 Hz - 20 kHz (S224, PK1 a: ueber das
+ganze Band traegt ihn die statische Last unter 20 Hz — an der Gitarre 1-3 s 21-40 dB ueber dem Band; `kraftband`), die Lautheit am Hoerort (Momentary-Maximum,
+BS.1770) und der Pegel 1-2 s gegen 0-0,4 s. Zahlen mit 17 Stellen.
 """
 import importlib.util
 import json
@@ -167,6 +168,17 @@ def zahl(x):
     return repr(float(x))
 
 
+BAND_N = 1 << 18          # das Band ueber eine FFT auf 2^18 Werten (der Ton hat 180 000), wie der Test des Kerns
+
+
+def im_band(x, von=20.0, bis=20000.0):
+    """Der Zeitverlauf nur mit den Frequenzen von <= f <= bis (S224, PK1 a), auf BAND_N Werten, auf die Laenge von x."""
+    X = np.fft.rfft(x, BAND_N)
+    hz = np.fft.rfftfreq(BAND_N, 1 / ps.FS)
+    X[(hz < von) | (hz > bis)] = 0.0
+    return np.fft.irfft(X, BAND_N)[:len(x)]
+
+
 def rechne(name, instrument, taste, stufe, kp, roh, w, aus):
     saiten, laengen, stegtaste, xp, d, winkel, breite, tempo, neigung = eingaben(instrument, taste, stufe)
     punkt = kp["tasten"].index(stegtaste)
@@ -205,6 +217,13 @@ def rechne(name, instrument, taste, stufe, kp, roh, w, aus):
     for n, (hz, frueh, spaet) in enumerate(tt, 1):
         aus.append(f"teilton {n} {zahl(hz)} {zahl(frueh)} {zahl(spaet)}")
     aus.append(f"kraft {zahl(rms(v, v + 0.1))} {zahl(rms(v, v + 1.0))} {zahl(rms(1.0, 3.0))}")
+    band = im_band(kraft)
+
+    def rms_band(von, bis):
+        x = band[int(von * ps.FS):int(bis * ps.FS)]
+        return 10 * np.log10(np.mean(x ** 2) + 1e-300)
+
+    aus.append(f"kraftband {zahl(rms_band(v, v + 0.1))} {zahl(rms_band(v, v + 1.0))} {zahl(rms_band(1.0, 3.0))}")
     aus.append(f"hoerort {zahl(ps.momentary_max(p))} {zahl(ps.rms_db(p, 1, 2) - ps.rms_db(p, v, e))}")
     print(f"{name}: {S} Saite(n), Stegpunkt {stegtaste}, x_p {xp:.4f} m, F0 {saiten[0]['T'] * d * laengen[0] / (xp * (laengen[0] - xp)):.4f} N, "
           f"{len(tt)} Teiltoene, Grundton {tt[0][0]:.3f} Hz, Hoerort {ps.momentary_max(p):.2f} LUFS", flush=True)
@@ -298,6 +317,7 @@ def main():
            "# daempfer streuung <phi_rms senkrecht> <phi^2 je Mitte, 7 Werte>",
            "# teilton <n> <Hz> <Pegel frueh dB> <Pegel spaet dB>   (Stegkraft senkrecht)",
            "# kraft <dB re 1 N: 0-0,1 s> <0-1 s> <1-3 s>   (ab dem Vorlauf)",
+           "# kraftband <dieselben im Band 20 Hz - 20 kHz: FFT auf 2^18 Werten, ausserhalb null>",
            "# hoerort <Momentary-Maximum LUFS> <Pegel 1-2 s gegen 0-0,4 s dB>"]
     geladen = {}
     for name, instrument, taste, stufe in faelle():
