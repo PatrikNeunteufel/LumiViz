@@ -1,11 +1,11 @@
 # InstrumentBody — Rechenkern der Instrumentkörper
 
-> **Version:** 0.28.0  
-> **Datum:** 2026-11-23  
+> **Version:** 0.29.0  
+> **Datum:** 2026-11-27  
 > **Typ:** CppModuleDoc  
 > **Status:** im Bau (Stufe 31c; gebaut: 31c-1 Bauplan, 31c-2 Netz, 31c-3 Platte, 31c-4 Eigenlöser, 31c-5 Körper, 31c-6 Teil 1 Dämpfung je Werkstoff)  
 > **Modul:** lumi::koerper (Lib **InstrumentBody**, header-only INTERFACE)  
-> **Dateien:** Bauplan.hpp, Luftraum.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Antwort.hpp, Statistik.hpp, Koerper.hpp  
+> **Dateien:** Bauplan.hpp, Luftraum.hpp, Netz.hpp, NetzCdt.hpp (bindet CDT ein), DuenneMatrix.hpp, Platte.hpp, Eigenloeser.hpp, EigenloeserSpectra.hpp (bindet Eigen und Spectra ein), Umsetzungen.hpp (jede Umsetzung), Verformungsenergie.hpp, Auswertung.hpp, Mobilitaet.hpp, Antwort.hpp, Statistik.hpp, Koerper.hpp, KoerperAmSteg.hpp  
 > **Namespace:** lumi::koerper  
 > **Abhängigkeiten:** kein Qt, keine App-Teile; `InstrumentCore` (seit 0.27.0, KQ65 a: `zerlegeSymmetrisch` für das Rohr in `Luftraum.hpp`); CDT 2.0.1 nur in `NetzCdt.hpp` (hinter der Schnittstelle des Netzes); Eigen 3.4.1 und Spectra 1.2.0 nur in `EigenloeserSpectra.hpp` (hinter der Schnittstelle des Eigenlösers)  
 > **Zielgruppe:** Entwickler  
@@ -38,6 +38,7 @@ den Stegpunkten (sie wirkt auf die Saite) und der Abstrahlung. Diese Bibliothek 
 | Datei `.lvinstbodyplan` lesen/schreiben | App, `loop/KoerperBauplan` | ja |
 | Werkzeug Bauplan → Körper | `projects/exec/InstrumentBodyTool` (31c-4: bis zu den Moden; den Körper schreibt es ab 31c-5) | ja (kompiliert den Leser mit) |
 | Körper anwenden (Klang) | App, ab 31c-7 | ja |
+| der Körper am Steg für einen Kern (`kern::Steg`, SR1 a) | `InstrumentBody/KoerperAmSteg.hpp` (seit 0.29.0, 34k-7d-4) | nein |
 
 Steuerdokument: `projects/apps/LumiViz/docs/audio/Spielweisen_Konzept.md` §4.1 (BM1 a bis BM5-1 a, PL31c a,
 GB1 a). Recherchen: `projects/apps/LumiViz/docs/modellierung/hammer-saite/` und `…/koerper/`.
@@ -504,6 +505,7 @@ falsches Format, zu neue Fassung).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.29.0 | 2026-11-27 | Session 224, Stufe 34k-7d-4 (b), SR1 a: `KoerperAmSteg.hpp` — `stegAus(koerper)` baut den `kern::Steg` für einen Kern mit `stegImAuftrag`: die Moden der Datei (ohne den statistischen Teil), alle Stegpunkte mit dem Formwert längs der Richtung und φ_rms senkrecht, die Dichte des statistischen Teils; trägt die Datei keine Richtung (jeder Körper aus einem Bauplan), die Annahme nach Scherrer wie `richtung_tan` des Prüfstands (`richtungNachScherrer`, Samen 7; θ = atan tan θ, Formwert φ · √(1 + tan² θ), senkrecht φ wie die Datei), `traegtRichtung`. Die Körperdateien bleiben, wie sie gerechnet sind; nichts an Rechnung oder Fassung. Neuer Fall „InstrumentModels 34k-7d-4 Steg aus der Koerperdatei (SR1 a)“ in `test_InstrumentModelsZupfBezug` (alle fünf gezupften Körper; tan θ an 13 Moden gegen den Prüfstand auf 10⁻¹²). |
 | 0.28.0 | 2026-11-23 | Session 218, Stufe 34k-5, KQ71 a: **die Öffnungen aus ihrer Geometrie** — `.lvinstbodyplan` **Fassung 11** (`OeffnungsModell`, `OeffnungsUmgebung`, `GuetePunkt`, `InnererVerlust`, `Oeffnung::laenge`, `Hohlraum::modell`, `umgebung`, `innen`, `ausGeometrie`; `cavity.openingModel`, `cavity.surroundings`, `cavity.innerLoss`, je Öffnung `length`, alles immer geschrieben; Fassung 10 liest sich mit Mündungskorrektur und Güten), `oeffnungsIntegrale`, `oeffnungsMassen`, `rohrGroessen`, `kEigenQuadrat`, `kAussenFreiGegenWand`; in `LuftraumGroessen` Güten, Massenmatrix, Strahlung und Tafel des inneren Verlusts (`innenBei`), in `LochLuft` `laengs` und `feld`; `koppleRohr` mit Massenmatrix (Cholesky) und dem Druck über die Länge der Öffnung; `LuftraumMode::luftVerlust`; **`.lvinstbody` Fassung 8** (`airLoss`, `ModeImKoerper::luftVerlust`). Ohne Geometrie Bit für Bit wie vorher. Die Harfe mit Öffnungen in der Wand neu; alle Körper mit Bauplan neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.27.0 | 2026-11-23 | Session 215, Stufe 34k-5, KQ59 a, KQ61 a–KQ66 a: **die Luft als Rohr** — `.lvinstbodyplan` **Fassung 10** (`HohlraumArt`, `Querschnitt`, `Rohr`, `Hohlraum::art`, `rohr`, `alsRohr`; `cavity.kind`, `cavity.tube`, immer geschrieben; Prüfung der Querschnitte gegen das Volumen), `rohrModen`, `koppleRohr`, `lochAbstrahlungJeLoch`, `mitLuftraumRohr`, `mitLuftraum(…, bisHz)`, `Auswertung::volumenLaengs`, `ModeImKoerper::rohrAnteil`; **`.lvinstbody` Fassung 7** (`tubeShare`); `schaetze` ohne Moden mit mehr als halber Luft (`kStatistikLuftGrenze`). Abhängigkeit zu `InstrumentCore` (in `Solution.json` danach). Neuer Test `test_LoopKoerperRohr`. Ein Druck Bit für Bit wie vorher; alle sieben Körper mit Bauplan neu gerechnet. `kRechenFassung` bleibt 2. |
 | 0.26.0 | 2026-11-21 | Session 211, Stufe 34k-6, KQ53 a: **`.lvinstbody` Fassung 6** — je Mode `springShare` (`ModeImKoerper::federAnteil`, immer geschrieben, Fassung 5 liest sich mit 0). Der Wächter über die mitgelieferten Körper rechnet die Dämpfung mit dem Anteil der Federn nach. Die sieben Körper mit `--rewrite` neu geschrieben, die Harfe (der erste Körper mit Federn, KQ52 a) neu gerechnet. `kRechenFassung` bleibt 2. |

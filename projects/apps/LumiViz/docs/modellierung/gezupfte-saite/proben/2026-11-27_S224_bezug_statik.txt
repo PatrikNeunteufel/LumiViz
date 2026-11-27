@@ -1,0 +1,53 @@
+S224, 34k-7d-4 (PK1 a) - die statische Kraft am Steg im Bezug und in der Schleife des Kerns
+=========================================================================================
+
+Frage: Warum lag der Pegel der Stegkraft im Band 20 Hz - 20 kHz (erster Entwurf von PK1 a: der ganze Ton ueber eine FFT
+auf 2^18 Werten gefiltert) bei leisem Ausklang neben dem Bezug (Gitarre 57 pp 1-3 s -0,82 dB, Harfe 91 1-3 s -2,3 dB),
+obwohl die Teiltoene trafen?
+
+Bezug: 2026-11-27_S224_bezug_statik.py gitarre_57 gitarre_57_pp harfe_60 harfe_91 cembalo_84 (Stegkraft senkrecht wie
+`rechne` von 2026-11-26_S222_bezug_zupf.py, je Band 1-3 s, dB re 1 N; "ohne": der Gleichanteil 3-3,75 s abgezogen)
+
+gitarre_57: Gleichanteil 3-3,75 s -1.25918 N, Mittel 1-2 s -1.25922 N
+    mit       20-100: -51.48 / 100-300: -41.99 / 300-1000: -26.36 / 1000-5000: -58.97 / 5000-20000: -98.68 dB
+    ohne      20-100: -50.42 / 100-300: -42.01 / 300-1000: -26.36 / 1000-5000: -58.96 / 5000-20000: -107.50 dB
+gitarre_57_pp: Gleichanteil 3-3,75 s -0.129873 N, Mittel 1-2 s -0.129661 N
+    mit       20-100: -65.08 / 100-300: -71.62 / 300-1000: -59.03 / 1000-5000: -96.02 / 5000-20000: -123.43 dB
+    ohne      20-100: -69.90 / 100-300: -71.69 / 300-1000: -59.03 / 1000-5000: -95.84 / 5000-20000: -122.37 dB
+harfe_60: Gleichanteil 3-3,75 s -3.68513 N, Mittel 1-2 s -3.68467 N
+    mit       20-100: -42.11 / 100-300: -10.23 / 300-1000: -20.69 / 1000-5000: -36.16 / 5000-20000: -94.37 dB
+    ohne      20-100: -41.13 / 100-300: -10.23 / 300-1000: -20.69 / 1000-5000: -36.16 / 5000-20000: -90.23 dB
+harfe_91: Gleichanteil 3-3,75 s -4.93332 N, Mittel 1-2 s -4.93332 N
+    mit       20-100: -39.67 / 100-300: -53.70 / 300-1000: -60.77 / 1000-5000: -42.67 / 5000-20000: -91.03 dB
+    ohne      20-100: -38.60 / 100-300: -90.84 / 300-1000: -81.78 / 1000-5000: -42.68 / 5000-20000: -90.21 dB
+cembalo_84: Gleichanteil 3-3,75 s -0.272238 N, Mittel 1-2 s -0.272237 N
+    mit       20-100: -64.83 / 100-300: -78.78 / 300-1000: -79.03 / 1000-5000: -42.89 / 5000-20000: -51.73 dB
+    ohne      20-100: -63.76 / 100-300: -109.80 / 300-1000: -81.11 / 1000-5000: -42.89 / 5000-20000: -51.73 dB
+
+Schleife des Kerns (zupf/Schleife, Fall "34k-7d-4 Schleife gegen den Bezug: alle Faelle" mit LUMIVIZ_34K7D4_TEILTOENE=1;
+dieselben Baender, ohne Abzug; dazu das Mittel der Stegkraft 1-2 s und 3-3,75 s):
+
+gitarre_57     20-100: -55.65 / 100-300: -42.03 / 300-1000: -26.28 / 1000-5000: -58.94 / 5000-20000: -102.75 dB | Mittel -0.337 / -0.060 N
+gitarre_57_pp  20-100: -75.30 / 100-300: -71.68 / 300-1000: -59.02 / 1000-5000: -96.05 / 5000-20000: -143.90 dB | Mittel -0.035 / -0.006 N
+harfe_60       20-100: -46.30 / 100-300: -10.31 / 300-1000: -20.39 / 1000-5000: -36.39 / 5000-20000: -98.71 dB | Mittel -1.087 / -0.221 N
+harfe_91       20-100: -43.98 / 100-300: -57.58 / 300-1000: -66.47 / 1000-5000: -42.64 / 5000-20000: -106.48 dB | Mittel -0.044 / -0.0003 N
+cembalo_84     20-100: -69.00 / 100-300: -82.54 / 300-1000: -80.10 / 1000-5000: -42.89 / 5000-20000: -51.61 dB | Mittel -0.094 / -0.024 N
+
+Befund:
+- Nach dem Loslassen bleibt im Bezug eine statische Kraft am Steg stehen (die Antwort auf das Wegnehmen der Kraft des
+  Fingers: die Saite kehrt in die gerade Lage zurueck; Gitarre 57 -1,26 N, Harfe 91 -4,93 N), ueber die ganze Note gleich.
+  In der Schleife klingt sie ab (Gitarre 57 von -0,34 N bei 1-2 s auf -0,06 N bei 3-3,75 s): das Umlauf-Filter ist bei
+  0 Hz nicht genau 1, die Tafel ist fuer die Teiltoene entworfen.
+- Ihre Spruenge (Anfang des Tons, Ende des Signals bei 3,75 s) laufen beim Filtern ueber den ganzen Ton in die Baender
+  unter dem Grundton aus: ohne den Gleichanteil faellt das Band 100-300 Hz der Harfe 91 im Bezug von -53,7 auf -90,8 dB,
+  das Band 20-100 Hz bleibt (der Sprung am Anfang). Die Baender der Teiltoene sind in beiden gleich.
+- Hoerbar ist beides nicht: unter 20 Hz, am Hoerort mit omega^2 gewichtet.
+
+Folge (PK1 a, S224): der Pegel im Band je Fenster - das Stueck ohne seinen Mittelwert mit Hann-Fenster, die Leistung
+auf das Mittel des Fensters im Quadrat bezogen, eine FFT ueber das Stueck, ausserhalb 20 Hz - 20 kHz null (`band_db` im
+Bezug, `bandDb` im Test). Ohne Hann-Fenster (nur der Mittelwert abgezogen) trug das Gefaelle der abklingenden statischen
+Kraft der Schleife das Band (Gitarre 57 pp 1-3 s +4,7 dB). Mit dem Hann-Fenster an allen 17 Faellen <= 0,08 / 0,08 /
+0,40 dB (0-0,1 / 0-1 / 1-3 s).
+
+Offen: ob der Kern die statische Kraft halten soll (die Antwort des Umlauf-Filters bei 0 Hz) - fuer den Klang ohne
+Belang, solange die App die Kraft nur mit der Antwort des Koerpers faltet.

@@ -168,15 +168,21 @@ def zahl(x):
     return repr(float(x))
 
 
-BAND_N = 1 << 18          # das Band ueber eine FFT auf 2^18 Werten (der Ton hat 180 000), wie der Test des Kerns
-
-
-def im_band(x, von=20.0, bis=20000.0):
-    """Der Zeitverlauf nur mit den Frequenzen von <= f <= bis (S224, PK1 a), auf BAND_N Werten, auf die Laenge von x."""
-    X = np.fft.rfft(x, BAND_N)
-    hz = np.fft.rfftfreq(BAND_N, 1 / ps.FS)
-    X[(hz < von) | (hz > bis)] = 0.0
-    return np.fft.irfft(X, BAND_N)[:len(x)]
+def band_db(x, von, bis):
+    """Der Pegel der Kraft im Fenster von ... bis (s) im Band 20 Hz - 20 kHz (S224, PK1 a): das Stueck ohne seinen
+    Mittelwert, mit Hann-Fenster (die Leistung auf das Mittel des Fensters im Quadrat bezogen), eine FFT ueber das Stueck,
+    ausserhalb des Bands null. Die statische Kraft und ihre Auslaeufer zaehlen so nicht: sie bleibt im Bezug nach dem
+    Loslassen stehen (Harfe 91 -4,9 N), im Kern klingt sie langsam ab (sein Umlauf-Filter ist bei 0 Hz nicht genau 1) —
+    ueber den ganzen Ton gefiltert trugen ihre Spruenge, im Rechteckfenster ihr Gefaelle bei leisem Ausklang das Band
+    (`proben/2026-11-27_S224_bezug_statik.txt`)."""
+    s = x[int(von * ps.FS):int(bis * ps.FS)]
+    w = np.hanning(len(s))
+    s = (s - np.mean(s)) * w
+    X = np.fft.rfft(s)
+    hz = np.fft.rfftfreq(len(s), 1 / ps.FS)
+    X[(hz < 20.0) | (hz > 20000.0)] = 0.0
+    y = np.fft.irfft(X, len(s))
+    return 10 * np.log10(np.mean(y ** 2) / np.mean(w ** 2) + 1e-300)
 
 
 def rechne(name, instrument, taste, stufe, kp, roh, w, aus):
@@ -217,13 +223,7 @@ def rechne(name, instrument, taste, stufe, kp, roh, w, aus):
     for n, (hz, frueh, spaet) in enumerate(tt, 1):
         aus.append(f"teilton {n} {zahl(hz)} {zahl(frueh)} {zahl(spaet)}")
     aus.append(f"kraft {zahl(rms(v, v + 0.1))} {zahl(rms(v, v + 1.0))} {zahl(rms(1.0, 3.0))}")
-    band = im_band(kraft)
-
-    def rms_band(von, bis):
-        x = band[int(von * ps.FS):int(bis * ps.FS)]
-        return 10 * np.log10(np.mean(x ** 2) + 1e-300)
-
-    aus.append(f"kraftband {zahl(rms_band(v, v + 0.1))} {zahl(rms_band(v, v + 1.0))} {zahl(rms_band(1.0, 3.0))}")
+    aus.append(f"kraftband {zahl(band_db(kraft, v, v + 0.1))} {zahl(band_db(kraft, v, v + 1.0))} {zahl(band_db(kraft, 1.0, 3.0))}")
     aus.append(f"hoerort {zahl(ps.momentary_max(p))} {zahl(ps.rms_db(p, 1, 2) - ps.rms_db(p, v, e))}")
     print(f"{name}: {S} Saite(n), Stegpunkt {stegtaste}, x_p {xp:.4f} m, F0 {saiten[0]['T'] * d * laengen[0] / (xp * (laengen[0] - xp)):.4f} N, "
           f"{len(tt)} Teiltoene, Grundton {tt[0][0]:.3f} Hz, Hoerort {ps.momentary_max(p):.2f} LUFS", flush=True)
@@ -317,7 +317,7 @@ def main():
            "# daempfer streuung <phi_rms senkrecht> <phi^2 je Mitte, 7 Werte>",
            "# teilton <n> <Hz> <Pegel frueh dB> <Pegel spaet dB>   (Stegkraft senkrecht)",
            "# kraft <dB re 1 N: 0-0,1 s> <0-1 s> <1-3 s>   (ab dem Vorlauf)",
-           "# kraftband <dieselben im Band 20 Hz - 20 kHz: FFT auf 2^18 Werten, ausserhalb null>",
+           "# kraftband <dieselben im Band 20 Hz - 20 kHz: je Fenster das Stueck ohne Mittelwert mit Hann-Fenster, FFT, ausserhalb null>",
            "# hoerort <Momentary-Maximum LUFS> <Pegel 1-2 s gegen 0-0,4 s dB>"]
     geladen = {}
     for name, instrument, taste, stufe in faelle():
