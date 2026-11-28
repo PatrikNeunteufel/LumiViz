@@ -9,10 +9,13 @@
  *
  * - **Quelle** (ZU1 a): die Welle, die der Zupf am Steg einspeist, je Saite genau aus der Frequenzantwort und mit einer FFT
  *   in den Takt gebracht (`quelleImTakt`, wie `quelle` des Bezugs): Kraftstufe F0 = T d L / (x_p (L − x_p)), Fingerbreite
- *   als Gauss-Tiefpass, Neigung je Stufe ohne Pegel 10^(Stufe k lb(f / 1 kHz) / 20) (GZ6 a; den Pegel traegt d), bei der Harfe die Geschwindigkeit beim Abloesen als verteilter
+ *   als Gauss-Tiefpass, Neigung je Stufe ohne Pegel mit dem Betrag 10^(Stufe k lb(f / 1 kHz) / 20) (GZ6 a; den Pegel traegt d),
+ *   kausal als minimalphasiges Filter (VL2 a) zusammen mit der Bandgrenze (VL5 a: 1 bis 20 kHz, darueber auf −120 dB;
+ *   `quellfilterKausal`), bei der Harfe die Geschwindigkeit beim Abloesen als verteilter
  *   Kraftstoss ueber das Dreieck; der Winkel teilt sie auf die zwei Polarisationen (senkrecht cos, parallel sin). Gerechnet
- *   auf der Geraden ω − i s₀ (s₀ = 2 1/s) wie der Pruefstand, der Ton beginnt nach `vorlauf` (was vor dem Loslassen
- *   liegt — Vorschwinger der Bandgrenze und des Tiefpasses — faellt dorthin).
+ *   auf der Geraden ω − i s₀ mit einer FFT fester Laenge (VL3 a: 2¹⁸ Werte, s₀ · Dauer = 8 wie der Pruefstand, genutzt die
+ *   erste Haelfte), der Ton beginnt nach `vorlauf` (was vor dem Loslassen liegt — Vorschwinger der Bandgrenze, VL1 —
+ *   faellt dorthin).
  * - **Umlauf** Steg → Sattel → Steg: je Saite und Polarisation das Umlauf-Filter (`umlauf::Umlauffilter`, UL3 a; aus der
  *   Tafel des Kerns, das Glied am Grundton gestimmt), mit dem ganzzahligen Verzug N ≥ 1 als Ringpuffer:
  *   v⁺[n] = g[n] − (H ∗ (u − v⁺))[n].
@@ -43,6 +46,7 @@
 #include <array>
 #include <complex>
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace lumi::kern::zupf
@@ -50,8 +54,15 @@ namespace lumi::kern::zupf
 
 /// Der Takt der Schleife.
 inline constexpr double kSchleifenRate = 48000.0;
-/// Die Gerade ω − i s₀ der Quelle (wie der Pruefstand), 1/s.
-inline constexpr double kQuelleS0 = 2.0;
+/// Die FFT der Quelle (VL3 a): immer so viele Werte (5,46 s), genutzt die erste Haelfte.
+inline constexpr std::size_t kQuelleLaenge = std::size_t{1} << 18;
+/// Die Gerade ω − i s₀ der Quelle, 1/s: s₀ · Dauer = 8 wie der Pruefstand (4 s · 2 1/s), VL3 a.
+inline constexpr double kQuelleS0 = 8.0 * kSchleifenRate / static_cast<double>(kQuelleLaenge);
+/// Das Raster der reellen Achse, auf dem das Quellfilter kausal wird (VL2 a, wie `NFEIN` des Bezugs).
+inline constexpr std::size_t kNeigungFein = std::size_t{1} << 21;
+/// Die Bandgrenze der Quelle (VL5 a): Betrag 1 bis hier, darueber mit einem halben Kosinus bis f_s / 2 auf den Boden.
+inline constexpr double kBandDurchlass = 20000.0;
+inline constexpr double kBandBodenDb = -120.0;
 /// Die Mitten der breiten Moden des Daempfers (GZ5-1 a), Hz, und ihr Verlustfaktor (Q 1,5).
 inline constexpr std::array<double, 7> kDaempferMitten = {6000.0, 7500.0, 9500.0, 12000.0, 15000.0, 19000.0, 23000.0};
 inline constexpr double kDaempferVerlust = 1.0 / 1.5;
@@ -96,16 +107,22 @@ struct Daempfer
 /// Bezugs: Raster 0,5–4,5 kHz und 5,25–20 kHz in 250 Hz, unter `vonHz` Ziel 0 mit Gewicht 3). Ohne Dichte alle 0.
 [[nodiscard]] Daempfer daempferAn(const Steg::Dichte& dichte, double streuung);
 
-/// Die Wellenzahl k und die Impedanz z₀ = T k / ω der Saite bei komplexer Kreisfrequenz (wie `saite_wellen` des
-/// Pruefstands; `umlauf::wellenzahl` ist der Fall reeller ω).
+/// Die Wellenzahl k und die Impedanz z₀ = T k / ω der Saite bei komplexer Kreisfrequenz ω − i s₀ (VL7 a, wie
+/// `wellen_kausal` des Bezugs): k′(T′, EI′) fortgesetzt plus `umlauf::kausalerVerlustAuf(saite, s₀)` — der Verlust
+/// samt seiner Dispersion als eine analytische Funktion auf der Geraden.
 struct Welle
 {
     std::complex<double> k, z0;
 };
-[[nodiscard]] Welle welleBei(const umlauf::Saitenwerte& saite, std::complex<double> omega);
+[[nodiscard]] Welle welleBei(const umlauf::Saitenwerte& saite, double laenge, std::complex<double> omega);
+
+/// Das Quellfilter kausal (VL2 a, VL5 a): die Antwort h je Takt (kQuelleLaenge Werte) des minimalphasigen Filters mit
+/// dem Betrag 10^(p lb(max(f, 20 Hz) / 1 kHz) / 20) (die Neigung je Stufe, p = Stufe · k in dB je Oktave um 1 kHz) mal der
+/// Bandgrenze (kBandDurchlass, kBandBodenDb). Je p einmal gerechnet, geteilt.
+[[nodiscard]] std::shared_ptr<const std::vector<double>> quellfilterKausal(double neigungDb);
 
 /// Die Quelle g einer Saite am Steg im Takt (ohne Aufteilung auf die Polarisationen), `frames` Werte, der Ton ab
-/// `vorlauf` Sekunden (siehe Kopf).
+/// `vorlauf` Sekunden (siehe Kopf); ab der halben FFT (kQuelleLaenge / 2) null.
 [[nodiscard]] std::vector<double> quelleImTakt(const umlauf::Saitenwerte& saite, double laenge, const Zupfangabe& zupf,
                                                std::size_t frames, double vorlauf);
 

@@ -18,7 +18,8 @@ weichen an zwei Stellen von den festen Zahlen des Pruefstands ab, deren Ausgaben
                         (ZW1 a), 30 Grad, Breite 7,5 mm        [der Pruefstand rechnet 2 mm und mit Kappe]
                         Den Pegel traegt die Auslenkung, die Neigung kommt als eigener Faktor
                         10^(Stufe k lb(f / 1 kHz) / 20) dazu (`neigung_faktor`, k je Instrument in `KIPP`: Gitarre, Laute,
-                        Oud 0,16 nach GZ6 a / ZD2 a, Harfe 0 nach ZD1-1 a, Cembalo 0). Bis S224 nahm die Quelle
+                        Oud 0,16 nach GZ6 a / ZD2 a, Harfe 0 nach ZD1-1 a, Cembalo 0), kausal (minimalphasig, VL2 a,
+                        S224 - nullphasig reichte die Quelle leiser Stufen weit vor das Loslassen). Bis S224 nahm die Quelle
                         `staerke_faktor` des Pruefstands, der den Pegel 10^(Stufe/20) schon enthaelt - mit der geschwaechten
                         Auslenkung zaehlte die Stufe doppelt (gitarre_57_pp: -36 statt -18 dB bei 1 kHz).
                Laute, Oud  d = 2 mm, 16 cm fest, 30 Grad, 7,5 mm
@@ -61,6 +62,131 @@ kd = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(kd)
 
 ZUPFSTELLE = 0.16                      # ZW1 a
+
+# ---------------------------------------------------------------- VL7 a: der Verlust der Saite kausal (S224)
+# Wie `umlauf::kausalerVerlust`, `kausalAngepasst` und `wellenzahl` des Kerns Schritt fuer Schritt: Im k ohne Dispersion
+# (`ps.saite_wellen`) auf VERLUST_FEIN Werten der reellen Achse (w mindestens 2 pi * 1 Hz), sein reelles Cepstrum gefaltet,
+# dk = -Im rfft; jeder VERLUST_ABLAGE. Wert gemerkt (je Saite). Zug und Biegesteife der verlustfreien Wellenzahl k' je Saite
+# und Laenge so, dass die Teiltoene 2 L (Re k'(w_n) + dk(w_n)) = 2 pi n denen der Vorgabe gleichen (f_n = sqrt((T q^2 +
+# EI q^4) / m) / 2 pi, q = n pi / L, n = 1 ... 30 bis 20 kHz; Cent; Gauss-Newton, Differenzen 1e-7, 30 Schritte; die
+# Teiltoene des neuen Modells mit 60 Halbierungen in [0,9 ; 1,1] w_n). Die Wellenzahl: k'(w) + dk + i Im k, auf der Geraden
+# w = Re w - i s0 als eine analytische Funktion fortgesetzt: das gefaltete Cepstrum c ist kausal, G = rfft(c) traegt auf der
+# reellen Achse Im k - i dk, also dk + i Im k = i G, und auf der Geraden G = rfft(c exp(-s0 q / FS)) (S224, nach VL7 a: bis
+# dahin dk an |Re w| zur fortgesetzten k', auf der Geraden fehlte -i s0 d(dk)/dw, die Laute 38 klang rund 10 % langsamer
+# ab, `2026-11-28_S224_laute38_kopplung.txt`); z0 = T k / w mit dem Zug der Saite. Quellen und Zahlen: `2026-11-27_S224_verlust_kausal.py` / `.txt` (E_B aus den
+# gemessenen Obertoenen, Lynch-Aird & Woodhouse 2017); ueber die Laenge gemeinsam angepasst blieben an der Darmsaite der
+# Laute 38 10,6 Cent.
+VERLUST_FEIN = 1 << 20
+VERLUST_ABLAGE = 16
+WELLEN_OHNE_DISPERSION = ps.saite_wellen
+_KAUSAL = {}
+_ANGEPASST = {}
+_AUF_GERADE = {}
+
+
+def verlustfrei(T, m, EI, w):
+    if EI > 0:
+        return np.sqrt((-T + np.sqrt(T * T + 4 * EI * m * w * w)) / (2 * EI))
+    return w * np.sqrt(m / T)
+
+
+def gefaltetes_cepstrum(sa):
+    """Im k ohne Dispersion auf der reellen Achse (w mindestens 2 pi * 1 Hz), sein reelles Cepstrum gefaltet (kausal)."""
+    N = VERLUST_FEIN
+    f = np.arange(N // 2 + 1) * (ps.FS / N)
+    k, _ = WELLEN_OHNE_DISPERSION(sa, (2 * np.pi * np.maximum(f, 1.0)).astype(complex))
+    c = np.fft.irfft(k.imag, N)
+    c[1:N // 2] *= 2
+    c[N // 2 + 1:] = 0.0
+    return c
+
+
+def kausal_verlust(sa):
+    """(Schritt in Hz, dk ab 0 Hz) einer Saite — je Satz Werte einmal."""
+    schluessel = tuple(sorted(sa.items()))
+    if schluessel not in _KAUSAL:
+        N = VERLUST_FEIN
+        df = ps.FS / N
+        dk_voll = -np.fft.rfft(gefaltetes_cepstrum(sa)).imag
+        idx = np.minimum(np.arange(len(dk_voll) // VERLUST_ABLAGE + 1) * VERLUST_ABLAGE, len(dk_voll) - 1)
+        _KAUSAL[schluessel] = (df * VERLUST_ABLAGE, dk_voll[idx])
+    return _KAUSAL[schluessel]
+
+
+def kausal_verlust_auf(sa, s0):
+    """(Schritt in Hz, dk + i Im k ab 0 Hz) auf der Geraden w - i s0 — je Satz Werte und s0 einmal."""
+    schluessel = (tuple(sorted(sa.items())), float(s0))
+    if schluessel not in _AUF_GERADE:
+        N = VERLUST_FEIN
+        c = gefaltetes_cepstrum(sa) * np.exp(-s0 * np.arange(N) / ps.FS)
+        G = 1j * np.fft.rfft(c)
+        idx = np.minimum(np.arange(len(G) // VERLUST_ABLAGE + 1) * VERLUST_ABLAGE, len(G) - 1)
+        _AUF_GERADE[schluessel] = (ps.FS / N * VERLUST_ABLAGE, G[idx])
+    return _AUF_GERADE[schluessel]
+
+
+def dk_bei(schritt, dk, w):
+    x = np.abs(np.real(w)) / (2 * np.pi) / schritt
+    i = np.minimum(np.floor(x).astype(int), len(dk) - 2)
+    t = x - i
+    return np.where(np.floor(x) + 1 >= len(dk), dk[-1], dk[i] + t * (dk[i + 1] - dk[i]))
+
+
+def kausal_angepasst(sa, L):
+    """(T'/T, EI'/EI, Rest in Cent) einer Saite an der Laenge L — je Saite und Laenge einmal."""
+    schluessel = (tuple(sorted(sa.items())), L)
+    if schluessel in _ANGEPASST:
+        return _ANGEPASST[schluessel]
+    schritt, dk = kausal_verlust(sa)
+    T, m, EI = sa["T"], sa["m"], sa["EI"]
+    n = np.arange(1, 31)
+    q = n * np.pi / L
+    alt = np.sqrt((T * q * q + EI * q ** 4) / m)
+    alt = alt[alt <= 2 * np.pi * 20000.0]
+    ziel = np.pi * np.arange(1, len(alt) + 1)
+
+    def neu(pT, pE):
+        lo, hi = 0.9 * alt, 1.1 * alt
+        for _ in range(60):
+            mitte = 0.5 * (lo + hi)
+            g = L * (verlustfrei(T * pT, m, EI * pE, mitte) + dk_bei(schritt, dk, mitte)) - ziel
+            lo, hi = np.where(g < 0, mitte, lo), np.where(g < 0, hi, mitte)
+        return 0.5 * (lo + hi)
+
+    def rest(pT, pE):
+        return 1200 * np.log2(neu(pT, pE) / alt)
+
+    steif = EI > 0
+    p = [1.0, 1.0]
+    for _ in range(30):
+        r0 = rest(*p)
+        h = 1e-7
+        j1 = (rest(p[0] + h, p[1]) - r0) / h
+        j2 = (rest(p[0], p[1] + h) - r0) / h if steif else 0 * r0
+        a11, a12, a22 = np.dot(j1, j1), np.dot(j1, j2), np.dot(j2, j2)
+        b1, b2 = np.dot(j1, r0), np.dot(j2, r0)
+        det = a11 * a22 - a12 * a12
+        if steif and len(r0) > 1 and det > 0:
+            d1, d2 = (a22 * b1 - a12 * b2) / det, (a11 * b2 - a12 * b1) / det
+        else:
+            d1, d2 = b1 / a11, 0.0
+        p = [p[0] - d1, p[1] - d2]
+        if abs(d1) < 1e-13 and abs(d2) < 1e-13:
+            break
+    _ANGEPASST[schluessel] = (p[0], p[1], float(np.abs(rest(*p)).max()))
+    return _ANGEPASST[schluessel]
+
+
+def wellen_kausal(sa, L, w):
+    """Die Wellenzahl der Saite mit der Laenge L kausal (VL7 a) und z0 = T k / w."""
+    w = np.asarray(w, dtype=complex)
+    s0 = -float(np.imag(w).flat[0])
+    assert np.all(np.imag(w) == -s0), "wellen_kausal: alle w auf einer Geraden w - i s0"
+    schritt, wert = kausal_verlust_auf(sa, s0)
+    pT, pE, _ = kausal_angepasst(sa, L)
+    T, m, EI = sa["T"], sa["m"], sa["EI"]
+    k = verlustfrei(T * pT, m, EI * pE, w) + dk_bei(schritt, wert, w)
+    return k, T * k / w
 DAEMPFER_MITTEN = np.array([6000.0, 7500.0, 9500.0, 12000.0, 15000.0, 19000.0, 23000.0])
 DAEMPFER_ETA = 1 / 1.5
 
@@ -86,20 +212,74 @@ def dreieck_integral(kappa, a, L, d):
 KIPP = {"gitarre": 0.16, "laute": 0.16, "oud": 0.16, "harfe": 0.0, "cembalo": 0.0}
 
 
+NFEIN = 1 << 21                        # VL2 a: Raster der reellen Achse fuer das Cepstrum (wie `kNeigungFein` des Kerns)
+_NEIGUNG = {}
+
+
+def neigung_kausal(p):
+    """VL2 a: h(t) je Takt des minimalphasigen Filters mit dem Betrag 10^(p lb(max(f, 20 Hz) / 1 kHz) / 20) — reelles
+    Cepstrum auf NFEIN Werten, gefaltet, h = irfft(exp(rfft(gefaltet))) (wie `neigungKausal` des Kerns)."""
+    if p not in _NEIGUNG:
+        f = np.fft.rfftfreq(NFEIN, 1 / ps.FS)
+        c = np.fft.irfft(p * np.log2(np.maximum(f, 20.0) / 1000.0) / 20 * np.log(10.0), NFEIN)
+        c[1:NFEIN // 2] *= 2
+        c[NFEIN // 2 + 1:] = 0.0
+        _NEIGUNG[p] = np.fft.irfft(np.exp(np.fft.rfft(c)), NFEIN)
+    return _NEIGUNG[p]
+
+
+BAND_DURCHLASS = 20000.0              # VL5 a: die Bandgrenze der Quelle kausal (wie `kBandDurchlass`, `kBandBodenDb`)
+BAND_BODEN_DB = -120.0
+_QUELLFILTER = {}
+
+
+def quellfilter_kausal(p):
+    """VL2 a, VL5 a: h(t) je Takt des minimalphasigen Filters mit dem Betrag der Neigung (p wie `neigung_kausal`) mal der
+    Bandgrenze (1 bis BAND_DURCHLASS, darueber mit einem halben Kosinus bis FS / 2 auf BAND_BODEN_DB) — wie
+    `quellfilterKausal` des Kerns."""
+    if p not in _QUELLFILTER:
+        f = np.fft.rfftfreq(NFEIN, 1 / ps.FS)
+        x = np.clip((f - BAND_DURCHLASS) / (ps.FS / 2 - BAND_DURCHLASS), 0.0, 1.0)
+        db = p * np.log2(np.maximum(f, 20.0) / 1000.0) + BAND_BODEN_DB * 0.5 * (1 - np.cos(np.pi * x))
+        c = np.fft.irfft(db / 20 * np.log(10.0), NFEIN)
+        c[1:NFEIN // 2] *= 2
+        c[NFEIN // 2 + 1:] = 0.0
+        _QUELLFILTER[p] = np.fft.irfft(np.exp(np.fft.rfft(c)), NFEIN)
+    return _QUELLFILTER[p]
+
+
+def quellfilter(w, stufe, kipp):
+    """Das Quellfilter (Neigung je Stufe und Bandgrenze, kausal; VL2 a, VL5 a) an den Punkten w der Geraden w - i s0 des
+    Pruefstands. Seit VL5 a (S224) immer, auch bei Stufe 0: nullphasig begrenzt schwang der Kraftsprung des Loslassens
+    nach beiden Seiten nach (Cembalo vor -2 ms -72 dB; `2026-11-27_S224_vorlaeufer_kausal.txt`)."""
+    n = 2 * (len(w) - 1)
+    s0 = -float(w[0].imag)
+    assert n <= NFEIN and abs(w[1].real - 2 * np.pi * ps.FS / n) < 1e-9, "nur auf einem Raster der FFT bei FS"
+    h = quellfilter_kausal(stufe * kipp)[:n]
+    return np.fft.rfft(h * np.exp(-s0 * np.arange(n) / ps.FS), n)
+
+
 def neigung_faktor(w, stufe, kipp):
-    """Die Neigung je Stufe um 1 kHz ohne Pegel: 10^(Stufe k lb(f / 1 kHz) / 20), f mindestens 20 Hz (GZ6 a)."""
+    """Die Neigung allein (die Quelle nimmt seit VL5 a `quellfilter`, das die Bandgrenze mitfuehrt; diese Funktion bleibt
+    fuer die Proben S224). Die Neigung je Stufe um 1 kHz ohne Pegel (GZ6 a): Betrag 10^(Stufe k lb(f / 1 kHz) / 20), f mindestens 20 Hz; seit
+    VL2 a (S224) kausal (minimalphasig, `neigung_kausal`), an den Punkten w der Geraden w - i s0 des Pruefstands
+    (`ps.frequenzen()`): H = Summe h(t) e^(-s0 t) e^(-i w t). Bis S224 reell (nullphasig): mit dem Knick bei 20 Hz reichte
+    die Quelle bei leisen Stufen weit vor das Loslassen (`2026-11-27_S224_vorlauf.txt`)."""
     if stufe == 0.0 or kipp == 0.0:
         return 1.0
-    f = np.maximum(np.abs(w.real) / (2 * np.pi), 20.0)
-    return 10 ** (stufe * kipp * np.log2(f / 1000.0) / 20)
+    n = 2 * (len(w) - 1)
+    s0 = -float(w[0].imag)
+    assert n == int(ps.DAUER * ps.FS) and abs(w[1].real - 2 * np.pi * ps.FS / n) < 1e-9, "nur auf dem Raster des Pruefstands"
+    h = neigung_kausal(stufe * kipp)[:n]
+    return np.fft.rfft(h * np.exp(-s0 * np.arange(n) / ps.FS), n)
 
 
 def quelle(sa, L, xp, d, breite, tempo, stufe, w, geschwindigkeit="impuls", kipp=0.16):
     """Die Quelle g einer Saite am Steg (ZU1 a: so rechnet der Kern sie, mit einer FFT): Kraftstufe am Zupfpunkt,
     Fingerbreite, Neigung je Stufe (ohne Pegel, den traegt d), dazu die Geschwindigkeit beim Abloesen (siehe `stegkraft`)."""
-    k, z0 = ps.saite_wellen(sa, w)
+    k, z0 = wellen_kausal(sa, L, w)                  # VL7 a
     T, m = sa["T"], sa["m"]
-    breit = np.exp(-(w * breite / np.sqrt(T / m)) ** 2) * neigung_faktor(w, stufe, kipp)
+    breit = np.exp(-(w * breite / np.sqrt(T / m)) ** 2) * quellfilter(w, stufe, kipp)     # VL2 a, VL5 a
     f = -(T * d * L / (xp * (L - xp))) / (1j * w) * breit
     if tempo and geschwindigkeit == "rampe":
         f = f * (1 - (tempo / d) / (1j * w))
@@ -125,7 +305,7 @@ def stegkraft(saiten, laengen, xp, d, winkel, breite, tempo, stufe, Y, w, geschw
     g = np.zeros((n, 2 * S), dtype=complex)
     a = np.radians(winkel)
     for i, (sa, L) in enumerate(zip(saiten, laengen)):
-        k, z0 = ps.saite_wellen(sa, w)
+        k, z0 = wellen_kausal(sa, L, w)              # VL7 a
         z[:, 2 * i] = z[:, 2 * i + 1] = z0
         E[:, 2 * i] = E[:, 2 * i + 1] = np.exp(-2j * k * L)
         gi = quelle(sa, L, xp, d, breite, tempo, stufe, w, geschwindigkeit, kipp)

@@ -1,0 +1,18 @@
+# S224, VL4 a: Ausgabe von 2026-11-27_S224_vorlaeufer_kausal.py (Python 3.12, numpy)
+
+(1) Bandgrenze minimalphasig (Betrag 1 bis 20000 Hz, bis 24 kHz auf -120 dB)
+    Vorlaeufer Spitze / Energie vor -2 ms  vor -20 ms (dB) | Betrag der Quelle: groesste Aenderung bis 16 / 20 kHz (dB)
+  cembalo_59  Vorgabe   -79.4 /   -72.2    -94.9 /   -81.1 | Tiefpass   -99.6 /   -87.3   -109.7 /   -91.7 | 0.0009 / 0.0068
+  cembalo_84  Vorgabe   -69.5 /   -61.9    -88.2 /   -72.1 | Tiefpass  -109.4 /   -99.3   -122.3 /  -105.3 | 0.0009 / 0.0068
+  cembalo_89  Vorgabe   -72.1 /   -64.1    -90.6 /   -74.3 | Tiefpass  -112.8 /  -102.2   -126.0 /  -108.3 | 0.0009 / 0.0068
+  laute_38    Vorgabe   -68.5 /   -67.6    -78.5 /   -71.5 | Tiefpass   -68.5 /   -67.6    -78.5 /   -71.5 | 0.0009 / 0.0068
+  harfe_60    Vorgabe   -80.9 /   -78.0    -96.6 /   -86.2 | Tiefpass   -80.9 /   -78.0    -96.6 /   -86.2 | 0.0009 / 0.0068
+(2) Verlust kausal: Verschiebung der Teiltoene 2-12 gegen Teilton 1 (Cent), dazu der groesste Betrag
+  laute_38    Grundton    73.45 Hz (Soll    73.42) | -0.10 +0.17 +0.63 +1.22 +1.91 +2.68 +3.51 +4.39 +5.30 +6.24 +7.19 | groesster 7.19 Cent
+  laute_58    Grundton   233.36 Hz (Soll   233.08) | -0.40 -0.56 -0.64 -0.68 -0.69 -0.69 -0.67 -0.65 -0.61 -0.57 -0.53 | groesster 0.69 Cent
+  gitarre_57  Grundton   219.77 Hz (Soll   220.00) | -0.03 -0.04 -0.03 -0.00 +0.03 +0.07 +0.11 +0.16 +0.22 +0.27 +0.33 | groesster 0.33 Cent
+  harfe_36    Grundton    64.63 Hz (Soll    65.41) | -0.01 -0.01 +0.01 +0.02 +0.05 +0.07 +0.11 +0.14 +0.18 +0.22 +0.26 | groesster 0.26 Cent
+  harfe_60    Grundton   261.72 Hz (Soll   261.63) | -0.23 -0.27 -0.24 -0.17 -0.08 +0.04 +0.17 +0.31 +0.46 +0.62 +0.79 | groesster 0.79 Cent
+  oud_72      Grundton   523.77 Hz (Soll   523.25) | -0.25 -0.33 -0.34 -0.33 -0.30 -0.25 -0.19 -0.13 -0.07 -0.01 +0.06 | groesster 0.34 Cent
+  cembalo_60  Grundton   261.63 Hz (Soll   261.63) | -0.08 -0.11 -0.13 -0.14 -0.15 -0.16 -0.16 -0.17 -0.17 -0.18 -0.18 | groesster 0.18 Cent
+  cembalo_89  Grundton  1397.03 Hz (Soll  1396.91) | -0.03 -0.05 -0.06 -0.06 -0.07 -0.07 -0.07 -0.08 -0.08 -0.08 -0.08 | groesster 0.08 Cent

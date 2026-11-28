@@ -29,12 +29,17 @@
  *   Stegkraft senkrecht (gemessen wie `teiltoene` des Kandidaten S200; Lage, Pegel frueh, Abklingen nach UL2 a) und ihr
  *   Pegel im Band 20 Hz – 20 kHz (PK1 a, Zeile `kraftband`); der Pegel ueber das ganze Band nur als Meldung.
  *   `LUMIVIZ_34K7D4_TEILTOENE=1` meldet je Fall die Teiltoene und die Baender 1–3 s. Rund 3 s.
+ * - VL1 a (S224): der Vorlauf der Note — die Quelle mit 2 ms (`kVorlauf`) gegen 20 ms Vorlauf je Instrument tief, mitte,
+ *   hoch bei Stufe 0 und −40, vor dem Einsatz ≤ −80 dB (seit VL2 a, VL5 a, VL7 a kausal: gemessen ≤ −101,7 dB);
+ *   `LUMIVIZ_VL1_MESSUNG=1` misst dazu die Vorlaeufer gegen 0,3 s und die Kraft einer Note von 6,5 s je 100 ms.
+ * - VL3 a (S224): eine Note laenger als die Quelle (12 s) klingt ohne Sprung aus (Pegel im Band je 100 ms ab 1 s ≤ +3 dB).
  ****************************************************************************************
  */
 
 #include <doctest.h>
 
 #include "InstrumentBody/KoerperAmSteg.hpp"
+#include "InstrumentCore/Anschlag.hpp"
 #include "InstrumentCore/Fft.hpp"
 #include "InstrumentCore/Pool.hpp"
 #include "InstrumentMeasure/UmlaufEntwurf.hpp"
@@ -57,6 +62,7 @@
 #include <chrono>
 #include <cmath>
 #include <complex>
+#include <iomanip>
 #include <numbers>
 #include <cstdio>
 #include <cstdlib>
@@ -286,7 +292,8 @@ const std::vector<Instrument>& instrumente()
     return v;
 }
 
-/// UL2 a, bekannte Ausnahme (Herleitung §9): Laute Chor 8.1 (G4), bis 12,2 Cent an Teiltoenen ueber 16 kHz.
+/// UL2 a, bekannte Ausnahme (Herleitung §9): Laute Chor 8.1 (G4), bis 12,2 Cent an Teiltoenen ueber 16 kHz (nach VL7 a
+/// S224 bis 12,3 Cent an fremden Stellen, 9,8 Cent an halben Buenden).
 bool bekannteAusnahme(const std::string& instrument, int chor, int saite) { return instrument == "lute" && chor == 7 && saite == 0; }
 
 }  // namespace
@@ -876,4 +883,210 @@ TEST_CASE("InstrumentModels 34k-7d-4 Schleife gegen den Bezug: alle Faelle")
         ++gerechnet;
     }
     CHECK(gerechnet == 17);
+}
+
+// ---------------------------------------------------------------- 34k-7d-4 (d): Vorlauf der Note (VL1 a)
+
+TEST_CASE("InstrumentModels 34k-7d-4 Vorlauf der Note (VL1 a)")
+{
+    // Die Quelle aus der Frequenzantwort ist nicht ganz kausal; was vor dem Loslassen liegt, braucht Platz vor dem Einsatz
+    // (`kVorlauf` 2 ms im Kern, 20 ms im Bezug). Je Instrument tief, mitte und hoch, bei Stufe 0 und der kleinsten Stufe:
+    // (1) was die Quelle mit 20 ms Vorlauf frueher als 2 ms vor dem Einsatz traegt, (2) der groesste Unterschied der Quelle
+    // mit 2 ms gegen die mit 20 ms (verschoben) — beide gegen die Spitze, ≤ −80 dB (VL1 a). Seit S224 kausal: die Neigung
+    // (VL2 a), die Bandgrenze (VL5 a) und der Verlust der Saite (VL7 a); gemessen S224 hoechstens −101,7 dB vor dem Einsatz
+    // (vor VL7 a an Laute und Oud bis −68,3 dB, vor VL2 a bei Stufe −40 bis −8 dB).
+    QFile datei(QString::fromStdString(umlaufDatei().string()));
+    REQUIRE(datei.open(QIODevice::ReadOnly));
+    const QJsonObject inst = QJsonDocument::fromJson(datei.readAll()).object().value(QStringLiteral("instruments")).toObject();
+    const auto versatz = static_cast<std::size_t>(std::llround((kVorlauf - kz::kVorlauf) * kFs));
+    double schlimmstVor = -1e300, schlimmstDiff = -1e300;
+    for (const kz::Vorlage& v : kz::vorlagen())
+    {
+        CAPTURE(v.name);
+        kz::ZupfSpiel s = v.spiel;
+        s.umlauf = kz::umlaufTafelEintraege(lumi::loop::werteAusJson(tafelDerListe(), inst.value(QString::fromStdString(v.name)).toObject()).liste(kz::kUmlaufTafel));
+        for (const int wunsch : {s.noteMin, (s.noteMin + s.noteMax) / 2, s.noteMax})
+            for (const int stufe : {0, lumi::kern::kAnschlagStufeMin})
+            {
+                // die naechste spielbare Taste abwaerts (ein Saitensatz endet am letzten Bund)
+                kz::ZupfNote note;
+                int taste = wunsch;
+                for (; taste >= s.noteMin; --taste)
+                {
+                    note = kz::zupfNote(s, taste, -1, stufe, static_cast<long long>(kFrames), kFs);
+                    if (note.fehler.empty()) break;
+                }
+                REQUIRE(note.fehler.empty());
+                if (std::getenv("LUMIVIZ_VL1_MESSUNG") != nullptr)
+                {
+                    // wie weit die Quelle vor dem Loslassen reicht: gegen 0,3 s Vorlauf je Vorlauf V die Spitze und die Energie
+                    // vor −V; dazu eine Note von 6 s (laenger als 2¹⁸ Werte): die Spitze in den letzten 50 ms vor 2¹⁸
+                    const kz::SchleifenSaite& sa = note.saiten.front();
+                    const std::size_t lang = static_cast<std::size_t>(6.0 * kFs);
+                    const std::vector<double> ref = kz::quelleImTakt(sa.werte, sa.laenge, note.zupf, lang, 0.3);
+                    double spitze = 0.0, energie = 0.0;
+                    for (double x : ref)
+                    {
+                        spitze = std::max(spitze, std::abs(x));
+                        energie += x * x;
+                    }
+                    std::ostringstream b;
+                    for (const double vor : {0.002, 0.02, 0.05, 0.1, 0.2})
+                    {
+                        double s = 0.0, e = 0.0;
+                        for (std::size_t t = 0; t < static_cast<std::size_t>((0.3 - vor) * kFs); ++t)
+                        {
+                            s = std::max(s, std::abs(ref[t]));
+                            e += ref[t] * ref[t];
+                        }
+                        b << " " << vor * 1000.0 << " ms: " << 20.0 * std::log10(s / spitze + 1e-300) << " / " << 10.0 * std::log10(e / energie + 1e-300);
+                    }
+                    const std::vector<double> g6 = kz::quelleImTakt(sa.werte, sa.laenge, note.zupf, lang, kz::kVorlauf);
+                    const std::size_t n = std::size_t{1} << 18;
+                    double ende = 0.0, s6 = 0.0;
+                    for (std::size_t t = 0; t < n; ++t) s6 = std::max(s6, std::abs(g6[t]));
+                    for (std::size_t t = n - static_cast<std::size_t>(0.05 * kFs); t < n; ++t) ende = std::max(ende, std::abs(g6[t]));
+                    MESSAGE("VL1 " << v.name << " Taste " << taste << " Stufe " << stufe << ": verloren vor −V (Spitze / Energie dB)" << b.str()
+                                   << " | Note 6 s: letzte 50 ms vor 2^18 " << 20.0 * std::log10(ende / s6 + 1e-300) << " dB");
+                    // die Kraft am Steg einer gehaltenen Note von 6,5 s: Pegel im Band je 100 ms von 4,8 bis 6,4 s
+                    const lumi::kern::Steg steg = lumi::koerper::stegAus(ladeKoerperDatei(v.name));
+                    const kz::ZupfNote lange = kz::zupfNote(s, taste, -1, stufe, static_cast<long long>(6.5 * kFs), kFs);
+                    kz::Schleifenauftrag a;
+                    a.saiten = lange.saiten;
+                    a.zupf = lange.zupf;
+                    a.steg = &steg;
+                    a.punkt = steg.punktZu(lange.stegTaste);
+                    REQUIRE(a.punkt != nullptr);
+                    a.frames = static_cast<std::size_t>(6.5 * kFs);
+                    a.vorlauf = kz::kVorlauf;
+                    const kz::Schleifenkraft k = kz::rechneSchleife(a);
+                    std::ostringstream z;
+                    for (double t = 4.8; t < 6.35; t += 0.1) z << " " << bandDb(k.senkrecht, t, t + 0.1);
+                    MESSAGE("    Band je 100 ms ab 4,8 s:" << z.str());
+                }
+                for (const kz::SchleifenSaite& sa : note.saiten)
+                {
+                    const std::vector<double> g20 = kz::quelleImTakt(sa.werte, sa.laenge, note.zupf, kFrames, kVorlauf);
+                    const std::vector<double> g2 = kz::quelleImTakt(sa.werte, sa.laenge, note.zupf, kFrames, kz::kVorlauf);
+                    double spitze = 0.0, vor = 0.0, diff = 0.0;
+                    for (double x : g20) spitze = std::max(spitze, std::abs(x));
+                    REQUIRE(spitze > 0.0);
+                    for (std::size_t t = 0; t < versatz; ++t) vor = std::max(vor, std::abs(g20[t]));
+                    for (std::size_t t = 0; t + versatz < kFrames; ++t) diff = std::max(diff, std::abs(g2[t] - g20[t + versatz]));
+                    const double vorDb = 20.0 * std::log10(vor / spitze + 1e-300), diffDb = 20.0 * std::log10(diff / spitze + 1e-300);
+                    CAPTURE(taste);
+                    CAPTURE(stufe);
+                    CHECK(vorDb <= -80.0);
+                    CHECK(diffDb <= -80.0);
+                    schlimmstVor = std::max(schlimmstVor, vorDb);
+                    schlimmstDiff = std::max(schlimmstDiff, diffDb);
+                    MESSAGE(v.name << " Taste " << taste << " Stufe " << stufe << ": vor dem Einsatz " << vorDb << " dB, Unterschied 2 gegen 20 ms " << diffDb << " dB");
+                }
+            }
+    }
+    MESSAGE("VL1 a: hoechstens " << schlimmstVor << " dB vor dem Einsatz, " << schlimmstDiff << " dB Unterschied");
+}
+
+TEST_CASE("InstrumentModels 34k-7d-4 Note laenger als die Quelle (VL3 a)")
+{
+    // Bis S224 reichte die FFT der Quelle ueber die Note (hoechstens 2¹⁸ Werte, s₀ = 2): an einer Note ueber 5,4 s faltete
+    // sie den Teil vor dem Loslassen ans Ende und hob ihn um e^(s₀ n) ≈ 95 dB — die Kraft sprang bei 5,4 s um 20–90 dB.
+    // Hier je Instrument eine mittlere Taste bei Stufe 0 und −40, 12 s gehalten: der Pegel der Kraft im Band je 100 ms
+    // (`bandDb`) steigt ab 1 s nirgends um mehr als 3 dB gegen das Fenster davor (Schwebungen im Chor und am Koerper).
+    QFile datei(QString::fromStdString(umlaufDatei().string()));
+    REQUIRE(datei.open(QIODevice::ReadOnly));
+    const QJsonObject inst = QJsonDocument::fromJson(datei.readAll()).object().value(QStringLiteral("instruments")).toObject();
+    const std::size_t frames = static_cast<std::size_t>(12.0 * kFs);
+    double groessterAnstieg = -1e300;
+    for (const kz::Vorlage& v : kz::vorlagen())
+    {
+        CAPTURE(v.name);
+        kz::ZupfSpiel s = v.spiel;
+        s.umlauf = kz::umlaufTafelEintraege(lumi::loop::werteAusJson(tafelDerListe(), inst.value(QString::fromStdString(v.name)).toObject()).liste(kz::kUmlaufTafel));
+        const lumi::kern::Steg steg = lumi::koerper::stegAus(ladeKoerperDatei(v.name));
+        for (const int stufe : {0, lumi::kern::kAnschlagStufeMin})
+        {
+            CAPTURE(stufe);
+            const int taste = (s.noteMin + s.noteMax) / 2;
+            const kz::ZupfNote note = kz::zupfNote(s, taste, -1, stufe, static_cast<long long>(frames), kFs);
+            REQUIRE(note.fehler.empty());
+            kz::Schleifenauftrag a;
+            a.saiten = note.saiten;
+            a.zupf = note.zupf;
+            a.steg = &steg;
+            a.punkt = steg.punktZu(note.stegTaste);
+            REQUIRE(a.punkt != nullptr);
+            a.frames = frames;
+            a.vorlauf = kz::kVorlauf;
+            const kz::Schleifenkraft k = kz::rechneSchleife(a);
+            double vorher = bandDb(k.senkrecht, 0.9, 1.0), anstieg = -1e300;
+            std::ostringstream z;
+            for (double t = 1.0; t + 0.1 <= 12.0 + 1e-9; t += 0.1)
+            {
+                const double jetzt = bandDb(k.senkrecht, t, t + 0.1);
+                anstieg = std::max(anstieg, jetzt - vorher);
+                if (std::fmod(t + 1e-9, 1.0) < 0.05) z << " " << jetzt;
+                vorher = jetzt;
+            }
+            CHECK(anstieg <= 3.0);
+            groessterAnstieg = std::max(groessterAnstieg, anstieg);
+            MESSAGE(v.name << " Taste " << taste << " Stufe " << stufe << ": groesster Anstieg je 100 ms " << anstieg << " dB; Band je s ab 1 s:" << z.str());
+        }
+    }
+    MESSAGE("VL3 a: groesster Anstieg je 100 ms ab 1 s " << groessterAnstieg << " dB");
+}
+
+TEST_CASE("InstrumentModels VL7 a Wellenzahl kausal gegen den Bezug")
+{
+    // Zug und Biegesteife je Saite und Laenge (`umlauf::kausalAngepasst`) gegen `kausal_angepasst` des Bezugs
+    // (`proben/2026-11-26_S222_bezug_zupf.py`, S224 mit Python 3.12 gerechnet): Cembalo T29 (Draht, monofil), Harfe T46 (Darm)
+    struct Stich
+    {
+        const char* vorlage;
+        int taste;
+        double zug, steife;
+    };
+    for (const Stich& st : {Stich{"harpsichord", 29, 1.000780708689044, 0.9972204321753778}, Stich{"concert_harp", 46, 1.0251630610395956, 1.0683607487361844}})
+    {
+        CAPTURE(st.vorlage);
+        const kz::Vorlage* v = nullptr;
+        for (const kz::Vorlage& x : kz::vorlagen())
+            if (x.name == st.vorlage) v = &x;
+        REQUIRE(v != nullptr);
+        const std::optional<kz::Tastensaite> s = kz::tastensaiteAus(v->spiel, st.taste);
+        REQUIRE(s);
+        const auto t0 = std::chrono::steady_clock::now();
+        const lumi::kern::umlauf::KausalAngepasst a = lumi::kern::umlauf::kausalAngepasst(s->werte, s->laenge);
+        const double sek = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        MESSAGE(std::string(st.vorlage) << " T" << st.taste << ": T'/T " << a.zugFaktor << ", EI'/EI " << a.steifeFaktor << ", Rest " << a.restCent << " Cent, " << sek << " s");
+        CHECK(a.zugFaktor == doctest::Approx(st.zug).epsilon(1e-9));
+        CHECK(a.steifeFaktor == doctest::Approx(st.steife).epsilon(1e-7));
+        CHECK(std::isfinite(lumi::kern::umlauf::wellenzahl(s->werte, s->laenge, 2.0 * std::numbers::pi * 1000.0).real()));
+    }
+    // Laute 38 (Chor 1, Oktavsaite und Grundsaite): die Saiten aus der Note wie der Kern
+    const std::array<std::pair<double, double>, 2> laute = {std::pair{1.0412980707777437, 1.0939895392734902}, std::pair{1.0221906823090567, 1.0626586465605816}};
+    const kz::Vorlage* v = nullptr;
+    for (const kz::Vorlage& x : kz::vorlagen())
+        if (x.name == "lute") v = &x;
+    REQUIRE(v != nullptr);
+    kz::ZupfSpiel spiel = v->spiel;
+    {
+        QFile datei(QString::fromStdString(umlaufDatei().string()));
+        REQUIRE(datei.open(QIODevice::ReadOnly));
+        const QJsonObject inst = QJsonDocument::fromJson(datei.readAll()).object().value(QStringLiteral("instruments")).toObject();
+        spiel.umlauf = kz::umlaufTafelEintraege(lumi::loop::werteAusJson(tafelDerListe(), inst.value(QStringLiteral("lute")).toObject()).liste(kz::kUmlaufTafel));
+    }
+    const kz::ZupfNote note = kz::zupfNote(spiel, 38, -1, 0, 48000, 48000.0);
+    REQUIRE_MESSAGE(note.fehler.empty(), note.fehler);
+    REQUIRE(note.saiten.size() == 2);
+    for (std::size_t i = 0; i < 2; ++i)
+    {
+        CAPTURE(i);
+        const lumi::kern::umlauf::KausalAngepasst a = lumi::kern::umlauf::kausalAngepasst(note.saiten[i].werte, note.saiten[i].laenge);
+        const std::complex<double> k = lumi::kern::umlauf::wellenzahl(note.saiten[i].werte, note.saiten[i].laenge, 2.0 * std::numbers::pi * 73.3915);
+        MESSAGE("lute T38 Saite " << i << ": L " << note.saiten[i].laenge << ", T'/T " << a.zugFaktor << ", EI'/EI " << a.steifeFaktor << ", Rest "
+                                  << a.restCent << " Cent, k(73,39 Hz) " << std::setprecision(17) << k.real() << " " << k.imag());
+        CHECK(a.zugFaktor == doctest::Approx(laute[i].first).epsilon(1e-9));
+        CHECK(a.steifeFaktor == doctest::Approx(laute[i].second).epsilon(1e-7));
+    }
 }

@@ -210,7 +210,7 @@
         "name": "InstrumentModels",
         "//description": "Die Rechenkerne der Instrumentklassen ueber InstrumentCore (Instrumente_IC_Konzept.md BK1 a, Stufe 34d): je Klasse ein Unterordner und Namensraum (hammer/: der Fluegel, lumi::kern::hammer; stab/: Klasse 4, lumi::kern::stab, 34g; trommel/: Klasse 5, lumi::kern::trommel, 34h; saite/: Klasse 1 Rest, angeschlagene Saite, lumi::kern::saite, 34i; zunge/: Klasse 10, durchschlagende Zunge, lumi::kern::zunge, 34j), geteilte Bausteine unter gemeinsam/ (Balken, Reibung, Membran), dazu die Fabrik der eingebauten Kerne. STATIC mit denselben Schaltern nach E1 a (PRIVATE). Als Quellpaket nach IC (TP1 a, packages: instrumentmodels; bezieht instrumentcore)",
         "skip": false,
-        "version": "0.11.0",
+        "version": "0.12.0",
         "type": "STATIC",
         "path": "projects/libs/InstrumentModels/src",
         "public_headers": "projects/libs/InstrumentModels/include",

@@ -4,7 +4,12 @@
  */
 #include "InstrumentModels/gemeinsam/Umlauf.hpp"
 
+#include "InstrumentCore/Fft.hpp"
+
 #include <algorithm>
+#include <array>
+#include <map>
+#include <mutex>
 #include <cmath>
 #include <numbers>
 
@@ -23,7 +28,222 @@ double binom(int n, int k)
 }
 }  // namespace
 
-std::complex<double> wellenzahl(const Saitenwerte& s, double omega)
+std::complex<double> wellenzahlVerlustfrei(double T, double m, double EI, std::complex<double> w)
+{
+    return EI > 0.0 ? std::sqrt((-T + std::sqrt(T * T + 4.0 * EI * m * w * w)) / (2.0 * EI)) : w * std::sqrt(m / T);
+}
+
+double KausalerVerlust::bei(double omega) const
+{
+    if (dk.empty()) return 0.0;
+    const double x = std::abs(omega) / (2.0 * kPi) / schritt;
+    const auto i = static_cast<std::size_t>(std::floor(x));
+    if (i + 1 >= dk.size()) return dk.back();
+    const double t = x - static_cast<double>(i);
+    return dk[i] + t * (dk[i + 1] - dk[i]);
+}
+
+namespace
+{
+/// Im k ohne Dispersion auf der reellen Achse (ω mindestens 2π · 1 Hz), sein reelles Cepstrum gefaltet (kausal).
+std::vector<double> gefaltetesCepstrum(const Saitenwerte& s)
+{
+    const std::size_t N = kVerlustFein;
+    const double df = kRate / static_cast<double>(N);
+    std::vector<std::complex<double>> spektrum(N / 2 + 1);
+    for (std::size_t j = 0; j < spektrum.size(); ++j)
+        spektrum[j] = wellenzahlOhneDispersion(s, 2.0 * kPi * std::max(static_cast<double>(j) * df, 1.0)).imag();
+    std::vector<double> c(N);
+    kern::fft().rueckwaerts(spektrum, c);
+    for (std::size_t q = 1; q < N / 2; ++q) c[q] *= 2.0;
+    for (std::size_t q = N / 2 + 1; q < N; ++q) c[q] = 0.0;
+    return c;
+}
+
+/// Rechnet den kausalen Verlust (siehe Kopf; `kausal_verlust` des Bezugs Schritt fuer Schritt).
+KausalerVerlust rechneKausal(const Saitenwerte& s)
+{
+    const std::size_t N = kVerlustFein;
+    const double df = kRate / static_cast<double>(N);
+    std::vector<std::complex<double>> spektrum(N / 2 + 1);
+    kern::fft().vorwaerts(gefaltetesCepstrum(s), spektrum);
+    KausalerVerlust v;
+    v.schritt = df * static_cast<double>(kVerlustAblage);
+    v.dk.resize(spektrum.size() / kVerlustAblage + 1);
+    for (std::size_t i = 0; i < v.dk.size(); ++i) v.dk[i] = -spektrum[std::min(i * kVerlustAblage, spektrum.size() - 1)].imag();
+
+    return v;
+}
+
+/// Der kausale Verlust auf der Geraden ω − i s₀ (siehe Kopf; `kausal_verlust_auf` des Bezugs Schritt fuer Schritt).
+KausalerVerlustAufGerade rechneAufGerade(const Saitenwerte& s, double s0)
+{
+    const std::size_t N = kVerlustFein;
+    const double df = kRate / static_cast<double>(N);
+    std::vector<double> c = gefaltetesCepstrum(s);
+    for (std::size_t q = 0; q < N; ++q) c[q] *= std::exp(-s0 * static_cast<double>(q) / kRate);
+    std::vector<std::complex<double>> G(N / 2 + 1);
+    kern::fft().vorwaerts(c, G);
+    KausalerVerlustAufGerade v;
+    v.s0 = s0;
+    v.schritt = df * static_cast<double>(kVerlustAblage);
+    v.wert.resize(G.size() / kVerlustAblage + 1);
+    for (std::size_t i = 0; i < v.wert.size(); ++i) v.wert[i] = std::complex<double>(0.0, 1.0) * G[std::min(i * kVerlustAblage, G.size() - 1)];
+    return v;
+}
+
+struct Schluessel
+{
+    std::array<double, 9> x;
+    bool operator<(const Schluessel& o) const { return x < o.x; }
+};
+
+Schluessel schluesselVon(const Saitenwerte& s, double laenge)
+{
+    return {{s.zug, s.masse, s.biegesteife, s.verlustBiegung, s.verlustInnen, s.verlustLuft, s.durchmesser, s.dichte, laenge}};
+}
+
+/// Die Teiltoene ω_n des neuen Modells (2 L (Re k′ + Δk) = 2π n) mit 60 Halbierungen in [0,9 ; 1,1] ω_alt.
+void teiltoeneNeu(const Saitenwerte& s, double L, const KausalerVerlust& v, double pT, double pE, const std::vector<double>& alt,
+                  std::vector<double>& aus)
+{
+    aus.resize(alt.size());
+    for (std::size_t n = 0; n < alt.size(); ++n)
+    {
+        const double ziel = kPi * static_cast<double>(n + 1);
+        double lo = 0.9 * alt[n], hi = 1.1 * alt[n];
+        for (int i = 0; i < 60; ++i)
+        {
+            const double m = 0.5 * (lo + hi);
+            const double g = L * (wellenzahlVerlustfrei(s.zug * pT, s.masse, s.biegesteife * pE, m).real() + v.bei(m)) - ziel;
+            (g < 0.0 ? lo : hi) = m;
+        }
+        aus[n] = 0.5 * (lo + hi);
+    }
+}
+
+/// Zug und Biegesteife je Saite und Laenge (siehe Kopf; `kausal_angepasst` des Bezugs Schritt fuer Schritt).
+KausalAngepasst rechneAngepasst(const Saitenwerte& s, double L)
+{
+    const std::shared_ptr<const KausalerVerlust> v = kausalerVerlust(s);
+    std::vector<double> alt;
+    for (int n = 1; n <= 30; ++n)
+    {
+        const double q = n * kPi / L;
+        const double w = std::sqrt((s.zug * q * q + s.biegesteife * q * q * q * q) / s.masse);
+        if (w > 2.0 * kPi * 20000.0) break;
+        alt.push_back(w);
+    }
+    KausalAngepasst a;
+    if (alt.empty()) return a;
+    const bool steif = s.biegesteife > 0.0;
+    std::vector<double> wn;
+    const auto rest = [&](double pT, double pE, std::vector<double>& r) {
+        teiltoeneNeu(s, L, *v, pT, pE, alt, wn);
+        r.resize(alt.size());
+        for (std::size_t n = 0; n < alt.size(); ++n) r[n] = 1200.0 * std::log2(wn[n] / alt[n]);
+    };
+    double p[2] = {1.0, 1.0};
+    std::vector<double> r0, r1, r2;
+    for (int it = 0; it < 30; ++it)
+    {
+        rest(p[0], p[1], r0);
+        constexpr double h = 1e-7;
+        rest(p[0] + h, p[1], r1);
+        if (steif) rest(p[0], p[1] + h, r2);
+        double a11 = 0.0, a12 = 0.0, a22 = 0.0, b1 = 0.0, b2 = 0.0;
+        for (std::size_t j = 0; j < r0.size(); ++j)
+        {
+            const double j1 = (r1[j] - r0[j]) / h, j2 = steif ? (r2[j] - r0[j]) / h : 0.0;
+            a11 += j1 * j1;
+            a12 += j1 * j2;
+            a22 += j2 * j2;
+            b1 += j1 * r0[j];
+            b2 += j2 * r0[j];
+        }
+        double d1 = 0.0, d2 = 0.0;
+        const double det = a11 * a22 - a12 * a12;
+        if (steif && r0.size() > 1 && det > 0.0)
+        {
+            d1 = (a22 * b1 - a12 * b2) / det;
+            d2 = (a11 * b2 - a12 * b1) / det;
+        }
+        else
+            d1 = b1 / a11;
+        p[0] -= d1;
+        p[1] -= d2;
+        if (std::abs(d1) < 1e-13 && std::abs(d2) < 1e-13) break;
+    }
+    a.zugFaktor = p[0];
+    a.steifeFaktor = p[1];
+    rest(p[0], p[1], r0);
+    for (double x : r0) a.restCent = std::max(a.restCent, std::abs(x));
+    return a;
+}
+}  // namespace
+
+std::shared_ptr<const KausalerVerlust> kausalerVerlust(const Saitenwerte& s)
+{
+    static std::mutex sperre;
+    static std::map<Schluessel, std::shared_ptr<const KausalerVerlust>> merk;
+    const Schluessel k = schluesselVon(s, 0.0);
+    {
+        const std::lock_guard<std::mutex> l(sperre);
+        if (const auto it = merk.find(k); it != merk.end()) return it->second;
+    }
+    auto v = std::make_shared<const KausalerVerlust>(rechneKausal(s));
+    const std::lock_guard<std::mutex> l(sperre);
+    return merk.emplace(k, std::move(v)).first->second;
+}
+
+std::complex<double> KausalerVerlustAufGerade::bei(double omega) const
+{
+    if (wert.empty()) return 0.0;
+    const double x = std::abs(omega) / (2.0 * kPi) / schritt;
+    const auto i = static_cast<std::size_t>(std::floor(x));
+    if (i + 1 >= wert.size()) return wert.back();
+    const double t = x - static_cast<double>(i);
+    return wert[i] + t * (wert[i + 1] - wert[i]);
+}
+
+std::shared_ptr<const KausalerVerlustAufGerade> kausalerVerlustAuf(const Saitenwerte& s, double s0)
+{
+    static std::mutex sperre;
+    static std::map<Schluessel, std::shared_ptr<const KausalerVerlustAufGerade>> merk;
+    const Schluessel k = schluesselVon(s, s0);
+    {
+        const std::lock_guard<std::mutex> l(sperre);
+        if (const auto it = merk.find(k); it != merk.end()) return it->second;
+    }
+    auto v = std::make_shared<const KausalerVerlustAufGerade>(rechneAufGerade(s, s0));
+    const std::lock_guard<std::mutex> l(sperre);
+    return merk.emplace(k, std::move(v)).first->second;
+}
+
+KausalAngepasst kausalAngepasst(const Saitenwerte& s, double laenge)
+{
+    static std::mutex sperre;
+    static std::map<Schluessel, KausalAngepasst> merk;
+    const Schluessel k = schluesselVon(s, laenge);
+    {
+        const std::lock_guard<std::mutex> l(sperre);
+        if (const auto it = merk.find(k); it != merk.end()) return it->second;
+    }
+    const KausalAngepasst a = rechneAngepasst(s, laenge);
+    const std::lock_guard<std::mutex> l(sperre);
+    return merk.emplace(k, a).first->second;
+}
+
+std::complex<double> wellenzahl(const Saitenwerte& s, double laenge, double omega)
+{
+    const std::shared_ptr<const KausalerVerlust> v = kausalerVerlust(s);
+    const KausalAngepasst a = kausalAngepasst(s, laenge);
+    const std::complex<double> alt = wellenzahlOhneDispersion(s, omega);
+    const double neu = wellenzahlVerlustfrei(s.zug * a.zugFaktor, s.masse, s.biegesteife * a.steifeFaktor, omega).real() + v->bei(omega);
+    return {neu, alt.imag()};
+}
+
+std::complex<double> wellenzahlOhneDispersion(const Saitenwerte& s, double omega)
 {
     const double T = s.zug, m = s.masse, EI = s.biegesteife;
     const double k2 = EI > 0.0 ? (-T + std::sqrt(T * T + 4.0 * EI * m * omega * omega)) / (2.0 * EI) : omega * omega * m / T;
@@ -43,7 +263,7 @@ std::complex<double> wellenzahl(const Saitenwerte& s, double omega)
 
 Umlaufwert umlaufDerSaite(const Saitenwerte& saite, double laenge, double hz)
 {
-    const std::complex<double> k = wellenzahl(saite, 2.0 * kPi * hz);
+    const std::complex<double> k = wellenzahl(saite, laenge, 2.0 * kPi * hz);
     return {std::exp(2.0 * k.imag() * laenge), 2.0 * k.real() * laenge};
 }
 

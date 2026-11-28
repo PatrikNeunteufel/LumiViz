@@ -2,22 +2,24 @@
 
 > Ablage `…\Visuals_Project\cmake\quellen` — Paper, Bücher, Noten und andere Dokumente, die aus
 > urheberrechtlichen Gründen nicht ins Repo gehören; archiviert auf der Wechselplatte unter
-> `<Laufwerk>:\samples\quellen` (seit S189; früher `<Laufwerk>:\quellen`, der Buchstabe kann wechseln).
+> `<Laufwerk>:\archive\LumiViz\quellen` (seit S224; S189 bis S224 `<Laufwerk>:\samples\quellen`, davor
+> `<Laufwerk>:\quellen`; der Buchstabe kann wechseln).
 > **Vor Gebrauch Patrik bitten, sie verfügbar zu machen.** Zitiert wird in den Berichten unter
 > `docs/modellierung/` mit Seite. Erzeugt von `tools/archiv_index.py`.
 
 <!-- SYSTEM:ANFANG -->
 ## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\quellen`
 
-*Stand 2026-11-17.*
+*Stand 2026-11-27.*
 
-**Gesamt:** 255 Dateien, 748.1 MB.
+**Gesamt:** 258 Dateien, 749.5 MB.
 
 ### .
 
 - `UMZUG_S182.tsv` (36.0 KB)
 - `UMZUG_S202.tsv` (9.1 KB)
 - `UMZUG_S203.tsv` (14.0 KB)
+- `UMZUG_S208.tsv` (1014 B)
 
 ### bogen-saite
 
@@ -39,6 +41,7 @@
 - `Chadefaux_etal_2013_ModelHarpPlucking_JASA133.pdf` (801.3 KB)
 - `Chadefaux_LeCarrou_LeConte_Castellengo_2013_HarpsichordPlectrumStringInteraction_SMAC2013.pdf` (1.7 MB)
 - `Degirmenli_2017_AkustikAnalizTelliCalgilar_GUJSciC5.pdf` (1.1 MB)
+- `Degirmenli_2023_TinisalNiteliklerUd_Idil104.pdf` (790.3 KB)
 - `DiVeroli_2012_OptimisingHarpsichordStaggering_HFP16.pdf` (4.5 MB)
 - `DiVeroli_2022_StringingCalculator.xls` (211.0 KB)
 - `Donahue_2012_PitchLevelsStringLengthsIronStrung_JAMIS.pdf` (12.9 MB)
@@ -81,7 +84,7 @@
 - `Roy_LeCarrou_Fabre_Vitrani_2015_PlectreClavecin_CFM.pdf` (302.3 KB)
 - `SantaMariaBouquet_2020_LuteRauwolf1598_CL93.pdf` (2.3 MB)
 - `Scherrer_2013_AngleOfRelease_Diss_McGill.pdf` (35.1 MB)
-- `SHA256SUMS` (7.4 KB)
+- `SHA256SUMS` (7.6 KB)
 - `SMAC83_1985_Volume2_FirthBell_HarpSoundboardSoundbox.pdf` (15.9 MB)
 - `Thwaites_Fletcher_1981_NotesOnClavichord.pdf` (714.4 KB)
 - `Traube_2004_TimbreClassicalGuitar_Diss_McGill.pdf` (18.6 MB)
@@ -91,6 +94,7 @@
 - `Woodhouse_etal_2012_PerceptualThresholdsGuitarModels_ActaAcustica98.pdf` (1.1 MB)
 - `Woodhouse_LynchAird_2019_ChoosingStringsPlucked_ActaAcustica105.pdf` (1.3 MB)
 - `Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf` (4.7 MB)
+- `Ziyagil_2021_UdSesOlusumu_MotifAkademi14.pdf` (677.0 KB)
 - `Zuckermann_2000_FrenchDoubleVI_StringingSchedule.pdf` (53.4 KB)
 
 ### hammer-saite
@@ -314,31 +318,43 @@
 <!-- SYSTEM:ENDE -->
 
 <!-- WECHSEL:ANFANG -->
-## Wechselplatte: `E:\samples\quellen`
+## Wechselplatte: `E:\archive\LumiViz\quellen`
 
-*Stand 2026-11-17.*
+*Stand 2026-11-27.*
 
-**Gesamt:** 193 Dateien, 573.4 MB.
+**Gesamt:** 258 Dateien, 749.5 MB.
 
 ### .
 
 - `UMZUG_S182.tsv` (36.0 KB)
+- `UMZUG_S202.tsv` (9.1 KB)
+- `UMZUG_S203.tsv` (14.0 KB)
+- `UMZUG_S208.tsv` (1014 B)
 
 ### bogen-saite
 
+- `Chatziioannou_Mayer_2025_ReconstructedRababs_HKB20.pdf` (969.3 KB)
 - `Maestre_Scavone_Smith_2013_DigitalModelingBridgeDrivingPointAdmittances_SMAC2013.pdf` (3.9 MB)
 - `Russo_Ducceschi_Bilbao_2022_EfficientSimulationBowedStringModalForm_DAFx20in22.pdf` (2.3 MB)
+- `SHA256SUMS` (121 B)
 
 ### gezupfte-saite
 
 - `Abdallah_etal_2026_OudSoundboardBracing_Meccanica61.pdf` (4.0 MB)
 - `Bader_Plath_Kontopidis_2025_Dulcken1755HarpsichordDampingBentside_arXiv2511.09037.pdf` (9.6 MB)
+- `Bank_Karjalainen_2010_PassiveAdmittanceMatrix_DAFx10.pdf` (240.1 KB)
+- `Bank_Valimaki_2003_RobustLossFilter_SPL10.pdf` (200.8 KB)
 - `Bell_1988_AcousticalInvestigationConcertHarp_PhD.pdf` (82.6 MB)
+- `Bell_Firth_oJ_HarpSoundboardSoundbox_ProcIOA.pdf` (973.7 KB)
 - `Camac_2022_StringChartPedalHarps.pdf` (85.9 KB)
 - `Chadefaux_etal_2012_HarpPluckingDescription_JASA131.pdf` (1.6 MB)
 - `Chadefaux_etal_2013_ModelHarpPlucking_JASA133.pdf` (801.3 KB)
 - `Chadefaux_LeCarrou_LeConte_Castellengo_2013_HarpsichordPlectrumStringInteraction_SMAC2013.pdf` (1.7 MB)
+- `Degirmenli_2017_AkustikAnalizTelliCalgilar_GUJSciC5.pdf` (1.1 MB)
+- `Degirmenli_2023_TinisalNiteliklerUd_Idil104.pdf` (790.3 KB)
+- `DiVeroli_2012_OptimisingHarpsichordStaggering_HFP16.pdf` (4.5 MB)
 - `DiVeroli_2022_StringingCalculator.xls` (211.0 KB)
+- `Donahue_2012_PitchLevelsStringLengthsIronStrung_JAMIS.pdf` (12.9 MB)
 - `Ducceschi_Russo_Webb_2026_65ModelledGuitars_DAFx26.pdf` (8.2 MB)
 - `Edinburgh_StCecilias_96074.html` (61.9 KB)
 - `Edinburgh_StCecilias_96075.html` (56.6 KB)
@@ -347,6 +363,17 @@
 - `Edinburgh_StCecilias_96081.html` (60.5 KB)
 - `Edinburgh_StCecilias_96082.html` (60.3 KB)
 - `Edinburgh_StCecilias_96088.html` (53.1 KB)
+- `Elie_2012_CaracterisationVibratoireInstrumentsCordes_These.pdf` (19.6 MB)
+- `Elie_etal_2011_BridgeAdmittanceHighFrequency_FA2011.pdf` (2.0 MB)
+- `Elie_Gautier_David_2012_MacroParametersClassicalGuitars_JASA.pdf` (328.3 KB)
+- `Fabre_LeCarrou_Chomette_LeBomin_2023_CentralAfricaHarps_FA2023.pdf` (654.4 KB)
+- `Fletcher_Beebe_2010_HarpsichordClavichord_Kap8.pdf` (778.5 KB)
+- `Giordano_Winans_1999_PluckedStringsHarpsichord_JSVpreprint.ps` (451.0 KB)
+- `Hess_2013_FrequencyResponseGuitarModifications_SavartJ.pdf` (357.9 KB)
+- `Inanli_Altinsoy_2018_VibroacousticsOud_DAGA2018.pdf` (662.6 KB)
+- `Jansson_1983_FunctionConstructionQualityGuitar_KMA38.pdf` (3.0 MB)
+- `Lane_Kasparis_2012_FrequencyErrorFrettedStrings_ActaAcust98.pdf` (1.1 MB)
+- `Law_2008_HarpsichordRegulation_HFP13-1.pdf` (3.3 MB)
 - `LeCarrou_2006_VibroacoustiqueHarpeConcert_These.pdf` (3.5 MB)
 - `LeCarrou_Gautier_Badeau_2007_HarpSympatheticModes_ICA.pdf` (286.0 KB)
 - `LeCarrou_Gautier_Badeau_2009_SympatheticModesHarp_ActaAcust95.pdf` (972.6 KB)
@@ -354,17 +381,22 @@
 - `LeCarrou_Leclere_Gautier_2010_HarpRadiation_JASA127.pdf` (1.5 MB)
 - `LynchAird_Woodhouse_2017_NylonHarpStrings_Materials10.pdf` (3.5 MB)
 - `LynchAird_Woodhouse_2018_GutSyntheticHarpStrings_Materials11.pdf` (1.2 MB)
+- `MacRitchie_Nuti_2015_HarpsichordTouchTaskin_FrontPsychol6.pdf` (2.3 MB)
 - `Mores_2021_Comments_ArchiveGuitars_Zenodo4604576.pdf` (109.9 KB)
 - `Mores_2021_ListOfGuitarsPhysicalMeasures_ArchiveGuitars_Zenodo4604576.pdf` (196.2 KB)
 - `Mores_2021_Method_ArchiveGuitars_Zenodo4604576.pdf` (454.4 KB)
+- `Mores_2021_SymmetryAsymmetryGuitarBracings_DAGA2021.pdf` (530.0 KB)
 - `Penttinen_2006_DynamicsHarpsichordSynthesis_DAFx06.pdf` (272.7 KB)
 - `Perng_2012_HarpsichordPlectrumStringInteraction_Diss.pdf` (20.5 MB)
 - `Perng_Smith_Rossing_2010_PlectrumString_DAFx10.pdf` (456.4 KB)
 - `Perng_Smith_Rossing_2011_PlectrumWaveguide_DAFx11.pdf` (1.2 MB)
+- `Rauhala_Valimaki_2006_DispersionTunableAllpass_DAFx06.pdf` (450.8 KB)
 - `Roy_LeCarrou_Fabre_Vitrani_2015_PlectreClavecin_CFM.pdf` (302.3 KB)
 - `SantaMariaBouquet_2020_LuteRauwolf1598_CL93.pdf` (2.3 MB)
 - `Scherrer_2013_AngleOfRelease_Diss_McGill.pdf` (35.1 MB)
 - `SHA256SUMS` (4.7 KB)
+- `SMAC83_1985_Volume2_FirthBell_HarpSoundboardSoundbox.pdf` (15.9 MB)
+- `Thwaites_Fletcher_1981_NotesOnClavichord.pdf` (714.4 KB)
 - `Traube_2004_TimbreClassicalGuitar_Diss_McGill.pdf` (18.6 MB)
 - `Valimaki_etal_2004_HarpsichordSynthesis_EURASIP.pdf` (1.5 MB)
 - `Waltham_etal_2008_HarpSoundboards_CanAcoust36.pdf` (157.9 KB)
@@ -372,6 +404,7 @@
 - `Woodhouse_etal_2012_PerceptualThresholdsGuitarModels_ActaAcustica98.pdf` (1.1 MB)
 - `Woodhouse_LynchAird_2019_ChoosingStringsPlucked_ActaAcustica105.pdf` (1.3 MB)
 - `Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf` (4.7 MB)
+- `Ziyagil_2021_UdSesOlusumu_MotifAkademi14.pdf` (677.0 KB)
 - `Zuckermann_2000_FrenchDoubleVI_StringingSchedule.pdf` (53.4 KB)
 
 ### hammer-saite
@@ -462,9 +495,49 @@
 
 - `1611.01025v1.pdf` (3.3 MB)
 - `2207.05395v3.pdf` (2.9 MB)
+- `Adachi_Sato_1995_TrumpetLipVibrationModel_ATR-TR-H-177.pdf` (469.1 KB)
+- `AragoBishop_Myers_Campbell_2025_VentHolesBrass_FA2025.pdf` (2.4 MB)
+- `Bertsch_1998_IntonationTrumpets_ISMA1998.pdf` (477.8 KB)
+- `BonetFilella_2014_InputImpedanceHornsCrooks_MSc_Edinburgh.pdf` (1.9 MB)
+- `Boutin_etal_2013_LipMotionTrombone_SMAC2013.pdf` (397.6 KB)
+- `Boutin_etal_2015_TrombonePressureFlowImpedance_JASA137.pdf` (2.1 MB)
+- `Boutin_Smith_Wolfe_2020_TromboneLippingUpDown_JASA147.pdf` (3.5 MB)
+- `Braden_2006_BoreOptimisationImpedanceBrass_PhD_Edinburgh.pdf` (2.5 MB)
+- `Bromage_2007_LipMotionArtificialMouth_PhD_Edinburgh.pdf` (3.8 MB)
+- `Cabaret_etal_2023_ExperimentalDatabaseResonators_FA2023.pdf` (1.6 MB)
+- `Dell_James_Davidson_Wolfe_2010_HandMuteHornImpedance_ISMA2010.pdf` (154.4 KB)
+- `EJV_2021_TechnischesRegulativAlphorn.pdf` (347.8 KB)
+- `HarrisonHarsley_2018_FDTDBrassModelling_PhD_Edinburgh.pdf` (17.5 MB)
 - `Hendrie DA thesis 07.pdf` (9.5 MB)
+- `Logie_2012_PlayingCharacteristicsBrass_PhD_Edinburgh.pdf` (14.9 MB)
+- `Marcinno_etal_2026_PerfectSwissAlphorn_arXiv2607.22823.pdf` (5.0 MB)
+- `Matteoli_etal_2021_MinimalBlowingPressureBassBrass_arXiv2112.08751.pdf` (2.6 MB)
+- `Matteoli_etal_2023_OnePedalNote_FA2023.pdf` (1.7 MB)
+- `Myers_1998_TaxonomyHistoricBrass_PhD_Edinburgh.pdf` (12.7 MB)
+- `Newton_2009_LipReedVocalFolds_PhD_Edinburgh.pdf` (6.4 MB)
+- `Newton_etal_2014_PredictingPlayingFrequenciesBrass_FA2014.pdf` (512.3 KB)
 - `Petiot_Freour_Arimoto_2025_FA_Trompete_Mundrohr.pdf` (1.0 MB)
+- `Schneider_1995_DerAlphornblaeser_Eigenverlag.pdf` (1.2 MB)
+- `SHA256SUMS` (3.0 KB)
+- `Silva_etal_2008_RadiationImpedanceCylindricalPipe_arXiv0811.3625.pdf` (358.0 KB)
 - `Soares_et_al_2025_ActaAcustica_9_68_Trompete.pdf` (3.0 MB)
+- `Stevenson_2009_LipMotionBrass_PhD_Edinburgh.pdf` (5.8 MB)
+- `Wachter_2008_StopfenBeiHoernern_Diplomarbeit_mdw.pdf` (5.3 MB)
+- `Ziegenhals_2010_Vuvuzela_DAGA2010.pdf` (370.4 KB)
+
+### messung
+
+> Normen und Aufsätze zur Messung (Lautheit, Abklingen) für `docs/modellierung/messung/` und die Messkette `InstrumentMeasure`.
+
+- `Ackermann_Brinkmann_Weinzierl_2023_DirectivityDatabase_arXiv2307.02110.pdf` (2.9 MB)
+- `EBU_2023_Tech3341_LoudnessMetering.pdf` (354.4 KB)
+- `EBU_2023_Tech3342_LoudnessRange.pdf` (381.6 KB)
+- `Goto_etal_2003_RWCMusicDatabase_ISMIR2003.pdf` (27.6 KB)
+- `ITU_2023_BS1770-5_ProgrammeLoudness.pdf` (1.9 MB)
+- `Lindau_etal_2014_SpatialAudioQualityInventory_ActaAcust100.pdf` (1.2 MB)
+- `SHA256SUMS` (969 B)
+- `Venturi_Farina_Tronchin_2013_PreprocessingImpulseResponses_POMA19.pdf` (500.5 KB)
+- `Weinzierl_etal_2017_DocumentationMusicalInstruments_DepositOnce5861.pdf` (739.3 KB)
 
 ### noten/imslp
 

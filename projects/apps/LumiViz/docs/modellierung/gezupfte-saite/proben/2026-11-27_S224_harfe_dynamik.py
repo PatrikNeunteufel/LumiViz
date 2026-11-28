@@ -1,7 +1,7 @@
 """S224, ZD1 a — die Staerke je Stufe an der Harfe: f gegen mf an der VCSL-Konzertharfe, je Teilton.
 
 Aufruf (vom Projekt-Root, das Archiv eingesteckt): python -X utf8 -B <dieses Skript> [<ordner der Aufnahmen>]
-    Vorgabe: E:/samples/Klasse 2 - Gezupfte Saite/VCSL/Chordophones/Composite Chordophones/Concert Harp
+    Vorgabe: E:/archive/LumiViz/samples/Klasse 2 - Gezupfte Saite/VCSL/Chordophones/Composite Chordophones/Concert Harp
 Ergebnis: `2026-11-27_S224_harfe_dynamik.txt` (die Ausgabe dieses Skripts).
 
 Wie `2026-11-15_S199_dynamik_je_teilton` an der Iowa-Gitarre (GZ6 a): je Note, die in beiden Staerken vorliegt, der Pegel
@@ -22,7 +22,7 @@ import numpy as np
 from scipy.io import wavfile
 
 ORDNER = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(
-    "E:/samples/Klasse 2 - Gezupfte Saite/VCSL/Chordophones/Composite Chordophones/Concert Harp")
+    "E:/archive/LumiViz/samples/Klasse 2 - Gezupfte Saite/VCSL/Chordophones/Composite Chordophones/Concert Harp")
 NAMEN = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
 

@@ -9,6 +9,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <numbers>
 #include <stdexcept>
 
@@ -21,15 +24,6 @@ using cplx = std::complex<double>;
 constexpr double kPi = std::numbers::pi;
 constexpr cplx kI{0.0, 1.0};
 
-/// GZ6 a: die Stufe kippt das Spektrum um 1 kHz, k dB je Oktave je dB Stufe — ohne den Pegel, den traegt die Auslenkung
-/// (`neigung_faktor` des Bezugs; bis S224 mit dem Pegel wie `staerke_faktor` des Pruefstands, die Stufe zaehlte doppelt).
-double neigungFaktor(cplx w, double stufe, double kipp)
-{
-    if (stufe == 0.0 || kipp == 0.0) return 1.0;
-    const double f = std::max(std::abs(w.real()) / (2.0 * kPi), 20.0);
-    return std::pow(10.0, stufe * kipp * std::log2(f / 1000.0) / 20.0);
-}
-
 /// ∫₀ᴸ y₀(x) e^(−i κ x) dx fuer das Dreieck y₀ (Spitze d bei a, null an beiden Enden), geschlossen.
 cplx dreieckIntegral(cplx kappa, double a, double L, double d)
 {
@@ -37,13 +31,14 @@ cplx dreieckIntegral(cplx kappa, double a, double L, double d)
     return d * (Ea - 1.0) / (a * kappa * kappa) - d * (EL - Ea) / ((L - a) * kappa * kappa);
 }
 
-/// Die Quelle g(ω) einer Saite (`quelle` des Bezugs, Geschwindigkeit als Kraftstoss).
-cplx quelleBei(const umlauf::Saitenwerte& sa, double L, const Zupfangabe& z, cplx w)
+/// Die Quelle g(ω) einer Saite (`quelle` des Bezugs, Geschwindigkeit als Kraftstoss); `filter` der Faktor des
+/// Quellfilters an diesem ω (Neigung je Stufe und Bandgrenze, kausal: `quellfilterKausal`, VL2 a, VL5 a).
+cplx quelleBei(const umlauf::Saitenwerte& sa, double L, const Zupfangabe& z, cplx w, cplx filter)
 {
-    const Welle wl = welleBei(sa, w);
+    const Welle wl = welleBei(sa, L, w);
     const double T = sa.zug, m = sa.masse, xp = z.ort, d = z.auslenkung;
     const cplx arg = w * z.breite / std::sqrt(T / m);
-    const cplx breit = std::exp(-(arg * arg)) * neigungFaktor(w, z.neigung, z.kipp);
+    const cplx breit = std::exp(-(arg * arg)) * filter;
     const cplx f = -(T * d * L / (xp * (L - xp))) / (kI * w) * breit;
     cplx g = f / (2.0 * wl.z0) * (std::exp(-kI * wl.k * xp) - std::exp(-kI * wl.k * (2.0 * L - xp)));
     if (z.tempo != 0.0)
@@ -124,46 +119,84 @@ Daempfer daempferAn(const Steg::Dichte& dichte, double streuung)
     return d;
 }
 
-Welle welleBei(const umlauf::Saitenwerte& s, cplx w)
+Welle welleBei(const umlauf::Saitenwerte& s, double laenge, cplx w)
 {
+    // VL7 a: der Verlust kausal — die verlustfreie Wellenzahl mit angepasstem Zug und Biegesteife, fortgesetzt auf die
+    // Gerade ω − i s₀, und Δk + i Im k als eine analytische Funktion dorthin fortgesetzt (`umlauf::kausalerVerlustAuf`;
+    // `wellen_kausal` des Bezugs). z₀ mit dem Zug der Saite.
     const double T = s.zug, m = s.masse, EI = s.biegesteife;
-    const cplx k2 = EI > 0.0 ? (-T + std::sqrt(T * T + 4.0 * EI * m * w * w)) / (2.0 * EI) : w * w * m / T;
-    const cplx biegung = EI * s.verlustBiegung * k2 / (T + EI * k2);
-    cplx eta;
-    if (s.durchmesser > 0.0)
-    {
-        const double f = std::max(std::abs(w.real()) / (2.0 * kPi), 20.0);
-        const double M = s.durchmesser / 4.0 * std::sqrt(2.0 * kPi * f / 1.5e-5);
-        eta = (s.durchmesser * 1000.0 + 0.2) * 1.2 / s.dichte * (2.0 * std::sqrt(2.0) * M + 1.0) / (M * M) + biegung;
-    }
-    else
-        eta = T * (s.verlustInnen + s.verlustLuft / w) / (T + EI * k2) + biegung;
-    const cplx k = std::sqrt(k2) * (1.0 - 0.5 * kI * eta);
+    const std::shared_ptr<const umlauf::KausalerVerlustAufGerade> v = umlauf::kausalerVerlustAuf(s, -w.imag());
+    const umlauf::KausalAngepasst a = umlauf::kausalAngepasst(s, laenge);
+    const cplx k = umlauf::wellenzahlVerlustfrei(T * a.zugFaktor, m, EI * a.steifeFaktor, w) + v->bei(w.real());
     return {k, T * k / w};
+}
+
+std::shared_ptr<const std::vector<double>> quellfilterKausal(double neigungDb)
+{
+    // VL2 a, VL5 a: der Betrag 10^(p lb(max(f, 20 Hz) / 1 kHz) / 20) mal der Bandgrenze (1 bis kBandDurchlass, darueber mit
+    // einem halben Kosinus bis f_s / 2 auf kBandBodenDb) auf kNeigungFein Werten der reellen Achse, das reelle Cepstrum
+    // gefaltet (kausal), h = IFFT(exp(FFT(gefaltet))) — wie `quellfilter` des Bezugs. Je p einmal gerechnet.
+    static std::mutex sperre;
+    static std::map<double, std::shared_ptr<const std::vector<double>>> merk;
+    {
+        const std::lock_guard<std::mutex> l(sperre);
+        if (const auto it = merk.find(neigungDb); it != merk.end()) return it->second;
+    }
+    const std::size_t N = kNeigungFein;
+    std::vector<cplx> spektrum(N / 2 + 1);
+    for (std::size_t k = 0; k < spektrum.size(); ++k)
+    {
+        const double f = std::max(static_cast<double>(k) * kSchleifenRate / static_cast<double>(N), 20.0);
+        const double fk = static_cast<double>(k) * kSchleifenRate / static_cast<double>(N);
+        const double x = std::clamp((fk - kBandDurchlass) / (0.5 * kSchleifenRate - kBandDurchlass), 0.0, 1.0);
+        const double db = neigungDb * std::log2(f / 1000.0) + kBandBodenDb * 0.5 * (1.0 - std::cos(kPi * x));
+        spektrum[k] = db / 20.0 * std::numbers::ln10;  // ln |H|
+    }
+    std::vector<double> c(N);
+    fft().rueckwaerts(spektrum, c);
+    for (std::size_t q = 1; q < N / 2; ++q) c[q] *= 2.0;
+    for (std::size_t q = N / 2 + 1; q < N; ++q) c[q] = 0.0;
+    fft().vorwaerts(c, spektrum);
+    for (cplx& x : spektrum) x = std::exp(x);
+    std::vector<double> h(N);
+    fft().rueckwaerts(spektrum, h);
+    h.resize(kQuelleLaenge);
+    auto fertig = std::make_shared<const std::vector<double>>(std::move(h));
+    const std::lock_guard<std::mutex> l(sperre);
+    return merk.emplace(neigungDb, std::move(fertig)).first->second;
 }
 
 std::vector<double> quelleImTakt(const umlauf::Saitenwerte& saite, double laenge, const Zupfangabe& zupf, std::size_t frames, double vorlauf)
 {
-    // Die FFT reicht ueber die ganze Note (hoechstens 2¹⁸ Werte, 5,5 s), mindestens ueber das Achtfache von Vorlauf und
-    // Umlauf. g selbst ist kurz (zwei Stufen im Abstand 2 (L − x_p) / c), aber die Neigung (GZ6 a) knickt das Spektrum bei
-    // 20 Hz und gibt g einen langsamen Auslaeufer: mit 2¹⁵ Werten (0,68 s) lagen die spaeten Pegel der Gitarre pp bis 5 dB
-    // neben dem Bezug, ueber die Note wie der Kandidat S200 (S224). Was ueber 2¹⁸ hinausreicht, faellt um e^(−s₀ n / f_s)
-    // ≈ 2 · 10⁻⁵ gedaempft auf den Anfang.
-    const double c0 = std::sqrt(saite.zug / saite.masse);
-    const double traeger = vorlauf + 2.0 * laenge / c0;
-    const std::size_t n = zweierpotenzAb(std::max<std::size_t>(std::min<std::size_t>(frames, std::size_t{1} << 18),
-                                                               static_cast<std::size_t>(8.0 * traeger * kSchleifenRate)));
+    // VL3 a: die FFT richtet sich nach der Quelle, nicht nach der Note — immer kQuelleLaenge Werte auf der Geraden
+    // ω − i s₀ mit s₀ · Dauer = 8 (wie der Bezug: 4 s · 2 1/s); genutzt wird nur die erste Haelfte. Was vor dem Loslassen
+    // liegt, faltet die FFT ans Ende (dort um e^(s₀ n) = e⁸ gehoben), was ueber das Ende reicht, um e⁻⁸ gedaempft auf den
+    // Anfang; beides bleibt so ausserhalb der genutzten Haelfte bzw. unter −70 dB. Bis S224 reichte die FFT ueber die Note
+    // (hoechstens 2¹⁸) mit s₀ = 2: an Noten ueber 5,4 s sprang die Kraft um 20–90 dB (`proben/2026-11-27_S224_vorlauf.txt`).
+    // g selbst ist kurz (zwei Stufen im Abstand 2 (L − x_p) / c, geglaettet), die Neigung (VL2 a, kausal) gibt ihm einen
+    // Auslaeufer, der in der halben FFT (2,7 s) abklingt. Das Quellfilter (Neigung und Bandgrenze, VL5 a) gilt immer.
+    const std::size_t n = kQuelleLaenge;
+    if (vorlauf * kSchleifenRate >= static_cast<double>(n / 2))
+        throw std::invalid_argument("plucked string loop: the lead-in must be shorter than half the source window");
+    const double s0 = kQuelleS0;
+    std::vector<cplx> filter(n / 2 + 1);
+    {
+        const std::shared_ptr<const std::vector<double>> h = quellfilterKausal(zupf.neigung * zupf.kipp);
+        std::vector<double> gedaempft(n);
+        for (std::size_t t = 0; t < n; ++t) gedaempft[t] = (*h)[t] * std::exp(-s0 * static_cast<double>(t) / kSchleifenRate);
+        fft().vorwaerts(gedaempft, filter);
+    }
     std::vector<cplx> spektrum(n / 2 + 1);
     for (std::size_t k = 0; k < spektrum.size(); ++k)
     {
-        const cplx w(2.0 * kPi * static_cast<double>(k) * kSchleifenRate / static_cast<double>(n), -kQuelleS0);
-        spektrum[k] = quelleBei(saite, laenge, zupf, w) * std::exp(-kI * w * vorlauf);
+        const cplx w(2.0 * kPi * static_cast<double>(k) * kSchleifenRate / static_cast<double>(n), -s0);
+        spektrum[k] = quelleBei(saite, laenge, zupf, w, filter[k]) * std::exp(-kI * w * vorlauf);
     }
     std::vector<double> zeit(n);
     fft().rueckwaerts(spektrum, zeit);
     std::vector<double> g(frames, 0.0);
-    for (std::size_t t = 0; t < std::min(frames, n); ++t)
-        g[t] = zeit[t] * kSchleifenRate * std::exp(kQuelleS0 * static_cast<double>(t) / kSchleifenRate);
+    for (std::size_t t = 0; t < std::min(frames, n / 2); ++t)
+        g[t] = zeit[t] * kSchleifenRate * std::exp(s0 * static_cast<double>(t) / kSchleifenRate);
     return g;
 }
 

@@ -4,9 +4,10 @@ Archiv auf der Wechselplatte —, auch wenn das Archiv nicht eingesteckt ist.
     python tools/archiv_index.py [--archiv <Laufwerk>]     z. B.  --archiv E
 
 Je Ablage zwei Abschnitte: **Systemplatte** (`…\\Visuals_Project\\cmake\\<ablage>`) und **Wechselplatte**
-(`<Laufwerk>:\\samples`, die Quellen darunter in `<Laufwerk>:\\samples\\quellen` — S189, sonst wie frueher
+(seit S224 `<Laufwerk>:\\archive\\LumiViz\\samples` und `<Laufwerk>:\\archive\\LumiViz\\quellen`; gesucht werden in
+dieser Reihenfolge auch die frueheren Orte `<Laufwerk>:\\samples` und `<Laufwerk>:\\samples\\quellen` (S189) bzw.
 `<Laufwerk>:\\quellen`; ohne Angabe wird D: bis Z: gesucht). Ein Ordner `quellen` direkt in der Ablage der Samples ist das
-Archiv der Quellen und zaehlt nicht zu den Samples. Ist ein Ort nicht da, bleibt sein Abschnitt aus dem
+Archiv der Quellen (bis S224) und zaehlt nicht zu den Samples. Ist ein Ort nicht da, bleibt sein Abschnitt aus dem
 vorigen Index stehen (mit dem Datum, an dem er geschrieben wurde). Schreibt
 `projects/apps/LumiViz/docs/archiv/Index_samples.md` und `Index_quellen.md`.
 
@@ -30,21 +31,24 @@ ZIEL = REPO / "projects" / "apps" / "LumiViz" / "docs" / "archiv"
 BEGLEIT = ("HERKUNFT.md", "README.md", "readme.txt", "Readme.txt")
 MERKMAL = re.compile(r"lizenz|license|licence|herkunft|quelle|source|url|doi|zenodo|cc[- ]by|cc0|public domain", re.I)
 OHNE = {"README.md"}  # die Beschreibung der Ablage selbst
-QUELLEN_IN_SAMPLES = "quellen"  # S189: das Archiv der Quellen liegt unter dem der Samples
-# wo eine Ablage auf der Wechselplatte liegt, in dieser Reihenfolge gesucht
-ARCHIV = {"samples": ("samples",), "quellen": ("samples/" + QUELLEN_IN_SAMPLES, "quellen")}
+QUELLEN_IN_SAMPLES = "quellen"  # S189 bis S224: das Archiv der Quellen lag unter dem der Samples
+# wo eine Ablage auf der Wechselplatte liegt, in dieser Reihenfolge gesucht (S224: unter `archive\LumiViz`)
+ARCHIV = {"samples": ("archive/LumiViz/samples", "samples"),
+          "quellen": ("archive/LumiViz/quellen", "samples/" + QUELLEN_IN_SAMPLES, "quellen")}
 
 KOPF = {
     "samples": ["# Index: Samples, Messdaten und Hörproben", "",
                 "> Ablage `…\\Visuals_Project\\cmake\\samples`, aus Platzmangel archiviert auf der Wechselplatte",
-                "> (`<Laufwerk>:\\samples`, der Buchstabe kann wechseln). **Vor Gebrauch Patrik bitten, sie verfügbar zu",
+                "> (`<Laufwerk>:\\archive\\LumiViz\\samples` seit S224, vorher `<Laufwerk>:\\samples`; der Buchstabe kann",
+                "> wechseln). **Vor Gebrauch Patrik bitten, sie verfügbar zu",
                 "> machen.** Lizenz und Herkunft je Quelle stehen in deren `HERKUNFT.md`; hier nur die Zeilen dazu. Hörproben",
                 "> bleiben auf der Systemplatte, bis ihr Test abgeschlossen ist (`abgeschlossen.pass`). Erzeugt von",
                 "> `tools/archiv_index.py`."],
     "quellen": ["# Index: fremde Dokumente", "",
                 "> Ablage `…\\Visuals_Project\\cmake\\quellen` — Paper, Bücher, Noten und andere Dokumente, die aus",
                 "> urheberrechtlichen Gründen nicht ins Repo gehören; archiviert auf der Wechselplatte unter",
-                "> `<Laufwerk>:\\samples\\quellen` (seit S189; früher `<Laufwerk>:\\quellen`, der Buchstabe kann wechseln).",
+                "> `<Laufwerk>:\\archive\\LumiViz\\quellen` (seit S224; S189 bis S224 `<Laufwerk>:\\samples\\quellen`, davor",
+                "> `<Laufwerk>:\\quellen`; der Buchstabe kann wechseln).",
                 "> **Vor Gebrauch Patrik bitten, sie verfügbar zu machen.** Zitiert wird in den Berichten unter",
                 "> `docs/modellierung/` mit Seite. Erzeugt von `tools/archiv_index.py`."],
 }

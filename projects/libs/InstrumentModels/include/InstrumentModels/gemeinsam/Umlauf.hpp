@@ -30,6 +30,7 @@
 
 #include <complex>
 #include <cstddef>
+#include <memory>
 #include <numbers>
 #include <optional>
 #include <vector>
@@ -52,8 +53,67 @@ struct Saitenwerte
     [[nodiscard]] bool operator==(const Saitenwerte&) const = default;
 };
 
-/// Die Wellenzahl k(ω) der Saite bei der Kreisfrequenz ω (rad/s, > 0).
-[[nodiscard]] std::complex<double> wellenzahl(const Saitenwerte& saite, double omega);
+/// Die Wellenzahl k(ω) der Saite mit der schwingenden Laenge `laenge` bei der Kreisfrequenz ω (rad/s, > 0) — kausal
+/// (VL7 a, siehe `KausalerVerlust`): Re k = k′(ω) + Δk(ω), Im k wie `wellenzahlOhneDispersion`.
+[[nodiscard]] std::complex<double> wellenzahl(const Saitenwerte& saite, double laenge, double omega);
+
+/// Die Wellenzahl bis S224: k = √k² (1 − i η / 2) — der Verlust ohne die Dispersion, die nach Kramers–Kronig zu ihm
+/// gehoert (akausal: an Laute und Oud lag der Zupf bis −68 dB vor dem Loslassen, `proben/2026-11-27_S224_*`).
+[[nodiscard]] std::complex<double> wellenzahlOhneDispersion(const Saitenwerte& saite, double omega);
+
+/// √k² der verlustfreien steifen Saite mit Zug `zug` und Biegesteife `steife` (ω auch komplex).
+[[nodiscard]] std::complex<double> wellenzahlVerlustfrei(double zug, double masse, double steife, std::complex<double> omega);
+
+/// VL7 a: der Verlust der Saite kausal. Der Betrag des Umlaufs bleibt e^(−α x) (α = −Im k ohne Dispersion), die Phase
+/// bekommt die Dispersion Δk, die nach Kramers–Kronig zu ihm gehoert (minimalphasig: das reelle Cepstrum von Im k auf
+/// kVerlustFein Werten der reellen Achse bei kRate, gefaltet; Δk = −Im FFT(gefaltet)) — je Satz Saitenwerte einmal.
+/// Damit die Teiltoene bleiben, wo die Quellen sie messen (E_B kommt aus den gemessenen Obertoenen: Lynch-Aird & Woodhouse
+/// 2017 Gl. 17, 18), werden Zug und Biegesteife der verlustfreien Wellenzahl k′ je Saite und Laenge neu angepasst
+/// (`kausalAngepasst`): die Teiltoene 2 L (Re k′(ω_n) + Δk(ω_n)) = 2π n gleich denen der Vorgabe, f_n = √((T q² + EI q⁴) / m)
+/// / 2π mit q = n π / L, n = 1 … 30 bis 20 kHz, in Cent (Gauss-Newton in (T′/T, EI′/EI), Differenzen 10⁻⁷, 30 Schritte;
+/// die Teiltoene des neuen Modells je n mit 60 Halbierungen in [0,9 ; 1,1] ω_n). Ueber die Laenge gemeinsam reichen zwei
+/// Werte nicht: an der Darmsaite der Laute 38 blieben 10,6 Cent (S224). Die Saitenwerte selbst bleiben.
+struct KausalerVerlust
+{
+    double schritt = 0.0;       ///< Hz zwischen den Werten von `dk`
+    std::vector<double> dk;     ///< Δk ab 0 Hz, 1/m
+
+    /// Δk bei ω (rad/s, Betrag), linear zwischen den Werten.
+    [[nodiscard]] double bei(double omega) const;
+};
+inline constexpr std::size_t kVerlustFein = std::size_t{1} << 20;  ///< das Raster des Cepstrums (21,8 s bei kRate)
+inline constexpr std::size_t kVerlustAblage = 16;                   ///< jeder 16. Wert wird gemerkt (0,73 Hz)
+
+/// Der kausale Verlust einer Saite; je Satz Saitenwerte einmal gerechnet und geteilt (von mehreren Threads benutzbar).
+[[nodiscard]] std::shared_ptr<const KausalerVerlust> kausalerVerlust(const Saitenwerte& saite);
+
+/// Der kausale Verlust auf der Geraden ω − i s₀ (die Quelle und der Bezug rechnen dort): Δk + i Im k als eine analytische
+/// Funktion fortgesetzt. Das gefaltete Cepstrum c von Im k (siehe `KausalerVerlust`) ist kausal; G(ω) = FFT(c) traegt auf
+/// der reellen Achse Im k − i Δk, also Δk + i Im k = i G. Auf der Geraden ist G(ω − i s₀) = FFT(c · e^(−s₀ q / kRate)),
+/// genau. Bis S224 nahm die Quelle Δk an |Re ω| und fuegte es zur fortgesetzten Wellenzahl k′(ω − i s₀): auf der Geraden
+/// fehlte −i s₀ dΔk/dω gegen den Anteil des angepassten Zugs, im Bezug klang die Laute 38 (T′/T 1,041) so rund 10 %
+/// langsamer ab (`proben/2026-11-28_S224_laute38_kopplung.txt`). Auf der reellen Achse (s₀ = 0) Δk + i Im k mit Im k
+/// am Raster (ab 1 Hz), linear zwischen den Werten.
+struct KausalerVerlustAufGerade
+{
+    double s0 = 0.0;                         ///< 1/s
+    double schritt = 0.0;                    ///< Hz zwischen den Werten
+    std::vector<std::complex<double>> wert;  ///< Δk + i Im k bei ω − i s₀ ab 0 Hz, 1/m
+
+    /// Der Wert bei ω − i s₀ (ω in rad/s, Betrag), linear zwischen den Werten.
+    [[nodiscard]] std::complex<double> bei(double omega) const;
+};
+/// Je Satz Saitenwerte und s₀ einmal gerechnet und geteilt.
+[[nodiscard]] std::shared_ptr<const KausalerVerlustAufGerade> kausalerVerlustAuf(const Saitenwerte& saite, double s0);
+
+/// Zug und Biegesteife der verlustfreien Wellenzahl, je Saite und Laenge angepasst (siehe `KausalerVerlust`).
+struct KausalAngepasst
+{
+    double zugFaktor = 1.0;     ///< T′ / T
+    double steifeFaktor = 1.0;  ///< EI′ / EI
+    double restCent = 0.0;      ///< der groesste Betrag der Teiltoene gegen die Vorgabe nach der Anpassung
+};
+[[nodiscard]] KausalAngepasst kausalAngepasst(const Saitenwerte& saite, double laenge);
 
 /// Betrag und Verzug des Umlaufs exp(−2 i k L) bei `hz`.
 struct Umlaufwert

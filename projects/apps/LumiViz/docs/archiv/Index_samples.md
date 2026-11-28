@@ -1,7 +1,8 @@
 # Index: Samples, Messdaten und Hörproben
 
 > Ablage `…\Visuals_Project\cmake\samples`, aus Platzmangel archiviert auf der Wechselplatte
-> (`<Laufwerk>:\samples`, der Buchstabe kann wechseln). **Vor Gebrauch Patrik bitten, sie verfügbar zu
+> (`<Laufwerk>:\archive\LumiViz\samples` seit S224, vorher `<Laufwerk>:\samples`; der Buchstabe kann
+> wechseln). **Vor Gebrauch Patrik bitten, sie verfügbar zu
 > machen.** Lizenz und Herkunft je Quelle stehen in deren `HERKUNFT.md`; hier nur die Zeilen dazu. Hörproben
 > bleiben auf der Systemplatte, bis ihr Test abgeschlossen ist (`abgeschlossen.pass`). Erzeugt von
 > `tools/archiv_index.py`.
@@ -9,9 +10,40 @@
 <!-- SYSTEM:ANFANG -->
 ## Systemplatte: `C:\Users\patri\source\repos\Visuals_Project\cmake\samples`
 
-*Stand 2026-11-17.*
+*Stand 2026-11-27.*
 
-**Gesamt:** 2321 Dateien, 3.1 GB.
+**Gesamt:** 0 Dateien, 0 B.
+<!-- SYSTEM:ENDE -->
+
+<!-- WECHSEL:ANFANG -->
+## Wechselplatte: `E:\archive\LumiViz\samples`
+
+*Stand 2026-11-27.*
+
+**Gesamt:** 47083 Dateien, 30.8 GB.
+
+| Quelle | Dateien | Größe | Endungen |
+|---|---|---|---|
+| `ChordsDb` | 4 | 444.9 KB | .json 3, (ohne) 1 |
+| `CommonsClave` | 1 | 32.6 MB | .wav 1 |
+| `DrumGizmo` | 121 | 452.1 MB | .xml 80, .wav 38, .json 3 |
+| `Gesang/Vocadito_Zenodo5578807` | 205 | 72.4 MB | .csv 121, .txt 41, .wav 40, .md 1, .tsv 1 |
+| `Klasse 1 - Hammer-Saite/K18_Upright_Piano` | 217 | 939.0 MB | .wav 212, .md 1, .sfz 1, .tsv 1, .txt 1 |
+| `Klasse 1 - Hammer-Saite/VCSL` | 293 | 637.0 MB | .wav 285, .txt 3, .md 2, (ohne) 2, .tsv 1 |
+| `Klasse 2 - Gezupfte Saite/Iowa_MIS_Guitar_mono2496` | 48 | 789.4 MB | .aif 45, .md 1, .tsv 1, (ohne) 1 |
+| `Klasse 2 - Gezupfte Saite/Mores_2021_Zenodo4604577` | 12 | 33.1 MB | .pdf 6, .m 2, .md 1, .tsv 1, .mat 1 |
+| `Klasse 2 - Gezupfte Saite/TU_Berlin_Weinzierl_DepositOnce19858` | 5 | 3.5 GB | .zip 2, (ohne) 1, .tsv 1, .md 1 |
+| `Klasse 2 - Gezupfte Saite/VCSL` | 569 | 682.7 MB | .wav 564, .md 2, (ohne) 2, .tsv 1 |
+| `Klasse 3 - Bogen-Saite/CNSM_Zenodo18696786` | 465 | 1.7 GB | .wav 316, .csv 146, .md 1, .tsv 1, (ohne) 1 |
+| `Klasse 3 - Bogen-Saite/Iowa_MIS_Strings2012_stereo2496` | 267 | 7.5 GB | .aif 264, .md 1, .tsv 1, (ohne) 1 |
+| `Klasse 3 - Bogen-Saite/Lampis_Zenodo13374477` | 37298 | 4.8 GB | .wav 37295, .md 1, .tsv 1, (ohne) 1 |
+| `Klasse 3 - Bogen-Saite/TinySOL_Strings` | 1197 | 719.1 MB | .wav 1193, .md 1, .tsv 1, (ohne) 1, .csv 1 |
+| `Klasse 3 - Bogen-Saite/TU-Note_Violin` | 2083 | 2.1 GB | .wav 1384, .txt 695, .md 1, .tsv 1, (ohne) 1 |
+| `Klasse 3 - Bogen-Saite/VSCO-2-CE_Strings` | 749 | 686.9 MB | .wav 744, .md 2, (ohne) 2, .tsv 1 |
+| `loops` | 540 | 89.3 MB | .wav 537, .zip 3 |
+| `OLPC` | 40 | 5.2 MB | .wav 40 |
+| `Salamander` | 647 | 1.8 GB | .wav 641, .py 2, .sfz 2, .md 1, (ohne) 1 |
+| `Salamander_download` | 1 | 1.3 GB | .bz2 1 |
 
 ### Hörproben
 
@@ -76,36 +108,6 @@
 | `LumiViz/stil_tabs` | 26 | 98.2 MB | offen |
 | `LumiViz/titanium` | 1 | 39.9 MB | offen |
 | `LumiViz/zunge_34j` | 53 | 29.5 MB | offen |
-<!-- SYSTEM:ENDE -->
-
-<!-- WECHSEL:ANFANG -->
-## Wechselplatte: `E:\samples`
-
-*Stand 2026-11-17.*
-
-**Gesamt:** 44757 Dateien, 24.3 GB (ohne das Archiv der Quellen in `quellen`).
-
-| Quelle | Dateien | Größe | Endungen |
-|---|---|---|---|
-| `ChordsDb` | 4 | 444.9 KB | .json 3, (ohne) 1 |
-| `CommonsClave` | 1 | 32.6 MB | .wav 1 |
-| `DrumGizmo` | 121 | 452.1 MB | .xml 80, .wav 38, .json 3 |
-| `Gesang/Vocadito_Zenodo5578807` | 205 | 72.4 MB | .csv 121, .txt 41, .wav 40, .md 1, .tsv 1 |
-| `Klasse 1 - Hammer-Saite/K18_Upright_Piano` | 217 | 939.0 MB | .wav 212, .md 1, .sfz 1, .tsv 1, .txt 1 |
-| `Klasse 1 - Hammer-Saite/VCSL` | 293 | 637.0 MB | .wav 285, .txt 3, .md 2, (ohne) 2, .tsv 1 |
-| `Klasse 2 - Gezupfte Saite/Iowa_MIS_Guitar_mono2496` | 48 | 789.4 MB | .aif 45, .md 1, .tsv 1, (ohne) 1 |
-| `Klasse 2 - Gezupfte Saite/Mores_2021_Zenodo4604577` | 12 | 33.1 MB | .pdf 6, .m 2, .md 1, .tsv 1, .mat 1 |
-| `Klasse 2 - Gezupfte Saite/VCSL` | 569 | 682.7 MB | .wav 564, .md 2, (ohne) 2, .tsv 1 |
-| `Klasse 3 - Bogen-Saite/CNSM_Zenodo18696786` | 465 | 1.7 GB | .wav 316, .csv 146, .md 1, .tsv 1, (ohne) 1 |
-| `Klasse 3 - Bogen-Saite/Iowa_MIS_Strings2012_stereo2496` | 267 | 7.5 GB | .aif 264, .md 1, .tsv 1, (ohne) 1 |
-| `Klasse 3 - Bogen-Saite/Lampis_Zenodo13374477` | 37298 | 4.8 GB | .wav 37295, .md 1, .tsv 1, (ohne) 1 |
-| `Klasse 3 - Bogen-Saite/TinySOL_Strings` | 1197 | 719.1 MB | .wav 1193, .md 1, .tsv 1, (ohne) 1, .csv 1 |
-| `Klasse 3 - Bogen-Saite/TU-Note_Violin` | 2083 | 2.1 GB | .wav 1384, .txt 695, .md 1, .tsv 1, (ohne) 1 |
-| `Klasse 3 - Bogen-Saite/VSCO-2-CE_Strings` | 749 | 686.9 MB | .wav 744, .md 2, (ohne) 2, .tsv 1 |
-| `loops` | 540 | 89.3 MB | .wav 537, .zip 3 |
-| `OLPC` | 40 | 5.2 MB | .wav 40 |
-| `Salamander` | 647 | 1.8 GB | .wav 641, .py 2, .sfz 2, .md 1, (ohne) 1 |
-| `Salamander_download` | 1 | 1.3 GB | .bz2 1 |
 
 ### ChordsDb
 
@@ -162,6 +164,15 @@
 - 2021-03-15; geladen über die Zenodo-API am **2026-10-26** (IC Session 2, Freigabe Patrik, Klasse 2 F-10).
 - Lizenz:** Zenodo-API `license: {'id': 'cc-by-4.0'}` (nachgelesen 2026-10-26) — Namensnennung nötig.
 - `List_of_guitars_physical_measures.pdf`, die seit IC Session 1 unter [gemeinsam/quellen/](../../../../gemeinsam/quellen/)
+
+### Klasse 2 - Gezupfte Saite/TU_Berlin_Weinzierl_DepositOnce19858
+
+- HERKUNFT.md: Herkunft — TU Berlin, reflexionsarme Einzeltöne mit 32 Mikrofonen: Gitarre und Doppelpedalharfe
+- Quelle:** S. Weinzierl, M. Vorländer, D. Ackermann u. a., „A Database of Anechoic Microphone Array Measurements of
+- musical instruments“, DepositOnce (TU Berlin), Version 3 vom 2024-02-12, DOI 10.14279/depositonce-19858 (die in der
+- Doku genannte DOI `…-5861.3` antwortet mit 404); Seite
+- Freigabe Patrik, KQ33 a) mit `curl`, nur diese zwei Dateien.
+- Lizenz:** die Dokumentation v3 S. 2 (Textebene, in S203 gelesen; Ablage `…\cmake\quellen\koerper\Weinzierl_et_al_2017_…
 
 ### Klasse 2 - Gezupfte Saite/VCSL
 
